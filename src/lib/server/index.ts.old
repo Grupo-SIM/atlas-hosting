@@ -1,0 +1,80 @@
+import { db } from "@/lib/db";
+import { sessionTable } from "@/lib/db/schema";
+import { cookies } from "next/headers";
+import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
+import { eq } from "drizzle-orm";
+
+export async function createSession() {
+  const sessionId = generateSessionToken();
+
+  const existingSession = await db.query.sessionTable.findFirst({
+    where: (sessionTable) => eq(sessionTable.id, sessionId),
+  });
+
+  if (!existingSession) {
+    await db.insert(sessionTable).values({
+      id: sessionId,
+      expiresAt: expiresAt,
+    });
+  }
+
+  const cookieStore = await cookies();
+
+  cookieStore.set("session", sessionId, {
+    httpOnly: true,
+    secure: true,
+    expires: expiresAt,
+    sameSite: "lax",
+    path: "/",
+  });
+
+  return sessionId;
+}
+
+export async function isAuthenticated() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("session");
+
+  if (!sessionId) {
+    return false;
+  }
+
+  const session = await db.query.sessionTable.findFirst({
+    where: eq(sessionTable.id, sessionId.value),
+  });
+
+  if (!session) {
+    return false;
+  }
+
+  return true;
+}
+
+export async function resetSession(sessionId: string) {
+  const cookieStore = await cookies();
+
+  await db
+    .update(sessionTable)
+    .set({
+      externalId: null,
+      expiresAt: expiresAt.toISOString(),
+    })
+    .where(eq(sessionTable.id, sessionId));
+
+  cookieStore.set("session", sessionId, {
+    httpOnly: true,
+    secure: true,
+    expires: expiresAt,
+    sameSite: "lax",
+    path: "/",
+  });
+}
+
+export function generateSessionToken(): string {
+  const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
+  const token = encodeBase32LowerCaseNoPadding(bytes);
+  return token;
+}
+
+export const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);

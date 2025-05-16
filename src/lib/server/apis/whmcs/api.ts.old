@@ -1,0 +1,79 @@
+import { db } from "@/lib/db";
+import { sessionTable } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { cookies } from "next/headers";
+import { cache } from "react";
+import WhmcsApi from "whmcs-node";
+import type { Domain } from "whmcs-node/dist/interface/client/get-clients-domains";
+
+export const whmcsApi = new WhmcsApi({
+  identifier: process.env.WHMCS_USER || "",
+  secret: process.env.WHMCS_PASSWORD || "",
+  apiUrl: process.env.WHMCS_API_URL || "",
+});
+
+export const getCurrentUserId = cache(async function getCurrentUserId() {
+  const store = await cookies();
+  const sessionId = store.get("session")?.value;
+
+  if (!sessionId) {
+    throw new Error("Session not found");
+  }
+
+  const session = await db.query.sessionTable.findFirst({
+    where: eq(sessionTable.id, sessionId),
+  });
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
+  if (!session.externalId) {
+    throw new Error("Session not found");
+  }
+
+  return session.externalId;
+});
+
+export const getCurrentUser = cache(async function getCurrentUser() {
+  const externalId = await getCurrentUserId();
+
+  const user = await whmcsApi.client.getClientsDetails({
+    clientid: +externalId,
+  });
+
+  return user;
+});
+
+export const getUsers = cache(async function getUsers() {
+});
+
+export const getDomains = cache(async function getDomains() {
+  const userId = await getCurrentUserId();
+
+  const { domains } = await whmcsApi.client.getClientsDomains({
+    clientid: +userId,
+  });
+
+  return (domains as unknown as { domain: Domain[] }).domain;
+});
+
+export const getUserProducts = cache(async function getUserProducts() {
+  const userId = await getCurrentUserId();
+
+  const products = await whmcsApi.client.getClientsProducts({
+    clientid: +userId
+  });
+
+  return products;
+});
+
+export const getUserPlans = cache(async function getUserPlans() {
+  const userId = await getCurrentUserId();
+
+  const a = await whmcsApi.client.getClientsProducts({
+    clientid: +userId,
+  });
+
+  return a;
+});
