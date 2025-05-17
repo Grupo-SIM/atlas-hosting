@@ -1,16 +1,24 @@
-export interface CheckRegisterAvailabilityResponse {
+export interface NamesiloResponse<T> {
 	request: NamesiloRequest;
-	reply: Reply;
+	reply: NamesiloReply<T>;
 }
 
-export interface Reply {
+export type NamesiloReply<T> = {
 	code: number;
 	detail: string;
-	available: Available;
+} & T;
+
+export interface CheckRegisterAvailabilityResponse<T extends string | string[]> {
+	available?: T extends string[] ? Domain[]: Available;
+	unavailable?: T extends string[] ? string[]: Unavailable;
 }
 
 export interface Available {
 	domain: Domain;
+}
+
+export interface Unavailable {
+	domain: string;
 }
 
 export interface Domain {
@@ -35,6 +43,7 @@ export interface RegisterDomainParams {
 	domain: string;
 	years: number;
 	payment_id?: number;
+	contact_id?: number;
 	private?: NamesiloBoolean;
     coupon?: string;
 }
@@ -78,3 +87,15 @@ export interface CreateContactParams {
 	*/
 	ph: string;
 }
+
+export interface CreateContactResponse {
+	contact_id: number;
+}
+
+export interface RegistrationData {
+	registration: number;
+	transfer: number;
+	renew: number;
+}
+
+export type GetPricesResponse = Record<string, RegistrationData>;

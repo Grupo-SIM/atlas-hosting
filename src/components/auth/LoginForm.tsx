@@ -1,18 +1,17 @@
 "use client";
 
-import { startTransition, useCallback, useEffect, useActionState, useState } from "react";
-import { useRouter } from "next/navigation";
+import { ActionResponse, login } from "@/app/actions"; // Renamed LoginProps to avoid conflict
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import Link from "next/link";
-import { useForm, useFormState } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
-import { login, ActionResponse } from "@/app/actions"; // Renamed LoginProps to avoid conflict
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { startTransition, useActionState, useCallback, useEffect, useState } from "react";
+import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
-import { FaGithub, FaGithubAlt, FaGoogle } from "react-icons/fa6";
+import { FaGithub, FaGoogle } from "react-icons/fa6";
+import * as yup from "yup";
 
 export default function LoginForm() {
   const { register, getValues, control, ...methods} = useForm<LoginFormInputs>({

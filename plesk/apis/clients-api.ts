@@ -60,7 +60,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
             // authentication BasicAuth required
             // http basic authentication required
             if (configuration && (configuration.username || configuration.password)) {
-                localVarRequestOptions["auth"] = { username: configuration.username, password: configuration.password };
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
             const query = new URLSearchParams(localVarUrlObj.search);
@@ -114,7 +114,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
             // authentication BasicAuth required
             // http basic authentication required
             if (configuration && (configuration.username || configuration.password)) {
-                localVarRequestOptions["auth"] = { username: configuration.username, password: configuration.password };
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
             const query = new URLSearchParams(localVarUrlObj.search);
@@ -168,7 +168,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
             // authentication BasicAuth required
             // http basic authentication required
             if (configuration && (configuration.username || configuration.password)) {
-                localVarRequestOptions["auth"] = { username: configuration.username, password: configuration.password };
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
             const query = new URLSearchParams(localVarUrlObj.search);
@@ -222,7 +222,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
             // authentication BasicAuth required
             // http basic authentication required
             if (configuration && (configuration.username || configuration.password)) {
-                localVarRequestOptions["auth"] = { username: configuration.username, password: configuration.password };
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
             const query = new URLSearchParams(localVarUrlObj.search);
@@ -276,7 +276,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
             // authentication BasicAuth required
             // http basic authentication required
             if (configuration && (configuration.username || configuration.password)) {
-                localVarRequestOptions["auth"] = { username: configuration.username, password: configuration.password };
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
             const query = new URLSearchParams(localVarUrlObj.search);
@@ -335,7 +335,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
             // authentication BasicAuth required
             // http basic authentication required
             if (configuration && (configuration.username || configuration.password)) {
-                localVarRequestOptions["auth"] = { username: configuration.username, password: configuration.password };
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
@@ -393,7 +393,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
             // authentication BasicAuth required
             // http basic authentication required
             if (configuration && (configuration.username || configuration.password)) {
-                localVarRequestOptions["auth"] = { username: configuration.username, password: configuration.password };
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
             const query = new URLSearchParams(localVarUrlObj.search);
@@ -447,7 +447,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
             // authentication BasicAuth required
             // http basic authentication required
             if (configuration && (configuration.username || configuration.password)) {
-                localVarRequestOptions["auth"] = { username: configuration.username, password: configuration.password };
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
             const query = new URLSearchParams(localVarUrlObj.search);
@@ -500,7 +500,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
             // authentication BasicAuth required
             // http basic authentication required
             if (configuration && (configuration.username || configuration.password)) {
-                localVarRequestOptions["auth"] = { username: configuration.username, password: configuration.password };
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';

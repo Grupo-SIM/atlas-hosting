@@ -1,6 +1,6 @@
 import Link from "next/link";
 import AtlasLogo from "@/assets/atlas.svg";
-import { PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import { FaBolt, FaLock, FaHeadset } from "react-icons/fa6";
 
 export default function AuthPage({
@@ -13,7 +13,6 @@ export default function AuthPage({
 }: PropsWithChildren<AuthPageProps>) {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Left side - Branding & Info */}
       <div className="w-full md:w-1/2 bg-gradient-to-br from-primary/90 to-blue-700 text-white p-8 md:p-16 flex flex-col justify-between">
         <div className="text-shadow-sm shadow-zinc-900/10">
           <h1 className="text-3xl md:text-4xl font-bold flex items-center mb-2">
@@ -70,7 +69,6 @@ export default function AuthPage({
         </div>
       </div>
 
-      {/* Right side - Login Form */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 md:p-16">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center md:text-left">
@@ -95,7 +93,7 @@ export default function AuthPage({
   );
 }
 
-export interface AuthPageProps {
+interface AuthPageProps {
   title: string;
   subtitle: string;
   switchHref: string;

@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -12,6 +13,9 @@ const nextConfig = {
       },
     },
   },
+  typescript: {
+    tsconfigPath: "./tsconfig.json",
+  }
 };
 
 module.exports = nextConfig;

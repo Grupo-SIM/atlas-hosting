@@ -1,6 +1,7 @@
 import type { InferSelectModel } from "drizzle-orm";
 import {
   date,
+  doublePrecision,
   integer,
   json,
   pgTable,
@@ -15,6 +16,7 @@ export const userTable = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   namesiloId: integer("namesilo_id"),
+  domId: text("dom_id"),
   createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
   deletedAt: date("deleted_at", { mode: "date" }),
@@ -29,10 +31,10 @@ export const sessionTable = pgTable("sessions", {
 });
 
 export const plansTable = pgTable("plans", {
-  id: integer("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  price: integer("price").notNull(),
+  price: doublePrecision("price").notNull(),
   metadata: json("metadata").$type<PlanMetadata>(),
   pleskPlanId: integer("plesk_plan_id").notNull(),
 });
@@ -40,16 +42,31 @@ export const plansTable = pgTable("plans", {
 export const userPlansTable = pgTable(
   "user_plans",
   {
-    userId: integer("user_id").notNull(),
-    planId: integer("plan_id")
+    userId: uuid("user_id").notNull(),
+    planId: uuid("plan_id")
       .references(() => plansTable.id)
       .notNull(),
+    nextPaymentDate: date("next_payment_date", { mode: "date" }).notNull(),
     createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
     updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
     deletedAt: date("deleted_at", { mode: "date" }),
   },
   (table) => [primaryKey({ columns: [table.userId, table.planId] })],
 );
+
+export const invoiceTable = pgTable("invoices", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => userTable.id),
+  amount: doublePrecision("amount").notNull(),
+  reference: text("reference").notNull(),
+  type: text("type", { enum: ["subscription", "domain"] }).notNull(),
+  status: text("status", { enum: ["pending", "paid", "failed"] }).notNull(),
+  dueDate: date("due_date", { mode: "date" }).notNull(),
+  createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
 
 interface PlanMetadata {
 	features: string[];

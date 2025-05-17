@@ -46,10 +46,10 @@ export class PleskApi {
       username: this.rootUser,
     });
 
-    const initParameters: [Plesk.Configuration, undefined, AxiosInstance] = [
+    const initParameters: ConstructorParameters<typeof Plesk.ClientsApi> = [
       this.apiConfig,
       undefined,
-      this.pleskAxios,
+      this.pleskAxios as ConstructorParameters<typeof Plesk.ClientsApi>[2],
     ];
 
     this.clientsApi = new Plesk.ClientsApi(...initParameters);

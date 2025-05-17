@@ -1,13 +1,18 @@
-import axios, { type AxiosInstance } from "axios";
-import type {
-  CheckRegisterAvailabilityResponse,
-  CreateContactParams,
-  RegisterDomainParams,
+import axios, { ParamsSerializerOptions, type AxiosInstance } from "axios";
+import {
+  CreateContactResponse,
+  NamesiloReply,
+  type CheckRegisterAvailabilityResponse,
+  type CreateContactParams,
+  type GetPricesResponse,
+  type NamesiloResponse,
+  type RegisterDomainParams,
 } from "./types";
 
 export class NamesiloApi {
   private apiKey: string;
   private api: AxiosInstance;
+  public profitFee: number;
 
   constructor() {
     if (!process.env.NAMESILO_API_KEY) {
@@ -15,6 +20,12 @@ export class NamesiloApi {
     }
 
     this.apiKey = process.env.NAMESILO_API_KEY;
+
+    if (!process.env.NAMESILO_PROFIT_FEE) {
+      throw new Error("NAMESILO_PROFIT_FEE is not set");
+    }
+
+    this.profitFee = Number.parseFloat(process.env.NAMESILO_PROFIT_FEE);
 
     this.api = axios.create({
       baseURL: "https://www.namesilo.com/api",
@@ -34,75 +45,87 @@ export class NamesiloApi {
     };
 
     const newParams = Object.assign(
-			{} as AxiosQueryParams,
-			params,
-			defaultParams,
+		{} as AxiosQueryParams,
+		params,
+		defaultParams,
     );
-
-    for (const key in newParams) {
-      if (Array.isArray(newParams[key])) {
-        newParams[key] = newParams[key].join(",");
-      }
-    }
 
     return newParams;
   }
+
+  private async get<T>(url: string, params?: AxiosQueryParams) {
+    try {
+      const { data, request } = await this.api.get<NamesiloResponse<T>>(url, {
+        params: this.gqp({ ...params }),
+        paramsSerializer: paramsSerializer,
+      });
+
+      if (data?.reply?.code !== 300) {
+        console.error("Error in API response:", data);
+        return null;
+      }
+
+      return data.reply;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("Error in API request:", error.response?.data);
+      }
+      console.error("Error in API request:", error);
+
+      return null;
+    }
+	  }
 
   /**
 	 * Checks if a domain is available for registration using the Namesilo API.
 	 * @param domain - The domain name to check.
 	 * @returns The response data from the API, or null if an error occurs.
-	 */
-  public async checkDomainAvailability(domain: string) {
-    try {
-      const { data } = await this.api.get<CheckRegisterAvailabilityResponse>(
-        "/checkRegisterAvailability",
-        {
-          params: this.gqp({
-            domains: [domain],
-          }),
-        },
-      );
-
-      return data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error(
-          "Error checking domain availability:",
-          error.response?.data,
-        );
-      }
-      console.trace(
-        "Error checking domain availability:",
-        JSON.stringify(error),
-      );
-      return null;
-    }
+  */
+  public async checkDomainAvailability<T extends string | string[]>(domain: T) {
+    return this.get<CheckRegisterAvailabilityResponse<T>>("/checkRegisterAvailability", {
+      domains: domain,
+    });
   }
 
   public async registerDomain(params: RegisterDomainParams) {
-    const { data } = await this.api.get("/registerDomain", {
-      params: this.gqp({
-        domain: params.domain,
-        years: params.years
-      }),
+    return this.get("/registerDomain", {
+      domain: params.domain,
+      years: params.years,
     });
-
-    return data;
   }
 
   public async createContact({
     fn, ln, ad, cy, st, zp, ct, em, ph
-  }: CreateContactParams) {
-    const { data } = await this.api.get("/contactAdd", {
-	  params: this.gqp({
-        fn, ln, ad, cy, st, zp, ct, em, ph
-	  }),
+  }: CreateContactParams): Promise<number> {
+    const result =await this.get<NamesiloResponse<CreateContactResponse>>("/contactAdd", {
+      fn, ln, ad, cy, st, zp, ct, em, ph
     });
 
-    return data;
+    if (!result?.reply.contact_id) {
+      throw new Error("Error creating contact");
+    }
+
+    return result.reply.contact_id;
   }
 
+  public async getDomainPrices() {
+    return this.get<GetPricesResponse>("/getPrices", {});
+  }
+}
+
+function paramsSerializer(params: Record<string, unknown>, options?: ParamsSerializerOptions): string {
+  const paramsArray = [];
+
+  for (const key in params) {
+    const value = params[key];
+    if (Array.isArray(value)) {
+      paramsArray.push(`${key}=${value.join(",")}`);
+    } else {
+      paramsArray.push(`${key}=${value}`);
+    }
+  }
+
+  return paramsArray.join("&");
 }
 
 type AxiosQueryParams = Record<string, string | number | string[] | unknown>;
