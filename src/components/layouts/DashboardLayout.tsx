@@ -1,5 +1,6 @@
 "use client";
 
+import AtlasLogo from "@/assets/atlas.svg";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,11 +17,11 @@ import {
   Shield,
   X
 } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import AtlasLogo from "@/assets/atlas.svg";
+import { ModeToggle } from "../ModeToggle";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -32,7 +33,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
 
   const navigation = [
-    { name: "Painel", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Painel", href: "/", icon: LayoutDashboard },
     { name: "Hospedagem", href: "/hosting", icon: Server },
     { name: "Domínios", href: "/domains", icon: Globe },
     { name: "Bancos de Dados", href: "/databases", icon: Database },
@@ -67,7 +68,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         onMouseLeave={() => setIsCompact(true)}
         animate={{
           width: isCompact ? "min-content" : "auto",
-          // translateX: sidebarOpen ? 0 : 0,
           transition: { duration: 0.3, ease: sidebarOpen ? "easeIn": "easeOut" }
         }}
         transition={{
@@ -78,7 +78,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           "fixed inset-y-0 left-0 z-40 bg-card border-r shadow-sm whitespace-nowrap",
           "lg:relative lg:flex lg:flex-col",
           isCompact ? "w-[60px]" : "w-64",
-          // sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <motion.div
@@ -102,7 +101,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             }}
             className="text-lg font-semibold overflow-x-hidden"
           >
-                Atlas Hosting
+            Atlas Hosting
           </motion.span>
         </motion.div>
 
@@ -189,8 +188,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-card border-b flex items-center justify-between px-6">
           <h1 className="text-lg md:text-xl font-semibold">Painel</h1>
-          {/* <div className="flex items-center space-x-4">
-            <Button variant="outline" size="icon" className="relative">
+          {<div className="flex items-center space-x-4">
+            {/* <Button variant="outline" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               <Badge
                 className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0"
@@ -198,9 +197,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               >
                 3
               </Badge>
-            </Button>
+            </Button> */}
             <ModeToggle />
-          </div> */}
+          </div>}
         </header>
 
         {/* Page content */}

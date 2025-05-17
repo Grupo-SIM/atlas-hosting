@@ -30,7 +30,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
   return (
     <div className="w-screen h-screen overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-black/50 relative">
       <header className="h-16 bg-card border-b flex items-center justify-between px-6 space-x-4 absolute top-0 left-0 w-full">
-        <h1 className="text-base md:text-2xl font-bold flex items-center mb-2">
+        <h1 className="text-base md:text-2xl font-bold flex items-center m-0">
           <AtlasLogo className="h-6 w-min object-contain mr-4" />
             Atlas Hosting
         </h1>

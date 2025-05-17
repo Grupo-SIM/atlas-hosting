@@ -23,7 +23,7 @@ const inputClasses = "flex h-10 w-full rounded-md border border-input bg-backgro
 const domPk = process.env.NEXT_PUBLIC_DOM_PUBLIC_KEY ?? "";
 
 export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
-  const { register, handleSubmit, control, watch } = useForm<CheckoutFormInputs>({
+  const { register, handleSubmit, control, watch, getValues } = useForm<CheckoutFormInputs>({
     resolver: yupResolver(schema),
     mode: "onChange",
     reValidateMode: "onChange",
@@ -31,7 +31,6 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
 
   const { errors, isValid, isValidating } = useFormState({ control });
 
-  const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
 
   const [actionState, doSignup, isPending] = useActionState(signup, {
@@ -39,8 +38,6 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
   });
 
   const [cardToken, setCardToken] = useState<string>();
-
-  const values = watch();
 
   // Define the submit handler
   // const onSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
@@ -63,30 +60,29 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
   //   }
   // }, [actionState.message, actionState.status, router]);
 
-  const onSubmit = useCallback(() => {
+  const onSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
     const public_key = domPk ?? "";
+    const { fullName, document, phoneNumber, cardNumber, cardCvv, cardExpiration } = getValues();
     
-  	const data_card = {
-    	name: "João da Silva",
-      document: "11111111111",
-      customer_id: "",
-      number: "5147430374257642",
-      cvv: "652",
-      month: "01",
-      year: "25"
+    const [month, year] = cardExpiration.split("/");
+
+  	const dataCard = {
+    	name: fullName,
+      document: document,
+      number: cardNumber,
+      cvv: cardCvv,
+      month,
+      year
     };
     
     const installments = 1;
 
-    getTokenCard(public_key, data_card, installments, function (data) {
+    getTokenCard(public_key, dataCard, installments, function (data) {
     	console.log("resposta: ", data);
-      
-      if (data.token) {
-      } else {
-      	alert("ERRO: " + data.msgError);
-      }
     });
-  }, []);
+  }, [getValues]);
 
   return (
     <>

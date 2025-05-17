@@ -185,7 +185,7 @@ async function DomainAvailable({ domainData }: { domainData: Promise<DomainData>
           readOnly
         />
         <Button variant="action" className="w-auto" type="submit">
-              Registrar domínio
+          Registrar domínio
         </Button>
       </form>
     </DomainAvailableTemplate>

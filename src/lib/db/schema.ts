@@ -74,3 +74,4 @@ interface PlanMetadata {
 
 export type User = InferSelectModel<typeof userTable>;
 export type Session = InferSelectModel<typeof sessionTable>;
+export type Invoice = InferSelectModel<typeof invoiceTable>;

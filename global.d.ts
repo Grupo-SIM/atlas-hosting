@@ -3,7 +3,7 @@ declare function getTokenCard(
     data_card: {
         name: string;
         document: string;
-        customer_id: string;
+        customer_id?: string;
         number: string;
         cvv: string;
         month: string;
