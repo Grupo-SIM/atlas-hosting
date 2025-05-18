@@ -189,6 +189,25 @@ export async function buyDomain(
   return { status: "success", message: "Domínio registrado com sucesso" };
 }
 
+export async function searchDomains(
+  prevState: unknown,
+  searchQuery: string
+) {
+  "use server";
+
+  const newQuery = new URLSearchParams();
+
+  if (searchQuery) {
+    newQuery.set("search", searchQuery);
+  }
+
+  newQuery.set("tab", "results"); // Default tab on new search
+  newQuery.set("page", "1");      // Reset page on new search
+  newQuery.set("pricesPage", "1"); // Reset prices page on new search
+
+  redirect(`/domains/register?${newQuery.toString()}`);
+}
+
 export interface ActionResponse {
   status: "idle" | "success" | "error";
   message?: string;
