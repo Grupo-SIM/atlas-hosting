@@ -95,10 +95,10 @@ export async function createUser(
   name: string,
   email: string,
   passwordPlain: string,
-): Promise<(Omit<User, "password"> & { password?: string }) | null> {
+) {
   try {
-    const hashedPassword = await hash(passwordPlain); // Use new Scrypt hash
-    const newUser: Omit<User, "id" | "domId"> = {
+    const hashedPassword = await hash(passwordPlain);
+    const newUser = await db.insert(userTable).values({
       name,
       email: email.toLowerCase(),
       password: hashedPassword,
@@ -106,13 +106,15 @@ export async function createUser(
       updatedAt: new Date(),
       deletedAt: null,
       namesiloId: null,
-    };
-    await db.insert(userTable).values(newUser);
-    // Exclude password from the returned user object for security
-    const { password: _, ...userWithoutPassword } = newUser;
-    return userWithoutPassword as Omit<User, "password"> & {
-			password?: string;
-		};
+    }).returning({
+      id: userTable.id,
+      name: userTable.name,
+      email: userTable.email,
+      createdAt: userTable.createdAt,
+      updatedAt: userTable.updatedAt,
+      deletedAt: userTable.deletedAt,
+    });
+    return newUser[0];
   } catch (error) {
     // Handle potential errors, e.g., unique constraint violation for email
     console.error("Error creating user:", error);

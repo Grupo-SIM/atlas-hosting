@@ -1,8 +1,10 @@
 "use client";
 
+import { logout } from "@/app/actions";
 import AtlasLogo from "@/assets/atlas.svg";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import type { getUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   Database,
@@ -20,17 +22,29 @@ import {
 import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { startTransition, use, useActionState, useCallback, useState } from "react";
+import { FaPowerOff } from "react-icons/fa6";
 import { ModeToggle } from "../ModeToggle";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  user?: ReturnType<typeof getUser>;
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(true);
   const pathname = usePathname();
+
+  const [, signOut] = useActionState(logout, void 0);
+
+  const onSignOut = useCallback(() => {
+    startTransition(() => {
+      signOut();
+    });
+  }, [signOut]);
+
+  const userData = use(user ?? Promise.resolve(null));
 
   const navigation = [
     { name: "Painel", href: "/", icon: LayoutDashboard },
@@ -45,7 +59,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="max-h-screen min-h-screen flex bg-background">
       {/* Mobile sidebar toggle */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <Button
@@ -75,7 +89,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           ease: isCompact ? "easeIn" : "easeOut"
         }}
         className={cn(
-          "fixed inset-y-0 left-0 z-40 bg-card border-r shadow-sm whitespace-nowrap",
+          "fixed inset-y-0 left-0 z-40 bg-card border-r shadow-sm whitespace-nowrap max-h-screen",
           "lg:relative lg:flex lg:flex-col",
           isCompact ? "w-[60px]" : "w-64",
         )}
@@ -159,45 +173,42 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           ))}
         </motion.nav>
 
-        <div className="p-4 border-t">
-          <div className={cn(
-            "flex items-center gap-3",
-            isCompact && "justify-center"
-          )}>
-            <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>JS</AvatarFallback>
-            </Avatar>
-            <motion.div
-              layout
-              initial={{ width: 0 }}
-              animate={{
-                width: isCompact ? 0 : "auto",
-                transition: { duration: 0.3, ease: isCompact ? "easeIn" : "easeOut" }
-              }}
-              className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">João Silva</p>
-              <p className="text-xs text-muted-foreground truncate">
-                joao@exemplo.com
-              </p>
-            </motion.div>
+        {userData && (
+          <div className="p-4 border-t flex items-center justify-center">
+            <div className={cn(
+              "flex items-center",
+              isCompact && "justify-center"
+            )}>
+              <Avatar>
+                <AvatarImage src="https://github.com/shadcn.png" />
+                <AvatarFallback>JS</AvatarFallback>
+              </Avatar>
+              <motion.div
+                layout
+                initial={{ width: 0, marginLeft: 0 }}
+                animate={{
+                  width: isCompact ? 0 : "auto",
+                  marginLeft: isCompact ? 0 : "0.75rem",
+                  transition: { duration: 0.3, ease: isCompact ? "easeIn" : "easeOut" }
+                }}
+                className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{userData.name}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {userData.email}
+                </p>
+              </motion.div>
+            </div>
           </div>
-        </div>
+        )}
       </motion.div>
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-card border-b flex items-center justify-between px-6">
           <h1 className="text-lg md:text-xl font-semibold">Painel</h1>
           {<div className="flex items-center space-x-4">
-            {/* <Button variant="outline" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <Badge
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0"
-                variant="destructive"
-              >
-                3
-              </Badge>
-            </Button> */}
+            <Button onClick={onSignOut} variant="outline" size="icon" className="hover:text-destructive">
+              <FaPowerOff className="w-4 h-4 cursor-pointer transition-colors" />
+            </Button>
             <ModeToggle />
           </div>}
         </header>
@@ -211,4 +222,4 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   );
 }
 
-const MotionLink = motion(Link);
+const MotionLink = motion.create(Link);

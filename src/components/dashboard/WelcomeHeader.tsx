@@ -1,19 +1,23 @@
 import { Button } from "@/components/ui/button";
+import type { getUser } from "@/lib/auth";
 import { User } from "@/lib/db/schema";
 import { PlusCircle } from "lucide-react";
+import { Suspense } from "react";
+import Skeleton from "react-loading-skeleton";
 
-export async function WelcomeHeader({ user }: WelcomeHeaderProps) {
-  const firstName = user?.name.split(" ")[0];
-  const siteLabel = user?.namesiloId ? "Seu site atual: vemproclubedolivro.com": "Você ainda não tem um site ativo.";
-
+export function WelcomeHeader({ user }: WelcomeHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-          Bem-vindo de volta, {firstName}!
+          <Suspense fallback={<Skeleton height="1em" width="7rem" />}>
+            <UserName user={user} />
+          </Suspense>
         </h1>
         <p className="text-muted-foreground mt-1">
-          {siteLabel}
+          <Suspense fallback={<Skeleton height="1em" width="7rem" />}>
+            <UserSiteLabel user={user} />
+          </Suspense>
         </p>
       </div>
       <div className="flex space-x-3">
@@ -29,6 +33,20 @@ export async function WelcomeHeader({ user }: WelcomeHeaderProps) {
   );
 }
 
+async function UserName({ user }: WelcomeHeaderProps) {
+  const userData = await user;
+  const firstName = userData?.name.split(" ")[0];
+
+  return firstName ? `Bem-vindo de volta, ${firstName}!` : "Bem-vindo de volta!";
+}
+
+async function UserSiteLabel({ user }: WelcomeHeaderProps) {
+  const userData = await user;
+  return userData?.namesiloId
+    ? "Seu site atual: exemplo.com"
+    : "Você ainda não tem um site ativo.";
+}
+
 export interface WelcomeHeaderProps {
-  user: User | null;
+  user?: ReturnType<typeof getUser>;
 }

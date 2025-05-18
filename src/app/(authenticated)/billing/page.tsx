@@ -1,24 +1,21 @@
-import AtlasLogo from "@/assets/atlas.svg";
-import { ModeToggle } from "@/components/ModeToggle";
-import { Badge, BadgeProps } from "@/components/ui/badge";
-import { Button, ButtonProps } from "@/components/ui/button";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
+import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Invoice, invoiceTable } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
-import { eq, desc } from "drizzle-orm";
+import clsx from "clsx";
+import { desc, eq } from "drizzle-orm";
+import { CreditCard, FileText } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
-import { CreditCard, FileText } from "lucide-react";
-import { getUser } from "@/lib/auth";
-import { ComponentProps } from "react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 export const metadata: Metadata = {
   title: "Minhas Faturas - Atlas Hosting",
@@ -103,34 +100,34 @@ export default async function BillingPage() {
             <div className="space-y-6">
               {userInvoices.map((invoice) => (
                 <Card key={invoice.id} className="overflow-hidden shadow-md">
-                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 bg-muted/50 sm:items-center">
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0 !py-4 !px-6 bg-muted/50 sm:items-center">
                     <div>
                       <CardTitle className="text-2xl font-semibold">
                       Fatura #{invoice.id.substring(0, 8).toUpperCase()}
                       </CardTitle>
-                      <CardDescription>
-                      Total: {toBrl(invoice.amount)}
-                      </CardDescription>
                     </div>
                     <Badge variant={getStatusVariant(invoice.status)} className="text-sm whitespace-nowrap mt-1 sm:mt-0">
-                      {invoice.status ? invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1) : "Pendente"}
+                      {invoice.status === "pending" && "À pagar"}
+                      {invoice.status === "paid" && "Pago"}
+                      {invoice.status === "failed" && "Pagamento recusado"}
                     </Badge>
                   </CardHeader>
                   <CardContent className="pt-4">
-                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 mb-4 text-sm">
+                    <div className={clsx(["grid gap-3 sm:grid-cols-2 text-sm items-center", invoice.status === "pending" ? "md:grid-cols-5": "md:grid-cols-4"])}>
                       <div><strong>{invoice.type === "domain" ? "Domínio" : "Plano"}:</strong> {invoice.reference || "N/A"}</div>
                       <div><strong>Tipo:</strong> {invoice.type === "domain" ? "Domínio" : "Plano"}</div>
+                      <div><strong>Total:</strong> {toBrl(invoice.amount)}</div>
                       <div><strong>Data de Emissão:</strong> {formatDate(invoice.createdAt)}</div>
+                      {invoice.status === "pending" && (
+                        <div className="flex justify-end">
+                          <Button asChild>
+                            <Link href={`/checkout/${invoice.id}`}>
+                              <CreditCard className="mr-2 h-4 w-4" /> Pagar Agora
+                            </Link>
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    {(invoice.status?.toLowerCase() === "pending" || invoice.status?.toLowerCase() === "pendente" || !invoice.status) && (
-                      <div className="mt-6 flex justify-end">
-                        <Button asChild>
-                          <Link href={`/checkout/${invoice.id}`}>
-                            <CreditCard className="mr-2 h-4 w-4" /> Pagar Agora
-                          </Link>
-                        </Button>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               ))}

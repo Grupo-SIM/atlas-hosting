@@ -5,11 +5,11 @@ import { ServerStatus } from "@/components/dashboard/ServerStatus";
 import { RecentActivities } from "@/components/dashboard/RecentActivities";
 import { getUser } from "@/lib/auth";
 
-export default async function Dashboard() {
-  const user = await getUser();
+export default function Dashboard() {
+  const user = getUser();
 
   return (
-    <DashboardLayout>
+    <DashboardLayout user={user}>
       <div className="space-y-8 p-6 pb-16">
         <WelcomeHeader user={user} />
         <QuickActions />

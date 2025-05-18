@@ -214,10 +214,26 @@ export default async function DomainsPage({ searchParams }:
                 <Suspense fallback={
                   [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
                     <TableRow key={i}>
-                      <TableCell className="font-medium"><Skeleton width="3rem" height="1rem" /></TableCell>
-                      <TableCell className="hidden sm:table-cell"><Skeleton width="3rem" height="1rem" /></TableCell>
-                      <TableCell><Skeleton width="3rem" height="1rem" /></TableCell>
-                      <TableCell className="text-right"><Skeleton width="3rem" height="1rem" /></TableCell>
+                      <TableCell className="font-medium text-left">
+                        <span>
+                          <Skeleton width="6rem" height="1rem" />
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span>
+                          <Skeleton width="6rem" height="1rem" />
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span>
+                          <Skeleton width="6rem" height="1rem" />
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span>
+                          <Skeleton width="6rem" height="1rem" />
+                        </span>
+                      </TableCell>
                     </TableRow>
                   ))
                 }>

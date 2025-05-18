@@ -14,7 +14,7 @@ import { LoginFormInputs } from "@/components/auth/LoginForm";
 import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import nameSilo from "@/lib/server/apis/namesilo";
 import { db } from "@/lib/db";
-import { invoiceTable, userTable } from "@/lib/db/schema";
+import { invoiceTable, sessionTable, userTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NamesiloBoolean } from "@/lib/server/apis/namesilo/types";
 
@@ -108,6 +108,18 @@ export async function signup(
   } catch (error) {
     console.error("Signup error:", error);
     return { status: "error", message: "Erro ao criar conta" };
+  }
+
+  redirect("/");
+}
+
+export async function logout(): Promise<void> {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get("session_token")?.value;
+
+  if (sessionToken) {
+    await db.delete(sessionTable).where(eq(sessionTable.id, sessionToken));
+    cookieStore.delete("session_token");
   }
 
   redirect("/");
