@@ -1,7 +1,9 @@
 name: Deploy
 
 on:
-  # No changes
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -17,4 +19,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: akoskm/my-image:latest
+          tags: eurmn/atlas-hosting-frontend:latest
