@@ -1,5 +1,8 @@
 "use server";
 
+import { LoginFormInputs } from "@/components/auth/LoginForm";
+import { SignupFormInputs } from "@/components/auth/SignupForm";
+import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import {
   authenticateUser,
   createSession,
@@ -7,16 +10,13 @@ import {
   generateSessionToken,
   getUser,
 } from "@/lib/auth/index";
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { SignupFormInputs } from "@/components/auth/SignupForm";
-import { LoginFormInputs } from "@/components/auth/LoginForm";
-import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
-import nameSilo from "@/lib/server/apis/namesilo";
 import { db } from "@/lib/db";
 import { invoiceTable, sessionTable, userTable } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import nameSilo from "@/lib/server/apis/namesilo";
 import { NamesiloBoolean } from "@/lib/server/apis/namesilo/types";
+import { eq } from "drizzle-orm";
+import { cookies } from "next/headers";
+import { redirect, RedirectType } from "next/navigation";
 
 export async function login(
   prevState: unknown,
