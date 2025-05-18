@@ -1,4 +1,4 @@
-FROM oven/bun:latest AS base
+FROM oven/bun AS base
 
 USER root
 RUN apk update && apk add --no-cache libc6-compat
