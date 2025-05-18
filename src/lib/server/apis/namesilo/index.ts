@@ -15,17 +15,9 @@ export class NamesiloApi {
   public profitFee: number;
 
   constructor() {
-    if (!process.env.NAMESILO_API_KEY) {
-      throw new Error("NAMESILO_API_KEY is not set");
-    }
+    this.apiKey = process.env.NAMESILO_API_KEY!;
 
-    this.apiKey = process.env.NAMESILO_API_KEY;
-
-    if (!process.env.NAMESILO_PROFIT_FEE) {
-      throw new Error("NAMESILO_PROFIT_FEE is not set");
-    }
-
-    this.profitFee = Number.parseFloat(process.env.NAMESILO_PROFIT_FEE);
+    this.profitFee = Number.parseFloat(process.env.NAMESILO_PROFIT_FEE ?? "0");
 
     this.api = axios.create({
       baseURL: "https://www.namesilo.com/api",

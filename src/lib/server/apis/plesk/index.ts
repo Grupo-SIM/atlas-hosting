@@ -20,21 +20,9 @@ export class PleskApi {
   public subscriptions: SubscriptionApi;
 
   constructor() {
-    if (!process.env.PLESK_API_URL) {
-      throw new Error("PLESK_API_URL is not set");
-    }
-
-    if (!process.env.PLESK_ROOT_USER) {
-      throw new Error("PLESK_ROOT_USER is not set");
-    }
-
-    if (!process.env.PLESK_ROOT_PASSWORD) {
-      throw new Error("PLESK_ROOT_PASSWORD is not set");
-    }
-
-    this.apiUrl = process.env.PLESK_API_URL;
-    this.rootUser = process.env.PLESK_ROOT_USER;
-    this.rootPassword = process.env.PLESK_ROOT_PASSWORD;
+    this.apiUrl = process.env.PLESK_API_URL!;
+    this.rootUser = process.env.PLESK_ROOT_USER!;
+    this.rootPassword = process.env.PLESK_ROOT_PASSWORD!;
 
     this.pleskAxios = axios.create({
       baseURL: this.apiUrl,

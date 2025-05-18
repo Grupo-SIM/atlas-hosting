@@ -12,17 +12,9 @@ export class DomApi {
   private tokenApi: string;
 
   constructor() {
-    if (!process.env.DOM_API_KEY) {
-      throw new Error("DOM_API_KEY is not set");
-    }
+    this.tokenApi = process.env.DOM_API_KEY!;
 
-    this.tokenApi = process.env.DOM_API_KEY;
-
-    if (!process.env.DOM_WITHDRAWAL_SIGNATURE_KEY_PATH) {
-      throw new Error("DOM_WITHDRAWAL_SIGNATURE_KEY_PATH is not set");
-    }
-
-    this.privateKeyPath = process.env.DOM_WITHDRAWAL_SIGNATURE_KEY_PATH;
+    this.privateKeyPath = process.env.DOM_WITHDRAWAL_SIGNATURE_KEY_PATH!;
 
     this.api = axios.create({
       baseURL: "https://hml-apiv3.dompagamentos.com.br/checkout/sandbox",
@@ -114,29 +106,13 @@ export class DomApi {
    * @throws Error se alguma variável de ambiente necessária não estiver definida
    */
   public async withdrawFunds(amount: number, reference: string, userId: string) {
-    if (!process.env.DOM_WITHDRAWAL_RECEIVER_DOCUMENT) {
-      throw new Error("DOM_WITHDRAWAL_RECEIVER_DOCUMENT is not set");
-    }
-
-    if (!process.env.DOM_WITHDRAWAL_RECEIVER_NAME) {
-      throw new Error("DOM_WITHDRAWAL_RECEIVER_NAME is not set");
-    }
-
-    if (!process.env.DOM_WITHDRAWAL_PIX_KEY) {
-      throw new Error("DOM_WITHDRAWAL_PIX_KEY is not set");
-    }
-
-    if (!process.env.DOM_WITHDRAWAL_KEY_TYPE) {
-      throw new Error("DOM_WITHDRAWAL_KEY_TYPE is not set");
-    }
-
     const payload: WithDrawFundsParams = {
       description: reference,
       receivers: {
-        name: process.env.DOM_WITHDRAWAL_RECEIVER_NAME,
-        document: process.env.DOM_WITHDRAWAL_RECEIVER_DOCUMENT,
-        pix_key_type: process.env.DOM_WITHDRAWAL_KEY_TYPE as PixKeyType,
-        pix_key: process.env.DOM_WITHDRAWAL_PIX_KEY,
+        name: process.env.DOM_WITHDRAWAL_RECEIVER_NAME!,
+        document: process.env.DOM_WITHDRAWAL_RECEIVER_DOCUMENT!,
+        pix_key_type: process.env.DOM_WITHDRAWAL_KEY_TYPE! as PixKeyType,
+        pix_key: process.env.DOM_WITHDRAWAL_PIX_KEY!,
         amount,
         idempotency_key: reference,
         external_reference: reference,
