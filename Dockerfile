@@ -1,10 +1,9 @@
-FROM oven/bun:1 AS base
-WORKDIR /usr/src/app
+FROM oven/bun:latest AS base
 
-FROM base AS install
-RUN mkdir -p /temp/dev
-COPY package.json bun.lock plesk /temp/dev/
-RUN cd /temp/dev && bun install
+USER root
+RUN apk update && apk add --no-cache libc6-compat
+
+WORKDIR /usr/src/app
 
 RUN mkdir -p /temp/prod
 COPY package.json bun.lock plesk /temp/prod/
