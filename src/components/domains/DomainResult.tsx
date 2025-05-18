@@ -1,5 +1,5 @@
 
-import { DomainData } from "@/app/(authenticated)/domains/register/page";
+import { DomainData } from "@/app/(auth)/(dashboard)/domains/register/page";
 import { Button } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";

@@ -20,7 +20,7 @@ export class NamesiloApi {
     this.profitFee = Number.parseFloat(process.env.NAMESILO_PROFIT_FEE ?? "0");
 
     this.api = axios.create({
-      baseURL: "https://www.namesilo.com/api",
+      baseURL: "https://www.namesilo.com/apibatch",
     });
   }
 
@@ -37,9 +37,9 @@ export class NamesiloApi {
     };
 
     const newParams = Object.assign(
-		{} as AxiosQueryParams,
-		params,
-		defaultParams,
+      {} as AxiosQueryParams,
+      params,
+      defaultParams,
     );
 
     return newParams;
@@ -47,7 +47,7 @@ export class NamesiloApi {
 
   private async get<T>(url: string, params?: AxiosQueryParams) {
     try {
-      const { data, request } = await this.api.get<NamesiloResponse<T>>(url, {
+      const { data } = await this.api.get<NamesiloResponse<T>>(url, {
         params: this.gqp({ ...params }),
         paramsSerializer: paramsSerializer,
       });

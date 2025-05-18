@@ -1,6 +1,7 @@
-import { DomainData } from "@/app/(authenticated)/domains/register/page";
+import { DomainData } from "@/app/(auth)/(dashboard)/domains/register/page";
 import { Button } from "@/components/ui/button";
 import { toBrl } from "@/lib/utils";
+import Link from "next/link";
 
 interface DomainSuggestionsProps {
   searchQuery: string;
@@ -14,15 +15,16 @@ export async function DomainSuggestions({ searchQuery, domainData }: DomainSugge
     <div>
       <h3 className="text-lg font-medium mb-4">Sugestões de domínio</h3>
       <div className="grid gap-4">
-        {data?.available && data.extraDomains.map((domain, index) => {
+        {data && data.extraDomains.map((domain, index) => {
           const tld = domain.domain.split(".").pop() || "";
           const price = domain.price;
 
           const priceString = price ? toBrl(price) : null;
 
           return (
-            <div
+            <Link
               key={index}
+              href={`?search=${domain.domain}`}
               className="border rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-primary/50 hover:bg-muted/50 transition-colors"
             >
               <div>
@@ -38,7 +40,7 @@ export async function DomainSuggestions({ searchQuery, domainData }: DomainSugge
                   <p className="text-xs text-muted-foreground">Renovação: {toBrl(domain.renew)}</p>
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

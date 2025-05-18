@@ -23,13 +23,8 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { startTransition, use, useActionState, useCallback, useState } from "react";
-import { FaPowerOff } from "react-icons/fa6";
+import { FaPowerOff, FaUser } from "react-icons/fa6";
 import { ModeToggle } from "../ModeToggle";
-
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-  user?: ReturnType<typeof getUser>;
-}
 
 export default function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -44,7 +39,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
     });
   }, [signOut]);
 
-  const userData = use(user ?? Promise.resolve(null));
+  const userData = use(user!);
 
   const navigation = [
     { name: "Painel", href: "/", icon: LayoutDashboard },
@@ -59,7 +54,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
   ];
 
   return (
-    <div className="max-h-screen min-h-screen flex bg-background">
+    <div className="max-h-screen min-h-screen flex bg-background overflow-y-auto">
       {/* Mobile sidebar toggle */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <Button
@@ -180,8 +175,9 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
               isCompact && "justify-center"
             )}>
               <Avatar>
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>JS</AvatarFallback>
+                <div className="flex items-center justify-center w-full h-full rounded-full bg-muted-foreground/20 text-muted-foreground">
+                  <FaUser className="min-h-5 min-w-5" />
+                </div>
               </Avatar>
               <motion.div
                 layout
@@ -202,8 +198,8 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
         )}
       </motion.div>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-card border-b flex items-center justify-between px-6">
+      <div className="flex-1 flex flex-col min-w-0 h-screen w-screen overflow-y-auto">
+        <header className="min-h-16 h-16 bg-card border-b flex items-center justify-between px-6">
           <h1 className="text-lg md:text-xl font-semibold">Painel</h1>
           {<div className="flex items-center space-x-4">
             <Button onClick={onSignOut} variant="outline" size="icon" className="hover:text-destructive">
@@ -213,8 +209,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
           </div>}
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-6 flex flex-col">
           {children}
         </main>
       </div>
@@ -223,3 +218,8 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
 }
 
 const MotionLink = motion.create(Link);
+
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+  user?: ReturnType<typeof getUser>;
+}
