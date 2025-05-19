@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import type { getUser } from "@/lib/auth";
-import { User } from "@/lib/db/schema";
+import { db } from "@/lib/db";
+import { plansTable } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { PlusCircle } from "lucide-react";
 import { Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -42,9 +44,18 @@ async function UserName({ user }: WelcomeHeaderProps) {
 
 async function UserSiteLabel({ user }: WelcomeHeaderProps) {
   const userData = await user;
-  return userData?.namesiloId
-    ? "Seu site atual: exemplo.com"
-    : "Você ainda não tem um site ativo.";
+
+  if (userData?.planId) {
+    const plan = await db.query.plansTable.findFirst({
+      where: eq(plansTable.id, userData.planId),
+    });
+
+    if (plan) {
+      return `Seu plano atual: ${plan.name}`;
+    }
+  }
+
+  return "Você ainda não tem um plano ativo.";
 }
 
 export interface WelcomeHeaderProps {

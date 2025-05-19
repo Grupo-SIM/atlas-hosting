@@ -19,9 +19,9 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 export default async function DomainsPage({ searchParams }: 
-    {
-      searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-    }
+{
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
 ) {
   const params = await searchParams;
   const searchQuery = params.search ? params.search.toString().trim() : "";
@@ -192,10 +192,10 @@ async function DomainPriceTableRows({ items }: {
 export type DomainWithAvailability = Domain & { available: boolean };
 
 export type DomainData = {
-    available: boolean;
-    domain: DomainWithAvailability;
-    extraDomains: DomainWithAvailability[];
-} | null
+  available: boolean;
+  domain: DomainWithAvailability;
+  extraDomains: DomainWithAvailability[];
+} | null;
 
 const recommendedTlds: `.${string}`[] = [".com", ".net", ".org", ".io", ".dev", ".co", ".app", ".online"];
 

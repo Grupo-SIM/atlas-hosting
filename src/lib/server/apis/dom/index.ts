@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { CreateClientParams, CreateRecurrentPaymentParams, CreateSubscriptionParams, PixKeyType, WithDrawFundsParams, Receiver, PayloadWebhook } from "./types";
 import { signPayload } from "./signature";
 import jwt from "jsonwebtoken";
+import { getDay, startOfToday } from "date-fns";
 
 export class DomApi {
   private api: AxiosInstance;
@@ -24,11 +25,11 @@ export class DomApi {
     });
   }
 
-  public async createSubscription(userId: string, planId: string) {}
+  public async createSubscription(userId: string, invoiceId: string) {}
 
   public async createRecurrentPayment({
     token,
-    frequency,
+    planId,
     value,
     description,
     userId,
@@ -45,7 +46,7 @@ export class DomApi {
 
     let domId = user.domId;
 
-    if (domId) {
+    if (!domId) {
       if (!newClient) {
         throw new Error("User does not have a DOM ID");
       }
@@ -54,12 +55,26 @@ export class DomApi {
       domId = client.id;
     }
 
-    const { data } = await this.api.post<CreateSubscriptionParams & { id: string }>("/recurrence/subscriptions", {
-      token,
-      frequency,
-      value,
-      description,
-    });
+    const params: CreateSubscriptionParams = {
+      card: {
+        token,
+        installments: 1
+      },
+      customerId: domId,
+      externalReference,
+      paymentMethod: "credit_card",
+      startInvoiceDate: new Date(),
+      autoRecurring: {
+        description,
+        value,
+        billingDay: getDay(new Date()),
+        frequencyType: "MONTH",
+      },
+      cashbackActive: true,
+      postbackUrl: process.env.PUBLIC_URL + "/api/webhook/dom",
+    };
+
+    const { data } = await this.api.post("/recurrence/subscriptions", params);
 
     return data;
   }
@@ -138,3 +153,5 @@ export class DomApi {
   }
 }
 
+const domApi = new DomApi();
+export default domApi;

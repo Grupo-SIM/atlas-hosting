@@ -19,7 +19,7 @@ const eslintConfig = [
     },
     rules: {
       "@stylistic/semi": ["error", "always"],
-      "@stylistic/indent": ["error", "2"]
+      "@stylistic/indent": ["error", 2]
     },
   },
 ];

@@ -1,17 +1,13 @@
+import AtlasLogo from "@/assets/atlas.svg";
 import CheckoutForm from "@/components/checkout/CheckoutForm";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { invoiceTable } from "@/lib/db/schema";
+import { invoiceTable, plansTable } from "@/lib/db/schema";
+import { toBrl } from "@/lib/utils";
 import { eq } from "drizzle-orm";
-import { Bell } from "lucide-react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import AtlasLogo from "@/assets/atlas.svg";
-import { toBrl } from "@/lib/utils";
-
 
 export const metadata: Metadata = {
   title: "Checkout - Atlas Hosting",
@@ -23,8 +19,24 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
     where: eq(invoiceTable.id, (await params).id),
   });
 
+  console.log(invoice);
+
   if (!invoice) {
     notFound();
+  }
+
+  let reference = invoice.reference;
+
+  if (invoice.type === "subscription") {
+    const plan = await db.query.plansTable.findFirst({
+      where: eq(plansTable.id, reference),
+    });
+
+    if (!plan) {
+      notFound();
+    }
+
+    reference = plan.name;
   }
 
   return (
@@ -32,7 +44,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
       <header className="h-16 bg-card border-b flex items-center justify-between px-6 space-x-4 absolute top-0 left-0 w-full">
         <h1 className="text-base md:text-2xl font-bold flex items-center m-0">
           <AtlasLogo className="h-6 w-min object-contain mr-4" />
-            Atlas Hosting
+          Atlas Hosting
         </h1>
         <div className="flex items-center space-x-4">
           <ModeToggle />
@@ -49,7 +61,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
             <CheckoutForm invoiceId={invoice.id} />
           </CardContent>
         </Card>
-        <Card className="max-w-fit w-full h-min !shadow-lg !shadow-black/3 flex flex-col">
+        <Card className="min-w-xs max-w-fit w-full h-min !shadow-lg !shadow-black/3 flex flex-col">
           <CardHeader className="w-full text-center">
             <CardTitle className="text-base">Resumo do Pedido</CardTitle>
             <hr className="mt-4" />
@@ -58,7 +70,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
             <div className="text-xs flex items-center justify-between text-zinc-800 dark:text-zinc-200">
               <div>
                 {invoice.type === "domain" ? "Domínio ": "Plano "}
-                {invoice.reference}
+                {reference}
               </div>
               <div className="text-xs font-semibold">
                 {toBrl(invoice.amount)}
@@ -68,7 +80,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
               <>
                 <div className="text-xs flex gap-4 items-center justify-between text-zinc-800 dark:text-zinc-200 mt-7">
                   <div>
-                  Proteção de privacidade WHOIS
+                    Proteção de privacidade WHOIS
                   </div>
                   <div className="text-xs font-semibold">
                     {toBrl(0)}
@@ -76,7 +88,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
                 </div>
                 <div className="text-xs flex gap-4  items-center justify-between text-zinc-800 dark:text-zinc-200 mt-7 mb-1">
                   <div>
-                  Certificado SSL
+                    Certificado SSL
                   </div>
                   <div className="text-xs font-semibold">
                     {toBrl(0)}

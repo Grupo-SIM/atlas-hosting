@@ -30,7 +30,7 @@ export const userRelations = relations(userTable, ({ one }) => ({
   plan: one(plansTable, {
     fields: [userTable.planId],
     references: [plansTable.id]
-	}),
+  }),
 }));
 
 export const sessionTable = pgTable("sessions", {
@@ -93,7 +93,7 @@ export const invoiceTable = pgTable("invoices", {
   amount: doublePrecision("amount").notNull(),
   reference: text("reference").notNull(),
   type: text("type", { enum: ["subscription", "domain"] }).notNull(),
-  status: text("status", { enum: ["pending", "paid", "failed"] }).notNull(),
+  status: text("status", { enum: ["pending", "paid", "failed", "processing"] }).notNull(),
   dueDate: date("due_date", { mode: "date" }).notNull(),
   createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
@@ -101,12 +101,13 @@ export const invoiceTable = pgTable("invoices", {
 
 export const invoiceRelations = relations(invoiceTable, ({ one }) => ({
   user: one(userTable, {
-		fields: [invoiceTable.userId],
-		references: [userTable.id],
-	}),
+    fields: [invoiceTable.userId],
+    references: [userTable.id],
+  }),
 }));
 
 export type User = InferSelectModel<typeof userTable>;
 export type Session = InferSelectModel<typeof sessionTable>;
 export type Invoice = InferSelectModel<typeof invoiceTable>;
 export type Plan = InferSelectModel<typeof plansTable>;
+export type Feature = InferSelectModel<typeof featureTable>;

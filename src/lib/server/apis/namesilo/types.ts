@@ -1,153 +1,153 @@
 export interface NamesiloResponse<T> {
-	request: NamesiloRequest;
-	reply: NamesiloReply<T>;
+  request: NamesiloRequest;
+  reply: NamesiloReply<T>;
 }
 
 export type NamesiloReply<T> = {
-	code: number;
-	detail: string;
+  code: number;
+  detail: string;
 } & T;
 
 export interface CheckRegisterAvailabilityResponse<T extends string | string[]> {
-	available?: T extends string[] ? Domain[]: Available;
-	unavailable?: T extends string[] ? string[]: Unavailable;
+  available?: T extends string[] ? Domain[]: Available;
+  unavailable?: T extends string[] ? string[]: Unavailable;
 }
 
 export interface Available {
-	domain: Domain;
+  domain: Domain;
 }
 
 export interface Unavailable {
-	domain: string;
+  domain: string;
 }
 
 export interface Domain {
-	domain: string;
-	price: number;
-	renew: number;
-	premium: number;
-	duration: number;
+  domain: string;
+  price: number;
+  renew: number;
+  premium: number;
+  duration: number;
 }
 
 export interface NamesiloRequest {
-	operation: string;
-	ip: string;
+  operation: string;
+  ip: string;
 }
 
 export enum NamesiloBoolean {
-	True = "1",
-	False = "0",
+  True = "1",
+  False = "0",
 }
 
 export interface RegisterDomainParams {
-	domain: string;
-	years: number;
-	payment_id?: number;
-	contact_id?: number;
-	private?: NamesiloBoolean;
-    coupon?: string;
+  domain: string;
+  years: number;
+  payment_id?: number;
+  contact_id?: number;
+  private?: NamesiloBoolean;
+  coupon?: string;
 }
 
 
 export interface CreateContactParams {
-	/**
+  /**
      * First Name
 	*/
-	fn: string;
-	/**
+  fn: string;
+  /**
      * Last Name
 	*/
-	ln: string;
-	/**
+  ln: string;
+  /**
      * Mailing address
 	*/
-	ad: string;
-	/**
+  ad: string;
+  /**
      * City
 	*/
-	cy: `${string[0]}${string[0]}`;
-	/**
+  cy: `${string[0]}${string[0]}`;
+  /**
      * State
 	*/
-	st: string;
-	/**
+  st: string;
+  /**
      * Zip Code
 	*/
-	zp: string;
-	/**
+  zp: string;
+  /**
      * Country
 	*/
-	ct: string;
-	/**
+  ct: string;
+  /**
      * Email
 	*/
-	em: string;
-	/**
+  em: string;
+  /**
      * Phone Number
 	*/
-	ph: string;
+  ph: string;
 }
 
 export interface CreateContactResponse {
-	contact_id: number;
+  contact_id: number;
 }
 
 export interface RegistrationData {
-	registration: number;
-	transfer: number;
-	renew: number;
+  registration: number;
+  transfer: number;
+  renew: number;
 }
 
 export type GetPricesResponse = Record<string, RegistrationData>;
 
 export interface NamesiloDomainInfo {
-    created:                     string;
-    expires?:                     string;
-    status:                      string;
-    locked:                      string;
-    private:                     string;
-    auto_renew?:                  string;
-    traffic_type:                string;
-    email_verification_required: string;
-    portfolio:                   string;
-    forward_url:                 string;
-    forward_type:                string;
-    nameservers:                 Nameserver[];
-    contact_ids:                 ContactIDS;
+  created:                     string;
+  expires?:                     string;
+  status:                      string;
+  locked:                      string;
+  private:                     string;
+  auto_renew?:                  string;
+  traffic_type:                string;
+  email_verification_required: string;
+  portfolio:                   string;
+  forward_url:                 string;
+  forward_type:                string;
+  nameservers:                 Nameserver[];
+  contact_ids:                 ContactIDS;
 }
 
 export interface ContactIDS {
-    registrant:     string;
-    administrative: string;
-    technical:      string;
-    billing:        string;
+  registrant:     string;
+  administrative: string;
+  technical:      string;
+  billing:        string;
 }
 
 export interface Nameserver {
-    nameserver: string;
-    position:   number;
+  nameserver: string;
+  position:   number;
 }
 
 export interface NamesiloDomain {
-    domains: ListDomainDomain[] | { domain: ListDomainDomain };
-    pager?:   Pager;
+  domains: ListDomainDomain[] | { domain: ListDomainDomain };
+  pager?:   Pager;
 }
 
 export interface ListDomainDomain {
-    domain:  string;
-    created: string;
-    expires: string;
-    maxBid?: number;
+  domain:  string;
+  created: string;
+  expires: string;
+  maxBid?: number;
 }
 
 export interface Pager {
-    page:     number;
-    pageSize: string;
-    total:    string;
+  page:     number;
+  pageSize: string;
+  total:    string;
 }
 
 export interface ListDomainsParams {
-	page?: number;
-	pageSize?: number;
-	portfolioId?: number;
+  page?: number;
+  pageSize?: number;
+  portfolioId?: number;
 }

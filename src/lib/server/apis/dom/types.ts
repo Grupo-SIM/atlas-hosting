@@ -7,6 +7,7 @@ export interface CreateRecurrentPaymentParams {
   value: number;
   description: string;
   externalReference: string;
+  planId?: string;
   newClient?: CreateClientParams;
 }
 

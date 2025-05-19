@@ -18,6 +18,8 @@ import { featureTable, invoiceTable, planFeature, plansTable, sessionTable, user
 import { eq } from "drizzle-orm";
 import { NamesiloBoolean } from "@/lib/server/apis/namesilo/types";
 import { revalidatePath } from "next/cache";
+import domApi from "@/lib/server/apis/dom";
+import { metadata } from './(authenticated)/checkout/[id]/page';
 
 export async function login(
   prevState: unknown,
@@ -128,7 +130,7 @@ export async function logout(): Promise<void> {
 
 export async function buyDomain(
   prevState: unknown,
-  { address, cardCvv, cardExpiration, cardNumber, cardToken, document, fullName, phoneNumber, invoiceId }: CheckoutFormInputs
+  { address, cardCvv, cardExpiration, cardNumber, document, fullName, phoneNumber, invoiceId, cardToken }: CheckoutFormInputs & { invoiceId: string, cardToken: string }
 ): Promise<ActionResponse> {
   const user = await getUser();
 
@@ -226,8 +228,145 @@ export async function createPlan(
   return { status: "success", message: "Plano criado com sucesso!" };
 }
 
+export async function createPlanInvoice(prevState: unknown, planId: string): Promise<ActionResponse> {
+  const user = await getUser();
+
+  if (!user) {
+    return { status: "error", message: "Usuário não autenticado. Faça login para continuar." };
+  }
+
+  if (!planId) {
+    return { status: "error", message: "ID do plano é obrigatório." };
+  }
+
+  let redirectUrl: string | null = null;
+
+  try {
+    const plan = await db.query.plansTable.findFirst({
+      where: eq(plansTable.id, planId),
+    });
+
+    if (!plan) {
+      return { status: "error", message: "Plano não encontrado." };
+    }
+
+    const planPrice = plan.price; 
+
+    const [newInvoice] = await db.insert(invoiceTable).values({
+      userId: user.id,
+      type: "subscription", 
+      reference: plan.id, 
+      amount: planPrice,
+      status: "pending",
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 
+    }).returning();
+
+    if (!newInvoice || !newInvoice.id) {
+      console.error("Falha ao criar a fatura ou obter o ID de retorno do banco de dados.", newInvoice);
+      return { status: "error", message: "Erro ao criar fatura. Tente novamente." };
+    }
+    
+    domApi.createSubscription(user.id, newInvoice.id);
+    
+    redirectUrl = `/checkout/${newInvoice.id}`;
+  } catch (error) {
+    console.error("Erro ao criar fatura do plano:", error);
+    return { status: "error", message: "Erro interno ao processar o pedido. Por favor, tente mais tarde." };
+  }
+
+  console.log(redirectUrl);
+
+  if (redirectUrl) {
+    redirect(redirectUrl);
+  }
+
+  return { status: "error", message: "Erro ao processar o pedido. Por favor, tente mais tarde." };
+}
+
+export async function buyPlan(prevState: unknown, {
+  invoiceId,
+  ...values
+}: CheckoutFormInputs & { invoiceId: string, cardToken: string }): Promise<ActionResponse> {
+  const user = await getUser();
+
+  if (!user) {
+    return { status: "error", message: "Usuário não autenticado. Faça login para continuar." };
+  }
+
+  if (!invoiceId) {
+    return { status: "error", message: "ID da fatura é obrigatório." };
+  }
+
+  const invoice = await db.query.invoiceTable.findFirst({
+    where: eq(invoiceTable.id, invoiceId),
+  });
+
+  if (!invoice) {
+    return { status: "error", message: "Fatura não encontrada." };
+  }
+
+  const plan = await db.query.plansTable.findFirst({
+    where: eq(plansTable.id, invoice.reference),
+  });
+
+  if (!plan) {
+    return { status: "error", message: "Plano não encontrado." };
+  }
+
+  if (!user.domId) {
+    try {
+      await domApi.createClient({
+        name: user.name,
+        email: user.email,
+        document: values.document.replace(/\D/g, ""),
+        mobilePhone: values.phoneNumber.replace(/\D/g, ""),
+        userId: user.id,
+        address: {
+          street: values.address.street,
+          number: values.address.number,
+          city: values.address.city,
+          state: values.address.state,
+          zip_code: values.address.zipCode,
+          neighborhood: values.address.neighborhood,
+        },
+        codeExternal: user.id,
+      });
+    } catch (error) {
+      console.error("Erro ao criar cliente no DOM:", error);
+      return { status: "error", message: "Erro ao criar cliente no DOM." };
+    }
+  }
+  
+  await domApi.createRecurrentPayment({
+    description: `Atlas Hosting: ${plan.description}`,
+    externalReference: invoiceId,
+    frequency: "MONTH",
+    token: values.cardToken,
+    userId: user.id,
+    value: plan.price,
+  });
+
+  return { status: "success", message: "Plano adquirido com sucesso!" };
+}
+
 export interface ActionResponse {
   status: "idle" | "success" | "error";
   message?: string;
 }
 
+export interface PayInvoice {
+  fullName: string;
+  document: string;
+  cardNumber: string;
+  cardCvv: string;
+  cardExpiration: string;
+  phoneNumber: string;
+  address: {
+    number: string;
+    street: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+}

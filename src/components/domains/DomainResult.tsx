@@ -199,7 +199,7 @@ function DomainAvailableTemplate({ text1, text2, text3, text4, children }: Props
   text2: ReactNode;
   text3: ReactNode;
   text4: ReactNode;
- }>) {
+}>) {
   return (
     <div className="p-4 bg-green-50 dark:bg-green-900/10 border-t border-green-100 dark:border-green-900/20">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">

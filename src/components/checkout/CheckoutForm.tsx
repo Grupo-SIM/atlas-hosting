@@ -1,6 +1,6 @@
 "use client";
 
-import { signup } from "@/app/actions";
+import { buyPlan } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,9 +9,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import clsx from "clsx";
 import { getMonth, getYear } from "date-fns";
 import { isValidPhoneNumber } from "libphonenumber-js";
-import { useRouter } from "next/navigation";
 import Script from "next/script";
-import { useActionState, useCallback, useEffect, useState } from "react";
+import { startTransition, useActionState, useCallback, useState } from "react";
 import { Controller, useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import { IMaskInput } from "react-imask";
@@ -23,7 +22,12 @@ const inputClasses = "flex h-10 w-full rounded-md border border-input bg-backgro
 const domPk = process.env.NEXT_PUBLIC_DOM_PUBLIC_KEY ?? "";
 
 export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
-  const { register, handleSubmit, control, watch, getValues } = useForm<CheckoutFormInputs>({
+  const [state, doBuyPlan, isPending] = useActionState(buyPlan, {
+    status: "idle" as "error" | "success" | "idle",
+    message: "",
+  });
+
+  const { register, control, getValues } = useForm<CheckoutFormInputs>({
     resolver: yupResolver(schema),
     mode: "onChange",
     reValidateMode: "onChange",
@@ -32,44 +36,18 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
   const { errors, isValid, isValidating } = useFormState({ control });
 
   const [formError, setFormError] = useState<string | null>(null);
-
-  const [actionState, doSignup, isPending] = useActionState(signup, {
-    status: "idle",
-  });
-
   const [cardToken, setCardToken] = useState<string>();
-
-  // Define the submit handler
-  // const onSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault();
-
-  //   const data = methods.getValues();
-
-  //   setFormError(null);
-
-  //   startTransition(() => {
-  //     doSignup(data);
-  //   });
-  // }, [doSignup, methods]);
-
-  // useEffect(() => {
-  //   if (actionState.status === "success") {
-  //     router.push("/");
-  //   } else if (actionState.status === "error") {
-  //     setFormError(actionState.message ?? "Erro ao criar conta");
-  //   }
-  // }, [actionState.message, actionState.status, router]);
 
   const onSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const public_key = domPk ?? "";
-    const { fullName, document, phoneNumber, cardNumber, cardCvv, cardExpiration } = getValues();
+    const { fullName, document, phoneNumber, cardNumber, cardCvv, cardExpiration, address } = getValues();
     
     const [month, year] = cardExpiration.split("/");
 
-  	const dataCard = {
-    	name: fullName,
+    const dataCard = {
+      name: fullName,
       document: document,
       number: cardNumber,
       cvv: cardCvv,
@@ -79,10 +57,22 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
     
     const installments = 1;
 
-    getTokenCard(public_key, dataCard, installments, function (data) {
-    	console.log("resposta: ", data);
+    getTokenCard(public_key, dataCard, installments, function ({ token }) {
+      startTransition(() => {
+        doBuyPlan({
+          fullName,
+          document,
+          phoneNumber,
+          cardNumber,
+          cardCvv,
+          cardExpiration,
+          address,
+          invoiceId,
+          cardToken: token
+        });
+      });
     });
-  }, [getValues]);
+  }, [doBuyPlan, getValues, invoiceId]);
 
   return (
     <>
@@ -227,12 +217,22 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
           </div>
           <div className="space-y-2 col-span-2">
             <Label htmlFor="address.state">Estado</Label>
-            <Input
-              id="address.state"
-              type="text"
-              placeholder="UF"
-              {...register("address.state")}
-              className={inputClasses}
+            <Controller
+              name="address.state"
+              control={control}
+              render={({ field }) => (
+                <IMaskInput
+                  {...field}
+                  mask={[
+                    { mask: "00", lazy: true, maxLength: 2 }
+                  ]}
+                  unmask={true} // Get unmasked value
+                  placeholder="Código do estado"
+                  autoComplete="address-level1"
+                  className={inputClasses}
+                  onAccept={(value) => field.onChange(value)}
+                />
+              )}
             />
             {errors.address?.state && (
               <p className="text-xs text-red-400">{errors.address.state.message}</p>
@@ -318,6 +318,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
           type="submit"
           variant="action"
           className="w-full mt-4 flex items-center justify-center"
+          isLoading={isPending}
           disabled={!isValid || isValidating || isPending}
         >
           {isPending ? (
@@ -378,25 +379,13 @@ const schema = yup
       number: yup.string().required("Número é obrigatório"),
       neighborhood: yup.string().required("Bairro é obrigatório"),
       city: yup.string().required("Cidade é obrigatória"),
-      state: yup.string().required("Estado é obrigatório"),
+      state: yup.string().length(2).required("Estado é obrigatório"),
       zipCode: yup
         .string()
         .required("CEP é obrigatório")
         .matches(/^\d{5}-\d{3}$/, "CEP inválido"),
     }),
-    cardToken: yup.string(),
-    invoiceId: yup.string(),
   })
   .required();
 
-/*   userId: string;
-  name: string;
-  email: string;
-  document: string;
-  // documentType: "CPF" | "CNPJ";
-  codeExternal?: string;
-  gender?: "male" | "female" | "other";
-  birthdate?: Date;
-  mobilePhone: string;
-  address?: Address; */
 export type CheckoutFormInputs = yup.InferType<typeof schema>;
