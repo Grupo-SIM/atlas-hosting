@@ -18,7 +18,7 @@ export function QuickActions() {
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
             asChild
           >
-            <Link href="/hosting/new">
+            <Link href="/plans">
               <ShoppingCart className="h-10 w-10 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
                 <span className="text-xl font-medium block">Comprar Plano de Hospedagem</span>

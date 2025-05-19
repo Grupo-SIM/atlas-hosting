@@ -63,9 +63,9 @@ export interface CreateContactParams {
 	*/
 	ad: string;
 	/**
-     * Country
+     * City
 	*/
-	cy: string;
+	cy: `${string[0]}${string[0]}`;
 	/**
      * State
 	*/
@@ -75,7 +75,7 @@ export interface CreateContactParams {
 	*/
 	zp: string;
 	/**
-     * City
+     * Country
 	*/
 	ct: string;
 	/**
@@ -99,3 +99,55 @@ export interface RegistrationData {
 }
 
 export type GetPricesResponse = Record<string, RegistrationData>;
+
+export interface NamesiloDomainInfo {
+    created:                     string;
+    expires?:                     string;
+    status:                      string;
+    locked:                      string;
+    private:                     string;
+    auto_renew?:                  string;
+    traffic_type:                string;
+    email_verification_required: string;
+    portfolio:                   string;
+    forward_url:                 string;
+    forward_type:                string;
+    nameservers:                 Nameserver[];
+    contact_ids:                 ContactIDS;
+}
+
+export interface ContactIDS {
+    registrant:     string;
+    administrative: string;
+    technical:      string;
+    billing:        string;
+}
+
+export interface Nameserver {
+    nameserver: string;
+    position:   number;
+}
+
+export interface NamesiloDomain {
+    domains: ListDomainDomain[] | { domain: ListDomainDomain };
+    pager?:   Pager;
+}
+
+export interface ListDomainDomain {
+    domain:  string;
+    created: string;
+    expires: string;
+    maxBid?: number;
+}
+
+export interface Pager {
+    page:     number;
+    pageSize: string;
+    total:    string;
+}
+
+export interface ListDomainsParams {
+	page?: number;
+	pageSize?: number;
+	portfolioId?: number;
+}

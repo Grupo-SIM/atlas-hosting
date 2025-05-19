@@ -1,6 +1,9 @@
 import axios, { ParamsSerializerOptions, type AxiosInstance } from "axios";
 import {
   CreateContactResponse,
+  ListDomainsParams,
+  NamesiloDomain,
+  NamesiloDomainInfo,
   NamesiloReply,
   type CheckRegisterAvailabilityResponse,
   type CreateContactParams,
@@ -20,7 +23,7 @@ export class NamesiloApi {
     this.profitFee = Number.parseFloat(process.env.NAMESILO_PROFIT_FEE ?? "0");
 
     this.api = axios.create({
-      baseURL: "https://www.namesilo.com/api",
+      baseURL: "https://www.namesilo.com/apibatch",
     });
   }
 
@@ -29,44 +32,47 @@ export class NamesiloApi {
 	 * @param params - The query parameters to include in the request.
 	 * @returns An object containing the query parameters, including the API key.
 	 */
-  private gqp(params: AxiosQueryParams): AxiosQueryParams {
+  private gqp(params: AxiosQueryParams): string[][] {
     const defaultParams: AxiosQueryParams = {
       key: this.apiKey,
       type: "json",
       version: 1,
     };
 
-    const newParams = Object.assign(
-		{} as AxiosQueryParams,
-		params,
-		defaultParams,
-    );
+    const newParams = { ...defaultParams, ...params };
 
-    return newParams;
+    return Object.entries(newParams).map(([key, value]) => {
+      if (Array.isArray(value)) {
+        value = value.map(v => v.toString()).join(",")
+      }
+
+      return [key, String(value)];
+    }).filter(([, value]) => value !== undefined) as string[][]
   }
 
-  private async get<T>(url: string, params?: AxiosQueryParams) {
+  private async get<T>(url: string, params?: AxiosQueryParams): Promise<NamesiloReply<T>> {
     try {
-      const { data, request } = await this.api.get<NamesiloResponse<T>>(url, {
-        params: this.gqp({ ...params }),
-        paramsSerializer: paramsSerializer,
-      });
+      const queryParams = this.gqp({ ...params });
+      const queryString = new URLSearchParams(queryParams);
+      const fullUrl = `${url}?${queryString}`;
 
-      if (data?.reply?.code !== 300) {
+      const { data } = await this.api.get<NamesiloResponse<T>>(fullUrl);
+
+      if (data.reply?.code !== 300) {
         console.error("Error in API response:", data);
-        return null;
+        return data.reply;
       }
 
       return data.reply;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error("Error in API request:", error.response?.data);
+        return error.response?.data;
       }
       console.error("Error in API request:", error);
 
-      return null;
+      return null as any;
     }
-	  }
+  }
 
   /**
 	 * Checks if a domain is available for registration using the Namesilo API.
@@ -89,19 +95,64 @@ export class NamesiloApi {
   public async createContact({
     fn, ln, ad, cy, st, zp, ct, em, ph
   }: CreateContactParams): Promise<number> {
-    const result =await this.get<NamesiloResponse<CreateContactResponse>>("/contactAdd", {
+    const result = await this.get<NamesiloResponse<CreateContactResponse>>("/contactAdd", {
       fn, ln, ad, cy, st, zp, ct, em, ph
     });
 
-    if (!result?.reply.contact_id) {
-      throw new Error("Error creating contact");
+    const contactId = result.reply?.contact_id;
+
+    if (contactId) {
+      await this.addPortfolio(contactId.toString());
     }
 
-    return result.reply.contact_id;
+    return contactId;
+  }
+
+  /**
+   * Adds a new portfolio to Namesilo
+   * @param portfolioName - The name of the portfolio to add (will be encoded)
+   * @returns The response data from the API
+   */
+  public async addPortfolio(portfolioName: string) {
+    return this.get("/portfolioAdd", {
+      portfolio: portfolioName
+    });
+  }
+
+  public async getDomainInfo(domain: string) {
+    return await this.get<NamesiloDomainInfo>("/getDomainInfo", {
+      domain
+    });
   }
 
   public async getDomainPrices() {
     return this.get<GetPricesResponse>("/getPrices", {});
+  }
+
+  public async listDomains({
+    page,
+    pageSize,
+    portfolioId
+  }: ListDomainsParams) {
+    const params: Record<string, string | number> = {};
+
+    if (page) {
+      params.page = page;
+    }
+
+    if (pageSize) {
+      params.pageSize = pageSize
+    }
+
+    if (portfolioId) {
+      params.portfolio = portfolioId
+    }
+
+    const result = await this.get<NamesiloDomain>("/listDomains", params)
+
+    console.log(result);
+
+    return result;
   }
 }
 

@@ -1,13 +1,13 @@
-import type { InferSelectModel } from "drizzle-orm";
+import { relations, type InferSelectModel } from "drizzle-orm";
 import {
+  bigint,
+  boolean,
   date,
   doublePrecision,
-  integer,
-  json,
   pgTable,
   primaryKey,
   text,
-  uuid,
+  uuid
 } from "drizzle-orm/pg-core";
 
 export const userTable = pgTable("users", {
@@ -15,12 +15,23 @@ export const userTable = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  namesiloId: integer("namesilo_id"),
+  namesiloId: bigint("namesilo_id", {
+    mode: "number"
+  }),
+  isAdmin: boolean("is_admin"),
   domId: text("dom_id"),
+  planId: uuid("plan_id").references(() => plansTable.id),
   createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
   deletedAt: date("deleted_at", { mode: "date" }),
 });
+
+export const userRelations = relations(userTable, ({ one }) => ({
+  plan: one(plansTable, {
+    fields: [userTable.planId],
+    references: [plansTable.id]
+	}),
+}));
 
 export const sessionTable = pgTable("sessions", {
   id: text("id").primaryKey(),
@@ -35,24 +46,19 @@ export const plansTable = pgTable("plans", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   price: doublePrecision("price").notNull(),
-  metadata: json("metadata").$type<PlanMetadata>(),
-  pleskPlanId: integer("plesk_plan_id").notNull(),
+  featured: boolean("featured").default(false),
 });
 
-export const userPlansTable = pgTable(
-  "user_plans",
-  {
-    userId: uuid("user_id").notNull(),
-    planId: uuid("plan_id")
-      .references(() => plansTable.id)
-      .notNull(),
-    nextPaymentDate: date("next_payment_date", { mode: "date" }).notNull(),
-    createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
-    updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
-    deletedAt: date("deleted_at", { mode: "date" }),
-  },
-  (table) => [primaryKey({ columns: [table.userId, table.planId] })],
-);
+export const featureTable = pgTable("fature", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  description: text("description").notNull(),
+  reference: text("reference")
+});
+
+export const plansTableRelations = relations(plansTable, ({ many }) => ({
+  users: many(userTable),
+  features: many(featureTable)
+}));
 
 export const invoiceTable = pgTable("invoices", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -68,10 +74,32 @@ export const invoiceTable = pgTable("invoices", {
   updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
-interface PlanMetadata {
-	features: string[];
-}
+export const invoiceRelations = relations(invoiceTable, ({ one }) => ({
+  user: one(userTable, {
+		fields: [invoiceTable.userId],
+		references: [userTable.id],
+	}),
+}));
+
+export const planFeatureTable = pgTable("plan_feature", {
+  planId: uuid("plan_id").notNull().references(() => plansTable.id),
+  featureId: uuid("feature_id").notNull().references(() => featureTable.id),
+}, (t) => [
+  primaryKey({ columns: [t.planId, t.featureId] }),
+]);
+
+export const planFeatureRelations = relations(planFeatureTable, ({ one }) => ({
+  feature: one(featureTable, {
+    fields: [planFeatureTable.featureId],
+    references: [featureTable.id],
+  }),
+  plan: one(plansTable, {
+    fields: [planFeatureTable.planId],
+    references: [plansTable.id],
+  }),
+}));
 
 export type User = InferSelectModel<typeof userTable>;
 export type Session = InferSelectModel<typeof sessionTable>;
 export type Invoice = InferSelectModel<typeof invoiceTable>;
+export type Plan = InferSelectModel<typeof plansTable>;

@@ -44,7 +44,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
     });
   }, [signOut]);
 
-  const userData = use(user ?? Promise.resolve(null));
+  const userData = user ? use(user): null;
 
   const navigation = [
     { name: "Painel", href: "/", icon: LayoutDashboard },

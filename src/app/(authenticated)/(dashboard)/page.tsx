@@ -9,19 +9,17 @@ export default function Dashboard() {
   const user = getUser();
 
   return (
-    <DashboardLayout user={user}>
-      <div className="space-y-8 p-6 pb-16">
-        <WelcomeHeader user={user} />
-        <QuickActions />
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8">
-            <RecentActivities />
-          </div>
-          <div className="lg:col-span-4">
-            <ServerStatus />
-          </div>
+    <div className="space-y-8 p-6 pb-16">
+      <WelcomeHeader user={user} />
+      <QuickActions />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8">
+          <RecentActivities />
+        </div>
+        <div className="lg:col-span-4">
+          <ServerStatus />
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

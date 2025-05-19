@@ -1,5 +1,4 @@
-import { DomainData } from "@/app/(authenticated)/domains/register/page";
-import { Button } from "@/components/ui/button";
+import { DomainData } from "@/app/(authenticated)/(dashboard)/domains/register/page";
 import { toBrl } from "@/lib/utils";
 
 interface DomainSuggestionsProps {

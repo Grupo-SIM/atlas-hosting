@@ -1,5 +1,5 @@
 
-import { DomainData } from "@/app/(authenticated)/domains/register/page";
+import { DomainData, getDomainData } from "@/app/(authenticated)/(dashboard)/domains/register/page";
 import { Button } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -14,7 +14,9 @@ import { PropsWithChildren, ReactNode, Suspense } from "react";
 import { CgSpinner } from "react-icons/cg";
 import Skeleton from "react-loading-skeleton";
 
-export function DomainResult({ searchQuery, domainData }: DomainResultProps) {
+export function DomainResult({ searchQuery }: DomainResultProps) {
+  const domainData = getDomainData(searchQuery);
+
   return (
     <div className="border rounded-lg overflow-hidden">
       <div className="p-6 bg-muted/30">
@@ -221,5 +223,4 @@ function DomainAvailableTemplate({ text1, text2, text3, text4, children }: Props
 
 export interface DomainResultProps {
   searchQuery: string;
-  domainData: Promise<DomainData>;
 }

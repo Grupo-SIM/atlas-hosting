@@ -14,9 +14,10 @@ import { LoginFormInputs } from "@/components/auth/LoginForm";
 import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import nameSilo from "@/lib/server/apis/namesilo";
 import { db } from "@/lib/db";
-import { invoiceTable, sessionTable, userTable } from "@/lib/db/schema";
+import { featureTable, invoiceTable, planFeatureTable, plansTable, sessionTable, userTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NamesiloBoolean } from "@/lib/server/apis/namesilo/types";
+import { revalidatePath } from "next/cache";
 
 export async function login(
   prevState: unknown,
@@ -189,7 +190,44 @@ export async function buyDomain(
   return { status: "success", message: "Domínio registrado com sucesso" };
 }
 
+export async function createFeature(
+  prevState: unknown,
+  data: { description: string; reference?: string }) {
+
+  await db.insert(featureTable).values(data);
+
+  revalidatePath("/admin");
+
+  return { status: "success", message: "Feature criada com sucesso!" };
+}
+
+export async function createPlan(
+  prevState: unknown,
+  data: { name: string; description: string; price: number; features: string[] }
+) {
+
+  const [plan] = await db.insert(plansTable).values({
+    name: data.name,
+    description: data.description,
+    price: data.price,
+  }).returning();
+
+  if (plan && data.features.length) {
+    await db.insert(planFeatureTable).values(
+      data.features.map((featureId) => ({
+        planId: plan.id,
+        featureId,
+      }))
+    );
+  }
+
+  revalidatePath("/admin");
+
+  return { status: "success", message: "Plano criado com sucesso!" };
+}
+
 export interface ActionResponse {
   status: "idle" | "success" | "error";
   message?: string;
 }
+
