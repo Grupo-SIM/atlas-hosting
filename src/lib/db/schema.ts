@@ -49,15 +49,40 @@ export const plansTable = pgTable("plans", {
   featured: boolean("featured").default(false),
 });
 
-export const featureTable = pgTable("fature", {
+export const plansTableRelations = relations(plansTable, ({ many }) => ({
+  users: many(userTable),
+  planFeatures: many(planFeature)
+}));
+
+export const planFeature = pgTable("plan_feature", {
+  planId: uuid("plan_id").notNull().references(() => plansTable.id),
+  featureId: uuid("feature_id").notNull().references(() => featureTable.id),
+}, (t) => [
+  primaryKey({ columns: [t.planId, t.featureId] }),
+]);
+
+export const planFeatureRelations = relations(
+  planFeature,
+  ({ one }) => ({
+    feature: one(featureTable, {
+      fields: [planFeature.featureId],
+      references: [featureTable.id],
+    }),
+    plan: one(plansTable, {
+      fields: [planFeature.planId],
+      references: [plansTable.id],
+    }),
+  }),
+);
+
+export const featureTable = pgTable("feature", {
   id: uuid("id").primaryKey().defaultRandom(),
   description: text("description").notNull(),
   reference: text("reference")
 });
 
-export const plansTableRelations = relations(plansTable, ({ many }) => ({
-  users: many(userTable),
-  features: many(featureTable)
+export const featureRelations = relations(featureTable, ({ many }) => ({
+  featuresPlans: many(planFeature)
 }));
 
 export const invoiceTable = pgTable("invoices", {
@@ -79,24 +104,6 @@ export const invoiceRelations = relations(invoiceTable, ({ one }) => ({
 		fields: [invoiceTable.userId],
 		references: [userTable.id],
 	}),
-}));
-
-export const planFeatureTable = pgTable("plan_feature", {
-  planId: uuid("plan_id").notNull().references(() => plansTable.id),
-  featureId: uuid("feature_id").notNull().references(() => featureTable.id),
-}, (t) => [
-  primaryKey({ columns: [t.planId, t.featureId] }),
-]);
-
-export const planFeatureRelations = relations(planFeatureTable, ({ one }) => ({
-  feature: one(featureTable, {
-    fields: [planFeatureTable.featureId],
-    references: [featureTable.id],
-  }),
-  plan: one(plansTable, {
-    fields: [planFeatureTable.planId],
-    references: [plansTable.id],
-  }),
 }));
 
 export type User = InferSelectModel<typeof userTable>;

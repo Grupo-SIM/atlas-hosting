@@ -14,7 +14,7 @@ import { LoginFormInputs } from "@/components/auth/LoginForm";
 import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import nameSilo from "@/lib/server/apis/namesilo";
 import { db } from "@/lib/db";
-import { featureTable, invoiceTable, planFeatureTable, plansTable, sessionTable, userTable } from "@/lib/db/schema";
+import { featureTable, invoiceTable, planFeature, plansTable, sessionTable, userTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NamesiloBoolean } from "@/lib/server/apis/namesilo/types";
 import { revalidatePath } from "next/cache";
@@ -213,7 +213,7 @@ export async function createPlan(
   }).returning();
 
   if (plan && data.features.length) {
-    await db.insert(planFeatureTable).values(
+    await db.insert(planFeature).values(
       data.features.map((featureId) => ({
         planId: plan.id,
         featureId,
