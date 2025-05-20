@@ -17,23 +17,23 @@ export function DomainCart({ cartItems, removeFromCart }: DomainCartProps) {
     const tld = domain.split(".").pop();
     
     switch (tld) {
-    case "com":
-    case "net":
-      return 14.99;
-    case "org":
-      return 13.99;
-    case "io":
-      return 49.99;
-    case "dev":
-      return 19.99;
-    case "co":
-      return 29.99;
-    case "app":
-      return 17.99;
-    case "online":
-      return 9.99;
-    default:
-      return 14.99;
+      case "com":
+      case "net":
+        return 14.99;
+      case "org":
+        return 13.99;
+      case "io":
+        return 49.99;
+      case "dev":
+        return 19.99;
+      case "co":
+        return 29.99;
+      case "app":
+        return 17.99;
+      case "online":
+        return 9.99;
+      default:
+        return 14.99;
     }
   };
   

@@ -42,26 +42,26 @@ export async function InvoiceList({ searchParams }: InvoiceListProps) {
         email: userTable.email,
       },
     })
-    .from(invoiceTable)
-    .leftJoin(userTable, sql`${invoiceTable.userId} = ${userTable.id}`)
-    .where(
-      search
-        ? sql`${userTable.name} ILIKE ${`%${search}%`} OR ${userTable.email} ILIKE ${`%${search}%`}`
-        : undefined
-    )
-    .orderBy(desc(invoiceTable.createdAt))
-    .limit(ITEMS_PER_PAGE)
-    .offset((page - 1) * ITEMS_PER_PAGE),
+      .from(invoiceTable)
+      .leftJoin(userTable, sql`${invoiceTable.userId} = ${userTable.id}`)
+      .where(
+        search
+          ? sql`${userTable.name} ILIKE ${`%${search}%`} OR ${userTable.email} ILIKE ${`%${search}%`}`
+          : undefined
+      )
+      .orderBy(desc(invoiceTable.createdAt))
+      .limit(ITEMS_PER_PAGE)
+      .offset((page - 1) * ITEMS_PER_PAGE),
     db.select({
       count: sql<number>`count(*)`
     })
-    .from(invoiceTable)
-    .leftJoin(userTable, sql`${invoiceTable.userId} = ${userTable.id}`)
-    .where(
-      search
-        ? sql`${userTable.name} ILIKE ${`%${search}%`} OR ${userTable.email} ILIKE ${`%${search}%`}`
-        : undefined
-    )
+      .from(invoiceTable)
+      .leftJoin(userTable, sql`${invoiceTable.userId} = ${userTable.id}`)
+      .where(
+        search
+          ? sql`${userTable.name} ILIKE ${`%${search}%`} OR ${userTable.email} ILIKE ${`%${search}%`}`
+          : undefined
+      )
   ]);
 
   const totalPages = Math.ceil(totalInvoices[0].count / ITEMS_PER_PAGE);

@@ -65,10 +65,10 @@ const months = [
   "Outubro",
   "Novembro",
   "Dezembro"  
-]
+];
 
 function getDateFromMonth(month: number) {
-  return format(new Date(), "YYYY-MM")
+  return format(new Date(), "YYYY-MM");
 }
 
 export function UserChart({ userGrowth }: UserChartProps) {

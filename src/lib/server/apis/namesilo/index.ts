@@ -43,11 +43,11 @@ export class NamesiloApi {
 
     return Object.entries(newParams).map(([key, value]) => {
       if (Array.isArray(value)) {
-        value = value.map(v => v.toString()).join(",")
+        value = value.map(v => v.toString()).join(",");
       }
 
       return [key, String(value)];
-    }).filter(([, value]) => value !== undefined) as string[][]
+    }).filter(([, value]) => value !== undefined) as string[][];
   }
 
   private async get<T>(url: string, params?: AxiosQueryParams): Promise<NamesiloReply<T>> {
@@ -56,7 +56,11 @@ export class NamesiloApi {
       const queryString = new URLSearchParams(queryParams);
       const fullUrl = `${url}?${queryString}`;
 
-      const { data } = await this.api.get<NamesiloResponse<T>>(fullUrl);
+      const { data } = await this.api.get<NamesiloResponse<T>>(fullUrl, {
+        headers: {
+          "Accept": "application/json",
+        }
+      });
 
       if (data.reply?.code !== 300) {
         console.error("Error in API response:", data);
@@ -141,14 +145,14 @@ export class NamesiloApi {
     }
 
     if (pageSize) {
-      params.pageSize = pageSize
+      params.pageSize = pageSize;
     }
 
     if (portfolioId) {
-      params.portfolio = portfolioId
+      params.portfolio = portfolioId;
     }
 
-    const result = await this.get<NamesiloDomain>("/listDomains", params)
+    const result = await this.get<NamesiloDomain>("/listDomains", params);
 
     console.log(result);
 

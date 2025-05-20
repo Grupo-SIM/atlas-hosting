@@ -28,7 +28,7 @@ export default class SubscriptionApi {
 }
 
 interface SubscriptionCreateRequest {
-    domain: string;
-    customer_id: number;
+  domain: string;
+  customer_id: number;
 
 }

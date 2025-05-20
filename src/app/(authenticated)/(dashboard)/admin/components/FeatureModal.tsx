@@ -17,16 +17,16 @@ export function FeatureModal() {
     const form = e.currentTarget;
 
     startTransition(() => {
-        doCreate({
-            description: form.description.value,
-            reference: form.reference.value,
-        });
+      doCreate({
+        description: form.description.value,
+        reference: form.reference.value,
+      });
     });
   }
 
   useEffect(() => {
     if (state.status === "success") {
-        setOpen(false);
+      setOpen(false);
     }
   }, [state]);
 
@@ -44,11 +44,11 @@ export function FeatureModal() {
           <Input name="reference" placeholder="Referência" />
           <DialogFooter>
             <Button type="submit" className="w-30">
-                {!isPending ? (
-                    "Criar Recurso"
-                ): (
-                    <CgSpinner className="w-4 h-4 mx-auto animate-spin" />
-                )}
+              {!isPending ? (
+                "Criar Recurso"
+              ): (
+                <CgSpinner className="w-4 h-4 mx-auto animate-spin" />
+              )}
             </Button>
             <DialogClose asChild>
               <Button variant="outline" type="button">Cancelar</Button>

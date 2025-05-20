@@ -10,8 +10,9 @@ import { db } from "@/lib/db";
 import { getUser } from "@/lib/auth";
 import nameSilo from "@/lib/server/apis/namesilo";
 import { isBefore, startOfTomorrow, toDate } from "date-fns";
-import { ListDomainDomain, NamesiloDomain } from "@/lib/server/apis/namesilo/types";
+import { ListDomainDomain, ListDomainsParams, NamesiloDomain } from "@/lib/server/apis/namesilo/types";
 import { plansTable, Plan } from "@/lib/db/schema";
+import { cache } from "react";
 
 export default async function MyDomainsPage() {
   const { id, namesiloId } = (await getUser())!;
@@ -31,15 +32,15 @@ export default async function MyDomainsPage() {
   }[];
   
   if (namesiloId) {
-    let allDomains = await nameSilo.listDomains({ page: 1, pageSize: 100, portfolioId: namesiloId });
+    const allDomains = await listDomains({ page: 1, pageSize: 100, portfolioId: namesiloId });
 
     if (Array.isArray(allDomains.domains)) {
-      let total = +allDomains.pager!.total;
-      let pages = Math.ceil(total / 100);
-      let allPages = Array.from({ length: pages }, (_, i) => i + 1);
+      const total = +allDomains.pager!.total;
+      const pages = Math.ceil(total / 100);
+      const allPages = Array.from({ length: pages }, (_, i) => i + 1);
       allDomainsData = await Promise.all(
         allPages.map(async (page) => {
-          let result = await nameSilo.listDomains({ page, pageSize: 100 });
+          const result = await listDomains({ page, pageSize: 100 });
           return result.domains as ListDomainDomain[];
         })
       );
@@ -47,7 +48,7 @@ export default async function MyDomainsPage() {
       allDomainsData = [[allDomains.domains.domain]];
     }
 
-    console.log(allDomainsData)
+    console.log(allDomainsData);
 
     domains = allDomainsData.flat().map((domain) => {
       return {
@@ -169,8 +170,8 @@ export default async function MyDomainsPage() {
                             // Translate feature names
                             const featureLabel = feature === "DNS Management" ? "Gerenciamento de DNS" :
                               feature === "Email Forwarding" ? "Redirecionamento de E-mail" :
-                              feature === "Domain Privacy" ? "Privacidade de Domínio" :
-                              feature === "Auto-Renew" ? "Renovação Automática" : feature;
+                                feature === "Domain Privacy" ? "Privacidade de Domínio" :
+                                  feature === "Auto-Renew" ? "Renovação Automática" : feature;
                             return (
                               <Badge key={index} variant="secondary" className="text-xs">
                                 <Icon className="h-3 w-3 mr-1" />
@@ -223,3 +224,5 @@ export default async function MyDomainsPage() {
     </div>
   );
 }
+
+export const listDomains = cache((params: ListDomainsParams) => nameSilo.listDomains(params));

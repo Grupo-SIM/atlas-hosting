@@ -14,48 +14,48 @@ export default async function PlansSection() {
 
   return (
     <Card>
-        <CardHeader>
+      <CardHeader>
         <CardTitle>
-            <div className="flex items-center justify-between w-full">
+          <div className="flex items-center justify-between w-full">
             <h2 className="text-xl font-semibold mb-2">Planos</h2>
             <div className="flex gap-2 justify-end mb-4">
-                <PlanModal features={features} />
-                <FeatureModal />
+              <PlanModal features={features} />
+              <FeatureModal />
             </div>
-            </div>
+          </div>
         </CardTitle>
         <CardDescription>Visualize e edite os planos disponíveis para os usuários.</CardDescription>
-        </CardHeader>
-        <CardContent>
+      </CardHeader>
+      <CardContent>
         <div className="overflow-x-auto">
-            <Table>
+          <Table>
             <TableHeader>
-                <TableRow>
+              <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Preço</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
+              </TableRow>
             </TableHeader>
             <TableBody>
-                {plans.map((plan) => (
+              {plans.map((plan) => (
                 <TableRow key={plan.id}>
-                    <TableCell>{plan.name}</TableCell>
-                    <TableCell>{plan.description}</TableCell>
-                    <TableCell>R$ {plan.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">
+                  <TableCell>{plan.name}</TableCell>
+                  <TableCell>{plan.description}</TableCell>
+                  <TableCell>R$ {plan.price.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href={`/admin/plans/${plan.id}/edit`}>
+                      <Link href={`/admin/plans/${plan.id}/edit`}>
                         Editar
-                        </Link>
+                      </Link>
                     </Button>
-                    </TableCell>
+                  </TableCell>
                 </TableRow>
-                ))}
+              ))}
             </TableBody>
-            </Table>
+          </Table>
         </div>
-        </CardContent>
+      </CardContent>
     </Card>
   );
 } 

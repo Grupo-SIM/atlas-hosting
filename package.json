@@ -69,6 +69,7 @@
     "eslint-plugin-next": "^0.0.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "imask": "^7.6.1",
     "input-otp": "^1.2.4",
     "jsonwebtoken": "^9.0.2",
     "libphonenumber-js": "^1.12.8",

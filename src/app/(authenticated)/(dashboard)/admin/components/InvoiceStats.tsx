@@ -19,22 +19,22 @@ export async function InvoiceStats() {
       count: sql<number>`count(*)`,
       total: sql<number>`sum(amount)`
     })
-    .from(invoiceTable)
-    .groupBy(invoiceTable.status),
+      .from(invoiceTable)
+      .groupBy(invoiceTable.status),
     db.select({
       type: invoiceTable.type,
       count: sql<number>`count(*)`
     })
-    .from(invoiceTable)
-    .groupBy(invoiceTable.type),
+      .from(invoiceTable)
+      .groupBy(invoiceTable.type),
     db.select({
       avg: sql<number>`avg(amount)`
     })
-    .from(invoiceTable),
+      .from(invoiceTable),
     db.select({
       count: sql<number>`count(*)`
     })
-    .from(invoiceTable)
+      .from(invoiceTable)
   ]);
 
   const totalCount = totalInvoices[0].count;

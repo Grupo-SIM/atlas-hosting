@@ -19,7 +19,8 @@ import { eq } from "drizzle-orm";
 import { NamesiloBoolean } from "@/lib/server/apis/namesilo/types";
 import { revalidatePath } from "next/cache";
 import domApi from "@/lib/server/apis/dom";
-import { metadata } from './(authenticated)/checkout/[id]/page';
+import { metadata } from './(authenticated)/(dashboard)/checkout/[id]/page';
+import axios from "axios";
 
 export async function login(
   prevState: unknown,
@@ -250,7 +251,7 @@ export async function createPlanInvoice(prevState: unknown, planId: string): Pro
       return { status: "error", message: "Plano não encontrado." };
     }
 
-    const planPrice = plan.price; 
+    const planPrice = plan.price;
 
     const [newInvoice] = await db.insert(invoiceTable).values({
       userId: user.id,
@@ -315,7 +316,7 @@ export async function buyPlan(prevState: unknown, {
 
   if (!user.domId) {
     try {
-      await domApi.createClient({
+      const { id } = await domApi.createClient({
         name: user.name,
         email: user.email,
         document: values.document.replace(/\D/g, ""),
@@ -326,25 +327,68 @@ export async function buyPlan(prevState: unknown, {
           number: values.address.number,
           city: values.address.city,
           state: values.address.state,
-          zip_code: values.address.zipCode,
+          zip_code: values.address.zipCode.replace(/\D/g, ""),
           neighborhood: values.address.neighborhood,
         },
         codeExternal: user.id,
       });
+
+      await db.update(userTable).set({
+        domId: id,
+      }).where(eq(userTable.id, user.id));
     } catch (error) {
-      console.error("Erro ao criar cliente no DOM:", error);
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // A request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error("Erro ao criar cliente no DOM:", error.response.data);
+        } else if (error.request) {
+          // The request was made but no response was received
+          console.error("Erro ao criar cliente no DOM:", error.request);
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          console.error("Erro ao criar cliente no DOM:", error.message);
+        }
+      }
       return { status: "error", message: "Erro ao criar cliente no DOM." };
     }
   }
-  
-  await domApi.createRecurrentPayment({
-    description: `Atlas Hosting: ${plan.description}`,
-    externalReference: invoiceId,
-    frequency: "MONTH",
-    token: values.cardToken,
-    userId: user.id,
-    value: plan.price,
-  });
+
+  try {
+    const result = await domApi.createRecurrentPayment({
+      description: `Atlas Hosting ${plan.description}`,
+      externalReference: invoiceId,
+      frequency: "MONTH",
+      card: {
+        cvv: values.cardCvv,
+        exp_month: +values.cardExpiration.split("/")[0],
+        exp_year: +values.cardExpiration.split("/")[1],
+        number: values.cardNumber.replace(/\D/g, ""),
+        holder_name: values.fullName,
+        holder_document: values.document.replace(/\D/g, ""),
+      },
+      userId: user.id,
+      value: plan.price,
+    });
+    console.log("Nova assinatura criada", result);
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      if (err.response) {
+        // A request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("Erro ao criar pagamento recorrente no DOM:", err.response.data);
+      } else if (err.request) {
+        // The request was made but no response was received
+        console.error("Erro ao criar pagamento recorrente no DOM:", err.request);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error("Erro ao criar pagamento recorrente no DOM:", err.message);
+      }
+    }
+    return { status: "error", message: "Erro ao criar pagamento recorrente." };
+  }
+    
+  redirect("/payment/success");
 
   return { status: "success", message: "Plano adquirido com sucesso!" };
 }

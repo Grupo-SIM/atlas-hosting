@@ -64,32 +64,32 @@ export class CurrencyConversionApi {
 }
 
 type CurrencyApiResponse<T extends string, U extends string> = Record<
-	T,
-	Record<U, number>
+  T,
+  Record<U, number>
 >;
 
 export interface ConvertCurrencyParams<
-	T extends string = string,
-	U extends string = string,
+  T extends string = string,
+  U extends string = string,
 > {
-	from: U;
-	to: T;
-	amount: number;
+  from: U;
+  to: T;
+  amount: number;
 }
 
 export interface ConvertMultipleParams<
-	T extends string = string,
-	U extends string = string,
+  T extends string = string,
+  U extends string = string,
 > {
-	from: U;
-	to: T;
-	amounts: number[];
+  from: U;
+  to: T;
+  amounts: number[];
 }
 
 export type CurrencyConversionCacheEntry = {
   data: Record<string, number>;
   timestamp: number;
-}
+};
 
 export type CurrencyConversionCache = Record<string, CurrencyConversionCacheEntry>;
 

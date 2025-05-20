@@ -28,18 +28,18 @@ export function PlanModal({ features }: { features: { id: string, description: s
     const formData = new FormData(form);
 
     startTransition(() => {
-        doCreate({
-            name: formData.get("name")!.toString(),
-            description: formData.get("description")!.toString(),
-            price: +(formData.get("price")!),
-            features: selectedFeatures,
-        })
-    })
+      doCreate({
+        name: formData.get("name")!.toString(),
+        description: formData.get("description")!.toString(),
+        price: +(formData.get("price")!),
+        features: selectedFeatures,
+      });
+    });
   }
 
   useEffect(() => {
     if (state.status === "success") {
-        setOpen(false);
+      setOpen(false);
     }
   }, [state]);
 
@@ -59,50 +59,50 @@ export function PlanModal({ features }: { features: { id: string, description: s
           <div>
             <label className="block mb-1 font-medium">Recursos</label>
             {features.length === 0 ? (
-                <div className="py-6 flex justify-between items-center w-full">
-                    <div className="text-sm max-w-1/2 opacity-60">Nenhum recurso encontrado para adicionar ao plano</div>
-                    <FeatureModal />
-                </div>
+              <div className="py-6 flex justify-between items-center w-full">
+                <div className="text-sm max-w-1/2 opacity-60">Nenhum recurso encontrado para adicionar ao plano</div>
+                <FeatureModal />
+              </div>
             ): (
-                <>
+              <>
                 <Select onValueChange={handleFeatureSelect}>
-                <SelectTrigger>
+                  <SelectTrigger>
                     <SelectValue placeholder={selectedFeatures.length === 0 ? "Selecione os recursos" : `${selectedFeatures.length} selecionado(s)`} />
-                </SelectTrigger>
-                <SelectContent>
+                  </SelectTrigger>
+                  <SelectContent>
                     {features.map((feature) => (
-                    <SelectItem key={feature.id} value={feature.id}>
+                      <SelectItem key={feature.id} value={feature.id}>
                         <div className="flex items-center">
-                        <input
+                          <input
                             type="checkbox"
                             checked={selectedFeatures.includes(feature.id)}
                             readOnly
                             className="mr-2"
-                            />
-                        {feature.description}
+                          />
+                          {feature.description}
                         </div>
-                    </SelectItem>
+                      </SelectItem>
                     ))}
-                </SelectContent>
+                  </SelectContent>
                 </Select>
                 {selectedFeatures.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                        {selectedFeatures.map(fid => {
-                            const f = features.find(f => f.id === fid);
-                            return f ? <span key={fid} className="px-2 py-1 bg-muted rounded text-xs">{f.description}</span> : null;
-                        })}
-                    </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {selectedFeatures.map(fid => {
+                      const f = features.find(f => f.id === fid);
+                      return f ? <span key={fid} className="px-2 py-1 bg-muted rounded text-xs">{f.description}</span> : null;
+                    })}
+                  </div>
                 )}
-            </>
+              </>
             )}
           </div>
           <DialogFooter>
             <Button type="submit">
-                {!isPending ? (
-                    "Criar Plano"
-                ): (
-                    <CgSpinner className="w-4 h-4 mx-auto animate-spin" />
-                )}
+              {!isPending ? (
+                "Criar Plano"
+              ): (
+                <CgSpinner className="w-4 h-4 mx-auto animate-spin" />
+              )}
             </Button>
             <DialogClose asChild>
               <Button variant="outline" type="button">Cancelar</Button>

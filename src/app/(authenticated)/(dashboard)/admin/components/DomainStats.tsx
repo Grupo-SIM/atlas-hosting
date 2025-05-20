@@ -1,11 +1,12 @@
-import { db } from "@/lib/db";
-import { userTable, invoiceTable, User, Invoice } from "@/lib/db/schema";
-import { desc, sql } from "drizzle-orm";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import nameSilo from "@/lib/server/apis/namesilo";
-import { isBefore, startOfTomorrow, toDate } from "date-fns";
+import { db } from "@/lib/db";
+import { Invoice, invoiceTable, User } from "@/lib/db/schema";
+import { format, isBefore, startOfTomorrow, toDate } from "date-fns";
+import { desc, eq } from "drizzle-orm";
+import { listDomains } from "../../domains/page";
+import { ListDomainDomain } from "@/lib/server/apis/namesilo/types";
 
 export async function DomainStats() {
   // Get all invoices with user information, ordered by most recent
@@ -13,22 +14,22 @@ export async function DomainStats() {
     with: {
       user: true
     },
+    where: eq(invoiceTable.status, "paid"),
     orderBy: desc(invoiceTable.updatedAt),
     limit: 100
   });
 
   // Get unique users with Namesilo IDs
-  const invoicesWithNamesiloId = invoices.filter(({ user }) => user.namesiloId !== null && user.namesiloId !== undefined) as (Invoice & { user: User & { namesiloId: number } })[]
-
+  const invoicesWithNamesiloId = invoices.filter(({ user }) => user.namesiloId !== null && user.namesiloId !== undefined) as (Invoice & { user: User & { namesiloId: number } })[];
+  
   // Fetch domains for each user's portfolio
-  const domainPromises = invoicesWithNamesiloId.map(async ({ user }) => {
-    const domains = await nameSilo.listDomains({ portfolioId: user.namesiloId });
-    return { domains: Array.isArray(domains.domains) ? domains.domains: [domains.domains.domain!], user};
-  });
+  const allDomains: { domains: ListDomainDomain[], user: User & { namesiloId: number } }[] = [];
 
-  const allDomains = (await Promise.all(domainPromises)).flat();
-
-  console.log({allDomains})
+  for (const { user } of invoicesWithNamesiloId) {
+    const domains = await listDomains({ portfolioId: user.namesiloId, page: 1, pageSize: 100 });
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    allDomains.push({ domains: Array.isArray(domains.domains) ? domains.domains : [domains.domains.domain!], user });
+  }
 
   const domainStats = (await Promise.all(
     allDomains.map(async ({ domains, user }) => {
@@ -36,7 +37,7 @@ export async function DomainStats() {
         domain: domain.domain,
         status: isBefore(domain.expires || startOfTomorrow(), new Date()) ? "expired" : "active",
         expiryDate: domain.expires ? toDate(domain.expires).toLocaleDateString() : "Nunca",
-        autoRenew: !!domain.renew,
+        autoRenew: !domain.expires,
         user: user ? {
           name: user.name,
           email: user.email,
@@ -126,7 +127,7 @@ export async function DomainStats() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div>{domain.expiryDate}</div>
+                        <div>{format(domain.expiryDate, "dd/MM/yyyy")}</div>
                         {domain.autoRenew && (
                           <Badge variant="outline" className="mt-1">
                             Auto-Renovação

@@ -14,25 +14,25 @@ export async function UserStats() {
     db.select({
       count: sql<number>`count(*)`
     })
-    .from(userTable),
+      .from(userTable),
     db.select({
       count: sql<number>`count(*)`
     })
-    .from(userTable)
-    .where(isNotNull(userTable.planId)),
+      .from(userTable)
+      .where(isNotNull(userTable.planId)),
     db.select({
       count: sql<number>`count(*)`
     })
-    .from(userTable)
-    .where(sql`${userTable.createdAt} >= date_trunc('month', current_date)`),
+      .from(userTable)
+      .where(sql`${userTable.createdAt} >= date_trunc('month', current_date)`),
     db.select({
       month: sql<string>`to_char(${userTable.createdAt}, 'YYYY-MM')`,
       count: sql<number>`count(*)`
     })
-    .from(userTable)
-    .groupBy(sql`to_char(${userTable.createdAt}, 'YYYY-MM')`)
-    .orderBy(sql`to_char(${userTable.createdAt}, 'YYYY-MM')`)
-    .limit(6)
+      .from(userTable)
+      .groupBy(sql`to_char(${userTable.createdAt}, 'YYYY-MM')`)
+      .orderBy(sql`to_char(${userTable.createdAt}, 'YYYY-MM')`)
+      .limit(6)
   ]);
 
   return (

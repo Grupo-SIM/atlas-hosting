@@ -2,26 +2,35 @@ export type PixKeyType = "EMAIL" | "CPF" | "CNPJ" | "CHAVE_ALEATORIA";
 
 export interface CreateRecurrentPaymentParams {
   userId: string;
-  token: string;
   frequency: FrequencyType;
   value: number;
   description: string;
   externalReference: string;
   planId?: string;
   newClient?: CreateClientParams;
+  card: {
+    number: string;
+    holder_name: string;
+    holder_document: string;
+    exp_month: number;
+    exp_year: number;
+    cvv: string;
+  } | {
+    token: string;
+  }
 }
 
 export interface CreateSubscriptionParams {
-  customerId: string;
-  planId?: string;
-  autoRecurring?: AutoRecurring;
-  paymentMethod: "credit_card";
+  customer_id: string;
+  plan_id?: string;
+  auto_recurring?: AutoRecurring;
+  payment_method: "credit_card";
   card?: Card;
-  cashbackActive?: boolean;
-  postbackUrl?: string;
+  cashback_active?: boolean;
+  postbackurl?: string;
   metadata?: string;
-  startInvoiceDate: Date;
-  externalReference: string;
+  start_invoice_date?: string;
+  external_reference: string;
 }
 
 export interface Card {
@@ -35,11 +44,11 @@ export interface AutoRecurring {
   description: string;
   value: number;
   frequency?: number;
-  frequencyType?: FrequencyType;
+  frequency_type?: FrequencyType;
   repetitions?: number;
-  billingType?: "prepaid" | "postpaid" | "exact_day";
-  billingDay?: number;
-  retryDays?: number;
+  billing_type?: "prepaid" | "postpaid" | "exact_day";
+  billing_day?: number;
+  retry_days?: number;
 }
 
 export interface CreateClientParams {
@@ -148,10 +157,11 @@ export interface Plan {
 }
 
 export interface PayloadWebhook {
-  type: string;
+  event: string;
   data: {
     customer: Customer;
     subscription: Subscription;
     plan: Plan;
+    external_reference?: string;
   };
 }

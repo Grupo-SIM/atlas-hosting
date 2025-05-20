@@ -12,9 +12,9 @@ export default function NewPlanPage() {
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
     const price = parseFloat(formData.get("price") as string);
-    const pleskPlanId = parseInt(formData.get("pleskPlanId") as string, 10);
 
-    await db.insert(plansTable).values({ name, description, price, pleskPlanId });
+    await db.insert(plansTable).values({ name, description, price });
+
     revalidatePath("/admin/plans");
     redirect("/admin/plans");
   }

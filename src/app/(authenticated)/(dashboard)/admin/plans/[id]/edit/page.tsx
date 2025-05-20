@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
 
 interface EditPlanPageProps {
   params: { id: string };
@@ -12,7 +13,7 @@ interface EditPlanPageProps {
 
 export default async function EditPlanPage({ params }: EditPlanPageProps) {
   const plan = await db.query.plansTable.findFirst({
-    where: (p, { eq }) => eq(p.id, params.id),
+    where: eq(plansTable.id, params.id)
   });
 
   if (!plan) return notFound();
@@ -22,11 +23,10 @@ export default async function EditPlanPage({ params }: EditPlanPageProps) {
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
     const price = parseFloat(formData.get("price") as string);
-    const pleskPlanId = parseInt(formData.get("pleskPlanId") as string, 10);
 
     await db.update(plansTable)
-      .set({ name, description, price, pleskPlanId })
-      .where((p, { eq }) => eq(p.id, params.id));
+      .set({ name, description, price })
+      .where(eq(plansTable.id, params.id));
 
     revalidatePath("/admin/plans");
     redirect("/admin/plans");
@@ -52,10 +52,6 @@ export default async function EditPlanPage({ params }: EditPlanPageProps) {
             <div>
               <label className="block mb-1 font-medium">Preço (R$)</label>
               <Input name="price" type="number" step="0.01" defaultValue={plan.price} required />
-            </div>
-            <div>
-              <label className="block mb-1 font-medium">ID Plesk</label>
-              <Input name="pleskPlanId" type="number" defaultValue={plan.pleskPlanId} required />
             </div>
             <Button type="submit" className="w-full">Salvar Alterações</Button>
           </form>

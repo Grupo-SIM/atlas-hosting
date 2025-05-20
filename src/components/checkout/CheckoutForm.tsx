@@ -14,7 +14,9 @@ import { startTransition, useActionState, useCallback, useState } from "react";
 import { Controller, useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import { IMaskInput } from "react-imask";
+import IMask from "imask";
 import * as yup from "yup";
+import { toast } from "sonner";
 
 // Standard input class from shadcn/ui for consistency
 const inputClasses = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
@@ -42,9 +44,12 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
     event.preventDefault();
 
     const public_key = domPk ?? "";
-    const { fullName, document, phoneNumber, cardNumber, cardCvv, cardExpiration, address } = getValues();
+    const values = getValues();
+    const { fullName, document, phoneNumber, cardCvv, cardExpiration, address } = values;
     
     const [month, year] = cardExpiration.split("/");
+
+    const cardNumber = values.cardNumber.replace(/\D/g, "");
 
     const dataCard = {
       name: fullName,
@@ -57,7 +62,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
     
     const installments = 1;
 
-    getTokenCard(public_key, dataCard, installments, function ({ token }) {
+    try {
       startTransition(() => {
         doBuyPlan({
           fullName,
@@ -66,12 +71,19 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
           cardNumber,
           cardCvv,
           cardExpiration,
-          address,
+          address: {
+            ...address,
+            zipCode: address.zipCode.replace(/\D/g, ""),
+          },
           invoiceId,
-          cardToken: token
+          cardToken: ""
         });
       });
-    });
+      // getTokenCard(public_key, dataCard, installments, function ({ token }) {
+      // });
+    } catch {
+      toast("Dados de cartão inválido");
+    }
   }, [doBuyPlan, getValues, invoiceId]);
 
   return (
@@ -223,14 +235,13 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
               render={({ field }) => (
                 <IMaskInput
                   {...field}
-                  mask={[
-                    { mask: "00", lazy: true, maxLength: 2 }
-                  ]}
-                  unmask={true} // Get unmasked value
+                  unmask={true}
+                  mask="aa"
+                  placeholderChar=" "
                   placeholder="Código do estado"
                   autoComplete="address-level1"
                   className={inputClasses}
-                  onAccept={(value) => field.onChange(value)}
+                  onAccept={(value) => field.onChange(value.toUpperCase())}
                 />
               )}
             />
@@ -379,7 +390,7 @@ const schema = yup
       number: yup.string().required("Número é obrigatório"),
       neighborhood: yup.string().required("Bairro é obrigatório"),
       city: yup.string().required("Cidade é obrigatória"),
-      state: yup.string().length(2).required("Estado é obrigatório"),
+      state: yup.string().length(2, "Digite o código de 2 dígitos do estado").required("Estado é obrigatório"),
       zipCode: yup
         .string()
         .required("CEP é obrigatório")

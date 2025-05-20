@@ -25,25 +25,25 @@ export const metadata: Metadata = {
 type InvoiceStatus = Invoice["status"];
 
 type Common<A, B> = {
-    [P in keyof A & keyof B]: A[P] | B[P];
-}
+  [P in keyof A & keyof B]: A[P] | B[P];
+};
 
 const getStatusVariant = (
   status?: InvoiceStatus | null
 ): "default" | "destructive" | "outline" | "secondary" | "action" => {
   if (!status) return "secondary";
   switch (status.toLowerCase()) {
-  case "paid":
-  case "paga":
-    return "action";
-  case "pending":
-  case "pendente":
-    return "secondary";
-  case "overdue":
-  case "vencida":
-    return "destructive";
-  default:
-    return "outline";
+    case "paid":
+    case "paga":
+      return "action";
+    case "pending":
+    case "pendente":
+      return "secondary";
+    case "overdue":
+    case "vencida":
+      return "destructive";
+    default:
+      return "outline";
   }
 };
 
@@ -70,7 +70,7 @@ export default async function BillingPage() {
   const userInvoices = userId
     ? await db.query.invoiceTable.findMany({
       where: eq(invoiceTable.userId, userId),
-      orderBy: [desc(invoiceTable.createdAt)],
+      orderBy: [desc(invoiceTable.updatedAt)],
     })
     : [];
 
@@ -86,7 +86,7 @@ export default async function BillingPage() {
             <CardContent className="pt-6 flex flex-col items-center justify-center text-center min-h-[200px]">
               <FileText size={48} className="text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">
-              Nenhuma fatura encontrada
+                Nenhuma fatura encontrada
               </h3>
               <p className="text-muted-foreground">
                 {userId
@@ -102,13 +102,14 @@ export default async function BillingPage() {
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 !py-4 !px-6 bg-muted/50 sm:items-center">
                   <div>
                     <CardTitle className="text-2xl font-semibold">
-                    Fatura #{invoice.id.substring(0, 8).toUpperCase()}
+                      Fatura #{invoice.id.substring(0, 8).toUpperCase()}
                     </CardTitle>
                   </div>
                   <Badge variant={getStatusVariant(invoice.status)} className="text-sm whitespace-nowrap mt-1 sm:mt-0">
-                    {invoice.status === "pending" && "À pagar"}
+                    {invoice.status === "pending" && "A pagar"}
                     {invoice.status === "paid" && "Pago"}
                     {invoice.status === "failed" && "Pagamento recusado"}
+                    {invoice.status === "processing" && "Em processamento"}
                   </Badge>
                 </CardHeader>
                 <CardContent className="pt-4">
