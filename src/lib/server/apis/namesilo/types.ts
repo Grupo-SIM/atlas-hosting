@@ -1,3 +1,5 @@
+import { Name } from "drizzle-orm";
+
 export interface NamesiloResponse<T> {
   request: NamesiloRequest;
   reply: NamesiloReply<T>;
@@ -43,7 +45,7 @@ export interface RegisterDomainParams {
   domain: string;
   years: number;
   payment_id?: number;
-  contact_id?: number;
+  portfolio?: number;
   private?: NamesiloBoolean;
   coupon?: string;
 }
@@ -150,4 +152,26 @@ export interface ListDomainsParams {
   page?: number;
   pageSize?: number;
   portfolioId?: number;
+}
+
+export interface ListDnsRecordsResponse {
+  resource_record: ResourceRecord[];
+}
+
+export interface ResourceRecord {
+  record_id: string;
+  type:      string;
+  host:      string;
+  value:     string;
+  ttl:       string;
+  distance:  string;
+}
+
+export interface ListNameServersResponse {
+  hosts: NameServer[];
+}
+
+export interface NameServer {
+  host: string;
+  ip: string;
 }

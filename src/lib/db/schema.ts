@@ -20,6 +20,7 @@ export const userTable = pgTable("users", {
   }),
   isAdmin: boolean("is_admin"),
   domId: text("dom_id"),
+  pleskId: text("plesk_id"),
   planId: uuid("plan_id").references(() => plansTable.id),
   createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),

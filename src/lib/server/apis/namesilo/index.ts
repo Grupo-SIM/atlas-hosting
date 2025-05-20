@@ -1,7 +1,9 @@
 import axios, { ParamsSerializerOptions, type AxiosInstance } from "axios";
 import {
   CreateContactResponse,
+  ListDnsRecordsResponse,
   ListDomainsParams,
+  ListNameServersResponse,
   NamesiloDomain,
   NamesiloDomainInfo,
   NamesiloReply,
@@ -74,7 +76,7 @@ export class NamesiloApi {
       }
       console.error("Error in API request:", error);
 
-      return null as any;
+      return null as unknown as NamesiloReply<T>;
     }
   }
 
@@ -93,6 +95,7 @@ export class NamesiloApi {
     return this.get("/registerDomain", {
       domain: params.domain,
       years: params.years,
+      portfolio: params.portfolio
     });
   }
 
@@ -154,9 +157,49 @@ export class NamesiloApi {
 
     const result = await this.get<NamesiloDomain>("/listDomains", params);
 
-    console.log(result);
-
     return result;
+  }
+
+  public async addDnsRecord(params: { domain: string; type: string; host: string; value: string }) {
+    return await this.get("/dnsAddRecord", {
+      domain: params.domain,
+      rrtype: params.type,
+      rrhost: params.host,
+      rrvalue: params.value,
+    });
+  }
+
+  public async changeNameServers(domain: string, nameServers: string[]) {
+    return await this.get("/setNameServers", Object.fromEntries([
+      ["domain", domain],
+      ...nameServers.map((ns, index) => [`ns${index + 1}`, ns]),
+    ]));
+  }
+
+  public async dnsListRecords(domain: string) {
+    return await this.get<ListDnsRecordsResponse>("/dnsListRecords", {
+      domain,
+    });
+  }
+
+  public async deleteDnsRecord(domain: string, recordId: string) {
+    return await this.get("/dnsDeleteRecord", {
+      domain,
+      rrid: recordId,
+    });
+  }
+  
+  public async listRegisteredNameServers(domain: string) {
+    return await this.get<ListNameServersResponse>("/listRegisteredNameServers", {
+      domain,
+    });
+  }
+
+  public async deleteRegisteredNameServer(domain: string, host: string) {
+    return await this.get("/deleteRegisteredNameServer", {
+      domain,
+      current_host: host,
+    });
   }
 }
 

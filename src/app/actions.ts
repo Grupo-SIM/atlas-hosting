@@ -13,6 +13,11 @@ import { SignupFormInputs } from "@/components/auth/SignupForm";
 import { LoginFormInputs } from "@/components/auth/LoginForm";
 import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import nameSilo from "@/lib/server/apis/namesilo";
+import { type ListDomainDomain } from "@/lib/server/apis/namesilo/types";
+import pleskApi from "@/lib/server/apis/plesk";
+import { ClientRequestTypeEnum, ServerIpTypeEnum, type CliCallResponse } from "plesk-api";
+import { type User } from "@/lib/db/schema";
+
 import { db } from "@/lib/db";
 import { featureTable, invoiceTable, planFeature, plansTable, sessionTable, userTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -354,6 +359,31 @@ export async function buyPlan(prevState: unknown, {
     }
   }
 
+  if (!user.pleskId) {
+    const result = await pleskApi.createClient({
+      name: user.name,
+      email: user.email,
+      login: user.email,
+      password: user.password,
+      type: ClientRequestTypeEnum.Customer,
+      externalId: user.id,
+      ownerLogin: "lucas.garrafielo",
+      status: 0
+    });
+
+    if (result && result.id) {
+      await db.update(userTable).set({
+        pleskId: result.id,
+      }).where(eq(userTable.id, user.id));
+    } else {
+      console.error("Failed to create Plesk client:", result);
+      return {
+        message: "Erro: ID do usuário Plesk não configurado.",
+        error: "Configuração de usuário (Plesk ID) ausente."
+      };
+    }
+  }
+
   try {
     const result = await domApi.createRecurrentPayment({
       description: `Atlas Hosting ${plan.description}`,
@@ -393,9 +423,279 @@ export async function buyPlan(prevState: unknown, {
   return { status: "success", message: "Plano adquirido com sucesso!" };
 }
 
+// Helper to parse Plesk CLI JSON output
+interface PleskCliOutput {
+  stdout?: string; // Raw stdout
+  stderr?: string;
+  exit_code?: number; // WP Toolkit might put exit_code inside the JSON stdout
+  message?: string; // General message from WP Toolkit
+  error?: string | boolean; // Error message or flag
+  status?: string; // Status like 'success', 'installed', 'error'
+  admin_url?: string; // WordPress Admin URL
+  site_url?: string; // WordPress Site URL
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any; // For other potential fields
+}
+
+function parsePleskCliResponse(response: CliCallResponse): PleskCliOutput {
+  let parsedOutput: PleskCliOutput = {
+    stderr: response.stderr || "",
+    exit_code: response.code === 200 && !response.stderr ? 0 : -1, 
+  };
+
+  try {
+    if (response.stdout) {
+      const jsonOutput = JSON.parse(response.stdout);
+      parsedOutput = { ...parsedOutput, ...jsonOutput };
+      parsedOutput.stdout = response.stdout;
+
+      if (jsonOutput.result && typeof jsonOutput.result === 'object') {
+        parsedOutput.admin_url = jsonOutput.result.admin_url || parsedOutput.admin_url;
+        parsedOutput.site_url = jsonOutput.result.site_url || parsedOutput.site_url;
+      }
+      parsedOutput.admin_url = jsonOutput.admin_url || parsedOutput.admin_url;
+      parsedOutput.site_url = jsonOutput.site_url || parsedOutput.site_url;
+
+      if (typeof jsonOutput.exit_code === 'number') {
+        parsedOutput.exit_code = jsonOutput.exit_code;
+      }
+
+    } else {
+      parsedOutput.stdout = "";
+    }
+  } catch (e) {
+    console.warn("Failed to parse Plesk CLI stdout as JSON:", response.stdout);
+    parsedOutput.stdout = response.stdout || "";
+    if (!parsedOutput.message && !parsedOutput.error) {
+      parsedOutput.error = `Invalid JSON response from server: ${response.stdout}`;
+    }
+  }
+  return parsedOutput;
+}
+
+
+export async function createWordPressInstance(
+  prevState: unknown,
+  formData: FormData,
+): Promise<{ message: string; error?: string; siteUrl?: string; adminUrl?: string }> {
+  const user = await getUser();
+  if (!user) {
+    return { message: "Erro: Usuário não autenticado.", error: "Faça login para continuar." };
+  }
+  
+  const { id: userId, namesiloId } = user;
+  let { pleskId } = user;
+
+  const domainName = formData.get("domainName") as string;
+
+  if (!domainName) {
+    return { message: "Erro: Nome de domínio não fornecido.", error: "Selecione um domínio." };
+  }
+
+  if (!pleskId) {
+    const result = await pleskApi.createClient({
+      name: user.name,
+      email: user.email,
+      login: user.email,
+      password: user.password,
+      type: ClientRequestTypeEnum.Customer,
+      externalId: userId,
+      ownerLogin: "atlashosting",
+      status: 0
+    });
+
+    if (result && result.id) {
+      await db.update(userTable).set({
+        pleskId: result.id,
+      }).where(eq(userTable.id, userId));
+
+      pleskId = result.id;
+    } else {
+      console.error("Failed to create Plesk client:", result);
+      return {
+        message: "Erro: ID do usuário Plesk não configurado.",
+        error: "Configuração de usuário (Plesk ID) ausente."
+      };
+    }
+  }
+
+  if (!namesiloId) {
+    return { message: "Erro: Usuário Namesilo não configurado.", error: "Configuração de usuário (Namesilo ID) ausente." };
+  }
+
+  try {
+    const domainExists = false;
+    // try {
+    await pleskApi.assignDomain(domainName, 1);
+
+    // const existingDomain = await pleskApi.getDomain(domainName); 
+    //   if (existingDomain) {
+    //     domainExists = true;
+    //   }
+    // } catch (e: unknown) {
+    //   await pleskApi.assignDomain(domainName, 1);
+    // }
+    
+    const wpInstallRawResult = await pleskApi.wordpress.installWp(domainName);
+    const wpInstallResult = parsePleskCliResponse(wpInstallRawResult);
+
+    try {
+      await pleskApi.subscriptions.createSubscription(domainName, user);
+    } catch (assignError: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const typedAssignError = assignError as any;
+      console.error("Error assigning Plesk domain:", typedAssignError.response?.data || typedAssignError.message);
+      return { message: "Erro ao criar ou associar o domínio no servidor de hospedagem.", error: String(typedAssignError.response?.data?.message || typedAssignError.message || "Falha ao configurar domínio.") };
+    }
+
+    const stdOut = JSON.parse(wpInstallResult.stdout || "{}");
+
+    if (!stdOut["instance-id"]) {
+      console.error("WordPress installation failed (WP Toolkit exit code):", wpInstallResult);
+      const errorMessage = String(wpInstallResult.stderr || wpInstallResult.message || wpInstallResult.error || "Falha na instalação (código de saída).");
+      return { message: "Erro ao instalar o WordPress.", error: errorMessage };
+    }
+    if (wpInstallResult.error && typeof wpInstallResult.error === 'boolean') {
+      console.error("WordPress installation failed (error flag in response):", wpInstallResult);
+      return { message: "Erro ao instalar o WordPress.", error: "A instalação reportou um erro." };
+    }
+    if (wpInstallResult.error && typeof wpInstallResult.error === 'string' && wpInstallResult.error.toLowerCase() !== "false") {
+      console.error("WordPress installation failed (error message in response):", wpInstallResult);
+      return { message: "Erro ao instalar o WordPress.", error: String(wpInstallResult.error) };
+    }
+    if (wpInstallResult.status && !['success', 'installed', 'ok'].includes(wpInstallResult.status.toLowerCase())) {
+      console.error("WordPress installation failed (status in response):", wpInstallResult);
+      return { message: "Erro ao instalar o WordPress.", error: `Status da instalação: ${wpInstallResult.status}. ${wpInstallResult.message || ''}`.trim() };
+    }
+
+    const siteUrl = wpInstallResult.site_url;
+    const adminUrl = wpInstallResult.admin_url;
+
+    console.log({ siteUrl, adminUrl });
+
+    // if (!siteUrl || !adminUrl) {
+    //   console.error("WordPress installation succeeded but URLs not found in response:", wpInstallResult);
+    //   return { message: "WordPress instalado, mas não foi possível obter os URLs.", error: "Não foi possível recuperar os URLs do site/admin. Verifique o painel Plesk." };
+    // }
+
+    const primaryIp = process.env.SERVER_IP!;
+
+    const dnsRecords = await nameSilo.dnsListRecords(domainName);
+    const nsRecords = await nameSilo.listRegisteredNameServers(domainName);
+
+    if (Array.isArray(dnsRecords.resource_record)) {
+      for (const record of dnsRecords.resource_record) {
+        await nameSilo.deleteDnsRecord(domainName, record.record_id);
+      }
+    } else {
+      console.log(dnsRecords.resource_record);
+    }
+
+    if (Array.isArray(nsRecords.hosts)) {
+      for (const nsRecord of nsRecords.hosts) {
+        await nameSilo.deleteRegisteredNameServer(domainName, nsRecord.host);
+      }
+    } else {
+      console.log(nsRecords.hosts);
+    }
+
+    try {
+      await nameSilo.changeNameServers(domainName, [
+        "ns1.".concat(domainName),
+        "ns2.".concat(domainName),
+      ]).catch();
+
+      await nameSilo.addDnsRecord({
+        domain: domainName,
+        host: "", 
+        type: "A",
+        value: primaryIp,
+      }).catch();
+
+      await nameSilo.addDnsRecord({
+        domain: domainName,
+        host: "www", 
+        type: "A", 
+        value: primaryIp,
+      }).catch();
+    } catch {
+      // 
+    }
+
+    return { 
+      message: "WordPress instalado com sucesso!", 
+    };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    console.error("Failed to create WordPress instance:", error);
+    if (error.response && error.response.data) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pleskError = error.response.data as any;
+      return { message: "Erro durante a criação da instância WordPress.", error: String(pleskError.message || pleskError.errtext || JSON.stringify(pleskError)) };
+    }
+    return { message: "Erro ao criar instância WordPress.", error: String(error.message || "Ocorreu um erro desconhecido.") };
+  }
+}
+
+// Ensure imports for ListDomainDomain if not already present at the top
+// import { type ListDomainDomain } from "@/lib/server/apis/namesilo/types";
+
+export async function getUserDomains(): Promise<{ domains: { name: string }[]; error?: string }> {
+  try {
+    // Assuming nameSilo.listDomains returns Promise<NamesiloReply<NamesiloDomain>>
+    // where NamesiloReply<T> = { code: number; detail: string; } & T (NamesiloDomain in this case)
+    const response = await nameSilo.listDomains({});
+
+    // Check response code directly
+    if (response.code !== 300) { // 300 is typical success for NameSilo listDomains
+      return { domains: [], error: `Error fetching domains: ${response.detail} (Code: ${response.code})` };
+    }
+
+    // Access domains directly from response (which is effectively NamesiloReply<NamesiloDomain>)
+    // response.domains is of type (ListDomainDomain[] | { domain: ListDomainDomain } | undefined)
+    const namesiloDomainData = response.domains;
+
+    if (!namesiloDomainData) {
+      // No domains found or the 'domains' part of the response is empty/undefined.
+      return { domains: [] };
+    }
+
+    let domainList: ListDomainDomain[] = [];
+
+    if (Array.isArray(namesiloDomainData)) {
+      // Handles the case where 'domains' is an array of ListDomainDomain objects.
+      domainList = namesiloDomainData;
+    } else if (typeof namesiloDomainData === 'object' && namesiloDomainData !== null && 'domain' in namesiloDomainData) {
+      // Handles the case where 'domains' is an object like { domain: ListDomainDomain }.
+      // We need to ensure namesiloDomainData.domain is not undefined or null.
+      const singleDomainContainer = namesiloDomainData as { domain?: ListDomainDomain };
+      if (singleDomainContainer.domain) {
+        domainList = [singleDomainContainer.domain];
+      }
+    }
+    // If namesiloDomainData is neither an array nor the expected single domain object structure,
+    // domainList will remain empty, resulting in an empty domain array being returned, which is safe.
+
+    const domains = domainList.map(d => ({ name: d.domain }));
+    return { domains };
+
+  } catch (e: unknown) {
+    console.error("Failed to get user domains:", e);
+    let message = "An unexpected error occurred while fetching domains.";
+    if (e instanceof Error) {
+      message = e.message;
+    }
+    return { domains: [], error: message };
+  }
+}
+
 export interface ActionResponse {
-  status: "idle" | "success" | "error";
-  message?: string;
+  message: string;
+  error?: string;
+  fieldErrors?: Record<string, string>;
+  // Consider removing 'status' if not used, or define it here
+  status?: "success" | "error" | "idle"; 
 }
 
 export interface PayInvoice {

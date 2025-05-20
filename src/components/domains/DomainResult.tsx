@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { invoiceTable } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import nameSilo from "@/lib/server/apis/namesilo";
+import { NamesiloBoolean } from "@/lib/server/apis/namesilo/types";
 import { toBrl } from "@/lib/utils";
 import { endOfTomorrow } from "date-fns";
 import { Check, X } from "lucide-react";
@@ -134,6 +135,7 @@ async function DomainAvailable({ domainData }: { domainData: Promise<DomainData>
   async function buyDomain(data: FormData) {
     "use server";
 
+    const user = await getUser();
     const domain = data.get("domain") as string;
 
     if (!domain) {
@@ -146,30 +148,39 @@ async function DomainAvailable({ domainData }: { domainData: Promise<DomainData>
       throw new Error("Error checking domain availability");
     }
 
-    const price = await currencyConversion.convert({
-      from: "usd",
-      to: "brl",
-      amount: result.available.domain.price,
+    await nameSilo.registerDomain({
+      domain,
+      years: 1,
+      portfolio: user!.namesiloId!,
+      private: NamesiloBoolean.True,
     });
 
-    const user = await getUser();
+    redirect("/domains");
 
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
+    // return;
 
-    const invoices = await db.insert(invoiceTable).values({
-      type: "domain",
-      amount: price,
-      reference: domain,
-      dueDate: endOfTomorrow(),
-      status: "pending",
-      userId: user.id,
-    }).returning({ id: invoiceTable.id });
+    // const price = await currencyConversion.convert({
+    //   from: "usd",
+    //   to: "brl",
+    //   amount: result.available.domain.price,
+    // });
 
-    const invoice = invoices[0];
+    // if (!user) {
+    //   throw new Error("User not authenticated");
+    // }
 
-    redirect("/checkout/" + invoice.id);
+    // const invoices = await db.insert(invoiceTable).values({
+    //   type: "domain",
+    //   amount: price,
+    //   reference: domain,
+    //   dueDate: endOfTomorrow(),
+    //   status: "pending",
+    //   userId: user.id,
+    // }).returning({ id: invoiceTable.id });
+
+    // const invoice = invoices[0];
+
+    // redirect("/checkout/" + invoice.id);
   }
 
   return data?.available && (

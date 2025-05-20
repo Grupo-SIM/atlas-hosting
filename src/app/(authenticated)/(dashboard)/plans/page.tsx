@@ -31,7 +31,7 @@ export default async function PlansPage() {
 
       <div className="grid grid-flow-col gap-6 min-h-150">
         {plans.map((plan) => (
-          <PlanCard key={plan.id} plan={plan} user={user} /> // Use the client component
+          <PlanCard key={plan.id} plan={plan} user={user} />
         ))}
       </div>
     </div>

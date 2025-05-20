@@ -34,6 +34,8 @@ export default async function MyDomainsPage() {
   if (namesiloId) {
     const allDomains = await listDomains({ page: 1, pageSize: 100, portfolioId: namesiloId });
 
+    console.log(allDomains);
+
     if (Array.isArray(allDomains.domains)) {
       const total = +allDomains.pager!.total;
       const pages = Math.ceil(total / 100);

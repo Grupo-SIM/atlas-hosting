@@ -51,16 +51,12 @@ async function onInvoiceCreated(data: PayloadWebhook["data"]): Promise<void> {
   if (!updatedInvoice) {
     return;
   }
-
-  await db.update(userTable).set({
-    planId: updatedInvoice[0].reference,
-  }).where(eq(userTable.id, updatedInvoice[0].userId)).returning();
 }
 
 async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
   console.log("[Webhook Action] onInvoicePaid called with data:", data);
 
-  const invoiceId = data.subscription.external_reference;
+  const invoiceId = data.external_reference;
 
   if (!invoiceId) {
     console.error("Invoice ID not found in the payload.");
@@ -127,7 +123,9 @@ export async function POST(request: Request) {
         details = payload.data;
         break;
       case "CHARGE-APPROVED":
-      // As per service, this event is logged but might not have specific user-facing actions
+        await onInvoicePaid(payload.data);
+        actionTaken = "Processamento de pagamento de fatura iniciado.";
+        details = payload.data;
         actionTaken = "Evento CHARGE-APPROVED recebido e processado.";
         console.log("[Webhook] Evento CHARGE-APPROVED processado.");
         details = payload.data;

@@ -26,7 +26,7 @@ export default class PleskWpToolkitApi {
 
   public async installWp(domainName: string) {
     return await this.callWp(
-      `--install -format json -domain-name ${domainName}`,
+      `--install -format json -domain-name ${domainName} -path /`,
     );
   }
 }
