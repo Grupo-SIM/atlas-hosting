@@ -17,29 +17,24 @@ import { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
-import { DnsRecord } from '../models';
-import { DnsRecordRequest } from '../models';
 import { ErrorResponse } from '../models';
+import { Extension } from '../models';
+import { ExtensionInstallRequest } from '../models';
 import { StatusResponse } from '../models';
 /**
- * DNSApi - axios parameter creator
+ * ExtensionsApi - axios parameter creator
  * @export
  */
-export const DNSApiAxiosParamCreator = function (configuration?: Configuration) {
+export const ExtensionsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Get domain or domain alias DNS records
-         * @param {string} domain Filter by domain or domain alias name
+         * @summary List of installed Extensions
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        dnsRecordsGet: async (domain: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'domain' is not null or undefined
-            if (domain === null || domain === undefined) {
-                throw new RequiredError('domain','Required parameter domain was null or undefined when calling dnsRecordsGet.');
-            }
-            const localVarPath = `/dns/records`;
+        extensionsGet: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/extensions`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
             let baseOptions;
@@ -60,12 +55,8 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
-            }
-
-            if (domain !== undefined) {
-                localVarQueryParameter['domain'] = domain;
             }
 
             const query = new URLSearchParams(localVarUrlObj.search);
@@ -86,17 +77,17 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          * 
-         * @summary Delete DNS record
-         * @param {number} id DNS record ID
+         * @summary Delete an Extension
+         * @param {string} id Extension identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        dnsRecordsIdDelete: async (id: number, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        extensionsIdDelete: async (id: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling dnsRecordsIdDelete.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling extensionsIdDelete.');
             }
-            const localVarPath = `/dns/records/{id}`
+            const localVarPath = `/extensions/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
@@ -118,7 +109,7 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -140,76 +131,17 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          * 
-         * @summary Get DNS record
-         * @param {number} id DNS record ID
+         * @summary Disable extension
+         * @param {string} id Extension identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        dnsRecordsIdGet: async (id: number, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        extensionsIdDisablePut: async (id: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling dnsRecordsIdGet.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling extensionsIdDisablePut.');
             }
-            const localVarPath = `/dns/records/{id}`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication APIKeyHeader required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? await configuration.apiKey("X-API-Key")
-                    : await configuration.apiKey;
-                localVarHeaderParameter["X-API-Key"] = localVarApiKeyValue;
-            }
-
-            // authentication BasicAuth required
-            // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
-                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
-            }
-
-            const query = new URLSearchParams(localVarUrlObj.search);
-            for (const key in localVarQueryParameter) {
-                query.set(key, localVarQueryParameter[key]);
-            }
-            for (const key in options.params) {
-                query.set(key, options.params[key]);
-            }
-            localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Update DNS record
-         * @param {DnsRecord} body DNS record data
-         * @param {number} id DNS record ID
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        dnsRecordsIdPut: async (body: DnsRecord, id: number, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling dnsRecordsIdPut.');
-            }
-            // verify required parameter 'id' is not null or undefined
-            if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling dnsRecordsIdPut.');
-            }
-            const localVarPath = `/dns/records/{id}`
+            const localVarPath = `/extensions/{id}/disable`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
@@ -231,11 +163,9 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
 
             const query = new URLSearchParams(localVarUrlObj.search);
             for (const key in localVarQueryParameter) {
@@ -247,8 +177,6 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
 
             return {
                 url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
@@ -257,22 +185,125 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          * 
-         * @summary Create domain or domain alias DNS record
-         * @param {DnsRecordRequest} body DNS record data
-         * @param {string} domain Filter by domain or domain alias name
+         * @summary Enable extension
+         * @param {string} id Extension identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        dnsRecordsPost: async (body: DnsRecordRequest, domain: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        extensionsIdEnablePut: async (id: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling extensionsIdEnablePut.');
+            }
+            const localVarPath = `/extensions/{id}/enable`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication APIKeyHeader required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? await configuration.apiKey("X-API-Key")
+                    : await configuration.apiKey;
+                localVarHeaderParameter["X-API-Key"] = localVarApiKeyValue;
+            }
+
+            // authentication BasicAuth required
+            // http basic authentication required
+            if (configuration && (configuration.username! || configuration.password!)) {
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
+            }
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Extension details
+         * @param {string} id Extension identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        extensionsIdGet: async (id: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling extensionsIdGet.');
+            }
+            const localVarPath = `/extensions/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication APIKeyHeader required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? await configuration.apiKey("X-API-Key")
+                    : await configuration.apiKey;
+                localVarHeaderParameter["X-API-Key"] = localVarApiKeyValue;
+            }
+
+            // authentication BasicAuth required
+            // http basic authentication required
+            if (configuration && (configuration.username! || configuration.password!)) {
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
+            }
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Install a new Extension
+         * @param {ExtensionInstallRequest} body Installation type and resource
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        extensionsPost: async (body: ExtensionInstallRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling dnsRecordsPost.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling extensionsPost.');
             }
-            // verify required parameter 'domain' is not null or undefined
-            if (domain === null || domain === undefined) {
-                throw new RequiredError('domain','Required parameter domain was null or undefined when calling dnsRecordsPost.');
-            }
-            const localVarPath = `/dns/records`;
+            const localVarPath = `/extensions`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
             let baseOptions;
@@ -293,12 +324,8 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
-            }
-
-            if (domain !== undefined) {
-                localVarQueryParameter['domain'] = domain;
             }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
@@ -325,20 +352,19 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
 };
 
 /**
- * DNSApi - functional programming interface
+ * ExtensionsApi - functional programming interface
  * @export
  */
-export const DNSApiFp = function(configuration?: Configuration) {
+export const ExtensionsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Get domain or domain alias DNS records
-         * @param {string} domain Filter by domain or domain alias name
+         * @summary List of installed Extensions
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async dnsRecordsGet(domain: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<Array<DnsRecord>>>> {
-            const localVarAxiosArgs = await DNSApiAxiosParamCreator(configuration).dnsRecordsGet(domain, options);
+        async extensionsGet(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<Array<Extension>>>> {
+            const localVarAxiosArgs = await ExtensionsApiAxiosParamCreator(configuration).extensionsGet(options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -346,13 +372,13 @@ export const DNSApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Delete DNS record
-         * @param {number} id DNS record ID
+         * @summary Delete an Extension
+         * @param {string} id Extension identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async dnsRecordsIdDelete(id: number, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<StatusResponse>>> {
-            const localVarAxiosArgs = await DNSApiAxiosParamCreator(configuration).dnsRecordsIdDelete(id, options);
+        async extensionsIdDelete(id: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<StatusResponse>>> {
+            const localVarAxiosArgs = await ExtensionsApiAxiosParamCreator(configuration).extensionsIdDelete(id, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -360,13 +386,13 @@ export const DNSApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get DNS record
-         * @param {number} id DNS record ID
+         * @summary Disable extension
+         * @param {string} id Extension identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async dnsRecordsIdGet(id: number, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<DnsRecord>>> {
-            const localVarAxiosArgs = await DNSApiAxiosParamCreator(configuration).dnsRecordsIdGet(id, options);
+        async extensionsIdDisablePut(id: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<StatusResponse>>> {
+            const localVarAxiosArgs = await ExtensionsApiAxiosParamCreator(configuration).extensionsIdDisablePut(id, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -374,14 +400,13 @@ export const DNSApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Update DNS record
-         * @param {DnsRecord} body DNS record data
-         * @param {number} id DNS record ID
+         * @summary Enable extension
+         * @param {string} id Extension identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async dnsRecordsIdPut(body: DnsRecord, id: number, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<StatusResponse>>> {
-            const localVarAxiosArgs = await DNSApiAxiosParamCreator(configuration).dnsRecordsIdPut(body, id, options);
+        async extensionsIdEnablePut(id: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<StatusResponse>>> {
+            const localVarAxiosArgs = await ExtensionsApiAxiosParamCreator(configuration).extensionsIdEnablePut(id, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -389,14 +414,27 @@ export const DNSApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Create domain or domain alias DNS record
-         * @param {DnsRecordRequest} body DNS record data
-         * @param {string} domain Filter by domain or domain alias name
+         * @summary Extension details
+         * @param {string} id Extension identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async dnsRecordsPost(body: DnsRecordRequest, domain: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<DnsRecord>>> {
-            const localVarAxiosArgs = await DNSApiAxiosParamCreator(configuration).dnsRecordsPost(body, domain, options);
+        async extensionsIdGet(id: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<Extension>>> {
+            const localVarAxiosArgs = await ExtensionsApiAxiosParamCreator(configuration).extensionsIdGet(id, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * 
+         * @summary Install a new Extension
+         * @param {ExtensionInstallRequest} body Installation type and resource
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async extensionsPost(body: ExtensionInstallRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<StatusResponse>>> {
+            const localVarAxiosArgs = await ExtensionsApiAxiosParamCreator(configuration).extensionsPost(body, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -406,128 +444,143 @@ export const DNSApiFp = function(configuration?: Configuration) {
 };
 
 /**
- * DNSApi - factory interface
+ * ExtensionsApi - factory interface
  * @export
  */
-export const DNSApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+export const ExtensionsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
          * 
-         * @summary Get domain or domain alias DNS records
-         * @param {string} domain Filter by domain or domain alias name
+         * @summary List of installed Extensions
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async dnsRecordsGet(domain: string, options?: AxiosRequestConfig): Promise<AxiosResponse<Array<DnsRecord>>> {
-            return DNSApiFp(configuration).dnsRecordsGet(domain, options).then((request) => request(axios, basePath));
+        async extensionsGet(options?: AxiosRequestConfig): Promise<AxiosResponse<Array<Extension>>> {
+            return ExtensionsApiFp(configuration).extensionsGet(options).then((request) => request(axios, basePath));
         },
         /**
          * 
-         * @summary Delete DNS record
-         * @param {number} id DNS record ID
+         * @summary Delete an Extension
+         * @param {string} id Extension identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async dnsRecordsIdDelete(id: number, options?: AxiosRequestConfig): Promise<AxiosResponse<StatusResponse>> {
-            return DNSApiFp(configuration).dnsRecordsIdDelete(id, options).then((request) => request(axios, basePath));
+        async extensionsIdDelete(id: string, options?: AxiosRequestConfig): Promise<AxiosResponse<StatusResponse>> {
+            return ExtensionsApiFp(configuration).extensionsIdDelete(id, options).then((request) => request(axios, basePath));
         },
         /**
          * 
-         * @summary Get DNS record
-         * @param {number} id DNS record ID
+         * @summary Disable extension
+         * @param {string} id Extension identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async dnsRecordsIdGet(id: number, options?: AxiosRequestConfig): Promise<AxiosResponse<DnsRecord>> {
-            return DNSApiFp(configuration).dnsRecordsIdGet(id, options).then((request) => request(axios, basePath));
+        async extensionsIdDisablePut(id: string, options?: AxiosRequestConfig): Promise<AxiosResponse<StatusResponse>> {
+            return ExtensionsApiFp(configuration).extensionsIdDisablePut(id, options).then((request) => request(axios, basePath));
         },
         /**
          * 
-         * @summary Update DNS record
-         * @param {DnsRecord} body DNS record data
-         * @param {number} id DNS record ID
+         * @summary Enable extension
+         * @param {string} id Extension identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async dnsRecordsIdPut(body: DnsRecord, id: number, options?: AxiosRequestConfig): Promise<AxiosResponse<StatusResponse>> {
-            return DNSApiFp(configuration).dnsRecordsIdPut(body, id, options).then((request) => request(axios, basePath));
+        async extensionsIdEnablePut(id: string, options?: AxiosRequestConfig): Promise<AxiosResponse<StatusResponse>> {
+            return ExtensionsApiFp(configuration).extensionsIdEnablePut(id, options).then((request) => request(axios, basePath));
         },
         /**
          * 
-         * @summary Create domain or domain alias DNS record
-         * @param {DnsRecordRequest} body DNS record data
-         * @param {string} domain Filter by domain or domain alias name
+         * @summary Extension details
+         * @param {string} id Extension identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async dnsRecordsPost(body: DnsRecordRequest, domain: string, options?: AxiosRequestConfig): Promise<AxiosResponse<DnsRecord>> {
-            return DNSApiFp(configuration).dnsRecordsPost(body, domain, options).then((request) => request(axios, basePath));
+        async extensionsIdGet(id: string, options?: AxiosRequestConfig): Promise<AxiosResponse<Extension>> {
+            return ExtensionsApiFp(configuration).extensionsIdGet(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Install a new Extension
+         * @param {ExtensionInstallRequest} body Installation type and resource
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async extensionsPost(body: ExtensionInstallRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<StatusResponse>> {
+            return ExtensionsApiFp(configuration).extensionsPost(body, options).then((request) => request(axios, basePath));
         },
     };
 };
 
 /**
- * DNSApi - object-oriented interface
+ * ExtensionsApi - object-oriented interface
  * @export
- * @class DNSApi
+ * @class ExtensionsApi
  * @extends {BaseAPI}
  */
-export class DNSApi extends BaseAPI {
+export class ExtensionsApi extends BaseAPI {
     /**
      * 
-     * @summary Get domain or domain alias DNS records
-     * @param {string} domain Filter by domain or domain alias name
+     * @summary List of installed Extensions
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DNSApi
+     * @memberof ExtensionsApi
      */
-    public async dnsRecordsGet(domain: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<Array<DnsRecord>>> {
-        return DNSApiFp(this.configuration).dnsRecordsGet(domain, options).then((request) => request(this.axios, this.basePath));
+    public async extensionsGet(options?: AxiosRequestConfig) : Promise<AxiosResponse<Array<Extension>>> {
+        return ExtensionsApiFp(this.configuration).extensionsGet(options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 
-     * @summary Delete DNS record
-     * @param {number} id DNS record ID
+     * @summary Delete an Extension
+     * @param {string} id Extension identifier
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DNSApi
+     * @memberof ExtensionsApi
      */
-    public async dnsRecordsIdDelete(id: number, options?: AxiosRequestConfig) : Promise<AxiosResponse<StatusResponse>> {
-        return DNSApiFp(this.configuration).dnsRecordsIdDelete(id, options).then((request) => request(this.axios, this.basePath));
+    public async extensionsIdDelete(id: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<StatusResponse>> {
+        return ExtensionsApiFp(this.configuration).extensionsIdDelete(id, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 
-     * @summary Get DNS record
-     * @param {number} id DNS record ID
+     * @summary Disable extension
+     * @param {string} id Extension identifier
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DNSApi
+     * @memberof ExtensionsApi
      */
-    public async dnsRecordsIdGet(id: number, options?: AxiosRequestConfig) : Promise<AxiosResponse<DnsRecord>> {
-        return DNSApiFp(this.configuration).dnsRecordsIdGet(id, options).then((request) => request(this.axios, this.basePath));
+    public async extensionsIdDisablePut(id: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<StatusResponse>> {
+        return ExtensionsApiFp(this.configuration).extensionsIdDisablePut(id, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 
-     * @summary Update DNS record
-     * @param {DnsRecord} body DNS record data
-     * @param {number} id DNS record ID
+     * @summary Enable extension
+     * @param {string} id Extension identifier
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DNSApi
+     * @memberof ExtensionsApi
      */
-    public async dnsRecordsIdPut(body: DnsRecord, id: number, options?: AxiosRequestConfig) : Promise<AxiosResponse<StatusResponse>> {
-        return DNSApiFp(this.configuration).dnsRecordsIdPut(body, id, options).then((request) => request(this.axios, this.basePath));
+    public async extensionsIdEnablePut(id: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<StatusResponse>> {
+        return ExtensionsApiFp(this.configuration).extensionsIdEnablePut(id, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 
-     * @summary Create domain or domain alias DNS record
-     * @param {DnsRecordRequest} body DNS record data
-     * @param {string} domain Filter by domain or domain alias name
+     * @summary Extension details
+     * @param {string} id Extension identifier
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DNSApi
+     * @memberof ExtensionsApi
      */
-    public async dnsRecordsPost(body: DnsRecordRequest, domain: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<DnsRecord>> {
-        return DNSApiFp(this.configuration).dnsRecordsPost(body, domain, options).then((request) => request(this.axios, this.basePath));
+    public async extensionsIdGet(id: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<Extension>> {
+        return ExtensionsApiFp(this.configuration).extensionsIdGet(id, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * 
+     * @summary Install a new Extension
+     * @param {ExtensionInstallRequest} body Installation type and resource
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExtensionsApi
+     */
+    public async extensionsPost(body: ExtensionInstallRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<StatusResponse>> {
+        return ExtensionsApiFp(this.configuration).extensionsPost(body, options).then((request) => request(this.axios, this.basePath));
     }
 }

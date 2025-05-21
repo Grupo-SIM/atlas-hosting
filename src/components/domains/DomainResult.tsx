@@ -1,5 +1,7 @@
-
-import { DomainData, getDomainData } from "@/app/(authenticated)/(dashboard)/domains/register/page";
+import {
+  DomainData,
+  getDomainData,
+} from "@/app/(authenticated)/(dashboard)/domains/register/page";
 import { Button } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -24,59 +26,74 @@ export function DomainResult({ searchQuery }: DomainResultProps) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center">
-              <Suspense fallback={<CgSpinner className="animate-spin h-4 w-4 mr-2" />}>
+              <Suspense
+                fallback={<CgSpinner className="animate-spin h-4 w-4 mr-2" />}
+              >
                 <DomainAvailabilityIcon domainData={domainData} />
               </Suspense>
               <h3 className="text-lg font-semibold">{searchQuery}</h3>
             </div>
-            
+
             <p className="mt-2 text-muted-foreground">
               <Suspense fallback={<Skeleton height="1em" width="8em" />}>
                 <DomainAvailabilityLabel domainData={domainData} />
               </Suspense>
             </p>
           </div>
-          
+
           <div className="flex flex-col md:items-end gap-2">
-            <Suspense fallback={(
-              <>
-                <p className="font-semibold text-xl"><Skeleton height="1em" width="6em" /></p>
-                <p className="text-xs text-muted-foreground">Renovação: <Skeleton height="1em" width="6em" /></p>
-              </>
-            )}>
+            <Suspense
+              fallback={
+                <>
+                  <p className="font-semibold text-xl">
+                    <Skeleton height="1em" width="6em" />
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Renovação: <Skeleton height="1em" width="6em" />
+                  </p>
+                </>
+              }
+            >
               <DomainPricing domainData={domainData} />
             </Suspense>
-            
+
             <Suspense fallback={<></>}>
               <DomainUnavailable domainData={domainData} />
             </Suspense>
           </div>
         </div>
       </div>
-      
-      <Suspense fallback={(
-        <DomainAvailableTemplate text1={<Skeleton height="1em" width="8em" />}
-          text2={<Skeleton height="1em" width="6em" />}
-          text3={<Skeleton height="1em" width="6em" />}
-          text4={<Skeleton height="1em" width="6em" />}
-        >
-          <div className="flex-1 flex items-center justify-end">
-            <Skeleton height="2.5em" width="8em" />
-          </div>
-        </DomainAvailableTemplate>
-      )}>
+
+      <Suspense
+        fallback={
+          <DomainAvailableTemplate
+            text1={<Skeleton height="1em" width="8em" />}
+            text2={<Skeleton height="1em" width="6em" />}
+            text3={<Skeleton height="1em" width="6em" />}
+            text4={<Skeleton height="1em" width="6em" />}
+          >
+            <div className="flex-1 flex items-center justify-end">
+              <Skeleton height="2.5em" width="8em" />
+            </div>
+          </DomainAvailableTemplate>
+        }
+      >
         <DomainAvailable domainData={domainData} />
       </Suspense>
     </div>
   );
 }
 
-async function DomainAvailabilityIcon({ domainData }: { domainData: Promise<DomainData> }) {
+async function DomainAvailabilityIcon({
+  domainData,
+}: {
+  domainData: Promise<DomainData>;
+}) {
   const data = await domainData;
 
   console.log(JSON.stringify(data));
 
-  return (data?.available ? (
+  return data?.available ? (
     <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 dark:bg-green-900/30 mr-3">
       <Check className="h-4 w-4" />
     </div>
@@ -84,18 +101,26 @@ async function DomainAvailabilityIcon({ domainData }: { domainData: Promise<Doma
     <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 dark:bg-red-900/30 mr-3">
       <X className="h-4 w-4" />
     </div>
-  ));
+  );
 }
 
-async function DomainAvailabilityLabel({ domainData }: { domainData: Promise<DomainData> }) {
+async function DomainAvailabilityLabel({
+  domainData,
+}: {
+  domainData: Promise<DomainData>;
+}) {
   const data = await domainData;
 
-  return data?.available 
+  return data?.available
     ? "Este domínio está disponível para registro!"
     : "Este domínio está indisponível para registro.";
 }
 
-async function DomainPricing({ domainData }: { domainData: Promise<DomainData> }) {
+async function DomainPricing({
+  domainData,
+}: {
+  domainData: Promise<DomainData>;
+}) {
   const data = await domainData;
 
   const price = data?.available ? data.domain?.price : null;
@@ -105,31 +130,45 @@ async function DomainPricing({ domainData }: { domainData: Promise<DomainData> }
 
   const renewPriceString = renewPrice ? toBrl(renewPrice) : null;
 
-  return data?.available && (
-    <>
-      <p className="font-semibold text-xl">{priceString}</p>
-      <p className="text-xs text-muted-foreground">Renovação: {renewPriceString}</p>
-    </>
+  return (
+    data?.available && (
+      <>
+        <p className="font-semibold text-xl">{priceString}</p>
+        <p className="text-xs text-muted-foreground">
+          Renovação: {renewPriceString}
+        </p>
+      </>
+    )
   );
 }
 
-async function DomainUnavailable({ domainData }: { domainData: Promise<DomainData> }) {
+async function DomainUnavailable({
+  domainData,
+}: {
+  domainData: Promise<DomainData>;
+}) {
   const data = await domainData;
 
-  return !data?.available && (
-    <>
-      <Button variant="outline" disabled>
-        <X className="h-4 w-4 mr-2" />
-        Indisponível
-      </Button>
-      <Button variant="link" className="text-sm">
-        Tentar pesquisa WHOIS
-      </Button>
-    </>
+  return (
+    !data?.available && (
+      <>
+        <Button variant="outline" disabled>
+          <X className="h-4 w-4 mr-2" />
+          Indisponível
+        </Button>
+        <Button variant="link" className="text-sm">
+          Tentar pesquisa WHOIS
+        </Button>
+      </>
+    )
   );
 }
 
-async function DomainAvailable({ domainData }: { domainData: Promise<DomainData> }) {
+async function DomainAvailable({
+  domainData,
+}: {
+  domainData: Promise<DomainData>;
+}) {
   const data = await domainData;
 
   async function buyDomain(data: FormData) {
@@ -144,7 +183,7 @@ async function DomainAvailable({ domainData }: { domainData: Promise<DomainData>
 
     const result = await nameSilo.checkDomainAvailability(domain);
 
-    if (!result || !result.available) {
+    if (!result || !result?.available) {
       throw new Error("Error checking domain availability");
     }
 
@@ -183,29 +222,37 @@ async function DomainAvailable({ domainData }: { domainData: Promise<DomainData>
     // redirect("/checkout/" + invoice.id);
   }
 
-  return data?.available && (
-    <DomainAvailableTemplate
-      text1="Domínio inclui serviços gratuitos:"
-      text2="Administração de DNS"
-      text3="Proteção de privacidade"
-      text4="Encaminhamento de Email"
-    >
-      <form action={buyDomain} className="flex items-center justify-end">
-        <input
-          type="hidden"
-          name="domain"
-          value={data.domain?.domain}
-          readOnly
-        />
-        <Button variant="action" className="w-auto" type="submit">
-          Registrar domínio
-        </Button>
-      </form>
-    </DomainAvailableTemplate>
+  return (
+    data?.available && (
+      <DomainAvailableTemplate
+        text1="Domínio inclui serviços gratuitos:"
+        text2="Administração de DNS"
+        text3="Proteção de privacidade"
+        text4="Encaminhamento de Email"
+      >
+        <form action={buyDomain} className="flex items-center justify-end">
+          <input
+            type="hidden"
+            name="domain"
+            value={data.domain?.domain}
+            readOnly
+          />
+          <Button variant="action" className="w-auto" type="submit">
+            Registrar domínio
+          </Button>
+        </form>
+      </DomainAvailableTemplate>
+    )
   );
 }
 
-function DomainAvailableTemplate({ text1, text2, text3, text4, children }: PropsWithChildren<{ 
+function DomainAvailableTemplate({
+  text1,
+  text2,
+  text3,
+  text4,
+  children,
+}: PropsWithChildren<{
   text1: ReactNode;
   text2: ReactNode;
   text3: ReactNode;
@@ -219,14 +266,17 @@ function DomainAvailableTemplate({ text1, text2, text3, text4, children }: Props
           {text1}
         </p>
         <ul className="flex flex-wrap gap-2 items-center">
-          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">{text2}
+          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+            {text2}
           </li>
-          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">{text3}</li>
-          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">{text4}</li>
+          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+            {text3}
+          </li>
+          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+            {text4}
+          </li>
         </ul>
-        <div className="flex-1 mt-2 sm:mt-0">
-          {children}
-        </div>
+        <div className="flex-1 mt-2 sm:mt-0">{children}</div>
       </div>
     </div>
   );

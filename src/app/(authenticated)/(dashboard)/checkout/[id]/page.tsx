@@ -14,7 +14,11 @@ export const metadata: Metadata = {
   description: "Pagamento de fatura",
 };
 
-export default async function CheckoutPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CheckoutPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const invoice = await db.query.invoiceTable.findFirst({
     where: eq(invoiceTable.id, (await params).id),
   });
@@ -59,7 +63,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
           <CardContent className="flex flex-col h-full">
             <div className="text-xs flex items-center justify-between text-zinc-800 dark:text-zinc-200">
               <div>
-                {invoice.type === "domain" ? "Domínio ": "Plano "}
+                {invoice.type === "domain" ? "Domínio " : "Plano "}
                 {reference}
               </div>
               <div className="text-xs font-semibold">
@@ -69,30 +73,22 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
             {invoice.type === "domain" && (
               <>
                 <div className="text-xs flex gap-4 items-center justify-between text-zinc-800 dark:text-zinc-200 mt-7">
-                  <div>
-                    Proteção de privacidade WHOIS
-                  </div>
-                  <div className="text-xs font-semibold">
-                    {toBrl(0)}
-                  </div>
+                  <div>Proteção de privacidade WHOIS</div>
+                  <div className="text-xs font-semibold">{toBrl(0)}</div>
                 </div>
                 <div className="text-xs flex gap-4  items-center justify-between text-zinc-800 dark:text-zinc-200 mt-7 mb-1">
-                  <div>
-                    Certificado SSL
-                  </div>
-                  <div className="text-xs font-semibold">
-                    {toBrl(0)}
-                  </div>
+                  <div>Certificado SSL</div>
+                  <div className="text-xs font-semibold">{toBrl(0)}</div>
                 </div>
               </>
             )}
             <hr className="my-5" />
             <div className="flex flex-col flex-1 justify-end">
               <div className="flex justify-between items-center text-zinc-800 dark:text-zinc-200">
-                <div className="font-semibold text-xl">
-                  Total:
-                </div>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">{toBrl(invoice.amount)}</span>
+                <div className="font-semibold text-xl">Total:</div>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                  {toBrl(invoice.amount)}
+                </span>
               </div>
             </div>
           </CardContent>

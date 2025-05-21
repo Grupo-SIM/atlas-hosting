@@ -2,7 +2,15 @@ import { db } from "@/lib/db";
 import { userTable } from "@/lib/db/schema";
 import axios, { AxiosInstance } from "axios";
 import { eq } from "drizzle-orm";
-import { CreateClientParams, CreateRecurrentPaymentParams, CreateSubscriptionParams, PixKeyType, WithDrawFundsParams, Receiver, PayloadWebhook } from "./types";
+import {
+  CreateClientParams,
+  CreateRecurrentPaymentParams,
+  CreateSubscriptionParams,
+  PixKeyType,
+  WithDrawFundsParams,
+  Receiver,
+  PayloadWebhook,
+} from "./types";
 import { signPayload } from "./signature";
 import jwt from "jsonwebtoken";
 import { getDay, getDaysInMonth, startOfToday } from "date-fns";
@@ -20,8 +28,8 @@ export class DomApi {
     this.api = axios.create({
       baseURL: "https://apiv3.dompagamentos.com.br/checkout/production/",
       headers: {
-        "Authorization": `Bearer ${this.tokenApi}`,
-      }
+        Authorization: `Bearer ${this.tokenApi}`,
+      },
     });
   }
 
@@ -34,7 +42,7 @@ export class DomApi {
     description,
     userId,
     externalReference,
-    newClient
+    newClient,
   }: CreateRecurrentPaymentParams) {
     const user = await db.query.userTable.findFirst({
       where: eq(userTable.id, userId),
@@ -61,17 +69,23 @@ export class DomApi {
       billingDay = 1;
     }
 
-    const { data: { token: cardToken }} = await this.api.post<{ token: string }>(`/customers/${domId}/card-token`, card, {
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
+    const {
+      data: { token: cardToken },
+    } = await this.api.post<{ token: string }>(
+      `/customers/${domId}/card-token`,
+      card,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
       }
-    });
+    );
 
     const params: CreateSubscriptionParams = {
       card: {
         token: cardToken,
-        installments: 1
+        installments: 1,
       },
       customer_id: domId,
       external_reference: externalReference,
@@ -83,7 +97,7 @@ export class DomApi {
         frequency_type: "MONTH",
         billing_type: "prepaid",
         retry_days: 3,
-        frequency: 1
+        frequency: 1,
       },
       cashback_active: true,
       postbackurl: process.env.PUBLIC_URL + "/webhook/dom",
@@ -107,7 +121,7 @@ export class DomApi {
     birthdate,
     mobilePhone,
     address,
-    userId
+    userId,
   }: CreateClientParams) {
     const user = await db.query.userTable.findFirst({
       where: eq(userTable.id, userId),
@@ -117,17 +131,20 @@ export class DomApi {
       throw new Error("User not found");
     }
 
-    const { data } = await this.api.post<CreateClientParams & { id: string }>("/customers", {
-      name,
-      email,
-      document,
-      document_type: document.length === 11 ? "CPF" : "CNPJ",
-      code_external: codeExternal,
-      // gender,
-      // birthdate,
-      mobile_phone: mobilePhone,
-      address,
-    });
+    const { data } = await this.api.post<CreateClientParams & { id: string }>(
+      "/customers",
+      {
+        name,
+        email,
+        document,
+        document_type: document.length === 11 ? "CPF" : "CNPJ",
+        code_external: codeExternal,
+        // gender,
+        // birthdate,
+        mobile_phone: mobilePhone,
+        address,
+      }
+    );
 
     return data;
   }
@@ -139,7 +156,11 @@ export class DomApi {
    * @param userId Id do usuário relacionado ao invoice, utilizado em {@link Receiver}["external_reference"]
    * @throws Error se alguma variável de ambiente necessária não estiver definida
    */
-  public async withdrawFunds(amount: number, reference: string, userId: string) {
+  public async withdrawFunds(
+    amount: number,
+    reference: string,
+    userId: string
+  ) {
     const payload: WithDrawFundsParams = {
       description: reference,
       receivers: {
@@ -150,20 +171,25 @@ export class DomApi {
         amount,
         idempotency_key: reference,
         external_reference: reference,
-      }
+      },
     };
 
     const signature = signPayload(payload, this.privateKeyPath);
 
-    const { data } = await this.api.post<WithDrawFundsParams & { id: string }>("/withdrawals", {
-      ...payload,
-      signature,
-    });
+    const { data } = await this.api.post<WithDrawFundsParams & { id: string }>(
+      "/withdrawals",
+      {
+        ...payload,
+        signature,
+      }
+    );
   }
 
   public verifyWebhookSignature(signature: string): PayloadWebhook | null {
     try {
-      const payload = jwt.verify(signature, this.tokenApi, { algorithms: ["HS256"] }) as PayloadWebhook;
+      const payload = jwt.verify(signature, this.tokenApi, {
+        algorithms: ["HS256"],
+      }) as PayloadWebhook;
       return payload;
     } catch (error) {
       console.error("Error verifying webhook signature:", error);

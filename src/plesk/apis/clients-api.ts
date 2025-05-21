@@ -59,7 +59,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -113,7 +113,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -167,7 +167,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -221,7 +221,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -275,7 +275,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -334,7 +334,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -392,7 +392,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -446,7 +446,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -499,7 +499,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 

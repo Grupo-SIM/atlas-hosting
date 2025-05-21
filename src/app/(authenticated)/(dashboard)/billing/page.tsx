@@ -1,12 +1,7 @@
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Invoice, invoiceTable } from "@/lib/db/schema";
@@ -69,9 +64,9 @@ export default async function BillingPage() {
   // Adjust field names (e.g., invoiceTable.user_id) if your schema differs.
   const userInvoices = userId
     ? await db.query.invoiceTable.findMany({
-      where: eq(invoiceTable.userId, userId),
-      orderBy: [desc(invoiceTable.updatedAt)],
-    })
+        where: eq(invoiceTable.userId, userId),
+        orderBy: [desc(invoiceTable.updatedAt)],
+      })
     : [];
 
   return (
@@ -105,7 +100,10 @@ export default async function BillingPage() {
                       Fatura #{invoice.id.substring(0, 8).toUpperCase()}
                     </CardTitle>
                   </div>
-                  <Badge variant={getStatusVariant(invoice.status)} className="text-sm whitespace-nowrap mt-1 sm:mt-0">
+                  <Badge
+                    variant={getStatusVariant(invoice.status)}
+                    className="text-sm whitespace-nowrap mt-1 sm:mt-0"
+                  >
                     {invoice.status === "pending" && "A pagar"}
                     {invoice.status === "paid" && "Pago"}
                     {invoice.status === "failed" && "Pagamento recusado"}
@@ -113,11 +111,31 @@ export default async function BillingPage() {
                   </Badge>
                 </CardHeader>
                 <CardContent className="pt-4">
-                  <div className={clsx(["grid gap-3 sm:grid-cols-2 text-sm items-center", invoice.status === "pending" ? "md:grid-cols-5": "md:grid-cols-4"])}>
-                    <div><strong>{invoice.type === "domain" ? "Domínio" : "Plano"}:</strong> {invoice.reference || "N/A"}</div>
-                    <div><strong>Tipo:</strong> {invoice.type === "domain" ? "Domínio" : "Plano"}</div>
-                    <div><strong>Total:</strong> {toBrl(invoice.amount)}</div>
-                    <div><strong>Data de Emissão:</strong> {formatDate(invoice.createdAt)}</div>
+                  <div
+                    className={clsx([
+                      "grid gap-3 sm:grid-cols-2 text-sm items-center",
+                      invoice.status === "pending"
+                        ? "md:grid-cols-5"
+                        : "md:grid-cols-4",
+                    ])}
+                  >
+                    <div>
+                      <strong>
+                        {invoice.type === "domain" ? "Domínio" : "Plano"}:
+                      </strong>{" "}
+                      {invoice.reference || "N/A"}
+                    </div>
+                    <div>
+                      <strong>Tipo:</strong>{" "}
+                      {invoice.type === "domain" ? "Domínio" : "Plano"}
+                    </div>
+                    <div>
+                      <strong>Total:</strong> {toBrl(invoice.amount)}
+                    </div>
+                    <div>
+                      <strong>Data de Emissão:</strong>{" "}
+                      {formatDate(invoice.createdAt)}
+                    </div>
                     {invoice.status === "pending" && (
                       <div className="flex justify-end">
                         <Button asChild>

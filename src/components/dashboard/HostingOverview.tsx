@@ -1,7 +1,13 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
@@ -47,7 +53,9 @@ export function HostingOverview() {
     <Card>
       <CardHeader>
         <CardTitle>Hosting Services</CardTitle>
-        <CardDescription>Overview of your current hosting services</CardDescription>
+        <CardDescription>
+          Overview of your current hosting services
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="website">
@@ -56,26 +64,38 @@ export function HostingOverview() {
             <TabsTrigger value="ecommerce">E-commerce</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
           </TabsList>
-          
+
           {services.map((service) => (
-            <TabsContent key={service.id} value={service.name.toLowerCase().replace(/\s+/g, "")}>
+            <TabsContent
+              key={service.id}
+              value={service.name.toLowerCase().replace(/\s+/g, "")}
+            >
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-medium">{service.domain}</h3>
                     <div className="flex items-center mt-1">
                       {service.status === "active" ? (
-                        <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-200 dark:border-green-800">
+                        <Badge
+                          variant="outline"
+                          className="bg-green-500/10 text-green-500 border-green-200 dark:border-green-800"
+                        >
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Active
                         </Badge>
                       ) : service.status === "maintenance" ? (
-                        <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-200 dark:border-amber-800">
+                        <Badge
+                          variant="outline"
+                          className="bg-amber-500/10 text-amber-500 border-amber-200 dark:border-amber-800"
+                        >
                           <Clock className="h-3 w-3 mr-1" />
                           Maintenance
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-200 dark:border-red-800">
+                        <Badge
+                          variant="outline"
+                          className="bg-red-500/10 text-red-500 border-red-200 dark:border-red-800"
+                        >
                           <AlertTriangle className="h-3 w-3 mr-1" />
                           Issues
                         </Badge>
@@ -89,7 +109,7 @@ export function HostingOverview() {
                     {service.totalStorage} GB
                   </Badge>
                 </div>
-                
+
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -98,12 +118,12 @@ export function HostingOverview() {
                         {service.usedStorage} GB / {service.totalStorage} GB
                       </span>
                     </div>
-                    <Progress 
-                      value={(service.usedStorage / service.totalStorage) * 100} 
+                    <Progress
+                      value={(service.usedStorage / service.totalStorage) * 100}
                       className="h-2"
                     />
                   </div>
-                  
+
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm">Bandwidth</span>
@@ -111,8 +131,10 @@ export function HostingOverview() {
                         {service.usedBandwidth} GB / {service.totalBandwidth} GB
                       </span>
                     </div>
-                    <Progress 
-                      value={(service.usedBandwidth / service.totalBandwidth) * 100} 
+                    <Progress
+                      value={
+                        (service.usedBandwidth / service.totalBandwidth) * 100
+                      }
                       className="h-2"
                     />
                   </div>

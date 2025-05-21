@@ -2,12 +2,14 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import SkeletonThemeProvider from "@/components/layouts/SkeletonThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Atlas Hosting - Serviços de Web Hosting",
-  description: "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
+  description:
+    "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
 };
 
 export default async function RootLayout({
@@ -21,10 +23,10 @@ export default async function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          enableSystem={false}
+          enableSystem={true}
           disableTransitionOnChange
         >
-          {children}
+          <SkeletonThemeProvider>{children}</SkeletonThemeProvider>
         </ThemeProvider>
       </body>
     </html>

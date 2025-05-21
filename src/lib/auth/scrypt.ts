@@ -15,14 +15,14 @@ export async function hash(password: string): Promise<string> {
   const derivedKey = await scryptAsync(
     new TextEncoder().encode(password),
     salt,
-    SCRYPT_PARAMS,
+    SCRYPT_PARAMS
   );
   return `${bytesToHex(salt)}:${bytesToHex(derivedKey)}`;
 }
 
 export async function verify(
   hashedPasswordWithSalt: string,
-  passwordPlain: string,
+  passwordPlain: string
 ): Promise<boolean> {
   const [saltHex, storedKeyHex] = hashedPasswordWithSalt.split(":");
   if (!saltHex || !storedKeyHex) {
@@ -35,7 +35,7 @@ export async function verify(
   const derivedKey = await scryptAsync(
     new TextEncoder().encode(passwordPlain),
     salt,
-    SCRYPT_PARAMS,
+    SCRYPT_PARAMS
   );
 
   // Constant-time comparison (important for security)

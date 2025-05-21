@@ -7,7 +7,7 @@ import {
   pgTable,
   primaryKey,
   text,
-  uuid
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const userTable = pgTable("users", {
@@ -15,9 +15,7 @@ export const userTable = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  namesiloId: bigint("namesilo_id", {
-    mode: "number"
-  }),
+  namesiloId: text("namesilo_id"),
   isAdmin: boolean("is_admin"),
   domId: text("dom_id"),
   pleskId: text("plesk_id"),
@@ -30,7 +28,7 @@ export const userTable = pgTable("users", {
 export const userRelations = relations(userTable, ({ one }) => ({
   plan: one(plansTable, {
     fields: [userTable.planId],
-    references: [plansTable.id]
+    references: [plansTable.id],
   }),
 }));
 
@@ -52,38 +50,41 @@ export const plansTable = pgTable("plans", {
 
 export const plansTableRelations = relations(plansTable, ({ many }) => ({
   users: many(userTable),
-  planFeatures: many(planFeature)
+  planFeatures: many(planFeature),
 }));
 
-export const planFeature = pgTable("plan_feature", {
-  planId: uuid("plan_id").notNull().references(() => plansTable.id),
-  featureId: uuid("feature_id").notNull().references(() => featureTable.id),
-}, (t) => [
-  primaryKey({ columns: [t.planId, t.featureId] }),
-]);
-
-export const planFeatureRelations = relations(
-  planFeature,
-  ({ one }) => ({
-    feature: one(featureTable, {
-      fields: [planFeature.featureId],
-      references: [featureTable.id],
-    }),
-    plan: one(plansTable, {
-      fields: [planFeature.planId],
-      references: [plansTable.id],
-    }),
-  }),
+export const planFeature = pgTable(
+  "plan_feature",
+  {
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => plansTable.id),
+    featureId: uuid("feature_id")
+      .notNull()
+      .references(() => featureTable.id),
+  },
+  (t) => [primaryKey({ columns: [t.planId, t.featureId] })]
 );
+
+export const planFeatureRelations = relations(planFeature, ({ one }) => ({
+  feature: one(featureTable, {
+    fields: [planFeature.featureId],
+    references: [featureTable.id],
+  }),
+  plan: one(plansTable, {
+    fields: [planFeature.planId],
+    references: [plansTable.id],
+  }),
+}));
 
 export const featureTable = pgTable("feature", {
   id: uuid("id").primaryKey().defaultRandom(),
   description: text("description").notNull(),
-  reference: text("reference")
+  reference: text("reference"),
 });
 
 export const featureRelations = relations(featureTable, ({ many }) => ({
-  featuresPlans: many(planFeature)
+  featuresPlans: many(planFeature),
 }));
 
 export const invoiceTable = pgTable("invoices", {
@@ -94,7 +95,9 @@ export const invoiceTable = pgTable("invoices", {
   amount: doublePrecision("amount").notNull(),
   reference: text("reference").notNull(),
   type: text("type", { enum: ["subscription", "domain"] }).notNull(),
-  status: text("status", { enum: ["pending", "paid", "failed", "processing"] }).notNull(),
+  status: text("status", {
+    enum: ["pending", "paid", "failed", "processing"],
+  }).notNull(),
   dueDate: date("due_date", { mode: "date" }).notNull(),
   createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),

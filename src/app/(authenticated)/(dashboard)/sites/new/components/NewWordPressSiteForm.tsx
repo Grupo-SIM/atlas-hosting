@@ -1,7 +1,14 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { createWordPressInstance } from "@/app/actions";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -10,52 +17,97 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { CardContent, CardFooter } from "@/components/ui/card";
+import { ToastProvider } from "@/components/ui/toast";
+import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ListDomainDomain } from "@/lib/server/apis/namesilo/types";
 import { Terminal } from "lucide-react";
+import Link from "next/link";
+import { PropsWithChildren, useCallback, useRef, useState } from "react";
+import { CgSpinner } from "react-icons/cg";
+import { Input } from "@/components/ui/input";
+import { SubmitButton } from "./SubmitButton";
 
-const initialState: {
-  message: string;
-  error?: string;
-  siteUrl?: string;
-  adminUrl?: string;
-} = {
-  message: "",
-};
-
-function SubmitButton({ isPending }: { isPending: boolean }) {
-  return (
-    <Button type="submit" disabled={isPending} isLoading={isPending} className="w-full sm:w-auto">
-      {isPending ? "Criando Instância..." : "Criar Site WordPress"}
-    </Button>
-  );
+interface NewWordPressSiteFormProps {
+  domains: (ListDomainDomain & { inPlesk: boolean })[];
 }
 
-export function NewWordPressSiteForm({ domains }: { domains: string[] }) {
-  const [state, formAction, isPending] = useActionState(createWordPressInstance, initialState);
+export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
   const { toast } = useToast();
-  const [selectedDomain, setSelectedDomain] = useState<string | undefined>(domains.length > 0 ? domains[0] : undefined);
+  const [selectedDomain, setSelectedDomain] = useState<string>("");
+  const [adminUsername, setAdminUsername] = useState("admin");
+  const [adminPassword, setAdminPassword] = useState("");
 
-  useEffect(() => {
-    if (state?.message && !state.error && !state.siteUrl) { // Initial or pending state
-      // Potentially a message from a previous attempt if not cleared, or initial empty message
-    } else if (state?.error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao Criar Site",
-        description: state.message || state.error,
-      });
-    } else if (state?.siteUrl && state?.adminUrl) {
-      toast({
-        variant: "default",
-        title: "Site WordPress Criado!",
-        description: state.message || `Seu site ${state.siteUrl} está pronto.`,
-      });
-    }
-  }, [state, toast]);
+  const eventSource = useRef<EventSource>(null);
+  const [buttonLabel, setButtonLabel] = useState("Criar Site WordPress");
+
+  const [isPending, setIsPending] = useState(false);
+
+  const onSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+
+      if (!adminUsername || !adminPassword) {
+        toast({
+          title: "Erro",
+          description:
+            "Por favor, preencha o nome de usuário e senha do administrador.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsPending(true);
+
+      if (eventSource.current) {
+        return;
+      }
+
+      eventSource.current = new EventSource(
+        `/api/wp-install?domain=${selectedDomain}&admin_username=${adminUsername}&admin_password=${adminPassword}`
+      );
+
+      eventSource.current.onmessage = (event) => {
+        const data = event.data as string;
+        const [type, message, error] = data.split(";");
+
+        switch (type) {
+          case "INFO":
+            setButtonLabel(message);
+            break;
+          case "ERROR":
+            setButtonLabel("Criar site WordPress");
+            toast({
+              title: message,
+              description: error,
+              variant: "destructive",
+            });
+            setIsPending(false);
+            break;
+          case "SUCCESS":
+            setButtonLabel("Criar site WordPress");
+            setIsPending(false);
+            eventSource.current?.close();
+            toast({
+              title: "Instalação Concluída!",
+              description: message,
+              variant: "default",
+            });
+            break;
+          default:
+            setIsPending(false);
+            eventSource.current?.close();
+            toast({
+              title: "Erro na Instalação",
+              description: message,
+              variant: "destructive",
+            });
+            break;
+        }
+      };
+    },
+    [selectedDomain, toast, adminUsername, adminPassword]
+  );
 
   if (domains.length === 0) {
     return (
@@ -64,8 +116,15 @@ export function NewWordPressSiteForm({ domains }: { domains: string[] }) {
           <Terminal className="h-4 w-4" />
           <AlertTitle>Nenhum Domínio Encontrado</AlertTitle>
           <AlertDescription>
-            Você não possui domínios registrados em sua conta que possam ser usados para criar um site WordPress.
-            Por favor, <Link href="/domains/register" className="font-medium text-primary underline underline-offset-4">registre um domínio</Link> primeiro.
+            Você não possui domínios registrados em sua conta que possam ser
+            usados para criar um site WordPress. Por favor,{" "}
+            <Link
+              href="/domains/register"
+              className="font-medium text-primary underline underline-offset-4"
+            >
+              registre um domínio
+            </Link>{" "}
+            primeiro.
           </AlertDescription>
         </Alert>
       </CardContent>
@@ -73,25 +132,55 @@ export function NewWordPressSiteForm({ domains }: { domains: string[] }) {
   }
 
   return (
-    <form action={formAction}>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="domainName">Selecione um Domínio</Label>
-          <Select name="domainName" required value={selectedDomain} onValueChange={setSelectedDomain}>
-            <SelectTrigger id="domainName">
-              <SelectValue placeholder="Escolha um domínio" />
-            </SelectTrigger>
-            <SelectContent>
-              {domains.map((domain) => (
-                <SelectItem key={domain} value={domain}>
-                  {domain}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <>
+      <form onSubmit={onSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="domainName">Selecione um Domínio</Label>
+            <Select
+              value={selectedDomain}
+              onValueChange={(value) => setSelectedDomain(value)}
+            >
+              <SelectTrigger id="domainName">
+                <SelectValue placeholder="Selecione um domínio" />
+              </SelectTrigger>
+              <SelectContent>
+                {domains.map((domain) => (
+                  <SelectItem
+                    key={domain.domain}
+                    value={domain.domain}
+                    disabled={domain.inPlesk}
+                  >
+                    {domain.domain}
+                    {domain.inPlesk && " (WordPress já instalado)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {state?.siteUrl && state?.adminUrl && (
+          <div className="space-y-2">
+            <Label htmlFor="adminUsername">Nome de Usuário do Admin</Label>
+            <Input
+              id="adminUsername"
+              value={adminUsername}
+              onChange={(e) => setAdminUsername(e.target.value)}
+              placeholder="admin"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="adminPassword">Senha do Admin</Label>
+            <Input
+              id="adminPassword"
+              type="password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              placeholder="Digite uma senha forte"
+            />
+          </div>
+
+          {/* {state?.siteUrl && state?.adminUrl && (
           <Alert variant="default">
             <Terminal className="h-4 w-4" />
             <AlertTitle>Instalação Concluída!</AlertTitle>
@@ -99,18 +188,29 @@ export function NewWordPressSiteForm({ domains }: { domains: string[] }) {
               <p>{state.message}</p>
               <p>
                 <strong>URL do Site:</strong>{" "}
-                <Link href={state.siteUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline underline-offset-4">
+                <Link
+                  href={state.siteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary underline underline-offset-4"
+                >
                   {state.siteUrl}
                 </Link>
               </p>
               <p>
                 <strong>URL de Admin:</strong>{" "}
-                <Link href={state.adminUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline underline-offset-4">
+                <Link
+                  href={state.adminUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary underline underline-offset-4"
+                >
                   {state.adminUrl}
                 </Link>
               </p>
               <p className="text-xs text-muted-foreground pt-2">
-                Pode levar alguns minutos para que o site esteja totalmente acessível e o SSL seja provisionado.
+                Pode levar alguns minutos para que o site esteja totalmente
+                acessível e o SSL seja provisionado.
               </p>
             </AlertDescription>
           </Alert>
@@ -119,20 +219,19 @@ export function NewWordPressSiteForm({ domains }: { domains: string[] }) {
           <Alert variant="destructive">
             <Terminal className="h-4 w-4" />
             <AlertTitle>Falha na Instalação</AlertTitle>
-            <AlertDescription>
-              {state.message || state.error}
-            </AlertDescription>
+            <AlertDescription>{state.message || state.error}</AlertDescription>
           </Alert>
-        )}
-      </CardContent>
-      <CardFooter>
-        {!state?.siteUrl && <SubmitButton isPending={isPending} />}
-        {state?.siteUrl && (
-          <Button asChild className="w-full sm:w-auto">
-            <Link href="/sites">Ver Meus Sites</Link>
-          </Button>
-        )}
-      </CardFooter>
-    </form>
+        )} */}
+        </CardContent>
+        <CardFooter>
+          <SubmitButton
+            domain={selectedDomain}
+            adminUsername={adminUsername}
+            adminPassword={adminPassword}
+          />
+        </CardFooter>
+      </form>
+      <Toaster />
+    </>
   );
 }

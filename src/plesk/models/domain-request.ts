@@ -47,7 +47,7 @@ export interface DomainRequest {
      * @type {string}
      * @memberof DomainRequest
      */
-    hostingType?: DomainRequestHostingTypeEnum;
+    hosting_type?: DomainRequestHostingTypeEnum;
 
     /**
      *  for *physical hosting*: `ftp_login` - it specifies the ftp user login name (required). `ftp_password` - it specifies the ftp user password (required). for *frame forwarding* and *standard forwarding*: `dest_url` - it specifies the URL to which the user will be redirected explicitly at the attempt to visit the specified domain.
@@ -56,7 +56,7 @@ export interface DomainRequest {
      * @memberof DomainRequest
      * @example {"ftp_login":"test_login","ftp_password":"changeme1Q**"}
      */
-    hostingSettings?: { [key: string]: any; };
+    hosting_settings?: { [key: string]: any; };
 
     /**
      * @type {DomainReference}

@@ -1,7 +1,13 @@
 import { db } from "@/lib/db";
 import { plansTable } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { revalidatePath } from "next/cache";
@@ -24,7 +30,9 @@ export default function NewPlanPage() {
       <Card>
         <CardHeader>
           <CardTitle>Novo Plano</CardTitle>
-          <CardDescription>Preencha as informações para criar um novo plano.</CardDescription>
+          <CardDescription>
+            Preencha as informações para criar um novo plano.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={createPlan} className="space-y-6">
@@ -44,10 +52,12 @@ export default function NewPlanPage() {
               <label className="block mb-1 font-medium">ID Plesk</label>
               <Input name="pleskPlanId" type="number" required />
             </div>
-            <Button type="submit" className="w-full">Criar Plano</Button>
+            <Button type="submit" className="w-full">
+              Criar Plano
+            </Button>
           </form>
         </CardContent>
       </Card>
     </div>
   );
-} 
+}

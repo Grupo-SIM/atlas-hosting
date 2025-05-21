@@ -7,13 +7,17 @@ import PlansSection from "./components/PlansSection";
 import { PlanStats } from "./components/PlanStats";
 import { UserStats } from "./components/UserStats";
 
-export const getFeatures = cache(async () => await db.select().from(featureTable));
+export const getFeatures = cache(
+  async () => await db.select().from(featureTable)
+);
 
 export default async function AdminPage() {
   return (
     <div className="space-y-10 p-2 md:p-6">
       <header className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-1">Administrador</h1>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-1">
+          Administrador
+        </h1>
         <p className="text-muted-foreground text-lg">
           Visão geral das estatísticas da plataforma de hospedagem
         </p>
@@ -41,4 +45,4 @@ export default async function AdminPage() {
       </section>
     </div>
   );
-} 
+}

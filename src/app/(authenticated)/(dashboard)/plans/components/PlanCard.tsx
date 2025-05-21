@@ -3,7 +3,13 @@
 import { createPlanInvoice } from "@/app/actions"; // Import the server action
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast"; // Import toast for displaying messages
 import { Feature, Plan, User } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
@@ -19,24 +25,40 @@ const initialState = {
 };
 
 export function PlanCard({ plan, user }: PlanCardProps) {
-  const [state, doBuyPlan, isPending] = useActionState(createPlanInvoice, initialState);
+  const [state, doBuyPlan, isPending] = useActionState(
+    createPlanInvoice,
+    initialState
+  );
 
   useEffect(() => {
     if (state.status === "error" && state.message) {
-      toast({ title: "Erro", description: state.message, variant: "destructive" });
+      toast({
+        title: "Erro",
+        description: state.message,
+        variant: "destructive",
+      });
     }
   }, [state]);
 
-  const onSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-    startTransition(() => {
-      doBuyPlan(plan.id);
-    });
-  }, [doBuyPlan, plan.id]);
+      startTransition(() => {
+        doBuyPlan(plan.id);
+      });
+    },
+    [doBuyPlan, plan.id]
+  );
 
   return (
-    <Card className={clsx([plan.featured ? "border-primary shadow-lg" : "", user.planId === plan.id && "opacity-70", "flex flex-col h-full"])}>
+    <Card
+      className={clsx([
+        plan.featured ? "border-primary shadow-lg" : "",
+        user.planId === plan.id && "opacity-70",
+        "flex flex-col h-full",
+      ])}
+    >
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="space-y-1">
@@ -44,7 +66,10 @@ export function PlanCard({ plan, user }: PlanCardProps) {
             <CardDescription>{capitalize(plan.description)}</CardDescription>
           </div>
           {plan.featured && (
-            <Badge variant="default" className="bg-primary text-primary-foreground">
+            <Badge
+              variant="default"
+              className="bg-primary text-primary-foreground"
+            >
               Popular
             </Badge>
           )}
@@ -73,9 +98,14 @@ export function PlanCard({ plan, user }: PlanCardProps) {
             <Button disabled className="w-full" variant="outline">
               Plano atual
             </Button>
-          ): (
+          ) : (
             <form onSubmit={onSubmit}>
-              <Button isLoading={isPending} type="submit" className="w-full" variant={plan.featured ? "default" : "outline"}>
+              <Button
+                isLoading={isPending}
+                type="submit"
+                className="w-full"
+                variant={plan.featured ? "default" : "outline"}
+              >
                 Adquirir Agora
               </Button>
             </form>
@@ -86,4 +116,7 @@ export function PlanCard({ plan, user }: PlanCardProps) {
   );
 }
 
-export interface PlanCardProps { plan: Plan & { features: Feature[] }; user: User; }
+export interface PlanCardProps {
+  plan: Plan & { features: Feature[] };
+  user: User;
+}

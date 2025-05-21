@@ -24,7 +24,7 @@ export function generateSessionToken(): string {
 
 export async function createSession(
   token: string,
-  userId: string,
+  userId: string
 ): Promise<Session> {
   const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
   const session: Session = {
@@ -37,7 +37,7 @@ export async function createSession(
 }
 
 export async function validateSessionToken(
-  token: string,
+  token: string
 ): Promise<SessionValidationResult> {
   const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 
@@ -46,7 +46,7 @@ export async function validateSessionToken(
     .from(sessionTable)
     .innerJoin(userTable, eq(sessionTable.userId, userTable.id))
     .where(eq(sessionTable.id, sessionId));
-  
+
   if (result.length < 1) {
     return { session: null, user: null };
   }
@@ -60,7 +60,7 @@ export async function validateSessionToken(
 
   if (Date.now() >= session.expiresAt.getTime() - 1000 * 60 * 60 * 24 * 15) {
     session.expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
-  
+
     await db
       .update(sessionTable)
       .set({
@@ -94,26 +94,29 @@ export async function invalidateAllSessions(userId: string): Promise<void> {
 export async function createUser(
   name: string,
   email: string,
-  passwordPlain: string,
+  passwordPlain: string
 ) {
   try {
     const hashedPassword = await hash(passwordPlain);
-    const newUser = await db.insert(userTable).values({
-      name,
-      email: email.toLowerCase(),
-      password: hashedPassword,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      deletedAt: null,
-      namesiloId: null,
-    }).returning({
-      id: userTable.id,
-      name: userTable.name,
-      email: userTable.email,
-      createdAt: userTable.createdAt,
-      updatedAt: userTable.updatedAt,
-      deletedAt: userTable.deletedAt,
-    });
+    const newUser = await db
+      .insert(userTable)
+      .values({
+        name,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        namesiloId: null,
+      })
+      .returning({
+        id: userTable.id,
+        name: userTable.name,
+        email: userTable.email,
+        createdAt: userTable.createdAt,
+        updatedAt: userTable.updatedAt,
+        deletedAt: userTable.deletedAt,
+      });
     return newUser[0];
   } catch (error) {
     // Handle potential errors, e.g., unique constraint violation for email
@@ -124,7 +127,7 @@ export async function createUser(
 
 export async function authenticateUser(
   email: string,
-  passwordPlain: string,
+  passwordPlain: string
 ): Promise<(Omit<User, "password"> & { password?: string }) | null> {
   const result = await db
     .select()
@@ -151,8 +154,8 @@ export async function authenticateUser(
 }
 
 export type SessionValidationResult =
-	| { session: Session; user: User }
-	| { session: null; user: null };
+  | { session: Session; user: User }
+  | { session: null; user: null };
 
 export const getUser = cache(async function getUser() {
   const { user } = await validateSession();

@@ -10,9 +10,11 @@ export type NamesiloReply<T> = {
   detail: string;
 } & T;
 
-export interface CheckRegisterAvailabilityResponse<T extends string | string[]> {
-  available?: T extends string[] ? Domain[]: Available;
-  unavailable?: T extends string[] ? string[]: Unavailable;
+export interface CheckRegisterAvailabilityResponse<
+  T extends string | string[],
+> {
+  available?: T extends string[] ? Domain[] : Available;
+  unavailable?: T extends string[] ? string[] : Unavailable;
 }
 
 export interface Available {
@@ -45,48 +47,47 @@ export interface RegisterDomainParams {
   domain: string;
   years: number;
   payment_id?: number;
-  portfolio?: number;
+  portfolio: string;
   private?: NamesiloBoolean;
   coupon?: string;
 }
 
-
 export interface CreateContactParams {
   /**
-     * First Name
-	*/
+   * First Name
+   */
   fn: string;
   /**
-     * Last Name
-	*/
+   * Last Name
+   */
   ln: string;
   /**
-     * Mailing address
-	*/
+   * Mailing address
+   */
   ad: string;
   /**
-     * City
-	*/
+   * City
+   */
   cy: `${string[0]}${string[0]}`;
   /**
-     * State
-	*/
+   * State
+   */
   st: string;
   /**
-     * Zip Code
-	*/
+   * Zip Code
+   */
   zp: string;
   /**
-     * Country
-	*/
+   * Country
+   */
   ct: string;
   /**
-     * Email
-	*/
+   * Email
+   */
   em: string;
   /**
-     * Phone Number
-	*/
+   * Phone Number
+   */
   ph: string;
 }
 
@@ -103,49 +104,49 @@ export interface RegistrationData {
 export type GetPricesResponse = Record<string, RegistrationData>;
 
 export interface NamesiloDomainInfo {
-  created:                     string;
-  expires?:                     string;
-  status:                      string;
-  locked:                      string;
-  private:                     string;
-  auto_renew?:                  string;
-  traffic_type:                string;
+  created: string;
+  expires?: string;
+  status: string;
+  locked: string;
+  private: string;
+  auto_renew?: string;
+  traffic_type: string;
   email_verification_required: string;
-  portfolio:                   string;
-  forward_url:                 string;
-  forward_type:                string;
-  nameservers:                 Nameserver[];
-  contact_ids:                 ContactIDS;
+  portfolio: string;
+  forward_url: string;
+  forward_type: string;
+  nameservers: Nameserver[];
+  contact_ids: ContactIDS;
 }
 
 export interface ContactIDS {
-  registrant:     string;
+  registrant: string;
   administrative: string;
-  technical:      string;
-  billing:        string;
+  technical: string;
+  billing: string;
 }
 
 export interface Nameserver {
   nameserver: string;
-  position:   number;
+  position: number;
 }
 
 export interface NamesiloDomain {
   domains: ListDomainDomain[] | { domain: ListDomainDomain };
-  pager?:   Pager;
+  pager?: Pager;
 }
 
 export interface ListDomainDomain {
-  domain:  string;
+  domain: string;
   created: string;
   expires: string;
   maxBid?: number;
 }
 
 export interface Pager {
-  page:     number;
+  page: number;
   pageSize: string;
-  total:    string;
+  total: string;
 }
 
 export interface ListDomainsParams {
@@ -160,11 +161,11 @@ export interface ListDnsRecordsResponse {
 
 export interface ResourceRecord {
   record_id: string;
-  type:      string;
-  host:      string;
-  value:     string;
-  ttl:       string;
-  distance:  string;
+  type: string;
+  host: string;
+  value: string;
+  ttl: string;
+  distance: string;
 }
 
 export interface ListNameServersResponse {

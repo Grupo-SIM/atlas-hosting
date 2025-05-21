@@ -17,12 +17,18 @@ import {
   Server,
   Settings,
   Shield,
-  X
+  X,
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { startTransition, use, useActionState, useCallback, useState } from "react";
+import {
+  startTransition,
+  use,
+  useActionState,
+  useCallback,
+  useState,
+} from "react";
 import { FaPowerOff } from "react-icons/fa6";
 import { ModeToggle } from "../ModeToggle";
 
@@ -31,7 +37,10 @@ interface DashboardLayoutProps {
   user?: ReturnType<typeof getUser>;
 }
 
-export default function DashboardLayout({ children, user }: DashboardLayoutProps) {
+export default function DashboardLayout({
+  children,
+  user,
+}: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(true);
   const pathname = usePathname();
@@ -44,7 +53,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
     });
   }, [signOut]);
 
-  const userData = user ? use(user): null;
+  const userData = user ? use(user) : null;
 
   const navigation = [
     { name: "Painel", href: "/", icon: LayoutDashboard },
@@ -82,28 +91,35 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
         onMouseLeave={() => setIsCompact(true)}
         animate={{
           width: isCompact ? "min-content" : "auto",
-          transition: { duration: 0.3, ease: sidebarOpen ? "easeIn": "easeOut" }
+          transition: {
+            duration: 0.3,
+            ease: sidebarOpen ? "easeIn" : "easeOut",
+          },
         }}
         transition={{
           duration: 0.3,
-          ease: isCompact ? "easeIn" : "easeOut"
+          ease: isCompact ? "easeIn" : "easeOut",
         }}
         className={cn(
           "fixed inset-y-0 left-0 z-40 bg-card border-r shadow-sm whitespace-nowrap max-h-screen",
           "lg:relative lg:flex lg:flex-col",
-          isCompact ? "w-[60px]" : "w-64",
+          isCompact ? "w-[60px]" : "w-64"
         )}
       >
         <motion.div
           layout
           initial={{ paddingLeft: 0, paddingRight: 0 }}
           animate={{
-            paddingLeft: isCompact ? "1rem": "1.5rem",
-            paddingRight: isCompact ? "1rem": "1.5rem",
-            transition: { duration: 0.3, ease: isCompact ? "easeIn" : "easeOut" }
+            paddingLeft: isCompact ? "1rem" : "1.5rem",
+            paddingRight: isCompact ? "1rem" : "1.5rem",
+            transition: {
+              duration: 0.3,
+              ease: isCompact ? "easeIn" : "easeOut",
+            },
           }}
           exit={{ paddingLeft: 0, paddingRight: 0 }}
-          className="h-16 w-full flex items-center justify-center border-b overflow-hidden">
+          className="h-16 w-full flex items-center justify-center border-b overflow-hidden"
+        >
           <AtlasLogo className="min-h-8 min-w-8 h-8 w-8 object-contain" />
           <motion.span
             layout
@@ -111,7 +127,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
             animate={{
               width: isCompact ? 0 : "auto",
               paddingLeft: isCompact ? 0 : "0.75rem",
-              transition: { duration: 0.3, ease: "easeOut" }
+              transition: { duration: 0.3, ease: "easeOut" },
             }}
             className="text-lg font-semibold overflow-x-hidden"
           >
@@ -130,9 +146,13 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
             width: isCompact ? "3.75rem" : "auto",
             marginLeft: isCompact ? "auto" : 0,
             marginRight: isCompact ? "auto" : 0,
-            transition: { duration: 0.3, ease: isCompact ? "easeIn" : "easeOut" }
+            transition: {
+              duration: 0.3,
+              ease: isCompact ? "easeIn" : "easeOut",
+            },
           }}
-          className="flex-1 px-2 py-4 space-y-1 overflow-y-auto flex flex-col box-border">
+          className="flex-1 px-2 py-4 space-y-1 overflow-y-auto flex flex-col box-border"
+        >
           {navigation.map((item) => (
             <MotionLink
               layout
@@ -144,7 +164,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
                 "flex items-center px-3 py-2 text-sm font-medium rounded-md group transition-colors relative w-full box-border",
                 pathname === item.href
                   ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}
               title={isCompact ? item.name : undefined}
             >
@@ -158,15 +178,16 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
               />
               <motion.span
                 layout
-                initial={{  marginLeft: 0, minWidth: 0, maxWidth: 0, width: 0 }}
+                initial={{ marginLeft: 0, minWidth: 0, maxWidth: 0, width: 0 }}
                 animate={{
-                  marginLeft: isCompact ? 0: "0.75rem",
-                  minWidth: isCompact ? 0: "max-content",
-                  maxWidth: isCompact ? 0: "max-content",
-                  transition: { duration: 0.3, ease: "easeOut" }
+                  marginLeft: isCompact ? 0 : "0.75rem",
+                  minWidth: isCompact ? 0 : "max-content",
+                  maxWidth: isCompact ? 0 : "max-content",
+                  transition: { duration: 0.3, ease: "easeOut" },
                 }}
                 exit={{ width: 0, marginLeft: 0 }}
-                className="overflow-x-hidden whitespace-nowrap flex-1 w-full">
+                className="overflow-x-hidden whitespace-nowrap flex-1 w-full"
+              >
                 {item.name}
               </motion.span>
             </MotionLink>
@@ -175,10 +196,9 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
 
         {userData && (
           <div className="p-4 border-t flex items-center justify-center">
-            <div className={cn(
-              "flex items-center",
-              isCompact && "justify-center"
-            )}>
+            <div
+              className={cn("flex items-center", isCompact && "justify-center")}
+            >
               <Avatar>
                 <AvatarImage src="https://github.com/shadcn.png" />
                 <AvatarFallback>JS</AvatarFallback>
@@ -189,9 +209,13 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
                 animate={{
                   width: isCompact ? 0 : "auto",
                   marginLeft: isCompact ? 0 : "0.75rem",
-                  transition: { duration: 0.3, ease: isCompact ? "easeIn" : "easeOut" }
+                  transition: {
+                    duration: 0.3,
+                    ease: isCompact ? "easeIn" : "easeOut",
+                  },
                 }}
-                className="flex-1 min-w-0">
+                className="flex-1 min-w-0"
+              >
                 <p className="text-sm font-medium truncate">{userData.name}</p>
                 <p className="text-xs text-muted-foreground truncate">
                   {userData.email}
@@ -205,18 +229,21 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-card border-b flex items-center justify-between px-6">
           <h1 className="text-lg md:text-xl font-semibold">Painel</h1>
-          {<div className="flex items-center space-x-4">
-            <Button onClick={onSignOut} variant="outline" size="icon" className="hover:text-destructive">
+          <div className="flex items-center space-x-4">
+            <Button
+              onClick={onSignOut}
+              variant="outline"
+              size="icon"
+              className="hover:text-destructive"
+            >
               <FaPowerOff className="w-4 h-4 cursor-pointer transition-colors" />
             </Button>
             <ModeToggle />
-          </div>}
+          </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );

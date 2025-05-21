@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type AxiosResponse } from "axios";
-import * as Plesk from "plesk-api";
+import * as Plesk from "@/plesk";
 import SubscriptionApi from "./subscriptions";
 import PleskWpToolkitApi from "./wp-toolkit";
 
@@ -118,25 +118,17 @@ export class PleskApi {
     return data;
   }
 
-  public async getDomain(domainName: string) {
+  public async getDomain(
+    domainName: string
+  ): Promise<Plesk.DomainResponse | null> {
     try {
       const { data: domains } = await this.domainsApi.domainsGet();
       const foundDomain = domains.find((d) => d.name === domainName);
 
       if (!foundDomain) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const error: any = new Error(
-          `Unable to find the domain with name '${domainName}`
-        );
-        error.response = {
-          data: {
-            code: 1013, // Plesk error code for domain not found
-            message: `Unable to find the domain with name '${domainName}'.`,
-          },
-          status: 404,
-        };
-        throw error;
+        return null;
       }
+
       return foundDomain;
     } catch (error) {
       if (axios.isAxiosError(error) && !error.response?.data?.code) {
@@ -155,31 +147,42 @@ export class PleskApi {
     const user = await this.getUserById(userId);
 
     try {
-      const { data } = await this.domainsApi.domainsIdPut({
-        // name: domainName,
+      const { data } = await this.domainsApi.domainsPost({
+        name: domainName,
         ownerClient: {
           externalId: user.guid,
           guid: user.guid,
           id: user.id,
           login: user.login,
         },
-        hostingType: Plesk.DomainRequestHostingTypeEnum.Virtual,
-        // hosting_settings: {
-        //   php_handler_id: "fastcgi",
-        //   php_version: "8.2.28",
-        //   ssl: true,
-        //   ftp_login: "test_login_",
-        //   ftp_password: "Senha^^123a**",
-        // },
-      }, 238);
+        hosting_type: Plesk.DomainRequestHostingTypeEnum.Virtual,
+        hosting_settings: {
+          php_handler_id: "fastcgi",
+          php_version: "8.2.28",
+          ssl: true,
+          ftp_login: Math.random().toString(36).substring(2, 10),
+          ftp_password: `D%$%` + Math.random().toString(36).substring(2, 10),
+        },
+      });
+
+      console.log(data);
+
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.log(JSON.stringify(error.response?.data));
       }
 
+      console.log(error);
+
       throw error;
     }
+  }
+
+  public async deleteDomain(domainId: number) {
+    const { data } = await this.domainsApi.domainsIdDelete(domainId);
+    console.log(data);
+    return data;
   }
 
   public async listSubscriptions() {

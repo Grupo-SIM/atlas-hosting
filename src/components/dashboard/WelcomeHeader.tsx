@@ -23,9 +23,7 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
         </p>
       </div>
       <div className="flex space-x-3">
-        <Button variant="outline">
-          Atualizar Plano
-        </Button>
+        <Button variant="outline">Atualizar Plano</Button>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
           Novo Serviço
@@ -39,7 +37,9 @@ async function UserName({ user }: WelcomeHeaderProps) {
   const userData = await user;
   const firstName = userData?.name.split(" ")[0];
 
-  return firstName ? `Bem-vindo de volta, ${firstName}!` : "Bem-vindo de volta!";
+  return firstName
+    ? `Bem-vindo de volta, ${firstName}!`
+    : "Bem-vindo de volta!";
 }
 
 async function UserSiteLabel({ user }: WelcomeHeaderProps) {

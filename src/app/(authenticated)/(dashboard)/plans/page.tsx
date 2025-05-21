@@ -23,7 +23,9 @@ export default async function PlansPage() {
   return (
     <div className="space-y-6 p-6 pb-16 max-w-500 mx-auto">
       <div className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Planos de hospedagem</h1>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          Planos de hospedagem
+        </h1>
         <p className="text-muted-foreground">
           Escolha o melhor plano para suas necessidades
         </p>

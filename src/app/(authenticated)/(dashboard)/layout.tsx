@@ -1,11 +1,11 @@
 import DashboardLayout from "@/components/layouts/DashboardLayout";
-import { getUser, validateSession } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Atlas Hosting - Serviços de Web Hosting",
-  description: "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
+  description:
+    "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
 };
 
 export default async function RootLayout({
@@ -13,9 +13,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = (getUser())!;
+  const user = getUser()!;
 
-  return (
-    <DashboardLayout user={user}>{children}</DashboardLayout>
-  );
+  return <DashboardLayout user={user}>{children}</DashboardLayout>;
 }

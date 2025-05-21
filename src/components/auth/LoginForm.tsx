@@ -7,39 +7,54 @@ import { Label } from "@/components/ui/label";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startTransition, useActionState, useCallback, useEffect, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import { FaGithub, FaGoogle } from "react-icons/fa6";
 import * as yup from "yup";
 
 export default function LoginForm() {
-  const { register, getValues, control, ...methods} = useForm<LoginFormInputs>({
-    resolver: yupResolver(schema),
-    mode: "onChange",
-    reValidateMode: "onChange",
-  });
+  const { register, getValues, control, ...methods } = useForm<LoginFormInputs>(
+    {
+      resolver: yupResolver(schema),
+      mode: "onChange",
+      reValidateMode: "onChange",
+    }
+  );
 
   const { errors, isValid, isValidating } = useFormState({ control });
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
 
-  const [actionState, doLogin, isPending] = useActionState<ActionResponse, LoginFormInputs>(login, {
+  const [actionState, doLogin, isPending] = useActionState<
+    ActionResponse,
+    LoginFormInputs
+  >(login, {
     status: "idle",
+    message: "",
   });
 
-  const onSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const isValidClient = await methods.trigger();
-    if (!isValidClient) return;
+  const onSubmit = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const isValidClient = await methods.trigger();
+      if (!isValidClient) return;
 
-    const data = getValues();
-    setFormError(null);
+      const data = getValues();
+      setFormError(null);
 
-    startTransition(() => {
-      doLogin(data);
-    });
-  }, [doLogin, getValues, methods]);
+      startTransition(() => {
+        doLogin(data);
+      });
+    },
+    [doLogin, getValues, methods]
+  );
 
   useEffect(() => {
     if (actionState.status === "success") {
@@ -69,10 +84,7 @@ export default function LoginForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Senha</Label>
-          <Link
-            href="#"
-            className="text-sm text-primary hover:underline"
-          >
+          <Link href="#" className="text-sm text-primary hover:underline">
             Esqueceu a senha?
           </Link>
         </div>
@@ -101,11 +113,7 @@ export default function LoginForm() {
         className="w-full flex items-center justify-center"
         disabled={!isValid || isValidating || isPending}
       >
-        {isPending ? (
-          <CgSpinner className="animate-spin h-5 w-5" />
-        ) : (
-          "Entrar"
-        )}
+        {isPending ? <CgSpinner className="animate-spin h-5 w-5" /> : "Entrar"}
       </Button>
 
       <div className="relative my-6">
@@ -113,16 +121,26 @@ export default function LoginForm() {
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
+          <span className="bg-background px-2 text-muted-foreground">
+            Ou continue com
+          </span>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Button variant="outline" type="button" className="flex items-center justify-center gap-2">
+        <Button
+          variant="outline"
+          type="button"
+          className="flex items-center justify-center gap-2"
+        >
           <FaGithub className="h-4 w-4" />
           GitHub
         </Button>
-        <Button variant="outline" type="button" className="flex items-center justify-center gap-2">
+        <Button
+          variant="outline"
+          type="button"
+          className="flex items-center justify-center gap-2"
+        >
           <FaGoogle className="h-4 w-4" />
           Google
         </Button>

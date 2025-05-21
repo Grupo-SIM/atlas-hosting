@@ -1,10 +1,22 @@
 import { DomainResult } from "@/components/domains/DomainResult";
 import { DomainSuggestions } from "@/components/domains/DomainSuggestions";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import currencyConversion from "@/lib/server/apis/currency";
 import nameSilo from "@/lib/server/apis/namesilo";
@@ -12,17 +24,15 @@ import { Domain, RegistrationData } from "@/lib/server/apis/namesilo/types";
 import { toBrl } from "@/lib/utils";
 import { chunk } from "lodash";
 import { Search } from "lucide-react";
-import { redirect } from "next/navigation";
-import { NextResponse } from "next/server";
 import { cache, Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
-export default async function DomainsPage({ searchParams }: 
-{
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}
-) {
+export default async function DomainsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const params = await searchParams;
   const searchQuery = params.search ? params.search.toString().trim() : "";
 
@@ -32,8 +42,10 @@ export default async function DomainsPage({ searchParams }:
     if (!result) {
       return [];
     }
-    
-    const entries = Object.entries(result).filter(([key]) => !(["code", "detail"].includes(key))) as [string, RegistrationData][];
+
+    const entries = Object.entries(result).filter(
+      ([key]) => !["code", "detail"].includes(key)
+    ) as [string, RegistrationData][];
 
     const data = entries.map(([key, value]) => ({
       tld: key,
@@ -42,7 +54,7 @@ export default async function DomainsPage({ searchParams }:
       transfer: value.transfer,
     }));
 
-    const prices = data.map(item => [item.price, item.renew, item.transfer]);
+    const prices = data.map((item) => [item.price, item.renew, item.transfer]);
     const convertedPrices = await currencyConversion.convertMultiple({
       from: "usd",
       to: "brl",
@@ -65,7 +77,9 @@ export default async function DomainsPage({ searchParams }:
   return (
     <div className="space-y-6 p-6 pb-16">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Registrar novo domínio</h1>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          Registrar novo domínio
+        </h1>
         <p className="text-muted-foreground mt-1">
           Pesquise, registre e gerencie nomes de domínio para seus sites
         </p>
@@ -75,7 +89,8 @@ export default async function DomainsPage({ searchParams }:
         <CardHeader>
           <CardTitle>Encontre o Nome de Domínio Perfeito</CardTitle>
           <CardDescription>
-            Digite um nome de domínio para verificar a disponibilidade ou obter sugestões
+            Digite um nome de domínio para verificar a disponibilidade ou obter
+            sugestões
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -90,9 +105,7 @@ export default async function DomainsPage({ searchParams }:
                 defaultValue={searchQuery}
               />
             </div>
-            <Button type="submit">
-              Buscar domínios
-            </Button>
+            <Button type="submit">Buscar domínios</Button>
           </form>
 
           {searchQuery && (
@@ -102,14 +115,17 @@ export default async function DomainsPage({ searchParams }:
                   <TabsTrigger value="results">Resultados</TabsTrigger>
                   <TabsTrigger value="suggestions">Sugestões</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="results">
                   <DomainResult searchQuery={searchQuery} />
                 </TabsContent>
-                
+
                 <TabsContent value="suggestions">
                   <Suspense fallback={<Skeleton count={5} height={50} />}>
-                    <DomainSuggestions domainData={domainData} searchQuery={searchQuery} />
+                    <DomainSuggestions
+                      domainData={domainData}
+                      searchQuery={searchQuery}
+                    />
                   </Suspense>
                 </TabsContent>
               </Tabs>
@@ -117,7 +133,7 @@ export default async function DomainsPage({ searchParams }:
           )}
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Preços de Nomes de Domínio</CardTitle>
@@ -128,14 +144,16 @@ export default async function DomainsPage({ searchParams }:
             <TableHeader>
               <TableRow>
                 <TableHead>TLD</TableHead>
-                <TableHead className="hidden sm:table-cell text-right">Registro</TableHead>
+                <TableHead className="hidden sm:table-cell text-right">
+                  Registro
+                </TableHead>
                 <TableHead className="text-right">Renovação</TableHead>
                 <TableHead className="text-right">Transferência</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              <Suspense fallback={
-                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+              <Suspense
+                fallback={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
                   <TableRow key={i}>
                     <TableCell className="font-medium text-left">
                       <span>
@@ -158,8 +176,8 @@ export default async function DomainsPage({ searchParams }:
                       </span>
                     </TableCell>
                   </TableRow>
-                ))
-              }>
+                ))}
+              >
                 <DomainPriceTableRows items={domainPrices} />
               </Suspense>
             </TableBody>
@@ -170,19 +188,25 @@ export default async function DomainsPage({ searchParams }:
   );
 }
 
-async function DomainPriceTableRows({ items }: {
-  items: Promise<{
-    tld: string;
-    price: number;
-    renew: number;
-    transfer: number;
-  }[]>
+async function DomainPriceTableRows({
+  items,
+}: {
+  items: Promise<
+    {
+      tld: string;
+      price: number;
+      renew: number;
+      transfer: number;
+    }[]
+  >;
 }) {
   const resolvedItems = await items;
-  return resolvedItems.map(item => (
+  return resolvedItems.map((item) => (
     <TableRow key={item.tld}>
       <TableCell className="font-medium">.{item.tld}</TableCell>
-      <TableCell className="hidden sm:table-cell text-right">{toBrl(item.price)}</TableCell>
+      <TableCell className="hidden sm:table-cell text-right">
+        {toBrl(item.price)}
+      </TableCell>
       <TableCell className="text-right">{toBrl(item.renew)}</TableCell>
       <TableCell className="text-right">{toBrl(item.transfer)}</TableCell>
     </TableRow>
@@ -197,9 +221,20 @@ export type DomainData = {
   extraDomains: DomainWithAvailability[];
 } | null;
 
-const recommendedTlds: `.${string}`[] = [".com", ".net", ".org", ".io", ".dev", ".co", ".app", ".online"];
+const recommendedTlds: `.${string}`[] = [
+  ".com",
+  ".net",
+  ".org",
+  ".io",
+  ".dev",
+  ".co",
+  ".app",
+  ".online",
+];
 
-export const getDomainData = cache(async function getDomainData(searchQuery: string): Promise<DomainData> {
+export const getDomainData = cache(async function getDomainData(
+  searchQuery: string
+): Promise<DomainData> {
   if (searchQuery) {
     const domainName = searchQuery.split(".")[0];
     const domainsToSearch = recommendedTlds.map((tld) => `${domainName}${tld}`);
@@ -211,21 +246,24 @@ export const getDomainData = cache(async function getDomainData(searchQuery: str
     const result = await nameSilo.checkDomainAvailability(domainsToSearch);
 
     const availableDomains = result?.available ?? [];
-    const unavailableDomains = (Array.isArray(result?.unavailable)? result?.unavailable: []) ?? [];
+    const unavailableDomains =
+      (Array.isArray(result?.unavailable) ? result?.unavailable : []) ?? [];
 
-    const domainData: DomainWithAvailability[] = availableDomains.map((domain) => ({
-      ...domain,
-      available: true,
-    })).concat(
-      ...unavailableDomains.map((domain) => ({
-        domain: domain,
-        price: 0,
-        duration: -1,
-        premium: 0,
-        renew: 0,
-        available: false,
+    const domainData: DomainWithAvailability[] = availableDomains
+      .map((domain) => ({
+        ...domain,
+        available: true,
       }))
-    );
+      .concat(
+        ...unavailableDomains.map((domain) => ({
+          domain: domain,
+          price: 0,
+          duration: -1,
+          premium: 0,
+          renew: 0,
+          available: false,
+        }))
+      );
 
     const prices = await currencyConversion.convertMultiple({
       from: "usd",
@@ -247,8 +285,10 @@ export const getDomainData = cache(async function getDomainData(searchQuery: str
       item.renew = renewPrices[index];
     });
 
-    const mainDomainData = domainData.find((item) => item.domain === searchQuery)!;
-        
+    const mainDomainData = domainData.find(
+      (item) => item.domain === searchQuery
+    )!;
+
     return {
       available: mainDomainData?.available,
       domain: mainDomainData,

@@ -19,7 +19,8 @@ import * as yup from "yup";
 import { toast } from "sonner";
 
 // Standard input class from shadcn/ui for consistency
-const inputClasses = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+const inputClasses =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 const domPk = process.env.NEXT_PUBLIC_DOM_PUBLIC_KEY ?? "";
 
@@ -40,55 +41,68 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
   const [formError, setFormError] = useState<string | null>(null);
   const [cardToken, setCardToken] = useState<string>();
 
-  const onSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
 
-    const public_key = domPk ?? "";
-    const values = getValues();
-    const { fullName, document, phoneNumber, cardCvv, cardExpiration, address } = values;
-    
-    const [month, year] = cardExpiration.split("/");
+      const public_key = domPk ?? "";
+      const values = getValues();
+      const {
+        fullName,
+        document,
+        phoneNumber,
+        cardCvv,
+        cardExpiration,
+        address,
+      } = values;
 
-    const cardNumber = values.cardNumber.replace(/\D/g, "");
+      const [month, year] = cardExpiration.split("/");
 
-    const dataCard = {
-      name: fullName,
-      document: document,
-      number: cardNumber,
-      cvv: cardCvv,
-      month,
-      year
-    };
-    
-    const installments = 1;
+      const cardNumber = values.cardNumber.replace(/\D/g, "");
 
-    try {
-      startTransition(() => {
-        doBuyPlan({
-          fullName,
-          document,
-          phoneNumber,
-          cardNumber,
-          cardCvv,
-          cardExpiration,
-          address: {
-            ...address,
-            zipCode: address.zipCode.replace(/\D/g, ""),
-          },
-          invoiceId,
-          cardToken: ""
+      const dataCard = {
+        name: fullName,
+        document: document,
+        number: cardNumber,
+        cvv: cardCvv,
+        month,
+        year,
+      };
+
+      const installments = 1;
+
+      try {
+        startTransition(() => {
+          doBuyPlan({
+            fullName,
+            document,
+            phoneNumber,
+            cardNumber,
+            cardCvv,
+            cardExpiration,
+            address: {
+              ...address,
+              zipCode: address.zipCode.replace(/\D/g, ""),
+            },
+            invoiceId,
+            cardToken: "",
+          });
         });
-      });
-      // getTokenCard(public_key, dataCard, installments, function ({ token }) {
-      // });
-    } catch {
-      toast("Dados de cartão inválido");
-    }
-  }, [doBuyPlan, getValues, invoiceId]);
+        // getTokenCard(public_key, dataCard, installments, function ({ token }) {
+        // });
+      } catch {
+        toast("Dados de cartão inválido");
+      }
+    },
+    [doBuyPlan, getValues, invoiceId]
+  );
 
   return (
     <>
-      <Script type="text/javascript" src="https://hml-apiv3.dompagamentos.com.br/js/sdk-dompagamentos.min.js"></Script>
+      <Script
+        type="text/javascript"
+        src="https://hml-apiv3.dompagamentos.com.br/js/sdk-dompagamentos.min.js"
+      ></Script>
       <form onSubmit={onSubmit} className="space-y-2">
         <div className="space-y-2">
           <Label htmlFor="fullName">Nome completo</Label>
@@ -114,7 +128,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
                 {...field}
                 mask={[
                   { mask: "000.000.000-00", lazy: true, maxLength: 11 },
-                  { mask: "00.000.000/0000-00", lazy: false }
+                  { mask: "00.000.000/0000-00", lazy: false },
                 ]}
                 unmask={true} // Get unmasked value
                 placeholder="Seu CPF ou CNPJ"
@@ -168,13 +182,15 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
             )}
           />
           {errors.address?.zipCode && (
-            <p className="text-xs text-red-400">{errors.address.zipCode.message}</p>
+            <p className="text-xs text-red-400">
+              {errors.address.zipCode.message}
+            </p>
           )}
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="space-y-2 col-span-2">
             <Label htmlFor="address.street">Rua</Label>
-            <Input 
+            <Input
               id="address.street"
               type="text"
               placeholder="Nome da rua"
@@ -183,7 +199,9 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
               className={inputClasses}
             />
             {errors.address?.street && (
-              <p className="text-xs text-red-400">{errors.address.street.message}</p>
+              <p className="text-xs text-red-400">
+                {errors.address.street.message}
+              </p>
             )}
           </div>
           <div className="space-y-2">
@@ -196,7 +214,9 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
               className={inputClasses}
             />
             {errors.address?.number && (
-              <p className="text-xs text-red-400">{errors.address.number.message}</p>
+              <p className="text-xs text-red-400">
+                {errors.address.number.message}
+              </p>
             )}
           </div>
         </div>
@@ -210,7 +230,9 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
             className={inputClasses}
           />
           {errors.address?.neighborhood && (
-            <p className="text-xs text-red-400">{errors.address.neighborhood.message}</p>
+            <p className="text-xs text-red-400">
+              {errors.address.neighborhood.message}
+            </p>
           )}
         </div>
         <div className="grid grid-cols-5 gap-2">
@@ -224,7 +246,9 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
               className={inputClasses}
             />
             {errors.address?.city && (
-              <p className="text-xs text-red-400">{errors.address.city.message}</p>
+              <p className="text-xs text-red-400">
+                {errors.address.city.message}
+              </p>
             )}
           </div>
           <div className="space-y-2 col-span-2">
@@ -246,7 +270,9 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
               )}
             />
             {errors.address?.state && (
-              <p className="text-xs text-red-400">{errors.address.state.message}</p>
+              <p className="text-xs text-red-400">
+                {errors.address.state.message}
+              </p>
             )}
           </div>
         </div>
@@ -270,7 +296,9 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
               )}
             />
             {errors.cardNumber && (
-              <p className="text-xs text-red-400">{errors.cardNumber.message}</p>
+              <p className="text-xs text-red-400">
+                {errors.cardNumber.message}
+              </p>
             )}
           </div>
           <div className="space-y-2">
@@ -313,7 +341,9 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
               )}
             />
             {errors.cardExpiration && (
-              <p className="text-xs text-red-400">{errors.cardExpiration.message}</p>
+              <p className="text-xs text-red-400">
+                {errors.cardExpiration.message}
+              </p>
             )}
           </div>
         </div>
@@ -350,12 +380,14 @@ const schema = yup
       .trim()
       .required("Nome completo é obrigatório")
       .matches(/(\s)/, "Digite seu nome completo"),
-    document: yup.string()
+    document: yup
+      .string()
       .transform((value) => value.replace(/\D/g, ""))
       .test({
         test: (value) => isValidCPF(value) || isValidCNPJ(value),
         message: "Documento inválido",
-      }).required("Documento é obrigatório"),
+      })
+      .required("Documento é obrigatório"),
     cardNumber: yup
       .string()
       .transform((value) => value.replace(/\D/g, ""))
@@ -375,12 +407,16 @@ const schema = yup
         const [month, year] = value.split("/").map(Number);
         const today = new Date();
 
-        return month > getMonth(today) || (month === getMonth(today) && year > +getYear(today).toString().slice(-2));
+        return (
+          month > getMonth(today) ||
+          (month === getMonth(today) &&
+            year > +getYear(today).toString().slice(-2))
+        );
       }),
     phoneNumber: yup
       .string()
       .required("Número de telefone é obrigatório")
-      .transform((value) => "55"+value.replace(/\D/g, ""))
+      .transform((value) => "55" + value.replace(/\D/g, ""))
       .test({
         test: (value) => isValidPhoneNumber(value, "BR"),
         message: "Número de telefone inválido",
@@ -390,7 +426,10 @@ const schema = yup
       number: yup.string().required("Número é obrigatório"),
       neighborhood: yup.string().required("Bairro é obrigatório"),
       city: yup.string().required("Cidade é obrigatória"),
-      state: yup.string().length(2, "Digite o código de 2 dígitos do estado").required("Estado é obrigatório"),
+      state: yup
+        .string()
+        .length(2, "Digite o código de 2 dígitos do estado")
+        .required("Estado é obrigatório"),
       zipCode: yup
         .string()
         .required("CEP é obrigatório")

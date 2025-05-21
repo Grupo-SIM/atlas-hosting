@@ -6,18 +6,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
-import { startTransition, useActionState, useCallback, useEffect, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import { FaGithub, FaGoogle } from "react-icons/fa6";
 import * as yup from "yup";
 
 export default function SignupForm() {
-  const { register, handleSubmit, control, ...methods } = useForm<SignupFormInputs>({
-    resolver: yupResolver(schema),
-    mode: "onChange",
-    reValidateMode: "onChange",
-  });
+  const { register, handleSubmit, control, ...methods } =
+    useForm<SignupFormInputs>({
+      resolver: yupResolver(schema),
+      mode: "onChange",
+      reValidateMode: "onChange",
+    });
 
   const { errors, isValid, isValidating } = useFormState({ control });
 
@@ -26,20 +33,24 @@ export default function SignupForm() {
 
   const [actionState, doSignup, isPending] = useActionState(signup, {
     status: "idle",
+    message: "",
   });
 
   // Define the submit handler
-  const onSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmit = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
 
-    const data = methods.getValues();
+      const data = methods.getValues();
 
-    setFormError(null);
+      setFormError(null);
 
-    startTransition(() => {
-      doSignup(data);
-    });
-  }, [doSignup, methods]);
+      startTransition(() => {
+        doSignup(data);
+      });
+    },
+    [doSignup, methods]
+  );
 
   useEffect(() => {
     if (actionState.status === "success") {

@@ -1,6 +1,19 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { db } from "@/lib/db";
 import { Plan, plansTable } from "@/lib/db/schema";
 import Link from "next/link";
@@ -24,7 +37,9 @@ export default async function PlansSection() {
             </div>
           </div>
         </CardTitle>
-        <CardDescription>Visualize e edite os planos disponíveis para os usuários.</CardDescription>
+        <CardDescription>
+          Visualize e edite os planos disponíveis para os usuários.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -45,9 +60,7 @@ export default async function PlansSection() {
                   <TableCell>R$ {plan.price.toFixed(2)}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/admin/plans/${plan.id}/edit`}>
-                        Editar
-                      </Link>
+                      <Link href={`/admin/plans/${plan.id}/edit`}>Editar</Link>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -58,4 +71,4 @@ export default async function PlansSection() {
       </CardContent>
     </Card>
   );
-} 
+}

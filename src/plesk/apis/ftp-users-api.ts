@@ -58,7 +58,7 @@ export const FtpUsersApiAxiosParamCreator = function (configuration?: Configurat
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -120,7 +120,7 @@ export const FtpUsersApiAxiosParamCreator = function (configuration?: Configurat
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -179,7 +179,7 @@ export const FtpUsersApiAxiosParamCreator = function (configuration?: Configurat
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -236,7 +236,7 @@ export const FtpUsersApiAxiosParamCreator = function (configuration?: Configurat
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 

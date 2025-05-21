@@ -16,20 +16,30 @@ async function onSignatureCreated(data: PayloadWebhook["data"]): Promise<void> {
     return;
   }
 
-  const updatedInvoice = await db.update(invoiceTable).set({
-    status: "processing",
-  }).where(eq(invoiceTable.id, invoiceId)).returning();
+  const updatedInvoice = await db
+    .update(invoiceTable)
+    .set({
+      status: "processing",
+    })
+    .where(eq(invoiceTable.id, invoiceId))
+    .returning();
 
   if (!updatedInvoice) {
     return;
   }
 
-  await db.update(userTable).set({
-    planId: updatedInvoice[0].reference,
-  }).where(eq(userTable.id, updatedInvoice[0].userId)).returning();
+  await db
+    .update(userTable)
+    .set({
+      planId: updatedInvoice[0].reference,
+    })
+    .where(eq(userTable.id, updatedInvoice[0].userId))
+    .returning();
 }
 
-async function onSignatureCancelled(data: PayloadWebhook["data"]): Promise<void> {
+async function onSignatureCancelled(
+  data: PayloadWebhook["data"]
+): Promise<void> {
   console.log("[Webhook Action] onSignatureCancelled called with data:", data);
   const invoiceId = data.external_reference;
 }
@@ -44,9 +54,13 @@ async function onInvoiceCreated(data: PayloadWebhook["data"]): Promise<void> {
     return;
   }
 
-  const updatedInvoice = await db.update(invoiceTable).set({
-    status: "processing",
-  }).where(eq(invoiceTable.id, invoiceId)).returning();
+  const updatedInvoice = await db
+    .update(invoiceTable)
+    .set({
+      status: "processing",
+    })
+    .where(eq(invoiceTable.id, invoiceId))
+    .returning();
 
   if (!updatedInvoice) {
     return;
@@ -63,17 +77,25 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
     return;
   }
 
-  const updatedInvoice = await db.update(invoiceTable).set({
-    status: "paid",
-  }).where(eq(invoiceTable.id, invoiceId)).returning();
+  const updatedInvoice = await db
+    .update(invoiceTable)
+    .set({
+      status: "paid",
+    })
+    .where(eq(invoiceTable.id, invoiceId))
+    .returning();
 
   if (!updatedInvoice) {
     return;
   }
 
-  await db.update(userTable).set({
-    planId: updatedInvoice[0].reference,
-  }).where(eq(userTable.id, updatedInvoice[0].userId)).returning();
+  await db
+    .update(userTable)
+    .set({
+      planId: updatedInvoice[0].reference,
+    })
+    .where(eq(userTable.id, updatedInvoice[0].userId))
+    .returning();
 }
 
 export async function POST(request: Request) {
@@ -86,16 +108,21 @@ export async function POST(request: Request) {
 
     if (!payload || !payload.event || !payload.data) {
       console.error("Invalid webhook payload structure:", payload);
-      return NextResponse.json({
-        success: false,
-        message: "Invalid webhook payload structure.",
-        timestamp: new Date().toISOString()
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid webhook payload structure.",
+          timestamp: new Date().toISOString(),
+        },
+        { status: 400 }
+      );
     }
 
     console.log(`[Webhook] Received: ${JSON.stringify(payload)}`);
     console.log(`[Webhook] Type: ${payload.event}`);
-    console.log(`[Webhook] Reference: ${payload.data.external_reference} (${payload.data.external_reference})`);
+    console.log(
+      `[Webhook] Reference: ${payload.data.external_reference} (${payload.data.external_reference})`
+    );
 
     let actionTaken = "Nenhuma ação específica para este tipo de evento.";
     let details: Record<string, unknown> = {};
@@ -138,31 +165,41 @@ export async function POST(request: Request) {
 
     console.log(`[Webhook] Processado com sucesso. Ação: ${actionTaken}`);
 
-    return NextResponse.json({
-      success: true,
-      message: "Webhook processado com sucesso.",
-      actionTaken,
-      webhookType: payload.event,
-      details,
-      timestamp: new Date().toISOString()
-    }, { status: 200 });
-
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Webhook processado com sucesso.",
+        actionTaken,
+        webhookType: payload.event,
+        details,
+        timestamp: new Date().toISOString(),
+      },
+      { status: 200 }
+    );
   } catch (error) {
     if (error instanceof Error) {
-      console.error(`[Webhook] Erro ao processar: ${error.message}`, error.stack);
-        
-      const payloadType = payload?.event || "unknown (error before/during payload parsing)";
+      console.error(
+        `[Webhook] Erro ao processar: ${error.message}`,
+        error.stack
+      );
 
-      return NextResponse.json({
-        success: false,
-        message: "Falha ao processar webhook.",
-        webhookType: payloadType,
-        error: {
-          message: error.message,
-          stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+      const payloadType =
+        payload?.event || "unknown (error before/during payload parsing)";
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Falha ao processar webhook.",
+          webhookType: payloadType,
+          error: {
+            message: error.message,
+            stack:
+              process.env.NODE_ENV === "development" ? error.stack : undefined,
+          },
+          timestamp: new Date().toISOString(),
         },
-        timestamp: new Date().toISOString()
-      }, { status: payload ? 400 : 500 }); // 400 if payload was parsed, 500 if error before/during parsing
+        { status: payload ? 400 : 500 }
+      ); // 400 if payload was parsed, 500 if error before/during parsing
     }
   }
 }

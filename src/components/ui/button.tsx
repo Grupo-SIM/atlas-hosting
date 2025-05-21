@@ -19,7 +19,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        action: "bg-emerald-100 dark:bg-emerald-800/30 text-emerald-900 dark:text-emerald-400 ring-1 ring-emerald-900 dark:ring-emerald-400 hover:shadow-lg hover:-translate-y-[1px] hover:shadow-emerald-200/80 dark:hover:shadow-emerald-500/20",
+        action:
+          "bg-emerald-100 dark:bg-emerald-800/30 text-emerald-900 dark:text-emerald-400 ring-1 ring-emerald-900 dark:ring-emerald-400 hover:shadow-lg hover:-translate-y-[1px] hover:shadow-emerald-200/80 dark:hover:shadow-emerald-500/20",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -37,13 +38,24 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-  VariantProps<typeof buttonVariants> {
+    VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   isLoading?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, children, isLoading, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      children,
+      isLoading,
+      ...props
+    },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button";
     return (
       <Comp
@@ -53,7 +65,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading ? (
           <CgSpinner className="animate-spin h-4 w-4 mx-auto" />
-        ): (
+        ) : (
           children
         )}
       </Comp>

@@ -17,24 +17,26 @@ import { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
-import { CliCallRequest } from '../models';
-import { CliCallResponse } from '../models';
 import { ErrorResponse } from '../models';
-import { InlineResponse200 } from '../models';
+import { ServerInit } from '../models';
+import { ServerIp } from '../models';
+import { ServerLicense } from '../models';
+import { ServerMeta } from '../models';
+import { StatusResponse } from '../models';
 /**
- * CliApi - axios parameter creator
+ * ServerApi - axios parameter creator
  * @export
  */
-export const CliApiAxiosParamCreator = function (configuration?: Configuration) {
+export const ServerApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary List of available commands
+         * @summary Server Meta Information
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        cliCommandsGet: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/cli/commands`;
+        serverGet: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/server`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
             let baseOptions;
@@ -55,7 +57,7 @@ export const CliApiAxiosParamCreator = function (configuration?: Configuration) 
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -77,19 +79,17 @@ export const CliApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          * 
-         * @summary Execute command
-         * @param {string} id Command identifier
-         * @param {CliCallRequest} [body] Command execution parameters
+         * @summary Performing initial server setup
+         * @param {ServerInit} body Inital setup parameters
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        cliIdCallPost: async (id: string, body?: CliCallRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling cliIdCallPost.');
+        serverInitPost: async (body: ServerInit, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling serverInitPost.');
             }
-            const localVarPath = `/cli/{id}/call`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarPath = `/server/init`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
             let baseOptions;
@@ -110,7 +110,7 @@ export const CliApiAxiosParamCreator = function (configuration?: Configuration) 
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -135,19 +135,13 @@ export const CliApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         * plesk: >= 17.9
-         * @summary Command reference
-         * @param {string} id Command identifier
+         * 
+         * @summary Server IP Addresses
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        cliIdRefGet: async (id: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling cliIdRefGet.');
-            }
-            const localVarPath = `/cli/{id}/ref`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+        serverIpsGet: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/server/ips`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
             let baseOptions;
@@ -168,7 +162,7 @@ export const CliApiAxiosParamCreator = function (configuration?: Configuration) 
 
             // authentication BasicAuth required
             // http basic authentication required
-            if (configuration && (configuration.username || configuration.password)) {
+            if (configuration && (configuration.username! || configuration.password!)) {
                 localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
             }
 
@@ -188,23 +182,80 @@ export const CliApiAxiosParamCreator = function (configuration?: Configuration) 
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Installing license key
+         * @param {ServerLicense} body License key
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        serverLicensePost: async (body: ServerLicense, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling serverLicensePost.');
+            }
+            const localVarPath = `/server/license`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication APIKeyHeader required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? await configuration.apiKey("X-API-Key")
+                    : await configuration.apiKey;
+                localVarHeaderParameter["X-API-Key"] = localVarApiKeyValue;
+            }
+
+            // authentication BasicAuth required
+            // http basic authentication required
+            if (configuration && (configuration.username! || configuration.password!)) {
+                localVarRequestOptions["auth"] = { username: configuration.username!, password: configuration.password! };
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
 /**
- * CliApi - functional programming interface
+ * ServerApi - functional programming interface
  * @export
  */
-export const CliApiFp = function(configuration?: Configuration) {
+export const ServerApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary List of available commands
+         * @summary Server Meta Information
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async cliCommandsGet(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<Array<string>>>> {
-            const localVarAxiosArgs = await CliApiAxiosParamCreator(configuration).cliCommandsGet(options);
+        async serverGet(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<ServerMeta>>> {
+            const localVarAxiosArgs = await ServerApiAxiosParamCreator(configuration).serverGet(options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -212,28 +263,40 @@ export const CliApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Execute command
-         * @param {string} id Command identifier
-         * @param {CliCallRequest} [body] Command execution parameters
+         * @summary Performing initial server setup
+         * @param {ServerInit} body Inital setup parameters
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async cliIdCallPost(id: string, body?: CliCallRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<CliCallResponse>>> {
-            const localVarAxiosArgs = await CliApiAxiosParamCreator(configuration).cliIdCallPost(id, body, options);
+        async serverInitPost(body: ServerInit, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<StatusResponse>>> {
+            const localVarAxiosArgs = await ServerApiAxiosParamCreator(configuration).serverInitPost(body, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
             };
         },
         /**
-         * plesk: >= 17.9
-         * @summary Command reference
-         * @param {string} id Command identifier
+         * 
+         * @summary Server IP Addresses
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async cliIdRefGet(id: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<InlineResponse200>>> {
-            const localVarAxiosArgs = await CliApiAxiosParamCreator(configuration).cliIdRefGet(id, options);
+        async serverIpsGet(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<Array<ServerIp>>>> {
+            const localVarAxiosArgs = await ServerApiAxiosParamCreator(configuration).serverIpsGet(options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * 
+         * @summary Installing license key
+         * @param {ServerLicense} body License key
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async serverLicensePost(body: ServerLicense, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<StatusResponse>>> {
+            const localVarAxiosArgs = await ServerApiAxiosParamCreator(configuration).serverLicensePost(body, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -243,82 +306,99 @@ export const CliApiFp = function(configuration?: Configuration) {
 };
 
 /**
- * CliApi - factory interface
+ * ServerApi - factory interface
  * @export
  */
-export const CliApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+export const ServerApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
          * 
-         * @summary List of available commands
+         * @summary Server Meta Information
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async cliCommandsGet(options?: AxiosRequestConfig): Promise<AxiosResponse<Array<string>>> {
-            return CliApiFp(configuration).cliCommandsGet(options).then((request) => request(axios, basePath));
+        async serverGet(options?: AxiosRequestConfig): Promise<AxiosResponse<ServerMeta>> {
+            return ServerApiFp(configuration).serverGet(options).then((request) => request(axios, basePath));
         },
         /**
          * 
-         * @summary Execute command
-         * @param {string} id Command identifier
-         * @param {CliCallRequest} [body] Command execution parameters
+         * @summary Performing initial server setup
+         * @param {ServerInit} body Inital setup parameters
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async cliIdCallPost(id: string, body?: CliCallRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<CliCallResponse>> {
-            return CliApiFp(configuration).cliIdCallPost(id, body, options).then((request) => request(axios, basePath));
+        async serverInitPost(body: ServerInit, options?: AxiosRequestConfig): Promise<AxiosResponse<StatusResponse>> {
+            return ServerApiFp(configuration).serverInitPost(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * plesk: >= 17.9
-         * @summary Command reference
-         * @param {string} id Command identifier
+         * 
+         * @summary Server IP Addresses
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async cliIdRefGet(id: string, options?: AxiosRequestConfig): Promise<AxiosResponse<InlineResponse200>> {
-            return CliApiFp(configuration).cliIdRefGet(id, options).then((request) => request(axios, basePath));
+        async serverIpsGet(options?: AxiosRequestConfig): Promise<AxiosResponse<Array<ServerIp>>> {
+            return ServerApiFp(configuration).serverIpsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Installing license key
+         * @param {ServerLicense} body License key
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async serverLicensePost(body: ServerLicense, options?: AxiosRequestConfig): Promise<AxiosResponse<StatusResponse>> {
+            return ServerApiFp(configuration).serverLicensePost(body, options).then((request) => request(axios, basePath));
         },
     };
 };
 
 /**
- * CliApi - object-oriented interface
+ * ServerApi - object-oriented interface
  * @export
- * @class CliApi
+ * @class ServerApi
  * @extends {BaseAPI}
  */
-export class CliApi extends BaseAPI {
+export class ServerApi extends BaseAPI {
     /**
      * 
-     * @summary List of available commands
+     * @summary Server Meta Information
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof CliApi
+     * @memberof ServerApi
      */
-    public async cliCommandsGet(options?: AxiosRequestConfig) : Promise<AxiosResponse<Array<string>>> {
-        return CliApiFp(this.configuration).cliCommandsGet(options).then((request) => request(this.axios, this.basePath));
+    public async serverGet(options?: AxiosRequestConfig) : Promise<AxiosResponse<ServerMeta>> {
+        return ServerApiFp(this.configuration).serverGet(options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 
-     * @summary Execute command
-     * @param {string} id Command identifier
-     * @param {CliCallRequest} [body] Command execution parameters
+     * @summary Performing initial server setup
+     * @param {ServerInit} body Inital setup parameters
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof CliApi
+     * @memberof ServerApi
      */
-    public async cliIdCallPost(id: string, body?: CliCallRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<CliCallResponse>> {
-        return CliApiFp(this.configuration).cliIdCallPost(id, body, options).then((request) => request(this.axios, this.basePath));
+    public async serverInitPost(body: ServerInit, options?: AxiosRequestConfig) : Promise<AxiosResponse<StatusResponse>> {
+        return ServerApiFp(this.configuration).serverInitPost(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * plesk: >= 17.9
-     * @summary Command reference
-     * @param {string} id Command identifier
+     * 
+     * @summary Server IP Addresses
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof CliApi
+     * @memberof ServerApi
      */
-    public async cliIdRefGet(id: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<InlineResponse200>> {
-        return CliApiFp(this.configuration).cliIdRefGet(id, options).then((request) => request(this.axios, this.basePath));
+    public async serverIpsGet(options?: AxiosRequestConfig) : Promise<AxiosResponse<Array<ServerIp>>> {
+        return ServerApiFp(this.configuration).serverIpsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * 
+     * @summary Installing license key
+     * @param {ServerLicense} body License key
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ServerApi
+     */
+    public async serverLicensePost(body: ServerLicense, options?: AxiosRequestConfig) : Promise<AxiosResponse<StatusResponse>> {
+        return ServerApiFp(this.configuration).serverLicensePost(body, options).then((request) => request(this.axios, this.basePath));
     }
 }

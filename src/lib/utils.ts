@@ -15,20 +15,23 @@ export function toBrl(value: number): string {
 }
 
 export function isValidCPF(cpf: string = "") {
-  let sum = 0, remainder;
-        
-  cpf = `${cpf}`.replace(/^\D+/gmi, "");
+  let sum = 0,
+    remainder;
+
+  cpf = `${cpf}`.replace(/^\D+/gim, "");
 
   if (cpf.length != 11 || new Set(cpf).size === 1) return false;
 
-  for (let i = 1; i <= 9; i++) sum = sum + parseInt(cpf.substring(i - 1, i)) * (11 - i);
+  for (let i = 1; i <= 9; i++)
+    sum = sum + parseInt(cpf.substring(i - 1, i)) * (11 - i);
   remainder = (sum * 10) % 11;
 
   if (remainder == 10 || remainder == 11) remainder = 0;
   if (remainder != parseInt(cpf.substring(9, 10))) return false;
 
   sum = 0;
-  for (let i = 1; i <= 10; i++) sum = sum + parseInt(cpf.substring(i - 1, i)) * (12 - i);
+  for (let i = 1; i <= 10; i++)
+    sum = sum + parseInt(cpf.substring(i - 1, i)) * (12 - i);
   remainder = (sum * 10) % 11;
 
   if (remainder == 10 || remainder == 11) remainder = 0;
@@ -38,38 +41,36 @@ export function isValidCPF(cpf: string = "") {
 }
 
 export function isValidCNPJ(cnpj: string = "") {
-  cnpj = `${cnpj}`.replace(/^\D+/gmi,  "");
- 
+  cnpj = `${cnpj}`.replace(/^\D+/gim, "");
+
   if (cnpj.length != 14 || new Set(cnpj).size === 1) return false;
-         
+
   let size = cnpj.length - 2;
   let numbers = cnpj.substring(0, size);
   const digits = cnpj.substring(size);
   let soma = 0;
   let pos = size - 7;
-  
+
   for (let i = size; i >= 1; i--) {
-    soma += +(numbers.charAt(size - i)) * pos--;
-    if (pos < 2)
-      pos = 9;
+    soma += +numbers.charAt(size - i) * pos--;
+    if (pos < 2) pos = 9;
   }
-  
-  let result = soma % 11 < 2 ? 0 : 11 - soma % 11;
+
+  let result = soma % 11 < 2 ? 0 : 11 - (soma % 11);
 
   if (result !== +digits.charAt(0)) return false;
-         
+
   size = size + 1;
   numbers = cnpj.substring(0, size);
   soma = 0;
   pos = size - 7;
   for (let i = size; i >= 1; i--) {
-    soma += +(numbers.charAt(size - i)) * pos--;
-    if (pos < 2)
-      pos = 9;
+    soma += +numbers.charAt(size - i) * pos--;
+    if (pos < 2) pos = 9;
   }
 
-  result = soma % 11 < 2 ? 0 : 11 - soma % 11;
+  result = soma % 11 < 2 ? 0 : 11 - (soma % 11);
   if (result !== +digits.charAt(1)) return false;
-           
+
   return true;
 }

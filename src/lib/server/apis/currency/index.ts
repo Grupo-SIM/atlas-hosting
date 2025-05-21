@@ -12,21 +12,21 @@ export class CurrencyConversionApi {
 
   private async getNewConversionRate(currency: string) {
     const { data } = await this.api.get<CurrencyApiResponse<string, string>>(
-      `/currencies/${currency}.json`,
+      `/currencies/${currency}.json`
     );
 
     return data[currency];
   }
 
   private async getConversionRate(
-    currency: string,
+    currency: string
   ): Promise<Record<string, number>> {
     const cachedEntry = this.cache[currency];
 
     if (!cachedEntry || !isSameDay(cachedEntry.timestamp, Date.now())) {
       await this.updateCache(currency);
     }
-    
+
     return this.cache[currency].data;
   }
 
@@ -41,26 +41,23 @@ export class CurrencyConversionApi {
     return amount / converstionRate;
   }
 
-  public async convertMultiple<T extends string = string, U extends string = string>({
-    from,
-    to,
-    amounts,
-  }: ConvertMultipleParams<T, U>): Promise<number[]> {
+  public async convertMultiple<
+    T extends string = string,
+    U extends string = string,
+  >({ from, to, amounts }: ConvertMultipleParams<T, U>): Promise<number[]> {
     const data = await this.getConversionRate(to);
     const converstionRate = data[from];
     return amounts.map((amount) => amount / converstionRate);
   }
 
-  public async updateCache(
-    currency: string,
-  ): Promise<void> {
+  public async updateCache(currency: string): Promise<void> {
     const data = await this.getNewConversionRate(currency);
 
     this.cache[currency] = {
       data,
       timestamp: Date.now(),
     };
-  }  
+  }
 }
 
 type CurrencyApiResponse<T extends string, U extends string> = Record<
@@ -91,7 +88,10 @@ export type CurrencyConversionCacheEntry = {
   timestamp: number;
 };
 
-export type CurrencyConversionCache = Record<string, CurrencyConversionCacheEntry>;
+export type CurrencyConversionCache = Record<
+  string,
+  CurrencyConversionCacheEntry
+>;
 
 const currencyConversion = new CurrencyConversionApi();
 

@@ -14,20 +14,50 @@ import nameSilo from "@/lib/server/apis/namesilo";
 import { type ListDomainDomain } from "@/lib/server/apis/namesilo/types";
 import { Suspense } from "react";
 import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm"; // We'll create this client component
+import pleskApi from "@/lib/server/apis/plesk";
 
-async function getUserDomains(namesiloId: number): Promise<string[]> {
+async function getUserDomains(
+  namesiloId: number
+): Promise<(ListDomainDomain & { inPlesk: boolean })[]> {
   try {
-    const response = await nameSilo.listDomains({ portfolioId: namesiloId, pageSize: 300 }); // Max pageSize for listDomains is 300
+    const response = await nameSilo.listDomains({
+      portfolioId: namesiloId,
+      pageSize: 300,
+    }); // Max pageSize for listDomains is 300
+
+    let allDomains: ListDomainDomain[] = [];
+
     if (response && response.code === 300 && response.domains) {
       if (Array.isArray(response.domains)) {
-        return response.domains.map((d: ListDomainDomain) => d.domain);
-      } else if (typeof response.domains === 'object' && response.domains.domain) {
+        allDomains = response.domains;
+      } else if (
+        typeof response.domains === "object" &&
+        response.domains.domain
+      ) {
         // Handle case where only one domain is returned as an object instead of an array
-        return [response.domains.domain.domain];
+        allDomains = [response.domains.domain];
+      } else {
+        allDomains = [];
       }
-      return [];
     }
-    console.error("Error fetching domains or no domains found:", response?.detail);
+
+    const domainsWithPleskData = await Promise.all(
+      allDomains.map(async (domain) => {
+        const d = await pleskApi.getDomain(domain.domain);
+        console.log(d);
+        return {
+          ...domain,
+          inPlesk: false,
+        };
+      })
+    );
+
+    return domainsWithPleskData;
+
+    console.error(
+      "Error fetching domains or no domains found:",
+      response?.detail
+    );
     return [];
   } catch (error) {
     console.error("Exception fetching domains:", error);
@@ -53,23 +83,24 @@ export default async function NewSitePage() {
     );
   }
 
-  if (typeof user.namesiloId !== 'number') {
+  if (!user.namesiloId) {
     return (
       <div className="space-y-6 p-6 pb-16">
         <Card>
           <CardHeader>
             <CardTitle>Criar Novo Site WordPress</CardTitle>
             <CardDescription>
-              Sua conta não está configurada para registrar domínios (Namesilo ID ausente). Por favor, complete seu perfil ou contate o suporte.
+              Sua conta não está configurada para registrar domínios (Namesilo
+              ID ausente). Por favor, complete seu perfil ou contate o suporte.
             </CardDescription>
           </CardHeader>
         </Card>
       </div>
     );
   }
-  
+
   // Fetch domains on the server
-  const domains = await getUserDomains(user.namesiloId);
+  const domains = await getUserDomains(+user.namesiloId);
 
   return (
     <div className="space-y-6 p-6 pb-16">
@@ -95,7 +126,10 @@ function NewSitePageSkeleton() {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="domainName-skeleton">Selecione um Domínio</Label>
-          <div className="h-10 w-full bg-muted rounded-md animate-pulse" id="domainName-skeleton"></div>
+          <div
+            className="h-10 w-full bg-muted rounded-md animate-pulse"
+            id="domainName-skeleton"
+          ></div>
         </div>
       </CardContent>
       <CardFooter>

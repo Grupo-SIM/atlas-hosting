@@ -1,7 +1,19 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { FaCheck, FaCircleCheck, FaMoneyBillTransfer, FaMoneyCheck } from "react-icons/fa6";
+import {
+  FaCheck,
+  FaCircleCheck,
+  FaMoneyBillTransfer,
+  FaMoneyCheck,
+} from "react-icons/fa6";
 
 export default function PaymentSuccessPage() {
   return (
@@ -11,7 +23,9 @@ export default function PaymentSuccessPage() {
           <div className="mx-auto bg-green-100 dark:bg-green-900 rounded-full p-3 w-fit">
             <FaMoneyBillTransfer className="w-10 h-10 text-green-600 dark:text-green-400" />
           </div>
-          <CardTitle className="mt-4 text-2xl font-semibold">Pagamento Enviado!</CardTitle>
+          <CardTitle className="mt-4 text-2xl font-semibold">
+            Pagamento Enviado!
+          </CardTitle>
           <CardDescription className="mt-2 text-gray-600 dark:text-gray-400">
             Seu pagamento foi enviado e está sendo processado.
           </CardDescription>

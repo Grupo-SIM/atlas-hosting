@@ -1,7 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CreditCard, Globe, History, Plus, Server, Settings, ShoppingCart, PenTool as Tool, Train as Transfer } from "lucide-react";
+import {
+  CreditCard,
+  Globe,
+  History,
+  Plus,
+  Server,
+  Settings,
+  ShoppingCart,
+  PenTool as Tool,
+  Train as Transfer,
+} from "lucide-react";
 import Link from "next/link";
 
 export function QuickActions() {
@@ -21,8 +31,12 @@ export function QuickActions() {
             <Link href="/plans">
               <ShoppingCart className="h-10 w-10 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
-                <span className="text-xl font-medium block">Comprar Plano de Hospedagem</span>
-                <span className="text-sm text-muted-foreground block">Escolha o plano ideal para seu projeto</span>
+                <span className="text-xl font-medium block">
+                  Comprar Plano de Hospedagem
+                </span>
+                <span className="text-sm text-muted-foreground block">
+                  Escolha o plano ideal para seu projeto
+                </span>
               </div>
             </Link>
           </Button>
@@ -35,8 +49,12 @@ export function QuickActions() {
             <Link href="/hosting/premium">
               <Server className="h-10 w-10 text-purple-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
-                <span className="text-xl font-medium block">Premium Atlas Hosting</span>
-                <span className="text-sm text-muted-foreground block">Hospedagem premium com recursos avançados</span>
+                <span className="text-xl font-medium block">
+                  Premium Atlas Hosting
+                </span>
+                <span className="text-sm text-muted-foreground block">
+                  Hospedagem premium com recursos avançados
+                </span>
               </div>
             </Link>
           </Button>
@@ -49,8 +67,12 @@ export function QuickActions() {
             <Link href="/sites/new">
               <Plus className="h-10 w-10 text-green-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
-                <span className="text-xl font-medium block">Adicionar Novo Site</span>
-                <span className="text-sm text-muted-foreground block">Site atual: {currentSite}</span>
+                <span className="text-xl font-medium block">
+                  Adicionar Novo Site
+                </span>
+                <span className="text-sm text-muted-foreground block">
+                  Site atual: {currentSite}
+                </span>
               </div>
             </Link>
           </Button>
@@ -64,7 +86,9 @@ export function QuickActions() {
               <Tool className="h-10 w-10 text-orange-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
                 <span className="text-xl font-medium block">Ferramentas</span>
-                <span className="text-sm text-muted-foreground block">Acesse ferramentas e utilitários</span>
+                <span className="text-sm text-muted-foreground block">
+                  Acesse ferramentas e utilitários
+                </span>
               </div>
             </Link>
           </Button>
@@ -77,8 +101,12 @@ export function QuickActions() {
             <Link href="/wordpress">
               <Settings className="h-10 w-10 text-indigo-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
-                <span className="text-xl font-medium block">Admin WordPress</span>
-                <span className="text-sm text-muted-foreground block">Gerencie seu site WordPress</span>
+                <span className="text-xl font-medium block">
+                  Admin WordPress
+                </span>
+                <span className="text-sm text-muted-foreground block">
+                  Gerencie seu site WordPress
+                </span>
               </div>
             </Link>
           </Button>
@@ -91,8 +119,12 @@ export function QuickActions() {
             <Link href="/cpanel">
               <Settings className="h-10 w-10 text-red-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
-                <span className="text-xl font-medium block">Painel de Controle</span>
-                <span className="text-sm text-muted-foreground block">Acesse o cPanel</span>
+                <span className="text-xl font-medium block">
+                  Painel de Controle
+                </span>
+                <span className="text-sm text-muted-foreground block">
+                  Acesse o cPanel
+                </span>
               </div>
             </Link>
           </Button>
@@ -112,7 +144,9 @@ export function QuickActions() {
               <Globe className="h-10 w-10 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
                 <span className="text-xl font-medium block">Meus Domínios</span>
-                <span className="text-sm text-muted-foreground block">Gerencie seus domínios</span>
+                <span className="text-sm text-muted-foreground block">
+                  Gerencie seus domínios
+                </span>
               </div>
             </Link>
           </Button>
@@ -125,8 +159,12 @@ export function QuickActions() {
             <Link href="/domains/register">
               <ShoppingCart className="h-10 w-10 text-green-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
-                <span className="text-xl font-medium block">Comprar Novo Domínio</span>
-                <span className="text-sm text-muted-foreground block">Registre um novo domínio</span>
+                <span className="text-xl font-medium block">
+                  Comprar Novo Domínio
+                </span>
+                <span className="text-sm text-muted-foreground block">
+                  Registre um novo domínio
+                </span>
               </div>
             </Link>
           </Button>
@@ -139,8 +177,12 @@ export function QuickActions() {
             <Link href="/domains/transfer">
               <Transfer className="h-10 w-10 text-orange-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
-                <span className="text-xl font-medium block">Transferir Domínio</span>
-                <span className="text-sm text-muted-foreground block">Transfira um domínio existente</span>
+                <span className="text-xl font-medium block">
+                  Transferir Domínio
+                </span>
+                <span className="text-sm text-muted-foreground block">
+                  Transfira um domínio existente
+                </span>
               </div>
             </Link>
           </Button>
@@ -160,7 +202,9 @@ export function QuickActions() {
               <CreditCard className="h-10 w-10 text-purple-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
                 <span className="text-xl font-medium block">Assinaturas</span>
-                <span className="text-sm text-muted-foreground block">Gerencie suas assinaturas</span>
+                <span className="text-sm text-muted-foreground block">
+                  Gerencie suas assinaturas
+                </span>
               </div>
             </Link>
           </Button>
@@ -173,8 +217,12 @@ export function QuickActions() {
             <Link href="/billing/history">
               <History className="h-10 w-10 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
-                <span className="text-xl font-medium block">Histórico de Pagamento</span>
-                <span className="text-sm text-muted-foreground block">Visualize seu histórico de pagamentos</span>
+                <span className="text-xl font-medium block">
+                  Histórico de Pagamento
+                </span>
+                <span className="text-sm text-muted-foreground block">
+                  Visualize seu histórico de pagamentos
+                </span>
               </div>
             </Link>
           </Button>

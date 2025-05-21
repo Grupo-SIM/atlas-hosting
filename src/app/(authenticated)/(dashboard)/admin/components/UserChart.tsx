@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Line } from "react-chartjs-2";
@@ -12,8 +12,17 @@ import {
   Tooltip,
   Legend,
   ChartData,
-} from 'chart.js';
-import { addMonths, format, getDaysInMonth, getYear, isAfter, formatDate, getMonth, toDate } from "date-fns";
+} from "chart.js";
+import {
+  addMonths,
+  format,
+  getDaysInMonth,
+  getYear,
+  isAfter,
+  formatDate,
+  getMonth,
+  toDate,
+} from "date-fns";
 import { range } from "lodash";
 
 ChartJS.register(
@@ -37,7 +46,7 @@ interface UserChartProps {
 
 function getMonthRange(userGrowth: UserGrowth[]) {
   if (userGrowth.length === 0) return [];
-  const months = userGrowth.map(u => u.month).sort();
+  const months = userGrowth.map((u) => u.month).sort();
   const start = months[0];
   const end = months[months.length - 1];
 
@@ -64,7 +73,7 @@ const months = [
   "Setembro",
   "Outubro",
   "Novembro",
-  "Dezembro"  
+  "Dezembro",
 ];
 
 function getDateFromMonth(month: number) {
@@ -73,17 +82,19 @@ function getDateFromMonth(month: number) {
 
 export function UserChart({ userGrowth }: UserChartProps) {
   // Map userGrowth to a lookup for fast access
-  const growthMap = Object.fromEntries(userGrowth.map(u => [getMonth(toDate(u.month + '-01')), u.count]));
+  const growthMap = Object.fromEntries(
+    userGrowth.map((u) => [getMonth(toDate(u.month + "-01")), u.count])
+  );
 
   // Build the data array for all months (0 if no data)
   const data: ChartData<"line", number[], string> = {
     labels: months,
     datasets: [
       {
-        label: 'Novos Usuários',
+        label: "Novos Usuários",
         data: months.map((_, idx) => growthMap[idx] ?? 0),
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 1)',
+        borderColor: "rgb(59, 130, 246)",
+        backgroundColor: "rgba(59, 130, 246, 1)",
         tension: 0,
       },
     ],
@@ -101,7 +112,7 @@ export function UserChart({ userGrowth }: UserChartProps) {
             responsive: true,
             plugins: {
               legend: {
-                position: 'bottom' as const,
+                position: "bottom" as const,
               },
               title: {
                 display: false,
@@ -115,15 +126,15 @@ export function UserChart({ userGrowth }: UserChartProps) {
                 },
                 title: {
                   display: true,
-                  text: 'Novos Usuários',
-                  padding: 10
+                  text: "Novos Usuários",
+                  padding: 10,
                 },
               },
             },
-            maintainAspectRatio : false
+            maintainAspectRatio: false,
           }}
         />
       </CardContent>
     </Card>
   );
-} 
+}

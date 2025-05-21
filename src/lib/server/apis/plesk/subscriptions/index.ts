@@ -1,6 +1,6 @@
 import { User } from "@/lib/db/schema";
 import axios from "axios";
-import type * as Plesk from "plesk-api";
+import type * as Plesk from "@/plesk";
 
 export default class SubscriptionApi {
   constructor(private readonly api: Plesk.CliApi) {}
@@ -29,14 +29,14 @@ export default class SubscriptionApi {
     const login = Math.random().toString(36).substring(2, 10);
     const password = Math.random().toString(36).substring(2, 10);
 
-    await this.callSubscription(`--create ${domainName} -ip ${process.env.SERVER_IP} -login ${login} -passwd "${password}" -hosting true -hst_type phys -php true -php_handler_id fastcgi -ssl true -mail_service true -hard_quota 10G -log-rotate true -seo-redirect www`);
-
-    await this.getSsl(domainName, user);
+    await this.callSubscription(
+      `--create ${domainName} -ip ${process.env.SERVER_IP} -login ${login} -passwd "${password}" -hosting true -hst_type phys -php true -php_handler_id fastcgi -ssl true -mail_service true -hard_quota 10G -log-rotate true -seo-redirect www`
+    );
   }
 
-  private async getSsl(domainName: string, user: User) {
-    await this.api.cliIdCallPost("extension", {
-      "params": [
+  public async getSsl(domainName: string, user: User) {
+    return await this.api.cliIdCallPost("extension", {
+      params: [
         "--exec",
         "letsencrypt",
         "cli.php",
@@ -45,8 +45,8 @@ export default class SubscriptionApi {
         "-d",
         `www.${domainName}`,
         "-m",
-        user.email
-      ]
+        user.email,
+      ],
     });
   }
 }
@@ -54,5 +54,4 @@ export default class SubscriptionApi {
 interface SubscriptionCreateRequest {
   domain: string;
   customer_id: number;
-
 }

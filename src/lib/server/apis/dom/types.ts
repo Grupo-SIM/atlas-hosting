@@ -8,16 +8,18 @@ export interface CreateRecurrentPaymentParams {
   externalReference: string;
   planId?: string;
   newClient?: CreateClientParams;
-  card: {
-    number: string;
-    holder_name: string;
-    holder_document: string;
-    exp_month: number;
-    exp_year: number;
-    cvv: string;
-  } | {
-    token: string;
-  }
+  card:
+    | {
+        number: string;
+        holder_name: string;
+        holder_document: string;
+        exp_month: number;
+        exp_year: number;
+        cvv: string;
+      }
+    | {
+        token: string;
+      };
 }
 
 export interface CreateSubscriptionParams {
@@ -75,7 +77,7 @@ export interface Address {
 
 export interface WithDrawFundsParams {
   description: string;
-  receivers: Receiver
+  receivers: Receiver;
 }
 
 export interface WithDrawFundsResponse {

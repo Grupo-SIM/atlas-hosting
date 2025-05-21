@@ -1,7 +1,15 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createFeature } from "@/app/actions";
@@ -9,7 +17,10 @@ import { CgSpinner } from "react-icons/cg";
 
 export function FeatureModal() {
   const [open, setOpen] = useState(false);
-  const [state, doCreate, isPending] = useActionState(createFeature, { status: "idle", message: "" });
+  const [state, doCreate, isPending] = useActionState(createFeature, {
+    status: "idle",
+    message: "",
+  });
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,12 +57,14 @@ export function FeatureModal() {
             <Button type="submit" className="w-30">
               {!isPending ? (
                 "Criar Recurso"
-              ): (
+              ) : (
                 <CgSpinner className="w-4 h-4 mx-auto animate-spin" />
               )}
             </Button>
             <DialogClose asChild>
-              <Button variant="outline" type="button">Cancelar</Button>
+              <Button variant="outline" type="button">
+                Cancelar
+              </Button>
             </DialogClose>
           </DialogFooter>
         </form>
