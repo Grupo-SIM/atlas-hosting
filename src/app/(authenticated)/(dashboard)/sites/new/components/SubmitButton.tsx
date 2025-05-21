@@ -11,12 +11,14 @@ interface SubmitButtonProps {
   domain: string;
   adminUsername: string;
   adminPassword: string;
+  siteName: string;
 }
 
 export function SubmitButton({
   domain,
   adminUsername,
   adminPassword,
+  siteName,
 }: SubmitButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -29,9 +31,14 @@ export function SubmitButton({
     setProgress(0);
     setMessage("");
 
-    const eventSource = new EventSource(
-      `/api/wp-install?domain=${domain}&admin_username=${adminUsername}&admin_password=${adminPassword}`
-    );
+    const queryParams = new URLSearchParams({
+      domain,
+      admin_username: encodeURIComponent(adminUsername),
+      admin_password: encodeURIComponent(adminPassword),
+      site_name: encodeURIComponent(siteName),
+    });
+
+    const eventSource = new EventSource(`/api/wp-install?${queryParams}`);
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -53,8 +60,13 @@ export function SubmitButton({
       }
 
       if (data.success) {
+        toast({
+          title: "Sucesso",
+          description: "Você será redirecionado em breve.",
+          variant: "default",
+        });
+
         eventSource.close();
-        setIsLoading(false);
         router.push("/sites");
       }
     };

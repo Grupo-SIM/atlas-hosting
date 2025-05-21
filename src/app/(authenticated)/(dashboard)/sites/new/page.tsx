@@ -44,7 +44,6 @@ async function getUserDomains(
     const domainsWithPleskData = await Promise.all(
       allDomains.map(async (domain) => {
         const d = await pleskApi.getDomain(domain.domain);
-        console.log(d);
         return {
           ...domain,
           inPlesk: false,

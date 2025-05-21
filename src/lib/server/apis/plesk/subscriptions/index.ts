@@ -25,10 +25,11 @@ export default class SubscriptionApi {
     return await this.callSubscription("--list");
   }
 
-  public async createSubscription(domainName: string, user: User) {
-    const login = Math.random().toString(36).substring(2, 10);
-    const password = Math.random().toString(36).substring(2, 10);
-
+  public async createSubscription({
+    domainName,
+    login,
+    password,
+  }: CreateSubscriptionParameters) {
     await this.callSubscription(
       `--create ${domainName} -ip ${process.env.SERVER_IP} -login ${login} -passwd "${password}" -hosting true -hst_type phys -php true -php_handler_id fastcgi -ssl true -mail_service true -hard_quota 10G -log-rotate true -seo-redirect www`
     );
@@ -49,6 +50,12 @@ export default class SubscriptionApi {
       ],
     });
   }
+}
+
+export interface CreateSubscriptionParameters {
+  domainName: string;
+  login: string;
+  password: string;
 }
 
 interface SubscriptionCreateRequest {

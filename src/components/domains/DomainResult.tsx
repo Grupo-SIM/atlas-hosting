@@ -91,8 +91,6 @@ async function DomainAvailabilityIcon({
 }) {
   const data = await domainData;
 
-  console.log(JSON.stringify(data));
-
   return data?.available ? (
     <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 dark:bg-green-900/30 mr-3">
       <Check className="h-4 w-4" />

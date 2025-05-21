@@ -1,39 +1,26 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { deleteWordPressInstances } from "@/app/actions";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Globe } from "lucide-react";
-import { FaTimes } from "react-icons/fa";
-import Link from "next/link";
-import { CgSpinner } from "react-icons/cg";
-import { useEffect, useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { toast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { toast } from "@/hooks/use-toast";
 import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from "@/components/ui/tooltip";
+  startTransition,
+  useActionState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { BulkActionButtons } from "./BulkActionsButton";
+import { SiteCard } from "./SiteCard";
 
-interface WordPressInstance {
+export interface WordPressInstance {
   id: number;
   instanceId: number;
   name: string;
@@ -43,7 +30,7 @@ interface WordPressInstance {
   ready?: boolean;
 }
 
-interface SitesListProps {
+export interface SitesListProps {
   readyInstances: WordPressInstance[];
   processingInstances: WordPressInstance[];
 }
@@ -56,6 +43,40 @@ export function SitesList({
     useState<WordPressInstance[]>(initialReady);
   const [processingInstances, setProcessingInstances] =
     useState<WordPressInstance[]>(initialProcessing);
+  const [selectedInstances, setSelectedInstances] = useState<number[]>([]);
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [state, doDelete, isPending] = useActionState(
+    deleteWordPressInstances,
+    {
+      status: "idle",
+      message: "",
+    }
+  );
+
+  useEffect(() => {
+    if (state.status === "success") {
+      setSelectedInstances((prevInstances) => {
+        setReadyInstances((prev) =>
+          prev.filter((i) => !prevInstances.includes(i.id))
+        );
+        setProcessingInstances((prev) =>
+          prev.filter((i) => !prevInstances.includes(i.id))
+        );
+        return [];
+      });
+      setIsBulkMode(false);
+      toast({
+        title: "Sites excluídos",
+        description: state.message,
+      });
+    } else if (state.status === "error") {
+      toast({
+        title: "Erro ao excluir sites",
+        description: state.message,
+        variant: "destructive",
+      });
+    }
+  }, [state]);
 
   useEffect(() => {
     if (processingInstances.length === 0) return;
@@ -66,9 +87,9 @@ export function SitesList({
 
     es.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      // data.domains is { [domain]: boolean }
       const newlyReady: WordPressInstance[] = [];
       const stillProcessing: WordPressInstance[] = [];
+
       processingInstances.forEach((instance) => {
         const isReady = data.domains[instance.domain] === true;
         if (isReady) {
@@ -88,37 +109,73 @@ export function SitesList({
     return () => {
       es.close();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processingInstances.length]);
+  }, [processingInstances]);
 
-  const handleDelete = async (instance: WordPressInstance) => {
-    try {
-      const response = await fetch(`/api/sites/${instance.instanceId}`, {
-        method: "DELETE",
+  const handleDelete = useCallback(
+    (instance: WordPressInstance) => {
+      startTransition(() => {
+        doDelete(instance.instanceId.toString());
       });
+    },
+    [doDelete]
+  );
 
-      if (!response.ok) {
-        throw new Error("Failed to delete site");
-      }
+  const handleBulkDelete = useCallback(() => {
+    if (selectedInstances.length === 0) return;
 
-      // Remove the instance from both lists
-      setReadyInstances((prev) => prev.filter((i) => i.id !== instance.id));
-      setProcessingInstances((prev) =>
-        prev.filter((i) => i.id !== instance.id)
-      );
+    startTransition(() => {
+      doDelete(selectedInstances.join(","));
+    });
+  }, [doDelete, selectedInstances]);
 
-      toast({
-        title: "Site excluído",
-        description: "O site foi excluído com sucesso.",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao excluir site",
-        description: "Não foi possível excluir o site. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
+  const toggleInstanceSelection = useCallback((instanceId: number) => {
+    setSelectedInstances((prev) =>
+      prev.includes(instanceId)
+        ? prev.filter((id) => id !== instanceId)
+        : [...prev, instanceId]
+    );
+  }, []);
+
+  const toggleBulkMode = useCallback(() => {
+    setIsBulkMode((prev) => !prev);
+    setSelectedInstances([]);
+  }, []);
+
+  const bulkActionButtonsProps = useMemo(
+    () => ({
+      isBulkMode,
+      selectedCount: selectedInstances.length,
+      isPending,
+      onToggleBulkMode: toggleBulkMode,
+      onBulkDelete: handleBulkDelete,
+    }),
+    [
+      isBulkMode,
+      selectedInstances.length,
+      isPending,
+      toggleBulkMode,
+      handleBulkDelete,
+    ]
+  );
+
+  const siteCardProps = useCallback(
+    (instance: WordPressInstance, isLoading: boolean) => ({
+      instance,
+      isLoading,
+      isBulkMode,
+      isPending,
+      selectedInstances,
+      onToggleSelection: toggleInstanceSelection,
+      onDelete: handleDelete,
+    }),
+    [
+      isBulkMode,
+      isPending,
+      selectedInstances,
+      toggleInstanceSelection,
+      handleDelete,
+    ]
+  );
 
   if (readyInstances.length === 0 && processingInstances.length === 0) {
     return (
@@ -134,91 +191,17 @@ export function SitesList({
     );
   }
 
-  const SiteCard = ({
-    instance,
-    isLoading,
-  }: {
-    instance: WordPressInstance;
-    isLoading: boolean;
-  }) => {
-    // Remove trailing slash for /wp-admin link
-    const baseUrl = instance.domain.replace(/\/$/, "");
-    const redirectPath = `${baseUrl}/wp-admin/admin.php?page=elementor-app#onboarding/hello`;
-    const adminUrl = `${baseUrl}/wp-login.php?redirect_to=${encodeURIComponent(redirectPath)}`;
-    return (
-      <Card key={instance.id}>
-        <CardHeader className="relative">
-          <div className="absolute right-4 top-4">
-            <AlertDialog>
-              <TooltipProvider>
-                <Tooltip>
-                  <AlertDialogTrigger asChild>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                      >
-                        <FaTimes className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                  </AlertDialogTrigger>
-                  <TooltipContent>Excluir Site</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir Site</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza que deseja excluir o site {instance.name}? Esta
-                    ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => handleDelete(instance)}>
-                    Excluir
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-4 w-4" />
-            {instance.name}
-          </CardTitle>
-          <CardDescription>{instance.domain}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <CgSpinner className="h-4 w-4 animate-spin" />
-              <span>Em processamento</span>
-            </div>
-          ) : (
-            <Button variant="outline" asChild className="w-full">
-              <Link href={adminUrl} target="_blank" rel="noopener noreferrer">
-                Editar Site
-              </Link>
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
-
   return (
     <div className="space-y-8">
       {readyInstances.length > 0 && (
         <div>
-          <h2 className="mb-4 text-lg font-semibold">Sites Prontos</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Sites Prontos</h2>
+            <BulkActionButtons {...bulkActionButtonsProps} />
+          </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {readyInstances.map((instance) => (
-              <SiteCard
-                key={instance.id}
-                instance={instance}
-                isLoading={false}
-              />
+              <SiteCard key={instance.id} {...siteCardProps(instance, false)} />
             ))}
           </div>
         </div>
@@ -226,14 +209,13 @@ export function SitesList({
 
       {processingInstances.length > 0 && (
         <div>
-          <h2 className="mb-4 text-lg font-semibold">Sites em Processamento</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Sites em Processamento</h2>
+            <BulkActionButtons {...bulkActionButtonsProps} />
+          </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {processingInstances.map((instance) => (
-              <SiteCard
-                key={instance.id}
-                instance={instance}
-                isLoading={true}
-              />
+              <SiteCard key={instance.id} {...siteCardProps(instance, true)} />
             ))}
           </div>
         </div>

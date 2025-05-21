@@ -76,14 +76,14 @@ export default async function SitesPage() {
     status: instance.stateText,
   }));
 
-  console.log({ wpResponse });
-
   // Filter WordPress instances to only show user's domains
   const wpInstances = allWpInstances.filter((instance) =>
     userDomainNames.some((domain) =>
       [domain, `www.${domain}`].includes(new URL(instance.domain).hostname)
     )
   );
+
+  console.log({ wpInstances });
 
   // Do DNS check for each instance
   const dnsResults = await Promise.all(

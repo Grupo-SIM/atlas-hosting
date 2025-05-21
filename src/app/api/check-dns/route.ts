@@ -84,10 +84,10 @@ export async function GET(request: Request) {
 
         // Send current state for all domains
         yield `data: ${JSON.stringify({
-          initial: Object.fromEntries(
+          initial: {},
+          domains: Object.fromEntries(
             domains.map((domain) => [domain, results.get(domain)])
           ),
-          domains: Object.fromEntries(results),
           updates: domainResults,
         })}\n\n`;
 

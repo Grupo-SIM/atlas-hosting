@@ -1,5 +1,5 @@
-import axios, { type AxiosInstance, type AxiosResponse } from "axios";
 import * as Plesk from "@/plesk";
+import axios, { type AxiosInstance, type AxiosResponse } from "axios";
 import SubscriptionApi from "./subscriptions";
 import PleskWpToolkitApi from "./wp-toolkit";
 

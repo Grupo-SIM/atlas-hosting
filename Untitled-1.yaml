@@ -1,0 +1,123 @@
+{
+  id: 125,
+  mainDomainId: 254,
+  path: '/httpdocs',
+  ownerId: 1,
+  guid: 'df9db8c4-bd70-4d55-85d3-8ec876a90f31',
+  hidden: false,
+  unsupportedPhp: false,
+  unsupportedWp: false,
+  broken: false,
+  infected: false,
+  outdatedPhp: false,
+  outdatedWp: false,
+  alive: true,
+  stateText: 'Working',
+  siteUrl: 'https://www.iwillplay.lol',
+  loginUrl: 'https://www.iwillplay.lol/wp-login.php',
+  name: 'Inspiration Station',
+  version: '6.8.1',
+  admin_email: 'noreply@atlashosting.com.br',
+  forceUpdates: 'true',
+  blog_public: true,
+  update_version: '',
+  lastSecurityCheckResult: 'secureRecommended',
+  sslStatus: {
+    isSslEnabled: true,
+    isRedirectToHttpsEnabled: true,
+    isUrlProtocolHttps: true,
+    isCertificateInstalled: false,
+    isSelfSigned: null,
+    isActual: null,
+    issuerName: null,
+    isSuitableForDomain: null
+  },
+  fullPath: '/var/www/vhosts/iwillplay.lol/httpdocs',
+  plugins: {
+    akismet: {
+      name: 'akismet',
+      status: 'inactive',
+      version: '5.3.7',
+      title: 'Akismet Anti-spam: Spam Protection',
+      description: 'Used by millions, Akismet is quite possibly the best way in the world to\n' +
+        '<strong>protect your blog from spam</strong>. Akismet Anti-spam keeps your\n' +
+        'site protected even while you sleep. To get started: activate the Akismet\n' +
+        'plugin and then go to your Akismet Settings page to set up your API key.',
+      update_version: '5.4',
+      autoUpdates: false,
+      sourceId: 1,
+      ownerGuid: null,
+      blocked: false
+    },
+    hello: {
+      name: 'hello',
+      status: 'inactive',
+      version: '1.7.2',
+      title: 'Hello Dolly',
+      description: 'This is not just a plugin, it symbolizes the hope and enthusiasm of an\n' +
+        'entire generation summed up in two words sung most famously by Louis\n' +
+        'Armstrong: Hello, Dolly. When activated you will randomly see a lyric from\n' +
+        '<cite>Hello, Dolly</cite> in the upper right of your admin screen on every\n' +
+        'page.',
+      update_version: '',
+      autoUpdates: false,
+      sourceId: 1,
+      ownerGuid: null,
+      blocked: false
+    }
+  },
+  themes: {
+    twentytwentyfive: {
+      name: 'twentytwentyfive',
+      status: 'active',
+      version: '1.2',
+      title: 'Twenty Twenty-Five',
+      description: 'Twenty Twenty-Five emphasizes simplicity and adaptability. It offers\n' +
+        'flexible design options, supported by a variety of patterns for different\n' +
+        'page types, such as services and landing pages, making it ideal for\n' +
+        'building personal blogs, professional portfolios, online magazines, or\n' +
+        'business websites. Its templates cater to various blog styles, from\n' +
+        'text-focused to image-heavy layouts. Additionally, it supports\n' +
+        'international typography and diverse color palettes, ensuring accessibility\n' +
+        'and customization for users worldwide.',
+      update_version: '',
+      autoUpdates: false,
+      sourceId: 1,
+      ownerGuid: null
+    },
+    twentytwentyfour: {
+      name: 'twentytwentyfour',
+      status: 'inactive',
+      version: '1.3',
+      title: 'Twenty Twenty-Four',
+      description: 'Twenty Twenty-Four is designed to be flexible, versatile and applicable to\n' +
+        'any website. Its collection of templates and patterns tailor to different\n' +
+        'needs, such as presenting a business, blogging and writing or showcasing\n' +
+        'work. A multitude of possibilities open up with just a few adjustments to\n' +
+        'color and typography. Twenty Twenty-Four comes with style variations and\n' +
+        'full page designs to help speed up the site building process, is fully\n' +
+        'compatible with the site editor, and takes advantage of new design tools\n' +
+        'introduced in WordPress 6.4.',
+      update_version: '',
+      autoUpdates: false,
+      sourceId: 1,
+      ownerGuid: null
+    },
+    twentytwentythree: {
+      name: 'twentytwentythree',
+      status: 'inactive',
+      version: '1.6',
+      title: 'Twenty Twenty-Three',
+      description: 'Twenty Twenty-Three is designed to take advantage of the new design tools\n' +
+        'introduced in WordPress 6.1. With a clean, blank base as a starting point,\n' +
+        'this default theme includes ten diverse style variations created by members\n' +
+        'of the WordPress community. Whether you want to build a complex or\n' +
+        'incredibly simple website, you can do it quickly and intuitively through\n' +
+        'the bundled styles or dive into creation and full customization yourself.',
+      update_version: '',
+      autoUpdates: false,
+      sourceId: 1,
+      ownerGuid: null
+    }
+  }
+}

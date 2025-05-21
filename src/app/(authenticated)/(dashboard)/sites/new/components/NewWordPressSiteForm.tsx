@@ -35,8 +35,9 @@ interface NewWordPressSiteFormProps {
 export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
   const { toast } = useToast();
   const [selectedDomain, setSelectedDomain] = useState<string>("");
-  const [adminUsername, setAdminUsername] = useState("admin");
+  const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [siteName, setSiteName] = useState("");
 
   const eventSource = useRef<EventSource>(null);
   const [buttonLabel, setButtonLabel] = useState("Criar Site WordPress");
@@ -47,11 +48,10 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      if (!adminUsername || !adminPassword) {
+      if (!adminUsername || !adminPassword || !siteName) {
         toast({
           title: "Erro",
-          description:
-            "Por favor, preencha o nome de usuário e senha do administrador.",
+          description: "Por favor, preencha todos os campos obrigatórios.",
           variant: "destructive",
         });
         return;
@@ -64,7 +64,7 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
       }
 
       eventSource.current = new EventSource(
-        `/api/wp-install?domain=${selectedDomain}&admin_username=${adminUsername}&admin_password=${adminPassword}`
+        `/api/wp-install?domain=${selectedDomain}&admin_username=${adminUsername}&admin_password=${adminPassword}&site_name=${encodeURIComponent(siteName)}`
       );
 
       eventSource.current.onmessage = (event) => {
@@ -106,7 +106,7 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
         }
       };
     },
-    [selectedDomain, toast, adminUsername, adminPassword]
+    [selectedDomain, toast, adminUsername, adminPassword, siteName]
   );
 
   if (domains.length === 0) {
@@ -160,12 +160,22 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="siteName">Título do Website</Label>
+            <Input
+              id="siteName"
+              value={siteName}
+              onChange={(e) => setSiteName(e.target.value)}
+              placeholder="Digite o título do seu website"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="adminUsername">Nome de Usuário do Admin</Label>
             <Input
               id="adminUsername"
               value={adminUsername}
               onChange={(e) => setAdminUsername(e.target.value)}
-              placeholder="admin"
+              placeholder="Admin"
             />
           </div>
 
@@ -228,6 +238,7 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
             domain={selectedDomain}
             adminUsername={adminUsername}
             adminPassword={adminPassword}
+            siteName={siteName}
           />
         </CardFooter>
       </form>

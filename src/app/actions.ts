@@ -804,3 +804,36 @@ export interface PayInvoice {
     zipCode: string;
   };
 }
+
+export async function deleteWordPressInstances(
+  prevState: unknown,
+  instanceIds: string
+): Promise<ActionResponse> {
+  try {
+    const user = await getUser();
+
+    if (!user) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
+    // Handle both single instanceId and comma-separated list
+    const ids = instanceIds.split(",").map((id) => parseInt(id, 10));
+
+    if (ids.some(isNaN)) {
+      return { status: "error", message: "Invalid instance ID" };
+    }
+
+    // Delete all instances in parallel
+    await Promise.all(
+      ids.map(async (id) => {
+        // TODO: delete DNS entries.
+        await pleskApi.wordpress.uninstallWp(id);
+      })
+    );
+
+    return { status: "success", message: "Sites excluídos com sucesso" };
+  } catch (error) {
+    console.error("Error deleting WordPress instances:", error);
+    return { status: "error", message: "Erro ao excluir sites" };
+  }
+}

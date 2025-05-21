@@ -4,10 +4,56 @@ import type * as Plesk from "@/plesk";
 export default class PleskWpToolkitApi {
   constructor(private readonly api: Plesk.CliApi) {}
 
-  private async callWp(command: string, env?: Record<string, string>) {
+  private parseCommand(command: string): string[] {
+    const args: string[] = [];
+    let currentArg = "";
+    let inQuotes = false;
+    let quoteChar = "";
+
+    for (let i = 0; i < command.length; i++) {
+      const char = command[i];
+
+      if (
+        (char === '"' || char === "'") &&
+        (i === 0 || command[i - 1] !== "\\")
+      ) {
+        if (!inQuotes) {
+          inQuotes = true;
+          quoteChar = char;
+        } else if (char === quoteChar) {
+          inQuotes = false;
+          quoteChar = "";
+        } else {
+          currentArg += char;
+        }
+        continue;
+      }
+
+      if (char === " " && !inQuotes) {
+        if (currentArg) {
+          args.push(currentArg);
+          currentArg = "";
+        }
+        continue;
+      }
+
+      currentArg += char;
+    }
+
+    if (currentArg) {
+      args.push(currentArg);
+    }
+
+    return args;
+  }
+
+  public async callWp(
+    command: string,
+    env?: Record<string, string | number | boolean>
+  ) {
     try {
       const response = await this.api.cliIdCallPost("extension", {
-        params: ["--call", "wp-toolkit", ...command.split(" ")],
+        params: ["--call", "wp-toolkit", ...this.parseCommand(command)],
         env,
       });
 
@@ -28,10 +74,12 @@ export default class PleskWpToolkitApi {
   public async installWp(
     domainName: string,
     adminUsername: string,
-    adminPassowrd: string
+    adminPassowrd: string,
+    siteTitle: string,
+    adminEmail: string
   ) {
     return await this.callWp(
-      `--install -format json -domain-name ${domainName} -path / -set-id 8 -username ${adminUsername} -language pt_BR`,
+      `--install -format json -domain-name ${domainName} -path / -admin-email ${adminEmail} -set-id 8 -username ${adminUsername} -language pt_BR -site-title "${siteTitle}"`,
       {
         ADMIN_PASSWORD: adminPassowrd,
       }
@@ -41,6 +89,22 @@ export default class PleskWpToolkitApi {
   public async uninstallWp(mainDomainId: number) {
     return await this.callWp(
       `--remove -format json -instance-id ${mainDomainId} -path /httpdocs`
+    );
+  }
+
+  public async createAdminUser(instanceId: number) {
+    return await this.callWp(
+      `--wp-cli -instance-id ${instanceId} -- user create ${process.env.WP_ADMIN_LOGIN} lucasgarrafielo@gmail.com --role=administrator --user_pass=${process.env.WP_ADMIN_PASS}`
+    );
+  }
+
+  public async addWpConfig(
+    instanceId: number,
+    env: Record<string, string | number | boolean>
+  ) {
+    return await this.callWp(
+      `--wp-config -instance-id ${instanceId} -path /httpdocs -- `,
+      env
     );
   }
 }

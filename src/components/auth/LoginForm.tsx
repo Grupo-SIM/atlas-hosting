@@ -64,8 +64,6 @@ export default function LoginForm() {
     }
   }, [actionState.status, actionState.message, router]);
 
-  console.log(!isValid, isValidating, isPending);
-
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">

@@ -5,7 +5,7 @@ import { CliCallResponse, ClientRequestTypeEnum } from "@/plesk";
 import { db } from "@/lib/db";
 import { userTable } from "@/lib/db/schema";
 import desecApi from "@/lib/server/apis/desec";
-import nameSilo from "@/lib/server/apis/namesilo";
+import nameSilo, { NamesiloApi } from "@/lib/server/apis/namesilo";
 import axios from "axios";
 import { eq } from "drizzle-orm";
 
@@ -18,11 +18,15 @@ const TOTAL_STEPS = 7;
 export async function GET(request: Request) {
   const domainName = new URL(request.url).searchParams.get("domain");
   const adminUsername = new URL(request.url).searchParams.get("admin_username");
-  const adminPassword = new URL(request.url).searchParams.get("admin_password");
+  let adminPassword = new URL(request.url).searchParams.get("admin_password");
+  let siteName = new URL(request.url).searchParams.get("site_name");
 
-  if (!domainName || !adminUsername || !adminPassword) {
+  if (!domainName || !adminUsername || !adminPassword || !siteName) {
     return Response.error();
   }
+
+  adminPassword = decodeURIComponent(adminPassword);
+  siteName = decodeURIComponent(siteName);
 
   const user = await getUser();
 
@@ -106,16 +110,22 @@ export async function GET(request: Request) {
         const domainExists = await pleskApi.getDomain(domainName);
 
         if (!domainExists) {
-          await pleskApi.subscriptions.createSubscription(domainName, user);
+          await pleskApi.subscriptions.createSubscription({
+            domainName,
+            login: domainName.replace(".", "_").concat("_", user.pleskId!),
+            password: adminPassword,
+          });
         }
 
         // Step 6: Installing WordPress
-        yield `data: ${JSON.stringify({ step: ++currentStep, total: TOTAL_STEPS, message: "Instalando a instância do WordPress" })}\n\n`;
+        yield `data: ${JSON.stringify({ step: ++currentStep, total: TOTAL_STEPS, message: "Instalando a instância do WordPress (isso pode demorar alguns segundos)" })}\n\n`;
 
         const wpInstallRawResult = await pleskApi.wordpress.installWp(
           domainName,
           adminUsername,
-          adminPassword
+          adminPassword,
+          siteName,
+          user.email
         );
         const wpInstallResult = parsePleskCliResponse(wpInstallRawResult);
 
@@ -164,38 +174,94 @@ export async function GET(request: Request) {
           return;
         }
 
+        await pleskApi.wordpress.createAdminUser(+stdOut["instance-id"]);
+
+        await pleskApi.wordpress.addWpConfig(+stdOut["instance-id"], {
+          SIMPLE_JWT_AUTH_ENCRYPT_KEY: process.env.JWT_AUTH_SECRET!,
+        });
+
         // Step 7: Configuring DNS and SSL
-        yield `data: ${JSON.stringify({ step: ++currentStep, total: TOTAL_STEPS, message: "Configurando DNS e SSL" })}\n\n`;
+        yield `data: ${JSON.stringify({ step: ++currentStep, total: TOTAL_STEPS, message: "Configurando DNS" })}\n\n`;
 
         try {
-          await desecApi.domains
-            .createDomain({
-              name: domainName,
-            })
-            .catch();
+          await nameSilo.addDnsRecord({
+            domain: domainName,
+            host: "@",
+            type: "A",
+            value: process.env.SERVER_IP!,
+          });
 
-          await desecApi.rrsets
-            .bulkModifyRRsets(domainName, [
-              {
-                subname: "",
-                records: [process.env.SERVER_IP!],
-                ttl: 3600,
-                type: "A",
-              },
-              {
-                subname: "www",
-                records: [process.env.SERVER_IP!],
-                ttl: 3600,
-                type: "A",
-              },
-            ])
-            .catch();
+          await nameSilo.addDnsRecord({
+            domain: domainName,
+            host: "www",
+            type: "A",
+            value: process.env.SERVER_IP!,
+          });
 
-          (async () => {
-            await new Promise((resolve) => setTimeout(resolve, 5 * 1000));
-            await pleskApi.subscriptions.getSsl(domainName, user);
-          })();
-        } catch {
+          // const dynv6Api = axios.create({
+          //   baseURL: "https://dynv6.com/api/v2",
+          //   headers: {
+          //     Authorization: `Bearer ${process.env.DYNV6_TOKEN}`,
+          //   },
+          // });
+
+          // let { data } = await dynv6Api.post("/zones", {
+          //   name: domainName,
+          //   ipv4address: process.env.SERVER_IP!,
+          // });
+
+          // console.log(data);
+
+          // const zoneId = data.id;
+
+          // data = (
+          //   await dynv6Api.post(`/zones/${zoneId}/records`, {
+          //     name: domainName,
+          //     type: "A",
+          //     data: process.env.SERVER_IP!,
+          //   })
+          // ).data;
+
+          // console.log(data);
+
+          // data = (
+          //   await dynv6Api.post(`/zones/${zoneId}/records`, {
+          //     name: `www.${domainName}`,
+          //     type: "A",
+          //     data: process.env.SERVER_IP!,
+          //   })
+          // ).data;
+
+          // console.log(data);
+
+          // await desecApi.domains
+          //   .createDomain({
+          //     name: domainName,
+          //   })
+          //   .catch();
+
+          // await desecApi.rrsets
+          //   .bulkModifyRRsets(domainName, [
+          //     {
+          //       subname: "",
+          //       records: [process.env.SERVER_IP!],
+          //       ttl: 3600,
+          //       type: "A",
+          //     },
+          //     {
+          //       subname: "www",
+          //       records: [process.env.SERVER_IP!],
+          //       ttl: 3600,
+          //       type: "A",
+          //     },
+          //   ])
+          //   .catch();
+
+          // (async () => {
+          //   await new Promise((resolve) => setTimeout(resolve, 5 * 1000));
+          //   await pleskApi.subscriptions.getSsl(domainName, user);
+          // })();
+        } catch (err) {
           // Ignore DNS/SSL errors as they can be configured later
         }
 

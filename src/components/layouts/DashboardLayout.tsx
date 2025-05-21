@@ -12,6 +12,7 @@ import {
   Globe,
   LayoutDashboard,
   LifeBuoy,
+  LucideProps,
   Mail,
   Menu,
   Server,
@@ -23,10 +24,13 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  ForwardRefExoticComponent,
+  RefAttributes,
   startTransition,
   use,
   useActionState,
   useCallback,
+  useRef,
   useState,
 } from "react";
 import { FaPowerOff } from "react-icons/fa6";
@@ -154,43 +158,7 @@ export default function DashboardLayout({
           className="flex-1 px-2 py-4 space-y-1 overflow-y-auto flex flex-col box-border"
         >
           {navigation.map((item) => (
-            <MotionLink
-              layout
-              initial={{ marginLeft: 0, marginRight: 0 }}
-              // animate={{ marginLeft: isCompact ? "auto": "0", marginRight: isCompact ? "auto": "0", transition: { duration: 0.3, ease: "easeOut" } }}
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center px-3 py-2 text-sm font-medium rounded-md group transition-colors relative w-full box-border",
-                pathname === item.href
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              )}
-              title={isCompact ? item.name : undefined}
-            >
-              <item.icon
-                className={cn(
-                  "h-5 w-5 flex-shrink-0",
-                  pathname === item.href
-                    ? "text-accent-foreground"
-                    : "text-muted-foreground group-hover:text-accent-foreground"
-                )}
-              />
-              <motion.span
-                layout
-                initial={{ marginLeft: 0, minWidth: 0, maxWidth: 0, width: 0 }}
-                animate={{
-                  marginLeft: isCompact ? 0 : "0.75rem",
-                  minWidth: isCompact ? 0 : "max-content",
-                  maxWidth: isCompact ? 0 : "max-content",
-                  transition: { duration: 0.3, ease: "easeOut" },
-                }}
-                exit={{ width: 0, marginLeft: 0 }}
-                className="overflow-x-hidden whitespace-nowrap flex-1 w-full"
-              >
-                {item.name}
-              </motion.span>
-            </MotionLink>
+            <NavItem item={item} key={item.name} isCompact={isCompact} />
           ))}
         </motion.nav>
 
@@ -246,6 +214,70 @@ export default function DashboardLayout({
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
+  );
+}
+
+function NavItem({
+  item,
+  isCompact,
+}: {
+  isCompact: boolean;
+  item: {
+    name: string;
+    href: string;
+    icon: ForwardRefExoticComponent<
+      Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
+    >;
+  };
+}) {
+  const pathname = usePathname();
+
+  const itemNameRef = useRef<HTMLSpanElement>(null);
+  const itemWidth = itemNameRef.current?.scrollWidth;
+
+  return (
+    <MotionLink
+      layout
+      initial={{ marginLeft: 0, marginRight: 0 }}
+      key={item.name}
+      href={item.href}
+      className={cn(
+        "flex items-center px-3 py-2 text-sm font-medium rounded-md group transition-colors relative w-full box-border",
+        pathname === item.href
+          ? "bg-accent text-accent-foreground"
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+      )}
+      title={isCompact ? item.name : undefined}
+    >
+      <item.icon
+        className={cn(
+          "h-5 w-5 flex-shrink-0",
+          pathname === item.href
+            ? "text-accent-foreground"
+            : "text-muted-foreground group-hover:text-accent-foreground"
+        )}
+      />
+      <motion.span
+        ref={itemNameRef}
+        layout
+        initial={{
+          marginLeft: 0,
+          minWidth: 0,
+          maxWidth: 0,
+          width: 0,
+        }}
+        animate={{
+          marginLeft: isCompact ? 0 : "0.75rem",
+          minWidth: isCompact ? 0 : itemWidth,
+          maxWidth: isCompact ? 0 : itemWidth,
+          transition: { duration: 0.3, ease: "easeOut" },
+        }}
+        exit={{ width: 0, marginLeft: 0 }}
+        className="overflow-x-hidden whitespace-nowrap flex-1 w-full"
+      >
+        {item.name}
+      </motion.span>
+    </MotionLink>
   );
 }
 

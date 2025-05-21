@@ -23,8 +23,6 @@ export default async function CheckoutPage({
     where: eq(invoiceTable.id, (await params).id),
   });
 
-  console.log(invoice);
-
   if (!invoice) {
     notFound();
   }

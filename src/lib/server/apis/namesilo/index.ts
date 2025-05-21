@@ -188,6 +188,16 @@ export class NamesiloApi {
     });
   }
 
+  public async addDnsSecRecord(params: {
+    domain: string;
+    digest: string;
+    keyTag: string;
+    digestType: string;
+    alg: string;
+  }) {
+    return await this.get("/dnsSecAddRecord", params);
+  }
+
   public async updateDnsRecord(params: {
     domain: string;
     rrid: string;

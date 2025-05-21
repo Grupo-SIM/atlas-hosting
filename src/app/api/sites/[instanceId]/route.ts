@@ -13,16 +13,23 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const instanceId = parseInt(params.instanceId, 10);
-    if (isNaN(instanceId)) {
+    // Handle both single instanceId and comma-separated list
+    const instanceIds = params.instanceId
+      .split(",")
+      .map((id) => parseInt(id, 10));
+
+    if (instanceIds.some(isNaN)) {
       return new NextResponse("Invalid instance ID", { status: 400 });
     }
 
-    await pleskApi.wordpress.uninstallWp(instanceId);
+    // Delete all instances in parallel
+    await Promise.all(
+      instanceIds.map((id) => pleskApi.wordpress.uninstallWp(id))
+    );
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting WordPress instance:", error);
+    console.error("Error deleting WordPress instances:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
-} 
+}
