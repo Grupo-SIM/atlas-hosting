@@ -1,14 +1,9 @@
+// src/app/(authenticated)/(dashboard)/sites/new/components/NewWordPressSiteForm.tsx
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -17,19 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
-import { ListDomainDomain } from "@/lib/server/apis/namesilo/types";
+import { type DomainListItem } from "@/lib/server/apis/namecheap/types"; // Import Namecheap DomainListItem
 import { Terminal } from "lucide-react";
 import Link from "next/link";
-import { PropsWithChildren, useCallback, useRef, useState } from "react";
-import { CgSpinner } from "react-icons/cg";
+import { useCallback, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "./SubmitButton";
 
 interface NewWordPressSiteFormProps {
-  domains: (ListDomainDomain & { inPlesk: boolean })[];
+  domains: (DomainListItem & { inPlesk: boolean })[]; // Use DomainListItem from Namecheap
 }
 
 export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
@@ -39,14 +32,22 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
   const [adminPassword, setAdminPassword] = useState("");
   const [siteName, setSiteName] = useState("");
 
-  const eventSource = useRef<EventSource>(null);
+  const eventSource = useRef<EventSource | null>(null); // Initialize with null
   const [buttonLabel, setButtonLabel] = useState("Criar Site WordPress");
-
   const [isPending, setIsPending] = useState(false);
 
   const onSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+
+      if (!selectedDomain) {
+        toast({
+          title: "Erro",
+          description: "Por favor, selecione um domínio.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       if (!adminUsername || !adminPassword || !siteName) {
         toast({
@@ -58,66 +59,113 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
       }
 
       setIsPending(true);
+      setButtonLabel("Processando...");
 
       if (eventSource.current) {
-        return;
+        eventSource.current.close(); // Close any existing connection
       }
 
       eventSource.current = new EventSource(
         `/api/wp-install?domain=${selectedDomain}&admin_username=${adminUsername}&admin_password=${adminPassword}&site_name=${encodeURIComponent(siteName)}`
       );
 
-      eventSource.current.onmessage = (event) => {
-        const data = event.data as string;
-        const [type, message, error] = data.split(";");
+      eventSource.current.onopen = () => {
+        // console.log("SSE connection opened.");
+      };
 
-        switch (type) {
-          case "INFO":
-            setButtonLabel(message);
-            break;
-          case "ERROR":
-            setButtonLabel("Criar site WordPress");
-            toast({
-              title: message,
-              description: error,
-              variant: "destructive",
-            });
-            setIsPending(false);
-            break;
-          case "SUCCESS":
+      eventSource.current.onmessage = (event) => {
+        const rawData = event.data as string;
+        try {
+          const parsedData = JSON.parse(rawData); // Assuming server sends JSON strings
+          const { type, message, error, step, details } = parsedData;
+
+          switch (type) {
+            case "INFO":
+              setButtonLabel(message || step || "Atualizando...");
+              if (details) {
+                //   console.log("SSE Info Details:", details);
+              }
+              break;
+            case "ERROR":
+              setButtonLabel("Criar site WordPress");
+              toast({
+                title: message || "Erro na Instalação",
+                description: error || details || "Ocorreu um erro.",
+                variant: "destructive",
+              });
+              setIsPending(false);
+              eventSource.current?.close();
+              break;
+            case "SUCCESS":
+              setButtonLabel("Criar site WordPress");
+              setIsPending(false);
+              eventSource.current?.close();
+              toast({
+                title: "Instalação Concluída!",
+                description:
+                  message || "Seu site WordPress foi instalado com sucesso.",
+                variant: "default",
+              });
+              // Optionally redirect or update UI
+              // window.location.href = "/sites";
+              break;
+            default:
+              // console.log("SSE Unknown message type:", parsedData);
+              setButtonLabel("Aguarde...");
+              break;
+          }
+        } catch (e) {
+          // console.error("Error parsing SSE message or non-JSON message:", rawData, e);
+          // Fallback for plain text messages if any
+          if (rawData.startsWith("SUCCESS:")) {
             setButtonLabel("Criar site WordPress");
             setIsPending(false);
             eventSource.current?.close();
             toast({
               title: "Instalação Concluída!",
-              description: message,
+              description: rawData.substring(8),
               variant: "default",
             });
-            break;
-          default:
-            setIsPending(false);
-            eventSource.current?.close();
+          } else if (rawData.startsWith("ERROR:")) {
+            setButtonLabel("Criar site WordPress");
             toast({
               title: "Erro na Instalação",
-              description: message,
+              description: rawData.substring(6),
               variant: "destructive",
             });
-            break;
+            setIsPending(false);
+            eventSource.current?.close();
+          } else {
+            setButtonLabel(rawData || "Progresso...");
+          }
         }
+      };
+
+      eventSource.current.onerror = (err) => {
+        // console.error("EventSource failed:", err);
+        toast({
+          title: "Erro de Conexão",
+          description:
+            "Não foi possível conectar ao servidor para atualizações em tempo real.",
+          variant: "destructive",
+        });
+        setIsPending(false);
+        setButtonLabel("Criar Site WordPress");
+        eventSource.current?.close();
       };
     },
     [selectedDomain, toast, adminUsername, adminPassword, siteName]
   );
 
-  if (domains.length === 0) {
+  if (!Array.isArray(domains) || domains.length === 0) {
     return (
       <CardContent>
         <Alert>
           <Terminal className="h-4 w-4" />
           <AlertTitle>Nenhum Domínio Encontrado</AlertTitle>
           <AlertDescription>
-            Você não possui domínios registrados em sua conta que possam ser
-            usados para criar um site WordPress. Por favor,{" "}
+            Você não possui domínios registrados em sua conta Namecheap que
+            possam ser usados para criar um site WordPress. Por favor,{" "}
             <Link
               href="/domains/register"
               className="font-medium text-primary underline underline-offset-4"
@@ -140,6 +188,7 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
             <Select
               value={selectedDomain}
               onValueChange={(value) => setSelectedDomain(value)}
+              disabled={isPending}
             >
               <SelectTrigger id="domainName">
                 <SelectValue placeholder="Selecione um domínio" />
@@ -147,18 +196,17 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
               <SelectContent>
                 {domains.map((domain) => (
                   <SelectItem
-                    key={domain.domain}
-                    value={domain.domain}
-                    disabled={domain.inPlesk}
+                    key={domain.ID} // Use domain.ID or domain.Name as key
+                    value={domain.Name} // Use domain.Name for the value
+                    disabled={domain.inPlesk || isPending}
                   >
-                    {domain.domain}
+                    {domain.Name}
                     {domain.inPlesk && " (WordPress já instalado)"}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="siteName">Título do Website</Label>
             <Input
@@ -166,6 +214,7 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
               value={siteName}
               onChange={(e) => setSiteName(e.target.value)}
               placeholder="Digite o título do seu website"
+              disabled={isPending}
             />
           </div>
 
@@ -176,6 +225,7 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
               value={adminUsername}
               onChange={(e) => setAdminUsername(e.target.value)}
               placeholder="Admin"
+              disabled={isPending}
             />
           </div>
 
@@ -187,58 +237,18 @@ export function NewWordPressSiteForm({ domains }: NewWordPressSiteFormProps) {
               value={adminPassword}
               onChange={(e) => setAdminPassword(e.target.value)}
               placeholder="Digite uma senha forte"
+              disabled={isPending}
             />
           </div>
-
-          {/* {state?.siteUrl && state?.adminUrl && (
-          <Alert variant="default">
-            <Terminal className="h-4 w-4" />
-            <AlertTitle>Instalação Concluída!</AlertTitle>
-            <AlertDescription className="space-y-2">
-              <p>{state.message}</p>
-              <p>
-                <strong>URL do Site:</strong>{" "}
-                <Link
-                  href={state.siteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-primary underline underline-offset-4"
-                >
-                  {state.siteUrl}
-                </Link>
-              </p>
-              <p>
-                <strong>URL de Admin:</strong>{" "}
-                <Link
-                  href={state.adminUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-primary underline underline-offset-4"
-                >
-                  {state.adminUrl}
-                </Link>
-              </p>
-              <p className="text-xs text-muted-foreground pt-2">
-                Pode levar alguns minutos para que o site esteja totalmente
-                acessível e o SSL seja provisionado.
-              </p>
-            </AlertDescription>
-          </Alert>
-        )}
-        {state?.error && !state.siteUrl && (
-          <Alert variant="destructive">
-            <Terminal className="h-4 w-4" />
-            <AlertTitle>Falha na Instalação</AlertTitle>
-            <AlertDescription>{state.message || state.error}</AlertDescription>
-          </Alert>
-        )} */}
         </CardContent>
         <CardFooter>
           <SubmitButton
-            domain={selectedDomain}
+            domain={selectedDomain} // This component might need isPending prop too
             adminUsername={adminUsername}
             adminPassword={adminPassword}
             siteName={siteName}
+            isPending={isPending} // Pass isPending to SubmitButton
+            buttonLabel={buttonLabel} // Pass buttonLabel
           />
         </CardFooter>
       </form>

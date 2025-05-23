@@ -66,14 +66,14 @@ export default async function MyDomainsPage() {
   // Fetch plans for admin section - keep if needed, otherwise remove
   // const plans: Plan[] = await db.select().from(plansTable);
 
-  const nameCheapUser = await db.query.namecheapIntegration.findFirst({
-    where: eq(namecheapIntegration.userId, user.id),
-  });
+  // const nameCheapUser = await db.query.namecheapIntegration.findFirst({
+  //   where: eq(namecheapIntegration.userId, user.id),
+  // });
 
   let processedDomains: ProcessedDomain[] = [];
 
   try {
-    const domainsListResponse = await namecheapApi.getList(); // Uses your wrapper
+    const domainsListResponse = await namecheapApi.getList({}); // Uses your wrapper
 
     if (domainsListResponse && domainsListResponse.Domains) {
       processedDomains = await Promise.all(
@@ -90,18 +90,21 @@ export default async function MyDomainsPage() {
               `Error fetching info for domain ${listedDomain.Name}:`,
               infoError
             );
+
+            console.log({ listedDomain });
+
             // Fallback or skip this domain if info is critical
             return {
               // Provide a fallback structure
               id: listedDomain.Name,
               name: listedDomain.Name,
               registrationDate: listedDomain.Created
-                ? format(parseISO(listedDomain.Created), "dd/MM/yyyy", {
+                ? format(listedDomain.Created, "dd/MM/yyyy", {
                     locale: ptBR,
                   })
                 : "N/A",
               expiryDate: listedDomain.Expires
-                ? format(parseISO(listedDomain.Expires), "dd/MM/yyyy", {
+                ? format(listedDomain.Expires, "dd/MM/yyyy", {
                     locale: ptBR,
                   })
                 : "Nunca",
@@ -117,7 +120,7 @@ export default async function MyDomainsPage() {
 
           const expiryDateObj =
             domainInfo.ExpireDate !== "N/A"
-              ? parseISO(domainInfo.ExpireDate)
+              ? domainInfo.ExpireDate
               : startOfTomorrow();
           const status: "active" | "expired" = isBefore(
             expiryDateObj,
@@ -138,13 +141,13 @@ export default async function MyDomainsPage() {
             name: domainInfo.DomainName,
             registrationDate:
               domainInfo.CreatedDate !== "N/A"
-                ? format(parseISO(domainInfo.CreatedDate), "dd/MM/yyyy", {
+                ? format(domainInfo.CreatedDate, "dd/MM/yyyy", {
                     locale: ptBR,
                   })
                 : "N/A",
             expiryDate:
               domainInfo.ExpireDate !== "N/A"
-                ? format(parseISO(domainInfo.ExpireDate), "dd/MM/yyyy", {
+                ? format(domainInfo.ExpireDate, "dd/MM/yyyy", {
                     locale: ptBR,
                   })
                 : "Nunca",

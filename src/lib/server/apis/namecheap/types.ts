@@ -1,7 +1,3 @@
-export interface NamecheapRequestParams {
-  [key: string]: string | number | boolean | undefined;
-}
-
 export interface NamecheapRawErrorDetails {
   $: { Number: string };
   _: string;
@@ -180,33 +176,6 @@ export interface RawDomainDNSSetHostsResultAttributes {
 
 export interface RawDomainsDnsSetHostsCommandResponseContent {
   DomainDNSSetHostsResult?: Array<{ $: RawDomainDNSSetHostsResultAttributes }>;
-}
-
-export interface TldListItem {
-  Name: string;
-  NonRealTime: boolean;
-  MinRegisterYears: number;
-  MaxRegisterYears: number;
-  MinRenewYears: number;
-  MaxRenewYears: number;
-  MinTransferYears: number;
-  MaxTransferYears: number;
-  IsApiRegisterable: boolean;
-  IsApiRenewable: boolean;
-  IsApiTransferable: boolean;
-  IsEppRequired: boolean;
-  IsDisableModifications: boolean;
-  IsDisableWGAllot: boolean;
-  IsIncludeInExtendedSearchOnly: boolean;
-  SequenceNumber: number;
-  Type: string;
-  SubType?: string;
-  IsSupportsIDN: boolean;
-  Category: string;
-  SupportsRegistrarLock: boolean;
-  AddGracePeriodDays: number;
-  WhoisVerification: boolean;
-  ProviderApiDelete: boolean;
 }
 
 export interface DomainsGetTldListCleanedResponse {
@@ -575,4 +544,266 @@ export interface RawUsersCreateCommandResponseContent {
     // Similar to DomainCreateResult, might be a single object
     $: RawUserCreateResultAttributes;
   };
+}
+
+export type NamecheapRequestParams = Record<
+  string,
+  string | number | boolean | undefined
+>;
+
+export interface NamecheapRawErrorDetails {
+  $: { Number: string };
+  _: string;
+}
+
+export interface RawNamecheapApiResponse<TCommandResponseContent> {
+  ApiResponse: {
+    $: { Status: "OK" | "ERROR"; xmlns: string };
+    Errors: Array<{ Error?: NamecheapRawErrorDetails[] } | string>;
+    Warnings: any;
+    RequestedCommand: string[];
+    CommandResponse: Array<{ $: { Type: string } } & TCommandResponseContent>;
+    Server: string[];
+    GMTTimeDifference: string[];
+    ExecutionTime: string[];
+  };
+}
+
+export interface DomainsCheckUserParams {
+  DomainList: string;
+}
+
+export interface DomainCheckResultItem {
+  Domain: string;
+  Available: boolean;
+  ErrorNo?: string;
+  Description?: string;
+  IsPremiumName: boolean;
+
+  PremiumRegistrationPrice?: number;
+  PremiumRenewalPrice?: number;
+  PremiumRestorePrice?: number;
+  PremiumTransferPrice?: number;
+  IcannFee?: number;
+  EapFee?: number;
+}
+
+export interface DomainsCheckCleanedResponse {
+  Results: DomainCheckResultItem[];
+}
+
+export interface RawDomainCheckResultAttributes {
+  Domain: string;
+  Available: "true" | "false";
+  ErrorNo: string;
+  Description: string;
+  IsPremiumName: "true" | "false";
+  PremiumRegistrationPrice: string;
+  PremiumRenewalPrice: string;
+  PremiumRestorePrice: string;
+  PremiumTransferPrice: string;
+  IcannFee: string;
+  EapFee: string;
+}
+
+export interface RawDomainsCheckCommandResponseContent {
+  DomainCheckResult?: Array<{ $: RawDomainCheckResultAttributes }>;
+}
+
+export interface DomainsGetListUserParams {
+  ListType?: DomainsGetListListType;
+  SearchTerm?: string;
+  Page?: number;
+  PageSize?: number;
+  SortBy?: DomainsGetListSortBy;
+}
+
+export interface DomainListItem {
+  ID: number;
+  Name: string;
+  User: string;
+  Created: string;
+  Expires: string;
+  IsExpired: boolean;
+  IsLocked: boolean;
+  AutoRenew: boolean;
+  WhoisGuard: string; // e.g., "ENABLED", "NOTPRESENT"
+  IsPremium: boolean;
+  IsOurDNS: boolean;
+}
+
+export interface PagingInfo {
+  TotalItems: number;
+  CurrentPage: number;
+  PageSize: number;
+}
+
+export interface DomainsGetListCleanedResponse {
+  Domains: DomainListItem[];
+  Paging: PagingInfo;
+}
+
+export interface RawDomainListItemAttributes {
+  ID: string;
+  Name: string;
+  User: string;
+  Created: string; // Date string e.g., "02/15/2016"
+  Expires: string; // Date string e.g., "02/15/2022"
+  IsExpired: "true" | "false";
+  IsLocked: "true" | "false";
+  AutoRenew: "true" | "false";
+  WhoisGuard: string;
+  IsPremium: "true" | "false";
+  IsOurDNS: "true" | "false";
+}
+
+// Represents the <DomainGetListResult> tag which contains <Domain> tags
+export interface RawDomainGetListResultContent {
+  Domain?: Array<{ $: RawDomainListItemAttributes }>;
+}
+
+// Represents the <Paging> tag
+export interface RawPagingInfoContent {
+  TotalItems: string[]; // xml2js makes single text nodes into an array
+  CurrentPage: string[];
+  PageSize: string[];
+}
+
+export interface RawDomainsGetListCommandResponseContent {
+  DomainGetListResult?: RawDomainGetListResultContent[]; // Array because xml2js default
+  Paging?: RawPagingInfoContent[]; // Array because xml2js default
+}
+// --- END: Added for namecheap.domains.getList ---
+
+export interface DnsHostRecord {
+  HostName: string;
+  RecordType: DnsRecordType;
+  Address: string;
+  MXPref?: number;
+  TTL?: number;
+  Flag?: number;
+  Tag?: DnsCaaTag;
+}
+
+export interface DomainsDnsSetHostsUserParams {
+  SLD: string;
+  TLD: string;
+  Records: DnsHostRecord[];
+  EmailType?: DnsEmailType;
+}
+
+export interface DomainsDnsSetHostsCleanedResponse {
+  Domain: string;
+  IsSuccess: boolean;
+}
+
+export interface RawDomainDNSSetHostsResultAttributes {
+  Domain: string;
+  IsSuccess: "true" | "false";
+}
+
+export interface RawDomainsDnsSetHostsCommandResponseContent {
+  DomainDNSSetHostsResult?: Array<{ $: RawDomainDNSSetHostsResultAttributes }>;
+}
+
+export interface TldListItem {
+  Name: string;
+  Description: string; // Added this field
+  NonRealTime: boolean;
+  MinRegisterYears: number;
+  MaxRegisterYears: number;
+  MinRenewYears: number;
+  MaxRenewYears: number;
+  MinTransferYears: number;
+  MaxTransferYears: number;
+  IsApiRegisterable: boolean;
+  IsApiRenewable: boolean;
+  IsApiTransferable: boolean;
+  IsEppRequired: boolean;
+  IsDisableModContact: boolean; // Added this field based on RawTldAttributes
+  IsDisableWGAllot: boolean;
+  IsIncludeInExtendedSearchOnly: boolean;
+  SequenceNumber: number;
+  Type: string;
+  IsSupportsIDN: boolean;
+  Category: string;
+  SupportsRegistrarLock: boolean; // Added
+  AddGracePeriodDays: number; // Added
+  WhoisVerification: boolean; // Added
+  ProviderApiDelete: boolean; // Added
+  IsDisableModifications?: boolean; // Made optional as per Raw
+}
+
+export interface DomainsGetTldListCleanedResponse {
+  Tlds: TldListItem[];
+}
+
+export interface RawTldAttributes {
+  Name: string;
+  NonRealTime: "true" | "false";
+  MinRegisterYears: string;
+  MaxRegisterYears: string;
+  MinRenewYears: string;
+  MaxRenewYears: string;
+  MinTransferYears: string;
+  MaxTransferYears: string;
+  IsApiRegisterable: "true" | "false";
+  IsApiRenewable: "true" | "false";
+  IsApiTransferable: "true" | "false";
+  IsEppRequired: "true" | "false";
+  IsDisableModContact: "true" | "false";
+  IsDisableWGAllot: "true" | "false";
+  IsIncludeInExtendedSearchOnly: "true" | "false";
+  SequenceNumber: string;
+  Type: string;
+  IsSupportsIDN: "true" | "false";
+  Category: string;
+
+  IsDisableModifications?: "true" | "false";
+  SupportsRegistrarLock?: "true" | "false";
+  AddGracePeriodDays?: string; // e.g. "10" or "" if not applicable
+  WhoisVerification?: "true" | "false";
+  ProviderApiDelete?: "true" | "false";
+}
+
+export interface RawDomainsGetTldListCommandResponseContent {
+  Tlds?: Array<{
+    Tld?: Array<{
+      $: RawTldAttributes;
+      _: string; // This captures the description text node for the TLD
+    }>;
+  }>;
+}
+
+export interface UsersGetPricingUserParams {
+  ProductType: UsersGetPricingProductType;
+  ProductCategory?: string;
+  ProductName?: string;
+  ActionName?: UsersGetPricingActionName;
+  PromotionCode?: string;
+}
+
+export interface ProductPriceDetail {
+  Duration: number;
+  DurationType: string;
+  Price: number;
+  RegularPrice: number;
+  YourPrice: number;
+  CouponPrice?: number;
+  Currency: "USD" | "BRL"; // Added Currency field
+}
+
+export interface ProductPricingInfo {
+  Name: string;
+  Prices: ProductPriceDetail[];
+}
+
+export interface ProductCategoryPricingInfo {
+  Name: string;
+  Products: ProductPricingInfo[];
+}
+
+export interface ProductTypePricingInfo {
+  Name: UsersGetPricingProductType;
+  Categories: ProductCategoryPricingInfo[];
 }

@@ -100,11 +100,10 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
   }
 
   if (invoice.type === "domain") {
-      // await namecheapApi.createDomain({
-      //   Admin: {
-
-      //   }
-      // })
+    // await namecheapApi.createDomain({
+    //   Admin: {
+    //   }
+    // })
   }
 }
 

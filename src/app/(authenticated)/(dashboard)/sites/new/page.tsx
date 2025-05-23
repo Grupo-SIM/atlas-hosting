@@ -1,4 +1,4 @@
-// filepath: /home/eurmn/workspace/jb/atlas-hosting/src/app/(authenticated)/(dashboard)/sites/new/page.tsx
+// src/app/(authenticated)/(dashboard)/sites/new/page.tsx
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,56 +10,61 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { getUser } from "@/lib/auth";
-import nameSilo from "@/lib/server/apis/namesilo";
-import { type ListDomainDomain } from "@/lib/server/apis/namesilo/types";
-import { Suspense } from "react";
-import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm"; // We'll create this client component
+import { namecheapApi } from "@/lib/server/apis/namecheap"; // Import Namecheap API
+import { type DomainListItem } from "@/lib/server/apis/namecheap/types"; // Import Namecheap DomainListItem type
 import pleskApi from "@/lib/server/apis/plesk";
+import { Suspense } from "react";
+import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm";
 
-async function getUserDomains(
-  namesiloId: number
-): Promise<(ListDomainDomain & { inPlesk: boolean })[]> {
+// Updated function to use Namecheap API
+async function getUserDomains(): Promise<
+  (DomainListItem & { inPlesk: boolean })[]
+> {
   try {
-    const response = await nameSilo.listDomains({
-      portfolioId: namesiloId,
-      pageSize: 300,
-    }); // Max pageSize for listDomains is 300
+    // Call Namecheap API to get the list of domains
+    // Assuming PageSize and other params are handled by default or not strictly needed here.
+    // Add params like PageSize if needed: namecheapApi.getList({ PageSize: 100 })
+    const response = await namecheapApi.getList({});
 
-    let allDomains: ListDomainDomain[] = [];
+    let allDomains: DomainListItem[] = [];
 
-    if (response && response.code === 300 && response.domains) {
-      if (Array.isArray(response.domains)) {
-        allDomains = response.domains;
-      } else if (
-        typeof response.domains === "object" &&
-        response.domains.domain
-      ) {
-        // Handle case where only one domain is returned as an object instead of an array
-        allDomains = [response.domains.domain];
-      } else {
-        allDomains = [];
-      }
+    if (response && response.Domains) {
+      allDomains = response.Domains;
+    } else {
+      console.error(
+        "Error fetching domains from Namecheap or no domains found:",
+        response
+      );
+      return [];
     }
 
     const domainsWithPleskData = await Promise.all(
       allDomains.map(async (domain) => {
-        const d = await pleskApi.getDomain(domain.domain);
+        let isInPlesk = false;
+        try {
+          // Check if domain exists in Plesk.
+          // Plesk API's getDomain might throw an error if domain is not found,
+          // so we'll catch it and assume not in Plesk.
+          const pleskDomainInfo = await pleskApi.getDomain(domain.Name); // Use domain.Name
+          if (pleskDomainInfo) {
+            // Further checks can be added here if needed, e.g., check for WP installation
+            isInPlesk = true;
+          }
+        } catch (pleskError) {
+          // Assuming error means domain is not in Plesk or not accessible
+          // console.warn(`Domain ${domain.Name} not found in Plesk or error checking:`, pleskError);
+          isInPlesk = false;
+        }
         return {
           ...domain,
-          inPlesk: false,
+          inPlesk: isInPlesk, // Example: Check if domain is already in Plesk
         };
       })
     );
 
     return domainsWithPleskData;
-
-    console.error(
-      "Error fetching domains or no domains found:",
-      response?.detail
-    );
-    return [];
   } catch (error) {
-    console.error("Exception fetching domains:", error);
+    console.error("Exception fetching/processing Namecheap domains:", error);
     return [];
   }
 }
@@ -82,24 +87,12 @@ export default async function NewSitePage() {
     );
   }
 
-  if (!user.namesiloId) {
-    return (
-      <div className="space-y-6 p-6 pb-16">
-        <Card>
-          <CardHeader>
-            <CardTitle>Criar Novo Site WordPress</CardTitle>
-            <CardDescription>
-              Sua conta não está configurada para registrar domínios (Namesilo
-              ID ausente). Por favor, complete seu perfil ou contate o suporte.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
+  // Removed user.namesiloId check.
+  // If there's a Namecheap-specific user configuration to check (e.g., user.namecheapUserName),
+  // it could be added here. For now, proceeding without it.
 
-  // Fetch domains on the server
-  const domains = await getUserDomains(+user.namesiloId);
+  // Fetch domains on the server using the updated function
+  const domains = await getUserDomains();
 
   return (
     <div className="space-y-6 p-6 pb-16">
