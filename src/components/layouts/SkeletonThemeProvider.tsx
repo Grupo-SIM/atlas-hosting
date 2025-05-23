@@ -4,8 +4,8 @@ import { useTheme } from "next-themes";
 import { PropsWithChildren } from "react";
 import { SkeletonTheme } from "react-loading-skeleton";
 
-const darkThemeBaseColor = "#212529";
-const darkThemeHighlightColor = "#495057";
+const darkThemeBaseColor = "#0f1629";
+const darkThemeHighlightColor = "#dee2e616";
 
 const lightThemeBaseColor = "#f8f9fa";
 const lightThemeHighlightColor = "#dee2e6";

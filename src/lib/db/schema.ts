@@ -20,6 +20,7 @@ export const userTable = pgTable("users", {
   domId: text("dom_id"),
   pleskId: text("plesk_id"),
   planId: uuid("plan_id").references(() => plansTable.id),
+  namecheapId: text("namecheap_id"),
   createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
   deletedAt: date("deleted_at", { mode: "date" }),
@@ -30,7 +31,28 @@ export const userRelations = relations(userTable, ({ one }) => ({
     fields: [userTable.planId],
     references: [plansTable.id],
   }),
+  namecheap: one(namecheapIntegration, {
+    fields: [userTable.namecheapId],
+    references: [namecheapIntegration.id],
+  }),
 }));
+
+export const namecheapIntegration = pgTable("namecheap_integration", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  password: text("password").notNull(),
+  username: text("username").notNull(),
+  namecheapId: bigint("namecheap_id", { mode: "number" }).notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => userTable.id),
+});
+
+export const namecheapIntegrationRelations = relations(
+  namecheapIntegration,
+  ({ many }) => ({
+    users: many(userTable),
+  })
+);
 
 export const sessionTable = pgTable("sessions", {
   id: text("id").primaryKey(),

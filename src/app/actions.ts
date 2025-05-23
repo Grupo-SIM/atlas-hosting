@@ -21,6 +21,7 @@ import { db } from "@/lib/db";
 import {
   featureTable,
   invoiceTable,
+  namecheapIntegration,
   planFeature,
   plansTable,
   sessionTable,
@@ -31,6 +32,10 @@ import { NamesiloBoolean } from "@/lib/server/apis/namesilo/types";
 import axios from "axios";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import namecheapApi from "@/lib/server/apis/namecheap";
+import { random } from "lodash";
+import { randomBytes } from "@noble/hashes/utils";
+import { hash, hashWithEncodeKey } from "@/lib/auth/scrypt";
 
 export async function login(
   prevState: unknown,
@@ -107,6 +112,43 @@ export async function signup(
         message: "Erro ao criar conta. O email pode já estar em uso.",
       };
     }
+
+    const randomPassword = randomBytes(10).toHex();
+    const hashedPassword = await hashWithEncodeKey(randomPassword);
+
+    const nameCheapUser = await namecheapApi.createUser({
+      AcceptTerms: true,
+      Address1: "Placeholder",
+      City: "Placeholder",
+      Country: "BR",
+      EmailAddress: email,
+      FirstName: fullName.split(" ")[0],
+      LastName: fullName.split(" ")[1],
+      NewUserName: user.id.replace(/\-/g, ""),
+      NewUserPassword: randomPassword,
+      Phone: "5583912345678",
+      StateProvince: "Placeholder",
+      Zip: "58045010",
+    });
+
+    const { id: namecheapId } = (
+      await db
+        .insert(namecheapIntegration)
+        .values({
+          password: hashedPassword,
+          username: user.id.replace(/\-/g, ""),
+          userId: user.id,
+          namecheapId: nameCheapUser.UserId!,
+        })
+        .returning()
+    )[0];
+
+    await db
+      .update(userTable)
+      .set({
+        namecheapId,
+      })
+      .where(eq(userTable.id, user.id));
 
     const sessionToken = generateSessionToken();
     await createSession(sessionToken, user.id);

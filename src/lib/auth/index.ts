@@ -11,9 +11,9 @@ import {
   encodeHexLowerCase,
 } from "@oslojs/encoding";
 import { eq } from "drizzle-orm";
-import { hash, verify } from "./scrypt";
 import { cookies } from "next/headers";
 import { cache } from "react";
+import { hash, verify } from "./scrypt";
 
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);

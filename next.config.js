@@ -13,8 +13,8 @@ const nextConfig = {
       },
     },
   },
-  typescript: {
-    tsconfigPath: "./tsconfig.json",
+  experimental: {
+    ppr: "incremental",
   },
 };
 

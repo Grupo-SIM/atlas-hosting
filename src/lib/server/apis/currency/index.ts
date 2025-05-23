@@ -37,7 +37,6 @@ export class CurrencyConversionApi {
   }: ConvertCurrencyParams<T, U>): Promise<number> {
     const data = await this.getConversionRate(to);
     const converstionRate = data[from];
-    console.log({ converstionRate, amount });
     return amount / converstionRate;
   }
 
