@@ -1,141 +1,149 @@
-// src/app/api/wp-install/route.ts
-import { getUser } from "@/lib/auth";
-import { NextRequest } from "next/server";
+// TODO: replace (yield ) with yield* send
+import { getUser } from "@/lib/auth/index";
 import pleskApi from "@/lib/server/apis/plesk";
-import { ClientRequestTypeEnum } from "@/plesk"; // Assuming this is from your Plesk SDK
+import { CliCallResponse, ClientRequestTypeEnum } from "@/plesk";
+
 import { db } from "@/lib/db";
 import { userTable } from "@/lib/db/schema";
+import desecApi from "@/lib/server/apis/desec";
+import nameSilo, { NamesiloApi } from "@/lib/server/apis/namesilo";
+import axios from "axios";
 import { eq } from "drizzle-orm";
-import { namecheapApi } from "@/lib/server/apis/namecheap"; // Import Namecheap API
-import { DnsHostRecord } from "@/lib/server/apis/namecheap/types"; // Import DnsHostRecord type
+import { DnsHostRecord } from "@/lib/server/apis/namecheap/types";
+import namecheapApi from "@/lib/server/apis/namecheap";
 
-// Helper function to send SSE messages
-function sendSSE(
-  controller: ReadableStreamDefaultController<any>,
-  type: "INFO" | "ERROR" | "SUCCESS" | "STEP",
-  message: string,
-  details?: any
-) {
-  const data = JSON.stringify({ type, message, step: message, details }); // 'step' for compatibility if frontend uses it
-  controller.enqueue(`data: ${data}\n\n`);
-}
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
-  const user = await getUser();
-  if (!user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+// Total number of steps in the installation process
+const TOTAL_STEPS = 7;
 
-  const url = new URL(request.url);
-  const domainName = url.searchParams.get("domain");
-  const adminUsername = url.searchParams.get("admin_username");
-  const adminPassword = url.searchParams.get("admin_password");
-  const siteName = url.searchParams.get("site_name");
+export async function GET(request: Request) {
+  const domainName = new URL(request.url).searchParams.get("domain");
+  const adminUsername = new URL(request.url).searchParams.get("admin_username");
+  let adminPassword = new URL(request.url).searchParams.get("admin_password");
+  let siteName = new URL(request.url).searchParams.get("site_name");
 
   if (!domainName || !adminUsername || !adminPassword || !siteName) {
-    return new Response(
-      JSON.stringify({ error: "Missing required parameters" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    return Response.error();
   }
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      const send = (
-        type: "INFO" | "ERROR" | "SUCCESS" | "STEP",
-        message: string,
-        details?: any
-      ) => sendSSE(controller, type, message, details);
+  adminPassword = decodeURIComponent(adminPassword);
+  siteName = decodeURIComponent(siteName);
+
+  const user = await getUser();
+
+  if (!user) {
+    return Response.error();
+  }
+
+  function* send(
+    type: "INFO" | "ERROR" | "SUCCESS" | "STEP",
+    message: string,
+    details?: any
+  ) {
+    yield* sendSSE(type, message, details);
+  }
+
+  const response = new Response(
+    // @ts-expect-error Bun async generators are not typed
+    (async function* () {
+      const currentStep = 0;
+
+      // Step 1: Starting installation
+      yield* send("INFO", "Iniciando a instalação do WordPress");
+
+      if (!user) {
+        yield* send("ERROR", "Usuário não autenticado");
+        return;
+      }
+
+      let { pleskId, namesiloId } = user;
+      const { id: userId } = user;
+
+      if (!domainName) {
+        yield* send("ERROR", `Nome de domínio não fornecido`);
+        return;
+      }
+
+      if (!pleskId) {
+        // Step 2: Creating hosting user
+        yield* send("INFO", `Criando usuário de hospedagem no sistema`);
+
+        const result = await pleskApi.createClient({
+          name: user.name,
+          email: user.email,
+          login: user.email,
+          password: user.password,
+          type: ClientRequestTypeEnum.Customer,
+          externalId: userId,
+          ownerLogin: "atlashosting",
+          status: 0,
+        });
+
+        // Step 3: Updating user data
+        yield* send("INFO", `Atualizando os dados do usuário`);
+
+        if (result && result.id) {
+          await db
+            .update(userTable)
+            .set({
+              pleskId: result.id,
+            })
+            .where(eq(userTable.id, userId));
+
+          pleskId = result.id;
+        } else {
+          console.error("Failed to create Plesk client:", result);
+          yield* send(
+            "ERROR",
+            `Erro ao criar usuário de hospedagem no sistema`
+          );
+          return;
+        }
+      }
+
+      if (!namesiloId) {
+        // Step 4: Creating Namesilo contact
+        yield* send("INFO", `Configurando registro de domínio`);
+
+        namesiloId = await nameSilo.createContact();
+
+        await db
+          .update(userTable)
+          .set({
+            namesiloId,
+          })
+          .where(eq(userTable.id, userId));
+      }
 
       try {
-        send("INFO", "Iniciando instalação do WordPress...");
+        // Step 5: Updating domain data
+        yield* send("INFO", `Atualizando os dados do domínio`);
 
-        // 1. Ensure Plesk client exists or create one
-        let pleskId = user.pleskId;
+        const domainExists = await pleskApi.getDomain(domainName);
 
-        if (!pleskId) {
-          send("INFO", "Configurando usuário no painel de hospedagem...");
-          const pleskClient = await pleskApi.createClient({
-            name: user.name || user.email, // Ensure name is available
-            email: user.email,
-            login: user.email, // Plesk login
-            password: user.password, // This should be a secure, perhaps temporary or generated password
-            type: ClientRequestTypeEnum.Customer,
-            externalId: user.id,
-            ownerLogin: process.env.PLESK_ADMIN_USERNAME || "admin", // Ensure admin login is configured
-            status: 0, // Active
-          });
-
-          if (pleskClient && pleskClient.id) {
-            await db
-              .update(userTable)
-              .set({ pleskId: pleskClient.id })
-              .where(eq(userTable.id, user.id));
-            pleskId = pleskClient.id;
-          } else {
-            send("ERROR", "Falha ao criar usuário no Plesk.", pleskClient);
-            controller.close();
-            return;
-          }
+        if (domainExists) {
+          await pleskApi.deleteDomain(domainExists.id);
         }
 
-        // 2. Create/Assign domain in Plesk
-        send("INFO", `Configurando domínio ${domainName} no sistema...`);
-        try {
-          const domainData = await pleskApi.getDomain(domainName);
+        await pleskApi.subscriptions.createSubscription({
+          domainName,
+          login: domainName.replace(".", "_").concat("_", user.pleskId!),
+          password: adminPassword.concat(`_${user.pleskId!}`),
+        });
 
-          if (domainData) {
-            await pleskApi.deleteDomain(domainData.id);
-          }
-
-          await pleskApi.assignDomain(domainName, +pleskId!); // Assign to the client's Plesk account
-          send("INFO", `Domínio ${domainName} configurado no Plesk.`);
-        } catch (e: any) {
-          // Check if error is because domain already exists for this client
-          if (
-            e.response &&
-            e.response.data &&
-            e.response.data.message &&
-            e.response.data.message.includes("already exists")
-          ) {
-            send(
-              "INFO",
-              `Domínio ${domainName} já existe no sistema para este usuário.`
-            );
-          } else {
-            send(
-              "ERROR",
-              `Erro ao configurar domínio ${domainName} no Plesk.`,
-              e.message || e
-            );
-            controller.close();
-            return;
-          }
-        }
-
-        // 3. Set DNS records using Namecheap API
-        send(
-          "INFO",
-          `Configurando registros DNS para ${domainName} via Namecheap...`
-        );
-        // IMPORTANT: The `domainName` here MUST be the apex domain registered with Namecheap (e.g., example.com, example.co.uk)
-        // It should not be a subdomain like 'www.example.com' for SLD/TLD parsing.
+        yield* send("INFO", "Configurando DNS");
 
         let sld: string;
         let tld: string;
         const domainParts = domainName.split(".");
 
-        // This logic attempts to correctly identify SLD and TLD for Namecheap
-        // Assumes domainName is the registrable domain (e.g., 'mydomain.com' or 'mydomain.co.uk')
         if (domainParts.length < 2) {
-          send(
+          yield* send(
             "ERROR",
-            `Formato de domínio inválido para configuração de DNS: ${domainName}`
+            `Formato de domínio inválido para configuração de DNS.`
           );
-          controller.close();
           return;
         }
 
@@ -165,21 +173,19 @@ export async function GET(request: NextRequest) {
 
         if (!sld) {
           // Handles cases like ".com" or if SLD becomes empty after split
-          send(
+          yield* send(
             "ERROR",
             `Não foi possível determinar o SLD para o domínio: ${domainName}`
           );
-          controller.close();
           return;
         }
 
         const serverIp = process.env.SERVER_IP;
         if (!serverIp) {
-          send(
+          yield* send(
             "ERROR",
             "IP do servidor não configurado nas variáveis de ambiente (SERVER_IP)."
           );
-          controller.close();
           return;
         }
 
@@ -187,14 +193,6 @@ export async function GET(request: NextRequest) {
           { HostName: "@", RecordType: "A", Address: serverIp, TTL: 1800 },
           { HostName: "www", RecordType: "A", Address: serverIp, TTL: 1800 },
         ];
-
-        // Reminder: namecheap.domains.dns.setHosts overwrites ALL existing records.
-        // If you need to preserve MX, TXT, etc., you must first fetch existing records
-        // (implement getHosts in NamecheapApiWrapper) and include them in this list.
-        send(
-          "INFO",
-          "Atenção: A configuração de DNS substituirá todos os registros existentes para o domínio com os novos registros A."
-        );
 
         try {
           const dnsResult = await namecheapApi.setHosts({
@@ -204,47 +202,35 @@ export async function GET(request: NextRequest) {
           });
 
           if (dnsResult.IsSuccess) {
-            send(
-              "INFO",
-              `Registros DNS para ${domainName} configurados com sucesso via Namecheap.`
-            );
+            send("INFO", `Registros DNS para configurados com sucesso.`);
           } else {
             // Even if IsSuccess is false, Namecheap API might not throw an error but return it in the response.
             // The _makeRequest should throw for Status="ERROR" in ApiResponse.
             // This path might be if ApiResponse Status="OK" but CommandResponse indicates logical failure.
-            send(
+            yield* send(
               "ERROR",
-              `Falha ao configurar registros DNS para ${domainName} via Namecheap.`,
+              `Falha ao configurar registros DNS.`,
               dnsResult
             );
-            controller.close();
             return;
           }
         } catch (dnsError: any) {
-          send(
+          yield* send(
             "ERROR",
-            `Erro ao configurar DNS via Namecheap: ${dnsError.message || "Erro desconhecido"}`,
+            `Erro ao configurar DNS: ${dnsError.message || "Erro desconhecido"}`,
             dnsError
           );
-          controller.close();
           return;
         }
 
-        // 4. Install WordPress using Plesk WP Toolkit CLI
-        send(
+        yield* send("INFO", "Configurando certificado SSL");
+        await pleskApi.subscriptions.getSsl(domainName, user);
+
+        // Step 6: Installing WordPress
+        yield* send(
           "INFO",
-          `Instalando WordPress em ${domainName}... Isso pode levar alguns minutos.`
+          "Instalando a instância do WordPress (isso pode demorar alguns segundos)"
         );
-        // Construct the WP Toolkit command arguments
-        const wpInstallArgs = [
-          "--path=/", // Install in the webroot of the domain
-          `--title="${siteName}"`,
-          `--admin-user="${adminUsername}"`,
-          `--admin-password="${adminPassword}"`, // Consider password strength policies
-          `--admin-email="${user.email}"`,
-          // Add other options as needed, e.g., language, version
-          // `--locale=pt_BR`,
-        ];
 
         const wpInstallRawResult = await pleskApi.wordpress.installWp(
           domainName,
@@ -253,71 +239,159 @@ export async function GET(request: NextRequest) {
           siteName,
           user.email
         );
+        const wpInstallResult = parsePleskCliResponse(wpInstallRawResult);
 
-        if (wpInstallRawResult.code === 0 && wpInstallRawResult.stdout) {
-          // WP Toolkit success typically code 0
-          let siteUrl = "";
-          let adminUrl = "";
-          try {
-            // Try to parse stdout if it's JSON, otherwise look for known strings
-            const outputJson = JSON.parse(wpInstallRawResult.stdout);
-            siteUrl =
-              outputJson.site_url ||
-              outputJson.siteUrl ||
-              `http://${domainName}`;
-            adminUrl =
-              outputJson.admin_url ||
-              outputJson.adminUrl ||
-              `http://${domainName}/wp-admin`;
-          } catch (parseError) {
-            // Fallback if stdout is not JSON - this can happen with WP Toolkit CLI output
-            const stdoutText = wpInstallRawResult.stdout.toLowerCase();
-            const siteUrlMatch = stdoutText.match(
-              /site url:\s*(https?:\/\/[^\s]+)/
-            );
-            const adminUrlMatch = stdoutText.match(
-              /admin url:\s*(https?:\/\/[^\s]+)/
-            );
-            siteUrl = siteUrlMatch ? siteUrlMatch[1] : `http://${domainName}`;
-            adminUrl = adminUrlMatch
-              ? adminUrlMatch[1]
-              : `http://${domainName}/wp-admin`;
-          }
+        const stdOut = JSON.parse(wpInstallResult.stdout || "{}");
 
-          send("SUCCESS", "WordPress instalado com sucesso!", {
-            siteUrl,
-            adminUrl,
-            message: `WordPress instalado! Site: ${siteUrl}, Admin: ${adminUrl}`,
-          });
-        } else {
-          send("ERROR", "Falha na instalação do WordPress via WP Toolkit.", {
-            stdout: wpInstallRawResult.stdout,
-            stderr: wpInstallRawResult.stderr,
-            code: wpInstallRawResult.code,
-            message:
-              wpInstallRawResult.stderr ||
-              wpInstallRawResult.stdout ||
-              "Erro desconhecido do WP Toolkit.",
-          });
+        if (!stdOut["instance-id"]) {
+          console.error(
+            "WordPress installation failed (WP Toolkit exit code):",
+            wpInstallResult
+          );
+          const errorMessage = String(
+            wpInstallResult.stderr ||
+              wpInstallResult.message ||
+              wpInstallResult.error ||
+              "Falha na instalação (código de saída)."
+          );
+
+          yield* send("ERROR", `Erro ao instalar o WordPress: ${errorMessage}`);
+          return;
         }
-      } catch (error: any) {
-        console.error("WP Install Route Error:", error);
-        send(
-          "ERROR",
-          `Erro geral no processo de instalação: ${error.message || "Erro desconhecido."}`,
-          error
-        );
-      } finally {
-        controller.close();
-      }
-    },
-  });
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
-  });
+        if (
+          wpInstallResult.error &&
+          typeof wpInstallResult.error === "boolean"
+        ) {
+          yield* send(
+            "ERROR",
+            "Erro ao instalar o WordPress: A instalação reportou um erro."
+          );
+          return;
+        }
+
+        if (
+          wpInstallResult.error &&
+          typeof wpInstallResult.error === "string" &&
+          wpInstallResult.error.toLowerCase() !== "false"
+        ) {
+          yield* send(
+            "ERROR",
+            `Erro ao instalar o WordPress: ${wpInstallResult.error}`
+          );
+          return;
+        }
+
+        if (
+          wpInstallResult.status &&
+          !["success", "installed", "ok"].includes(
+            wpInstallResult.status.toLowerCase()
+          )
+        ) {
+          yield* send(
+            "ERROR",
+            `Erro ao instalar o WordPress: ${wpInstallResult.status}`
+          );
+          return;
+        }
+
+        await pleskApi.wordpress.createAdminUser(+stdOut["instance-id"]);
+
+        await pleskApi.wordpress.addWpConfig(+stdOut["instance-id"], {
+          SIMPLE_JWT_AUTH_ENCRYPT_KEY: process.env.JWT_AUTH_SECRET!,
+        });
+
+        // Final success message
+        yield* send("SUCCESS", "Instalação concluída com sucesso!");
+        return;
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error("Failed to create WordPress instance:", error);
+          if (error.response && error.response.data) {
+            const pleskError = error.response.data as any;
+            yield* send(
+              "ERROR",
+              `Erro durante a criação da instância WordPress: ${pleskError.message || pleskError.errtext || JSON.stringify(pleskError)}`
+            );
+            return;
+          }
+        }
+
+        yield* send("ERROR", "Erro ao criar instância WordPress");
+        return;
+      }
+    })(),
+    {
+      headers: {
+        Connection: "keep-alive",
+        "Content-Encoding": "none",
+        "Cache-Control": "no-cache, no-transform",
+        "Content-Type": "text/event-stream; charset=utf-8",
+      },
+    }
+  );
+
+  return response;
+}
+
+function parsePleskCliResponse(response: CliCallResponse): PleskCliOutput {
+  let parsedOutput: PleskCliOutput = {
+    stderr: response.stderr || "",
+    exit_code: response.code === 200 && !response.stderr ? 0 : -1,
+  };
+
+  try {
+    if (response.stdout) {
+      const jsonOutput = JSON.parse(response.stdout);
+      parsedOutput = { ...parsedOutput, ...jsonOutput };
+      parsedOutput.stdout = response.stdout;
+
+      if (jsonOutput.result && typeof jsonOutput.result === "object") {
+        parsedOutput.admin_url =
+          jsonOutput.result.admin_url || parsedOutput.admin_url;
+        parsedOutput.site_url =
+          jsonOutput.result.site_url || parsedOutput.site_url;
+      }
+      parsedOutput.admin_url = jsonOutput.admin_url || parsedOutput.admin_url;
+      parsedOutput.site_url = jsonOutput.site_url || parsedOutput.site_url;
+
+      if (typeof jsonOutput.exit_code === "number") {
+        parsedOutput.exit_code = jsonOutput.exit_code;
+      }
+    } else {
+      parsedOutput.stdout = "";
+    }
+  } catch (e) {
+    console.warn("Failed to parse Plesk CLI stdout as JSON:", response.stdout);
+    parsedOutput.stdout = response.stdout || "";
+    if (!parsedOutput.message && !parsedOutput.error) {
+      parsedOutput.error = `Invalid JSON response from server: ${response.stdout}`;
+    }
+  }
+  return parsedOutput;
+}
+
+interface PleskCliOutput {
+  stdout?: string; // Raw stdout
+  stderr?: string;
+  exit_code?: number; // WP Toolkit might put exit_code inside the JSON stdout
+  message?: string; // General message from WP Toolkit
+  error?: string | boolean; // Error message or flag
+  status?: string; // Status like 'success', 'installed', 'error'
+  admin_url?: string; // WordPress Admin URL
+  site_url?: string; // WordPress Site URL
+  [key: string]: any; // For other potential fields
+}
+
+function* sendSSE(
+  type: "INFO" | "ERROR" | "SUCCESS" | "STEP",
+  message: string,
+  details?: any
+) {
+  const payload = { type, message, step: message, details };
+
+  console.log("SSE Payload:", payload);
+
+  const data = JSON.stringify(payload); // 'step' for compatibility if frontend uses it
+  yield `data: ${data}\n\n`;
 }

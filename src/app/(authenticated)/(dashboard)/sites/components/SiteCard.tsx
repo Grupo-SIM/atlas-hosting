@@ -31,16 +31,16 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { CgSpinner } from "react-icons/cg";
 import { FaTimes } from "react-icons/fa";
-import { WordPressInstance } from "./SitesList";
+import { ParsedWordPressInstance } from "../page";
 
 export interface SiteCardProps {
-  instance: WordPressInstance;
+  instance: ParsedWordPressInstance;
   isLoading: boolean;
   isBulkMode: boolean;
   isPending: boolean;
   selectedInstances: number[];
   onToggleSelection: (instanceId: number) => void;
-  onDelete: (instance: WordPressInstance) => void;
+  onDelete: (instance: ParsedWordPressInstance) => void;
 }
 
 export function SiteCard({
@@ -53,7 +53,9 @@ export function SiteCard({
   onDelete,
 }: SiteCardProps) {
   const redirectUrl = useMemo(
-    () => `/sites/edit?site=${encodeURIComponent(instance.domain)}`,
+    // https://www.testeatlas.xyz/wp-login.php?redirect_to=https%3A%2F%2Fwww.testeatlas.xyz%2Fwp-admin%2F&reauth=1
+    () =>
+      `${instance.domain}/wp-login.php?redirect_to=${encodeURIComponent(instance.domain.concat("/wp-admin/admin.php?page=elementor-app#onboarding/goodToGo"))}`,
     [instance.domain]
   );
 

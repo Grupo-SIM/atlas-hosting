@@ -1,19 +1,24 @@
-FROM node:22-slim AS base
-
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
-COPY . /app
-WORKDIR /app
+FROM oven/bun:latest AS base
+WORKDIR /usr/src/app
 
 FROM base AS install
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-RUN pnpm run build
+COPY package.json bun.lock ./
+COPY src/plesk/ ./src/
+RUN bun install
 
-FROM base
-COPY --from=build /app/node_modules /app/node_modules
-COPY --from=build /app/.next/standalone ./
-COPY --from=build /app/.next/static ./.next/static
+FROM base AS prerelease
+COPY --from=install /usr/src/app/node_modules ./node_modules
+COPY . .
 
+ENV NODE_ENV=production
+ENV HOST="0.0.0.0"
+RUN bun test
+RUN bun --bun run build
+
+FROM base AS release
+COPY --from=prerelease /usr/src/app/.next/standalone ./
+COPY --from=prerelease /usr/src/app/.next/static ./.next/static
+
+USER bun
 EXPOSE 3000/tcp
-CMD [ "node", "server.js" ]
+ENTRYPOINT [ "bun", "run", "server.js" ]

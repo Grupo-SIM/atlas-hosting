@@ -47,7 +47,9 @@ async function getUserDomains(): Promise<
       allDomains.map(async (domain) => ({
         ...domain,
         inPlesk: wpInstances.some(
-          (wp) => new URL(wp.domain).hostname === new URL(domain.Name).hostname
+          (wp) =>
+            new URL(wp.domain).hostname ===
+            new URL(`https://wwww.${domain.Name}`).hostname
         ),
       }))
     );

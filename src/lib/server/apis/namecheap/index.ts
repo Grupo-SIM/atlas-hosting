@@ -35,19 +35,13 @@ import type {
   UsersCreateUserParams,
   UsersGetPricingCleanedResponse,
   UsersGetPricingUserParams,
-  DomainListItem, // Already imported from previous turn
-  PagingInfo, // Already imported from previous turn
-  // START: Added for namecheap.domains.dns.setHosts
+  DomainListItem,
+  PagingInfo,
   DomainsDnsSetHostsUserParams,
   DomainsDnsSetHostsCleanedResponse,
   RawDomainsDnsSetHostsCommandResponseContent,
-  DnsHostRecord, // Ensure DnsHostRecord is imported if defined in types.ts, or use its definition
-  DnsRecordType,
-  DnsEmailType,
-  // END: Added for namecheap.domains.dns.setHosts
 } from "./types";
 import { isString } from "lodash";
-// import { isString } from "lodash"; // Was present in uploaded:index.ts, keep if used
 
 const TARGET_CURRENCY = "BRL";
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -587,7 +581,7 @@ export class NamecheapApiWrapper {
   private _parseDomainsDnsSetHostsResponse = (
     rawContent: RawDomainsDnsSetHostsCommandResponseContent
   ): DomainsDnsSetHostsCleanedResponse => {
-    const resultNode = rawContent.DomainDNSSetHostsResult; // Should be an object
+    const resultNode = rawContent.DomainDNSSetHostsResult?.[0];
     if (!resultNode || !resultNode.$) {
       throw new Error(
         "DomainDNSSetHostsResult missing or malformed in API response."
@@ -849,10 +843,13 @@ export class NamecheapApiWrapper {
   private _parseDomainsCreateResponse = async (
     rawContent: RawDomainsCreateCommandResponseContent
   ): Promise<DomainsCreateCleanedResponse> => {
-    const resNode = rawContent.DomainCreateResult;
-    if (!resNode || !resNode.$)
+    // DomainCreateResult is an array due to xml2js explicitArray:true
+    const resultNode = rawContent.DomainCreateResult?.[0];
+    if (!resultNode || !resultNode.$) {
+      // Check if the first element and its attributes exist
       throw new Error("DomainCreateResult missing or malformed.");
-    const res = resNode.$;
+    }
+    const res = resultNode.$; // Attributes are on the '$' property of the element
     const originalCurrency = "USD";
     const chargedAmountBRL = await this._convertPrice(
       parseFloat(res.ChargedAmount),

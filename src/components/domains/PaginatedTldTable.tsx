@@ -20,6 +20,14 @@ import {
 } from "@/components/ui/pagination"; // Assuming this is your correct path
 import { cn, toBrl } from "@/lib/utils";
 import type { DomainPriceInfo } from "@/app/(authenticated)/(dashboard)/domains/register/page"; // Adjust path if types moved
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Input } from "../ui/input";
 
 const ITEMS_PER_TLD_PAGE = 10; // Or make this a prop
 
@@ -69,11 +77,18 @@ interface PaginatedTldTableProps {
 
 export function PaginatedTldTable({ allTldData }: PaginatedTldTableProps) {
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [search, setSearch] = React.useState("");
 
-  const totalTldCount = allTldData.length;
+  const filteredTldData = allTldData.filter((item) =>
+    [item.tld, `.${item.tld}`]
+      .map((tld) => tld.toLowerCase())
+      .some((tld) => tld.includes(search))
+  );
+
+  const totalTldCount = filteredTldData.length;
   const totalTldPages = Math.ceil(totalTldCount / ITEMS_PER_TLD_PAGE);
 
-  const paginatedTldItems = allTldData.slice(
+  const paginatedTldItems = filteredTldData.slice(
     (currentPage - 1) * ITEMS_PER_TLD_PAGE,
     currentPage * ITEMS_PER_TLD_PAGE
   );
@@ -102,6 +117,14 @@ export function PaginatedTldTable({ allTldData }: PaginatedTldTableProps) {
     setCurrentPage((prev) => Math.min(totalTldPages, prev + 1));
   };
 
+  const onSearch = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value.toLowerCase();
+      setSearch(value);
+    },
+    []
+  );
+
   if (!allTldData || allTldData.length === 0) {
     return (
       <p className="text-center text-muted-foreground py-4">
@@ -111,90 +134,107 @@ export function PaginatedTldTable({ allTldData }: PaginatedTldTableProps) {
   }
 
   return (
-    <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>TLD</TableHead>
-            <TableHead className="hidden sm:table-cell text-right">
-              Registro (BRL)
-            </TableHead>
-            <TableHead className="text-right">Renovação (BRL)</TableHead>
-            <TableHead className="text-right">Transferência (BRL)</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {paginatedTldItems.length === 0 && currentPage > 1 ? (
+    <Card>
+      <CardHeader>
+        <CardTitle>Preços de Nomes de Domínio (BRL)</CardTitle>
+        <CardDescription>
+          Lista de TLDs com preços de registro em BRL (convertidos de USD,
+          atualizado diariamente).
+        </CardDescription>
+        <Input
+          value={search}
+          onChange={onSearch}
+          type="search"
+          placeholder="Pesquisar TLD"
+          className="mt-2 w-full"
+        />
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell
-                colSpan={4}
-                className="text-center text-muted-foreground"
-              >
-                Nenhum item nesta página. Retorne à página anterior.
-              </TableCell>
+              <TableHead>TLD</TableHead>
+              <TableHead className="hidden sm:table-cell text-right">
+                Registro (BRL)
+              </TableHead>
+              <TableHead className="text-right">Renovação (BRL)</TableHead>
+              <TableHead className="text-right">Transferência (BRL)</TableHead>
             </TableRow>
-          ) : (
-            paginatedTldItems.map((item) => (
-              <TableRow key={item.tld}>
-                <TableCell className="font-medium">.{item.tld}</TableCell>
-                <TableCell className="hidden sm:table-cell text-right">
-                  {item.price !== undefined ? toBrl(item.price) : "N/A"}
-                </TableCell>
-                <TableCell className="text-right">
-                  {item.renew !== undefined ? toBrl(item.renew) : "N/A"}
-                </TableCell>
-                <TableCell className="text-right">
-                  {item.transfer !== undefined ? toBrl(item.transfer) : "N/A"}
+          </TableHeader>
+          <TableBody>
+            {paginatedTldItems.length === 0 && currentPage > 1 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  className="text-center text-muted-foreground"
+                >
+                  Nenhum item nesta página. Retorne à página anterior.
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-
-      {totalTldPages > 1 && (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#" // href is required by Link, but action handled by onClick
-                onClick={currentPage <= 1 ? undefined : handlePreviousPage}
-                className={cn({
-                  "cursor-not-allowed opacity-70": currentPage <= 1,
-                })}
-              />
-            </PaginationItem>
-            {generatePagination(currentPage, totalTldPages).map(
-              (page, index) => (
-                <PaginationItem key={index}>
-                  {page === "..." ? (
-                    <PaginationEllipsis />
-                  ) : (
-                    <PaginationLink
-                      href="#" // href is required by Link
-                      onClick={(e) => handlePageChange(page as number, e)}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  )}
-                </PaginationItem>
-              )
+            ) : (
+              paginatedTldItems.map((item) => (
+                <TableRow key={item.tld}>
+                  <TableCell className="font-medium">.{item.tld}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-right">
+                    {item.price !== undefined ? toBrl(item.price) : "N/A"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {item.renew !== undefined ? toBrl(item.renew) : "N/A"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {item.transfer !== undefined ? toBrl(item.transfer) : "N/A"}
+                  </TableCell>
+                </TableRow>
+              ))
             )}
-            <PaginationItem>
-              <PaginationNext
-                href="#" // href is required by Link
-                onClick={
-                  currentPage >= totalTldPages ? undefined : handleNextPage
-                }
-                className={cn({
-                  "cursor-not-allowed opacity-70": currentPage >= totalTldPages,
-                })}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      )}
-    </>
+          </TableBody>
+        </Table>
+
+        {totalTldPages > 1 && (
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={currentPage <= 1 ? undefined : handlePreviousPage}
+                  className={cn({
+                    "cursor-not-allowed opacity-70": currentPage <= 1,
+                  })}
+                />
+              </PaginationItem>
+              {generatePagination(currentPage, totalTldPages).map(
+                (page, index) => (
+                  <PaginationItem key={index}>
+                    {page === "..." ? (
+                      <PaginationEllipsis />
+                    ) : (
+                      <PaginationLink
+                        href="#" // href is required by Link
+                        onClick={(e) => handlePageChange(page as number, e)}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    )}
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  href="#" // href is required by Link
+                  onClick={
+                    currentPage >= totalTldPages ? undefined : handleNextPage
+                  }
+                  className={cn({
+                    "cursor-not-allowed opacity-70":
+                      currentPage >= totalTldPages,
+                  })}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
+      </CardContent>
+    </Card>
   );
 }

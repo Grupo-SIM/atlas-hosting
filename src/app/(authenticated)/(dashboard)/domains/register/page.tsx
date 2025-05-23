@@ -26,7 +26,7 @@ import type {
 } from "@/lib/server/apis/namecheap/types";
 import { Search } from "lucide-react";
 import { Metadata } from "next";
-import { cache, Suspense } from "react";
+import { cache, Suspense, useCallback } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -352,63 +352,66 @@ export default async function DomainsPage({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Preços de Nomes de Domínio (BRL)</CardTitle>
-          <CardDescription>
-            Lista de TLDs com preços de registro em BRL (convertidos de USD,
-            atualizado diariamente).
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={<TldPriceTableSkeleton />}>
-            <TldPriceSectionFromDb
-              allDomainPricesFromDbPromise={allDomainPricesFromDbPromise}
-            />
-          </Suspense>
-        </CardContent>
-      </Card>
+      <Suspense fallback={<TldPriceTableSkeleton />}>
+        <TldPriceSectionFromDb
+          allDomainPricesFromDbPromise={allDomainPricesFromDbPromise}
+        />
+      </Suspense>
     </div>
   );
 }
 
 function TldPriceTableSkeleton() {
   return (
-    <div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>TLD</TableHead>
-            <TableHead className="hidden sm:table-cell text-right">
-              Registro (BRL)
-            </TableHead>
-            <TableHead className="text-right">Renovação (BRL)</TableHead>
-            <TableHead className="text-right">Transferência (BRL)</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {[...Array(ITEMS_PER_TLD_PAGE_SKELETON)].map((_, i) => (
-            <TableRow key={`skeleton-${i}`}>
-              <TableCell>
-                <Skeleton width="6rem" height="1rem" />
-              </TableCell>
-              <TableCell className="hidden sm:table-cell text-right">
-                <Skeleton width="6rem" height="1rem" />
-              </TableCell>
-              <TableCell className="text-right">
-                <Skeleton width="6rem" height="1rem" />
-              </TableCell>
-              <TableCell className="text-right">
-                <Skeleton width="6rem" height="1rem" />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <div className="mx-auto flex w-full justify-center pt-4">
-        <Skeleton width="15rem" height="2.25rem" />
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Preços de Nomes de Domínio (BRL)</CardTitle>
+        <CardDescription>
+          Lista de TLDs com preços de registro em BRL (convertidos de USD,
+          atualizado diariamente).
+        </CardDescription>
+        <Input type="search" placeholder="Pesquisar TLD" className="mt-2" />
+      </CardHeader>
+      <CardContent>
+        <div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>TLD</TableHead>
+                <TableHead className="hidden sm:table-cell text-right">
+                  Registro (BRL)
+                </TableHead>
+                <TableHead className="text-right">Renovação (BRL)</TableHead>
+                <TableHead className="text-right">
+                  Transferência (BRL)
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[...Array(ITEMS_PER_TLD_PAGE_SKELETON)].map((_, i) => (
+                <TableRow key={`skeleton-${i}`}>
+                  <TableCell>
+                    <Skeleton width="6rem" height="1rem" />
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell text-right">
+                    <Skeleton width="6rem" height="1rem" />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Skeleton width="6rem" height="1rem" />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Skeleton width="6rem" height="1rem" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div className="mx-auto flex w-full justify-center pt-4">
+            <Skeleton width="15rem" height="2.25rem" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -459,9 +462,9 @@ async function TldPriceSectionFromDb({
         transfer: transferBRL, // Now BRL
         minRegisterYears: item.minRegisterYears ?? undefined,
         maxRegisterYears: item.maxRegisterYears ?? undefined,
-        // description: item.description, // If description was fetched and stored
       };
     })
   );
+
   return <PaginatedTldTable allTldData={convertedPricesForTable} />;
 }

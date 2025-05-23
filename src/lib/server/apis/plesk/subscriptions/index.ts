@@ -30,7 +30,7 @@ export default class SubscriptionApi {
     login,
     password,
   }: CreateSubscriptionParameters) {
-    await this.callSubscription(
+    return await this.callSubscription(
       `--create ${domainName} -ip ${process.env.SERVER_IP} -login ${login} -passwd "${password}" -hosting true -hst_type phys -php true -php_handler_id fastcgi -ssl true -mail_service true -hard_quota 10G -log-rotate true -seo-redirect www`
     );
   }

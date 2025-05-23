@@ -173,10 +173,10 @@ export interface RawDomainDNSSetHostsResultAttributes {
 }
 
 export interface RawDomainsDnsSetHostsCommandResponseContent {
-  DomainDNSSetHostsResult?: {
+  DomainDNSSetHostsResult?: Array<{
     // Should be an object, not an array based on typical XML single result
     $: RawDomainDNSSetHostsResultAttributes;
-  };
+  }>;
 }
 
 export interface DomainsGetTldListCleanedResponse {
@@ -398,9 +398,10 @@ export interface RawDomainCreateResultAttributes {
 }
 
 export interface RawDomainsCreateCommandResponseContent {
-  DomainCreateResult?: {
+  // Corrected: DomainCreateResult should be an array when parsed by xml2js with explicitArray: true
+  DomainCreateResult?: Array<{
     $: RawDomainCreateResultAttributes;
-  };
+  }>;
 }
 
 // --- For namecheap.domains.getInfo ---
