@@ -19,20 +19,11 @@ import {
 } from "react";
 import { BulkActionButtons } from "./BulkActionsButton";
 import { SiteCard } from "./SiteCard";
-
-export interface WordPressInstance {
-  id: number;
-  instanceId: number;
-  name: string;
-  domain: string;
-  path: string;
-  status: string;
-  ready?: boolean;
-}
+import { ParsedWordPressInstance } from "../page";
 
 export interface SitesListProps {
-  readyInstances: WordPressInstance[];
-  processingInstances: WordPressInstance[];
+  readyInstances: ParsedWordPressInstance[];
+  processingInstances: ParsedWordPressInstance[];
 }
 
 export function SitesList({
@@ -40,9 +31,9 @@ export function SitesList({
   processingInstances: initialProcessing,
 }: SitesListProps) {
   const [readyInstances, setReadyInstances] =
-    useState<WordPressInstance[]>(initialReady);
+    useState<ParsedWordPressInstance[]>(initialReady);
   const [processingInstances, setProcessingInstances] =
-    useState<WordPressInstance[]>(initialProcessing);
+    useState<ParsedWordPressInstance[]>(initialProcessing);
   const [selectedInstances, setSelectedInstances] = useState<number[]>([]);
   const [isBulkMode, setIsBulkMode] = useState(false);
   const [state, doDelete, isPending] = useActionState(
@@ -87,8 +78,8 @@ export function SitesList({
 
     es.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      const newlyReady: WordPressInstance[] = [];
-      const stillProcessing: WordPressInstance[] = [];
+      const newlyReady: (ParsedWordPressInstance & { ready: boolean })[] = [];
+      const stillProcessing: ParsedWordPressInstance[] = [];
 
       processingInstances.forEach((instance) => {
         const isReady = data.domains[instance.domain] === true;
@@ -112,7 +103,7 @@ export function SitesList({
   }, [processingInstances]);
 
   const handleDelete = useCallback(
-    (instance: WordPressInstance) => {
+    (instance: ParsedWordPressInstance) => {
       startTransition(() => {
         doDelete(instance.instanceId.toString());
       });
@@ -159,7 +150,7 @@ export function SitesList({
   );
 
   const siteCardProps = useCallback(
-    (instance: WordPressInstance, isLoading: boolean) => ({
+    (instance: ParsedWordPressInstance, isLoading: boolean) => ({
       instance,
       isLoading,
       isBulkMode,

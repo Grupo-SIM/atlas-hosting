@@ -12,11 +12,9 @@ import type {
   DomainsCreateUserParams,
   DomainsGetInfoCleanedResponse,
   DomainsGetInfoUserParams,
-  // START: Added for namecheap.domains.getList
   DomainsGetListCleanedResponse,
   DomainsGetListUserParams,
   RawDomainsGetListCommandResponseContent,
-  // END: Added for namecheap.domains.getList
   DomainsGetTldListCleanedResponse,
   NamecheapContactDetails,
   NamecheapDnsDetails,
@@ -37,10 +35,19 @@ import type {
   UsersCreateUserParams,
   UsersGetPricingCleanedResponse,
   UsersGetPricingUserParams,
-  DomainListItem,
-  PagingInfo,
+  DomainListItem, // Already imported from previous turn
+  PagingInfo, // Already imported from previous turn
+  // START: Added for namecheap.domains.dns.setHosts
+  DomainsDnsSetHostsUserParams,
+  DomainsDnsSetHostsCleanedResponse,
+  RawDomainsDnsSetHostsCommandResponseContent,
+  DnsHostRecord, // Ensure DnsHostRecord is imported if defined in types.ts, or use its definition
+  DnsRecordType,
+  DnsEmailType,
+  // END: Added for namecheap.domains.dns.setHosts
 } from "./types";
 import { isString } from "lodash";
+// import { isString } from "lodash"; // Was present in uploaded:index.ts, keep if used
 
 const TARGET_CURRENCY = "BRL";
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -72,7 +79,7 @@ export class NamecheapApiWrapper {
     fetchPromise: Promise<UsersGetPricingCleanedResponse | null> | null;
   } = { value: null, lastUpdated: 0, isFetching: false, fetchPromise: null };
 
-  private dbDomainPricesLastRefreshed: number = 0; // In-memory track of last DB refresh
+  private dbDomainPricesLastRefreshed: number = 0;
   private dbDomainPricingRefreshInterval: NodeJS.Timeout | null = null;
   private isDbDomainPricingRefreshing: boolean = false;
   private dbRefreshPromise: Promise<void> | null = null;
@@ -89,7 +96,7 @@ export class NamecheapApiWrapper {
     console.log(
       "NamecheapApiWrapper: Initializing TLD List API (in-memory) cache..."
     );
-    await this._fetchAndCacheTldListApi(); // Fetches TLD metadata
+    await this._fetchAndCacheTldListApi();
     if (this.tldListApiRefreshInterval)
       clearInterval(this.tldListApiRefreshInterval);
     this.tldListApiRefreshInterval = setInterval(async () => {
@@ -182,13 +189,12 @@ export class NamecheapApiWrapper {
         >(
           "namecheap.users.getPricing",
           this._parseUsersGetPricingParams(params),
-          this._parseUsersGetPricingResponse, // This converts to BRL for in-memory
+          this._parseUsersGetPricingResponse,
           "GET"
         );
         if (freshPricing?.ProductType) {
           this.domainPricingApiCache.value = freshPricing;
           this.domainPricingApiCache.lastUpdated = Date.now();
-          // Trigger non-blocking DB update (should fetch USD again or use raw before conversion)
           this._refreshDomainPricingDbCache().catch((err) =>
             console.error(
               "NCW: Background DB domain pricing cache refresh failed:",
@@ -223,13 +229,12 @@ export class NamecheapApiWrapper {
           ProductType: "DOMAIN",
         };
         const rawPricingApiResponse = await this._makeRequest<
-          // Fetch raw USD data
           RawUsersGetPricingCommandResponseContent,
-          RawUsersGetPricingCommandResponseContent // Keep it raw
+          RawUsersGetPricingCommandResponseContent
         >(
           "namecheap.users.getPricing",
           this._parseUsersGetPricingParams(rawPricingParams),
-          (rawContent) => rawContent, // Pass through raw content (USD)
+          (rawContent) => rawContent,
           "GET"
         );
 
@@ -392,10 +397,14 @@ export class NamecheapApiWrapper {
             "; "
           );
         else if (typeof errNode === "string" && errNode.trim())
+          // Use isString from lodash if preferred
           errMsg += ` Details: ${errNode}`;
         else if (parsedXml.ApiResponse.Errors)
           errMsg += ` Raw Errors: ${JSON.stringify(parsedXml.ApiResponse.Errors)}`;
-        // Check for specific error 5050169
+
+        // Specific error code checks for setHosts (example)
+        // Error codes specific to setHosts like 2030167, 2030280 etc. can be checked here
+        // For now, appending the known "Unknown exception"
         if (
           !isString(errNode) &&
           errNode?.Error?.some((e) => e.$.Number === "5050169")
@@ -421,7 +430,7 @@ export class NamecheapApiWrapper {
     }
   };
 
-  // --- Method 1: namecheap.domains.check (Parser is async, converts to BRL) ---
+  // --- Method 1: namecheap.domains.check ---
   private _parseDomainsCheckParams = (
     params: DomainsCheckUserParams
   ): NamecheapRequestParams => ({ DomainList: params.DomainList });
@@ -480,7 +489,7 @@ export class NamecheapApiWrapper {
       "GET"
     );
 
-  // --- START: Added for namecheap.domains.getList ---
+  // --- Method for namecheap.domains.getList ---
   private _parseDomainsGetListParams = (
     params: DomainsGetListUserParams
   ): NamecheapRequestParams => {
@@ -542,11 +551,76 @@ export class NamecheapApiWrapper {
       "namecheap.domains.getList",
       this._parseDomainsGetListParams(params),
       this._parseDomainsGetListResponse,
-      "GET" // As per documentation, it's a GET request
+      "GET"
     );
-  // --- END: Added for namecheap.domains.getList ---
 
-  // --- Method 4: namecheap.domains.getTldList (Uses in-memory API cache) ---
+  // --- START: Added for namecheap.domains.dns.setHosts ---
+  private _parseDomainsDnsSetHostsParams = (
+    params: DomainsDnsSetHostsUserParams
+  ): NamecheapRequestParams => {
+    const apiParams: NamecheapRequestParams = {
+      SLD: params.SLD,
+      TLD: params.TLD,
+    };
+
+    if (params.EmailType) {
+      apiParams.EmailType = params.EmailType;
+    }
+
+    params.Records.forEach((record, index) => {
+      const recordNum = index + 1;
+      apiParams[`HostName${recordNum}`] = record.HostName;
+      apiParams[`RecordType${recordNum}`] = record.RecordType;
+      apiParams[`Address${recordNum}`] = record.Address;
+      if (record.MXPref !== undefined) {
+        // Specifically check for undefined, as 0 is a valid MXPref
+        apiParams[`MXPref${recordNum}`] = record.MXPref;
+      }
+      if (record.TTL !== undefined) {
+        apiParams[`TTL${recordNum}`] = record.TTL;
+      }
+    });
+
+    return apiParams;
+  };
+
+  private _parseDomainsDnsSetHostsResponse = (
+    rawContent: RawDomainsDnsSetHostsCommandResponseContent
+  ): DomainsDnsSetHostsCleanedResponse => {
+    const resultNode = rawContent.DomainDNSSetHostsResult; // Should be an object
+    if (!resultNode || !resultNode.$) {
+      throw new Error(
+        "DomainDNSSetHostsResult missing or malformed in API response."
+      );
+    }
+    const attrs = resultNode.$;
+    return {
+      Domain: attrs.Domain,
+      IsSuccess: attrs.IsSuccess === "true",
+    };
+  };
+
+  public setHosts = async (
+    params: DomainsDnsSetHostsUserParams
+  ): Promise<DomainsDnsSetHostsCleanedResponse> => {
+    const httpMethod = params.Records.length > 10 ? "POST" : "GET";
+    // As per documentation: "We recommend you use HTTPPOST method when setting more than 10 hostnames."
+    // "All host records that are not included into the API call will be deleted, so add them in addition to new host records."
+    // This means the `params.Records` should be the complete list of desired records.
+
+    return this._makeRequest<
+      RawDomainsDnsSetHostsCommandResponseContent,
+      DomainsDnsSetHostsCleanedResponse
+    >(
+      "namecheap.domains.dns.setHosts",
+      this._parseDomainsDnsSetHostsParams(params),
+      this._parseDomainsDnsSetHostsResponse,
+      httpMethod
+    );
+  };
+  // --- END: Added for namecheap.domains.dns.setHosts ---
+
+  // --- Method 4: namecheap.domains.getTldList ---
   private _parseDomainsGetTldListResponse = (
     rawContent: RawDomainsGetTldListCommandResponseContent
   ): DomainsGetTldListCleanedResponse => {
@@ -555,7 +629,7 @@ export class NamecheapApiWrapper {
     if (rawTldArray) {
       rawTldArray.forEach((rt) => {
         const attrs = rt.$;
-        const desc = rt._ || ""; // Description is the text node content
+        const desc = rt._ || "";
         tlds.push({
           Name: attrs.Name,
           Description: desc.trim(),
@@ -608,7 +682,7 @@ export class NamecheapApiWrapper {
       return this.tldListApiCache.value;
     };
 
-  // --- Method 5: namecheap.users.getPricing (Uses in-memory API cache for full BRL converted response, triggers DB USD cache update) ---
+  // --- Method 5: namecheap.users.getPricing ---
   private _parseUsersGetPricingParams = (
     params: UsersGetPricingUserParams
   ): NamecheapRequestParams => {
@@ -639,7 +713,7 @@ export class NamecheapApiWrapper {
             if (rawProduct.Price) {
               for (const rawPrice of rawProduct.Price) {
                 const pAttrs = rawPrice.$;
-                const originalCurrency = pAttrs.Currency.toUpperCase(); // Preserve original currency
+                const originalCurrency = pAttrs.Currency.toUpperCase();
                 prices.push({
                   Duration: parseInt(pAttrs.Duration),
                   DurationType: pAttrs.DurationType,
@@ -661,7 +735,7 @@ export class NamecheapApiWrapper {
                         originalCurrency
                       )
                     : 0,
-                  Currency: TARGET_CURRENCY as "BRL", // Set to target currency after conversion
+                  Currency: TARGET_CURRENCY as "BRL",
                 });
               }
             }
@@ -703,12 +777,11 @@ export class NamecheapApiWrapper {
         ) {
           return this.domainPricingApiCache.fetchPromise;
         }
-        return this._fetchAndCacheFullDomainPricing(); // This fetches and caches BRL prices
+        return this._fetchAndCacheFullDomainPricing();
       }
-      return this.domainPricingApiCache.value; // Return BRL prices from cache
+      return this.domainPricingApiCache.value;
     }
 
-    // For specific pricing requests, fetch directly (will also convert to BRL)
     const apiParams = this._parseUsersGetPricingParams(params);
     return this._makeRequest<
       RawUsersGetPricingCommandResponseContent,
@@ -716,12 +789,12 @@ export class NamecheapApiWrapper {
     >(
       "namecheap.users.getPricing",
       apiParams,
-      this._parseUsersGetPricingResponse, // Converts to BRL
+      this._parseUsersGetPricingResponse,
       "GET"
     );
   };
 
-  // --- Method 6: namecheap.domains.create (Parser is async, converts ChargedAmount to BRL) ---
+  // --- Method 6: namecheap.domains.create ---
   private _flattenContactDetails = (
     contact: NamecheapContactDetails,
     prefix: string
@@ -776,11 +849,11 @@ export class NamecheapApiWrapper {
   private _parseDomainsCreateResponse = async (
     rawContent: RawDomainsCreateCommandResponseContent
   ): Promise<DomainsCreateCleanedResponse> => {
-    const resNode = rawContent.DomainCreateResult; // This should be an object
+    const resNode = rawContent.DomainCreateResult;
     if (!resNode || !resNode.$)
       throw new Error("DomainCreateResult missing or malformed.");
     const res = resNode.$;
-    const originalCurrency = "USD"; // Assume ChargedAmount is in USD
+    const originalCurrency = "USD";
     const chargedAmountBRL = await this._convertPrice(
       parseFloat(res.ChargedAmount),
       originalCurrency
@@ -807,7 +880,7 @@ export class NamecheapApiWrapper {
       "POST"
     );
 
-  // --- Method 7: namecheap.domains.getInfo (No prices to convert here) ---
+  // --- Method 7: namecheap.domains.getInfo ---
   private _parseDomainsGetInfoParams = (
     params: DomainsGetInfoUserParams
   ): NamecheapRequestParams => {
@@ -819,14 +892,14 @@ export class NamecheapApiWrapper {
   private _parseDomainsGetInfoResponse = (
     rawContent: RawDomainsGetInfoCommandResponseContent
   ): DomainsGetInfoCleanedResponse => {
-    const resultNode = rawContent.DomainGetInfoResult; // This should be an object
+    const resultNode = rawContent.DomainGetInfoResult;
     if (!resultNode || !resultNode.$)
       throw new Error("DomainGetInfoResult missing/malformed.");
 
     const resultAttrs = resultNode.$;
-    const domainDetailsRaw = resultNode.DomainDetails?.[0]; // xml2js default array
-    const dnsDetailsRaw = resultNode.DnsDetails?.[0]; // xml2js default array
-    const whoisguardRaw = resultNode.Whoisguard?.[0]; // xml2js default array
+    const domainDetailsRaw = resultNode.DomainDetails?.[0];
+    const dnsDetailsRaw = resultNode.DnsDetails?.[0];
+    const whoisguardRaw = resultNode.Whoisguard?.[0];
 
     const dnsDetails: NamecheapDnsDetails = {
       ProviderType: dnsDetailsRaw?.ProviderType || "UNKNOWN",
@@ -837,7 +910,7 @@ export class NamecheapApiWrapper {
       EmailType: dnsDetailsRaw?.EmailType || "UNKNOWN",
       DynamicDNSStatus: dnsDetailsRaw?.DynamicDNSStatus === "true",
       IsFailover: dnsDetailsRaw?.IsFailover === "true",
-      Nameservers: dnsDetailsRaw?.Nameserver || [], // Nameserver can be multiple
+      Nameservers: dnsDetailsRaw?.Nameserver || [],
     };
 
     const whoisguard: NamecheapWhoisguardInfo = {
@@ -853,19 +926,12 @@ export class NamecheapApiWrapper {
     };
 
     let autoRenewStatus = false;
-    // Logic for AutoRenew: if domain uses WhoisGuard and WG is set to autorenew, then domain is AutoRenew=true
-    // Otherwise, need to check domain's specific AutoRenew flag (which is not directly in getInfo for domain itself, but part of Whoisguard section or separate calls)
-    // For now, relying on Whoisguard auto-renew status if enabled.
-    // This might need refinement if Namecheap has a separate AutoRenew flag for the domain itself distinct from Whoisguard's.
-    // The provided getList response has a direct AutoRenew for the domain. getInfo seems to only show it for Whoisguard.
-    // For consistency with getList, we'll assume the Whoisguard's autorenew implies domain autorenew if WG is active.
     if (
       whoisguard.Enabled &&
       whoisguard.EmailDetails?.AutoRenew !== undefined
     ) {
       autoRenewStatus = whoisguard.EmailDetails.AutoRenew;
     }
-    // If a more direct domain AutoRenew flag becomes available in getInfo, use that.
 
     return {
       DomainName: resultAttrs.DomainName,
@@ -881,12 +947,11 @@ export class NamecheapApiWrapper {
       IsOurDNS: dnsDetails.IsUsingOurDNS,
       CreatedDate: domainDetailsRaw?.CreatedDate || "N/A",
       ExpireDate: domainDetailsRaw?.ExpiredDate || "N/A",
-      AutoRenew: autoRenewStatus, // Derived from Whoisguard currently
+      AutoRenew: autoRenewStatus,
       Whoisguard: whoisguard,
       DnsDetails: dnsDetails,
       Modificationrights: resultNode.Modificationrights?.[0]?.$
         ? {
-            // xml2js default array
             All: resultNode.Modificationrights[0].$.All === "true",
             ChangeDNS: resultNode.Modificationrights[0].$.ChangeDNS === "true",
           }
@@ -904,7 +969,7 @@ export class NamecheapApiWrapper {
       "GET"
     );
 
-  // --- Method 8: namecheap.users.create (Parser is synchronous as no prices) ---
+  // --- Method 8: namecheap.users.create ---
   private _parseUsersCreateParams = (
     params: UsersCreateUserParams
   ): NamecheapRequestParams => {
@@ -936,7 +1001,7 @@ export class NamecheapApiWrapper {
   private _parseUsersCreateResponse = (
     rawContent: RawUsersCreateCommandResponseContent
   ): UsersCreateCleanedResponse => {
-    const resultNode = rawContent.UserCreateResult; // This should be an object
+    const resultNode = rawContent.UserCreateResult;
     if (!resultNode || !resultNode.$)
       throw new Error("UserCreateResult is missing in the API response.");
     const result = resultNode.$;
@@ -957,9 +1022,8 @@ export class NamecheapApiWrapper {
     );
 }
 
-// Placeholder for original export style, adjust as per your singleton setup:
 export const namecheapApi = new NamecheapApiWrapper(
   process.env.NAMECHEAP_API_USER!
 );
 
-export default namecheapApi; // Keep if this is how you export the singleton
+export default namecheapApi;

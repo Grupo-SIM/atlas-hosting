@@ -1,4 +1,3 @@
-// src/app/(authenticated)/(dashboard)/sites/new/components/NewWordPressSiteForm.tsx
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

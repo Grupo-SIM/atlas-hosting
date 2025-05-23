@@ -148,20 +148,18 @@ export type DnsEmailType = "MXE" | "MX" | "FWD" | "OX";
 export type DnsCaaTag = "issue" | "issuewild" | "iodef";
 
 export interface DnsHostRecord {
-  HostName: string;
-  RecordType: DnsRecordType;
-  Address: string;
-  MXPref?: number;
-  TTL?: number;
-  Flag?: number;
-  Tag?: DnsCaaTag;
+  HostName: string; // Corresponds to HostNameN
+  RecordType: DnsRecordType; // Corresponds to RecordTypeN
+  Address: string; // Corresponds to AddressN
+  MXPref?: number; // Corresponds to MXPrefN, required if RecordType is MX
+  TTL?: number; // Corresponds to TTlN, Default 1800, Min 60, Max 600000
 }
 
 export interface DomainsDnsSetHostsUserParams {
   SLD: string;
   TLD: string;
   Records: DnsHostRecord[];
-  EmailType?: DnsEmailType;
+  EmailType?: DnsEmailType; // Optional parameter for the domain
 }
 
 export interface DomainsDnsSetHostsCleanedResponse {
@@ -175,7 +173,10 @@ export interface RawDomainDNSSetHostsResultAttributes {
 }
 
 export interface RawDomainsDnsSetHostsCommandResponseContent {
-  DomainDNSSetHostsResult?: Array<{ $: RawDomainDNSSetHostsResultAttributes }>;
+  DomainDNSSetHostsResult?: {
+    // Should be an object, not an array based on typical XML single result
+    $: RawDomainDNSSetHostsResultAttributes;
+  };
 }
 
 export interface DomainsGetTldListCleanedResponse {
@@ -700,10 +701,6 @@ export interface DomainsDnsSetHostsCleanedResponse {
 export interface RawDomainDNSSetHostsResultAttributes {
   Domain: string;
   IsSuccess: "true" | "false";
-}
-
-export interface RawDomainsDnsSetHostsCommandResponseContent {
-  DomainDNSSetHostsResult?: Array<{ $: RawDomainDNSSetHostsResultAttributes }>;
 }
 
 export interface TldListItem {

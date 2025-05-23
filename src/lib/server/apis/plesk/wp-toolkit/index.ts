@@ -108,3 +108,25 @@ export default class PleskWpToolkitApi {
     );
   }
 }
+
+export interface WordPressInstance {
+  id: number;
+  mainDomainId: number;
+  path: string;
+  ownerId: number;
+  guid: string;
+  hidden: boolean;
+  unsupportedPhp: boolean;
+  unsupportedWp: boolean;
+  broken: boolean;
+  infected: boolean;
+  outdatedPhp: boolean;
+  outdatedWp: boolean;
+  alive: boolean;
+  stateText: string;
+  siteUrl: string;
+  loginUrl: string;
+  name: string;
+  version: string;
+  fullPath: string;
+}

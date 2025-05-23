@@ -15,11 +15,14 @@ import { type DomainListItem } from "@/lib/server/apis/namecheap/types"; // Impo
 import pleskApi from "@/lib/server/apis/plesk";
 import { Suspense } from "react";
 import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm";
+import { getUserWordPressSites } from "../page";
 
 // Updated function to use Namecheap API
 async function getUserDomains(): Promise<
   (DomainListItem & { inPlesk: boolean })[]
 > {
+  const user = (await getUser())!;
+
   try {
     // Call Namecheap API to get the list of domains
     // Assuming PageSize and other params are handled by default or not strictly needed here.
@@ -38,28 +41,15 @@ async function getUserDomains(): Promise<
       return [];
     }
 
+    const wpInstances = await getUserWordPressSites(user.id);
+
     const domainsWithPleskData = await Promise.all(
-      allDomains.map(async (domain) => {
-        let isInPlesk = false;
-        try {
-          // Check if domain exists in Plesk.
-          // Plesk API's getDomain might throw an error if domain is not found,
-          // so we'll catch it and assume not in Plesk.
-          const pleskDomainInfo = await pleskApi.getDomain(domain.Name); // Use domain.Name
-          if (pleskDomainInfo) {
-            // Further checks can be added here if needed, e.g., check for WP installation
-            isInPlesk = true;
-          }
-        } catch (pleskError) {
-          // Assuming error means domain is not in Plesk or not accessible
-          // console.warn(`Domain ${domain.Name} not found in Plesk or error checking:`, pleskError);
-          isInPlesk = false;
-        }
-        return {
-          ...domain,
-          inPlesk: isInPlesk, // Example: Check if domain is already in Plesk
-        };
-      })
+      allDomains.map(async (domain) => ({
+        ...domain,
+        inPlesk: wpInstances.some(
+          (wp) => new URL(wp.domain).hostname === new URL(domain.Name).hostname
+        ),
+      }))
     );
 
     return domainsWithPleskData;

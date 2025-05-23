@@ -24,11 +24,7 @@ export function SubmitButton({
   const canSubmit = domain && adminUsername && adminPassword && siteName;
 
   return (
-    <Button
-      type="submit"
-      disabled={isPending || !canSubmit}
-      className="w-full sm:w-auto"
-    >
+    <Button type="submit" disabled={isPending || !canSubmit} className="w-full">
       {isPending && <CgSpinner className="mr-2 h-4 w-4 animate-spin" />}
       {buttonLabel}
     </Button>
