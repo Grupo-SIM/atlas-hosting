@@ -4,20 +4,37 @@ import { logout } from "@/app/actions";
 import AtlasLogo from "@/assets/atlas.svg";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { getUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
+  CreditCard,
   Database,
   FileText,
   Globe,
+  Key,
   LayoutDashboard,
   LifeBuoy,
+  LogOut,
   LucideProps,
   Mail,
   Menu,
   Server,
   Settings,
   Shield,
+  User,
+  Users,
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -33,8 +50,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { FaPowerOff } from "react-icons/fa6";
+import { FaCircleUser, FaPowerOff, FaUser } from "react-icons/fa6";
 import { ModeToggle } from "../ModeToggle";
+import { FaUserAlt } from "react-icons/fa";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -162,7 +180,7 @@ export default function DashboardLayout({
           ))}
         </motion.nav>
 
-        {userData && (
+        {/* userData && (
           <div className="p-4 border-t flex items-center justify-center">
             <div
               className={cn("flex items-center", isCompact && "justify-center")}
@@ -191,22 +209,89 @@ export default function DashboardLayout({
               </motion.div>
             </div>
           </div>
-        )}
+        ) */}
       </motion.div>
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-card border-b flex items-center justify-between px-6">
           <h1 className="text-lg md:text-xl font-semibold">Painel</h1>
           <div className="flex items-center space-x-4">
-            <Button
-              onClick={onSignOut}
-              variant="outline"
-              size="icon"
-              className="hover:text-destructive"
-            >
-              <FaPowerOff className="w-4 h-4 cursor-pointer transition-colors" />
-            </Button>
             <ModeToggle />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full bg-muted-foreground/10"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                      <FaUserAlt className="h-4 w-4 color-white absolute top-1/2 left-1/2 -translate-1/2" />
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                {userData && (
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {userData.name}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {userData.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup className="[&>*]:cursor-pointer">
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    <span>Pagamentos</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configurações</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Key className="mr-2 h-4 w-4" />
+                    <span>Alterar Senha</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup className="[&>*]:cursor-pointer">
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <Users className="mr-2 h-4 w-4" />
+                      <span>Acesso</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem>
+                        <span>Adicionar Administrador</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <span>Adicionar Desenvolvedor</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <span>Gerenciar Acessos</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={onSignOut}
+                  className="cursor-pointer"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 

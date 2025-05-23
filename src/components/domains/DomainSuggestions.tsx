@@ -65,11 +65,11 @@ export async function DomainSuggestions({
                   {domain.available ? (
                     <div className="flex flex-col gap-1 my-1">
                       <p className="text-sm text-muted-foreground">
-                        Preço de registro: {toBrl(domain.price)}
+                        Preço de registro: {toBrl(domain.priceBRL)}
                         {domain.isPremium && " (Premium)"}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Preço de renovação: {toBrl(domain.renew)}
+                        Preço de renovação: {toBrl(domain.renewBRL)}
                         {domain.isPremium && " (Premium)"}
                       </p>
                     </div>

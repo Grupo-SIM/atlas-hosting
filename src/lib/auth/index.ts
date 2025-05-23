@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import {
+  namecheapIntegration,
   sessionTable,
   userTable,
   type Session,
@@ -13,7 +14,10 @@ import {
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { cache } from "react";
-import { hash, verify } from "./scrypt";
+import { hash, hashWithEncodeKey, verify } from "./scrypt";
+import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
+import { randomBytes } from "@noble/hashes/utils";
+import { namecheapApi } from "@/lib/server/apis/namecheap";
 
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);
@@ -161,3 +165,48 @@ export const getUser = cache(async function getUser() {
   const { user } = await validateSession();
   return user;
 });
+
+export async function createNamecheapForUser(
+  user: User,
+  checkoutInputs: CheckoutFormInputs
+): Promise<number> {
+  const randomPassword = randomBytes(10).toHex();
+  const hashedPassword = await hashWithEncodeKey(randomPassword);
+
+  const nameCheapUser = await namecheapApi.createUser({
+    AcceptTerms: true,
+    Address1: checkoutInputs.address.street,
+    City: checkoutInputs.address.city,
+    Country: "BR",
+    EmailAddress: user.email,
+    FirstName: user.name.split(" ")[0],
+    LastName: user.name.split(" ")[1],
+    NewUserName: user.id.replace(/\-/g, ""),
+    NewUserPassword: randomPassword,
+    Phone: checkoutInputs.phoneNumber,
+    StateProvince: checkoutInputs.address.state,
+    Zip: checkoutInputs.address.zipCode,
+  });
+
+  const namecheapId = nameCheapUser.UserId;
+
+  if (!namecheapId) {
+    throw new Error("Failed to create Namecheap user");
+  }
+
+  await db.insert(namecheapIntegration).values({
+    id: namecheapId,
+    password: hashedPassword,
+    username: user.id.replace(/\-/g, ""),
+    userId: user.id,
+  });
+
+  await db
+    .update(userTable)
+    .set({
+      namecheapId,
+    })
+    .where(eq(userTable.id, user.id));
+
+  return namecheapId;
+}

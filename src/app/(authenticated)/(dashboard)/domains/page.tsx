@@ -34,13 +34,13 @@ import Link from "next/link";
 // import { db } from "@/lib/db"; // Keep if plansTable is still used from DB
 // import { plansTable, Plan } from "@/lib/db/schema"; // Keep if used
 import { getUser } from "@/lib/auth";
-import namecheapApi from "@/lib/server/apis/namecheap"; // Use your wrapper
 import { format, isBefore, parseISO, startOfTomorrow } from "date-fns"; // Added parseISO, format
 import { ptBR } from "date-fns/locale"; // For pt-BR date formatting
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { namecheapIntegration } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { namecheapApi } from "@/lib/server/apis/namecheap";
 
 // Define a type for the processed domain to be used in the table
 interface ProcessedDomain {

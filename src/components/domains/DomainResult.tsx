@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getUser } from "@/lib/auth"; // For server action
-import namecheapApi from "@/lib/server/apis/namecheap";
+import { namecheapApi } from "@/lib/server/apis/namecheap";
 import {
   DomainsCreateUserParams,
   NamecheapContactDetails,
@@ -74,7 +74,7 @@ export async function DomainResult({ searchQuery }: { searchQuery: string }) {
               )}
             </div>
           </div>
-          <h2 className="font-semibold text-2xl">{toBrl(domain.price)}</h2>
+          <h2 className="font-semibold text-2xl">{toBrl(domain.priceBRL)}</h2>
         </div>
 
         {domain.isPremium && available && (
@@ -82,7 +82,7 @@ export async function DomainResult({ searchQuery }: { searchQuery: string }) {
             <AlertCircle className="h-4 w-4" />
             <p className="text-sm">
               Este é um domínio premium. O preço de registro é{" "}
-              {toBrl(domain.price)}.
+              {toBrl(domain.priceBRL)}.
             </p>
           </div>
         )}
@@ -168,65 +168,62 @@ async function DomainUnavailable({ domainData }: { domainData: DomainData }) {
   );
 }
 
-const getMockContactDetails = (
-  userEmail: string,
-  userName?: string
-): NamecheapContactDetails => {
-  const nameParts = userName?.split(" ") || ["Usuário", "Teste"];
-  const firstName = nameParts[0];
-  const lastName = nameParts.slice(1).join(" ") || "Teste";
+// const getMockContactDetails = (
+//   userEmail: string,
+//   userName?: string
+// ): NamecheapContactDetails => {
+//   const nameParts = userName?.split(" ") || ["Usuário", "Teste"];
+//   const firstName = nameParts[0];
+//   const lastName = nameParts.slice(1).join(" ") || "Teste";
 
-  return {
-    FirstName: firstName,
-    LastName: lastName,
-    Address1: "Av. Cabo Branco, 1850",
-    City: "Joao Pessoa",
-    StateProvince: "pB", // State/Province code
-    PostalCode: "58045010", // Zip/Postal code
-    Country: "BR", // 2-letter country code
-    Phone: "+55.83991598702", // Format: +CountryCode.PhoneNumber
-    EmailAddress: userEmail,
-  };
-};
+//   return {
+//     FirstName: firstName,
+//     LastName: lastName,
+//     Address1: "Av. Cabo Branco, 1850",
+//     City: "Joao Pessoa",
+//     StateProvince: "PB", // State/Province code
+//     PostalCode: "58045010", // Zip/Postal code
+//     Country: "BR", // 2-letter country code
+//     Phone: "+55.83991598702", // Format: +CountryCode.PhoneNumber
+//     EmailAddress: userEmail,
+//   };
+// };
 
 async function DomainAvailable({ domainData }: { domainData: DomainData }) {
   async function buyDomainAction(formData: FormData) {
     "use server";
-    const user = await getUser(); // Assuming this returns { id: string, email: string, name?: string, ... }
+
+    const user = await getUser();
+
     const domainName = formData.get("domainName") as string;
-    const yearsToRegister = parseInt(formData.get("years") as string, 10);
+
+    const formYears = formData.get("years") as string;
+
+    const yearsToRegister = formYears ? parseInt(formYears, 10) : 1;
     const registrationPrice = parseFloat(formData.get("price") as string); // This is the USD price
     const isPremium = formData.get("isPremium") === "true";
 
     if (!user || !user.email) {
-      // Check for user and email
       throw new Error("Usuário não autenticado ou e-mail não encontrado.");
     }
     if (!domainName) {
       throw new Error("Nome do domínio é obrigatório.");
     }
 
-    // **IMPORTANT**: Get actual contact details. Using mock data for now.
-    const contactDetails = getMockContactDetails(
-      user.email,
-      user.name || undefined
-    );
-
     const params: DomainsCreateUserParams = {
       DomainName: domainName,
       Years: yearsToRegister,
-      Registrant: contactDetails,
-      Admin: contactDetails, // Often same as Registrant
-      Tech: contactDetails, // Often same as Registrant
-      AuxBilling: contactDetails, // Often same as Registrant
-      AddFreeWhoisguard: "yes", // Or make this configurable
-      WGEnabled: "yes", // Or make this configurable
+      Registrant: adminNamecheapDetails,
+      Admin: adminNamecheapDetails,
+      Tech: adminNamecheapDetails,
+      AuxBilling: adminNamecheapDetails,
+      AddFreeWhoisguard: "yes",
+      WGEnabled: "yes",
     };
 
     if (isPremium) {
       params.IsPremiumDomain = true;
       params.PremiumPrice = registrationPrice; // Pass the USD premium price
-      // params.EapFee = 0; // If applicable
     }
 
     try {
@@ -234,12 +231,14 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
         "Attempting to register domain with params:",
         JSON.stringify(params, null, 2)
       );
+
       const registrationResult = await namecheapApi.createDomain(params);
+
       console.log("Namecheap registration result:", registrationResult);
 
       if (registrationResult.Registered) {
         // Optionally, store registration details in your DB here
-        redirect("/domains?status=success&domain=" + domainName); // Redirect to domains list or success page
+        redirect("/domains"); // Redirect to domains list or success page
       } else {
         // Handle cases where Namecheap says not registered but no error thrown
         throw new Error(
@@ -293,3 +292,15 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
     )
   );
 }
+
+export const adminNamecheapDetails = {
+  Address1: "Beco Neuteu Maia",
+  City: "Rio Branco",
+  Country: "BR",
+  EmailAddress: "lucasgarrafielo@gmail.com",
+  FirstName: "Lucas",
+  LastName: "Garrafielo",
+  Phone: process.env.ADMIN_PHONENUMBER!,
+  PostalCode: "69900430",
+  StateProvince: "AC",
+};

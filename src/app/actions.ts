@@ -5,6 +5,7 @@ import { SignupFormInputs } from "@/components/auth/SignupForm";
 import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import {
   authenticateUser,
+  createNamecheapForUser,
   createSession,
   createUser,
   generateSessionToken,
@@ -21,7 +22,6 @@ import { db } from "@/lib/db";
 import {
   featureTable,
   invoiceTable,
-  namecheapIntegration,
   planFeature,
   plansTable,
   sessionTable,
@@ -32,10 +32,8 @@ import { NamesiloBoolean } from "@/lib/server/apis/namesilo/types";
 import axios from "axios";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import namecheapApi from "@/lib/server/apis/namecheap";
-import { random } from "lodash";
-import { randomBytes } from "@noble/hashes/utils";
-import { hash, hashWithEncodeKey } from "@/lib/auth/scrypt";
+import namecheapApi, { NamecheapApiWrapper } from "@/lib/server/apis/namecheap";
+import currencyConversion from "@/lib/server/apis/currency";
 
 export async function login(
   prevState: unknown,
@@ -113,43 +111,6 @@ export async function signup(
       };
     }
 
-    const randomPassword = randomBytes(10).toHex();
-    const hashedPassword = await hashWithEncodeKey(randomPassword);
-
-    const nameCheapUser = await namecheapApi.createUser({
-      AcceptTerms: true,
-      Address1: "Placeholder",
-      City: "Placeholder",
-      Country: "BR",
-      EmailAddress: email,
-      FirstName: fullName.split(" ")[0],
-      LastName: fullName.split(" ")[1],
-      NewUserName: user.id.replace(/\-/g, ""),
-      NewUserPassword: randomPassword,
-      Phone: "5583912345678",
-      StateProvince: "Placeholder",
-      Zip: "58045010",
-    });
-
-    const { id: namecheapId } = (
-      await db
-        .insert(namecheapIntegration)
-        .values({
-          password: hashedPassword,
-          username: user.id.replace(/\-/g, ""),
-          userId: user.id,
-          namecheapId: nameCheapUser.UserId!,
-        })
-        .returning()
-    )[0];
-
-    await db
-      .update(userTable)
-      .set({
-        namecheapId,
-      })
-      .where(eq(userTable.id, user.id));
-
     const sessionToken = generateSessionToken();
     await createSession(sessionToken, user.id);
 
@@ -181,18 +142,12 @@ export async function logout(): Promise<void> {
   redirect("/");
 }
 
-export async function buyDomain(
+/* export async function buyDomain(
   prevState: unknown,
   {
-    address,
-    cardCvv,
-    cardExpiration,
-    cardNumber,
-    document,
-    fullName,
-    phoneNumber,
     invoiceId,
     cardToken,
+    ...params
   }: CheckoutFormInputs & { invoiceId: string; cardToken: string }
 ): Promise<ActionResponse> {
   const user = await getUser();
@@ -201,15 +156,10 @@ export async function buyDomain(
     return { status: "error", message: "Usuário não autenticado" };
   }
 
-  if (!user.namesiloId) {
-    user.namesiloId = await nameSilo.createContact();
+  let namecheapId = user.namecheapId;
 
-    await db
-      .update(userTable)
-      .set({
-        namesiloId: user.namesiloId,
-      })
-      .where(eq(userTable.id, user.id));
+  if (!namecheapId) {
+    namecheapId = await createNamecheapForUser(user, params);
   }
 
   if (!invoiceId || !cardToken) {
@@ -228,12 +178,24 @@ export async function buyDomain(
     return { status: "error", message: "Fatura não é um domínio" };
   }
 
-  const result = await nameSilo.registerDomain({
-    domain: invoice?.reference,
-    years: 1,
-    portfolio: user.namesiloId,
-    private: NamesiloBoolean.True,
-  });
+  const userDetails = {
+    Address1: params.address.street,
+    City: params.address.city,
+    Country: "BR",
+    EmailAddress: user.email,
+    FirstName: user.name.split(" ")[0],
+    LastName: user.name.split(" ").pop() ?? "",
+    Phone: params.phoneNumber,
+    PostalCode: params.address.zipCode,
+    StateProvince: params.address.state,
+  };
+
+  // const result = await namecheapApi.createDomain({
+  //   Admin: userDetails,
+  //   AuxBilling: adminNamecheapDetails,
+  //   DomainName: ,
+  //   Registrant: {},
+  // });
 
   if (!result) {
     return { status: "error", message: "Erro ao registrar domínio" };
@@ -244,7 +206,7 @@ export async function buyDomain(
   }
 
   return { status: "success", message: "Domínio registrado com sucesso" };
-}
+} */
 
 export async function createFeature(
   prevState: unknown,
@@ -322,7 +284,107 @@ export async function createPlanInvoice(
         reference: plan.id,
         amount: planPrice,
         status: "pending",
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+      })
+      .returning();
+
+    if (!newInvoice || !newInvoice.id) {
+      console.error(
+        "Falha ao criar a fatura ou obter o ID de retorno do banco de dados.",
+        newInvoice
+      );
+      return {
+        status: "error",
+        message: "Erro ao criar fatura. Tente novamente.",
+      };
+    }
+
+    domApi.createSubscription(user.id, newInvoice.id);
+
+    redirectUrl = `/checkout/${newInvoice.id}`;
+  } catch (error) {
+    console.error("Erro ao criar fatura do plano:", error);
+    return {
+      status: "error",
+      message:
+        "Erro interno ao processar o pedido. Por favor, tente mais tarde.",
+    };
+  }
+
+  console.log(redirectUrl);
+
+  if (redirectUrl) {
+    redirect(redirectUrl);
+  }
+
+  return {
+    status: "error",
+    message: "Erro ao processar o pedido. Por favor, tente mais tarde.",
+  };
+}
+
+export async function createDomainInvoice(
+  prevState: unknown,
+  domain: string
+): Promise<ActionResponse> {
+  const user = await getUser();
+
+  if (!user) {
+    return {
+      status: "error",
+      message: "Usuário não autenticado. Faça login para continuar.",
+    };
+  }
+
+  if (!domain) {
+    return { status: "error", message: "Domínio é obrigatório." };
+  }
+
+  let redirectUrl: string | null = null;
+
+  try {
+    const namecheapResult = await namecheapApi
+      .check({
+        DomainList: domain,
+      })
+      .then((r) => r.Results[0]);
+
+    const isAvailable = namecheapResult.Available;
+
+    if (!isAvailable) {
+      return { status: "error", message: "Domínio indisponível." };
+    }
+
+    // const tld = domain.split(".").pop();
+
+    const price = await namecheapApi.getPricing({
+      ProductType: "DOMAIN",
+      ProductName: domain,
+      ActionName: "REGISTER",
+    });
+
+    if (!price || !price.ProductType) {
+      return { status: "error", message: "Erro ao obter preço do domínio." };
+    }
+
+    const domainPrice =
+      price.ProductType.Categories[0].Products[0].Prices[0].Price;
+
+    const priceInBrl = await currencyConversion.convert({
+      from: "USD",
+      to: "BRL",
+      amount: domainPrice,
+    });
+
+    const [newInvoice] = await db
+      .insert(invoiceTable)
+      .values({
+        userId: user.id,
+        type: "domain",
+        reference: domain,
+        amount: priceInBrl,
+        status: "pending",
+        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
       })
       .returning();
 

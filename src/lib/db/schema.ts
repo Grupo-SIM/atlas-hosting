@@ -4,6 +4,7 @@ import {
   boolean,
   date,
   doublePrecision,
+  integer,
   pgTable,
   primaryKey,
   text,
@@ -20,7 +21,7 @@ export const userTable = pgTable("users", {
   domId: text("dom_id"),
   pleskId: text("plesk_id"),
   planId: uuid("plan_id").references(() => plansTable.id),
-  namecheapId: text("namecheap_id"),
+  namecheapId: bigint("namecheap_id", { mode: "number" }),
   createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
   deletedAt: date("deleted_at", { mode: "date" }),
@@ -38,10 +39,9 @@ export const userRelations = relations(userTable, ({ one }) => ({
 }));
 
 export const namecheapIntegration = pgTable("namecheap_integration", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: bigint("id", { mode: "number" }).primaryKey(),
   password: text("password").notNull(),
   username: text("username").notNull(),
-  namecheapId: bigint("namecheap_id", { mode: "number" }).notNull(),
   userId: uuid("user_id")
     .notNull()
     .references(() => userTable.id),
@@ -132,8 +132,25 @@ export const invoiceRelations = relations(invoiceTable, ({ one }) => ({
   }),
 }));
 
+export const domainPricingCache = pgTable("domain_pricing_cache", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tld: text("tld").unique().notNull(),
+  price: doublePrecision("price"),
+  renew: doublePrecision("renew"),
+  transfer: doublePrecision("transfer"),
+  minRegisterYears: integer("min_register_years"),
+  maxRegisterYears: integer("max_register_years"),
+  createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
 export type User = InferSelectModel<typeof userTable>;
 export type Session = InferSelectModel<typeof sessionTable>;
 export type Invoice = InferSelectModel<typeof invoiceTable>;
 export type Plan = InferSelectModel<typeof plansTable>;
 export type Feature = InferSelectModel<typeof featureTable>;
+export type PlanFeature = InferSelectModel<typeof planFeature>;
+export type NamecheapIntegration = InferSelectModel<
+  typeof namecheapIntegration
+>;
+export type DomainPricingCache = InferSelectModel<typeof domainPricingCache>;

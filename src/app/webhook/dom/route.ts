@@ -4,37 +4,38 @@ import { PayloadWebhook } from "@/lib/server/apis/dom/types";
 import { db } from "@/lib/db";
 import { invoiceTable, userTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import namecheapApi from "@/lib/server/apis/namecheap";
 
 // Placeholder functions for webhook actions
 async function onSignatureCreated(data: PayloadWebhook["data"]): Promise<void> {
   console.log("[Webhook Action] onSignatureCreated called with data:", data);
 
-  const invoiceId = data.external_reference;
+  // const invoiceId = data.external_reference;
 
-  if (!invoiceId) {
-    console.error("Invoice ID not found in the payload.");
-    return;
-  }
+  // if (!invoiceId) {
+  //   console.error("Invoice ID not found in the payload.");
+  //   return;
+  // }
 
-  const updatedInvoice = await db
-    .update(invoiceTable)
-    .set({
-      status: "processing",
-    })
-    .where(eq(invoiceTable.id, invoiceId))
-    .returning();
+  // const updatedInvoice = await db
+  //   .update(invoiceTable)
+  //   .set({
+  //     status: "processing",
+  //   })
+  //   .where(eq(invoiceTable.id, invoiceId))
+  //   .returning();
 
-  if (!updatedInvoice) {
-    return;
-  }
+  // if (!updatedInvoice) {
+  //   return;
+  // }
 
-  await db
-    .update(userTable)
-    .set({
-      planId: updatedInvoice[0].reference,
-    })
-    .where(eq(userTable.id, updatedInvoice[0].userId))
-    .returning();
+  // await db
+  //   .update(userTable)
+  //   .set({
+  //     planId: updatedInvoice[0].reference,
+  //   })
+  //   .where(eq(userTable.id, updatedInvoice[0].userId))
+  //   .returning();
 }
 
 async function onSignatureCancelled(
@@ -77,25 +78,34 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
     return;
   }
 
-  const updatedInvoice = await db
+  const invoice = await db
     .update(invoiceTable)
     .set({
       status: "paid",
     })
     .where(eq(invoiceTable.id, invoiceId))
-    .returning();
+    .returning()
+    .then((result) => result[0]);
 
-  if (!updatedInvoice) {
+  if (invoice.type === "subscription") {
+    await db
+      .update(userTable)
+      .set({
+        planId: invoice.reference,
+      })
+      .where(eq(userTable.id, invoice.userId))
+      .returning();
+
     return;
   }
 
-  await db
-    .update(userTable)
-    .set({
-      planId: updatedInvoice[0].reference,
-    })
-    .where(eq(userTable.id, updatedInvoice[0].userId))
-    .returning();
+  if (invoice.type === "domain") {
+      // await namecheapApi.createDomain({
+      //   Admin: {
+
+      //   }
+      // })
+  }
 }
 
 export async function POST(request: Request) {

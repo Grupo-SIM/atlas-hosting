@@ -1,56 +1,37 @@
+// lib/server/apis/namecheap/index.ts
+import { db } from "@/lib/db";
+import * as schema from "@/lib/db/schema";
+import currencyConversion from "@/lib/server/apis/currency";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { parseStringPromise } from "xml2js";
-import currencyConversion from "@/lib/server/apis/currency";
 import type {
-  NamecheapRequestParams,
-  RawNamecheapApiResponse,
-  // ... (all existing type imports from previous steps)
-  DomainsGetTldListCleanedResponse,
-  RawDomainsGetTldListCommandResponseContent,
-  TldListItem,
-  RawTldAttributes,
-  DomainsCheckUserParams,
-  DomainsCheckCleanedResponse,
-  RawDomainsCheckCommandResponseContent,
   DomainCheckResultItem,
-  DomainsGetListUserParams,
-  DomainsGetListCleanedResponse,
-  RawDomainsGetListCommandResponseContent,
-  DomainListItem,
-  PagingInfo,
-  DomainsDnsSetHostsUserParams,
-  DomainsDnsSetHostsCleanedResponse,
-  RawDomainsDnsSetHostsCommandResponseContent,
-  UsersGetPricingUserParams,
-  UsersGetPricingCleanedResponse,
-  RawUsersGetPricingCommandResponseContent,
-  ProductTypePricingInfo,
-  ProductCategoryPricingInfo,
-  ProductPricingInfo,
-  ProductPriceDetail,
-  RawProductTypeContent,
-  RawProductCategoryContent,
-  RawProductContent,
-  RawPriceAttributes,
-  DomainsCreateUserParams,
-  NamecheapContactDetails,
+  DomainsCheckCleanedResponse,
+  DomainsCheckUserParams,
   DomainsCreateCleanedResponse,
-  RawDomainsCreateCommandResponseContent,
-  DomainsGetInfoUserParams,
+  DomainsCreateUserParams,
   DomainsGetInfoCleanedResponse,
-  RawDomainsGetInfoCommandResponseContent,
+  DomainsGetInfoUserParams,
+  DomainsGetTldListCleanedResponse,
+  NamecheapContactDetails,
   NamecheapDnsDetails,
+  NamecheapRequestParams,
   NamecheapWhoisguardInfo,
-  RawDomainDetails,
-  RawDnsDetails,
-  RawWhoisguard,
-  RawModificationrights,
-
-  // New types for users.create
-  UsersCreateUserParams,
-  UsersCreateCleanedResponse,
+  ProductCategoryPricingInfo,
+  ProductPriceDetail,
+  ProductPricingInfo,
+  RawDomainsCheckCommandResponseContent,
+  RawDomainsCreateCommandResponseContent,
+  RawDomainsGetInfoCommandResponseContent,
+  RawDomainsGetTldListCommandResponseContent,
+  RawNamecheapApiResponse,
   RawUsersCreateCommandResponseContent,
-  RawUserCreateResultAttributes, // Though used internally
+  RawUsersGetPricingCommandResponseContent,
+  TldListItem,
+  UsersCreateCleanedResponse,
+  UsersCreateUserParams,
+  UsersGetPricingCleanedResponse,
+  UsersGetPricingUserParams,
 } from "./types";
 
 const TARGET_CURRENCY = "BRL";
@@ -58,70 +39,67 @@ const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export class NamecheapApiWrapper {
   private axiosInstance: AxiosInstance;
-  private readonly apiUser: string;
-  private readonly apiKey: string;
+  private readonly apiUser = process.env.NAMECHEAP_API_USER!;
+  private readonly apiKey = process.env.NAMECHEAP_API_KEY!;
   private readonly userName: string;
-  private readonly clientIp: string;
-  private readonly baseUrl: string = "https://api.namecheap.com/xml.response";
+  private readonly clientIp = process.env.PUBLIC_IP!;
+  private readonly baseUrl = "https://api.namecheap.com/xml.response";
 
-  // TLD List Cache
-  private tldListCache: {
+  private db = db;
+  private domainPricingCacheTable = schema.domainPricingCache;
+
+  private tldListApiCache: {
     value: DomainsGetTldListCleanedResponse | null;
     lastUpdated: number;
     isFetching: boolean;
     fetchPromise: Promise<DomainsGetTldListCleanedResponse | null> | null;
   } = { value: null, lastUpdated: 0, isFetching: false, fetchPromise: null };
 
-  private tldListRefreshInterval: NodeJS.Timeout | null = null;
+  private tldListApiRefreshInterval: NodeJS.Timeout | null = null;
 
-  // Domain Pricing Cache
-  private domainPricingCache: {
+  private domainPricingApiCache: {
     value: UsersGetPricingCleanedResponse | null;
     lastUpdated: number;
     isFetching: boolean;
     fetchPromise: Promise<UsersGetPricingCleanedResponse | null> | null;
   } = { value: null, lastUpdated: 0, isFetching: false, fetchPromise: null };
 
-  private domainPricingRefreshInterval: NodeJS.Timeout | null = null;
+  private dbDomainPricesLastRefreshed: number = 0; // In-memory track of last DB refresh
+  private dbDomainPricingRefreshInterval: NodeJS.Timeout | null = null;
+  private isDbDomainPricingRefreshing: boolean = false;
+  private dbRefreshPromise: Promise<void> | null = null;
 
-  constructor(
-    apiUser: string,
-    apiKey: string,
-    userName: string,
-    clientIp: string
-  ) {
-    this.apiUser = apiUser;
-    this.apiKey = apiKey;
+  constructor(userName: string) {
     this.userName = userName;
-    this.clientIp = clientIp;
     this.axiosInstance = axios.create();
 
-    this._initializeTldCacheAndInterval();
-    this._initializeDomainPricingCacheAndInterval();
+    this._initializeTldApiCacheAndInterval();
+    this._initializeDbDomainPricingCacheAndInterval();
   }
 
-  private async _initializeTldCacheAndInterval(): Promise<void> {
-    console.log("NamecheapApiWrapper: Initializing TLD list cache...");
-    await this._fetchAndCacheTldList();
-    if (this.tldListRefreshInterval) clearInterval(this.tldListRefreshInterval);
-    this.tldListRefreshInterval = setInterval(async () => {
+  private async _initializeTldApiCacheAndInterval(): Promise<void> {
+    console.log(
+      "NamecheapApiWrapper: Initializing TLD List API (in-memory) cache..."
+    );
+    await this._fetchAndCacheTldListApi(); // Fetches TLD metadata
+    if (this.tldListApiRefreshInterval)
+      clearInterval(this.tldListApiRefreshInterval);
+    this.tldListApiRefreshInterval = setInterval(async () => {
       console.log(
-        "NamecheapApiWrapper: Refreshing TLD list cache due to interval."
+        "NamecheapApiWrapper: Refreshing TLD List API (in-memory) cache."
       );
-      await this._fetchAndCacheTldList();
+      await this._fetchAndCacheTldListApi();
     }, CACHE_DURATION_MS);
   }
 
-  private async _initializeDomainPricingCacheAndInterval(): Promise<void> {
-    console.log("NamecheapApiWrapper: Initializing Domain Pricing cache...");
-    await this._fetchAndCacheDomainPricing();
-    if (this.domainPricingRefreshInterval)
-      clearInterval(this.domainPricingRefreshInterval);
-    this.domainPricingRefreshInterval = setInterval(async () => {
-      console.log(
-        "NamecheapApiWrapper: Refreshing Domain Pricing cache due to interval."
-      );
-      await this._fetchAndCacheDomainPricing();
+  private async _initializeDbDomainPricingCacheAndInterval(): Promise<void> {
+    console.log("NamecheapApiWrapper: Initializing Domain Pricing DB Cache...");
+    await this._refreshDomainPricingDbCache();
+    if (this.dbDomainPricingRefreshInterval)
+      clearInterval(this.dbDomainPricingRefreshInterval);
+    this.dbDomainPricingRefreshInterval = setInterval(async () => {
+      console.log("NamecheapApiWrapper: Refreshing Domain Pricing DB Cache.");
+      await this._refreshDomainPricingDbCache();
     }, CACHE_DURATION_MS);
   }
 
@@ -129,14 +107,13 @@ export class NamecheapApiWrapper {
     amount: number,
     fromCurrency: string
   ): Promise<number> {
-    if (fromCurrency.toUpperCase() === TARGET_CURRENCY || amount === 0) {
+    if (fromCurrency.toUpperCase() === TARGET_CURRENCY || amount === 0)
       return amount;
-    }
     try {
       return await currencyConversion.convert({
         from: fromCurrency.toLowerCase() as any,
         to: TARGET_CURRENCY.toLowerCase() as any,
-        amount: amount,
+        amount,
       });
     } catch (error) {
       console.error(
@@ -147,12 +124,12 @@ export class NamecheapApiWrapper {
     }
   }
 
-  private async _fetchAndCacheTldList(): Promise<DomainsGetTldListCleanedResponse | null> {
-    if (this.tldListCache.isFetching && this.tldListCache.fetchPromise)
-      return this.tldListCache.fetchPromise;
-    this.tldListCache.isFetching = true;
-    console.log("NamecheapApiWrapper: Fetching new TLD list from API...");
-    this.tldListCache.fetchPromise = (async () => {
+  private async _fetchAndCacheTldListApi(): Promise<DomainsGetTldListCleanedResponse | null> {
+    if (this.tldListApiCache.isFetching && this.tldListApiCache.fetchPromise)
+      return this.tldListApiCache.fetchPromise;
+    this.tldListApiCache.isFetching = true;
+    console.log("NCW: Fetching TLD list (metadata) for in-memory cache...");
+    this.tldListApiCache.fetchPromise = (async () => {
       try {
         const freshTldList = await this._makeRequest<
           RawDomainsGetTldListCommandResponseContent,
@@ -164,36 +141,34 @@ export class NamecheapApiWrapper {
           "GET"
         );
         if (freshTldList?.Tlds?.length) {
-          this.tldListCache.value = freshTldList;
-          this.tldListCache.lastUpdated = Date.now();
-          console.log(
-            `NamecheapApiWrapper: TLD list cache updated with ${freshTldList.Tlds.length} TLDs.`
-          );
+          this.tldListApiCache.value = freshTldList;
+          this.tldListApiCache.lastUpdated = Date.now();
           return freshTldList;
         }
-        return this.tldListCache.value;
+        return this.tldListApiCache.value;
       } catch (error) {
-        console.error("NCW: Error TLD fetch:", error);
-        return this.tldListCache.value;
+        console.error("NCW: Error TLD API fetch (in-memory):", error);
+        return this.tldListApiCache.value;
       } finally {
-        this.tldListCache.isFetching = false;
-        this.tldListCache.fetchPromise = null;
+        this.tldListApiCache.isFetching = false;
+        this.tldListApiCache.fetchPromise = null;
       }
     })();
-    return this.tldListCache.fetchPromise;
+    return this.tldListApiCache.fetchPromise;
   }
 
-  private async _fetchAndCacheDomainPricing(): Promise<UsersGetPricingCleanedResponse | null> {
+  private async _fetchAndCacheFullDomainPricing(): Promise<UsersGetPricingCleanedResponse | null> {
     if (
-      this.domainPricingCache.isFetching &&
-      this.domainPricingCache.fetchPromise
+      this.domainPricingApiCache.isFetching &&
+      this.domainPricingApiCache.fetchPromise
     )
-      return this.domainPricingCache.fetchPromise;
-    this.domainPricingCache.isFetching = true;
-    console.log("NamecheapApiWrapper: Fetching new Domain Pricing from API...");
-    this.domainPricingCache.fetchPromise = (async () => {
+      return this.domainPricingApiCache.fetchPromise;
+    this.domainPricingApiCache.isFetching = true;
+    console.log("NCW: Fetching Full Domain Pricing for in-memory cache...");
+    this.domainPricingApiCache.fetchPromise = (async () => {
       try {
         const params: UsersGetPricingUserParams = { ProductType: "DOMAIN" };
+        // _parseUsersGetPricingResponse converts prices to BRL for this in-memory cache
         const freshPricing = await this._makeRequest<
           RawUsersGetPricingCommandResponseContent,
           UsersGetPricingCleanedResponse
@@ -204,24 +179,173 @@ export class NamecheapApiWrapper {
           "GET"
         );
         if (freshPricing?.ProductType) {
-          this.domainPricingCache.value = freshPricing;
-          this.domainPricingCache.lastUpdated = Date.now();
-          console.log(`NamecheapApiWrapper: Domain Pricing cache updated.`);
+          this.domainPricingApiCache.value = freshPricing;
+          this.domainPricingApiCache.lastUpdated = Date.now();
+          // Trigger non-blocking DB update with the original USD data (or re-fetch for USD)
+          this._refreshDomainPricingDbCache().catch((err) =>
+            console.error(
+              "NCW: Background DB domain pricing cache refresh failed:",
+              err
+            )
+          );
           return freshPricing;
         }
-        return this.domainPricingCache.value;
+        return this.domainPricingApiCache.value;
       } catch (error) {
-        console.error("NCW: Error Domain Pricing fetch:", error);
-        return this.domainPricingCache.value;
+        console.error(
+          "NCW: Error Full Domain Pricing API fetch (in-memory):",
+          error
+        );
+        return this.domainPricingApiCache.value;
       } finally {
-        this.domainPricingCache.isFetching = false;
-        this.domainPricingCache.fetchPromise = null;
+        this.domainPricingApiCache.isFetching = false;
+        this.domainPricingApiCache.fetchPromise = null;
       }
     })();
-    return this.domainPricingCache.fetchPromise;
+    return this.domainPricingApiCache.fetchPromise;
+  }
+
+  private async _refreshDomainPricingDbCache(): Promise<void> {
+    if (this.isDbDomainPricingRefreshing && this.dbRefreshPromise)
+      return this.dbRefreshPromise;
+    this.isDbDomainPricingRefreshing = true;
+    console.log("NCW: Refreshing Domain Pricing DB Cache (USD prices)...");
+    this.dbRefreshPromise = (async () => {
+      try {
+        // Fetch RAW pricing data from Namecheap (will be USD)
+        const rawPricingParams: UsersGetPricingUserParams = {
+          ProductType: "DOMAIN",
+        };
+        const rawPricingApiResponse = await this._makeRequest<
+          RawUsersGetPricingCommandResponseContent,
+          RawUsersGetPricingCommandResponseContent
+        >(
+          "namecheap.users.getPricing",
+          this._parseUsersGetPricingParams(rawPricingParams),
+          (rawContent) => rawContent, // Pass through raw content
+          "GET"
+        );
+
+        const productTypeNode =
+          rawPricingApiResponse?.UserGetPricingResult?.[0]?.ProductType?.[0];
+        if (!productTypeNode?.ProductCategory) {
+          console.warn(
+            "NCW: No pricing data categories to process for DB cache refresh."
+          );
+          return;
+        }
+
+        // Fetch TLD metadata for min/max years
+        const tldListMetaData = await this.getTldList(); // Uses in-memory cache for TLD metadata
+        const tldMetaDataMap = new Map<
+          string,
+          { minReg?: number; maxReg?: number }
+        >();
+        tldListMetaData?.Tlds.forEach((tld) => {
+          tldMetaDataMap.set(tld.Name.toLowerCase(), {
+            minReg: tld.MinRegisterYears,
+            maxReg: tld.MaxRegisterYears,
+          });
+        });
+
+        const upsertData: (typeof schema.domainPricingCache.$inferInsert)[] =
+          [];
+
+        productTypeNode.ProductCategory.forEach((category) => {
+          const actionType = category.$.Name.toUpperCase();
+          category.Product?.forEach((product) => {
+            const tld = product.$.Name.toLowerCase();
+            const oneYearPriceDetail = product.Price?.find(
+              (p) => p.$.Duration === "1" && p.$.DurationType === "YEAR"
+            );
+
+            if (
+              oneYearPriceDetail &&
+              oneYearPriceDetail.$.Currency.toUpperCase() === "USD"
+            ) {
+              const currentEntry = upsertData.find((item) => item.tld === tld);
+              const priceUSD = parseFloat(oneYearPriceDetail.$.Price);
+              const meta = tldMetaDataMap.get(tld);
+
+              if (currentEntry) {
+                // Update existing entry for this TLD
+                if (actionType === "REGISTER") currentEntry.price = priceUSD;
+                else if (actionType === "RENEW") currentEntry.renew = priceUSD;
+                else if (actionType === "TRANSFER")
+                  currentEntry.transfer = priceUSD;
+              } else {
+                // Create new entry
+                upsertData.push({
+                  tld: tld,
+                  price: actionType === "REGISTER" ? priceUSD : undefined,
+                  renew: actionType === "RENEW" ? priceUSD : undefined,
+                  transfer: actionType === "TRANSFER" ? priceUSD : undefined,
+                  minRegisterYears: meta?.minReg,
+                  maxRegisterYears: meta?.maxReg,
+                  createdAt: new Date(), // Drizzle handles defaultRandom for id
+                  updatedAt: new Date(),
+                });
+              }
+            }
+          });
+        });
+
+        if (upsertData.length > 0) {
+          console.log(
+            `NCW: Upserting ${upsertData.length} TLD prices (USD) to DB cache...`
+          );
+          // Batch upsert
+          for (const data of upsertData) {
+            // Ensure required fields are not undefined before upserting
+            const valuesToUpsert: typeof schema.domainPricingCache.$inferInsert =
+              {
+                tld: data.tld!,
+                price: data.price ?? null, // Use null if undefined for nullable doublePrecision
+                renew: data.renew ?? null,
+                transfer: data.transfer ?? null,
+                minRegisterYears: data.minRegisterYears ?? null,
+                maxRegisterYears: data.maxRegisterYears ?? null,
+                createdAt: data.createdAt!,
+                updatedAt: data.updatedAt!,
+              };
+
+            await this.db
+              .insert(this.domainPricingCacheTable)
+              .values(valuesToUpsert)
+              .onConflictDoUpdate({
+                target: this.domainPricingCacheTable.tld,
+                set: {
+                  price: valuesToUpsert.price,
+                  renew: valuesToUpsert.renew,
+                  transfer: valuesToUpsert.transfer,
+                  minRegisterYears: valuesToUpsert.minRegisterYears,
+                  maxRegisterYears: valuesToUpsert.maxRegisterYears,
+                  updatedAt: new Date(),
+                },
+              });
+          }
+          this.dbDomainPricesLastRefreshed = Date.now();
+          console.log("NCW: Domain Pricing DB Cache refresh completed.");
+        } else {
+          console.log(
+            "NCW: No data prepared for DB upsert in pricing refresh."
+          );
+        }
+      } catch (error) {
+        console.error(
+          "NCW: Error during Domain Pricing DB Cache refresh:",
+          error
+        );
+      } finally {
+        this.isDbDomainPricingRefreshing = false;
+        this.dbRefreshPromise = null;
+      }
+    })();
+    return this.dbRefreshPromise;
   }
 
   private _makeRequest = async <TCommandResponseContent, TCleanedResponse>(
+    // ... (implementation remains the same)
     command: string,
     methodParams: NamecheapRequestParams,
     parseResponseFunction: (
@@ -290,11 +414,7 @@ export class NamecheapApiWrapper {
     }
   };
 
-  // --- Existing Methods (check, getList, setHosts, getTldList, getPricing, createDomain, getInfo) ---
-  // ... (These methods and their parsers remain as previously defined and corrected) ...
-  // (For brevity, I'm omitting the full code of already implemented methods here,
-  //  but they should be present in your actual class file.)
-
+  // --- Method 1: namecheap.domains.check (Parser is async, converts to BRL) ---
   private _parseDomainsCheckParams = (
     params: DomainsCheckUserParams
   ): NamecheapRequestParams => ({ DomainList: params.DomainList });
@@ -306,7 +426,7 @@ export class NamecheapApiWrapper {
     if (rawContent.DomainCheckResult) {
       for (const rawResult of rawContent.DomainCheckResult) {
         const attrs = rawResult.$;
-        const originalCurrency = "USD";
+        const originalCurrency = "USD"; // Assuming check prices are USD
         results.push({
           Domain: attrs.Domain,
           Available: attrs.Available === "true",
@@ -353,104 +473,7 @@ export class NamecheapApiWrapper {
       "GET"
     );
 
-  private _parseDomainsGetListParams = (
-    params: DomainsGetListUserParams
-  ): NamecheapRequestParams => {
-    const p: NamecheapRequestParams = {};
-    if (params.ListType) p.ListType = params.ListType;
-    if (params.SearchTerm) p.SearchTerm = params.SearchTerm;
-    if (params.Page) p.Page = params.Page;
-    if (params.PageSize) p.PageSize = params.PageSize;
-    if (params.SortBy) p.SortBy = params.SortBy;
-    return p;
-  };
-
-  private _parseDomainsGetListResponse = (
-    rawContent: RawDomainsGetListCommandResponseContent
-  ): DomainsGetListCleanedResponse => {
-    const domains: DomainListItem[] = [];
-    const paging: PagingInfo = { TotalItems: 0, CurrentPage: 1, PageSize: 0 };
-    const rawResult = rawContent.DomainGetListResult?.[0];
-    if (rawResult?.Domain) {
-      rawResult.Domain.forEach((d) =>
-        domains.push({
-          ID: parseInt(d.$.ID),
-          Name: d.$.Name,
-          User: d.$.User,
-          Created: d.$.Created,
-          Expires: d.$.Expires,
-          IsExpired: d.$.IsExpired === "true",
-          IsLocked: d.$.IsLocked === "true",
-          AutoRenew: d.$.AutoRenew === "true",
-          WhoisGuard: d.$.WhoisGuard,
-          IsPremium: d.$.IsPremium === "true",
-          IsOurDNS: d.$.IsOurDNS === "true",
-        })
-      );
-    }
-    const rawPaging = rawContent.Paging?.[0];
-    if (rawPaging) {
-      paging.TotalItems = rawPaging.TotalItems?.[0]
-        ? parseInt(rawPaging.TotalItems[0])
-        : 0;
-      paging.CurrentPage = rawPaging.CurrentPage?.[0]
-        ? parseInt(rawPaging.CurrentPage[0])
-        : 1;
-      paging.PageSize = rawPaging.PageSize?.[0]
-        ? parseInt(rawPaging.PageSize[0])
-        : 0;
-    }
-    return { Domains: domains, Paging: paging };
-  };
-
-  public getList = async (
-    params: DomainsGetListUserParams = {}
-  ): Promise<DomainsGetListCleanedResponse> =>
-    this._makeRequest(
-      "namecheap.domains.getList",
-      this._parseDomainsGetListParams(params),
-      this._parseDomainsGetListResponse,
-      "GET"
-    );
-
-  private _parseDomainsDnsSetHostsParams = (
-    params: DomainsDnsSetHostsUserParams
-  ): NamecheapRequestParams => {
-    const p: NamecheapRequestParams = { SLD: params.SLD, TLD: params.TLD };
-    params.Records.forEach((r, i) => {
-      const idx = i + 1;
-      p[`HostName${idx}`] = r.HostName;
-      p[`RecordType${idx}`] = r.RecordType;
-      p[`Address${idx}`] = r.Address;
-      if (r.MXPref !== undefined) p[`MXPref${idx}`] = r.MXPref;
-      if (r.TTL !== undefined) p[`TTL${idx}`] = r.TTL;
-      if (r.RecordType === "CAA") {
-        if (r.Flag !== undefined) p[`Flag${idx}`] = r.Flag;
-        if (r.Tag !== undefined) p[`Tag${idx}`] = r.Tag;
-      }
-    });
-    if (params.EmailType) p.EmailType = params.EmailType;
-    return p;
-  };
-
-  private _parseDomainsDnsSetHostsResponse = (
-    rawContent: RawDomainsDnsSetHostsCommandResponseContent
-  ): DomainsDnsSetHostsCleanedResponse => {
-    const res = rawContent.DomainDNSSetHostsResult?.[0]?.$;
-    if (!res) throw new Error("DomainDNSSetHostsResult missing.");
-    return { Domain: res.Domain, IsSuccess: res.IsSuccess === "true" };
-  };
-
-  public setHosts = async (
-    params: DomainsDnsSetHostsUserParams
-  ): Promise<DomainsDnsSetHostsCleanedResponse> =>
-    this._makeRequest(
-      "namecheap.domains.dns.setHosts",
-      this._parseDomainsDnsSetHostsParams(params),
-      this._parseDomainsDnsSetHostsResponse,
-      "POST"
-    );
-
+  // --- Method 4: namecheap.domains.getTldList (Uses in-memory API cache) ---
   private _parseDomainsGetTldListResponse = (
     rawContent: RawDomainsGetTldListCommandResponseContent
   ): DomainsGetTldListCleanedResponse => {
@@ -499,16 +522,20 @@ export class NamecheapApiWrapper {
     async (): Promise<DomainsGetTldListCleanedResponse | null> => {
       const now = Date.now();
       const isCacheStale =
-        !this.tldListCache.value ||
-        now - this.tldListCache.lastUpdated > CACHE_DURATION_MS;
+        !this.tldListApiCache.value ||
+        now - this.tldListApiCache.lastUpdated > CACHE_DURATION_MS;
       if (isCacheStale) {
-        if (this.tldListCache.isFetching && this.tldListCache.fetchPromise)
-          return this.tldListCache.fetchPromise;
-        return this._fetchAndCacheTldList();
+        if (
+          this.tldListApiCache.isFetching &&
+          this.tldListApiCache.fetchPromise
+        )
+          return this.tldListApiCache.fetchPromise;
+        return this._fetchAndCacheTldListApi();
       }
-      return this.tldListCache.value;
+      return this.tldListApiCache.value;
     };
 
+  // --- Method 5: namecheap.users.getPricing (Uses in-memory API cache for full BRL converted response, triggers DB USD cache update) ---
   private _parseUsersGetPricingParams = (
     params: UsersGetPricingUserParams
   ): NamecheapRequestParams => {
@@ -526,10 +553,13 @@ export class NamecheapApiWrapper {
     const rawProdTypeNode =
       rawContent.UserGetPricingResult?.[0]?.ProductType?.[0];
     if (!rawProdTypeNode) return { ProductType: null };
+
     const categories: ProductCategoryPricingInfo[] = [];
+
     if (rawProdTypeNode.ProductCategory) {
       for (const rawCategory of rawProdTypeNode.ProductCategory) {
         const products: ProductPricingInfo[] = [];
+
         if (rawCategory.Product) {
           for (const rawProduct of rawCategory.Product) {
             const prices: ProductPriceDetail[] = [];
@@ -562,6 +592,7 @@ export class NamecheapApiWrapper {
                 });
               }
             }
+
             products.push({ Name: rawProduct.$.Name, Prices: prices });
           }
         }
@@ -589,17 +620,17 @@ export class NamecheapApiWrapper {
     if (isGeneralDomainPricingRequest) {
       const now = Date.now();
       const isCacheStale =
-        !this.domainPricingCache.value ||
-        now - this.domainPricingCache.lastUpdated > CACHE_DURATION_MS;
+        !this.domainPricingApiCache.value ||
+        now - this.domainPricingApiCache.lastUpdated > CACHE_DURATION_MS;
       if (isCacheStale) {
         if (
-          this.domainPricingCache.isFetching &&
-          this.domainPricingCache.fetchPromise
+          this.domainPricingApiCache.isFetching &&
+          this.domainPricingApiCache.fetchPromise
         )
-          return this.domainPricingCache.fetchPromise;
-        return this._fetchAndCacheDomainPricing();
+          return this.domainPricingApiCache.fetchPromise;
+        return this._fetchAndCacheFullDomainPricing();
       }
-      return this.domainPricingCache.value;
+      return this.domainPricingApiCache.value;
     }
     const apiParams = this._parseUsersGetPricingParams(params);
     return this._makeRequest<
@@ -613,6 +644,7 @@ export class NamecheapApiWrapper {
     );
   };
 
+  // --- Method 6: namecheap.domains.create (Parser is async, converts ChargedAmount to BRL) ---
   private _flattenContactDetails = (
     contact: NamecheapContactDetails,
     prefix: string
@@ -667,6 +699,7 @@ export class NamecheapApiWrapper {
   private _parseDomainsCreateResponse = async (
     rawContent: RawDomainsCreateCommandResponseContent
   ): Promise<DomainsCreateCleanedResponse> => {
+    console.log({ rawContent });
     const res = rawContent.DomainCreateResult?.$;
     if (!res) throw new Error("DomainCreateResult missing.");
     const originalCurrency = "USD";
@@ -696,6 +729,7 @@ export class NamecheapApiWrapper {
       "POST"
     );
 
+  // --- Method 7: namecheap.domains.getInfo (No prices to convert here) ---
   private _parseDomainsGetInfoParams = (
     params: DomainsGetInfoUserParams
   ): NamecheapRequestParams => {
@@ -768,7 +802,7 @@ export class NamecheapApiWrapper {
       "GET"
     );
 
-  // --- Method 8: namecheap.users.create (New) ---
+  // --- Method 8: namecheap.users.create (Parser is synchronous as no prices) ---
   private _parseUsersCreateParams = (
     params: UsersCreateUserParams
   ): NamecheapRequestParams => {
@@ -778,7 +812,7 @@ export class NamecheapApiWrapper {
       EmailAddress: params.EmailAddress,
       FirstName: params.FirstName,
       LastName: params.LastName,
-      AcceptTerms: params.AcceptTerms ? "1" : "0", // Convert boolean to "1" or "0"
+      AcceptTerms: params.AcceptTerms ? "1" : "0",
       Address1: params.Address1,
       City: params.City,
       StateProvince: params.StateProvince,
@@ -787,9 +821,8 @@ export class NamecheapApiWrapper {
       Phone: params.Phone,
     };
 
-    if (params.AcceptNews !== undefined) {
+    if (params.AcceptNews !== undefined)
       apiParams.AcceptNews = params.AcceptNews ? "1" : "0";
-    }
     if (params.JobTitle) apiParams.JobTitle = params.JobTitle;
     if (params.Organization) apiParams.Organization = params.Organization;
     if (params.Address2) apiParams.Address2 = params.Address2;
@@ -802,37 +835,28 @@ export class NamecheapApiWrapper {
     rawContent: RawUsersCreateCommandResponseContent
   ): UsersCreateCleanedResponse => {
     const result = rawContent.UserCreateResult?.$;
-    if (!result) {
+    if (!result)
       throw new Error("UserCreateResult is missing in the API response.");
-    }
     return {
       Success: result.Success === "true",
       UserId: result.UserId ? parseInt(result.UserId, 10) : undefined,
     };
   };
 
-  /**
-   * Creates a new Namecheap user account under the main ApiUser account.
-   * This typically uses POST due to the amount of data, overriding example GET.
-   */
   public createUser = async (
     params: UsersCreateUserParams
-  ): Promise<UsersCreateCleanedResponse> => {
-    const command = "namecheap.users.create";
-    const apiParams = this._parseUsersCreateParams(params);
-    // Using POST for create methods with many parameters is generally safer
-    return this._makeRequest<
-      RawUsersCreateCommandResponseContent,
-      UsersCreateCleanedResponse
-    >(command, apiParams, this._parseUsersCreateResponse, "POST");
-  };
+  ): Promise<UsersCreateCleanedResponse> =>
+    this._makeRequest(
+      "namecheap.users.create",
+      this._parseUsersCreateParams(params),
+      this._parseUsersCreateResponse,
+      "POST"
+    );
 }
 
-const namecheapApi = new NamecheapApiWrapper(
-  process.env.NAMECHEAP_API_USER!,
-  process.env.NAMECHEAP_API_KEY!,
-  process.env.NAMECHEAP_API_USER!,
-  process.env.PUBLIC_IP!
+// Placeholder for original export style, adjust as per your singleton setup:
+export const namecheapApi = new NamecheapApiWrapper(
+  process.env.NAMECHEAP_API_USER!
 );
 
-export default namecheapApi;
+export default namecheapApi; // Keep if this is how you export the singleton
