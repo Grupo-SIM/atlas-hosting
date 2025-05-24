@@ -38,3 +38,5 @@ next-env.d.ts
 src/app/api/route.ts
 
 *.old.ts
+
+pnpm-lock.yaml
