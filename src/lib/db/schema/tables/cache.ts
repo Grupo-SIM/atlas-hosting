@@ -5,6 +5,7 @@ import {
   integer,
   pgTable,
   text,
+  timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -16,8 +17,8 @@ export const pgDomainPricingCache = pgTable("domain_pricing_cache", {
   transfer: doublePrecision("transfer"),
   minRegisterYears: integer("min_register_years"),
   maxRegisterYears: integer("max_register_years"),
-  createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 export const ipLocationCache = pgTable("ip_location_cache", {
@@ -34,8 +35,8 @@ export const ipLocationCache = pgTable("ip_location_cache", {
   asn: text("asn").notNull(),
   as: text("as").notNull(),
   isProxy: boolean("is_proxy").notNull(),
-  createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 export type DomainPricing = typeof pgDomainPricingCache.$inferSelect;

@@ -35,6 +35,7 @@ import { pgDomainPricingCache as domainPricingCacheTable } from "@/lib/db/schema
 import currencyConversion from "@/lib/server/apis/currency";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import RegisterDomainSearch from "./components/RegisterDomainSearch";
 
 export const experimental_ppr = true;
 
@@ -183,8 +184,6 @@ export const getDomainData = cache(async function getDomainData(
   domainsToSearch = [...new Set(domainsToSearch)];
 
   try {
-    // namecheapApi.check() returns prices already converted to BRL by its parser
-    // getStandardPricingMapBRL() also returns BRL prices
     const [checkResult, standardPricingMapBRL] = await Promise.all([
       check({ DomainList: domainsToSearch.join(",") }),
       getStandardPricingMapBRL(),
@@ -280,18 +279,6 @@ export default async function DomainsPage({
   const allDomainPricesFromDbPromise = getAllDomainPricesFromDb(); // Fetches USD prices from DB
   const domainDataPromise = getDomainData(searchQuery); // Provides BRL prices
 
-  async function checkDomain(formData: FormData) {
-    "use server";
-
-    const search = formData.get("search");
-    if (typeof search !== "string" || search.trim() === "") {
-      throw new Error("Search query is required.");
-    }
-
-    revalidatePath("/domains/register");
-    redirect(`/domains/register?search=${encodeURIComponent(search.trim())}`);
-  }
-
   return (
     <div className="space-y-6 p-6 pb-16">
       <div>
@@ -311,22 +298,7 @@ export default async function DomainsPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form
-            action={checkDomain}
-            className="flex flex-col sm:flex-row gap-3"
-          >
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="ex: minhaempresa.com"
-                className="pl-10"
-                name="search"
-                defaultValue={searchQuery}
-              />
-            </div>
-            <Button type="submit">Buscar domínios</Button>
-          </form>
+          <RegisterDomainSearch />
           {searchQuery && (
             <div className="mt-8">
               <Tabs defaultValue="results">

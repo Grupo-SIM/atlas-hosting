@@ -16,7 +16,14 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
-import { pgInvoice, pgPlan, pgSession, pgUser, Plan } from "@/lib/db/schema";
+import {
+  pgDomainPricingCache,
+  pgInvoice,
+  pgPlan,
+  pgSession,
+  pgUser,
+  Plan,
+} from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
 import namecheapApi from "@/lib/server/apis/namecheap";
@@ -24,6 +31,8 @@ import axios from "axios";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import ip2Location from "@/lib/server/apis/ip2location";
+import ipaddrJs from "ipaddr.js";
+import { signIn } from "@/auth";
 
 export async function login(
   prevState: unknown,
@@ -34,8 +43,12 @@ export async function login(
   }
 
   const reqHeaders = await headers();
-  const userIp =
+  let userIp: string | null =
     reqHeaders.get("x-forwarded-for") || reqHeaders.get("x-real-ip");
+
+  if (!userIp || ipaddrJs.parse(userIp).range() !== "unicast") {
+    userIp = null;
+  }
 
   try {
     const user = await authenticateUser(email, password);
@@ -54,7 +67,7 @@ export async function login(
       secure: process.env.NODE_ENV === "production",
       path: "/",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      maxAge: 60 * 60 * 24 * 30,
     });
 
     let description = "Novo login realizado";
@@ -64,9 +77,9 @@ export async function login(
 
       if (location) {
         description += ` de ${location.cityName}, ${location.countryName} (IP: ${userIp})`;
-      } else {
-        description += " de um local desconhecido";
       }
+    } else {
+      description += " (localização desconhecida)";
     }
 
     user.logger.log({
@@ -275,11 +288,9 @@ export async function createPlanInvoice(
       };
     }
 
-    domApi.createSubscription(user.id, newInvoice.id);
-
     redirectUrl = `/checkout/${newInvoice.id}`;
   } catch (error) {
-    console.error("Erro ao criar fatura do plano:", error);
+    console.error("Erro ao criar fatura do domínio:", error);
     return {
       status: "error",
       message:
@@ -331,24 +342,19 @@ export async function createDomainInvoice(
       return { status: "error", message: "Domínio indisponível." };
     }
 
-    // const tld = domain.split(".").pop();
-
-    const price = await namecheapApi.getPricing({
-      ProductType: "DOMAIN",
-      ProductName: domain,
-      ActionName: "REGISTER",
+    const price = await db.query.pgDomainPricingCache.findFirst({
+      where: eq(pgDomainPricingCache.tld, domain.split(".").pop()!),
     });
 
-    if (!price || !price.ProductType) {
+    if (!price || !price.price) {
       return { status: "error", message: "Erro ao obter preço do domínio." };
     }
 
-    const domainPrice =
-      price.ProductType.Categories[0].Products[0].Prices[0].Price;
+    const domainPrice = price.price;
 
     const priceInBrl = await currencyConversion.convert({
-      from: "USD",
-      to: "BRL",
+      from: "usd",
+      to: "brl",
       amount: domainPrice,
     });
 
@@ -375,19 +381,15 @@ export async function createDomainInvoice(
       };
     }
 
-    domApi.createSubscription(user.id, newInvoice.id);
-
     redirectUrl = `/checkout/${newInvoice.id}`;
   } catch (error) {
-    console.error("Erro ao criar fatura do plano:", error);
+    console.error("Erro ao criar fatura do domínio:", error);
     return {
       status: "error",
       message:
         "Erro interno ao processar o pedido. Por favor, tente mais tarde.",
     };
   }
-
-  console.log(redirectUrl);
 
   if (redirectUrl) {
     redirect(redirectUrl);
@@ -399,7 +401,7 @@ export async function createDomainInvoice(
   };
 }
 
-export async function buyPlan(
+export async function completeCheckout(
   prevState: unknown,
   {
     invoiceId,
@@ -425,14 +427,6 @@ export async function buyPlan(
 
   if (!invoice) {
     return { status: "error", message: "Fatura não encontrada." };
-  }
-
-  const plan = await db.query.pgPlan.findFirst({
-    where: eq(pgPlan.id, invoice.reference),
-  });
-
-  if (!plan) {
-    return { status: "error", message: "Plano não encontrado." };
   }
 
   if (!user.domId) {
@@ -518,7 +512,7 @@ export async function buyPlan(
 
   try {
     const result = await domApi.createRecurrentPayment({
-      description: `Atlas Hosting ${plan.description}`,
+      description: `Atlas Hosting ${invoice.reference}`,
       externalReference: invoiceId,
       frequency: "MONTH",
       card: {
@@ -530,7 +524,7 @@ export async function buyPlan(
         holder_document: values.document.replace(/\D/g, ""),
       },
       userId: user.id,
-      value: plan.price,
+      value: invoice.amount,
     });
     console.log("Nova assinatura criada", result);
   } catch (err) {
@@ -926,4 +920,12 @@ export async function deleteWordPressInstances(
     console.error("Error deleting WordPress instances:", error);
     return { status: "error", message: "Erro ao excluir sites" };
   }
+}
+
+export async function signInWithGithub() {
+  await signIn("github");
+}
+
+export async function signInWithGoogle() {
+  await signIn("google");
 }

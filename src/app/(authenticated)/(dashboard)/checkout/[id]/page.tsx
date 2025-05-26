@@ -60,9 +60,11 @@ export default async function CheckoutPage({
           </CardHeader>
           <CardContent className="flex flex-col h-full">
             <div className="text-xs flex items-center justify-between text-zinc-800 dark:text-zinc-200">
-              <div>
-                {invoice.type === "domain" ? "Domínio " : "Plano "}
-                {reference}
+              <div className="flex flex-col gap-1">
+                <div>{invoice.type === "domain" ? "Domínio" : "Plano"}</div>
+                <div className="text-muted-foreground/70 font-medium">
+                  {reference}
+                </div>
               </div>
               <div className="text-xs font-semibold">
                 {toBrl(invoice.amount)}

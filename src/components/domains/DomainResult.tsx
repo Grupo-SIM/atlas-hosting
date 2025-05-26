@@ -2,6 +2,7 @@ import {
   getDomainData,
   type DomainData,
 } from "@/app/(authenticated)/(dashboard)/domains/register/page";
+import RegisterDomainForm from "@/components/domains/RegisterDomainForm";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,12 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getUser } from "@/lib/auth";
-import { namecheapApi } from "@/lib/server/apis/namecheap";
-import { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
 import { toBrl } from "@/lib/utils";
 import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
-import { redirect } from "next/navigation";
 import { PropsWithChildren, ReactNode, Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
 
@@ -164,87 +161,87 @@ async function DomainUnavailable({ domainData }: { domainData: DomainData }) {
 }
 
 async function DomainAvailable({ domainData }: { domainData: DomainData }) {
-  async function buyDomainAction(formData: FormData) {
-    "use server";
+  // async function buyDomainAction(formData: FormData) {
+  //   "use server";
 
-    const user = await getUser();
+  //   const user = await getUser();
 
-    const domainName = formData.get("domainName") as string;
+  //   const domainName = formData.get("domainName") as string;
 
-    const formYears = formData.get("years") as string;
+  //   const formYears = formData.get("years") as string;
 
-    const yearsToRegister = formYears ? parseInt(formYears, 10) : 1;
-    const registrationPrice = parseFloat(formData.get("price") as string);
-    const isPremium = formData.get("isPremium") === "true";
+  //   const yearsToRegister = formYears ? parseInt(formYears, 10) : 1;
+  //   const registrationPrice = parseFloat(formData.get("price") as string);
+  //   const isPremium = formData.get("isPremium") === "true";
 
-    if (!user || !user.email) {
-      throw new Error("Usuário não autenticado ou e-mail não encontrado.");
-    }
-    if (!domainName) {
-      throw new Error("Nome do domínio é obrigatório.");
-    }
+  //   if (!user || !user.email) {
+  //     throw new Error("Usuário não autenticado ou e-mail não encontrado.");
+  //   }
+  //   if (!domainName) {
+  //     throw new Error("Nome do domínio é obrigatório.");
+  //   }
 
-    const params: DomainsCreateUserParams = {
-      DomainName: domainName,
-      Years: yearsToRegister,
-      Registrant: adminNamecheapDetails,
-      Admin: adminNamecheapDetails,
-      Tech: adminNamecheapDetails,
-      AuxBilling: adminNamecheapDetails,
-      AddFreeWhoisguard: "yes",
-      WGEnabled: "yes",
-    };
+  //   const params: DomainsCreateUserParams = {
+  //     DomainName: domainName,
+  //     Years: yearsToRegister,
+  //     Registrant: adminNamecheapDetails,
+  //     Admin: adminNamecheapDetails,
+  //     Tech: adminNamecheapDetails,
+  //     AuxBilling: adminNamecheapDetails,
+  //     AddFreeWhoisguard: "yes",
+  //     WGEnabled: "yes",
+  //   };
 
-    if (isPremium) {
-      params.IsPremiumDomain = true;
-      params.PremiumPrice = registrationPrice;
-    }
+  //   if (isPremium) {
+  //     params.IsPremiumDomain = true;
+  //     params.PremiumPrice = registrationPrice;
+  //   }
 
-    try {
-      console.log(
-        "Attempting to register domain with params:",
-        JSON.stringify(params, null, 2)
-      );
+  //   try {
+  //     console.log(
+  //       "Attempting to register domain with params:",
+  //       JSON.stringify(params, null, 2)
+  //     );
 
-      const registrationResult = await namecheapApi.createDomain(params);
+  //     const registrationResult = await namecheapApi.createDomain(params);
 
-      console.log("Namecheap registration result:", registrationResult);
+  //     console.log("Namecheap registration result:", registrationResult);
 
-      if (!registrationResult.Registered) {
-        throw new Error(
-          `Falha ao registrar o domínio ${domainName} via Namecheap. Motivo desconhecido.`
-        );
-      }
-    } catch (error) {
-      console.error(
-        `Erro ao registrar o domínio ${domainName} com Namecheap:`,
-        error
-      );
+  //     if (!registrationResult.Registered) {
+  //       throw new Error(
+  //         `Falha ao registrar o domínio ${domainName} via Namecheap. Motivo desconhecido.`
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error(
+  //       `Erro ao registrar o domínio ${domainName} com Namecheap:`,
+  //       error
+  //     );
 
-      if (error instanceof Error) {
-        throw new Error(`Falha ao registrar ${domainName}: ${error.message}`);
-      }
-      throw new Error(
-        `Falha ao registrar ${domainName}. Por favor, tente novamente.`
-      );
-    }
+  //     if (error instanceof Error) {
+  //       throw new Error(`Falha ao registrar ${domainName}: ${error.message}`);
+  //     }
+  //     throw new Error(
+  //       `Falha ao registrar ${domainName}. Por favor, tente novamente.`
+  //     );
+  //   }
 
-    try {
-      user.logger.log({
-        title: "Novo domínio registrado",
-        description: `Domínio ${domainName} registrado com sucesso.`,
-        severity: "success",
-        type: "hosting",
-      });
-    } catch (error) {
-      console.error(
-        `Erro ao registrar log de domínio para ${domainName}:`,
-        error
-      );
-    }
+  //   try {
+  //     user.logger.log({
+  //       title: "Novo domínio registrado",
+  //       description: `Domínio ${domainName} registrado com sucesso.`,
+  //       severity: "success",
+  //       type: "hosting",
+  //     });
+  //   } catch (error) {
+  //     console.error(
+  //       `Erro ao registrar log de domínio para ${domainName}:`,
+  //       error
+  //     );
+  //   }
 
-    redirect("/domains");
-  }
+  //   redirect("/domains");
+  // }
 
   return (
     domainData?.available &&
@@ -255,24 +252,7 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
         text3="Proteção de privacidade"
         text4="Encaminhamento de Email"
       >
-        {/* Form now contains price text and button */}
-        <form action={buyDomainAction} className="flex items-center gap-2">
-          <input
-            type="hidden"
-            name="domainName"
-            value={domainData.domain.domain}
-            readOnly
-          />
-          <input
-            type="hidden"
-            name="isPremium"
-            value={domainData.domain.isPremium.toString()}
-            readOnly
-          />
-          <Button variant="action" className="w-auto" type="submit">
-            Registrar domínio
-          </Button>
-        </form>
+        <RegisterDomainForm domainData={domainData} />
       </DomainAvailableTemplate>
     )
   );

@@ -1,6 +1,10 @@
+import { adminNamecheapDetails } from "@/components/domains/DomainResult";
 import { db } from "@/lib/db";
 import { pgInvoice, pgUser } from "@/lib/db/schema";
 import { PayloadWebhook } from "@/lib/server/apis/dom/types";
+import namecheapApi from "@/lib/server/apis/namecheap";
+import { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
+import { AppLogger } from "@/lib/server/logs";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -62,16 +66,6 @@ async function onInvoiceCreated(data: PayloadWebhook["data"]): Promise<void> {
 
     return;
   }
-
-  if (updatedInvoice[0].type === "subscription") {
-    await db
-      .update(pgUser)
-      .set({
-        planId: updatedInvoice[0].reference,
-      })
-      .where(eq(pgUser.id, updatedInvoice[0].userId))
-      .returning();
-  }
 }
 
 async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
@@ -106,10 +100,88 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
   }
 
   if (invoice.type === "domain") {
-    // await namecheapApi.createDomain({
-    //   Admin: {
-    //   }
-    // })
+    const domainName = invoice.reference;
+
+    if (!domainName) {
+      throw new Error("Nome do domínio é obrigatório.");
+    }
+
+    const yearsToRegister = 1;
+    const registrationPrice = invoice.amount;
+
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, invoice.userId),
+    });
+
+    if (!user || !user.email) {
+      throw new Error("Usuário não autenticado ou e-mail não encontrado.");
+    }
+
+    const logger = new AppLogger(user);
+
+    const params: DomainsCreateUserParams = {
+      DomainName: domainName,
+      Years: yearsToRegister,
+      Registrant: adminNamecheapDetails,
+      Admin: adminNamecheapDetails,
+      Tech: adminNamecheapDetails,
+      AuxBilling: adminNamecheapDetails,
+      AddFreeWhoisguard: "yes",
+      WGEnabled: "yes",
+    };
+
+    try {
+      console.log(
+        "Attempting to register domain with params:",
+        JSON.stringify(params, null, 2)
+      );
+
+      const registrationResult = await namecheapApi.createDomain(params);
+
+      console.log("Namecheap registration result:", registrationResult);
+
+      if (!registrationResult.Registered) {
+        throw new Error(
+          `Falha ao registrar o domínio ${domainName} via Namecheap. Motivo desconhecido.`
+        );
+      }
+    } catch (error) {
+      logger.log({
+        title: "Erro ao registrar domínio",
+        description: `Erro ao registrar o domínio ${domainName}.`,
+        severity: "danger",
+        type: "hosting",
+      });
+
+      console.error(
+        `Erro ao registrar o domínio ${domainName} com Namecheap:`,
+        error
+      );
+
+      if (error instanceof Error) {
+        throw new Error(`Falha ao registrar ${domainName}: ${error.message}`);
+      }
+
+      throw new Error(
+        `Falha ao registrar ${domainName}. Por favor, tente novamente.`
+      );
+    }
+
+    try {
+      logger.log({
+        title: "Novo domínio registrado",
+        description: `Domínio ${domainName} registrado com sucesso.`,
+        severity: "success",
+        type: "hosting",
+      });
+    } catch (error) {
+      logger.log({
+        title: "Erro ao registrar domínio",
+        description: `Erro ao registrar o domínio ${domainName}.`,
+        severity: "danger",
+        type: "hosting",
+      });
+    }
   }
 }
 

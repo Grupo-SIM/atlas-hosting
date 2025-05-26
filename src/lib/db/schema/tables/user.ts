@@ -28,9 +28,9 @@ export const pgUser = pgTable("users", {
   walletId: uuid("wallet_id")
     .notNull()
     .references(() => pgWallet.id),
-  createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
-  deletedAt: date("deleted_at", { mode: "date" }),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  deletedAt: timestamp("deleted_at", { mode: "date" }),
 });
 
 export const userRelations = relations(pgUser, ({ one }) => ({

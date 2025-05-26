@@ -1,4 +1,4 @@
-import { date, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { date, pgTable, text, uuid, timestamp } from "drizzle-orm/pg-core";
 import { pgUser } from "./user";
 
 export const pgSession = pgTable("session", {
@@ -6,7 +6,7 @@ export const pgSession = pgTable("session", {
   userId: uuid("user_id")
     .notNull()
     .references(() => pgUser.id),
-  expiresAt: date("expires_at", { mode: "date" }).notNull(),
+  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
 });
 
 export type Session = typeof pgSession.$inferSelect;

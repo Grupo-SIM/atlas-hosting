@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { date, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { date, pgTable, text, uuid, timestamp } from "drizzle-orm/pg-core";
 import { pgUser } from "./user";
 
 export const pgLog = pgTable("log", {
@@ -11,9 +11,11 @@ export const pgLog = pgTable("log", {
   }).notNull(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
-  deletedAt: date("deleted_at", { mode: "date" }),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" })
+    .$default(() => new Date())
+    .notNull(),
+  deletedAt: timestamp("deleted_at", { mode: "date" }),
 });
 
 export const logsRelations = relations(pgLog, ({ one }) => ({

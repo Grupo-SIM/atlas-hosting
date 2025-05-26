@@ -1,9 +1,9 @@
 import { relations } from "drizzle-orm";
 import {
-  date,
   doublePrecision,
   pgTable,
   text,
+  timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
 import { pgUser } from "./user";
@@ -19,11 +19,11 @@ export const pgInvoice = pgTable("invoices", {
   status: text("status", {
     enum: ["pending", "paid", "failed", "processing"],
   }).notNull(),
-  dueDate: date("due_date", { mode: "date" }).notNull(),
+  dueDate: timestamp("due_date", { mode: "date" }).notNull(),
   currency: text("currency").default("BRL").notNull(), // Added currency, defaulting to BRL
   description: text("description"), // Added description, optional
-  createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 export const invoiceRelations = relations(pgInvoice, ({ one }) => ({

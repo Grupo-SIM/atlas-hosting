@@ -1,6 +1,6 @@
 "use client";
 
-import { buyPlan } from "@/app/actions";
+import { completeCheckout } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,13 +10,18 @@ import clsx from "clsx";
 import { getMonth, getYear } from "date-fns";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import Script from "next/script";
-import { startTransition, useActionState, useCallback, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { Controller, useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import { IMaskInput } from "react-imask";
-import IMask from "imask";
-import * as yup from "yup";
 import { toast } from "sonner";
+import * as yup from "yup";
 
 // Standard input class from shadcn/ui for consistency
 const inputClasses =
@@ -25,10 +30,17 @@ const inputClasses =
 const domPk = process.env.NEXT_PUBLIC_DOM_PUBLIC_KEY ?? "";
 
 export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
-  const [state, doBuyPlan, isPending] = useActionState(buyPlan, {
-    status: "idle" as "error" | "success" | "idle",
-    message: "",
-  });
+  const [state, doCompleteCheckout, isPending] = useActionState(
+    completeCheckout,
+    {
+      status: "idle" as "error" | "success" | "idle",
+      message: "",
+    }
+  );
+
+  useEffect(() => {
+    console.log({ state });
+  }, [state]);
 
   const { register, control, getValues } = useForm<CheckoutFormInputs>({
     resolver: yupResolver(schema),
@@ -73,7 +85,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
 
       try {
         startTransition(() => {
-          doBuyPlan({
+          doCompleteCheckout({
             fullName,
             document,
             phoneNumber,
@@ -92,9 +104,10 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
         // });
       } catch {
         toast("Dados de cartão inválido");
+        console.log("Dados de cartão inválido");
       }
     },
-    [doBuyPlan, getValues, invoiceId]
+    [doCompleteCheckout, getValues, invoiceId]
   );
 
   return (
