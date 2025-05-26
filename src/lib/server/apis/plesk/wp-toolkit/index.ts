@@ -74,14 +74,14 @@ export default class PleskWpToolkitApi {
   public async installWp(
     domainName: string,
     adminUsername: string,
-    adminPassowrd: string,
+    adminPassword: string,
     siteTitle: string,
     adminEmail: string
   ) {
     return await this.callWp(
-      `--install -format json -domain-name ${domainName} -path / -admin-email ${adminEmail} -set-id 8 -username ${adminUsername} -language pt_BR -site-title "${siteTitle}"`,
+      `--install -format json -domain-name ${domainName} -path / -admin-email ${adminEmail} -username ${adminUsername} -language pt_BR -site-title "${siteTitle}"`,
       {
-        ADMIN_PASSWORD: adminPassowrd,
+        ADMIN_PASSWORD: adminPassword,
       }
     );
   }
@@ -94,7 +94,7 @@ export default class PleskWpToolkitApi {
 
   public async createAdminUser(instanceId: number) {
     return await this.callWp(
-      `--wp-cli -instance-id ${instanceId} -- user create ${process.env.WP_ADMIN_LOGIN} lucasgarrafielo@gmail.com --role=administrator --user_pass=${process.env.WP_ADMIN_PASS}`
+      `--wp-cli -instance-id ${instanceId} -- user create ${process.env.WP_ADMIN_LOGIN} ${process.env.WP_ADMIN_EMAIL_FOR_NEW_USERS || "user@example.com"} --role=administrator --user_pass=${process.env.WP_ADMIN_PASS}`
     );
   }
 
@@ -103,7 +103,7 @@ export default class PleskWpToolkitApi {
     env: Record<string, string | number | boolean>
   ) {
     return await this.callWp(
-      `--wp-config -instance-id ${instanceId} -path /httpdocs -- `,
+      `--wp-config -instance-id ${instanceId} -path /httpdoc -- `,
       env
     );
   }

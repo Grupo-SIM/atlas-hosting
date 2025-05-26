@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Card,
   CardContent,
@@ -72,16 +70,16 @@ export function RecentActivities() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Activities</CardTitle>
-        <CardDescription>Latest actions and updates</CardDescription>
+        <CardTitle>Atividades Recentes</CardTitle>
+        <CardDescription>Ações e atualizações mais recentes</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="all">
           <TabsList className="grid grid-cols-4 mb-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="hosting">Hosting</TabsTrigger>
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="all">Todos</TabsTrigger>
+            <TabsTrigger value="hosting">Hospedagem</TabsTrigger>
+            <TabsTrigger value="account">Conta</TabsTrigger>
+            <TabsTrigger value="security">Segurança</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all">

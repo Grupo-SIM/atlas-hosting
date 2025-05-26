@@ -8,7 +8,7 @@ import {
 import { db } from "@/lib/db";
 
 export async function PlanStats() {
-  const planStats = await db.query.plansTable.findMany({
+  const planStats = await db.query.pgPlan.findMany({
     with: {
       users: true,
     },

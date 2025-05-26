@@ -15,8 +15,9 @@ import {
 } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
-import { FaGithub, FaGoogle } from "react-icons/fa6";
 import * as yup from "yup";
+import GithubAuthButton from "./GithubAuthButton";
+import GoogleAuthButton from "./GoogleAuthButton";
 
 export default function SignupForm() {
   const { register, handleSubmit, control, ...methods } =
@@ -61,100 +62,87 @@ export default function SignupForm() {
   }, [actionState.message, actionState.status, router]);
 
   return (
-    <form onSubmit={onSubmit} className="space-y-2">
-      <div className="space-y-2">
-        <Label htmlFor="fullName">Nome completo</Label>
-        <Input
-          type="text"
-          placeholder="Seu nome completo"
-          autoComplete="name"
-          {...register("fullName")}
-        />
-        {errors.fullName && (
-          <p className="text-xs text-red-400">{errors.fullName.message}</p>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="email">E-mail</Label>
-        <Input
-          type="email"
-          placeholder="exemplo@exemplo.com"
-          autoComplete="email"
-          {...register("email")}
-        />
-        {errors.email && (
-          <p className="text-xs text-red-400">{errors.email.message}</p>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Senha</Label>
-        <Input
-          type="password"
-          autoComplete="new-password"
-          {...register("password")}
-        />
-        {errors.password && (
-          <p className="text-xs text-red-400">{errors.password.message}</p>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-        <Input
-          type="password"
-          autoComplete="new-password"
-          {...register("confirmPassword")}
-        />
-        {errors.confirmPassword && (
-          <p className="text-xs text-red-400">
-            {errors.confirmPassword.message}
-          </p>
-        )}
-      </div>
-
-      {formError && <p className="text-xs text-red-400">{formError}</p>}
-
-      <Button
-        type="submit"
-        className="w-full mt-2 flex items-center justify-center"
-        disabled={!isValid || isValidating || isPending}
-      >
-        {isPending ? (
-          <CgSpinner className="h-6 w-6 animate-spin" />
-        ) : (
-          "Cadastrar"
-        )}
-      </Button>
-
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
+    <>
+      <form onSubmit={onSubmit} className="space-y-2">
+        <div className="space-y-2">
+          <Label htmlFor="fullName">Nome completo</Label>
+          <Input
+            type="text"
+            placeholder="Seu nome completo"
+            autoComplete="name"
+            {...register("fullName")}
+          />
+          {errors.fullName && (
+            <p className="text-xs text-red-400">{errors.fullName.message}</p>
+          )}
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Ou cadastre-se com
-          </span>
+        <div className="space-y-2">
+          <Label htmlFor="email">E-mail</Label>
+          <Input
+            type="email"
+            placeholder="exemplo@exemplo.com"
+            autoComplete="email"
+            {...register("email")}
+          />
+          {errors.email && (
+            <p className="text-xs text-red-400">{errors.email.message}</p>
+          )}
         </div>
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Senha</Label>
+          <Input
+            type="password"
+            autoComplete="new-password"
+            {...register("password")}
+          />
+          {errors.password && (
+            <p className="text-xs text-red-400">{errors.password.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+          <Input
+            type="password"
+            autoComplete="new-password"
+            {...register("confirmPassword")}
+          />
+          {errors.confirmPassword && (
+            <p className="text-xs text-red-400">
+              {errors.confirmPassword.message}
+            </p>
+          )}
+        </div>
 
+        {formError && <p className="text-xs text-red-400">{formError}</p>}
+
+        <Button
+          type="submit"
+          className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+          disabled={!isValid || isValidating || isPending}
+        >
+          {isPending ? (
+            <CgSpinner className="h-6 w-6 animate-spin" />
+          ) : (
+            "Cadastrar"
+          )}
+        </Button>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Ou cadastre-se com
+            </span>
+          </div>
+        </div>
+      </form>
       <div className="grid grid-cols-2 gap-4">
-        <Button
-          variant="outline"
-          type="button"
-          className="flex items-center justify-center gap-2"
-        >
-          <FaGithub className="h-4 w-4" />
-          GitHub
-        </Button>
-        <Button
-          variant="outline"
-          type="button"
-          className="flex items-center justify-center gap-2"
-        >
-          <FaGoogle className="h-4 w-4" />
-          Google
-        </Button>
+        <GithubAuthButton />
+        <GoogleAuthButton />
       </div>
-    </form>
+    </>
   );
 }
 

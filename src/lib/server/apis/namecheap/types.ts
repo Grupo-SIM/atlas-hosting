@@ -455,8 +455,8 @@ export interface DomainsGetInfoCleanedResponse {
 
 // Raw types for XML parsing for domains.getInfo
 export interface RawDomainDetails {
-  CreatedDate: string;
-  ExpiredDate: string; // Note: Namecheap uses ExpiredDate or ExpireDate
+  CreatedDate: string[];
+  ExpiredDate: string[]; // Note: Namecheap uses ExpiredDate or ExpireDate
   NumYears?: string;
 }
 
@@ -490,7 +490,7 @@ export interface RawModificationrights {
 }
 
 export interface RawDomainsGetInfoCommandResponseContent {
-  DomainGetInfoResult?: {
+  DomainGetInfoResult?: Array<{
     // Usually an array of 1 by xml2js default
     $: {
       // Attributes of DomainGetInfoResult
@@ -506,7 +506,7 @@ export interface RawDomainsGetInfoCommandResponseContent {
     Whoisguard?: RawWhoisguard[];
     Modificationrights?: RawModificationrights[];
     // ... other potential nested elements
-  };
+  }>;
 }
 
 // --- For namecheap.users.create ---

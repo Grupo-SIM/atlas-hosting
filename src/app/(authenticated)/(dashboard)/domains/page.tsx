@@ -38,7 +38,7 @@ import { format, isBefore, parseISO, startOfTomorrow } from "date-fns"; // Added
 import { ptBR } from "date-fns/locale"; // For pt-BR date formatting
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { namecheapIntegration } from "@/lib/db/schema";
+import { pgNamecheapIntegration } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 

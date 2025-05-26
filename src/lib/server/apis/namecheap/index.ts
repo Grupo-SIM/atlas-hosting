@@ -55,7 +55,7 @@ export class NamecheapApiWrapper {
   private readonly baseUrl = "https://api.namecheap.com/xml.response";
 
   private db = db;
-  private domainPricingCacheTable = schema.domainPricingCache;
+  private domainPricingCacheTable = schema.pgDomainPricingCache;
 
   private tldListApiCache: {
     value: DomainsGetTldListCleanedResponse | null;
@@ -253,8 +253,7 @@ export class NamecheapApiWrapper {
           });
         });
 
-        const upsertData: (typeof schema.domainPricingCache.$inferInsert)[] =
-          [];
+        const upsertData: schema.DomainPricingInsert[] = [];
 
         productTypeNode.ProductCategory.forEach((category) => {
           const actionType = category.$.Name.toUpperCase();
@@ -298,17 +297,16 @@ export class NamecheapApiWrapper {
             `NCW: Upserting ${upsertData.length} TLD prices (USD) to DB cache...`
           );
           for (const data of upsertData) {
-            const valuesToUpsert: typeof schema.domainPricingCache.$inferInsert =
-              {
-                tld: data.tld!,
-                price: data.price ?? null,
-                renew: data.renew ?? null,
-                transfer: data.transfer ?? null,
-                minRegisterYears: data.minRegisterYears ?? null,
-                maxRegisterYears: data.maxRegisterYears ?? null,
-                createdAt: data.createdAt!,
-                updatedAt: data.updatedAt!,
-              };
+            const valuesToUpsert: schema.DomainPricingInsert = {
+              tld: data.tld!,
+              price: data.price ?? null,
+              renew: data.renew ?? null,
+              transfer: data.transfer ?? null,
+              minRegisterYears: data.minRegisterYears ?? null,
+              maxRegisterYears: data.maxRegisterYears ?? null,
+              createdAt: data.createdAt!,
+              updatedAt: data.updatedAt!,
+            };
             await this.db
               .insert(this.domainPricingCacheTable)
               .values(valuesToUpsert)
@@ -889,7 +887,7 @@ export class NamecheapApiWrapper {
   private _parseDomainsGetInfoResponse = (
     rawContent: RawDomainsGetInfoCommandResponseContent
   ): DomainsGetInfoCleanedResponse => {
-    const resultNode = rawContent.DomainGetInfoResult;
+    const resultNode = rawContent.DomainGetInfoResult?.[0];
     if (!resultNode || !resultNode.$)
       throw new Error("DomainGetInfoResult missing/malformed.");
 
@@ -942,8 +940,8 @@ export class NamecheapApiWrapper {
         resultAttrs.Status.toUpperCase() === "LOCKED" ||
         resultAttrs.Status.toUpperCase() === "REGISTRAR-LOCK",
       IsOurDNS: dnsDetails.IsUsingOurDNS,
-      CreatedDate: domainDetailsRaw?.CreatedDate || "N/A",
-      ExpireDate: domainDetailsRaw?.ExpiredDate || "N/A",
+      CreatedDate: domainDetailsRaw?.CreatedDate[0] || "N/A",
+      ExpireDate: domainDetailsRaw?.ExpiredDate[0] || "N/A",
       AutoRenew: autoRenewStatus,
       Whoisguard: whoisguard,
       DnsDetails: dnsDetails,

@@ -1,7 +1,7 @@
 import {
-  getDomainData, // Imported from page.tsx where it's cached
-  type DomainData, // Import type from page.tsx or a shared types file
-} from "@/app/(authenticated)/(dashboard)/domains/register/page"; // Adjust path as needed
+  getDomainData,
+  type DomainData,
+} from "@/app/(authenticated)/(dashboard)/domains/register/page";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,15 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getUser } from "@/lib/auth"; // For server action
+import { getUser } from "@/lib/auth";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
-import {
-  DomainsCreateUserParams,
-  NamecheapContactDetails,
-} from "@/lib/server/apis/namecheap/types";
+import { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
 import { toBrl } from "@/lib/utils";
 import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
-import { redirect } from "next/navigation"; // For server action
+import { redirect } from "next/navigation";
 import { PropsWithChildren, ReactNode, Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
 
@@ -105,8 +102,6 @@ export async function DomainResult({ searchQuery }: { searchQuery: string }) {
   );
 }
 
-// --- Helper components for DomainResult ---
-
 function DomainAvailableTemplate({
   text1,
   text2,
@@ -168,27 +163,6 @@ async function DomainUnavailable({ domainData }: { domainData: DomainData }) {
   );
 }
 
-// const getMockContactDetails = (
-//   userEmail: string,
-//   userName?: string
-// ): NamecheapContactDetails => {
-//   const nameParts = userName?.split(" ") || ["Usuário", "Teste"];
-//   const firstName = nameParts[0];
-//   const lastName = nameParts.slice(1).join(" ") || "Teste";
-
-//   return {
-//     FirstName: firstName,
-//     LastName: lastName,
-//     Address1: "Av. Cabo Branco, 1850",
-//     City: "Joao Pessoa",
-//     StateProvince: "PB", // State/Province code
-//     PostalCode: "58045010", // Zip/Postal code
-//     Country: "BR", // 2-letter country code
-//     Phone: "+55.83991598702", // Format: +CountryCode.PhoneNumber
-//     EmailAddress: userEmail,
-//   };
-// };
-
 async function DomainAvailable({ domainData }: { domainData: DomainData }) {
   async function buyDomainAction(formData: FormData) {
     "use server";
@@ -200,7 +174,7 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
     const formYears = formData.get("years") as string;
 
     const yearsToRegister = formYears ? parseInt(formYears, 10) : 1;
-    const registrationPrice = parseFloat(formData.get("price") as string); // This is the USD price
+    const registrationPrice = parseFloat(formData.get("price") as string);
     const isPremium = formData.get("isPremium") === "true";
 
     if (!user || !user.email) {
@@ -223,7 +197,7 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
 
     if (isPremium) {
       params.IsPremiumDomain = true;
-      params.PremiumPrice = registrationPrice; // Pass the USD premium price
+      params.PremiumPrice = registrationPrice;
     }
 
     try {
@@ -236,11 +210,7 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
 
       console.log("Namecheap registration result:", registrationResult);
 
-      if (registrationResult.Registered) {
-        // Optionally, store registration details in your DB here
-        redirect("/domains"); // Redirect to domains list or success page
-      } else {
-        // Handle cases where Namecheap says not registered but no error thrown
+      if (!registrationResult.Registered) {
         throw new Error(
           `Falha ao registrar o domínio ${domainName} via Namecheap. Motivo desconhecido.`
         );
@@ -250,8 +220,7 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
         `Erro ao registrar o domínio ${domainName} com Namecheap:`,
         error
       );
-      // Consider re-throwing a more user-friendly error or redirecting with an error message
-      // For now, re-throwing the original or a generic one
+
       if (error instanceof Error) {
         throw new Error(`Falha ao registrar ${domainName}: ${error.message}`);
       }
@@ -259,6 +228,22 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
         `Falha ao registrar ${domainName}. Por favor, tente novamente.`
       );
     }
+
+    try {
+      user.logger.log({
+        title: "Novo domínio registrado",
+        description: `Domínio ${domainName} registrado com sucesso.`,
+        severity: "success",
+        type: "hosting",
+      });
+    } catch (error) {
+      console.error(
+        `Erro ao registrar log de domínio para ${domainName}:`,
+        error
+      );
+    }
+
+    redirect("/domains");
   }
 
   return (

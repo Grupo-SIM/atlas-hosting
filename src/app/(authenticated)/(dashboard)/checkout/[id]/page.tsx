@@ -3,7 +3,7 @@ import CheckoutForm from "@/components/checkout/CheckoutForm";
 import { ModeToggle } from "@/components/ModeToggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { invoiceTable, plansTable } from "@/lib/db/schema";
+import { pgInvoice, pgPlan } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
 import { eq } from "drizzle-orm";
 import { Metadata } from "next";
@@ -19,8 +19,8 @@ export default async function CheckoutPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const invoice = await db.query.invoiceTable.findFirst({
-    where: eq(invoiceTable.id, (await params).id),
+  const invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, (await params).id),
   });
 
   if (!invoice) {
@@ -30,8 +30,8 @@ export default async function CheckoutPage({
   let reference = invoice.reference;
 
   if (invoice.type === "subscription") {
-    const plan = await db.query.plansTable.findFirst({
-      where: eq(plansTable.id, reference),
+    const plan = await db.query.pgPlan.findFirst({
+      where: eq(pgPlan.id, reference),
     });
 
     if (!plan) {

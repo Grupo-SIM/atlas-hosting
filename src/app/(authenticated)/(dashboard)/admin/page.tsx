@@ -1,17 +1,19 @@
-import { db } from "@/lib/db";
-import { featureTable } from "@/lib/db/schema";
-import { cache } from "react";
 import { DomainStats } from "./components/DomainStats";
 import { InvoiceStats } from "./components/InvoiceStats";
 import PlansSection from "./components/PlansSection";
 import { PlanStats } from "./components/PlanStats";
 import { UserStats } from "./components/UserStats";
-
-export const getFeatures = cache(
-  async () => await db.select().from(featureTable)
-);
+import { db } from "@/lib/db";
+import { pgPlan, type Plan } from "@/lib/db/schema";
+import { eq } from "drizzle-orm"; // Import eq for querying
 
 export default async function AdminPage() {
+  // Fetch initial plans data on the server
+  const initialPlans: Plan[] = await db
+    .select()
+    .from(pgPlan)
+    .orderBy(pgPlan.id);
+
   return (
     <div className="space-y-10 p-2 md:p-6">
       <header className="mb-6">
@@ -39,9 +41,8 @@ export default async function AdminPage() {
         <DomainStats />
       </section>
 
-      {/* Planos Section for Admins */}
       <section className="space-y-6">
-        <PlansSection />
+        <PlansSection initialPlans={initialPlans} />
       </section>
     </div>
   );

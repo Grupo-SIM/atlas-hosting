@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { db } from "@/lib/db";
-import { Invoice, invoiceTable, User } from "@/lib/db/schema";
+import { Invoice, pgInvoice, User } from "@/lib/db/schema";
 import { format, isBefore, startOfTomorrow, toDate } from "date-fns";
 import { desc, eq } from "drizzle-orm";
 // import { listDomains } from "../../domains/page";
@@ -24,7 +24,7 @@ import { ListDomainDomain } from "@/lib/server/apis/namesilo/types";
 export async function DomainStats() {
   return false;
   // Get all invoices with user information, ordered by most recent
-  // const invoices = await db.query.invoiceTable.findMany({
+  // const invoices = await db.query.pgInvoice.findMany({
   //   with: {
   //     user: true,
   //   },

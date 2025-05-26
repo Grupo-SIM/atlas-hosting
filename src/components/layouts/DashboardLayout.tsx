@@ -2,7 +2,7 @@
 
 import { logout } from "@/app/actions";
 import AtlasLogo from "@/assets/atlas.svg";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,7 +16,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { getUser } from "@/lib/auth";
+import { User } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import {
   CreditCard,
@@ -33,7 +33,7 @@ import {
   Server,
   Settings,
   Shield,
-  User,
+  User as UserIcon,
   Users,
   X,
 } from "lucide-react";
@@ -44,19 +44,17 @@ import {
   ForwardRefExoticComponent,
   RefAttributes,
   startTransition,
-  use,
   useActionState,
   useCallback,
   useRef,
   useState,
 } from "react";
-import { FaCircleUser, FaPowerOff, FaUser } from "react-icons/fa6";
-import { ModeToggle } from "../ModeToggle";
 import { FaUserAlt } from "react-icons/fa";
+import { ModeToggle } from "../ModeToggle";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  user?: ReturnType<typeof getUser>;
+  user?: User;
 }
 
 export default function DashboardLayout({
@@ -74,8 +72,6 @@ export default function DashboardLayout({
       signOut();
     });
   }, [signOut]);
-
-  const userData = user ? use(user) : null;
 
   const navigation = [
     { name: "Painel", href: "/", icon: LayoutDashboard },
@@ -231,14 +227,14 @@ export default function DashboardLayout({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
-                {userData && (
+                {user && (
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {userData.name}
+                        {user.name}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {userData.email}
+                        {user.email}
                       </p>
                     </div>
                   </DropdownMenuLabel>
@@ -246,7 +242,7 @@ export default function DashboardLayout({
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup className="[&>*]:cursor-pointer">
                   <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
+                    <UserIcon className="mr-2 h-4 w-4" />
                     <span>Perfil</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem>

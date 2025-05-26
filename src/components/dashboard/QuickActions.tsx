@@ -5,6 +5,7 @@ import {
   CreditCard,
   Globe,
   History,
+  Mail,
   Plus,
   Server,
   Settings,
@@ -82,12 +83,12 @@ export function QuickActions() {
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
             asChild
           >
-            <Link href="/tools">
-              <Tool className="h-10 w-10 text-orange-500 mb-4 group-hover:scale-110 transition-transform" />
+            <Link href="/email">
+              <Mail className="h-10 w-10 text-orange-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
-                <span className="text-xl font-medium block">Ferramentas</span>
+                <span className="text-xl font-medium block">Meu Email</span>
                 <span className="text-sm text-muted-foreground block">
-                  Acesse ferramentas e utilitários
+                  Acesse suas caixas de email
                 </span>
               </div>
             </Link>

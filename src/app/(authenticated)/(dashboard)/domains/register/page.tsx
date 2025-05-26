@@ -26,13 +26,15 @@ import type {
 } from "@/lib/server/apis/namecheap/types";
 import { Search } from "lucide-react";
 import { Metadata } from "next";
-import { cache, Suspense, useCallback } from "react";
+import { cache, Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 import { db } from "@/lib/db";
-import { domainPricingCache as domainPricingCacheTable } from "@/lib/db/schema";
+import { pgDomainPricingCache as domainPricingCacheTable } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export const experimental_ppr = true;
 
@@ -278,6 +280,18 @@ export default async function DomainsPage({
   const allDomainPricesFromDbPromise = getAllDomainPricesFromDb(); // Fetches USD prices from DB
   const domainDataPromise = getDomainData(searchQuery); // Provides BRL prices
 
+  async function checkDomain(formData: FormData) {
+    "use server";
+
+    const search = formData.get("search");
+    if (typeof search !== "string" || search.trim() === "") {
+      throw new Error("Search query is required.");
+    }
+
+    revalidatePath("/domains/register");
+    redirect(`/domains/register?search=${encodeURIComponent(search.trim())}`);
+  }
+
   return (
     <div className="space-y-6 p-6 pb-16">
       <div>
@@ -297,7 +311,10 @@ export default async function DomainsPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form method="GET" className="flex flex-col sm:flex-row gap-3">
+          <form
+            action={checkDomain}
+            className="flex flex-col sm:flex-row gap-3"
+          >
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -421,11 +438,6 @@ async function TldPriceSectionFromDb({
   allDomainPricesFromDbPromise: Promise<DomainPriceInfoFromDb[]>;
 }) {
   const allDomainPricesFromDb = await allDomainPricesFromDbPromise;
-  // PaginatedTldTable expects 'allTldData' prop with specific structure
-  // We need to map DomainPriceInfoFromDb to what PaginatedTldTable expects (DomainPriceInfo)
-  // AND convert USD to BRL here before passing to the client component,
-  // or PaginatedTldTable needs to do it (but it's a client component).
-  // For server components, we can do the conversion here.
 
   const convertedPricesForTable: DomainPriceInfo[] = await Promise.all(
     allDomainPricesFromDb.map(async (item) => {

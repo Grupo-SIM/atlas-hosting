@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { invoiceTable, userTable } from "@/lib/db/schema";
+import { pgInvoice, pgUser } from "@/lib/db/schema";
 import { desc, sql } from "drizzle-orm";
 import {
   Table,
@@ -33,35 +33,35 @@ export async function InvoiceList({ searchParams }: InvoiceListProps) {
   const [invoices, totalInvoices] = await Promise.all([
     db
       .select({
-        id: invoiceTable.id,
-        amount: invoiceTable.amount,
-        status: invoiceTable.status,
-        type: invoiceTable.type,
-        createdAt: invoiceTable.createdAt,
+        id: pgInvoice.id,
+        amount: pgInvoice.amount,
+        status: pgInvoice.status,
+        type: pgInvoice.type,
+        createdAt: pgInvoice.createdAt,
         user: {
-          name: userTable.name,
-          email: userTable.email,
+          name: pgUser.name,
+          email: pgUser.email,
         },
       })
-      .from(invoiceTable)
-      .leftJoin(userTable, sql`${invoiceTable.userId} = ${userTable.id}`)
+      .from(pgInvoice)
+      .leftJoin(pgUser, sql`${pgInvoice.userId} = ${pgUser.id}`)
       .where(
         search
-          ? sql`${userTable.name} ILIKE ${`%${search}%`} OR ${userTable.email} ILIKE ${`%${search}%`}`
+          ? sql`${pgUser.name} ILIKE ${`%${search}%`} OR ${pgUser.email} ILIKE ${`%${search}%`}`
           : undefined
       )
-      .orderBy(desc(invoiceTable.createdAt))
+      .orderBy(desc(pgInvoice.createdAt))
       .limit(ITEMS_PER_PAGE)
       .offset((page - 1) * ITEMS_PER_PAGE),
     db
       .select({
         count: sql<number>`count(*)`,
       })
-      .from(invoiceTable)
-      .leftJoin(userTable, sql`${invoiceTable.userId} = ${userTable.id}`)
+      .from(pgInvoice)
+      .leftJoin(pgUser, sql`${pgInvoice.userId} = ${pgUser.id}`)
       .where(
         search
-          ? sql`${userTable.name} ILIKE ${`%${search}%`} OR ${userTable.email} ILIKE ${`%${search}%`}`
+          ? sql`${pgUser.name} ILIKE ${`%${search}%`} OR ${pgUser.email} ILIKE ${`%${search}%`}`
           : undefined
       ),
   ]);

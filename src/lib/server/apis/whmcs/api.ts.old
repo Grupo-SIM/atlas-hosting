@@ -20,7 +20,7 @@ export const getCurrentUserId = cache(async function getCurrentUserId() {
     throw new Error("Session not found");
   }
 
-  const session = await db.query.sessionTable.findFirst({
+  const session = await db.query.pgSessionTable.findFirst({
     where: eq(sessionTable.id, sessionId),
   });
 

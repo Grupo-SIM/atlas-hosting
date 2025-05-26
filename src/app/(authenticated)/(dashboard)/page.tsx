@@ -1,8 +1,7 @@
-import DashboardLayout from "@/components/layouts/DashboardLayout";
-import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { QuickActions } from "@/components/dashboard/QuickActions";
-import { ServerStatus } from "@/components/dashboard/ServerStatus";
 import { RecentActivities } from "@/components/dashboard/RecentActivities";
+import { ServerStatus } from "@/components/dashboard/ServerStatus";
+import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { getUser } from "@/lib/auth";
 
 export default function Dashboard() {

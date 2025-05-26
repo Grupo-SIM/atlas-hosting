@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { userTable } from "@/lib/db/schema";
+import { pgUser } from "@/lib/db/schema";
 import { isNotNull, sql } from "drizzle-orm";
 import { UserChart } from "./UserChart";
 
@@ -17,29 +17,29 @@ export async function UserStats() {
         .select({
           count: sql<number>`count(*)`,
         })
-        .from(userTable),
+        .from(pgUser),
       db
         .select({
           count: sql<number>`count(*)`,
         })
-        .from(userTable)
-        .where(isNotNull(userTable.planId)),
+        .from(pgUser)
+        .where(isNotNull(pgUser.planId)),
       db
         .select({
           count: sql<number>`count(*)`,
         })
-        .from(userTable)
+        .from(pgUser)
         .where(
-          sql`${userTable.createdAt} >= date_trunc('month', current_date)`
+          sql`${pgUser.createdAt} >= date_trunc('month', current_date)`
         ),
       db
         .select({
-          month: sql<string>`to_char(${userTable.createdAt}, 'YYYY-MM')`,
+          month: sql<string>`to_char(${pgUser.createdAt}, 'YYYY-MM')`,
           count: sql<number>`count(*)`,
         })
-        .from(userTable)
-        .groupBy(sql`to_char(${userTable.createdAt}, 'YYYY-MM')`)
-        .orderBy(sql`to_char(${userTable.createdAt}, 'YYYY-MM')`)
+        .from(pgUser)
+        .groupBy(sql`to_char(${pgUser.createdAt}, 'YYYY-MM')`)
+        .orderBy(sql`to_char(${pgUser.createdAt}, 'YYYY-MM')`)
         .limit(6),
     ]);
 

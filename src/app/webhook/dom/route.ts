@@ -1,41 +1,12 @@
-import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
-import { PayloadWebhook } from "@/lib/server/apis/dom/types";
 import { db } from "@/lib/db";
-import { invoiceTable, userTable } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import namecheapApi from "@/lib/server/apis/namecheap";
+import { pgInvoice, pgUser } from "@/lib/db/schema";
+import { PayloadWebhook } from "@/lib/server/apis/dom/types";
+import { and, eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
 
 // Placeholder functions for webhook actions
 async function onSignatureCreated(data: PayloadWebhook["data"]): Promise<void> {
   console.log("[Webhook Action] onSignatureCreated called with data:", data);
-
-  // const invoiceId = data.external_reference;
-
-  // if (!invoiceId) {
-  //   console.error("Invoice ID not found in the payload.");
-  //   return;
-  // }
-
-  // const updatedInvoice = await db
-  //   .update(invoiceTable)
-  //   .set({
-  //     status: "processing",
-  //   })
-  //   .where(eq(invoiceTable.id, invoiceId))
-  //   .returning();
-
-  // if (!updatedInvoice) {
-  //   return;
-  // }
-
-  // await db
-  //   .update(userTable)
-  //   .set({
-  //     planId: updatedInvoice[0].reference,
-  //   })
-  //   .where(eq(userTable.id, updatedInvoice[0].userId))
-  //   .returning();
 }
 
 async function onSignatureCancelled(
@@ -43,6 +14,11 @@ async function onSignatureCancelled(
 ): Promise<void> {
   console.log("[Webhook Action] onSignatureCancelled called with data:", data);
   const invoiceId = data.external_reference;
+
+  if (!invoiceId) {
+    console.error("Invoice ID not found in the payload.");
+    return;
+  }
 }
 
 async function onInvoiceCreated(data: PayloadWebhook["data"]): Promise<void> {
@@ -56,15 +32,45 @@ async function onInvoiceCreated(data: PayloadWebhook["data"]): Promise<void> {
   }
 
   const updatedInvoice = await db
-    .update(invoiceTable)
+    .update(pgInvoice)
     .set({
       status: "processing",
     })
-    .where(eq(invoiceTable.id, invoiceId))
+    .where(and(eq(pgInvoice.id, invoiceId), eq(pgInvoice.status, "pending")))
     .returning();
 
   if (!updatedInvoice) {
+    const oldInvoice = await db.query.pgInvoice.findFirst({
+      where: eq(pgInvoice.id, invoiceId),
+    });
+
+    if (!oldInvoice) {
+      console.error("Invoice not found in the database.", invoiceId);
+      return;
+    }
+
+    await db.insert(pgInvoice).values({
+      status: "processing",
+      type: oldInvoice.type,
+      reference: oldInvoice.reference,
+      userId: oldInvoice.userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      amount: oldInvoice.amount,
+      dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // Set due date to 7 days from now
+    });
+
     return;
+  }
+
+  if (updatedInvoice[0].type === "subscription") {
+    await db
+      .update(pgUser)
+      .set({
+        planId: updatedInvoice[0].reference,
+      })
+      .where(eq(pgUser.id, updatedInvoice[0].userId))
+      .returning();
   }
 }
 
@@ -79,21 +85,21 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
   }
 
   const invoice = await db
-    .update(invoiceTable)
+    .update(pgInvoice)
     .set({
       status: "paid",
     })
-    .where(eq(invoiceTable.id, invoiceId))
+    .where(eq(pgInvoice.id, invoiceId))
     .returning()
     .then((result) => result[0]);
 
   if (invoice.type === "subscription") {
     await db
-      .update(userTable)
+      .update(pgUser)
       .set({
         planId: invoice.reference,
       })
-      .where(eq(userTable.id, invoice.userId))
+      .where(eq(pgUser.id, invoice.userId))
       .returning();
 
     return;
@@ -146,7 +152,6 @@ export async function POST(request: Request) {
         await onSignatureCancelled(payload.data);
         actionTaken = "Processamento de cancelamento de assinatura iniciado.";
         details = payload.data;
-
         break;
       case "SIGNATURE-INVOICE-CREATED":
         await onInvoiceCreated(payload.data);

@@ -11,12 +11,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast"; // Import toast for displaying messages
-import { Feature, Plan, User } from "@/lib/db/schema";
-import { toBrl } from "@/lib/utils";
+import { Plan, User } from "@/lib/db/schema";
+import { intersperse, toBrl } from "@/lib/utils";
 import clsx from "clsx";
 import { capitalize } from "lodash";
-import { Check } from "lucide-react";
-import { startTransition, useActionState, useCallback, useEffect } from "react"; // Import useEffect for handling redirection
+import { Check, XIcon } from "lucide-react"; // Import XIcon
+import { startTransition, useActionState, useCallback, useEffect } from "react";
 
 // Define initial state for the form
 const initialState = {
@@ -38,6 +38,7 @@ export function PlanCard({ plan, user }: PlanCardProps) {
         variant: "destructive",
       });
     }
+    // Redirect logic can be added here if state.status === "success" and a redirectUrl is provided in state
   }, [state]);
 
   const onSubmit = useCallback(
@@ -51,11 +52,27 @@ export function PlanCard({ plan, user }: PlanCardProps) {
     [doBuyPlan, plan.id]
   );
 
+  // Unified configuration for all plan features
+  const allFeaturesConfig: {
+    key: keyof Plan;
+    label: string;
+    isBoolean: boolean;
+    unit?: string;
+  }[] = [
+    { key: "maxSites", label: "Sites", isBoolean: false },
+    { key: "maxStorage", label: "Armazenamento", isBoolean: false, unit: "GB" },
+    { key: "ssl", label: "SSL Grátis", isBoolean: true },
+    { key: "backup", label: "Backup", isBoolean: true },
+    { key: "email", label: "Email", isBoolean: true },
+    { key: "cdn", label: "CDN", isBoolean: true },
+    { key: "supportPriority", label: "Suporte Prioritário", isBoolean: true },
+  ];
+
   return (
     <Card
       className={clsx([
         plan.featured ? "border-primary shadow-lg" : "",
-        user.planId === plan.id && "opacity-70",
+        user.planId === plan.id && "opacity-20",
         "flex flex-col h-full",
       ])}
     >
@@ -82,15 +99,45 @@ export function PlanCard({ plan, user }: PlanCardProps) {
             <span className="text-muted-foreground ml-1">/mês</span>
           </div>
           <div className="h-full flex-1">
-            <div>
-              <p className="text-sm font-medium mb-3">Incluso:</p>
+            <div className="flex flex-col gap-3">
+              {/* <hr /> */}
+              <Badge
+                variant="secondary"
+                className="text-sm font-medium my-0 mr-auto"
+              >
+                Incluso
+              </Badge>
+              <hr />
               <ul className="space-y-2.5">
-                {plan.features.map((feature: Feature, index: number) => (
-                  <li key={index} className="flex items-center text-sm">
-                    <Check className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>{feature.description}</span>
-                  </li>
-                ))}
+                {intersperse(
+                  allFeaturesConfig.map(({ key, label, isBoolean, unit }) => {
+                    const value = plan[key];
+                    const hasFeature = isBoolean ? !!value : true; // Non-boolean features are always considered 'present'
+
+                    return (
+                      <li
+                        key={key as string}
+                        className={clsx("flex items-center", {
+                          "text-muted-foreground line-through":
+                            isBoolean && !hasFeature,
+                        })}
+                      >
+                        {hasFeature ? (
+                          <Check className="h-4 w-4 mr-2 text-green-500 flex-shrink-0" />
+                        ) : (
+                          // This case should only be hit for boolean features that are false
+                          <XIcon className="h-4 w-4 mr-2 text-red-500 flex-shrink-0" />
+                        )}
+                        {isBoolean
+                          ? label
+                          : `${label}: ${value}${unit ? ` ${unit}` : ""}`}
+                      </li>
+                    );
+                  }),
+                  (i) => (
+                    <hr key={i} />
+                  )
+                )}
               </ul>
             </div>
           </div>
@@ -117,6 +164,6 @@ export function PlanCard({ plan, user }: PlanCardProps) {
 }
 
 export interface PlanCardProps {
-  plan: Plan & { features: Feature[] };
+  plan: Plan; // Removed features property as it's part of Plan now
   user: User;
 }

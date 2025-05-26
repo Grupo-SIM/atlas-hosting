@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import type { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { plansTable } from "@/lib/db/schema";
+import { pgPlan } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { PlusCircle } from "lucide-react";
 import { Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
+import { Badge } from "../ui/badge";
 
 export function WelcomeHeader({ user }: WelcomeHeaderProps) {
   return (
@@ -16,11 +17,11 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
             <UserName user={user} />
           </Suspense>
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <div className="text-muted-foreground mt-2">
           <Suspense fallback={<Skeleton height="1em" width="7rem" />}>
             <UserSiteLabel user={user} />
           </Suspense>
-        </p>
+        </div>
       </div>
       <div className="flex space-x-3">
         <Button variant="outline">Atualizar Plano</Button>
@@ -46,12 +47,17 @@ async function UserSiteLabel({ user }: WelcomeHeaderProps) {
   const userData = await user;
 
   if (userData?.planId) {
-    const plan = await db.query.plansTable.findFirst({
-      where: eq(plansTable.id, userData.planId),
+    const plan = await db.query.pgPlan.findFirst({
+      where: eq(pgPlan.id, userData.planId),
     });
 
     if (plan) {
-      return `Seu plano atual: ${plan.name}`;
+      return (
+        <span className="flex items-center gap-2">
+          <span>Seu plano atual:</span>
+          <Badge variant="secondary">{plan.name}</Badge>
+        </span>
+      );
     }
   }
 

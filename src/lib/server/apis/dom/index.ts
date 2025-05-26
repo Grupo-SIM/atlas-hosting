@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { userTable } from "@/lib/db/schema";
+import { pgUser } from "@/lib/db/schema";
 import axios, { AxiosInstance } from "axios";
 import { eq } from "drizzle-orm";
 import {
@@ -44,8 +44,8 @@ export class DomApi {
     externalReference,
     newClient,
   }: CreateRecurrentPaymentParams) {
-    const user = await db.query.userTable.findFirst({
-      where: eq(userTable.id, userId),
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, userId),
     });
 
     if (!user) {
@@ -123,8 +123,8 @@ export class DomApi {
     address,
     userId,
   }: CreateClientParams) {
-    const user = await db.query.userTable.findFirst({
-      where: eq(userTable.id, userId),
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, userId),
     });
 
     if (!user) {

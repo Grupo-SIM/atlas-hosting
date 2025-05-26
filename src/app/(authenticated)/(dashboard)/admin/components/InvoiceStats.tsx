@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { invoiceTable } from "@/lib/db/schema";
+import { pgInvoice } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
 import {
   Card,
@@ -18,29 +18,29 @@ export async function InvoiceStats() {
     await Promise.all([
       db
         .select({
-          status: invoiceTable.status,
+          status: pgInvoice.status,
           count: sql<number>`count(*)`,
           total: sql<number>`sum(amount)`,
         })
-        .from(invoiceTable)
-        .groupBy(invoiceTable.status),
+        .from(pgInvoice)
+        .groupBy(pgInvoice.status),
       db
         .select({
-          type: invoiceTable.type,
+          type: pgInvoice.type,
           count: sql<number>`count(*)`,
         })
-        .from(invoiceTable)
-        .groupBy(invoiceTable.type),
+        .from(pgInvoice)
+        .groupBy(pgInvoice.type),
       db
         .select({
           avg: sql<number>`avg(amount)`,
         })
-        .from(invoiceTable),
+        .from(pgInvoice),
       db
         .select({
           count: sql<number>`count(*)`,
         })
-        .from(invoiceTable),
+        .from(pgInvoice),
     ]);
 
   const totalCount = totalInvoices[0].count;

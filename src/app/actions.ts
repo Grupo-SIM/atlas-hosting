@@ -5,35 +5,25 @@ import { SignupFormInputs } from "@/components/auth/SignupForm";
 import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import {
   authenticateUser,
-  createNamecheapForUser,
   createSession,
   createUser,
   generateSessionToken,
   getUser,
 } from "@/lib/auth/index";
-import nameSilo from "@/lib/server/apis/namesilo";
-import { type ListDomainDomain } from "@/lib/server/apis/namesilo/types";
 import pleskApi from "@/lib/server/apis/plesk";
 import { ClientRequestTypeEnum } from "@/plesk";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
-import {
-  featureTable,
-  invoiceTable,
-  planFeature,
-  plansTable,
-  sessionTable,
-  userTable,
-} from "@/lib/db/schema";
+import { pgInvoice, pgPlan, pgSession, pgUser, Plan } from "@/lib/db/schema";
+import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
-import { NamesiloBoolean } from "@/lib/server/apis/namesilo/types";
+import namecheapApi from "@/lib/server/apis/namecheap";
 import axios from "axios";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import namecheapApi, { NamecheapApiWrapper } from "@/lib/server/apis/namecheap";
-import currencyConversion from "@/lib/server/apis/currency";
+import ip2Location from "@/lib/server/apis/ip2location";
 
 export async function login(
   prevState: unknown,
@@ -42,6 +32,10 @@ export async function login(
   if (!email || !password) {
     return { status: "error", message: "Email e senha são obrigatórios" };
   }
+
+  const reqHeaders = await headers();
+  const userIp =
+    reqHeaders.get("x-forwarded-for") || reqHeaders.get("x-real-ip");
 
   try {
     const user = await authenticateUser(email, password);
@@ -54,12 +48,32 @@ export async function login(
     await createSession(sessionToken, user.id);
 
     const cookieStore = await cookies();
+
     cookieStore.set("session_token", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       path: "/",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+
+    let description = "Novo login realizado";
+
+    if (userIp) {
+      const location = await ip2Location.getLocation(userIp);
+
+      if (location) {
+        description += ` de ${location.cityName}, ${location.countryName} (IP: ${userIp})`;
+      } else {
+        description += " de um local desconhecido";
+      }
+    }
+
+    user.logger.log({
+      title: "Novo login realizado",
+      description,
+      severity: "danger",
+      type: "security",
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -135,115 +149,75 @@ export async function logout(): Promise<void> {
   const sessionToken = cookieStore.get("session_token")?.value;
 
   if (sessionToken) {
-    await db.delete(sessionTable).where(eq(sessionTable.id, sessionToken));
+    await db.delete(pgSession).where(eq(pgSession.id, sessionToken));
     cookieStore.delete("session_token");
   }
 
   redirect("/");
 }
 
-/* export async function buyDomain(
-  prevState: unknown,
-  {
-    invoiceId,
-    cardToken,
-    ...params
-  }: CheckoutFormInputs & { invoiceId: string; cardToken: string }
-): Promise<ActionResponse> {
-  const user = await getUser();
-
-  if (!user) {
-    return { status: "error", message: "Usuário não autenticado" };
-  }
-
-  let namecheapId = user.namecheapId;
-
-  if (!namecheapId) {
-    namecheapId = await createNamecheapForUser(user, params);
-  }
-
-  if (!invoiceId || !cardToken) {
-    return { status: "error", message: "Dados de pagamento inválidos" };
-  }
-
-  const invoice = await db.query.invoiceTable.findFirst({
-    where: eq(invoiceTable.id, invoiceId),
-  });
-
-  if (!invoice) {
-    return { status: "error", message: "Fatura não encontrada" };
-  }
-
-  if (invoice?.type !== "domain") {
-    return { status: "error", message: "Fatura não é um domínio" };
-  }
-
-  const userDetails = {
-    Address1: params.address.street,
-    City: params.address.city,
-    Country: "BR",
-    EmailAddress: user.email,
-    FirstName: user.name.split(" ")[0],
-    LastName: user.name.split(" ").pop() ?? "",
-    Phone: params.phoneNumber,
-    PostalCode: params.address.zipCode,
-    StateProvince: params.address.state,
-  };
-
-  // const result = await namecheapApi.createDomain({
-  //   Admin: userDetails,
-  //   AuxBilling: adminNamecheapDetails,
-  //   DomainName: ,
-  //   Registrant: {},
-  // });
-
-  if (!result) {
-    return { status: "error", message: "Erro ao registrar domínio" };
-  }
-
-  if (result?.code !== 300) {
-    return { status: "error", message: result?.detail };
-  }
-
-  return { status: "success", message: "Domínio registrado com sucesso" };
-} */
-
-export async function createFeature(
-  prevState: unknown,
-  data: { description: string; reference?: string }
-) {
-  await db.insert(featureTable).values(data);
-
-  revalidatePath("/admin");
-
-  return { status: "success", message: "Feature criada com sucesso!" };
-}
-
 export async function createPlan(
   prevState: unknown,
-  data: { name: string; description: string; price: number; features: string[] }
-) {
-  const [plan] = await db
-    .insert(plansTable)
-    .values({
-      name: data.name,
-      description: data.description,
-      price: data.price,
-    })
-    .returning();
+  input: Omit<Plan, "id" | "createdAt" | "updatedAt">
+): Promise<ActionResponse> {
+  try {
+    const [plan] = await db // Destructure to get the first element
+      .insert(pgPlan)
+      .values({
+        name: input.name,
+        description: input.description,
+        price: input.price,
+        maxSites: input.maxSites,
+        maxStorage: input.maxStorage,
+        ssl: input.ssl,
+        backup: input.backup,
+        email: input.email,
+        cdn: input.cdn,
+        supportPriority: input.supportPriority,
+        featured: input.featured,
+      })
+      .returning();
 
-  if (plan && data.features.length) {
-    await db.insert(planFeature).values(
-      data.features.map((featureId) => ({
-        planId: plan.id,
-        featureId,
-      }))
-    );
+    revalidatePath("/admin/plans");
+    return {
+      status: "success",
+      message: "Plano criado com sucesso",
+    };
+  } catch (error) {
+    console.error("Create plan error:", error);
+    return { status: "error", message: "Erro ao criar plano" };
   }
+}
 
-  revalidatePath("/admin");
+export async function updatePlan(
+  id: string,
+  values: Partial<Omit<Plan, "id" | "createdAt" | "updatedAt">>
+): Promise<ActionResponse> {
+  try {
+    const [plan] = await db // Destructure to get the first element
+      .update(pgPlan)
+      .set(values)
+      .where(eq(pgPlan.id, id))
+      .returning();
 
-  return { status: "success", message: "Plano criado com sucesso!" };
+    if (!plan) {
+      return {
+        status: "error",
+        message: "Plano não encontrado para atualização.",
+      };
+    }
+
+    revalidatePath("/admin/plans");
+    revalidatePath(`/admin/plans/${id}/edit`);
+
+    return {
+      status: "success",
+      message: "Plano atualizado com sucesso",
+    };
+  } catch (error) {
+    console.error("Update plan error:", error);
+    return { status: "error", message: "Erro ao atualizar plano" };
+  }
 }
 
 export async function createPlanInvoice(
@@ -266,8 +240,8 @@ export async function createPlanInvoice(
   let redirectUrl: string | null = null;
 
   try {
-    const plan = await db.query.plansTable.findFirst({
-      where: eq(plansTable.id, planId),
+    const plan = await db.query.pgPlan.findFirst({
+      where: eq(pgPlan.id, planId),
     });
 
     if (!plan) {
@@ -277,14 +251,16 @@ export async function createPlanInvoice(
     const planPrice = plan.price;
 
     const [newInvoice] = await db
-      .insert(invoiceTable)
+      .insert(pgInvoice)
       .values({
         userId: user.id,
         type: "subscription",
         reference: plan.id,
         amount: planPrice,
         status: "pending",
-        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // Pass Date object directly
+        currency: "BRL",
+        description: `Cobrança para o plano ${plan.name}`,
       })
       .returning();
 
@@ -377,7 +353,7 @@ export async function createDomainInvoice(
     });
 
     const [newInvoice] = await db
-      .insert(invoiceTable)
+      .insert(pgInvoice)
       .values({
         userId: user.id,
         type: "domain",
@@ -443,16 +419,16 @@ export async function buyPlan(
     return { status: "error", message: "ID da fatura é obrigatório." };
   }
 
-  const invoice = await db.query.invoiceTable.findFirst({
-    where: eq(invoiceTable.id, invoiceId),
+  const invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, invoiceId),
   });
 
   if (!invoice) {
     return { status: "error", message: "Fatura não encontrada." };
   }
 
-  const plan = await db.query.plansTable.findFirst({
-    where: eq(plansTable.id, invoice.reference),
+  const plan = await db.query.pgPlan.findFirst({
+    where: eq(pgPlan.id, invoice.reference),
   });
 
   if (!plan) {
@@ -479,26 +455,36 @@ export async function buyPlan(
       });
 
       await db
-        .update(userTable)
+        .update(pgUser)
         .set({
           domId: id,
         })
-        .where(eq(userTable.id, user.id));
+        .where(eq(pgUser.id, user.id));
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
-          // A request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          console.error("Erro ao criar cliente no DOM:", error.response.data);
+          console.error(
+            "Erro ao criar cliente no DOM (Axios Response Error):",
+            error.response.data
+          );
         } else if (error.request) {
-          // The request was made but no response was received
-          console.error("Erro ao criar cliente no DOM:", error.request);
+          console.error(
+            "Erro ao criar cliente no DOM (Axios Request Error):",
+            error.request
+          );
         } else {
-          // Something happened in setting up the request that triggered an Error
-          console.error("Erro ao criar cliente no DOM:", error.message);
+          console.error(
+            "Erro ao criar cliente no DOM (Axios Setup Error):",
+            error.message
+          );
         }
+      } else {
+        console.error("Erro ao criar cliente no DOM (Non-Axios Error):", error);
       }
-      return { status: "error", message: "Erro ao criar cliente no DOM." };
+      return {
+        status: "error",
+        message: "Erro ao criar cliente no sistema de domínios.",
+      }; // User-friendly message
     }
   }
 
@@ -516,11 +502,11 @@ export async function buyPlan(
 
     if (result && result.id) {
       await db
-        .update(userTable)
+        .update(pgUser)
         .set({
           pleskId: result.id,
         })
-        .where(eq(userTable.id, user.id));
+        .where(eq(pgUser.id, user.id));
     } else {
       console.error("Failed to create Plesk client:", result);
       return {
@@ -621,11 +607,11 @@ export async function buyPlan(
 
 //     if (result && result.id) {
 //       await db
-//         .update(userTable)
+//         .update(pgUser)
 //         .set({
 //           pleskId: result.id,
 //         })
-//         .where(eq(userTable.id, userId));
+//         .where(eq(pgUser.id, userId));
 
 //       pleskId = result.id;
 //     } else {
@@ -823,66 +809,66 @@ export async function buyPlan(
 // Ensure imports for ListDomainDomain if not already present at the top
 // import { type ListDomainDomain } from "@/lib/server/apis/namesilo/types";
 
-export async function getUserDomains(): Promise<{
-  domains: { name: string }[];
-  error?: string;
-}> {
-  try {
-    // Assuming nameSilo.listDomains returns Promise<NamesiloReply<NamesiloDomain>>
-    // where NamesiloReply<T> = { code: number; detail: string; } & T (NamesiloDomain in this case)
-    const response = await nameSilo.listDomains({});
+// export async function getUserDomains(): Promise<{
+//   domains: { name: string }[];
+//   error?: string;
+// }> {
+//   try {
+//     // Assuming nameSilo.listDomains returns Promise<NamesiloReply<NamesiloDomain>>
+//     // where NamesiloReply<T> = { code: number; detail: string; } & T (NamesiloDomain in this case)
+//     const response = await nameSilo.listDomains({});
 
-    // Check response code directly
-    if (response.code !== 300) {
-      // 300 is typical success for NameSilo listDomains
-      return {
-        domains: [],
-        error: `Error fetching domains: ${response.detail} (Code: ${response.code})`,
-      };
-    }
+//     // Check response code directly
+//     if (response.code !== 300) {
+//       // 300 is typical success for NameSilo listDomains
+//       return {
+//         domains: [],
+//         error: `Error fetching domains: ${response.detail} (Code: ${response.code})`,
+//       };
+//     }
 
-    // Access domains directly from response (which is effectively NamesiloReply<NamesiloDomain>)
-    // response.domains is of type (ListDomainDomain[] | { domain: ListDomainDomain } | undefined)
-    const namesiloDomainData = response.domains;
+//     // Access domains directly from response (which is effectively NamesiloReply<NamesiloDomain>)
+//     // response.domains is of type (ListDomainDomain[] | { domain: ListDomainDomain } | undefined)
+//     const namesiloDomainData = response.domains;
 
-    if (!namesiloDomainData) {
-      // No domains found or the 'domains' part of the response is empty/undefined.
-      return { domains: [] };
-    }
+//     if (!namesiloDomainData) {
+//       // No domains found or the 'domains' part of the response is empty/undefined.
+//       return { domains: [] };
+//     }
 
-    let domainList: ListDomainDomain[] = [];
+//     let domainList: ListDomainDomain[] = [];
 
-    if (Array.isArray(namesiloDomainData)) {
-      // Handles the case where 'domains' is an array of ListDomainDomain objects.
-      domainList = namesiloDomainData;
-    } else if (
-      typeof namesiloDomainData === "object" &&
-      namesiloDomainData !== null &&
-      "domain" in namesiloDomainData
-    ) {
-      // Handles the case where 'domains' is an object like { domain: ListDomainDomain }.
-      // We need to ensure namesiloDomainData.domain is not undefined or null.
-      const singleDomainContainer = namesiloDomainData as {
-        domain?: ListDomainDomain;
-      };
-      if (singleDomainContainer.domain) {
-        domainList = [singleDomainContainer.domain];
-      }
-    }
-    // If namesiloDomainData is neither an array nor the expected single domain object structure,
-    // domainList will remain empty, resulting in an empty domain array being returned, which is safe.
+//     if (Array.isArray(namesiloDomainData)) {
+//       // Handles the case where 'domains' is an array of ListDomainDomain objects.
+//       domainList = namesiloDomainData;
+//     } else if (
+//       typeof namesiloDomainData === "object" &&
+//       namesiloDomainData !== null &&
+//       "domain" in namesiloDomainData
+//     ) {
+//       // Handles the case where 'domains' is an object like { domain: ListDomainDomain }.
+//       // We need to ensure namesiloDomainData.domain is not undefined or null.
+//       const singleDomainContainer = namesiloDomainData as {
+//         domain?: ListDomainDomain;
+//       };
+//       if (singleDomainContainer.domain) {
+//         domainList = [singleDomainContainer.domain];
+//       }
+//     }
+//     // If namesiloDomainData is neither an array nor the expected single domain object structure,
+//     // domainList will remain empty, resulting in an empty domain array being returned, which is safe.
 
-    const domains = domainList.map((d) => ({ name: d.domain }));
-    return { domains };
-  } catch (e: unknown) {
-    console.error("Failed to get user domains:", e);
-    let message = "An unexpected error occurred while fetching domains.";
-    if (e instanceof Error) {
-      message = e.message;
-    }
-    return { domains: [], error: message };
-  }
-}
+//     const domains = domainList.map((d) => ({ name: d.domain }));
+//     return { domains };
+//   } catch (e: unknown) {
+//     console.error("Failed to get user domains:", e);
+//     let message = "An unexpected error occurred while fetching domains.";
+//     if (e instanceof Error) {
+//       message = e.message;
+//     }
+//     return { domains: [], error: message };
+//   }
+// }
 
 export interface ActionResponse {
   message: string;

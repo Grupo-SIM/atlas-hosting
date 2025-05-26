@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Invoice, invoiceTable } from "@/lib/db/schema";
+import { Invoice, pgInvoice } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
 import clsx from "clsx";
 import { desc, eq } from "drizzle-orm";
@@ -63,9 +63,9 @@ export default async function BillingPage() {
   // Assumes invoiceTable has fields: id, userId, amount, status, createdAt, reference, type
   // Adjust field names (e.g., invoiceTable.user_id) if your schema differs.
   const userInvoices = userId
-    ? await db.query.invoiceTable.findMany({
-        where: eq(invoiceTable.userId, userId),
-        orderBy: [desc(invoiceTable.updatedAt)],
+    ? await db.query.pgInvoice.findMany({
+        where: eq(pgInvoice.userId, userId),
+        orderBy: [desc(pgInvoice.updatedAt)],
       })
     : [];
 

@@ -108,7 +108,7 @@ export default function LoginForm() {
 
       <Button
         type="submit"
-        className="w-full flex items-center justify-center"
+        className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
         disabled={!isValid || isValidating || isPending}
       >
         {isPending ? <CgSpinner className="animate-spin h-5 w-5" /> : "Entrar"}

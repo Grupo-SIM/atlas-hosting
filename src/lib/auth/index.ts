@@ -1,8 +1,10 @@
 import { db } from "@/lib/db";
 import {
-  namecheapIntegration,
-  sessionTable,
-  userTable,
+  pgNamecheapIntegration,
+  pgSession,
+  pgUser,
+  pgWallet,
+  SessionInsert,
   type Session,
   type User,
 } from "@/lib/db/schema";
@@ -18,6 +20,7 @@ import { hash, hashWithEncodeKey, verify } from "./scrypt";
 import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import { randomBytes } from "@noble/hashes/utils";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
+import { AppLogger } from "../server/logs";
 
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);
@@ -31,12 +34,12 @@ export async function createSession(
   userId: string
 ): Promise<Session> {
   const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
-  const session: Session = {
+  const session: SessionInsert = {
     id: sessionId,
     userId,
     expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
   };
-  await db.insert(sessionTable).values(session);
+  await db.insert(pgSession).values(session);
   return session;
 }
 
@@ -46,10 +49,10 @@ export async function validateSessionToken(
   const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 
   const result = await db
-    .select({ user: userTable, session: sessionTable })
-    .from(sessionTable)
-    .innerJoin(userTable, eq(sessionTable.userId, userTable.id))
-    .where(eq(sessionTable.id, sessionId));
+    .select({ user: pgUser, session: pgSession })
+    .from(pgSession)
+    .innerJoin(pgUser, eq(pgSession.userId, pgUser.id))
+    .where(eq(pgSession.id, sessionId));
 
   if (result.length < 1) {
     return { session: null, user: null };
@@ -58,7 +61,7 @@ export async function validateSessionToken(
   const { user, session } = result[0];
 
   if (Date.now() >= session.expiresAt.getTime()) {
-    await db.delete(sessionTable).where(eq(sessionTable.id, session.id));
+    await db.delete(pgSession).where(eq(pgSession.id, session.id));
     return { session: null, user: null };
   }
 
@@ -66,14 +69,19 @@ export async function validateSessionToken(
     session.expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
 
     await db
-      .update(sessionTable)
+      .update(pgSession)
       .set({
         expiresAt: session.expiresAt,
       })
-      .where(eq(sessionTable.id, session.id));
+      .where(eq(pgSession.id, session.id));
   }
 
-  return { session, user };
+  const userWithLogger = {
+    ...user,
+    logger: new AppLogger(user),
+  };
+
+  return { session, user: userWithLogger };
 }
 
 export async function validateSession() {
@@ -88,11 +96,11 @@ export async function validateSession() {
 }
 
 export async function invalidateSession(sessionId: string): Promise<void> {
-  await db.delete(sessionTable).where(eq(sessionTable.id, sessionId));
+  await db.delete(pgSession).where(eq(pgSession.id, sessionId));
 }
 
 export async function invalidateAllSessions(userId: string): Promise<void> {
-  await db.delete(sessionTable).where(eq(sessionTable.userId, userId));
+  await db.delete(pgSession).where(eq(pgSession.userId, userId));
 }
 
 export async function createUser(
@@ -101,25 +109,37 @@ export async function createUser(
   passwordPlain: string
 ) {
   try {
+    const walletResult = await db
+      .insert(pgWallet)
+      .values({
+        balance: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    const { id: walletId } = walletResult[0];
+
     const hashedPassword = await hash(passwordPlain);
     const newUser = await db
-      .insert(userTable)
+      .insert(pgUser)
       .values({
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
+        walletId,
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
         namesiloId: null,
       })
       .returning({
-        id: userTable.id,
-        name: userTable.name,
-        email: userTable.email,
-        createdAt: userTable.createdAt,
-        updatedAt: userTable.updatedAt,
-        deletedAt: userTable.deletedAt,
+        id: pgUser.id,
+        name: pgUser.name,
+        email: pgUser.email,
+        createdAt: pgUser.createdAt,
+        updatedAt: pgUser.updatedAt,
+        deletedAt: pgUser.deletedAt,
       });
     return newUser[0];
   } catch (error) {
@@ -132,11 +152,11 @@ export async function createUser(
 export async function authenticateUser(
   email: string,
   passwordPlain: string
-): Promise<(Omit<User, "password"> & { password?: string }) | null> {
+): Promise<Omit<UserWithLogger, "password"> | null> {
   const result = await db
     .select()
-    .from(userTable)
-    .where(eq(userTable.email, email.toLowerCase()));
+    .from(pgUser)
+    .where(eq(pgUser.email, email.toLowerCase()));
 
   if (result.length < 1) {
     return null; // User not found
@@ -154,11 +174,17 @@ export async function authenticateUser(
 
   // Exclude password from the returned user object for security
   const { password, ...userWithoutPassword } = user;
-  return userWithoutPassword as Omit<User, "password"> & { password?: string };
+
+  const userWithLogger = {
+    ...userWithoutPassword,
+    logger: new AppLogger(userWithoutPassword as User),
+  };
+
+  return userWithLogger;
 }
 
 export type SessionValidationResult =
-  | { session: Session; user: User }
+  | { session: Session; user: UserWithLogger }
   | { session: null; user: null };
 
 export const getUser = cache(async function getUser() {
@@ -194,7 +220,7 @@ export async function createNamecheapForUser(
     throw new Error("Failed to create Namecheap user");
   }
 
-  await db.insert(namecheapIntegration).values({
+  await db.insert(pgNamecheapIntegration).values({
     id: namecheapId,
     password: hashedPassword,
     username: user.id.replace(/\-/g, ""),
@@ -202,11 +228,15 @@ export async function createNamecheapForUser(
   });
 
   await db
-    .update(userTable)
+    .update(pgUser)
     .set({
       namecheapId,
     })
-    .where(eq(userTable.id, user.id));
+    .where(eq(pgUser.id, user.id));
 
   return namecheapId;
+}
+
+export interface UserWithLogger extends User {
+  logger: AppLogger;
 }

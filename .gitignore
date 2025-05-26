@@ -40,3 +40,4 @@ src/app/api/route.ts
 *.old.ts
 
 pnpm-lock.yaml
+drizzle/

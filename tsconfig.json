@@ -28,7 +28,8 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     ".next/types/**/*.ts",
-    "global.d.ts"
+    "global.d.ts",
+    "src/lib/db/schema/index.ts"
   ],
   "exclude": [
     "node_modules/**/*",

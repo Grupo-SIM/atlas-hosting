@@ -1,0 +1,52 @@
+import { relations } from "drizzle-orm";
+import {
+  bigint,
+  boolean,
+  date,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
+import { pgNamecheapIntegration } from "./namecheap";
+import { pgPlan } from "./plan";
+import { pgWallet } from "./wallet";
+
+export const pgUser = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: timestamp("emailVerified", { mode: "date" }),
+  image: text("image"),
+  password: text("password").notNull(),
+  namesiloId: text("namesilo_id"),
+  isAdmin: boolean("is_admin"),
+  domId: text("dom_id"),
+  pleskId: text("plesk_id"),
+  planId: uuid("plan_id").references(() => pgPlan.id),
+  namecheapId: bigint("namecheap_id", { mode: "number" }),
+  walletId: uuid("wallet_id")
+    .notNull()
+    .references(() => pgWallet.id),
+  createdAt: date("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: date("updated_at", { mode: "date" }).defaultNow().notNull(),
+  deletedAt: date("deleted_at", { mode: "date" }),
+});
+
+export const userRelations = relations(pgUser, ({ one }) => ({
+  plan: one(pgPlan, {
+    fields: [pgUser.planId],
+    references: [pgPlan.id],
+  }),
+  namecheap: one(pgNamecheapIntegration, {
+    fields: [pgUser.namecheapId],
+    references: [pgNamecheapIntegration.id],
+  }),
+  wallet: one(pgWallet, {
+    fields: [pgUser.walletId],
+    references: [pgWallet.id],
+  }),
+}));
+
+export type User = typeof pgUser.$inferSelect;
+export type UserInsert = typeof pgUser.$inferInsert;
