@@ -21,21 +21,30 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 import type {
+  DomainsCheckCleanedResponse,
   DomainsCheckUserParams,
-  UsersGetPricingUserParams,
 } from "@/lib/server/apis/namecheap/types";
-import { Search } from "lucide-react";
+import { toBrl } from "@/lib/utils";
+import { Sparkles } from "lucide-react";
 import { Metadata } from "next";
+import Link from "next/link";
 import { cache, Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 import { db } from "@/lib/db";
-import { pgDomainPricingCache as domainPricingCacheTable } from "@/lib/db/schema";
+import {
+  DomainPricing,
+  pgDomainPricingCache as domainPricingCacheTable,
+} from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import RegisterDomainSearch from "./components/RegisterDomainSearch";
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
+import {
+  isRedirectError,
+  RedirectError,
+} from "next/dist/client/components/redirect-error";
 
 export const experimental_ppr = true;
 
@@ -124,49 +133,8 @@ const recommendedTlds: `.${string}`[] = [
   ".online",
 ];
 
-// Cached API calls
-const getPricing = cache(async (params: UsersGetPricingUserParams) =>
-  namecheapApi.getPricing(params)
-);
 const check = cache(async (params: DomainsCheckUserParams) =>
   namecheapApi.check(params)
-);
-
-// Helper to get the standard pricing map (USD prices, converted to BRL by namecheapApi.getPricing)
-// This map will contain BRL prices because namecheapApi.getPricing's parser converts them.
-const getStandardPricingMapBRL = cache(
-  async (): Promise<
-    Map<string, { register?: number; renew?: number; transfer?: number }>
-  > => {
-    const pricingResult = await getPricing({ ProductType: "DOMAIN" }); // This returns BRL prices
-    const newPricingMap = new Map<
-      string,
-      { register?: number; renew?: number; transfer?: number }
-    >();
-    if (pricingResult?.ProductType?.Categories) {
-      pricingResult.ProductType.Categories.forEach((category) => {
-        const actionType = category.Name.toUpperCase();
-        category.Products.forEach((product) => {
-          const tldName = product.Name.toLowerCase();
-          const priceDetail = product.Prices.find(
-            (p) => p.Duration === 1 && p.DurationType === "YEAR"
-          );
-          if (priceDetail) {
-            if (!newPricingMap.has(tldName)) newPricingMap.set(tldName, {});
-            const tldPrices = newPricingMap.get(tldName)!;
-            // Prices from getPricing are already BRL
-            if (actionType === "REGISTER")
-              tldPrices.register = priceDetail.Price; // BRL
-            else if (actionType === "RENEW")
-              tldPrices.renew = priceDetail.Price; // BRL
-            else if (actionType === "TRANSFER")
-              tldPrices.transfer = priceDetail.Price; // BRL
-          }
-        });
-      });
-    }
-    return newPricingMap;
-  }
 );
 
 export const getDomainData = cache(async function getDomainData(
@@ -184,21 +152,28 @@ export const getDomainData = cache(async function getDomainData(
   domainsToSearch = [...new Set(domainsToSearch)];
 
   try {
-    const [checkResult, standardPricingMapBRL] = await Promise.all([
-      check({ DomainList: domainsToSearch.join(",") }),
-      getStandardPricingMapBRL(),
+    const [checkResult, pricings]: [
+      DomainsCheckCleanedResponse | null,
+      DomainPricing[],
+    ] = await Promise.all([
+      domainsToSearch.length > 0
+        ? check({ DomainList: domainsToSearch.join(",") })
+        : Promise.resolve(null),
+      namecheapApi.getPricing(),
     ]);
 
     if (!checkResult?.Results || checkResult.Results.length === 0) return null;
 
-    const domainDataMapped: DomainWithAvailability[] = checkResult.Results.map(
-      (domainDetail) => {
+    const pricingRecord = Object.fromEntries(pricings.map((p) => [p.tld, p]));
+
+    const domainDataMapped = await Promise.all(
+      checkResult.Results.map(async (domainDetail) => {
         const fullDomainName = domainDetail.Domain;
         let tldForLookup = "";
         const parts = fullDomainName.split(".");
         if (parts.length > 1) {
           let bestMatch = "";
-          for (const knownTld of standardPricingMapBRL.keys()) {
+          for (const knownTld of Object.keys(pricingRecord)) {
             if (fullDomainName.toLowerCase().endsWith("." + knownTld)) {
               if (knownTld.length > bestMatch.length) bestMatch = knownTld;
             }
@@ -211,27 +186,29 @@ export const getDomainData = cache(async function getDomainData(
               .toLowerCase();
         }
 
-        const standardBRLPrices = standardPricingMapBRL.get(tldForLookup);
-        // Prices from 'check' (Premium...Price) are already BRL via _parseDomainsCheckResponse
-        const regPriceBRL = domainDetail.IsPremiumName
-          ? (domainDetail.PremiumRegistrationPrice ?? 0)
-          : (standardBRLPrices?.register ?? 0);
-        const renPriceBRL = domainDetail.IsPremiumName
-          ? (domainDetail.PremiumRenewalPrice ?? 0)
-          : (standardBRLPrices?.renew ?? 0);
-        const tranPriceBRL = domainDetail.IsPremiumName
-          ? (domainDetail.PremiumTransferPrice ?? 0)
-          : (standardBRLPrices?.transfer ?? 0);
+        const standardBRLPrices = pricingRecord[tldForLookup];
 
         return {
           domain: fullDomainName,
           available: domainDetail.Available,
-          priceBRL: regPriceBRL,
-          renewBRL: renPriceBRL,
-          transferBRL: tranPriceBRL,
+          priceBRL: await currencyConversion.convert({
+            from: "usd",
+            to: "brl",
+            amount: standardBRLPrices.price ?? 0,
+          }),
+          renewBRL: await currencyConversion.convert({
+            from: "usd",
+            to: "brl",
+            amount: standardBRLPrices.renew ?? 0,
+          }),
+          transferBRL: await currencyConversion.convert({
+            from: "usd",
+            to: "brl",
+            amount: standardBRLPrices.transfer ?? 0,
+          }),
           isPremium: domainDetail.IsPremiumName,
         };
-      }
+      })
     );
 
     let mainDomainData = domainDataMapped.find(
@@ -259,10 +236,76 @@ export const getDomainData = cache(async function getDomainData(
       ),
     };
   } catch (error) {
-    console.error(`Error in getDomainData for "${searchQuery}":`, error);
-    return null;
+    throw error;
   }
 });
+
+// Get popular domain extensions for the grid
+const popularExtensions = [".com", ".net", ".org", ".io", ".dev", ".co"];
+
+function DomainExtensionsGridSkeleton() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
+      {[...Array(6)].map((_, i) => (
+        <Card key={`skeleton-${i}`} className="text-center">
+          <CardContent className="pt-6">
+            <Skeleton width="4rem" height="1.125rem" className="mx-auto mb-2" />
+            <Skeleton width="5rem" height="0.875rem" className="mx-auto" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+async function DomainExtensionsGrid({
+  allDomainPricesFromDbPromise,
+}: {
+  allDomainPricesFromDbPromise: Promise<DomainPriceInfoFromDb[]>;
+}) {
+  const allDomainPricesFromDb = await allDomainPricesFromDbPromise;
+
+  // Get pricing for popular extensions
+  const extensionsWithPricing = await Promise.all(
+    popularExtensions.map(async (ext) => {
+      const tldName = ext.substring(1); // Remove the dot
+      const tldData = allDomainPricesFromDb.find(
+        (item) => item.tld === tldName
+      );
+
+      if (tldData && tldData.priceUSD) {
+        const priceBRL = await currencyConversion.convert({
+          from: "usd",
+          to: "brl",
+          amount: tldData.priceUSD,
+        });
+
+        return {
+          extension: ext,
+          price: toBrl(priceBRL),
+        };
+      }
+
+      return {
+        extension: ext,
+        price: "Consulte",
+      };
+    })
+  );
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
+      {extensionsWithPricing.map((domain) => (
+        <Card key={domain.extension} className="text-center">
+          <CardContent className="pt-6">
+            <p className="text-lg font-semibold">{domain.extension}</p>
+            <p className="text-sm text-muted-foreground">{domain.price}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
 
 const ITEMS_PER_TLD_PAGE_SKELETON = 10;
 
@@ -276,76 +319,203 @@ export default async function DomainsPage({
     ? String(resolvedSearchParams.search).trim()
     : "";
 
+  let isError = false;
+
   const allDomainPricesFromDbPromise = getAllDomainPricesFromDb(); // Fetches USD prices from DB
-  const domainDataPromise = getDomainData(searchQuery); // Provides BRL prices
+  const domainDataPromise = (async () => {
+    return new Promise<DomainData | null>((resolve, reject) => {
+      if (!searchQuery || searchQuery.trim() === "") {
+        isError = false;
+        resolve(null);
+        return;
+      }
+
+      try {
+        return getDomainData(searchQuery);
+      } catch (err) {
+        console.error(`Error fetching domain data for "${searchQuery}":`, err);
+        if (
+          err instanceof Error &&
+          err.message.includes("pricing_unavailable")
+        ) {
+          isError = true;
+          reject(err);
+        }
+        isError = true;
+        resolve(null);
+      }
+    });
+  })().catch((err) => {
+    throw err;
+  });
 
   return (
-    <div className="space-y-6 p-6 pb-16">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-          Registrar novo domínio
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Pesquise, registre e gerencie nomes de domínio.
+    <div className="p-6 space-y-8 h-full max-h-full">
+      {/* Hero Section */}
+      <div className="max-w-3xl mx-auto text-center space-y-4">
+        <h1 className="text-3xl font-bold">Compre um Novo Domínio</h1>
+
+        <div className="inline-flex rounded-full p-1 bg-white dark:bg-accent w-full max-w-2xl">
+          <Button variant="default" className="flex-1 rounded-full bg-primary">
+            Encontrar novo domínio
+          </Button>
+          <Button variant="ghost" className="flex-1 rounded-full">
+            <Sparkles className="w-4 h-4 mr-2" />
+            Gerar domínio usando IA
+          </Button>
+        </div>
+
+        <p className="text-muted-foreground">
+          Digite no campo de pesquisa o nome de domínio que você deseja e
+          descubra se ele está disponível!
         </p>
+
+        <RegisterDomainSearch />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Encontre o Nome de Domínio Perfeito</CardTitle>
-          <CardDescription>
-            Digite um nome ou palavra-chave para verificar a disponibilidade.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RegisterDomainSearch />
-          {searchQuery && (
-            <div className="mt-8">
-              <Tabs defaultValue="results">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="results">Resultados</TabsTrigger>
-                  <TabsTrigger value="suggestions">Sugestões</TabsTrigger>
-                </TabsList>
-                <TabsContent value="results">
-                  <Suspense
-                    fallback={
-                      <Skeleton
-                        count={3}
-                        height={30}
-                        containerClassName="space-y-3"
-                      />
-                    }
-                  >
-                    <DomainResult searchQuery={searchQuery} />
-                  </Suspense>
-                </TabsContent>
-                <TabsContent value="suggestions">
-                  <Suspense
-                    fallback={
-                      <Skeleton
-                        count={5}
-                        height={50}
-                        containerClassName="space-y-4"
-                      />
-                    }
-                  >
+      <ErrorBoundary
+        errorComponent={async (err) => {
+          "use server";
+
+          if (isRedirectError(err)) {
+            redirect(err.digest.split(";")[2]);
+          }
+
+          return <div></div>;
+        }}
+      >
+        <Suspense fallback={<DomainExtensionsGridSkeleton />}>
+          <DomainExtensionsGrid
+            allDomainPricesFromDbPromise={allDomainPricesFromDbPromise}
+          />
+        </Suspense>
+      </ErrorBoundary>
+
+      {isError ? (
+        <div className="max-w-4xl mx-auto">
+          <Card className="border-destructive/80">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 mb-4">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-full h-full text-destructive"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-semibold mb-2 text-destructive">
+                Domínio Inválido
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                O domínio &quot;
+                <span className="font-medium">{searchQuery}</span>&quot; não é
+                válido ou não pode ser adquirido no momento.
+              </p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Verifique se o nome do domínio está correto ou tente pesquisar
+                por uma extensão diferente.
+              </p>
+              <Button variant="outline" asChild>
+                <Link href="/domains/register">Fazer uma nova pesquisa</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        searchQuery && (
+          <div className="max-w-4xl mx-auto">
+            <Tabs defaultValue="results">
+              <TabsList className="mb-4">
+                <TabsTrigger value="results">Resultados</TabsTrigger>
+                <TabsTrigger value="suggestions">Sugestões</TabsTrigger>
+              </TabsList>
+              <TabsContent value="results">
+                <Suspense
+                  fallback={
+                    <Skeleton
+                      count={3}
+                      height={30}
+                      containerClassName="space-y-3"
+                    />
+                  }
+                >
+                  <DomainResult searchQuery={searchQuery} />
+                </Suspense>
+              </TabsContent>
+              <TabsContent value="suggestions">
+                <Suspense
+                  fallback={
+                    <Skeleton
+                      count={5}
+                      height={50}
+                      containerClassName="space-y-4"
+                    />
+                  }
+                >
+                  {!!resolvedSearchParams.error && (
                     <DomainSuggestions
                       domainDataPromise={domainDataPromise}
                       searchQuery={searchQuery}
                     />
-                  </Suspense>
-                </TabsContent>
-              </Tabs>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  )}
+                </Suspense>
+              </TabsContent>
+            </Tabs>
+          </div>
+        )
+      )}
 
-      <Suspense fallback={<TldPriceTableSkeleton />}>
-        <TldPriceSectionFromDb
-          allDomainPricesFromDbPromise={allDomainPricesFromDbPromise}
-        />
-      </Suspense>
+      {/* Call to Action Card */}
+      {!searchQuery && (
+        <Card className="max-w-2xl mx-auto">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 mb-4">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-full h-full text-primary"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-semibold mb-2">
+              Registre um domínio para colocar seu site online
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Registre um novo domínio ou configure suas zonas DNS.
+            </p>
+            <div className="space-y-3">
+              <Button className="w-full" size="lg" asChild>
+                <Link href="#search">Comprar novo domínio</Link>
+              </Button>
+              <Button variant="outline" className="w-full" size="lg" asChild>
+                <Link href="/domains">Gerenciar domínios existentes</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Full TLD Table */}
+      {/* <div className="max-w-6xl mx-auto">
+        <Suspense fallback={<TldPriceTableSkeleton />}>
+          <TldPriceSectionFromDb
+            allDomainPricesFromDbPromise={allDomainPricesFromDbPromise}
+          />
+        </Suspense>
+      </div> */}
     </div>
   );
 }

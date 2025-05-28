@@ -48,7 +48,7 @@ export async function DomainSuggestions({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-full">
           {domainData.extraDomains.map((domain) => (
             <div
               key={domain.domain}

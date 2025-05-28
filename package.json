@@ -58,6 +58,7 @@
     "@types/xml2js": "^0.4.14",
     "autoprefixer": "10.4.15",
     "axios": "^1.9.0",
+    "bluebird": "^3.7.2",
     "chart.js": "^4.4.9",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

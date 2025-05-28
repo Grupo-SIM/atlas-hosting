@@ -95,7 +95,6 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
       })
       .where(eq(pgUser.id, invoice.userId))
       .returning();
-
     return;
   }
 

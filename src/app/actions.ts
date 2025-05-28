@@ -273,7 +273,7 @@ export async function createPlanInvoice(
         status: "pending",
         dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // Pass Date object directly
         currency: "BRL",
-        description: `Cobrança para o plano ${plan.name}`,
+        description: `ATLAS Fatura plano ${plan.name}`,
       })
       .returning();
 
@@ -297,8 +297,6 @@ export async function createPlanInvoice(
         "Erro interno ao processar o pedido. Por favor, tente mais tarde.",
     };
   }
-
-  console.log(redirectUrl);
 
   if (redirectUrl) {
     redirect(redirectUrl);

@@ -7,16 +7,9 @@ import { Label } from "@/components/ui/label";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
 import { yupResolver } from "@hookform/resolvers/yup";
 import clsx from "clsx";
-import { getMonth, getYear } from "date-fns";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import Script from "next/script";
-import {
-  startTransition,
-  useActionState,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { startTransition, useActionState, useCallback, useState } from "react";
 import { Controller, useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import { IMaskInput } from "react-imask";
@@ -38,9 +31,9 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
     }
   );
 
-  useEffect(() => {
-    console.log({ state });
-  }, [state]);
+  // useEffect(() => {
+  //   console.log({ state });
+  // }, [state]);
 
   const { register, control, getValues } = useForm<CheckoutFormInputs>({
     resolver: yupResolver(schema),
@@ -413,19 +406,7 @@ const schema = yup
     cardExpiration: yup
       .string()
       .required("Data de validade é obrigatória")
-      .matches(/^\d{2}\/\d{2}$/, "Data inválida")
-      .test("is-future-date", "Data inválida", (value) => {
-        if (!value) return false;
-
-        const [month, year] = value.split("/").map(Number);
-        const today = new Date();
-
-        return (
-          month > getMonth(today) ||
-          (month === getMonth(today) &&
-            year > +getYear(today).toString().slice(-2))
-        );
-      }),
+      .matches(/^[0-9]{2}\/[0-9]{2}$/, "Data inválida"),
     phoneNumber: yup
       .string()
       .required("Número de telefone é obrigatório")

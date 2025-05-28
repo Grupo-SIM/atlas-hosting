@@ -42,6 +42,9 @@ import type {
   RawDomainsDnsSetHostsCommandResponseContent,
 } from "./types";
 import { isString } from "lodash";
+import { isBefore, startOfToday, startOfTomorrow } from "date-fns";
+import { DomainPricing } from "@/lib/db/schema/tables/cache";
+import { eq } from "drizzle-orm";
 
 const TARGET_CURRENCY = "BRL";
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -471,15 +474,16 @@ export class NamecheapApiWrapper {
     return { Results: results };
   };
 
-  public check = async (
+  public async check(
     params: DomainsCheckUserParams
-  ): Promise<DomainsCheckCleanedResponse> =>
-    this._makeRequest(
+  ): Promise<DomainsCheckCleanedResponse> {
+    return await this._makeRequest(
       "namecheap.domains.check",
       this._parseDomainsCheckParams(params),
       this._parseDomainsCheckResponse,
       "GET"
     );
+  }
 
   // --- Method for namecheap.domains.getList ---
   private _parseDomainsGetListParams = (
@@ -535,16 +539,46 @@ export class NamecheapApiWrapper {
 
   public getList = async (
     params: DomainsGetListUserParams
-  ): Promise<DomainsGetListCleanedResponse> =>
-    this._makeRequest<
-      RawDomainsGetListCommandResponseContent,
-      DomainsGetListCleanedResponse
-    >(
-      "namecheap.domains.getList",
-      this._parseDomainsGetListParams(params),
-      this._parseDomainsGetListResponse,
-      "GET"
-    );
+  ): Promise<DomainsGetListCleanedResponse> => {
+    try {
+      return this._makeRequest<
+        RawDomainsGetListCommandResponseContent,
+        DomainsGetListCleanedResponse
+      >(
+        "namecheap.domains.getList",
+        this._parseDomainsGetListParams(params),
+        this._parseDomainsGetListResponse,
+        "GET"
+      );
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data) {
+          // parse xml error
+          const parsedXml: RawNamecheapApiResponse<RawDomainsGetListCommandResponseContent> =
+            await parseStringPromise(error.response.data, {
+              explicitArray: true,
+            });
+          if (parsedXml.ApiResponse) {
+            const errNode = parsedXml.ApiResponse.Errors?.[0];
+            if (typeof errNode === "object" && errNode.Error) {
+              throw new Error(errNode.Error[0].$.Number);
+            } else if (typeof errNode === "string" && errNode.trim())
+              throw new Error(`Namecheap API error: ${errNode}`);
+            else if (parsedXml.ApiResponse.Errors)
+              throw new Error(
+                `Namecheap API error: ${JSON.stringify(parsedXml.ApiResponse.Errors)}`
+              );
+
+            throw new Error(
+              `Namecheap API error: ${parsedXml.ApiResponse.$.Status}`
+            );
+          }
+        }
+      }
+
+      throw error;
+    }
+  };
 
   // --- START: Added for namecheap.domains.dns.setHosts ---
   private _parseDomainsDnsSetHostsParams = (
@@ -746,45 +780,44 @@ export class NamecheapApiWrapper {
     };
   };
 
-  public getPricing = async (
-    params: UsersGetPricingUserParams
-  ): Promise<UsersGetPricingCleanedResponse | null> => {
-    const isGeneralDomainPricingRequest =
-      params.ProductType === "DOMAIN" &&
-      !params.ProductCategory &&
-      !params.ProductName &&
-      !params.ActionName &&
-      !params.PromotionCode;
+  public async getPricing(params?: undefined | void): Promise<DomainPricing[]>;
+  public async getPricing(
+    params?: { domain: string } | undefined | void
+  ): Promise<DomainPricing | DomainPricing[]> {
+    const dbCache = await db.query.pgDomainPricingCache.findMany();
 
-    if (isGeneralDomainPricingRequest) {
-      const now = Date.now();
-      const isCacheStale =
-        !this.domainPricingApiCache.value ||
-        now - this.domainPricingApiCache.lastUpdated > CACHE_DURATION_MS;
-
-      if (isCacheStale) {
-        if (
-          this.domainPricingApiCache.isFetching &&
-          this.domainPricingApiCache.fetchPromise
-        ) {
-          return this.domainPricingApiCache.fetchPromise;
-        }
-        return this._fetchAndCacheFullDomainPricing();
-      }
-      return this.domainPricingApiCache.value;
+    const lastUpdated = dbCache[0];
+    if (!lastUpdated || isBefore(lastUpdated.updatedAt, startOfToday())) {
+      await this._refreshDomainPricingDbCache();
     }
 
-    const apiParams = this._parseUsersGetPricingParams(params);
-    return this._makeRequest<
-      RawUsersGetPricingCommandResponseContent,
-      UsersGetPricingCleanedResponse
-    >(
-      "namecheap.users.getPricing",
-      apiParams,
-      this._parseUsersGetPricingResponse,
-      "GET"
-    );
-  };
+    if (params !== undefined) {
+      const tld = params.domain.toLowerCase().split(".").pop()!;
+
+      const dbDomain = await db.query.pgDomainPricingCache.findFirst({
+        where: eq(schema.pgDomainPricingCache.tld, tld),
+      });
+
+      if (!dbDomain) {
+        throw new Error(`No pricing data found for TLD: ${tld}`);
+      }
+
+      return dbDomain;
+    }
+
+    return await db.query.pgDomainPricingCache.findMany();
+
+    // const apiParams = this._parseUsersGetPricingParams(params);
+    // return this._makeRequest<
+    //   RawUsersGetPricingCommandResponseContent,
+    //   UsersGetPricingCleanedResponse
+    // >(
+    //   "namecheap.users.getPricing",
+    //   apiParams,
+    //   this._parseUsersGetPricingResponse,
+    //   "GET"
+    // );
+  }
 
   // --- Method 6: namecheap.domains.create ---
   private _flattenContactDetails = (

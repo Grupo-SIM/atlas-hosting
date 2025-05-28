@@ -224,7 +224,7 @@ export async function GET(request: Request) {
           {
             HostName: "www",
             RecordType: "A",
-            Address: domainName,
+            Address: serverIp,
             TTL: 60,
           },
         ];
