@@ -29,9 +29,7 @@ export async function UserStats() {
           count: sql<number>`count(*)`,
         })
         .from(pgUser)
-        .where(
-          sql`${pgUser.createdAt} >= date_trunc('month', current_date)`
-        ),
+        .where(sql`${pgUser.createdAt} >= date_trunc('month', current_date)`),
       db
         .select({
           month: sql<string>`to_char(${pgUser.createdAt}, 'YYYY-MM')`,

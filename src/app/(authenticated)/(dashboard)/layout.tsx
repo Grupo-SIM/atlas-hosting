@@ -13,7 +13,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { logger, ...user } = (await getUser())!;
+  const user = await getUser();
 
   return <DashboardLayout user={user}>{children}</DashboardLayout>;
 }

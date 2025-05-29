@@ -9,6 +9,8 @@ import namecheapApi from "@/lib/server/apis/namecheap";
 import { DnsHostRecord } from "@/lib/server/apis/namecheap/types";
 import axios from "axios";
 import { eq } from "drizzle-orm";
+import { AppLogger } from "@/lib/server/logs";
+import { ELEMENTOR_PRO_PLUGIN_ID } from "@/lib/server/apis/plesk/wp-toolkit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -79,15 +81,14 @@ export async function GET(request: Request) {
 
         if (!pleskId) {
           yield* sendSSE("INFO", "Criando usuário de hospedagem no sistema...");
-          const pleskClientPassword = user.password || "DefaultPassword123!"; // Fallback, ensure user.password is hashed if stored
+          // const pleskClientPassword = user.password || "DefaultPassword123!"; // Fallback, ensure user.password is hashed if stored
+          const pleskClientPassword = "Default#Password123"; // Fallback, ensure user.password is hashed if stored
           const result = await pleskApi.createClient({
             name: user.name,
             email: userEmailForPlesk,
-            login: userEmailForPlesk,
+            login: user.id.replaceAll("-", "").substring(0, 50), // Plesk login must be <= 50 characters
             password: pleskClientPassword,
             type: ClientRequestTypeEnum.Customer,
-            externalId: userId,
-            ownerLogin: "atlashosting",
             status: 0,
           });
 
@@ -120,13 +121,12 @@ export async function GET(request: Request) {
 
         yield* sendSSE("INFO", `Criando assinatura para o domínio...`);
 
-        const result = await pleskApi.subscriptions.createSubscription({
+        await pleskApi.subscriptions.createSubscription({
           domainName,
           login: `${domainName.replace(/\./g, "_")}_${pleskId}`,
           password: `${adminPassword}_${pleskId}`,
+          ownerLogin: user.id.replaceAll("-", "").substring(0, 50),
         });
-
-        console.log({ result });
 
         yield* sendSSE("INFO", `Assinatura criada.`);
 
@@ -231,34 +231,56 @@ export async function GET(request: Request) {
 
         yield* sendSSE("INFO", `Configurando registro de DNS principal...`);
 
-        await namecheapApi.setHosts({
-          SLD: sld,
-          TLD: tld,
-          Records: mainDnsRecord,
-        });
+        await Promise.all([
+          namecheapApi.createNameserver({
+            SLD: sld,
+            TLD: tld,
+            Nameserver: `ns1.${domainName}`,
+            IP: serverIp,
+          }),
+          namecheapApi.createNameserver({
+            SLD: sld,
+            TLD: tld,
+            Nameserver: `ns2.${domainName}`,
+            IP: serverIp,
+          }),
+        ]);
 
-        yield* sendSSE("INFO", "Carregando");
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        // await namecheapApi.setHosts({
+        //   SLD: sld,
+        //   TLD: tld,
+        //   Records: mainDnsRecord,
+        // });
 
-        yield* sendSSE("INFO", `Configurando registro de DNS secundário...`);
-        const dnsResult = await namecheapApi.setHosts({
-          SLD: sld,
-          TLD: tld,
-          Records: wwwDnsRecord,
-        });
+        // yield* sendSSE("INFO", "Carregando");
+        // await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        if (dnsResult.IsSuccess) {
-          yield* sendSSE("INFO", "Registros DNS configurados com sucesso!");
-        } else {
-          yield* sendSSE(
-            "ERROR",
-            "Falha ao configurar registros DNS.",
-            dnsResult
-          );
-          return;
-        }
+        // const dnsResult = await namecheapApi.setHosts({
+        //   SLD: sld,
+        //   TLD: tld,
+        //   Records: wwwDnsRecord,
+        // });
 
-        user.logger.log({
+        // if (dnsResult.IsSuccess) {
+        //   yield* sendSSE("INFO", "Registros DNS configurados com sucesso!");
+        // } else {
+        //   yield* sendSSE(
+        //     "ERROR",
+        //     "Falha ao configurar registros DNS.",
+        //     dnsResult
+        //   );
+        //   return;
+        // }
+
+        yield* sendSSE("INFO", "Instalando plugins...");
+        await pleskApi.wordpress.addPluginToWebsite(
+          +stdOut["instance-id"],
+          ELEMENTOR_PRO_PLUGIN_ID
+        );
+
+        const userLogger = new AppLogger(user);
+
+        userLogger.log({
           title: "Instalação do WordPress",
           description: `Instância do WordPress criada com sucesso em ${domainName}.`,
           severity: "success",

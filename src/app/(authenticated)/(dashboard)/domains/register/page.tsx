@@ -36,6 +36,7 @@ import { db } from "@/lib/db";
 import {
   DomainPricing,
   pgDomainPricingCache as domainPricingCacheTable,
+  pgDomainPricingCache,
 } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import { redirect } from "next/navigation";
@@ -45,8 +46,9 @@ import {
   isRedirectError,
   RedirectError,
 } from "next/dist/client/components/redirect-error";
+import { inArray } from "drizzle-orm";
 
-export const experimental_ppr = true;
+// export const experimental_ppr = true;
 
 // Types remain the same
 export type DomainPriceInfo = {
@@ -90,29 +92,30 @@ export type DomainData = {
 } | null;
 
 // This function now fetches USD prices from your Drizzle DB cache
-async function getAllDomainPricesFromDb(): Promise<DomainPriceInfoFromDb[]> {
+async function getAllDomainPricesFromDb(
+  domains?: string[]
+): Promise<DomainPriceInfoFromDb[]> {
   try {
     console.log("Fetching TLD prices (USD) from database cache...");
-    const cachedPrices = await db
-      .select({
-        tld: domainPricingCacheTable.tld,
-        priceUSD: domainPricingCacheTable.price, // This is USD registration price
-        renewUSD: domainPricingCacheTable.renew, // USD renewal price
-        transferUSD: domainPricingCacheTable.transfer, // USD transfer price
-        minRegisterYears: domainPricingCacheTable.minRegisterYears,
-        maxRegisterYears: domainPricingCacheTable.maxRegisterYears,
-      })
-      .from(domainPricingCacheTable)
-      .orderBy(domainPricingCacheTable.tld);
+
+    const cachedPrices = await db.query.pgDomainPricingCache.findMany({
+      where:
+        domains && domains.length > 0
+          ? inArray(pgDomainPricingCache.tld, domains)
+          : undefined,
+    });
+
+    console.log(cachedPrices.length);
 
     if (!cachedPrices || cachedPrices.length === 0) {
       console.warn("No TLD prices found in the database cache.");
     }
+
     return cachedPrices.map((item) => ({
       tld: item.tld,
-      priceUSD: item.priceUSD,
-      renewUSD: item.renewUSD,
-      transferUSD: item.transferUSD,
+      priceUSD: item.price,
+      renewUSD: item.renew,
+      transferUSD: item.transfer,
       minRegisterYears: item.minRegisterYears,
       maxRegisterYears: item.maxRegisterYears,
     }));
@@ -241,7 +244,7 @@ export const getDomainData = cache(async function getDomainData(
 });
 
 // Get popular domain extensions for the grid
-const popularExtensions = [".com", ".net", ".org", ".io", ".dev", ".co"];
+export const popularExtensions = [".com", ".net", ".org", ".io", ".dev", ".co"];
 
 function DomainExtensionsGridSkeleton() {
   return (
@@ -321,7 +324,10 @@ export default async function DomainsPage({
 
   let isError = false;
 
-  const allDomainPricesFromDbPromise = getAllDomainPricesFromDb(); // Fetches USD prices from DB
+  const allDomainPricesFromDbPromise = getAllDomainPricesFromDb(
+    popularExtensions.map((tld) => tld.substring(1))
+  );
+
   const domainDataPromise = (async () => {
     return new Promise<DomainData | null>((resolve, reject) => {
       if (!searchQuery || searchQuery.trim() === "") {
@@ -373,23 +379,9 @@ export default async function DomainsPage({
         <RegisterDomainSearch />
       </div>
 
-      <ErrorBoundary
-        errorComponent={async (err) => {
-          "use server";
-
-          if (isRedirectError(err)) {
-            redirect(err.digest.split(";")[2]);
-          }
-
-          return <div></div>;
-        }}
-      >
-        <Suspense fallback={<DomainExtensionsGridSkeleton />}>
-          <DomainExtensionsGrid
-            allDomainPricesFromDbPromise={allDomainPricesFromDbPromise}
-          />
-        </Suspense>
-      </ErrorBoundary>
+      <DomainExtensionsGrid
+        allDomainPricesFromDbPromise={allDomainPricesFromDbPromise}
+      />
 
       {isError ? (
         <div className="max-w-4xl mx-auto">

@@ -1,10 +1,13 @@
+import { unstable_cacheTag as cacheTag } from "next/cache";
 import { ParsedWordPressInstance } from "@/app/(authenticated)/(dashboard)/sites/page";
-import { User } from "../db/schema/index";
+import { pgUser, User } from "../db/schema/index";
 import { DomainListItem } from "./apis/namecheap/types";
 import namecheapApi from "./apis/namecheap";
 import pleskApi from "./apis/plesk";
 import { WordPressInstance } from "./apis/plesk/wp-toolkit";
 import { cache } from "react";
+import { _getUser, getUser } from "../auth";
+import { db } from "../db";
 
 export async function domainHasWordPress(
   domain: DomainListItem,
@@ -76,7 +79,6 @@ export const getUserWordPressSites = cache(async function getUserWordPressSites(
     try {
       const instanceHostname = new URL(instance.domain).hostname;
       return userDomainNames.some((userDomain) => {
-        console.log(instanceHostname, userDomain);
         return (
           instanceHostname === userDomain ||
           instanceHostname === `www.${userDomain}`
@@ -90,3 +92,87 @@ export const getUserWordPressSites = cache(async function getUserWordPressSites(
 
   return userWpInstances;
 });
+
+// Function to get domains and check if WordPress is installed (already in your existing page.tsx, adapted slightly)
+export async function _getUserDomainsWithNamecheap(
+  userId: string
+): Promise<(DomainListItem & { inPlesk: boolean })[]> {
+  "use cache";
+  cacheTag("user-domains");
+
+  try {
+    const response = await namecheapApi.getList({}); // Uses your wrapper
+    let allDomains: DomainListItem[] = [];
+
+    if (response && response.Domains) {
+      allDomains = response.Domains;
+    } else {
+      console.error(
+        "Error fetching domains from Namecheap or no domains found:",
+        response
+      );
+      return [];
+    }
+
+    const wpInstances = await getUserWordPressSites(userId); // Reuse the existing function
+
+    const domainsWithPleskData = await Promise.all(
+      allDomains.map(async (domain) => {
+        let domainNameToCheck = domain.Name;
+        try {
+          // Ensure domain.Name is a valid URL string before parsing
+          if (!domainNameToCheck.startsWith("http")) {
+            domainNameToCheck = `https://${domainNameToCheck}`;
+          }
+          const domainHostname = new URL(domainNameToCheck).hostname;
+          return {
+            ...domain,
+            inPlesk: false,
+            // inPlesk: wpInstances.some((wp) => {
+            //   try {
+            //     return new URL(wp.domain).hostname === domainHostname;
+            //   } catch (e) {
+            //     // console.warn(`Invalid URL for WP instance domain during comparison: ${wp.domain}`);
+            //     return false;
+            //   }
+            // }),
+          };
+        } catch (e) {
+          return { ...domain, inPlesk: false };
+        }
+      })
+    );
+    return domainsWithPleskData;
+  } catch (error) {
+    console.error("Exception fetching/processing Namecheap domains:", error);
+    return [];
+  }
+}
+
+export const getUserDomainsWithNamecheap = cache(_getUserDomainsWithNamecheap);
+
+export async function getUserCurrentDomain({
+  selectedDomain,
+  id: userId,
+}: User) {
+  "use cache";
+  cacheTag("current-domain");
+
+  let domainName = selectedDomain;
+
+  if (!selectedDomain) {
+    const domains = await getUserDomainsWithNamecheap(userId);
+
+    if (domains.length === 0) {
+      return null; // No domains available
+    }
+
+    domainName = domains[0].Name; // Default to the first domain
+
+    await db.update(pgUser).set({
+      selectedDomain: domains[0].Name,
+    });
+  }
+
+  return domainName;
+}

@@ -17,10 +17,14 @@ import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 
 interface EditPlanPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default async function EditPlanPage({ params }: EditPlanPageProps) {
+export default async function EditPlanPage({
+  params: _params,
+}: EditPlanPageProps) {
+  const params = await _params;
+
   const plan = await db.query.pgPlan.findFirst({
     where: eq(pgPlan.id, params.id),
   });

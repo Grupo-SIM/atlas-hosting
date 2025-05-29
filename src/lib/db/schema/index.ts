@@ -8,3 +8,4 @@ export * from "./tables/session";
 export * from "./tables/user";
 export * from "./tables/wallet";
 export * from "./tables/card";
+export * from "./tables/email";

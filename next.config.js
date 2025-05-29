@@ -14,8 +14,8 @@ const nextConfig = {
     },
   },
   experimental: {
-    ppr: "incremental",
     nodeMiddleware: true,
+    dynamicIO: true,
   },
 };
 

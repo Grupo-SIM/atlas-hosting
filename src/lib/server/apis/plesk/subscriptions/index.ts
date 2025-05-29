@@ -29,10 +29,19 @@ export default class SubscriptionApi {
     domainName,
     login,
     password,
+    ownerLogin,
   }: CreateSubscriptionParameters) {
-    return await this.callSubscription(
-      `--create ${domainName} -ip ${process.env.SERVER_IP} -login ${login} -passwd "${password}" -hosting true -hst_type phys -php true -php_handler_id fastcgi -ssl true -mail_service true -hard_quota 10G -log-rotate true -seo-redirect www`
+    const result = await this.callSubscription(
+      `--create ${domainName} -ip ${process.env.SERVER_IP} -login ${login} -passwd "${password}" -hosting true -hst_type phys -php true -php_handler_id fastcgi -ssl true -mail_service true -hard_quota 10G -log-rotate true -seo-redirect www -webstat awstats -owner ${ownerLogin} -dns true`
     );
+
+    const data = await this.callSubscription(`--webspace-on ${domainName}`);
+
+    console.log({ data, result });
+
+    console.log({ login, password });
+
+    return result;
   }
 
   public async getSsl(domainName: string, user: User) {
@@ -56,6 +65,7 @@ export interface CreateSubscriptionParameters {
   domainName: string;
   login: string;
   password: string;
+  ownerLogin: string;
 }
 
 interface SubscriptionCreateRequest {

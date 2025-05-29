@@ -373,6 +373,7 @@ export interface DomainsCreateUserParams {
   EapFee?: number;
 
   GenerateAdminOrderRefId?: boolean;
+  Nameservers?: string[];
 }
 
 export interface DomainsCreateCleanedResponse {
@@ -550,7 +551,7 @@ export interface RawUsersCreateCommandResponseContent {
 
 export type NamecheapRequestParams = Record<
   string,
-  string | number | boolean | undefined
+  string | number | boolean | string[] | undefined
 >;
 
 export interface NamecheapRawErrorDetails {
@@ -804,4 +805,31 @@ export interface ProductCategoryPricingInfo {
 export interface ProductTypePricingInfo {
   Name: UsersGetPricingProductType;
   Categories: ProductCategoryPricingInfo[];
+}
+
+export interface DomainsNsCreateUserParams {
+  SLD: string;
+  TLD: string;
+  Nameserver: string;
+  IP: string;
+}
+
+export interface DomainsNsCreateCleanedResponse {
+  Domain: string;
+  Nameserver: string;
+  IP: string;
+  IsSuccess: boolean;
+}
+
+export interface RawDomainNsCreateResultAttributes {
+  Domain: string;
+  Nameserver: string;
+  IP: string;
+  IsSuccess: "true" | "false";
+}
+
+export interface RawDomainsNsCreateCommandResponseContent {
+  DomainNSCreateResult?: Array<{
+    $: RawDomainNsCreateResultAttributes;
+  }>;
 }

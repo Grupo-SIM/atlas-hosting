@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import SkeletonThemeProvider from "@/components/layouts/SkeletonThemeProvider";
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
+import { Suspense } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,14 +22,16 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="dark">
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={true}
-          disableTransitionOnChange
-        >
-          <SkeletonThemeProvider>{children}</SkeletonThemeProvider>
-        </ThemeProvider>
+        <Suspense>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem={true}
+            disableTransitionOnChange
+          >
+            <SkeletonThemeProvider>{children}</SkeletonThemeProvider>
+          </ThemeProvider>
+        </Suspense>
       </body>
     </html>
   );

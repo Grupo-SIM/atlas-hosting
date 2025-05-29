@@ -29,10 +29,11 @@ import domApi from "@/lib/server/apis/dom";
 import namecheapApi from "@/lib/server/apis/namecheap";
 import axios from "axios";
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import ip2Location from "@/lib/server/apis/ip2location";
 import ipaddrJs from "ipaddr.js";
 import { signIn } from "@/auth";
+import { AppLogger } from "@/lib/server/logs";
 
 export async function login(
   prevState: unknown,
@@ -82,7 +83,9 @@ export async function login(
       description += " (localização desconhecida)";
     }
 
-    user.logger.log({
+    const userLogger = new AppLogger(user);
+
+    userLogger.log({
       title: "Novo login realizado",
       description,
       severity: "danger",
@@ -926,4 +929,36 @@ export async function signInWithGithub() {
 
 export async function signInWithGoogle() {
   await signIn("google");
+}
+
+export async function changeSelectedDomain(
+  prevState: unknown,
+  domainName: string
+): Promise<ActionResponse> {
+  const user = await getUser();
+
+  if (!user) {
+    return { status: "error", message: "Usuário não autenticado" };
+  }
+
+  if (!domainName) {
+    return { status: "error", message: "Nome do domínio é obrigatório" };
+  }
+
+  try {
+    await db
+      .update(pgUser)
+      .set({ selectedDomain: domainName })
+      .where(eq(pgUser.id, user.id));
+
+    revalidateTag("current-domain");
+
+    return {
+      status: "success",
+      message: "Domínio padrão atualizado com sucesso",
+    };
+  } catch (error) {
+    console.error("Erro ao atualizar domínio padrão:", error);
+    return { status: "error", message: "Erro ao atualizar domínio padrão" };
+  }
 }

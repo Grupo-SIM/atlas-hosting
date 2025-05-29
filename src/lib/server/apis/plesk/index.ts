@@ -16,6 +16,7 @@ export class PleskApi {
   public cliApi: Plesk.CliApi;
   public domainsApi: Plesk.DomainsApi;
   public serverApi: Plesk.ServerApi;
+  public dnsApi: Plesk.DNSApi;
 
   public wordpress: PleskWpToolkitApi;
   public subscriptions: SubscriptionApi;
@@ -46,6 +47,7 @@ export class PleskApi {
     this.cliApi = new Plesk.CliApi(...initParameters);
     this.domainsApi = new Plesk.DomainsApi(...initParameters);
     this.serverApi = new Plesk.ServerApi(...initParameters);
+    this.dnsApi = new Plesk.DNSApi(...initParameters);
 
     this.wordpress = new PleskWpToolkitApi(this.cliApi);
     this.subscriptions = new SubscriptionApi(this.cliApi);
@@ -122,14 +124,13 @@ export class PleskApi {
     domainName: string
   ): Promise<Plesk.DomainResponse | null> {
     try {
-      const { data: domains } = await this.domainsApi.domainsGet();
-      const foundDomain = domains.find((d) => d.name === domainName);
+      const { data: domains } = await this.domainsApi.domainsGet(domainName);
 
-      if (!foundDomain) {
+      if (!domains.length) {
         return null;
       }
 
-      return foundDomain;
+      return domains[0];
     } catch (error) {
       if (axios.isAxiosError(error) && !error.response?.data?.code) {
         console.log(
@@ -143,8 +144,8 @@ export class PleskApi {
     }
   }
 
-  public async assignDomain(domainName: string, userId: number) {
-    const user = await this.getUserById(userId);
+  public async assignDomain(domainName: string, pleskId: number) {
+    const user = await this.getUserById(pleskId);
 
     try {
       const { data } = await this.domainsApi.domainsPost({
@@ -160,7 +161,7 @@ export class PleskApi {
           php_handler_id: "fastcgi",
           php_version: "8.2.28",
           ssl: true,
-          ftp_login: Math.random().toString(36).substring(2, 10),
+          ftp_login: "user_" + Math.random().toString(36).substring(2, 10),
           ftp_password: `D%$%` + Math.random().toString(36).substring(2, 10),
         },
       });

@@ -88,7 +88,7 @@ export default class PleskWpToolkitApi {
 
   public async uninstallWp(mainDomainId: number) {
     return await this.callWp(
-      `--remove -format json -instance-id ${mainDomainId} -path /httpdocs`
+      `--remove -format json -instance-id ${mainDomainId} -path /httpdoc`
     );
   }
 
@@ -107,7 +107,19 @@ export default class PleskWpToolkitApi {
       env
     );
   }
+
+  public async listAvailablePlugins() {
+    return await this.callWp("--plugins -operation list-custom -format json");
+  }
+
+  public async addPluginToWebsite(instanceId: number, pluginId: number) {
+    return await this.callWp(
+      `--plugins -format json -operation install -id ${pluginId} -version 3.28.1 -instance-id ${instanceId}`
+    );
+  }
 }
+
+export const ELEMENTOR_PRO_PLUGIN_ID = 12;
 
 export interface WordPressInstance {
   id: number;

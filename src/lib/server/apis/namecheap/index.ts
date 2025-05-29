@@ -40,6 +40,9 @@ import type {
   DomainsDnsSetHostsUserParams,
   DomainsDnsSetHostsCleanedResponse,
   RawDomainsDnsSetHostsCommandResponseContent,
+  DomainsNsCreateUserParams,
+  DomainsNsCreateCleanedResponse,
+  RawDomainsNsCreateCommandResponseContent,
 } from "./types";
 import { isString } from "lodash";
 import { isBefore, startOfToday, startOfTomorrow } from "date-fns";
@@ -84,9 +87,6 @@ export class NamecheapApiWrapper {
   constructor(userName: string) {
     this.userName = userName;
     this.axiosInstance = axios.create();
-
-    this._initializeTldApiCacheAndInterval();
-    this._initializeDbDomainPricingCacheAndInterval();
   }
 
   private async _initializeTldApiCacheAndInterval(): Promise<void> {
@@ -868,6 +868,9 @@ export class NamecheapApiWrapper {
       apiParams.GenerateAdminOrderRefId = params.GenerateAdminOrderRefId
         ? "True"
         : "False";
+    if (params.Nameservers !== undefined) {
+      apiParams.Nameservers = params.Nameservers.join(",");
+    }
     return apiParams;
   };
 
@@ -905,7 +908,7 @@ export class NamecheapApiWrapper {
       "namecheap.domains.create",
       this._parseDomainsCreateParams(params),
       this._parseDomainsCreateResponse,
-      "POST"
+      "GET"
     );
 
   // --- Method 7: namecheap.domains.getInfo ---
@@ -1048,6 +1051,46 @@ export class NamecheapApiWrapper {
       this._parseUsersCreateResponse,
       "POST"
     );
+
+  private _parseDomainsNsCreateParams = (
+    params: DomainsNsCreateUserParams
+  ): NamecheapRequestParams => {
+    return {
+      SLD: params.SLD,
+      TLD: params.TLD,
+      Nameserver: params.Nameserver,
+      IP: params.IP,
+    };
+  };
+
+  private _parseDomainsNsCreateResponse = (
+    rawContent: RawDomainsNsCreateCommandResponseContent
+  ): DomainsNsCreateCleanedResponse => {
+    const resultAttrs = rawContent.DomainNSCreateResult?.[0]?.$;
+    if (!resultAttrs) {
+      throw new Error(
+        "DomainNSCreateResult is missing or malformed in the API response."
+      );
+    }
+    return {
+      Domain: resultAttrs.Domain,
+      Nameserver: resultAttrs.Nameserver,
+      IP: resultAttrs.IP,
+      IsSuccess: resultAttrs.IsSuccess === "true",
+    };
+  };
+
+  public createNameserver = async (
+    params: DomainsNsCreateUserParams
+  ): Promise<DomainsNsCreateCleanedResponse> => {
+    const command = "namecheap.domains.ns.create";
+    const apiParams = this._parseDomainsNsCreateParams(params);
+    // Modification commands are often POST, even if example URL is GET
+    return this._makeRequest<
+      RawDomainsNsCreateCommandResponseContent,
+      DomainsNsCreateCleanedResponse
+    >(command, apiParams, this._parseDomainsNsCreateResponse, "POST");
+  };
 }
 
 export const namecheapApi = new NamecheapApiWrapper(

@@ -25,7 +25,7 @@ class AppLoggerQueue {
 }
 
 export class AppLogger {
-  constructor(private readonly user: User) {}
+  constructor(private readonly user: Pick<User, "id">) {}
 
   public log(message: Omit<LogInsert, "userId">): void {
     AppLoggerQueue.send({

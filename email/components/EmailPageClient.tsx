@@ -33,8 +33,12 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
+import { DomainListItem } from "@/lib/server/apis/namecheap/types";
 
-export default function EmailPage() {
+export function EmailPageClient({
+  domains,
+  selectedDomain,
+}: EmailPageClientProps) {
   const domain = "example.com";
   const expiryDate = "2027-02-12";
   const plan = "Atlas Hosting Pro";
@@ -251,4 +255,9 @@ export default function EmailPage() {
       </Card>
     </div>
   );
+}
+
+interface EmailPageClientProps {
+  domains: DomainListItem[];
+  selectedDomain?: DomainListItem;
 }

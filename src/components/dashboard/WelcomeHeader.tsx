@@ -1,12 +1,17 @@
 import { Button } from "@/components/ui/button";
 import type { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { pgPlan } from "@/lib/db/schema";
+import { pgPlan, User } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { PlusCircle } from "lucide-react";
 import { Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
 import { Badge } from "../ui/badge";
+import {
+  getUserCurrentDomain,
+  getUserDomainsWithNamecheap,
+} from "@/lib/server/utils";
+import DomainSelector from "../domains/DomainSelector";
 
 export function WelcomeHeader({ user }: WelcomeHeaderProps) {
   return (
@@ -46,24 +51,21 @@ async function UserName({ user }: WelcomeHeaderProps) {
 async function UserSiteLabel({ user }: WelcomeHeaderProps) {
   const userData = await user;
 
-  if (userData?.planId) {
-    const plan = await db.query.pgPlan.findFirst({
-      where: eq(pgPlan.id, userData.planId),
-    });
+  const domains = await getUserDomainsWithNamecheap(userData.id);
+  const selectedDomain = await getUserCurrentDomain(userData);
 
-    if (plan) {
-      return (
-        <span className="flex items-center gap-2">
-          <span>Seu plano atual:</span>
-          <Badge variant="secondary">{plan.name}</Badge>
-        </span>
-      );
-    }
+  if (!selectedDomain) {
+    return "Você ainda não possui um domínio na plataforma.";
   }
 
-  return "Você ainda não tem um plano ativo.";
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-muted-foreground">Site atual:</span>
+      <DomainSelector domains={domains} selectedDomain={selectedDomain} />
+    </div>
+  );
 }
 
 export interface WelcomeHeaderProps {
-  user?: ReturnType<typeof getUser>;
+  user: Promise<User>;
 }

@@ -19,6 +19,8 @@ import { promisify } from "util";
 import { WordPressInstance } from "@/lib/server/apis/plesk/wp-toolkit";
 import { getUserWordPressSites } from "@/lib/server/utils";
 
+export const experimental_ppr = true;
+
 export interface ParsedWordPressInstance {
   id: number; // This likely refers to Plesk's internal ID for the WP instance
   instanceId: number; // Often the same as id from WP Toolkit

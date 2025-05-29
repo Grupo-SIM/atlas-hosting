@@ -1,72 +1,16 @@
 // src/app/(authenticated)/(dashboard)/sites/new/page.tsx
-import { getUser } from "@/lib/auth";
-import { namecheapApi } from "@/lib/server/apis/namecheap";
-import { type DomainListItem } from "@/lib/server/apis/namecheap/types";
-import { Suspense } from "react";
-import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm"; // Updated import
+import DashboardLayout from "@/components/layouts/DashboardLayout"; // Import the layout
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import DashboardLayout from "@/components/layouts/DashboardLayout"; // Import the layout
-import { getUserWordPressSites } from "@/lib/server/utils";
-
-// Function to get domains and check if WordPress is installed (already in your existing page.tsx, adapted slightly)
-async function getUserDomainsWithNamecheap(
-  userId: string
-): Promise<(DomainListItem & { inPlesk: boolean })[]> {
-  try {
-    const response = await namecheapApi.getList({}); // Uses your wrapper
-    let allDomains: DomainListItem[] = [];
-
-    if (response && response.Domains) {
-      allDomains = response.Domains;
-    } else {
-      console.error(
-        "Error fetching domains from Namecheap or no domains found:",
-        response
-      );
-      return [];
-    }
-
-    const wpInstances = await getUserWordPressSites(userId); // Reuse the existing function
-
-    const domainsWithPleskData = await Promise.all(
-      allDomains.map(async (domain) => {
-        let domainNameToCheck = domain.Name;
-        try {
-          // Ensure domain.Name is a valid URL string before parsing
-          if (!domainNameToCheck.startsWith("http")) {
-            domainNameToCheck = `https://${domainNameToCheck}`;
-          }
-          const domainHostname = new URL(domainNameToCheck).hostname;
-          return {
-            ...domain,
-            inPlesk: wpInstances.some((wp) => {
-              try {
-                return new URL(wp.domain).hostname === domainHostname;
-              } catch (e) {
-                // console.warn(`Invalid URL for WP instance domain during comparison: ${wp.domain}`);
-                return false;
-              }
-            }),
-          };
-        } catch (e) {
-          return { ...domain, inPlesk: false };
-        }
-      })
-    );
-    return domainsWithPleskData;
-  } catch (error) {
-    console.error("Exception fetching/processing Namecheap domains:", error);
-    return [];
-  }
-}
+import { getUser } from "@/lib/auth";
+import { getUserDomainsWithNamecheap } from "@/lib/server/utils";
+import { Suspense } from "react";
+import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm"; // Updated import
 
 export default async function NewSitePageContainer() {
   const user = await getUser();

@@ -1,16 +1,45 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, HelpCircle, MessageSquare, ChevronRight, Phone, Mail, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Search,
+  HelpCircle,
+  MessageSquare,
+  ChevronRight,
+  Phone,
+  Mail,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 
 const supportTopics = [
   { id: "billing", label: "Fatura e Pagamentos", icon: "💳" },
@@ -20,26 +49,30 @@ const supportTopics = [
   { id: "email", label: "Configuração Email", icon: "📧" },
   { id: "newsite", label: "Novo Site", icon: "🚀" },
   { id: "downtime", label: "Site fora do ar", icon: "⚠️" },
-  { id: "cancel", label: "Cancelamento", icon: "❌" }
+  { id: "cancel", label: "Cancelamento", icon: "❌" },
 ];
 
 const faqs = [
   {
     question: "Como alterar a forma de pagamento?",
-    answer: "Você pode alterar sua forma de pagamento acessando a seção Pagamentos no seu painel e adicionando um novo método de pagamento."
+    answer:
+      "Você pode alterar sua forma de pagamento acessando a seção Pagamentos no seu painel e adicionando um novo método de pagamento.",
   },
   {
     question: "Como instalar WordPress?",
-    answer: "Acesse a seção Sites > Novo Site e selecione a opção WordPress. A instalação é automática e leva apenas alguns minutos."
+    answer:
+      "Acesse a seção Sites > Novo Site e selecione a opção WordPress. A instalação é automática e leva apenas alguns minutos.",
   },
   {
     question: "Como configurar email personalizado?",
-    answer: "Vá para a seção E-mails e clique em 'Nova conta de e-mail'. Configure o endereço desejado e siga as instruções."
+    answer:
+      "Vá para a seção E-mails e clique em 'Nova conta de e-mail'. Configure o endereço desejado e siga as instruções.",
   },
   {
     question: "Como fazer backup do meu site?",
-    answer: "No painel de controle, acesse a seção Backup e configure backups automáticos ou faça um backup manual."
-  }
+    answer:
+      "No painel de controle, acesse a seção Backup e configure backups automáticos ou faça um backup manual.",
+  },
 ];
 
 const tickets = [
@@ -49,7 +82,7 @@ const tickets = [
     status: "open",
     priority: "high",
     created: "2024-03-15",
-    lastUpdate: "2024-03-15"
+    lastUpdate: "2024-03-15",
   },
   {
     id: "#12344",
@@ -57,7 +90,7 @@ const tickets = [
     status: "resolved",
     priority: "normal",
     created: "2024-03-14",
-    lastUpdate: "2024-03-14"
+    lastUpdate: "2024-03-14",
   },
   {
     id: "#12343",
@@ -65,8 +98,8 @@ const tickets = [
     status: "in_progress",
     priority: "normal",
     created: "2024-03-13",
-    lastUpdate: "2024-03-14"
-  }
+    lastUpdate: "2024-03-14",
+  },
 ];
 
 export default function SupportPage() {
@@ -103,7 +136,9 @@ export default function SupportPage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Suporte</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Suporte
+          </h1>
           <p className="text-muted-foreground mt-1">
             Obtenha ajuda e tire suas dúvidas
           </p>
@@ -123,9 +158,7 @@ export default function SupportPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">24/7</div>
-            <p className="text-xs text-muted-foreground">
-              Suporte disponível
-            </p>
+            <p className="text-xs text-muted-foreground">Suporte disponível</p>
           </CardContent>
         </Card>
 
@@ -136,9 +169,7 @@ export default function SupportPage() {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">suporte@atlas.com</div>
-            <p className="text-xs text-muted-foreground">
-              Resposta em até 2h
-            </p>
+            <p className="text-xs text-muted-foreground">Resposta em até 2h</p>
           </CardContent>
         </Card>
 
@@ -149,9 +180,7 @@ export default function SupportPage() {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">(11) 4000-0000</div>
-            <p className="text-xs text-muted-foreground">
-              Seg-Sex 8h às 18h
-            </p>
+            <p className="text-xs text-muted-foreground">Seg-Sex 8h às 18h</p>
           </CardContent>
         </Card>
       </div>
@@ -190,7 +219,10 @@ export default function SupportPage() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {supportTopics.map((topic) => (
-                  <Card key={topic.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                  <Card
+                    key={topic.id}
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                  >
                     <CardContent className="p-4 text-center">
                       <div className="text-2xl mb-2">{topic.icon}</div>
                       <h3 className="font-medium text-sm">{topic.label}</h3>
@@ -217,7 +249,9 @@ export default function SupportPage() {
                       <h4 className="font-medium">{faq.question}</h4>
                       <ChevronRight className="h-4 w-4" />
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2">{faq.answer}</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {faq.answer}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -247,7 +281,10 @@ export default function SupportPage() {
                 </TableHeader>
                 <TableBody>
                   {tickets.map((ticket) => (
-                    <TableRow key={ticket.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableRow
+                      key={ticket.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                    >
                       <TableCell className="font-medium">{ticket.id}</TableCell>
                       <TableCell>{ticket.subject}</TableCell>
                       <TableCell>{getStatusBadge(ticket.status)}</TableCell>
@@ -307,7 +344,10 @@ export default function SupportPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="subject">Assunto</Label>
-                  <Input id="subject" placeholder="Descreva brevemente o problema" />
+                  <Input
+                    id="subject"
+                    placeholder="Descreva brevemente o problema"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -335,9 +375,7 @@ export default function SupportPage() {
                   <MessageSquare className="h-5 w-5" />
                   Chat Online
                 </CardTitle>
-                <CardDescription>
-                  Fale conosco em tempo real
-                </CardDescription>
+                <CardDescription>Fale conosco em tempo real</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2 mb-4">
@@ -356,15 +394,14 @@ export default function SupportPage() {
                   <Phone className="h-5 w-5" />
                   Suporte por Telefone
                 </CardTitle>
-                <CardDescription>
-                  Ligue para nossa central
-                </CardDescription>
+                <CardDescription>Ligue para nossa central</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 mb-4">
                   <p className="font-medium">(11) 4000-0000</p>
                   <p className="text-sm text-muted-foreground">
-                    Segunda a Sexta: 8h às 18h<br />
+                    Segunda a Sexta: 8h às 18h
+                    <br />
                     Sábado: 9h às 15h
                   </p>
                 </div>

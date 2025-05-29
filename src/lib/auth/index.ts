@@ -76,12 +76,7 @@ export async function validateSessionToken(
       .where(eq(pgSession.id, session.id));
   }
 
-  const userWithLogger = {
-    ...user,
-    logger: new AppLogger(user),
-  };
-
-  return { session, user: userWithLogger };
+  return { session, user };
 }
 
 export async function validateSession() {
@@ -152,7 +147,7 @@ export async function createUser(
 export async function authenticateUser(
   email: string,
   passwordPlain: string
-): Promise<Omit<UserWithLogger, "password"> | null> {
+): Promise<Omit<User, "password"> | null> {
   const result = await db
     .select()
     .from(pgUser)
@@ -175,22 +170,22 @@ export async function authenticateUser(
   // Exclude password from the returned user object for security
   const { password, ...userWithoutPassword } = user;
 
-  const userWithLogger = {
-    ...userWithoutPassword,
-    logger: new AppLogger(userWithoutPassword as User),
-  };
-
-  return userWithLogger;
+  return userWithoutPassword;
 }
 
 export type SessionValidationResult =
-  | { session: Session; user: UserWithLogger }
+  | { session: Session; user: User }
   | { session: null; user: null };
 
-export const getUser = cache(async function getUser() {
+export async function _getUser<
+  T extends boolean = false,
+  U = T extends true ? User | null : User,
+>(): Promise<U> {
   const { user } = await validateSession();
-  return user;
-});
+  return user as U;
+}
+
+export const getUser = cache(_getUser);
 
 export async function createNamecheapForUser(
   user: User,

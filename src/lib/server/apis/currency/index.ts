@@ -4,7 +4,7 @@ import { isSameDay } from "date-fns";
 export class CurrencyConversionApi {
   private cache: CurrencyConversionCache = {};
   private api = axios.create({
-    baseURL: "https://latest.currency-api.pages.dev/v1",
+    baseURL: "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1",
     headers: {
       Accept: "application/json",
     },

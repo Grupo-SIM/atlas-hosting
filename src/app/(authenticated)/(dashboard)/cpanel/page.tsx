@@ -1,12 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Database, Files, FolderTree, HardDrive, Lock, Settings, Shield, Terminal, Upload, Users, Cpu, MemoryStick as Memory, Server, RefreshCw, AlertTriangle, CheckCircle } from "lucide-react";
+import {
+  Database,
+  Files,
+  FolderTree,
+  HardDrive,
+  Lock,
+  Settings,
+  Shield,
+  Terminal,
+  Upload,
+  Users,
+  Cpu,
+  MemoryStick as Memory,
+  Server,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle,
+} from "lucide-react";
 
 export default function CpanelPage() {
   const [isRestarting, setIsRestarting] = useState(false);
@@ -20,13 +43,19 @@ export default function CpanelPage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Painel de Controle</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Painel de Controle
+          </h1>
           <p className="text-muted-foreground mt-1">
             Gerencie seu servidor e recursos
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={handleServerRestart} disabled={isRestarting}>
+          <Button
+            variant="outline"
+            onClick={handleServerRestart}
+            disabled={isRestarting}
+          >
             {isRestarting ? (
               <>
                 <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -50,7 +79,9 @@ export default function CpanelPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Status do Servidor</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Status do Servidor
+            </CardTitle>
             <Server className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -184,9 +215,7 @@ export default function CpanelPage() {
                   <Lock className="h-5 w-5" />
                   SSL/TLS
                 </CardTitle>
-                <CardDescription>
-                  Gerencie certificados SSL
-                </CardDescription>
+                <CardDescription>Gerencie certificados SSL</CardDescription>
               </CardHeader>
             </Card>
 
@@ -196,9 +225,7 @@ export default function CpanelPage() {
                   <Shield className="h-5 w-5" />
                   Proteção IP
                 </CardTitle>
-                <CardDescription>
-                  Bloqueie IPs maliciosos
-                </CardDescription>
+                <CardDescription>Bloqueie IPs maliciosos</CardDescription>
               </CardHeader>
             </Card>
           </div>
@@ -212,9 +239,7 @@ export default function CpanelPage() {
                   <Settings className="h-5 w-5" />
                   Configurações PHP
                 </CardTitle>
-                <CardDescription>
-                  Ajuste configurações do PHP
-                </CardDescription>
+                <CardDescription>Ajuste configurações do PHP</CardDescription>
               </CardHeader>
             </Card>
 
@@ -224,9 +249,7 @@ export default function CpanelPage() {
                   <Users className="h-5 w-5" />
                   Usuários FTP
                 </CardTitle>
-                <CardDescription>
-                  Gerencie contas FTP
-                </CardDescription>
+                <CardDescription>Gerencie contas FTP</CardDescription>
               </CardHeader>
             </Card>
           </div>

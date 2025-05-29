@@ -11,6 +11,7 @@ import {
 import { pgNamecheapIntegration } from "./namecheap";
 import { pgPlan } from "./plan";
 import { pgWallet } from "./wallet";
+import { pgZohoDomainOrganizations } from "@/lib/db/schema/tables/email";
 
 export const pgUser = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -28,12 +29,13 @@ export const pgUser = pgTable("users", {
   walletId: uuid("wallet_id")
     .notNull()
     .references(() => pgWallet.id),
+  selectedDomain: text("selected_domain"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   deletedAt: timestamp("deleted_at", { mode: "date" }),
 });
 
-export const userRelations = relations(pgUser, ({ one }) => ({
+export const userRelations = relations(pgUser, ({ one, many }) => ({
   plan: one(pgPlan, {
     fields: [pgUser.planId],
     references: [pgPlan.id],
@@ -46,6 +48,7 @@ export const userRelations = relations(pgUser, ({ one }) => ({
     fields: [pgUser.walletId],
     references: [pgWallet.id],
   }),
+  zohoOrgs: many(pgZohoDomainOrganizations),
 }));
 
 export type User = typeof pgUser.$inferSelect;
