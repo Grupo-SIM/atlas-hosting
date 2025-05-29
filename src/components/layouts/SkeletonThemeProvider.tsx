@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import { SkeletonTheme } from "react-loading-skeleton";
 
 const darkThemeBaseColor = "#0f1629";

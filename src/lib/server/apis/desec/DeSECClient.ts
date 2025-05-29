@@ -1,8 +1,8 @@
 import axios, {
-  AxiosInstance,
-  AxiosRequestConfig,
-  Method,
-  AxiosError,
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type Method,
+  type AxiosError,
 } from "axios";
 import { DeSECError, DeSECRateLimitError } from "./errors";
 
@@ -38,7 +38,7 @@ export class DeSECClient {
             responseBody?.detail || responseBody?.message || error.message;
 
           if (statusCode === 429) {
-            const retryAfter = parseInt(
+            const retryAfter = Number.parseInt(
               response.headers["retry-after"] || "0",
               10
             );
@@ -158,9 +158,9 @@ export class DeSECClient {
     tokenSecret: string,
     ipv4?: string | string,
     ipv6?: string | string,
-    useIpv6OnlyEndpoint: boolean = false,
-    preserveIpv4: boolean = false,
-    preserveIpv6: boolean = false
+    useIpv6OnlyEndpoint = false,
+    preserveIpv4 = false,
+    preserveIpv6 = false
   ): Promise<string> {
     const updateUrl = useIpv6OnlyEndpoint
       ? this.DYNDNS_IPV6_URL

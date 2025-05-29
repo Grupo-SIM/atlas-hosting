@@ -1,5 +1,5 @@
-import axios, { ParamsSerializerOptions, type AxiosInstance } from "axios";
-import {
+import axios, { type ParamsSerializerOptions, type AxiosInstance } from "axios";
+import type {
   CreateContactResponse,
   ListDnsRecordsResponse,
   ListDomainsParams,
@@ -7,11 +7,11 @@ import {
   NamesiloDomain,
   NamesiloDomainInfo,
   NamesiloReply,
-  type CheckRegisterAvailabilityResponse,
-  type CreateContactParams,
-  type GetPricesResponse,
-  type NamesiloResponse,
-  type RegisterDomainParams,
+  CheckRegisterAvailabilityResponse,
+  CreateContactParams,
+  GetPricesResponse,
+  NamesiloResponse,
+  RegisterDomainParams,
 } from "./types";
 
 export class NamesiloApi {

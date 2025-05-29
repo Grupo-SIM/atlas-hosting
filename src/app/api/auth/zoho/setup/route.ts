@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { zohoOAuthManager } from "@/lib/server/apis/zoho/oauth";
 
 export async function GET(request: NextRequest) {

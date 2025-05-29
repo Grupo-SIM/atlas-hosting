@@ -1,6 +1,6 @@
 import AuthPage from "@/components/auth/AuthPage";
 import SignupForm from "@/components/auth/SignupForm";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Criar Conta - Atlas Hosting",

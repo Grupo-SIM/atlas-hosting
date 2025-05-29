@@ -1,13 +1,15 @@
-import { unstable_cacheTag as cacheTag } from "next/cache";
-import { ParsedWordPressInstance } from "@/app/(authenticated)/(dashboard)/sites/page";
-import { pgUser, User } from "../db/schema/index";
-import { DomainListItem } from "./apis/namecheap/types";
+import { unstable_cacheTag as cacheTag, revalidateTag } from "next/cache";
+import { pgUser, type User } from "../db/schema/index";
+import type { DomainListItem } from "./apis/namecheap/types";
 import namecheapApi from "./apis/namecheap";
 import pleskApi from "./apis/plesk";
-import { WordPressInstance } from "./apis/plesk/wp-toolkit";
+import type { WordPressInstance } from "./apis/plesk/wp-toolkit";
 import { cache } from "react";
 import { _getUser, getUser } from "../auth";
 import { db } from "../db";
+import type { ParsedWordPressInstance } from "@/app/(auth)/sites/page";
+import { eq } from "drizzle-orm";
+import { defer } from "lodash";
 
 export async function domainHasWordPress(
   domain: DomainListItem,
@@ -41,7 +43,7 @@ export const getUserWordPressSites = cache(async function getUserWordPressSites(
     console.log("Fetching domains from Namecheap for user:", userId);
     const ncResponse = await namecheapApi.getList({ PageSize: 100 });
 
-    if (ncResponse && ncResponse.Domains) {
+    if (ncResponse?.Domains) {
       userDomainNames = ncResponse.Domains.map((d: DomainListItem) => d.Name);
     } else {
       console.warn("No domains found for user from Namecheap or API error.");
@@ -94,18 +96,19 @@ export const getUserWordPressSites = cache(async function getUserWordPressSites(
 });
 
 // Function to get domains and check if WordPress is installed (already in your existing page.tsx, adapted slightly)
-export async function _getUserDomainsWithNamecheap(
+export async function getUserDomains(
   userId: string
 ): Promise<(DomainListItem & { inPlesk: boolean })[]> {
   "use cache";
   cacheTag("user-domains");
 
   try {
-    const response = await namecheapApi.getList({}); // Uses your wrapper
+    const response = await namecheapApi.getList(); // Uses your wrapper
     let allDomains: DomainListItem[] = [];
 
-    if (response && response.Domains) {
+    if (response?.Domains) {
       allDomains = response.Domains;
+      console.log({ allDomains });
     } else {
       console.error(
         "Error fetching domains from Namecheap or no domains found:",
@@ -127,17 +130,17 @@ export async function _getUserDomainsWithNamecheap(
           const domainHostname = new URL(domainNameToCheck).hostname;
           return {
             ...domain,
-            inPlesk: false,
-            // inPlesk: wpInstances.some((wp) => {
-            //   try {
-            //     return new URL(wp.domain).hostname === domainHostname;
-            //   } catch (e) {
-            //     // console.warn(`Invalid URL for WP instance domain during comparison: ${wp.domain}`);
-            //     return false;
-            //   }
-            // }),
+            inPlesk: wpInstances.some((wp) => {
+              try {
+                return new URL(wp.domain).hostname === domainHostname;
+              } catch (e) {
+                // console.warn(`Invalid URL for WP instance domain during comparison: ${wp.domain}`);
+                return false;
+              }
+            }),
           };
         } catch (e) {
+          console.log(e);
           return { ...domain, inPlesk: false };
         }
       })
@@ -149,30 +152,41 @@ export async function _getUserDomainsWithNamecheap(
   }
 }
 
-export const getUserDomainsWithNamecheap = cache(_getUserDomainsWithNamecheap);
-
 export async function getUserCurrentDomain({
   selectedDomain,
   id: userId,
-}: User) {
+}: User): Promise<DomainListItem | null> {
   "use cache";
   cacheTag("current-domain");
 
-  let domainName = selectedDomain;
+  const domains = await getUserDomains(userId);
 
   if (!selectedDomain) {
-    const domains = await getUserDomainsWithNamecheap(userId);
-
     if (domains.length === 0) {
       return null; // No domains available
     }
 
-    domainName = domains[0].Name; // Default to the first domain
+    await db
+      .update(pgUser)
+      .set({
+        selectedDomain: domains[0].Name,
+      })
+      .where(eq(pgUser.id, userId))
+      .execute();
 
-    await db.update(pgUser).set({
-      selectedDomain: domains[0].Name,
-    });
+    revalidateTag("current-domain");
+    return domains[0]; // Default to the first domain
   }
 
-  return domainName;
+  const fullDomain = domains.find(
+    (domain) => domain.Name === selectedDomain
+  );
+
+  if (!fullDomain) {
+    throw new Error(
+      `Selected domain "${selectedDomain}" not found in user's domains.`
+    );
+  }
+
+  return fullDomain;
 }

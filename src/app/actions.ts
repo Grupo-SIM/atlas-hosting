@@ -1,8 +1,8 @@
 "use server";
 
-import { LoginFormInputs } from "@/components/auth/LoginForm";
-import { SignupFormInputs } from "@/components/auth/SignupForm";
-import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
+import type { LoginFormInputs } from "@/components/auth/LoginForm";
+import type { SignupFormInputs } from "@/components/auth/SignupForm";
+import type { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import {
   authenticateUser,
   createSession,
@@ -22,7 +22,7 @@ import {
   pgPlan,
   pgSession,
   pgUser,
-  Plan,
+  type Plan,
 } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
@@ -902,7 +902,7 @@ export async function deleteWordPressInstances(
     }
 
     // Handle both single instanceId and comma-separated list
-    const ids = instanceIds.split(",").map((id) => parseInt(id, 10));
+    const ids = instanceIds.split(",").map((id) => Number.parseInt(id, 10));
 
     if (ids.some(isNaN)) {
       return { status: "error", message: "Invalid instance ID" };

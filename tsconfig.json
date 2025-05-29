@@ -28,12 +28,10 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     ".next/types/**/*.ts",
-    "global.d.ts",
-    "src/lib/db/schema/index.ts"
+    "global.d.ts"
   ],
   "exclude": [
     "node_modules/**/*",
-    "src/plesk/**/*",
-    "node_modules/.pnpm/plesk-api@file+plesk/**"
+    "src/plesk/**/*"
   ]
 }

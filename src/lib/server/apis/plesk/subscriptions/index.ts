@@ -1,4 +1,4 @@
-import { User } from "@/lib/db/schema";
+import type { User } from "@/lib/db/schema";
 import axios from "axios";
 import type * as Plesk from "@/plesk";
 

@@ -16,7 +16,7 @@ export async function DELETE(
     // Handle both single instanceId and comma-separated list
     const instanceIds = params.instanceId
       .split(",")
-      .map((id) => parseInt(id, 10));
+      .map((id) => Number.parseInt(id, 10));
 
     if (instanceIds.some(isNaN)) {
       return new NextResponse("Invalid instance ID", { status: 400 });

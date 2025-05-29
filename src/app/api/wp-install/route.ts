@@ -1,7 +1,7 @@
 // src/app/api/wp-install/route.ts
 import { getUser } from "@/lib/auth/index";
 import pleskApi from "@/lib/server/apis/plesk";
-import { CliCallResponse, ClientRequestTypeEnum } from "@/plesk";
+import { type CliCallResponse, ClientRequestTypeEnum } from "@/plesk";
 import type { DnsRecord as PleskDnsRecord } from "@/plesk/models"; // Corrected import path
 
 import { db } from "@/lib/db";
@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 function* sendSSE(
   type: "INFO" | "ERROR" | "SUCCESS" | "STEP",
   message: string,
-  details?: any
+  details?: unknown
 ) {
   const payload = { type, message, step: message, details }; // 'step' for frontend compatibility
   // console.log("SSE Payload:", payload); // Kept for server-side debugging if needed
@@ -137,7 +137,7 @@ export async function GET(request: Request) {
           });
 
           yield* sendSSE("INFO", "Atualizando os dados do usuário...");
-          if (result && result.id) {
+          if (result?.id) {
             await db
               .update(pgUser)
               .set({ pleskId: result.id })
@@ -215,7 +215,7 @@ export async function GET(request: Request) {
           tld = domainParts.slice(-2).join(".");
           sld = domainParts.slice(0, -2).join(".");
         } else {
-          tld = domainParts.pop()!;
+          tld = domainParts.pop()?.toLowerCase() || "";
           sld = domainParts.join(".");
         }
 
@@ -303,7 +303,7 @@ export async function GET(request: Request) {
             `Erro ao buscar registros DNS no Plesk para ${domainName}:`,
             error
           );
-          let errorDetails: any = {};
+          let errorDetails = {};
           let status = 500;
           if (axios.isAxiosError(error)) {
             errorDetails = error.response?.data || {};
@@ -397,8 +397,8 @@ export async function GET(request: Request) {
             };
 
             if (recordTypeUpper === "MX" && pleskRecord.opt) {
-              const mxPref = parseInt(pleskRecord.opt, 10);
-              if (!isNaN(mxPref)) {
+              const mxPref = Number.parseInt(pleskRecord.opt, 10);
+              if (!Number.isNaN(mxPref)) {
                 namecheapEntry.MXPref = mxPref;
               } else {
                 yield* sendSSE(
@@ -451,7 +451,7 @@ export async function GET(request: Request) {
                 `Erro ao enviar registros DNS para Namecheap para ${domainName}:`,
                 error
               );
-              let errorDetails: any = {};
+              let errorDetails: unknown = {};
               let status = 500;
               if (error instanceof Error && error.message.match(/^\d+$/)) {
                 // Check if error.message is a Namecheap error code
@@ -475,7 +475,7 @@ export async function GET(request: Request) {
           } else if (pleskDnsRecords.length > 0) {
             yield* sendSSE(
               "INFO",
-              `Nenhum registro DNS do Plesk era compatível para sincronização com Namecheap após a transformação.`
+              "Nenhum registro DNS do Plesk era compatível para sincronização com Namecheap após a transformação."
             );
           }
         } else {
@@ -511,10 +511,10 @@ export async function GET(request: Request) {
           "SUCCESS",
           "Instalação do WordPress e configuração inicial concluídas com sucesso!"
         );
-      } catch (error: any) {
+      } catch (error) {
         console.error("Erro geral no processo de instalação:", error);
         let errorMsg = "Erro desconhecido durante a instalação.";
-        let errorDetails: any = {};
+        let errorDetails = {};
         if (axios.isAxiosError(error)) {
           errorDetails = error.response?.data;
           errorMsg = `Erro de API: ${error.response?.data?.message || error.message}`;
@@ -549,7 +549,7 @@ interface PleskCliOutput {
   status?: string;
   admin_url?: string;
   site_url?: string;
-  [key: string]: any;
+  [key: string]: string | number | boolean | undefined | object;
 }
 
 function parsePleskCliResponse(response: CliCallResponse): PleskCliOutput {

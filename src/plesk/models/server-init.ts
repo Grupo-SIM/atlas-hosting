@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import { Admin } from './admin';
+import type { Admin } from './admin';
  /**
  * Initial server setup parameters
  *

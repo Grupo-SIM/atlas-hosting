@@ -12,21 +12,20 @@
  * Do not edit the class manually.
  */
 
-import globalAxios, { AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Configuration } from '../configuration';
+import globalAxios, { type AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import type { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
-import { DnsRecord } from '../models';
-import { DnsRecordRequest } from '../models';
+import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError } from '../base';
+import type { DnsRecord } from '../models';
+import type { DnsRecordRequest } from '../models';
 import { ErrorResponse } from '../models';
-import { StatusResponse } from '../models';
+import type { StatusResponse } from '../models';
 /**
  * DNSApi - axios parameter creator
  * @export
  */
-export const DNSApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
+export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
         /**
          * 
          * @summary Get domain or domain alias DNS records
@@ -76,7 +75,7 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -130,7 +129,7 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -184,7 +183,7 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -245,7 +244,7 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -311,7 +310,7 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -321,15 +320,13 @@ export const DNSApiAxiosParamCreator = function (configuration?: Configuration) 
                 options: localVarRequestOptions,
             };
         },
-    }
-};
+    });
 
 /**
  * DNSApi - functional programming interface
  * @export
  */
-export const DNSApiFp = function(configuration?: Configuration) {
-    return {
+export const DNSApiFp = (configuration?: Configuration) => ({
         /**
          * 
          * @summary Get domain or domain alias DNS records
@@ -402,15 +399,13 @@ export const DNSApiFp = function(configuration?: Configuration) {
                 return axios.request(axiosRequestArgs);
             };
         },
-    }
-};
+    });
 
 /**
  * DNSApi - factory interface
  * @export
  */
-export const DNSApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    return {
+export const DNSApiFactory = (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) => ({
         /**
          * 
          * @summary Get domain or domain alias DNS records
@@ -463,8 +458,7 @@ export const DNSApiFactory = function (configuration?: Configuration, basePath?:
         async dnsRecordsPost(body: DnsRecordRequest, domain: string, options?: AxiosRequestConfig): Promise<AxiosResponse<DnsRecord>> {
             return DNSApiFp(configuration).dnsRecordsPost(body, domain, options).then((request) => request(axios, basePath));
         },
-    };
-};
+    });
 
 /**
  * DNSApi - object-oriented interface

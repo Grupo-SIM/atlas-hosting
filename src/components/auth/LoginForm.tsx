@@ -1,6 +1,6 @@
 "use client";
 
-import { ActionResponse, login } from "@/app/actions"; // Renamed LoginProps to avoid conflict
+import { type ActionResponse, login } from "@/app/actions"; // Renamed LoginProps to avoid conflict
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,7 +44,7 @@ export default function LoginForm() {
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       const isValidClient = await methods.trigger();
-      if (!isValidClient) return;
+      if (!isValidClient) { return; }
 
       const data = getValues();
       setFormError(null);
@@ -67,7 +67,7 @@ export default function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">E-mail</Label>
+        <Label for="email">E-mail</Label>
         <Input
           id="email"
           type="email"
@@ -81,7 +81,7 @@ export default function LoginForm() {
       </div>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="password">Senha</Label>
+          <Label for="password">Senha</Label>
           <Link href="#" className="text-sm text-primary hover:underline">
             Esqueceu a senha?
           </Link>

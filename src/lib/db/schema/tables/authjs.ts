@@ -7,7 +7,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { AdapterAccountType } from "next-auth/adapters";
+import type { AdapterAccountType } from "next-auth/adapters";
 import { pgUser } from "./user";
 
 export const pgAccount = pgTable(

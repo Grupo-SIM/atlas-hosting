@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import { DomainReference } from './domain-reference';
+import type { DomainReference } from './domain-reference';
  /**
  * 
  *

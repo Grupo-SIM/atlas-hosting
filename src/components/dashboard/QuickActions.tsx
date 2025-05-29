@@ -10,7 +10,6 @@ import {
   Server,
   Settings,
   ShoppingCart,
-  PenTool as Tool,
   Train as Transfer,
 } from "lucide-react";
 import Link from "next/link";
@@ -27,7 +26,7 @@ export function QuickActions() {
           <Button
             variant="outline"
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild
+            asChild={true}
           >
             <Link href="/plans">
               <ShoppingCart className="h-10 w-10 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
@@ -45,7 +44,7 @@ export function QuickActions() {
           <Button
             variant="outline"
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild
+            asChild={true}
           >
             <Link href="/hosting/premium">
               <Server className="h-10 w-10 text-purple-500 mb-4 group-hover:scale-110 transition-transform" />
@@ -63,7 +62,7 @@ export function QuickActions() {
           <Button
             variant="outline"
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild
+            asChild={true}
           >
             <Link href="/sites/new">
               <Plus className="h-10 w-10 text-green-500 mb-4 group-hover:scale-110 transition-transform" />
@@ -81,7 +80,7 @@ export function QuickActions() {
           <Button
             variant="outline"
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild
+            asChild={true}
           >
             <Link href="/email">
               <Mail className="h-10 w-10 text-orange-500 mb-4 group-hover:scale-110 transition-transform" />
@@ -97,7 +96,7 @@ export function QuickActions() {
           <Button
             variant="outline"
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild
+            asChild={true}
           >
             <Link href="/wordpress">
               <Settings className="h-10 w-10 text-indigo-500 mb-4 group-hover:scale-110 transition-transform" />
@@ -115,7 +114,7 @@ export function QuickActions() {
           <Button
             variant="outline"
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild
+            asChild={true}
           >
             <Link href="/cpanel">
               <Settings className="h-10 w-10 text-red-500 mb-4 group-hover:scale-110 transition-transform" />
@@ -139,7 +138,7 @@ export function QuickActions() {
           <Button
             variant="outline"
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild
+            asChild={true}
           >
             <Link href="/domains">
               <Globe className="h-10 w-10 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
@@ -155,7 +154,7 @@ export function QuickActions() {
           <Button
             variant="outline"
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild
+            asChild={true}
           >
             <Link href="/domains/register">
               <ShoppingCart className="h-10 w-10 text-green-500 mb-4 group-hover:scale-110 transition-transform" />
@@ -173,7 +172,7 @@ export function QuickActions() {
           <Button
             variant="outline"
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild
+            asChild={true}
           >
             <Link href="/domains/dns">
               <Transfer className="h-10 w-10 text-orange-500 mb-4 group-hover:scale-110 transition-transform" />
@@ -195,7 +194,7 @@ export function QuickActions() {
           <Button
             variant="outline"
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild
+            asChild={true}
           >
             <Link href="/billing/subscriptions">
               <CreditCard className="h-10 w-10 text-purple-500 mb-4 group-hover:scale-110 transition-transform" />
@@ -211,7 +210,7 @@ export function QuickActions() {
           <Button
             variant="outline"
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild
+            asChild={true}
           >
             <Link href="/billing/history">
               <History className="h-10 w-10 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />

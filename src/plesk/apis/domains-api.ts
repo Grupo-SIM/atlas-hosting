@@ -12,23 +12,22 @@
  * Do not edit the class manually.
  */
 
-import globalAxios, { AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Configuration } from '../configuration';
+import globalAxios, { type AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import type { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
-import { Client } from '../models';
-import { CreatedResponse } from '../models';
-import { DomainRequest } from '../models';
-import { DomainResponse } from '../models';
-import { DomainStatus } from '../models';
+import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError } from '../base';
+import type { Client } from '../models';
+import type { CreatedResponse } from '../models';
+import type { DomainRequest } from '../models';
+import type { DomainResponse } from '../models';
+import type { DomainStatus } from '../models';
 import { ErrorResponse } from '../models';
 /**
  * DomainsApi - axios parameter creator
  * @export
  */
-export const DomainsApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
+export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
         /**
          * 
          * @summary List all domains
@@ -74,7 +73,7 @@ export const DomainsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -128,7 +127,7 @@ export const DomainsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -182,7 +181,7 @@ export const DomainsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -236,7 +235,7 @@ export const DomainsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -297,7 +296,7 @@ export const DomainsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -353,7 +352,7 @@ export const DomainsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -414,7 +413,7 @@ export const DomainsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -471,7 +470,7 @@ export const DomainsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -481,15 +480,13 @@ export const DomainsApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
-    }
-};
+    });
 
 /**
  * DomainsApi - functional programming interface
  * @export
  */
-export const DomainsApiFp = function(configuration?: Configuration) {
-    return {
+export const DomainsApiFp = (configuration?: Configuration) => ({
         /**
          * 
          * @summary List all domains
@@ -604,15 +601,13 @@ export const DomainsApiFp = function(configuration?: Configuration) {
                 return axios.request(axiosRequestArgs);
             };
         },
-    }
-};
+    });
 
 /**
  * DomainsApi - factory interface
  * @export
  */
-export const DomainsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    return {
+export const DomainsApiFactory = (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) => ({
         /**
          * 
          * @summary List all domains
@@ -695,8 +690,7 @@ export const DomainsApiFactory = function (configuration?: Configuration, basePa
         async domainsPost(body: DomainRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<CreatedResponse>> {
             return DomainsApiFp(configuration).domainsPost(body, options).then((request) => request(axios, basePath));
         },
-    };
-};
+    });
 
 /**
  * DomainsApi - object-oriented interface

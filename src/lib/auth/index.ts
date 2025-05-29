@@ -4,7 +4,7 @@ import {
   pgSession,
   pgUser,
   pgWallet,
-  SessionInsert,
+  type SessionInsert,
   type Session,
   type User,
 } from "@/lib/db/schema";
@@ -17,10 +17,10 @@ import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { cache } from "react";
 import { hash, hashWithEncodeKey, verify } from "./scrypt";
-import { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
+import type { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import { randomBytes } from "@noble/hashes/utils";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
-import { AppLogger } from "../server/logs";
+import type { AppLogger } from "../server/logs";
 
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);

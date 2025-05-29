@@ -15,7 +15,7 @@ export function toBrl(value: number): string {
   });
 }
 
-export function isValidCPF(cpf: string = "") {
+export function isValidCPF(cpf = "") {
   let sum = 0,
     remainder;
 
@@ -24,24 +24,24 @@ export function isValidCPF(cpf: string = "") {
   if (cpf.length != 11 || new Set(cpf).size === 1) return false;
 
   for (let i = 1; i <= 9; i++)
-    sum = sum + parseInt(cpf.substring(i - 1, i)) * (11 - i);
+    sum = sum + Number.parseInt(cpf.substring(i - 1, i)) * (11 - i);
   remainder = (sum * 10) % 11;
 
   if (remainder == 10 || remainder == 11) remainder = 0;
-  if (remainder != parseInt(cpf.substring(9, 10))) return false;
+  if (remainder != Number.parseInt(cpf.substring(9, 10))) return false;
 
   sum = 0;
   for (let i = 1; i <= 10; i++)
-    sum = sum + parseInt(cpf.substring(i - 1, i)) * (12 - i);
+    sum = sum + Number.parseInt(cpf.substring(i - 1, i)) * (12 - i);
   remainder = (sum * 10) % 11;
 
   if (remainder == 10 || remainder == 11) remainder = 0;
-  if (remainder != parseInt(cpf.substring(10, 11))) return false;
+  if (remainder != Number.parseInt(cpf.substring(10, 11))) return false;
 
   return true;
 }
 
-export function isValidCNPJ(cnpj: string = "") {
+export function isValidCNPJ(cnpj = "") {
   cnpj = `${cnpj}`.replace(/^\D+/gim, "");
 
   if (cnpj.length != 14 || new Set(cnpj).size === 1) return false;
@@ -86,7 +86,7 @@ export const intersperse = <T>(arr: T[], separator: (n: number) => T): T[] =>
     ];
   }, []);
 
-export function generateRandomPassword(length: number = 16) {
+export function generateRandomPassword(length = 16) {
   const chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+";
   let password = "";

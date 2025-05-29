@@ -12,25 +12,24 @@
  * Do not edit the class manually.
  */
 
-import globalAxios, { AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Configuration } from '../configuration';
+import globalAxios, { type AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import type { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
-import { Client } from '../models';
-import { ClientRequest } from '../models';
-import { ClientStatistics } from '../models';
-import { ClientUpdateRequest } from '../models';
-import { CreatedResponse } from '../models';
-import { DomainResponse } from '../models';
+import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError } from '../base';
+import type { Client } from '../models';
+import type { ClientRequest } from '../models';
+import type { ClientStatistics } from '../models';
+import type { ClientUpdateRequest } from '../models';
+import type { CreatedResponse } from '../models';
+import type { DomainResponse } from '../models';
 import { ErrorResponse } from '../models';
-import { StatusResponse } from '../models';
+import type { StatusResponse } from '../models';
 /**
  * ClientsApi - axios parameter creator
  * @export
  */
-export const ClientsApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
+export const ClientsApiAxiosParamCreator = (configuration?: Configuration) => ({
         /**
          * 
          * @summary List all clients
@@ -71,7 +70,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -125,7 +124,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -179,7 +178,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -233,7 +232,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -287,7 +286,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -348,7 +347,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -404,7 +403,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -458,7 +457,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -513,7 +512,7 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -523,15 +522,13 @@ export const ClientsApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
-    }
-};
+    });
 
 /**
  * ClientsApi - functional programming interface
  * @export
  */
-export const ClientsApiFp = function(configuration?: Configuration) {
-    return {
+export const ClientsApiFp = (configuration?: Configuration) => ({
         /**
          * 
          * @summary List all clients
@@ -658,15 +655,13 @@ export const ClientsApiFp = function(configuration?: Configuration) {
                 return axios.request(axiosRequestArgs);
             };
         },
-    }
-};
+    });
 
 /**
  * ClientsApi - factory interface
  * @export
  */
-export const ClientsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    return {
+export const ClientsApiFactory = (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) => ({
         /**
          * 
          * @summary List all clients
@@ -757,8 +752,7 @@ export const ClientsApiFactory = function (configuration?: Configuration, basePa
         async clientsPost(body: ClientRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<CreatedResponse>> {
             return ClientsApiFp(configuration).clientsPost(body, options).then((request) => request(axios, basePath));
         },
-    };
-};
+    });
 
 /**
  * ClientsApi - object-oriented interface

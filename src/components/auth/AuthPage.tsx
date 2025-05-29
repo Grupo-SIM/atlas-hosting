@@ -75,8 +75,8 @@ export default function AuthPage({
 
         {/* Background decoration */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute right-0 top-0 w-96 h-96 bg-blue-500 rounded-full filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-          <div className="absolute left-0 bottom-0 w-96 h-96 bg-violet-500 rounded-full filter blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2"></div>
+          <div className="absolute right-0 top-0 w-96 h-96 bg-blue-500 rounded-full filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute left-0 bottom-0 w-96 h-96 bg-violet-500 rounded-full filter blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2" />
         </div>
       </div>
 

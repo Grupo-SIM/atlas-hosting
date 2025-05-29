@@ -9,10 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
-  FaCheck,
-  FaCircleCheck,
   FaMoneyBillTransfer,
-  FaMoneyCheck,
 } from "react-icons/fa6";
 
 export default function PaymentSuccessPage() {
@@ -37,7 +34,7 @@ export default function PaymentSuccessPage() {
           </p>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <Button asChild>
+          <Button asChild={true}>
             <Link href="/">Voltar para a Página Inicial</Link>
           </Button>
         </CardFooter>

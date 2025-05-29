@@ -12,21 +12,20 @@
  * Do not edit the class manually.
  */
 
-import globalAxios, { AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Configuration } from '../configuration';
+import globalAxios, { type AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import type { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
+import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError } from '../base';
 import { ErrorResponse } from '../models';
-import { SecretKeyRequest } from '../models';
-import { SecretKeyResponse } from '../models';
-import { StatusResponse } from '../models';
+import type { SecretKeyRequest } from '../models';
+import type { SecretKeyResponse } from '../models';
+import type { StatusResponse } from '../models';
 /**
  * AuthenticationApi - axios parameter creator
  * @export
  */
-export const AuthenticationApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
+export const AuthenticationApiAxiosParamCreator = (configuration?: Configuration) => ({
         /**
          * 
          * @summary Delete a secret key
@@ -73,7 +72,7 @@ export const AuthenticationApiAxiosParamCreator = function (configuration?: Conf
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -128,7 +127,7 @@ export const AuthenticationApiAxiosParamCreator = function (configuration?: Conf
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -138,15 +137,13 @@ export const AuthenticationApiAxiosParamCreator = function (configuration?: Conf
                 options: localVarRequestOptions,
             };
         },
-    }
-};
+    });
 
 /**
  * AuthenticationApi - functional programming interface
  * @export
  */
-export const AuthenticationApiFp = function(configuration?: Configuration) {
-    return {
+export const AuthenticationApiFp = (configuration?: Configuration) => ({
         /**
          * 
          * @summary Delete a secret key
@@ -175,15 +172,13 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
                 return axios.request(axiosRequestArgs);
             };
         },
-    }
-};
+    });
 
 /**
  * AuthenticationApi - factory interface
  * @export
  */
-export const AuthenticationApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    return {
+export const AuthenticationApiFactory = (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) => ({
         /**
          * 
          * @summary Delete a secret key
@@ -204,8 +199,7 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
         async authKeysPost(body: SecretKeyRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<SecretKeyResponse>> {
             return AuthenticationApiFp(configuration).authKeysPost(body, options).then((request) => request(axios, basePath));
         },
-    };
-};
+    });
 
 /**
  * AuthenticationApi - object-oriented interface

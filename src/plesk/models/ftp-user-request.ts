@@ -12,8 +12,8 @@
  * Do not edit the class manually.
  */
 
-import { DomainReference } from './domain-reference';
-import { FtpUserRequestPermissions } from './ftp-user-request-permissions';
+import type { DomainReference } from './domain-reference';
+import type { FtpUserRequestPermissions } from './ftp-user-request-permissions';
  /**
  * 
  *

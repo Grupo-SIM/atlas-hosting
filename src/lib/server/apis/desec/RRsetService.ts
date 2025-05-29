@@ -1,7 +1,7 @@
 // src/services/RRsetService.ts
 
-import { DeSECClient } from "./DeSECClient";
-import {
+import type { DeSECClient } from "./DeSECClient";
+import type {
   RRset,
   CreateRRsetPayload,
   ModifyRRsetPayload,

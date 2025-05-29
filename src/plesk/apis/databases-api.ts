@@ -12,25 +12,24 @@
  * Do not edit the class manually.
  */
 
-import globalAxios, { AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Configuration } from '../configuration';
+import globalAxios, { type AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import type { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
-import { Database } from '../models';
-import { DatabaseRequest } from '../models';
-import { DatabaseServer } from '../models';
-import { DatabaseUser } from '../models';
-import { DatabaseUserRequest } from '../models';
-import { DatabaseUserUpdateRequest } from '../models';
+import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError } from '../base';
+import type { Database } from '../models';
+import type { DatabaseRequest } from '../models';
+import type { DatabaseServer } from '../models';
+import type { DatabaseUser } from '../models';
+import type { DatabaseUserRequest } from '../models';
+import type { DatabaseUserUpdateRequest } from '../models';
 import { ErrorResponse } from '../models';
-import { StatusResponse } from '../models';
+import type { StatusResponse } from '../models';
 /**
  * DatabasesApi - axios parameter creator
  * @export
  */
-export const DatabasesApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
+export const DatabasesApiAxiosParamCreator = (configuration?: Configuration) => ({
         /**
          * 
          * @summary Get databases
@@ -76,7 +75,7 @@ export const DatabasesApiAxiosParamCreator = function (configuration?: Configura
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -130,7 +129,7 @@ export const DatabasesApiAxiosParamCreator = function (configuration?: Configura
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -185,7 +184,7 @@ export const DatabasesApiAxiosParamCreator = function (configuration?: Configura
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -240,7 +239,7 @@ export const DatabasesApiAxiosParamCreator = function (configuration?: Configura
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -293,7 +292,7 @@ export const DatabasesApiAxiosParamCreator = function (configuration?: Configura
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -347,7 +346,7 @@ export const DatabasesApiAxiosParamCreator = function (configuration?: Configura
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -408,7 +407,7 @@ export const DatabasesApiAxiosParamCreator = function (configuration?: Configura
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -465,7 +464,7 @@ export const DatabasesApiAxiosParamCreator = function (configuration?: Configura
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -475,15 +474,13 @@ export const DatabasesApiAxiosParamCreator = function (configuration?: Configura
                 options: localVarRequestOptions,
             };
         },
-    }
-};
+    });
 
 /**
  * DatabasesApi - functional programming interface
  * @export
  */
-export const DatabasesApiFp = function(configuration?: Configuration) {
-    return {
+export const DatabasesApiFp = (configuration?: Configuration) => ({
         /**
          * 
          * @summary Get databases
@@ -597,15 +594,13 @@ export const DatabasesApiFp = function(configuration?: Configuration) {
                 return axios.request(axiosRequestArgs);
             };
         },
-    }
-};
+    });
 
 /**
  * DatabasesApi - factory interface
  * @export
  */
-export const DatabasesApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    return {
+export const DatabasesApiFactory = (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) => ({
         /**
          * 
          * @summary Get databases
@@ -687,8 +682,7 @@ export const DatabasesApiFactory = function (configuration?: Configuration, base
         async dbusersPost(body: DatabaseUserRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<DatabaseUser>> {
             return DatabasesApiFp(configuration).dbusersPost(body, options).then((request) => request(axios, basePath));
         },
-    };
-};
+    });
 
 /**
  * DatabasesApi - object-oriented interface

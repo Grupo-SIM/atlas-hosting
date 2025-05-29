@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as crypto from "crypto";
 import axios from "axios";
-import { WithDrawFundsParams } from "./types";
+import type { WithDrawFundsParams } from "./types";
 
 /**
  * Função para assinar um payload com uma chave privada

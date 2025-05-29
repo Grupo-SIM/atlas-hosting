@@ -12,22 +12,21 @@
  * Do not edit the class manually.
  */
 
-import globalAxios, { AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Configuration } from '../configuration';
+import globalAxios, { type AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import type { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
+import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError } from '../base';
 import { ErrorResponse } from '../models';
-import { FtpUser } from '../models';
-import { FtpUserRequest } from '../models';
-import { FtpUserUpdateRequest } from '../models';
-import { StatusResponse } from '../models';
+import type { FtpUser } from '../models';
+import type { FtpUserRequest } from '../models';
+import type { FtpUserUpdateRequest } from '../models';
+import type { StatusResponse } from '../models';
 /**
  * FtpUsersApi - axios parameter creator
  * @export
  */
-export const FtpUsersApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
+export const FtpUsersApiAxiosParamCreator = (configuration?: Configuration) => ({
         /**
          * 
          * @summary Get FTP users
@@ -78,7 +77,7 @@ export const FtpUsersApiAxiosParamCreator = function (configuration?: Configurat
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -132,7 +131,7 @@ export const FtpUsersApiAxiosParamCreator = function (configuration?: Configurat
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -193,7 +192,7 @@ export const FtpUsersApiAxiosParamCreator = function (configuration?: Configurat
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -250,7 +249,7 @@ export const FtpUsersApiAxiosParamCreator = function (configuration?: Configurat
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -260,15 +259,13 @@ export const FtpUsersApiAxiosParamCreator = function (configuration?: Configurat
                 options: localVarRequestOptions,
             };
         },
-    }
-};
+    });
 
 /**
  * FtpUsersApi - functional programming interface
  * @export
  */
-export const FtpUsersApiFp = function(configuration?: Configuration) {
-    return {
+export const FtpUsersApiFp = (configuration?: Configuration) => ({
         /**
          * 
          * @summary Get FTP users
@@ -327,15 +324,13 @@ export const FtpUsersApiFp = function(configuration?: Configuration) {
                 return axios.request(axiosRequestArgs);
             };
         },
-    }
-};
+    });
 
 /**
  * FtpUsersApi - factory interface
  * @export
  */
-export const FtpUsersApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    return {
+export const FtpUsersApiFactory = (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) => ({
         /**
          * 
          * @summary Get FTP users
@@ -378,8 +373,7 @@ export const FtpUsersApiFactory = function (configuration?: Configuration, baseP
         async ftpusersPost(body: FtpUserRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<FtpUser>> {
             return FtpUsersApiFp(configuration).ftpusersPost(body, options).then((request) => request(axios, basePath));
         },
-    };
-};
+    });
 
 /**
  * FtpUsersApi - object-oriented interface

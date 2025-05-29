@@ -1,6 +1,6 @@
 "use client";
 
-import { DomainData } from "@/app/(authenticated)/(dashboard)/domains/register/page";
+import type { DomainData } from "@/app/(authenticated)/(dashboard)/domains/register/page";
 import { createDomainInvoice } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { startTransition, useActionState, useCallback } from "react";
@@ -8,7 +8,7 @@ import { startTransition, useActionState, useCallback } from "react";
 export default function RegisterDomainForm({
   domainData,
 }: RegisterDomainButtonProps) {
-  const [state, doCreateInvoice, isPending] = useActionState(
+  const [_state, doCreateInvoice, isPending] = useActionState(
     createDomainInvoice,
     {
       status: "idle" as "error" | "success" | "idle",
@@ -33,13 +33,13 @@ export default function RegisterDomainForm({
         type="hidden"
         name="domainName"
         value={domainData.domain.domain}
-        readOnly
+        readOnly={true}
       />
       <input
         type="hidden"
         name="isPremium"
         value={domainData.domain.isPremium.toString()}
-        readOnly
+        readOnly={true}
       />
       <Button
         isLoading={isPending}

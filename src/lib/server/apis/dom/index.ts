@@ -1,15 +1,15 @@
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema";
-import axios, { AxiosInstance } from "axios";
+import axios, { type AxiosInstance } from "axios";
 import { eq } from "drizzle-orm";
 import {
-  CreateClientParams,
-  CreateRecurrentPaymentParams,
-  CreateSubscriptionParams,
-  PixKeyType,
-  WithDrawFundsParams,
+  type CreateClientParams,
+  type CreateRecurrentPaymentParams,
+  type CreateSubscriptionParams,
+  type PixKeyType,
+  type WithDrawFundsParams,
   Receiver,
-  PayloadWebhook,
+  type PayloadWebhook,
 } from "./types";
 import { signPayload } from "./signature";
 import jwt from "jsonwebtoken";

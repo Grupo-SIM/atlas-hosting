@@ -23,7 +23,7 @@ const inputClasses =
 const domPk = process.env.NEXT_PUBLIC_DOM_PUBLIC_KEY ?? "";
 
 export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
-  const [state, doCompleteCheckout, isPending] = useActionState(
+  const [_state, doCompleteCheckout, isPending] = useActionState(
     completeCheckout,
     {
       status: "idle" as "error" | "success" | "idle",
@@ -43,14 +43,14 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
 
   const { errors, isValid, isValidating } = useFormState({ control });
 
-  const [formError, setFormError] = useState<string | null>(null);
-  const [cardToken, setCardToken] = useState<string>();
+  const [formError, _setFormError] = useState<string | null>(null);
+  const [cardToken, _setCardToken] = useState<string>();
 
   const onSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
-      const public_key = domPk ?? "";
+      const _publicKey = domPk ?? "";
       const values = getValues();
       const {
         fullName,
@@ -65,7 +65,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
 
       const cardNumber = values.cardNumber.replace(/\D/g, "");
 
-      const dataCard = {
+      const _dataCard = {
         name: fullName,
         document: document,
         number: cardNumber,
@@ -74,7 +74,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
         year,
       };
 
-      const installments = 1;
+      const _installments = 1;
 
       try {
         startTransition(() => {
@@ -97,7 +97,6 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
         // });
       } catch {
         toast("Dados de cartão inválido");
-        console.log("Dados de cartão inválido");
       }
     },
     [doCompleteCheckout, getValues, invoiceId]
@@ -108,10 +107,10 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
       <Script
         type="text/javascript"
         src="https://hml-apiv3.dompagamentos.com.br/js/sdk-dompagamentos.min.js"
-      ></Script>
+      />
       <form onSubmit={onSubmit} className="space-y-2">
         <div className="space-y-2">
-          <Label htmlFor="fullName">Nome completo</Label>
+          <Label for="fullName">Nome completo</Label>
           <Input // Standard input for non-masked field
             id="fullName"
             type="text"
@@ -125,7 +124,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="document">CPF ou CNPJ</Label>
+          <Label for="document">CPF ou CNPJ</Label>
           <Controller
             name="document"
             control={control}
@@ -149,7 +148,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phoneNumber">Telefone</Label>
+          <Label for="phoneNumber">Telefone</Label>
           <Controller
             name="phoneNumber"
             control={control}
@@ -171,7 +170,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
         </div>
         <hr className="my-4" />
         <div className="space-y-2">
-          <Label htmlFor="address.zipCode">CEP</Label>
+          <Label for="address.zipCode">CEP</Label>
           <Controller
             name="address.zipCode"
             control={control}
@@ -195,7 +194,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="space-y-2 col-span-2">
-            <Label htmlFor="address.street">Rua</Label>
+            <Label for="address.street">Rua</Label>
             <Input
               id="address.street"
               type="text"
@@ -211,7 +210,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="address.number">Número</Label>
+            <Label for="address.number">Número</Label>
             <Input
               id="address.number"
               type="text"
@@ -227,7 +226,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="address.neighborhood">Bairro</Label>
+          <Label for="address.neighborhood">Bairro</Label>
           <Input
             id="address.neighborhood"
             type="text"
@@ -243,7 +242,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
         </div>
         <div className="grid grid-cols-5 gap-2">
           <div className="space-y-2 col-span-3">
-            <Label htmlFor="address.city">Cidade</Label>
+            <Label for="address.city">Cidade</Label>
             <Input
               id="address.city"
               type="text"
@@ -258,7 +257,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
             )}
           </div>
           <div className="space-y-2 col-span-2">
-            <Label htmlFor="address.state">Estado</Label>
+            <Label for="address.state">Estado</Label>
             <Controller
               name="address.state"
               control={control}
@@ -285,7 +284,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
         <hr className="my-4" />
         <div className="grid grid-cols-4 gap-2">
           <div className="space-y-2 col-span-2">
-            <Label htmlFor="cardNumber">Número do Cartão</Label>
+            <Label for="cardNumber">Número do Cartão</Label>
             <Controller
               name="cardNumber"
               control={control}
@@ -308,7 +307,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cardCvv">CVV</Label>
+            <Label for="cardCvv">CVV</Label>
             <Controller
               name="cardCvv"
               control={control}
@@ -329,7 +328,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cardExpiration">Data de Validade</Label>
+            <Label for="cardExpiration">Data de Validade</Label>
             <Controller
               name="cardExpiration"
               control={control}
@@ -410,7 +409,7 @@ const schema = yup
     phoneNumber: yup
       .string()
       .required("Número de telefone é obrigatório")
-      .transform((value) => "55" + value.replace(/\D/g, ""))
+      .transform((value) => `55${value.replace(/\D/g, "")}`)
       .test({
         test: (value) => isValidPhoneNumber(value, "BR"),
         message: "Número de telefone inválido",

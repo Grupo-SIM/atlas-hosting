@@ -12,21 +12,20 @@
  * Do not edit the class manually.
  */
 
-import globalAxios, { AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Configuration } from '../configuration';
+import globalAxios, { type AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import type { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
+import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError } from '../base';
 import { ErrorResponse } from '../models';
-import { Extension } from '../models';
-import { ExtensionInstallRequest } from '../models';
-import { StatusResponse } from '../models';
+import type { Extension } from '../models';
+import type { ExtensionInstallRequest } from '../models';
+import type { StatusResponse } from '../models';
 /**
  * ExtensionsApi - axios parameter creator
  * @export
  */
-export const ExtensionsApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
+export const ExtensionsApiAxiosParamCreator = (configuration?: Configuration) => ({
         /**
          * 
          * @summary List of installed Extensions
@@ -67,7 +66,7 @@ export const ExtensionsApiAxiosParamCreator = function (configuration?: Configur
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -121,7 +120,7 @@ export const ExtensionsApiAxiosParamCreator = function (configuration?: Configur
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -175,7 +174,7 @@ export const ExtensionsApiAxiosParamCreator = function (configuration?: Configur
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -229,7 +228,7 @@ export const ExtensionsApiAxiosParamCreator = function (configuration?: Configur
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -283,7 +282,7 @@ export const ExtensionsApiAxiosParamCreator = function (configuration?: Configur
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -338,7 +337,7 @@ export const ExtensionsApiAxiosParamCreator = function (configuration?: Configur
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -348,15 +347,13 @@ export const ExtensionsApiAxiosParamCreator = function (configuration?: Configur
                 options: localVarRequestOptions,
             };
         },
-    }
-};
+    });
 
 /**
  * ExtensionsApi - functional programming interface
  * @export
  */
-export const ExtensionsApiFp = function(configuration?: Configuration) {
-    return {
+export const ExtensionsApiFp = (configuration?: Configuration) => ({
         /**
          * 
          * @summary List of installed Extensions
@@ -440,15 +437,13 @@ export const ExtensionsApiFp = function(configuration?: Configuration) {
                 return axios.request(axiosRequestArgs);
             };
         },
-    }
-};
+    });
 
 /**
  * ExtensionsApi - factory interface
  * @export
  */
-export const ExtensionsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    return {
+export const ExtensionsApiFactory = (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) => ({
         /**
          * 
          * @summary List of installed Extensions
@@ -508,8 +503,7 @@ export const ExtensionsApiFactory = function (configuration?: Configuration, bas
         async extensionsPost(body: ExtensionInstallRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<StatusResponse>> {
             return ExtensionsApiFp(configuration).extensionsPost(body, options).then((request) => request(axios, basePath));
         },
-    };
-};
+    });
 
 /**
  * ExtensionsApi - object-oriented interface

@@ -1,15 +1,11 @@
 import { Button } from "@/components/ui/button";
-import type { getUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { pgPlan, User } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import type { User } from "@/lib/db/schema";
 import { PlusCircle } from "lucide-react";
 import { Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
-import { Badge } from "../ui/badge";
 import {
   getUserCurrentDomain,
-  getUserDomainsWithNamecheap,
+  getUserDomains,
 } from "@/lib/server/utils";
 import DomainSelector from "../domains/DomainSelector";
 
@@ -51,7 +47,7 @@ async function UserName({ user }: WelcomeHeaderProps) {
 async function UserSiteLabel({ user }: WelcomeHeaderProps) {
   const userData = await user;
 
-  const domains = await getUserDomainsWithNamecheap(userData.id);
+  const domains = await getUserDomains(userData.id);
   const selectedDomain = await getUserCurrentDomain(userData);
 
   if (!selectedDomain) {

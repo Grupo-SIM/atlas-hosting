@@ -12,23 +12,22 @@
  * Do not edit the class manually.
  */
 
-import globalAxios, { AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Configuration } from '../configuration';
+import globalAxios, { type AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import type { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
+import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError } from '../base';
 import { ErrorResponse } from '../models';
-import { ServerInit } from '../models';
-import { ServerIp } from '../models';
-import { ServerLicense } from '../models';
-import { ServerMeta } from '../models';
-import { StatusResponse } from '../models';
+import type { ServerInit } from '../models';
+import type { ServerIp } from '../models';
+import type { ServerLicense } from '../models';
+import type { ServerMeta } from '../models';
+import type { StatusResponse } from '../models';
 /**
  * ServerApi - axios parameter creator
  * @export
  */
-export const ServerApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
+export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
         /**
          * 
          * @summary Server Meta Information
@@ -69,7 +68,7 @@ export const ServerApiAxiosParamCreator = function (configuration?: Configuratio
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -124,7 +123,7 @@ export const ServerApiAxiosParamCreator = function (configuration?: Configuratio
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -174,7 +173,7 @@ export const ServerApiAxiosParamCreator = function (configuration?: Configuratio
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -229,7 +228,7 @@ export const ServerApiAxiosParamCreator = function (configuration?: Configuratio
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -239,15 +238,13 @@ export const ServerApiAxiosParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
-    }
-};
+    });
 
 /**
  * ServerApi - functional programming interface
  * @export
  */
-export const ServerApiFp = function(configuration?: Configuration) {
-    return {
+export const ServerApiFp = (configuration?: Configuration) => ({
         /**
          * 
          * @summary Server Meta Information
@@ -302,15 +299,13 @@ export const ServerApiFp = function(configuration?: Configuration) {
                 return axios.request(axiosRequestArgs);
             };
         },
-    }
-};
+    });
 
 /**
  * ServerApi - factory interface
  * @export
  */
-export const ServerApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    return {
+export const ServerApiFactory = (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) => ({
         /**
          * 
          * @summary Server Meta Information
@@ -349,8 +344,7 @@ export const ServerApiFactory = function (configuration?: Configuration, basePat
         async serverLicensePost(body: ServerLicense, options?: AxiosRequestConfig): Promise<AxiosResponse<StatusResponse>> {
             return ServerApiFp(configuration).serverLicensePost(body, options).then((request) => request(axios, basePath));
         },
-    };
-};
+    });
 
 /**
  * ServerApi - object-oriented interface

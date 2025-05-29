@@ -1,6 +1,6 @@
 import { signInWithGoogle } from "@/app/actions";
 import { FaGoogle } from "react-icons/fa6";
-import { Button } from "../ui/button";
+import { Button } from "../ui/button.ts";
 
 export default function GoogleAuthButton() {
   return (

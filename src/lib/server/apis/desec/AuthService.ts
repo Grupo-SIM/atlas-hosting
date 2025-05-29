@@ -1,5 +1,5 @@
-import { DeSECClient } from "./DeSECClient";
-import {
+import type { DeSECClient } from "./DeSECClient";
+import type {
   AccountInfo,
   CaptchaResponse,
   ChangeEmailPayload,

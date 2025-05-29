@@ -1,4 +1,4 @@
-import { type DomainData } from "@/app/(authenticated)/(dashboard)/domains/register/page";
+import type { DomainData } from "@/app/(authenticated)/(dashboard)/domains/register/page";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,8 +20,7 @@ export async function DomainSuggestions({
   const domainData = await domainDataPromise;
 
   if (
-    !domainData ||
-    !domainData.extraDomains ||
+    !(domainData?.extraDomains ) ||
     domainData.extraDomains.length === 0
   ) {
     return (

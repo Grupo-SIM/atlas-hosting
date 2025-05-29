@@ -12,10 +12,10 @@
  * Do not edit the class manually.
  */
 
-import { Configuration } from "./configuration";
+import type { Configuration } from "./configuration";
 // Some imports not used depending on template conditions
 // @ts-ignore
-import globalAxios, { AxiosRequestConfig, AxiosInstance } from 'axios';
+import globalAxios, { type AxiosRequestConfig, type AxiosInstance } from 'axios';
 
 export const BASE_PATH = "/api/v2".replace(/\/+$/, "");
 
@@ -63,7 +63,7 @@ export class BaseAPI {
  * @extends {Error}
  */
 export class RequiredError extends Error {
-    name: "RequiredError" = "RequiredError";
+    name = "RequiredError" as const;
     constructor(public field: string, msg?: string) {
         super(msg);
     }

@@ -1,5 +1,5 @@
-import { signIn } from "@/auth";
-import { Button } from "../ui/button";
+
+import { Button } from "../ui/button.ts";
 import { FaGithub } from "react-icons/fa6";
 import { signInWithGithub } from "@/app/actions";
 

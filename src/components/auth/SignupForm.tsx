@@ -16,8 +16,8 @@ import {
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import * as yup from "yup";
-import GithubAuthButton from "./GithubAuthButton";
-import GoogleAuthButton from "./GoogleAuthButton";
+import GithubAuthButton from "./GithubAuthButton.tsx";
+import GoogleAuthButton from "./GoogleAuthButton.tsx";
 
 export default function SignupForm() {
   const { register, handleSubmit, control, ...methods } =
@@ -65,7 +65,7 @@ export default function SignupForm() {
     <>
       <form onSubmit={onSubmit} className="space-y-2">
         <div className="space-y-2">
-          <Label htmlFor="fullName">Nome completo</Label>
+          <Label for="fullName">Nome completo</Label>
           <Input
             type="text"
             placeholder="Seu nome completo"
@@ -77,7 +77,7 @@ export default function SignupForm() {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">E-mail</Label>
+          <Label for="email">E-mail</Label>
           <Input
             type="email"
             placeholder="exemplo@exemplo.com"
@@ -89,7 +89,7 @@ export default function SignupForm() {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Senha</Label>
+          <Label for="password">Senha</Label>
           <Input
             type="password"
             autoComplete="new-password"
@@ -100,7 +100,7 @@ export default function SignupForm() {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+          <Label for="confirmPassword">Confirmar Senha</Label>
           <Input
             type="password"
             autoComplete="new-password"

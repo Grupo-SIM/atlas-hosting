@@ -1,4 +1,4 @@
-import axios, { AxiosError, isAxiosError, type AxiosInstance } from "axios";
+import axios, { type AxiosError, isAxiosError, type AxiosInstance } from "axios";
 import { ZohoOAuthManager, zohoOAuthManager } from "./oauth";
 import { isBefore } from "date-fns";
 
@@ -401,7 +401,7 @@ export class ZohoMailApi {
     orgId: string,
     emailAddress: string,
     forwardTo: string,
-    enabled: boolean = true
+    enabled = true
   ) {
     try {
       const response = await this.axiosInstance.put(
@@ -423,7 +423,7 @@ export class ZohoMailApi {
     orgId: string,
     emailAddress: string,
     message: string,
-    enabled: boolean = true,
+    enabled = true,
     startDate?: Date,
     endDate?: Date
   ) {

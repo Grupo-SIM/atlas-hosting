@@ -7,22 +7,14 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  BadgeAlert as Alert,
-  Settings,
-  UserPlus,
-  FileText,
   Server,
-  Globe,
   Info,
   AlertTriangle,
   XCircle,
   CheckCircle,
   Shield,
   User,
-  Database,
-  HardDrive,
-  Link,
-  LucideIcon,
+  type LucideIcon,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { pgLog } from "@/lib/db/schema";

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { LogInsert, pgLog, User } from "@/lib/db/schema";
+import { type LogInsert, pgLog, type User } from "@/lib/db/schema";
 import EventEmitter from "events";
 
 class AppLoggerQueue {

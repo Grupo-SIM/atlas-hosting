@@ -2,7 +2,7 @@
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import axios, { type AxiosInstance, type AxiosResponse } from "axios";
 import { parseStringPromise } from "xml2js";
 import type {
   DomainCheckResultItem,
@@ -46,7 +46,7 @@ import type {
 } from "./types";
 import { isString } from "lodash";
 import { isBefore, startOfToday, startOfTomorrow } from "date-fns";
-import { DomainPricing } from "@/lib/db/schema/tables/cache";
+import type { DomainPricing } from "@/lib/db/schema/tables/cache";
 import { eq } from "drizzle-orm";
 
 const TARGET_CURRENCY = "BRL";
@@ -79,9 +79,9 @@ export class NamecheapApiWrapper {
     fetchPromise: Promise<UsersGetPricingCleanedResponse | null> | null;
   } = { value: null, lastUpdated: 0, isFetching: false, fetchPromise: null };
 
-  private dbDomainPricesLastRefreshed: number = 0;
+  private dbDomainPricesLastRefreshed = 0;
   private dbDomainPricingRefreshInterval: NodeJS.Timeout | null = null;
-  private isDbDomainPricingRefreshing: boolean = false;
+  private isDbDomainPricingRefreshing = false;
   private dbRefreshPromise: Promise<void> | null = null;
 
   constructor(userName: string) {
@@ -271,7 +271,7 @@ export class NamecheapApiWrapper {
               oneYearPriceDetail.$.Currency.toUpperCase() === "USD"
             ) {
               const currentEntry = upsertData.find((item) => item.tld === tld);
-              const priceUSD = parseFloat(oneYearPriceDetail.$.Price);
+              const priceUSD = Number.parseFloat(oneYearPriceDetail.$.Price);
               const meta = tldMetaDataMap.get(tld);
 
               if (currentEntry) {
@@ -445,27 +445,27 @@ export class NamecheapApiWrapper {
           Description: attrs.Description || undefined,
           IsPremiumName: attrs.IsPremiumName === "true",
           PremiumRegistrationPrice: await this._convertPrice(
-            parseFloat(attrs.PremiumRegistrationPrice),
+            Number.parseFloat(attrs.PremiumRegistrationPrice),
             originalCurrency
           ),
           PremiumRenewalPrice: await this._convertPrice(
-            parseFloat(attrs.PremiumRenewalPrice),
+            Number.parseFloat(attrs.PremiumRenewalPrice),
             originalCurrency
           ),
           PremiumRestorePrice: await this._convertPrice(
-            parseFloat(attrs.PremiumRestorePrice),
+            Number.parseFloat(attrs.PremiumRestorePrice),
             originalCurrency
           ),
           PremiumTransferPrice: await this._convertPrice(
-            parseFloat(attrs.PremiumTransferPrice),
+            Number.parseFloat(attrs.PremiumTransferPrice),
             originalCurrency
           ),
           IcannFee: await this._convertPrice(
-            parseFloat(attrs.IcannFee),
+            Number.parseFloat(attrs.IcannFee),
             originalCurrency
           ),
           EapFee: await this._convertPrice(
-            parseFloat(attrs.EapFee),
+            Number.parseFloat(attrs.EapFee),
             originalCurrency
           ),
         });
@@ -505,10 +505,10 @@ export class NamecheapApiWrapper {
     const rawDomainList = rawContent.DomainGetListResult?.[0]?.Domain;
 
     if (rawDomainList) {
-      rawDomainList.forEach((d) => {
+      for (const d of rawDomainList) {
         const attrs = d.$;
         domains.push({
-          ID: parseInt(attrs.ID),
+          ID: Number.parseInt(attrs.ID),
           Name: attrs.Name,
           User: attrs.User,
           Created: attrs.Created,
@@ -520,25 +520,27 @@ export class NamecheapApiWrapper {
           IsPremium: attrs.IsPremium === "true",
           IsOurDNS: attrs.IsOurDNS === "true",
         });
-      });
+      }
     }
 
     const rawPaging = rawContent.Paging?.[0];
     const paging: PagingInfo = {
       TotalItems: rawPaging?.TotalItems?.[0]
-        ? parseInt(rawPaging.TotalItems[0])
+        ? Number.parseInt(rawPaging.TotalItems[0])
         : 0,
       CurrentPage: rawPaging?.CurrentPage?.[0]
-        ? parseInt(rawPaging.CurrentPage[0])
+        ? Number.parseInt(rawPaging.CurrentPage[0])
         : 1,
-      PageSize: rawPaging?.PageSize?.[0] ? parseInt(rawPaging.PageSize[0]) : 0,
+      PageSize: rawPaging?.PageSize?.[0]
+        ? Number.parseInt(rawPaging.PageSize[0])
+        : 0,
     };
 
     return { Domains: domains, Paging: paging };
   };
 
   public getList = async (
-    params: DomainsGetListUserParams
+    params: DomainsGetListUserParams = { PageSize: 100, Page: 1 }
   ): Promise<DomainsGetListCleanedResponse> => {
     try {
       return this._makeRequest<
@@ -558,16 +560,22 @@ export class NamecheapApiWrapper {
             await parseStringPromise(error.response.data, {
               explicitArray: true,
             });
+
           if (parsedXml.ApiResponse) {
             const errNode = parsedXml.ApiResponse.Errors?.[0];
             if (typeof errNode === "object" && errNode.Error) {
               throw new Error(errNode.Error[0].$.Number);
-            } else if (typeof errNode === "string" && errNode.trim())
+            }
+
+            if (typeof errNode === "string" && errNode.trim()) {
               throw new Error(`Namecheap API error: ${errNode}`);
-            else if (parsedXml.ApiResponse.Errors)
+            }
+
+            if (parsedXml.ApiResponse.Errors) {
               throw new Error(
                 `Namecheap API error: ${JSON.stringify(parsedXml.ApiResponse.Errors)}`
               );
+            }
 
             throw new Error(
               `Namecheap API error: ${parsedXml.ApiResponse.$.Status}`
@@ -653,19 +661,20 @@ export class NamecheapApiWrapper {
     const tlds: TldListItem[] = [];
     const rawTldArray = rawContent.Tlds?.[0]?.Tld;
     if (rawTldArray) {
-      rawTldArray.forEach((rt) => {
+      for (const rt of rawTldArray) {
         const attrs = rt.$;
         const desc = rt._ || "";
+
         tlds.push({
           Name: attrs.Name,
           Description: desc.trim(),
           NonRealTime: attrs.NonRealTime === "true",
-          MinRegisterYears: parseInt(attrs.MinRegisterYears),
-          MaxRegisterYears: parseInt(attrs.MaxRegisterYears),
-          MinRenewYears: parseInt(attrs.MinRenewYears),
-          MaxRenewYears: parseInt(attrs.MaxRenewYears),
-          MinTransferYears: parseInt(attrs.MinTransferYears),
-          MaxTransferYears: parseInt(attrs.MaxTransferYears),
+          MinRegisterYears: Number.parseInt(attrs.MinRegisterYears),
+          MaxRegisterYears: Number.parseInt(attrs.MaxRegisterYears),
+          MinRenewYears: Number.parseInt(attrs.MinRenewYears),
+          MaxRenewYears: Number.parseInt(attrs.MaxRenewYears),
+          MinTransferYears: Number.parseInt(attrs.MinTransferYears),
+          MaxTransferYears: Number.parseInt(attrs.MaxTransferYears),
           IsApiRegisterable: attrs.IsApiRegisterable === "true",
           IsApiRenewable: attrs.IsApiRenewable === "true",
           IsApiTransferable: attrs.IsApiTransferable === "true",
@@ -674,19 +683,19 @@ export class NamecheapApiWrapper {
           IsDisableWGAllot: attrs.IsDisableWGAllot === "true",
           IsIncludeInExtendedSearchOnly:
             attrs.IsIncludeInExtendedSearchOnly === "true",
-          SequenceNumber: parseInt(attrs.SequenceNumber),
+          SequenceNumber: Number.parseInt(attrs.SequenceNumber),
           Type: attrs.Type,
           IsSupportsIDN: attrs.IsSupportsIDN === "true",
           Category: attrs.Category,
           IsDisableModifications: attrs.IsDisableModifications === "true",
           SupportsRegistrarLock: attrs.SupportsRegistrarLock === "true",
           AddGracePeriodDays: attrs.AddGracePeriodDays
-            ? parseInt(attrs.AddGracePeriodDays)
+            ? Number.parseInt(attrs.AddGracePeriodDays)
             : 0,
           WhoisVerification: attrs.WhoisVerification === "true",
           ProviderApiDelete: attrs.ProviderApiDelete === "true",
         });
-      });
+      }
     }
     return { Tlds: tlds };
   };
@@ -741,23 +750,23 @@ export class NamecheapApiWrapper {
                 const pAttrs = rawPrice.$;
                 const originalCurrency = pAttrs.Currency.toUpperCase();
                 prices.push({
-                  Duration: parseInt(pAttrs.Duration),
+                  Duration: Number.parseInt(pAttrs.Duration),
                   DurationType: pAttrs.DurationType,
                   Price: await this._convertPrice(
-                    parseFloat(pAttrs.Price),
+                    Number.parseFloat(pAttrs.Price),
                     originalCurrency
                   ),
                   RegularPrice: await this._convertPrice(
-                    parseFloat(pAttrs.RegularPrice),
+                    Number.parseFloat(pAttrs.RegularPrice),
                     originalCurrency
                   ),
                   YourPrice: await this._convertPrice(
-                    parseFloat(pAttrs.YourPrice),
+                    Number.parseFloat(pAttrs.YourPrice),
                     originalCurrency
                   ),
                   CouponPrice: pAttrs.CouponPrice
                     ? await this._convertPrice(
-                        parseFloat(pAttrs.CouponPrice),
+                        Number.parseFloat(pAttrs.CouponPrice),
                         originalCurrency
                       )
                     : 0,
@@ -886,16 +895,16 @@ export class NamecheapApiWrapper {
     const res = resultNode.$; // Attributes are on the '$' property of the element
     const originalCurrency = "USD";
     const chargedAmountBRL = await this._convertPrice(
-      parseFloat(res.ChargedAmount),
+      Number.parseFloat(res.ChargedAmount),
       originalCurrency
     );
     return {
       Domain: res.Domain,
       Registered: res.Registered === "true",
       ChargedAmount: chargedAmountBRL,
-      DomainID: res.DomainID ? parseInt(res.DomainID) : undefined,
-      OrderID: parseInt(res.OrderID),
-      TransactionID: parseInt(res.TransactionID),
+      DomainID: res.DomainID ? Number.parseInt(res.DomainID) : undefined,
+      OrderID: Number.parseInt(res.OrderID),
+      TransactionID: Number.parseInt(res.TransactionID),
       WhoisguardEnable: res.WhoisguardEnable === "true",
       NonRealTimeDomain: res.NonRealTimeDomain === "true",
     };
@@ -936,7 +945,7 @@ export class NamecheapApiWrapper {
       ProviderType: dnsDetailsRaw?.ProviderType || "UNKNOWN",
       IsUsingOurDNS: dnsDetailsRaw?.IsUsingOurDNS === "true",
       HostCount: dnsDetailsRaw?.HostCount
-        ? parseInt(dnsDetailsRaw.HostCount)
+        ? Number.parseInt(dnsDetailsRaw.HostCount)
         : 0,
       EmailType: dnsDetailsRaw?.EmailType || "UNKNOWN",
       DynamicDNSStatus: dnsDetailsRaw?.DynamicDNSStatus === "true",
@@ -967,7 +976,7 @@ export class NamecheapApiWrapper {
     return {
       DomainName: resultAttrs.DomainName,
       OwnerName: resultAttrs.OwnerName,
-      ID: parseInt(resultAttrs.ID),
+      ID: Number.parseInt(resultAttrs.ID),
       IsOwner: resultAttrs.IsOwner === "true",
       IsPremium: resultAttrs.IsPremium === "true",
       Status: resultAttrs.Status,
@@ -1038,7 +1047,7 @@ export class NamecheapApiWrapper {
     const result = resultNode.$;
     return {
       Success: result.Success === "true",
-      UserId: result.UserId ? parseInt(result.UserId, 10) : undefined,
+      UserId: result.UserId ? Number.parseInt(result.UserId, 10) : undefined,
     };
   };
 

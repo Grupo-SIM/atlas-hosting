@@ -2,7 +2,6 @@ import {
   getDomainData,
   type DomainData,
 } from "@/app/(authenticated)/(dashboard)/domains/register/page";
-import RegisterDomainForm from "@/components/domains/RegisterDomainForm";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,17 +12,17 @@ import {
 } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import namecheapApi from "@/lib/server/apis/namecheap";
-import { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
+import type { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
 import { toBrl } from "@/lib/utils";
 import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
 import { redirect } from "next/navigation";
-import { PropsWithChildren, ReactNode, Suspense } from "react";
+import { type PropsWithChildren, type ReactNode, Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
 
 export async function DomainResult({ searchQuery }: { searchQuery: string }) {
   const domainData = await getDomainData(searchQuery);
 
-  if (!domainData || !domainData.domain) {
+  if (!(domainData?.domain)) {
     return (
       <Card>
         <CardHeader>
@@ -146,11 +145,11 @@ async function DomainUnavailable({ domainData }: { domainData: DomainData }) {
   return (
     !domainData?.available && (
       <div className="p-4 border-t flex items-center justify-end gap-2">
-        <Button variant="outline" disabled>
+        <Button variant="outline" disabled={true}>
           <X className="h-4 w-4 mr-2" />
           Indisponível
         </Button>
-        <Button variant="link" className="text-sm" asChild>
+        <Button variant="link" className="text-sm" asChild={true}>
           <a
             href={`https://whois.domaintools.com/${domainData?.domain?.domain}`}
             target="_blank"
@@ -174,11 +173,11 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
 
     const formYears = formData.get("years") as string;
 
-    const yearsToRegister = formYears ? parseInt(formYears, 10) : 1;
-    const registrationPrice = parseFloat(formData.get("price") as string);
+    const yearsToRegister = formYears ? Number.parseInt(formYears, 10) : 1;
+    const registrationPrice = Number.parseFloat(formData.get("price") as string);
     const isPremium = formData.get("isPremium") === "true";
 
-    if (!user || !user.email) {
+    if (!(user?.email)) {
       throw new Error("Usuário não autenticado ou e-mail não encontrado.");
     }
     if (!domainName) {
@@ -203,14 +202,8 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
     }
 
     try {
-      console.log(
-        "Attempting to register domain with params:",
-        JSON.stringify(params, null, 2)
-      );
 
       const registrationResult = await namecheapApi.createDomain(params);
-
-      console.log("Namecheap registration result:", registrationResult);
 
       if (!registrationResult.Registered) {
         throw new Error(
@@ -218,10 +211,6 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
         );
       }
     } catch (error) {
-      console.error(
-        `Erro ao registrar o domínio ${domainName} com Namecheap:`,
-        error
-      );
 
       if (error instanceof Error) {
         throw new Error(`Falha ao registrar ${domainName}: ${error.message}`);
@@ -262,13 +251,13 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
             type="hidden"
             name="domainName"
             value={domainData.domain.domain}
-            readOnly
+            readOnly={true}
           />
           <input
             type="hidden"
             name="isPremium"
             value={domainData.domain.isPremium.toString()}
-            readOnly
+            readOnly={true}
           />
           <Button
             disabled={!domainData}

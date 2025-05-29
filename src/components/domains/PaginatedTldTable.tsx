@@ -26,8 +26,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../ui/card";
-import { Input } from "../ui/input";
+} from "../ui/card.ts";
+import { Input } from "../ui/input.ts";
 
 const ITEMS_PER_TLD_PAGE = 10; // Or make this a prop
 
@@ -35,7 +35,7 @@ const ITEMS_PER_TLD_PAGE = 10; // Or make this a prop
 const generatePagination = (
   currentPage: number,
   totalPages: number,
-  maxPagesToShow: number = 5
+  maxPagesToShow = 5
 ) => {
   const pages: (number | string)[] = [];
   if (totalPages <= maxPagesToShow) {
@@ -97,7 +97,8 @@ export function PaginatedTldTable({ allTldData }: PaginatedTldTableProps) {
     page: number | string,
     event?: React.MouseEvent<HTMLAnchorElement, MouseEvent>
   ) => {
-    if (event) event.preventDefault(); // Prevent navigation for client-side state change
+    if (event) { event.preventDefault(); // Prevent navigation for client-side state change
+}
     if (typeof page === "number" && page >= 1 && page <= totalTldPages) {
       setCurrentPage(page);
     }

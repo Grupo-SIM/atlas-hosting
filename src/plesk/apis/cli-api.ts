@@ -12,21 +12,20 @@
  * Do not edit the class manually.
  */
 
-import globalAxios, { AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Configuration } from '../configuration';
+import globalAxios, { type AxiosResponse, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import type { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
-import { CliCallRequest } from '../models';
-import { CliCallResponse } from '../models';
+import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError } from '../base';
+import type { CliCallRequest } from '../models';
+import type { CliCallResponse } from '../models';
 import { ErrorResponse } from '../models';
-import { InlineResponse200 } from '../models';
+import type { InlineResponse200 } from '../models';
 /**
  * CliApi - axios parameter creator
  * @export
  */
-export const CliApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
+export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
         /**
          * 
          * @summary List of available commands
@@ -67,7 +66,7 @@ export const CliApiAxiosParamCreator = function (configuration?: Configuration) 
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -124,7 +123,7 @@ export const CliApiAxiosParamCreator = function (configuration?: Configuration) 
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
@@ -180,7 +179,7 @@ export const CliApiAxiosParamCreator = function (configuration?: Configuration) 
                 query.set(key, options.params[key]);
             }
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            const headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
@@ -188,15 +187,13 @@ export const CliApiAxiosParamCreator = function (configuration?: Configuration) 
                 options: localVarRequestOptions,
             };
         },
-    }
-};
+    });
 
 /**
  * CliApi - functional programming interface
  * @export
  */
-export const CliApiFp = function(configuration?: Configuration) {
-    return {
+export const CliApiFp = (configuration?: Configuration) => ({
         /**
          * 
          * @summary List of available commands
@@ -239,15 +236,13 @@ export const CliApiFp = function(configuration?: Configuration) {
                 return axios.request(axiosRequestArgs);
             };
         },
-    }
-};
+    });
 
 /**
  * CliApi - factory interface
  * @export
  */
-export const CliApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    return {
+export const CliApiFactory = (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) => ({
         /**
          * 
          * @summary List of available commands
@@ -278,8 +273,7 @@ export const CliApiFactory = function (configuration?: Configuration, basePath?:
         async cliIdRefGet(id: string, options?: AxiosRequestConfig): Promise<AxiosResponse<InlineResponse200>> {
             return CliApiFp(configuration).cliIdRefGet(id, options).then((request) => request(axios, basePath));
         },
-    };
-};
+    });
 
 /**
  * CliApi - object-oriented interface

@@ -16,7 +16,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User } from "@/lib/db/schema";
+import type { User } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import {
   CreditCard,
@@ -27,7 +27,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   LogOut,
-  LucideProps,
+  type LucideProps,
   Mail,
   Menu,
   Server,
@@ -41,8 +41,8 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ForwardRefExoticComponent,
-  RefAttributes,
+  type ForwardRefExoticComponent,
+  type RefAttributes,
   startTransition,
   useActionState,
   useCallback,
@@ -50,7 +50,7 @@ import {
   useState,
 } from "react";
 import { FaUserAlt } from "react-icons/fa";
-import { ModeToggle } from "../ModeToggle";
+import { ModeToggle } from "../ModeToggle.tsx";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -63,7 +63,7 @@ export default function DashboardLayout({
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(true);
-  const pathname = usePathname();
+  const _pathname = usePathname();
 
   const [, signOut] = useActionState(logout, void 0);
 
@@ -104,7 +104,7 @@ export default function DashboardLayout({
       </div>
 
       <motion.div
-        layout
+        layout={true}
         onMouseEnter={() => setIsCompact(false)}
         onMouseLeave={() => setIsCompact(true)}
         animate={{
@@ -125,7 +125,7 @@ export default function DashboardLayout({
         )}
       >
         <motion.div
-          layout
+          layout={true}
           initial={{ paddingLeft: 0, paddingRight: 0 }}
           animate={{
             paddingLeft: isCompact ? "1rem" : "1.5rem",
@@ -140,7 +140,7 @@ export default function DashboardLayout({
         >
           <AtlasLogo className="min-h-8 min-w-8 h-8 w-8 object-contain" />
           <motion.span
-            layout
+            layout={true}
             initial={{ width: 0, paddingLeft: 0 }}
             animate={{
               width: isCompact ? 0 : "auto",
@@ -154,7 +154,7 @@ export default function DashboardLayout({
         </motion.div>
 
         <motion.nav
-          layout
+          layout={true}
           initial={{
             width: "3.75rem",
             marginLeft: "auto",
@@ -214,7 +214,7 @@ export default function DashboardLayout({
           <div className="flex items-center space-x-4">
             <ModeToggle />
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger asChild={true}>
                 <Button
                   variant="ghost"
                   className="relative h-8 w-8 rounded-full bg-muted-foreground/10"
@@ -226,7 +226,7 @@ export default function DashboardLayout({
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuContent className="w-56" align="end" forceMount={true}>
                 {user && (
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
@@ -318,7 +318,7 @@ function NavItem({
 
   return (
     <MotionLink
-      layout
+      layout={true}
       initial={{ marginLeft: 0, marginRight: 0 }}
       key={item.name}
       href={item.href}
@@ -340,7 +340,7 @@ function NavItem({
       />
       <motion.span
         ref={itemNameRef}
-        layout
+        layout={true}
         initial={{
           marginLeft: 0,
           minWidth: 0,

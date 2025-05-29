@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import { FtpUserPermissions } from './ftp-user-permissions';
+import type { FtpUserPermissions } from './ftp-user-permissions';
  /**
  * 
  *

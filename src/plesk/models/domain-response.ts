@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import { DomainAlias } from './domain-alias';
+import type { DomainAlias } from './domain-alias';
  /**
  * 
  *

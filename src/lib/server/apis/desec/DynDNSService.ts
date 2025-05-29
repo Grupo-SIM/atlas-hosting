@@ -1,5 +1,5 @@
-import { DeSECClient } from "./DeSECClient";
-import { DynDNSUpdateResponse } from "./types";
+import type { DeSECClient } from "./DeSECClient";
+import type { DynDNSUpdateResponse } from "./types";
 
 /**
  * Service for interacting with the deSEC DynDNS Update API.
@@ -31,8 +31,8 @@ export class DynDNSService {
     tokenSecret: string,
     ipv4?: string | string,
     ipv6?: string | string,
-    preserveIpv4: boolean = false,
-    preserveIpv6: boolean = false
+    preserveIpv4 = false,
+    preserveIpv6 = false
   ): Promise<DynDNSUpdateResponse> {
     return this.client.dynDNSUpdate(
       domainName,
@@ -60,8 +60,8 @@ export class DynDNSService {
     domainName: string,
     tokenSecret: string,
     ipv6?: string | string,
-    preserveIpv4: boolean = false,
-    preserveIpv6: boolean = false
+    preserveIpv4 = false,
+    preserveIpv6 = false
   ): Promise<DynDNSUpdateResponse> {
     // When using update6.dedyn.io, if ipv4 is not explicitly provided, it will be removed.
     // The `dynDNSUpdate` method handles the `myipv4=''` parameter for this case.

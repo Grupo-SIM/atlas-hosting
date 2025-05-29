@@ -7,18 +7,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DomainListItem } from "@/lib/server/apis/namecheap/types";
+import type { DomainListItem } from "@/lib/server/apis/namecheap/types";
 import { startTransition, useActionState } from "react";
 import { changeSelectedDomain } from "@/app/actions";
 import { cn } from "@/lib/utils";
-import clsx from "clsx";
-import Skeleton from "react-loading-skeleton";
 
 export default function DomainSelector({
   domains,
   selectedDomain,
 }: DomainSelectorProps) {
-  const [state, setSelectedDomain, isLoading] = useActionState(
+  const [_state, setSelectedDomain, isLoading] = useActionState(
     changeSelectedDomain,
     { message: "", status: "idle" }
   );
@@ -31,7 +29,7 @@ export default function DomainSelector({
 
   return (
     <div className="relative">
-      <Select value={selectedDomain} onValueChange={onValueChange}>
+      <Select value={selectedDomain?.Name} onValueChange={onValueChange}>
         <SelectTrigger
           id="domainName"
           className={cn(
@@ -54,6 +52,6 @@ export default function DomainSelector({
 }
 
 export interface DomainSelectorProps {
-  selectedDomain?: string;
+  selectedDomain?: DomainListItem;
   domains: (DomainListItem & { inPlesk: boolean })[];
 }

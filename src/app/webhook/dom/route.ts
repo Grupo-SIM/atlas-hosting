@@ -1,9 +1,9 @@
 import { adminNamecheapDetails } from "@/components/domains/DomainResult";
 import { db } from "@/lib/db";
 import { pgInvoice, pgUser } from "@/lib/db/schema";
-import { PayloadWebhook } from "@/lib/server/apis/dom/types";
+import type { PayloadWebhook } from "@/lib/server/apis/dom/types";
 import namecheapApi from "@/lib/server/apis/namecheap";
-import { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
+import type { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
 import { AppLogger } from "@/lib/server/logs";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";

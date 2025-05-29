@@ -12,9 +12,9 @@
  * Do not edit the class manually.
  */
 
-import { DomainReference } from './domain-reference';
-import { OwnerClientReference } from './owner-client-reference';
-import { PlanReference } from './plan-reference';
+import type { DomainReference } from './domain-reference';
+import type { OwnerClientReference } from './owner-client-reference';
+import type { PlanReference } from './plan-reference';
  /**
  * 
  *
