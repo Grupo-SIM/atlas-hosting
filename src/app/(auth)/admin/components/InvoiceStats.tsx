@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { InvoiceChart } from "./InvoiceChart.tsx";
-import { InvoiceList } from "./InvoiceList.tsx";
+import { InvoiceChart } from "./InvoiceChart";
+import { InvoiceList } from "./InvoiceList";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 

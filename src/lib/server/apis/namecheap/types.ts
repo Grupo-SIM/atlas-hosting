@@ -833,3 +833,52 @@ export interface RawDomainsNsCreateCommandResponseContent {
     $: RawDomainNsCreateResultAttributes;
   }>;
 }
+
+export interface DomainsDnsGetHostsUserParams {
+  SLD: string; // Second Level Domain, e.g., "domain"
+  TLD: string; // Top Level Domain, e.g., "com"
+}
+
+export interface DnsHostRecordItem {
+  HostId: number;
+  Name: string; // e.g., "@", "www"
+  Type: string; // e.g., "A", "CNAME", "MX"
+  Address: string;
+  MXPref?: number; // Only for MX records
+  TTL: number;
+  // Potentially other fields like AssociatedAppTitle, FriendlyName, IsActive, IsDDNSEnabled if needed
+}
+
+export interface DomainsDnsGetHostsCleanedResponse {
+  Domain: string;
+  IsUsingOurDNS: boolean;
+  Hosts: DnsHostRecordItem[];
+  // EmailType could also be part of the DomainDNSGetHostsResult attributes
+}
+
+// Raw types for XML parsing
+export interface RawDnsHostRecordAttributes {
+  HostId: string;
+  Name: string;
+  Type: string;
+  Address: string;
+  MXPref: string; // Always present, even if not an MX record (value might be "0" or "10")
+  TTL: string;
+  AssociatedAppTitle?: string;
+  FriendlyName?: string;
+  IsActive?: "true" | "false";
+  IsDDNSEnabled?: "true" | "false";
+}
+
+export interface RawDomainsDnsGetHostsCommandResponseContent {
+  DomainDNSGetHostsResult?: Array<{
+    $: {
+      Domain: string;
+      EmailType?: string;
+      IsUsingOurDNS: "true" | "false";
+    };
+    host?: Array<{
+      $: RawDnsHostRecordAttributes;
+    }>;
+  }>;
+}

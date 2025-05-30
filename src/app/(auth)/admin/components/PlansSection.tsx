@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { PlanForm } from "./PlanForm.tsx";
+import { PlanForm } from "./PlanForm";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 // import { deletePlan as deletePlanAction } from "@/app/actions"; // TODO: Uncomment when deletePlanAction is implemented in actions.ts

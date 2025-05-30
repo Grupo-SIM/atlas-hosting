@@ -62,19 +62,19 @@ export default function NewPlanPage() {
         <CardContent>
           <form action={handleCreatePlan} className="space-y-6">
             <div>
-              <Label for="name" className="block mb-1 font-medium">
+              <Label htmlFor="name" className="block mb-1 font-medium">
                 Nome
               </Label>
               <Input id="name" name="name" required={true} />
             </div>
             <div>
-              <Label for="description" className="block mb-1 font-medium">
+              <Label htmlFor="description" className="block mb-1 font-medium">
                 Descrição
               </Label>
               <Input id="description" name="description" required={true} />
             </div>
             <div>
-              <Label for="price" className="block mb-1 font-medium">
+              <Label htmlFor="price" className="block mb-1 font-medium">
                 Preço (R$)
               </Label>
               <Input
@@ -86,13 +86,13 @@ export default function NewPlanPage() {
               />
             </div>
             <div>
-              <Label for="maxSites" className="block mb-1 font-medium">
+              <Label htmlFor="maxSites" className="block mb-1 font-medium">
                 Max. Sites
               </Label>
               <Input id="maxSites" name="maxSites" type="number" required={true} />
             </div>
             <div>
-              <Label for="maxStorage" className="block mb-1 font-medium">
+              <Label htmlFor="maxStorage" className="block mb-1 font-medium">
                 Max. Armazenamento (GB)
               </Label>
               <Input
@@ -105,27 +105,27 @@ export default function NewPlanPage() {
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox id="ssl" name="ssl" />
-              <Label for="ssl">SSL Grátis</Label>
+              <Label htmlFor="ssl">SSL Grátis</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox id="backup" name="backup" />
-              <Label for="backup">Backup</Label>
+              <Label htmlFor="backup">Backup</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox id="email" name="email" />
-              <Label for="email">Email</Label>
+              <Label htmlFor="email">Email</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox id="cdn" name="cdn" />
-              <Label for="cdn">CDN</Label>
+              <Label htmlFor="cdn">CDN</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox id="supportPriority" name="supportPriority" />
-              <Label for="supportPriority">Suporte Prioritário</Label>
+              <Label htmlFor="supportPriority">Suporte Prioritário</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox id="featured" name="featured" />
-              <Label for="featured">Destacado</Label>
+              <Label htmlFor="featured">Destacado</Label>
             </div>
             <Button type="submit" className="w-full">
               Criar Plano

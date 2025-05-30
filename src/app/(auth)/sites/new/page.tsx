@@ -10,7 +10,7 @@ import {
 import { getUser } from "@/lib/auth";
 import { getUserDomains } from "@/lib/server/utils";
 import { Suspense } from "react";
-import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm.tsx"; // Updated import
+import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm"; // Updated import
 
 export default async function NewSitePageContainer() {
   const user = await getUser();

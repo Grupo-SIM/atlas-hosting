@@ -7,6 +7,7 @@ import {
   timestamp,
   uuid,
   jsonb,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { pgUser } from "./user";
 
@@ -41,6 +42,56 @@ export const pgZohoDomainOrganizations = pgTable("zoho_domain_orgs", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
+
+export const pgUserEmailAccountConfigs = pgTable(
+  "user_email_account_configs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => pgUser.id, { onDelete: "cascade" }),
+    emailAddress: text("email_address").notNull(),
+    emailPassword: text("email_password").notNull(), // For Plesk-managed accounts, this is the password set during creation
+    // For others, this is the main account password, used for both IMAP/SMTP if usernames are same
+    // This will be encrypted by the encryption utility.
+    imapHost: text("imap_host").notNull(),
+    imapPort: integer("imap_port").notNull(),
+    imapUsername: text("imap_username").notNull(),
+    encryptedImapPassword: text("encrypted_imap_password").notNull(), // If different from main emailPassword
+    imapSecure: boolean("imap_secure").default(true).notNull(),
+
+    smtpHost: text("smtp_host").notNull(),
+    smtpPort: integer("smtp_port").notNull(),
+    smtpUsername: text("smtp_username").notNull(),
+    encryptedSmtpPassword: text("encrypted_smtp_password").notNull(), // If different from main emailPassword
+    smtpSecure: boolean("smtp_secure").default(true).notNull(), // true for SSL/TLS with port 465, false for STARTTLS with 587
+
+    isPleskManaged: boolean("is_plesk_managed").default(false),
+    pleskSiteId: integer("plesk_site_id"), // Store if provisioned via Plesk for the domain
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("user_email_config_unique_idx").on(
+      table.userId,
+      table.emailAddress
+    ),
+  ]
+);
+
+export type UserEmailAccountConfig =
+  typeof pgUserEmailAccountConfigs.$inferSelect;
+export type NewUserEmailAccountConfig =
+  typeof pgUserEmailAccountConfigs.$inferInsert;
+
+// Don't forget to add this table to your main schema index file (e.g., src/lib/db/schema/index.ts)
+// export * from './userEmailConfigs';
+// And then run drizzle-kit generate:pg and drizzle-kit push:pg
 
 export const zohoOAuthTokenRelations = relations(
   pgZohoOAuthTokens,

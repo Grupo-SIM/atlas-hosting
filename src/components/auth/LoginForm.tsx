@@ -40,21 +40,20 @@ export default function LoginForm() {
     message: "",
   });
 
-  const onSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      const isValidClient = await methods.trigger();
-      if (!isValidClient) { return; }
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const isValidClient = await methods.trigger();
+    if (!isValidClient) {
+      return;
+    }
 
-      const data = getValues();
-      setFormError(null);
+    const data = getValues();
+    setFormError(null);
 
-      startTransition(() => {
-        doLogin(data);
-      });
-    },
-    [doLogin, getValues, methods]
-  );
+    startTransition(() => {
+      doLogin(data);
+    });
+  };
 
   useEffect(() => {
     if (actionState.status === "success") {
@@ -67,7 +66,7 @@ export default function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label for="email">E-mail</Label>
+        <Label htmlFor="email">E-mail</Label>
         <Input
           id="email"
           type="email"
@@ -81,7 +80,7 @@ export default function LoginForm() {
       </div>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label for="password">Senha</Label>
+          <Label htmlFor="password">Senha</Label>
           <Link href="#" className="text-sm text-primary hover:underline">
             Esqueceu a senha?
           </Link>

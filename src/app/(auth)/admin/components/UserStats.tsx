@@ -8,7 +8,7 @@ import {
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema";
 import { isNotNull, sql } from "drizzle-orm";
-import { UserChart } from "./UserChart.tsx";
+import { UserChart } from "./UserChart";
 
 export async function UserStats() {
   const [totalUsers, activeUsers, newUsersThisMonth, userGrowth] =

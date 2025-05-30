@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { PlanCard } from "./components/PlanCard.tsx";
+import { PlanCard } from "./components/PlanCard";
 import { getUser } from "@/lib/auth";
 import { sortBy } from "lodash";
 

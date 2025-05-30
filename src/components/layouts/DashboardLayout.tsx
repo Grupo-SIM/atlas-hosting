@@ -50,7 +50,7 @@ import {
   useState,
 } from "react";
 import { FaUserAlt } from "react-icons/fa";
-import { ModeToggle } from "../ModeToggle.tsx";
+import { ModeToggle } from "../ModeToggle";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

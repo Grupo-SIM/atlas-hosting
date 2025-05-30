@@ -31,7 +31,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { CgSpinner } from "react-icons/cg";
 import { FaTimes } from "react-icons/fa";
-import type { ParsedWordPressInstance } from "../page.ts";
+import type { ParsedWordPressInstance } from "../page";
 
 export interface SiteCardProps {
   instance: ParsedWordPressInstance;

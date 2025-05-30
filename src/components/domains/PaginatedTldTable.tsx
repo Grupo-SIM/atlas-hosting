@@ -19,15 +19,15 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"; // Assuming this is your correct path
 import { cn, toBrl } from "@/lib/utils";
-import type { DomainPriceInfo } from "@/app/(authenticated)/(dashboard)/domains/register/page"; // Adjust path if types moved
+import type { DomainPriceInfo } from "@/app/(auth)/domains/register/page"; // Adjust path if types moved
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../ui/card.ts";
-import { Input } from "../ui/input.ts";
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 const ITEMS_PER_TLD_PAGE = 10; // Or make this a prop
 
@@ -97,8 +97,9 @@ export function PaginatedTldTable({ allTldData }: PaginatedTldTableProps) {
     page: number | string,
     event?: React.MouseEvent<HTMLAnchorElement, MouseEvent>
   ) => {
-    if (event) { event.preventDefault(); // Prevent navigation for client-side state change
-}
+    if (event) {
+      event.preventDefault(); // Prevent navigation for client-side state change
+    }
     if (typeof page === "number" && page >= 1 && page <= totalTldPages) {
       setCurrentPage(page);
     }

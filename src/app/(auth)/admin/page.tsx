@@ -1,8 +1,8 @@
-import { DomainStats } from "./components/DomainStats.tsx";
-import { InvoiceStats } from "./components/InvoiceStats.tsx";
-import PlansSection from "./components/PlansSection.tsx";
-import { PlanStats } from "./components/PlanStats.tsx";
-import { UserStats } from "./components/UserStats.tsx";
+import { DomainStats } from "./components/DomainStats";
+import { InvoiceStats } from "./components/InvoiceStats";
+import PlansSection from "./components/PlansSection";
+import { PlanStats } from "./components/PlanStats";
+import { UserStats } from "./components/UserStats";
 import { db } from "@/lib/db";
 import { pgPlan, type Plan } from "@/lib/db/schema";
 

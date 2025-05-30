@@ -39,12 +39,8 @@ function transformPleskHostToNamecheapHostName(
   const normalizedDomain = domainName.toLowerCase();
   let host = pleskHost.toLowerCase();
 
-  // Remove the domain itself and the trailing dot if present
-  // Handles cases like "sub.domain.com.domain.com." -> "sub" (if domainName is "domain.com")
-  // or "domain.com." -> "@"
-  // or "sub.domain.com." -> "sub"
-  const fullDomainPattern1 = `.${normalizedDomain}.`; // e.g., .example.com.
-  const fullDomainPattern2 = `.${normalizedDomain}`; // e.g., .example.com (less common for FQDN end)
+  const fullDomainPattern1 = `.${normalizedDomain}.`;
+  const fullDomainPattern2 = `.${normalizedDomain}`;
   const apexPattern1 = `${normalizedDomain}.`; // e.g., example.com.
   const apexPattern2 = `${normalizedDomain}`; // e.g., example.com
 
@@ -332,7 +328,6 @@ export async function GET(request: Request) {
             "CNAME",
             "MX",
             "MXE",
-            "NS",
             "TXT",
             "URL",
             "URL301",

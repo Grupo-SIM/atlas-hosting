@@ -78,13 +78,13 @@ export default async function EditPlanPage({
         <CardContent>
           <form action={handleUpdatePlan} className="space-y-6">
             <div>
-              <Label for="name" className="block mb-1 font-medium">
+              <Label htmlFor="name" className="block mb-1 font-medium">
                 Nome
               </Label>
               <Input id="name" name="name" defaultValue={plan.name} required={true} />
             </div>
             <div>
-              <Label for="description" className="block mb-1 font-medium">
+              <Label htmlFor="description" className="block mb-1 font-medium">
                 Descrição
               </Label>
               <Input
@@ -95,7 +95,7 @@ export default async function EditPlanPage({
               />
             </div>
             <div>
-              <Label for="price" className="block mb-1 font-medium">
+              <Label htmlFor="price" className="block mb-1 font-medium">
                 Preço (R$)
               </Label>
               <Input
@@ -108,7 +108,7 @@ export default async function EditPlanPage({
               />
             </div>
             <div>
-              <Label for="maxSites" className="block mb-1 font-medium">
+              <Label htmlFor="maxSites" className="block mb-1 font-medium">
                 Max. Sites
               </Label>
               <Input
@@ -120,7 +120,7 @@ export default async function EditPlanPage({
               />
             </div>
             <div>
-              <Label for="maxStorage" className="block mb-1 font-medium">
+              <Label htmlFor="maxStorage" className="block mb-1 font-medium">
                 Max. Armazenamento (GB)
               </Label>
               <Input
@@ -138,7 +138,7 @@ export default async function EditPlanPage({
                 name="ssl"
                 defaultChecked={plan.ssl ?? false}
               />
-              <Label for="ssl">SSL Grátis</Label>
+              <Label htmlFor="ssl">SSL Grátis</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -146,7 +146,7 @@ export default async function EditPlanPage({
                 name="backup"
                 defaultChecked={plan.backup ?? false}
               />
-              <Label for="backup">Backup</Label>
+              <Label htmlFor="backup">Backup</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -154,7 +154,7 @@ export default async function EditPlanPage({
                 name="email"
                 defaultChecked={plan.email ?? false}
               />
-              <Label for="email">Email</Label>
+              <Label htmlFor="email">Email</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -162,7 +162,7 @@ export default async function EditPlanPage({
                 name="cdn"
                 defaultChecked={plan.cdn ?? false}
               />
-              <Label for="cdn">CDN</Label>
+              <Label htmlFor="cdn">CDN</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -170,7 +170,7 @@ export default async function EditPlanPage({
                 name="supportPriority"
                 defaultChecked={plan.supportPriority ?? false}
               />
-              <Label for="supportPriority">Suporte Prioritário</Label>
+              <Label htmlFor="supportPriority">Suporte Prioritário</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -178,7 +178,7 @@ export default async function EditPlanPage({
                 name="featured"
                 defaultChecked={plan.featured ?? false}
               />
-              <Label for="featured">Destacado</Label>
+              <Label htmlFor="featured">Destacado</Label>
             </div>
             <Button type="submit" className="w-full">
               Salvar Alterações

@@ -241,7 +241,10 @@ export default function SupportPage() {
             <CardContent>
               <div className="space-y-4">
                 {faqs.map((faq, index) => (
-                  <div key={index} className="border rounded-lg p-4">
+                  <div
+                    key={JSON.stringify(faq).concat(index.toString())}
+                    className="border rounded-lg p-4"
+                  >
                     <div className="flex items-center justify-between cursor-pointer">
                       <h4 className="font-medium">{faq.question}</h4>
                       <ChevronRight className="h-4 w-4" />
@@ -308,7 +311,7 @@ export default function SupportPage() {
               <form className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label for="category">Categoria</Label>
+                    <Label htmlFor="category">Categoria</Label>
                     <Select>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione uma categoria" />
@@ -324,7 +327,7 @@ export default function SupportPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label for="priority">Prioridade</Label>
+                    <Label htmlFor="priority">Prioridade</Label>
                     <Select>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a prioridade" />
@@ -340,7 +343,7 @@ export default function SupportPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label for="subject">Assunto</Label>
+                  <Label htmlFor="subject">Assunto</Label>
                   <Input
                     id="subject"
                     placeholder="Descreva brevemente o problema"
@@ -348,7 +351,7 @@ export default function SupportPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label for="description">Descrição</Label>
+                  <Label htmlFor="description">Descrição</Label>
                   <Textarea
                     id="description"
                     placeholder="Descreva detalhadamente o problema ou dúvida..."

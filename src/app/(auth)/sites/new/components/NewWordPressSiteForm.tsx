@@ -255,7 +255,7 @@ export function NewWordPressSiteForm({
             </div>
             <div className="space-y-4">
               <div>
-                <Label for="domainName">Nome do Domínio</Label>
+                <Label htmlFor="domainName">Nome do Domínio</Label>
                 <Select
                   value={formData.domain}
                   onValueChange={(value) =>
@@ -304,7 +304,7 @@ export function NewWordPressSiteForm({
             </div>
             <div className="space-y-4">
               <div>
-                <Label for="siteName">Nome do Site</Label>
+                <Label htmlFor="siteName">Nome do Site</Label>
                 <Input
                   id="siteName"
                   className="h-12"
@@ -321,7 +321,7 @@ export function NewWordPressSiteForm({
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label for="adminUsername">Usuário Admin</Label>
+                  <Label htmlFor="adminUsername">Usuário Admin</Label>
                   <Input
                     id="adminUsername"
                     className="h-12"
@@ -337,7 +337,7 @@ export function NewWordPressSiteForm({
                   />
                 </div>
                 <div>
-                  <Label for="adminPassword">Senha do Admin</Label>
+                  <Label htmlFor="adminPassword">Senha do Admin</Label>
                   <Input
                     id="adminPassword"
                     className="h-12"
@@ -355,7 +355,7 @@ export function NewWordPressSiteForm({
                 </div>
               </div>
               <div>
-                <Label for="adminEmail">Email do Admin</Label>
+                <Label htmlFor="adminEmail">Email do Admin</Label>
                 <Input
                   id="adminEmail"
                   className="h-12"

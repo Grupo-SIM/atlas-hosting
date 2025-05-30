@@ -17,9 +17,9 @@ import {
   useMemo,
   useState,
 } from "react";
-import { BulkActionButtons } from "./BulkActionsButton.tsx";
-import { SiteCard } from "./SiteCard.tsx";
-import type { ParsedWordPressInstance } from "../page.ts";
+import { BulkActionButtons } from "./BulkActionsButton";
+import { SiteCard } from "./SiteCard";
+import type { ParsedWordPressInstance } from "../page";
 
 export interface SitesListProps {
   readyInstances: ParsedWordPressInstance[];

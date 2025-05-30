@@ -16,8 +16,8 @@ import {
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import * as yup from "yup";
-import GithubAuthButton from "./GithubAuthButton.tsx";
-import GoogleAuthButton from "./GoogleAuthButton.tsx";
+import GithubAuthButton from "./GithubAuthButton";
+import GoogleAuthButton from "./GoogleAuthButton";
 
 export default function SignupForm() {
   const { register, handleSubmit, control, ...methods } =
@@ -38,20 +38,17 @@ export default function SignupForm() {
   });
 
   // Define the submit handler
-  const onSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-      const data = methods.getValues();
+    const data = methods.getValues();
 
-      setFormError(null);
+    setFormError(null);
 
-      startTransition(() => {
-        doSignup(data);
-      });
-    },
-    [doSignup, methods]
-  );
+    startTransition(() => {
+      doSignup(data);
+    });
+  };
 
   useEffect(() => {
     if (actionState.status === "success") {
@@ -65,7 +62,7 @@ export default function SignupForm() {
     <>
       <form onSubmit={onSubmit} className="space-y-2">
         <div className="space-y-2">
-          <Label for="fullName">Nome completo</Label>
+          <Label htmlFor="fullName">Nome completo</Label>
           <Input
             type="text"
             placeholder="Seu nome completo"
@@ -77,7 +74,7 @@ export default function SignupForm() {
           )}
         </div>
         <div className="space-y-2">
-          <Label for="email">E-mail</Label>
+          <Label htmlFor="email">E-mail</Label>
           <Input
             type="email"
             placeholder="exemplo@exemplo.com"
@@ -89,7 +86,7 @@ export default function SignupForm() {
           )}
         </div>
         <div className="space-y-2">
-          <Label for="password">Senha</Label>
+          <Label htmlFor="password">Senha</Label>
           <Input
             type="password"
             autoComplete="new-password"
@@ -100,7 +97,7 @@ export default function SignupForm() {
           )}
         </div>
         <div className="space-y-2">
-          <Label for="confirmPassword">Confirmar Senha</Label>
+          <Label htmlFor="confirmPassword">Confirmar Senha</Label>
           <Input
             type="password"
             autoComplete="new-password"

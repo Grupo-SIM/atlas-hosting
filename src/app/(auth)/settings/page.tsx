@@ -88,7 +88,7 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label for="timezone">Fuso Horário</Label>
+                  <Label htmlFor="timezone">Fuso Horário</Label>
                   <Select
                     value={generalSettings.timezone}
                     onValueChange={(value) =>
@@ -119,7 +119,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label for="language">Idioma</Label>
+                  <Label htmlFor="language">Idioma</Label>
                   <Select
                     value={generalSettings.language}
                     onValueChange={(value) =>
@@ -141,7 +141,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label for="dateFormat">Formato de Data</Label>
+                  <Label htmlFor="dateFormat">Formato de Data</Label>
                   <Select
                     value={generalSettings.dateFormat}
                     onValueChange={(value) =>
@@ -176,7 +176,7 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label for="theme">Tema</Label>
+                  <Label htmlFor="theme">Tema</Label>
                   <Select
                     value={generalSettings.theme}
                     onValueChange={(value) =>
@@ -441,7 +441,7 @@ export default function SettingsPage() {
               {backupSettings.autoBackup && (
                 <>
                   <div className="space-y-2">
-                    <Label for="frequency">Frequência do Backup</Label>
+                    <Label htmlFor="frequency">Frequência do Backup</Label>
                     <Select
                       value={backupSettings.backupFrequency}
                       onValueChange={(value) =>
@@ -463,7 +463,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label for="retention">
+                    <Label htmlFor="retention">
                       Período de Retenção (dias)
                     </Label>
                     <Input
@@ -514,7 +514,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label for="webhook">URL do Webhook</Label>
+                <Label htmlFor="webhook">URL do Webhook</Label>
                 <Input id="webhook" placeholder="https://example.com/webhook" />
                 <p className="text-xs text-muted-foreground">
                   Receba notificações de eventos em tempo real
@@ -522,7 +522,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label for="apiDocs">Documentação</Label>
+                <Label htmlFor="apiDocs">Documentação</Label>
                 <div className="text-sm text-muted-foreground">
                   <p>
                     Consulte nossa documentação da API para integrar com seus

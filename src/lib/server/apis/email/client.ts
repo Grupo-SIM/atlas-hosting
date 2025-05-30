@@ -60,6 +60,8 @@ async function requestPleskApi<TResponsePayload>(
       },
     });
 
+    console.log(response.data);
+
     const parsedResponse = xmlParser.parse(
       response.data
     ) as PleskPacket<TResponsePayload>;
@@ -78,7 +80,9 @@ async function requestPleskApi<TResponsePayload>(
     // Navigate to the actual result object
     // e.g. parsedResponse.packet.mail.get.result
     const operationResultContainer =
-      parsedResponse.packet[options.operator]?.[options.operation];
+      'system' in parsedResponse.packet 
+        ? undefined 
+        : parsedResponse.packet[options.operator]?.[options.operation];
     if (!operationResultContainer || !operationResultContainer.result) {
       console.error("Unexpected Plesk API response structure:", parsedResponse);
       throw new Error(
@@ -118,9 +122,11 @@ async function requestPleskApi<TResponsePayload>(
 }
 
 export async function getMailAccounts(pleskId: number): Promise<MailName[]> {
-  if (typeof pleskId !== 'number' || Number.isNaN(pleskId)) {
-    console.error('Invalid pleskId passed to getMailAccounts:', pleskId);
-    throw new Error('Invalid pleskId provided for fetching mail accounts. It must be a valid number.');
+  if (typeof pleskId !== "number" || Number.isNaN(pleskId)) {
+    console.error("Invalid pleskId passed to getMailAccounts:", pleskId);
+    throw new Error(
+      "Invalid pleskId provided for fetching mail accounts. It must be a valid number."
+    );
   }
 
   const response = await requestPleskApi<GetMailNamesResult>({
@@ -129,8 +135,10 @@ export async function getMailAccounts(pleskId: number): Promise<MailName[]> {
     params: {
       filter: { "site-id": pleskId },
       mailbox: {},
-      // antispam: {}, // Uncomment if you need this info
-      // autoresponder: {},
+      "mailbox-usage": {},
+      forwarding: {},
+      autoresponder: {},
+      // aliases: {}
     },
   });
   if (response.mailname) {

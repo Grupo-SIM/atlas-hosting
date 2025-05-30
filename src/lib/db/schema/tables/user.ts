@@ -30,6 +30,7 @@ export const pgUser = pgTable("users", {
     .notNull()
     .references(() => pgWallet.id),
   selectedDomain: text("selected_domain"),
+  referrerId: uuid("referrer_id"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   deletedAt: timestamp("deleted_at", { mode: "date" }),
@@ -49,6 +50,14 @@ export const userRelations = relations(pgUser, ({ one, many }) => ({
     references: [pgWallet.id],
   }),
   zohoOrgs: many(pgZohoDomainOrganizations),
+  referrer: one(pgUser, {
+    fields: [pgUser.referrerId],
+    references: [pgUser.id],
+    relationName: "referred_users",
+  }),
+  referredUsers: many(pgUser, {
+    relationName: "referred_users",
+  }),
 }));
 
 export type User = typeof pgUser.$inferSelect;

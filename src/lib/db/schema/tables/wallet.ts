@@ -1,6 +1,5 @@
 import { relations } from "drizzle-orm";
 import { pgTable, uuid, bigint, date, timestamp } from "drizzle-orm/pg-core";
-import { pgUser } from "./user";
 import { pgUserCard } from "./card";
 
 export const pgWallet = pgTable("wallet", {

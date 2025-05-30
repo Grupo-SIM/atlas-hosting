@@ -1,12 +1,15 @@
 import { Button } from "@/components/ui/button";
-import type { User } from "@/lib/db/schema";
-import { PlusCircle } from "lucide-react";
-import { Suspense } from "react";
-import Skeleton from "react-loading-skeleton";
 import {
-  getUserCurrentDomain,
-  getUserDomains,
-} from "@/lib/server/utils";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { User } from "@/lib/db/schema";
+import { getUserCurrentDomain, getUserDomains } from "@/lib/server/utils";
+import { cn } from "@/lib/utils";
+import { PlusCircle } from "lucide-react";
 import DomainSelector from "../domains/DomainSelector";
 
 export function WelcomeHeader({ user }: WelcomeHeaderProps) {
@@ -14,14 +17,10 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
     <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-          <Suspense fallback={<Skeleton height="1em" width="7rem" />}>
-            <UserName user={user} />
-          </Suspense>
+          <UserName user={user} />
         </h1>
         <div className="text-muted-foreground mt-2">
-          <Suspense fallback={<Skeleton height="1em" width="7rem" />}>
-            <UserSiteLabel user={user} />
-          </Suspense>
+          <UserSiteLabel user={user} />
         </div>
       </div>
       <div className="flex space-x-3">

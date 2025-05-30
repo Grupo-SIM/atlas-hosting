@@ -1,6 +1,6 @@
 "use client";
 
-import type { DomainData } from "@/app/(authenticated)/(dashboard)/domains/register/page";
+import type { DomainData } from "@/app/(auth)/domains/register/page";
 import { createDomainInvoice } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { startTransition, useActionState, useCallback } from "react";

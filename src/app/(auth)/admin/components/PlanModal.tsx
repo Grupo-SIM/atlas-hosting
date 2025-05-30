@@ -28,26 +28,53 @@ export function PlanModal() {
     const form = e.currentTarget;
     const formData = new FormData(form);
 
+    const {
+      name,
+      description,
+      price,
+      maxSites,
+      maxStorage,
+      ssl,
+      backup,
+      email,
+      cdn,
+      supportPriority,
+      featured,
+    } = Object.fromEntries(formData.entries());
+
+    if (
+      !name ||
+      !description ||
+      !price ||
+      !maxSites ||
+      !maxStorage ||
+      Number.isNaN(Number(price)) ||
+      Number.isNaN(Number(maxSites)) ||
+      Number.isNaN(Number(maxStorage))
+    ) {
+      return;
+    }
+
     startTransition(() => {
       const planInput: Omit<Plan, "id" | "createdAt" | "updatedAt"> = {
-        name: formData.get("name")?.toString(),
-        description: formData.get("description")?.toString(),
-        price: +formData.get("price")!,
-        maxSites: Number.parseInt(formData.get("maxSites") as string),
-        maxStorage: Number.parseFloat(formData.get("maxStorage") as string),
-        ssl: formData.get("ssl") === "on",
-        backup: formData.get("backup") === "on",
-        email: formData.get("email") === "on",
-        cdn: formData.get("cdn") === "on",
-        supportPriority: formData.get("supportPriority") === "on",
-        featured: formData.get("featured") === "on",
+        name: name.toString(),
+        description: description.toString(),
+        price: +price,
+        maxSites: Number.parseInt(maxSites as string, 10),
+        maxStorage: Number.parseFloat(maxStorage as string),
+        ssl: ssl === "on",
+        backup: backup === "on",
+        email: email === "on",
+        cdn: cdn === "on",
+        supportPriority: supportPriority === "on",
+        featured: featured === "on",
       };
       doCreate(planInput);
     });
   }
 
   useEffect(() => {
-    if (state && (state as any).status === "success") {
+    if (state && state.status === "success") {
       setOpen(false);
     }
   }, [state]);
@@ -86,27 +113,27 @@ export function PlanModal() {
           />
           <div className="flex items-center space-x-2">
             <Checkbox id="modal-ssl" name="ssl" />
-            <Label for="modal-ssl">SSL Grátis</Label>
+            <Label htmlFor="modal-ssl">SSL Grátis</Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox id="modal-backup" name="backup" />
-            <Label for="modal-backup">Backup</Label>
+            <Label htmlFor="modal-backup">Backup</Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox id="modal-email" name="email" />
-            <Label for="modal-email">Email</Label>
+            <Label htmlFor="modal-email">Email</Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox id="modal-cdn" name="cdn" />
-            <Label for="modal-cdn">CDN</Label>
+            <Label htmlFor="modal-cdn">CDN</Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox id="modal-supportPriority" name="supportPriority" />
-            <Label for="modal-supportPriority">Suporte Prioritário</Label>
+            <Label htmlFor="modal-supportPriority">Suporte Prioritário</Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox id="modal-featured" name="featured" />
-            <Label for="modal-featured">Destacado</Label>
+            <Label htmlFor="modal-featured">Destacado</Label>
           </div>
           <DialogFooter>
             <Button type="submit">

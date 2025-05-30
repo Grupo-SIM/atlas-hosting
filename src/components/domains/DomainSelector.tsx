@@ -30,14 +30,11 @@ export default function DomainSelector({
   return (
     <div className="relative">
       <Select value={selectedDomain?.Name} onValueChange={onValueChange}>
-        <SelectTrigger
-          id="domainName"
-          className={cn(
-            { "opacity-0": isLoading },
-            "w-[300px] text-foreground"
-          )}
-        >
-          <SelectValue placeholder="Selecione um domínio" />
+        <SelectTrigger id="domainName" className="w-[300px] text-foreground relative">
+          <SelectValue
+            // className={cn({ "opacity-0": isLoading })}
+            placeholder={isLoading ? "": "Selecione um domínio"}
+          />
         </SelectTrigger>
         <SelectContent>
           {domains.map((domain) => (

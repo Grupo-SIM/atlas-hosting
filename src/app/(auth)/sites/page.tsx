@@ -9,12 +9,10 @@ import {
 } from "@/components/ui/card";
 import { Globe } from "lucide-react";
 import Link from "next/link";
-import { SitesList } from "./components/SitesList.tsx";
+import { SitesList } from "./components/SitesList";
 import dns from "node:dns";
 import { promisify } from "node:util";
 import { getUserWordPressSites } from "@/lib/server/utils";
-
-export const experimental_ppr = true;
 
 export interface ParsedWordPressInstance {
   id: number; // This likely refers to Plesk's internal ID for the WP instance

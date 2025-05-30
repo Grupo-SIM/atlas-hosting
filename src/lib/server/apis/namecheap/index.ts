@@ -43,6 +43,10 @@ import type {
   DomainsNsCreateUserParams,
   DomainsNsCreateCleanedResponse,
   RawDomainsNsCreateCommandResponseContent,
+  DomainsDnsGetHostsUserParams,
+  DomainsDnsGetHostsCleanedResponse,
+  RawDomainsDnsGetHostsCommandResponseContent,
+  DnsHostRecordItem,
 } from "./types";
 import { isString } from "lodash";
 import { isBefore, startOfToday, startOfTomorrow } from "date-fns";
@@ -1099,6 +1103,68 @@ export class NamecheapApiWrapper {
       RawDomainsNsCreateCommandResponseContent,
       DomainsNsCreateCleanedResponse
     >(command, apiParams, this._parseDomainsNsCreateResponse, "POST");
+  };
+
+  private _parseDomainsDnsGetHostsParams = (
+    params: DomainsDnsGetHostsUserParams
+  ): NamecheapRequestParams => {
+    return {
+      SLD: params.SLD,
+      TLD: params.TLD,
+    };
+  };
+
+  private _parseDomainsDnsGetHostsResponse = (
+    rawContent: RawDomainsDnsGetHostsCommandResponseContent
+  ): DomainsDnsGetHostsCleanedResponse => {
+    console.log(JSON.stringify(rawContent))
+    const resultNode = rawContent.DomainDNSGetHostsResult?.[0];
+    if (!resultNode || !resultNode.$) {
+      throw new Error(
+        "DomainDNSGetHostsResult is missing or malformed in the API response."
+      );
+    }
+
+    const resultAttrs = resultNode.$;
+    const hosts: DnsHostRecordItem[] = [];
+
+
+    if (resultNode.host) {
+      for (const rawHost of resultNode.host) {
+        const hostAttrs = rawHost.$;
+        hosts.push({
+          HostId: Number.parseInt(hostAttrs.HostId, 10),
+          Name: hostAttrs.Name,
+          Type: hostAttrs.Type,
+          Address: hostAttrs.Address,
+          MXPref: hostAttrs.MXPref
+            ? Number.parseInt(hostAttrs.MXPref, 10)
+            : undefined, // MXPref is present even for A records with value "10" in example, handle appropriately
+          TTL: Number.parseInt(hostAttrs.TTL, 10),
+        });
+      }
+    }
+
+    return {
+      Domain: resultAttrs.Domain,
+      IsUsingOurDNS: resultAttrs.IsUsingOurDNS === "true",
+      Hosts: hosts,
+    };
+  };
+
+  /**
+   * Retrieves DNS host record settings for the requested domain.
+   */
+  public getDnsHosts = async (
+    params: DomainsDnsGetHostsUserParams
+  ): Promise<DomainsDnsGetHostsCleanedResponse> => {
+    const command = "namecheap.domains.dns.getHosts";
+    const apiParams = this._parseDomainsDnsGetHostsParams(params);
+    // This is a GET request according to the example
+    return this._makeRequest<
+      RawDomainsDnsGetHostsCommandResponseContent,
+      DomainsDnsGetHostsCleanedResponse
+    >(command, apiParams, this._parseDomainsDnsGetHostsResponse, "GET");
   };
 }
 

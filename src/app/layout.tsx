@@ -13,6 +13,8 @@ export const metadata: Metadata = {
     "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
 };
 
+export const experimental_ppr = true;
+
 export default async function RootLayout({
   children,
 }: {

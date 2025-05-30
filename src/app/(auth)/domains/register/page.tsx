@@ -33,15 +33,10 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 import { db } from "@/lib/db";
-import {
-  type DomainPricing,
-  pgDomainPricingCache,
-} from "@/lib/db/schema";
+import { type DomainPricing, pgDomainPricingCache } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
-import RegisterDomainSearch from "./components/RegisterDomainSearch.tsx";
+import RegisterDomainSearch from "./components/RegisterDomainSearch";
 import { inArray } from "drizzle-orm";
-
-// export const experimental_ppr = true;
 
 // Types remain the same
 export type DomainPriceInfo = {
@@ -89,7 +84,6 @@ async function getAllDomainPricesFromDb(
   domains?: string[]
 ): Promise<DomainPriceInfoFromDb[]> {
   try {
-
     const cachedPrices = await db.query.pgDomainPricingCache.findMany({
       where:
         domains && domains.length > 0
@@ -98,6 +92,7 @@ async function getAllDomainPricesFromDb(
     });
 
     if (!cachedPrices || cachedPrices.length === 0) {
+      return [];
     }
 
     return cachedPrices.map((item) => ({
@@ -131,7 +126,9 @@ const check = cache(async (params: DomainsCheckUserParams) =>
 export const getDomainData = cache(async function getDomainData(
   searchQuery: string
 ): Promise<DomainData> {
-  if (!searchQuery || searchQuery.trim() === "") { return null; }
+  if (!searchQuery || searchQuery.trim() === "") {
+    return null;
+  }
 
   const domainNameOnly = searchQuery.includes(".")
     ? searchQuery.split(".")[0]
@@ -141,108 +138,112 @@ export const getDomainData = cache(async function getDomainData(
     domainsToSearch.unshift(searchQuery);
   }
   domainsToSearch = [...new Set(domainsToSearch)];
-    const [checkResult, pricings]: [
-      DomainsCheckCleanedResponse | null,
-      DomainPricing[],
-    ] = await Promise.all([
-      domainsToSearch.length > 0
-        ? check({ DomainList: domainsToSearch.join(",") })
-        : Promise.resolve(null),
-      namecheapApi.getPricing(),
-    ]);
+  const [checkResult, pricings]: [
+    DomainsCheckCleanedResponse | null,
+    DomainPricing[],
+  ] = await Promise.all([
+    domainsToSearch.length > 0
+      ? check({ DomainList: domainsToSearch.join(",") })
+      : Promise.resolve(null),
+    namecheapApi.getPricing(),
+  ]);
 
-    if (!checkResult?.Results || checkResult.Results.length === 0) { return null; }
+  if (!checkResult?.Results || checkResult.Results.length === 0) {
+    return null;
+  }
 
-    const pricingRecord = Object.fromEntries(pricings.map((p) => [p.tld, p]));
+  const pricingRecord = Object.fromEntries(pricings.map((p) => [p.tld, p]));
 
-    const domainDataMapped = await Promise.all(
-      checkResult.Results.map(async (domainDetail) => {
-        const fullDomainName = domainDetail.Domain;
-        let tldForLookup = "";
-        const parts = fullDomainName.split(".");
-        if (parts.length > 1) {
-          let bestMatch = "";
-          for (const knownTld of Object.keys(pricingRecord)) {
-            if (fullDomainName.toLowerCase().endsWith(`.${knownTld}`)) {
-              if (knownTld.length > bestMatch.length) { bestMatch = knownTld; }
+  const domainDataMapped = await Promise.all(
+    checkResult.Results.map(async (domainDetail) => {
+      const fullDomainName = domainDetail.Domain;
+      let tldForLookup = "";
+      const parts = fullDomainName.split(".");
+      if (parts.length > 1) {
+        let bestMatch = "";
+        for (const knownTld of Object.keys(pricingRecord)) {
+          if (fullDomainName.toLowerCase().endsWith(`.${knownTld}`)) {
+            if (knownTld.length > bestMatch.length) {
+              bestMatch = knownTld;
             }
           }
-          tldForLookup =
-            bestMatch ||
-            parts
-              .slice(parts.length > 2 ? -2 : -1)
-              .join(".")
-              .toLowerCase();
         }
+        tldForLookup =
+          bestMatch ||
+          parts
+            .slice(parts.length > 2 ? -2 : -1)
+            .join(".")
+            .toLowerCase();
+      }
 
-        const standardBrlPrices = pricingRecord[tldForLookup];
+      const standardBrlPrices = pricingRecord[tldForLookup];
 
-        return {
-          domain: fullDomainName,
-          available: domainDetail.Available,
-          priceBRL: await currencyConversion.convert({
-            from: "usd",
-            to: "brl",
-            amount: standardBrlPrices.price ?? 0,
-          }),
-          renewBRL: await currencyConversion.convert({
-            from: "usd",
-            to: "brl",
-            amount: standardBrlPrices.renew ?? 0,
-          }),
-          transferBRL: await currencyConversion.convert({
-            from: "usd",
-            to: "brl",
-            amount: standardBrlPrices.transfer ?? 0,
-          }),
-          isPremium: domainDetail.IsPremiumName,
-        };
-      })
-    );
+      return {
+        domain: fullDomainName,
+        available: domainDetail.Available,
+        priceBRL: await currencyConversion.convert({
+          from: "usd",
+          to: "brl",
+          amount: standardBrlPrices.price ?? 0,
+        }),
+        renewBRL: await currencyConversion.convert({
+          from: "usd",
+          to: "brl",
+          amount: standardBrlPrices.renew ?? 0,
+        }),
+        transferBRL: await currencyConversion.convert({
+          from: "usd",
+          to: "brl",
+          amount: standardBrlPrices.transfer ?? 0,
+        }),
+        isPremium: domainDetail.IsPremiumName,
+      };
+    })
+  );
 
-    let mainDomainData = domainDataMapped.find(
-      (item) => item.domain.toLowerCase() === searchQuery.toLowerCase()
-    );
-    if (!mainDomainData) {
-      mainDomainData =
-        domainDataMapped.length > 0
-          ? domainDataMapped[0]
-          : {
-              domain: searchQuery,
-              available: false,
-              priceBRL: 0,
-              renewBRL: 0,
-              transferBRL: 0,
-              isPremium: false,
-            };
-    }
-    return {
-      available: mainDomainData.available,
-      domain: mainDomainData,
-      extraDomains: domainDataMapped.filter(
-        (item) =>
-          item.domain.toLowerCase() !== mainDomainData?.domain.toLowerCase()
-      ),
-    };
+  let mainDomainData = domainDataMapped.find(
+    (item) => item.domain.toLowerCase() === searchQuery.toLowerCase()
+  );
+  if (!mainDomainData) {
+    mainDomainData =
+      domainDataMapped.length > 0
+        ? domainDataMapped[0]
+        : {
+            domain: searchQuery,
+            available: false,
+            priceBRL: 0,
+            renewBRL: 0,
+            transferBRL: 0,
+            isPremium: false,
+          };
+  }
+  return {
+    available: mainDomainData.available,
+    domain: mainDomainData,
+    extraDomains: domainDataMapped.filter(
+      (item) =>
+        item.domain.toLowerCase() !== mainDomainData?.domain.toLowerCase()
+    ),
+  };
 });
 
 // Get popular domain extensions for the grid
 export const popularExtensions = [".com", ".net", ".org", ".io", ".dev", ".co"];
 
-function DomainExtensionsGridSkeleton() {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
-      {[...new Array(6)].map((_, i) => (
-        <Card key={`skeleton-${i}`} className="text-center">
-          <CardContent className="pt-6">
-            <Skeleton width="4rem" height="1.125rem" className="mx-auto mb-2" />
-            <Skeleton width="5rem" height="0.875rem" className="mx-auto" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
+// function DomainExtensionsGridSkeleton() {
+//   return (
+//     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
+//       {[...new Array(6)].map((_, i) => (
+//         <Card key={`skeleton-${i}`} className="text-center">
+//           <CardContent className="pt-6">
+//             <Skeleton width="4rem" height="1.125rem" className="mx-auto mb-2" />
+//             <Skeleton width="5rem" height="0.875rem" className="mx-auto" />
+//           </CardContent>
+//         </Card>
+//       ))}
+//     </div>
+//   );
+// }
 
 async function DomainExtensionsGrid({
   allDomainPricesFromDbPromise,
@@ -379,6 +380,7 @@ export default async function DomainsPage({
                   strokeLinejoin="round"
                   className="w-full h-full text-destructive"
                 >
+                  <title>Erro ao Buscar Domínio</title>
                   <circle cx="12" cy="12" r="10" />
                   <line x1="15" y1="9" x2="9" y2="15" />
                   <line x1="9" y1="9" x2="15" y2="15" />
@@ -460,6 +462,7 @@ export default async function DomainsPage({
                 strokeLinejoin="round"
                 className="w-full h-full text-primary"
               >
+                <title>Registrar Domínio</title>
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 16v-4M12 8h.01" />
               </svg>
@@ -474,7 +477,12 @@ export default async function DomainsPage({
               <Button className="w-full" size="lg" asChild={true}>
                 <Link href="#search">Comprar novo domínio</Link>
               </Button>
-              <Button variant="outline" className="w-full" size="lg" asChild={true}>
+              <Button
+                variant="outline"
+                className="w-full"
+                size="lg"
+                asChild={true}
+              >
                 <Link href="/domains">Gerenciar domínios existentes</Link>
               </Button>
             </div>
@@ -522,6 +530,7 @@ function TldPriceTableSkeleton() {
             </TableHeader>
             <TableBody>
               {[...new Array(ITEMS_PER_TLD_PAGE_SKELETON)].map((_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: necessary for skeletons
                 <TableRow key={`skeleton-${i}`}>
                   <TableCell>
                     <Skeleton width="6rem" height="1rem" />

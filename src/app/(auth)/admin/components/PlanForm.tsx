@@ -63,12 +63,12 @@ export function PlanForm({ plan, onSuccess, onCancel }: PlanFormProps) {
       price: plan?.price || 0,
       maxSites: plan?.maxSites || 0,
       maxStorage: plan?.maxStorage || 0,
-      ssl: plan?.ssl,
-      backup: plan?.backup,
-      email: plan?.email,
-      cdn: plan?.cdn,
-      supportPriority: plan?.supportPriority,
-      featured: plan?.featured,
+      ssl: plan?.ssl ?? undefined,
+      backup: plan?.backup ?? undefined,
+      email: plan?.email ?? undefined,
+      cdn: plan?.cdn ?? undefined,
+      supportPriority: plan?.supportPriority ?? undefined,
+      featured: plan?.featured ?? undefined,
     },
   });
 

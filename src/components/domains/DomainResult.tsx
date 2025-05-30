@@ -1,7 +1,7 @@
 import {
   getDomainData,
   type DomainData,
-} from "@/app/(authenticated)/(dashboard)/domains/register/page";
+} from "@/app/(auth)/domains/register/page";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -193,7 +193,6 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
       AuxBilling: adminNamecheapDetails,
       AddFreeWhoisguard: "yes",
       WGEnabled: "yes",
-      Nameservers: [`ns1.${domainName}`, `ns2.${domainName}`],
     };
 
     if (isPremium) {

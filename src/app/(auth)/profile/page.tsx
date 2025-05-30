@@ -108,7 +108,7 @@ export default function ProfilePage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label for="name">Nome Completo</Label>
+                      <Label htmlFor="name">Nome Completo</Label>
                       <Input
                         id="name"
                         value={formData.name}
@@ -119,7 +119,7 @@ export default function ProfilePage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label for="email">E-mail</Label>
+                      <Label htmlFor="email">E-mail</Label>
                       <Input
                         id="email"
                         type="email"
@@ -134,7 +134,7 @@ export default function ProfilePage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label for="phone">Telefone</Label>
+                      <Label htmlFor="phone">Telefone</Label>
                       <Input
                         id="phone"
                         value={formData.phone}
@@ -145,7 +145,7 @@ export default function ProfilePage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label for="company">Empresa</Label>
+                      <Label htmlFor="company">Empresa</Label>
                       <Input
                         id="company"
                         value={formData.company}
@@ -176,7 +176,7 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label for="address">Endereço</Label>
+                  <Label htmlFor="address">Endereço</Label>
                   <Input
                     id="address"
                     value={formData.address}
@@ -189,7 +189,7 @@ export default function ProfilePage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label for="city">Cidade</Label>
+                    <Label htmlFor="city">Cidade</Label>
                     <Input
                       id="city"
                       value={formData.city}
@@ -200,7 +200,7 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label for="state">Estado</Label>
+                    <Label htmlFor="state">Estado</Label>
                     <Select disabled={!isEditing} value={formData.state}>
                       <SelectTrigger>
                         <SelectValue />
@@ -216,7 +216,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label for="zipCode">CEP</Label>
+                  <Label htmlFor="zipCode">CEP</Label>
                   <Input
                     id="zipCode"
                     value={formData.zipCode}
