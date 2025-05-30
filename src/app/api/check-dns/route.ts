@@ -18,8 +18,7 @@ async function checkDomain(domain: string): Promise<boolean> {
 }
 
 export async function GET(request: Request) {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) {
     return Response.error();

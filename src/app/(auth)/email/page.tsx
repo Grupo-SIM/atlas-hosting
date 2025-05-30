@@ -51,8 +51,7 @@ const DeleteButton = ({ mailNameId }: { mailNameId: number }) => {
 };
 
 export default async function EmailPage() {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   const domains = await getUserDomains(user.id);
   const selectedDomain = await getUserCurrentDomain(user);

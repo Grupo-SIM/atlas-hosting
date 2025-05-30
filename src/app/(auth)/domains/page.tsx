@@ -58,8 +58,7 @@ export default async function MyDomainsPage({
   searchParams,
 }: { searchParams: Promise<{ q?: string }> }) {
   const q = await searchParams;
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   let processedDomains: ProcessedDomain[] = [];
 

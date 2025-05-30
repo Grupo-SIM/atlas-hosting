@@ -58,8 +58,7 @@ const severityToColor = {
 };
 
 export async function RecentActivities() {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) {
     return (

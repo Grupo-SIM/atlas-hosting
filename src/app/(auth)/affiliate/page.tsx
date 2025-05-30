@@ -54,8 +54,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AffiliatePage() {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   const affiliateLink = `${process.env.PUBLIC_URL}/signup?ref=${user.id}`;
 

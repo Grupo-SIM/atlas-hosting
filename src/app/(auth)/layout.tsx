@@ -1,24 +1,12 @@
-import { validateSession } from "@/lib/auth";
+import DomainSelector from "@/components/domains/DomainSelector";
+import Sidebar from "@/components/layouts/components/Sidebar";
+import Topbar from "@/components/layouts/components/Topbar";
+import { getUser } from "@/lib/auth";
+import type { User } from "@/lib/db/schema";
+import type { DomainListItem } from "@/lib/server/apis/namecheap/types";
+import { getUserCurrentDomain, getUserDomains } from "@/lib/server/utils";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import Topbar from "@/components/layouts/components/Topbar";
-import type { User } from "@/lib/db/schema";
-import { getUserCurrentDomain, getUserDomains } from "@/lib/server/utils";
-import {
-  Database,
-  FileText,
-  Globe,
-  LayoutDashboard,
-  LifeBuoy,
-  Mail,
-  Server,
-  Settings,
-  Shield,
-  Users,
-} from "lucide-react";
-import Sidebar from "@/components/layouts/components/Sidebar";
-import DomainSelector from "@/components/domains/DomainSelector";
-import type { DomainListItem } from "@/lib/server/apis/namecheap/types";
 
 export const metadata: Metadata = {
   title: "Atlas Hosting - Serviços de Web Hosting",
@@ -31,7 +19,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = await validateSession();
+  const user = await getUser();
 
   if (!user) {
     redirect("/login");

@@ -54,8 +54,7 @@ export async function fetchEmailsAction(
   emailAddress: string
 ): Promise<{ emails?: EmailMessage[]; error?: string }> {
   try {
-    const cookieStore = await cookies();
-    const user = await getUser(cookieStore);
+    const user = await getUser();
 
     if (!user) return { error: "User not authenticated." };
 
@@ -120,8 +119,7 @@ export async function fetchEmailBodyAction(
   uid: number
 ): Promise<{ email?: EmailMessage; error?: string }> {
   try {
-    const cookieStore = await cookies();
-    const user = await getUser(cookieStore);
+    const user = await getUser();
 
     if (!user) return { error: "User not authenticated." };
 
@@ -195,8 +193,7 @@ export async function sendEmailAction(
   payload: SendEmailPayload
 ): Promise<{ success?: boolean; messageId?: string; error?: string }> {
   try {
-    const cookieStore = await cookies();
-    const user = await getUser(cookieStore);
+    const user = await getUser();
 
     if (!user) return { error: "User not authenticated." };
 
@@ -259,8 +256,7 @@ export async function saveEmailAccountConfigAction(
   error?: string;
   data?: UserEmailAccountConfig;
 }> {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) return { error: "User not authenticated." };
 
@@ -471,8 +467,7 @@ export async function deleteEmailAccountAction(
   emailAddress: string,
   domain: string
 ) {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) return { error: "User not authenticated." };
 
@@ -514,8 +509,7 @@ export async function deleteEmailAccountAction(
 export async function getManagedEmailAccountsAction(
   domainName: string
 ): Promise<{ accounts?: UserEmailAccountConfig[]; error?: string }> {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) return { error: "User not authenticated." };
 

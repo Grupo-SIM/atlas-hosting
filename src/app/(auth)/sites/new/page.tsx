@@ -13,8 +13,7 @@ import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm"; // Upd
 import { cookies } from "next/headers";
 
 export default async function NewSitePageContainer() {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) {
     return (

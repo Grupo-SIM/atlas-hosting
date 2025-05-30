@@ -1,12 +1,13 @@
 import { db } from "@/lib/db";
 import { type LogInsert, pgLog, type User } from "@/lib/db/schema";
-import EventEmitter from "events";
+import EventEmitter from "node:events";
 
+// biome-ignore lint/complexity/noStaticOnlyClass: <explanation>
 class AppLoggerQueue {
   private static eventTarget = new EventEmitter();
 
   public static send(message: LogInsert): void {
-    this.eventTarget.emit("log", message);
+    AppLoggerQueue.eventTarget.emit("log", message);
   }
 
   private static onLogEvent = async (event: LogInsert): Promise<void> => {

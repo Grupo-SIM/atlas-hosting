@@ -173,6 +173,7 @@ export async function getUserCurrentDomain({
       .execute();
 
     revalidateTag("current-domain");
+    revalidateTag("session-validate");
     return domains[0]; // Default to the first domain
   }
 

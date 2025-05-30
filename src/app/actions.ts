@@ -71,6 +71,8 @@ export async function login(
       maxAge: 60 * 60 * 24 * 30,
     });
 
+    revalidateTag("session-validate");
+
     let description = "Novo login realizado";
 
     if (userIp) {
@@ -152,6 +154,19 @@ export async function signup(
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 30, // 30 days
     });
+
+    if (referrerId) {
+      const userLogger = new AppLogger({ id: referrerId });
+      userLogger.log({
+        type: "account",
+        title: "Usuário cadastrado com seu link de afiliado",
+        description:
+          "Um novo usuário se cadastrou usando seu link de afiliado.",
+        severity: "success",
+      });
+    }
+
+    revalidateTag("session-validate");
   } catch (error) {
     console.error("Signup error:", error);
     return { status: "error", message: "Erro ao criar conta" };
@@ -168,6 +183,8 @@ export async function logout(): Promise<void> {
     await db.delete(pgSession).where(eq(pgSession.id, sessionToken));
     cookieStore.delete("session_token");
   }
+
+  revalidateTag("session-validate");
 
   redirect("/");
 }
@@ -240,8 +257,7 @@ export async function createPlanInvoice(
   prevState: unknown,
   planId: string
 ): Promise<ActionResponse> {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) {
     return {
@@ -316,8 +332,7 @@ export async function createDomainInvoice(
   prevState: unknown,
   domain: string
 ): Promise<ActionResponse> {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) {
     return {
@@ -346,7 +361,7 @@ export async function createDomainInvoice(
     }
 
     const price = await db.query.pgDomainPricingCache.findFirst({
-      where: eq(pgDomainPricingCache.tld, domain.split(".").pop()!),
+      where: eq(pgDomainPricingCache.tld, domain.split(".").pop() ?? ""),
     });
 
     if (!price || !price.price) {
@@ -411,8 +426,7 @@ export async function completeCheckout(
     ...values
   }: CheckoutFormInputs & { invoiceId: string; cardToken: string }
 ): Promise<ActionResponse> {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) {
     return {
@@ -498,7 +512,7 @@ export async function completeCheckout(
       status: 0,
     });
 
-    if (result && result.id) {
+    if (result?.id) {
       await db
         .update(pgUser)
         .set({
@@ -898,8 +912,8 @@ export async function deleteWordPressInstances(
   instanceIds: string
 ): Promise<ActionResponse> {
   try {
-    const cookieStore = await cookies();
-    const user = await getUser(cookieStore);
+    const user = await getUser();
+
     if (!user) {
       return { status: "error", message: "Unauthorized" };
     }
@@ -938,8 +952,7 @@ export async function changeSelectedDomain(
   prevState: unknown,
   domainName: string
 ): Promise<ActionResponse> {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) {
     return { status: "error", message: "Usuário não autenticado" };
@@ -956,6 +969,7 @@ export async function changeSelectedDomain(
       .where(eq(pgUser.id, user.id));
 
     revalidateTag("current-domain");
+    revalidateTag("session-validate");
 
     return {
       status: "success",

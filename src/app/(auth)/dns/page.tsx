@@ -20,8 +20,7 @@ export const metadata: Metadata = {
 export default async function DnsManagementPage({
   params,
 }: { params: { domain: string } }) {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   const domain = await getUserCurrentDomain(user);
 

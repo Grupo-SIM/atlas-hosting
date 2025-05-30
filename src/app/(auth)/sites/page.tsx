@@ -37,8 +37,7 @@ async function checkDomain(domain: string): Promise<boolean> {
 }
 
 export default async function SitesPage() {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) {
     return (

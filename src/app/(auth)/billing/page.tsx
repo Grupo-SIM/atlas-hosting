@@ -61,8 +61,7 @@ const formatDate = (dateInput: string | Date | undefined | null): string => {
 };
 
 export default async function BillingPage() {
-  const cookieStore = await cookies();
-  const { id: userId } = await getUser(cookieStore);
+  const user = await getUser();
 
   // Assumes invoiceTable has fields: id, userId, amount, status, createdAt, reference, type
   // Adjust field names (e.g., invoiceTable.user_id) if your schema differs.

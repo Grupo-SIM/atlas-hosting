@@ -5,8 +5,7 @@ import { sortBy } from "lodash";
 import { cookies } from "next/headers";
 
 export default async function PlansPage() {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   // Fetch plans without the planFeatures relation
   const dbPlans = await db.query.pgPlan.findMany();

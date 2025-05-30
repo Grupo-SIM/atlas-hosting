@@ -168,8 +168,7 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
   async function buyDomainAction(formData: FormData) {
     "use server";
 
-    const cookieStore = await cookies();
-    const user = await getUser(cookieStore);
+    const user = await getUser();
 
     const domainName = formData.get("domainName") as string;
 

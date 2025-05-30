@@ -37,8 +37,7 @@ async function performDnsOperation(
     currentItems: DnsHostRecordItem[]
   ) => DnsHostRecordItem[] | Promise<DnsHostRecordItem[]>
 ): Promise<DnsActionResult> {
-  const cookieStore = await cookies();
-  const user = await getUser(cookieStore);
+  const user = await getUser();
 
   if (!user) return { success: false, message: "Usuário não autenticado." };
 

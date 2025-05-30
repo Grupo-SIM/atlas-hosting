@@ -18,9 +18,9 @@ import {
 } from "@oslojs/encoding";
 import { eq } from "drizzle-orm";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-import type { ReadonlyRequestCookies } from "node_modules/next/dist/server/web/spec-extension/adapters/request-cookies";
 import type { AppLogger } from "../server/logs";
 import { hash, hashWithEncodeKey, verify } from "./scrypt";
+import { cookies } from "next/headers";
 
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);
@@ -80,9 +80,10 @@ export async function validateSessionToken(
 }
 
 export async function validateSession(
-  cookieStore: ReadonlyRequestCookies
+  sessionToken?: string
 ): Promise<SessionValidationResult> {
-  const sessionToken = cookieStore.get("session_token")?.value;
+  "use cache";
+  cacheTag("session-validate");
 
   if (!sessionToken) {
     return { session: null, user: null };
@@ -183,11 +184,12 @@ export type SessionValidationResult =
 export async function getUser<
   T extends boolean = false,
   U = T extends true ? User | null : User,
->(cookieStore: ReadonlyRequestCookies): Promise<U> {
-  "use cache";
-  cacheTag("current-user");
+>(): Promise<U> {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get("session_token")?.value;
 
-  const { user } = await validateSession(cookieStore);
+  const { user } = await validateSession(sessionToken);
+
   return user as U;
 }
 

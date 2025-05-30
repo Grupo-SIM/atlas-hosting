@@ -9,8 +9,7 @@ export async function DELETE(
   { params }: { params: { instanceId: string } }
 ) {
   try {
-    const cookieStore = await cookies();
-    const user = await getUser(cookieStore);
+    const user = await getUser();
 
     if (!user) {
       return new NextResponse("Unauthorized", { status: 401 });
