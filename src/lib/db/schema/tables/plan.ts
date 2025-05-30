@@ -8,6 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { pgUser } from "./user";
+import { pgOrganization } from "./organization";
 
 export const pgPlan = pgTable("plans", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -25,7 +26,7 @@ export const pgPlan = pgTable("plans", {
 });
 
 export const plansTableRelations = relations(pgPlan, ({ many }) => ({
-  users: many(pgUser),
+  users: many(pgOrganization),
 }));
 
 export type Plan = typeof pgPlan.$inferSelect;

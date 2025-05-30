@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast"; // Import toast for displaying messages
-import type { Plan, User } from "@/lib/db/schema";
+import type { Organization, Plan, User } from "@/lib/db/schema";
 import { intersperse, toBrl } from "@/lib/utils";
 import clsx from "clsx";
 import { capitalize } from "lodash";
@@ -72,7 +72,7 @@ export function PlanCard({ plan, user }: PlanCardProps) {
     <Card
       className={clsx([
         plan.featured ? "border-primary shadow-lg" : "",
-        user.planId === plan.id && "opacity-20",
+        user.organization.planId === plan.id && "opacity-20",
         "flex flex-col h-full",
       ])}
     >
@@ -141,7 +141,7 @@ export function PlanCard({ plan, user }: PlanCardProps) {
               </ul>
             </div>
           </div>
-          {user.planId === plan.id ? (
+          {user.organization.planId === plan.id ? (
             <Button disabled={true} className="w-full" variant="outline">
               Plano atual
             </Button>
@@ -165,5 +165,5 @@ export function PlanCard({ plan, user }: PlanCardProps) {
 
 export interface PlanCardProps {
   plan: Plan; // Removed features property as it's part of Plan now
-  user: User;
+  user: User & { organization: Organization };
 }

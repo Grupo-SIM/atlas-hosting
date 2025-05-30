@@ -13,7 +13,7 @@ export default async function PlansPage() {
   // Plans now have feature columns directly.
   // The previous mapping to create a 'features' array is no longer needed.
   const plans = sortBy(dbPlans, [
-    (plan) => (plan.id === user.planId ? -1 : 0),
+    (plan) => (plan.id === user.organization.planId ? -1 : 0),
     "price",
   ]);
 

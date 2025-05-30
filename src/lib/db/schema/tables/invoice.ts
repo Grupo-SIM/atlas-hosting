@@ -7,9 +7,13 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { pgUser } from "./user";
+import { pgOrganization } from "./organization";
 
 export const pgInvoice = pgTable("invoices", {
   id: uuid("id").primaryKey().defaultRandom(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => pgOrganization.id),
   userId: uuid("user_id")
     .notNull()
     .references(() => pgUser.id),
@@ -27,6 +31,10 @@ export const pgInvoice = pgTable("invoices", {
 });
 
 export const invoiceRelations = relations(pgInvoice, ({ one }) => ({
+  organization: one(pgOrganization, {
+    fields: [pgInvoice.orgId],
+    references: [pgOrganization.id],
+  }),
   user: one(pgUser, {
     fields: [pgInvoice.userId],
     references: [pgUser.id],

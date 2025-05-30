@@ -1,6 +1,11 @@
 import { adminNamecheapDetails } from "@/components/domains/DomainResult";
 import { db } from "@/lib/db";
-import { pgInvoice, pgUser } from "@/lib/db/schema";
+import {
+  pgInvoice,
+  pgOrganization,
+  pgOrganizationDomains,
+  pgUser,
+} from "@/lib/db/schema";
 import type { PayloadWebhook } from "@/lib/server/apis/dom/types";
 import namecheapApi from "@/lib/server/apis/namecheap";
 import type { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
@@ -57,11 +62,12 @@ async function onInvoiceCreated(data: PayloadWebhook["data"]): Promise<void> {
       status: "processing",
       type: oldInvoice.type,
       reference: oldInvoice.reference,
+      orgId: oldInvoice.orgId,
       userId: oldInvoice.userId,
       createdAt: new Date(),
       updatedAt: new Date(),
       amount: oldInvoice.amount,
-      dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // Set due date to 7 days from now
+      dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
     });
 
     return;
@@ -89,11 +95,11 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
 
   if (invoice.type === "subscription") {
     await db
-      .update(pgUser)
+      .update(pgOrganization)
       .set({
         planId: invoice.reference,
       })
-      .where(eq(pgUser.id, invoice.userId))
+      .where(eq(pgOrganization.id, invoice.orgId))
       .returning();
     return;
   }
@@ -109,7 +115,7 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
     const registrationPrice = invoice.amount;
 
     const user = await db.query.pgUser.findFirst({
-      where: eq(pgUser.id, invoice.userId),
+      where: eq(pgUser.id, invoice.orgId),
     });
 
     if (!user || !user.email) {
@@ -136,6 +142,11 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
       );
 
       const registrationResult = await namecheapApi.createDomain(params);
+
+      await db.insert(pgOrganizationDomains).values({
+        domain: domainName,
+        organizationId: invoice.orgId,
+      });
 
       console.log("Namecheap registration result:", registrationResult);
 

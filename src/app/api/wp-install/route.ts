@@ -5,7 +5,7 @@ import { type CliCallResponse, ClientRequestTypeEnum } from "@/plesk";
 import type { DnsRecord as PleskDnsRecord } from "@/plesk/models"; // Corrected import path
 
 import { db } from "@/lib/db";
-import { pgUser } from "@/lib/db/schema";
+import { pgOrganization, pgUser } from "@/lib/db/schema";
 import namecheapApi from "@/lib/server/apis/namecheap";
 import type {
   DnsHostRecord,
@@ -118,7 +118,7 @@ export async function GET(request: Request) {
       try {
         yield* sendSSE("INFO", "Iniciando a instalação do WordPress...");
 
-        let { pleskId } = user;
+        let { pleskId } = user.organization;
         const { id: userId, email: userEmailForPlesk } = user;
 
         if (!pleskId) {
@@ -136,9 +136,9 @@ export async function GET(request: Request) {
           yield* sendSSE("INFO", "Atualizando os dados do usuário...");
           if (result?.id) {
             await db
-              .update(pgUser)
+              .update(pgOrganization)
               .set({ pleskId: result.id })
-              .where(eq(pgUser.id, userId));
+              .where(eq(pgOrganization.id, user.organization.id));
             pleskId = result.id;
             yield* sendSSE("INFO", "Usuário de hospedagem criado e vinculado.");
           } else {

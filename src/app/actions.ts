@@ -19,6 +19,7 @@ import { db } from "@/lib/db";
 import {
   pgDomainPricingCache,
   pgInvoice,
+  pgOrganization,
   pgPlan,
   pgSession,
   pgUser,
@@ -103,9 +104,9 @@ export async function login(
 
 export async function signup(
   prevState: unknown,
-  { email, password, fullName, referrerId }: SignupFormInputs
+  { email, password, fullName, referrerId, organizationName }: SignupFormInputs
 ): Promise<ActionResponse> {
-  if (!email || !password || !fullName) {
+  if (!email || !password || !fullName || !organizationName) {
     return {
       status: "error",
       message: "Nome, email e senha são obrigatórios",
@@ -133,7 +134,7 @@ export async function signup(
   }
 
   try {
-    const user = await createUser(fullName, email, password, referrerId);
+    const user = await createUser(fullName, email, password, organizationName, referrerId);
 
     if (!user) {
       // Assuming createUser returns null if user already exists or on other errors
@@ -286,6 +287,7 @@ export async function createPlanInvoice(
     const [newInvoice] = await db
       .insert(pgInvoice)
       .values({
+        orgId: user.organization.id,
         userId: user.id,
         type: "subscription",
         reference: plan.id,
@@ -379,6 +381,7 @@ export async function createDomainInvoice(
     const [newInvoice] = await db
       .insert(pgInvoice)
       .values({
+        orgId: user.organization.id,
         userId: user.id,
         type: "domain",
         reference: domain,
@@ -447,7 +450,7 @@ export async function completeCheckout(
     return { status: "error", message: "Fatura não encontrada." };
   }
 
-  if (!user.domId) {
+  if (!user.organization?.domId) {
     try {
       const { id } = await domApi.createClient({
         name: user.name,
@@ -467,11 +470,11 @@ export async function completeCheckout(
       });
 
       await db
-        .update(pgUser)
+        .update(pgOrganization)
         .set({
           domId: id,
         })
-        .where(eq(pgUser.id, user.id));
+        .where(eq(pgOrganization.id, user.organizationId));
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
@@ -500,7 +503,7 @@ export async function completeCheckout(
     }
   }
 
-  if (!user.pleskId) {
+  if (!user.organization?.pleskId) {
     const result = await pleskApi.createClient({
       name: user.name,
       email: user.email,
@@ -514,11 +517,11 @@ export async function completeCheckout(
 
     if (result?.id) {
       await db
-        .update(pgUser)
+        .update(pgOrganization)
         .set({
           pleskId: result.id,
         })
-        .where(eq(pgUser.id, user.id));
+        .where(eq(pgOrganization.id, user.organizationId));
     } else {
       console.error("Failed to create Plesk client:", result);
       return {

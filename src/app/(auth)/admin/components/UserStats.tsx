@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { pgUser } from "@/lib/db/schema";
+import { pgOrganization, pgUser } from "@/lib/db/schema";
 import { isNotNull, sql } from "drizzle-orm";
 import { UserChart } from "./UserChart";
 
@@ -22,8 +22,8 @@ export async function UserStats() {
         .select({
           count: sql<number>`count(*)`,
         })
-        .from(pgUser)
-        .where(isNotNull(pgUser.planId)),
+        .from(pgOrganization)
+        .where(isNotNull(pgOrganization.planId)),
       db
         .select({
           count: sql<number>`count(*)`,

@@ -61,13 +61,13 @@ const formatDate = (dateInput: string | Date | undefined | null): string => {
 };
 
 export default async function BillingPage() {
-  const { id: userId } = await getUser();
+  const { organizationId } = await getUser();
 
   // Assumes invoiceTable has fields: id, userId, amount, status, createdAt, reference, type
   // Adjust field names (e.g., invoiceTable.user_id) if your schema differs.
-  const userInvoices = userId
+  const userInvoices = organizationId
     ? await db.query.pgInvoice.findMany({
-        where: eq(pgInvoice.userId, userId),
+        where: eq(pgInvoice.orgId, organizationId),
         orderBy: [desc(pgInvoice.updatedAt)],
       })
     : [];
@@ -87,7 +87,7 @@ export default async function BillingPage() {
                 Nenhuma fatura encontrada
               </h3>
               <p className="text-muted-foreground">
-                {userId
+                {organizationId
                   ? "Você ainda não possui faturas."
                   : "Não foi possível carregar suas faturas. Verifique se você está logado."}
               </p>

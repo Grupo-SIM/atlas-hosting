@@ -1,18 +1,8 @@
-import { relations } from "drizzle-orm";
-import {
-  bigint,
-  boolean,
-  date,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
-import { pgNamecheapIntegration } from "./namecheap";
-import { pgPlan } from "./plan";
-import { pgWallet } from "./wallet";
 import { pgZohoDomainOrganizations } from "@/lib/db/schema/tables/email";
-import { pgOrganization } from "./organization";
+import { relations } from "drizzle-orm";
+import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgOrganization, pgUserPermission } from "./organization";
+import { pgSession } from "./session";
 
 export const pgUser = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -22,35 +12,23 @@ export const pgUser = pgTable("users", {
   image: text("image"),
   password: text("password").notNull(),
   namesiloId: text("namesilo_id"),
-  isAdmin: boolean("is_admin"),
-  domId: text("dom_id"),
-  pleskId: text("plesk_id"),
-  planId: uuid("plan_id").references(() => pgPlan.id),
-  namecheapId: bigint("namecheap_id", { mode: "number" }),
-  walletId: uuid("wallet_id")
-    .notNull()
-    .references(() => pgWallet.id),
+  isAdmin: boolean("is_admin").default(false),
   selectedDomain: text("selected_domain"),
   referrerId: uuid("referrer_id"),
-  organizationId: uuid("organization_id").references(() => pgOrganization.id),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => pgOrganization.id),
+  organizationRole: text("organization_role", {
+    enum: ["member", "admin", "developer"],
+  })
+    .notNull()
+    .default("admin"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   deletedAt: timestamp("deleted_at", { mode: "date" }),
 });
 
 export const userRelations = relations(pgUser, ({ one, many }) => ({
-  plan: one(pgPlan, {
-    fields: [pgUser.planId],
-    references: [pgPlan.id],
-  }),
-  namecheap: one(pgNamecheapIntegration, {
-    fields: [pgUser.namecheapId],
-    references: [pgNamecheapIntegration.id],
-  }),
-  wallet: one(pgWallet, {
-    fields: [pgUser.walletId],
-    references: [pgWallet.id],
-  }),
   zohoOrgs: many(pgZohoDomainOrganizations),
   referrer: one(pgUser, {
     fields: [pgUser.referrerId],
@@ -65,6 +43,8 @@ export const userRelations = relations(pgUser, ({ one, many }) => ({
     references: [pgOrganization.id],
     relationName: "organization_members",
   }),
+  domainAccess: many(pgUserPermission),
+  sessions: many(pgSession),
 }));
 
 export type User = typeof pgUser.$inferSelect;

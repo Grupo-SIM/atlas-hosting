@@ -1,7 +1,6 @@
-import type { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import { db } from "@/lib/db";
 import {
-  pgNamecheapIntegration,
+  pgOrganization,
   pgSession,
   pgUser,
   pgWallet,
@@ -9,8 +8,6 @@ import {
   type SessionInsert,
   type User,
 } from "@/lib/db/schema";
-import { namecheapApi } from "@/lib/server/apis/namecheap";
-import { randomBytes } from "@noble/hashes/utils";
 import { sha256 } from "@oslojs/crypto/sha2";
 import {
   encodeBase32LowerCaseNoPadding,
@@ -18,9 +15,10 @@ import {
 } from "@oslojs/encoding";
 import { eq } from "drizzle-orm";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-import type { AppLogger } from "../server/logs";
-import { hash, hashWithEncodeKey, verify } from "./scrypt";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import type { AppLogger } from "../server/logs";
+import { hash, verify } from "./scrypt";
 
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);
@@ -43,22 +41,28 @@ export async function createSession(
   return session;
 }
 
-export async function validateSessionToken(
-  token: string
-): Promise<SessionValidationResult> {
+export async function validateSessionToken(token: string) {
   const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 
-  const result = await db
-    .select({ user: pgUser, session: pgSession })
-    .from(pgSession)
-    .innerJoin(pgUser, eq(pgSession.userId, pgUser.id))
-    .where(eq(pgSession.id, sessionId));
+  const result = await db.query.pgSession.findFirst({
+    where: eq(pgSession.id, sessionId),
+    with: {
+      user: {
+        with: {
+          organization: true,
+          domainAccess: true,
+          referrer: true,
+          referredUsers: true,
+        },
+      },
+    },
+  });
 
-  if (result.length < 1) {
+  if (!result) {
     return { session: null, user: null };
   }
 
-  const { user, session } = result[0];
+  const { user, ...session } = result;
 
   if (Date.now() >= session.expiresAt.getTime()) {
     await db.delete(pgSession).where(eq(pgSession.id, session.id));
@@ -79,9 +83,7 @@ export async function validateSessionToken(
   return { session, user };
 }
 
-export async function validateSession(
-  sessionToken?: string
-): Promise<SessionValidationResult> {
+export async function validateSession(sessionToken?: string) {
   "use cache";
   cacheTag("session-validate");
 
@@ -104,6 +106,7 @@ export async function createUser(
   name: string,
   email: string,
   passwordPlain: string,
+  organizationName: string,
   referrerId?: string
 ) {
   try {
@@ -119,18 +122,71 @@ export async function createUser(
     const { id: walletId } = walletResult[0];
 
     const hashedPassword = await hash(passwordPlain);
+
+    const newOrg = await db
+      .insert(pgOrganization)
+      .values({
+        name: organizationName,
+        walletId,
+      })
+      .returning();
+
     const newUser = await db
       .insert(pgUser)
       .values({
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
-        walletId,
         createdAt: new Date(),
         updatedAt: new Date(),
-        deletedAt: null,
-        namesiloId: null,
         referrerId,
+        organizationRole: "admin",
+        organizationId: newOrg[0].id,
+      })
+      .returning({
+        id: pgUser.id,
+        name: pgUser.name,
+        email: pgUser.email,
+        createdAt: pgUser.createdAt,
+        updatedAt: pgUser.updatedAt,
+        deletedAt: pgUser.deletedAt,
+      });
+
+    await db
+      .update(pgOrganization)
+      .set({
+        ownerId: newUser[0].id,
+      })
+      .where(eq(pgOrganization.id, newOrg[0].id));
+
+    return newUser[0];
+  } catch (error) {
+    // Handle potential errors, e.g., unique constraint violation for email
+    console.error("Error creating user:", error);
+    return null;
+  }
+}
+
+export async function createUserForOrganization(
+  name: string,
+  email: string,
+  passwordPlain: string,
+  organizationId: string,
+  role: "admin" | "member" | "developer" = "member"
+) {
+  try {
+    const hashedPassword = await hash(passwordPlain);
+
+    const newUser = await db
+      .insert(pgUser)
+      .values({
+        name,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        organizationRole: role,
+        organizationId,
       })
       .returning({
         id: pgUser.id,
@@ -181,62 +237,63 @@ export type SessionValidationResult =
   | { session: Session; user: User }
   | { session: null; user: null };
 
-export async function getUser<
-  T extends boolean = false,
-  U = T extends true ? User | null : User,
->(): Promise<U> {
+export async function getUser() {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("session_token")?.value;
 
   const { user } = await validateSession(sessionToken);
 
-  return user as U;
-}
-
-export async function createNamecheapForUser(
-  user: User,
-  checkoutInputs: CheckoutFormInputs
-): Promise<number> {
-  const randomPassword = randomBytes(10).toHex();
-  const hashedPassword = await hashWithEncodeKey(randomPassword);
-
-  const nameCheapUser = await namecheapApi.createUser({
-    AcceptTerms: true,
-    Address1: checkoutInputs.address.street,
-    City: checkoutInputs.address.city,
-    Country: "BR",
-    EmailAddress: user.email,
-    FirstName: user.name.split(" ")[0],
-    LastName: user.name.split(" ")[1],
-    NewUserName: user.id.replace(/\-/g, ""),
-    NewUserPassword: randomPassword,
-    Phone: checkoutInputs.phoneNumber,
-    StateProvince: checkoutInputs.address.state,
-    Zip: checkoutInputs.address.zipCode,
-  });
-
-  const namecheapId = nameCheapUser.UserId;
-
-  if (!namecheapId) {
-    throw new Error("Failed to create Namecheap user");
+  if (!user) {
+    redirect("/login");
   }
 
-  await db.insert(pgNamecheapIntegration).values({
-    id: namecheapId,
-    password: hashedPassword,
-    username: user.id.replace(/\-/g, ""),
-    userId: user.id,
-  });
-
-  await db
-    .update(pgUser)
-    .set({
-      namecheapId,
-    })
-    .where(eq(pgUser.id, user.id));
-
-  return namecheapId;
+  return user;
 }
+
+// export async function createNamecheapForUser(
+//   user: User,
+//   checkoutInputs: CheckoutFormInputs
+// ): Promise<number> {
+//   const randomPassword = randomBytes(10).toHex();
+//   const hashedPassword = await hashWithEncodeKey(randomPassword);
+
+//   const nameCheapUser = await namecheapApi.createUser({
+//     AcceptTerms: true,
+//     Address1: checkoutInputs.address.street,
+//     City: checkoutInputs.address.city,
+//     Country: "BR",
+//     EmailAddress: user.email,
+//     FirstName: user.name.split(" ")[0],
+//     LastName: user.name.split(" ")[1],
+//     NewUserName: user.id.replace(/\-/g, ""),
+//     NewUserPassword: randomPassword,
+//     Phone: checkoutInputs.phoneNumber,
+//     StateProvince: checkoutInputs.address.state,
+//     Zip: checkoutInputs.address.zipCode,
+//   });
+
+//   const namecheapId = nameCheapUser.UserId;
+
+//   if (!namecheapId) {
+//     throw new Error("Failed to create Namecheap user");
+//   }
+
+//   await db.insert(pgNamecheapIntegration).values({
+//     id: namecheapId,
+//     password: hashedPassword,
+//     username: user.id.replace(/\-/g, ""),
+//     userId: user.id,
+//   });
+
+//   await db
+//     .update(pgUser)
+//     .set({
+//       namecheapId,
+//     })
+//     .where(eq(pgUser.id, user.id));
+
+//   return namecheapId;
+// }
 
 export interface UserWithLogger extends User {
   logger: AppLogger;

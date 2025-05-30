@@ -172,7 +172,6 @@ export async function getUserCurrentDomain({
       .where(eq(pgUser.id, userId))
       .execute();
 
-    revalidateTag("current-domain");
     revalidateTag("session-validate");
     return domains[0]; // Default to the first domain
   }

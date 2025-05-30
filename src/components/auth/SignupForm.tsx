@@ -83,6 +83,18 @@ export default function SignupForm({
           )}
         </div>
         <div className="space-y-2">
+          <Label htmlFor="organizationName">Nome da organização</Label>
+          <Input
+            type="text"
+            placeholder="Nome da sua organização"
+            autoComplete="organizationName"
+            {...register("organizationName")}
+          />
+          {errors.organizationName && (
+            <p className="text-xs text-red-400">{errors.organizationName.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="password">Senha</Label>
           <Input
             type="password"
@@ -151,6 +163,11 @@ const schema = yup
       .string()
       .email("Digite um e-mail válido")
       .required("E-mail é obrigatório"),
+    organizationName: yup
+      .string()
+      .trim()
+      .max(100, "O nome da organização deve ter no máximo 100 caracteres")
+      .required("Nome da organização é obrigatório"),
     password: yup
       .string()
       .min(8, "A senha deve ter pelo menos 8 caracteres")
