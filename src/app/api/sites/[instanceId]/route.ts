@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import pleskApi from "@/lib/server/apis/plesk";
 import { getUser } from "@/lib/auth";
 import { AppLogger } from "@/lib/server/logs";
+import { cookies } from "next/headers";
 
 export async function DELETE(
   request: Request,
   { params }: { params: { instanceId: string } }
 ) {
   try {
-    const user = await getUser();
+    const cookieStore = await cookies();
+    const user = await getUser(cookieStore);
 
     if (!user) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -44,7 +46,9 @@ export async function DELETE(
             title: "Erro ao excluir instância do WordPress",
             description: `Falha ao excluir a instância do WordPress em "${data.name}" `,
           });
-          throw new Error(`Falha ao excluir a instância do WordPress em "${data.name}".`);
+          throw new Error(
+            `Falha ao excluir a instância do WordPress em "${data.name}".`
+          );
         }
       })
     );

@@ -23,6 +23,7 @@ import {
 // import { Badge } from "@/components/ui/badge"; // Not used in the final layout but good to have if needed
 import { Mail, Plus, Check } from "lucide-react";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 
 // Ensure ListDomainDomain is imported if selectedDomain relies on its specific properties not covered by a general object type
 // import type { ListDomainDomain } from "@/lib/server/apis/namesilo/types";
@@ -50,7 +51,8 @@ const DeleteButton = ({ mailNameId }: { mailNameId: number }) => {
 };
 
 export default async function EmailPage() {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   const domains = await getUserDomains(user.id);
   const selectedDomain = await getUserCurrentDomain(user);

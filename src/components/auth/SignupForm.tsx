@@ -4,14 +4,14 @@ import { signup } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { User } from "@/lib/db/schema";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
 import {
   startTransition,
   useActionState,
-  useCallback,
   useEffect,
-  useState,
+  useState
 } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
@@ -19,7 +19,9 @@ import * as yup from "yup";
 import GithubAuthButton from "./GithubAuthButton";
 import GoogleAuthButton from "./GoogleAuthButton";
 
-export default function SignupForm() {
+export default function SignupForm({
+  referrer,
+}: { referrer?: Pick<User, "name" | "email" | "id"> }) {
   const { register, handleSubmit, control, ...methods } =
     useForm<SignupFormInputs>({
       resolver: yupResolver(schema),
@@ -46,7 +48,7 @@ export default function SignupForm() {
     setFormError(null);
 
     startTransition(() => {
-      doSignup(data);
+      doSignup({ ...data, referrerId: referrer?.id });
     });
   };
 
@@ -166,4 +168,6 @@ const schema = yup
   })
   .required();
 
-export type SignupFormInputs = yup.InferType<typeof schema>;
+export type SignupFormInputs = yup.InferType<typeof schema> & {
+  referrerId?: string;
+};

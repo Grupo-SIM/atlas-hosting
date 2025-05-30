@@ -22,6 +22,7 @@ import { desc, eq } from "drizzle-orm";
 import { getUser } from "@/lib/auth";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cookies } from "next/headers";
 
 // Map severity to icons
 const severityToIcon: Record<string, LucideIcon> = {
@@ -57,7 +58,8 @@ const severityToColor = {
 };
 
 export async function RecentActivities() {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   if (!user) {
     return (

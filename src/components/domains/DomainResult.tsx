@@ -15,6 +15,7 @@ import namecheapApi from "@/lib/server/apis/namecheap";
 import type { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
 import { toBrl } from "@/lib/utils";
 import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { type PropsWithChildren, type ReactNode, Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -22,7 +23,7 @@ import Skeleton from "react-loading-skeleton";
 export async function DomainResult({ searchQuery }: { searchQuery: string }) {
   const domainData = await getDomainData(searchQuery);
 
-  if (!(domainData?.domain)) {
+  if (!domainData?.domain) {
     return (
       <Card>
         <CardHeader>
@@ -167,17 +168,20 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
   async function buyDomainAction(formData: FormData) {
     "use server";
 
-    const user = await getUser();
+    const cookieStore = await cookies();
+    const user = await getUser(cookieStore);
 
     const domainName = formData.get("domainName") as string;
 
     const formYears = formData.get("years") as string;
 
     const yearsToRegister = formYears ? Number.parseInt(formYears, 10) : 1;
-    const registrationPrice = Number.parseFloat(formData.get("price") as string);
+    const registrationPrice = Number.parseFloat(
+      formData.get("price") as string
+    );
     const isPremium = formData.get("isPremium") === "true";
 
-    if (!(user?.email)) {
+    if (!user?.email) {
       throw new Error("Usuário não autenticado ou e-mail não encontrado.");
     }
     if (!domainName) {
@@ -201,7 +205,6 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
     }
 
     try {
-
       const registrationResult = await namecheapApi.createDomain(params);
 
       if (!registrationResult.Registered) {
@@ -210,7 +213,6 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
         );
       }
     } catch (error) {
-
       if (error instanceof Error) {
         throw new Error(`Falha ao registrar ${domainName}: ${error.message}`);
       }

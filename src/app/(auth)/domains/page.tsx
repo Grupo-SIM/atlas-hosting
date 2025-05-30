@@ -38,6 +38,8 @@ import { format, isBefore, startOfTomorrow } from "date-fns"; // Added parseISO,
 import { ptBR } from "date-fns/locale"; // For pt-BR date formatting
 import { redirect } from "next/navigation";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
+import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
+import { cookies } from "next/headers";
 
 // Define a type for the processed domain to be used in the table
 interface ProcessedDomain {
@@ -52,20 +54,12 @@ interface ProcessedDomain {
   features: string[];
 }
 
-export default async function MyDomainsPage() {
-  const user = await getUser();
-  if (!user) {
-    // Handle unauthenticated user, perhaps redirect to login
-    redirect("/login"); // Example redirect
-    return null;
-  }
-
-  // Fetch plans for admin section - keep if needed, otherwise remove
-  // const plans: Plan[] = await db.select().from(plansTable);
-
-  // const nameCheapUser = await db.query.namecheapIntegration.findFirst({
-  //   where: eq(namecheapIntegration.userId, user.id),
-  // });
+export default async function MyDomainsPage({
+  searchParams,
+}: { searchParams: Promise<{ q?: string }> }) {
+  const q = await searchParams;
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   let processedDomains: ProcessedDomain[] = [];
 
@@ -77,13 +71,12 @@ export default async function MyDomainsPage() {
         domainsListResponse.Domains.map(async (listedDomain) => {
           // Fetch detailed info for each domain
           // The getInfo method in the wrapper might need to be robust if some domains fail to fetch info
-          let domainInfo;
+          let domainInfo: DomainsGetInfoCleanedResponse;
           try {
             domainInfo = await namecheapApi.getInfo({
               DomainName: listedDomain.Name,
             });
           } catch (_infoError) {
-
             // Fallback or skip this domain if info is critical
             return {
               // Provide a fallback structure
@@ -172,18 +165,14 @@ export default async function MyDomainsPage() {
               <Globe className="mr-2 h-4 w-4" /> Registrar Novo Domínio
             </Link>
           </Button>
-          {/* <Button variant="outline"> // Mass DNS Update - implement if needed
-            <Server className="mr-2 h-4 w-4" />
-            Atualização em Massa de DNS
-          </Button> */}
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Domínios Registrados</CardTitle>
+          <CardTitle>Seus Domínios</CardTitle>
           <CardDescription>
-            Visualize e gerencie seu portfólio de domínios
+            Lista de todos os seus domínios registrados e subdomínios
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -215,7 +204,7 @@ export default async function MyDomainsPage() {
                       Data de Expiração
                     </TableHead>
                     <TableHead className="hidden lg:table-cell">
-                      Recursos
+                      Renovaçao
                     </TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -243,41 +232,22 @@ export default async function MyDomainsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col items-center gap-1">
-                          <p>{domain.expiryDate}</p>
-                          {domain.autoRenew && (
-                            <Badge variant="outline" className="mt-1">
-                              <RefreshCw className="h-3 w-3 mr-1" />
-                              Renovação Automática
-                            </Badge>
-                          )}
+                          {domain.expiryDate}
                         </div>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         <div className="flex flex-wrap gap-1">
-                          {domain.features.map((feature, index) => {
-                            const getIcon = (featureName: string) => {
-                              if (featureName.includes("DNS")) { return Server; }
-                              if (featureName.includes("Email")) { return Mail; }
-                              if (featureName.includes("Privacidade")) {
-                                return Lock;
-                              }
-                              if (featureName.includes("Renovação Automática")) {
-                                return RefreshCw;
-                              }
-                              return Globe;
-                            };
-                            const Icon = getIcon(feature);
-                            return (
-                              <Badge
-                                key={index}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                <Icon className="h-3 w-3 mr-1" />
-                                {feature}
-                              </Badge>
-                            );
-                          })}
+                          {domain.autoRenew ? (
+                            <Badge
+                              variant="outline"
+                              className="bg-green-500/10 text-green-500 border-green-200 dark:border-green-800"
+                            >
+                              <RefreshCw className="h-3 w-3 mr-1" />
+                              Automática
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">Manual</Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
@@ -294,9 +264,7 @@ export default async function MyDomainsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild={true}>
-                              <Link href={`/domains/${domain.name}/dns`}>
-                                {" "}
-                                {/* Example link */}
+                              <Link href={`/dns?domain=${domain.id}`}>
                                 <Server className="h-4 w-4 mr-2" /> Gerenciar
                                 DNS
                               </Link>

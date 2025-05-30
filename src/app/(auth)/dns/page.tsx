@@ -9,6 +9,7 @@ import { DnsRecordsManager } from "./components/DnsRecordManager";
 import { getUserCurrentDomain } from "@/lib/server/utils";
 import { isError } from "lodash";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Gerenciamento de DNS - Atlas Hosting",
@@ -19,7 +20,9 @@ export const metadata: Metadata = {
 export default async function DnsManagementPage({
   params,
 }: { params: { domain: string } }) {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
+
   const domain = await getUserCurrentDomain(user);
 
   if (!domain) {

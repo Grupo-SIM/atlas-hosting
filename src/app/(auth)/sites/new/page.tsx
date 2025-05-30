@@ -1,5 +1,4 @@
 // src/app/(authenticated)/(dashboard)/sites/new/page.tsx
-import DashboardLayout from "@/components/layouts/DashboardLayout"; // Import the layout
 import {
   Card,
   CardContent,
@@ -11,24 +10,24 @@ import { getUser } from "@/lib/auth";
 import { getUserDomains } from "@/lib/server/utils";
 import { Suspense } from "react";
 import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm"; // Updated import
+import { cookies } from "next/headers";
 
 export default async function NewSitePageContainer() {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   if (!user) {
     return (
-      <DashboardLayout>
-        <div className="space-y-6 p-6 pb-16">
-          <Card>
-            <CardHeader>
-              <CardTitle>Criar Novo Site WordPress</CardTitle>
-              <CardDescription>
-                Você precisa estar logado para criar um novo site.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </DashboardLayout>
+      <div className="space-y-6 p-6 pb-16">
+        <Card>
+          <CardHeader>
+            <CardTitle>Criar Novo Site WordPress</CardTitle>
+            <CardDescription>
+              Você precisa estar logado para criar um novo site.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
     );
   }
 

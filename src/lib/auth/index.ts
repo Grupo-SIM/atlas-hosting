@@ -1,26 +1,26 @@
+import type { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
 import { db } from "@/lib/db";
 import {
   pgNamecheapIntegration,
   pgSession,
   pgUser,
   pgWallet,
-  type SessionInsert,
   type Session,
+  type SessionInsert,
   type User,
 } from "@/lib/db/schema";
+import { namecheapApi } from "@/lib/server/apis/namecheap";
+import { randomBytes } from "@noble/hashes/utils";
 import { sha256 } from "@oslojs/crypto/sha2";
 import {
   encodeBase32LowerCaseNoPadding,
   encodeHexLowerCase,
 } from "@oslojs/encoding";
 import { eq } from "drizzle-orm";
-import { cookies } from "next/headers";
-import { cache } from "react";
-import { hash, hashWithEncodeKey, verify } from "./scrypt";
-import type { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
-import { randomBytes } from "@noble/hashes/utils";
-import { namecheapApi } from "@/lib/server/apis/namecheap";
+import { cacheTag } from "next/dist/server/use-cache/cache-tag";
+import type { ReadonlyRequestCookies } from "node_modules/next/dist/server/web/spec-extension/adapters/request-cookies";
 import type { AppLogger } from "../server/logs";
+import { hash, hashWithEncodeKey, verify } from "./scrypt";
 
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);
@@ -79,8 +79,9 @@ export async function validateSessionToken(
   return { session, user };
 }
 
-export async function validateSession() {
-  const cookieStore = await cookies();
+export async function validateSession(
+  cookieStore: ReadonlyRequestCookies
+): Promise<SessionValidationResult> {
   const sessionToken = cookieStore.get("session_token")?.value;
 
   if (!sessionToken) {
@@ -101,7 +102,8 @@ export async function invalidateAllSessions(userId: string): Promise<void> {
 export async function createUser(
   name: string,
   email: string,
-  passwordPlain: string
+  passwordPlain: string,
+  referrerId?: string
 ) {
   try {
     const walletResult = await db
@@ -127,6 +129,7 @@ export async function createUser(
         updatedAt: new Date(),
         deletedAt: null,
         namesiloId: null,
+        referrerId,
       })
       .returning({
         id: pgUser.id,
@@ -177,15 +180,16 @@ export type SessionValidationResult =
   | { session: Session; user: User }
   | { session: null; user: null };
 
-export async function _getUser<
+export async function getUser<
   T extends boolean = false,
   U = T extends true ? User | null : User,
->(): Promise<U> {
-  const { user } = await validateSession();
+>(cookieStore: ReadonlyRequestCookies): Promise<U> {
+  "use cache";
+  cacheTag("current-user");
+
+  const { user } = await validateSession(cookieStore);
   return user as U;
 }
-
-export const getUser = cache(_getUser);
 
 export async function createNamecheapForUser(
   user: User,

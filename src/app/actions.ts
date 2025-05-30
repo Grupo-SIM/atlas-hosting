@@ -101,7 +101,7 @@ export async function login(
 
 export async function signup(
   prevState: unknown,
-  { email, password, fullName }: SignupFormInputs
+  { email, password, fullName, referrerId }: SignupFormInputs
 ): Promise<ActionResponse> {
   if (!email || !password || !fullName) {
     return {
@@ -131,7 +131,7 @@ export async function signup(
   }
 
   try {
-    const user = await createUser(fullName, email, password);
+    const user = await createUser(fullName, email, password, referrerId);
 
     if (!user) {
       // Assuming createUser returns null if user already exists or on other errors
@@ -240,7 +240,8 @@ export async function createPlanInvoice(
   prevState: unknown,
   planId: string
 ): Promise<ActionResponse> {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   if (!user) {
     return {
@@ -315,7 +316,8 @@ export async function createDomainInvoice(
   prevState: unknown,
   domain: string
 ): Promise<ActionResponse> {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   if (!user) {
     return {
@@ -409,7 +411,8 @@ export async function completeCheckout(
     ...values
   }: CheckoutFormInputs & { invoiceId: string; cardToken: string }
 ): Promise<ActionResponse> {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   if (!user) {
     return {
@@ -895,8 +898,8 @@ export async function deleteWordPressInstances(
   instanceIds: string
 ): Promise<ActionResponse> {
   try {
-    const user = await getUser();
-
+    const cookieStore = await cookies();
+    const user = await getUser(cookieStore);
     if (!user) {
       return { status: "error", message: "Unauthorized" };
     }
@@ -904,7 +907,7 @@ export async function deleteWordPressInstances(
     // Handle both single instanceId and comma-separated list
     const ids = instanceIds.split(",").map((id) => Number.parseInt(id, 10));
 
-    if (ids.some(isNaN)) {
+    if (ids.some(Number.isNaN)) {
       return { status: "error", message: "Invalid instance ID" };
     }
 
@@ -935,7 +938,8 @@ export async function changeSelectedDomain(
   prevState: unknown,
   domainName: string
 ): Promise<ActionResponse> {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   if (!user) {
     return { status: "error", message: "Usuário não autenticado" };

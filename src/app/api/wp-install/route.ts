@@ -15,6 +15,7 @@ import axios from "axios";
 import { eq } from "drizzle-orm";
 import { AppLogger } from "@/lib/server/logs";
 import { ELEMENTOR_PRO_PLUGIN_ID } from "@/lib/server/apis/plesk/wp-toolkit";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -99,7 +100,8 @@ export async function GET(request: Request) {
   siteName = decodeURIComponent(siteName);
   adminEmail = decodeURIComponent(adminEmail);
 
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   if (!user) {
     return new Response(

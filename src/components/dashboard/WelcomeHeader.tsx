@@ -1,14 +1,6 @@
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { User } from "@/lib/db/schema";
 import { getUserCurrentDomain, getUserDomains } from "@/lib/server/utils";
-import { cn } from "@/lib/utils";
 import { PlusCircle } from "lucide-react";
 import DomainSelector from "../domains/DomainSelector";
 
@@ -43,21 +35,19 @@ async function UserName({ user }: WelcomeHeaderProps) {
     : "Bem-vindo de volta!";
 }
 
-async function UserSiteLabel({ user }: WelcomeHeaderProps) {
+export async function UserSiteLabel({ user }: WelcomeHeaderProps) {
   const userData = await user;
 
   const domains = await getUserDomains(userData.id);
   const selectedDomain = await getUserCurrentDomain(userData);
 
-  if (!selectedDomain) {
-    return "Você ainda não possui um domínio na plataforma.";
-  }
-
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-muted-foreground">Site atual:</span>
-      <DomainSelector domains={domains} selectedDomain={selectedDomain} />
-    </div>
+    selectedDomain && (
+      <div className="flex items-center gap-2">
+        <span className="text-muted-foreground">Site atual:</span>
+        <DomainSelector domains={domains} selectedDomain={selectedDomain} />
+      </div>
+    )
   );
 }
 

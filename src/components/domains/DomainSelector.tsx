@@ -1,5 +1,6 @@
 "use client";
 
+import { changeSelectedDomain } from "@/app/actions";
 import {
   Select,
   SelectContent,
@@ -9,8 +10,6 @@ import {
 } from "@/components/ui/select";
 import type { DomainListItem } from "@/lib/server/apis/namecheap/types";
 import { startTransition, useActionState } from "react";
-import { changeSelectedDomain } from "@/app/actions";
-import { cn } from "@/lib/utils";
 
 export default function DomainSelector({
   domains,
@@ -28,12 +27,15 @@ export default function DomainSelector({
   };
 
   return (
-    <div className="relative">
+    <div className="relative cursor-pointer">
       <Select value={selectedDomain?.Name} onValueChange={onValueChange}>
-        <SelectTrigger id="domainName" className="w-[300px] text-foreground relative">
+        <SelectTrigger
+          id="domainName"
+          className="w-[300px] text-foreground relative"
+        >
           <SelectValue
             // className={cn({ "opacity-0": isLoading })}
-            placeholder={isLoading ? "": "Selecione um domínio"}
+            placeholder={isLoading ? "" : "Selecione um domínio"}
           />
         </SelectTrigger>
         <SelectContent>

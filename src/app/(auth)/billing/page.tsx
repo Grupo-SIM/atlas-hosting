@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import clsx from "clsx";
 import { desc, eq } from "drizzle-orm";
 import { CreditCard, FileText } from "lucide-react";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -26,7 +26,9 @@ type Common<A, B> = {
 const getStatusVariant = (
   status?: InvoiceStatus | null
 ): "default" | "destructive" | "outline" | "secondary" | "action" => {
-  if (!status) { return "secondary"; }
+  if (!status) {
+    return "secondary";
+  }
   switch (status.toLowerCase()) {
     case "paid":
     case "paga":
@@ -43,7 +45,9 @@ const getStatusVariant = (
 };
 
 const formatDate = (dateInput: string | Date | undefined | null): string => {
-  if (!dateInput) { return "N/A"; }
+  if (!dateInput) {
+    return "N/A";
+  }
   try {
     const date = new Date(dateInput);
     return date.toLocaleDateString("pt-BR", {
@@ -57,7 +61,8 @@ const formatDate = (dateInput: string | Date | undefined | null): string => {
 };
 
 export default async function BillingPage() {
-  const { id: userId } = (await getUser())!;
+  const cookieStore = await cookies();
+  const { id: userId } = await getUser(cookieStore);
 
   // Assumes invoiceTable has fields: id, userId, amount, status, createdAt, reference, type
   // Adjust field names (e.g., invoiceTable.user_id) if your schema differs.

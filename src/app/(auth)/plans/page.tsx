@@ -2,9 +2,11 @@ import { db } from "@/lib/db";
 import { PlanCard } from "./components/PlanCard";
 import { getUser } from "@/lib/auth";
 import { sortBy } from "lodash";
+import { cookies } from "next/headers";
 
 export default async function PlansPage() {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   // Fetch plans without the planFeatures relation
   const dbPlans = await db.query.pgPlan.findMany();

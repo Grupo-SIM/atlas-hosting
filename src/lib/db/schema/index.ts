@@ -9,3 +9,4 @@ export * from "./tables/user";
 export * from "./tables/wallet";
 export * from "./tables/card";
 export * from "./tables/email";
+export * from "./tables/system";

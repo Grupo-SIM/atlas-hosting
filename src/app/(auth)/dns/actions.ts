@@ -11,6 +11,7 @@ import { revalidateTag } from "next/cache";
 import { getUser } from "@/lib/auth";
 import { parseDomainForSldTld } from "./utils"; // We'll create this util
 import { isError } from "lodash";
+import { cookies } from "next/headers";
 
 export interface DnsActionResult {
   success: boolean;
@@ -36,7 +37,9 @@ async function performDnsOperation(
     currentItems: DnsHostRecordItem[]
   ) => DnsHostRecordItem[] | Promise<DnsHostRecordItem[]>
 ): Promise<DnsActionResult> {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
+
   if (!user) return { success: false, message: "Usuário não autenticado." };
 
   // Optional: Add a check here to ensure `user` is authorized to manage `domainName`
@@ -72,7 +75,10 @@ async function performDnsOperation(
 
     if (response.IsSuccess) {
       revalidateTag("dns-records");
-      return { success: true, message: "Registros DNS atualizados com sucesso." };
+      return {
+        success: true,
+        message: "Registros DNS atualizados com sucesso.",
+      };
     }
     // This case might be rare if _makeRequest throws on API errors
     return {
@@ -120,7 +126,8 @@ function parseAndValidateFormData(formData: FormData): {
     return {
       error: {
         success: false,
-        message: "Campos obrigatórios ausentes: domínio, host, tipo, endereço, TTL.",
+        message:
+          "Campos obrigatórios ausentes: domínio, host, tipo, endereço, TTL.",
       },
     };
   }
@@ -131,7 +138,8 @@ function parseAndValidateFormData(formData: FormData): {
     return {
       error: {
         success: false,
-        message: "Valor de TTL inválido. Deve ser um número (por exemplo, 3600 para 1 hora).",
+        message:
+          "Valor de TTL inválido. Deve ser um número (por exemplo, 3600 para 1 hora).",
       },
     };
   }

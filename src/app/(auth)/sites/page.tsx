@@ -13,6 +13,7 @@ import { SitesList } from "./components/SitesList";
 import dns from "node:dns";
 import { promisify } from "node:util";
 import { getUserWordPressSites } from "@/lib/server/utils";
+import { cookies } from "next/headers";
 
 export interface ParsedWordPressInstance {
   id: number; // This likely refers to Plesk's internal ID for the WP instance
@@ -36,7 +37,8 @@ async function checkDomain(domain: string): Promise<boolean> {
 }
 
 export default async function SitesPage() {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   if (!user) {
     return (

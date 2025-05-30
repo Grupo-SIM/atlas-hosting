@@ -1,5 +1,6 @@
 import { getUser } from "@/lib/auth";
 import dns from "dns";
+import { cookies } from "next/headers";
 import { promisify } from "util";
 
 export const runtime = "nodejs";
@@ -17,7 +18,8 @@ async function checkDomain(domain: string): Promise<boolean> {
 }
 
 export async function GET(request: Request) {
-  const user = await getUser();
+  const cookieStore = await cookies();
+  const user = await getUser(cookieStore);
 
   if (!user) {
     return Response.error();
