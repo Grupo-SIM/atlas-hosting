@@ -1,5 +1,3 @@
-
-
 export async function DomainStats() {
   return false;
   // Get all invoices with user information, ordered by most recent

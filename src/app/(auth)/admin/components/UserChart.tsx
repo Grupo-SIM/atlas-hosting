@@ -13,13 +13,7 @@ import {
   Legend,
   type ChartData,
 } from "chart.js";
-import {
-  addMonths,
-  format,
-  isAfter,
-  getMonth,
-  toDate,
-} from "date-fns";
+import { addMonths, format, isAfter, getMonth, toDate } from "date-fns";
 
 chartJs.register(
   CategoryScale,
@@ -41,7 +35,9 @@ interface UserChartProps {
 }
 
 function getMonthRange(userGrowth: UserGrowth[]) {
-  if (userGrowth.length === 0) { return []; }
+  if (userGrowth.length === 0) {
+    return [];
+  }
   const months = userGrowth.map((u) => u.month).sort();
   const start = months[0];
   const end = months[months.length - 1];

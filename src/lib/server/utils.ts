@@ -177,9 +177,7 @@ export async function getUserCurrentDomain({
     return domains[0]; // Default to the first domain
   }
 
-  const fullDomain = domains.find(
-    (domain) => domain.Name === selectedDomain
-  );
+  const fullDomain = domains.find((domain) => domain.Name === selectedDomain);
 
   if (!fullDomain) {
     throw new Error(

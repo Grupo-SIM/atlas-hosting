@@ -12,6 +12,7 @@ import { pgNamecheapIntegration } from "./namecheap";
 import { pgPlan } from "./plan";
 import { pgWallet } from "./wallet";
 import { pgZohoDomainOrganizations } from "@/lib/db/schema/tables/email";
+import { pgOrganization } from "./organization";
 
 export const pgUser = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -31,6 +32,7 @@ export const pgUser = pgTable("users", {
     .references(() => pgWallet.id),
   selectedDomain: text("selected_domain"),
   referrerId: uuid("referrer_id"),
+  organizationId: uuid("organization_id").references(() => pgOrganization.id),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   deletedAt: timestamp("deleted_at", { mode: "date" }),
@@ -57,6 +59,11 @@ export const userRelations = relations(pgUser, ({ one, many }) => ({
   }),
   referredUsers: many(pgUser, {
     relationName: "referred_users",
+  }),
+  organization: one(pgOrganization, {
+    fields: [pgUser.organizationId],
+    references: [pgOrganization.id],
+    relationName: "organization_members",
   }),
 }));
 

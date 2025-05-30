@@ -89,7 +89,12 @@ export default function NewPlanPage() {
               <Label htmlFor="maxSites" className="block mb-1 font-medium">
                 Max. Sites
               </Label>
-              <Input id="maxSites" name="maxSites" type="number" required={true} />
+              <Input
+                id="maxSites"
+                name="maxSites"
+                type="number"
+                required={true}
+              />
             </div>
             <div>
               <Label htmlFor="maxStorage" className="block mb-1 font-medium">

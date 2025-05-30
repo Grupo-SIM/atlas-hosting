@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import crypto from "crypto";
+import crypto from "node:crypto";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,36 +15,36 @@ export function toBrl(value: number): string {
   });
 }
 
-export function isValidCPF(cpf = "") {
-  let sum = 0,
-    remainder;
+export function isValidCPF(cpfInput = "") {
+  let sum = 0;
+  let remainder: number;
 
-  cpf = `${cpf}`.replace(/^\D+/gim, "");
+  const cpf = `${cpfInput}`.replace(/^\D+/gim, "");
 
-  if (cpf.length != 11 || new Set(cpf).size === 1) return false;
+  if (cpf.length !== 11 || new Set(cpf).size === 1) return false;
 
   for (let i = 1; i <= 9; i++)
     sum = sum + Number.parseInt(cpf.substring(i - 1, i)) * (11 - i);
   remainder = (sum * 10) % 11;
 
-  if (remainder == 10 || remainder == 11) remainder = 0;
-  if (remainder != Number.parseInt(cpf.substring(9, 10))) return false;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== Number.parseInt(cpf.substring(9, 10))) return false;
 
   sum = 0;
   for (let i = 1; i <= 10; i++)
     sum = sum + Number.parseInt(cpf.substring(i - 1, i)) * (12 - i);
   remainder = (sum * 10) % 11;
 
-  if (remainder == 10 || remainder == 11) remainder = 0;
-  if (remainder != Number.parseInt(cpf.substring(10, 11))) return false;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== Number.parseInt(cpf.substring(10, 11))) return false;
 
   return true;
 }
 
-export function isValidCNPJ(cnpj = "") {
-  cnpj = `${cnpj}`.replace(/^\D+/gim, "");
+export function isValidCNPJ(cnpjInput = "") {
+  const cnpj = `${cnpjInput}`.replace(/^\D+/gim, "");
 
-  if (cnpj.length != 14 || new Set(cnpj).size === 1) return false;
+  if (cnpj.length !== 14 || new Set(cnpj).size === 1) return false;
 
   let size = cnpj.length - 2;
   let numbers = cnpj.substring(0, size);
@@ -79,11 +79,10 @@ export function isValidCNPJ(cnpj = "") {
 export const intersperse = <T>(arr: T[], separator: (n: number) => T): T[] =>
   arr.reduce<T[]>((acc, currentElement, currentIndex) => {
     const isLast = currentIndex === arr.length - 1;
-    return [
-      ...acc,
+    return acc.concat(
       currentElement,
-      ...(isLast ? [] : [separator(currentIndex)]),
-    ];
+      ...(isLast ? [] : [separator(currentIndex)])
+    );
   }, []);
 
 export function generateRandomPassword(length = 16) {

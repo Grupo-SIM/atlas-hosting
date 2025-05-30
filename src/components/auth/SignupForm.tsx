@@ -7,12 +7,7 @@ import { Label } from "@/components/ui/label";
 import type { User } from "@/lib/db/schema";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
-import {
-  startTransition,
-  useActionState,
-  useEffect,
-  useState
-} from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import * as yup from "yup";

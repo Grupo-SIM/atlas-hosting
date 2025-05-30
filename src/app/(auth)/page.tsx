@@ -6,8 +6,7 @@ import { getUser } from "@/lib/auth";
 import { cookies } from "next/headers";
 
 export default async function Dashboard() {
-  const cookieStore = await cookies();
-  const user = getUser(cookieStore);
+  const user = getUser();
 
   return (
     <div className="space-y-8 p-6 pb-16">

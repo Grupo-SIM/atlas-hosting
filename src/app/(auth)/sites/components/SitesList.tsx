@@ -70,7 +70,9 @@ export function SitesList({
   }, [state]);
 
   useEffect(() => {
-    if (processingInstances.length === 0) { return; }
+    if (processingInstances.length === 0) {
+      return;
+    }
     const domains = processingInstances
       .map((instance) => instance.domain)
       .join(",");
@@ -112,7 +114,9 @@ export function SitesList({
   );
 
   const handleBulkDelete = useCallback(() => {
-    if (selectedInstances.length === 0) { return; }
+    if (selectedInstances.length === 0) {
+      return;
+    }
 
     startTransition(() => {
       doDelete(selectedInstances.join(","));

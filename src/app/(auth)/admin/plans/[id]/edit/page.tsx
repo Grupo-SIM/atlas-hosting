@@ -29,7 +29,9 @@ export default async function EditPlanPage({
     where: eq(pgPlan.id, params.id),
   });
 
-  if (!plan) { return notFound(); }
+  if (!plan) {
+    return notFound();
+  }
 
   async function handleUpdatePlan(formData: FormData) {
     "use server";
@@ -81,7 +83,12 @@ export default async function EditPlanPage({
               <Label htmlFor="name" className="block mb-1 font-medium">
                 Nome
               </Label>
-              <Input id="name" name="name" defaultValue={plan.name} required={true} />
+              <Input
+                id="name"
+                name="name"
+                defaultValue={plan.name}
+                required={true}
+              />
             </div>
             <div>
               <Label htmlFor="description" className="block mb-1 font-medium">

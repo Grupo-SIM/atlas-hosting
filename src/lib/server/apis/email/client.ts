@@ -48,7 +48,7 @@ async function requestPleskApi<TResponsePayload>(
     .up()
     .end({ prettyPrint: true });
 
-  console.log('Plesk API Request XML being sent:', xmlRequest); // Log the generated XML
+  console.log("Plesk API Request XML being sent:", xmlRequest); // Log the generated XML
 
   try {
     const response = await axios.post(PLESK_XML_API_URL, xmlRequest, {
@@ -80,8 +80,8 @@ async function requestPleskApi<TResponsePayload>(
     // Navigate to the actual result object
     // e.g. parsedResponse.packet.mail.get.result
     const operationResultContainer =
-      'system' in parsedResponse.packet 
-        ? undefined 
+      "system" in parsedResponse.packet
+        ? undefined
         : parsedResponse.packet[options.operator]?.[options.operation];
     if (!operationResultContainer || !operationResultContainer.result) {
       console.error("Unexpected Plesk API response structure:", parsedResponse);

@@ -1117,7 +1117,7 @@ export class NamecheapApiWrapper {
   private _parseDomainsDnsGetHostsResponse = (
     rawContent: RawDomainsDnsGetHostsCommandResponseContent
   ): DomainsDnsGetHostsCleanedResponse => {
-    console.log(JSON.stringify(rawContent))
+    console.log(JSON.stringify(rawContent));
     const resultNode = rawContent.DomainDNSGetHostsResult?.[0];
     if (!resultNode || !resultNode.$) {
       throw new Error(
@@ -1127,7 +1127,6 @@ export class NamecheapApiWrapper {
 
     const resultAttrs = resultNode.$;
     const hosts: DnsHostRecordItem[] = [];
-
 
     if (resultNode.host) {
       for (const rawHost of resultNode.host) {

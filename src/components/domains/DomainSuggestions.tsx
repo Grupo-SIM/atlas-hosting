@@ -19,10 +19,7 @@ export async function DomainSuggestions({
 }) {
   const domainData = await domainDataPromise;
 
-  if (
-    !(domainData?.extraDomains ) ||
-    domainData.extraDomains.length === 0
-  ) {
+  if (!domainData?.extraDomains || domainData.extraDomains.length === 0) {
     return (
       <Card>
         <CardHeader>

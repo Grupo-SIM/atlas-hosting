@@ -110,7 +110,8 @@ const recordTypes: {
   {
     value: "URL301",
     label: "URL Redirect (301)",
-    description: "Redirecionamento permanente para outro endereço da web (não mascarado)",
+    description:
+      "Redirecionamento permanente para outro endereço da web (não mascarado)",
   },
   {
     value: "FRAME",
