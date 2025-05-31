@@ -91,7 +91,9 @@ export default function SignupForm({
             {...register("organizationName")}
           />
           {errors.organizationName && (
-            <p className="text-xs text-red-400">{errors.organizationName.message}</p>
+            <p className="text-xs text-red-400">
+              {errors.organizationName.message}
+            </p>
           )}
         </div>
         <div className="space-y-2">

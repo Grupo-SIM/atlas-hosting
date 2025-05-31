@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import {pgInvoice, pgUser, pgOrganization} from '@/lib/db/schema';
+import { pgInvoice, pgUser, pgOrganization } from "@/lib/db/schema";
 import { desc, sql } from "drizzle-orm";
 import {
   Table,

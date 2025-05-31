@@ -108,11 +108,15 @@ export function MemberManagement({ members }: MemberManagementProps) {
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={member.image || undefined} />
                         <AvatarFallback>
-                          {member.name?.charAt(0) || member.email?.charAt(0) || "?"}
+                          {member.name?.charAt(0) ||
+                            member.email?.charAt(0) ||
+                            "?"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">{member.name || "Unnamed User"}</p>
+                        <p className="font-medium">
+                          {member.name || "Unnamed User"}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {member.email || "No email"}
                         </p>
@@ -124,7 +128,8 @@ export function MemberManagement({ members }: MemberManagementProps) {
                       {member.organizationRole === "admin" && (
                         <Shield className="h-3 w-3 mr-1" />
                       )}
-                      {member.organizationRole?.charAt(0).toUpperCase() + member.organizationRole?.slice(1) || "Member"}
+                      {member.organizationRole?.charAt(0).toUpperCase() +
+                        member.organizationRole?.slice(1) || "Member"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -140,7 +145,9 @@ export function MemberManagement({ members }: MemberManagementProps) {
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={getStatusBadgeColor(member.deletedAt ? "suspended" : "active")}
+                      className={getStatusBadgeColor(
+                        member.deletedAt ? "suspended" : "active"
+                      )}
                     >
                       {member.deletedAt ? "Suspended" : "Active"}
                     </Badge>

@@ -26,10 +26,7 @@ export function OrganizationHeaderActions({
           </p>
         </div>
         <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={() => setIsInviteDialogOpen(true)}
-          >
+          <Button variant="outline" onClick={() => setIsInviteDialogOpen(true)}>
             <UserPlus className="h-4 w-4 mr-2" />
             Invite Member
           </Button>
@@ -39,7 +36,7 @@ export function OrganizationHeaderActions({
           </Button>
         </div>
       </div>
-      
+
       <InviteMemberDialog
         open={isInviteDialogOpen}
         onOpenChange={setIsInviteDialogOpen}

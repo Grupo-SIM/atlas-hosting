@@ -29,7 +29,9 @@ import { FaUserAlt } from "react-icons/fa";
 export default function Topbar({
   children,
   user,
-}: PropsWithChildren<{ user: Pick<User, "name" | "email"> & { organization: Organization } }>) {
+}: PropsWithChildren<{
+  user: Pick<User, "name" | "email"> & { organization: Organization };
+}>) {
   return (
     <header className="h-16 bg-card border-b flex items-center justify-between px-6">
       <h1 className="text-lg md:text-xl font-semibold">Painel</h1>
@@ -116,7 +118,9 @@ export default function Topbar({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <div className="text-sm border-l-1 border-muted-foreground/20 pl-4 border-solid">{user.organization.name}</div>
+        <div className="text-sm border-l-1 border-muted-foreground/20 pl-4 border-solid">
+          {user.organization.name}
+        </div>
       </div>
     </header>
   );

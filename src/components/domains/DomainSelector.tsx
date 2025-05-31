@@ -9,7 +9,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { OrganizationDomain } from "@/lib/db/schema";
-import type { DomainListItem, DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
+import type {
+  DomainListItem,
+  DomainsGetInfoCleanedResponse,
+} from "@/lib/server/apis/namecheap/types";
 import { startTransition, useActionState } from "react";
 
 export default function DomainSelector({

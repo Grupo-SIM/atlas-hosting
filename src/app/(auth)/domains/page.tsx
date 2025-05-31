@@ -68,34 +68,34 @@ export default async function MyDomainsPage({
   try {
     const dbDomains = user.organization.domains;
 
-    const domains = await Promise.all(dbDomains.map(async (domain) => {
-      const d = await namecheapApi.getInfo({
-        DomainName: domain.domain,
-      });
+    const domains = await Promise.all(
+      dbDomains.map(async (domain) => {
+        const d = await namecheapApi.getInfo({
+          DomainName: domain.domain,
+        });
 
-      return {
-        id: d.DomainName,
-        name: d.DomainName,
-        registrationDate: d.CreatedDate
-          ? format(d.CreatedDate, "dd/MM/yyyy", { locale: ptBR })
-          : "N/A",
-        expiryDate: d.ExpireDate
-          ? format(d.ExpireDate, "dd/MM/yyyy", { locale: ptBR })
-          : "Nunca",
-        status: isBefore(d.ExpireDate, new Date())
-          ? "expired"
-          : "active",
-        autoRenew: d.AutoRenew,
-        isLocked: d.IsLocked,
-        usesOurDNS: d.DnsDetails.IsUsingOurDNS,
-        features: [
-          d.DnsDetails.IsUsingOurDNS && "DNS Management",
-          d.Whoisguard.Enabled && "Domain Privacy",
-          d.AutoRenew && "Auto-Renew",
-          // "Email Forwarding" - This info might come from a different API call or be assumed
-        ].filter(Boolean) as string[],
-      } as ProcessedDomain;
-    }));
+        return {
+          id: d.DomainName,
+          name: d.DomainName,
+          registrationDate: d.CreatedDate
+            ? format(d.CreatedDate, "dd/MM/yyyy", { locale: ptBR })
+            : "N/A",
+          expiryDate: d.ExpireDate
+            ? format(d.ExpireDate, "dd/MM/yyyy", { locale: ptBR })
+            : "Nunca",
+          status: isBefore(d.ExpireDate, new Date()) ? "expired" : "active",
+          autoRenew: d.AutoRenew,
+          isLocked: d.IsLocked,
+          usesOurDNS: d.DnsDetails.IsUsingOurDNS,
+          features: [
+            d.DnsDetails.IsUsingOurDNS && "DNS Management",
+            d.Whoisguard.Enabled && "Domain Privacy",
+            d.AutoRenew && "Auto-Renew",
+            // "Email Forwarding" - This info might come from a different API call or be assumed
+          ].filter(Boolean) as string[],
+        } as ProcessedDomain;
+      })
+    );
 
     processedDomains = domains;
   } catch (error) {

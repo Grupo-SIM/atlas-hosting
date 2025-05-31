@@ -26,7 +26,12 @@ import {
 } from "@/components/ui/table";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { pgInvoice, pgOrganization, pgUser, pgWithdrawalRequests } from "@/lib/db/schema";
+import {
+  pgInvoice,
+  pgOrganization,
+  pgUser,
+  pgWithdrawalRequests,
+} from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";

@@ -9,7 +9,7 @@ import type { DomainListItem } from "./apis/namecheap/types";
 import pleskApi from "./apis/plesk";
 import type { WordPressInstance } from "./apis/plesk/wp-toolkit";
 import type { getUser } from "../auth";
-import type {DomainsGetInfoCleanedResponse} from '@/lib/server/apis/namecheap/types';
+import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
 
 export async function domainHasWordPress(
   domain: DomainListItem,
@@ -103,11 +103,13 @@ export async function getUserDomains(
   cacheTag("user-domains");
 
   try {
-    const allDomains = await Promise.all(user.organization.domains.map(async (domain) => {
-      return namecheapApi.getInfo({
-        DomainName: domain.domain,
-      });
-    }));
+    const allDomains = await Promise.all(
+      user.organization.domains.map(async (domain) => {
+        return namecheapApi.getInfo({
+          DomainName: domain.domain,
+        });
+      })
+    );
 
     const wpInstances = await getUserWordPressSites(user.id); // Reuse the existing function
 
@@ -145,7 +147,9 @@ export async function getUserDomains(
   }
 }
 
-export async function getUserCurrentDomain(user: User): Promise<DomainsGetInfoCleanedResponse | null> {
+export async function getUserCurrentDomain(
+  user: User
+): Promise<DomainsGetInfoCleanedResponse | null> {
   "use cache";
   cacheTag("current-domain");
 
@@ -168,7 +172,9 @@ export async function getUserCurrentDomain(user: User): Promise<DomainsGetInfoCl
     return domains[0]; // Default to the first domain
   }
 
-  const fullDomain = domains.find((domain) => domain.DomainName === user.selectedDomain);
+  const fullDomain = domains.find(
+    (domain) => domain.DomainName === user.selectedDomain
+  );
 
   if (!fullDomain) {
     throw new Error(

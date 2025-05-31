@@ -52,5 +52,7 @@ export const userRelations = relations(pgUser, ({ one, many }) => ({
   sessions: many(pgSession),
 }));
 
-export type User = typeof pgUser.$inferSelect & { organization: Organization & { domains: OrganizationDomain[] } };
+export type User = typeof pgUser.$inferSelect & {
+  organization: Organization & { domains: OrganizationDomain[] };
+};
 export type UserInsert = typeof pgUser.$inferInsert;

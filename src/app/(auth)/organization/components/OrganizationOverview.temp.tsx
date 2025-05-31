@@ -41,9 +41,13 @@ interface OrganizationOverviewProps {
   };
 }
 
-export function OrganizationOverview({ organization }: OrganizationOverviewProps) {
-  const [memberGrowthData, setMemberGrowthData] = useState<{ month: string; members: number }[]>([]);
-  
+export function OrganizationOverview({
+  organization,
+}: OrganizationOverviewProps) {
+  const [memberGrowthData, setMemberGrowthData] = useState<
+    { month: string; members: number }[]
+  >([]);
+
   useEffect(() => {
     // Generate demo data based on organization information
     const generateData = () => {
@@ -51,24 +55,24 @@ export function OrganizationOverview({ organization }: OrganizationOverviewProps
       // Generate 6 months of data with a slight upward trend
       const today = new Date();
       const months: { month: string; members: number }[] = [];
-      
+
       for (let i = 5; i >= 0; i--) {
         const month = new Date(today);
         month.setMonth(today.getMonth() - i);
-        
+
         // Start with a value lower than current member count and gradually increase
-        const growthFactor = 0.85 + (i * 0.03);
+        const growthFactor = 0.85 + i * 0.03;
         const value = Math.max(1, Math.floor(memberCount * growthFactor));
-        
+
         months.push({
-          month: month.toLocaleString('default', { month: 'short' }),
-          members: value
+          month: month.toLocaleString("default", { month: "short" }),
+          members: value,
         });
       }
-      
+
       return months;
     };
-    
+
     setMemberGrowthData(generateData());
   }, [organization.members?.length]);
 
@@ -82,7 +86,9 @@ export function OrganizationOverview({ organization }: OrganizationOverviewProps
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{organization.members?.length || 0}</div>
+            <div className="text-2xl font-bold">
+              {organization.members?.length || 0}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               Organization members
             </p>
@@ -119,7 +125,9 @@ export function OrganizationOverview({ organization }: OrganizationOverviewProps
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Organization Name</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Organization Name
+            </CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -194,12 +202,15 @@ export function OrganizationOverview({ organization }: OrganizationOverviewProps
                   </p>
                 </div>
                 <span className="text-sm font-medium">
-                  {Math.round(((organization.members?.length || 0) / 75) * 100)}%
+                  {Math.round(((organization.members?.length || 0) / 75) * 100)}
+                  %
                 </span>
               </div>
-              <Progress 
-                value={Math.round(((organization.members?.length || 0) / 75) * 100)} 
-                className="h-2" 
+              <Progress
+                value={Math.round(
+                  ((organization.members?.length || 0) / 75) * 100
+                )}
+                className="h-2"
               />
             </div>
           </div>

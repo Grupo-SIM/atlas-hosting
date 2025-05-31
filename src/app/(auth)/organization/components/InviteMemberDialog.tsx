@@ -27,10 +27,10 @@ interface InviteMemberDialogProps {
   showTriggerButton?: boolean;
 }
 
-export function InviteMemberDialog({ 
-  open, 
+export function InviteMemberDialog({
+  open,
   onOpenChange,
-  showTriggerButton = false
+  showTriggerButton = false,
 }: InviteMemberDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordCopied, setPasswordCopied] = useState(false);

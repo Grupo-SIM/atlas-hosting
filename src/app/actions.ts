@@ -134,7 +134,13 @@ export async function signup(
   }
 
   try {
-    const user = await createUser(fullName, email, password, organizationName, referrerId);
+    const user = await createUser(
+      fullName,
+      email,
+      password,
+      organizationName,
+      referrerId
+    );
 
     if (!user) {
       // Assuming createUser returns null if user already exists or on other errors

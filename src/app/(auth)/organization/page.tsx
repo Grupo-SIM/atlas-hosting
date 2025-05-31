@@ -11,20 +11,17 @@ export default async function OrganizationPage() {
   const user = await getUser();
 
   // Fetch audit logs for this organization
-  const auditLogs = await db.select({
-    log: pgLog,
-    user: {
-      id: pgUser.id,
-      name: pgUser.name,
-      email: pgUser.email,
-    },
-  })
+  const auditLogs = await db
+    .select({
+      log: pgLog,
+      user: {
+        id: pgUser.id,
+        name: pgUser.name,
+        email: pgUser.email,
+      },
+    })
     .from(pgLog)
-    .where(
-      and(
-        eq(pgUser.organizationId, user.organizationId)
-      )
-    )
+    .where(and(eq(pgUser.organizationId, user.organizationId)))
     .orderBy(desc(pgLog.createdAt))
     .innerJoin(pgUser, eq(pgLog.userId, pgUser.id))
     .limit(10);
