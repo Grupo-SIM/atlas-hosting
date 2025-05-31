@@ -25,17 +25,51 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import type { Organization } from "@/lib/db/schema/tables/organization";
+import type { User } from "@/lib/db/schema/tables/user";
+import { useEffect, useState } from "react";
 
-const memberGrowthData = [
-  { month: "Jan", members: 20 },
-  { month: "Feb", members: 25 },
-  { month: "Mar", members: 30 },
-  { month: "Apr", members: 35 },
-  { month: "May", members: 45 },
-  { month: "Jun", members: 57 },
-];
+interface OrganizationOverviewProps {
+  organization: User["organization"];
+  members: Omit<User, "organization">[];
+}
 
-export function OrganizationOverview() {
+export function OrganizationOverview({
+  organization,
+  members,
+}: OrganizationOverviewProps) {
+  const [memberGrowthData, setMemberGrowthData] = useState<
+    { month: string; members: number }[]
+  >([]);
+
+  useEffect(() => {
+    // Generate demo data based on organization information
+    const generateData = () => {
+      const memberCount = members?.length || 0;
+      // Generate 6 months of data with a slight upward trend
+      const today = new Date();
+      const months: { month: string; members: number }[] = [];
+
+      for (let i = 5; i >= 0; i--) {
+        const month = new Date(today);
+        month.setMonth(today.getMonth() - i);
+
+        // Start with a value lower than current member count and gradually increase
+        const growthFactor = 0.85 + i * 0.03;
+        const value = Math.max(1, Math.floor(memberCount * growthFactor));
+
+        months.push({
+          month: month.toLocaleString("default", { month: "short" }),
+          members: value,
+        });
+      }
+
+      return months;
+    };
+
+    setMemberGrowthData(generateData());
+  }, [members?.length]);
+
   return (
     <div className="space-y-6">
       {/* Organization Stats */}
@@ -46,9 +80,9 @@ export function OrganizationOverview() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">57</div>
+            <div className="text-2xl font-bold">{members?.length || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              +12 from last month
+              Organization members
             </p>
           </CardContent>
         </Card>
@@ -83,13 +117,15 @@ export function OrganizationOverview() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Next Payment</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Organization Name
+            </CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$199.99</div>
+            <div className="text-2xl font-bold">{organization.name}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Due Jul 1, 2024
+              Created on {new Date(organization.createdAt).toLocaleDateString()}
             </p>
           </CardContent>
         </Card>
@@ -116,7 +152,7 @@ export function OrganizationOverview() {
             <div>
               <p className="font-medium">Pro Plan</p>
               <p className="text-sm text-muted-foreground">
-                Active until Jul 1, 2024
+                Active until May 30, 2026
               </p>
             </div>
             <Button variant="outline">Upgrade Plan</Button>
@@ -154,12 +190,17 @@ export function OrganizationOverview() {
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Team Members</p>
                   <p className="text-sm text-muted-foreground">
-                    57 of 75 seats used
+                    {members?.length || 0} of 75 seats used
                   </p>
                 </div>
-                <span className="text-sm font-medium">76%</span>
+                <span className="text-sm font-medium">
+                  {Math.round(((members?.length || 0) / 75) * 100)}%
+                </span>
               </div>
-              <Progress value={76} className="h-2" />
+              <Progress
+                value={Math.round(((members?.length || 0) / 75) * 100)}
+                className="h-2"
+              />
             </div>
           </div>
         </CardContent>

@@ -36,47 +36,19 @@ import {
   UserMinus,
   Ban,
 } from "lucide-react";
+import type { User } from "@/lib/db/schema/tables/user";
 
-const members = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    role: "Admin",
-    joinDate: "2024-01-15",
-    lastActive: "2024-03-20",
-    status: "active",
-    avatarUrl: null,
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane@example.com",
-    role: "Developer",
-    joinDate: "2024-02-01",
-    lastActive: "2024-03-19",
-    status: "active",
-    avatarUrl: null,
-  },
-  {
-    id: 3,
-    name: "Bob Wilson",
-    email: "bob@example.com",
-    role: "Developer",
-    joinDate: "2024-02-15",
-    lastActive: null,
-    status: "invited",
-    avatarUrl: null,
-  },
-];
+interface MemberManagementProps {
+  members: Omit<User, "organization">[];
+}
 
-export function MemberManagement() {
+export function MemberManagement({ members }: MemberManagementProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredMembers = members.filter(
     (member) =>
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase())
+      (member.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (member.email?.toLowerCase() || "").includes(searchQuery.toLowerCase())
   );
 
   const getStatusBadgeColor = (status: string) => {
@@ -134,40 +106,43 @@ export function MemberManagement() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.avatarUrl || undefined} />
-                        <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={member.image || undefined} />
+                        <AvatarFallback>
+                          {member.name?.charAt(0) || member.email?.charAt(0) || "?"}
+                        </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">{member.name}</p>
+                        <p className="font-medium">{member.name || "Unnamed User"}</p>
                         <p className="text-sm text-muted-foreground">
-                          {member.email}
+                          {member.email || "No email"}
                         </p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {member.role === "Admin" && (
+                      {member.organizationRole === "admin" && (
                         <Shield className="h-3 w-3 mr-1" />
                       )}
-                      {member.role}
+                      {member.organizationRole?.charAt(0).toUpperCase() + member.organizationRole?.slice(1) || "Member"}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {new Date(member.joinDate).toLocaleDateString()}
+                    {member.createdAt
+                      ? new Date(member.createdAt).toLocaleDateString()
+                      : "Unknown"}
                   </TableCell>
                   <TableCell>
-                    {member.lastActive
-                      ? new Date(member.lastActive).toLocaleDateString()
+                    {member.updatedAt
+                      ? new Date(member.updatedAt).toLocaleDateString()
                       : "Never"}
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={getStatusBadgeColor(member.status)}
+                      className={getStatusBadgeColor(member.deletedAt ? "suspended" : "active")}
                     >
-                      {member.status.charAt(0).toUpperCase() +
-                        member.status.slice(1)}
+                      {member.deletedAt ? "Suspended" : "Active"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -183,12 +158,10 @@ export function MemberManagement() {
                           <UserCog className="h-4 w-4 mr-2" />
                           Change Role
                         </DropdownMenuItem>
-                        {member.status === "invited" && (
-                          <DropdownMenuItem>
-                            <Mail className="h-4 w-4 mr-2" />
-                            Resend Invitation
-                          </DropdownMenuItem>
-                        )}
+                        <DropdownMenuItem>
+                          <Mail className="h-4 w-4 mr-2" />
+                          Resend Invitation
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-amber-600 dark:text-amber-400">
                           <Ban className="h-4 w-4 mr-2" />

@@ -27,7 +27,10 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import type { DomainListItem } from "@/lib/server/apis/namecheap/types";
+import type {
+  DomainListItem,
+  DomainsGetInfoCleanedResponse,
+} from "@/lib/server/apis/namecheap/types";
 import Link from "next/link";
 
 const recommendedPlugins = [
@@ -68,7 +71,9 @@ interface FormData {
 }
 
 interface NewWordPressSiteFormProps {
-  domains: (DomainListItem & { inPlesk: boolean })[];
+  domains: (DomainsGetInfoCleanedResponse & {
+    inPlesk: boolean;
+  })[];
   userEmail?: string; // Optional: prefill admin email
 }
 
@@ -270,10 +275,10 @@ export function NewWordPressSiteForm({
                     {domains.map((domain) => (
                       <SelectItem
                         key={domain.ID}
-                        value={domain.Name}
+                        value={domain.DomainName}
                         disabled={domain.inPlesk || isInstalling}
                       >
-                        {domain.Name}
+                        {domain.DomainName}
                         {domain.inPlesk && " (WordPress já instalado)"}
                       </SelectItem>
                     ))}

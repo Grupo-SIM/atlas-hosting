@@ -8,6 +8,8 @@ import namecheapApi from "./apis/namecheap";
 import type { DomainListItem } from "./apis/namecheap/types";
 import pleskApi from "./apis/plesk";
 import type { WordPressInstance } from "./apis/plesk/wp-toolkit";
+import type { getUser } from "../auth";
+import type {DomainsGetInfoCleanedResponse} from '@/lib/server/apis/namecheap/types';
 
 export async function domainHasWordPress(
   domain: DomainListItem,
@@ -95,31 +97,23 @@ export const getUserWordPressSites = cache(async function getUserWordPressSites(
 
 // Function to get domains and check if WordPress is installed (already in your existing page.tsx, adapted slightly)
 export async function getUserDomains(
-  userId: string
-): Promise<(DomainListItem & { inPlesk: boolean })[]> {
+  user: User
+): Promise<(DomainsGetInfoCleanedResponse & { inPlesk: boolean })[]> {
   "use cache";
   cacheTag("user-domains");
 
   try {
-    const response = await namecheapApi.getList(); // Uses your wrapper
-    let allDomains: DomainListItem[] = [];
+    const allDomains = await Promise.all(user.organization.domains.map(async (domain) => {
+      return namecheapApi.getInfo({
+        DomainName: domain.domain,
+      });
+    }));
 
-    if (response?.Domains) {
-      allDomains = response.Domains;
-      console.log({ allDomains });
-    } else {
-      console.error(
-        "Error fetching domains from Namecheap or no domains found:",
-        response
-      );
-      return [];
-    }
-
-    const wpInstances = await getUserWordPressSites(userId); // Reuse the existing function
+    const wpInstances = await getUserWordPressSites(user.id); // Reuse the existing function
 
     const domainsWithPleskData = await Promise.all(
       allDomains.map(async (domain) => {
-        let domainNameToCheck = domain.Name;
+        let domainNameToCheck = domain.DomainName;
         try {
           // Ensure domain.Name is a valid URL string before parsing
           if (!domainNameToCheck.startsWith("http")) {
@@ -143,6 +137,7 @@ export async function getUserDomains(
         }
       })
     );
+
     return domainsWithPleskData;
   } catch (error) {
     console.error("Exception fetching/processing Namecheap domains:", error);
@@ -150,16 +145,13 @@ export async function getUserDomains(
   }
 }
 
-export async function getUserCurrentDomain({
-  selectedDomain,
-  id: userId,
-}: User): Promise<DomainListItem | null> {
+export async function getUserCurrentDomain(user: User): Promise<DomainsGetInfoCleanedResponse | null> {
   "use cache";
   cacheTag("current-domain");
 
-  const domains = await getUserDomains(userId);
+  const domains = await getUserDomains(user);
 
-  if (!selectedDomain) {
+  if (!user.selectedDomain) {
     if (domains.length === 0) {
       return null; // No domains available
     }
@@ -167,20 +159,20 @@ export async function getUserCurrentDomain({
     await db
       .update(pgUser)
       .set({
-        selectedDomain: domains[0].Name,
+        selectedDomain: domains[0].DomainName,
       })
-      .where(eq(pgUser.id, userId))
+      .where(eq(pgUser.id, user.id))
       .execute();
 
     revalidateTag("session-validate");
     return domains[0]; // Default to the first domain
   }
 
-  const fullDomain = domains.find((domain) => domain.Name === selectedDomain);
+  const fullDomain = domains.find((domain) => domain.DomainName === user.selectedDomain);
 
   if (!fullDomain) {
     throw new Error(
-      `Selected domain "${selectedDomain}" not found in user's domains.`
+      `Selected domain "${user.selectedDomain}" not found in user's domains.`
     );
   }
 

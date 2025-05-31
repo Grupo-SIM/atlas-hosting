@@ -49,7 +49,15 @@ export async function validateSessionToken(token: string) {
     with: {
       user: {
         with: {
-          organization: true,
+          organization: {
+            with: {
+              members: true,
+              plan: true,
+              wallet: true,
+              owner: true,
+              domains: true,
+            },
+          },
           domainAccess: true,
           referrer: true,
           referredUsers: true,
@@ -207,7 +215,7 @@ export async function createUserForOrganization(
 export async function authenticateUser(
   email: string,
   passwordPlain: string
-): Promise<Omit<User, "password"> | null> {
+): Promise<Omit<User, "password" | "organization"> | null> {
   const result = await db
     .select()
     .from(pgUser)

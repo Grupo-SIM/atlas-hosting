@@ -30,7 +30,7 @@ export default async function NewSitePageContainer() {
     );
   }
 
-  const domains = await getUserDomains(user.id);
+  const domains = await getUserDomains(user);
 
   return (
     <div className="p-6">

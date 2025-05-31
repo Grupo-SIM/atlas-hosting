@@ -9,7 +9,6 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { pgNamecheapIntegration } from "./namecheap";
 import { pgUser } from "./user";
 
 export const pgOrganization = pgTable("organization", {
@@ -41,13 +40,12 @@ export const organizationRelations = relations(
       fields: [pgOrganization.planId],
       references: [pgPlan.id],
     }),
-    namecheap: one(pgNamecheapIntegration, {
-      fields: [pgOrganization.namecheapId],
-      references: [pgNamecheapIntegration.id],
-    }),
     wallet: one(pgWallet, {
       fields: [pgOrganization.walletId],
       references: [pgWallet.id],
+    }),
+    domains: many(pgOrganizationDomains, {
+      relationName: "organization_domains",
     }),
   })
 );
@@ -73,24 +71,26 @@ export const pgUserPermission = pgTable(
   },
   (t) => [primaryKey({ columns: [t.userId, t.domainId] })]
 );
-export const domainToUserRelations = relations(
-  pgUserPermission,
-  ({ one }) => ({
-    domain: one(pgOrganizationDomains, {
-      fields: [pgUserPermission.domainId],
-      references: [pgOrganizationDomains.id],
-    }),
-    user: one(pgUser, {
-      fields: [pgUserPermission.userId],
-      references: [pgUser.id],
-    }),
-  })
-);
+export const domainToUserRelations = relations(pgUserPermission, ({ one }) => ({
+  domain: one(pgOrganizationDomains, {
+    fields: [pgUserPermission.domainId],
+    references: [pgOrganizationDomains.id],
+  }),
+  user: one(pgUser, {
+    fields: [pgUserPermission.userId],
+    references: [pgUser.id],
+  }),
+}));
 
 export const organizationDomainsRelations = relations(
   pgOrganizationDomains,
-  ({ many }) => ({
+  ({ many, one }) => ({
     domainAccess: many(pgUserPermission),
+    organization: one(pgOrganization, {
+      fields: [pgOrganizationDomains.organizationId],
+      references: [pgOrganization.id],
+      relationName: "organization_domains",
+    }),
   })
 );
 

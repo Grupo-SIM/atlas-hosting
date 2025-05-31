@@ -28,7 +28,7 @@ export default async function DnsManagementPage({
     notFound();
   }
 
-  const domainName = domain.Name;
+  const domainName = domain.DomainName;
 
   let initialDnsData: CachedDnsData | null = null;
   let fetchError: string | null = null;

@@ -3,6 +3,7 @@ import type { User } from "@/lib/db/schema";
 import { getUserCurrentDomain, getUserDomains } from "@/lib/server/utils";
 import { PlusCircle } from "lucide-react";
 import DomainSelector from "../domains/DomainSelector";
+import type { getUser } from "@/lib/auth";
 
 export function WelcomeHeader({ user }: WelcomeHeaderProps) {
   return (
@@ -38,14 +39,18 @@ async function UserName({ user }: WelcomeHeaderProps) {
 export async function UserSiteLabel({ user }: WelcomeHeaderProps) {
   const userData = await user;
 
-  const domains = await getUserDomains(userData.id);
-  const selectedDomain = await getUserCurrentDomain(userData);
+  const domains = await getUserDomains(userData);
 
   return (
-    selectedDomain && (
+    userData.selectedDomain && (
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground">Site atual:</span>
-        <DomainSelector domains={domains} selectedDomain={selectedDomain} />
+        <DomainSelector
+          domains={domains}
+          selectedDomain={userData.organization.domains.find(
+            (domain) => domain.domain === userData.selectedDomain
+          )}
+        />
       </div>
     )
   );

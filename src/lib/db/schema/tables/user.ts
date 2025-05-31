@@ -1,7 +1,12 @@
 import { pgZohoDomainOrganizations } from "@/lib/db/schema/tables/email";
 import { relations } from "drizzle-orm";
 import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { pgOrganization, pgUserPermission } from "./organization";
+import {
+  pgOrganization,
+  pgUserPermission,
+  type Organization,
+  type OrganizationDomain,
+} from "./organization";
 import { pgSession } from "./session";
 
 export const pgUser = pgTable("users", {
@@ -47,5 +52,5 @@ export const userRelations = relations(pgUser, ({ one, many }) => ({
   sessions: many(pgSession),
 }));
 
-export type User = typeof pgUser.$inferSelect;
+export type User = typeof pgUser.$inferSelect & { organization: Organization & { domains: OrganizationDomain[] } };
 export type UserInsert = typeof pgUser.$inferInsert;

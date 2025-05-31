@@ -3,8 +3,9 @@ import Sidebar from "@/components/layouts/components/Sidebar";
 import Topbar from "@/components/layouts/components/Topbar";
 import { getUser } from "@/lib/auth";
 import type { User } from "@/lib/db/schema";
-import type { DomainListItem } from "@/lib/server/apis/namecheap/types";
+import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
 import { getUserCurrentDomain, getUserDomains } from "@/lib/server/utils";
+import { find } from "lodash";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -25,7 +26,7 @@ export default async function RootLayout({
     redirect("/login");
   }
 
-  const domains = await getUserDomains(user.id);
+  const domains = await getUserDomains(user);
   const selectedDomain = await getUserCurrentDomain(user);
 
   return (
@@ -57,15 +58,20 @@ async function UserSiteSelect({
   domains,
   selectedDomain,
 }: {
-  user: User;
-  domains: (DomainListItem & {
+  domains: (DomainsGetInfoCleanedResponse & {
     inPlesk: boolean;
   })[];
-  selectedDomain: DomainListItem | null;
+  user: User;
+  selectedDomain: DomainsGetInfoCleanedResponse | null;
 }) {
+  const selectedDomainInfo = find(
+    user.organization.domains,
+    (domain) => domain.domain === selectedDomain?.DomainName
+  );
+
   return (
     selectedDomain && (
-      <DomainSelector domains={domains} selectedDomain={selectedDomain} />
+      <DomainSelector domains={domains} selectedDomain={selectedDomainInfo} />
     )
   );
 }

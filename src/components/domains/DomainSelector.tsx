@@ -8,7 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { DomainListItem } from "@/lib/server/apis/namecheap/types";
+import type { OrganizationDomain } from "@/lib/db/schema";
+import type { DomainListItem, DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
 import { startTransition, useActionState } from "react";
 
 export default function DomainSelector({
@@ -28,7 +29,7 @@ export default function DomainSelector({
 
   return (
     <div className="relative cursor-pointer">
-      <Select value={selectedDomain?.Name} onValueChange={onValueChange}>
+      <Select value={selectedDomain?.domain} onValueChange={onValueChange}>
         <SelectTrigger
           id="domainName"
           className="w-[300px] text-foreground relative"
@@ -40,8 +41,8 @@ export default function DomainSelector({
         </SelectTrigger>
         <SelectContent>
           {domains.map((domain) => (
-            <SelectItem key={domain.ID} value={domain.Name}>
-              {domain.Name}
+            <SelectItem key={domain.ID} value={domain.DomainName}>
+              {domain.DomainName}
             </SelectItem>
           ))}
         </SelectContent>
@@ -51,6 +52,6 @@ export default function DomainSelector({
 }
 
 export interface DomainSelectorProps {
-  selectedDomain?: DomainListItem;
-  domains: (DomainListItem & { inPlesk: boolean })[];
+  selectedDomain?: OrganizationDomain;
+  domains: (DomainsGetInfoCleanedResponse & { inPlesk: boolean })[];
 }

@@ -2,7 +2,6 @@ export * from "./tables/authjs";
 export * from "./tables/cache";
 export * from "./tables/invoice";
 export * from "./tables/log";
-export * from "./tables/namecheap";
 export * from "./tables/plan";
 export * from "./tables/session";
 export * from "./tables/user";

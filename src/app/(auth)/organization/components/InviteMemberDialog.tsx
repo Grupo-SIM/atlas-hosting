@@ -7,6 +7,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,16 +19,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, RefreshCw, Copy, Check } from "lucide-react";
+import { Loader2, RefreshCw, Copy, Check, UserPlus } from "lucide-react";
 
 interface InviteMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showTriggerButton?: boolean;
 }
 
-export function InviteMemberDialog({
-  open,
+export function InviteMemberDialog({ 
+  open, 
   onOpenChange,
+  showTriggerButton = false
 }: InviteMemberDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordCopied, setPasswordCopied] = useState(false);
@@ -78,6 +81,14 @@ export function InviteMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      {showTriggerButton && (
+        <DialogTrigger asChild>
+          <Button variant="outline">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Invite Member
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New User</DialogTitle>
@@ -129,7 +140,7 @@ export function InviteMemberDialog({
               <SelectContent>
                 <SelectItem value="admin">Administrator</SelectItem>
                 <SelectItem value="developer">Developer</SelectItem>
-                <SelectItem value="viewer">Viewer</SelectItem>
+                <SelectItem value="member">Member</SelectItem>
               </SelectContent>
             </Select>
           </div>

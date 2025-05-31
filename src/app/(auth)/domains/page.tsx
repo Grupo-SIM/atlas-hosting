@@ -40,6 +40,9 @@ import { redirect } from "next/navigation";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
 import { cookies } from "next/headers";
+import { db } from "@/lib/db";
+import { pgOrganizationDomains } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 // Define a type for the processed domain to be used in the table
 interface ProcessedDomain {
@@ -63,88 +66,40 @@ export default async function MyDomainsPage({
   let processedDomains: ProcessedDomain[] = [];
 
   try {
-    const domainsListResponse = await namecheapApi.getList({}); // Uses your wrapper
+    const dbDomains = user.organization.domains;
 
-    if (domainsListResponse?.Domains) {
-      processedDomains = await Promise.all(
-        domainsListResponse.Domains.map(async (listedDomain) => {
-          // Fetch detailed info for each domain
-          // The getInfo method in the wrapper might need to be robust if some domains fail to fetch info
-          let domainInfo: DomainsGetInfoCleanedResponse;
-          try {
-            domainInfo = await namecheapApi.getInfo({
-              DomainName: listedDomain.Name,
-            });
-          } catch (_infoError) {
-            // Fallback or skip this domain if info is critical
-            return {
-              // Provide a fallback structure
-              id: listedDomain.Name,
-              name: listedDomain.Name,
-              registrationDate: listedDomain.Created
-                ? format(listedDomain.Created, "dd/MM/yyyy", {
-                    locale: ptBR,
-                  })
-                : "N/A",
-              expiryDate: listedDomain.Expires
-                ? format(listedDomain.Expires, "dd/MM/yyyy", {
-                    locale: ptBR,
-                  })
-                : "Nunca",
-              status: "unknown" as const,
-              autoRenew: listedDomain.AutoRenew, // From getList
-              isLocked: false, // Default if getInfo fails
-              usesOurDNS: false, // Default
-              features: [listedDomain.AutoRenew && "Auto-Renew"].filter(
-                Boolean
-              ) as string[],
-            };
-          }
+    const domains = await Promise.all(dbDomains.map(async (domain) => {
+      const d = await namecheapApi.getInfo({
+        DomainName: domain.domain,
+      });
 
-          const expiryDateObj =
-            domainInfo.ExpireDate !== "N/A"
-              ? domainInfo.ExpireDate
-              : startOfTomorrow();
-          const status: "active" | "expired" = isBefore(
-            expiryDateObj,
-            new Date()
-          )
-            ? "expired"
-            : "active";
+      return {
+        id: d.DomainName,
+        name: d.DomainName,
+        registrationDate: d.CreatedDate
+          ? format(d.CreatedDate, "dd/MM/yyyy", { locale: ptBR })
+          : "N/A",
+        expiryDate: d.ExpireDate
+          ? format(d.ExpireDate, "dd/MM/yyyy", { locale: ptBR })
+          : "Nunca",
+        status: isBefore(d.ExpireDate, new Date())
+          ? "expired"
+          : "active",
+        autoRenew: d.AutoRenew,
+        isLocked: d.IsLocked,
+        usesOurDNS: d.DnsDetails.IsUsingOurDNS,
+        features: [
+          d.DnsDetails.IsUsingOurDNS && "DNS Management",
+          d.Whoisguard.Enabled && "Domain Privacy",
+          d.AutoRenew && "Auto-Renew",
+          // "Email Forwarding" - This info might come from a different API call or be assumed
+        ].filter(Boolean) as string[],
+      } as ProcessedDomain;
+    }));
 
-          const features = [
-            domainInfo.DnsDetails.IsUsingOurDNS && "DNS Management", // Check if using Namecheap DNS
-            domainInfo.Whoisguard.Enabled && "Domain Privacy",
-            listedDomain.AutoRenew && "Auto-Renew", // Prefer AutoRenew from getList as it's more direct
-            // "Email Forwarding" - This info might come from a different API call or be assumed
-          ].filter(Boolean) as string[];
-
-          return {
-            id: domainInfo.DomainName,
-            name: domainInfo.DomainName,
-            registrationDate:
-              domainInfo.CreatedDate !== "N/A"
-                ? format(domainInfo.CreatedDate, "dd/MM/yyyy", {
-                    locale: ptBR,
-                  })
-                : "N/A",
-            expiryDate:
-              domainInfo.ExpireDate !== "N/A"
-                ? format(domainInfo.ExpireDate, "dd/MM/yyyy", {
-                    locale: ptBR,
-                  })
-                : "Nunca",
-            status: status,
-            autoRenew: listedDomain.AutoRenew, // Use AutoRenew from getList
-            isLocked: domainInfo.IsLocked,
-            usesOurDNS: domainInfo.DnsDetails.IsUsingOurDNS,
-            features: features,
-          };
-        })
-      );
-    }
-  } catch (_error) {
-    // Optionally, set an error state to display to the user
+    processedDomains = domains;
+  } catch (error) {
+    console.error("Error fetching domain info:", error);
   }
 
   return (
