@@ -2,13 +2,18 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import SkeletonThemeProvider from "@/components/layouts/SkeletonThemeProvider";
+import { Suspense } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Atlas Hosting - Serviços de Web Hosting",
-  description: "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
+  description:
+    "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
 };
+
+export const experimental_ppr = true;
 
 export default async function RootLayout({
   children,
@@ -16,16 +21,18 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className="dark">
+    <html lang="en" suppressHydrationWarning={true} className="dark">
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <Suspense>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem={true}
+            disableTransitionOnChange={true}
+          >
+            <SkeletonThemeProvider>{children}</SkeletonThemeProvider>
+          </ThemeProvider>
+        </Suspense>
       </body>
     </html>
   );

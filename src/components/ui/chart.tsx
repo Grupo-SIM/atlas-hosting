@@ -72,32 +72,48 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     ([, config]) => config.theme || config.color
   );
 
-  if (!colorConfig.length) {
+  if (colorConfig.length === 0) {
     return null;
   }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-      .map(([key, itemConfig]) => {
-        const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color;
-        return color ? `  --color-${key}: ${color};` : null;
-      })
-      .join("\n")}
-}
-`
-          )
-          .join("\n"),
-      }}
-    />
-  );
+  React.useEffect(() => {
+    const styleId = `chart-style-${id}`;
+    let existingStyle = document.getElementById(styleId);
+
+    if (!existingStyle) {
+      existingStyle = document.createElement("style");
+      existingStyle.id = styleId;
+      document.head.appendChild(existingStyle);
+    }
+
+    const cssContent = Object.entries(THEMES)
+      .map(
+        ([theme, prefix]) => `
+          ${prefix} [data-chart=${id}] {
+          ${colorConfig
+            .map(([key, itemConfig]) => {
+              const color =
+                itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
+                itemConfig.color;
+              return color ? `  --color-${key}: ${color};` : null;
+            })
+            .join("\n")}
+          }
+        `
+      )
+      .join("\n");
+
+    existingStyle.textContent = cssContent;
+
+    return () => {
+      const styleElement = document.getElementById(styleId);
+      if (styleElement) {
+        styleElement.remove();
+      }
+    };
+  }, [id, colorConfig]);
+
+  return null;
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
@@ -134,7 +150,7 @@ const ChartTooltipContent = React.forwardRef<
     const { config } = useChart();
 
     const tooltipLabel = React.useMemo(() => {
-      if (hideLabel || !payload?.length) {
+      if (hideLabel || !payload || payload.length === 0) {
         return null;
       }
 
@@ -169,7 +185,7 @@ const ChartTooltipContent = React.forwardRef<
       labelKey,
     ]);
 
-    if (!active || !payload?.length) {
+    if (!(active && payload && payload.length > 0)) {
       return null;
     }
 
@@ -183,9 +199,9 @@ const ChartTooltipContent = React.forwardRef<
           className
         )}
       >
-        {!nestLabel ? tooltipLabel : null}
+        {nestLabel ? null : tooltipLabel}
         <div className="grid gap-1.5">
-          {payload.map((item, index) => {
+          {payload?.map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`;
             const itemConfig = getPayloadConfigFromPayload(config, item, key);
             const indicatorColor = color || item.payload.fill || item.color;
@@ -272,7 +288,7 @@ const ChartLegendContent = React.forwardRef<
   ) => {
     const { config } = useChart();
 
-    if (!payload?.length) {
+    if (payload?.length === 0) {
       return null;
     }
 
@@ -285,7 +301,7 @@ const ChartLegendContent = React.forwardRef<
           className
         )}
       >
-        {payload.map((item) => {
+        {payload?.map((item) => {
           const key = `${nameKey || item.dataKey || "value"}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
 
@@ -356,8 +372,10 @@ function getPayloadConfigFromPayload(
 }
 
 export {
-  ChartContainer, ChartLegend,
+  ChartContainer,
+  ChartLegend,
   ChartLegendContent,
-  ChartStyle, ChartTooltip,
-  ChartTooltipContent
+  ChartStyle,
+  ChartTooltip,
+  ChartTooltipContent,
 };

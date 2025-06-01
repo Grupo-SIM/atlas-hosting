@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as crypto from "crypto";
 import axios from "axios";
-import { WithDrawFundsParams } from "./types";
+import type { WithDrawFundsParams } from "./types";
 
 /**
  * Função para assinar um payload com uma chave privada
@@ -12,7 +12,10 @@ import { WithDrawFundsParams } from "./types";
  * @throws Lança um {@link Error} se ocorrer um problema ao ler o arquivo da chave privada ou se houver qualquer outro erro durante o processo de assinatura.
  * @see {@link https://dom-pagamentos.readme.io/reference/autentica%C3%A7%C3%A3o-com-assinatura-rsa | DOM Pagamentos API - Autenticação com assinatura RSA}
  */
-export function signPayload(payload: WithDrawFundsParams, privateKeyPath: string) {
+export function signPayload(
+  payload: WithDrawFundsParams,
+  privateKeyPath: string
+) {
   try {
     // Carrega a chave privada
     const privateKey = fs.readFileSync(privateKeyPath, "utf8");

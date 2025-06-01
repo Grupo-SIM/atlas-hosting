@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
 export function UsageStats() {
@@ -15,7 +21,9 @@ export function UsageStats() {
     <Card>
       <CardHeader>
         <CardTitle>Resource Usage</CardTitle>
-        <CardDescription>Current usage of your allocated resources</CardDescription>
+        <CardDescription>
+          Current usage of your allocated resources
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         {resources.map((resource, index) => (
@@ -24,7 +32,9 @@ export function UsageStats() {
               <span className="text-sm font-medium">{resource.name}</span>
               <span className="text-sm text-muted-foreground">
                 {resource.used} / {resource.total}
-                {resource.name === "Disk Space" || resource.name === "Bandwidth" ? " GB" : ""}
+                {resource.name === "Disk Space" || resource.name === "Bandwidth"
+                  ? " GB"
+                  : ""}
               </span>
             </div>
             <div className="flex items-center">

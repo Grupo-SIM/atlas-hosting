@@ -1,50 +1,90 @@
-import { DomainData } from "@/app/(auth)/(dashboard)/domains/register/page";
+import type { DomainData } from "@/app/(auth)/domains/register/page";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toBrl } from "@/lib/utils";
-import Link from "next/link";
+import { CheckCircle2, XCircle } from "lucide-react";
 
-interface DomainSuggestionsProps {
+export async function DomainSuggestions({
+  domainDataPromise,
+  searchQuery,
+}: {
+  domainDataPromise: Promise<DomainData>;
   searchQuery: string;
-  domainData: Promise<DomainData>;
-}
+}) {
+  const domainData = await domainDataPromise;
 
-export async function DomainSuggestions({ searchQuery, domainData }: DomainSuggestionsProps) {
-  const data = await domainData;
+  if (!domainData?.extraDomains || domainData.extraDomains.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Sugestões</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Não há sugestões adicionais de domínios disponíveis para &quot;
+            {searchQuery}&quot; no momento.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div>
-      <h3 className="text-lg font-medium mb-4">Sugestões de domínio</h3>
-      <div className="grid gap-4">
-        {data && data.extraDomains.map((domain, index) => {
-          const tld = domain.domain.split(".").pop() || "";
-          const price = domain.price;
-
-          const priceString = price ? toBrl(price) : null;
-
-          return (
-            <Link
-              key={index}
-              href={`?search=${domain.domain}`}
-              className="border rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-primary/50 hover:bg-muted/50 transition-colors"
+    <Card>
+      <CardHeader>
+        <CardTitle>Sugestões de Domínios</CardTitle>
+        <CardDescription>
+          Outras opções de domínios que podem lhe interessar:
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4 max-h-full">
+          {domainData.extraDomains.map((domain) => (
+            <div
+              key={domain.domain}
+              className="flex items-center justify-between gap-4 p-4 border rounded-lg"
             >
-              <div>
-                <p className="font-medium">{domain.domain}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Includes free privacy protection and DNS management
-                </p>
-              </div>
-              
-              <div className="flex items-center gap-4 self-end sm:self-auto">
-                <div className="text-right">
-                  <p className="font-semibold">{priceString}</p>
-                  <p className="text-xs text-muted-foreground">Renovação: {toBrl(domain.renew)}</p>
+              <div className="flex items-center gap-4">
+                {domain.available ? (
+                  <CheckCircle2 className="h-6 w-6 text-green-500 flex-shrink-0" />
+                ) : (
+                  <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />
+                )}
+                <div>
+                  <h3 className="font-semibold">{domain.domain}</h3>
+                  {domain.available ? (
+                    <div className="flex flex-col gap-1 my-1">
+                      <p className="text-sm text-muted-foreground">
+                        Preço de registro: {toBrl(domain.priceBRL)}
+                        {domain.isPremium && " (Premium)"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Preço de renovação: {toBrl(domain.renewBRL)}
+                        {domain.isPremium && " (Premium)"}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Domínio não disponível
+                    </p>
+                  )}
                 </div>
               </div>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
+              {domain.available && (
+                <Button variant="outline" size="sm">
+                  Registrar
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
-

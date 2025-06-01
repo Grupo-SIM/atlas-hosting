@@ -3,7 +3,7 @@ WORKDIR /usr/src/app
 
 FROM base AS install
 COPY package.json bun.lock ./
-COPY plesk ./plesk
+COPY src/plesk/ ./src/
 RUN bun install
 
 FROM base AS prerelease

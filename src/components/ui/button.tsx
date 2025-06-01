@@ -3,6 +3,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
+import { CgSpinner } from "react-icons/cg";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-350 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
@@ -18,7 +19,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        action: "bg-emerald-100 dark:bg-emerald-800/30 text-emerald-900 dark:text-emerald-400 ring-1 ring-emerald-900 dark:ring-emerald-400 hover:shadow-lg hover:-translate-y-[1px] hover:shadow-emerald-200/80 dark:hover:shadow-emerald-500/20",
+        action:
+          "bg-emerald-100 dark:bg-emerald-800/30 text-emerald-900 dark:text-emerald-400 ring-1 ring-emerald-900 dark:ring-emerald-400 hover:shadow-lg hover:-translate-y-[1px] hover:shadow-emerald-200/80 dark:hover:shadow-emerald-500/20",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -38,17 +40,35 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  isLoading?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      children,
+      isLoading,
+      ...props
+    },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button";
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...props}
-      />
+      >
+        {isLoading ? (
+          <CgSpinner className="animate-spin h-4 w-4 mx-auto" />
+        ) : (
+          children
+        )}
+      </Comp>
     );
   }
 );

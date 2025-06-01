@@ -1,203 +1,121 @@
-
-import { DomainData } from "@/app/(auth)/(dashboard)/domains/register/page";
+import {
+  getDomainData,
+  type DomainData,
+} from "@/app/(auth)/domains/register/page";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { invoiceTable } from "@/lib/db/schema";
-import currencyConversion from "@/lib/server/apis/currency";
-import nameSilo from "@/lib/server/apis/namesilo";
+import namecheapApi from "@/lib/server/apis/namecheap";
+import type { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
 import { toBrl } from "@/lib/utils";
-import { endOfTomorrow } from "date-fns";
-import { Check, X } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { PropsWithChildren, ReactNode, Suspense } from "react";
-import { CgSpinner } from "react-icons/cg";
+import { type PropsWithChildren, type ReactNode, Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
+import RegisterDomainForm from "./RegisterDomainForm";
 
-export function DomainResult({ searchQuery, domainData }: DomainResultProps) {
-  return (
-    <div className="border rounded-lg overflow-hidden">
-      <div className="p-6 bg-muted/30">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center">
-              <Suspense fallback={<CgSpinner className="animate-spin h-4 w-4 mr-2" />}>
-                <DomainAvailabilityIcon domainData={domainData} />
-              </Suspense>
-              <h3 className="text-lg font-semibold">{searchQuery}</h3>
-            </div>
-            
-            <p className="mt-2 text-muted-foreground">
-              <Suspense fallback={<Skeleton height="1em" width="8em" />}>
-                <DomainAvailabilityLabel domainData={domainData} />
-              </Suspense>
-            </p>
-          </div>
-          
-          <div className="flex flex-col md:items-end gap-2">
-            <Suspense fallback={(
-              <>
-                <p className="font-semibold text-xl"><Skeleton height="1em" width="6em" /></p>
-                <p className="text-xs text-muted-foreground">Renovação: <Skeleton height="1em" width="6em" /></p>
-              </>
-            )}>
-              <DomainPricing domainData={domainData} />
-            </Suspense>
-            
-            <Suspense fallback={<></>}>
-              <DomainUnavailable domainData={domainData} />
-            </Suspense>
-          </div>
-        </div>
-      </div>
-      
-      <Suspense fallback={(
-        <DomainAvailableTemplate text1={<Skeleton height="1em" width="8em" />}
-          text2={<Skeleton height="1em" width="6em" />}
-          text3={<Skeleton height="1em" width="6em" />}
-          text4={<Skeleton height="1em" width="6em" />}
-        >
-          <div className="flex-1 flex items-center justify-end">
-            <Skeleton height="2.5em" width="8em" />
-          </div>
-        </DomainAvailableTemplate>
-      )}>
-        <DomainAvailable domainData={domainData} />
-      </Suspense>
-    </div>
-  );
-}
+export async function DomainResult({ searchQuery }: { searchQuery: string }) {
+  const domainData = await getDomainData(searchQuery);
 
-async function DomainAvailabilityIcon({ domainData }: { domainData: Promise<DomainData> }) {
-  const data = await domainData;
-
-  console.log(JSON.stringify(data));
-
-  return (data?.available ? (
-    <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 dark:bg-green-900/30 mr-3">
-      <Check className="h-4 w-4" />
-    </div>
-  ) : (
-    <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 dark:bg-red-900/30 mr-3">
-      <X className="h-4 w-4" />
-    </div>
-  ));
-}
-
-async function DomainAvailabilityLabel({ domainData }: { domainData: Promise<DomainData> }) {
-  const data = await domainData;
-
-  return data?.available 
-    ? "Este domínio está disponível para registro!"
-    : "Este domínio está indisponível para registro.";
-}
-
-async function DomainPricing({ domainData }: { domainData: Promise<DomainData> }) {
-  const data = await domainData;
-
-  const price = data?.available ? data.domain?.price : null;
-  const renewPrice = data?.available ? data.domain?.renew : null;
-
-  const priceString = price ? toBrl(price) : null;
-
-  const renewPriceString = renewPrice ? toBrl(renewPrice) : null;
-
-  return data?.available && (
-    <>
-      <p className="font-semibold text-xl">{priceString}</p>
-      <p className="text-xs text-muted-foreground">Renovação: {renewPriceString}</p>
-    </>
-  );
-}
-
-async function DomainUnavailable({ domainData }: { domainData: Promise<DomainData> }) {
-  const data = await domainData;
-
-  return !data?.available && (
-    <>
-      <Button variant="outline" disabled>
-        <X className="h-4 w-4 mr-2" />
-        Indisponível
-      </Button>
-      <Button variant="link" className="text-sm">
-        Tentar pesquisa WHOIS
-      </Button>
-    </>
-  );
-}
-
-async function DomainAvailable({ domainData }: { domainData: Promise<DomainData> }) {
-  const data = await domainData;
-
-  async function buyDomain(data: FormData) {
-    "use server";
-
-    const domain = data.get("domain") as string;
-
-    if (!domain) {
-      throw new Error("Domain is required");
-    }
-
-    const result = await nameSilo.checkDomainAvailability(domain);
-
-    if (!result || !result.available) {
-      throw new Error("Error checking domain availability");
-    }
-
-    const price = await currencyConversion.convert({
-      from: "usd",
-      to: "brl",
-      amount: result.available.domain.price,
-    });
-
-    const user = await getUser();
-
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
-    const invoices = await db.insert(invoiceTable).values({
-      type: "domain",
-      amount: price,
-      reference: domain,
-      dueDate: endOfTomorrow(),
-      status: "pending",
-      userId: user.id,
-    }).returning({ id: invoiceTable.id });
-
-    const invoice = invoices[0];
-
-    redirect("/checkout/" + invoice.id);
+  if (!domainData?.domain) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Resultado da Busca</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Não foi possível verificar a disponibilidade do domínio &quot;
+            {searchQuery}&quot;. Tente novamente ou verifique o termo.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
-  return data?.available && (
-    <DomainAvailableTemplate
-      text1="Domínio inclui serviços gratuitos:"
-      text2="Administração de DNS"
-      text3="Proteção de privacidade"
-      text4="Encaminhamento de Email"
-    >
-      <form action={buyDomain} className="flex items-center justify-end">
-        <input
-          type="hidden"
-          name="domain"
-          value={data.domain?.domain}
-          readOnly
-        />
-        <Button variant="action" className="w-auto" type="submit">
-          Registrar domínio
-        </Button>
-      </form>
-    </DomainAvailableTemplate>
+  const { available, domain } = domainData;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Resultado da Busca: {domain.domain}</CardTitle>
+        <CardDescription>
+          {available
+            ? "Este domínio está disponível para registro!"
+            : "Este domínio não está disponível para registro."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            {available ? (
+              <CheckCircle2 className="h-8 w-8 text-green-500 flex-shrink-0" />
+            ) : (
+              <XCircle className="h-8 w-8 text-red-500 flex-shrink-0" />
+            )}
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold">{domain.domain}</h3>
+              {available ? (
+                <p className="text-sm text-muted-foreground">
+                  Este domínio está disponível para registro
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Este domínio já está registrado.
+                </p>
+              )}
+            </div>
+          </div>
+          <h2 className="font-semibold text-2xl">{toBrl(domain.priceBRL)}</h2>
+        </div>
+
+        {domain.isPremium && available && (
+          <div className="mt-4 flex items-center gap-2 text-amber-500">
+            <AlertCircle className="h-4 w-4" />
+            <p className="text-sm">
+              Este é um domínio premium. O preço de registro é{" "}
+              {toBrl(domain.priceBRL)}.
+            </p>
+          </div>
+        )}
+      </CardContent>
+
+      <Suspense
+        fallback={
+          <div className="p-4">
+            <Skeleton height={40} />
+          </div>
+        }
+      >
+        {available ? (
+          <DomainAvailable domainData={domainData} />
+        ) : (
+          <DomainUnavailable domainData={domainData} />
+        )}
+      </Suspense>
+    </Card>
   );
 }
 
-function DomainAvailableTemplate({ text1, text2, text3, text4, children }: PropsWithChildren<{ 
+function DomainAvailableTemplate({
+  text1,
+  text2,
+  text3,
+  text4,
+  children,
+}: PropsWithChildren<{
   text1: ReactNode;
   text2: ReactNode;
   text3: ReactNode;
   text4: ReactNode;
- }>) {
+}>) {
   return (
     <div className="p-4 bg-green-50 dark:bg-green-900/10 border-t border-green-100 dark:border-green-900/20">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -206,12 +124,18 @@ function DomainAvailableTemplate({ text1, text2, text3, text4, children }: Props
           {text1}
         </p>
         <ul className="flex flex-wrap gap-2 items-center">
-          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">{text2}
+          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+            {text2}
           </li>
-          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">{text3}</li>
-          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">{text4}</li>
+          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+            {text3}
+          </li>
+          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+            {text4}
+          </li>
         </ul>
-        <div className="flex-1 mt-2 sm:mt-0">
+        {/* Children (form with button and price) will now be flexed to the end */}
+        <div className="flex-1 flex items-center justify-end gap-2 mt-2 sm:mt-0">
           {children}
         </div>
       </div>
@@ -219,7 +143,146 @@ function DomainAvailableTemplate({ text1, text2, text3, text4, children }: Props
   );
 }
 
-export interface DomainResultProps {
-  searchQuery: string;
-  domainData: Promise<DomainData>;
+async function DomainUnavailable({ domainData }: { domainData: DomainData }) {
+  return (
+    !domainData?.available && (
+      <div className="p-4 border-t flex items-center justify-end gap-2">
+        <Button variant="outline" disabled={true}>
+          <X className="h-4 w-4 mr-2" />
+          Indisponível
+        </Button>
+        <Button variant="link" className="text-sm" asChild={true}>
+          <a
+            href={`https://whois.domaintools.com/${domainData?.domain?.domain}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Tentar pesquisa WHOIS
+          </a>
+        </Button>
+      </div>
+    )
+  );
 }
+
+async function DomainAvailable({ domainData }: { domainData: DomainData }) {
+  // async function buyDomainAction(formData: FormData) {
+  //   "use server";
+
+  //   const user = await getUser();
+
+  //   const domainName = formData.get("domainName") as string;
+
+  //   const formYears = formData.get("years") as string;
+
+  //   const yearsToRegister = formYears ? Number.parseInt(formYears, 10) : 1;
+  //   const registrationPrice = Number.parseFloat(
+  //     formData.get("price") as string
+  //   );
+  //   const isPremium = formData.get("isPremium") === "true";
+
+  //   if (!user?.email) {
+  //     throw new Error("Usuário não autenticado ou e-mail não encontrado.");
+  //   }
+  //   if (!domainName) {
+  //     throw new Error("Nome do domínio é obrigatório.");
+  //   }
+
+  //   const params: DomainsCreateUserParams = {
+  //     DomainName: domainName,
+  //     Years: yearsToRegister,
+  //     Registrant: adminNamecheapDetails,
+  //     Admin: adminNamecheapDetails,
+  //     Tech: adminNamecheapDetails,
+  //     AuxBilling: adminNamecheapDetails,
+  //     AddFreeWhoisguard: "yes",
+  //     WGEnabled: "yes",
+  //   };
+
+  //   if (isPremium) {
+  //     params.IsPremiumDomain = true;
+  //     params.PremiumPrice = registrationPrice;
+  //   }
+
+  //   try {
+  //     const registrationResult = await namecheapApi.createDomain(params);
+
+  //     if (!registrationResult.Registered) {
+  //       throw new Error(
+  //         `Falha ao registrar o domínio ${domainName} via Namecheap. Motivo desconhecido.`
+  //       );
+  //     }
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       throw new Error(`Falha ao registrar ${domainName}: ${error.message}`);
+  //     }
+  //     throw new Error(
+  //       `Falha ao registrar ${domainName}. Por favor, tente novamente.`
+  //     );
+  //   }
+
+    // try {
+    //   user.logger.log({
+    //     title: "Novo domínio registrado",
+    //     description: `Domínio ${domainName} registrado com sucesso.`,
+    //     severity: "success",
+    //     type: "hosting",
+    //   });
+    // } catch (error) {
+    //   console.error(
+    //     `Erro ao registrar log de domínio para ${domainName}:`,
+    //     error
+    //   );
+    // }
+
+  //   redirect("/domains");
+  // }
+
+  return (
+    domainData?.available &&
+    domainData.domain && (
+      <DomainAvailableTemplate
+        text1="Domínio inclui serviços gratuitos:"
+        text2="Administração de DNS"
+        text3="Proteção de privacidade"
+        text4="Encaminhamento de Email"
+      >
+        {/* <form action={buyDomainAction} className="flex items-center gap-2">
+          <input
+            type="hidden"
+            name="domainName"
+            value={domainData.domain.domain}
+            readOnly={true}
+          />
+          <input
+            type="hidden"
+            name="isPremium"
+            value={domainData.domain.isPremium.toString()}
+            readOnly={true}
+          />
+          <Button
+            disabled={!domainData}
+            variant="action"
+            className="w-40"
+            type="submit"
+          >
+            Registrar domínio
+          </Button>
+        </form> */}
+        <RegisterDomainForm domainData={domainData} />
+      </DomainAvailableTemplate>
+    )
+  );
+}
+
+export const adminNamecheapDetails = {
+  Address1: "Beco Neuteu Maia",
+  City: "Rio Branco",
+  Country: "BR",
+  EmailAddress: "lucasgarrafielo@gmail.com",
+  FirstName: "Lucas",
+  LastName: "Garrafielo",
+  Phone: process.env.ADMIN_PHONENUMBER!,
+  PostalCode: "69900430",
+  StateProvince: "AC",
+};

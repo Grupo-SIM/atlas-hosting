@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { CheckCircle, AlertTriangle } from "lucide-react";
 
 export function ServerStatus() {
@@ -21,13 +27,15 @@ export function ServerStatus() {
       <CardContent>
         <div className="space-y-4">
           {services.map((service, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="flex items-center justify-between border-b last:border-0 pb-3 last:pb-0"
             >
               <div>
                 <p className="font-medium">{service.name}</p>
-                <p className="text-xs text-muted-foreground">Uptime: {service.uptime}</p>
+                <p className="text-xs text-muted-foreground">
+                  Uptime: {service.uptime}
+                </p>
               </div>
               <div className="flex items-center">
                 {service.status === "operational" ? (

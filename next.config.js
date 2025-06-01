@@ -13,9 +13,10 @@ const nextConfig = {
       },
     },
   },
-  typescript: {
-    tsconfigPath: "./tsconfig.json",
-  }
+  experimental: {
+    nodeMiddleware: true,
+    dynamicIO: true,
+  },
 };
 
 module.exports = nextConfig;

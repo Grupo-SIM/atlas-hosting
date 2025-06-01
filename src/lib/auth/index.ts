@@ -1,8 +1,11 @@
 import { db } from "@/lib/db";
 import {
-  sessionTable,
-  userTable,
+  pgOrganization,
+  pgSession,
+  pgUser,
+  pgWallet,
   type Session,
+  type SessionInsert,
   type User,
 } from "@/lib/db/schema";
 import { sha256 } from "@oslojs/crypto/sha2";
@@ -11,9 +14,13 @@ import {
   encodeHexLowerCase,
 } from "@oslojs/encoding";
 import { eq } from "drizzle-orm";
-import { hash, verify } from "./scrypt";
+import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { cookies } from "next/headers";
-import { cache } from "react";
+import { redirect } from "next/navigation";
+import { AppLogger } from "../server/logs";
+import { hash, verify } from "./scrypt";
+import type { RawUser } from "@/lib/db/schema/tables/user";
+import { auth } from "@/auth";
 
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);
@@ -24,57 +31,71 @@ export function generateSessionToken(): string {
 
 export async function createSession(
   token: string,
-  userId: string,
+  userId: string
 ): Promise<Session> {
   const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
-  const session: Session = {
+  const session: SessionInsert = {
     id: sessionId,
     userId,
     expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
   };
-  await db.insert(sessionTable).values(session);
+  await db.insert(pgSession).values(session);
   return session;
 }
 
-export async function validateSessionToken(
-  token: string,
-): Promise<SessionValidationResult> {
+export async function validateSessionToken(token: string) {
   const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 
-  const result = await db
-    .select({ user: userTable, session: sessionTable })
-    .from(sessionTable)
-    .innerJoin(userTable, eq(sessionTable.userId, userTable.id))
-    .where(eq(sessionTable.id, sessionId));
-  
-  if (result.length < 1) {
+  const result = await db.query.pgSession.findFirst({
+    where: eq(pgSession.id, sessionId),
+    with: {
+      user: {
+        with: {
+          organization: {
+            with: {
+              members: true,
+              plan: true,
+              wallet: true,
+              owner: true,
+              domains: true,
+            },
+          },
+          domainAccess: true,
+          referrer: true,
+          referredUsers: true,
+        },
+      },
+    },
+  });
+
+  if (!result) {
     return { session: null, user: null };
   }
 
-  const { user, session } = result[0];
+  const { user, ...session } = result;
 
   if (Date.now() >= session.expiresAt.getTime()) {
-    await db.delete(sessionTable).where(eq(sessionTable.id, session.id));
+    await db.delete(pgSession).where(eq(pgSession.id, session.id));
     return { session: null, user: null };
   }
 
   if (Date.now() >= session.expiresAt.getTime() - 1000 * 60 * 60 * 24 * 15) {
     session.expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
-  
+
     await db
-      .update(sessionTable)
+      .update(pgSession)
       .set({
         expiresAt: session.expiresAt,
       })
-      .where(eq(sessionTable.id, session.id));
+      .where(eq(pgSession.id, session.id));
   }
 
   return { session, user };
 }
 
-export async function validateSession() {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("session_token")?.value;
+export async function validateSession(sessionToken?: string) {
+  "use cache";
+  cacheTag("session-validate");
 
   if (!sessionToken) {
     return { session: null, user: null };
@@ -84,36 +105,118 @@ export async function validateSession() {
 }
 
 export async function invalidateSession(sessionId: string): Promise<void> {
-  await db.delete(sessionTable).where(eq(sessionTable.id, sessionId));
+  await db.delete(pgSession).where(eq(pgSession.id, sessionId));
 }
 
 export async function invalidateAllSessions(userId: string): Promise<void> {
-  await db.delete(sessionTable).where(eq(sessionTable.userId, userId));
+  await db.delete(pgSession).where(eq(pgSession.userId, userId));
 }
 
 export async function createUser(
   name: string,
   email: string,
   passwordPlain: string,
+  organizationName: string,
+  referrerId?: string
 ) {
   try {
+    const walletResult = await db
+      .insert(pgWallet)
+      .values({
+        balance: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    const { id: walletId } = walletResult[0];
+
     const hashedPassword = await hash(passwordPlain);
-    const newUser = await db.insert(userTable).values({
-      name,
-      email: email.toLowerCase(),
-      password: hashedPassword,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      deletedAt: null,
-      namesiloId: null,
-    }).returning({
-      id: userTable.id,
-      name: userTable.name,
-      email: userTable.email,
-      createdAt: userTable.createdAt,
-      updatedAt: userTable.updatedAt,
-      deletedAt: userTable.deletedAt,
+
+    const newOrg = await db
+      .insert(pgOrganization)
+      .values({
+        name: organizationName,
+        walletId,
+      })
+      .returning();
+
+    const newUser = await db
+      .insert(pgUser)
+      .values({
+        name,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        referrerId,
+        organizationRole: "admin",
+        organizationId: newOrg[0].id,
+      })
+      .returning({
+        id: pgUser.id,
+        name: pgUser.name,
+        email: pgUser.email,
+        createdAt: pgUser.createdAt,
+        updatedAt: pgUser.updatedAt,
+        deletedAt: pgUser.deletedAt,
+      });
+
+    await db
+      .update(pgOrganization)
+      .set({
+        ownerId: newUser[0].id,
+      })
+      .where(eq(pgOrganization.id, newOrg[0].id));
+
+    return newUser[0];
+  } catch (error) {
+    // Handle potential errors, e.g., unique constraint violation for email
+    console.error("Error creating user:", error);
+    return null;
+  }
+}
+
+export async function createUserForOrganization(
+  name: string,
+  email: string,
+  passwordPlain: string,
+  organizationId: string,
+  role: "admin" | "member" | "developer" = "member"
+) {
+  const user = await getUser();
+
+  try {
+    const hashedPassword = await hash(passwordPlain);
+
+    const newUser = await db
+      .insert(pgUser)
+      .values({
+        name,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        organizationRole: role,
+        organizationId,
+      })
+      .returning({
+        id: pgUser.id,
+        name: pgUser.name,
+        email: pgUser.email,
+        createdAt: pgUser.createdAt,
+        updatedAt: pgUser.updatedAt,
+        deletedAt: pgUser.deletedAt,
+      });
+
+    const logger = new AppLogger(user);
+    logger.log({
+      title: "Usuário criado",
+      description: `Usuário ${newUser[0].name} (${newUser[0].email}) foi criado na organização ${user.organization.name}.`,
+      type: "account",
+      severity: "info",
     });
+
     return newUser[0];
   } catch (error) {
     // Handle potential errors, e.g., unique constraint violation for email
@@ -124,12 +227,12 @@ export async function createUser(
 
 export async function authenticateUser(
   email: string,
-  passwordPlain: string,
-): Promise<(Omit<User, "password"> & { password?: string }) | null> {
+  passwordPlain: string
+): Promise<Omit<RawUser, "password"> | null> {
   const result = await db
     .select()
-    .from(userTable)
-    .where(eq(userTable.email, email.toLowerCase()));
+    .from(pgUser)
+    .where(eq(pgUser.email, email.toLowerCase()));
 
   if (result.length < 1) {
     return null; // User not found
@@ -147,14 +250,53 @@ export async function authenticateUser(
 
   // Exclude password from the returned user object for security
   const { password, ...userWithoutPassword } = user;
-  return userWithoutPassword as Omit<User, "password"> & { password?: string };
+
+  return userWithoutPassword;
 }
 
 export type SessionValidationResult =
-	| { session: Session; user: User }
-	| { session: null; user: null };
+  | { session: Session; user: User }
+  | { session: null; user: null };
 
-export const getUser = cache(async function getUser() {
-  const { user } = await validateSession();
+export async function getUser(): Promise<User> {
+  const session = await auth();
+
+  console.log({ session });
+
+  if (session?.user?.id) {
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, session.user.id),
+      with: {
+        organization: {
+          with: {
+            members: true,
+            plan: true,
+            wallet: true,
+            owner: true,
+            domains: true,
+          },
+        },
+        domainAccess: true,
+        referrer: true,
+        referredUsers: true,
+      },
+    });
+
+    return user;
+  }
+
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get("session_token")?.value;
+
+  const { user } = await validateSession(sessionToken);
+
+  if (!user) {
+    redirect("/login");
+  }
+
   return user;
-});
+}
+
+export interface UserWithLogger extends User {
+  logger: AppLogger;
+}

@@ -2,9 +2,27 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ExternalLink, Globe, MoreHorizontal, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
@@ -56,9 +74,13 @@ export function DomainsList() {
             <TableHeader>
               <TableRow>
                 <TableHead>Domain Name</TableHead>
-                <TableHead className="hidden sm:table-cell">Registration Date</TableHead>
+                <TableHead className="hidden sm:table-cell">
+                  Registration Date
+                </TableHead>
                 <TableHead>Expiry Date</TableHead>
-                <TableHead className="hidden md:table-cell">Auto-Renew</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Auto-Renew
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -78,11 +100,16 @@ export function DomainsList() {
                       {domain.name}
                     </div>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">{domain.registrationDate}</TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    {domain.registrationDate}
+                  </TableCell>
                   <TableCell>{domain.expiryDate}</TableCell>
                   <TableCell className="hidden md:table-cell">
                     {domain.autoRenew ? (
-                      <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-200 dark:border-green-800">
+                      <Badge
+                        variant="outline"
+                        className="bg-green-500/10 text-green-500 border-green-200 dark:border-green-800"
+                      >
                         <RefreshCw className="h-3 w-3 mr-1" />
                         Auto-Renew
                       </Badge>
@@ -92,7 +119,7 @@ export function DomainsList() {
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild={true}>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreHorizontal className="h-4 w-4" />
                           <span className="sr-only">Actions</span>
