@@ -1,6 +1,6 @@
 "use client";
 
-import { type ActionResponse, login } from "@/app/actions"; // Renamed LoginProps to avoid conflict
+import { type ActionResponse, login, signInWithGithub } from "@/app/actions"; // Renamed LoginProps to avoid conflict
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import { FaGithub, FaGoogle } from "react-icons/fa6";
 import * as yup from "yup";
+import GithubAuthButton from "./GithubAuthButton";
 
 export default function LoginForm() {
   const { register, getValues, control, ...methods } = useForm<LoginFormInputs>(
@@ -125,14 +126,7 @@ export default function LoginForm() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Button
-          variant="outline"
-          type="button"
-          className="flex items-center justify-center gap-2"
-        >
-          <FaGithub className="h-4 w-4" />
-          GitHub
-        </Button>
+        <GithubAuthButton action={signInWithGithub} />
         <Button
           variant="outline"
           type="button"

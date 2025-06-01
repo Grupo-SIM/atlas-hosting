@@ -1,10 +1,9 @@
 import { Button } from "../ui/button";
 import { FaGithub } from "react-icons/fa6";
-import { signInWithGithub } from "@/app/actions";
 
-export default function GithubAuthButton() {
+export default function GithubAuthButton({ action }: { action: () => void }) {
   return (
-    <form action={signInWithGithub} className="w-full h-full">
+    <form action={action} className="w-full h-full">
       <Button
         variant="outline"
         type="submit"

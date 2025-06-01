@@ -15,7 +15,7 @@ export async function domainHasWordPress(
   domain: DomainListItem,
   user: User
 ): Promise<boolean> {
-  const wpInstances = await getUserWordPressSites(user.id);
+  const wpInstances = await getUserWordPressSites(user);
 
   let domainNameToCheck = domain.Name;
   try {
@@ -36,23 +36,11 @@ export async function domainHasWordPress(
 }
 
 export const getUserWordPressSites = cache(async function getUserWordPressSites(
-  userId: string
+  user: User
 ) {
-  let userDomainNames: string[] = [];
-  try {
-    console.log("Fetching domains from Namecheap for user:", userId);
-    const ncResponse = await namecheapApi.getList({ PageSize: 100 });
-
-    if (ncResponse?.Domains) {
-      userDomainNames = ncResponse.Domains.map((d: DomainListItem) => d.Name);
-    } else {
-      console.warn("No domains found for user from Namecheap or API error.");
-      userDomainNames = [];
-    }
-  } catch (error) {
-    console.error("Error fetching domains from Namecheap:", error);
-    userDomainNames = []; // Default to empty list on error
-  }
+  const userDomainNames = user.organization.domains.map(
+    (domain) => domain.domain
+  );
 
   // Fetch WordPress instances from Plesk
   let allWpInstances: ParsedWordPressInstance[] = [];
@@ -111,7 +99,7 @@ export async function getUserDomains(
       })
     );
 
-    const wpInstances = await getUserWordPressSites(user.id); // Reuse the existing function
+    const wpInstances = await getUserWordPressSites(user); // Reuse the existing function
 
     const domainsWithPleskData = await Promise.all(
       allDomains.map(async (domain) => {
@@ -150,16 +138,10 @@ export async function getUserDomains(
 export async function getUserCurrentDomain(
   user: User
 ): Promise<DomainsGetInfoCleanedResponse | null> {
-  "use cache";
-  cacheTag("current-domain");
-
   const domains = await getUserDomains(user);
+  const domain = await _getUserCurrentDomain(user, domains);
 
-  if (!user.selectedDomain) {
-    if (domains.length === 0) {
-      return null; // No domains available
-    }
-
+  if (!domain && domains.length > 0) {
     await db
       .update(pgUser)
       .set({
@@ -167,9 +149,23 @@ export async function getUserCurrentDomain(
       })
       .where(eq(pgUser.id, user.id))
       .execute();
-
-    revalidateTag("session-validate");
     return domains[0]; // Default to the first domain
+  }
+
+  return domain;
+}
+
+async function _getUserCurrentDomain(
+  user: User,
+  domains: (DomainsGetInfoCleanedResponse & {
+    inPlesk: boolean;
+  })[]
+): Promise<DomainsGetInfoCleanedResponse | null> {
+  "use cache";
+  cacheTag("current-domain");
+
+  if (!user.selectedDomain) {
+    return null;
   }
 
   const fullDomain = domains.find(

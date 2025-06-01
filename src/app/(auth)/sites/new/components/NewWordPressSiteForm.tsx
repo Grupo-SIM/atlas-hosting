@@ -516,23 +516,28 @@ export function NewWordPressSiteForm({
 
   if (!Array.isArray(domains) || domains.length === 0) {
     return (
-      <CardContent>
-        <Alert>
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Nenhum Domínio Disponível</AlertTitle>
-          <AlertDescription>
-            Você não possui domínios registrados em sua conta Namecheap ou todos
-            os seus domínios já possuem WordPress instalado. Por favor,{" "}
-            <Link
-              href="/domains/register"
-              className="font-medium text-primary underline underline-offset-4"
-            >
-              registre um novo domínio
-            </Link>{" "}
-            ou verifique seus sites existentes.
-          </AlertDescription>
-        </Alert>
-      </CardContent>
+      <div className="flex flex-col gap-4 items-end max-w-2xl mx-auto">
+        <Card>
+          <Alert>
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Nenhum domínio disponível</AlertTitle>
+            <AlertDescription>
+              Você não possui domínios registrados em sua conta ou todos os seus
+              domínios já possuem WordPress instalado. Por favor,{" "}
+              <Link
+                href="/domains/register"
+                className="font-medium text-primary underline underline-offset-4"
+              >
+                registre um novo domínio
+              </Link>{" "}
+              ou verifique seus sites existentes.
+            </AlertDescription>
+          </Alert>
+        </Card>
+        <Button asChild>
+          <Link href="/">Voltar à página inicial</Link>
+        </Button>
+      </div>
     );
   }
 

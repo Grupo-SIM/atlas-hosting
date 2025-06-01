@@ -39,23 +39,8 @@ async function checkDomain(domain: string): Promise<boolean> {
 export default async function SitesPage() {
   const user = await getUser();
 
-  if (!user) {
-    return (
-      <div className="space-y-6 p-6 pb-16">
-        <Card>
-          <CardHeader>
-            <CardTitle>Sites WordPress</CardTitle>
-            <CardDescription>
-              Você precisa estar logado para ver seus sites.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
-
   // Filter WordPress instances to only show those associated with the user's Namecheap domains
-  const wpInstances = await getUserWordPressSites(user.id);
+  const wpInstances = await getUserWordPressSites(user);
 
   // Do DNS check for each filtered instance
   const dnsResults = await Promise.all(

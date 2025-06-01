@@ -1,15 +1,15 @@
 // src/app/(authenticated)/(dashboard)/sites/[domain]/dns/page.tsx
-import { getUser } from "@/lib/auth";
-import { notFound, redirect } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
-import { getCachedDnsRecords, type CachedDnsData } from "./utils";
-import { DnsRecordsManager } from "./components/DnsRecordManager";
+import { getUser } from "@/lib/auth";
 import { getUserCurrentDomain } from "@/lib/server/utils";
 import { isError } from "lodash";
+import { AlertCircle } from "lucide-react";
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
+import { DnsRecordsManager } from "./components/DnsRecordManager";
+import { getCachedDnsRecords, type CachedDnsData } from "./utils";
+import NoDomains from "@/components/domains/NoDomains";
 
 export const metadata: Metadata = {
   title: "Gerenciamento de DNS - Atlas Hosting",
@@ -25,7 +25,11 @@ export default async function DnsManagementPage({
   const domain = await getUserCurrentDomain(user);
 
   if (!domain) {
-    notFound();
+    return (
+      <Card className="max-w-2xl mx-auto mt-8">
+        <NoDomains />
+      </Card>
+    );
   }
 
   const domainName = domain.DomainName;

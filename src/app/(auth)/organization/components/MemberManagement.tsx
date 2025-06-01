@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,10 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -27,19 +26,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { RawUser } from "@/lib/db/schema/tables/user";
 import {
-  Search,
+  Ban,
+  Mail,
   MoreHorizontal,
+  Search,
   Shield,
   UserCog,
-  Mail,
   UserMinus,
-  Ban,
 } from "lucide-react";
-import type { User } from "@/lib/db/schema/tables/user";
+import { useState } from "react";
 
 interface MemberManagementProps {
-  members: Omit<User, "organization">[];
+  members: RawUser[];
 }
 
 export function MemberManagement({ members }: MemberManagementProps) {
@@ -69,16 +69,16 @@ export function MemberManagement({ members }: MemberManagementProps) {
       <CardHeader>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <CardTitle>Team Members</CardTitle>
+            <CardTitle>Membros da Organização</CardTitle>
             <CardDescription>
-              Manage your organization's team members and their roles
+              Gerencie os membros da sua organização e seus papéis
             </CardDescription>
           </div>
           <div className="flex gap-2">
             <div className="relative flex-1 md:min-w-[300px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search members..."
+                placeholder="Buscar membros..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -92,12 +92,12 @@ export function MemberManagement({ members }: MemberManagementProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Member</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Join Date</TableHead>
-                <TableHead>Last Active</TableHead>
+                <TableHead>Membro</TableHead>
+                <TableHead>Papel</TableHead>
+                <TableHead>Data de Adesão</TableHead>
+                <TableHead>Última Atividade</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -157,26 +157,26 @@ export function MemberManagement({ members }: MemberManagementProps) {
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
+                          <span className="sr-only">Ações</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
                           <UserCog className="h-4 w-4 mr-2" />
-                          Change Role
+                          Alterar Papel
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Mail className="h-4 w-4 mr-2" />
-                          Resend Invitation
+                          Reenviar Convite
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-amber-600 dark:text-amber-400">
                           <Ban className="h-4 w-4 mr-2" />
-                          Suspend Member
+                          Suspender Membro
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600 dark:text-red-400">
                           <UserMinus className="h-4 w-4 mr-2" />
-                          Remove Member
+                          Remover Membro
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

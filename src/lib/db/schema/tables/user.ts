@@ -6,8 +6,11 @@ import {
   pgUserPermission,
   type Organization,
   type OrganizationDomain,
+  type UserDomainAccess,
 } from "./organization";
 import { pgSession } from "./session";
+import type { Plan } from "./plan";
+import type { Wallet } from "./wallet";
 
 export const pgUser = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -15,13 +18,12 @@ export const pgUser = pgTable("users", {
   email: text("email").notNull().unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
-  password: text("password").notNull(),
+  password: text("password"),
   namesiloId: text("namesilo_id"),
   isAdmin: boolean("is_admin").default(false),
   selectedDomain: text("selected_domain"),
   referrerId: uuid("referrer_id"),
   organizationId: uuid("organization_id")
-    .notNull()
     .references(() => pgOrganization.id),
   organizationRole: text("organization_role", {
     enum: ["member", "admin", "developer"],
@@ -52,7 +54,19 @@ export const userRelations = relations(pgUser, ({ one, many }) => ({
   sessions: many(pgSession),
 }));
 
-export type User = typeof pgUser.$inferSelect & {
-  organization: Organization & { domains: OrganizationDomain[] };
+export type RawUser = typeof pgUser.$inferSelect;
+
+export type User = RawUser & {
+  organization: Organization & {
+    domains: OrganizationDomain[];
+    plan: Plan | null;
+    owner: RawUser | null;
+    wallet: Wallet | null;
+    members: RawUser[];
+  };
+  domainAccess: UserDomainAccess[];
+  referrer: RawUser | null;
+  referredUsers: RawUser[];
 };
+
 export type UserInsert = typeof pgUser.$inferInsert;

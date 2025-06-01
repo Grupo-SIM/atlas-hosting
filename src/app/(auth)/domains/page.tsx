@@ -43,6 +43,8 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { pgOrganizationDomains } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import NoDomains from "@/components/domains/NoDomains";
+import { cn } from "@/lib/utils";
 
 // Define a type for the processed domain to be used in the table
 interface ProcessedDomain {
@@ -113,13 +115,15 @@ export default async function MyDomainsPage({
             Gerencie seus domínios registrados e configurações de DNS
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" asChild={true}>
-            <Link href="/domains/register">
-              <Globe className="mr-2 h-4 w-4" /> Registrar Novo Domínio
-            </Link>
-          </Button>
-        </div>
+        {processedDomains.length > 0 && (
+          <div className="flex gap-3">
+            <Button variant="outline" asChild={true}>
+              <Link href="/domains/register">
+                <Globe className="mr-2 h-4 w-4" /> Registrar Novo Domínio
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
 
       <Card>
@@ -129,23 +133,12 @@ export default async function MyDomainsPage({
             Lista de todos os seus domínios registrados e subdomínios
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent
+          className={cn({ "max-w-2xl mx-auto": processedDomains.length === 0 })}
+        >
           <div className="border rounded-md">
             {processedDomains.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <Globe className="w-12 h-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  Nenhum domínio registrado
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Você ainda não registrou nenhum domínio.
-                </p>
-                <Button asChild={true}>
-                  <Link href="/domains/register">
-                    <Globe className="mr-2 h-4 w-4" /> Registrar Novo Domínio
-                  </Link>
-                </Button>
-              </div>
+              <NoDomains />
             ) : (
               <Table>
                 <TableHeader>

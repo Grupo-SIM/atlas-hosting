@@ -52,7 +52,7 @@ const getStatusText = (status: string) => {
 const getTypeText = (type: string) => {
   const typeMap: Record<string, string> = {
     domain: "Domínio",
-    plan: "Plano",
+    subscription: "Plano",
   };
   return typeMap[type] || type;
 };
@@ -118,7 +118,7 @@ export function InvoiceChart({ statusStats, typeStats }: InvoiceChartProps) {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Tipo de Fatura (Domínio/Plano)</CardTitle>
+            <CardTitle>Tipo de Fatura - Domínio / Plano</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             <Doughnut

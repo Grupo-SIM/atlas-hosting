@@ -23,6 +23,7 @@ import {
   User as UserIcon,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import type { PropsWithChildren } from "react";
 import { FaUserAlt } from "react-icons/fa";
 
@@ -32,6 +33,7 @@ export default function Topbar({
 }: PropsWithChildren<{
   user: Pick<User, "name" | "email"> & { organization: Organization };
 }>) {
+  console.log({user})
   return (
     <header className="h-16 bg-card border-b flex items-center justify-between px-6">
       <h1 className="text-lg md:text-xl font-semibold">Painel</h1>
@@ -70,9 +72,11 @@ export default function Topbar({
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Perfil</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard className="mr-2 h-4 w-4" />
-                <span>Pagamentos</span>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/wallet">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Pagamentos</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />

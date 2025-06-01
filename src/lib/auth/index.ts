@@ -17,8 +17,10 @@ import { eq } from "drizzle-orm";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import type { AppLogger } from "../server/logs";
+import { AppLogger } from "../server/logs";
 import { hash, verify } from "./scrypt";
+import type { RawUser } from "@/lib/db/schema/tables/user";
+import { auth } from "@/auth";
 
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);
@@ -182,6 +184,8 @@ export async function createUserForOrganization(
   organizationId: string,
   role: "admin" | "member" | "developer" = "member"
 ) {
+  const user = await getUser();
+
   try {
     const hashedPassword = await hash(passwordPlain);
 
@@ -204,6 +208,15 @@ export async function createUserForOrganization(
         updatedAt: pgUser.updatedAt,
         deletedAt: pgUser.deletedAt,
       });
+
+    const logger = new AppLogger(user);
+    logger.log({
+      title: "Usuário criado",
+      description: `Usuário ${newUser[0].name} (${newUser[0].email}) foi criado na organização ${user.organization.name}.`,
+      type: "account",
+      severity: "info",
+    });
+
     return newUser[0];
   } catch (error) {
     // Handle potential errors, e.g., unique constraint violation for email
@@ -215,7 +228,7 @@ export async function createUserForOrganization(
 export async function authenticateUser(
   email: string,
   passwordPlain: string
-): Promise<Omit<User, "password" | "organization"> | null> {
+): Promise<Omit<RawUser, "password"> | null> {
   const result = await db
     .select()
     .from(pgUser)
@@ -245,7 +258,33 @@ export type SessionValidationResult =
   | { session: Session; user: User }
   | { session: null; user: null };
 
-export async function getUser() {
+export async function getUser(): Promise<User> {
+  const session = await auth();
+
+  console.log({ session });
+
+  if (session?.user?.id) {
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, session.user.id),
+      with: {
+        organization: {
+          with: {
+            members: true,
+            plan: true,
+            wallet: true,
+            owner: true,
+            domains: true,
+          },
+        },
+        domainAccess: true,
+        referrer: true,
+        referredUsers: true,
+      },
+    });
+
+    return user;
+  }
+
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("session_token")?.value;
 
@@ -257,51 +296,6 @@ export async function getUser() {
 
   return user;
 }
-
-// export async function createNamecheapForUser(
-//   user: User,
-//   checkoutInputs: CheckoutFormInputs
-// ): Promise<number> {
-//   const randomPassword = randomBytes(10).toHex();
-//   const hashedPassword = await hashWithEncodeKey(randomPassword);
-
-//   const nameCheapUser = await namecheapApi.createUser({
-//     AcceptTerms: true,
-//     Address1: checkoutInputs.address.street,
-//     City: checkoutInputs.address.city,
-//     Country: "BR",
-//     EmailAddress: user.email,
-//     FirstName: user.name.split(" ")[0],
-//     LastName: user.name.split(" ")[1],
-//     NewUserName: user.id.replace(/\-/g, ""),
-//     NewUserPassword: randomPassword,
-//     Phone: checkoutInputs.phoneNumber,
-//     StateProvince: checkoutInputs.address.state,
-//     Zip: checkoutInputs.address.zipCode,
-//   });
-
-//   const namecheapId = nameCheapUser.UserId;
-
-//   if (!namecheapId) {
-//     throw new Error("Failed to create Namecheap user");
-//   }
-
-//   await db.insert(pgNamecheapIntegration).values({
-//     id: namecheapId,
-//     password: hashedPassword,
-//     username: user.id.replace(/\-/g, ""),
-//     userId: user.id,
-//   });
-
-//   await db
-//     .update(pgUser)
-//     .set({
-//       namecheapId,
-//     })
-//     .where(eq(pgUser.id, user.id));
-
-//   return namecheapId;
-// }
 
 export interface UserWithLogger extends User {
   logger: AppLogger;

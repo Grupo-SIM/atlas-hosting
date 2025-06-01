@@ -3,10 +3,9 @@ import { RecentActivities } from "@/components/dashboard/RecentActivities";
 import { ServerStatus } from "@/components/dashboard/ServerStatus";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { getUser } from "@/lib/auth";
-import { cookies } from "next/headers";
 
 export default async function Dashboard() {
-  const user = getUser();
+  const user = await getUser();
 
   return (
     <div className="space-y-8 p-6 pb-16">

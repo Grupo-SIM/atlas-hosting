@@ -19,8 +19,7 @@ import { ptBR } from "date-fns/locale";
 import { AlertCircle, CheckCircle } from "lucide-react";
 
 interface OrganizationTabsProps {
-  organization: User["organization"];
-  members: Omit<User, "organization">[];
+  user: User;
   auditLogs?: Array<{
     log: Log;
     user: {
@@ -32,10 +31,12 @@ interface OrganizationTabsProps {
 }
 
 export function OrganizationTabs({
-  organization,
-  members,
+  user,
   auditLogs = [],
 }: OrganizationTabsProps) {
+  const { organization } = user;
+  const { members } = organization || [];
+
   return (
     <Tabs defaultValue="overview" className="space-y-6">
       <TabsList>
@@ -46,7 +47,7 @@ export function OrganizationTabs({
       </TabsList>
 
       <TabsContent value="overview">
-        <OrganizationOverview organization={organization} members={members} />
+        <OrganizationOverview user={user} />
       </TabsContent>
 
       <TabsContent value="members">

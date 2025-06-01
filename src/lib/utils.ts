@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import crypto from "node:crypto";
+import { format } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -94,4 +95,8 @@ export function generateRandomPassword(length = 16) {
     password += chars[randomBytes[i] % chars.length];
   }
   return password;
+}
+
+export function formatDate(date: Date | string): string {
+  return format(date, "dd/MM/yyyy");
 }

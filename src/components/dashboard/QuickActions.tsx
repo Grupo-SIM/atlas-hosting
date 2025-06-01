@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import {
+  Building2,
   CreditCard,
   Globe,
   History,
@@ -46,14 +47,12 @@ export function QuickActions() {
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
             asChild={true}
           >
-            <Link href="/hosting/premium">
-              <Server className="h-10 w-10 text-purple-500 mb-4 group-hover:scale-110 transition-transform" />
+            <Link href="/organization">
+              <Building2 className="h-10 w-10 text-purple-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
-                <span className="text-xl font-medium block">
-                  Premium Atlas Hosting
-                </span>
+                <span className="text-xl font-medium block">Organização</span>
                 <span className="text-sm text-muted-foreground block">
-                  Hospedagem premium com recursos avançados
+                  Administre as configurações de sua organização
                 </span>
               </div>
             </Link>
@@ -98,7 +97,8 @@ export function QuickActions() {
             className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
             asChild={true}
           >
-            <Link href="/wordpress">
+            {/* <Link href="/wordpress"> */}
+            <Link href="/sites">
               <Settings className="h-10 w-10 text-indigo-500 mb-4 group-hover:scale-110 transition-transform" />
               <div className="space-y-2">
                 <span className="text-xl font-medium block">

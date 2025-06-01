@@ -13,6 +13,7 @@ import { CgSpinner } from "react-icons/cg";
 import * as yup from "yup";
 import GithubAuthButton from "./GithubAuthButton";
 import GoogleAuthButton from "./GoogleAuthButton";
+import { signInWithGithub } from "@/app/actions";
 
 export default function SignupForm({
   referrer,
@@ -147,7 +148,7 @@ export default function SignupForm({
         </div>
       </form>
       <div className="grid grid-cols-2 gap-4">
-        <GithubAuthButton />
+        <GithubAuthButton action={signInWithGithub} />
         <GoogleAuthButton />
       </div>
     </>

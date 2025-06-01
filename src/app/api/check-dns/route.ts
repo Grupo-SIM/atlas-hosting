@@ -1,7 +1,6 @@
 import { getUser } from "@/lib/auth";
-import dns from "dns";
-import { cookies } from "next/headers";
-import { promisify } from "util";
+import dns from "node:dns";
+import { promisify } from "node:util";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

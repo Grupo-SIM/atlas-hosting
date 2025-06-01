@@ -33,7 +33,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import ip2Location from "@/lib/server/apis/ip2location";
 import ipaddrJs from "ipaddr.js";
-import { signIn } from "@/auth";
+import { signIn, signOut } from "@/auth";
 import { AppLogger } from "@/lib/server/logs";
 
 export async function login(
@@ -75,6 +75,7 @@ export async function login(
     revalidateTag("session-validate");
 
     let description = "Novo login realizado";
+    let severity: "success" | "info" | "warning" | "danger" = "info";
 
     if (userIp) {
       const location = await ip2Location.getLocation(userIp);
@@ -84,6 +85,7 @@ export async function login(
       }
     } else {
       description += " (localização desconhecida)";
+      severity = "warning";
     }
 
     const userLogger = new AppLogger(user);
@@ -91,7 +93,7 @@ export async function login(
     userLogger.log({
       title: "Novo login realizado",
       description,
-      severity: "danger",
+      severity,
       type: "security",
     });
   } catch (error) {
@@ -192,7 +194,8 @@ export async function logout(): Promise<void> {
   }
 
   revalidateTag("session-validate");
-
+  await signOut();
+  
   redirect("/");
 }
 
@@ -480,7 +483,7 @@ export async function completeCheckout(
         .set({
           domId: id,
         })
-        .where(eq(pgOrganization.id, user.organizationId));
+        .where(eq(pgOrganization.id, user.organizationId ?? ""));
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
@@ -514,7 +517,7 @@ export async function completeCheckout(
       name: user.name,
       email: user.email,
       login: user.email,
-      password: user.password,
+      password: user.password ?? "",
       type: ClientRequestTypeEnum.Customer,
       externalId: user.id,
       ownerLogin: "lucas.garrafielo",
@@ -950,11 +953,15 @@ export async function deleteWordPressInstances(
 }
 
 export async function signInWithGithub() {
-  await signIn("github");
+  await signIn("github", {
+    redirectTo: "/api/newuser",
+  });
 }
 
 export async function signInWithGoogle() {
-  await signIn("google");
+  await signIn("google", {
+    redirectTo: "/api/newuser",
+  });
 }
 
 export async function changeSelectedDomain(

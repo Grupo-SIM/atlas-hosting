@@ -1,46 +1,58 @@
-"use client";
-
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Settings } from "lucide-react";
 import { InviteMemberDialog } from "./InviteMemberDialog";
+import { headers } from "next/headers";
+import type { OrganizationPageParams } from "@/app/(auth)/organization/types";
+import Link from "next/link";
 
 interface OrganizationHeaderActionsProps {
   organizationName: string;
+  organizationId: string;
+  dialogOpen: boolean;
+  searchParams: OrganizationPageParams;
 }
 
-export function OrganizationHeaderActions({
+export async function OrganizationHeaderActions({
   organizationName,
+  organizationId,
+  dialogOpen,
+  searchParams,
 }: OrganizationHeaderActionsProps) {
-  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const addMemberLink = {
+    ...searchParams,
+    action: "createMember",
+  };
 
   return (
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            {organizationName} - Management
+            {organizationName} - Administração
           </h1>
           <p className="text-muted-foreground">
-            Manage your organization, team members, and settings
+            Gerencie sua organização, membros da equipe e configurações
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => setIsInviteDialogOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Invite Member
+          <Button variant="outline" asChild>
+            <Link
+              href={{
+                pathname: "/organization",
+                query: addMemberLink,
+              }}
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Adicionar membro
+            </Link>
           </Button>
           <Button>
             <Settings className="h-4 w-4 mr-2" />
-            Organization Settings
+            Configurações da Organização
           </Button>
         </div>
       </div>
-
-      <InviteMemberDialog
-        open={isInviteDialogOpen}
-        onOpenChange={setIsInviteDialogOpen}
-      />
+      <InviteMemberDialog open={dialogOpen} orgId={organizationId} searchParams={searchParams} />
     </>
   );
 }

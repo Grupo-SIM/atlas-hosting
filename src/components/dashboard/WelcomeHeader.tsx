@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
 import type { User } from "@/lib/db/schema";
-import { getUserCurrentDomain, getUserDomains } from "@/lib/server/utils";
-import { PlusCircle } from "lucide-react";
-import DomainSelector from "../domains/DomainSelector";
-import type { getUser } from "@/lib/auth";
+import { CircleFadingArrowUp, PlusCircle } from "lucide-react";
+import { Badge } from "../ui/badge";
+import Link from "next/link";
 
 export function WelcomeHeader({ user }: WelcomeHeaderProps) {
   return (
@@ -13,14 +12,21 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
           <UserName user={user} />
         </h1>
         <div className="text-muted-foreground mt-2">
-          <UserSiteLabel user={user} />
+          <UserPlanBadge user={user} />
         </div>
       </div>
       <div className="flex space-x-3">
-        <Button variant="outline">Atualizar Plano</Button>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Novo Serviço
+        <Button variant="outline" asChild>
+          <Link href="/plans">
+            <CircleFadingArrowUp className="mr-2 h-4 w-4" />
+            Atualizar Plano
+          </Link>
+        </Button>
+        <Button asChild>
+          <Link href="/sites/new">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Novo Serviço
+          </Link>
         </Button>
       </div>
     </div>
@@ -36,26 +42,16 @@ async function UserName({ user }: WelcomeHeaderProps) {
     : "Bem-vindo de volta!";
 }
 
-export async function UserSiteLabel({ user }: WelcomeHeaderProps) {
-  const userData = await user;
+export function UserPlanBadge({ user }: WelcomeHeaderProps) {
+  if (user.organization.plan) {
+    return (
+      <Badge variant="secondary">Plano {user.organization.plan.name}</Badge>
+    );
+  }
 
-  const domains = await getUserDomains(userData);
-
-  return (
-    userData.selectedDomain && (
-      <div className="flex items-center gap-2">
-        <span className="text-muted-foreground">Site atual:</span>
-        <DomainSelector
-          domains={domains}
-          selectedDomain={userData.organization.domains.find(
-            (domain) => domain.domain === userData.selectedDomain
-          )}
-        />
-      </div>
-    )
-  );
+  return "Nenhum plano ativo no momento.";
 }
 
 export interface WelcomeHeaderProps {
-  user: Promise<User>;
+  user: User;
 }

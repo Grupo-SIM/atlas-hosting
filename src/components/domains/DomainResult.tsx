@@ -19,6 +19,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { type PropsWithChildren, type ReactNode, Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
+import RegisterDomainForm from "./RegisterDomainForm";
 
 export async function DomainResult({ searchQuery }: { searchQuery: string }) {
   const domainData = await getDomainData(searchQuery);
@@ -165,60 +166,60 @@ async function DomainUnavailable({ domainData }: { domainData: DomainData }) {
 }
 
 async function DomainAvailable({ domainData }: { domainData: DomainData }) {
-  async function buyDomainAction(formData: FormData) {
-    "use server";
+  // async function buyDomainAction(formData: FormData) {
+  //   "use server";
 
-    const user = await getUser();
+  //   const user = await getUser();
 
-    const domainName = formData.get("domainName") as string;
+  //   const domainName = formData.get("domainName") as string;
 
-    const formYears = formData.get("years") as string;
+  //   const formYears = formData.get("years") as string;
 
-    const yearsToRegister = formYears ? Number.parseInt(formYears, 10) : 1;
-    const registrationPrice = Number.parseFloat(
-      formData.get("price") as string
-    );
-    const isPremium = formData.get("isPremium") === "true";
+  //   const yearsToRegister = formYears ? Number.parseInt(formYears, 10) : 1;
+  //   const registrationPrice = Number.parseFloat(
+  //     formData.get("price") as string
+  //   );
+  //   const isPremium = formData.get("isPremium") === "true";
 
-    if (!user?.email) {
-      throw new Error("Usuário não autenticado ou e-mail não encontrado.");
-    }
-    if (!domainName) {
-      throw new Error("Nome do domínio é obrigatório.");
-    }
+  //   if (!user?.email) {
+  //     throw new Error("Usuário não autenticado ou e-mail não encontrado.");
+  //   }
+  //   if (!domainName) {
+  //     throw new Error("Nome do domínio é obrigatório.");
+  //   }
 
-    const params: DomainsCreateUserParams = {
-      DomainName: domainName,
-      Years: yearsToRegister,
-      Registrant: adminNamecheapDetails,
-      Admin: adminNamecheapDetails,
-      Tech: adminNamecheapDetails,
-      AuxBilling: adminNamecheapDetails,
-      AddFreeWhoisguard: "yes",
-      WGEnabled: "yes",
-    };
+  //   const params: DomainsCreateUserParams = {
+  //     DomainName: domainName,
+  //     Years: yearsToRegister,
+  //     Registrant: adminNamecheapDetails,
+  //     Admin: adminNamecheapDetails,
+  //     Tech: adminNamecheapDetails,
+  //     AuxBilling: adminNamecheapDetails,
+  //     AddFreeWhoisguard: "yes",
+  //     WGEnabled: "yes",
+  //   };
 
-    if (isPremium) {
-      params.IsPremiumDomain = true;
-      params.PremiumPrice = registrationPrice;
-    }
+  //   if (isPremium) {
+  //     params.IsPremiumDomain = true;
+  //     params.PremiumPrice = registrationPrice;
+  //   }
 
-    try {
-      const registrationResult = await namecheapApi.createDomain(params);
+  //   try {
+  //     const registrationResult = await namecheapApi.createDomain(params);
 
-      if (!registrationResult.Registered) {
-        throw new Error(
-          `Falha ao registrar o domínio ${domainName} via Namecheap. Motivo desconhecido.`
-        );
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Falha ao registrar ${domainName}: ${error.message}`);
-      }
-      throw new Error(
-        `Falha ao registrar ${domainName}. Por favor, tente novamente.`
-      );
-    }
+  //     if (!registrationResult.Registered) {
+  //       throw new Error(
+  //         `Falha ao registrar o domínio ${domainName} via Namecheap. Motivo desconhecido.`
+  //       );
+  //     }
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       throw new Error(`Falha ao registrar ${domainName}: ${error.message}`);
+  //     }
+  //     throw new Error(
+  //       `Falha ao registrar ${domainName}. Por favor, tente novamente.`
+  //     );
+  //   }
 
     // try {
     //   user.logger.log({
@@ -234,8 +235,8 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
     //   );
     // }
 
-    redirect("/domains");
-  }
+  //   redirect("/domains");
+  // }
 
   return (
     domainData?.available &&
@@ -246,7 +247,7 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
         text3="Proteção de privacidade"
         text4="Encaminhamento de Email"
       >
-        <form action={buyDomainAction} className="flex items-center gap-2">
+        {/* <form action={buyDomainAction} className="flex items-center gap-2">
           <input
             type="hidden"
             name="domainName"
@@ -267,8 +268,8 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
           >
             Registrar domínio
           </Button>
-        </form>
-        {/* <RegisterDomainForm domainData={domainData} /> */}
+        </form> */}
+        <RegisterDomainForm domainData={domainData} />
       </DomainAvailableTemplate>
     )
   );
