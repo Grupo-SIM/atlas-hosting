@@ -9,10 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { OrganizationDomain } from "@/lib/db/schema";
-import type {
-  DomainListItem,
-  DomainsGetInfoCleanedResponse,
-} from "@/lib/server/apis/namecheap/types";
+import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
 import { startTransition, useActionState } from "react";
 
 export default function DomainSelector({
@@ -35,10 +32,10 @@ export default function DomainSelector({
       <Select value={selectedDomain?.domain} onValueChange={onValueChange}>
         <SelectTrigger
           id="domainName"
-          className="w-[300px] text-foreground relative"
+          className="w-[230px] text-foreground relative !grid grid-cols-[1fr_auto] items-center"
         >
           <SelectValue
-            // className={cn({ "opacity-0": isLoading })}
+            className="text-center w-full"
             placeholder={isLoading ? "" : "Selecione um domínio"}
           />
         </SelectTrigger>

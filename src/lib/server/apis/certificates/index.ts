@@ -6,8 +6,8 @@ import { lookupTxt } from "dns-query";
 
 export class CertificatesApi {
   private readonly letsEncryptDirectoryUrl =
-    acme.directory.letsencrypt.staging;
-  private readonly certEmail = "support@atlashosting.com.br";
+    acme.directory.letsencrypt.production;
+  private readonly certEmail = "lucasgarrafielo@gmail.com";
 
   public async getCertificate(domainName: string) {
     const sld = domainName.split(".")[0];
@@ -25,7 +25,7 @@ export class CertificatesApi {
           HostName: host.Name,
           RecordType: host.Type as DnsRecordType,
           Address: host.Address,
-        }))
+        })).filter(predicate => predicate.HostName !== "_acme-challenge" || predicate.RecordType !== "TXT")
       );
     try {
       // --- 1. Initialize ACME Client & Account ---
@@ -55,7 +55,7 @@ export class CertificatesApi {
           },
           {
             type: "dns",
-            value: `www.${domainName}`,
+            value: `*.${domainName}`,
           },
         ],
       });
@@ -110,38 +110,61 @@ export class CertificatesApi {
           "TXT record creation initiated. Waiting for propagation..."
         );
 
-        // --- 3b. Wait for DNS Propagation ---
-        // Implement a loop with a delay to check if the TXT record is visible publicly.
-        // Use a DNS lookup tool (e.g., 'dns' module in Node, or an external API)
-        // This is crucial as Let's Encrypt needs to see it.
-        await this.checkDnsPropagation(
-          `_acme-challenge.${domainName}`,
-          keyAuthorization
-        ); // You'll need to implement this
+        // // --- 3b. Wait for DNS Propagation ---
+        // // Implement a loop with a delay to check if the TXT record is visible publicly.
+        // // Use a DNS lookup tool (e.g., 'dns' module in Node, or an external API)
+        // // This is crucial as Let's Encrypt needs to see it.
+        // await Promise.all([
+        //   this.checkDnsPropagation(
+        //     `_acme-challenge.${domainName}`,
+        //     keyAuthorization
+        //   ),
+        // ]); // You'll need to implement this
+
+        await Bun.sleep(15000);
+
         console.log("DNS record propagated.");
 
         // --- 3c. Notify Let's Encrypt to Verify Challenge ---
         console.log("Notifying Let's Encrypt to verify challenge...");
-        await client.completeChallenge(dnsChallenge);
+        let done = false;
+        while (!done) {
+          try {
+            await client.completeChallenge(dnsChallenge);
+            done = true;
+          } catch (error) {
+            console.error("Error completing challenge:", error);
+            await Bun.sleep(5000);
+          }
+        }
+
+        done = false;
 
         // --- 3d. Wait for Challenge Validation ---
         console.log("Waiting for challenge validation...");
-        await client.waitForValidStatus(dnsChallenge); // Or poll authz.status
+        while (!done) {
+          try {
+            await client.waitForValidStatus(dnsChallenge); // Or poll authz.status
+            done = true;
+          } catch (error) {
+            console.error("Error waiting for challenge validation:", error);
+            await Bun.sleep(5000);
+          }
+        }
         console.log(
           `Challenge for ${authz.identifier.value} validated successfully.`
         );
-
-        console.log("TXT record removal initiated.");
       }
 
       // --- 4. Finalize Order & Get Certificate ---
       console.log("All challenges satisfied. Finalizing order...");
       const [key, csr] = await acme.crypto.createCsr({
         commonName: domainName,
-        // altNames: [`*.${YOUR_DOMAIN}`] // if wildcard
+        altNames: [`*.${domainName}`], // if wildcard
       }); // Create a new private key and CSR for the certificate itself
 
-      await client.finalizeOrder(order, csr);
+      const result = await client.finalizeOrder(order, csr);
+
       const certificate = await client.getCertificate(order);
 
       console.log("Certificate obtained successfully!");
@@ -150,11 +173,27 @@ export class CertificatesApi {
       console.log("--- Private Key for Certificate ---");
       console.log(key.toString()); // This is the private key for the certificate (PEM format)
 
+      // Extract CA certificate from the chain
+      // The certificate chain contains multiple PEM blocks separated by line breaks
+      const pemCertificates = certificate.split(
+        /(?=-----BEGIN CERTIFICATE-----)/g
+      );
+
+      // The rest are intermediate and root CA certificates
+      const caCertificates = pemCertificates.slice(1).join("\n");
+
+      return {
+        certificate: certificate,
+        privateKey: key.toString(),
+        csr: csr.toString(),
+        ca: caCertificates.trim(),
+      };
       // TODO: Save the certificate and private key to files securely.
       // e.g., fs.writeFileSync('certificate.pem', certificate);
       // e.g., fs.writeFileSync('privatekey.pem', key.toString());
     } catch (error) {
       console.error("An error occurred:", error);
+      throw error;
     }
   }
 
@@ -164,7 +203,7 @@ export class CertificatesApi {
   ): Promise<void> {
     let done = false;
 
-    const checkInterval = 2500;
+    const checkInterval = 5000;
 
     while (!done) {
       try {

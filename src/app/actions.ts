@@ -340,7 +340,6 @@ export async function createPlanInvoice(
 }
 
 export async function createDomainInvoice(
-  prevState: unknown,
   domain: string
 ): Promise<ActionResponse> {
   const user = await getUser();
@@ -530,7 +529,7 @@ export async function completeCheckout(
         .set({
           pleskId: result.id,
         })
-        .where(eq(pgOrganization.id, user.organizationId));
+        .where(eq(pgOrganization.id, user.organizationId ?? ""));
     } else {
       console.error("Failed to create Plesk client:", result);
       return {

@@ -37,10 +37,6 @@ export default class SubscriptionApi {
 
     const data = await this.callSubscription(`--webspace-on ${domainName}`);
 
-    console.log({ data, result });
-
-    console.log({ login, password });
-
     return result;
   }
 
