@@ -10,14 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getUser } from "@/lib/auth";
-import namecheapApi from "@/lib/server/apis/namecheap";
-import type { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
 import { toBrl } from "@/lib/utils";
 import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { type PropsWithChildren, type ReactNode, Suspense } from "react";
+import { Suspense, type PropsWithChildren, type ReactNode } from "react";
 import Skeleton from "react-loading-skeleton";
 import RegisterDomainForm from "./RegisterDomainForm";
 
@@ -221,19 +216,19 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
   //     );
   //   }
 
-    // try {
-    //   user.logger.log({
-    //     title: "Novo domínio registrado",
-    //     description: `Domínio ${domainName} registrado com sucesso.`,
-    //     severity: "success",
-    //     type: "hosting",
-    //   });
-    // } catch (error) {
-    //   console.error(
-    //     `Erro ao registrar log de domínio para ${domainName}:`,
-    //     error
-    //   );
-    // }
+  // try {
+  //   user.logger.log({
+  //     title: "Novo domínio registrado",
+  //     description: `Domínio ${domainName} registrado com sucesso.`,
+  //     severity: "success",
+  //     type: "hosting",
+  //   });
+  // } catch (error) {
+  //   console.error(
+  //     `Erro ao registrar log de domínio para ${domainName}:`,
+  //     error
+  //   );
+  // }
 
   //   redirect("/domains");
   // }

@@ -41,3 +41,5 @@ src/app/api/route.ts
 
 pnpm-lock.yaml
 drizzle/
+
+php-api/

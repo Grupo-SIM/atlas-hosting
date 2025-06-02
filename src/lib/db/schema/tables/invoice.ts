@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   doublePrecision,
+  json,
   pgTable,
   text,
   timestamp,
@@ -23,6 +24,7 @@ export const pgInvoice = pgTable("invoices", {
   status: text("status", {
     enum: ["pending", "paid", "failed", "processing"],
   }).notNull(),
+  metadata: json("metadata").$type<Record<string, string>>().default({}).notNull(),
   dueDate: timestamp("due_date", { mode: "date" }).notNull(),
   currency: text("currency").default("BRL").notNull(), // Added currency, defaulting to BRL
   description: text("description"), // Added description, optional
