@@ -1,7 +1,7 @@
 import {
   PLESK_API_LOGIN,
   PLESK_API_PASSWORD,
-} from "@/lib/server/apis/email/config";
+} from "@/lib/server/apis/plesk-xml/config";
 import axios, { type AxiosError } from "axios";
 import { XMLParser } from "fast-xml-parser";
 import { create } from "xmlbuilder2";
@@ -13,6 +13,9 @@ import type {
   PleskApiError,
   PleskPacket,
 } from "./types";
+import { format } from "date-fns";
+import certificatesApi from "../certificates";
+import pleskApi from "../plesk";
 
 const axiosInstance = axios.create({
   adapter: "xhr",
@@ -147,6 +150,58 @@ export async function getMailAccounts(pleskId: number): Promise<MailName[]> {
       : [response.mailname];
   }
   return [];
+}
+
+export async function setSiteCertificate(domainName: string, certName: string) {
+  return await requestPleskApi({
+    operator: "site",
+    operation: "set",
+    params: {
+      filter: {
+        name: domainName,
+      },
+      values: {
+        hosting: {
+          vrt_hst: {
+            property: {
+              name: "certificate_name",
+              value: certName,
+            },
+          },
+        },
+      },
+    },
+  })
+}
+
+export async function* installCertificate(domainName: string) {
+  const { certificate, csr, privateKey, ca } =
+    await certificatesApi.getCertificate(domainName);
+
+  yield 1;
+
+  const certName = domainName.concat(format(new Date(), "dLy"));
+
+  await requestPleskApi<void>({
+    operator: "certificate",
+    operation: "install",
+    params: {
+      name: certName,
+      webspace: domainName,
+      content: {
+        csr,
+        pvt: privateKey,
+        cert: certificate,
+        ca,
+      },
+    },
+  });
+
+  await setSiteCertificate(domainName, certName);
+
+  yield 2;
+
+  return;
 }
 
 export async function addMailAccount(

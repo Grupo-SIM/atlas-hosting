@@ -19,287 +19,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { namecheapApi } from "@/lib/server/apis/namecheap";
-import type {
-  DomainsCheckCleanedResponse,
-  DomainsCheckUserParams,
-} from "@/lib/server/apis/namecheap/types";
 import { toBrl } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
-import type { Metadata } from "next";
 import Link from "next/link";
-import { cache, Suspense } from "react";
+import { Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 import { db } from "@/lib/db";
-import { type DomainPricing, pgDomainPricingCache } from "@/lib/db/schema";
+import { pgDomainPricingCache } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
-import RegisterDomainSearch from "./components/RegisterDomainSearch";
 import { inArray } from "drizzle-orm";
-
-// Types remain the same
-export type DomainPriceInfo = {
-  tld: string;
-  price?: number;
-  renew?: number;
-  transfer?: number;
-  minRegisterYears?: number;
-  maxRegisterYears?: number;
-  description?: string;
-};
-
-export const metadata: Metadata = {
-  title: "Registrar Domínio | Sua Plataforma",
-  description: "Pesquise, registre e gerencie nomes de domínio.",
-};
-
-export type DomainPriceInfoFromDb = {
-  tld: string;
-  priceUSD?: number | null; // Registration price in USD from DB
-  renewUSD?: number | null; // Renewal price in USD from DB
-  transferUSD?: number | null; // Transfer price in USD from DB
-  minRegisterYears?: number | null;
-  maxRegisterYears?: number | null;
-  // description might come from a separate getTldList call if needed
-};
-
-export type DomainWithAvailability = {
-  domain: string;
-  available: boolean;
-  priceBRL: number; // Final BRL price (premium or standard)
-  renewBRL: number; // Final BRL price
-  transferBRL: number; // Final BRL price
-  isPremium: boolean;
-};
-
-export type DomainData = {
-  available: boolean;
-  domain: DomainWithAvailability;
-  extraDomains: DomainWithAvailability[];
-} | null;
-
-// This function now fetches USD prices from your Drizzle DB cache
-async function getAllDomainPricesFromDb(
-  domains?: string[]
-): Promise<DomainPriceInfoFromDb[]> {
-  try {
-    const cachedPrices = await db.query.pgDomainPricingCache.findMany({
-      where:
-        domains && domains.length > 0
-          ? inArray(pgDomainPricingCache.tld, domains)
-          : undefined,
-    });
-
-    if (!cachedPrices || cachedPrices.length === 0) {
-      return [];
-    }
-
-    return cachedPrices.map((item) => ({
-      tld: item.tld,
-      priceUSD: item.price,
-      renewUSD: item.renew,
-      transferUSD: item.transfer,
-      minRegisterYears: item.minRegisterYears,
-      maxRegisterYears: item.maxRegisterYears,
-    }));
-  } catch (_error) {
-    return [];
-  }
-}
-
-const recommendedTlds: `.${string}`[] = [
-  ".com",
-  ".net",
-  ".org",
-  ".io",
-  ".dev",
-  ".co",
-  ".app",
-  ".online",
-];
-
-const check = cache(async (params: DomainsCheckUserParams) =>
-  namecheapApi.check(params)
-);
-
-export const getDomainData = cache(async function getDomainData(
-  searchQuery: string
-): Promise<DomainData> {
-  if (!searchQuery || searchQuery.trim() === "") {
-    return null;
-  }
-
-  const domainNameOnly = searchQuery.includes(".")
-    ? searchQuery.split(".")[0]
-    : searchQuery;
-  let domainsToSearch = recommendedTlds.map((tld) => `${domainNameOnly}${tld}`);
-  if (searchQuery.includes(".") && !domainsToSearch.includes(searchQuery)) {
-    domainsToSearch.unshift(searchQuery);
-  }
-  domainsToSearch = [...new Set(domainsToSearch)];
-  const [checkResult, pricings]: [
-    DomainsCheckCleanedResponse | null,
-    DomainPricing[],
-  ] = await Promise.all([
-    domainsToSearch.length > 0
-      ? check({ DomainList: domainsToSearch.join(",") })
-      : Promise.resolve(null),
-    namecheapApi.getPricing(),
-  ]);
-
-  if (!checkResult?.Results || checkResult.Results.length === 0) {
-    return null;
-  }
-
-  const pricingRecord = Object.fromEntries(pricings.map((p) => [p.tld, p]));
-
-  const domainDataMapped = await Promise.all(
-    checkResult.Results.map(async (domainDetail) => {
-      const fullDomainName = domainDetail.Domain;
-      let tldForLookup = "";
-      const parts = fullDomainName.split(".");
-      if (parts.length > 1) {
-        let bestMatch = "";
-        for (const knownTld of Object.keys(pricingRecord)) {
-          if (fullDomainName.toLowerCase().endsWith(`.${knownTld}`)) {
-            if (knownTld.length > bestMatch.length) {
-              bestMatch = knownTld;
-            }
-          }
-        }
-        tldForLookup =
-          bestMatch ||
-          parts
-            .slice(parts.length > 2 ? -2 : -1)
-            .join(".")
-            .toLowerCase();
-      }
-
-      const standardBrlPrices = pricingRecord[tldForLookup];
-
-      return {
-        domain: fullDomainName,
-        available: domainDetail.Available,
-        priceBRL: await currencyConversion.convert({
-          from: "usd",
-          to: "brl",
-          amount: standardBrlPrices.price ?? 0,
-        }),
-        renewBRL: await currencyConversion.convert({
-          from: "usd",
-          to: "brl",
-          amount: standardBrlPrices.renew ?? 0,
-        }),
-        transferBRL: await currencyConversion.convert({
-          from: "usd",
-          to: "brl",
-          amount: standardBrlPrices.transfer ?? 0,
-        }),
-        isPremium: domainDetail.IsPremiumName,
-      };
-    })
-  );
-
-  let mainDomainData = domainDataMapped.find(
-    (item) => item.domain.toLowerCase() === searchQuery.toLowerCase()
-  );
-  if (!mainDomainData) {
-    mainDomainData =
-      domainDataMapped.length > 0
-        ? domainDataMapped[0]
-        : {
-            domain: searchQuery,
-            available: false,
-            priceBRL: 0,
-            renewBRL: 0,
-            transferBRL: 0,
-            isPremium: false,
-          };
-  }
-  return {
-    available: mainDomainData.available,
-    domain: mainDomainData,
-    extraDomains: domainDataMapped.filter(
-      (item) =>
-        item.domain.toLowerCase() !== mainDomainData?.domain.toLowerCase()
-    ),
-  };
-});
-
-// Get popular domain extensions for the grid
-export const popularExtensions = [".com", ".net", ".org", ".io", ".dev", ".co"];
-
-// function DomainExtensionsGridSkeleton() {
-//   return (
-//     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
-//       {[...new Array(6)].map((_, i) => (
-//         <Card key={`skeleton-${i}`} className="text-center">
-//           <CardContent className="pt-6">
-//             <Skeleton width="4rem" height="1.125rem" className="mx-auto mb-2" />
-//             <Skeleton width="5rem" height="0.875rem" className="mx-auto" />
-//           </CardContent>
-//         </Card>
-//       ))}
-//     </div>
-//   );
-// }
-
-async function DomainExtensionsGrid({
-  allDomainPricesFromDbPromise,
-}: {
-  allDomainPricesFromDbPromise: Promise<DomainPriceInfoFromDb[]>;
-}) {
-  const allDomainPricesFromDb = await allDomainPricesFromDbPromise;
-
-  // Get pricing for popular extensions
-  const extensionsWithPricing = await Promise.all(
-    popularExtensions.map(async (ext) => {
-      const tldName = ext.substring(1); // Remove the dot
-      const tldData = allDomainPricesFromDb.find(
-        (item) => item.tld === tldName
-      );
-
-      if (tldData?.priceUSD) {
-        const priceBrl = await currencyConversion.convert({
-          from: "usd",
-          to: "brl",
-          amount: tldData.priceUSD,
-        });
-
-        return {
-          extension: ext,
-          price: toBrl(priceBrl),
-        };
-      }
-
-      return {
-        extension: ext,
-        price: "Consulte",
-      };
-    })
-  );
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
-      {extensionsWithPricing.map((domain) => (
-        <Card key={domain.extension} className="text-center">
-          <CardContent className="pt-6">
-            <p className="text-lg font-semibold">{domain.extension}</p>
-            <p className="text-sm text-muted-foreground">{domain.price}</p>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-const ITEMS_PER_TLD_PAGE_SKELETON = 10;
+import RegisterDomainSearch from "./components/RegisterDomainSearch";
+import type {
+  DomainData,
+  DomainPageParams,
+  DomainPriceInfo,
+  DomainPriceInfoFromDb,
+} from "./types";
+import { getDomainData, popularExtensions } from "./utils";
 
 export default async function DomainsPage({
   searchParams: searchParamsProp,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<DomainPageParams>;
 }) {
   const resolvedSearchParams = await searchParamsProp;
   const searchQuery = resolvedSearchParams.search
@@ -422,7 +165,7 @@ export default async function DomainsPage({
                     />
                   }
                 >
-                  <DomainResult searchQuery={searchQuery} />
+                  <DomainResult searchParams={resolvedSearchParams} />
                 </Suspense>
               </TabsContent>
               <TabsContent value="suggestions">
@@ -448,7 +191,6 @@ export default async function DomainsPage({
         )
       )}
 
-      {/* Call to Action Card */}
       {!searchQuery && (
         <Card className="max-w-2xl mx-auto">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -605,3 +347,98 @@ async function TldPriceSectionFromDb({
 
   return <PaginatedTldTable allTldData={convertedPricesForTable} />;
 }
+
+// This function now fetches USD prices from your Drizzle DB cache
+async function getAllDomainPricesFromDb(
+  domains?: string[]
+): Promise<DomainPriceInfoFromDb[]> {
+  try {
+    const cachedPrices = await db.query.pgDomainPricingCache.findMany({
+      where:
+        domains && domains.length > 0
+          ? inArray(pgDomainPricingCache.tld, domains)
+          : undefined,
+    });
+
+    if (!cachedPrices || cachedPrices.length === 0) {
+      return [];
+    }
+
+    return cachedPrices.map((item) => ({
+      tld: item.tld,
+      priceUSD: item.price,
+      renewUSD: item.renew,
+      transferUSD: item.transfer,
+      minRegisterYears: item.minRegisterYears,
+      maxRegisterYears: item.maxRegisterYears,
+    }));
+  } catch (_error) {
+    return [];
+  }
+}
+
+// function DomainExtensionsGridSkeleton() {
+//   return (
+//     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
+//       {[...new Array(6)].map((_, i) => (
+//         <Card key={`skeleton-${i}`} className="text-center">
+//           <CardContent className="pt-6">
+//             <Skeleton width="4rem" height="1.125rem" className="mx-auto mb-2" />
+//             <Skeleton width="5rem" height="0.875rem" className="mx-auto" />
+//           </CardContent>
+//         </Card>
+//       ))}
+//     </div>
+//   );
+// }
+
+async function DomainExtensionsGrid({
+  allDomainPricesFromDbPromise,
+}: {
+  allDomainPricesFromDbPromise: Promise<DomainPriceInfoFromDb[]>;
+}) {
+  const allDomainPricesFromDb = await allDomainPricesFromDbPromise;
+
+  // Get pricing for popular extensions
+  const extensionsWithPricing = await Promise.all(
+    popularExtensions.map(async (ext) => {
+      const tldName = ext.substring(1); // Remove the dot
+      const tldData = allDomainPricesFromDb.find(
+        (item) => item.tld === tldName
+      );
+
+      if (tldData?.priceUSD) {
+        const priceBrl = await currencyConversion.convert({
+          from: "usd",
+          to: "brl",
+          amount: tldData.priceUSD,
+        });
+
+        return {
+          extension: ext,
+          price: toBrl(priceBrl),
+        };
+      }
+
+      return {
+        extension: ext,
+        price: "Consulte",
+      };
+    })
+  );
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
+      {extensionsWithPricing.map((domain) => (
+        <Card key={domain.extension} className="text-center">
+          <CardContent className="pt-6">
+            <p className="text-lg font-semibold">{domain.extension}</p>
+            <p className="text-sm text-muted-foreground">{domain.price}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+const ITEMS_PER_TLD_PAGE_SKELETON = 10;

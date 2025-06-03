@@ -1,7 +1,9 @@
-import {
-  getDomainData,
-  type DomainData,
-} from "@/app/(auth)/domains/register/page";
+import type {
+  DomainData,
+  DomainPageParams,
+} from "@/app/(auth)/domains/register/types";
+import { getDomainData } from "@/app/(auth)/domains/register/utils";
+import { createDomainInvoice } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,14 +12,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toBrl } from "@/lib/utils";
 import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
-import { Suspense, type PropsWithChildren, type ReactNode } from "react";
+import { type PropsWithChildren, type ReactNode, Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
-import RegisterDomainForm from "./RegisterDomainForm";
+import { Checkbox } from "../ui/checkbox";
+import { Label } from "../ui/label";
+import { Select } from "../ui/select";
 
-export async function DomainResult({ searchQuery }: { searchQuery: string }) {
-  const domainData = await getDomainData(searchQuery);
+export async function DomainResult({
+  searchParams,
+}: { searchParams: Required<DomainPageParams> }) {
+  const domainData = await getDomainData(searchParams.search);
 
   if (!domainData?.domain) {
     return (
@@ -28,7 +40,7 @@ export async function DomainResult({ searchQuery }: { searchQuery: string }) {
         <CardContent>
           <p className="text-muted-foreground">
             Não foi possível verificar a disponibilidade do domínio &quot;
-            {searchQuery}&quot;. Tente novamente ou verifique o termo.
+            {searchParams.search}&quot;. Tente novamente ou verifique o termo.
           </p>
         </CardContent>
       </Card>
@@ -90,7 +102,10 @@ export async function DomainResult({ searchQuery }: { searchQuery: string }) {
         }
       >
         {available ? (
-          <DomainAvailable domainData={domainData} />
+          <DomainAvailable
+            domainData={domainData}
+            searchParams={searchParams}
+          />
         ) : (
           <DomainUnavailable domainData={domainData} />
         )}
@@ -113,12 +128,12 @@ function DomainAvailableTemplate({
 }>) {
   return (
     <div className="p-4 bg-green-50 dark:bg-green-900/10 border-t border-green-100 dark:border-green-900/20">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-        <p className="text-green-700 dark:text-green-400 text-sm font-medium flex items-center">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4">
+        <p className="text-green-700 dark:text-green-400 text-sm font-medium flex items-center whitespace-nowrap">
           <Check className="h-4 w-4 mr-1 flex-shrink-0" />
           {text1}
         </p>
-        <ul className="flex flex-wrap gap-2 items-center">
+        <ul className="flex flex-nowrap gap-2 items-center justify-end w-full">
           <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
             {text2}
           </li>
@@ -129,10 +144,9 @@ function DomainAvailableTemplate({
             {text4}
           </li>
         </ul>
-        {/* Children (form with button and price) will now be flexed to the end */}
-        <div className="flex-1 flex items-center justify-end gap-2 mt-2 sm:mt-0">
-          {children}
-        </div>
+      </div>
+      <div className="flex-1 flex items-center justify-end gap-2 mt-2 sm:mt-0">
+        {children}
       </div>
     </div>
   );
@@ -160,7 +174,10 @@ async function DomainUnavailable({ domainData }: { domainData: DomainData }) {
   );
 }
 
-async function DomainAvailable({ domainData }: { domainData: DomainData }) {
+async function DomainAvailable({
+  domainData,
+  searchParams,
+}: { domainData: DomainData; searchParams: DomainPageParams }) {
   // async function buyDomainAction(formData: FormData) {
   //   "use server";
 
@@ -242,29 +259,46 @@ async function DomainAvailable({ domainData }: { domainData: DomainData }) {
         text3="Proteção de privacidade"
         text4="Encaminhamento de Email"
       >
-        {/* <form action={buyDomainAction} className="flex items-center gap-2">
-          <input
-            type="hidden"
-            name="domainName"
-            value={domainData.domain.domain}
-            readOnly={true}
-          />
-          <input
-            type="hidden"
-            name="isPremium"
-            value={domainData.domain.isPremium.toString()}
-            readOnly={true}
-          />
-          <Button
-            disabled={!domainData}
-            variant="action"
-            className="w-40"
-            type="submit"
+        <div className="flex items-center gap-2 justify-between w-full">
+          <form
+            action={createDomainInvoice}
+            className="flex items-center gap-3 whitespace-nowrap w-full"
           >
-            Registrar domínio
-          </Button>
-        </form> */}
-        <RegisterDomainForm domainData={domainData} />
+            <Select name="years">
+              <SelectTrigger className="mr-2">
+                <SelectValue placeholder="Duração do registro" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 ano</SelectItem>
+                <SelectItem value="2">2 anos</SelectItem>
+                <SelectItem value="3">3 anos</SelectItem>
+                <SelectItem value="5">5 anos</SelectItem>
+                <SelectItem value="10">10 anos</SelectItem>
+              </SelectContent>
+            </Select>
+            <Checkbox name="autorenew" />
+            <Label htmlFor="autorenew">Renovação automática</Label>
+            <Checkbox name="whoisguard" />
+            <Label htmlFor="whoisguard">Proteção de privacidade</Label>
+            <input
+              type="hidden"
+              name="search"
+              value={domainData.domain.domain}
+              readOnly={true}
+            />
+            <div className="flex justify-end w-full">
+              <Button
+                // isLoading={isPending}
+                disabled={!domainData}
+                className="w-45"
+                type="submit"
+                variant="action"
+              >
+                Registrar domínio
+              </Button>
+            </div>
+          </form>
+        </div>
       </DomainAvailableTemplate>
     )
   );

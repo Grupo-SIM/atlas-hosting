@@ -1,56 +1,51 @@
-"use client";
-
-import type { DomainData } from "@/app/(auth)/domains/register/page";
-import { createDomainInvoice } from "@/app/actions";
+import type { DomainData, DomainPageParams } from "@/app/(auth)/domains/register/types";
 import { Button } from "@/components/ui/button";
-import { startTransition, useActionState, useCallback } from "react";
+import { ChevronDown } from "lucide-react";
+import Form from "next/form";
 
 export default function RegisterDomainForm({
   domainData,
 }: RegisterDomainButtonProps) {
-  const [_state, doCreateInvoice, isPending] = useActionState(
-    createDomainInvoice,
-    {
-      status: "idle" as "error" | "success" | "idle",
-      message: "",
-    }
-  );
+  // const [_state, doCreateInvoice, isPending] = useActionState(
+  //   createDomainInvoice,
+  //   {
+  //     status: "idle" as "error" | "success" | "idle",
+  //     message: "",
+  //   }
+  // );
 
-  const onSubmit = useCallback(
-    async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
+  // const onSubmit = useCallback(
+  //   async (e: React.FormEvent<HTMLFormElement>) => {
+  //     e.preventDefault();
 
-      startTransition(() => {
-        doCreateInvoice(domainData.domain.domain);
-      });
-    },
-    [doCreateInvoice, domainData]
-  );
+  //     startTransition(() => {
+  //       doCreateInvoice(domainData.domain.domain);
+  //     });
+  //   },
+  //   [doCreateInvoice, domainData]
+  // );
 
   return (
-    <form onSubmit={onSubmit} className="flex items-center gap-2">
+    <Form action="/domains/register" className="flex items-center gap-2">
       <input
         type="hidden"
-        name="domainName"
+        name="search"
         value={domainData.domain.domain}
         readOnly={true}
       />
-      <input
-        type="hidden"
-        name="isPremium"
-        value={domainData.domain.isPremium.toString()}
-        readOnly={true}
-      />
+      <input type="hidden" name="confirm" value="true" readOnly={true} />
       <Button
-        isLoading={isPending}
+        // isLoading={isPending}
         disabled={!domainData}
-        variant="action"
-        className="w-40"
+        className="w-45 flex gap-2 items-center justify-between"
         type="submit"
       >
-        Registrar domínio
+        <span>
+          Registrar domínio
+        </span>
+        <ChevronDown className="min-h-5 min-w-5 text-inherit" />
       </Button>
-    </form>
+    </Form>
   );
 }
 

@@ -5,17 +5,17 @@ import { type CliCallResponse, ClientRequestTypeEnum } from "@/plesk";
 import type { DnsRecord as PleskDnsRecord } from "@/plesk/models"; // Corrected import path
 
 import { db } from "@/lib/db";
-import { pgOrganization, pgUser } from "@/lib/db/schema";
+import { pgOrganization } from "@/lib/db/schema";
 import namecheapApi from "@/lib/server/apis/namecheap";
 import type {
   DnsHostRecord,
   DnsRecordType as NamecheapDnsRecordType,
 } from "@/lib/server/apis/namecheap/types";
+import { installCertificate } from "@/lib/server/apis/plesk-xml/client";
+import { ELEMENTOR_PRO_PLUGIN_ID } from "@/lib/server/apis/plesk/wp-toolkit";
+import { AppLogger } from "@/lib/server/logs";
 import axios from "axios";
 import { eq } from "drizzle-orm";
-import { AppLogger } from "@/lib/server/logs";
-import { ELEMENTOR_PRO_PLUGIN_ID } from "@/lib/server/apis/plesk/wp-toolkit";
-import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,6 +28,7 @@ function* sendSSE(
 ) {
   const payload = { type, message, step: message, details }; // 'step' for frontend compatibility
   // console.log("SSE Payload:", payload); // Kept for server-side debugging if needed
+  console.log(payload);
   const data = JSON.stringify(payload);
   yield `data: ${data}\n\n`;
 }
@@ -83,7 +84,7 @@ export async function GET(request: Request) {
     !siteName ||
     !adminEmail
   ) {
-    // Not using SSE here as it's a preliminary check before stream starts
+    // Not using SSE here as it's a preliminary a before stream starts
     return new Response(
       JSON.stringify({
         type: "ERROR",
@@ -142,46 +143,31 @@ export async function GET(request: Request) {
             pleskId = result.id;
             yield* sendSSE("INFO", "Usuário de hospedagem criado e vinculado.");
           } else {
-            console.error("Failed to create Plesk client:", result);
+            console.error("Failed to create client:", result);
             yield* sendSSE(
               "ERROR",
-              "Erro ao criar usuário de hospedagem no sistema",
-              result
+              "Erro ao criar usuário de hospedagem no sistema"
             );
             return;
           }
         }
 
-        yield* sendSSE(
-          "INFO",
-          "Verificando e configurando domínio em Plesk..."
-        );
+        yield* sendSSE("INFO", "Verificando e configurando domínio...");
+        console.log("hello wod");
         const existingDomainInPlesk = await pleskApi
           .getDomain(domainName)
           .catch(() => null);
+        console.log("hello wod 2");
         if (existingDomainInPlesk) {
-          yield* sendSSE(
-            "INFO",
-            `Domínio ${domainName} existente encontrado em Plesk (ID: ${existingDomainInPlesk.id}). Removendo antes de recriar...`
-          );
           await pleskApi.deleteDomain(existingDomainInPlesk.id);
-          yield* sendSSE("INFO", `Domínio ${domainName} removido de Plesk.`);
         }
 
-        yield* sendSSE(
-          "INFO",
-          `Criando assinatura para o domínio ${domainName} em Plesk...`
-        );
         await pleskApi.subscriptions.createSubscription({
           domainName,
           login: `${domainName.replace(/\./g, "_")}_${pleskId}`,
           password: `${adminPassword}_${pleskId}`, // Consider a more robust password generation strategy
           ownerLogin: user.id.replaceAll("-", "").substring(0, 50),
         });
-        yield* sendSSE(
-          "INFO",
-          `Assinatura criada para ${domainName} em Plesk.`
-        );
 
         // SLD and TLD determination (from user's original file)
         let sld: string;
@@ -232,7 +218,7 @@ export async function GET(request: Request) {
         if (!serverIp) {
           yield* sendSSE(
             "ERROR",
-            "IP do servidor não configurado (SERVER_IP), necessário para a instalação do WordPress em Plesk."
+            "IP do servidor não configurado (SERVER_IP), necessário para a instalação do WordPress."
           );
           return;
         }
@@ -262,42 +248,23 @@ export async function GET(request: Request) {
           yield* sendSSE(
             "ERROR",
             `Erro ao instalar o WordPress: ${errorMsg}`,
-            wpInstallResult
+            wpInstallResult.stderr
           );
           return;
         }
-        yield* sendSSE(
-          "SUCCESS",
-          `WordPress instalado com sucesso! ID da Instância: ${stdOut["instance-id"]}`
-        );
 
-        yield* sendSSE(
-          "INFO",
-          "Criando usuário administrador adicional no WordPress..."
-        );
         await pleskApi.wordpress.createAdminUser(+stdOut["instance-id"]);
-        yield* sendSSE(
-          "INFO",
-          "Configurações adicionais do WordPress aplicadas."
-        );
 
         // ----- START: Full DNS Synchronization with Namecheap -----
-        yield* sendSSE(
-          "INFO",
-          `Iniciando sincronização de DNS de Plesk para Namecheap para o domínio ${domainName}...`
-        );
+        yield* sendSSE("INFO", "Iniciando configuração de DNS...");
 
         let pleskDnsRecords: PleskDnsRecord[];
         try {
           const response = await pleskApi.dnsApi.dnsRecordsGet(domainName);
           pleskDnsRecords = response.data;
-          yield* sendSSE(
-            "INFO",
-            `Foram obtidos ${pleskDnsRecords.length} registros DNS do Plesk.`
-          );
         } catch (error) {
           console.error(
-            `Erro ao buscar registros DNS no Plesk para ${domainName}:`,
+            `Erro ao atualizar registros DNS para ${domainName}:`,
             error
           );
           let errorDetails = {};
@@ -310,7 +277,7 @@ export async function GET(request: Request) {
           }
           yield* sendSSE(
             "ERROR",
-            `Falha ao buscar registros DNS no Plesk (HTTP ${status}).`,
+            "Falha ao atualizar os registros DNS.",
             errorDetails
           );
           // Depending on severity, you might want to 'return' here or let plugin install proceed with a warning.
@@ -347,33 +314,12 @@ export async function GET(request: Request) {
                 recordTypeUpper as NamecheapDnsRecordType
               )
             ) {
-              if (recordTypeUpper === "SRV") {
-                yield* sendSSE(
-                  "INFO",
-                  `Registro SRV ignorado (host: ${pleskRecord.host}, valor: ${pleskRecord.value} ${pleskRecord.opt}) pois não é diretamente suportado.`
-                );
-              } else {
-                yield* sendSSE(
-                  "INFO",
-                  `Tipo de registro DNS '${pleskRecord.type}' ignorado (host: ${pleskRecord.host}) pois não está na lista de tipos suportados pelo Namecheap setHosts.`
-                );
-              }
               skippedRecordTypes.add(pleskRecord.type);
               continue;
             }
 
             if (!pleskRecord.host) {
-              yield* sendSSE(
-                "INFO",
-                `Registro DNS sem host definido (tipo: ${pleskRecord.type}, valor: ${pleskRecord.value}) ignorado.`
-              );
               continue;
-            }
-            if (!pleskRecord.value) {
-              yield* sendSSE(
-                "INFO",
-                `Registro DNS sem valor definido (tipo: ${pleskRecord.type}, host: ${pleskRecord.host}) ignorado.`
-              );
             }
 
             const hostName = transformPleskHostToNamecheapHostName(
@@ -396,32 +342,16 @@ export async function GET(request: Request) {
               const mxPref = Number.parseInt(pleskRecord.opt, 10);
               if (!Number.isNaN(mxPref)) {
                 namecheapEntry.MXPref = mxPref;
-              } else {
-                yield* sendSSE(
-                  "INFO",
-                  `Não foi possível converter MXPref para o host ${pleskRecord.host}: ${pleskRecord.opt}`
-                );
               }
             }
             namecheapDnsEntries.push(namecheapEntry);
           }
 
           if (namecheapDnsEntries.length > 0) {
-            yield* sendSSE(
-              "INFO",
-              `Total de ${namecheapDnsEntries.length} registros DNS transformados para o formato Namecheap.`
-            );
-            if (skippedRecordTypes.size > 0) {
-              yield* sendSSE(
-                "INFO",
-                `Tipos de registros DNS ignorados: ${Array.from(skippedRecordTypes).join(", ")}`
-              );
-            }
-
             try {
               yield* sendSSE(
                 "INFO",
-                `Enviando ${namecheapDnsEntries.length} registros DNS para Namecheap...`
+                `Cadastrando ${namecheapDnsEntries.length} registros DNS...`
               );
               const namecheapResponse = await namecheapApi.setHosts({
                 SLD: sld,
@@ -431,14 +361,14 @@ export async function GET(request: Request) {
 
               if (namecheapResponse.IsSuccess) {
                 yield* sendSSE(
-                  "SUCCESS",
-                  `Registros DNS para ${domainName} atualizados com sucesso no Namecheap.`,
+                  "INFO",
+                  `Registros DNS para ${domainName} atualizados com sucesso.`,
                   namecheapResponse
                 );
               } else {
                 yield* sendSSE(
                   "ERROR",
-                  `Namecheap API reportou falha ao configurar DNS para ${domainName}.`,
+                  `Falha ao configurar DNS para ${domainName}.`,
                   namecheapResponse
                 );
               }
@@ -464,21 +394,10 @@ export async function GET(request: Request) {
               }
               yield* sendSSE(
                 "ERROR",
-                `Falha crítica ao enviar registros para Namecheap (HTTP ${status}).`,
-                errorDetails
+                `Falha crítica ao registrar DNS (HTTP ${status}).`
               );
             }
-          } else if (pleskDnsRecords.length > 0) {
-            yield* sendSSE(
-              "INFO",
-              "Nenhum registro DNS do Plesk era compatível para sincronização com Namecheap após a transformação."
-            );
           }
-        } else {
-          yield* sendSSE(
-            "INFO",
-            "Nenhum registro DNS encontrado no Plesk, etapa de sincronização com Namecheap ignorada."
-          );
         }
         // ----- END: Full DNS Synchronization with Namecheap -----
 
@@ -486,14 +405,36 @@ export async function GET(request: Request) {
           "INFO",
           "Instalando plugins adicionais (Elementor Pro)..."
         );
-        await pleskApi.wordpress.addPluginToWebsite(
+/*         await pleskApi.wordpress.addPluginToWebsite(
           +stdOut["instance-id"],
           ELEMENTOR_PRO_PLUGIN_ID
+        ); */
+
+        await pleskApi.wordpress.callWp(
+          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install elementor --activate`
         );
+
+        await pleskApi.wordpress.callWp(
+          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install -source-url https://github.com/PRO-Elementor/PRO-Elementor/releases/download/v3.3.0/pro-elementor.zip --activate`
+        );
+
         yield* sendSSE(
           "INFO",
           "Plugin Elementor Pro agendado para instalação/ativação."
         );
+
+        yield* sendSSE("INFO", "Iniciando instalação do certificado SSL...");
+        for await (const step of installCertificate(domainName)) {
+          if (step === 1) {
+            yield* sendSSE(
+              "INFO",
+              "Certificado gerado com sucesso, iniciando instalação..."
+            );
+          } else if (step === 2) {
+            yield* sendSSE("INFO", "Certificado instalado com sucesso.");
+            break;
+          }
+        }
 
         const userLogger = new AppLogger(user);
         userLogger.log({
@@ -517,11 +458,7 @@ export async function GET(request: Request) {
         } else if (error instanceof Error) {
           errorMsg = error.message;
         }
-        yield* sendSSE(
-          "ERROR",
-          `Falha na instalação: ${errorMsg}`,
-          errorDetails
-        );
+        yield* sendSSE("ERROR", `Falha na instalação: ${errorMsg}`);
       }
     })(),
     {
