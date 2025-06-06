@@ -55,7 +55,11 @@ export async function validateSessionToken(token: string) {
             with: {
               members: true,
               plan: true,
-              wallet: true,
+              wallet: {
+                with: {
+                  cards: true
+                }
+              },
               owner: true,
               domains: true,
             },
@@ -267,7 +271,11 @@ export async function getUser(): Promise<User> {
           with: {
             members: true,
             plan: true,
-            wallet: true,
+            wallet: {
+              with: {
+                cards: true
+              }
+            },
             owner: true,
             domains: true,
           },
@@ -289,6 +297,8 @@ export async function getUser(): Promise<User> {
     }
 
     user.organization = organization;
+
+    console.log(JSON.stringify(user.organization, null, 2));
 
     return user as User;
   }

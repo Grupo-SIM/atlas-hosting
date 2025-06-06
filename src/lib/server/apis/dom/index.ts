@@ -203,6 +203,189 @@ export class DomApi {
       return null;
     }
   }
+
+  /**
+   * Create a card token for a customer
+   * @param userId User ID to get the organization's DOM ID
+   * @param cardData Card information for tokenization
+   * @returns Card token and metadata
+   */
+  public async createCardToken(
+    userId: string,
+    cardData: {
+      number: string;
+      cvv: string;
+      exp_month: number;
+      exp_year: number;
+      holder_name: string;
+      holder_document: string;
+    }
+  ) {
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, userId),
+      with: {
+        organization: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const domId = user.organization?.domId;
+    if (!domId) {
+      throw new Error("User does not have a DOM customer ID");
+    }
+
+    const { data } = await this.api.post<{ token: string }>(
+      `/customers/${domId}/card-token`,
+      cardData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      }
+    );
+
+    return {
+      token: data.token,
+      last4: cardData.number.slice(-4),
+      brand: this.detectCardBrand(cardData.number),
+      expiryMonth: cardData.exp_month.toString().padStart(2, '0'),
+      expiryYear: cardData.exp_year.toString(),
+      holderName: cardData.holder_name,
+    };
+  }
+
+  /**
+   * Delete a card token from DOM API
+   * @param userId User ID to get the organization's DOM ID
+   * @param cardToken Card token to delete
+   */
+  public async deleteCardToken(userId: string, cardToken: string) {
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, userId),
+      with: {
+        organization: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const domId = user.organization?.domId;
+    if (!domId) {
+      throw new Error("User does not have a DOM customer ID");
+    }
+
+    try {
+      await this.api.delete(`/customers/${domId}/cards/${cardToken}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+    } catch (error) {
+      console.error("Error deleting card from DOM:", error);
+      // Don't throw here as we still want to delete from our database
+      // even if DOM deletion fails
+    }
+  }
+
+  /**
+   * Get card token information from DOM API
+   * @param userId User ID to get the organization's DOM ID
+   * @param cardToken Card token to fetch information for
+   * @returns Card token information
+   */
+  public async getCardToken(userId: string, cardToken: string) {
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, userId),
+      with: {
+        organization: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const domId = user.organization?.domId;
+    if (!domId) {
+      throw new Error("User does not have a DOM customer ID");
+    }
+
+    try {
+      const { data } = await this.api.get(
+        `/customers/${domId}/card-token/${cardToken}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      return data;
+    } catch (error) {
+      console.error("Error fetching card token from DOM:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all card tokens for a customer from DOM API
+   * @param userId User ID to get the organization's DOM ID
+   * @returns Array of card token information
+   */
+  public async getCustomerCardTokens(userId: string) {
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, userId),
+      with: {
+        organization: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const domId = user.organization?.domId;
+    if (!domId) {
+      throw new Error("User does not have a DOM customer ID");
+    }
+
+    try {
+      const { data } = await this.api.get(`/customers/${domId}/cards`, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+
+      return data;
+    } catch (error) {
+      console.error("Error fetching customer cards from DOM:", error);
+      // Return empty array if no cards or error
+      return [];
+    }
+  }
+
+  /**
+   * Detect card brand from card number
+   */
+  private detectCardBrand(cardNumber: string): string {
+    const number = cardNumber.replace(/\D/g, '');
+    
+    if (number.startsWith('4')) return 'Visa';
+    if (number.startsWith('5') || (number.startsWith('2') && Number.parseInt(number.substring(0, 4)) >= 2221 && Number.parseInt(number.substring(0, 4)) <= 2720)) return 'Mastercard';
+    if (number.startsWith('3')) return 'American Express';
+    if (number.startsWith('6')) return 'Discover';
+    
+    return 'Unknown';
+  }
 }
 
 const domApi = new DomApi();

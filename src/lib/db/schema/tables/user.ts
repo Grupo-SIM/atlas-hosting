@@ -11,6 +11,7 @@ import {
 import { pgSession, type Session } from "./session";
 import type { Plan } from "./plan";
 import type { Wallet } from "./wallet";
+import type { UserCard } from "./card";
 
 export const pgUser = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -60,7 +61,7 @@ export type User = RawUser & {
     domains: OrganizationDomain[];
     plan: Plan | null;
     owner: RawUser | null;
-    wallet: Wallet | null;
+    wallet: (Wallet & { cards: UserCard[] }) | null;
     members: RawUser[];
   };
   domainAccess: UserDomainAccess[];
