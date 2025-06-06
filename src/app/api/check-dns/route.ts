@@ -67,9 +67,10 @@ export async function GET(request: Request) {
     (async function* () {
       const results = new Map(domains.map((domain) => [domain, false]));
       // Set initial results
-      initialResults.forEach(({ domain, ready }) => {
+
+      for (const { domain, ready } of initialResults) {
         results.set(domain, ready);
-      });
+      };
 
       let allReady = false;
 

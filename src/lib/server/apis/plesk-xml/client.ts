@@ -10,6 +10,7 @@ import type {
 import axios, { type AxiosError } from "axios";
 import { format } from "date-fns";
 import { XMLParser } from "fast-xml-parser";
+import type { DeepPartial } from "react-hook-form";
 import { create } from "xmlbuilder2";
 import certificatesApi from "../certificates";
 import { PLESK_API_KEY, PLESK_XML_API_URL } from "./config";
@@ -20,7 +21,6 @@ import type {
   PleskApiError,
   PleskPacket,
 } from "./types";
-import type { DeepPartial } from "react-hook-form";
 
 const axiosInstance = axios.create({
   adapter: "xhr",

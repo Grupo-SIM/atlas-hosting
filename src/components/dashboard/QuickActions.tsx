@@ -142,7 +142,7 @@ export async function QuickActions() {
             Icon={CreditCard}
             title="Assinaturas"
             subtitle="Gerencie suas assinaturas"
-            href="/billing/subscriptions"
+            href="Pse/subscriptions"
             iconClassName="text-purple-500"
           />
 

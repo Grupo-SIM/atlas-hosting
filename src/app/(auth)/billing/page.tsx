@@ -157,11 +157,11 @@ export default async function BillingPage() {
                     </div>
                     {invoice.status === "pending" && (
                       <div className="flex justify-end">
-                        <Button asChild={true}>
-                          <Link href={`/checkout/${invoice.id}`}>
+                        <Link href={`/checkout/${invoice.id}`}>
+                          <Button>
                             <CreditCard className="mr-2 h-4 w-4" /> Pagar Agora
-                          </Link>
-                        </Button>
+                          </Button>
+                        </Link>
                       </div>
                     )}
                   </div>

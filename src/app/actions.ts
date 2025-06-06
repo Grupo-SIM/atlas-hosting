@@ -193,7 +193,7 @@ export async function logout(): Promise<void> {
 
   await signOut({
     redirectTo: "/login",
-    redirect: true
+    redirect: true,
   });
 
   if (sessionToken) {
@@ -269,7 +269,6 @@ export async function updatePlan(
 }
 
 export async function createPlanInvoice(
-  prevState: unknown,
   planId: string
 ): Promise<ActionResponse> {
   const user = await getUser();
@@ -335,7 +334,10 @@ export async function createPlanInvoice(
   }
 
   if (redirectUrl) {
-    redirect(redirectUrl);
+    return {
+      status: "success",
+      message: redirectUrl,
+    };
   }
 
   return {
@@ -380,8 +382,12 @@ export async function createDomainInvoice({
       return;
     }
 
-    const pricesInfo = await getDomainPricing(domain.split(".").pop() as string);
-    const priceInfo = pricesInfo.Prices.find((p) => p.Duration === +years && p.DurationType === "YEAR");
+    const pricesInfo = await getDomainPricing(
+      domain.split(".").pop() as string
+    );
+    const priceInfo = pricesInfo.Prices.find(
+      (p) => p.Duration === +years && p.DurationType === "YEAR"
+    );
 
     if (!priceInfo) {
       return;
@@ -403,11 +409,11 @@ export async function createDomainInvoice({
 
     priceInBrl *= fee;
 
-    console.log({ whoisguard })
+    console.log({ whoisguard });
     if (whoisguard) {
       priceInBrl += 3;
     }
-    console.log({ priceInBrl })
+    console.log({ priceInBrl });
 
     const [newInvoice] = await db
       .insert(pgInvoice)
@@ -759,7 +765,7 @@ export async function completeCheckout(
 //       );
 //       return {
 //         message: "Erro ao instalar o WordPress.",
-//         error:
+//         error:s
 //           `Status da instalação: ${wpInstallResult.status}. ${wpInstallResult.message || ""}`.trim(),
 //       };
 //     }
@@ -774,7 +780,7 @@ export async function completeCheckout(
 //     //   return { message: "WordPress instalado, mas não foi possível obter os URLs.", error: "Não foi possível recuperar os URLs do site/admin. Verifique o painel Plesk." };
 //     // }
 
-//     const primaryIp = process.env.SERVER_IP!;
+    // const primaryIp = process.env.SERVER_IP!;
 
 //     const dnsRecords = await nameSilo.dnsListRecords(domainName);
 //     const nsRecords = await nameSilo.listRegisteredNameServers(domainName);

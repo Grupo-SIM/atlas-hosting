@@ -12,10 +12,13 @@ COPY . .
 
 ENV NODE_ENV=production
 ENV HOST="0.0.0.0"
-
 RUN bun test
 RUN bun --bun run build
 
+FROM base AS release
+COPY --from=prerelease /usr/src/app/.next/standalone ./
+COPY --from=prerelease /usr/src/app/.next/static ./.next/static
+
 USER bun
 EXPOSE 3000/tcp
-ENTRYPOINT [ "bun", "--bun", "next", "start" ]
+ENTRYPOINT [ "bun", "--bun", "run", "server.js" ]

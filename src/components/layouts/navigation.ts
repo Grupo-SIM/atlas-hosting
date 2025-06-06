@@ -19,7 +19,6 @@ export const navigation = [
   { name: "E-mail", href: "/email", icon: Mail },
   { name: "Faturas", href: "/billing", icon: FileText },
   { name: "Afiliado", href: "/affiliate", icon: Users },
-  { name: "Segurança", href: "/security", icon: Shield },
   { name: "Suporte", href: "/support", icon: LifeBuoy },
   { name: "Configurações", href: "/settings", icon: Settings },
 ];
