@@ -1,4 +1,4 @@
-import type { DomainData } from "@/app/(auth)/domains/register/page";
+import type { DomainData } from "@/app/(auth)/domains/register/types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { toBrl } from "@/lib/utils";
 import { CheckCircle2, XCircle } from "lucide-react";
+import Link from "next/link";
 
 export async function DomainSuggestions({
   domainDataPromise,
@@ -44,7 +45,7 @@ export async function DomainSuggestions({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4 max-h-full">
+        <div className="grid grid-cols-2 gap-4 max-h-full">
           {domainData.extraDomains.map((domain) => (
             <div
               key={domain.domain}
@@ -77,8 +78,12 @@ export async function DomainSuggestions({
                 </div>
               </div>
               {domain.available && (
-                <Button variant="outline" size="sm">
-                  Registrar
+                <Button asChild variant="outline" size="sm">
+                  <Link
+                    href={`/domains/register?domain=${domain.domain}`}
+                  >
+                    Registrar
+                  </Link>
                 </Button>
               )}
             </div>

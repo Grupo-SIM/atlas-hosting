@@ -1,10 +1,17 @@
+import type { AddWebspaceParams } from "@/app/api/wp-install-w/worker/types";
 import {
   PLESK_API_LOGIN,
   PLESK_API_PASSWORD,
 } from "@/lib/server/apis/plesk-xml/config";
+import type {
+  GetDnsRecordsResult,
+  GetSubscriptionResult,
+} from "@/lib/server/apis/plesk-xml/types";
 import axios, { type AxiosError } from "axios";
+import { format } from "date-fns";
 import { XMLParser } from "fast-xml-parser";
 import { create } from "xmlbuilder2";
+import certificatesApi from "../certificates";
 import { PLESK_API_KEY, PLESK_XML_API_URL } from "./config";
 import type {
   AddMailNamePayload,
@@ -13,9 +20,7 @@ import type {
   PleskApiError,
   PleskPacket,
 } from "./types";
-import { format } from "date-fns";
-import certificatesApi from "../certificates";
-import pleskApi from "../plesk";
+import type { DeepPartial } from "react-hook-form";
 
 const axiosInstance = axios.create({
   adapter: "xhr",
@@ -51,8 +56,6 @@ async function requestPleskApi<TResponsePayload>(
     .up()
     .end({ prettyPrint: true });
 
-  console.log("Plesk API Request XML being sent:", xmlRequest); // Log the generated XML
-
   try {
     const response = await axios.post(PLESK_XML_API_URL, xmlRequest, {
       headers: {
@@ -62,8 +65,6 @@ async function requestPleskApi<TResponsePayload>(
         KEY: PLESK_API_KEY,
       },
     });
-
-    console.log(response.data);
 
     const parsedResponse = xmlParser.parse(
       response.data
@@ -152,7 +153,10 @@ export async function getMailAccounts(pleskId: number): Promise<MailName[]> {
   return [];
 }
 
-export async function setSiteCertificate(domainName: string, certName: string) {
+export async function setSiteProperties(
+  domainName: string,
+  params: DeepPartial<AddWebspaceParams>
+) {
   return await requestPleskApi({
     operator: "site",
     operation: "set",
@@ -160,23 +164,35 @@ export async function setSiteCertificate(domainName: string, certName: string) {
       filter: {
         name: domainName,
       },
-      values: {
-        hosting: {
-          vrt_hst: {
-            property: {
-              name: "certificate_name",
-              value: certName,
-            },
+      values: params,
+    },
+  });
+}
+
+export async function setSiteCertificate(domainName: string, certName: string) {
+  return await setSiteProperties(domainName, {
+    hosting: {
+      vrt_hst: {
+        property: [
+          {
+            name: "certificate_name",
+            value: certName,
           },
-        },
+          {
+            name: "ssl",
+            value: "true",
+          },
+        ],
       },
     },
-  })
+  });
 }
 
 export async function* installCertificate(domainName: string) {
-  const { certificate, csr, privateKey, ca } =
+  const { certificate, csr, privateKey, ca, keyAuthorization } =
     await certificatesApi.getCertificate(domainName);
+
+  yield keyAuthorization;
 
   yield 1;
 
@@ -237,26 +253,209 @@ export async function deleteMailAccount(mailNameId: number): Promise<void> {
   });
 }
 
-// --- Example of how to build more complex XML for specific operations ---
-// This is a helper, you might integrate it or call it from specific functions
-/*
-function buildMailNameXml(data: AddMailNamePayload['mailname']): object {
-  const mailnameNode: any = { name: data.name };
-  if (data.mailbox) {
-    mailnameNode.mailbox = { enabled: data.mailbox.enabled };
-    if (data.mailbox.quota !== undefined) {
-      mailnameNode.mailbox.quota = data.mailbox.quota;
-    }
-  }
-  if (data.password) {
-    mailnameNode.password = { value: data.password.value, type: data.password.type };
-  }
-  // Add other elements like mailgroup, autoresponder, forward, antispam, antivirus here
-  return mailnameNode;
+export async function getPermissionDescriptor() {
+  return await requestPleskApi({
+    operator: "webspace",
+    operation: "get-permission-descriptor",
+    params: {
+      filter: {
+        name: "lucasgarrafielo.xyz",
+      },
+    },
+  });
 }
-*/
 
-// You would continue to add more functions here for other operations:
-// - updateMailAccount
-// - getMailAliases, addMailAlias, deleteMailAlias
-// - manageAutoresponders, etc.
+export async function getHostingDescriptor() {
+  return await requestPleskApi({
+    operator: "webspace",
+    operation: "get-physical-hosting-descriptor",
+    params: {
+      filter: {
+        name: "lucasgarrafielo.xyz",
+      },
+    },
+  });
+}
+
+export async function getLimitsDescriptor() {
+  return await requestPleskApi({
+    operator: "webspace",
+    operation: "get-limit-descriptor",
+    params: {
+      filter: {
+        name: "lucasgarrafielo.xyz",
+      },
+    },
+  });
+}
+
+export async function createSubscription(params: AddWebspaceParams) {
+  return await requestPleskApi<{
+    status: string;
+    id: number;
+    guid: string;
+  }>({
+    operator: "webspace",
+    operation: "add",
+    params,
+  });
+}
+
+export async function createDomain(domainName: string) {
+  return await requestPleskApi({
+    operator: "site",
+    operation: "add",
+    params: {
+      gen_setup: {
+        name: domainName,
+        "webspace-name": domainName,
+      },
+    },
+  });
+}
+
+export async function deleteDomain(domainName: string) {
+  return await requestPleskApi({
+    operator: "site",
+    operation: "del",
+    params: {
+      filter: {
+        name: domainName,
+      },
+    },
+  });
+}
+
+export async function getDomain(domainName: string) {
+  return await requestPleskApi<{ id: number }>({
+    operator: "site",
+    operation: "get",
+    params: {
+      filter: {
+        name: domainName,
+      },
+      dataset: {
+        gen_info: {},
+        hosting: {},
+        disk_usage: {},
+        performance: {},
+      },
+    },
+  });
+}
+
+export async function getDnsRecords(siteId: number) {
+  return await requestPleskApi<GetDnsRecordsResult[]>({
+    operator: "dns",
+    operation: "get_rec",
+    params: {
+      filter: {
+        "site-id": siteId,
+      },
+    },
+  });
+}
+
+export async function getSubscription(domainName: string) {
+  return await requestPleskApi<GetSubscriptionResult>({
+    operator: "webspace",
+    operation: "get",
+    params: {
+      filter: {
+        name: domainName,
+      },
+      dataset: {
+        gen_info: {},
+        hosting: {},
+        // "hosting-basic": {},
+        // limits: {},
+        stat: {},
+        // prefs: {},
+        disk_usage: {},
+        performance: {},
+        subscriptions: {},
+        // permissions: {},
+        // "plan-items": {},
+        // "php-settings": {},
+        "resource-usage": {},
+        // mail: {},
+        // "aps-filter": {},
+        // packages: {}
+      },
+    },
+  });
+}
+
+export async function deleteSubscription(domainName: number) {
+  return await requestPleskApi({
+    operator: "webspace",
+    operation: "del",
+    params: {
+      filter: {
+        name: domainName,
+      },
+    },
+  });
+}
+
+export async function installCertificateHttp(domainName: string) {
+  try {
+    const certificateData =
+      await certificatesApi.getCertificateHttp(domainName);
+
+    // Install the certificate in Plesk
+    const certName = `${domainName}-${Date.now()}`;
+
+    // Create certificate in Plesk
+    await createCertificate({
+      name: certName,
+      certificate: certificateData.certificate,
+      privateKey: certificateData.privateKey,
+      ca: certificateData.ca,
+    });
+
+    // Assign certificate to the domain
+    await setSiteCertificate(domainName, certName);
+
+    return certificateData;
+  } catch (error) {
+    console.error(
+      `Error installing HTTP certificate for ${domainName}:`,
+      error
+    );
+    throw error;
+  }
+}
+
+export async function createCertificate(params: {
+  name: string;
+  certificate: string;
+  privateKey: string;
+  ca?: string;
+}) {
+  return await requestPleskApi({
+    operator: "certificate",
+    operation: "install",
+    params: {
+      name: params.name,
+      content: {
+        csr: "",
+        pvt: params.privateKey,
+        cert: params.certificate,
+        ca: params.ca || "",
+      },
+    },
+  });
+}
+
+export async function deleteFtpUser(ftpLogin: string) {
+  return await requestPleskApi({
+    operator: "ftp-user",
+    operation: "del",
+    params: {
+      filter: {
+        name: ftpLogin,
+      },
+    },
+  });
+}

@@ -3,7 +3,6 @@ import type {
   DomainPageParams,
 } from "@/app/(auth)/domains/register/types";
 import { getDomainData } from "@/app/(auth)/domains/register/utils";
-import { createDomainInvoice } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,26 +11,50 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getDomainPricing } from "@/lib/server/apis/namecheap/index";
+import { toBrl } from "@/lib/utils";
+import { TooltipArrow } from "@radix-ui/react-tooltip";
+import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
+import { Suspense } from "react";
+import { FaCircleQuestion } from "react-icons/fa6";
+import Skeleton from "react-loading-skeleton";
+import { Checkbox } from "../ui/checkbox";
+import { Label } from "../ui/label";
 import {
+  Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { toBrl } from "@/lib/utils";
-import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
-import { type PropsWithChildren, type ReactNode, Suspense } from "react";
-import Skeleton from "react-loading-skeleton";
-import { Checkbox } from "../ui/checkbox";
-import { Label } from "../ui/label";
-import { Select } from "../ui/select";
+} from "../ui/select";
+import { Separator } from "../ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+import Form from "next/form";
+import { createDomainInvoice } from "@/app/actions";
 
 export async function DomainResult({
   searchParams,
-}: { searchParams: Required<DomainPageParams> }) {
-  const domainData = await getDomainData(searchParams.search);
+}: {
+  searchParams: DomainPageParams;
+}) {
+  const { domain } = searchParams;
 
-  if (!domainData?.domain) {
+  const domainData = await getDomainData(domain as string);
+
+  const domainPricing = await getDomainPricing(
+    domain?.split(".").pop() as string
+  ).catch(() => null);
+
+  let price = domainPricing?.Prices?.find(
+    (p) => p.DurationType === "YEAR" && p.Duration === 1
+  )?.Price;
+
+  if (!domainData?.domain || !price) {
     return (
       <Card>
         <CardHeader>
@@ -40,19 +63,26 @@ export async function DomainResult({
         <CardContent>
           <p className="text-muted-foreground">
             Não foi possível verificar a disponibilidade do domínio &quot;
-            {searchParams.search}&quot;. Tente novamente ou verifique o termo.
+            {searchParams.domain}&quot;. Tente novamente ou verifique o termo.
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  const { available, domain } = domainData;
+  const {
+    available,
+    domain: { renewBRL, isPremium },
+  } = domainData;
+
+  if (searchParams.whoisguard) {
+    price += 3;
+  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Resultado da Busca: {domain.domain}</CardTitle>
+        <CardTitle>Resultado da Busca: {domain}</CardTitle>
         <CardDescription>
           {available
             ? "Este domínio está disponível para registro!"
@@ -68,7 +98,7 @@ export async function DomainResult({
               <XCircle className="h-8 w-8 text-red-500 flex-shrink-0" />
             )}
             <div className="flex-1">
-              <h3 className="text-lg font-semibold">{domain.domain}</h3>
+              <h3 className="text-lg font-semibold">{domain}</h3>
               {available ? (
                 <p className="text-sm text-muted-foreground">
                   Este domínio está disponível para registro
@@ -80,15 +110,31 @@ export async function DomainResult({
               )}
             </div>
           </div>
-          <h2 className="font-semibold text-2xl">{toBrl(domain.priceBRL)}</h2>
+
+          {searchParams.domain && searchParams.years && (
+            <div className="grid grid-cols-[1fr_auto_auto] grid-rows-[auto_1fr] gap-x-3 gap-y-1 grid-flow-col">
+              <div className="text-xs text-muted-foreground">Primeiro ano</div>
+              <h2 className="font-semibold text-2xl m-0">{toBrl(price)}</h2>
+              <Separator
+                orientation="vertical"
+                className="row-span-2 h-3/4 my-auto"
+              />
+              <div className="text-xs text-muted-foreground text-right">
+                Renovação
+              </div>
+              <span className="text-muted-foreground flex items-center">
+                {toBrl(renewBRL)}
+              </span>
+            </div>
+          )}
         </div>
 
-        {domain.isPremium && available && (
+        {isPremium && available && (
           <div className="mt-4 flex items-center gap-2 text-amber-500">
             <AlertCircle className="h-4 w-4" />
             <p className="text-sm">
               Este é um domínio premium. O preço de registro é{" "}
-              {toBrl(domain.priceBRL)}.
+              {toBrl(price)}.
             </p>
           </div>
         )}
@@ -104,51 +150,13 @@ export async function DomainResult({
         {available ? (
           <DomainAvailable
             domainData={domainData}
-            searchParams={searchParams}
+            searchParams={searchParams as Partial<DomainPageParams>}
           />
         ) : (
           <DomainUnavailable domainData={domainData} />
         )}
       </Suspense>
     </Card>
-  );
-}
-
-function DomainAvailableTemplate({
-  text1,
-  text2,
-  text3,
-  text4,
-  children,
-}: PropsWithChildren<{
-  text1: ReactNode;
-  text2: ReactNode;
-  text3: ReactNode;
-  text4: ReactNode;
-}>) {
-  return (
-    <div className="p-4 bg-green-50 dark:bg-green-900/10 border-t border-green-100 dark:border-green-900/20">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4">
-        <p className="text-green-700 dark:text-green-400 text-sm font-medium flex items-center whitespace-nowrap">
-          <Check className="h-4 w-4 mr-1 flex-shrink-0" />
-          {text1}
-        </p>
-        <ul className="flex flex-nowrap gap-2 items-center justify-end w-full">
-          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
-            {text2}
-          </li>
-          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
-            {text3}
-          </li>
-          <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
-            {text4}
-          </li>
-        </ul>
-      </div>
-      <div className="flex-1 flex items-center justify-end gap-2 mt-2 sm:mt-0">
-        {children}
-      </div>
-    </div>
   );
 }
 
@@ -162,7 +170,7 @@ async function DomainUnavailable({ domainData }: { domainData: DomainData }) {
         </Button>
         <Button variant="link" className="text-sm" asChild={true}>
           <a
-            href={`https://whois.domaintools.com/${domainData?.domain?.domain}`}
+            href={`https://www.whois.com/whois/${domainData?.domain?.domain}`}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -177,129 +185,144 @@ async function DomainUnavailable({ domainData }: { domainData: DomainData }) {
 async function DomainAvailable({
   domainData,
   searchParams,
-}: { domainData: DomainData; searchParams: DomainPageParams }) {
-  // async function buyDomainAction(formData: FormData) {
-  //   "use server";
+}: { domainData: DomainData; searchParams: Partial<DomainPageParams> }) {
+  const domain = domainData
+    ? await getDomainPricing(
+        domainData?.domain.domain.split(".").pop() as string
+      )
+    : null;
 
-  //   const user = await getUser();
-
-  //   const domainName = formData.get("domainName") as string;
-
-  //   const formYears = formData.get("years") as string;
-
-  //   const yearsToRegister = formYears ? Number.parseInt(formYears, 10) : 1;
-  //   const registrationPrice = Number.parseFloat(
-  //     formData.get("price") as string
-  //   );
-  //   const isPremium = formData.get("isPremium") === "true";
-
-  //   if (!user?.email) {
-  //     throw new Error("Usuário não autenticado ou e-mail não encontrado.");
-  //   }
-  //   if (!domainName) {
-  //     throw new Error("Nome do domínio é obrigatório.");
-  //   }
-
-  //   const params: DomainsCreateUserParams = {
-  //     DomainName: domainName,
-  //     Years: yearsToRegister,
-  //     Registrant: adminNamecheapDetails,
-  //     Admin: adminNamecheapDetails,
-  //     Tech: adminNamecheapDetails,
-  //     AuxBilling: adminNamecheapDetails,
-  //     AddFreeWhoisguard: "yes",
-  //     WGEnabled: "yes",
-  //   };
-
-  //   if (isPremium) {
-  //     params.IsPremiumDomain = true;
-  //     params.PremiumPrice = registrationPrice;
-  //   }
-
-  //   try {
-  //     const registrationResult = await namecheapApi.createDomain(params);
-
-  //     if (!registrationResult.Registered) {
-  //       throw new Error(
-  //         `Falha ao registrar o domínio ${domainName} via Namecheap. Motivo desconhecido.`
-  //       );
-  //     }
-  //   } catch (error) {
-  //     if (error instanceof Error) {
-  //       throw new Error(`Falha ao registrar ${domainName}: ${error.message}`);
-  //     }
-  //     throw new Error(
-  //       `Falha ao registrar ${domainName}. Por favor, tente novamente.`
-  //     );
-  //   }
-
-  // try {
-  //   user.logger.log({
-  //     title: "Novo domínio registrado",
-  //     description: `Domínio ${domainName} registrado com sucesso.`,
-  //     severity: "success",
-  //     type: "hosting",
-  //   });
-  // } catch (error) {
-  //   console.error(
-  //     `Erro ao registrar log de domínio para ${domainName}:`,
-  //     error
-  //   );
-  // }
-
-  //   redirect("/domains");
-  // }
+  const registerOptions = (domain?.Prices ?? [])
+    .filter((domain) => domain.DurationType === "YEAR")
+    .map((domain) => ({
+      duration: domain.Duration,
+      price: domain.YourPrice,
+    }));
 
   return (
     domainData?.available &&
     domainData.domain && (
-      <DomainAvailableTemplate
-        text1="Domínio inclui serviços gratuitos:"
-        text2="Administração de DNS"
-        text3="Proteção de privacidade"
-        text4="Encaminhamento de Email"
-      >
-        <div className="flex items-center gap-2 justify-between w-full">
-          <form
-            action={createDomainInvoice}
-            className="flex items-center gap-3 whitespace-nowrap w-full"
+      <div>
+        <Separator className="mb-4 w-full" />
+        <Form
+          action=""
+          className="grid grid-rows-[auto_1fr] grid-cols-[1fr_1fr_auto] gap-4 px-4 pb-4"
+        >
+          <h2 className="col-span-3 font-medium text-xl">Opções de registro</h2>
+          <Select
+            name="years"
+            defaultValue={
+              searchParams.years ?? registerOptions[0].duration.toString()
+            }
           >
-            <Select name="years">
-              <SelectTrigger className="mr-2">
-                <SelectValue placeholder="Duração do registro" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1 ano</SelectItem>
-                <SelectItem value="2">2 anos</SelectItem>
-                <SelectItem value="3">3 anos</SelectItem>
-                <SelectItem value="5">5 anos</SelectItem>
-                <SelectItem value="10">10 anos</SelectItem>
-              </SelectContent>
-            </Select>
-            <Checkbox name="autorenew" />
-            <Label htmlFor="autorenew">Renovação automática</Label>
-            <Checkbox name="whoisguard" />
-            <Label htmlFor="whoisguard">Proteção de privacidade</Label>
-            <input
-              type="hidden"
-              name="search"
-              value={domainData.domain.domain}
-              readOnly={true}
-            />
-            <div className="flex justify-end w-full">
-              <Button
-                // isLoading={isPending}
-                disabled={!domainData}
-                className="w-45"
-                type="submit"
-                variant="action"
-              >
-                Registrar domínio
-              </Button>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {registerOptions.map((option) => (
+                <SelectItem
+                  key={option.duration}
+                  value={option.duration.toString()}
+                >
+                  {option.duration} ano{option.duration > 1 ? "s" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center space-x-2 mr-auto">
+                  <Checkbox
+                    name="whoisguard"
+                    defaultChecked={searchParams.whoisguard === "on"}
+                  />
+                  <Label
+                    htmlFor="whoisguard"
+                    className="text-sm flex items-center space-x-2"
+                  >
+                    <span>Proteção de Privacidade</span>
+                    <FaCircleQuestion className="h-4 w-4 text-muted-foreground" />
+                  </Label>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent align="start" side="top">
+                <div className="text-sm max-w-sm text-center text-foreground/90 mr-auto space-y-1 p-2">
+                  <div>
+                    Protege suas informações pessoais de serem exibidas
+                    publicamente ao buscar seu domínio.
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    *Adicional de {toBrl(3)}
+                  </div>
+                </div>
+                <TooltipArrow className="fill-border" />
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <input type="hidden" name="domain" value={domainData.domain.domain} />
+          <Button
+            type="submit"
+            variant={searchParams.years ? "secondary" : "default"}
+          >
+            {searchParams.years ? "Alterar opções" : "Continuar"}
+          </Button>
+        </Form>
+        {searchParams.years && (
+          <Form action="">
+            <Separator className="m-0 w-full" />
+            <div className="animate-accordion-down animate-in duration-300 ease-out">
+              <div className="p-4 bg-green-50 dark:bg-green-900/10">
+                <div className="flex items-center gap-2 justify-between w-full">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                    <p className="text-green-700 dark:text-green-400 text-sm font-medium flex items-center whitespace-nowrap">
+                      <Check className="h-4 w-4 mr-1 flex-shrink-0" />
+                      Domínio inclui serviços gratuitos:
+                    </p>
+                    <ul className="flex flex-nowrap gap-2 items-center justify-end w-full">
+                      <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+                        Administração de DNS
+                      </li>
+                      <li className="text-xs bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+                        Encaminhamento de email
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="flex-1 flex items-center justify-end gap-2 mt-2 sm:mt-0">
+                    <div className="flex justify-end w-full">
+                      <input
+                        type="hidden"
+                        name="domain"
+                        value={domainData.domain.domain}
+                      />
+                      <input
+                        type="hidden"
+                        name="years"
+                        value={searchParams.years}
+                      />
+                      <input
+                        type="hidden"
+                        name="whoisguard"
+                        value={searchParams.whoisguard ?? "off"}
+                      />
+                      <input type="hidden" name="confirm" value="true" />
+                      <Button
+                        disabled={!domainData || !!searchParams.confirm}
+                        isLoading={!!searchParams.confirm}
+                        className="w-45"
+                        type="submit"
+                        variant="action"
+                      >
+                        Registrar domínio
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </form>
-        </div>
-      </DomainAvailableTemplate>
+          </Form>
+        )}
+      </div>
     )
   );
 }
@@ -311,7 +334,7 @@ export const adminNamecheapDetails = {
   EmailAddress: "lucasgarrafielo@gmail.com",
   FirstName: "Lucas",
   LastName: "Garrafielo",
-  Phone: process.env.ADMIN_PHONENUMBER!,
+  Phone: process.env.ADMIN_PHONENUMBER as string,
   PostalCode: "69900430",
   StateProvince: "AC",
 };

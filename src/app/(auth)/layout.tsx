@@ -41,8 +41,7 @@ export default async function RootLayout({
           />
         </Topbar>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto inset-shadow-border inset-shadow-[1px_1px]">{children}</main>
       </div>
     </div>
   );

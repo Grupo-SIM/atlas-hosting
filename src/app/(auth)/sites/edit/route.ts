@@ -9,8 +9,6 @@ export async function GET(request: Request) {
 
   siteUrl = decodeURIComponent(siteUrl);
 
-  console.log({ siteUrl });
-
   const getTokenUrl = new URL(siteUrl);
   getTokenUrl.pathname += "/wp-json/api/v1/mo-jwt";
   getTokenUrl.pathname = getTokenUrl.pathname.replaceAll("//", "/");
@@ -25,8 +23,6 @@ export async function GET(request: Request) {
       password: process.env.WP_ADMIN_PASS!,
     }),
   });
-
-  console.log({ response });
 
   if (!response.ok) {
     return Response.error();

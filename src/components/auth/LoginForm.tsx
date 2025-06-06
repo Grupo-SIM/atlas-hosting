@@ -124,18 +124,6 @@ export default function LoginForm() {
           </span>
         </div>
       </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <GithubAuthButton action={signInWithGithub} />
-        <Button
-          variant="outline"
-          type="button"
-          className="flex items-center justify-center gap-2"
-        >
-          <FaGoogle className="h-4 w-4" />
-          Google
-        </Button>
-      </div>
     </form>
   );
 }

@@ -113,8 +113,11 @@ export default class PleskWpToolkitApi {
   }
 
   public async addPluginToWebsite(instanceId: number, pluginId: number) {
-    return await this.callWp(
+    await this.callWp(
       `--plugins -format json -operation install -id ${pluginId} -version 3.28.1 -instance-id ${instanceId}`
+    );
+    await this.callWp(
+      `--plugins -format json -operation activate -id ${pluginId} -version 3.28.1 -instance-id ${instanceId}`
     );
   }
 }

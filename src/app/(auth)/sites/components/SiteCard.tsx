@@ -117,7 +117,7 @@ export function SiteCard({
         <CardDescription>{instance.domain}</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {isLoading && selectedInstances.includes(instance.id) ? (
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <CgSpinner className="h-4 w-4 animate-spin" />
             <span>Em processamento</span>

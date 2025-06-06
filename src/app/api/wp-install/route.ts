@@ -11,7 +11,6 @@ import type {
   DnsHostRecord,
   DnsRecordType as NamecheapDnsRecordType,
 } from "@/lib/server/apis/namecheap/types";
-import { installCertificate } from "@/lib/server/apis/plesk-xml/client";
 import { ELEMENTOR_PRO_PLUGIN_ID } from "@/lib/server/apis/plesk/wp-toolkit";
 import { AppLogger } from "@/lib/server/logs";
 import axios from "axios";
@@ -28,7 +27,7 @@ function* sendSSE(
 ) {
   const payload = { type, message, step: message, details }; // 'step' for frontend compatibility
   // console.log("SSE Payload:", payload); // Kept for server-side debugging if needed
-  console.log(payload);
+  console.log({ payload });
   const data = JSON.stringify(payload);
   yield `data: ${data}\n\n`;
 }
@@ -76,6 +75,7 @@ export async function GET(request: Request) {
   let adminPassword = urlParams.get("admin_password");
   let siteName = urlParams.get("site_name");
   let adminEmail = urlParams.get("admin_email");
+  const plugins = urlParams.get("plugins");
 
   if (
     !domainName ||
@@ -125,6 +125,7 @@ export async function GET(request: Request) {
         if (!pleskId) {
           yield* sendSSE("INFO", "Criando usuário de hospedagem no sistema...");
           const pleskClientPassword = "Default#Password123";
+
           const result = await pleskApi.createClient({
             name: user.name,
             email: userEmailForPlesk,
@@ -153,11 +154,9 @@ export async function GET(request: Request) {
         }
 
         yield* sendSSE("INFO", "Verificando e configurando domínio...");
-        console.log("hello wod");
         const existingDomainInPlesk = await pleskApi
           .getDomain(domainName)
           .catch(() => null);
-        console.log("hello wod 2");
         if (existingDomainInPlesk) {
           await pleskApi.deleteDomain(existingDomainInPlesk.id);
         }
@@ -168,6 +167,8 @@ export async function GET(request: Request) {
           password: `${adminPassword}_${pleskId}`, // Consider a more robust password generation strategy
           ownerLogin: user.id.replaceAll("-", "").substring(0, 50),
         });
+
+        await pleskApi.assignDomain(domainName, +pleskId!);
 
         // SLD and TLD determination (from user's original file)
         let sld: string;
@@ -285,6 +286,23 @@ export async function GET(request: Request) {
           pleskDnsRecords = []; // Ensure it's an empty array to skip Namecheap update
         }
 
+        // let keyAuthorization = "";
+        // for await (const step of installCertificate(domainName)) {
+        //   if (typeof step === "string") {
+        //     keyAuthorization = step;
+        //   }
+
+        //   if (step === 1) {
+        //     yield* sendSSE(
+        //       "INFO",
+        //       "Certificado gerado com sucesso, iniciando instalação..."
+        //     );
+        //   } else if (step === 2) {
+        //     yield* sendSSE("INFO", "Certificado instalado com sucesso.");
+        //     break;
+        //   }
+        // }
+
         if (pleskDnsRecords.length > 0) {
           const namecheapDnsEntries: DnsHostRecord[] = [];
           const skippedRecordTypes: Set<string> = new Set();
@@ -308,6 +326,13 @@ export async function GET(request: Request) {
             }
 
             const recordTypeUpper = pleskRecord.type.toUpperCase();
+
+            if (
+              recordTypeUpper === "TXT" &&
+              pleskRecord.host === "_acme-challenge"
+            ) {
+              continue;
+            }
 
             if (
               !supportedNamecheapTypes.has(
@@ -346,6 +371,12 @@ export async function GET(request: Request) {
             }
             namecheapDnsEntries.push(namecheapEntry);
           }
+
+          // namecheapDnsEntries.push({
+          //   HostName: "_acme-challenge",
+          //   RecordType: "TXT",
+          //   Address: keyAuthorization,
+          // });
 
           if (namecheapDnsEntries.length > 0) {
             try {
@@ -401,40 +432,24 @@ export async function GET(request: Request) {
         }
         // ----- END: Full DNS Synchronization with Namecheap -----
 
-        yield* sendSSE(
-          "INFO",
-          "Instalando plugins adicionais (Elementor Pro)..."
-        );
-/*         await pleskApi.wordpress.addPluginToWebsite(
-          +stdOut["instance-id"],
-          ELEMENTOR_PRO_PLUGIN_ID
-        ); */
+        yield* sendSSE("INFO", "Instalando plugins...");
 
-        await pleskApi.wordpress.callWp(
-          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install elementor --activate`
-        );
+        const pluginsArray = plugins?.split(",") ?? [];
 
-        await pleskApi.wordpress.callWp(
-          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install -source-url https://github.com/PRO-Elementor/PRO-Elementor/releases/download/v3.3.0/pro-elementor.zip --activate`
-        );
-
-        yield* sendSSE(
-          "INFO",
-          "Plugin Elementor Pro agendado para instalação/ativação."
-        );
-
-        yield* sendSSE("INFO", "Iniciando instalação do certificado SSL...");
-        for await (const step of installCertificate(domainName)) {
-          if (step === 1) {
-            yield* sendSSE(
-              "INFO",
-              "Certificado gerado com sucesso, iniciando instalação..."
+        await Promise.all([
+          ...pluginsArray.map((plugin) => {
+            pleskApi.wordpress.callWp(
+              `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install ${plugin} --activate`
             );
-          } else if (step === 2) {
-            yield* sendSSE("INFO", "Certificado instalado com sucesso.");
-            break;
-          }
-        }
+          }),
+          pleskApi.wordpress.callWp(
+            `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install elementor --activate`
+          ),
+          pleskApi.wordpress.addPluginToWebsite(
+            +stdOut["instance-id"],
+            ELEMENTOR_PRO_PLUGIN_ID
+          ),
+        ]);
 
         const userLogger = new AppLogger(user);
         userLogger.log({

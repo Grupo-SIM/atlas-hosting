@@ -19,7 +19,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"; // Assuming this is your correct path
 import { cn, toBrl } from "@/lib/utils";
-import type { DomainPriceInfo } from "@/app/(auth)/domains/register/page"; // Adjust path if types moved
 import {
   Card,
   CardContent,
@@ -28,6 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import type { DomainPriceInfo } from "@/app/(auth)/domains/register/types";
 
 const ITEMS_PER_TLD_PAGE = 10; // Or make this a prop
 

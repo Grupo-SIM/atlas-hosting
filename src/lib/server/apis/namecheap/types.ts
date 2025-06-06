@@ -7,7 +7,7 @@ export interface RawNamecheapApiResponse<TCommandResponseContent> {
   ApiResponse: {
     $: { Status: "OK" | "ERROR"; xmlns: string };
     Errors: Array<{ Error?: NamecheapRawErrorDetails[] } | string>;
-    Warnings: any;
+    Warnings: unknown;
     RequestedCommand: string[];
     CommandResponse: Array<{ $: { Type: string } } & TCommandResponseContent>;
     Server: string[];
@@ -249,14 +249,6 @@ export interface RawDomainsGetTldListCommandResponseContent {
       _: string;
     }>;
   }>;
-}
-
-export interface UsersGetPricingUserParams {
-  ProductType: UsersGetPricingProductType;
-  ProductCategory?: string;
-  ProductName?: string;
-  ActionName?: UsersGetPricingActionName;
-  PromotionCode?: string;
 }
 
 export type UsersGetPricingProductType =
@@ -563,7 +555,7 @@ export interface RawNamecheapApiResponse<TCommandResponseContent> {
   ApiResponse: {
     $: { Status: "OK" | "ERROR"; xmlns: string };
     Errors: Array<{ Error?: NamecheapRawErrorDetails[] } | string>;
-    Warnings: any;
+    Warnings: unknown;
     RequestedCommand: string[];
     CommandResponse: Array<{ $: { Type: string } } & TCommandResponseContent>;
     Server: string[];

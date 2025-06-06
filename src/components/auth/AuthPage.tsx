@@ -2,6 +2,9 @@ import Link from "next/link";
 import AtlasLogo from "@/assets/atlas.svg";
 import type { PropsWithChildren } from "react";
 import { FaBolt, FaLock, FaHeadset } from "react-icons/fa6";
+import GithubAuthButton from "@/components/auth/GithubAuthButton";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
+import { signInWithGithub } from "@/app/actions";
 
 export default function AuthPage({
   title,
@@ -87,6 +90,10 @@ export default function AuthPage({
             <p className="text-muted-foreground mt-2">{subtitle}</p>
           </div>
           {children}
+          <div className="grid grid-cols-2 gap-4">
+            <GithubAuthButton action={signInWithGithub} />
+            <GoogleAuthButton />
+          </div>
           <div className="mt-8 text-center">
             <p className="text-muted-foreground">
               {switchTitle}{" "}

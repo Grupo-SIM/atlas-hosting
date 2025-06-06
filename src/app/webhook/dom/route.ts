@@ -84,14 +84,14 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
     return;
   }
 
-  const invoice = await db
-    .update(pgInvoice)
-    .set({
-      status: "paid",
-    })
-    .where(eq(pgInvoice.id, invoiceId))
-    .returning()
-    .then((result) => result[0]);
+  const invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, invoiceId),
+  });
+
+  if (!invoice) {
+    console.error("Invoice not found in the database.", invoiceId);
+    return;
+  }
 
   if (invoice.type === "subscription") {
     await db
@@ -101,6 +101,13 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
       })
       .where(eq(pgOrganization.id, invoice.orgId))
       .returning();
+
+    await db
+      .update(pgInvoice)
+      .set({
+        status: "paid",
+      })
+      .where(eq(pgInvoice.id, invoiceId));
     return;
   }
 
@@ -111,11 +118,11 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
       throw new Error("Nome do domínio é obrigatório.");
     }
 
-    const yearsToRegister = 1;
-    const registrationPrice = invoice.amount;
+    const yearsToRegister = Number.parseInt(invoice.metadata.years ?? "1");
+    const whoisGuard = invoice.metadata.whoisguard === "on";
 
     const user = await db.query.pgUser.findFirst({
-      where: eq(pgUser.id, invoice.orgId),
+      where: eq(pgUser.organizationId, invoice.orgId),
     });
 
     if (!user || !user.email) {
@@ -131,8 +138,8 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
       Admin: adminNamecheapDetails,
       Tech: adminNamecheapDetails,
       AuxBilling: adminNamecheapDetails,
-      AddFreeWhoisguard: "yes",
-      WGEnabled: "yes",
+      AddFreeWhoisguard: whoisGuard ? "yes" : "no",
+      WGEnabled: whoisGuard ? "yes" : "no",
     };
 
     try {
@@ -147,6 +154,13 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
         domain: domainName,
         organizationId: invoice.orgId,
       });
+
+      await db
+        .update(pgInvoice)
+        .set({
+          status: "paid",
+        })
+        .where(eq(pgInvoice.id, invoiceId));
 
       console.log("Namecheap registration result:", registrationResult);
 
@@ -246,7 +260,7 @@ export async function POST(request: Request) {
         details = payload.data;
         break;
       case "CHARGE-APPROVED":
-        await onInvoicePaid(payload.data);
+        // await onInvoicePaid(payload.data);
         actionTaken = "Processamento de pagamento de fatura iniciado.";
         details = payload.data;
         actionTaken = "Evento CHARGE-APPROVED recebido e processado.";

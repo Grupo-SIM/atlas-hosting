@@ -1,3 +1,4 @@
+import type { DomainPageParams } from "@/app/(auth)/domains/register/types";
 import { relations } from "drizzle-orm";
 import {
   doublePrecision,
@@ -7,8 +8,13 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { pgUser } from "./user";
 import { pgOrganization } from "./organization";
+import { pgUser } from "./user";
+
+export const defaultDomainRegisterOptions: DomainRegisterInvoiceOptions = {
+  years: "1",
+  whoisguard: "true",
+};
 
 export const pgInvoice = pgTable("invoices", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -24,7 +30,10 @@ export const pgInvoice = pgTable("invoices", {
   status: text("status", {
     enum: ["pending", "paid", "failed", "processing"],
   }).notNull(),
-  metadata: json("metadata").$type<Record<string, string>>().default({}).notNull(),
+  metadata: json("metadata")
+    .$type<DomainRegisterInvoiceOptions>()
+    .default(defaultDomainRegisterOptions)
+    .notNull(),
   dueDate: timestamp("due_date", { mode: "date" }).notNull(),
   currency: text("currency").default("BRL").notNull(), // Added currency, defaulting to BRL
   description: text("description"), // Added description, optional
@@ -46,3 +55,8 @@ export const invoiceRelations = relations(pgInvoice, ({ one }) => ({
 export type Invoice = typeof pgInvoice.$inferSelect;
 export type InvoiceInsert = typeof pgInvoice.$inferInsert;
 export type InvoiceSelect = typeof pgInvoice.$inferSelect;
+
+export type DomainRegisterInvoiceOptions = Pick<
+  DomainPageParams,
+  "whoisguard" | "years"
+>;

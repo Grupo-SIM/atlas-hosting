@@ -26,18 +26,19 @@ import { Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
+import { createDomainInvoice } from "@/app/actions";
 import { db } from "@/lib/db";
 import { pgDomainPricingCache } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import { inArray } from "drizzle-orm";
 import RegisterDomainSearch from "./components/RegisterDomainSearch";
 import type {
-  DomainData,
   DomainPageParams,
   DomainPriceInfo,
   DomainPriceInfoFromDb,
 } from "./types";
 import { getDomainData, popularExtensions } from "./utils";
+import { redirect } from "next/navigation";
 
 export default async function DomainsPage({
   searchParams: searchParamsProp,
@@ -45,8 +46,8 @@ export default async function DomainsPage({
   searchParams: Promise<DomainPageParams>;
 }) {
   const resolvedSearchParams = await searchParamsProp;
-  const searchQuery = resolvedSearchParams.search
-    ? String(resolvedSearchParams.search).trim()
+  const searchQuery = resolvedSearchParams.domain
+    ? String(resolvedSearchParams.domain).trim()
     : "";
 
   let isError = false;
@@ -56,35 +57,40 @@ export default async function DomainsPage({
   );
 
   const domainDataPromise = (async () => {
-    return new Promise<DomainData | null>((resolve, reject) => {
-      if (!searchQuery || searchQuery.trim() === "") {
-        isError = false;
-        resolve(null);
-        return;
-      }
+    if (!searchQuery || searchQuery.trim() === "") {
+      isError = false;
+      return null;
+    }
 
-      try {
-        return getDomainData(searchQuery);
-      } catch (err) {
-        if (
-          err instanceof Error &&
-          err.message.includes("pricing_unavailable")
-        ) {
-          isError = true;
-          reject(err);
-        }
+    try {
+      return getDomainData(searchQuery);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("pricing_unavailable")) {
         isError = true;
-        resolve(null);
+        throw err;
       }
+      isError = true;
+      return null;
+    }
+  })();
+
+  if (resolvedSearchParams.confirm) {
+    const redirectUrl = await createDomainInvoice({
+      whoisguard: resolvedSearchParams.whoisguard,
+      domain: searchQuery,
+      years: resolvedSearchParams.years ?? "1",
     });
-  })().catch((err) => {
-    throw err;
-  });
+
+    if (redirectUrl) {
+      redirect(redirectUrl);
+    }
+
+    isError = true;
+  }
 
   return (
-    <div className="p-6 space-y-8 h-full max-h-full">
-      {/* Hero Section */}
-      <div className="max-w-3xl mx-auto text-center space-y-4">
+    <div className="p-6 space-y-8 h-full max-h-full max-w-4xl mx-auto">
+      <div className="text-center space-y-4">
         <h1 className="text-3xl font-bold">Compre um Novo Domínio</h1>
 
         <div className="inline-flex rounded-full p-1 bg-white dark:bg-accent w-full max-w-2xl">
@@ -102,7 +108,7 @@ export default async function DomainsPage({
           descubra se ele está disponível!
         </p>
 
-        <RegisterDomainSearch />
+        <RegisterDomainSearch domain={resolvedSearchParams.domain} />
       </div>
 
       <DomainExtensionsGrid
@@ -165,7 +171,12 @@ export default async function DomainsPage({
                     />
                   }
                 >
-                  <DomainResult searchParams={resolvedSearchParams} />
+                  <DomainResult
+                    searchParams={{
+                      ...resolvedSearchParams,
+                      domain: searchQuery,
+                    }}
+                  />
                 </Suspense>
               </TabsContent>
               <TabsContent value="suggestions">
@@ -178,12 +189,10 @@ export default async function DomainsPage({
                     />
                   }
                 >
-                  {!!resolvedSearchParams.error && (
-                    <DomainSuggestions
-                      domainDataPromise={domainDataPromise}
-                      searchQuery={searchQuery}
-                    />
-                  )}
+                  <DomainSuggestions
+                    domainDataPromise={domainDataPromise}
+                    searchQuery={searchQuery}
+                  />
                 </Suspense>
               </TabsContent>
             </Tabs>

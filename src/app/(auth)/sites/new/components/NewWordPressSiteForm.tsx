@@ -33,34 +33,6 @@ import type {
 } from "@/lib/server/apis/namecheap/types";
 import Link from "next/link";
 
-const recommendedPlugins = [
-  {
-    id: "woocommerce",
-    label: "WooCommerce - eCommerce Platform",
-    description: "Add a complete online store to your site",
-  },
-  {
-    id: "yoast",
-    label: "Yoast SEO - Search Engine Optimization",
-    description: "Improve your site's visibility in search engines",
-  },
-  {
-    id: "elementor",
-    label: "Elementor - Page Builder",
-    description: "Create beautiful pages with drag & drop",
-  },
-  {
-    id: "wpforms",
-    label: "WPForms Lite - Contact Forms",
-    description: "Add professional contact forms easily",
-  },
-  {
-    id: "wordfence",
-    label: "Wordfence Security",
-    description: "Protect your site with advanced security features",
-  },
-];
-
 interface FormData {
   domain: string;
   siteName: string;
@@ -143,8 +115,18 @@ export function NewWordPressSiteForm({
     if (eventSource.current) {
       eventSource.current.close();
     }
+
+    const searchParams = new URLSearchParams({
+      domain: formData.domain,
+      admin_username: formData.adminUsername,
+      admin_password: formData.adminPassword,
+      site_name: formData.siteName,
+      admin_email: formData.adminEmail,
+      plugins: formData.selectedPlugins.join(","),
+    });
+
     // TODO: Add selectedPlugins to the API call if the backend supports it
-    const apiUrl = `/api/wp-install?domain=${formData.domain}&admin_username=${formData.adminUsername}&admin_password=${encodeURIComponent(formData.adminPassword)}&site_name=${encodeURIComponent(formData.siteName)}&admin_email=${encodeURIComponent(formData.adminEmail)}`;
+    const apiUrl = `/api/wp-install-w?${searchParams.toString()}`;
 
     eventSource.current = new EventSource(apiUrl);
 
@@ -601,3 +583,55 @@ export function NewWordPressSiteForm({
     </>
   );
 }
+
+export enum WordPressPlugins {
+  WooCommerce = "ommerce",
+  YoastSEO = "yoast-seo",
+  Askimet = "akismet",
+  WPForms = "wpforms-lite",
+  LiteSpeedCache = "litespeed-cache",
+  WPOptimize = "wp-optimize",
+  ReallySimpleSsl = "really-simple-ssl",
+}
+
+const recommendedPlugins = [
+  {
+    id: WordPressPlugins.WooCommerce,
+    label: "WooCommerce - Plataforma de eCommerce",
+    description: "Adicione uma loja online completa ao seu site",
+  },
+  {
+    id: WordPressPlugins.Askimet,
+    label: "Askimet",
+    description:
+      "o melhor proteção contra spam para bloquear comentários de spam e spam em um formulário de contato. A solução antispam mais confiável para WordPress e WooCommerce.",
+  },
+  {
+    id: WordPressPlugins.YoastSEO,
+    label: "Yoast SEO - Otimização para Motores de Busca",
+    description: "Melhore a visibilidade do seu site nos motores de busca",
+  },
+  {
+    id: WordPressPlugins.WPForms,
+    label: "WPForms Lite - Formulários de Contato",
+    description: "Adicione formulários de contato profissionais facilmente",
+  },
+  {
+    id: WordPressPlugins.ReallySimpleSsl,
+    label: "Really Simple SSL",
+    description:
+      "Melhore a segurança do seu site com Autenticação de Dois Fatores (2FA), Proteção de Login, Detecção de Vulnerabilidades e certificado SSL.",
+  },
+  {
+    id: WordPressPlugins.LiteSpeedCache,
+    label: "LiteSpeed Cache",
+    description:
+      "Aceleração imbatível e melhoria de PageSpeed: cache, otimização de imagem/CSS/JS.",
+  },
+  {
+    id: WordPressPlugins.WPOptimize,
+    label: "WP Optimize",
+    description:
+      "Melhore o desempenho do seu site com otimização de banco de dados e cache.",
+  },
+];

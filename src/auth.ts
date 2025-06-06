@@ -31,4 +31,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
     Github,
   ],
+  session: {
+    strategy: "database",
+  },
 });

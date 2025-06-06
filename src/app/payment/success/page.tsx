@@ -6,9 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { FaMoneyBillTransfer } from "react-icons/fa6";
+import Countdown from "./components/Countdown";
 
 export default function PaymentSuccessPage() {
   return (
@@ -22,7 +21,7 @@ export default function PaymentSuccessPage() {
             Pagamento Enviado!
           </CardTitle>
           <CardDescription className="mt-2 text-gray-600 dark:text-gray-400">
-            Seu pagamento foi enviado e está sendo processado.
+            Seu pagamento foi enviado e está sendo processado. Isso pode levar alguns instantes.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -32,9 +31,7 @@ export default function PaymentSuccessPage() {
           </p>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <Button asChild={true}>
-            <Link href="/">Voltar para a Página Inicial</Link>
-          </Button>
+          <Countdown />
         </CardFooter>
       </Card>
     </div>

@@ -63,6 +63,7 @@ export async function validateSessionToken(token: string) {
           domainAccess: true,
           referrer: true,
           referredUsers: true,
+          sessions: true,
         },
       },
     },
@@ -94,9 +95,6 @@ export async function validateSessionToken(token: string) {
 }
 
 export async function validateSession(sessionToken?: string) {
-  "use cache";
-  cacheTag("session-validate");
-
   if (!sessionToken) {
     return { session: null, user: null };
   }
@@ -212,7 +210,7 @@ export async function createUserForOrganization(
     const logger = new AppLogger(user);
     logger.log({
       title: "Usuário criado",
-      description: `Usuário ${newUser[0].name} (${newUser[0].email}) foi criado na organização ${user.organization.name}.`,
+      description: `Usuário ${newUser[0].name} (${newUser[0].email}) foi criado na organização ${user.organization?.name ?? "Sem Nome"}.`,
       type: "account",
       severity: "info",
     });
@@ -261,8 +259,6 @@ export type SessionValidationResult =
 export async function getUser(): Promise<User> {
   const session = await auth();
 
-  console.log({ session });
-
   if (session?.user?.id) {
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, session.user.id),
@@ -282,19 +278,32 @@ export async function getUser(): Promise<User> {
       },
     });
 
-    return user;
+    if (!user) {
+      redirect("/login");
+    }
+
+    const { organization } = user;
+
+    if (!organization) {
+      redirect("/newuser");
+    }
+
+    user.organization = organization;
+
+    return user as User;
   }
 
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("session_token")?.value;
 
   const { user } = await validateSession(sessionToken);
+  invalidateSession(sessionToken as string);
 
   if (!user) {
     redirect("/login");
   }
 
-  return user;
+  return user as User;
 }
 
 export interface UserWithLogger extends User {

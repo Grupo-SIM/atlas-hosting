@@ -3,17 +3,83 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter, // Added CardFooter
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button"; // Added Button
 import { getUser } from "@/lib/auth";
 import { getUserDomains } from "@/lib/server/utils";
+import Link from "next/link"; // Added Link
 import { Suspense } from "react";
 import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm"; // Updated import
-import { cookies } from "next/headers";
+import { AlertTriangle } from "lucide-react"; // Corrected duplicate import
 
 export default async function NewSitePageContainer() {
   const user = await getUser();
+
+  if (!user.organization.plan) {
+    return (
+      <div className="space-y-6 p-6 pb-16 max-w-2xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-6 h-6 text-yellow-500" />
+              <span>Assinatura Necessária</span>
+            </CardTitle>
+            <CardDescription>
+              Para criar um novo site, é necessário ter uma assinatura ativa.
+              Explore nossos planos e escolha o que melhor se adapta às suas
+              necessidades para desbloquear este recurso.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Link href="/plans" passHref className="ml-auto">
+              <Button>Ver Planos</Button>
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  if (user.organization.plan.maxSites === user.organization.domains.length) {
+    const isElitePlan = user.organization.plan.name === "Elite";
+    return (
+      <div className="space-y-6 p-6 pb-16 max-w-2xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-6 h-6 text-yellow-500" />
+              <span>
+                {isElitePlan
+                  ? "Limite Máximo de Sites Atingido"
+                  : "Limite de Sites do Plano Atingido"}
+              </span>
+            </CardTitle>
+            <CardDescription>
+              {isElitePlan
+                ? "Você atingiu o número máximo de sites permitido, mesmo no plano Elite. Para adicionar mais sites, por favor, entre em contato com o suporte. Você pode gerenciar seus sites existentes ou sua assinatura."
+                : `Você utilizou todos os ${user.organization.plan.maxSites} sites disponíveis no seu plano atual (${user.organization.plan.name}). Para criar mais sites, por favor, faça um upgrade do seu plano.`}
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            {isElitePlan ? (
+              <div className="flex gap-2">
+                <Link href="/plans" passHref className="ml-auto">
+                  <Button variant="outline">Gerenciar Sites</Button>
+                </Link>
+              </div>
+            ) : (
+              <Link href="/plans" passHref>
+                <Button>Fazer Upgrade do Plano</Button>
+              </Link>
+            )}
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

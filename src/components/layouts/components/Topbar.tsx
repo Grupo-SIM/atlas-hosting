@@ -33,9 +33,8 @@ export default function Topbar({
 }: PropsWithChildren<{
   user: Pick<User, "name" | "email"> & { organization: Organization };
 }>) {
-  console.log({user})
   return (
-    <header className="h-16 bg-card border-b flex items-center justify-between px-6">
+    <header className="h-16 bg-card flex items-center justify-between px-6">
       <h1 className="text-lg md:text-xl font-semibold">Painel</h1>
       <div className="flex items-center space-x-4">
         {children}

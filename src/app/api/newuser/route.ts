@@ -28,8 +28,6 @@ export async function GET() {
       })
       .returning();
 
-    console.log(user.id);
-
     await db
       .update(pgUser)
       .set({

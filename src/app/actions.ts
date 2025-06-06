@@ -9,6 +9,7 @@ import {
   createUser,
   generateSessionToken,
   getUser,
+  invalidateSession,
 } from "@/lib/auth/index";
 import pleskApi from "@/lib/server/apis/plesk";
 import { ClientRequestTypeEnum } from "@/plesk";
@@ -27,14 +28,15 @@ import {
 } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
-import namecheapApi from "@/lib/server/apis/namecheap";
+import namecheapApi, { getDomainPricing } from "@/lib/server/apis/namecheap";
 import axios from "axios";
 import { eq } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import ip2Location from "@/lib/server/apis/ip2location";
 import ipaddrJs from "ipaddr.js";
-import { signIn, signOut } from "@/auth";
+import { auth, signIn, signOut } from "@/auth";
 import { AppLogger } from "@/lib/server/logs";
+import type { DomainPageParams } from "./(auth)/domains/register/types";
 
 export async function login(
   prevState: unknown,
@@ -185,17 +187,20 @@ export async function signup(
 }
 
 export async function logout(): Promise<void> {
+  const a = await auth();
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("session_token")?.value;
+
+  await signOut({
+    redirectTo: "/login",
+    redirect: true
+  });
 
   if (sessionToken) {
     await db.delete(pgSession).where(eq(pgSession.id, sessionToken));
     cookieStore.delete("session_token");
   }
 
-  revalidateTag("session-validate");
-  await signOut();
-  
   redirect("/");
 }
 
@@ -339,20 +344,25 @@ export async function createPlanInvoice(
   };
 }
 
-export async function createDomainInvoice(
-  domain: string
-): Promise<ActionResponse> {
+export async function createDomainInvoice({
+  domain,
+  years,
+  whoisguard,
+}: DomainPageParams) {
+  "use server";
+
+  if (!domain || !years) {
+    return;
+  }
+
   const user = await getUser();
 
   if (!user) {
-    return {
-      status: "error",
-      message: "Usuário não autenticado. Faça login para continuar.",
-    };
+    return;
   }
 
   if (!domain) {
-    return { status: "error", message: "Domínio é obrigatório." };
+    return;
   }
 
   let redirectUrl: string | null = null;
@@ -367,24 +377,37 @@ export async function createDomainInvoice(
     const isAvailable = namecheapResult.Available;
 
     if (!isAvailable) {
-      return { status: "error", message: "Domínio indisponível." };
+      return;
     }
 
-    const price = await db.query.pgDomainPricingCache.findFirst({
-      where: eq(pgDomainPricingCache.tld, domain.split(".").pop() ?? ""),
-    });
+    const pricesInfo = await getDomainPricing(domain.split(".").pop() as string);
+    const priceInfo = pricesInfo.Prices.find((p) => p.Duration === +years && p.DurationType === "YEAR");
 
-    if (!price || !price.price) {
-      return { status: "error", message: "Erro ao obter preço do domínio." };
+    if (!priceInfo) {
+      return;
     }
 
-    const domainPrice = price.price;
+    let priceInBrl = priceInfo.Price;
 
-    const priceInBrl = await currencyConversion.convert({
-      from: "usd",
-      to: "brl",
-      amount: domainPrice,
-    });
+    // Pode vir em USD, pode vir em BRL (?)
+    if (priceInfo.Currency.toUpperCase() !== "BRL") {
+      priceInBrl = await currencyConversion.convert({
+        from: priceInfo.Currency.toLowerCase(),
+        to: "brl",
+        amount: priceInfo.Price,
+      });
+    }
+
+    const fee =
+      1 + ((await db.query.pgSystemConfig.findFirst())?.domainFee ?? 1);
+
+    priceInBrl *= fee;
+
+    console.log({ whoisguard })
+    if (whoisguard) {
+      priceInBrl += 3;
+    }
+    console.log({ priceInBrl })
 
     const [newInvoice] = await db
       .insert(pgInvoice)
@@ -396,6 +419,10 @@ export async function createDomainInvoice(
         amount: priceInBrl,
         status: "pending",
         dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+        metadata: {
+          years,
+          whoisguard,
+        },
       })
       .returning();
 
@@ -404,30 +431,16 @@ export async function createDomainInvoice(
         "Falha ao criar a fatura ou obter o ID de retorno do banco de dados.",
         newInvoice
       );
-      return {
-        status: "error",
-        message: "Erro ao criar fatura. Tente novamente.",
-      };
+      return;
     }
 
     redirectUrl = `/checkout/${newInvoice.id}`;
   } catch (error) {
     console.error("Erro ao criar fatura do domínio:", error);
-    return {
-      status: "error",
-      message:
-        "Erro interno ao processar o pedido. Por favor, tente mais tarde.",
-    };
+    return;
   }
 
-  if (redirectUrl) {
-    redirect(redirectUrl);
-  }
-
-  return {
-    status: "error",
-    message: "Erro ao processar o pedido. Por favor, tente mais tarde.",
-  };
+  return redirectUrl;
 }
 
 export async function completeCheckout(
@@ -450,9 +463,15 @@ export async function completeCheckout(
     return { status: "error", message: "ID da fatura é obrigatório." };
   }
 
-  const invoice = await db.query.pgInvoice.findFirst({
-    where: eq(pgInvoice.id, invoiceId),
-  });
+  const invoice = await db
+    .update(pgInvoice)
+    .set({
+      status: "processing",
+    })
+    .where(eq(pgInvoice.id, invoiceId))
+    .returning()
+    .execute()
+    .then((r) => r[0]);
 
   if (!invoice) {
     return { status: "error", message: "Fatura não encontrada." };
@@ -943,6 +962,8 @@ export async function deleteWordPressInstances(
         await pleskApi.wordpress.uninstallWp(id);
       })
     );
+
+    revalidatePath("/sites");
 
     return { status: "success", message: "Sites excluídos com sucesso" };
   } catch (error) {

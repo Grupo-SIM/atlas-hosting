@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { type Invoice, pgInvoice } from "@/lib/db/schema";
+import { type Invoice, pgInvoice, pgPlan } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
 import clsx from "clsx";
 import { desc, eq } from "drizzle-orm";
+import { groupBy } from "lodash";
 import { CreditCard, FileText } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -65,12 +66,27 @@ export default async function BillingPage() {
 
   // Assumes invoiceTable has fields: id, userId, amount, status, createdAt, reference, type
   // Adjust field names (e.g., invoiceTable.user_id) if your schema differs.
-  const userInvoices = organizationId
+  const _userInvoices = organizationId
     ? await db.query.pgInvoice.findMany({
         where: eq(pgInvoice.orgId, organizationId),
         orderBy: [desc(pgInvoice.updatedAt)],
       })
     : [];
+
+  const plans = groupBy(await db.query.pgPlan.findMany(), "id");
+
+  const userInvoices = _userInvoices.map((invoice) => {
+    if (invoice.type === "domain") {
+      return invoice;
+    }
+
+    const plan = plans[invoice.reference][0];
+
+    return {
+      ...invoice,
+      reference: plan ? plan.name : invoice.reference,
+    };
+  });
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -99,7 +115,7 @@ export default async function BillingPage() {
               <Card key={invoice.id} className="overflow-hidden shadow-md">
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 !py-4 !px-6 bg-muted/50 sm:items-center">
                   <div>
-                    <CardTitle className="text-2xl font-semibold">
+                    <CardTitle className="text-xl font-medium">
                       Fatura #{invoice.id.substring(0, 8).toUpperCase()}
                     </CardTitle>
                   </div>

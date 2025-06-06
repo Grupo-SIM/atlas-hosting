@@ -29,7 +29,7 @@ export default function RegisterDomainForm({
     <Form action="/domains/register" className="flex items-center gap-2">
       <input
         type="hidden"
-        name="search"
+        name="domain"
         value={domainData.domain.domain}
         readOnly={true}
       />

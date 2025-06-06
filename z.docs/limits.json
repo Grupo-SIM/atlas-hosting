@@ -1,0 +1,307 @@
+{
+    "status": "ok",
+    "filter-id": "lucasgarrafielo.xyz",
+    "id": 367,
+    "descriptor": {
+        "property": [
+            {
+                "name": "max_site",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Domains",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "max_subdom",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Subdomains",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "max_dom_aliases",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Domain aliases",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "disk_space",
+                "type": "bytes",
+                "writable-by": "admin",
+                "label": "Disk space",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "disk_space_soft",
+                "type": "bytes",
+                "writable-by": "admin",
+                "label": "Notify when disk space usage reaches",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "max_traffic",
+                "type": "bytes",
+                "writable-by": "admin",
+                "label": "Traffic",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "max_traffic_soft",
+                "type": "bytes",
+                "writable-by": "admin",
+                "label": "Notify when traffic usage reaches",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "max_wu",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Web users",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "max_subftp_users",
+                "type": "int",
+                "default-value": 0,
+                "writable-by": "admin",
+                "label": "Additional FTP accounts",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "max_db",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Databases",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "max_box",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Mailboxes",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "mbox_quota",
+                "type": "bytes",
+                "writable-by": "admin",
+                "label": "Mailbox size",
+                "extension": {
+                    "shared": true
+                }
+            },
+            {
+                "name": "max_maillists",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Mailing lists",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "expiration",
+                "type": "date",
+                "writable-by": "admin",
+                "label": "Expiration date",
+                "extension": {
+                    "shared": true
+                }
+            },
+            {
+                "name": "expiration_soft",
+                "type": "date",
+                "writable-by": "admin",
+                "label": "Notify when the expiration date reaches",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_cpu_usage",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Maximum CPU usage",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_cpu_usage_soft",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Notify when CPU usage reaches this value",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_ram_usage",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Maximum RAM usage",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_ram_usage_soft",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Notify when RAM usage reaches this value",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_disk_read_usage",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Maximum Disk Read usage",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_disk_read_usage_soft",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Notify when Disk Read usage reaches this value",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_disk_write_usage",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Maximum Disk Write usage",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_disk_write_usage_soft",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Notify when Disk Write usage reaches this value",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_cpu_period",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Period to check CPU usage",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_ram_period",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Period to check RAM usage",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_disk_read_period",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Period to check Disk Read speed usage",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "cgroups_disk_write_period",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Period to check Disk Write speed usage",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "ext_limit_wp_toolkit_wp_instances",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "WordPress Websites",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "ext_limit_wp_toolkit_wp_backups",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "WordPress Backups",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "ext_limit_wp_toolkit_smart_update_instances",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "WordPress websites with Smart Update",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "ext_limit_wp_toolkit_virtual_patches_instances",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "WordPress websites with vulnerability protection",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "ext_limit_xovi_max_keywords",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Rank Tracker crawls",
+                "extension": {
+                    "shared": false
+                }
+            },
+            {
+                "name": "ext_limit_baqend_domains",
+                "type": "int",
+                "writable-by": "admin",
+                "label": "Speed Kit domains",
+                "extension": {
+                    "shared": false
+                }
+            }
+        ]
+    }
+}

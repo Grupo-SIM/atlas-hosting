@@ -1,9 +1,5 @@
+import type { DomainRegisterInvoiceOptions } from "@/lib/db/schema/tables/invoice";
 import type { Metadata } from "next";
-import { namecheapApi } from "@/lib/server/apis/namecheap";
-import { DomainsCheckCleanedResponse } from "@/lib/server/apis/namecheap/types";
-import { cache } from "react";
-import { DomainPricing } from "@/lib/db/schema";
-import currencyConversion from "@/lib/server/apis/currency";
 
 // Types remain the same
 export type DomainPriceInfo = {
@@ -47,9 +43,9 @@ export type DomainData = {
 } | null;
 
 export interface DomainPageParams {
-  search?: string;
-  confirm?: string;
+  whoisguard?: string;
   years?: string;
-  whois?: string;
-  autoRenew?: string;
+  domain?: string;
+  confirm?: string;
+  action?: "search"
 }

@@ -3,6 +3,7 @@ import { namecheapApi } from "@/lib/server/apis/namecheap";
 import type { DnsHostRecordItem } from "@/lib/server/apis/namecheap/types";
 import { unstable_cache } from "next/cache"; // Or 'next/cache' for newer Next.js versions
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
+import { cache } from "react";
 
 /**
  * Parses a domain name into its SLD (Second Level Domain) and TLD (Top Level Domain) parts
@@ -88,11 +89,9 @@ export interface CachedDnsData {
   isUsingOurDNS: boolean;
 }
 
-export async function getCachedDnsRecords(
+export const getCachedDnsRecords = cache(async function getCachedDnsRecords(
   domainName: string
 ): Promise<CachedDnsData> {
-  "use cache";
-  cacheTag("dns-records", domainName);
 
   const { sld, tld } = parseDomainForSldTld(domainName);
   try {
@@ -112,4 +111,4 @@ export async function getCachedDnsRecords(
     // The error from namecheapApi._makeRequest should be descriptive enough.
     throw error;
   }
-}
+});

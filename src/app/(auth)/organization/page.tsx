@@ -24,7 +24,7 @@ export default async function OrganizationPage({
       },
     })
     .from(pgLog)
-    .where(and(eq(pgUser.organizationId, user.organizationId)))
+    .where(and(eq(pgUser.organizationId, user.organizationId ?? "")))
     .orderBy(desc(pgLog.createdAt))
     .innerJoin(pgUser, eq(pgLog.userId, pgUser.id))
     .limit(10);
@@ -33,7 +33,7 @@ export default async function OrganizationPage({
     <div className="p-6 space-y-6">
       <OrganizationHeaderActions
         organizationName={user.organization.name}
-        organizationId={user.organizationId}
+        organizationId={user.organizationId ?? ""}
         dialogOpen={params.action === "createMember"}
         searchParams={params}
       />

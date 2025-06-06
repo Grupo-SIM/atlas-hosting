@@ -84,12 +84,9 @@ export const getUserWordPressSites = cache(async function getUserWordPressSites(
 });
 
 // Function to get domains and check if WordPress is installed (already in your existing page.tsx, adapted slightly)
-export async function getUserDomains(
+export const getUserDomains = cache(async function getUserDomains(
   user: User
 ): Promise<(DomainsGetInfoCleanedResponse & { inPlesk: boolean })[]> {
-  "use cache";
-  cacheTag("user-domains");
-
   try {
     const allDomains = await Promise.all(
       user.organization.domains.map(async (domain) => {
@@ -133,9 +130,9 @@ export async function getUserDomains(
     console.error("Exception fetching/processing Namecheap domains:", error);
     return [];
   }
-}
+});
 
-export async function getUserCurrentDomain(
+export const getUserCurrentDomain = cache(async function getUserCurrentDomain(
   user: User
 ): Promise<DomainsGetInfoCleanedResponse | null> {
   const domains = await getUserDomains(user);
@@ -153,7 +150,7 @@ export async function getUserCurrentDomain(
   }
 
   return domain;
-}
+});
 
 async function _getUserCurrentDomain(
   user: User,
@@ -161,9 +158,6 @@ async function _getUserCurrentDomain(
     inPlesk: boolean;
   })[]
 ): Promise<DomainsGetInfoCleanedResponse | null> {
-  "use cache";
-  cacheTag("current-domain");
-
   if (!user.selectedDomain) {
     return null;
   }

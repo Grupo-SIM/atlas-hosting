@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -15,8 +14,9 @@ const nextConfig = {
   },
   experimental: {
     nodeMiddleware: true,
-    dynamicIO: true,
+    useCache: true,
   },
+
 };
 
 module.exports = nextConfig;

@@ -1,133 +1,107 @@
-"use client";
-
-import { Button } from "@/components/ui/button";
+import { getUser } from "@/lib/auth";
+import { cn } from "@/lib/utils";
+import { TooltipArrow, TooltipTrigger } from "@radix-ui/react-tooltip";
+import clsx from "clsx";
 import {
+  BookPlus,
   Building2,
   CreditCard,
   Globe,
   History,
+  HousePlus,
+  LucideBookMarked,
   Mail,
-  Plus,
-  Server,
-  Settings,
-  ShoppingCart,
+  ShieldCheck,
   Train as Transfer,
 } from "lucide-react";
 import Link from "next/link";
+import { FaTasks } from "react-icons/fa";
+import { Card, CardContent } from "../ui/card";
+import { Tooltip, TooltipContent, TooltipProvider } from "../ui/tooltip";
 
-export function QuickActions() {
-  const currentSite = "vemproclubedolivro.com";
+export async function QuickActions() {
+  const user = await getUser();
+
+  const canAdministrate = !!(
+    user.organization.planId && user.organization.domains
+  );
 
   return (
     <div className="grid gap-8">
-      {/* Sites Section */}
       <div>
         <h2 className="text-2xl font-semibold mb-6">Sites</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          <Button
-            variant="outline"
-            className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild={true}
-          >
-            <Link href="/plans">
-              <ShoppingCart className="h-10 w-10 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
-              <div className="space-y-2">
-                <span className="text-xl font-medium block">
-                  Comprar Plano de Hospedagem
-                </span>
-                <span className="text-sm text-muted-foreground block">
-                  Escolha o plano ideal para seu projeto
-                </span>
-              </div>
-            </Link>
-          </Button>
+          <QuickActionButton
+            Icon={FaTasks}
+            title="Planos de Hospedagem"
+            subtitle="Escolha o plano ideal para seu projeto"
+            href="/plans"
+            iconClassName="text-foreground"
+          />
 
-          <Button
-            variant="outline"
-            className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild={true}
-          >
-            <Link href="/organization">
-              <Building2 className="h-10 w-10 text-purple-500 mb-4 group-hover:scale-110 transition-transform" />
-              <div className="space-y-2">
-                <span className="text-xl font-medium block">Organização</span>
-                <span className="text-sm text-muted-foreground block">
-                  Administre as configurações de sua organização
-                </span>
-              </div>
-            </Link>
-          </Button>
+          <QuickActionButton
+            Icon={Building2}
+            title="Organização"
+            subtitle="Administre as configurações de sua organização"
+            href="/organization"
+            iconClassName="text-purple-500"
+          />
 
-          <Button
-            variant="outline"
-            className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild={true}
-          >
-            <Link href="/sites/new">
-              <Plus className="h-10 w-10 text-green-500 mb-4 group-hover:scale-110 transition-transform" />
-              <div className="space-y-2">
-                <span className="text-xl font-medium block">
-                  Adicionar Novo Site
-                </span>
-                <span className="text-sm text-muted-foreground block">
-                  Site atual: {currentSite}
-                </span>
-              </div>
-            </Link>
-          </Button>
+          <QuickActionButton
+            Icon={BookPlus}
+            title="Nova Instalação WordPress"
+            subtitle="Crie novas instalações apartir de seus domínios"
+            href="/sites/new"
+            iconClassName="text-green-600 dark:text-green-500"
+          />
 
-          <Button
-            variant="outline"
-            className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild={true}
-          >
-            <Link href="/email">
-              <Mail className="h-10 w-10 text-orange-500 mb-4 group-hover:scale-110 transition-transform" />
-              <div className="space-y-2">
-                <span className="text-xl font-medium block">Meu Email</span>
-                <span className="text-sm text-muted-foreground block">
-                  Acesse suas caixas de email
-                </span>
-              </div>
-            </Link>
-          </Button>
+          <QuickActionButton
+            Icon={Mail}
+            title="Meu Email"
+            subtitle="Acesse suas caixas de email"
+            href="/email"
+            iconClassName="text-orange-500"
+          />
 
-          <Button
-            variant="outline"
-            className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild={true}
-          >
-            {/* <Link href="/wordpress"> */}
-            <Link href="/sites">
-              <Settings className="h-10 w-10 text-indigo-500 mb-4 group-hover:scale-110 transition-transform" />
-              <div className="space-y-2">
-                <span className="text-xl font-medium block">
-                  Admin WordPress
-                </span>
-                <span className="text-sm text-muted-foreground block">
-                  Gerencie seu site WordPress
-                </span>
-              </div>
-            </Link>
-          </Button>
+          <QuickActionButton
+            Icon={LucideBookMarked}
+            title="Meus Sites"
+            subtitle="Gerencie seus sites WordPress"
+            href="/sites"
+            iconClassName="text-indigo-500"
+          />
 
-          <Button
-            variant="outline"
-            className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild={true}
-          >
-            <Link href="/cpanel">
-              <Settings className="h-10 w-10 text-red-500 mb-4 group-hover:scale-110 transition-transform" />
-              <div className="space-y-2">
-                <span className="text-xl font-medium block">
-                  Painel de Controle
-                </span>
-                <span className="text-sm text-muted-foreground block">
-                  Acesse o cPanel
-                </span>
-              </div>
-            </Link>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <QuickActionButton
+                  Icon={ShieldCheck}
+                  title="Acessar painel de administrador"
+                  subtitle={
+                    canAdministrate
+                      ? `Acesse o painel de administrador WordPress do site ${user.selectedDomain}`
+                      : "Adicione um plano ou compre um domínio para acessar esta área."
+                  }
+                  disabled={!canAdministrate}
+                  target="_blank"
+                  href={
+                    canAdministrate
+                      ? `https://www.${user.selectedDomain}/wp-admin`
+                      : "#"
+                  }
+                  iconClassName="text-red-500"
+                />
+              </TooltipTrigger>
+              <TooltipContent
+                hidden={canAdministrate}
+                align="center"
+                className="p-4"
+              >
+                Adicione um plano ou compre um domínio para acessar esta área.
+                <TooltipArrow className="fill-border" />
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -135,97 +109,97 @@ export function QuickActions() {
       <div>
         <h2 className="text-2xl font-semibold mb-6">Domínios</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          <Button
-            variant="outline"
-            className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild={true}
-          >
-            <Link href="/domains">
-              <Globe className="h-10 w-10 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
-              <div className="space-y-2">
-                <span className="text-xl font-medium block">Meus Domínios</span>
-                <span className="text-sm text-muted-foreground block">
-                  Gerencie seus domínios
-                </span>
-              </div>
-            </Link>
-          </Button>
+          <QuickActionButton
+            Icon={Globe}
+            title="Meus Domínios"
+            subtitle="Gerencie seus domínios"
+            href="/domains"
+            iconClassName="text-blue-500"
+          />
 
-          <Button
-            variant="outline"
-            className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild={true}
-          >
-            <Link href="/domains/register">
-              <ShoppingCart className="h-10 w-10 text-green-500 mb-4 group-hover:scale-110 transition-transform" />
-              <div className="space-y-2">
-                <span className="text-xl font-medium block">
-                  Comprar Novo Domínio
-                </span>
-                <span className="text-sm text-muted-foreground block">
-                  Registre um novo domínio
-                </span>
-              </div>
-            </Link>
-          </Button>
+          <QuickActionButton
+            Icon={HousePlus}
+            title="Novo Domínio"
+            subtitle="Registre um novo domínio"
+            href="/domains/register"
+            iconClassName="text-green-500"
+          />
 
-          <Button
-            variant="outline"
-            className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild={true}
-          >
-            <Link href="/dns">
-              <Transfer className="h-10 w-10 text-orange-500 mb-4 group-hover:scale-110 transition-transform" />
-              <div className="space-y-2">
-                <span className="text-xl font-medium block">Zona DNS</span>
-                <span className="text-sm text-muted-foreground block">
-                  Gerencie suas zonas DNS
-                </span>
-              </div>
-            </Link>
-          </Button>
+          <QuickActionButton
+            Icon={Transfer}
+            title="Zona DNS"
+            subtitle="Gerencie suas zonas DNS"
+            href="/dns"
+            iconClassName="text-orange-500"
+          />
         </div>
       </div>
 
-      {/* Billing Section */}
       <div>
         <h2 className="text-2xl font-semibold mb-6">Faturas</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Button
-            variant="outline"
-            className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild={true}
-          >
-            <Link href="/billing/subscriptions">
-              <CreditCard className="h-10 w-10 text-purple-500 mb-4 group-hover:scale-110 transition-transform" />
-              <div className="space-y-2">
-                <span className="text-xl font-medium block">Assinaturas</span>
-                <span className="text-sm text-muted-foreground block">
-                  Gerencie suas assinaturas
-                </span>
-              </div>
-            </Link>
-          </Button>
+          <QuickActionButton
+            Icon={CreditCard}
+            title="Assinaturas"
+            subtitle="Gerencie suas assinaturas"
+            href="/billing/subscriptions"
+            iconClassName="text-purple-500"
+          />
 
-          <Button
-            variant="outline"
-            className="h-auto p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group"
-            asChild={true}
-          >
-            <Link href="/billing/history">
-              <History className="h-10 w-10 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
-              <div className="space-y-2">
-                <span className="text-xl font-medium block">
-                  Histórico de Pagamento
-                </span>
-                <span className="text-sm text-muted-foreground block">
-                  Visualize seu histórico de pagamentos
-                </span>
-              </div>
-            </Link>
-          </Button>
+          <QuickActionButton
+            Icon={History}
+            title="Histórico de Pagamentos"
+            subtitle="Visualize seu histórico de pagamentos"
+            href="/billing"
+            iconClassName="text-blue-500"
+          />
         </div>
       </div>
     </div>
+  );
+}
+
+function QuickActionButton({
+  title,
+  subtitle,
+  href,
+  target,
+  disabled,
+  Icon,
+  iconClassName,
+}: {
+  title: string;
+  subtitle: string;
+  href: string;
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  iconClassName?: string;
+  disabled?: boolean;
+  target?: string;
+}) {
+  return (
+    <Link
+      target={target}
+      href={href}
+      className={cn("h-full block", {
+        "brigthness-80 opacity-20 pointer-events-none": !!disabled,
+      })}
+    >
+      <Card className="h-full shadow-none">
+        <CardContent className="h-full p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group">
+          <Icon
+            className={clsx([
+              "h-10 w-10 mb-4 group-hover:scale-110 transition-transform",
+              iconClassName,
+            ])}
+          />
+          <div className="space-y-2">
+            <span className="text-xl font-medium block">{title}</span>
+            <span className="text-sm text-muted-foreground block">
+              {subtitle}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }

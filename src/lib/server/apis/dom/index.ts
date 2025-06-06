@@ -2,18 +2,14 @@ import { db } from "@/lib/db";
 import { pgOrganization, pgUser } from "@/lib/db/schema";
 import axios, { type AxiosInstance } from "axios";
 import { eq } from "drizzle-orm";
+import jwt from "jsonwebtoken";
 import {
+  Receiver,
   type CreateClientParams,
   type CreateRecurrentPaymentParams,
   type CreateSubscriptionParams,
-  type PixKeyType,
-  type WithDrawFundsParams,
-  Receiver,
   type PayloadWebhook,
 } from "./types";
-import { signPayload } from "./signature";
-import jwt from "jsonwebtoken";
-import { getDay, getDaysInMonth, startOfToday } from "date-fns";
 
 export class DomApi {
   private api: AxiosInstance;
@@ -55,7 +51,7 @@ export class DomApi {
       throw new Error("User not found");
     }
 
-    let domId = user.organization.domId;
+    let domId = user.organization?.domId ?? "";
 
     if (!domId) {
       if (!newClient) {
@@ -69,7 +65,7 @@ export class DomApi {
         .set({
           domId: client.id,
         })
-        .where(eq(pgOrganization.id, user.organization.id));
+        .where(eq(pgOrganization.id, user.organization?.id ?? ""));
 
       domId = client.id;
     }
@@ -111,7 +107,7 @@ export class DomApi {
         frequency: 1,
       },
       cashback_active: true,
-      postbackurl: process.env.PUBLIC_URL + "/webhook/dom",
+      postbackurl: `${process.env.PUBLIC_URL}/webhook/dom`,
     };
 
     console.log(params);

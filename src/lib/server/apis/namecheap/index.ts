@@ -3,30 +3,43 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import axios, { type AxiosInstance, type AxiosResponse } from "axios";
+import { isString, uniq } from "lodash";
 import { parseStringPromise } from "xml2js";
 import type {
+  DnsHostRecordItem,
   DomainCheckResultItem,
+  DomainListItem,
   DomainsCheckCleanedResponse,
   DomainsCheckUserParams,
   DomainsCreateCleanedResponse,
   DomainsCreateUserParams,
+  DomainsDnsGetHostsCleanedResponse,
+  DomainsDnsGetHostsUserParams,
+  DomainsDnsSetHostsCleanedResponse,
+  DomainsDnsSetHostsUserParams,
   DomainsGetInfoCleanedResponse,
   DomainsGetInfoUserParams,
   DomainsGetListCleanedResponse,
   DomainsGetListUserParams,
-  RawDomainsGetListCommandResponseContent,
   DomainsGetTldListCleanedResponse,
+  DomainsNsCreateCleanedResponse,
+  DomainsNsCreateUserParams,
   NamecheapContactDetails,
   NamecheapDnsDetails,
   NamecheapRequestParams,
   NamecheapWhoisguardInfo,
+  PagingInfo,
   ProductCategoryPricingInfo,
   ProductPriceDetail,
   ProductPricingInfo,
   RawDomainsCheckCommandResponseContent,
   RawDomainsCreateCommandResponseContent,
+  RawDomainsDnsGetHostsCommandResponseContent,
+  RawDomainsDnsSetHostsCommandResponseContent,
   RawDomainsGetInfoCommandResponseContent,
+  RawDomainsGetListCommandResponseContent,
   RawDomainsGetTldListCommandResponseContent,
+  RawDomainsNsCreateCommandResponseContent,
   RawNamecheapApiResponse,
   RawUsersCreateCommandResponseContent,
   RawUsersGetPricingCommandResponseContent,
@@ -35,33 +48,18 @@ import type {
   UsersCreateUserParams,
   UsersGetPricingCleanedResponse,
   UsersGetPricingUserParams,
-  DomainListItem,
-  PagingInfo,
-  DomainsDnsSetHostsUserParams,
-  DomainsDnsSetHostsCleanedResponse,
-  RawDomainsDnsSetHostsCommandResponseContent,
-  DomainsNsCreateUserParams,
-  DomainsNsCreateCleanedResponse,
-  RawDomainsNsCreateCommandResponseContent,
-  DomainsDnsGetHostsUserParams,
-  DomainsDnsGetHostsCleanedResponse,
-  RawDomainsDnsGetHostsCommandResponseContent,
-  DnsHostRecordItem,
 } from "./types";
-import { isString } from "lodash";
-import { isBefore, startOfToday, startOfTomorrow } from "date-fns";
-import type { DomainPricing } from "@/lib/db/schema/tables/cache";
-import { eq } from "drizzle-orm";
+import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 
 const TARGET_CURRENCY = "BRL";
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export class NamecheapApiWrapper {
   private axiosInstance: AxiosInstance;
-  private readonly apiUser = process.env.NAMECHEAP_API_USER!;
-  private readonly apiKey = process.env.NAMECHEAP_API_KEY!;
+  private readonly apiUser = process.env.NAMECHEAP_API_USER as string;
+  private readonly apiKey = process.env.NAMECHEAP_API_KEY as string;
   private readonly userName: string;
-  private readonly clientIp = process.env.PUBLIC_IP!;
+  private readonly clientIp = process.env.PUBLIC_IP as string;
   private readonly baseUrl = "https://api.namecheap.com/xml.response";
 
   private db = db;
@@ -127,8 +125,8 @@ export class NamecheapApiWrapper {
       return amount;
     try {
       return await currencyConversion.convert({
-        from: fromCurrency.toLowerCase() as any,
-        to: TARGET_CURRENCY.toLowerCase() as any,
+        from: fromCurrency.toLowerCase(),
+        to: TARGET_CURRENCY.toLowerCase(),
         amount,
       });
     } catch (error) {
@@ -253,18 +251,20 @@ export class NamecheapApiWrapper {
           string,
           { minReg?: number; maxReg?: number }
         >();
-        tldListMetaData?.Tlds.forEach((tld) => {
+
+        for (const tld of tldListMetaData?.Tlds ?? []) {
           tldMetaDataMap.set(tld.Name.toLowerCase(), {
             minReg: tld.MinRegisterYears,
             maxReg: tld.MaxRegisterYears,
           });
-        });
+        }
 
         const upsertData: schema.DomainPricingInsert[] = [];
 
-        productTypeNode.ProductCategory.forEach((category) => {
+        for (const category of productTypeNode.ProductCategory) {
           const actionType = category.$.Name.toUpperCase();
-          category.Product?.forEach((product) => {
+
+          for (const product of category.Product ?? []) {
             const tld = product.$.Name.toLowerCase();
             const oneYearPriceDetail = product.Price?.find(
               (p) => p.$.Duration === "1" && p.$.DurationType === "YEAR"
@@ -296,8 +296,8 @@ export class NamecheapApiWrapper {
                 });
               }
             }
-          });
-        });
+          }
+        }
 
         if (upsertData.length > 0) {
           console.log(
@@ -305,15 +305,16 @@ export class NamecheapApiWrapper {
           );
           for (const data of upsertData) {
             const valuesToUpsert: schema.DomainPricingInsert = {
-              tld: data.tld!,
+              tld: data.tld as string,
               price: data.price ?? null,
               renew: data.renew ?? null,
               transfer: data.transfer ?? null,
               minRegisterYears: data.minRegisterYears ?? null,
               maxRegisterYears: data.maxRegisterYears ?? null,
-              createdAt: data.createdAt!,
-              updatedAt: data.updatedAt!,
+              createdAt: data.createdAt as Date,
+              updatedAt: data.updatedAt as Date,
             };
+
             await this.db
               .insert(this.domainPricingCacheTable)
               .values(valuesToUpsert)
@@ -793,43 +794,34 @@ export class NamecheapApiWrapper {
     };
   };
 
-  public async getPricing(params?: undefined | void): Promise<DomainPricing[]>;
-  public async getPricing(
-    params?: { domain: string } | undefined | void
-  ): Promise<DomainPricing | DomainPricing[]> {
-    const dbCache = await db.query.pgDomainPricingCache.findMany();
+  public async getPricings(domains: string[]) {
+    const tlds = uniq(
+      domains.map((domain) => domain.split(".").pop() as string)
+    );
 
-    const lastUpdated = dbCache[0];
-    if (!lastUpdated || isBefore(lastUpdated.updatedAt, startOfToday())) {
-      await this._refreshDomainPricingDbCache();
-    }
+    return await Promise.all(tlds.map(this.getPricing));
+  }
 
-    if (params !== undefined) {
-      const tld = params.domain.toLowerCase().split(".").pop()!;
+  public async getPricing(tld: string) {
+    const apiParams = this._parseUsersGetPricingParams({
+      ProductType: "DOMAIN",
+      ProductName: tld,
+      ActionName: "REGISTER",
+    });
 
-      const dbDomain = await db.query.pgDomainPricingCache.findFirst({
-        where: eq(schema.pgDomainPricingCache.tld, tld),
-      });
+    const response = await this._makeRequest<
+      RawUsersGetPricingCommandResponseContent,
+      UsersGetPricingCleanedResponse
+    >(
+      "namecheap.users.getPricing",
+      apiParams,
+      this._parseUsersGetPricingResponse,
+      "GET"
+    );
 
-      if (!dbDomain) {
-        throw new Error(`No pricing data found for TLD: ${tld}`);
-      }
-
-      return dbDomain;
-    }
-
-    return await db.query.pgDomainPricingCache.findMany();
-
-    // const apiParams = this._parseUsersGetPricingParams(params);
-    // return this._makeRequest<
-    //   RawUsersGetPricingCommandResponseContent,
-    //   UsersGetPricingCleanedResponse
-    // >(
-    //   "namecheap.users.getPricing",
-    //   apiParams,
-    //   this._parseUsersGetPricingResponse,
-    //   "GET"
-    // );
+    return (
+      response.ProductType?.Categories.flatMap((cat) => cat.Products) ?? []
+    );
   }
 
   // --- Method 6: namecheap.domains.create ---
@@ -1117,7 +1109,6 @@ export class NamecheapApiWrapper {
   private _parseDomainsDnsGetHostsResponse = (
     rawContent: RawDomainsDnsGetHostsCommandResponseContent
   ): DomainsDnsGetHostsCleanedResponse => {
-    console.log(JSON.stringify(rawContent));
     const resultNode = rawContent.DomainDNSGetHostsResult?.[0];
     if (!resultNode || !resultNode.$) {
       throw new Error(
@@ -1168,7 +1159,13 @@ export class NamecheapApiWrapper {
 }
 
 export const namecheapApi = new NamecheapApiWrapper(
-  process.env.NAMECHEAP_API_USER!
+  process.env.NAMECHEAP_API_USER as string
 );
+
+export async function getDomainPricing(tld: string) {
+  "use cache";
+  cacheTag(`pricing-${tld}`);
+  return await namecheapApi.getPricing(tld).then(r => r[0]);
+}
 
 export default namecheapApi;

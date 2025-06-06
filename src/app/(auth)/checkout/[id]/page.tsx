@@ -40,7 +40,7 @@ export default async function CheckoutPage({
   }
 
   return (
-    <div className="w-full h-full overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-black/50 relative">
+    <div className="w-full h-full overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-black/20 relative">
       <div className="flex gap-6">
         <Card className="max-w-xl w-full !shadow-lg !shadow-black/3">
           <CardHeader className="w-full text-center">
@@ -65,15 +65,17 @@ export default async function CheckoutPage({
                 </div>
               </div>
               <div className="text-xs font-semibold">
-                {toBrl(invoice.amount)}
+                {toBrl(invoice.amount - (invoice.metadata?.whoisguard ? 3 : 0))}
               </div>
             </div>
             {invoice.type === "domain" && (
               <>
-                <div className="text-xs flex gap-4 items-center justify-between text-zinc-800 dark:text-zinc-200 mt-7">
-                  <div>Proteção de privacidade WHOIS</div>
-                  <div className="text-xs font-semibold">{toBrl(0)}</div>
-                </div>
+                {invoice.metadata.whoisguard && (
+                  <div className="text-xs flex gap-4 items-center justify-between text-zinc-800 dark:text-zinc-200 mt-7">
+                    <div>Proteção de privacidade WHOIS</div>
+                    <div className="text-xs font-semibold">{toBrl(3)}</div>
+                  </div>
+                )}
                 <div className="text-xs flex gap-4  items-center justify-between text-zinc-800 dark:text-zinc-200 mt-7 mb-1">
                   <div>Certificado SSL</div>
                   <div className="text-xs font-semibold">{toBrl(0)}</div>

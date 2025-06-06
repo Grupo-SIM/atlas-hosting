@@ -8,7 +8,7 @@ import {
   type OrganizationDomain,
   type UserDomainAccess,
 } from "./organization";
-import { pgSession } from "./session";
+import { pgSession, type Session } from "./session";
 import type { Plan } from "./plan";
 import type { Wallet } from "./wallet";
 
@@ -23,8 +23,7 @@ export const pgUser = pgTable("users", {
   isAdmin: boolean("is_admin").default(false),
   selectedDomain: text("selected_domain"),
   referrerId: uuid("referrer_id"),
-  organizationId: uuid("organization_id")
-    .references(() => pgOrganization.id),
+  organizationId: uuid("organization_id").references(() => pgOrganization.id),
   organizationRole: text("organization_role", {
     enum: ["member", "admin", "developer"],
   })
@@ -67,6 +66,7 @@ export type User = RawUser & {
   domainAccess: UserDomainAccess[];
   referrer: RawUser | null;
   referredUsers: RawUser[];
+  sessions: Session[];
 };
 
 export type UserInsert = typeof pgUser.$inferInsert;

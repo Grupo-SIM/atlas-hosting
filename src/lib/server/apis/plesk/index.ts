@@ -75,7 +75,6 @@ export class PleskApi {
   public async getClients() {
     try {
       const response = await this.clientsApi.clientsGet();
-      console.log(response);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -86,6 +85,9 @@ export class PleskApi {
     }
   }
 
+  /* 
+  await pleskApi.clientsApi.clientsPost({ email: "lucasgarrafielo19@gmail.com", login: "eurmn", name: "Lucas", password: "@RDvfp5Z", type: Plesk.ClientRequestTypeEnum.Admin });
+  */
   public async createClient(params: Plesk.ClientRequest) {
     try {
       const response = await this.clientsApi.clientsPost(params);
@@ -144,6 +146,7 @@ export class PleskApi {
     }
   }
 
+  // @RDvfp5Zaas22AA
   public async assignDomain(domainName: string, pleskId: number) {
     const user = await this.getUserById(pleskId);
 
@@ -161,13 +164,10 @@ export class PleskApi {
           php_handler_id: "fastcgi",
           php_version: "8.2.28",
           ssl: true,
-          ftp_login: "user_" + Math.random().toString(36).substring(2, 10),
-          ftp_password: `D%$%` + Math.random().toString(36).substring(2, 10),
-          upload_max_filesize: "10M",
+          ftp_login: `user_${Math.random().toString(36).substring(2, 10)}`,
+          ftp_password: `D%$%${Math.random().toString(36).substring(2, 10)}`,
         },
       });
-
-      console.log(data);
 
       return data;
     } catch (error) {
@@ -175,21 +175,17 @@ export class PleskApi {
         console.log(JSON.stringify(error.response?.data));
       }
 
-      console.log(error);
-
       throw error;
     }
   }
 
   public async deleteDomain(domainId: number) {
     const { data } = await this.domainsApi.domainsIdDelete(domainId);
-    console.log(data);
     return data;
   }
 
   public async listSubscriptions() {
     const data = await this.subscriptions.list();
-    console.log(data);
     return data;
   }
 }

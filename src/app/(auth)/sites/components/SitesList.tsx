@@ -83,14 +83,15 @@ export function SitesList({
       const newlyReady: (ParsedWordPressInstance & { ready: boolean })[] = [];
       const stillProcessing: ParsedWordPressInstance[] = [];
 
-      processingInstances.forEach((instance) => {
+      for (const instance of processingInstances) {
         const isReady = data.domains[instance.domain] === true;
         if (isReady) {
           newlyReady.push({ ...instance, ready: true });
         } else {
           stillProcessing.push(instance);
         }
-      });
+      };
+
       if (newlyReady.length > 0) {
         setReadyInstances((prev) => [...prev, ...newlyReady]);
         setProcessingInstances(stillProcessing);

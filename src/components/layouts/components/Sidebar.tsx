@@ -2,7 +2,7 @@
 
 import AtlasLogo from "@/assets/atlas.svg";
 import { cn } from "@/lib/utils";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   useState,
   type ForwardRefExoticComponent,
@@ -35,58 +35,49 @@ export default function Sidebar() {
         ease: isCompact ? "easeIn" : "easeOut",
       }}
       className={cn(
-        "fixed inset-y-0 left-0 z-40 bg-card border-r shadow-sm whitespace-nowrap max-h-screen",
+        "fixed inset-y-0 left-0 bg-card whitespace-nowrap max-h-screen",
         "lg:relative lg:flex lg:flex-col",
         isCompact ? "w-[60px]" : "w-64"
       )}
     >
       <motion.div
-        layout={true}
-        initial={{ paddingLeft: 0, paddingRight: 0 }}
-        animate={{
-          paddingLeft: isCompact ? "1rem" : "1.5rem",
-          paddingRight: isCompact ? "1rem" : "1.5rem",
-          transition: {
-            duration: 0.3,
-            ease: isCompact ? "easeIn" : "easeOut",
-          },
-        }}
-        exit={{ paddingLeft: 0, paddingRight: 0 }}
-        className="h-16 w-full flex items-center justify-center border-b overflow-hidden"
+        layout
+        className="h-16 flex items-center px-3.5 overflow-x-hidden max-w-inherit"
       >
-        <AtlasLogo className="min-h-8 min-w-8 h-8 w-8 object-contain" />
-        <motion.span
-          layout={true}
-          initial={{ width: 0, paddingLeft: 0 }}
+        <MotionLogo
+          className="min-h-8 min-w-8 h-8 w-8 object-contain"
           animate={{
-            width: isCompact ? 0 : "auto",
-            paddingLeft: isCompact ? 0 : "0.75rem",
-            transition: { duration: 0.3, ease: "easeOut" },
+            marginRight: isCompact ? "0" : "0.5rem",
           }}
-          className="text-lg font-semibold overflow-x-hidden"
-        >
-          Atlas Hosting
-        </motion.span>
-      </motion.div>
-
-      <motion.nav
-        layout={true}
-        initial={{
-          width: "3.75rem",
-          marginLeft: "auto",
-          marginRight: "auto",
-        }}
-        animate={{
-          width: isCompact ? "3.75rem" : "auto",
-          marginLeft: isCompact ? "auto" : 0,
-          marginRight: isCompact ? "auto" : 0,
-          transition: {
+          transition={{
             duration: 0.3,
-            ease: isCompact ? "easeIn" : "easeOut",
-          },
-        }}
-        className="flex-1 px-2 py-4 space-y-1 overflow-y-auto flex flex-col box-border"
-      >
+            ease: "easeOut",
+          }}
+        />
+        <AnimatePresence mode="popLayout" propagate>
+          {!isCompact && (
+            <motion.span
+              layout
+              initial={{ opacity: 0, width: 0 }}
+              animate={{
+                opacity: 1,
+                width: "100%",
+              }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{
+                duration: 0.3,
+                ease: "easeOut",
+              }}
+              className="text-lg font-semibold overflow-x-hidden box-border whitespace-nowrap max-w-full"
+            >
+              <motion.div layout className="w-fit min-w-fit">
+                Atlas Hosting
+              </motion.div>
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.div>
+      <motion.nav className="flex-1 px-2 py-4 w-auto space-y-1 overflow-y-auto flex flex-col box-border m-0 relative z-90 inset-shadow-border inset-shadow-[0_1px_0_0]">
         {navigation.map((item) => (
           <NavItem item={item} key={item.name} isCompact={isCompact} />
         ))}
@@ -125,7 +116,7 @@ function NavItem({
           ? "bg-accent text-accent-foreground"
           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       )}
-      title={isCompact ? item.name : undefined}
+      title={item.name}
     >
       <item.icon
         className={cn(
@@ -135,28 +126,30 @@ function NavItem({
             : "text-muted-foreground group-hover:text-accent-foreground"
         )}
       />
-      <motion.span
-        ref={itemNameRef}
-        layout={true}
-        initial={{
-          marginLeft: 0,
-          minWidth: 0,
-          maxWidth: 0,
-          width: 0,
-        }}
-        animate={{
-          marginLeft: isCompact ? 0 : "0.75rem",
-          minWidth: isCompact ? 0 : itemWidth,
-          maxWidth: isCompact ? 0 : itemWidth,
-          transition: { duration: 0.3, ease: "easeOut" },
-        }}
-        exit={{ width: 0, marginLeft: 0 }}
-        className="overflow-x-hidden whitespace-nowrap flex-1 w-full"
-      >
-        {item.name}
-      </motion.span>
+      <AnimatePresence mode="sync">
+        {!isCompact && (
+          <motion.span
+            initial={{ opacity: 0, width: 0, paddingLeft: 0 }}
+            animate={{
+              opacity: 1,
+              width: itemWidth || "auto",
+              paddingLeft: "0.5rem",
+            }}
+            exit={{ opacity: 0, width: 0, paddingLeft: 0 }}
+            transition={{
+              duration: 0.3,
+              ease: "easeOut",
+            }}
+            ref={itemNameRef}
+            className="overflow-x-hidden whitespace-nowrap flex-1 w-full box-border"
+          >
+            {item.name}
+          </motion.span>
+        )}
+      </AnimatePresence>
     </MotionLink>
   );
 }
 
 const MotionLink = motion.create(Link);
+const MotionLogo = motion.create(AtlasLogo);

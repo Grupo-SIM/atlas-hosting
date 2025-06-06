@@ -14,6 +14,7 @@ import dns from "node:dns";
 import { promisify } from "node:util";
 import { getUserWordPressSites } from "@/lib/server/utils";
 import { cookies } from "next/headers";
+import { query } from "dns-query";
 
 export interface ParsedWordPressInstance {
   id: number; // This likely refers to Plesk's internal ID for the WP instance
@@ -28,8 +29,13 @@ const resolve4 = promisify(dns.resolve4);
 
 async function checkDomain(domain: string): Promise<boolean> {
   try {
-    const addresses = await resolve4(domain);
-    return addresses.includes(process.env.SERVER_IP!);
+    const { answers } = await query(
+      { question: { type: "A", name: domain } },
+      {
+        endpoints: ["1.1.1.1", "8.8.8.8"],
+      }
+    );
+    return (answers ?? []).map(answer => answer.data).includes(process.env.SERVER_IP!);
   } catch (_error) {
     // console.error(`DNS resolution failed for ${domain}:`, error);
     return false;
