@@ -49,7 +49,7 @@ export function AffiliateChart() {
           />
           <Tooltip
             contentStyle={{
-              background: "hsl(var(--background))",
+              background: "rgb(var(--background))",
               border: "1px solid hsl(var(--border))",
               color: "hsl(var(--foreground))",
             }}

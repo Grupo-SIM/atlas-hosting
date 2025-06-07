@@ -35,7 +35,7 @@ export default function Sidebar() {
         ease: isCompact ? "easeIn" : "easeOut",
       }}
       className={cn(
-        "fixed inset-y-0 left-0 bg-card whitespace-nowrap max-h-screen",
+        "fixed inset-y-0 left-0 bg-card whitespace-nowrap max-h-screen z-2",
         "lg:relative lg:flex lg:flex-col",
         isCompact ? "w-[60px]" : "w-64"
       )}

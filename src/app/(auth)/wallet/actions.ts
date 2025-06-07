@@ -7,6 +7,7 @@ import { pgUser, pgUserCard } from "@/lib/db/schema";
 import domApi from "@/lib/server/apis/dom";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { cache } from "react";
 
 export interface AddCardData {
   cardNumber: string;
@@ -210,7 +211,7 @@ export async function setDefaultCard(cardId: string): Promise<ActionResponse> {
   }
 }
 
-export async function getUserCards() {
+export const getUserCards = cache(async function getUserCards() {
   try {
     const user = await getUser();
     if (!user?.organization?.wallet) {
@@ -219,14 +220,23 @@ export async function getUserCards() {
 
     // Get cards from local database
     const localCards = user.organization.wallet.cards ?? [];
-    
+
     // Get cards from DOM API for up-to-date information
     try {
       const domCards = await domApi.getCustomerCardTokens(user.id);
-      
+
       // Merge local card data with DOM card data
-      const mergedCards = localCards.map(localCard => {
-        const domCard = domCards.find((dc: { token: string; last4?: string; brand?: string; exp_month?: string; exp_year?: string; holder_name?: string }) => dc.token === localCard.cardToken);
+      const mergedCards = localCards.map((localCard) => {
+        const domCard = domCards.find(
+          (dc: {
+            token: string;
+            last4?: string;
+            brand?: string;
+            exp_month?: string;
+            exp_year?: string;
+            holder_name?: string;
+          }) => dc.token === localCard.cardToken
+        );
         return {
           ...localCard,
           // Override with fresh DOM data if available
@@ -236,18 +246,58 @@ export async function getUserCards() {
             expiryMonth: domCard.exp_month || localCard.expiryMonth,
             expiryYear: domCard.exp_year || localCard.expiryYear,
             holderName: domCard.holder_name || localCard.holderName,
-          })
+          }),
         };
       });
-      
+
       return mergedCards;
     } catch (domError) {
-      console.error("Error fetching cards from DOM API, falling back to local data:", domError);
+      console.error(
+        "Error fetching cards from DOM API, falling back to local data:",
+        domError
+      );
       // Fall back to local data if DOM API fails
       return localCards;
     }
   } catch (error) {
     console.error("Error fetching user cards:", error);
     return [];
+  }
+});
+
+export async function getUserCardsForCheckout() {
+  try {
+    const user = await getUser();
+    if (!user?.organization?.wallet) {
+      return [];
+    }
+
+    return await getUserCards();
+  } catch (error) {
+    console.error("Error fetching user cards for checkout:", error);
+    return [];
+  }
+}
+
+export async function getCustomerFromDOM() {
+  try {
+    const user = await getUser();
+    if (!user?.organization?.domId) {
+      return null;
+    }
+
+    // Get customer information from DOM API
+    const customerData = await domApi.getCustomer(user.id);
+
+    return {
+      name: customerData.name,
+      email: customerData.email,
+      document: customerData.document,
+      mobilePhone: customerData.mobile_phone,
+      address: customerData.address,
+    };
+  } catch (error) {
+    console.error("Error fetching customer from DOM:", error);
+    return null;
   }
 }

@@ -19,6 +19,7 @@ export interface CreateRecurrentPaymentParams {
       }
     | {
         token: string;
+        installments?: number;
       };
 }
 

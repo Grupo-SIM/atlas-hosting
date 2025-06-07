@@ -374,6 +374,51 @@ export class DomApi {
   }
 
   /**
+   * Get customer information from DOM API
+   * @param userId User ID to get the organization's DOM ID
+   * @returns Customer information from DOM API
+   */
+  public async getCustomer(userId: string) {
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, userId),
+      with: {
+        organization: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const domId = user.organization?.domId;
+    if (!domId) {
+      throw new Error("User does not have a DOM customer ID");
+    }
+
+    try {
+      const { data } = await this.api.get(`/customers/${domId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+
+      return {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        document: data.document,
+        document_type: data.document_type,
+        mobile_phone: data.mobile_phone,
+        address: data.address,
+      };
+    } catch (error) {
+      console.error("Error fetching customer from DOM:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Detect card brand from card number
    */
   private detectCardBrand(cardNumber: string): string {

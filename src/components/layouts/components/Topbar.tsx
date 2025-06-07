@@ -14,7 +14,8 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Organization, User } from "@/lib/db/schema";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getUser } from "@/lib/auth";
 import {
   CreditCard,
   Key,
@@ -24,17 +25,12 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import type { PropsWithChildren } from "react";
+import { Suspense, type PropsWithChildren } from "react";
 import { FaUserAlt } from "react-icons/fa";
 
-export default function Topbar({
-  children,
-  user,
-}: PropsWithChildren<{
-  user: Pick<User, "name" | "email"> & { organization: Organization };
-}>) {
+export default function Topbar({ children }: PropsWithChildren) {
   return (
-    <header className="h-16 bg-card flex items-center justify-between px-6">
+    <header className="h-16 bg-card flex items-center justify-between px-6 relative z-2">
       <h1 className="text-lg md:text-xl font-semibold">Painel</h1>
       <div className="flex items-center space-x-4">
         {children}
@@ -53,26 +49,19 @@ export default function Topbar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount={true}>
-            {user && (
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {user.name}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user.email}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-            )}
+            <Suspense fallback={<UserDataDropdownItemSkeleton />}>
+              <UserDataDropdownItem />
+            </Suspense>
             <DropdownMenuSeparator />
             <DropdownMenuGroup className="[&>*]:cursor-pointer">
               <DropdownMenuItem>
-                <UserIcon className="mr-2 h-4 w-4" />
-                <span>Perfil</span>
+                <Link href="/settings?tab=wallet">
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  <span>Perfil</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/wallet">
+                <Link href="/settings?tab=wallet">
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Pagamentos</span>
                 </Link>
@@ -124,9 +113,49 @@ export default function Topbar({
           </DropdownMenuContent>
         </DropdownMenu>
         <div className="text-sm border-l-1 border-muted-foreground/20 pl-4 border-solid">
-          {user.organization.name}
+          <Suspense fallback={<Skeleton className="h-[1em] w-24" />}>
+            <OrganizationName />
+          </Suspense>
         </div>
       </div>
     </header>
+  );
+}
+
+async function OrganizationName() {
+  const user = await getUser();
+
+  return (
+    <div className="text-sm border-l-1 border-muted-foreground/20 pl-4 border-solid">
+      {user.organization.name}
+    </div>
+  );
+}
+
+async function UserDataDropdownItem() {
+  const user = await getUser();
+
+  return (
+    user && (
+      <DropdownMenuLabel className="font-normal">
+        <div className="flex flex-col space-y-1">
+          <p className="text-sm font-medium leading-none">{user.name}</p>
+          <p className="text-xs leading-none text-muted-foreground">
+            {user.email}
+          </p>
+        </div>
+      </DropdownMenuLabel>
+    )
+  );
+}
+
+async function UserDataDropdownItemSkeleton() {
+  return (
+    <DropdownMenuLabel className="font-normal">
+      <div className="flex flex-col space-y-1">
+        <Skeleton className="text-sm h-[1em] w-26" />
+        <Skeleton className="text-xs h-[1em] w-22" />
+      </div>
+    </DropdownMenuLabel>
   );
 }

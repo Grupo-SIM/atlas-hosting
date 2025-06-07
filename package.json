@@ -98,6 +98,7 @@
     "react-icons": "^5.5.0",
     "react-imask": "^7.6.1",
     "react-loading-skeleton": "^3.5.0",
+    "react-payment-inputs": "^1.2.0",
     "react-resizable-panels": "^3.0.2",
     "recharts": "^2.15.3",
     "remove": "^0.1.5",
@@ -127,6 +128,7 @@
     "@types/xml2js": "^0.4.14",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.0",
+    "postcss-easings": "^4.0.0",
     "prettier": "^3.5.3"
   },
   "peerDependencies": {

@@ -230,7 +230,7 @@ async function DomainAvailable({
             </SelectContent>
           </Select>
           <TooltipProvider>
-            <Tooltip>
+            <Tooltip delayDuration={100}>
               <TooltipTrigger asChild>
                 <div className="flex items-center space-x-2 mr-auto">
                   <Checkbox

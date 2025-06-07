@@ -1,11 +1,10 @@
-import CheckoutForm from "@/components/checkout/CheckoutForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import CheckoutClient from "./checkout-client";
 import { db } from "@/lib/db";
 import { pgInvoice, pgPlan } from "@/lib/db/schema";
-import { toBrl } from "@/lib/utils";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Checkout - Atlas Hosting",
@@ -17,8 +16,11 @@ export default async function CheckoutPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const user = await getUser();
+  const resolvedParams = await params;
+  
   const invoice = await db.query.pgInvoice.findFirst({
-    where: eq(pgInvoice.id, (await params).id),
+    where: eq(pgInvoice.id, resolvedParams.id),
   });
 
   if (!invoice) {
@@ -40,60 +42,10 @@ export default async function CheckoutPage({
   }
 
   return (
-    <div className="w-full h-full overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-black/20 relative">
-      <div className="flex gap-6">
-        <Card className="max-w-xl w-full !shadow-lg !shadow-black/3">
-          <CardHeader className="w-full text-center">
-            <CardTitle>Compra por cartão de crédito</CardTitle>
-            <hr className="mt-4" />
-          </CardHeader>
-          <CardContent>
-            <CheckoutForm invoiceId={invoice.id} />
-          </CardContent>
-        </Card>
-        <Card className="min-w-xs max-w-fit w-full h-min !shadow-lg !shadow-black/3 flex flex-col">
-          <CardHeader className="w-full text-center">
-            <CardTitle className="text-base">Resumo do Pedido</CardTitle>
-            <hr className="mt-4" />
-          </CardHeader>
-          <CardContent className="flex flex-col h-full">
-            <div className="text-xs flex items-center justify-between text-zinc-800 dark:text-zinc-200">
-              <div className="flex flex-col gap-1">
-                <div>{invoice.type === "domain" ? "Domínio" : "Plano"}</div>
-                <div className="text-muted-foreground/70 font-medium">
-                  {reference}
-                </div>
-              </div>
-              <div className="text-xs font-semibold">
-                {toBrl(invoice.amount - (invoice.metadata?.whoisguard ? 3 : 0))}
-              </div>
-            </div>
-            {invoice.type === "domain" && (
-              <>
-                {invoice.metadata.whoisguard && (
-                  <div className="text-xs flex gap-4 items-center justify-between text-zinc-800 dark:text-zinc-200 mt-7">
-                    <div>Proteção de privacidade WHOIS</div>
-                    <div className="text-xs font-semibold">{toBrl(3)}</div>
-                  </div>
-                )}
-                <div className="text-xs flex gap-4  items-center justify-between text-zinc-800 dark:text-zinc-200 mt-7 mb-1">
-                  <div>Certificado SSL</div>
-                  <div className="text-xs font-semibold">{toBrl(0)}</div>
-                </div>
-              </>
-            )}
-            <hr className="my-5" />
-            <div className="flex flex-col flex-1 justify-end">
-              <div className="flex justify-between items-center text-zinc-800 dark:text-zinc-200">
-                <div className="font-semibold text-xl">Total:</div>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                  {toBrl(invoice.amount)}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <CheckoutClient 
+      invoice={invoice}
+      user={user}
+      reference={reference}
+    />
   );
 }

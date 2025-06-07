@@ -42,6 +42,7 @@ import {
   Trash2,
   Star,
   StarOff,
+  Check,
 } from "lucide-react";
 import type { User } from "@/lib/db/schema/tables/user";
 import type { UserCard } from "@/lib/db/schema/tables/card";
@@ -55,6 +56,7 @@ import {
   getUserCards,
   type AddCardData,
 } from "@/app/(auth)/wallet/actions";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface WalletSectionProps {
   user: User;
@@ -288,7 +290,7 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
               </span>
               <Badge
                 variant="outline"
-                className="ml-3 bg-green-500/10 text-green-500"
+                className="ml-3 bg-green-500/10 text-green-500 mb-auto mt-2"
               >
                 <ArrowUpCircle className="mr-1 h-3 w-3" />
                 Ativo
@@ -301,55 +303,6 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
               </p>
             )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Transactions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <History className="h-5 w-5" />
-            Transações Recentes
-          </CardTitle>
-          <CardDescription>
-            Histórico das suas últimas movimentações
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {invoices.length > 0 ? (
-            <div className="space-y-3">
-              {invoices.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="flex items-center justify-between p-3 border rounded-lg bg-card/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full flex items-center justify-center bg-amber-500/10 text-amber-500">
-                      <ArrowUpRight className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{transaction.reference}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(transaction.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="font-medium text-amber-600">
-                    -{toBrl(transaction.amount)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <History className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground">
-                Nenhuma transação encontrada
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -468,20 +421,15 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
         </CardHeader>
         <CardContent>
           {isLoadingCards ? (
-            <div className="text-center py-8">
-              <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <CreditCard className="h-6 w-6 text-muted-foreground animate-pulse" />
-              </div>
-              <p className="text-muted-foreground">
-                Carregando cartões...
-              </p>
+            <div className="text-center">
+              <Skeleton className="h-24 w-full" />
             </div>
           ) : cards.length > 0 ? (
             <div className="space-y-3">
               {cards.map((card) => (
                 <div
                   key={card.id}
-                  className="flex items-center justify-between p-4 border rounded-lg bg-card/50"
+                  className="flex items-center justify-between p-4 border rounded-lg bg-card/50 h-24"
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg">
@@ -541,6 +489,55 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
               </p>
               <p className="text-sm text-muted-foreground">
                 Adicione um cartão para facilitar seus pagamentos futuros
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent Transactions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Transações Recentes
+          </CardTitle>
+          <CardDescription>
+            Histórico das suas últimas movimentações
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {invoices.length > 0 ? (
+            <div className="space-y-3">
+              {invoices.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between p-3 border rounded-lg bg-card/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full flex items-center justify-center bg-emerald-500/10 text-emerald-500">
+                      <Check className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{transaction.reference}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(transaction.createdAt, "PPP", { locale: ptBR })}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="font-medium text-muted-foreground">
+                    {toBrl(transaction.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <History className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">
+                Nenhuma transação encontrada
               </p>
             </div>
           )}

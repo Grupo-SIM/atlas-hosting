@@ -409,11 +409,9 @@ export async function createDomainInvoice({
 
     priceInBrl *= fee;
 
-    console.log({ whoisguard });
-    if (whoisguard) {
+    if (whoisguard === "on") {
       priceInBrl += 3;
     }
-    console.log({ priceInBrl });
 
     const [newInvoice] = await db
       .insert(pgInvoice)
@@ -605,6 +603,140 @@ export async function completeCheckout(
       }
     }
     return { status: "error", message: "Erro ao criar pagamento recorrente." };
+  }
+
+  redirect("/payment/success");
+
+  return { status: "success", message: "Plano adquirido com sucesso!" };
+}
+
+export async function completeCheckoutWithSavedCard(
+  prevState: unknown,
+  {
+    invoiceId,
+    cardToken,
+    ...values
+  }: Omit<CheckoutFormInputs, 'cardNumber' | 'cardCvv' | 'cardExpiration'> & { 
+    invoiceId: string; 
+    cardToken: string;
+  }
+): Promise<ActionResponse> {
+  const user = await getUser();
+
+  if (!user) {
+    return {
+      status: "error",
+      message: "Usuário não autenticado. Faça login para continuar.",
+    };
+  }
+
+  if (!invoiceId) {
+    return { status: "error", message: "ID da fatura é obrigatório." };
+  }
+
+  if (!cardToken) {
+    return { status: "error", message: "Token do cartão é obrigatório." };
+  }
+
+  const invoice = await db
+    .update(pgInvoice)
+    .set({
+      status: "processing",
+    })
+    .where(eq(pgInvoice.id, invoiceId))
+    .returning()
+    .execute()
+    .then((r) => r[0]);
+
+  if (!invoice) {
+    return { status: "error", message: "Fatura não encontrada." };
+  }
+
+  // Ensure DOM client exists
+  if (!user.organization?.domId) {
+    try {
+      const { id } = await domApi.createClient({
+        name: user.name,
+        email: user.email,
+        document: values.document.replace(/\D/g, ""),
+        mobilePhone: values.phoneNumber.replace(/\D/g, ""),
+        userId: user.id,
+        address: {
+          street: values.address.street,
+          number: values.address.number,
+          city: values.address.city,
+          state: values.address.state,
+          zip_code: values.address.zipCode.replace(/\D/g, ""),
+          neighborhood: values.address.neighborhood,
+        },
+        codeExternal: user.id,
+      });
+
+      await db
+        .update(pgOrganization)
+        .set({
+          domId: id,
+        })
+        .where(eq(pgOrganization.id, user.organizationId ?? ""));
+    } catch (error) {
+      console.error("Error creating DOM client:", error);
+      return {
+        status: "error",
+        message: "Erro ao criar cliente no sistema de pagamentos.",
+      };
+    }
+  }
+
+  // Ensure Plesk client exists
+  if (!user.organization?.pleskId) {
+    const result = await pleskApi.createClient({
+      name: user.name,
+      email: user.email,
+      login: user.email,
+      password: user.password ?? "",
+      type: ClientRequestTypeEnum.Customer,
+      externalId: user.id,
+      ownerLogin: "lucas.garrafielo",
+      status: 0,
+    });
+
+    if (result?.id) {
+      await db
+        .update(pgOrganization)
+        .set({
+          pleskId: result.id,
+        })
+        .where(eq(pgOrganization.id, user.organizationId ?? ""));
+    } else {
+      console.error("Failed to create Plesk client:", result);
+      return {
+        status: "error",
+        message: "Erro ao configurar usuário no sistema de hosting.",
+      };
+    }
+  }
+
+  try {
+    // Create subscription using saved card token
+    const result = await domApi.createRecurrentPayment({
+      description: `Atlas Hosting ${invoice.reference}`,
+      externalReference: invoiceId,
+      frequency: "MONTH",
+      card: {
+        token: cardToken,
+        installments: 1
+      },
+      userId: user.id,
+      value: invoice.amount,
+    });
+
+    console.log("Nova assinatura criada com cartão salvo", result);
+  } catch (err) {
+    console.error("Error creating recurrent payment with saved card:", err.response.data);
+    return { 
+      status: "error", 
+      message: "Erro ao processar pagamento com cartão salvo." 
+    };
   }
 
   redirect("/payment/success");

@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "tailwindcss/preflight" layer(base);
+@import "tailwindcss/utilities" layer(utilities);
+
+.loader-auth {
+  @apply animate-[rotate_1.5s_infinite] ease-in-out h-12 w-12;
+}
+
+.loader-auth:before,
+.loader-auth:after {
+  @apply rounded-full content-[''] block h-5 w-5;
+}
+.loader-auth:before {
+  @apply animate-[ball1_1.5s_infinite] ease-in-out bg-[hsl(var(--foreground))] shadow-[30px_0_0_hsl(var(--muted-foreground))] mb-2;
+}
+.loader-auth:after {
+  @apply animate-[ball2_1.5s_infinite] ease-in-out bg-[hsl(var(--muted-foreground))] opacity-85 shadow-[30px_0_0_hsl(var(--foreground))];
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg) scale(0.8);
+  }
+  50% {
+    transform: rotate(360deg) scale(1.2);
+  }
+  100% {
+    transform: rotate(720deg) scale(0.8);
+  }
+}
+
+@keyframes ball1 {
+  0% {
+    box-shadow: 30px 0 0 hsl(var(--muted-foreground));
+  }
+  50% {
+    box-shadow: 0 0 0 hsl(var(--muted-foreground));
+    margin-bottom: 0;
+    transform: translate(15px, 15px);
+  }
+  100% {
+    box-shadow: 30px 0 0 hsl(var(--muted-foreground));
+    margin-bottom: 10px;
+  }
+}
+
+@keyframes ball2 {
+  0% {
+    box-shadow: 30px 0 0 hsl(var(--foreground));
+  }
+  50% {
+    box-shadow: 0 0 0 hsl(var(--foreground));
+    margin-top: -20px;
+    transform: translate(15px, 15px);
+  }
+  100% {
+    box-shadow: 30px 0 0 hsl(var(--foreground));
+    margin-top: 0;
+  }
+}

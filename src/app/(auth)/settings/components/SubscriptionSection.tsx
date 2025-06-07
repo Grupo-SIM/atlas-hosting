@@ -268,7 +268,7 @@ export function SubscriptionSection({ user }: SubscriptionSectionProps) {
 
             <div className="flex gap-3">
               <Link href="/plans" className="flex-1">
-                <Button variant="outline" className="w-full">
+                <Button className="w-full">
                   Alterar Plano
                 </Button>
               </Link>

@@ -1,10 +1,20 @@
-"use client";
-
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GradientButton } from "@/components/ui/gradient-button";
 import { Separator } from "@/components/ui/separator";
+import { db } from "@/lib/db";
+import { pgPlan, type Invoice } from "@/lib/db/schema";
+import { cn, toBrl } from "@/lib/utils";
+import {
+  add,
+  addDays,
+  format,
+  formatDistanceToNow,
+  formatDistanceToNowStrict,
+} from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { eq } from "drizzle-orm";
 import {
   CalendarDays,
   ChevronDown,
@@ -13,15 +23,43 @@ import {
   Package,
   Tag,
 } from "lucide-react";
-import Form from "next/form";
 import Link from "next/link";
-import type { Invoice } from "@/lib/db/schema";
-import { toBrl } from "@/lib/utils";
 
 export default function InvoiceCard({
   isExpanded,
   invoice,
 }: { isExpanded?: boolean; invoice: Invoice }) {
+  const breakdownInformation = (() => {
+    if (invoice.type === "subscription") {
+      return [
+        {
+          label: invoice.reference ? `Plano ${invoice.reference}` : "Plano",
+          value: invoice.amount,
+        },
+      ];
+    }
+
+    const whoisGuard = invoice.metadata.whoisguard === "on";
+
+    const breakdownInformation = [
+      {
+        label: invoice.reference,
+        value: invoice.amount - (whoisGuard ? 3 : 0),
+      },
+    ];
+
+    if (whoisGuard) {
+      breakdownInformation.push({
+        label: "Proteção de Privacidade",
+        value: whoisGuard ? 3 : 0,
+      });
+    }
+
+    return breakdownInformation;
+  })();
+
+  const expiryDate = addDays(invoice.createdAt, 3);
+
   return (
     <div>
       <Card className="w-full transition-all duration-300">
@@ -33,30 +71,31 @@ export default function InvoiceCard({
                 <FileText className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-lg font-bold">
-                  Invoice #INV-2024-001
+                <CardTitle className="text-base">
+                  Fatura #{invoice.id.slice(0, 8).toUpperCase()}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Web Development Package
+                  {format(invoice.createdAt, "PPP", { locale: ptBR })}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div className="text-right">
-                <p className="text-xl font-bold text-primary">$2,450.00</p>
-                <p className="text-xs text-muted-foreground">Dec 5, 2024</p>
+                <div className="text-xl font-bold text-primary">
+                  {toBrl(invoice.amount)}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Valor da fatura
+                </div>
               </div>
               <Link href={isExpanded ? "?" : `?id=${invoice.id}`}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-2"
-                >
-                  {isExpanded ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
+                <Button variant="ghost" size="sm">
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform ease-[easeOutCubic] duration-300",
+                      { "rotate-180": isExpanded }
+                    )}
+                  />
                 </Button>
               </Link>
             </div>
@@ -64,30 +103,36 @@ export default function InvoiceCard({
 
           {/* Quick Summary Bar */}
           {!isExpanded && (
-            <div className="flex items-center gap-4 mt-3 pt-3 border-t">
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t">
               <Badge variant="secondary" className="text-xs">
-                Digital Service
+                {invoice.type === "domain" ? "Domínio" : "Plano"}
               </Badge>
-              <Badge variant="outline" className="text-xs">
-                Issued
+              <Badge
+                variant={getStatusVariant(invoice.status)}
+                className="text-xs"
+              >
+                {statusLabel[invoice.status] || "Status desconhecido"}
               </Badge>
-              <span className="text-xs text-muted-foreground">Net 30 days</span>
             </div>
           )}
         </CardHeader>
 
         {/* Expanded Detailed View */}
         {isExpanded && (
-          <CardContent className="space-y-6 animate-in slide-in-from-top-2 duration-300">
+          <CardContent
+            className={cn(
+              "space-y-6 ease-[easeOutCubic] duration-300",
+              isExpanded
+                ? "animate-in slide-in-from-top-2"
+                : "animate-out slide-out-to-top-2"
+            )}
+          >
             <div className="flex justify-end">
               <Badge
                 variant={getStatusVariant(invoice.status)}
                 className="text-sm"
               >
-                {invoice.status === "pending" && "A pagar"}
-                {invoice.status === "paid" && "Pago"}
-                {invoice.status === "failed" && "Pagamento recusado"}
-                {invoice.status === "processing" && "Em processamento"}
+                {statusLabel[invoice.status] || "Status desconhecido"}
               </Badge>
             </div>
 
@@ -135,10 +180,7 @@ export default function InvoiceCard({
                       <Package className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="font-semibold">{invoice.description}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {invoice.description}
-                      </p>
+                      <p className="font-medium">{invoice.reference}</p>
                     </div>
                   </div>
                 </div>
@@ -149,7 +191,7 @@ export default function InvoiceCard({
                     Tipo de produto:
                   </span>
                   <Badge variant="outline">
-                    {invoice.type === "domain" ? "Domínio" : "Plano"}]]]]]]
+                    {invoice.type === "domain" ? "Domínio" : "Plano"}
                   </Badge>
                 </div>
               </div>
@@ -159,54 +201,70 @@ export default function InvoiceCard({
 
             {/* Price Breakdown */}
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold">Price Breakdown</h3>
+              <h3 className="text-lg font-semibold">Produtos da compra</h3>
 
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-medium">$2,200.00</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Tax (10%)</span>
-                  <span className="font-medium">$220.00</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Processing Fee</span>
-                  <span className="font-medium">$30.00</span>
-                </div>
+                <Separator />
+
+                {breakdownInformation.map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex justify-between items-center"
+                  >
+                    <span className="text-muted-foreground">{item.label}</span>
+                    <span className="text-muted-foreground text-sm">
+                      {toBrl(item.value)}
+                    </span>
+                  </div>
+                ))}
 
                 <Separator />
 
                 <div className="flex justify-between items-center text-lg font-bold">
-                  <span>Total Amount</span>
-                  <span className="text-primary">$2,450.00</span>
+                  <span>Valor Final</span>
+                  <span className="text-primary">{toBrl(invoice.amount)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Additional Info */}
-            <div className="bg-muted/20 rounded-lg p-4 border-l-4 border-primary">
-              <p className="text-sm text-muted-foreground">
-                <strong>Payment Terms:</strong> Net 30 days from emission date.
-                Late payments may incur additional fees.
-              </p>
-            </div>
+            {invoice.status !== "paid" && (
+              <>
+                {/* Additional Info */}
+                <div className="bg-muted/20 rounded-lg p-4 border-l-4 border-primary">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Vencimento:</strong>{" "}
+                    {format(expiryDate, "PPP", { locale: ptBR })}, em{" "}
+                    {formatDistanceToNow(expiryDate, { locale: ptBR })}.
+                    <br />
+                    Essa fatura será vencida 3 dias após sua emissão.
+                  </p>
+                </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2 pt-4">
-              <Button size="sm" className="flex-1">
-                Download PDF
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1">
-                Send Email
-              </Button>
-            </div>
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-4">
+                  <Link
+                    className="flex-1 grid !cursor-pointer"
+                    href={`/checkout/${invoice.id}`}
+                  >
+                    <GradientButton>Pagar agora</GradientButton>
+                  </Link>
+                </div>
+              </>
+            )}
           </CardContent>
         )}
       </Card>
     </div>
   );
 }
+
+const statusLabel = {
+  paid: "Pago",
+  pending: "Pendente",
+  overdue: "Vencida",
+  failed: "Pagamento recusado",
+  processing: "Em processamento",
+};
 
 const getStatusVariant = (
   status?: InvoiceStatus | null

@@ -108,9 +108,9 @@ export function OrganizationOverview({ user }: { user: User }) {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium">
+              <div className="font-medium">
                 <UserPlanBadge user={user} />
-              </p>
+              </div>
               <p className="text-sm text-muted-foreground">
                 Active until May 30, 2026
               </p>
