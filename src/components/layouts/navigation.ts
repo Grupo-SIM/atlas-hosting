@@ -13,7 +13,7 @@ import {
 
 export const navigation = [
   { name: "Painel", href: "/", icon: LayoutDashboard },
-  { name: "Hospedagem", href: "/hosting", icon: Server },
+  { name: "Hospedagem", href: "/sites/new", icon: Server },
   { name: "Domínios", href: "/domains", icon: Globe },
   { name: "Bancos de Dados", href: "/databases", icon: Database },
   { name: "E-mail", href: "/email", icon: Mail },

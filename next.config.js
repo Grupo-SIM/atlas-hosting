@@ -20,6 +20,30 @@ const nextConfig = {
       dynamic: 30,
       static: 180,
     },
+    // Turbopack-specific configuration for file watching
+    turbo: {
+      rules: {
+        "*.svg": {
+          loaders: ["@svgr/webpack"],
+          as: "*.js",
+        },
+      },
+    },
+  },
+  // For webpack (when not using turbopack)
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: [
+          '**/node_modules/**',
+          '**/docker-data/**',
+          '**/.next/**',
+          '**/.git/**',
+        ],
+      };
+    }
+    return config;
   },
 };
 
