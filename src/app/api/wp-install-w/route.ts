@@ -87,7 +87,7 @@ export async function GET(request: Request) {
       domainName,
       adminEmail,
       adminPassword,
-    adminUsername,
+      adminUsername,
       plugins,
       siteName,
     });

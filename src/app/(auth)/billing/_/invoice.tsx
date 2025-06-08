@@ -12,6 +12,7 @@ import {
   format,
   formatDistanceToNow,
   formatDistanceToNowStrict,
+  isBefore,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { eq } from "drizzle-orm";
@@ -59,6 +60,7 @@ export default function InvoiceCard({
   })();
 
   const expiryDate = addDays(invoice.createdAt, 3);
+  const isOverdue = isBefore(expiryDate, new Date());
 
   return (
     <div>
@@ -88,7 +90,11 @@ export default function InvoiceCard({
                   Valor da fatura
                 </div>
               </div>
-              <Link href={isExpanded ? "?" : `?id=${invoice.id}`}>
+              <Link
+                href={isExpanded ? "?" : `?id=${invoice.id}`}
+                scroll={false}
+                replace
+              >
                 <Button variant="ghost" size="sm">
                   <ChevronDown
                     className={cn(
@@ -233,8 +239,12 @@ export default function InvoiceCard({
                 <div className="bg-muted/20 rounded-lg p-4 border-l-4 border-primary">
                   <p className="text-sm text-muted-foreground">
                     <strong>Vencimento:</strong>{" "}
-                    {format(expiryDate, "PPP", { locale: ptBR })}, em{" "}
-                    {formatDistanceToNow(expiryDate, { locale: ptBR })}.
+                    {format(expiryDate, "PPP", { locale: ptBR })},{" "}
+                    {formatDistanceToNow(expiryDate, {
+                      locale: ptBR,
+                      addSuffix: true,
+                    })}
+                    .
                     <br />
                     Essa fatura será vencida 3 dias após sua emissão.
                   </p>

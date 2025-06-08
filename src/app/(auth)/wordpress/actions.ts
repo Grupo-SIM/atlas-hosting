@@ -5,41 +5,12 @@ import { getUserWordPressSites } from "@/lib/server/utils";
 import pleskApi from "@/lib/server/apis/plesk";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-export interface WordPressPluginInfo {
-  id: number;
-  name: string;
-  version: string;
-  status: "active" | "inactive";
-  updateAvailable?: boolean;
-  description?: string;
-}
-
-export interface WordPressSiteInfo {
-  id: number;
-  instanceId: number;
-  name: string;
-  domain: string;
-  path: string;
-  status: string;
-  version: string;
-  loginUrl: string;
-  url?: string; // Computed from domain + path
-  createdAt?: string;
-  plugins?: WordPressPluginInfo[];
-  users?: Array<{
-    id: number;
-    username: string;
-    email: string;
-    role: string;
-  }>;
-  hasUpdates?: boolean;
-  lastBackup?: string;
-  updatesAvailable?: {
-    core?: boolean;
-    plugins?: WordPressPluginInfo[];
-  };
-}
+import type {
+  WordPressPluginInfo,
+  WordPressSiteInfo,
+  WordPressUserInfo,
+  WordPressThemeInfo,
+} from "./types";
 
 export async function getWordPressSitesForSelectedDomain(): Promise<
   WordPressSiteInfo[]
@@ -71,27 +42,53 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
         try {
           // Get plugins for this instance (table format)
           const pluginsResponse = await pleskApi.wordpress.callWp(
-            `--wp-cli -instance-id ${instance.instanceId} -- plugin list`
+            `--wp-cli -instance-id ${instance.instanceId} -- plugin list --format=json --fields=${pluginFields.join(",")}`
           );
 
           let plugins: WordPressPluginInfo[] = [];
           if (pluginsResponse.stdout) {
-            plugins = parsePluginList(pluginsResponse.stdout);
+            plugins = JSON.parse(
+              pluginsResponse.stdout
+            ) as WordPressPluginInfo[];
+          }
+
+          // Get themes for this instance
+          const themesResponse = await pleskApi.wordpress.callWp(
+            `--wp-cli -instance-id ${instance.instanceId} -- theme list --format=json --fields=${themeFields.join(",")}`
+          );
+
+          let themes: WordPressThemeInfo[] = [];
+          if (themesResponse.stdout) {
+            const rawThemes = JSON.parse(themesResponse.stdout) as Array<{
+              name: string;
+              title?: string;
+              description?: string;
+              status: "active" | "inactive";
+              update: "available" | "none";
+              version?: string;
+              author?: string;
+              template?: string;
+            }>;
+            themes = rawThemes.map((theme) => ({
+              name: theme.name,
+              title: theme.title,
+              description: theme.description,
+              status: theme.status,
+              updateAvailable: theme.update === "available",
+              version: theme.version,
+              author: theme.author,
+              template: theme.template,
+            }));
           }
 
           // Get users for this instance (table format)
           const usersResponse = await pleskApi.wordpress.callWp(
-            `--wp-cli -instance-id ${instance.instanceId} -- user list`
+            `--wp-cli -instance-id ${instance.instanceId} -- user list --format=json`
           );
 
-          let users: Array<{
-            id: number;
-            username: string;
-            email: string;
-            role: string;
-          }> = [];
+          let users: Array<WordPressUserInfo> = [];
           if (usersResponse.stdout) {
-            users = parseUserList(usersResponse.stdout);
+            users = JSON.parse(usersResponse.stdout);
           }
 
           // Check for core updates (table format)
@@ -111,6 +108,7 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
           }
 
           const pluginsWithUpdates = plugins.filter((p) => p.updateAvailable);
+          const themesWithUpdates = themes.filter((t) => t.updateAvailable);
 
           return {
             id: instance.id,
@@ -124,11 +122,13 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
             url: instance.domain, // Use domain as URL
             createdAt: new Date().toISOString(), // Placeholder - could get from instance data
             plugins,
+            themes,
             users,
-            hasUpdates: hasUpdates || plugins.some((p) => p.updateAvailable),
+            hasUpdates: hasUpdates || plugins.some((p) => p.updateAvailable) || themes.some((t) => t.updateAvailable),
             updatesAvailable: {
               core: hasUpdates,
               plugins: pluginsWithUpdates,
+              themes: themesWithUpdates,
             },
           };
         } catch (error) {
@@ -216,7 +216,7 @@ export async function togglePlugin(
 
   try {
     const action = activate ? "activate" : "deactivate";
-    const response = await pleskApi.wordpress.callWp(
+    await pleskApi.wordpress.callWp(
       `--wp-cli -instance-id ${instanceId} -- plugin ${action} ${pluginName}`
     );
 
@@ -262,7 +262,7 @@ export async function createWordPressUser(
   username: string,
   email: string,
   password: string,
-  role: string = "subscriber"
+  role = "subscriber"
 ) {
   const user = await getUser();
   if (!user) {
@@ -279,6 +279,71 @@ export async function createWordPressUser(
   } catch (error) {
     console.error("Error creating WordPress user:", error);
     return { success: false, message: "Failed to create user" };
+  }
+}
+
+// Theme management actions
+export async function activateTheme(instanceId: number, themeName: string) {
+  const user = await getUser();
+  
+  try {
+    const response = await pleskApi.wordpress.callWp(
+      `--wp-cli -instance-id ${instanceId} -- theme activate ${themeName}`
+    );
+    
+    revalidatePath("/wordpress");
+    return { success: true, message: "Tema ativado com sucesso" };
+  } catch (error) {
+    console.error("Error activating theme:", error);
+    return { success: false, message: "Erro ao ativar tema" };
+  }
+}
+
+export async function updateTheme(instanceId: number, themeName: string) {
+  const user = await getUser();
+  
+  try {
+    const response = await pleskApi.wordpress.callWp(
+      `--wp-cli -instance-id ${instanceId} -- theme update ${themeName}`
+    );
+    
+    revalidatePath("/wordpress");
+    return { success: true, message: "Tema atualizado com sucesso" };
+  } catch (error) {
+    console.error("Error updating theme:", error);
+    return { success: false, message: "Erro ao atualizar tema" };
+  }
+}
+
+export async function deleteTheme(instanceId: number, themeName: string) {
+  const user = await getUser();
+  
+  try {
+    const response = await pleskApi.wordpress.callWp(
+      `--wp-cli -instance-id ${instanceId} -- theme delete ${themeName}`
+    );
+    
+    revalidatePath("/wordpress");
+    return { success: true, message: "Tema removido com sucesso" };
+  } catch (error) {
+    console.error("Error deleting theme:", error);
+    return { success: false, message: "Erro ao remover tema" };
+  }
+}
+
+export async function installTheme(instanceId: number, themeSlug: string) {
+  const user = await getUser();
+  
+  try {
+    const response = await pleskApi.wordpress.callWp(
+      `--wp-cli -instance-id ${instanceId} -- theme install ${themeSlug}`
+    );
+    
+    revalidatePath("/wordpress");
+    return { success: true, message: "Tema instalado com sucesso" };
+  } catch (error) {
+    console.error("Error installing theme:", error);
+    return { success: false, message: "Erro ao instalar tema" };
   }
 }
 
@@ -308,7 +373,7 @@ function parseTableOutput(output: string): Array<Record<string, string>> {
     // Split by multiple spaces to separate columns
     const values = line.split("\t").map((v) => v.trim());
 
-    console.log({values})
+    console.log({ values });
 
     const row: Record<string, string> = {};
     headers.forEach((header, index) => {
@@ -319,38 +384,6 @@ function parseTableOutput(output: string): Array<Record<string, string>> {
   }
 
   return results;
-}
-
-function parsePluginList(output: string): WordPressPluginInfo[] {
-  const rows = parseTableOutput(output);
-
-  console.log({ rows });
-
-  return rows.map((row, index) => ({
-    id: index + 1,
-    name: row.name || row.Name || "",
-    version: row.version || row.Version || "",
-    status: (row.status || row.Status || "inactive").toLowerCase() as
-      | "active"
-      | "inactive",
-    updateAvailable:
-      (row.update || row.Update || "").toLowerCase() === "available",
-    description:
-      row.title || row.Title || row.description || row.Description || "",
-  }));
-}
-
-function parseThemeList(
-  output: string
-): Array<{ name: string; status: string; version: string; update: string }> {
-  const rows = parseTableOutput(output);
-
-  return rows.map((row) => ({
-    name: row.name || row.Name || "",
-    status: row.status || row.Status || "",
-    version: row.version || row.Version || "",
-    update: row.update || row.Update || "",
-  }));
 }
 
 function parseUserList(
@@ -365,3 +398,28 @@ function parseUserList(
     role: row.roles || row.role || row.Role || "subscriber",
   }));
 }
+
+const pluginFields = [
+  "update_id",
+  "name",
+  "title",
+  "description",
+  "status",
+  "update",
+  "version",
+  "update_version",
+  "auto_update",
+];
+
+const themeFields = [
+  "name",
+  "status",
+  "update",
+  "version",
+  "update_version",
+  "auto_update",
+  "update_package",
+  "update_id",
+  "title",
+  "description",
+];

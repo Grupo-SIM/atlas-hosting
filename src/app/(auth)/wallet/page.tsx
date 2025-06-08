@@ -79,7 +79,8 @@ export default async function WalletPage() {
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                Última transação: {format(invoices[0]?.createdAt, "PPP", { locale: ptBR })}
+                Última transação:{" "}
+                {format(invoices[0]?.createdAt, "PPP", { locale: ptBR })}
               </p>
             </div>
 
@@ -117,11 +118,10 @@ export default async function WalletPage() {
                       </div>
                     </div>
                     <span
-                      className={`font-medium ${
-                        false ? "text-green-500" : ""
-                      }`}
+                      className={`font-medium ${false ? "text-green-500" : ""}`}
                     >
-                      {false ? "+" : ""}{toBrl(transaction.amount)}
+                      {false ? "+" : ""}
+                      {toBrl(transaction.amount)}
                     </span>
                   </div>
                 ))}

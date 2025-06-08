@@ -13,7 +13,7 @@ export default function InviteMemberDialogWrapper({
 
   const onOpenChange = (open: boolean) => {
     const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.delete("action")
+    newSearchParams.delete("action");
 
     if (!open) {
       router.push(`/organization?${newSearchParams.toString()}`);

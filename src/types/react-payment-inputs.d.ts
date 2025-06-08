@@ -1,4 +1,4 @@
-declare module 'react-payment-inputs' {
+declare module "react-payment-inputs" {
   export interface UsePaymentInputsOptions {
     onCardNumberChange?: (cardNumber: string) => void;
     onExpiryDateChange?: (expiryDate: string) => void;
@@ -44,10 +44,12 @@ declare module 'react-payment-inputs' {
     wrapperProps?: any;
   }
 
-  export function usePaymentInputs(options?: UsePaymentInputsOptions): UsePaymentInputsReturn;
+  export function usePaymentInputs(
+    options?: UsePaymentInputsOptions
+  ): UsePaymentInputsReturn;
 }
 
-declare module 'react-payment-inputs/images' {
+declare module "react-payment-inputs/images" {
   const images: any;
   export default images;
   export type CardImages = any;

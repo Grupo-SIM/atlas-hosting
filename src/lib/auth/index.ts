@@ -57,8 +57,8 @@ export async function validateSessionToken(token: string) {
               plan: true,
               wallet: {
                 with: {
-                  cards: true
-                }
+                  cards: true,
+                },
               },
               owner: true,
               domains: true,
@@ -273,8 +273,8 @@ export async function getUser(): Promise<User> {
             plan: true,
             wallet: {
               with: {
-                cards: true
-              }
+                cards: true,
+              },
             },
             owner: true,
             domains: true,

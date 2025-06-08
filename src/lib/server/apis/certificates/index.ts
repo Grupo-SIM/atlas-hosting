@@ -423,9 +423,10 @@ export class CertificatesApi {
 
     const stream = Readable.from(keyAuthorization);
     const htAccessStream = Readable.from(
-`<Directory ".well-known">
+      `<Directory ".well-known">
     Require all granted
-</Directory>`);
+</Directory>`
+    );
 
     try {
       // Ensure the challenge directory exists
@@ -433,7 +434,10 @@ export class CertificatesApi {
       // Create the challenge file with the key authorization
       await ftpClient.uploadFrom(stream, challengeFile);
 
-      await ftpClient.uploadFrom(htAccessStream, path.join("/httpdocs", ".htaccess"));
+      await ftpClient.uploadFrom(
+        htAccessStream,
+        path.join("/httpdocs", ".htaccess")
+      );
 
       console.log(`Challenge file created: ${challengeFile}`);
 

@@ -41,9 +41,11 @@ export default async function PlansPage({
 
   // Check if user has a plan and if any plans would be downgrades
   const userPlan = user.organization.plan;
-  const hasDowngrades = userPlan && plans.some(plan => 
-    plan.id !== userPlan.id && plan.price < userPlan.price
-  );
+  const hasDowngrades =
+    userPlan &&
+    plans.some(
+      (plan) => plan.id !== userPlan.id && plan.price < userPlan.price
+    );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/80 to-muted/20">
@@ -55,7 +57,8 @@ export default async function PlansPage({
               Planos de Hospedagem
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Escolha o melhor plano para suas necessidades e comece a criar sites incríveis hoje mesmo
+              Escolha o melhor plano para suas necessidades e comece a criar
+              sites incríveis hoje mesmo
             </p>
           </div>
 
@@ -64,9 +67,10 @@ export default async function PlansPage({
             <Alert className="max-w-2xl mx-auto border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
               <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               <AlertDescription className="text-amber-800 dark:text-amber-200">
-                Para fazer downgrade do seu plano, você precisa primeiro cancelar sua assinatura atual.{" "}
-                <Link 
-                  href="/settings" 
+                Para fazer downgrade do seu plano, você precisa primeiro
+                cancelar sua assinatura atual.{" "}
+                <Link
+                  href="/settings"
                   className="font-medium underline hover:no-underline text-amber-900 dark:text-amber-100"
                 >
                   Gerencie suas assinaturas aqui
@@ -74,7 +78,7 @@ export default async function PlansPage({
               </AlertDescription>
             </Alert>
           )}
-          
+
           {/* Trust indicators */}
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
@@ -116,7 +120,7 @@ export default async function PlansPage({
             opts={{
               align: "start",
               slidesToScroll: 1,
-              axis: "x"
+              axis: "x",
             }}
             className="w-full group overflow-visible"
           >
@@ -133,7 +137,7 @@ export default async function PlansPage({
                   <div className="h-full w-1/3 bg-gradient-to-r from-primary to-primary/70 rounded-full animate-pulse" />
                 </div>
               </div>
-              
+
               {/* Navigation Buttons */}
               <div className="flex items-center gap-3 opacity-60 group-hover:opacity-100 transition-all duration-300">
                 <CarouselPrevious className="relative left-0 translate-y-0 h-11 w-11 rounded-xl border-2 border-border/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-lg backdrop-blur-sm" />
@@ -143,8 +147,8 @@ export default async function PlansPage({
 
             <CarouselContent className="-ml-6">
               {plans.map((plan, index) => (
-                <CarouselItem 
-                  key={plan.id} 
+                <CarouselItem
+                  key={plan.id}
                   className="pl-6 basis-full sm:basis-1/2 lg:basis-1/3 group/item"
                 >
                   <div className="h-full transform transition-all duration-500 group-hover/item:scale-[1.02] group-hover/item:z-10 relative">
@@ -152,7 +156,11 @@ export default async function PlansPage({
                       plan={plan}
                       user={user}
                       searchParams={searchParams}
-                      isDowngrade={Boolean(userPlan && plan.id !== userPlan.id && plan.price < userPlan.price)}
+                      isDowngrade={Boolean(
+                        userPlan &&
+                          plan.id !== userPlan.id &&
+                          plan.price < userPlan.price
+                      )}
                     />
                   </div>
                 </CarouselItem>
@@ -164,7 +172,7 @@ export default async function PlansPage({
               <CarouselPrevious className="relative left-0 translate-y-0 h-9 w-9 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border-primary/20 hover:border-primary/40 transition-all duration-300" />
               <div className="flex gap-2">
                 {plans.map((plan, index) => (
-                  <div 
+                  <div
                     key={`dot-${plan.id}`}
                     className="w-2.5 h-2.5 rounded-full bg-muted-foreground/20 transition-all duration-300 hover:bg-primary/40 hover:scale-125"
                   />
@@ -184,10 +192,11 @@ export default async function PlansPage({
                   Por que escolher nossos planos?
                 </h3>
                 <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Oferecemos a melhor infraestrutura e suporte para garantir que seu projeto tenha sucesso
+                  Oferecemos a melhor infraestrutura e suporte para garantir que
+                  seu projeto tenha sucesso
                 </p>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
                 <div className="space-y-3 p-4 rounded-2xl bg-gradient-to-br from-green-50/50 to-emerald-50/30 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200/50 dark:border-green-800/50">
                   <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mx-auto">
@@ -198,7 +207,7 @@ export default async function PlansPage({
                     Infraestrutura confiável com monitoramento 24/7
                   </p>
                 </div>
-                
+
                 <div className="space-y-3 p-4 rounded-2xl bg-gradient-to-br from-blue-50/50 to-cyan-50/30 dark:from-blue-950/20 dark:to-cyan-950/20 border border-blue-200/50 dark:border-blue-800/50">
                   <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto">
                     <div className="w-6 h-6 bg-white rounded-full" />
@@ -208,7 +217,7 @@ export default async function PlansPage({
                     Equipe técnica pronta para te ajudar quando precisar
                   </p>
                 </div>
-                
+
                 <div className="space-y-3 p-4 rounded-2xl bg-gradient-to-br from-purple-50/50 to-violet-50/30 dark:from-purple-950/20 dark:to-violet-950/20 border border-purple-200/50 dark:border-purple-800/50">
                   <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto">
                     <div className="w-6 h-6 bg-white rounded-full" />
@@ -230,16 +239,17 @@ export default async function PlansPage({
               Precisa de algo personalizado?
             </h3>
             <p className="text-muted-foreground mb-4">
-              Nossa equipe pode criar um plano sob medida para suas necessidades específicas
+              Nossa equipe pode criar um plano sob medida para suas necessidades
+              específicas
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button 
+              <button
                 type="button"
                 className="px-6 py-2 border border-border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 Falar com vendas
               </button>
-              <button 
+              <button
                 type="button"
                 className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
               >

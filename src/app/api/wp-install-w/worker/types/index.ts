@@ -18,7 +18,6 @@ export interface SetWebspaceParams {
   "php-settings"?: WebspacePhpSettings[];
 }
 
-
 export interface WebspaceGenSetup {
   /** Nome do domínio */
   name: string;

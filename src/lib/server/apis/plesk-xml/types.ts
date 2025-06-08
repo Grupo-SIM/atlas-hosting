@@ -1,5 +1,5 @@
 import type { HostingProperties } from "@/app/api/wp-install-w/worker/types/hosting";
-import {WebspaceHosting} from '@/app/api/wp-install-w/worker/types/index';
+import type { WebspaceHosting } from "@/app/api/wp-install-w/worker/types/index";
 
 export interface PleskApiError {
   status: "error";

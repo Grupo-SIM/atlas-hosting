@@ -5,7 +5,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +27,11 @@ interface InviteMemberDialogProps {
   searchParams: OrganizationPageParams;
 }
 
-export function InviteMemberDialog({ open, orgId, searchParams }: InviteMemberDialogProps) {
+export function InviteMemberDialog({
+  open,
+  orgId,
+  searchParams,
+}: InviteMemberDialogProps) {
   async function addMemberToOrg(formData: FormData) {
     "use server";
 

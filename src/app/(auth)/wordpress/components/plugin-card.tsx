@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { updatePlugin, togglePlugin } from "../actions";
-import type { WordPressPluginInfo } from "../actions";
+import type { WordPressPluginInfo } from "../types";
 
 interface PluginCardProps {
   plugin: WordPressPluginInfo;
@@ -114,9 +114,9 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-6 w-6 p-0"
                 disabled={isPending}
               >
@@ -129,10 +129,10 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onClick={() => handleToggle(plugin.status !== 'active')}
+                onClick={() => handleToggle(plugin.status !== "active")}
                 disabled={isToggling}
               >
-                {plugin.status === 'active' ? (
+                {plugin.status === "active" ? (
                   <>
                     <XCircle className="mr-2 h-4 w-4" />
                     Desativar
@@ -144,22 +144,19 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
                   </>
                 )}
               </DropdownMenuItem>
-              
+
               {plugin.updateAvailable && (
-                <DropdownMenuItem
-                  onClick={handleUpdate}
-                  disabled={isUpdating}
-                >
+                <DropdownMenuItem onClick={handleUpdate} disabled={isUpdating}>
                   <ArrowUpCircle className="mr-2 h-4 w-4" />
                   {isUpdating ? "Atualizando..." : "Atualizar"}
                 </DropdownMenuItem>
               )}
-              
+
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
                 Configurações
               </DropdownMenuItem>
-              
+
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem
@@ -174,8 +171,9 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Remover Plugin</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Tem certeza que deseja remover o plugin "{plugin.name}"? 
-                      Esta ação não pode ser desfeita e todos os dados do plugin serão perdidos.
+                      Tem certeza que deseja remover o plugin "{plugin.name}"?
+                      Esta ação não pode ser desfeita e todos os dados do plugin
+                      serão perdidos.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -189,22 +187,29 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Badge 
-              variant={plugin.status === 'active' ? 'default' : 'secondary'}
-              className={plugin.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ''}
+            <Badge
+              variant={plugin.status === "active" ? "default" : "secondary"}
+              className={
+                plugin.status === "active"
+                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                  : ""
+              }
             >
-              {plugin.status === 'active' ? (
+              {plugin.status === "active" ? (
                 <CheckCircle className="mr-1 h-3 w-3" />
               ) : (
                 <XCircle className="mr-1 h-3 w-3" />
               )}
-              {plugin.status === 'active' ? 'Ativo' : 'Inativo'}
+              {plugin.status === "active" ? "Ativo" : "Inativo"}
             </Badge>
             {plugin.updateAvailable && (
-              <Badge variant="outline" className="text-orange-600 border-orange-200">
+              <Badge
+                variant="outline"
+                className="text-orange-600 border-orange-200"
+              >
                 <ArrowUpCircle className="mr-1 h-3 w-3" />
                 Update
               </Badge>

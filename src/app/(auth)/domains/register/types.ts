@@ -47,5 +47,5 @@ export interface DomainPageParams {
   years?: string;
   domain?: string;
   confirm?: string;
-  action?: "search"
+  action?: "search";
 }

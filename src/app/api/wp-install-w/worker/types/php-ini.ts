@@ -255,26 +255,26 @@ export interface PhpConfiguration {
 
   // Date
   /** Default timezone */
-  'date.timezone'?: string;
+  "date.timezone"?: string;
 
   /** Default latitude */
-  'date.default_latitude'?: number;
+  "date.default_latitude"?: number;
 
   /** Default longitude */
-  'date.default_longitude'?: number;
+  "date.default_longitude"?: number;
 
   /** Sunrise zenith */
-  'date.sunrise_zenith'?: number;
+  "date.sunrise_zenith"?: number;
 
   /** Sunset zenith */
-  'date.sunset_zenith'?: number;
+  "date.sunset_zenith"?: number;
 
   // Filter
   /** Default filter */
-  'filter.default'?: string;
+  "filter.default"?: string;
 
   /** Default filter flags */
-  'filter.default_flags'?: string;
+  "filter.default_flags"?: string;
 
   // Mail Function
   /** SMTP server */
@@ -300,140 +300,140 @@ export interface PhpConfiguration {
 
   // SQL
   /** SQL safe mode */
-  'sql.safe_mode': boolean;
+  "sql.safe_mode": boolean;
 
   // MySQL
   /** Allow local file access with LOAD DATA */
-  'mysql.allow_local_infile': boolean;
+  "mysql.allow_local_infile": boolean;
 
   /** Allow persistent MySQL connections */
-  'mysql.allow_persistent': boolean;
+  "mysql.allow_persistent": boolean;
 
   /** MySQL cache size */
-  'mysql.cache_size': number;
+  "mysql.cache_size": number;
 
   /** Maximum persistent MySQL connections */
-  'mysql.max_persistent': number;
+  "mysql.max_persistent": number;
 
   /** Maximum MySQL connections */
-  'mysql.max_links': number;
+  "mysql.max_links": number;
 
   /** Default MySQL port */
-  'mysql.default_port': number;
+  "mysql.default_port": number;
 
   /** Default MySQL socket */
-  'mysql.default_socket'?: string;
+  "mysql.default_socket"?: string;
 
   /** Default MySQL host */
-  'mysql.default_host'?: string;
+  "mysql.default_host"?: string;
 
   /** Default MySQL user */
-  'mysql.default_user'?: string;
+  "mysql.default_user"?: string;
 
   /** Default MySQL password */
-  'mysql.default_password'?: string;
+  "mysql.default_password"?: string;
 
   /** MySQL connect timeout */
-  'mysql.connect_timeout': number;
+  "mysql.connect_timeout": number;
 
   /** MySQL trace mode */
-  'mysql.trace_mode': boolean;
+  "mysql.trace_mode": boolean;
 
   // MySQLi
   /** Maximum persistent MySQLi connections */
-  'mysqli.max_persistent': number;
+  "mysqli.max_persistent": number;
 
   /** Allow local file access with MySQLi LOAD DATA */
-  'mysqli.allow_local_infile': boolean;
+  "mysqli.allow_local_infile": boolean;
 
   /** Allow persistent MySQLi connections */
-  'mysqli.allow_persistent': boolean;
+  "mysqli.allow_persistent": boolean;
 
   /** Maximum MySQLi connections */
-  'mysqli.max_links': number;
+  "mysqli.max_links": number;
 
   /** MySQLi cache size */
-  'mysqli.cache_size': number;
+  "mysqli.cache_size": number;
 
   /** Default MySQLi port */
-  'mysqli.default_port': number;
+  "mysqli.default_port": number;
 
   /** Default MySQLi socket */
-  'mysqli.default_socket'?: string;
+  "mysqli.default_socket"?: string;
 
   /** Default MySQLi host */
-  'mysqli.default_host'?: string;
+  "mysqli.default_host"?: string;
 
   /** Default MySQLi user */
-  'mysqli.default_user'?: string;
+  "mysqli.default_user"?: string;
 
   /** Default MySQLi password */
-  'mysqli.default_pw'?: string;
+  "mysqli.default_pw"?: string;
 
   // Session
   /** Session save handler */
-  'session.save_handler': string;
+  "session.save_handler": string;
 
   /** Session save path */
-  'session.save_path'?: string;
+  "session.save_path"?: string;
 
   /** Use cookies for sessions */
-  'session.use_cookies': boolean;
+  "session.use_cookies": boolean;
 
   /** Use only cookies for sessions */
-  'session.use_only_cookies': boolean;
+  "session.use_only_cookies": boolean;
 
   /** Session name */
-  'session.name': string;
+  "session.name": string;
 
   /** Auto-start sessions */
-  'session.auto_start': boolean;
+  "session.auto_start": boolean;
 
   /** Session cookie lifetime */
-  'session.cookie_lifetime': number;
+  "session.cookie_lifetime": number;
 
   /** Session cookie path */
-  'session.cookie_path': string;
+  "session.cookie_path": string;
 
   /** Session cookie domain */
-  'session.cookie_domain'?: string;
+  "session.cookie_domain"?: string;
 
   /** Session cookie httpOnly flag */
-  'session.cookie_httponly': boolean;
+  "session.cookie_httponly": boolean;
 
   /** Session serialize handler */
-  'session.serialize_handler': string;
+  "session.serialize_handler": string;
 
   /** Session garbage collection probability */
-  'session.gc_probability': number;
+  "session.gc_probability": number;
 
   /** Session garbage collection divisor */
-  'session.gc_divisor': number;
+  "session.gc_divisor": number;
 
   /** Session garbage collection max lifetime */
-  'session.gc_maxlifetime': number;
+  "session.gc_maxlifetime": number;
 
   /** Session referer check */
-  'session.referer_check'?: string;
+  "session.referer_check"?: string;
 
   /** Session entropy length */
-  'session.entropy_length': number;
+  "session.entropy_length": number;
 
   /** Session entropy file */
-  'session.entropy_file'?: string;
+  "session.entropy_file"?: string;
 
   /** Session cache limiter */
-  'session.cache_limiter': string;
+  "session.cache_limiter": string;
 
   /** Session cache expire */
-  'session.cache_expire': number;
+  "session.cache_expire": number;
 
   /** Use transparent session ID */
-  'session.use_trans_sid': boolean;
+  "session.use_trans_sid": boolean;
 
   /** Session hash function */
-  'session.hash_function': number;
+  "session.hash_function": number;
 
   /** Session hash bits per character */
-  'session.hash_bits_per_character': number;
+  "session.hash_bits_per_character": number;
 }

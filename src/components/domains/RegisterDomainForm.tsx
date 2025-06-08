@@ -1,4 +1,7 @@
-import type { DomainData, DomainPageParams } from "@/app/(auth)/domains/register/types";
+import type {
+  DomainData,
+  DomainPageParams,
+} from "@/app/(auth)/domains/register/types";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import Form from "next/form";
@@ -40,9 +43,7 @@ export default function RegisterDomainForm({
         className="w-45 flex gap-2 items-center justify-between"
         type="submit"
       >
-        <span>
-          Registrar domínio
-        </span>
+        <span>Registrar domínio</span>
         <ChevronDown className="min-h-5 min-w-5 text-inherit" />
       </Button>
     </Form>

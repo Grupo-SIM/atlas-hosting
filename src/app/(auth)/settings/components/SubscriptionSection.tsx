@@ -85,14 +85,10 @@ export function SubscriptionSection({ user }: SubscriptionSectionProps) {
                     <h3 className="text-lg font-semibold">{plan.name}</h3>
                     <UserPlanBadge user={user} />
                   </div>
-                  <p className="text-muted-foreground">
-                    {plan.description}
-                  </p>
+                  <p className="text-muted-foreground">{plan.description}</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold">
-                    {toBrl(plan.price)}
-                  </div>
+                  <div className="text-2xl font-bold">{toBrl(plan.price)}</div>
                   <p className="text-sm text-muted-foreground">por mês</p>
                 </div>
               </div>
@@ -109,7 +105,9 @@ export function SubscriptionSection({ user }: SubscriptionSectionProps) {
                   <HardDrive className="h-8 w-8 text-green-500" />
                   <div>
                     <p className="font-medium">{plan.maxStorage} GB</p>
-                    <p className="text-sm text-muted-foreground">Armazenamento</p>
+                    <p className="text-sm text-muted-foreground">
+                      Armazenamento
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-card/50">
@@ -125,24 +123,36 @@ export function SubscriptionSection({ user }: SubscriptionSectionProps) {
 
               <div className="flex flex-wrap gap-2">
                 {plan.ssl && (
-                  <Badge variant="secondary" className="bg-green-500/10 text-green-700">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-500/10 text-green-700"
+                  >
                     <Shield className="w-3 h-3 mr-1" />
                     SSL Incluído
                   </Badge>
                 )}
                 {plan.backup && (
-                  <Badge variant="secondary" className="bg-blue-500/10 text-blue-700">
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-500/10 text-blue-700"
+                  >
                     <HardDrive className="w-3 h-3 mr-1" />
                     Backup Automático
                   </Badge>
                 )}
                 {plan.cdn && (
-                  <Badge variant="secondary" className="bg-purple-500/10 text-purple-700">
+                  <Badge
+                    variant="secondary"
+                    className="bg-purple-500/10 text-purple-700"
+                  >
                     CDN Global
                   </Badge>
                 )}
                 {plan.supportPriority && (
-                  <Badge variant="secondary" className="bg-orange-500/10 text-orange-700">
+                  <Badge
+                    variant="secondary"
+                    className="bg-orange-500/10 text-orange-700"
+                  >
                     Suporte Prioritário
                   </Badge>
                 )}
@@ -189,17 +199,18 @@ export function SubscriptionSection({ user }: SubscriptionSectionProps) {
                     {storageUsed} GB de {storageLimit} GB utilizados
                   </p>
                 </div>
-                <Badge 
+                <Badge
                   variant={storagePercentage > 80 ? "destructive" : "secondary"}
-                  className={storagePercentage > 80 ? "" : "bg-green-500/10 text-green-700"}
+                  className={
+                    storagePercentage > 80
+                      ? ""
+                      : "bg-green-500/10 text-green-700"
+                  }
                 >
                   {storagePercentage.toFixed(1)}%
                 </Badge>
               </div>
-              <Progress 
-                value={storagePercentage} 
-                className="h-2"
-              />
+              <Progress value={storagePercentage} className="h-2" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -249,17 +260,20 @@ export function SubscriptionSection({ user }: SubscriptionSectionProps) {
                 <div>
                   <p className="font-medium">Próxima cobrança</p>
                   <p className="text-sm text-muted-foreground">
-                    {nextBillingDate.toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: 'long',
-                      year: 'numeric'
+                    {nextBillingDate.toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
                     })}
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="font-semibold">{toBrl(plan.price)}</p>
-                <Badge variant="outline" className="bg-green-500/10 text-green-600">
+                <Badge
+                  variant="outline"
+                  className="bg-green-500/10 text-green-600"
+                >
                   <CheckCircle className="w-3 h-3 mr-1" />
                   Ativo
                 </Badge>
@@ -268,11 +282,9 @@ export function SubscriptionSection({ user }: SubscriptionSectionProps) {
 
             <div className="flex gap-3">
               <Link href="/plans" className="flex-1">
-                <Button className="w-full">
-                  Alterar Plano
-                </Button>
+                <Button className="w-full">Alterar Plano</Button>
               </Link>
-              
+
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" className="flex-1">
@@ -286,14 +298,15 @@ export function SubscriptionSection({ user }: SubscriptionSectionProps) {
                       Cancelar assinatura do plano {plan.name}?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Esta ação não pode ser desfeita. Você perderá acesso a todos os recursos
-                      do seu plano atual. Seus sites e dados permanecerão ativos até o final
-                      do período de cobrança atual ({nextBillingDate.toLocaleDateString('pt-BR')}).
+                      Esta ação não pode ser desfeita. Você perderá acesso a
+                      todos os recursos do seu plano atual. Seus sites e dados
+                      permanecerão ativos até o final do período de cobrança
+                      atual ({nextBillingDate.toLocaleDateString("pt-BR")}).
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Manter Assinatura</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogAction
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       onClick={() => {
                         // Handle cancellation logic here

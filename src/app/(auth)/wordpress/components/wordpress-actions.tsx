@@ -1,9 +1,21 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpCircle, RefreshCw, Shield, Package, AlertTriangle } from "lucide-react";
+import {
+  ArrowUpCircle,
+  RefreshCw,
+  Shield,
+  Package,
+  AlertTriangle,
+} from "lucide-react";
 import type { WordPressSiteInfo } from "../actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -12,14 +24,18 @@ interface WordPressActionsButtonsProps {
   sites: WordPressSiteInfo[];
 }
 
-export function WordPressActionsButtons({ sites }: WordPressActionsButtonsProps) {
+export function WordPressActionsButtons({
+  sites,
+}: WordPressActionsButtonsProps) {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
-  
+
   // Calculate sites with updates available
-  const sitesWithUpdates = sites.filter(site => 
-    site.updatesAvailable?.core || 
-    (site.updatesAvailable?.plugins && site.updatesAvailable.plugins.length > 0)
+  const sitesWithUpdates = sites.filter(
+    (site) =>
+      site.updatesAvailable?.core ||
+      (site.updatesAvailable?.plugins &&
+        site.updatesAvailable.plugins.length > 0)
   );
 
   const handleUpdateAll = async () => {
@@ -38,7 +54,7 @@ export function WordPressActionsButtons({ sites }: WordPressActionsButtonsProps)
       // This would call the createWordPressBackup server action
       router.refresh();
     } catch (error) {
-      console.error('Error creating backup:', error);
+      console.error("Error creating backup:", error);
     }
   };
 
@@ -59,22 +75,24 @@ export function WordPressActionsButtons({ sites }: WordPressActionsButtonsProps)
               </CardTitle>
             </div>
             <CardDescription className="text-orange-700 dark:text-orange-300">
-              {sitesWithUpdates.length} site{sitesWithUpdates.length !== 1 ? 's' : ''} com atualizações pendentes
+              {sitesWithUpdates.length} site
+              {sitesWithUpdates.length !== 1 ? "s" : ""} com atualizações
+              pendentes
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2 mb-4">
-              {sitesWithUpdates.map(site => (
-                <Badge 
-                  key={site.id} 
-                  variant="secondary" 
+              {sitesWithUpdates.map((site) => (
+                <Badge
+                  key={site.id}
+                  variant="secondary"
                   className="bg-white dark:bg-orange-900"
                 >
                   {site.url}
                 </Badge>
               ))}
             </div>
-            <Button 
+            <Button
               onClick={handleUpdateAll}
               disabled={isUpdating}
               className="bg-orange-600 hover:bg-orange-700 text-white"
@@ -105,7 +123,7 @@ export function WordPressActionsButtons({ sites }: WordPressActionsButtonsProps)
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
-            <Button 
+            <Button
               variant="outline"
               onClick={handleCreateBackup}
               className="flex items-center space-x-2"
@@ -113,8 +131,8 @@ export function WordPressActionsButtons({ sites }: WordPressActionsButtonsProps)
               <Shield className="h-4 w-4" />
               <span>Backup de Todos os Sites</span>
             </Button>
-            
-            <Button 
+
+            <Button
               variant="outline"
               onClick={() => router.refresh()}
               className="flex items-center space-x-2"
@@ -122,8 +140,8 @@ export function WordPressActionsButtons({ sites }: WordPressActionsButtonsProps)
               <Package className="h-4 w-4" />
               <span>Verificar Plugins</span>
             </Button>
-            
-            <Button 
+
+            <Button
               variant="outline"
               onClick={() => router.refresh()}
               className="flex items-center space-x-2"

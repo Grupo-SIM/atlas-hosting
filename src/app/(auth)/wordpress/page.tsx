@@ -28,6 +28,7 @@ import {
   Globe,
   MoreHorizontal,
   Package,
+  Palette,
   Plus,
   RefreshCw,
   Settings,
@@ -46,13 +47,12 @@ import { getWordPressSitesForSelectedDomain } from "./actions";
 import { revalidatePath } from "next/cache";
 import { PluginCard } from "./components/plugin-card";
 import { PluginBulkActions } from "./components/plugin-bulk-actions";
+import { ThemeBulkActions } from "./components/theme-bulk-actions";
 
 export default async function WordPressPage() {
   const user = await getUser();
 
   const sites = await getWordPressSitesForSelectedDomain();
-
-  Bun.write("output.json", JSON.stringify(sites))
 
   // Calculate stats from real data
   const totalSites = sites.length;
@@ -61,11 +61,16 @@ export default async function WordPressPage() {
     return (
       acc +
       (site.updatesAvailable?.core ? 1 : 0) +
-      (site.updatesAvailable?.plugins?.length || 0)
+      (site.updatesAvailable?.plugins?.length || 0) +
+      (site.updatesAvailable?.themes?.length || 0)
     );
   }, 0);
   const totalPlugins = sites.reduce(
     (acc, site) => acc + (site.plugins?.length || 0),
+    0
+  );
+  const totalThemes = sites.reduce(
+    (acc, site) => acc + (site.themes?.length || 0),
     0
   );
 
@@ -82,10 +87,14 @@ export default async function WordPressPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" type="submit" onClick={async () => {
-            "use server";
-            revalidatePath("/wordpress");
-          }}>
+          <Button
+            variant="outline"
+            type="submit"
+            onClick={async () => {
+              "use server";
+              revalidatePath("/wordpress");
+            }}
+          >
             <RefreshCw className="mr-2 h-4 w-4" />
             Verificar Atualizações
           </Button>
@@ -155,6 +164,17 @@ export default async function WordPressPage() {
             <p className="text-xs text-muted-foreground">Instalados</p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Temas</CardTitle>
+            <Palette className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalThemes}</div>
+            <p className="text-xs text-muted-foreground">Instalados</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* WordPress Sites Table */}
@@ -189,6 +209,7 @@ export default async function WordPressPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Versão</TableHead>
                   <TableHead>Plugins</TableHead>
+                  <TableHead>Temas</TableHead>
                   <TableHead>Criado em</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -253,6 +274,23 @@ export default async function WordPressPage() {
                             >
                               {site.updatesAvailable.plugins.length} update
                               {site.updatesAvailable.plugins.length !== 1
+                                ? "s"
+                                : ""}
+                            </Badge>
+                          )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <span>{site.themes?.length || 0}</span>
+                        {site.updatesAvailable?.themes &&
+                          site.updatesAvailable.themes.length > 0 && (
+                            <Badge
+                              variant="outline"
+                              className="text-orange-600 border-orange-200"
+                            >
+                              {site.updatesAvailable.themes.length} update
+                              {site.updatesAvailable.themes.length !== 1
                                 ? "s"
                                 : ""}
                             </Badge>
@@ -341,140 +379,413 @@ export default async function WordPressPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {sites.every(site => !site.plugins || site.plugins.length === 0) ? (
+            {sites.every(
+              (site) => !site.plugins || site.plugins.length === 0
+            ) ? (
               <div className="text-center py-8">
                 <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nenhum plugin encontrado</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Nenhum plugin encontrado
+                </h3>
                 <p className="text-muted-foreground">
                   Os plugins serão exibidos aqui quando disponíveis.
                 </p>
               </div>
             ) : (
               <div className="space-y-6">
-                {sites.map((site) => (
-                  site.plugins && site.plugins.length > 0 && (
-                    <div key={site.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                            <Globe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                {sites.map(
+                  (site) =>
+                    site.plugins &&
+                    site.plugins.length > 0 && (
+                      <div key={site.id} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                              <Globe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold">{site.url}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {site.plugins.length} plugin
+                                {site.plugins.length !== 1 ? "s" : ""} instalado
+                                {site.plugins.length !== 1 ? "s" : ""}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-semibold">{site.url}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {site.plugins.length} plugin{site.plugins.length !== 1 ? 's' : ''} instalado{site.plugins.length !== 1 ? 's' : ''}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          {site.updatesAvailable?.plugins && site.updatesAvailable.plugins.length > 0 && (
-                            <Badge variant="outline" className="text-orange-600 border-orange-200">
-                              <ArrowUpCircle className="mr-1 h-3 w-3" />
-                              {site.updatesAvailable.plugins.length} update{site.updatesAvailable.plugins.length !== 1 ? 's' : ''}
+                          <div className="flex gap-2">
+                            {site.updatesAvailable?.plugins &&
+                              site.updatesAvailable.plugins.length > 0 && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-orange-600 border-orange-200"
+                                >
+                                  <ArrowUpCircle className="mr-1 h-3 w-3" />
+                                  {site.updatesAvailable.plugins.length} update
+                                  {site.updatesAvailable.plugins.length !== 1
+                                    ? "s"
+                                    : ""}
+                                </Badge>
+                              )}
+                            <Badge variant="secondary">
+                              {
+                                site.plugins.filter(
+                                  (p) => p.status === "active"
+                                ).length
+                              }{" "}
+                              ativo
+                              {site.plugins.filter((p) => p.status === "active")
+                                .length !== 1
+                                ? "s"
+                                : ""}
                             </Badge>
-                          )}
-                          <Badge variant="secondary">
-                            {site.plugins.filter(p => p.status === 'active').length} ativo{site.plugins.filter(p => p.status === 'active').length !== 1 ? 's' : ''}
-                          </Badge>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {site.plugins.map((plugin) => (
-                          <Card key={plugin.id} className="relative">
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="flex-1">
-                                  <h5 className="font-medium text-sm mb-1">{plugin.name}</h5>
-                                  <p className="text-xs text-muted-foreground mb-2">
-                                    {plugin.description || 'Sem descrição'}
-                                  </p>
-                                </div>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                      <MoreHorizontal className="h-3 w-3" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem>
-                                      {plugin.status === 'active' ? (
-                                        <>
-                                          <XCircle className="mr-2 h-4 w-4" />
-                                          Desativar
-                                        </>
-                                      ) : (
-                                        <>
-                                          <CheckCircle className="mr-2 h-4 w-4" />
-                                          Ativar
-                                        </>
-                                      )}
-                                    </DropdownMenuItem>
-                                    {plugin.updateAvailable && (
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {site.plugins.map((plugin) => (
+                            <Card key={plugin.update_id} className="relative">
+                              <CardContent className="p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <h5 className="font-medium text-sm mb-1">
+                                      {plugin.title || plugin.name}
+                                    </h5>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                      {plugin.description || "Sem descrição"}
+                                    </p>
+                                  </div>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 w-6 p-0"
+                                      >
+                                        <MoreHorizontal className="h-3 w-3" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
                                       <DropdownMenuItem>
-                                        <ArrowUpCircle className="mr-2 h-4 w-4" />
-                                        Atualizar
+                                        {plugin.status === "active" ? (
+                                          <>
+                                            <XCircle className="mr-2 h-4 w-4" />
+                                            Desativar
+                                          </>
+                                        ) : (
+                                          <>
+                                            <CheckCircle className="mr-2 h-4 w-4" />
+                                            Ativar
+                                          </>
+                                        )}
                                       </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuItem>
-                                      <Settings className="mr-2 h-4 w-4" />
-                                      Configurações
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-red-600">
-                                      <XCircle className="mr-2 h-4 w-4" />
-                                      Remover
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  <Badge 
-                                    variant={plugin.status === 'active' ? 'default' : 'secondary'}
-                                    className={plugin.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ''}
-                                  >
-                                    {plugin.status === 'active' ? (
-                                      <CheckCircle className="mr-1 h-3 w-3" />
-                                    ) : (
-                                      <XCircle className="mr-1 h-3 w-3" />
-                                    )}
-                                    {plugin.status === 'active' ? 'Ativo' : 'Inativo'}
-                                  </Badge>
-                                  {plugin.updateAvailable && (
-                                    <Badge variant="outline" className="text-orange-600 border-orange-200">
-                                      <ArrowUpCircle className="mr-1 h-3 w-3" />
-                                      Update
+                                      {plugin.updateAvailable && (
+                                        <DropdownMenuItem>
+                                          <ArrowUpCircle className="mr-2 h-4 w-4" />
+                                          Atualizar
+                                        </DropdownMenuItem>
+                                      )}
+                                      <DropdownMenuItem>
+                                        <Settings className="mr-2 h-4 w-4" />
+                                        Configurações
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem className="text-red-600">
+                                        <XCircle className="mr-2 h-4 w-4" />
+                                        Remover
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <Badge
+                                      variant={
+                                        plugin.status === "active"
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                      className={
+                                        plugin.status === "active"
+                                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                          : ""
+                                      }
+                                    >
+                                      {plugin.status === "active" ? (
+                                        <CheckCircle className="mr-1 h-3 w-3" />
+                                      ) : (
+                                        <XCircle className="mr-1 h-3 w-3" />
+                                      )}
+                                      {plugin.status === "active"
+                                        ? "Ativo"
+                                        : "Inativo"}
                                     </Badge>
+                                    {plugin.updateAvailable && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-orange-600 border-orange-200"
+                                      >
+                                        <ArrowUpCircle className="mr-1 h-3 w-3" />
+                                        Update
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {plugin.version && (
+                                    <span className="text-xs text-muted-foreground">
+                                      v{plugin.version}
+                                    </span>
                                   )}
                                 </div>
-                                <span className="text-xs text-muted-foreground">
-                                  v{plugin.version}
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                      
-                      <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                        <div className="text-sm text-muted-foreground">
-                          {site.plugins.filter(p => p.status === 'active').length} de {site.plugins.length} plugins ativos
+                              </CardContent>
+                            </Card>
+                          ))}
                         </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Instalar Plugin
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Package className="mr-2 h-4 w-4" />
-                            Gerenciar
-                          </Button>
+
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                          <div className="text-sm text-muted-foreground">
+                            {
+                              site.plugins.filter((p) => p.status === "active")
+                                .length
+                            }{" "}
+                            de {site.plugins.length} plugins ativos
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm">
+                              <Plus className="mr-2 h-4 w-4" />
+                              Instalar Plugin
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Package className="mr-2 h-4 w-4" />
+                              Gerenciar
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                ))}
+                    )
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* WordPress Themes Section */}
+      {sites.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5" />
+                  Temas WordPress
+                </CardTitle>
+                <CardDescription>
+                  Gerencie temas em todas as suas instalações WordPress
+                </CardDescription>
+              </div>
+              <ThemeBulkActions sites={sites} />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {sites.every(
+              (site) => !site.themes || site.themes.length === 0
+            ) ? (
+              <div className="text-center py-8">
+                <Palette className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
+                  Nenhum tema encontrado
+                </h3>
+                <p className="text-muted-foreground">
+                  Os temas serão exibidos aqui quando disponíveis.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {sites.map(
+                  (site) =>
+                    site.themes &&
+                    site.themes.length > 0 && (
+                      <div key={`themes-${site.id}`} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                              <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold">{site.url}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {site.themes.length} tema
+                                {site.themes.length !== 1 ? "s" : ""} instalado
+                                {site.themes.length !== 1 ? "s" : ""}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            {site.updatesAvailable?.themes &&
+                              site.updatesAvailable.themes.length > 0 && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-orange-600 border-orange-200"
+                                >
+                                  <ArrowUpCircle className="mr-1 h-3 w-3" />
+                                  {site.updatesAvailable.themes.length} update
+                                  {site.updatesAvailable.themes.length !== 1
+                                    ? "s"
+                                    : ""}
+                                </Badge>
+                              )}
+                            <Badge variant="secondary">
+                              {
+                                site.themes.filter(
+                                  (t) => t.status === "active"
+                                ).length
+                              }{" "}
+                              ativo
+                              {site.themes.filter((t) => t.status === "active")
+                                .length !== 1
+                                ? "s"
+                                : ""}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {site.themes.map((theme) => (
+                            <Card key={`${site.id}-${theme.name}`} className="relative">
+                              <CardContent className="p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <h5 className="font-medium text-sm mb-1">
+                                      {theme.title || theme.name}
+                                    </h5>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                      {theme.description || "Sem descrição"}
+                                    </p>
+                                    {theme.update_id && (
+                                      <p className="text-xs text-muted-foreground">
+                                        ID: {theme.update_id}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 w-6 p-0"
+                                      >
+                                        <MoreHorizontal className="h-3 w-3" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem>
+                                        {theme.status === "active" ? (
+                                          <>
+                                            <XCircle className="mr-2 h-4 w-4" />
+                                            Desativar
+                                          </>
+                                        ) : (
+                                          <>
+                                            <CheckCircle className="mr-2 h-4 w-4" />
+                                            Ativar
+                                          </>
+                                        )}
+                                      </DropdownMenuItem>
+                                      {theme.update && theme.update_version && (
+                                        <DropdownMenuItem>
+                                          <ArrowUpCircle className="mr-2 h-4 w-4" />
+                                          Atualizar para v{theme.update_version}
+                                        </DropdownMenuItem>
+                                      )}
+                                      <DropdownMenuItem>
+                                        <Settings className="mr-2 h-4 w-4" />
+                                        Personalizar
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem>
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Backup
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem className="text-red-600">
+                                        <XCircle className="mr-2 h-4 w-4" />
+                                        Remover
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <Badge
+                                      variant={
+                                        theme.status === "active"
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                      className={
+                                        theme.status === "active"
+                                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                          : ""
+                                      }
+                                    >
+                                      {theme.status === "active" ? (
+                                        <CheckCircle className="mr-1 h-3 w-3" />
+                                      ) : (
+                                        <XCircle className="mr-1 h-3 w-3" />
+                                      )}
+                                      {theme.status === "active"
+                                        ? "Ativo"
+                                        : "Inativo"}
+                                    </Badge>
+                                    {theme.update && theme.update_version && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-orange-600 border-orange-200"
+                                      >
+                                        <ArrowUpCircle className="mr-1 h-3 w-3" />
+                                        v{theme.update_version}
+                                      </Badge>
+                                    )}
+                                    {theme.auto_update && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-blue-600 border-blue-200"
+                                      >
+                                        Auto Update
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {theme.version && (
+                                    <span className="text-xs text-muted-foreground">
+                                      v{theme.version}
+                                    </span>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                          <div className="text-sm text-muted-foreground">
+                            {
+                              site.themes.filter((t) => t.status === "active")
+                                .length
+                            }{" "}
+                            de {site.themes.length} temas ativos
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm">
+                              <Plus className="mr-2 h-4 w-4" />
+                              Instalar Tema
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Palette className="mr-2 h-4 w-4" />
+                              Gerenciar
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                )}
               </div>
             )}
           </CardContent>

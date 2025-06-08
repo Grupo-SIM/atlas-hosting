@@ -90,7 +90,8 @@ export const UnclickableDropdownMenuItem = React.forwardRef<
     {...props}
   />
 ));
-UnclickableDropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
+UnclickableDropdownMenuItem.displayName =
+  DropdownMenuPrimitive.Item.displayName;
 
 const DropdownMenuItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,

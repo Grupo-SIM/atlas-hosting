@@ -1,19 +1,28 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { CheckCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { CheckCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface GradientButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  asChild?: boolean
-  icon?: React.ReactNode
+  asChild?: boolean;
+  icon?: React.ReactNode;
 }
 
 const GradientButton = React.forwardRef<HTMLButtonElement, GradientButtonProps>(
-  ({ className, children = "Finalizar Transação", asChild = false, icon, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
+  (
+    {
+      className,
+      children = "Finalizar Transação",
+      asChild = false,
+      icon,
+      ...props
+    },
+    ref
+  ) => {
+    const Comp = asChild ? Slot : "button";
 
     return (
       <Comp
@@ -28,23 +37,23 @@ const GradientButton = React.forwardRef<HTMLButtonElement, GradientButtonProps>(
       >
         {/* Gradient background */}
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-blue-500 opacity-90 group-hover:opacity-100 transition-opacity duration-300" />
-        
+
         {/* Button content */}
         <div className="relative flex items-center justify-center gap-2 px-6 py-3 font-medium text-white">
           {icon || <CheckCircle className="w-5 h-5" />}
           <span>{children}</span>
-          
+
           {/* Shine effect on hover */}
           <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
         </div>
-        
+
         {/* Bottom highlight */}
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </Comp>
-    )
+    );
   }
-)
+);
 
-GradientButton.displayName = "GradientButton"
+GradientButton.displayName = "GradientButton";
 
-export { GradientButton }
+export { GradientButton };

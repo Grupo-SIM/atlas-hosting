@@ -33,8 +33,12 @@ import {
 import { useState } from "react";
 
 export default function SubscriptionPage() {
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
-  const [selectedPlan, setSelectedPlan] = useState<string | null>("professional");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
+    "monthly"
+  );
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(
+    "professional"
+  );
 
   const plans = [
     {
@@ -163,19 +167,22 @@ export default function SubscriptionPage() {
     {
       name: "Maria Silva",
       role: "Fundadora, Blog da Maria",
-      content: "A Atlas Hosting transformou completamente a performance do meu site. Velocidade incrível!",
+      content:
+        "A Atlas Hosting transformou completamente a performance do meu site. Velocidade incrível!",
       rating: 5,
     },
     {
       name: "João Santos",
       role: "CEO, TechStart",
-      content: "Suporte excepcional e infraestrutura robusta. Recomendo para qualquer empresa.",
+      content:
+        "Suporte excepcional e infraestrutura robusta. Recomendo para qualquer empresa.",
       rating: 5,
     },
     {
       name: "Ana Costa",
       role: "Designer Freelancer",
-      content: "Interface intuitiva e recursos avançados. Tudo que preciso para meus projetos.",
+      content:
+        "Interface intuitiva e recursos avançados. Tudo que preciso para meus projetos.",
       rating: 5,
     },
   ];
@@ -188,7 +195,7 @@ export default function SubscriptionPage() {
   };
 
   const getSavings = (monthly: number, yearly: number) => {
-    const yearlySavings = (monthly * 12) - (yearly * 12);
+    const yearlySavings = monthly * 12 - yearly * 12;
     const percentage = Math.round((yearlySavings / (monthly * 12)) * 100);
     return { amount: yearlySavings, percentage };
   };
@@ -205,19 +212,29 @@ export default function SubscriptionPage() {
             </h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Hospedagem otimizada para WordPress com performance excepcional, 
-            segurança avançada e suporte especializado. Escolha o plano ideal para seu projeto.
+            Hospedagem otimizada para WordPress com performance excepcional,
+            segurança avançada e suporte especializado. Escolha o plano ideal
+            para seu projeto.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+            <Badge
+              variant="secondary"
+              className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+            >
               <CheckCircle className="w-3 h-3 mr-1" />
               SSL Grátis Incluído
             </Badge>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+            <Badge
+              variant="secondary"
+              className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+            >
               <Clock className="w-3 h-3 mr-1" />
               Setup Instantâneo
             </Badge>
-            <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+            <Badge
+              variant="secondary"
+              className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+            >
               <Shield className="w-3 h-3 mr-1" />
               99.9% Uptime
             </Badge>
@@ -228,14 +245,20 @@ export default function SubscriptionPage() {
         <div className="flex justify-center">
           <div className="bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border">
             <div className="flex items-center gap-4">
-              <span className={`font-medium ${billingCycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground'}`}>
+              <span
+                className={`font-medium ${billingCycle === "monthly" ? "text-foreground" : "text-muted-foreground"}`}
+              >
                 Mensal
               </span>
               <Switch
                 checked={billingCycle === "yearly"}
-                onCheckedChange={(checked) => setBillingCycle(checked ? "yearly" : "monthly")}
+                onCheckedChange={(checked) =>
+                  setBillingCycle(checked ? "yearly" : "monthly")
+                }
               />
-              <span className={`font-medium ${billingCycle === 'yearly' ? 'text-foreground' : 'text-muted-foreground'}`}>
+              <span
+                className={`font-medium ${billingCycle === "yearly" ? "text-foreground" : "text-muted-foreground"}`}
+              >
                 Anual
               </span>
               {billingCycle === "yearly" && (
@@ -259,8 +282,8 @@ export default function SubscriptionPage() {
                   plan.recommended
                     ? "border-purple-300 shadow-xl scale-105 bg-gradient-to-b from-purple-50 to-white dark:from-purple-950/20 dark:to-slate-900"
                     : selectedPlan === plan.id
-                    ? "border-primary shadow-lg scale-102"
-                    : "hover:border-purple-200"
+                      ? "border-primary shadow-lg scale-102"
+                      : "hover:border-purple-200"
                 }`}
                 onClick={() => setSelectedPlan(plan.id)}
               >
@@ -275,13 +298,21 @@ export default function SubscriptionPage() {
 
                 <CardHeader className="text-center pb-4">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    {plan.id === "starter" && <Globe className="h-6 w-6 text-blue-500" />}
-                    {plan.id === "professional" && <Zap className="h-6 w-6 text-purple-500" />}
-                    {plan.id === "business" && <Crown className="h-6 w-6 text-green-500" />}
+                    {plan.id === "starter" && (
+                      <Globe className="h-6 w-6 text-blue-500" />
+                    )}
+                    {plan.id === "professional" && (
+                      <Zap className="h-6 w-6 text-purple-500" />
+                    )}
+                    {plan.id === "business" && (
+                      <Crown className="h-6 w-6 text-green-500" />
+                    )}
                     <CardTitle className="text-2xl">{plan.name}</CardTitle>
                   </div>
-                  <CardDescription className="text-base">{plan.description}</CardDescription>
-                  
+                  <CardDescription className="text-base">
+                    {plan.description}
+                  </CardDescription>
+
                   <div className="mt-6">
                     <div className="text-4xl font-bold">
                       {formatPrice(plan.price[billingCycle])}
@@ -290,7 +321,8 @@ export default function SubscriptionPage() {
                       por mês
                       {billingCycle === "yearly" && (
                         <div className="text-green-600 font-medium mt-1">
-                          Economize {formatPrice(savings.amount)} por ano ({savings.percentage}% off)
+                          Economize {formatPrice(savings.amount)} por ano (
+                          {savings.percentage}% off)
                         </div>
                       )}
                     </div>
@@ -341,13 +373,15 @@ export default function SubscriptionPage() {
                       plan.recommended
                         ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                         : selectedPlan === plan.id
-                        ? "bg-primary"
-                        : ""
+                          ? "bg-primary"
+                          : ""
                     }`}
                     variant={selectedPlan === plan.id ? "default" : "outline"}
                     size="lg"
                   >
-                    {selectedPlan === plan.id ? "Plano Selecionado" : "Escolher Plano"}
+                    {selectedPlan === plan.id
+                      ? "Plano Selecionado"
+                      : "Escolher Plano"}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </CardContent>
@@ -359,10 +393,12 @@ export default function SubscriptionPage() {
         {/* Features Section */}
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Por que escolher a Atlas Hosting?</h2>
+            <h2 className="text-3xl font-bold mb-4">
+              Por que escolher a Atlas Hosting?
+            </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Oferecemos a melhor infraestrutura WordPress com recursos avançados 
-              para garantir o sucesso do seu projeto online
+              Oferecemos a melhor infraestrutura WordPress com recursos
+              avançados para garantir o sucesso do seu projeto online
             </p>
           </div>
 
@@ -370,13 +406,20 @@ export default function SubscriptionPage() {
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <Card key={feature.title} className="hover:shadow-lg transition-shadow duration-300">
+                <Card
+                  key={feature.title}
+                  className="hover:shadow-lg transition-shadow duration-300"
+                >
                   <CardContent className="pt-6 text-center">
                     <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Icon className="h-8 w-8 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
-                    <p className="text-muted-foreground">{feature.description}</p>
+                    <h3 className="font-semibold text-lg mb-2">
+                      {feature.title}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {feature.description}
+                    </p>
                   </CardContent>
                 </Card>
               );
@@ -387,7 +430,9 @@ export default function SubscriptionPage() {
         {/* Testimonials */}
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">O que nossos clientes dizem</h2>
+            <h2 className="text-3xl font-bold mb-4">
+              O que nossos clientes dizem
+            </h2>
             <p className="text-xl text-muted-foreground">
               Mais de 10.000 clientes confiam em nossa hospedagem WordPress
             </p>
@@ -395,11 +440,17 @@ export default function SubscriptionPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={testimonial.content} className="hover:shadow-lg transition-shadow duration-300">
+              <Card
+                key={testimonial.content}
+                className="hover:shadow-lg transition-shadow duration-300"
+              >
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-1 mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={`${testimonial.name}-${i}`} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <Star
+                        key={`${testimonial.name}-${i}`}
+                        className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                      />
                     ))}
                   </div>
                   <blockquote className="text-muted-foreground mb-4">
@@ -407,7 +458,9 @@ export default function SubscriptionPage() {
                   </blockquote>
                   <div>
                     <div className="font-semibold">{testimonial.name}</div>
-                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {testimonial.role}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -428,21 +481,27 @@ export default function SubscriptionPage() {
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold mb-2">
-                      Plano {plans.find(p => p.id === selectedPlan)?.name} Selecionado
+                      Plano {plans.find((p) => p.id === selectedPlan)?.name}{" "}
+                      Selecionado
                     </h3>
                     <p className="text-muted-foreground text-lg">
                       Comece hoje mesmo com hospedagem WordPress otimizada
                     </p>
                   </div>
                   <div className="text-3xl font-bold text-green-600">
-                    {formatPrice(plans.find(p => p.id === selectedPlan)?.price[billingCycle] || 0)}/mês
+                    {formatPrice(
+                      plans.find((p) => p.id === selectedPlan)?.price[
+                        billingCycle
+                      ] || 0
+                    )}
+                    /mês
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button variant="outline" size="lg">
                       <Users className="mr-2 h-4 w-4" />
                       Falar com Especialista
                     </Button>
-                    <Button 
+                    <Button
                       size="lg"
                       className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                     >
@@ -473,7 +532,9 @@ export default function SubscriptionPage() {
         {/* Footer Benefits */}
         <div className="text-center py-12 border-t">
           <div className="max-w-4xl mx-auto">
-            <h3 className="text-2xl font-bold mb-6">Incluído em todos os planos</h3>
+            <h3 className="text-2xl font-bold mb-6">
+              Incluído em todos os planos
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="flex flex-col items-center">
                 <Shield className="h-8 w-8 text-green-500 mb-2" />

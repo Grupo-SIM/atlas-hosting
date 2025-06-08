@@ -1,1 +1,96 @@
-[{"id":226,"instanceId":226,"name":"laulipe","domain":"https://www.lauraifelipe.xyz","path":"/httpdocs","status":"Working","version":"6.4.2","loginUrl":"https://www.lauraifelipe.xyz/wp-admin","url":"https://www.lauraifelipe.xyz","createdAt":"2025-06-08T20:18:15.948Z","plugins":[{"id":1,"name":"akismet","version":"5.4","status":"active","updateAvailable":false,"description":""},{"id":2,"name":"hello","version":"1.7.2","status":"inactive","updateAvailable":false,"description":""},{"id":3,"name":"litespeed-cache","version":"7.1","status":"active","updateAvailable":false,"description":""},{"id":4,"name":"really-simple-ssl","version":"9.3.5","status":"active","updateAvailable":false,"description":""},{"id":5,"name":"seoo","version":"","status":"active","updateAvailable":false,"description":""},{"id":6,"name":"wp-optimize","version":"4.2.2","status":"active","updateAvailable":false,"description":""},{"id":7,"name":"wp-file-manager","version":"8.0.2","status":"inactive","updateAvailable":false,"description":""},{"id":8,"name":"wpforms-lite","version":"1.9.6","status":"active","updateAvailable":false,"description":""}],"users":[{"id":1,"username":"admin","email":"lucas@gmail.com","role":"administrator"},{"id":3,"username":"bryan","email":"bryan@lauraifelipe.xyz","role":"administrator"}],"hasUpdates":false,"updatesAvailable":{"core":false,"plugins":[]}}]
+[
+  {
+    "id": 226,
+    "instanceId": 226,
+    "name": "laulipe",
+    "domain": "https://www.lauraifelipe.xyz",
+    "path": "/httpdocs",
+    "status": "Working",
+    "version": "6.4.2",
+    "loginUrl": "https://www.lauraifelipe.xyz/wp-admin",
+    "url": "https://www.lauraifelipe.xyz",
+    "createdAt": "2025-06-08T20:18:15.948Z",
+    "plugins": [
+      {
+        "id": 1,
+        "name": "akismet",
+        "version": "5.4",
+        "status": "active",
+        "updateAvailable": false,
+        "description": ""
+      },
+      {
+        "id": 2,
+        "name": "hello",
+        "version": "1.7.2",
+        "status": "inactive",
+        "updateAvailable": false,
+        "description": ""
+      },
+      {
+        "id": 3,
+        "name": "litespeed-cache",
+        "version": "7.1",
+        "status": "active",
+        "updateAvailable": false,
+        "description": ""
+      },
+      {
+        "id": 4,
+        "name": "really-simple-ssl",
+        "version": "9.3.5",
+        "status": "active",
+        "updateAvailable": false,
+        "description": ""
+      },
+      {
+        "id": 5,
+        "name": "seoo",
+        "version": "",
+        "status": "active",
+        "updateAvailable": false,
+        "description": ""
+      },
+      {
+        "id": 6,
+        "name": "wp-optimize",
+        "version": "4.2.2",
+        "status": "active",
+        "updateAvailable": false,
+        "description": ""
+      },
+      {
+        "id": 7,
+        "name": "wp-file-manager",
+        "version": "8.0.2",
+        "status": "inactive",
+        "updateAvailable": false,
+        "description": ""
+      },
+      {
+        "id": 8,
+        "name": "wpforms-lite",
+        "version": "1.9.6",
+        "status": "active",
+        "updateAvailable": false,
+        "description": ""
+      }
+    ],
+    "users": [
+      {
+        "id": 1,
+        "username": "admin",
+        "email": "lucas@gmail.com",
+        "role": "administrator"
+      },
+      {
+        "id": 3,
+        "username": "bryan",
+        "email": "bryan@lauraifelipe.xyz",
+        "role": "administrator"
+      }
+    ],
+    "hasUpdates": false,
+    "updatesAvailable": { "core": false, "plugins": [] }
+  }
+]

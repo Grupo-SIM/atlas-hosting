@@ -35,7 +35,9 @@ async function checkDomain(domain: string): Promise<boolean> {
         endpoints: ["1.1.1.1", "8.8.8.8"],
       }
     );
-    return (answers ?? []).map(answer => answer.data).includes(process.env.SERVER_IP!);
+    return (answers ?? [])
+      .map((answer) => answer.data)
+      .includes(process.env.SERVER_IP!);
   } catch (_error) {
     // console.error(`DNS resolution failed for ${domain}:`, error);
     return false;

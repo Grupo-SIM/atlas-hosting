@@ -133,8 +133,7 @@ export async function DomainResult({
           <div className="mt-4 flex items-center gap-2 text-amber-500">
             <AlertCircle className="h-4 w-4" />
             <p className="text-sm">
-              Este é um domínio premium. O preço de registro é{" "}
-              {toBrl(price)}.
+              Este é um domínio premium. O preço de registro é {toBrl(price)}.
             </p>
           </div>
         )}

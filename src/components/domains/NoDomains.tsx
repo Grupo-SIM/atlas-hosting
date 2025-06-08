@@ -14,7 +14,7 @@ export default function NoDomains() {
         <Link href="/domains/register">
           <Globe className="mr-2 h-4 w-4" /> Registrar Novo Domínio
         </Link>
-      </Button> 
+      </Button>
     </div>
   );
 }

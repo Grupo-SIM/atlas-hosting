@@ -17,7 +17,12 @@ import { Check, XIcon, Crown, Zap, Shield, AlertTriangle } from "lucide-react";
 import Form from "next/form";
 import Link from "next/link";
 
-export function PlanCard({ plan, user, searchParams, isDowngrade }: PlanCardProps) {
+export function PlanCard({
+  plan,
+  user,
+  searchParams,
+  isDowngrade,
+}: PlanCardProps) {
   const userPlan = user.organization.plan;
   const hasPlan = !!userPlan?.id;
   const isCurrentPlan = user.organization.planId === plan.id;
@@ -42,10 +47,11 @@ export function PlanCard({ plan, user, searchParams, isDowngrade }: PlanCardProp
     <Card
       className={clsx([
         "group relative transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl hover:shadow-primary/10",
-        plan.featured 
-          ? "border-yellow-400/50 shadow-xl bg-gradient-to-br from-yellow-50/50 via-background to-orange-50/30 dark:from-yellow-950/20 dark:via-background dark:to-orange-950/20 hover:shadow-yellow-500/20" 
+        plan.featured
+          ? "border-yellow-400/50 shadow-xl bg-gradient-to-br from-yellow-50/50 via-background to-orange-50/30 dark:from-yellow-950/20 dark:via-background dark:to-orange-950/20 hover:shadow-yellow-500/20"
           : "hover:border-primary/50 hover:shadow-primary/5",
-        isCurrentPlan && "ring-2 ring-emerald-500/50 bg-emerald-50/30 dark:bg-emerald-950/20 hover:ring-emerald-500/70",
+        isCurrentPlan &&
+          "ring-2 ring-emerald-500/50 bg-emerald-50/30 dark:bg-emerald-950/20 hover:ring-emerald-500/70",
         "flex flex-col h-full backdrop-blur-sm",
       ])}
     >
@@ -86,7 +92,7 @@ export function PlanCard({ plan, user, searchParams, isDowngrade }: PlanCardProp
               </div>
             )}
           </div>
-          
+
           {/* Price Section */}
           <div className="space-y-1">
             <div className="flex items-baseline gap-1">
@@ -123,17 +129,19 @@ export function PlanCard({ plan, user, searchParams, isDowngrade }: PlanCardProp
                     key={key as string}
                     className={clsx(
                       "flex items-center gap-3 text-sm transition-colors",
-                      hasFeature 
-                        ? "text-foreground" 
+                      hasFeature
+                        ? "text-foreground"
                         : "text-muted-foreground line-through"
                     )}
                   >
-                    <div className={clsx(
-                      "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center",
-                      hasFeature 
-                        ? "bg-emerald-100 dark:bg-emerald-950" 
-                        : "bg-red-100 dark:bg-red-950"
-                    )}>
+                    <div
+                      className={clsx(
+                        "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center",
+                        hasFeature
+                          ? "bg-emerald-100 dark:bg-emerald-950"
+                          : "bg-red-100 dark:bg-red-950"
+                      )}
+                    >
                       {hasFeature ? (
                         <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                       ) : (
@@ -149,7 +157,10 @@ export function PlanCard({ plan, user, searchParams, isDowngrade }: PlanCardProp
                 );
               }),
               (i) => (
-                <li key={i} className="border-l border-muted ml-2.5 pl-2.5 h-0" />
+                <li
+                  key={i}
+                  className="border-l border-muted ml-2.5 pl-2.5 h-0"
+                />
               )
             )}
           </ul>
@@ -158,9 +169,9 @@ export function PlanCard({ plan, user, searchParams, isDowngrade }: PlanCardProp
         {/* CTA Button */}
         <div className="pt-4 border-t space-y-3">
           {isCurrentPlan ? (
-            <Button 
-              disabled={true} 
-              className="w-full h-12 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" 
+            <Button
+              disabled={true}
+              className="w-full h-12 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
               variant="outline"
             >
               <Shield className="w-4 h-4 mr-2" />
@@ -180,8 +191,8 @@ export function PlanCard({ plan, user, searchParams, isDowngrade }: PlanCardProp
                 <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <AlertDescription className="text-xs text-amber-800 dark:text-amber-200">
                   Para fazer downgrade, cancele sua assinatura atual em{" "}
-                  <Link 
-                    href="/settings" 
+                  <Link
+                    href="/settings"
                     className="font-medium underline hover:no-underline"
                   >
                     configurações
@@ -198,8 +209,8 @@ export function PlanCard({ plan, user, searchParams, isDowngrade }: PlanCardProp
                 type="submit"
                 className={clsx(
                   "w-full h-12 font-semibold transition-all duration-300",
-                  plan.featured 
-                    ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl" 
+                  plan.featured
+                    ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl"
                     : "hover:shadow-lg"
                 )}
                 variant={plan.featured ? "default" : "outline"}

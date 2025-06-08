@@ -18,7 +18,7 @@ export default async function CheckoutPage({
 }) {
   const user = await getUser();
   const resolvedParams = await params;
-  
+
   const invoice = await db.query.pgInvoice.findFirst({
     where: eq(pgInvoice.id, resolvedParams.id),
   });
@@ -41,11 +41,5 @@ export default async function CheckoutPage({
     reference = plan.name;
   }
 
-  return (
-    <CheckoutClient 
-      invoice={invoice}
-      user={user}
-      reference={reference}
-    />
-  );
+  return <CheckoutClient invoice={invoice} user={user} reference={reference} />;
 }

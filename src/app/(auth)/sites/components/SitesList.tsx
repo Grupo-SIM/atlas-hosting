@@ -90,7 +90,7 @@ export function SitesList({
         } else {
           stillProcessing.push(instance);
         }
-      };
+      }
 
       if (newlyReady.length > 0) {
         setReadyInstances((prev) => [...prev, ...newlyReady]);

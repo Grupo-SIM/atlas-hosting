@@ -47,12 +47,18 @@ export default async function SettingsPage({
             </TabsTrigger>
           </Link>
           <Link href="/settings?tab=organization" className="block w-full">
-            <TabsTrigger value="organization" className="pointer-events-none w-full">
+            <TabsTrigger
+              value="organization"
+              className="pointer-events-none w-full"
+            >
               Organização
             </TabsTrigger>
           </Link>
           <Link href="/settings?tab=subscription" className="block w-full">
-            <TabsTrigger value="subscription" className="pointer-events-none w-full">
+            <TabsTrigger
+              value="subscription"
+              className="pointer-events-none w-full"
+            >
               Assinatura
             </TabsTrigger>
           </Link>

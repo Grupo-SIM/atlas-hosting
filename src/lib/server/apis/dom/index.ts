@@ -252,7 +252,7 @@ export class DomApi {
       token: data.token,
       last4: cardData.number.slice(-4),
       brand: this.detectCardBrand(cardData.number),
-      expiryMonth: cardData.exp_month.toString().padStart(2, '0'),
+      expiryMonth: cardData.exp_month.toString().padStart(2, "0"),
       expiryYear: cardData.exp_year.toString(),
       holderName: cardData.holder_name,
     };
@@ -422,14 +422,20 @@ export class DomApi {
    * Detect card brand from card number
    */
   private detectCardBrand(cardNumber: string): string {
-    const number = cardNumber.replace(/\D/g, '');
-    
-    if (number.startsWith('4')) return 'Visa';
-    if (number.startsWith('5') || (number.startsWith('2') && Number.parseInt(number.substring(0, 4)) >= 2221 && Number.parseInt(number.substring(0, 4)) <= 2720)) return 'Mastercard';
-    if (number.startsWith('3')) return 'American Express';
-    if (number.startsWith('6')) return 'Discover';
-    
-    return 'Unknown';
+    const number = cardNumber.replace(/\D/g, "");
+
+    if (number.startsWith("4")) return "Visa";
+    if (
+      number.startsWith("5") ||
+      (number.startsWith("2") &&
+        Number.parseInt(number.substring(0, 4)) >= 2221 &&
+        Number.parseInt(number.substring(0, 4)) <= 2720)
+    )
+      return "Mastercard";
+    if (number.startsWith("3")) return "American Express";
+    if (number.startsWith("6")) return "Discover";
+
+    return "Unknown";
   }
 }
 

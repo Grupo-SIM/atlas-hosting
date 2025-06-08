@@ -42,7 +42,7 @@ export function CardList({ cards }: CardListProps) {
     setLoadingCardId(cardId);
     try {
       const result = await setDefaultCard(cardId);
-      
+
       if (result.status === "success") {
         toast({
           title: "Sucesso",
@@ -70,7 +70,7 @@ export function CardList({ cards }: CardListProps) {
     setDeletingCardId(cardId);
     try {
       const result = await deleteCard(cardId);
-      
+
       if (result.status === "success") {
         toast({
           title: "Sucesso",
@@ -126,17 +126,21 @@ export function CardList({ cards }: CardListProps) {
                   {card.brand} •••• {card.last4}
                 </p>
                 {card.isDefault && (
-                  <Badge variant="outline" className="bg-primary/10 text-primary">
+                  <Badge
+                    variant="outline"
+                    className="bg-primary/10 text-primary"
+                  >
                     Padrão
                   </Badge>
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                {card.holderName} • Expira em {card.expiryMonth}/{card.expiryYear}
+                {card.holderName} • Expira em {card.expiryMonth}/
+                {card.expiryYear}
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"

@@ -121,7 +121,11 @@ export function UserSection({ user }: UserSectionProps) {
               <Avatar className="h-20 w-20">
                 <AvatarImage src={user.image || undefined} />
                 <AvatarFallback className="text-lg">
-                  {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  {user.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <Button
@@ -137,11 +141,17 @@ export function UserSection({ user }: UserSectionProps) {
               <p className="text-muted-foreground">{user.email}</p>
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="outline">
-                  {user.organizationRole === 'admin' ? 'Administrador' :
-                   user.organizationRole === 'developer' ? 'Desenvolvedor' : 'Membro'}
+                  {user.organizationRole === "admin"
+                    ? "Administrador"
+                    : user.organizationRole === "developer"
+                      ? "Desenvolvedor"
+                      : "Membro"}
                 </Badge>
                 {user.emailVerified && (
-                  <Badge variant="secondary" className="bg-green-500/10 text-green-700">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-500/10 text-green-700"
+                  >
                     <Mail className="w-3 h-3 mr-1" />
                     E-mail Verificado
                   </Badge>
@@ -217,18 +227,11 @@ export function UserSection({ user }: UserSectionProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Membro desde</Label>
-                <Input
-                  value={formatDate(user.createdAt)}
-                  readOnly
-                />
+                <Input value={formatDate(user.createdAt)} readOnly />
               </div>
               <div className="space-y-2">
                 <Label>ID do Usuário</Label>
-                <Input
-                  value={user.id}
-                  readOnly
-                  className="font-mono text-sm"
-                />
+                <Input value={user.id} readOnly className="font-mono text-sm" />
               </div>
             </div>
           </div>
@@ -255,7 +258,10 @@ export function UserSection({ user }: UserSectionProps) {
                   Última alteração: Nunca
                 </p>
               </div>
-              <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
+              <Dialog
+                open={isChangePasswordOpen}
+                onOpenChange={setIsChangePasswordOpen}
+              >
                 <DialogTrigger asChild>
                   <Button variant="outline">
                     <Key className="h-4 w-4 mr-2" />
@@ -283,7 +289,9 @@ export function UserSection({ user }: UserSectionProps) {
                           variant="ghost"
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3"
-                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          onClick={() =>
+                            setShowCurrentPassword(!showCurrentPassword)
+                          }
                         >
                           {showCurrentPassword ? (
                             <EyeOff className="h-4 w-4" />
@@ -317,7 +325,9 @@ export function UserSection({ user }: UserSectionProps) {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+                      <Label htmlFor="confirmPassword">
+                        Confirmar Nova Senha
+                      </Label>
                       <div className="relative">
                         <Input
                           id="confirmPassword"
@@ -329,7 +339,9 @@ export function UserSection({ user }: UserSectionProps) {
                           variant="ghost"
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
                         >
                           {showConfirmPassword ? (
                             <EyeOff className="h-4 w-4" />
@@ -389,24 +401,32 @@ export function UserSection({ user }: UserSectionProps) {
               <div key={key} className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">
-                    {key === 'email' ? 'Notificações por E-mail' :
-                     key === 'push' ? 'Notificações Push' :
-                     key === 'security' ? 'Alertas de Segurança' :
-                     key === 'billing' ? 'Avisos de Cobrança' :
-                     'Marketing e Promoções'}
+                    {key === "email"
+                      ? "Notificações por E-mail"
+                      : key === "push"
+                        ? "Notificações Push"
+                        : key === "security"
+                          ? "Alertas de Segurança"
+                          : key === "billing"
+                            ? "Avisos de Cobrança"
+                            : "Marketing e Promoções"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {key === 'email' ? 'Receba atualizações importantes por e-mail' :
-                     key === 'push' ? 'Notificações em tempo real no navegador' :
-                     key === 'security' ? 'Alertas sobre atividades suspeitas' :
-                     key === 'billing' ? 'Lembretes de pagamento e faturas' :
-                     'Ofertas especiais e novidades'}
+                    {key === "email"
+                      ? "Receba atualizações importantes por e-mail"
+                      : key === "push"
+                        ? "Notificações em tempo real no navegador"
+                        : key === "security"
+                          ? "Alertas sobre atividades suspeitas"
+                          : key === "billing"
+                            ? "Lembretes de pagamento e faturas"
+                            : "Ofertas especiais e novidades"}
                   </p>
                 </div>
                 <Switch
                   checked={value}
                   onCheckedChange={(checked) =>
-                    setNotifications(prev => ({ ...prev, [key]: checked }))
+                    setNotifications((prev) => ({ ...prev, [key]: checked }))
                   }
                 />
               </div>
@@ -448,8 +468,9 @@ export function UserSection({ user }: UserSectionProps) {
                       Tem certeza que deseja excluir sua conta?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Esta ação não pode ser desfeita. Todos os seus dados, incluindo
-                      sites, domínios e configurações serão permanentemente removidos.
+                      Esta ação não pode ser desfeita. Todos os seus dados,
+                      incluindo sites, domínios e configurações serão
+                      permanentemente removidos.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

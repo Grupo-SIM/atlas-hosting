@@ -3,32 +3,35 @@
 // Test table parsing with real wp-cli output
 function parseTableOutput(output: string): Array<Record<string, string>> {
   if (!output?.trim()) return [];
-  
-  const lines = output.trim().split('\n');
+
+  const lines = output.trim().split("\n");
   if (lines.length < 2) return [];
-  
+
   // First line contains headers
   const headerLine = lines[0];
-  const headers = headerLine.split(/\s{2,}/).map(h => h.trim()).filter(Boolean);
-  
+  const headers = headerLine
+    .split(/\s{2,}/)
+    .map((h) => h.trim())
+    .filter(Boolean);
+
   const results: Array<Record<string, string>> = [];
-  
+
   // Parse each data line
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-    
+
     // Split by multiple spaces to separate columns
-    const values = line.split(/\s{2,}/).map(v => v.trim());
-    
+    const values = line.split(/\s{2,}/).map((v) => v.trim());
+
     const row: Record<string, string> = {};
     headers.forEach((header, index) => {
-      row[header] = values[index] || '';
+      row[header] = values[index] || "";
     });
-    
+
     results.push(row);
   }
-  
+
   return results;
 }
 
@@ -45,8 +48,12 @@ console.log("Parsed plugins:", JSON.stringify(parsed, null, 2));
 
 console.log("\n📊 Analysis:");
 console.log(`Total plugins: ${parsed.length}`);
-console.log(`Active plugins: ${parsed.filter(p => p.status === 'active').length}`);
-console.log(`Plugins with updates: ${parsed.filter(p => p.update === 'available').length}`);
+console.log(
+  `Active plugins: ${parsed.filter((p) => p.status === "active").length}`
+);
+console.log(
+  `Plugins with updates: ${parsed.filter((p) => p.update === "available").length}`
+);
 
 // Test actual WordPress list parsing
 const sampleWpListOutput = `ID  Main Domain ID                               Installation Path  Owner ID         State  Hidden                                            Website URL                                         Name  Version
@@ -59,7 +66,7 @@ console.log("Parsed WP instances:", JSON.stringify(wpParsed, null, 2));
 
 // Find the target domain
 const targetDomain = "lauraifelipe.xyz";
-const targetInstance = wpParsed.find(instance => 
+const targetInstance = wpParsed.find((instance) =>
   instance["Website URL"]?.includes(targetDomain)
 );
 

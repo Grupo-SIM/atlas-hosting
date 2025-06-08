@@ -1,5 +1,8 @@
 import { getUser } from "@/lib/auth";
-import { getUserCurrentDomain, getUserWordPressSites } from "@/lib/server/utils";
+import {
+  getUserCurrentDomain,
+  getUserWordPressSites,
+} from "@/lib/server/utils";
 import { NextResponse } from "next/server";
 
 export async function GET() {

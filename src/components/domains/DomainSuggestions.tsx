@@ -79,9 +79,7 @@ export async function DomainSuggestions({
               </div>
               {domain.available && (
                 <Button asChild variant="outline" size="sm">
-                  <Link
-                    href={`/domains/register?domain=${domain.domain}`}
-                  >
+                  <Link href={`/domains/register?domain=${domain.domain}`}>
                     Registrar
                   </Link>
                 </Button>

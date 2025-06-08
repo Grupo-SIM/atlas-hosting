@@ -70,7 +70,7 @@ export async function GET(request: Request) {
 
       for (const { domain, ready } of initialResults) {
         results.set(domain, ready);
-      };
+      }
 
       let allReady = false;
 

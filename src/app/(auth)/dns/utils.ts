@@ -92,7 +92,6 @@ export interface CachedDnsData {
 export const getCachedDnsRecords = cache(async function getCachedDnsRecords(
   domainName: string
 ): Promise<CachedDnsData> {
-
   const { sld, tld } = parseDomainForSldTld(domainName);
   try {
     const dnsInfo = await namecheapApi.getDnsHosts({ SLD: sld, TLD: tld });

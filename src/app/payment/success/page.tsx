@@ -21,7 +21,8 @@ export default function PaymentSuccessPage() {
             Pagamento Enviado!
           </CardTitle>
           <CardDescription className="mt-2 text-gray-600 dark:text-gray-400">
-            Seu pagamento foi enviado e está sendo processado. Isso pode levar alguns instantes.
+            Seu pagamento foi enviado e está sendo processado. Isso pode levar
+            alguns instantes.
           </CardDescription>
         </CardHeader>
         <CardContent>

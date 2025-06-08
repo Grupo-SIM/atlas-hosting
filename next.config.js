@@ -36,10 +36,10 @@ const nextConfig = {
       config.watchOptions = {
         ...config.watchOptions,
         ignored: [
-          '**/node_modules/**',
-          '**/docker-data/**',
-          '**/.next/**',
-          '**/.git/**',
+          "**/node_modules/**",
+          "**/docker-data/**",
+          "**/.next/**",
+          "**/.git/**",
         ],
       };
     }

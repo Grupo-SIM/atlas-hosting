@@ -1,9 +1,9 @@
 /**
  * Shell options for SSH access
  */
-type ShellType = 
+type ShellType =
   | "/bin/false"
-  | "/bin/sh" 
+  | "/bin/sh"
   | "/bin/bash"
   | "/usr/bin/bash"
   | "/bin/rbash"

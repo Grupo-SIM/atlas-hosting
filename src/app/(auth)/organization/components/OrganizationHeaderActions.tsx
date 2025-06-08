@@ -52,7 +52,11 @@ export async function OrganizationHeaderActions({
           </Button>
         </div>
       </div>
-      <InviteMemberDialog open={dialogOpen} orgId={organizationId} searchParams={searchParams} />
+      <InviteMemberDialog
+        open={dialogOpen}
+        orgId={organizationId}
+        searchParams={searchParams}
+      />
     </>
   );
 }

@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -64,7 +63,11 @@ export default async function BillingPage({
         ) : (
           <div className="space-y-6">
             {userInvoices.map((invoice) => (
-              <InvoiceCard key={invoice.id} invoice={invoice} isExpanded={searchParams.id === invoice.id}  />
+              <InvoiceCard
+                key={invoice.id}
+                invoice={invoice}
+                isExpanded={searchParams.id === invoice.id}
+              />
             ))}
           </div>
         )}

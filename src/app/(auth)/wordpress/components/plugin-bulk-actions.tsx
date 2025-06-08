@@ -2,12 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  ArrowUpCircle,
-  RefreshCw,
-  Package,
-  Loader2,
-} from "lucide-react";
+import { ArrowUpCircle, RefreshCw, Package, Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "@/hooks/use-toast";
 import { updatePlugin } from "../actions";
@@ -22,13 +17,14 @@ export function PluginBulkActions({ sites }: PluginBulkActionsProps) {
   const [isUpdatingAll, setIsUpdatingAll] = useState(false);
 
   // Get all plugins that have updates available across all sites
-  const pluginsWithUpdates = sites.flatMap(site => 
-    site.updatesAvailable?.plugins?.map(plugin => ({
-      plugin,
-      siteId: site.id,
-      instanceId: site.instanceId,
-      siteUrl: site.url,
-    })) || []
+  const pluginsWithUpdates = sites.flatMap(
+    (site) =>
+      site.updatesAvailable?.plugins?.map((plugin) => ({
+        plugin,
+        siteId: site.id,
+        instanceId: site.instanceId,
+        siteUrl: site.url,
+      })) || []
   );
 
   const handleUpdateAll = () => {
@@ -61,7 +57,7 @@ export function PluginBulkActions({ sites }: PluginBulkActionsProps) {
       if (successCount > 0) {
         toast({
           title: "Atualizações concluídas",
-          description: `${successCount} plugin(s) atualizado(s) com sucesso${errorCount > 0 ? `, ${errorCount} falharam` : ''}`,
+          description: `${successCount} plugin(s) atualizado(s) com sucesso${errorCount > 0 ? `, ${errorCount} falharam` : ""}`,
         });
       }
 
@@ -90,16 +86,21 @@ export function PluginBulkActions({ sites }: PluginBulkActionsProps) {
         size="sm"
         onClick={handleUpdateAll}
         disabled={isPending || pluginsWithUpdates.length === 0}
-        className={pluginsWithUpdates.length > 0 ? "border-orange-200 text-orange-600 hover:bg-orange-50" : ""}
+        className={
+          pluginsWithUpdates.length > 0
+            ? "border-orange-200 text-orange-600 hover:bg-orange-50"
+            : ""
+        }
       >
         {isUpdatingAll ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
           <ArrowUpCircle className="mr-2 h-4 w-4" />
         )}
-        Atualizar Todos {pluginsWithUpdates.length > 0 && `(${pluginsWithUpdates.length})`}
+        Atualizar Todos{" "}
+        {pluginsWithUpdates.length > 0 && `(${pluginsWithUpdates.length})`}
       </Button>
-      
+
       <Button
         variant="outline"
         size="sm"
@@ -113,12 +114,17 @@ export function PluginBulkActions({ sites }: PluginBulkActionsProps) {
         )}
         Verificar Updates
       </Button>
-      
+
       <div className="flex items-center gap-2 ml-auto">
         {pluginsWithUpdates.length > 0 && (
-          <Badge variant="outline" className="text-orange-600 border-orange-200">
+          <Badge
+            variant="outline"
+            className="text-orange-600 border-orange-200"
+          >
             <Package className="mr-1 h-3 w-3" />
-            {pluginsWithUpdates.length} update{pluginsWithUpdates.length !== 1 ? 's' : ''} disponível{pluginsWithUpdates.length !== 1 ? 'is' : ''}
+            {pluginsWithUpdates.length} update
+            {pluginsWithUpdates.length !== 1 ? "s" : ""} disponível
+            {pluginsWithUpdates.length !== 1 ? "is" : ""}
           </Badge>
         )}
       </div>

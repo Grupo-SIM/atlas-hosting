@@ -165,10 +165,7 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Criada em</Label>
-                <Input
-                  value={formatDate(organization.createdAt)}
-                  readOnly
-                />
+                <Input value={formatDate(organization.createdAt)} readOnly />
               </div>
               <div className="space-y-2">
                 <Label>ID da Organização</Label>
@@ -273,7 +270,11 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={member.image || undefined} />
                           <AvatarFallback>
-                            {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            {member.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -283,7 +284,10 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                           </p>
                         </div>
                         {member.id === organization.ownerId && (
-                          <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700">
+                          <Badge
+                            variant="secondary"
+                            className="bg-yellow-500/10 text-yellow-700"
+                          >
                             <Crown className="w-3 h-3 mr-1" />
                             Proprietário
                           </Badge>
@@ -292,16 +296,21 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {getRoleIcon(member.organizationRole || 'member')}
-                        <Badge variant={getRoleBadgeVariant(member.organizationRole || 'member')}>
-                          {member.organizationRole === 'admin' ? 'Administrador' :
-                           member.organizationRole === 'developer' ? 'Desenvolvedor' : 'Membro'}
+                        {getRoleIcon(member.organizationRole || "member")}
+                        <Badge
+                          variant={getRoleBadgeVariant(
+                            member.organizationRole || "member"
+                          )}
+                        >
+                          {member.organizationRole === "admin"
+                            ? "Administrador"
+                            : member.organizationRole === "developer"
+                              ? "Desenvolvedor"
+                              : "Membro"}
                         </Badge>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {formatDate(member.createdAt)}
-                    </TableCell>
+                    <TableCell>{formatDate(member.createdAt)}</TableCell>
                     <TableCell className="text-right">
                       {isOwner && member.id !== user.id && (
                         <DropdownMenu>
@@ -336,9 +345,7 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
               <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                 <Users className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="text-muted-foreground">
-                Nenhum membro encontrado
-              </p>
+              <p className="text-muted-foreground">Nenhum membro encontrado</p>
             </div>
           )}
         </CardContent>
@@ -361,7 +368,9 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-2xl font-bold">{members.length}</p>
-                  <p className="text-sm text-muted-foreground">Total de Membros</p>
+                  <p className="text-sm text-muted-foreground">
+                    Total de Membros
+                  </p>
                 </div>
                 <Users className="h-8 w-8 text-blue-500" />
               </div>
@@ -369,8 +378,12 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
             <div className="p-4 rounded-lg border bg-card/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold">{organization.domains?.length || 0}</p>
-                  <p className="text-sm text-muted-foreground">Domínios Ativos</p>
+                  <p className="text-2xl font-bold">
+                    {organization.domains?.length || 0}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Domínios Ativos
+                  </p>
                 </div>
                 <Building2 className="h-8 w-8 text-green-500" />
               </div>
@@ -379,9 +392,11 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-2xl font-bold">
-                    {formatDate(organization.createdAt).split('/')[2]}
+                    {formatDate(organization.createdAt).split("/")[2]}
                   </p>
-                  <p className="text-sm text-muted-foreground">Ano de Criação</p>
+                  <p className="text-sm text-muted-foreground">
+                    Ano de Criação
+                  </p>
                 </div>
                 <Calendar className="h-8 w-8 text-purple-500" />
               </div>

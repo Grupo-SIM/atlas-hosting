@@ -92,10 +92,7 @@ export default function CheckoutClient({
                           </p>
                         </div>
                         <p className="font-semibold text-right">
-                          {toBrl(
-                            invoice.amount -
-                              (whoisGuard ? 3 : 0)
-                          )}
+                          {toBrl(invoice.amount - (whoisGuard ? 3 : 0))}
                         </p>
                       </div>
 

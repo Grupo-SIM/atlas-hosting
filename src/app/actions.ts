@@ -616,8 +616,8 @@ export async function completeCheckoutWithSavedCard(
     invoiceId,
     cardToken,
     ...values
-  }: Omit<CheckoutFormInputs, 'cardNumber' | 'cardCvv' | 'cardExpiration'> & { 
-    invoiceId: string; 
+  }: Omit<CheckoutFormInputs, "cardNumber" | "cardCvv" | "cardExpiration"> & {
+    invoiceId: string;
     cardToken: string;
   }
 ): Promise<ActionResponse> {
@@ -724,7 +724,7 @@ export async function completeCheckoutWithSavedCard(
       frequency: "MONTH",
       card: {
         token: cardToken,
-        installments: 1
+        installments: 1,
       },
       userId: user.id,
       value: invoice.amount,
@@ -732,10 +732,13 @@ export async function completeCheckoutWithSavedCard(
 
     console.log("Nova assinatura criada com cartão salvo", result);
   } catch (err) {
-    console.error("Error creating recurrent payment with saved card:", err.response.data);
-    return { 
-      status: "error", 
-      message: "Erro ao processar pagamento com cartão salvo." 
+    console.error(
+      "Error creating recurrent payment with saved card:",
+      err.response.data
+    );
+    return {
+      status: "error",
+      message: "Erro ao processar pagamento com cartão salvo.",
     };
   }
 
@@ -912,7 +915,7 @@ export async function completeCheckoutWithSavedCard(
 //     //   return { message: "WordPress instalado, mas não foi possível obter os URLs.", error: "Não foi possível recuperar os URLs do site/admin. Verifique o painel Plesk." };
 //     // }
 
-    // const primaryIp = process.env.SERVER_IP!;
+// const primaryIp = process.env.SERVER_IP!;
 
 //     const dnsRecords = await nameSilo.dnsListRecords(domainName);
 //     const nsRecords = await nameSilo.listRegisteredNameServers(domainName);
