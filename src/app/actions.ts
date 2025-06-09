@@ -3,14 +3,13 @@
 import type { LoginFormInputs } from "@/components/auth/LoginForm";
 import type { SignupFormInputs } from "@/components/auth/SignupForm";
 import type { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
+import { getUser } from "@/lib/auth/index";
 import {
   authenticateUser,
   createSession,
   createUser,
   generateSessionToken,
-  getUser,
-  invalidateSession,
-} from "@/lib/auth/index";
+} from "@/lib/auth/utils";
 import pleskApi from "@/lib/server/apis/plesk";
 import { ClientRequestTypeEnum } from "@/plesk";
 import { cookies, headers } from "next/headers";
@@ -734,7 +733,9 @@ export async function completeCheckoutWithSavedCard(
   } catch (err) {
     console.error(
       "Error creating recurrent payment with saved card:",
-      err.response.data
+      err instanceof Error && "response" in err
+        ? (err as any).response?.data
+        : err
     );
     return {
       status: "error",
@@ -743,8 +744,6 @@ export async function completeCheckoutWithSavedCard(
   }
 
   redirect("/payment/success");
-
-  return { status: "success", message: "Plano adquirido com sucesso!" };
 }
 
 // export async function createWordPressInstance(

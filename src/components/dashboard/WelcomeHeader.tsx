@@ -45,9 +45,9 @@ async function UserName({ user }: WelcomeHeaderProps) {
 export function UserPlanBadge({ user }: WelcomeHeaderProps) {
   if (user.organization.plan) {
     return (
-      <div className="flex items-center gap-2">
-        <Badge variant="secondary">{user.email}</Badge>
+      <div className="flex items-center gap-2 h-min">
         <Badge variant="default">Plano {user.organization.plan.name}</Badge>
+        <Badge variant="secondary">{user.email}</Badge>
       </div>
     );
   }

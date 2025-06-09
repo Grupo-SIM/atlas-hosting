@@ -20,7 +20,7 @@ async function testWordPressThemes() {
     console.log("Basic Theme List Response:");
     console.log("stdout:", basicThemeResult.stdout);
     console.log("stderr:", basicThemeResult.stderr);
-    console.log("exit_code:", basicThemeResult.exit_code);
+    console.log("exit_code:", basicThemeResult.code);
 
     if (basicThemeResult.stdout) {
       try {

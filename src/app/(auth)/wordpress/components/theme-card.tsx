@@ -83,7 +83,7 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
                 </DropdownMenuItem>
               )}
               
-              {theme.updateAvailable && (
+              {theme.update === "available" && theme.update_version && (
                 <>
                   <DropdownMenuItem 
                     onClick={() => handleAction("update")}
@@ -116,11 +116,6 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
               <span className="text-muted-foreground">
                 v{theme.version || "N/A"}
               </span>
-              {theme.author && (
-                <span className="text-muted-foreground">
-                  por {theme.author}
-                </span>
-              )}
             </div>
             
             <div className="flex items-center space-x-2">
@@ -131,9 +126,9 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
                 {theme.status === "active" ? "Ativo" : "Inativo"}
               </Badge>
               
-              {theme.updateAvailable && (
+              {theme.update === "available" && theme.update_version && (
                 <Badge variant="destructive" className="text-xs">
-                  Atualização
+                  Atualização para v{theme.update_version}
                 </Badge>
               )}
             </div>
@@ -148,7 +143,7 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
-            {theme.updateAvailable && (
+            {theme.update === "available" && theme.update_version && (
               <Button
                 size="sm"
                 variant="outline"
@@ -157,7 +152,7 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
                 className="flex-1"
               >
                 <RefreshCw className="mr-2 h-3 w-3" />
-                Atualizar
+                Atualizar para v{theme.update_version}
               </Button>
             )}
             

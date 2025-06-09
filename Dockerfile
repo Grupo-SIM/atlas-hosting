@@ -2,7 +2,7 @@ FROM oven/bun:latest AS base
 WORKDIR /usr/src/app
 
 FROM base AS install
-COPY package.json bun.lock ./
+COPY package.json bun.lockb ./
 COPY src/plesk/ ./src/
 RUN bun install
 
@@ -13,7 +13,7 @@ COPY . .
 ENV NODE_ENV=production
 ENV HOST="0.0.0.0"
 RUN bun test
-RUN bun --bun run build
+RUN bun run build
 
 FROM base AS release
 COPY --from=prerelease /usr/src/app/.next/standalone ./

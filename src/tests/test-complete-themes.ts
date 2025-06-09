@@ -8,7 +8,7 @@ async function testCompleteThemesImplementation() {
   try {
     console.log("1️⃣ Testing getWordPressSitesForSelectedDomain with themes...");
     
-    const sites = await getWordPressSitesForSelectedDomain("lauraifelipe.xyz");
+    const sites = await getWordPressSitesForSelectedDomain();
     
     console.log(`✅ Found ${sites.length} WordPress sites`);
     
@@ -22,8 +22,8 @@ async function testCompleteThemesImplementation() {
         site.themes.forEach((theme) => {
           console.log(`    * ${theme.name} (${theme.status}) - v${theme.version}`);
           if (theme.title) console.log(`      Title: ${theme.title}`);
-          if (theme.author) console.log(`      Author: ${theme.author}`);
-          if (theme.updateAvailable) console.log(`      🔄 Update Available!`);
+          if (theme.description) console.log(`      Description: ${theme.description}`);
+          if (theme.update === "available" && theme.update_version) console.log(`      🔄 Update Available: v${theme.update_version}!`);
         });
       }
       

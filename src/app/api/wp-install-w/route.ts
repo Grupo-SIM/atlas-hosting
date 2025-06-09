@@ -5,7 +5,6 @@ import axios from "axios";
 import { getSSEPayload, sendSSE } from "./utils";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const urlParams = new URL(request.url).searchParams;

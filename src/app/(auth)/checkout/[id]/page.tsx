@@ -1,6 +1,6 @@
 import CheckoutClient from "./checkout-client";
 import { db } from "@/lib/db";
-import { pgInvoice, pgPlan } from "@/lib/db/schema";
+import { pgInvoice, pgPlan, type Invoice } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -41,5 +41,9 @@ export default async function CheckoutPage({
     reference = plan.name;
   }
 
-  return <CheckoutClient invoice={invoice} user={user} reference={reference} />;
+  if (!invoice) {
+    notFound();
+  }
+
+  return <CheckoutClient invoice={invoice as Invoice} user={user} reference={reference} />;
 }

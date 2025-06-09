@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
+import { Input, inputClasses } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -57,6 +57,7 @@ import {
   type AddCardData,
 } from "@/app/(auth)/wallet/actions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { IMaskInput } from "react-imask";
 
 interface WalletSectionProps {
   user: User;
@@ -111,7 +112,20 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
     cardExpiration: "",
     holderName: "",
     holderDocument: "",
+    // Billing information
+    billingName: "",
+    billingEmail: "",
+    billingPhone: "",
+    billingStreet: "",
+    billingNumber: "",
+    billingNeighborhood: "",
+    billingZipCode: "",
+    billingCity: "",
+    billingState: "",
   });
+
+  // Check if user needs billing information
+  const needsBillingInfo = !user.organization?.domId;
 
   // Load cards on component mount
   useEffect(() => {
@@ -151,6 +165,28 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
       return;
     }
 
+    // Validate billing information if user doesn't have domId
+    if (needsBillingInfo) {
+      if (
+        !cardForm.billingName ||
+        !cardForm.billingEmail ||
+        !cardForm.billingPhone ||
+        !cardForm.billingStreet ||
+        !cardForm.billingNumber ||
+        !cardForm.billingNeighborhood ||
+        !cardForm.billingZipCode ||
+        !cardForm.billingCity ||
+        !cardForm.billingState
+      ) {
+        toast({
+          title: "Erro",
+          description: "Todos os campos de cobrança são obrigatórios",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     startTransition(async () => {
       const result = await addCard(cardForm);
 
@@ -166,6 +202,16 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
           cardExpiration: "",
           holderName: "",
           holderDocument: "",
+          // Reset billing information
+          billingName: "",
+          billingEmail: "",
+          billingPhone: "",
+          billingStreet: "",
+          billingNumber: "",
+          billingNeighborhood: "",
+          billingZipCode: "",
+          billingCity: "",
+          billingState: "",
         });
         // Reload cards
         const userCards = await getUserCards();
@@ -396,18 +442,171 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="holderDocument">CPF do portador</Label>
-                  <Input
+                  <IMaskInput
                     id="holderDocument"
+                    autoComplete="document"
+                    mask={[
+                      { mask: "000.000.000-00", lazy: true, maxLength: 11 },
+                      { mask: "00.000.000/0000-00", lazy: false },
+                    ]}
+                    unmask={true}
                     placeholder="000.000.000-00"
-                    value={cardForm.holderDocument}
-                    onChange={(e) =>
+                    className={inputClasses}
+                    onAccept={(value) =>
                       setCardForm((prev) => ({
                         ...prev,
-                        holderDocument: e.target.value.replace(/\D/g, ""),
+                        holderDocument: value.replace(/\D/g, ""),
                       }))
                     }
                   />
                 </div>
+
+                {/* Billing Information Section - Only show if user doesn't have domId */}
+                {needsBillingInfo && (
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium mb-3 text-muted-foreground">
+                      Informações de Cobrança
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="billingName">Nome completo</Label>
+                        <Input
+                          id="billingName"
+                          placeholder="Nome completo do responsável"
+                          value={cardForm.billingName}
+                          onChange={(e) =>
+                            setCardForm((prev) => ({
+                              ...prev,
+                              billingName: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="billingEmail">Email</Label>
+                        <Input
+                          id="billingEmail"
+                          type="email"
+                          placeholder="email@exemplo.com"
+                          value={cardForm.billingEmail}
+                          onChange={(e) =>
+                            setCardForm((prev) => ({
+                              ...prev,
+                              billingEmail: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="billingPhone">Telefone</Label>
+                        <IMaskInput
+                          id="billingPhone"
+                          mask="(00) 00000-0000"
+                          placeholder="(11) 99999-9999"
+                          className={inputClasses}
+                          value={cardForm.billingPhone}
+                          onAccept={(value) =>
+                            setCardForm((prev) => ({
+                              ...prev,
+                              billingPhone: value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-2 space-y-2">
+                          <Label htmlFor="billingStreet">Endereço</Label>
+                          <Input
+                            id="billingStreet"
+                            placeholder="Nome da rua"
+                            value={cardForm.billingStreet}
+                            onChange={(e) =>
+                              setCardForm((prev) => ({
+                                ...prev,
+                                billingStreet: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="billingNumber">Número</Label>
+                          <Input
+                            id="billingNumber"
+                            placeholder="123"
+                            value={cardForm.billingNumber}
+                            onChange={(e) =>
+                              setCardForm((prev) => ({
+                                ...prev,
+                                billingNumber: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="billingNeighborhood">Bairro</Label>
+                        <Input
+                          id="billingNeighborhood"
+                          placeholder="Nome do bairro"
+                          value={cardForm.billingNeighborhood}
+                          onChange={(e) =>
+                            setCardForm((prev) => ({
+                              ...prev,
+                              billingNeighborhood: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="billingZipCode">CEP</Label>
+                          <IMaskInput
+                            id="billingZipCode"
+                            mask="00000-000"
+                            placeholder="00000-000"
+                            className={inputClasses}
+                            value={cardForm.billingZipCode}
+                            onAccept={(value) =>
+                              setCardForm((prev) => ({
+                                ...prev,
+                                billingZipCode: value,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="billingCity">Cidade</Label>
+                          <Input
+                            id="billingCity"
+                            placeholder="Nome da cidade"
+                            value={cardForm.billingCity}
+                            onChange={(e) =>
+                              setCardForm((prev) => ({
+                                ...prev,
+                                billingCity: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="billingState">Estado</Label>
+                        <Input
+                          id="billingState"
+                          placeholder="SP"
+                          maxLength={2}
+                          value={cardForm.billingState}
+                          onChange={(e) =>
+                            setCardForm((prev) => ({
+                              ...prev,
+                              billingState: e.target.value.toUpperCase(),
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <Button
                   className="w-full"
                   onClick={handleAddCard}

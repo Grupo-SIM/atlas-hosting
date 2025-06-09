@@ -6,7 +6,7 @@ import { ArrowUpCircle, RefreshCw, Package, Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "@/hooks/use-toast";
 import { updatePlugin } from "../actions";
-import type { WordPressSiteInfo } from "../actions";
+import type { WordPressSiteInfo } from "../types";
 
 interface PluginBulkActionsProps {
   sites: WordPressSiteInfo[];

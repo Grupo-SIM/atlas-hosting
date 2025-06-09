@@ -7,6 +7,7 @@ import { Readable } from "node:stream";
 import namecheapApi from "../namecheap";
 import type { DnsHostRecord, DnsRecordType } from "../namecheap/types";
 import { getSubscription } from "../plesk-xml/client";
+import { mkdir } from "node:fs/promises";
 
 export class CertificatesApi {
   private readonly letsEncryptDirectoryUrl =
@@ -383,9 +384,16 @@ export class CertificatesApi {
       try {
         const challengeDir = `/var/www/${domainName}/.well-known/acme-challenge`;
         if (
-          await access(challengeDir)
-            .then(() => true)
-            .catch(() => false)
+          await (async () => {
+            try {
+              await access(challengeDir);
+            } catch {
+              await mkdir(challengeDir, { recursive: true });
+            }
+
+            await access(challengeDir);
+            return true;
+          })()
         ) {
           await rmdir(challengeDir, { recursive: true });
         }
@@ -404,10 +412,13 @@ export class CertificatesApi {
   ): Promise<void> {
     const ftpClient = new FtpClient();
 
-    const { data } = await getSubscription(domainName);
+    const subscriptionResult = await getSubscription(domainName);
+    if (!subscriptionResult?.data) {
+      throw new Error(`Could not find subscription data for domain: ${domainName}`);
+    }
 
     const hostingData = Object.fromEntries(
-      data.hosting.vrt_hst.property.map(({ name, value }) => [name, value])
+      subscriptionResult.data.hosting.vrt_hst.property.map(({ name, value }: { name: string; value: string | number }) => [name, value])
     );
 
     const { ftp_login, ftp_password } = hostingData;
@@ -514,10 +525,13 @@ export class CertificatesApi {
     const ftpClient = new FtpClient();
 
     try {
-      const { data } = await getSubscription(domainName);
+      const subscriptionResult = await getSubscription(domainName);
+      if (!subscriptionResult?.data) {
+        throw new Error(`Could not find subscription data for domain: ${domainName}`);
+      }
 
       const hostingData = Object.fromEntries(
-        data.hosting.vrt_hst.property.map(({ name, value }) => [name, value])
+        subscriptionResult.data.hosting.vrt_hst.property.map(({ name, value }: { name: string; value: string | number }) => [name, value])
       );
 
       const { ftp_login, ftp_password } = hostingData;

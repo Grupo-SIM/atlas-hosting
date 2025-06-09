@@ -46,6 +46,7 @@ import type { User } from "@/lib/db/schema/tables/user";
 import { UserPlanBadge } from "@/components/dashboard/WelcomeHeader";
 import { toBrl } from "@/lib/utils";
 import Link from "next/link";
+import { capitalize } from "lodash";
 
 interface SubscriptionSectionProps {
   user: User;
@@ -67,32 +68,24 @@ export function SubscriptionSection({ user }: SubscriptionSectionProps) {
     <div className="space-y-6">
       {/* Current Plan Overview */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Plano Atual
-          </CardTitle>
-          <CardDescription>
-            Informações sobre sua assinatura ativa
-          </CardDescription>
+        <CardHeader className="grid gap-2 grid-cols-2 grid-rows-[auto]">
+          <div className="grid grid-rows-2 grid-cols-1">
+            <CardTitle className="flex items-center gap-2 mb-3">
+              <Package className="h-5 w-5" />
+              Plano Atual
+            </CardTitle>
+            <UserPlanBadge user={user} />
+          </div>
+          {hasActivePlan && (
+            <div className="text-right">
+              <div className="text-2xl font-bold">{toBrl(plan.price)}</div>
+              <div className="text-sm text-muted-foreground">por mês</div>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
           {hasActivePlan ? (
             <>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-semibold">{plan.name}</h3>
-                    <UserPlanBadge user={user} />
-                  </div>
-                  <p className="text-muted-foreground">{plan.description}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">{toBrl(plan.price)}</div>
-                  <p className="text-sm text-muted-foreground">por mês</p>
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-card/50">
                   <Server className="h-8 w-8 text-blue-500" />

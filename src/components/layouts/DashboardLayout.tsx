@@ -15,7 +15,7 @@ export default async function DashboardLayout({
     <div className="max-h-screen min-h-screen flex bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar user={user}>{/* <UserSiteSelect user={user} /> */}</Topbar>
+        <Topbar>{/* <UserSiteSelect user={user} /> */}</Topbar>
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>

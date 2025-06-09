@@ -90,7 +90,7 @@ export default async function BillingPage() {
 
   return (
     <div className="flex h-full w-full flex-col">
-      <main className="flex-grow container mx-auto py-8 px-4 md:px-6 w-full">
+      <div className="flex-grow container mx-auto py-8 px-4 md:px-6 w-full">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Minhas Faturas</h1>
         </div>
@@ -170,7 +170,7 @@ export default async function BillingPage() {
             ))}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

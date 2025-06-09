@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Input, inputClasses } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
@@ -28,12 +28,13 @@ import {
   useTransition,
   type ChangeEvent,
 } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, type UseFormReturn } from "react-hook-form";
 import { IMaskInput } from "react-imask";
 import { usePaymentInputs } from "react-payment-inputs";
 import { toast } from "sonner";
 import * as yup from "yup";
 import { Skeleton } from "../ui/skeleton";
+import clsx from "clsx";
 
 interface SavedCard {
   id: string;
@@ -55,7 +56,7 @@ export interface ModernCheckoutFormHandle {
   submit: () => void;
 }
 
-const schema = yup
+const billingAddressSchema = yup
   .object({
     fullName: yup
       .string()
@@ -95,7 +96,7 @@ const schema = yup
   })
   .required();
 
-const newCardSchema = schema.concat(
+const newCardSchema = billingAddressSchema.concat(
   yup.object({
     cardNumber: yup
       .string()
@@ -113,7 +114,7 @@ const newCardSchema = schema.concat(
   })
 );
 
-type BaseFormInputs = yup.InferType<typeof schema>;
+type BaseFormInputs = yup.InferType<typeof billingAddressSchema>;
 type NewCardFormInputs = yup.InferType<typeof newCardSchema>;
 
 const ModernCheckoutForm = forwardRef<
@@ -126,16 +127,16 @@ const ModernCheckoutForm = forwardRef<
   const [isLoadingCards, setIsLoadingCards] = useState(true);
   const [isPending, startTransition] = useTransition();
 
-  // Payment inputs hook for new card
-  const {
-    meta,
-    getCardNumberProps,
-    getExpiryDateProps,
-    getCVCProps,
-    getCardImageProps,
-  } = usePaymentInputs();
+  useEffect(() => {
+    console.log(paymentMethod);
+  }, [paymentMethod]);
 
   // Always use the full schema for form management
+  const methods = useForm<NewCardFormInputs>({
+    resolver: yupResolver(newCardSchema),
+    mode: "onChange",
+  });
+
   const {
     register,
     control,
@@ -144,10 +145,7 @@ const ModernCheckoutForm = forwardRef<
     formState: { errors, isValid },
     setValue,
     watch,
-  } = useForm<NewCardFormInputs>({
-    resolver: yupResolver(newCardSchema),
-    mode: "onChange",
-  });
+  } = methods;
 
   const watchPaymentMethod = watch();
 
@@ -364,42 +362,39 @@ const ModernCheckoutForm = forwardRef<
             <RadioGroup
               value={paymentMethod}
               onValueChange={setPaymentMethod}
-              className="space-y-3"
+              className="grid gap-3"
             >
               {/* Saved Cards */}
               {isLoadingCards ? (
                 <Skeleton className="h-21 w-full" />
               ) : savedCards.length > 0 ? (
-                <>
-                  {savedCards.map((card) => (
-                    <Label
-                      key={card.id}
-                      className="relative flex cursor-pointer items-center gap-3 rounded-lg border border-input p-4 shadow-sm shadow-black/5 outline-offset-2 transition-colors has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring/70 h-21"
-                    >
-                      <RadioGroupItem
-                        value={card.id}
-                        className="sr-only after:absolute after:inset-0"
-                      />
-                      <div className="text-2xl">
-                        {getCardBrandIcon(card.brand)}
+                savedCards.map((card) => (
+                  <Label
+                    key={card.id}
+                    className="relative flex cursor-pointer items-center gap-3 rounded-lg border border-input p-4 shadow-sm shadow-black/5 outline-offset-2 transition-colors has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring/70 h-21"
+                  >
+                    <RadioGroupItem
+                      value={card.id}
+                      className="sr-only after:absolute after:inset-0"
+                    />
+                    <div className="text-2xl">
+                      {getCardBrandIcon(card.brand)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          **** **** **** {card.last4}
+                        </span>
+                        {card.isDefault && (
+                          <Badge variant="secondary">Padrão</Badge>
+                        )}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            **** **** **** {card.last4}
-                          </span>
-                          {card.isDefault && (
-                            <Badge variant="secondary">Padrão</Badge>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {card.holderName} • {card.expiryMonth}/
-                          {card.expiryYear}
-                        </div>
+                      <div className="text-sm text-muted-foreground">
+                        {card.holderName} • {card.expiryMonth}/{card.expiryYear}
                       </div>
-                    </Label>
-                  ))}
-                </>
+                    </div>
+                  </Label>
+                ))
               ) : (
                 <div className="py-4 text-center text-sm text-muted-foreground">
                   Nenhum cartão salvo encontrado
@@ -430,104 +425,13 @@ const ModernCheckoutForm = forwardRef<
         </Card>
 
         {/* New Card Form - Only show if "new" is selected */}
-        {paymentMethod === "new" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Dados do Cartão</CardTitle>
-              <CardDescription>
-                Insira os dados do seu cartão de crédito ou débito
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Card Number */}
-                <div className="space-y-2">
-                  <Label htmlFor={`card-number-${id}`}>Número do cartão</Label>
-                  <div className="relative">
-                    <Input
-                      id={`card-number-${id}`}
-                      placeholder="1234 5678 9012 3456"
-                      {...getCardNumberProps()}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                        getCardNumberProps().onChange?.(e);
-                        setValue("cardNumber", e.target.value);
-                      }}
-                      className={errors.cardNumber ? "border-red-500" : ""}
-                    />
-                    <div className="absolute inset-y-0 right-3 flex items-center">
-                      {meta.cardType ? (
-                        <svg
-                          className="overflow-hidden rounded-sm"
-                          {...getCardImageProps()}
-                          width={20}
-                        />
-                      ) : (
-                        <CreditCard
-                          size={16}
-                          strokeWidth={2}
-                          aria-hidden="true"
-                        />
-                      )}
-                    </div>
-                  </div>
-                  {errors.cardNumber && (
-                    <p className="text-sm text-red-500">
-                      {errors.cardNumber.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Expiry Date */}
-                  <div className="space-y-2">
-                    <Label htmlFor={`expiry-${id}`}>Data de validade</Label>
-                    <Input
-                      id={`expiry-${id}`}
-                      placeholder="MM/AA"
-                      {...getExpiryDateProps()}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                        getExpiryDateProps().onChange?.(e);
-                        setValue("cardExpiration", e.target.value);
-                      }}
-                      className={errors.cardExpiration ? "border-red-500" : ""}
-                    />
-                    {errors.cardExpiration && (
-                      <p className="text-sm text-red-500">
-                        {errors.cardExpiration.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* CVV */}
-                  <div className="space-y-2">
-                    <Label htmlFor={`cvv-${id}`}>CVV</Label>
-                    <Input
-                      id={`cvv-${id}`}
-                      placeholder="123"
-                      {...getCVCProps()}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                        getCVCProps().onChange?.(e);
-                        setValue("cardCvv", e.target.value);
-                      }}
-                      className={errors.cardCvv ? "border-red-500" : ""}
-                    />
-                    {errors.cardCvv && (
-                      <p className="text-sm text-red-500">
-                        {errors.cardCvv.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {paymentMethod === "new" && <NewCardFormSection {...methods} />}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Payment Method Selection */}
       <Card>
         <CardHeader>
@@ -545,12 +449,12 @@ const ModernCheckoutForm = forwardRef<
           <RadioGroup
             value={paymentMethod}
             onValueChange={setPaymentMethod}
-            className="space-y-3"
+            className="grid gap-3"
           >
             {/* Saved Cards */}
             {isLoadingCards ? (
               <div className="py-4 text-center text-sm text-muted-foreground">
-                Carregando cartões salvos...
+                <Skeleton className="h-21 w-full" />
               </div>
             ) : savedCards.length > 0 ? (
               <>
@@ -585,7 +489,7 @@ const ModernCheckoutForm = forwardRef<
               </>
             ) : null}
 
-            <Label className="relative flex cursor-pointer items-center gap-3 rounded-lg border border-input p-4 shadow-sm shadow-black/5 outline-offset-2 transition-colors has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring/70">
+            <Label className="relative flex cursor-pointer items-center gap-3 rounded-lg border border-input p-4 shadow-sm shadow-black/5 outline-offset-2 transition-colors has-[:checked]:ring-1 has-[:checked]:bg-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring/70">
               <RadioGroupItem
                 value="new"
                 className="sr-only after:absolute after:inset-0"
@@ -604,299 +508,308 @@ const ModernCheckoutForm = forwardRef<
         </CardContent>
       </Card>
 
-      {/* Payment Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Informações de Cobrança</CardTitle>
-          <CardDescription>
-            {paymentMethod === "new"
-              ? "Complete os dados para processar o pagamento"
-              : `Pagamento com cartão ${selectedCard?.last4}`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Personal Information */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor={`fullName-${id}`}>Nome completo</Label>
-                <Input
-                  id={`fullName-${id}`}
-                  placeholder="Seu nome completo"
-                  autoComplete="name"
-                  {...register("fullName")}
-                />
-                {errors.fullName && (
-                  <p className="text-xs text-red-400">
-                    {errors.fullName.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={`document-${id}`}>CPF ou CNPJ</Label>
-                <Controller
-                  name="document"
-                  control={control}
-                  render={({ field }) => (
-                    <IMaskInput
-                      {...field}
-                      mask={[
-                        { mask: "000.000.000-00", lazy: true, maxLength: 11 },
-                        { mask: "00.000.000/0000-00", lazy: false },
-                      ]}
-                      unmask={true}
-                      placeholder="Seu CPF ou CNPJ"
-                      autoComplete="document"
-                      className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50"
-                      onAccept={(value) => field.onChange(value)}
-                    />
-                  )}
-                />
-                {errors.document && (
-                  <p className="text-xs text-red-400">
-                    {errors.document.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={`phoneNumber-${id}`}>Telefone</Label>
-                <Controller
-                  name="phoneNumber"
-                  control={control}
-                  render={({ field }) => (
-                    <IMaskInput
-                      {...field}
-                      mask={[
-                        { mask: "(00) 0000-0000" },
-                        { mask: "(00) 00000-0000" },
-                      ]}
-                      unmask={true}
-                      placeholder="(XX) XXXXX-XXXX"
-                      autoComplete="tel"
-                      className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50"
-                      onAccept={(value) => field.onChange(value)}
-                    />
-                  )}
-                />
-                {errors.phoneNumber && (
-                  <p className="text-xs text-red-400">
-                    {errors.phoneNumber.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Address Information */}
-            <div className="space-y-4">
-              <h3 className="font-medium">Endereço</h3>
-
-              <div className="space-y-2">
-                <Label htmlFor={`zipCode-${id}`}>CEP</Label>
-                <Controller
-                  name="address.zipCode"
-                  control={control}
-                  render={({ field }) => (
-                    <IMaskInput
-                      {...field}
-                      mask="00000-000"
-                      unmask={true}
-                      placeholder="00000-000"
-                      autoComplete="postal-code"
-                      className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50"
-                      onAccept={(value) => field.onChange(value)}
-                    />
-                  )}
-                />
-                {errors.address?.zipCode && (
-                  <p className="text-xs text-red-400">
-                    {errors.address.zipCode.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor={`street-${id}`}>Rua</Label>
-                  <Input
-                    id={`street-${id}`}
-                    placeholder="Nome da rua"
-                    autoComplete="street-address"
-                    {...register("address.street")}
-                  />
-                  {errors.address?.street && (
-                    <p className="text-xs text-red-400">
-                      {errors.address.street.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`number-${id}`}>Número</Label>
-                  <Input
-                    id={`number-${id}`}
-                    placeholder="Nº"
-                    {...register("address.number")}
-                  />
-                  {errors.address?.number && (
-                    <p className="text-xs text-red-400">
-                      {errors.address.number.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={`neighborhood-${id}`}>Bairro</Label>
-                <Input
-                  id={`neighborhood-${id}`}
-                  placeholder="Seu bairro"
-                  {...register("address.neighborhood")}
-                />
-                {errors.address?.neighborhood && (
-                  <p className="text-xs text-red-400">
-                    {errors.address.neighborhood.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-5 gap-3">
-                <div className="space-y-2 col-span-3">
-                  <Label htmlFor={`city-${id}`}>Cidade</Label>
-                  <Input
-                    id={`city-${id}`}
-                    placeholder="Sua cidade"
-                    {...register("address.city")}
-                  />
-                  {errors.address?.city && (
-                    <p className="text-xs text-red-400">
-                      {errors.address.city.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor={`state-${id}`}>Estado</Label>
-                  <Controller
-                    name="address.state"
-                    control={control}
-                    render={({ field }) => (
-                      <IMaskInput
-                        {...field}
-                        unmask={true}
-                        mask="aa"
-                        placeholderChar=" "
-                        placeholder="Código do estado"
-                        autoComplete="address-level1"
-                        className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50"
-                        onAccept={(value) =>
-                          field.onChange(value.toUpperCase())
-                        }
-                      />
-                    )}
-                  />
-                  {errors.address?.state && (
-                    <p className="text-xs text-red-400">
-                      {errors.address.state.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Card Information - Only for new cards */}
-            {paymentMethod === "new" && (
-              <>
-                <Separator />
+      {paymentMethod === "new" && (
+        <>
+          <NewCardFormSection {...methods} />
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações de Cobrança</CardTitle>
+              <CardDescription>
+                {paymentMethod === "new"
+                  ? "Complete os dados para processar o pagamento"
+                  : `Pagamento com cartão ${selectedCard?.last4}`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {/* Personal Information */}
                 <div className="space-y-4">
-                  <h3 className="font-medium">Informações do Cartão</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor={`fullName-${id}`}>Nome completo</Label>
+                    <Input
+                      id={`fullName-${id}`}
+                      placeholder="Seu nome completo"
+                      autoComplete="name"
+                      {...register("fullName")}
+                    />
+                    {errors.fullName && (
+                      <p className="text-xs text-red-400">
+                        {errors.fullName.message}
+                      </p>
+                    )}
+                  </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor={`cardNumber-${id}`}>Dados do Cartão</Label>
-                    <div className="rounded-lg shadow-sm shadow-black/5">
-                      <div className="relative focus-within:z-10">
-                        <Input
-                          className="peer rounded-b-none pe-9 shadow-none [direction:inherit]"
-                          {...getCardNumberProps()}
-                          id={`cardNumber-${id}`}
-                          onChange={(e) => {
-                            getCardNumberProps().onChange(e);
-                            register("cardNumber").onChange(e);
-                          }}
+                    <Label htmlFor={`document-${id}`}>CPF ou CNPJ</Label>
+                    <Controller
+                      name="document"
+                      control={control}
+                      render={({ field }) => (
+                        <IMaskInput
+                          {...field}
+                          mask={[
+                            {
+                              mask: "000.000.000-00",
+                              lazy: true,
+                              maxLength: 11,
+                            },
+                            { mask: "00.000.000/0000-00", lazy: false },
+                          ]}
+                          unmask={true}
+                          placeholder="Seu CPF ou CNPJ"
+                          autoComplete="document"
+                          className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50"
+                          onAccept={(value) => field.onChange(value)}
                         />
-                        <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-muted-foreground/80 peer-disabled:opacity-50">
-                          {meta.cardType ? (
-                            <svg
-                              className="overflow-hidden rounded-sm"
-                              {...getCardImageProps()}
-                              width={20}
-                            />
-                          ) : (
-                            <CreditCard
-                              size={16}
-                              strokeWidth={2}
-                              aria-hidden="true"
-                            />
-                          )}
-                        </div>
-                      </div>
-                      <div className="-mt-px flex">
-                        <div className="min-w-0 flex-1 focus-within:z-10">
-                          <Input
-                            className="rounded-e-none rounded-t-none shadow-none [direction:inherit]"
-                            {...getExpiryDateProps()}
-                            id={`expiry-${id}`}
-                            onChange={(e) => {
-                              getExpiryDateProps().onChange(e);
-                              register("cardExpiration").onChange(e);
-                            }}
-                          />
-                        </div>
-                        <div className="-ms-px min-w-0 flex-1 focus-within:z-10">
-                          <Input
-                            className="rounded-s-none rounded-t-none shadow-none [direction:inherit]"
-                            {...getCVCProps()}
-                            id={`cvc-${id}`}
-                            onChange={(e) => {
-                              getCVCProps().onChange(e);
-                              register("cardCvv").onChange(e);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    {(errors.cardNumber ||
-                      errors.cardExpiration ||
-                      errors.cardCvv) && (
-                      <div className="space-y-1">
-                        {errors.cardNumber && (
-                          <p className="text-xs text-red-400">
-                            {errors.cardNumber.message}
-                          </p>
-                        )}
-                        {errors.cardExpiration && (
-                          <p className="text-xs text-red-400">
-                            {errors.cardExpiration.message}
-                          </p>
-                        )}
-                        {errors.cardCvv && (
-                          <p className="text-xs text-red-400">
-                            {errors.cardCvv.message}
-                          </p>
-                        )}
-                      </div>
+                      )}
+                    />
+                    {errors.document && (
+                      <p className="text-xs text-red-400">
+                        {errors.document.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`phoneNumber-${id}`}>Telefone</Label>
+                    <Controller
+                      name="phoneNumber"
+                      control={control}
+                      render={({ field }) => (
+                        <IMaskInput
+                          {...field}
+                          mask={[
+                            { mask: "(00) 0000-0000" },
+                            { mask: "(00) 00000-0000" },
+                          ]}
+                          unmask={true}
+                          placeholder="(XX) XXXXX-XXXX"
+                          autoComplete="tel"
+                          className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50"
+                          onAccept={(value) => field.onChange(value)}
+                        />
+                      )}
+                    />
+                    {errors.phoneNumber && (
+                      <p className="text-xs text-red-400">
+                        {errors.phoneNumber.message}
+                      </p>
                     )}
                   </div>
                 </div>
-              </>
-            )}
-          </form>
-        </CardContent>
-      </Card>
+
+                <Separator />
+
+                {/* Address Information */}
+                <div className="space-y-4">
+                  <h3 className="font-medium">Endereço</h3>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`zipCode-${id}`}>CEP</Label>
+                    <Controller
+                      name="address.zipCode"
+                      control={control}
+                      render={({ field }) => (
+                        <IMaskInput
+                          {...field}
+                          mask="00000-000"
+                          unmask={true}
+                          placeholder="00000-000"
+                          autoComplete="postal-code"
+                          className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50"
+                          onAccept={(value) => field.onChange(value)}
+                        />
+                      )}
+                    />
+                    {errors.address?.zipCode && (
+                      <p className="text-xs text-red-400">
+                        {errors.address.zipCode.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2 col-span-2">
+                      <Label htmlFor={`street-${id}`}>Rua</Label>
+                      <Input
+                        id={`street-${id}`}
+                        placeholder="Nome da rua"
+                        autoComplete="street-address"
+                        {...register("address.street")}
+                      />
+                      {errors.address?.street && (
+                        <p className="text-xs text-red-400">
+                          {errors.address.street.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`number-${id}`}>Número</Label>
+                      <Input
+                        id={`number-${id}`}
+                        placeholder="Nº"
+                        {...register("address.number")}
+                      />
+                      {errors.address?.number && (
+                        <p className="text-xs text-red-400">
+                          {errors.address.number.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`neighborhood-${id}`}>Bairro</Label>
+                    <Input
+                      id={`neighborhood-${id}`}
+                      placeholder="Seu bairro"
+                      {...register("address.neighborhood")}
+                    />
+                    {errors.address?.neighborhood && (
+                      <p className="text-xs text-red-400">
+                        {errors.address.neighborhood.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-5 gap-3">
+                    <div className="space-y-2 col-span-3">
+                      <Label htmlFor={`city-${id}`}>Cidade</Label>
+                      <Input
+                        id={`city-${id}`}
+                        placeholder="Sua cidade"
+                        {...register("address.city")}
+                      />
+                      {errors.address?.city && (
+                        <p className="text-xs text-red-400">
+                          {errors.address.city.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <Label htmlFor={`state-${id}`}>Estado</Label>
+                      <Controller
+                        name="address.state"
+                        control={control}
+                        render={({ field }) => (
+                          <IMaskInput
+                            {...field}
+                            unmask={true}
+                            mask="aa"
+                            placeholderChar=" "
+                            placeholder="Código do estado"
+                            autoComplete="address-level1"
+                            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50"
+                            onAccept={(value) =>
+                              field.onChange(value.toUpperCase())
+                            }
+                          />
+                        )}
+                      />
+                      {errors.address?.state && (
+                        <p className="text-xs text-red-400">
+                          {errors.address.state.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 });
+
+function NewCardFormSection({
+  control,
+  formState: { errors },
+}: UseFormReturn<NewCardFormInputs>) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Dados do Cartão</CardTitle>
+        <CardDescription>
+          Insira os dados do seu cartão de crédito ou débito
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-4 gap-2">
+          <div className="space-y-2 col-span-2">
+            <Label htmlFor="cardNumber">Número do Cartão</Label>
+            <Controller
+              name="cardNumber"
+              control={control}
+              render={({ field }) => (
+                <IMaskInput
+                  {...field}
+                  mask="0000 0000 0000 0000"
+                  unmask={true}
+                  placeholder="0000 0000 0000 0000"
+                  autoComplete="cc-number"
+                  className={inputClasses}
+                  onAccept={(value) => field.onChange(value)}
+                />
+              )}
+            />
+            {errors.cardNumber && (
+              <p className="text-xs text-red-400">
+                {errors.cardNumber.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cardCvv">CVV</Label>
+            <Controller
+              name="cardCvv"
+              control={control}
+              render={({ field }) => (
+                <IMaskInput
+                  {...field}
+                  mask="000"
+                  unmask={true}
+                  placeholder="123"
+                  autoComplete="cc-csc"
+                  className={inputClasses}
+                  onAccept={(value) => field.onChange(value)}
+                />
+              )}
+            />
+            {errors.cardCvv && (
+              <p className="text-xs text-red-400">{errors.cardCvv.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cardExpiration">Data de Validade</Label>
+            <Controller
+              name="cardExpiration"
+              control={control}
+              render={({ field }) => (
+                <IMaskInput
+                  {...field}
+                  mask="00/00"
+                  placeholderChar=" "
+                  lazy={false}
+                  placeholder="MM/AA"
+                  autoComplete="cc-exp"
+                  className={clsx([inputClasses, "text-center"])}
+                  onAccept={(value) => field.onChange(value)}
+                />
+              )}
+            />
+            {errors.cardExpiration && (
+              <p className="text-xs text-red-400">
+                {errors.cardExpiration.message}
+              </p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 ModernCheckoutForm.displayName = "ModernCheckoutForm";
 

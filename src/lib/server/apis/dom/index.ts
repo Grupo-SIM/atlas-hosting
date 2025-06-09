@@ -17,9 +17,9 @@ export class DomApi {
   private tokenApi: string;
 
   constructor() {
-    this.tokenApi = process.env.DOM_API_KEY!;
+    this.tokenApi = process.env.DOM_API_KEY as string;
 
-    this.privateKeyPath = process.env.DOM_WITHDRAWAL_SIGNATURE_KEY_PATH!;
+    this.privateKeyPath = process.env.DOM_WITHDRAWAL_SIGNATURE_KEY_PATH as string;
 
     this.api = axios.create({
       baseURL: "https://apiv3.dompagamentos.com.br/checkout/production/",
@@ -138,22 +138,31 @@ export class DomApi {
       throw new Error("User not found");
     }
 
-    const { data } = await this.api.post<CreateClientParams & { id: string }>(
-      "/customers",
-      {
-        name,
-        email,
-        document,
-        document_type: document.length === 11 ? "CPF" : "CNPJ",
-        code_external: codeExternal,
-        // gender,
-        // birthdate,
-        mobile_phone: mobilePhone,
-        address,
-      }
-    );
+    try {
+      const { data } = await this.api.post<CreateClientParams & { id: string }>(
+        "/customers",
+        {
+          name,
+          email,
+          document,
+          document_type: document.length === 11 ? "CPF" : "CNPJ",
+          code_external: codeExternal,
+          // gender,
+          // birthdate,
+          mobile_phone: mobilePhone,
+          address,
+        }
+      );
+      return data;
+    } catch (error) {
+      console.log("error adding client", error);
 
-    return data;
+      if (axios.isAxiosError(error)) {
+        return { id: error.response?.data.id as string};
+      }
+
+      throw error;
+    }
   }
 
   /**
@@ -332,44 +341,6 @@ export class DomApi {
     } catch (error) {
       console.error("Error fetching card token from DOM:", error);
       throw error;
-    }
-  }
-
-  /**
-   * Get all card tokens for a customer from DOM API
-   * @param userId User ID to get the organization's DOM ID
-   * @returns Array of card token information
-   */
-  public async getCustomerCardTokens(userId: string) {
-    const user = await db.query.pgUser.findFirst({
-      where: eq(pgUser.id, userId),
-      with: {
-        organization: true,
-      },
-    });
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const domId = user.organization?.domId;
-    if (!domId) {
-      throw new Error("User does not have a DOM customer ID");
-    }
-
-    try {
-      const { data } = await this.api.get(`/customers/${domId}/cards`, {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      });
-
-      return data;
-    } catch (error) {
-      console.error("Error fetching customer cards from DOM:", error);
-      // Return empty array if no cards or error
-      return [];
     }
   }
 

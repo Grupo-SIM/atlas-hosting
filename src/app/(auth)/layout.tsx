@@ -14,6 +14,8 @@ export const metadata: Metadata = {
     "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
 };
 
+export const dynamic = "force-dynamic"; // Force dynamic rendering for this layout
+
 export default function AuthLayout({
   children,
 }: {
@@ -27,7 +29,7 @@ export default function AuthLayout({
           <UserSiteSelect />
         </Topbar>
 
-        <main className="flex-1 overflow-y-auto inset-shadow-border inset-shadow-[1px_1px] relative z-1">
+        <main className="flex-1 overflow-y-auto border-1 border-solid border-border border-b-0 border-r-0">
           {children}
         </main>
       </div>

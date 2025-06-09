@@ -1,26 +1,18 @@
 "use client";
 
-import { useRef } from "react";
 import ModernCheckoutForm, {
   type ModernCheckoutFormHandle,
 } from "@/components/checkout/ModernCheckoutForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Topbar from "@/components/layouts/components/Topbar";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientButton } from "@/components/ui/gradient-button";
+import { Separator } from "@/components/ui/separator";
+import type { Invoice } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
-import { ShieldCheck, CreditCard, Star } from "lucide-react";
-import { FaMoneyBillTransfer, FaMoneyBillTrendUp } from "react-icons/fa6";
-
-interface Invoice {
-  id: string;
-  type: string;
-  amount: number;
-  reference: string;
-  metadata?: {
-    whoisguard?: "on" | "off";
-  };
-}
+import { CreditCard, ShieldCheck } from "lucide-react";
+import { useRef } from "react";
+import { FaMoneyBillTrendUp } from "react-icons/fa6";
 
 interface User {
   id: string;
@@ -46,11 +38,11 @@ export default function CheckoutClient({
   const whoisGuard = invoice.metadata?.whoisguard === "on";
 
   return (
-    <div className="inset-shadow-border inset-shadow-[1px_1px] min-h-full bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
-      <div className="container mx-auto px-4 py-8">
+    <div className="h-full w-full overflow-x-hidden absolute top-0 left-0 z-2 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="container mx-auto px-4 py-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
               Finalizar Compra
             </h1>

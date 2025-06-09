@@ -67,7 +67,7 @@ export async function QuickActions() {
             Icon={LucideBookMarked}
             title="Meus Sites"
             subtitle="Gerencie seus sites WordPress"
-            href="/sites"
+            href="/wordpress"
             iconClassName="text-indigo-500"
           />
 

@@ -82,15 +82,20 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
     }
 
     sendProgress("INFO", "Verificando e configurando domínio...");
-    const existingDomainInPlesk = await getDomain(domainName).catch(() => null);
+    let existingDomainInPlesk: { id: number } | undefined = undefined;
+
+    try {
+      existingDomainInPlesk = await getDomain(domainName);
+    } catch {}
     if (existingDomainInPlesk) {
       await deleteDomain(domainName);
     }
 
     try {
-      await deleteFtpUser(`${domainName}-${pleskId}`).catch(() => null);
+      await deleteFtpUser(`${domainName}-${pleskId}`);
     } catch {
-      //
+      // Ignore errors if FTP user does not exist
+      console.warn(`FTP user ${domainName}-${pleskId} not found, skipping deletion.`);
     }
 
     const params: AddWebspaceParams = {
@@ -130,7 +135,7 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
       ],
     };
 
-    const { id: siteId } = await createSubscription(params);
+    const sub = await createSubscription(params);
 
     // await pleskApi.assignDomain(domainName, +pleskId);
 
@@ -184,9 +189,13 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
     async function setupDns() {
       sendProgress("INFO", "Iniciando configuração de DNS...");
 
-      let pleskDnsRecords: GetDnsRecordsResult[];
+      let pleskDnsRecords: GetDnsRecordsResult[] | undefined;
       try {
-        pleskDnsRecords = await getDnsRecords(siteId);
+        if (!sub) {
+          throw new Error("salve campeão")
+        }
+
+        pleskDnsRecords = await getDnsRecords(sub.id);
       } catch (error) {
         console.error(
           `Erro ao atualizar registros DNS para ${domainName}:`,
@@ -210,7 +219,7 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
         pleskDnsRecords = []; // Ensure it's an empty array to skip Namecheap update
       }
 
-      if (pleskDnsRecords.length > 0) {
+      if ((pleskDnsRecords?.length ?? 0) > 0) {
         const namecheapDnsEntries: DnsHostRecord[] = [];
         const skippedRecordTypes: Set<string> = new Set();
         const supportedNamecheapTypes = new Set<NamecheapDnsRecordType>([
@@ -227,7 +236,7 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
           "FRAME",
         ]);
 
-        for (const { data: pleskRecord } of pleskDnsRecords) {
+        for (const { data: pleskRecord } of pleskDnsRecords ?? []) {
           console.log({ pleskRecord });
           if (!pleskRecord.type) {
             continue;
@@ -384,24 +393,25 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
 
     sendProgress("INFO", "Instalando plugins...");
 
-    await Promise.all([
+    Promise.all([
       ...plugins.map(async (plugin) => {
-        await pleskApi.wordpress.callWp(
-          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install ${plugin} --activate`
-        );
-        await pleskApi.wordpress.callWp(
-          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin activate ${plugin}`
-        );
+        try {
+          await pleskApi.wordpress.callWp(
+            `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install ${plugin} --activate`
+          );
+          await pleskApi.wordpress.callWp(
+            `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin activate ${plugin}`
+          );
+        } catch (error) {
+          console.error(`Erro ao instalar o plugin ${plugin}:`, error);
+        }
       }),
       async () => {
         await pleskApi.wordpress.callWp(
-          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install elementor`
+          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install elementor --activate`
         );
         await pleskApi.wordpress.callWp(
-          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin activate elementor`
-        );
-        await pleskApi.wordpress.callWp(
-          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install -source-url https://github.com/PRO-Elementor/PRO-Elementor/releases/download/v3.3.0/pro-elementor.zip`
+          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install -source-url https://github.com/PRO-Elementor/PRO-Elementor/releases/download/v3.3.0/pro-elementor.zip --activate`
         );
       },
     ]);

@@ -3,7 +3,6 @@ import dns from "node:dns";
 import { promisify } from "node:util";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 const resolve4 = promisify(dns.resolve4);
 

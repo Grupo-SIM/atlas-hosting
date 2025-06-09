@@ -21,6 +21,7 @@ import type {
   PleskApiError,
   PleskPacket,
 } from "./types";
+import { cache } from "react";
 
 const axiosInstance = axios.create({
   adapter: "xhr",
@@ -45,7 +46,7 @@ interface PleskRequestOptions {
 
 async function requestPleskApi<TResponsePayload>(
   options: PleskRequestOptions
-): Promise<TResponsePayload> {
+): Promise<TResponsePayload | undefined> {
   const xmlRequest = create({ version: "1.0", encoding: "UTF-8" })
     .ele("packet")
     .ele(options.operator)
@@ -104,6 +105,8 @@ async function requestPleskApi<TResponsePayload>(
       );
     }
 
+    const a = cache(() => true)
+
     // The actual payload might be directly in result, or nested further
     // For 'get' operations, the data is often directly under 'result'
     // For 'add', 'set', 'del', it might just be status 'ok' and an 'id'.
@@ -121,7 +124,6 @@ async function requestPleskApi<TResponsePayload>(
       );
     }
     console.error("Error in requestPleskApi:", error);
-    throw error; // Re-throw other errors (like parsing or Plesk API errors)
   }
 }
 
@@ -145,7 +147,7 @@ export async function getMailAccounts(pleskId: number): Promise<MailName[]> {
       // aliases: {}
     },
   });
-  if (response.mailname) {
+  if (response?.mailname) {
     return Array.isArray(response.mailname)
       ? response.mailname
       : [response.mailname];
@@ -235,7 +237,7 @@ export async function addMailAccount(
     params: payload,
   });
 
-  if (!response.id) {
+  if (!response?.id) {
     throw new Error("Failed to create mail account: No ID returned.");
   }
 

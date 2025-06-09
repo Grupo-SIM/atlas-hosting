@@ -2,7 +2,7 @@
 
 import { completeCheckout } from "@/app/actions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input, inputClasses } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -15,10 +15,6 @@ import { CgSpinner } from "react-icons/cg";
 import { IMaskInput } from "react-imask";
 import { toast } from "sonner";
 import * as yup from "yup";
-
-// Standard input class from shadcn/ui for consistency
-const inputClasses =
-  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 const domPk = process.env.NEXT_PUBLIC_DOM_PUBLIC_KEY ?? "";
 

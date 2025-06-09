@@ -1,8 +1,6 @@
 // src/app/(authenticated)/(dashboard)/sites/[domain]/dns/utils.ts
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 import type { DnsHostRecordItem } from "@/lib/server/apis/namecheap/types";
-import { unstable_cache } from "next/cache"; // Or 'next/cache' for newer Next.js versions
-import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { cache } from "react";
 
 /**

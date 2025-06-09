@@ -7,14 +7,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type {
   WordPressPluginInfo,
-  WordPressSiteInfo,
   WordPressUserInfo,
   WordPressThemeInfo,
+  WordPressSiteInfo,
 } from "./types";
 
 export async function getWordPressSitesForSelectedDomain(): Promise<
   WordPressSiteInfo[]
 > {
+
   const user = await getUser();
 
   try {
@@ -59,25 +60,10 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
 
           let themes: WordPressThemeInfo[] = [];
           if (themesResponse.stdout) {
-            const rawThemes = JSON.parse(themesResponse.stdout) as Array<{
-              name: string;
-              title?: string;
-              description?: string;
-              status: "active" | "inactive";
-              update: "available" | "none";
-              version?: string;
-              author?: string;
-              template?: string;
-            }>;
+            const rawThemes = JSON.parse(themesResponse.stdout) as WordPressThemeInfo[];
             themes = rawThemes.map((theme) => ({
-              name: theme.name,
-              title: theme.title,
-              description: theme.description,
-              status: theme.status,
+              ...theme,
               updateAvailable: theme.update === "available",
-              version: theme.version,
-              author: theme.author,
-              template: theme.template,
             }));
           }
 
@@ -108,7 +94,7 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
           }
 
           const pluginsWithUpdates = plugins.filter((p) => p.updateAvailable);
-          const themesWithUpdates = themes.filter((t) => t.updateAvailable);
+          const themesWithUpdates = themes.filter((t) => t.update === "available");
 
           return {
             id: instance.id,
@@ -124,7 +110,7 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
             plugins,
             themes,
             users,
-            hasUpdates: hasUpdates || plugins.some((p) => p.updateAvailable) || themes.some((t) => t.updateAvailable),
+            hasUpdates: hasUpdates || plugins.some((p) => p.updateAvailable) || themes.some((t) => t.update === "available"),
             updatesAvailable: {
               core: hasUpdates,
               plugins: pluginsWithUpdates,
@@ -186,7 +172,6 @@ export async function updateWordPressCore(instanceId: number) {
 }
 
 export async function updatePlugin(instanceId: number, pluginName: string) {
-  const user = await getUser();
 
   try {
     const response = await pleskApi.wordpress.callWp(
@@ -284,7 +269,6 @@ export async function createWordPressUser(
 
 // Theme management actions
 export async function activateTheme(instanceId: number, themeName: string) {
-  const user = await getUser();
   
   try {
     const response = await pleskApi.wordpress.callWp(
@@ -300,7 +284,6 @@ export async function activateTheme(instanceId: number, themeName: string) {
 }
 
 export async function updateTheme(instanceId: number, themeName: string) {
-  const user = await getUser();
   
   try {
     const response = await pleskApi.wordpress.callWp(
@@ -316,8 +299,7 @@ export async function updateTheme(instanceId: number, themeName: string) {
 }
 
 export async function deleteTheme(instanceId: number, themeName: string) {
-  const user = await getUser();
-  
+
   try {
     const response = await pleskApi.wordpress.callWp(
       `--wp-cli -instance-id ${instanceId} -- theme delete ${themeName}`
@@ -332,7 +314,6 @@ export async function deleteTheme(instanceId: number, themeName: string) {
 }
 
 export async function installTheme(instanceId: number, themeSlug: string) {
-  const user = await getUser();
   
   try {
     const response = await pleskApi.wordpress.callWp(

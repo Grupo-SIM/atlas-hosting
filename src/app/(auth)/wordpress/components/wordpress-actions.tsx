@@ -16,9 +16,9 @@ import {
   Package,
   AlertTriangle,
 } from "lucide-react";
-import type { WordPressSiteInfo } from "../actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import type { WordPressSiteInfo } from "../types";
 
 interface WordPressActionsButtonsProps {
   sites: WordPressSiteInfo[];

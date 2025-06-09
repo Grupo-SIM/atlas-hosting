@@ -21,10 +21,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getUser } from "@/lib/auth";
 import {
+  Activity,
   ArrowUpCircle,
+  Calendar,
   CheckCircle,
+  Download,
   ExternalLink,
+  FileText,
   Globe,
   MoreHorizontal,
   Package,
@@ -34,20 +39,13 @@ import {
   Settings,
   Shield,
   Users,
-  Activity,
-  AlertTriangle,
-  FileText,
-  Calendar,
-  Download,
   XCircle,
 } from "lucide-react";
-import { getUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { getWordPressSitesForSelectedDomain } from "./actions";
 import { revalidatePath } from "next/cache";
-import { PluginCard } from "./components/plugin-card";
+import { getWordPressSitesForSelectedDomain } from "./actions";
 import { PluginBulkActions } from "./components/plugin-bulk-actions";
 import { ThemeBulkActions } from "./components/theme-bulk-actions";
+
 
 export default async function WordPressPage() {
   const user = await getUser();
@@ -586,9 +584,7 @@ export default async function WordPressPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {sites.every(
-              (site) => !site.themes || site.themes.length === 0
-            ) ? (
+            {sites.every((site) => !site.themes || site.themes.length === 0) ? (
               <div className="text-center py-8">
                 <Palette className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
@@ -604,7 +600,10 @@ export default async function WordPressPage() {
                   (site) =>
                     site.themes &&
                     site.themes.length > 0 && (
-                      <div key={`themes-${site.id}`} className="border rounded-lg p-4">
+                      <div
+                        key={`themes-${site.id}`}
+                        className="border rounded-lg p-4"
+                      >
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center space-x-3">
                             <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
@@ -635,9 +634,8 @@ export default async function WordPressPage() {
                               )}
                             <Badge variant="secondary">
                               {
-                                site.themes.filter(
-                                  (t) => t.status === "active"
-                                ).length
+                                site.themes.filter((t) => t.status === "active")
+                                  .length
                               }{" "}
                               ativo
                               {site.themes.filter((t) => t.status === "active")
@@ -650,7 +648,10 @@ export default async function WordPressPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {site.themes.map((theme) => (
-                            <Card key={`${site.id}-${theme.name}`} className="relative">
+                            <Card
+                              key={`${site.id}-${theme.name}`}
+                              className="relative"
+                            >
                               <CardContent className="p-4">
                                 <div className="flex items-start justify-between mb-2">
                                   <div className="flex-1">

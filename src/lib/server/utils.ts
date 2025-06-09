@@ -1,6 +1,7 @@
+"use server";
+
 import type { ParsedWordPressInstance } from "@/app/(auth)/sites/page";
 import { eq } from "drizzle-orm";
-import { unstable_cacheTag as cacheTag, revalidateTag } from "next/cache";
 import { cache } from "react";
 import { db } from "../db";
 import { pgUser, type User } from "../db/schema/index";
@@ -8,7 +9,6 @@ import namecheapApi from "./apis/namecheap";
 import type { DomainListItem } from "./apis/namecheap/types";
 import pleskApi from "./apis/plesk";
 import type { WordPressInstance } from "./apis/plesk/wp-toolkit";
-import type { getUser } from "../auth";
 import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
 
 export async function domainHasWordPress(

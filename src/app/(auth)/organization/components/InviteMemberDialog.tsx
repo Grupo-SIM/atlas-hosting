@@ -16,10 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createUserForOrganization } from "@/lib/auth/index";
 import Link from "next/link";
 import { RedirectType, redirect } from "next/navigation";
 import MemberPasswordInput from "./MemberPasswordInput";
+import { createUserForOrganization } from "@/lib/auth/utils";
 
 interface InviteMemberDialogProps {
   open: boolean;

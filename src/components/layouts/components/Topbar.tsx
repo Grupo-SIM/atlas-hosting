@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUser } from "@/lib/auth";
+import clsx from "clsx";
 import {
   CreditCard,
   Key,
@@ -25,12 +26,12 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { Suspense, type PropsWithChildren } from "react";
+import { Suspense, type HTMLAttributes, type PropsWithChildren } from "react";
 import { FaUserAlt } from "react-icons/fa";
 
-export default function Topbar({ children }: PropsWithChildren) {
+export default function Topbar({ children, className, ...props }: PropsWithChildren<HTMLAttributes<HTMLHeadElement>>) {
   return (
-    <header className="h-16 bg-card flex items-center justify-between px-6 relative z-2">
+    <header className={clsx("h-16 bg-card flex items-center justify-between px-6 relative z-2", className)} {...props}>
       <h1 className="text-lg md:text-xl font-semibold">Painel</h1>
       <div className="flex items-center space-x-4">
         {children}
@@ -48,14 +49,19 @@ export default function Topbar({ children }: PropsWithChildren) {
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount={true}>
+          <DropdownMenuContent
+            sideOffset={20}
+            className="w-56"
+            align="end"
+            forceMount={true}
+          >
             <Suspense fallback={<UserDataDropdownItemSkeleton />}>
               <UserDataDropdownItem />
             </Suspense>
             <DropdownMenuSeparator />
             <DropdownMenuGroup className="[&>*]:cursor-pointer">
-              <DropdownMenuItem>
-                <Link href="/settings?tab=wallet">
+              <DropdownMenuItem asChild>
+                <Link href="/settings?tab=user">
                   <UserIcon className="mr-2 h-4 w-4" />
                   <span>Perfil</span>
                 </Link>
@@ -112,11 +118,9 @@ export default function Topbar({ children }: PropsWithChildren) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <div className="text-sm border-l-1 border-muted-foreground/20 pl-4 border-solid">
-          <Suspense fallback={<Skeleton className="h-[1em] w-24" />}>
-            <OrganizationName />
-          </Suspense>
-        </div>
+        <Suspense fallback={<Skeleton className="h-[1em] w-24" />}>
+          <OrganizationName />
+        </Suspense>
       </div>
     </header>
   );

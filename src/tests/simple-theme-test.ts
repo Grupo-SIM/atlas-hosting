@@ -13,7 +13,7 @@ async function simpleThemeTest() {
     console.log("Theme List Response:");
     console.log("stdout:", result.stdout);
     console.log("stderr:", result.stderr);
-    console.log("exit_code:", result.exit_code);
+    console.log("exit_code:", result.code);
     
     if (result.stdout) {
       const themes = JSON.parse(result.stdout);

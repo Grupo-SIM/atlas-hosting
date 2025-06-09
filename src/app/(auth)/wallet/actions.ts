@@ -3,8 +3,9 @@
 import { auth } from "@/auth";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { pgUser, pgUserCard } from "@/lib/db/schema";
+import { pgOrganization, pgUser, pgUserCard } from "@/lib/db/schema";
 import domApi from "@/lib/server/apis/dom";
+import axios from "axios";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { cache } from "react";
@@ -15,6 +16,16 @@ export interface AddCardData {
   cardExpiration: string; // MM/YY format
   holderName: string;
   holderDocument: string;
+  // Billing information for users without domId
+  billingName?: string;
+  billingEmail?: string;
+  billingPhone?: string;
+  billingStreet?: string;
+  billingNumber?: string;
+  billingNeighborhood?: string;
+  billingZipCode?: string;
+  billingCity?: string;
+  billingState?: string;
 }
 
 export interface ActionResponse {
@@ -30,6 +41,50 @@ export async function addCard(cardData: AddCardData): Promise<ActionResponse> {
     // Parse expiration date
     const [expMonth, expYear] = cardData.cardExpiration.split("/");
     const fullYear = 2000 + Number.parseInt(expYear);
+
+    // If user doesn't have domId, create a DOM client first
+    if (!user.organization?.domId) {
+      if (
+        !cardData.billingName ||
+        !cardData.billingEmail ||
+        !cardData.billingPhone ||
+        !cardData.billingStreet ||
+        !cardData.billingNumber ||
+        !cardData.billingNeighborhood ||
+        !cardData.billingZipCode ||
+        !cardData.billingCity ||
+        !cardData.billingState
+      ) {
+        return {
+          status: "error",
+          message: "Informações de cobrança são obrigatórias",
+        };
+      }
+
+      // Create DOM client with billing information
+      const { id } = await domApi.createClient({
+        userId: user.id,
+        name: cardData.billingName,
+        email: cardData.billingEmail,
+        document: cardData.holderDocument.replace(/\D/g, ""),
+        mobilePhone: cardData.billingPhone.replace(/\D/g, ""),
+        address: {
+          street: cardData.billingStreet,
+          number: cardData.billingNumber,
+          neighborhood: cardData.billingNeighborhood,
+          zip_code: cardData.billingZipCode.replace(/\D/g, ""),
+          city: cardData.billingCity,
+          state: cardData.billingState,
+        },
+      });
+
+      await db
+        .update(pgOrganization)
+        .set({
+          domId: id,
+        })
+        .where(eq(pgOrganization.id, user.organization.id));
+    }
 
     // Create card token via DOM API
     const tokenData = await domApi.createCardToken(user.id, {
@@ -74,6 +129,10 @@ export async function addCard(cardData: AddCardData): Promise<ActionResponse> {
       message: "Cartão adicionado com sucesso",
     };
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("DOM API error:", error.response?.data || error.message);
+    }
+    
     console.error("Error adding card:", error);
     return {
       status: "error",
@@ -219,46 +278,7 @@ export const getUserCards = cache(async function getUserCards() {
     }
 
     // Get cards from local database
-    const localCards = user.organization.wallet.cards ?? [];
-
-    // Get cards from DOM API for up-to-date information
-    try {
-      const domCards = await domApi.getCustomerCardTokens(user.id);
-
-      // Merge local card data with DOM card data
-      const mergedCards = localCards.map((localCard) => {
-        const domCard = domCards.find(
-          (dc: {
-            token: string;
-            last4?: string;
-            brand?: string;
-            exp_month?: string;
-            exp_year?: string;
-            holder_name?: string;
-          }) => dc.token === localCard.cardToken
-        );
-        return {
-          ...localCard,
-          // Override with fresh DOM data if available
-          ...(domCard && {
-            last4: domCard.last4 || localCard.last4,
-            brand: domCard.brand || localCard.brand,
-            expiryMonth: domCard.exp_month || localCard.expiryMonth,
-            expiryYear: domCard.exp_year || localCard.expiryYear,
-            holderName: domCard.holder_name || localCard.holderName,
-          }),
-        };
-      });
-
-      return mergedCards;
-    } catch (domError) {
-      console.error(
-        "Error fetching cards from DOM API, falling back to local data:",
-        domError
-      );
-      // Fall back to local data if DOM API fails
-      return localCards;
-    }
+    return user.organization.wallet.cards ?? [];
   } catch (error) {
     console.error("Error fetching user cards:", error);
     return [];
