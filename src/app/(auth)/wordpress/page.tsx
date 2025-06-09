@@ -21,15 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getUser } from "@/lib/auth";
 import {
-  Activity,
   ArrowUpCircle,
-  Calendar,
   CheckCircle,
-  Download,
   ExternalLink,
-  FileText,
   Globe,
   MoreHorizontal,
   Package,
@@ -39,13 +34,21 @@ import {
   Settings,
   Shield,
   Users,
+  Activity,
+  AlertTriangle,
+  FileText,
+  Calendar,
+  Download,
   XCircle,
 } from "lucide-react";
-import { revalidatePath } from "next/cache";
+import { getUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { getWordPressSitesForSelectedDomain } from "./actions";
+import { revalidatePath } from "next/cache";
+import { PluginCard } from "./components/plugin-card";
 import { PluginBulkActions } from "./components/plugin-bulk-actions";
 import { ThemeBulkActions } from "./components/theme-bulk-actions";
-
+import { cn } from "@/lib/utils";
 
 export default async function WordPressPage() {
   const user = await getUser();
@@ -104,73 +107,95 @@ export default async function WordPressPage() {
       </div>
 
       {/* WordPress Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total de Sites
-            </CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalSites}</div>
-            <p className="text-xs text-muted-foreground">
-              {activeSites} ativos
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sites Ativos</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {activeSites}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <Card className="shadow-none border-1 border-solid border-border bg-gradient-to-br from-background to-muted/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900">
+                <Globe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">
+                +{activeSites > 0 ? Math.round((activeSites / totalSites) * 100) : 0}%
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground">
-              WordPress funcionando
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Atualizações</CardTitle>
-            <ArrowUpCircle
-              className={`h-4 w-4 ${totalUpdatesAvailable > 0 ? "text-orange-600" : "text-muted-foreground"}`}
-            />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${totalUpdatesAvailable > 0 ? "text-orange-600" : ""}`}
-            >
-              {totalUpdatesAvailable}
+            <div className="space-y-1">
+              <div className="text-2xl font-bold tracking-tight">{totalSites}</div>
+              <p className="text-sm text-muted-foreground">Total de Sites</p>
             </div>
-            <p className="text-xs text-muted-foreground">Disponíveis</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Plugins</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalPlugins}</div>
-            <p className="text-xs text-muted-foreground">Instalados</p>
+        <Card className="shadow-none border-1 border-solid border-border bg-gradient-to-br from-background to-green-50/50 dark:to-green-950/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900">
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
+              <span className="text-xs text-green-600 font-medium">
+                Funcionando
+              </span>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold tracking-tight text-green-600">
+                {activeSites}
+              </div>
+              <p className="text-sm text-muted-foreground">Sites Ativos</p>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Temas</CardTitle>
-            <Palette className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalThemes}</div>
-            <p className="text-xs text-muted-foreground">Instalados</p>
+        <Card className="shadow-none border-1 border-solid border-border  bg-gradient-to-br from-background to-orange-50/50 dark:to-orange-950/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900">
+                <ArrowUpCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              </div>
+              {totalUpdatesAvailable > 0 && (
+                <span className="text-xs text-orange-600 font-medium">
+                  Disponíveis
+                </span>
+              )}
+            </div>
+            <div className="space-y-1">
+              <div className={`text-2xl font-bold tracking-tight ${totalUpdatesAvailable > 0 ? "text-orange-600" : ""}`}>
+                {totalUpdatesAvailable}
+              </div>
+              <p className="text-sm text-muted-foreground">Atualizações</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none border-1 border-solid border-border  bg-gradient-to-br from-background to-purple-50/50 dark:to-purple-950/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900">
+                <Package className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">
+                Instalados
+              </span>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold tracking-tight">{totalPlugins}</div>
+              <p className="text-sm text-muted-foreground">Plugins</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none border-1 border-solid border-border bg-gradient-to-br from-background to-pink-50/50 dark:to-pink-950/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-900">
+                <Palette className="h-4 w-4 text-pink-600 dark:text-pink-400" />
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">
+                Instalados
+              </span>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold tracking-tight">{totalThemes}</div>
+              <p className="text-sm text-muted-foreground">Temas</p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -361,95 +386,88 @@ export default async function WordPressPage() {
 
       {/* WordPress Plugins Section */}
       {sites.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Plugins WordPress
-                </CardTitle>
-                <CardDescription>
-                  Gerencie plugins em todas as suas instalações WordPress
-                </CardDescription>
-              </div>
-              <PluginBulkActions sites={sites} />
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+                <Package className="h-6 w-6 text-primary" />
+                Plugins WordPress
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Gerencie plugins em todas as suas instalações WordPress
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
-            {sites.every(
-              (site) => !site.plugins || site.plugins.length === 0
-            ) ? (
-              <div className="text-center py-8">
-                <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
+            <PluginBulkActions sites={sites} />
+          </div>
+
+          {sites.every(
+            (site) => !site.plugins || site.plugins.length === 0
+          ) ? (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Package className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                <h3 className="text-xl font-semibold mb-2">
                   Nenhum plugin encontrado
                 </h3>
-                <p className="text-muted-foreground">
-                  Os plugins serão exibidos aqui quando disponíveis.
+                <p className="text-muted-foreground text-center max-w-md">
+                  Os plugins serão exibidos aqui quando disponíveis nas suas instalações WordPress.
                 </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {sites.map(
-                  (site) =>
-                    site.plugins &&
-                    site.plugins.length > 0 && (
-                      <div key={site.id} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-4">
+                <Button className="mt-4">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Instalar Primeiro Plugin
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-8">
+              {sites.map(
+                (site) =>
+                  site.plugins &&
+                  site.plugins.length > 0 && (
+                    <Card key={`plugins-${site.id}`} className="overflow-hidden">
+                      <CardHeader className="bg-muted/30 border-b">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                              <Globe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                              <Globe className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                              <h4 className="font-semibold">{site.url}</h4>
+                              <h3 className="font-semibold text-lg">{site.url}</h3>
                               <p className="text-sm text-muted-foreground">
-                                {site.plugins.length} plugin
-                                {site.plugins.length !== 1 ? "s" : ""} instalado
-                                {site.plugins.length !== 1 ? "s" : ""}
+                                {site.plugins.length} plugin{site.plugins.length !== 1 ? "s" : ""} instalado{site.plugins.length !== 1 ? "s" : ""}
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex items-center gap-3">
                             {site.updatesAvailable?.plugins &&
                               site.updatesAvailable.plugins.length > 0 && (
                                 <Badge
                                   variant="outline"
-                                  className="text-orange-600 border-orange-200"
+                                  className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300"
                                 >
                                   <ArrowUpCircle className="mr-1 h-3 w-3" />
-                                  {site.updatesAvailable.plugins.length} update
-                                  {site.updatesAvailable.plugins.length !== 1
-                                    ? "s"
-                                    : ""}
+                                  {site.updatesAvailable.plugins.length} update{site.updatesAvailable.plugins.length !== 1 ? "s" : ""}
                                 </Badge>
                               )}
-                            <Badge variant="secondary">
-                              {
-                                site.plugins.filter(
-                                  (p) => p.status === "active"
-                                ).length
-                              }{" "}
-                              ativo
-                              {site.plugins.filter((p) => p.status === "active")
-                                .length !== 1
-                                ? "s"
-                                : ""}
+                            <Badge variant="secondary" className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
+                              {site.plugins.filter((p) => p.status === "active").length} ativo{site.plugins.filter((p) => p.status === "active").length !== 1 ? "s" : ""}
                             </Badge>
                           </div>
                         </div>
+                      </CardHeader>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <CardContent className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                           {site.plugins.map((plugin) => (
-                            <Card key={plugin.update_id} className="relative">
-                              <CardContent className="p-4">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div className="flex-1">
-                                    <h5 className="font-medium text-sm mb-1">
+                            <Card key={`${site.id}-${plugin.update_id}`} className="group hover:shadow-md transition-all duration-200 border-0 shadow-sm bg-gradient-to-br from-background to-muted/20">
+                              <CardContent className="p-5">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-semibold text-base mb-1 truncate">
                                       {plugin.title || plugin.name}
-                                    </h5>
-                                    <p className="text-xs text-muted-foreground mb-2">
-                                      {plugin.description || "Sem descrição"}
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                                      {plugin.description || "Sem descrição disponível"}
                                     </p>
                                   </div>
                                   <DropdownMenu>
@@ -457,12 +475,12 @@ export default async function WordPressPage() {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-6 w-6 p-0"
+                                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                                       >
-                                        <MoreHorizontal className="h-3 w-3" />
+                                        <MoreHorizontal className="h-4 w-4" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
+                                    <DropdownMenuContent align="end" className="w-48">
                                       <DropdownMenuItem>
                                         {plugin.status === "active" ? (
                                           <>
@@ -494,43 +512,43 @@ export default async function WordPressPage() {
                                   </DropdownMenu>
                                 </div>
 
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <Badge
-                                      variant={
-                                        plugin.status === "active"
-                                          ? "default"
-                                          : "secondary"
-                                      }
-                                      className={
-                                        plugin.status === "active"
-                                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                          : ""
-                                      }
-                                    >
-                                      {plugin.status === "active" ? (
-                                        <CheckCircle className="mr-1 h-3 w-3" />
-                                      ) : (
-                                        <XCircle className="mr-1 h-3 w-3" />
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Badge
+                                        variant={plugin.status === "active" ? "default" : "outline"}
+                                        className={cn(
+                                          "text-xs",
+                                          plugin.status === "active"
+                                            ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
+                                            : "bg-muted"
+                                        )}
+                                      >
+                                        {plugin.status === "active" ? (
+                                          <CheckCircle className="mr-1 h-3 w-3" />
+                                        ) : (
+                                          <XCircle className="mr-1 h-3 w-3" />
+                                        )}
+                                        {plugin.status === "active" ? "Ativo" : "Inativo"}
+                                      </Badge>
+                                      {plugin.version && (
+                                        <span className="text-xs text-muted-foreground font-mono">
+                                          v{plugin.version}
+                                        </span>
                                       )}
-                                      {plugin.status === "active"
-                                        ? "Ativo"
-                                        : "Inativo"}
-                                    </Badge>
-                                    {plugin.updateAvailable && (
+                                    </div>
+                                  </div>
+
+                                  {plugin.updateAvailable && (
+                                    <div className="flex flex-wrap gap-1">
                                       <Badge
                                         variant="outline"
-                                        className="text-orange-600 border-orange-200"
+                                        className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300"
                                       >
                                         <ArrowUpCircle className="mr-1 h-3 w-3" />
-                                        Update
+                                        Update Disponível
                                       </Badge>
-                                    )}
-                                  </div>
-                                  {plugin.version && (
-                                    <span className="text-xs text-muted-foreground">
-                                      v{plugin.version}
-                                    </span>
+                                    </div>
                                   )}
                                 </div>
                               </CardContent>
@@ -538,146 +556,130 @@ export default async function WordPressPage() {
                           ))}
                         </div>
 
-                        <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                        <div className="flex items-center justify-between mt-6 pt-6 border-t border-border/50">
                           <div className="text-sm text-muted-foreground">
-                            {
-                              site.plugins.filter((p) => p.status === "active")
-                                .length
-                            }{" "}
+                            <span className="font-medium text-foreground">
+                              {site.plugins.filter((p) => p.status === "active").length}
+                            </span>{" "}
                             de {site.plugins.length} plugins ativos
                           </div>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" className="h-9">
                               <Plus className="mr-2 h-4 w-4" />
                               Instalar Plugin
                             </Button>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" className="h-9">
                               <Package className="mr-2 h-4 w-4" />
-                              Gerenciar
+                              Gerenciar Plugins
                             </Button>
                           </div>
                         </div>
-                      </div>
-                    )
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      </CardContent>
+                    </Card>
+                  )
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* WordPress Themes Section */}
       {sites.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Palette className="h-5 w-5" />
-                  Temas WordPress
-                </CardTitle>
-                <CardDescription>
-                  Gerencie temas em todas as suas instalações WordPress
-                </CardDescription>
-              </div>
-              <ThemeBulkActions sites={sites} />
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+                <Palette className="h-6 w-6 text-primary" />
+                Temas WordPress
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Gerencie temas em todas as suas instalações WordPress
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
-            {sites.every((site) => !site.themes || site.themes.length === 0) ? (
-              <div className="text-center py-8">
-                <Palette className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
+            <ThemeBulkActions sites={sites} />
+          </div>
+
+          {sites.every(
+            (site) => !site.themes || site.themes.length === 0
+          ) ? (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Palette className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                <h3 className="text-xl font-semibold mb-2">
                   Nenhum tema encontrado
                 </h3>
-                <p className="text-muted-foreground">
-                  Os temas serão exibidos aqui quando disponíveis.
+                <p className="text-muted-foreground text-center max-w-md">
+                  Os temas serão exibidos aqui quando disponíveis nas suas instalações WordPress.
                 </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {sites.map(
-                  (site) =>
-                    site.themes &&
-                    site.themes.length > 0 && (
-                      <div
-                        key={`themes-${site.id}`}
-                        className="border rounded-lg p-4"
-                      >
-                        <div className="flex items-center justify-between mb-4">
+                <Button className="mt-4">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Instalar Primeiro Tema
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-8">
+              {sites.map(
+                (site) =>
+                  site.themes &&
+                  site.themes.length > 0 && (
+                    <Card key={`themes-${site.id}`} className="overflow-hidden">
+                      <CardHeader className="bg-muted/30 border-b">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                              <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+                              <Globe className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                              <h4 className="font-semibold">{site.url}</h4>
+                              <h3 className="font-semibold text-lg">{site.url}</h3>
                               <p className="text-sm text-muted-foreground">
-                                {site.themes.length} tema
-                                {site.themes.length !== 1 ? "s" : ""} instalado
-                                {site.themes.length !== 1 ? "s" : ""}
+                                {site.themes.length} tema{site.themes.length !== 1 ? "s" : ""} instalado{site.themes.length !== 1 ? "s" : ""}
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex items-center gap-3">
                             {site.updatesAvailable?.themes &&
                               site.updatesAvailable.themes.length > 0 && (
                                 <Badge
                                   variant="outline"
-                                  className="text-orange-600 border-orange-200"
+                                  className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300"
                                 >
                                   <ArrowUpCircle className="mr-1 h-3 w-3" />
-                                  {site.updatesAvailable.themes.length} update
-                                  {site.updatesAvailable.themes.length !== 1
-                                    ? "s"
-                                    : ""}
+                                  {site.updatesAvailable.themes.length} update{site.updatesAvailable.themes.length !== 1 ? "s" : ""}
                                 </Badge>
                               )}
-                            <Badge variant="secondary">
-                              {
-                                site.themes.filter((t) => t.status === "active")
-                                  .length
-                              }{" "}
-                              ativo
-                              {site.themes.filter((t) => t.status === "active")
-                                .length !== 1
-                                ? "s"
-                                : ""}
+                            <Badge variant="secondary" className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
+                              {site.themes.filter((t) => t.status === "active").length} ativo{site.themes.filter((t) => t.status === "active").length !== 1 ? "s" : ""}
                             </Badge>
                           </div>
                         </div>
+                      </CardHeader>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <CardContent className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                           {site.themes.map((theme) => (
-                            <Card
-                              key={`${site.id}-${theme.name}`}
-                              className="relative"
-                            >
-                              <CardContent className="p-4">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div className="flex-1">
-                                    <h5 className="font-medium text-sm mb-1">
+                            <Card key={`${site.id}-${theme.name}`} className="group hover:shadow-md transition-all duration-200 border-0 shadow-sm bg-gradient-to-br from-background to-muted/20">
+                              <CardContent className="p-5">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-semibold text-base mb-1 truncate">
                                       {theme.title || theme.name}
-                                    </h5>
-                                    <p className="text-xs text-muted-foreground mb-2">
-                                      {theme.description || "Sem descrição"}
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                                      {theme.description || "Sem descrição disponível"}
                                     </p>
-                                    {theme.update_id && (
-                                      <p className="text-xs text-muted-foreground">
-                                        ID: {theme.update_id}
-                                      </p>
-                                    )}
                                   </div>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-6 w-6 p-0"
+                                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                                       >
-                                        <MoreHorizontal className="h-3 w-3" />
+                                        <MoreHorizontal className="h-4 w-4" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
+                                    <DropdownMenuContent align="end" className="w-48">
                                       <DropdownMenuItem>
                                         {theme.status === "active" ? (
                                           <>
@@ -713,51 +715,53 @@ export default async function WordPressPage() {
                                   </DropdownMenu>
                                 </div>
 
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <Badge
-                                      variant={
-                                        theme.status === "active"
-                                          ? "default"
-                                          : "secondary"
-                                      }
-                                      className={
-                                        theme.status === "active"
-                                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                          : ""
-                                      }
-                                    >
-                                      {theme.status === "active" ? (
-                                        <CheckCircle className="mr-1 h-3 w-3" />
-                                      ) : (
-                                        <XCircle className="mr-1 h-3 w-3" />
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Badge
+                                        variant={theme.status === "active" ? "default" : "outline"}
+                                        className={cn(
+                                          "text-xs",
+                                          theme.status === "active"
+                                            ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
+                                            : "bg-muted"
+                                        )}
+                                      >
+                                        {theme.status === "active" ? (
+                                          <CheckCircle className="mr-1 h-3 w-3" />
+                                        ) : (
+                                          <XCircle className="mr-1 h-3 w-3" />
+                                        )}
+                                        {theme.status === "active" ? "Ativo" : "Inativo"}
+                                      </Badge>
+                                      {theme.version && (
+                                        <span className="text-xs text-muted-foreground font-mono">
+                                          v{theme.version}
+                                        </span>
                                       )}
-                                      {theme.status === "active"
-                                        ? "Ativo"
-                                        : "Inativo"}
-                                    </Badge>
-                                    {theme.update && theme.update_version && (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-orange-600 border-orange-200"
-                                      >
-                                        <ArrowUpCircle className="mr-1 h-3 w-3" />
-                                        v{theme.update_version}
-                                      </Badge>
-                                    )}
-                                    {theme.auto_update && (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-blue-600 border-blue-200"
-                                      >
-                                        Auto Update
-                                      </Badge>
-                                    )}
+                                    </div>
                                   </div>
-                                  {theme.version && (
-                                    <span className="text-xs text-muted-foreground">
-                                      v{theme.version}
-                                    </span>
+
+                                  {(theme.update || theme.auto_update) && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {theme.update && theme.update_version && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300"
+                                        >
+                                          <ArrowUpCircle className="mr-1 h-3 w-3" />
+                                          v{theme.update_version}
+                                        </Badge>
+                                      )}
+                                      {theme.auto_update && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300"
+                                        >
+                                          Auto Update
+                                        </Badge>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                               </CardContent>
@@ -765,32 +769,31 @@ export default async function WordPressPage() {
                           ))}
                         </div>
 
-                        <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                        <div className="flex items-center justify-between mt-6 pt-6 border-t border-border/50">
                           <div className="text-sm text-muted-foreground">
-                            {
-                              site.themes.filter((t) => t.status === "active")
-                                .length
-                            }{" "}
+                            <span className="font-medium text-foreground">
+                              {site.themes.filter((t) => t.status === "active").length}
+                            </span>{" "}
                             de {site.themes.length} temas ativos
                           </div>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" className="h-9">
                               <Plus className="mr-2 h-4 w-4" />
                               Instalar Tema
                             </Button>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" className="h-9">
                               <Palette className="mr-2 h-4 w-4" />
-                              Gerenciar
+                              Gerenciar Temas
                             </Button>
                           </div>
                         </div>
-                      </div>
-                    )
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      </CardContent>
+                    </Card>
+                  )
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Quick Actions */}
