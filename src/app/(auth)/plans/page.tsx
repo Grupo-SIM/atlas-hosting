@@ -14,6 +14,8 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { asc } from "drizzle-orm";
+import { pgPlan } from "@/lib/db/schema";
 
 export default async function PlansPage({
   searchParams: _searchParams,
@@ -30,22 +32,12 @@ export default async function PlansPage({
   }
 
   // Fetch plans without the planFeatures relation
-  const dbPlans = await db.query.pgPlan.findMany();
-
-  // Plans now have feature columns directly.
-  // The previous mapping to create a 'features' array is no longer needed.
-  const plans = sortBy(dbPlans, [
-    (plan) => (plan.id === user.organization.planId ? -1 : 0),
-    "price",
-  ]);
+  const plans = await db.query.pgPlan.findMany({
+    orderBy: asc(pgPlan.price),
+  });
 
   // Check if user has a plan and if any plans would be downgrades
   const userPlan = user.organization.plan;
-  const hasDowngrades =
-    userPlan &&
-    plans.some(
-      (plan) => plan.id !== userPlan.id && plan.price < userPlan.price
-    );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/80 to-muted/20">
@@ -61,23 +53,6 @@ export default async function PlansPage({
               sites incríveis hoje mesmo
             </p>
           </div>
-
-          {/* Downgrade Warning */}
-          {hasDowngrades && (
-            <Alert className="max-w-2xl mx-auto border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
-              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              <AlertDescription className="text-amber-800 dark:text-amber-200">
-                Para fazer downgrade do seu plano, você precisa primeiro
-                cancelar sua assinatura atual.{" "}
-                <Link
-                  href="/settings"
-                  className="font-medium underline hover:no-underline text-amber-900 dark:text-amber-100"
-                >
-                  Gerencie suas assinaturas aqui
-                </Link>
-              </AlertDescription>
-            </Alert>
-          )}
 
           {/* Trust indicators */}
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
@@ -149,9 +124,9 @@ export default async function PlansPage({
               {plans.map((plan, index) => (
                 <CarouselItem
                   key={plan.id}
-                  className="pl-6 basis-full sm:basis-1/2 lg:basis-1/3 group/item"
+                  className="pl-6 basis-full sm:basis-1/2 lg:basis-1/3 group/item mt-2 mb-4"
                 >
-                  <div className="h-full transform transition-all duration-500 group-hover/item:scale-[1.02] group-hover/item:z-10 relative">
+                  <div className="h-full transform transition-all duration-500 group-hover/item:z-10 relative">
                     <PlanCard
                       plan={plan}
                       user={user}
@@ -184,7 +159,7 @@ export default async function PlansPage({
         </div>
 
         {/* Additional Features Section */}
-        <div className="mt-20 mb-12">
+        <div className="mt-14 mb-12">
           <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-3xl p-8 max-w-4xl mx-auto">
             <div className="text-center space-y-6">
               <div className="space-y-3">

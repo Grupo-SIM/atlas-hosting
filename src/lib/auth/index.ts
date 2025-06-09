@@ -53,8 +53,6 @@ export async function getUser(): Promise<User> {
 
     user.organization = organization;
 
-    console.log(JSON.stringify(user.organization, null, 2));
-
     return user as User;
   }
 

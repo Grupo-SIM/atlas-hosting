@@ -19,7 +19,8 @@ export class DomApi {
   constructor() {
     this.tokenApi = process.env.DOM_API_KEY as string;
 
-    this.privateKeyPath = process.env.DOM_WITHDRAWAL_SIGNATURE_KEY_PATH as string;
+    this.privateKeyPath = process.env
+      .DOM_WITHDRAWAL_SIGNATURE_KEY_PATH as string;
 
     this.api = axios.create({
       baseURL: "https://apiv3.dompagamentos.com.br/checkout/production/",
@@ -76,18 +77,26 @@ export class DomApi {
       billingDay = 1;
     }
 
-    const {
-      data: { token: cardToken },
-    } = await this.api.post<{ token: string }>(
-      `/customers/${domId}/card-token`,
-      card,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      }
-    );
+    let cardToken = "token" in card ? card.token : "";
+
+    if (!("token" in card)) {
+      const {
+        data: { token },
+      } = await this.api.post<{ token: string }>(
+        `/customers/${domId}/card-token`,
+        card,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      cardToken = token;
+    } else {
+      cardToken = card.token;
+    }
 
     const params: CreateSubscriptionParams = {
       card: {
@@ -158,7 +167,7 @@ export class DomApi {
       console.log("error adding client", error);
 
       if (axios.isAxiosError(error)) {
-        return { id: error.response?.data.id as string};
+        return { id: error.response?.data.id as string };
       }
 
       throw error;

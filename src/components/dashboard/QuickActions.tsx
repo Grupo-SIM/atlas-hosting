@@ -23,7 +23,7 @@ export async function QuickActions() {
   const user = await getUser();
 
   const canAdministrate = !!(
-    user.organization.planId && user.organization.domains
+    user.organization.planId && user.organization.domains.length > 0
   );
 
   return (

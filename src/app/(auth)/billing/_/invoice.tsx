@@ -233,7 +233,7 @@ export default function InvoiceCard({
               </div>
             </div>
 
-            {invoice.status !== "paid" && (
+            {!["paid", "processing"].includes(invoice.status) && (
               <>
                 {/* Additional Info */}
                 <div className="bg-muted/20 rounded-lg p-4 border-l-4 border-primary">

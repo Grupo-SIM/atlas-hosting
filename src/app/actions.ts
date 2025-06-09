@@ -23,6 +23,7 @@ import {
   pgPlan,
   pgSession,
   pgUser,
+  pgUserCard,
   type Plan,
 } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
@@ -36,6 +37,7 @@ import ipaddrJs from "ipaddr.js";
 import { auth, signIn, signOut } from "@/auth";
 import { AppLogger } from "@/lib/server/logs";
 import type { DomainPageParams } from "./(auth)/domains/register/types";
+import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
 
 export async function login(
   prevState: unknown,
@@ -451,9 +453,11 @@ export async function completeCheckout(
   {
     invoiceId,
     ...values
-  }: CheckoutFormInputs & { invoiceId: string; cardToken: string }
+  }: CheckoutFormInputs & { invoiceId: string; cardToken?: string }
 ): Promise<ActionResponse> {
   const user = await getUser();
+
+  console.log({ values });
 
   if (!user) {
     return {
@@ -533,46 +537,80 @@ export async function completeCheckout(
     }
   }
 
-  if (!user.organization?.pleskId) {
-    const result = await pleskApi.createClient({
-      name: user.name,
-      email: user.email,
-      login: user.email,
-      password: user.password ?? "",
-      type: ClientRequestTypeEnum.Customer,
-      externalId: user.id,
-      ownerLogin: "lucas.garrafielo",
-      status: 0,
-    });
+  const [expMonth, expYear] = values.cardExpiration.split("/");
+  const fullYear = 2000 + Number.parseInt(expYear);
 
-    if (result?.id) {
-      await db
-        .update(pgOrganization)
-        .set({
-          pleskId: result.id,
-        })
-        .where(eq(pgOrganization.id, user.organizationId ?? ""));
-    } else {
-      console.error("Failed to create Plesk client:", result);
-      return {
-        message: "Erro: ID do usuário Plesk não configurado.",
-        error: "Configuração de usuário (Plesk ID) ausente.",
-      };
+  let { cardToken } = values;
+
+  if (!cardToken) {
+    try {
+      const tokenData = await domApi.createCardToken(user.id, {
+        number: values.cardNumber.replace(/\D/g, ""),
+        cvv: values.cardCvv,
+        exp_month: Number.parseInt(expMonth),
+        exp_year: fullYear,
+        holder_name: values.fullName,
+        holder_document: values.document.replace(/\D/g, ""),
+      });
+
+      if (!user?.organization?.wallet) {
+        return {
+          status: "error",
+          message: "Carteira não encontrada",
+        };
+      }
+
+      const existingCards = await db.$count(
+        pgUserCard,
+        eq(pgUserCard.walletId, user.organization.wallet.id)
+      );
+
+      const isFirstCard = existingCards === 0;
+
+      // Save card to database
+      await db.insert(pgUserCard).values({
+        walletId: user.organization.wallet.id,
+        cardToken: tokenData.token,
+        last4: tokenData.last4,
+        brand: tokenData.brand,
+        expiryMonth: tokenData.expiryMonth,
+        expiryYear: tokenData.expiryYear,
+        holderName: tokenData.holderName,
+        isDefault: isFirstCard,
+      });
+
+      cardToken = tokenData.token;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          // A request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error(
+            "Erro ao criar token do cartão no DOM:",
+            err.response.data
+          );
+        } else if (err.request) {
+          // The request was made but no response was received
+          console.error("Erro ao criar token do cartão no DOM:", err.request);
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          console.error("Erro ao criar token do cartão no DOM:", err.message);
+        }
+      }
+
+      throw err;
     }
   }
 
   try {
+    console.log({ cardToken });
     const result = await domApi.createRecurrentPayment({
       description: `Atlas Hosting ${invoice.reference}`,
       externalReference: invoiceId,
       frequency: "MONTH",
       card: {
-        cvv: values.cardCvv,
-        exp_month: +values.cardExpiration.split("/")[0],
-        exp_year: +values.cardExpiration.split("/")[1],
-        number: values.cardNumber.replace(/\D/g, ""),
-        holder_name: values.fullName,
-        holder_document: values.document.replace(/\D/g, ""),
+        token: cardToken,
+        installments: 1,
       },
       userId: user.id,
       value: invoice.amount,
@@ -613,11 +651,11 @@ export async function completeCheckoutWithSavedCard(
   prevState: unknown,
   {
     invoiceId,
-    cardToken,
+    card: { cardToken, ...card },
     ...values
   }: Omit<CheckoutFormInputs, "cardNumber" | "cardCvv" | "cardExpiration"> & {
     invoiceId: string;
-    cardToken: string;
+    card: SavedCard;
   }
 ): Promise<ActionResponse> {
   const user = await getUser();
@@ -633,7 +671,7 @@ export async function completeCheckoutWithSavedCard(
     return { status: "error", message: "ID da fatura é obrigatório." };
   }
 
-  if (!cardToken) {
+  if (!card) {
     return { status: "error", message: "Token do cartão é obrigatório." };
   }
 
@@ -686,35 +724,6 @@ export async function completeCheckoutWithSavedCard(
     }
   }
 
-  // Ensure Plesk client exists
-  if (!user.organization?.pleskId) {
-    const result = await pleskApi.createClient({
-      name: user.name,
-      email: user.email,
-      login: user.email,
-      password: user.password ?? "",
-      type: ClientRequestTypeEnum.Customer,
-      externalId: user.id,
-      ownerLogin: "lucas.garrafielo",
-      status: 0,
-    });
-
-    if (result?.id) {
-      await db
-        .update(pgOrganization)
-        .set({
-          pleskId: result.id,
-        })
-        .where(eq(pgOrganization.id, user.organizationId ?? ""));
-    } else {
-      console.error("Failed to create Plesk client:", result);
-      return {
-        status: "error",
-        message: "Erro ao configurar usuário no sistema de hosting.",
-      };
-    }
-  }
-
   try {
     // Create subscription using saved card token
     const result = await domApi.createRecurrentPayment({
@@ -731,19 +740,22 @@ export async function completeCheckoutWithSavedCard(
 
     console.log("Nova assinatura criada com cartão salvo", result);
   } catch (err) {
-    console.error(
-      "Error creating recurrent payment with saved card:",
-      err instanceof Error && "response" in err
-        ? (err as any).response?.data
-        : err
-    );
+    if (axios.isAxiosError(err)) {
+      console.error(
+        "Error creating recurrent payment with saved card:",
+        err.response?.data
+      );
+    }
     return {
       status: "error",
       message: "Erro ao processar pagamento com cartão salvo.",
     };
   }
 
-  redirect("/payment/success");
+  return {
+    status: "success",
+    message: "/payment/success",
+  };
 }
 
 // export async function createWordPressInstance(
