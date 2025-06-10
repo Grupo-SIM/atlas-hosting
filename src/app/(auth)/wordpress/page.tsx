@@ -49,6 +49,7 @@ import { PluginCard } from "./components/plugin-card";
 import { PluginBulkActions } from "./components/plugin-bulk-actions";
 import { ThemeBulkActions } from "./components/theme-bulk-actions";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default async function WordPressPage() {
   const user = await getUser();
@@ -99,9 +100,11 @@ export default async function WordPressPage() {
             <RefreshCw className="mr-2 h-4 w-4" />
             Verificar Atualizações
           </Button>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Instalação
+          <Button asChild>
+            <Link href="/sites/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Instalação
+            </Link>
           </Button>
         </div>
       </div>
@@ -115,11 +118,17 @@ export default async function WordPressPage() {
                 <Globe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
               <span className="text-xs text-muted-foreground font-medium">
-                +{activeSites > 0 ? Math.round((activeSites / totalSites) * 100) : 0}%
+                +
+                {activeSites > 0
+                  ? Math.round((activeSites / totalSites) * 100)
+                  : 0}
+                %
               </span>
             </div>
             <div className="space-y-1">
-              <div className="text-2xl font-bold tracking-tight">{totalSites}</div>
+              <div className="text-2xl font-bold tracking-tight">
+                {totalSites}
+              </div>
               <p className="text-sm text-muted-foreground">Total de Sites</p>
             </div>
           </CardContent>
@@ -157,7 +166,9 @@ export default async function WordPressPage() {
               )}
             </div>
             <div className="space-y-1">
-              <div className={`text-2xl font-bold tracking-tight ${totalUpdatesAvailable > 0 ? "text-orange-600" : ""}`}>
+              <div
+                className={`text-2xl font-bold tracking-tight ${totalUpdatesAvailable > 0 ? "text-orange-600" : ""}`}
+              >
                 {totalUpdatesAvailable}
               </div>
               <p className="text-sm text-muted-foreground">Atualizações</p>
@@ -176,7 +187,9 @@ export default async function WordPressPage() {
               </span>
             </div>
             <div className="space-y-1">
-              <div className="text-2xl font-bold tracking-tight">{totalPlugins}</div>
+              <div className="text-2xl font-bold tracking-tight">
+                {totalPlugins}
+              </div>
               <p className="text-sm text-muted-foreground">Plugins</p>
             </div>
           </CardContent>
@@ -193,7 +206,9 @@ export default async function WordPressPage() {
               </span>
             </div>
             <div className="space-y-1">
-              <div className="text-2xl font-bold tracking-tight">{totalThemes}</div>
+              <div className="text-2xl font-bold tracking-tight">
+                {totalThemes}
+              </div>
               <p className="text-sm text-muted-foreground">Temas</p>
             </div>
           </CardContent>
@@ -400,9 +415,7 @@ export default async function WordPressPage() {
             <PluginBulkActions sites={sites} />
           </div>
 
-          {sites.every(
-            (site) => !site.plugins || site.plugins.length === 0
-          ) ? (
+          {sites.every((site) => !site.plugins || site.plugins.length === 0) ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Package className="h-16 w-16 text-muted-foreground/50 mb-4" />
@@ -410,7 +423,8 @@ export default async function WordPressPage() {
                   Nenhum plugin encontrado
                 </h3>
                 <p className="text-muted-foreground text-center max-w-md">
-                  Os plugins serão exibidos aqui quando disponíveis nas suas instalações WordPress.
+                  Os plugins serão exibidos aqui quando disponíveis nas suas
+                  instalações WordPress.
                 </p>
                 <Button className="mt-4">
                   <Plus className="mr-2 h-4 w-4" />
@@ -424,7 +438,10 @@ export default async function WordPressPage() {
                 (site) =>
                   site.plugins &&
                   site.plugins.length > 0 && (
-                    <Card key={`plugins-${site.id}`} className="overflow-hidden">
+                    <Card
+                      key={`plugins-${site.id}`}
+                      className="overflow-hidden"
+                    >
                       <CardHeader className="bg-muted/30 border-b">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
@@ -432,9 +449,13 @@ export default async function WordPressPage() {
                               <Globe className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                              <h3 className="font-semibold text-lg">{site.url}</h3>
+                              <h3 className="font-semibold text-lg">
+                                {site.url}
+                              </h3>
                               <p className="text-sm text-muted-foreground">
-                                {site.plugins.length} plugin{site.plugins.length !== 1 ? "s" : ""} instalado{site.plugins.length !== 1 ? "s" : ""}
+                                {site.plugins.length} plugin
+                                {site.plugins.length !== 1 ? "s" : ""} instalado
+                                {site.plugins.length !== 1 ? "s" : ""}
                               </p>
                             </div>
                           </div>
@@ -446,11 +467,26 @@ export default async function WordPressPage() {
                                   className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300"
                                 >
                                   <ArrowUpCircle className="mr-1 h-3 w-3" />
-                                  {site.updatesAvailable.plugins.length} update{site.updatesAvailable.plugins.length !== 1 ? "s" : ""}
+                                  {site.updatesAvailable.plugins.length} update
+                                  {site.updatesAvailable.plugins.length !== 1
+                                    ? "s"
+                                    : ""}
                                 </Badge>
                               )}
-                            <Badge variant="secondary" className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
-                              {site.plugins.filter((p) => p.status === "active").length} ativo{site.plugins.filter((p) => p.status === "active").length !== 1 ? "s" : ""}
+                            <Badge
+                              variant="secondary"
+                              className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
+                            >
+                              {
+                                site.plugins.filter(
+                                  (p) => p.status === "active"
+                                ).length
+                              }{" "}
+                              ativo
+                              {site.plugins.filter((p) => p.status === "active")
+                                .length !== 1
+                                ? "s"
+                                : ""}
                             </Badge>
                           </div>
                         </div>
@@ -459,7 +495,10 @@ export default async function WordPressPage() {
                       <CardContent className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                           {site.plugins.map((plugin) => (
-                            <Card key={`${site.id}-${plugin.update_id}`} className="group hover:shadow-md transition-all duration-200 border-0 shadow-sm bg-gradient-to-br from-background to-muted/20">
+                            <Card
+                              key={plugin.name}
+                              className="group hover:shadow-md transition-all duration-200 border-0 shadow-sm bg-gradient-to-br from-background to-muted/20"
+                            >
                               <CardContent className="p-5">
                                 <div className="flex items-start justify-between mb-3">
                                   <div className="flex-1 min-w-0">
@@ -467,7 +506,8 @@ export default async function WordPressPage() {
                                       {plugin.title || plugin.name}
                                     </h4>
                                     <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                                      {plugin.description || "Sem descrição disponível"}
+                                      {plugin.description ||
+                                        "Sem descrição disponível"}
                                     </p>
                                   </div>
                                   <DropdownMenu>
@@ -480,7 +520,10 @@ export default async function WordPressPage() {
                                         <MoreHorizontal className="h-4 w-4" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuContent
+                                      align="end"
+                                      className="w-48"
+                                    >
                                       <DropdownMenuItem>
                                         {plugin.status === "active" ? (
                                           <>
@@ -494,7 +537,8 @@ export default async function WordPressPage() {
                                           </>
                                         )}
                                       </DropdownMenuItem>
-                                      {plugin.updateAvailable && (
+                                      {plugin.version <
+                                        (plugin.updateVersion ?? 0) && (
                                         <DropdownMenuItem>
                                           <ArrowUpCircle className="mr-2 h-4 w-4" />
                                           Atualizar
@@ -516,7 +560,11 @@ export default async function WordPressPage() {
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                       <Badge
-                                        variant={plugin.status === "active" ? "default" : "outline"}
+                                        variant={
+                                          plugin.status === "active"
+                                            ? "default"
+                                            : "outline"
+                                        }
                                         className={cn(
                                           "text-xs",
                                           plugin.status === "active"
@@ -529,7 +577,9 @@ export default async function WordPressPage() {
                                         ) : (
                                           <XCircle className="mr-1 h-3 w-3" />
                                         )}
-                                        {plugin.status === "active" ? "Ativo" : "Inativo"}
+                                        {plugin.status === "active"
+                                          ? "Ativo"
+                                          : "Inativo"}
                                       </Badge>
                                       {plugin.version && (
                                         <span className="text-xs text-muted-foreground font-mono">
@@ -539,7 +589,8 @@ export default async function WordPressPage() {
                                     </div>
                                   </div>
 
-                                  {plugin.updateAvailable && (
+                                  {plugin.version <
+                                    (plugin.updateVersion ?? 0) && (
                                     <div className="flex flex-wrap gap-1">
                                       <Badge
                                         variant="outline"
@@ -559,7 +610,11 @@ export default async function WordPressPage() {
                         <div className="flex items-center justify-between mt-6 pt-6 border-t border-border/50">
                           <div className="text-sm text-muted-foreground">
                             <span className="font-medium text-foreground">
-                              {site.plugins.filter((p) => p.status === "active").length}
+                              {
+                                site.plugins.filter(
+                                  (p) => p.status === "active"
+                                ).length
+                              }
                             </span>{" "}
                             de {site.plugins.length} plugins ativos
                           </div>
@@ -599,9 +654,7 @@ export default async function WordPressPage() {
             <ThemeBulkActions sites={sites} />
           </div>
 
-          {sites.every(
-            (site) => !site.themes || site.themes.length === 0
-          ) ? (
+          {sites.every((site) => !site.themes || site.themes.length === 0) ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Palette className="h-16 w-16 text-muted-foreground/50 mb-4" />
@@ -609,7 +662,8 @@ export default async function WordPressPage() {
                   Nenhum tema encontrado
                 </h3>
                 <p className="text-muted-foreground text-center max-w-md">
-                  Os temas serão exibidos aqui quando disponíveis nas suas instalações WordPress.
+                  Os temas serão exibidos aqui quando disponíveis nas suas
+                  instalações WordPress.
                 </p>
                 <Button className="mt-4">
                   <Plus className="mr-2 h-4 w-4" />
@@ -631,9 +685,13 @@ export default async function WordPressPage() {
                               <Globe className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                              <h3 className="font-semibold text-lg">{site.url}</h3>
+                              <h3 className="font-semibold text-lg">
+                                {site.url}
+                              </h3>
                               <p className="text-sm text-muted-foreground">
-                                {site.themes.length} tema{site.themes.length !== 1 ? "s" : ""} instalado{site.themes.length !== 1 ? "s" : ""}
+                                {site.themes.length} tema
+                                {site.themes.length !== 1 ? "s" : ""} instalado
+                                {site.themes.length !== 1 ? "s" : ""}
                               </p>
                             </div>
                           </div>
@@ -645,11 +703,25 @@ export default async function WordPressPage() {
                                   className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300"
                                 >
                                   <ArrowUpCircle className="mr-1 h-3 w-3" />
-                                  {site.updatesAvailable.themes.length} update{site.updatesAvailable.themes.length !== 1 ? "s" : ""}
+                                  {site.updatesAvailable.themes.length} update
+                                  {site.updatesAvailable.themes.length !== 1
+                                    ? "s"
+                                    : ""}
                                 </Badge>
                               )}
-                            <Badge variant="secondary" className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
-                              {site.themes.filter((t) => t.status === "active").length} ativo{site.themes.filter((t) => t.status === "active").length !== 1 ? "s" : ""}
+                            <Badge
+                              variant="secondary"
+                              className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
+                            >
+                              {
+                                site.themes.filter((t) => t.status === "active")
+                                  .length
+                              }{" "}
+                              ativo
+                              {site.themes.filter((t) => t.status === "active")
+                                .length !== 1
+                                ? "s"
+                                : ""}
                             </Badge>
                           </div>
                         </div>
@@ -658,7 +730,10 @@ export default async function WordPressPage() {
                       <CardContent className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                           {site.themes.map((theme) => (
-                            <Card key={`${site.id}-${theme.name}`} className="group hover:shadow-md transition-all duration-200 border-0 shadow-sm bg-gradient-to-br from-background to-muted/20">
+                            <Card
+                              key={`${site.id}-${theme.name}`}
+                              className="group hover:shadow-md transition-all duration-200 border-0 shadow-sm bg-gradient-to-br from-background to-muted/20"
+                            >
                               <CardContent className="p-5">
                                 <div className="flex items-start justify-between mb-3">
                                   <div className="flex-1 min-w-0">
@@ -666,7 +741,8 @@ export default async function WordPressPage() {
                                       {theme.title || theme.name}
                                     </h4>
                                     <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                                      {theme.description || "Sem descrição disponível"}
+                                      {theme.description ||
+                                        "Sem descrição disponível"}
                                     </p>
                                   </div>
                                   <DropdownMenu>
@@ -679,7 +755,10 @@ export default async function WordPressPage() {
                                         <MoreHorizontal className="h-4 w-4" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuContent
+                                      align="end"
+                                      className="w-48"
+                                    >
                                       <DropdownMenuItem>
                                         {theme.status === "active" ? (
                                           <>
@@ -719,7 +798,11 @@ export default async function WordPressPage() {
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                       <Badge
-                                        variant={theme.status === "active" ? "default" : "outline"}
+                                        variant={
+                                          theme.status === "active"
+                                            ? "default"
+                                            : "outline"
+                                        }
                                         className={cn(
                                           "text-xs",
                                           theme.status === "active"
@@ -732,7 +815,9 @@ export default async function WordPressPage() {
                                         ) : (
                                           <XCircle className="mr-1 h-3 w-3" />
                                         )}
-                                        {theme.status === "active" ? "Ativo" : "Inativo"}
+                                        {theme.status === "active"
+                                          ? "Ativo"
+                                          : "Inativo"}
                                       </Badge>
                                       {theme.version && (
                                         <span className="text-xs text-muted-foreground font-mono">
@@ -772,7 +857,10 @@ export default async function WordPressPage() {
                         <div className="flex items-center justify-between mt-6 pt-6 border-t border-border/50">
                           <div className="text-sm text-muted-foreground">
                             <span className="font-medium text-foreground">
-                              {site.themes.filter((t) => t.status === "active").length}
+                              {
+                                site.themes.filter((t) => t.status === "active")
+                                  .length
+                              }
                             </span>{" "}
                             de {site.themes.length} temas ativos
                           </div>

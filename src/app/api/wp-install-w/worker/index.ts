@@ -4,30 +4,28 @@ export declare let self: Worker;
 import {
   parsePleskCliResponse,
   transformPleskHostToNamecheapHostName,
-} from "@/app/api/wp-install-w/utils";
-import { db } from "@/lib/db";
-import { pgOrganization } from "@/lib/db/schema";
-import namecheapApi from "@/lib/server/apis/namecheap";
+} from "../../../../app/api/wp-install-w/utils";
+import { db } from "../../../../lib/db";
+import { pgOrganization } from "../../../../lib/db/schema";
+import namecheapApi from "../../../../lib/server/apis/namecheap";
 import type {
   DnsHostRecord,
   DnsRecordType as NamecheapDnsRecordType,
-} from "@/lib/server/apis/namecheap/types";
-import pleskApi from "@/lib/server/apis/plesk";
+} from "../../../../lib/server/apis/namecheap/types";
+import pleskApi from "../../../../lib/server/apis/plesk";
 import {
   createSubscription,
   deleteDomain,
   deleteFtpUser,
   getDnsRecords,
   getDomain,
-  installCertificateHttp,
-  setSiteProperties,
-} from "@/lib/server/apis/plesk-xml/client";
-import type { GetDnsRecordsResult } from "@/lib/server/apis/plesk-xml/types";
-import { ELEMENTOR_PRO_PLUGIN_ID } from "@/lib/server/apis/plesk/wp-toolkit";
-import { AppLogger } from "@/lib/server/logs";
-import { ClientRequestTypeEnum } from "@/plesk";
+} from "../../../../lib/server/apis/plesk-xml/client";
+import type { GetDnsRecordsResult } from "../../../../lib/server/apis/plesk-xml/types";
+import { ELEMENTOR_PRO_PLUGIN_ID } from "../../../../lib/server/apis/plesk/wp-toolkit";
+import WpCliApi from "../../../../lib/server/apis/plesk/wp-toolkit/wp-cli";
+import { AppLogger } from "../../../../lib/server/logs";
+import { ClientRequestTypeEnum } from "../../../../plesk";
 import axios from "axios";
-import { query } from "dns-query";
 import { eq } from "drizzle-orm";
 import type { InstallWpData } from "../types";
 import type { AddWebspaceParams } from "./types";
@@ -95,7 +93,9 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
       await deleteFtpUser(`${domainName}-${pleskId}`);
     } catch {
       // Ignore errors if FTP user does not exist
-      console.warn(`FTP user ${domainName}-${pleskId} not found, skipping deletion.`);
+      console.warn(
+        `FTP user ${domainName}-${pleskId} not found, skipping deletion.`
+      );
     }
 
     const params: AddWebspaceParams = {
@@ -192,7 +192,7 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
       let pleskDnsRecords: GetDnsRecordsResult[] | undefined;
       try {
         if (!sub) {
-          throw new Error("salve campeão")
+          throw new Error("salve campeão");
         }
 
         pleskDnsRecords = await getDnsRecords(sub.id);
@@ -393,26 +393,39 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
 
     sendProgress("INFO", "Instalando plugins...");
 
+    const wpCli = new WpCliApi(+stdOut["instance-id"]);
+
     Promise.all([
-      ...plugins.map(async (plugin) => {
-        try {
-          await pleskApi.wordpress.callWp(
-            `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install ${plugin} --activate`
-          );
-          await pleskApi.wordpress.callWp(
-            `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin activate ${plugin}`
-          );
-        } catch (error) {
-          console.error(`Erro ao instalar o plugin ${plugin}:`, error);
-        }
-      }),
       async () => {
-        await pleskApi.wordpress.callWp(
-          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install elementor --activate`
-        );
-        await pleskApi.wordpress.callWp(
-          `--wp-cli -instance-id ${stdOut["instance-id"]} -- plugin install -source-url https://github.com/PRO-Elementor/PRO-Elementor/releases/download/v3.3.0/pro-elementor.zip --activate`
-        );
+        try {
+          const result = await wpCli.plugin.install(plugins.join(" "), {
+            activate: true,
+            insecure: true,
+            force: true,
+            ignoreRequirements: true,
+          });
+          console.log("Plugin install result: ", result);
+        } catch (error) {
+          console.error("Erro ao instalar plugins:", error);
+        }
+      },
+      async () => {
+        let r = await wpCli.plugin.install("elementor", {
+          activate: true,
+          insecure: true,
+          force: true,
+          ignoreRequirements: true,
+        });
+        console.log("Plugin [elementor] install result: ", r);
+
+        wpCli.plugin.install(plugins)
+        r = await wpCli.plugin.install("https://pixeldrain.com/api/file/P5iNPrn7?download", {
+          activate: true,
+          insecure: true,
+          force: true,
+          ignoreRequirements: true,
+        });
+        console.log("Plugin [elementor-pro] install result: ", r);
       },
     ]);
 

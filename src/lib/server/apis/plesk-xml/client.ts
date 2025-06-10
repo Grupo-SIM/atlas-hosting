@@ -23,10 +23,6 @@ import type {
 } from "./types";
 import { cache } from "react";
 
-const axiosInstance = axios.create({
-  adapter: "xhr",
-});
-
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",

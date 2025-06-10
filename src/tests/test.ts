@@ -1,10 +1,13 @@
-import pleskApi from "@/lib/server/apis/plesk";
+import WpCliApi from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
 
-const testInstanceId = "226";
+const testInstanceId = 226;
+
+const wpCli = new WpCliApi(testInstanceId);
+
 const pluginName = "hello";
 
 const pluginFields = [
-  "id",
+  "update_id",
   "name",
   "title",
   "description",
@@ -14,6 +17,13 @@ const pluginFields = [
   "update_version",
   "auto_update",
 ];
+
+const r = await wpCli.plugin.list({
+  fields: pluginFields.join(","),
+  format: "json"
+});
+
+console.log({ r })
 
 const themeFields = [
   "name",
@@ -28,16 +38,3 @@ const themeFields = [
   "description",
 ];
 
-/* const statusResult = await pleskApi.wordpress.callWp(
-  `-wp-cli -instance-id ${testInstanceId} -- help ${command - eg. plugin list}`
-); */
-const themeListResult = await pleskApi.wordpress.callWp(
-  //   `--wp-cli -instance-id ${testInstanceId} -- help instance --format=json`
-  //   `--wp-cli -instance-id ${testInstanceId} -- plugin activate ${pluginName}`
-  //   `--wp-cli -instance-id ${testInstanceId} -- user list --format=json`
-  // `-wp-cli -instance-id ${testInstanceId} -- theme status`
-  `--wp-cli -instance-id ${testInstanceId} -- theme list --fields=${themeFields.join(",")} --format=json`
-);
-
-// console.log({ themeListResult });
-console.log(themeListResult.stdout);

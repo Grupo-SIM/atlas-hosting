@@ -12,7 +12,7 @@ const nextConfig = {
       },
     },
   },
-  output: "standalone",
+  // output: "standalone",
   experimental: {
     nodeMiddleware: true,
     useCache: true,

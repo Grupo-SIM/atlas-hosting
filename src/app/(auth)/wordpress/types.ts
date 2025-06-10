@@ -1,3 +1,5 @@
+import type { WpPluginList } from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
+
 export interface WordPressPluginInfo {
   update_id: number;
   title?: string;
@@ -19,14 +21,14 @@ export interface WordPressSiteInfo {
   loginUrl: string;
   url?: string; // Computed from domain + path
   createdAt?: string;
-  plugins?: WordPressPluginInfo[];
+  plugins?: WpPluginList[];
   themes?: WordPressThemeInfo[];
   users?: WordPressUserInfo[];
   hasUpdates?: boolean;
   lastBackup?: string;
   updatesAvailable?: {
     core?: boolean;
-    plugins?: WordPressPluginInfo[];
+    plugins?: WpPluginList[];
     themes?: WordPressThemeInfo[];
   };
 }
