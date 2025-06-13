@@ -30,7 +30,7 @@ import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
 import namecheapApi, { getDomainPricing } from "@/lib/server/apis/namecheap";
 import axios from "axios";
-import { eq } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import ip2Location from "@/lib/server/apis/ip2location";
 import ipaddrJs from "ipaddr.js";
@@ -1177,4 +1177,46 @@ export async function generateSslForDomain(domainName: string) {
 export async function revalidateCurrentPath() {
   "use server";
   revalidatePath("/");
+}
+
+export async function getMonthlyAffiliateEarnings(userId: string) {
+  "use server";
+  
+  // Get the system configuration for commission rate
+  const systemConfig = await db.query.pgSystemConfig.findFirst();
+  if (!systemConfig) {
+    throw new Error("Configuração de comissão de afiliados não encontrada");
+  }
+
+  // Get monthly earnings for the last 12 months using proper Drizzle query
+  const monthlyData = await db
+    .select({
+      month: sql<string>`DATE_TRUNC('month', ${pgInvoice.createdAt})`,
+      total_amount: sql<number>`SUM(${pgInvoice.amount})`,
+      referrals_count: sql<number>`COUNT(DISTINCT ${pgUser.id})`,
+    })
+    .from(pgInvoice)
+    .leftJoin(pgUser, eq(pgInvoice.userId, pgUser.id))
+    .where(
+      and(
+        eq(pgUser.referrerId, userId),
+        sql`${pgInvoice.createdAt} >= NOW() - INTERVAL '12 months'`
+      )
+    )
+    .groupBy(sql`DATE_TRUNC('month', ${pgInvoice.createdAt})`)
+    .orderBy(sql`DATE_TRUNC('month', ${pgInvoice.createdAt}) ASC`);
+
+  // Transform the data and calculate earnings
+  const chartData = monthlyData.map((row) => {
+    const earnings = +(row.total_amount || 0) * (systemConfig.referrerCommission / 100);
+    const month = new Date(row.month).toLocaleDateString('pt-BR', { month: 'short' });
+    
+    return {
+      month: month.charAt(0).toUpperCase() + month.slice(1),
+      earnings: earnings,
+      referrals: +row.referrals_count || 0
+    };
+  });
+
+  return chartData;
 }

@@ -51,6 +51,7 @@ import { cookies } from "next/headers";
 import { AffiliateChart } from "./components/AffiliateChart";
 import AffiliateLinkDisplay from "./components/AffiliateLinkDisplay";
 import { DatePickerWithRange } from "./components/DateRangePicker";
+import { getMonthlyAffiliateEarnings } from "../../actions";
 
 export const metadata: Metadata = {
   title: "Afiliado - Atlas Hosting",
@@ -104,6 +105,9 @@ export default async function AffiliatePage() {
   const availableBalance = allTimeValues - totalWithdrawn;
   const minimumWithdrawal = systemConfig.minWithdrawalAmount;
   const totalReferrals = referredUsers.length;
+
+  // Get monthly earnings data for the chart
+  const monthlyEarnings = await getMonthlyAffiliateEarnings(user.id);
 
   const conversionRate = 10;
 
@@ -192,19 +196,6 @@ export default async function AffiliatePage() {
         </CardHeader>
         <CardContent>
           <AffiliateLinkDisplay affiliateLink={affiliateLink} />
-        </CardContent>
-      </Card>
-
-      {/* Performance Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Desempenho</CardTitle>
-          <CardDescription>
-            Análise de ganhos e indicações ao longo do tempo
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AffiliateChart />
         </CardContent>
       </Card>
 
@@ -305,6 +296,19 @@ export default async function AffiliatePage() {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Performance Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Desempenho</CardTitle>
+          <CardDescription>
+            Análise de ganhos e indicações ao longo do tempo
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AffiliateChart data={monthlyEarnings} />
         </CardContent>
       </Card>
     </div>
