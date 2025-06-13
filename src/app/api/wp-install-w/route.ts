@@ -74,9 +74,13 @@ export async function GET(request: Request) {
         data?: unknown;
       };
 
-      writer.write(encoder.encode(getSSEPayload(type, message, data)));
+      if (data) {
+        console.log("WORKER DATA", data);
+      }
 
-      if (event.data.type === "SUCCESS" || event.data.type === "ERROR") {
+      writer.write(encoder.encode(getSSEPayload(type, message)));
+
+      if (type === "SUCCESS" || type === "ERROR") {
         writer.close();
       }
     };
@@ -89,6 +93,20 @@ export async function GET(request: Request) {
       adminUsername,
       plugins,
       siteName,
+    });
+
+    await new Promise<void>((resolve) => {
+      worker.addEventListener("message", (event) => {
+        const { type } = event.data as {
+          type: "INFO" | "ERROR" | "SUCCESS";
+          message: string;
+          data?: unknown;
+        };
+
+        if (type === "INFO" || type === "ERROR") {
+          resolve();
+        }
+      });
     });
   } catch (error) {
     console.error("Erro geral no processo de instalação:", error);

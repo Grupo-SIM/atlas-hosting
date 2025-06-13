@@ -141,10 +141,6 @@ export default async function AffiliatePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{toBrl(allTimeValues)}</div>
-            <div className="flex items-center mt-4 text-green-500">
-              <ArrowUpRight className="h-4 w-4 mr-1" />
-              <span className="text-sm">+12.5% este mês</span>
-            </div>
           </CardContent>
         </Card>
 
@@ -173,15 +169,15 @@ export default async function AffiliatePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{toBrl(availableBalance)}</div>
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Mínimo para saque: {toBrl(minimumWithdrawal)}
+            </p>
             <Button
               className="w-full mt-4"
               disabled={availableBalance < minimumWithdrawal}
             >
               Solicitar saque
             </Button>
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              Mínimo para saque: {toBrl(minimumWithdrawal)}
-            </p>
           </CardContent>
         </Card>
       </div>

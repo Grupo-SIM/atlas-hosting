@@ -1,15 +1,11 @@
-import { db } from "@/lib/db";
 import pleskApi from "@/lib/server/apis/plesk";
-import { plugin } from "bun";
-import { find } from "lodash";
-import { cache } from "react";
 
 /**
  * Base class for all WP-CLI command groups.
  * It contains the logic to build and execute a command string.
  */
 abstract class WpCliCommand {
-  constructor(public readonly instanceId: number) {}
+  constructor(public readonly instanceId?: number) {}
 
   /**
    * Executes the final command string via the Plesk API.
@@ -20,10 +16,14 @@ abstract class WpCliCommand {
     const data = await pleskApi.wordpress.callWp(command);
 
     if (data.stderr || !data.stdout) {
-      throw new Error(data.stderr)
+      throw new Error(data.stderr);
     }
 
-    return JSON.parse(data.stdout) as T;
+    try {
+      return JSON.parse(data.stdout) as T;
+    } catch {
+      return data.stdout as T;
+    }
   }
 
   /**
@@ -3233,7 +3233,11 @@ class PluginCommand extends WpCliCommand {
     plugins: string | string[],
     options?: PluginDeactivateOptions
   ): Promise<string> {
-    const command = this.buildCommand("plugin deactivate", Array.isArray(plugins) ? plugins: [plugins], options);
+    const command = this.buildCommand(
+      "plugin deactivate",
+      Array.isArray(plugins) ? plugins : [plugins],
+      options
+    );
     return this.execute<string>(command);
   }
 
@@ -3484,7 +3488,11 @@ class PluginCommand extends WpCliCommand {
     plugins: string | string[],
     options?: PluginActivateOptions
   ): Promise<string> {
-    const command = this.buildCommand("plugin activate", Array.isArray(plugins) ? plugins: [plugins], options);
+    const command = this.buildCommand(
+      "plugin activate",
+      Array.isArray(plugins) ? plugins : [plugins],
+      options
+    );
     return this.execute<string>(command);
   }
 
@@ -3532,7 +3540,11 @@ class PluginCommand extends WpCliCommand {
     plugins: string | string[],
     options?: PluginInstallOptions
   ): Promise<string> {
-    const command = this.buildCommand("plugin install", Array.isArray(plugins) ? plugins: [plugins], options);
+    const command = this.buildCommand(
+      "plugin install",
+      Array.isArray(plugins) ? plugins : [plugins],
+      options
+    );
     return this.execute<string>(command);
   }
 
@@ -3562,7 +3574,11 @@ class PluginCommand extends WpCliCommand {
     plugins: string | string[],
     options?: PluginDeleteOptions
   ): Promise<string> {
-    const command = this.buildCommand("plugin delete", Array.isArray(plugins) ? plugins: [plugins], options);
+    const command = this.buildCommand(
+      "plugin delete",
+      Array.isArray(plugins) ? plugins : [plugins],
+      options
+    );
     return this.execute<string>(command);
   }
 }
@@ -7988,8 +8004,14 @@ class LanguageCommand extends WpCliCommand {
    * wp language plugin list hello-dolly --status=installed
    * ```
    */
-  async plugin(): Promise<string> {
-    const command = this.buildCommand("language plugin", []);
+  async plugin(
+    plugin: string,
+    language: `${string[0]}${string[0]}_${string[0]}${string[0]}`
+  ): Promise<string> {
+    const command = this.buildCommand(
+      `language plugin install ${plugin} ${language}`,
+      []
+    );
     return this.execute<string>(command);
   }
 
@@ -8583,7 +8605,7 @@ export class WpCliApi {
   public readonly cache: CacheCommand;
   public readonly help: HelpCommand;
 
-  constructor(public readonly instanceId: number) {
+  constructor(public readonly instanceId?: number) {
     this.theme = new ThemeCommand(instanceId);
     this.postType = new PostTypeCommand(instanceId);
     this.searchReplace = new SearchReplaceCommand(instanceId);
@@ -8633,7 +8655,7 @@ export class WpCliApi {
 
 /**
  * Singleton instance of the WpCliApi.
- * 
+ *
  * @example
  * import WpCliApi from './path/to/this/file';
  *

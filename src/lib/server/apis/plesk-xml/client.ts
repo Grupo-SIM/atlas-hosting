@@ -96,12 +96,7 @@ async function requestPleskApi<TResponsePayload>(
     if (result.status === "error") {
       const error = result as PleskApiError; // Type assertion
       console.error("Plesk API Operation Error:", error);
-      throw new Error(
-        `Plesk API Operation Error ${error.errcode}: ${error.errtext}`
-      );
     }
-
-    const a = cache(() => true)
 
     // The actual payload might be directly in result, or nested further
     // For 'get' operations, the data is often directly under 'result'
@@ -447,7 +442,7 @@ export async function createCertificate(params: {
 }
 
 export async function deleteFtpUser(ftpLogin: string) {
-  return await requestPleskApi({
+  return requestPleskApi({
     operator: "ftp-user",
     operation: "del",
     params: {

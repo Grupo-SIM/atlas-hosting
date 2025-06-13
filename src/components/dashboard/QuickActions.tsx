@@ -1,7 +1,6 @@
 import { getUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { TooltipArrow, TooltipTrigger } from "@radix-ui/react-tooltip";
-import clsx from "clsx";
+import { motion } from "framer-motion";
 import {
   BookPlus,
   Building2,
@@ -13,11 +12,40 @@ import {
   Mail,
   ShieldCheck,
   Train as Transfer,
+  Sparkles,
+  ArrowRight,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { FaTasks } from "react-icons/fa";
-import { Card, CardContent } from "../ui/card";
-import { Tooltip, TooltipContent, TooltipProvider } from "../ui/tooltip";
+import { Badge } from "../ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { MotionDiv } from "./MotionDiv";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 30, opacity: 0, scale: 0.95 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 25,
+    },
+  },
+};
 
 export async function QuickActions() {
   const user = await getUser();
@@ -27,179 +55,313 @@ export async function QuickActions() {
   );
 
   return (
-    <div className="grid gap-8">
-      <div>
-        <h2 className="text-2xl font-semibold mb-6">Sites</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          <QuickActionButton
+    <MotionDiv 
+      className="space-y-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Sites Section */}
+      <MotionDiv variants={itemVariants}>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+            Sites
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <QuickActionCard
             Icon={FaTasks}
             title="Planos de Hospedagem"
             subtitle="Escolha o plano ideal para seu projeto"
             href="/plans"
-            iconClassName="text-foreground"
+            gradient="from-blue-500 to-cyan-500"
+            pattern="dots"
           />
 
-          <QuickActionButton
+          <QuickActionCard
             Icon={Building2}
             title="Organização"
             subtitle="Administre as configurações de sua organização"
             href="/organization"
-            iconClassName="text-purple-500"
+            gradient="from-purple-500 to-pink-500"
+            pattern="grid"
           />
 
-          <QuickActionButton
+          <QuickActionCard
             Icon={BookPlus}
             title="Nova Instalação WordPress"
-            subtitle="Crie novas instalações apartir de seus domínios"
+            subtitle="Crie novas instalações a partir de seus domínios"
             href="/sites/new"
-            iconClassName="text-green-600 dark:text-green-500"
+            gradient="from-emerald-500 to-teal-500"
+            pattern="waves"
           />
 
-          <QuickActionButton
+          <QuickActionCard
             Icon={Mail}
             title="Meu Email"
             subtitle="Acesse suas caixas de email"
             href="/email"
-            iconClassName="text-orange-500"
+            gradient="from-orange-500 to-red-500"
+            pattern="dots"
           />
 
-          <QuickActionButton
+          <QuickActionCard
             Icon={LucideBookMarked}
             title="Meus Sites"
             subtitle="Gerencie seus sites WordPress"
             href="/wordpress"
-            iconClassName="text-indigo-500"
+            gradient="from-indigo-500 to-blue-500"
+            pattern="grid"
           />
 
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger>
-                <QuickActionButton
-                  Icon={ShieldCheck}
-                  title="Acessar painel de administrador"
-                  subtitle={
-                    canAdministrate
-                      ? `Acesse o painel de administrador WordPress do site ${user.selectedDomain}`
-                      : "Adicione um plano ou compre um domínio para acessar esta área."
-                  }
-                  disabled={!canAdministrate}
-                  target="_blank"
-                  href={
-                    canAdministrate
-                      ? `https://www.${user.selectedDomain}/wp-admin`
-                      : "#"
-                  }
-                  iconClassName="text-red-500"
-                />
+              <TooltipTrigger asChild>
+                <div>
+                  <QuickActionCard
+                    Icon={ShieldCheck}
+                    title="Painel de Administrador"
+                    subtitle={
+                      canAdministrate
+                        ? `Acesse o painel WordPress do site ${user.selectedDomain}`
+                        : "Adicione um plano ou compre um domínio para acessar"
+                    }
+                    disabled={!canAdministrate}
+                    target="_blank"
+                    href={
+                      canAdministrate
+                        ? `https://www.${user.selectedDomain}/wp-admin`
+                        : "#"
+                    }
+                    gradient="from-red-500 to-rose-500"
+                    pattern="waves"
+                  />
+                </div>
               </TooltipTrigger>
               <TooltipContent
                 hidden={canAdministrate}
                 align="center"
-                className="p-4"
+                className="p-4 max-w-xs"
               >
-                Adicione um plano ou compre um domínio para acessar esta área.
-                <TooltipArrow className="fill-border" />
+                <p className="text-sm">
+                  Adicione um plano ou compre um domínio para acessar esta área.
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-      </div>
+      </MotionDiv>
 
       {/* Domains Section */}
-      <div>
-        <h2 className="text-2xl font-semibold mb-6">Domínios</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          <QuickActionButton
+      <MotionDiv variants={itemVariants}>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
+            <Globe className="w-4 h-4 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+            Domínios
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <QuickActionCard
             Icon={Globe}
             title="Meus Domínios"
-            subtitle="Gerencie seus domínios"
+            subtitle="Gerencie seus domínios registrados"
             href="/domains"
-            iconClassName="text-blue-500"
+            gradient="from-blue-500 to-indigo-500"
+            pattern="grid"
           />
 
-          <QuickActionButton
+          <QuickActionCard
             Icon={HousePlus}
             title="Novo Domínio"
             subtitle="Registre um novo domínio"
             href="/domains/register"
-            iconClassName="text-green-500"
+            gradient="from-green-500 to-emerald-500"
+            pattern="dots"
           />
 
-          <QuickActionButton
+          <QuickActionCard
             Icon={Transfer}
             title="Zona DNS"
-            subtitle="Gerencie suas zonas DNS"
+            subtitle="Gerencie suas configurações DNS"
             href="/dns"
-            iconClassName="text-orange-500"
+            gradient="from-orange-500 to-amber-500"
+            pattern="waves"
           />
         </div>
-      </div>
+      </MotionDiv>
 
-      <div>
-        <h2 className="text-2xl font-semibold mb-6">Faturas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <QuickActionButton
+      {/* Billing Section */}
+      <MotionDiv variants={itemVariants}>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg">
+            <CreditCard className="w-4 h-4 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+            Faturas
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <QuickActionCard
             Icon={CreditCard}
             title="Assinaturas"
-            subtitle="Gerencie suas assinaturas"
-            href="Pse/subscriptions"
-            iconClassName="text-purple-500"
+            subtitle="Gerencie suas assinaturas ativas"
+            href="/subscriptions"
+            gradient="from-purple-500 to-violet-500"
+            pattern="grid"
           />
 
-          <QuickActionButton
+          <QuickActionCard
             Icon={History}
             title="Histórico de Pagamentos"
-            subtitle="Visualize seu histórico de pagamentos"
+            subtitle="Visualize seu histórico de transações"
             href="/billing"
-            iconClassName="text-blue-500"
+            gradient="from-blue-500 to-cyan-500"
+            pattern="dots"
           />
         </div>
-      </div>
-    </div>
+      </MotionDiv>
+    </MotionDiv>
   );
 }
 
-function QuickActionButton({
-  title,
-  subtitle,
-  href,
-  target,
-  disabled,
-  Icon,
-  iconClassName,
-}: {
+interface QuickActionCardProps {
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   title: string;
   subtitle: string;
   href: string;
-  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  iconClassName?: string;
+  gradient: string;
+  pattern: 'dots' | 'grid' | 'waves';
   disabled?: boolean;
   target?: string;
-}) {
+}
+
+function QuickActionCard({
+  Icon,
+  title,
+  subtitle,
+  href,
+  gradient,
+  pattern,
+  disabled = false,
+  target,
+}: QuickActionCardProps) {
   return (
-    <Link
-      target={target}
-      href={href}
-      className={cn("h-full block", {
-        "brigthness-80 opacity-20 pointer-events-none": !!disabled,
-      })}
-    >
-      <Card className="h-full shadow-none">
-        <CardContent className="h-full p-8 flex flex-col items-start justify-start text-left space-y-3 hover:bg-accent group">
-          <Icon
-            className={clsx([
-              "h-10 w-10 mb-4 group-hover:scale-110 transition-transform",
-              iconClassName,
-            ])}
-          />
-          <div className="space-y-2">
-            <span className="text-xl font-medium block">{title}</span>
-            <span className="text-sm text-muted-foreground block">
-              {subtitle}
-            </span>
+    <MotionDiv variants={itemVariants} className="group">
+      {disabled ? (
+        <div
+          className={cn(
+            "relative block h-full overflow-hidden rounded-2xl border border-border/40 transition-all duration-300",
+            "opacity-50 cursor-not-allowed"
+          )}
+        >
+          {/* Background Pattern */}
+          <div className={cn(
+            "absolute inset-0 opacity-10",
+            pattern === 'dots' && "bg-dots-pattern",
+            pattern === 'grid' && "bg-grid-pattern", 
+            pattern === 'waves' && "bg-waves-pattern"
+          )} />
+          
+          {/* Gradient Background */}
+          <div className={cn(
+            "absolute inset-0 bg-gradient-to-br opacity-5 transition-opacity duration-300",
+            gradient
+          )} />
+          
+          {/* Content */}
+          <div className="relative p-6 h-full flex flex-col">
+            {/* Icon */}
+            <div className={cn(
+              "flex items-center justify-center w-12 h-12 rounded-xl mb-4 transition-all duration-300",
+              "bg-gradient-to-br shadow-lg",
+              gradient
+            )}>
+              <Icon className="w-6 h-6 text-white" />
+            </div>
+            
+            {/* Text Content */}
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg mb-2 text-foreground transition-colors duration-200">
+                {title}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {subtitle}
+              </p>
+            </div>
+            
+            {/* Arrow Icon */}
+            <div className="flex justify-end mt-4">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted/50 transition-all duration-200">
+                <ArrowRight className="w-4 h-4 text-muted-foreground transition-all duration-200" />
+              </div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+        </div>
+      ) : (
+        <Link
+          href={href}
+          target={target}
+          className={cn(
+            "relative block h-full overflow-hidden rounded-2xl border border-border/40 transition-all duration-300",
+            "hover:border-border/60 hover:shadow-xl hover:-translate-y-1"
+          )}
+        >
+          {/* Background Pattern */}
+          <div className={cn(
+            "absolute inset-0 opacity-10",
+            pattern === 'dots' && "bg-dots-pattern",
+            pattern === 'grid' && "bg-grid-pattern", 
+            pattern === 'waves' && "bg-waves-pattern"
+          )} />
+          
+          {/* Gradient Background */}
+          <div className={cn(
+            "absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity duration-300",
+            gradient
+          )} />
+          
+          {/* Content */}
+          <div className="relative p-6 h-full flex flex-col">
+            {/* Icon */}
+            <div className={cn(
+              "flex items-center justify-center w-12 h-12 rounded-xl mb-4 transition-all duration-300",
+              "bg-gradient-to-br shadow-lg group-hover:shadow-xl group-hover:scale-110",
+              gradient
+            )}>
+              <Icon className="w-6 h-6 text-white" />
+            </div>
+            
+            {/* Text Content */}
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg mb-2 text-foreground group-hover:text-primary transition-colors duration-200">
+                {title}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {subtitle}
+              </p>
+            </div>
+            
+            {/* Arrow Icon */}
+            <div className="flex justify-end mt-4">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted/50 group-hover:bg-primary/10 transition-all duration-200">
+                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200" />
+              </div>
+            </div>
+            
+            {/* Hover Glow Effect */}
+            <div className={cn(
+              "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none",
+              "bg-gradient-to-br",
+              gradient
+            )} />
+          </div>
+        </Link>
+      )}
+    </MotionDiv>
   );
 }

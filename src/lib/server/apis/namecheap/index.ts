@@ -88,7 +88,9 @@ export class NamecheapApiWrapper {
 
   constructor(userName: string) {
     this.userName = userName;
-    this.axiosInstance = axios.create();
+    this.axiosInstance = axios.create({
+      headers: {"Content-Type": "application/xml"}
+    });
   }
 
   private async _initializeTldApiCacheAndInterval(): Promise<void> {

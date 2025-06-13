@@ -1168,3 +1168,13 @@ export async function changeSelectedDomain(
     return { status: "error", message: "Erro ao atualizar domínio padrão" };
   }
 }
+
+export async function generateSslForDomain(domainName: string) {
+  const user = await getUser();
+  return await pleskApi.subscriptions.getSsl(domainName, user);
+}
+
+export async function revalidateCurrentPath() {
+  "use server";
+  revalidatePath("/");
+}

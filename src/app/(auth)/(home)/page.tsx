@@ -4,8 +4,13 @@ import { ServerStatus } from "@/components/dashboard/ServerStatus";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { getUser } from "@/lib/auth";
 
-export default async function Dashboard() {
+export default async function Dashboard({
+  searchParams: _searchParams,
+}: {
+  searchParams: Promise<{ page?: string; type?: string }>;
+}) {
   const user = await getUser();
+  const searchParams = await _searchParams;
 
   return (
     <div className="space-y-8 p-6 pb-16">
@@ -13,7 +18,7 @@ export default async function Dashboard() {
       <QuickActions />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8">
-          <RecentActivities />
+          <RecentActivities searchParams={searchParams} />
         </div>
         <div className="lg:col-span-4">
           <ServerStatus />

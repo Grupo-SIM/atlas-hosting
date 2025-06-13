@@ -4,27 +4,27 @@ export declare let self: Worker;
 import {
   parsePleskCliResponse,
   transformPleskHostToNamecheapHostName,
-} from "../../../../app/api/wp-install-w/utils";
-import { db } from "../../../../lib/db";
-import { pgOrganization } from "../../../../lib/db/schema";
-import namecheapApi from "../../../../lib/server/apis/namecheap";
+} from "@/app/api/wp-install-w/utils";
+import { db } from "@/lib/db";
+import { pgOrganization } from "@/lib/db/schema";
+import namecheapApi from "@/lib/server/apis/namecheap";
 import type {
   DnsHostRecord,
   DnsRecordType as NamecheapDnsRecordType,
-} from "../../../../lib/server/apis/namecheap/types";
-import pleskApi from "../../../../lib/server/apis/plesk";
+} from "@/lib/server/apis/namecheap/types";
+import pleskApi from "@/lib/server/apis/plesk";
 import {
   createSubscription,
   deleteDomain,
   deleteFtpUser,
   getDnsRecords,
   getDomain,
-} from "../../../../lib/server/apis/plesk-xml/client";
-import type { GetDnsRecordsResult } from "../../../../lib/server/apis/plesk-xml/types";
-import { ELEMENTOR_PRO_PLUGIN_ID } from "../../../../lib/server/apis/plesk/wp-toolkit";
-import WpCliApi from "../../../../lib/server/apis/plesk/wp-toolkit/wp-cli";
-import { AppLogger } from "../../../../lib/server/logs";
-import { ClientRequestTypeEnum } from "../../../../plesk";
+} from "@/lib/server/apis/plesk-xml/client";
+import type { GetDnsRecordsResult } from "@/lib/server/apis/plesk-xml/types";
+import { ELEMENTOR_PRO_PLUGIN_ID } from "@/lib/server/apis/plesk/wp-toolkit";
+import WpCliApi from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
+import { AppLogger } from "@/lib/server/logs";
+import { ClientRequestTypeEnum } from "@/plesk";
 import axios from "axios";
 import { eq } from "drizzle-orm";
 import type { InstallWpData } from "../types";
@@ -111,7 +111,7 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
             { name: "ftp_login", value: `${domainName}-${pleskId}` },
             { name: "ftp_password", value: "Default#Password123" },
             { name: "ftp_quota", value: (10 * 1024 * 1024 * 1024).toString() },
-            { name: "ssl", value: "false" },
+            { name: "ssl", value: "true" },
             { name: "php_handler_id", value: "fpm" },
             { name: "memory_limit", value: "2G" },
             { name: "php", value: "true" },
@@ -395,39 +395,64 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
 
     const wpCli = new WpCliApi(+stdOut["instance-id"]);
 
-    Promise.all([
-      async () => {
-        try {
-          const result = await wpCli.plugin.install(plugins.join(" "), {
-            activate: true,
-            insecure: true,
-            force: true,
-            ignoreRequirements: true,
-          });
-          console.log("Plugin install result: ", result);
-        } catch (error) {
-          console.error("Erro ao instalar plugins:", error);
-        }
-      },
-      async () => {
-        let r = await wpCli.plugin.install("elementor", {
-          activate: true,
-          insecure: true,
-          force: true,
-          ignoreRequirements: true,
-        });
-        console.log("Plugin [elementor] install result: ", r);
+    try {
+      await wpCli.plugin.install("elementor", {
+        activate: true,
+        force: true,
+      });
+      wpCli.language.plugin("elementor", "pt_BR").catch(() => null);
 
-        wpCli.plugin.install(plugins)
-        r = await wpCli.plugin.install("https://pixeldrain.com/api/file/P5iNPrn7?download", {
+      sendProgress(
+        "INFO",
+        "Instalação de plugin [elementor] realizada com sucesso"
+      );
+
+      await wpCli.plugin.install(
+        "https://wpnull.my/download/elementor/?wpdmdl=1464",
+        {
           activate: true,
-          insecure: true,
           force: true,
-          ignoreRequirements: true,
+        }
+      );
+      wpCli.language.plugin("elementor-pro", "pt_BR").catch(() => null);
+
+      // sendProgress(
+      //   "INFO",
+      //   "Instalação de plugin [elementor-pro] realizada com sucesso"
+      // );
+
+      for (const plugin of plugins) {
+        const result = await wpCli.plugin.install(plugin, {
+          activate: true,
+          force: true,
         });
-        console.log("Plugin [elementor-pro] install result: ", r);
-      },
-    ]);
+
+        wpCli.language.plugin(plugin, "pt_BR").catch(() => null);
+
+        // sendProgress(
+        //   "INFO",
+        //   "Instalação de plugin [".concat(
+        //     plugin,
+        //     "]",
+        //     " realizada com sucesso."
+        //   )
+        // );
+        console.log("Plugin install result: ", result);
+      }
+    } catch (error) {
+      sendProgress("ERROR", "Erro ao instalar plugins", error);
+    }
+
+    sendProgress(
+      "INFO",
+      "Iniciando instalação de temas"
+    );
+
+    const result = await wpCli.theme.install("hello-biz", {
+      activate: true,
+      force: true,
+    });
+    console.log("Theme install result: ", result);
 
     const userLogger = new AppLogger(user);
     userLogger.log({
@@ -436,16 +461,6 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
       severity: "success",
       type: "hosting",
     });
-
-    await Promise.race([
-      async () => {
-        while (true) {
-          await setupDns();
-          await Bun.sleep(1000); // Wait for 2 seconds before next DNS check
-        }
-      },
-      pleskApi.subscriptions.getSsl(domainName, user),
-    ]);
 
     sendProgress(
       "SUCCESS",
