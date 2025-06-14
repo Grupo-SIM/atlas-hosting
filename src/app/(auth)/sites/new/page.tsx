@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button"; // Added Button
 import { getUser } from "@/lib/auth";
-import { getUserDomains } from "@/lib/server/utils";
+import { getUserNamecheapDomains } from "@/lib/server/utils";
 import Link from "next/link"; // Added Link
 import { Suspense } from "react";
 import { NewWordPressSiteForm } from "./components/NewWordPressSiteForm"; // Updated import
@@ -96,7 +96,7 @@ export default async function NewSitePageContainer() {
     );
   }
 
-  const domains = await getUserDomains(user);
+  const domains = await getUserNamecheapDomains(user);
 
   return (
     <div className="p-6">

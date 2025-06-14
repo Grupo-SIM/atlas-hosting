@@ -3,6 +3,7 @@ import { pgWallet } from "@/lib/db/schema/tables/wallet";
 import { relations } from "drizzle-orm";
 import {
   bigint,
+  boolean,
   pgTable,
   primaryKey,
   text,
@@ -56,6 +57,7 @@ export const pgOrganizationDomains = pgTable("organization_domains", {
     .notNull()
     .references(() => pgOrganization.id),
   domain: text("domain").notNull(),
+  active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 

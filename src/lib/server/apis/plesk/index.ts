@@ -12,6 +12,7 @@ export class PleskApi {
   public pleskAxios: AxiosInstance;
 
   public clientsApi: Plesk.ClientsApi;
+  public databasesApi: Plesk.DatabasesApi;
   public authApi: Plesk.AuthenticationApi;
   public cliApi: Plesk.CliApi;
   public domainsApi: Plesk.DomainsApi;
@@ -22,9 +23,9 @@ export class PleskApi {
   public subscriptions: SubscriptionApi;
 
   constructor() {
-    this.apiUrl = process.env.PLESK_API_URL!;
-    this.rootUser = process.env.PLESK_ROOT_USER!;
-    this.rootPassword = process.env.PLESK_ROOT_PASSWORD!;
+    this.apiUrl = process.env.PLESK_API_URL as string;
+    this.rootUser = process.env.PLESK_ROOT_USER as string;
+    this.rootPassword = process.env.PLESK_ROOT_PASSWORD as string;
 
     this.pleskAxios = axios.create({
       baseURL: this.apiUrl,
@@ -48,6 +49,7 @@ export class PleskApi {
     this.domainsApi = new Plesk.DomainsApi(...initParameters);
     this.serverApi = new Plesk.ServerApi(...initParameters);
     this.dnsApi = new Plesk.DNSApi(...initParameters);
+    this.databasesApi = new Plesk.DatabasesApi(...initParameters);
 
     this.wordpress = new PleskWpToolkitApi(this.cliApi);
     this.subscriptions = new SubscriptionApi(this.cliApi);

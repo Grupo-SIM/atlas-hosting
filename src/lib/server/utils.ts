@@ -4,7 +4,7 @@ import type { ParsedWordPressInstance } from "@/app/(auth)/sites/page";
 import { eq } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "../db";
-import { pgUser, type User } from "../db/schema/index";
+import { pgUser, type OrganizationDomain, type User } from "../db/schema/index";
 import namecheapApi from "./apis/namecheap";
 import type { DomainListItem } from "./apis/namecheap/types";
 import pleskApi from "./apis/plesk";
@@ -84,7 +84,7 @@ export const getUserWordPressSites = cache(async function getUserWordPressSites(
 });
 
 // Function to get domains and check if WordPress is installed (already in your existing page.tsx, adapted slightly)
-export const getUserDomains = cache(async function getUserDomains(
+export const getUserNamecheapDomains = cache(async function getUserDomains(
   user: User
 ): Promise<(DomainsGetInfoCleanedResponse & { inPlesk: boolean })[]> {
   try {
@@ -134,15 +134,15 @@ export const getUserDomains = cache(async function getUserDomains(
 
 export const getUserCurrentDomain = cache(async function getUserCurrentDomain(
   user: User
-): Promise<DomainsGetInfoCleanedResponse | null> {
-  const domains = await getUserDomains(user);
+): Promise<OrganizationDomain | null> {
+  const domains = user.organization.domains;
   const domain = await _getUserCurrentDomain(user, domains);
 
   if (!domain && domains.length > 0) {
     await db
       .update(pgUser)
       .set({
-        selectedDomain: domains[0].DomainName,
+        selectedDomain: domains[0].domain,
       })
       .where(eq(pgUser.id, user.id))
       .execute();
@@ -154,16 +154,14 @@ export const getUserCurrentDomain = cache(async function getUserCurrentDomain(
 
 async function _getUserCurrentDomain(
   user: User,
-  domains: (DomainsGetInfoCleanedResponse & {
-    inPlesk: boolean;
-  })[]
-): Promise<DomainsGetInfoCleanedResponse | null> {
+  domains: OrganizationDomain[]
+): Promise<OrganizationDomain | null> {
   if (!user.selectedDomain) {
     return null;
   }
 
   const fullDomain = domains.find(
-    (domain) => domain.DomainName === user.selectedDomain
+    (domain) => domain.domain === user.selectedDomain
   );
 
   if (!fullDomain) {

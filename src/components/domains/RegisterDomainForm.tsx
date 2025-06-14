@@ -1,7 +1,7 @@
 import type {
   DomainData,
   DomainPageParams,
-} from "@/app/(auth)/domains/register/types";
+} from "@/app/(auth)/domains/(register-transfer)/types";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import Form from "next/form";

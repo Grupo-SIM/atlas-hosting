@@ -1,8 +1,8 @@
 import type {
   DomainData,
   DomainPageParams,
-} from "@/app/(auth)/domains/register/types";
-import { getDomainData } from "@/app/(auth)/domains/register/utils";
+} from "@/app/(auth)/domains/(register-transfer)/types";
+import { getDomainData } from "@/app/(auth)/domains/(register-transfer)/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,

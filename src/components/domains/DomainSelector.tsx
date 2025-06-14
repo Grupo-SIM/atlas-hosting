@@ -9,7 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { OrganizationDomain } from "@/lib/db/schema";
-import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
 import { startTransition, useActionState } from "react";
 
 export default function DomainSelector({
@@ -41,8 +40,8 @@ export default function DomainSelector({
         </SelectTrigger>
         <SelectContent>
           {domains.map((domain) => (
-            <SelectItem key={domain.ID} value={domain.DomainName}>
-              {domain.DomainName}
+            <SelectItem disabled={!domain.active} key={domain.id} value={domain.domain}>
+              {domain.domain}
             </SelectItem>
           ))}
         </SelectContent>
@@ -53,5 +52,5 @@ export default function DomainSelector({
 
 export interface DomainSelectorProps {
   selectedDomain?: OrganizationDomain;
-  domains: (DomainsGetInfoCleanedResponse & { inPlesk: boolean })[];
+  domains: OrganizationDomain[];
 }

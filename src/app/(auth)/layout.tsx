@@ -3,7 +3,7 @@ import Sidebar from "@/components/layouts/components/Sidebar";
 import Topbar from "@/components/layouts/components/Topbar";
 import { getUser } from "@/lib/auth";
 import type { User } from "@/lib/db/schema";
-import { getUserCurrentDomain, getUserDomains } from "@/lib/server/utils";
+import { getUserCurrentDomain, getUserNamecheapDomains } from "@/lib/server/utils";
 import { find } from "lodash";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -49,17 +49,16 @@ export async function UserSiteSelect() {
     redirect("/login");
   }
 
-  const domains = await getUserDomains(user);
   const selectedDomain = await getUserCurrentDomain(user);
 
   const selectedDomainInfo = find(
     user.organization.domains,
-    (domain) => domain.domain === selectedDomain?.DomainName
+    (domain) => domain.domain === selectedDomain?.domain
   );
 
   return (
     selectedDomain && (
-      <DomainSelector domains={domains} selectedDomain={selectedDomainInfo} />
+      <DomainSelector domains={user.organization.domains} selectedDomain={selectedDomainInfo} />
     )
   );
 }

@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -14,7 +18,9 @@
     "jsx": "preserve",
     "incremental": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
     "plugins": [
       {
@@ -22,14 +28,19 @@
       }
     ]
   },
-  "files": ["global.d.ts"],
+  "files": [
+    "global.d.ts"
+  ],
   "include": [
     "global.d.ts",
     "next-env.d.ts",
+    "next.config.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
-    ".next/types/**/*.ts",
-    "next.config.ts"
+    ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules/**/*", "src/plesk/**/*"]
+  "exclude": [
+    "node_modules/**/*",
+    "src/plesk/**/*"
+  ]
 }

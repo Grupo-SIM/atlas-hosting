@@ -1,0 +1,199 @@
+
+function TldPriceTableSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Preços de Nomes de Domínio (BRL)</CardTitle>
+        <CardDescription>
+          Lista de TLDs com preços de registro em BRL (convertidos de USD,
+          atualizado diariamente).
+        </CardDescription>
+        <Input type="search" placeholder="Pesquisar TLD" className="mt-2" />
+      </CardHeader>
+      <CardContent>
+        <div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>TLD</TableHead>
+                <TableHead className="hidden sm:table-cell text-right">
+                  Registro (BRL)
+                </TableHead>
+                <TableHead className="text-right">Renovação (BRL)</TableHead>
+                <TableHead className="text-right">
+                  Transferência (BRL)
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[...new Array(ITEMS_PER_TLD_PAGE_SKELETON)].map((_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: necessary for skeletons
+                <TableRow key={`skeleton-${i}`}>
+                  <TableCell>
+                    <Skeleton width="6rem" height="1rem" />
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell text-right">
+                    <Skeleton width="6rem" height="1rem" />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Skeleton width="6rem" height="1rem" />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Skeleton width="6rem" height="1rem" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div className="mx-auto flex w-full justify-center pt-4">
+            <Skeleton width="15rem" height="2.25rem" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+async function TldPriceSectionFromDb({
+  allDomainPricesFromDbPromise,
+}: {
+  allDomainPricesFromDbPromise: Promise<DomainPriceInfoFromDb[]>;
+}) {
+  const allDomainPricesFromDb = await allDomainPricesFromDbPromise;
+
+  const convertedPricesForTable: DomainPriceInfo[] = await Promise.all(
+    allDomainPricesFromDb.map(async (item) => {
+      // Assuming your currencyConversion.convert can handle null/undefined gracefully or we check
+      const priceBrl =
+        item.priceUSD != null
+          ? await currencyConversion.convert({
+              from: "usd",
+              to: "brl",
+              amount: item.priceUSD,
+            })
+          : undefined;
+      const renewBrl =
+        item.renewUSD != null
+          ? await currencyConversion.convert({
+              from: "usd",
+              to: "brl",
+              amount: item.renewUSD,
+            })
+          : undefined;
+      const transferBrl =
+        item.transferUSD != null
+          ? await currencyConversion.convert({
+              from: "usd",
+              to: "brl",
+              amount: item.transferUSD,
+            })
+          : undefined;
+
+      return {
+        tld: item.tld,
+        price: priceBrl, // Now BRL
+        renew: renewBrl, // Now BRL
+        transfer: transferBrl, // Now BRL
+        minRegisterYears: item.minRegisterYears ?? undefined,
+        maxRegisterYears: item.maxRegisterYears ?? undefined,
+      };
+    })
+  );
+
+  return <PaginatedTldTable allTldData={convertedPricesForTable} />;
+}
+
+// This function now fetches USD prices from your Drizzle DB cache
+async function getAllDomainPricesFromDb(
+  domains?: string[]
+): Promise<DomainPriceInfoFromDb[]> {
+  try {
+    const cachedPrices = await db.query.pgDomainPricingCache.findMany({
+      where:
+        domains && domains.length > 0
+          ? inArray(pgDomainPricingCache.tld, domains)
+          : undefined,
+    });
+
+    if (!cachedPrices || cachedPrices.length === 0) {
+      return [];
+    }
+
+    return cachedPrices.map((item) => ({
+      tld: item.tld,
+      priceUSD: item.price,
+      renewUSD: item.renew,
+      transferUSD: item.transfer,
+      minRegisterYears: item.minRegisterYears,
+      maxRegisterYears: item.maxRegisterYears,
+    }));
+  } catch (_error) {
+    return [];
+  }
+}
+
+function DomainExtensionsGridSkeleton() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
+      {[...new Array(6)].map((_, i) => (
+        <Card key={`skeleton-${i}`} className="text-center">
+          <CardContent className="pt-6">
+            <Skeleton width="4rem" height="1.125rem" className="mx-auto mb-2" />
+            <Skeleton width="5rem" height="0.875rem" className="mx-auto" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+async function DomainExtensionsGrid({
+  allDomainPricesFromDbPromise,
+}: {
+  allDomainPricesFromDbPromise: Promise<DomainPriceInfoFromDb[]>;
+}) {
+  const allDomainPricesFromDb = await allDomainPricesFromDbPromise;
+
+  // Get pricing for popular extensions
+  const extensionsWithPricing = await Promise.all(
+    popularExtensions.map(async (ext) => {
+      const tldName = ext.substring(1); // Remove the dot
+      const tldData = allDomainPricesFromDb.find(
+        (item) => item.tld === tldName
+      );
+
+      if (tldData?.priceUSD) {
+        const priceBrl = await currencyConversion.convert({
+          from: "usd",
+          to: "brl",
+          amount: tldData.priceUSD,
+        });
+
+        return {
+          extension: ext,
+          price: toBrl(priceBrl),
+        };
+      }
+
+      return {
+        extension: ext,
+        price: "Consulte",
+      };
+    })
+  );
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
+      {extensionsWithPricing.map((domain) => (
+        <Card key={domain.extension} className="text-center">
+          <CardContent className="pt-6">
+            <p className="text-lg font-semibold">{domain.extension}</p>
+            <p className="text-sm text-muted-foreground">{domain.price}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+const ITEMS_PER_TLD_PAGE_SKELETON = 10;

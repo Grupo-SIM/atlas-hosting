@@ -1,4 +1,4 @@
-import type { DomainPageParams } from "@/app/(auth)/domains/register/types";
+import type { DomainPageParams } from "@/app/(auth)/domains/(register-transfer)/types";
 import { relations } from "drizzle-orm";
 import {
   doublePrecision,
