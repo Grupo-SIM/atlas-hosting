@@ -15,7 +15,9 @@ abstract class WpCliCommand {
   protected async execute<T>(command: string): Promise<T> {
     const data = await pleskApi.wordpress.callWp(command);
 
-    if (data.stderr || !data.stdout) {
+    console.log(data);
+
+    if (data.stderr) {
       throw new Error(data.stderr);
     }
 

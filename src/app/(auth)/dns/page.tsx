@@ -32,7 +32,7 @@ export default async function DnsManagementPage({
     );
   }
 
-  const domainName = domain.DomainName;
+  const domainName = domain.domain;
 
   let initialDnsData: CachedDnsData | null = null;
   let fetchError: string | null = null;

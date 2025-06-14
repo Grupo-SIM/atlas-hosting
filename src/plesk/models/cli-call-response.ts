@@ -35,7 +35,7 @@ export interface CliCallResponse {
    * @memberof CliCallResponse
    * @example Done
    */
-  stdout?: string;
+  stdout: string;
 
   /**
    * Command stderr.
