@@ -218,21 +218,25 @@ export async function addMailAccount(
   mailAccountData: AddMailNamePayload["mailname"]
 ): Promise<{ id: number }> {
   const payload: AddMailNamePayload = {
-    "site-id": siteId,
-    mailname: mailAccountData,
+    filter: {
+      "site-id": siteId,
+      mailname: mailAccountData
+    },
   };
 
-  const response = await requestPleskApi<{ id: number }>({
+  const response = await requestPleskApi<{ mailname: { id: number } }>({
     operator: "mail",
-    operation: "add_mail_name",
+    operation: "create",
     params: payload,
   });
 
-  if (!response?.id) {
+  console.log(response)
+
+  if (!response?.mailname?.id) {
     throw new Error("Failed to create mail account: No ID returned.");
   }
 
-  return { id: response.id }; // Assuming 'id' is returned on successful creation
+  return { id: response.mailname.id }; // Assuming 'id' is returned on successful creation
 }
 
 export async function deleteMailAccount(mailNameId: number): Promise<void> {

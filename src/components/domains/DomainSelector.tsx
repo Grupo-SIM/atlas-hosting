@@ -8,8 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { OrganizationDomain } from "@/lib/db/schema";
 import { startTransition, useActionState } from "react";
+import { Globe, ChevronDown, Check, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function DomainSelector({
   domains,
@@ -26,24 +30,58 @@ export default function DomainSelector({
     });
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2">
+        <Globe className="h-4 w-4 text-muted-foreground" />
+        <Skeleton className="h-9 w-[280px]" />
+      </div>
+    );
+  }
+
   return (
-    <div className="relative cursor-pointer">
+    <div className="flex items-center gap-2">
+      <Globe className="h-4 w-4 text-muted-foreground" />
       <Select value={selectedDomain?.domain} onValueChange={onValueChange}>
-        <SelectTrigger
-          id="domainName"
-          className="w-[230px] text-foreground relative !grid grid-cols-[1fr_auto] items-center"
-        >
-          <SelectValue
-            className="text-center w-full"
-            placeholder={isLoading ? "" : "Selecione um domínio"}
-          />
+        <SelectTrigger className="w-[280px] h-9 text-foreground bg-card border-border hover:bg-accent hover:text-accent-foreground transition-colors">
+          <div className="flex items-center gap-2 flex-1">
+            <SelectValue
+              placeholder="Selecione um domínio"
+              className="text-sm"
+            />
+          </div>
         </SelectTrigger>
-        <SelectContent>
-          {domains.map((domain) => (
-            <SelectItem disabled={!domain.active} key={domain.id} value={domain.domain}>
-              {domain.domain}
-            </SelectItem>
-          ))}
+        <SelectContent className="w-[280px]">
+          {domains.length === 0 ? (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              <AlertCircle className="h-4 w-4 mx-auto mb-2" />
+              Nenhum domínio encontrado
+            </div>
+          ) : (
+            domains.map((domain) => (
+              <SelectItem
+                key={domain.id}
+                value={domain.domain}
+                disabled={!domain.active}
+                className="cursor-pointer"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-medium">{domain.domain}</span>
+                  <Badge
+                    variant={domain.active ? "default" : "secondary"}
+                    className={cn(
+                      "text-xs ml-2",
+                      domain.active
+                        ? "bg-green-500/10 text-green-700"
+                        : "bg-yellow-500/10 text-yellow-700"
+                    )}
+                  >
+                    {domain.active ? "Ativo" : "Inativo"}
+                  </Badge>
+                </div>
+              </SelectItem>
+            ))
+          )}
         </SelectContent>
       </Select>
     </div>

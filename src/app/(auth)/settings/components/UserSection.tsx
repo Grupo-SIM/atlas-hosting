@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   Card,
   CardContent,
@@ -59,6 +59,13 @@ import {
 } from "lucide-react";
 import type { User } from "@/lib/db/schema/tables/user";
 import { formatDate } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
+import {
+  updateUserProfileAction,
+  changePasswordAction,
+  sendEmailVerificationAction,
+  deleteUserAccountAction,
+} from "../actions";
 
 interface UserSectionProps {
   user: User;
@@ -72,6 +79,12 @@ export function UserSection({ user }: UserSectionProps) {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  // Password form state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   // User preferences state
   const [notifications, setNotifications] = useState({
@@ -90,16 +103,131 @@ export function UserSection({ user }: UserSectionProps) {
   });
 
   const handleSaveProfile = () => {
-    // Handle profile update logic here
-    console.log("Saving profile:", { userName, userEmail });
-    setIsEditingProfile(false);
+    startTransition(async () => {
+      try {
+        const result = await updateUserProfileAction(userName, userEmail);
+        
+        if (result.success) {
+          toast({
+            title: "Sucesso",
+            description: result.message,
+          });
+          setIsEditingProfile(false);
+        } else {
+          toast({
+            title: "Erro",
+            description: result.message,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro inesperado ao salvar perfil.",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle password change logic here
-    console.log("Changing password...");
-    setIsChangePasswordOpen(false);
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast({
+        title: "Erro",
+        description: "A nova senha deve ter pelo menos 8 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const result = await changePasswordAction(currentPassword, newPassword);
+        
+        if (result.success) {
+          toast({
+            title: "Sucesso",
+            description: result.message,
+          });
+          setIsChangePasswordOpen(false);
+          setCurrentPassword("");
+          setNewPassword("");
+          setConfirmPassword("");
+        } else {
+          toast({
+            title: "Erro",
+            description: result.message,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro inesperado ao alterar senha.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
+  const handleEmailVerification = () => {
+    startTransition(async () => {
+      try {
+        const result = await sendEmailVerificationAction();
+        
+        toast({
+          title: result.success ? "Sucesso" : "Erro",
+          description: result.message,
+          variant: result.success ? "default" : "destructive",
+        });
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro inesperado ao enviar verificação.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
+  const handleDeleteAccount = () => {
+    startTransition(async () => {
+      try {
+        const result = await deleteUserAccountAction();
+        
+        if (result.success) {
+          toast({
+            title: "Conta Excluída",
+            description: result.message,
+          });
+          // Redirect to login page or home
+          window.location.href = "/login";
+        } else {
+          toast({
+            title: "Erro",
+            description: result.message,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro inesperado ao excluir conta.",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   return (
@@ -196,8 +324,13 @@ export function UserSection({ user }: UserSectionProps) {
                     className="flex-1"
                   />
                   {!user.emailVerified && (
-                    <Button size="sm" variant="outline">
-                      Verificar
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={handleEmailVerification}
+                      disabled={isPending}
+                    >
+                      {isPending ? "Enviando..." : "Verificar"}
                     </Button>
                   )}
                 </div>
@@ -206,9 +339,12 @@ export function UserSection({ user }: UserSectionProps) {
 
             {isEditingProfile && (
               <div className="flex gap-2">
-                <Button onClick={handleSaveProfile}>
+                <Button 
+                  onClick={handleSaveProfile}
+                  disabled={isPending}
+                >
                   <Save className="h-4 w-4 mr-2" />
-                  Salvar Alterações
+                  {isPending ? "Salvando..." : "Salvar Alterações"}
                 </Button>
                 <Button
                   variant="outline"
@@ -217,6 +353,7 @@ export function UserSection({ user }: UserSectionProps) {
                     setUserEmail(user.email);
                     setIsEditingProfile(false);
                   }}
+                  disabled={isPending}
                 >
                   <X className="h-4 w-4 mr-2" />
                   Cancelar
@@ -282,6 +419,8 @@ export function UserSection({ user }: UserSectionProps) {
                         <Input
                           id="currentPassword"
                           type={showCurrentPassword ? "text" : "password"}
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
                           required
                         />
                         <Button
@@ -307,6 +446,8 @@ export function UserSection({ user }: UserSectionProps) {
                         <Input
                           id="newPassword"
                           type={showNewPassword ? "text" : "password"}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
                           required
                         />
                         <Button
@@ -332,6 +473,8 @@ export function UserSection({ user }: UserSectionProps) {
                         <Input
                           id="confirmPassword"
                           type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
                           required
                         />
                         <Button
@@ -351,8 +494,12 @@ export function UserSection({ user }: UserSectionProps) {
                         </Button>
                       </div>
                     </div>
-                    <Button type="submit" className="w-full">
-                      Alterar Senha
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={isPending}
+                    >
+                      {isPending ? "Alterando..." : "Alterar Senha"}
                     </Button>
                   </form>
                 </DialogContent>
@@ -475,8 +622,12 @@ export function UserSection({ user }: UserSectionProps) {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Sim, excluir minha conta
+                    <AlertDialogAction 
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={handleDeleteAccount}
+                      disabled={isPending}
+                    >
+                      {isPending ? "Excluindo..." : "Sim, excluir minha conta"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

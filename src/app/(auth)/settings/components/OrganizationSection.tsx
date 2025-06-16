@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   Card,
   CardContent,
@@ -53,6 +53,8 @@ import {
 import type { User } from "@/lib/db/schema/tables/user";
 import { formatDate } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "@/hooks/use-toast";
+import { updateOrganizationNameAction } from "../actions";
 
 interface OrganizationSectionProps {
   user: User;
@@ -62,15 +64,38 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
   const [isEditingOrg, setIsEditingOrg] = useState(false);
   const [orgName, setOrgName] = useState(user.organization.name);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const organization = user.organization;
   const members = organization.members || [];
   const isOwner = organization.ownerId === user.id;
 
   const handleSaveOrgName = () => {
-    // Handle organization name update logic here
-    console.log("Saving organization name:", orgName);
-    setIsEditingOrg(false);
+    startTransition(async () => {
+      try {
+        const result = await updateOrganizationNameAction(orgName);
+        
+        if (result.success) {
+          toast({
+            title: "Sucesso",
+            description: result.message,
+          });
+          setIsEditingOrg(false);
+        } else {
+          toast({
+            title: "Erro",
+            description: result.message,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro inesperado ao salvar nome da organização.",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const getRoleIcon = (role: string) => {
@@ -122,7 +147,11 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                       className="flex-1"
                       disabled={!isOwner}
                     />
-                    <Button size="sm" onClick={handleSaveOrgName}>
+                    <Button 
+                      size="sm" 
+                      onClick={handleSaveOrgName}
+                      disabled={isPending}
+                    >
                       <Save className="h-4 w-4" />
                     </Button>
                     <Button
@@ -132,6 +161,7 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                         setOrgName(organization.name);
                         setIsEditingOrg(false);
                       }}
+                      disabled={isPending}
                     >
                       <X className="h-4 w-4" />
                     </Button>

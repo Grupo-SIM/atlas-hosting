@@ -106,8 +106,9 @@ export async function getDbTableDataAction(
     let parsedData: TableRowData[] = [];
     if (typeof dataString === "string" && dataString.trim() !== "") {
       const lines = dataString.trim().split("\n");
-      if (lines.length > 0) {
-        const dataRows = lines; 
+      if (lines.length > 1) {
+        // Skip the first line as it contains column headers, not data
+        const dataRows = lines.slice(1); 
 
         if (result.columns.length > 0) {
           parsedData = dataRows.map(line => {

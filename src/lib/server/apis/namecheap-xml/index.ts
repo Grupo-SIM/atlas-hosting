@@ -224,7 +224,7 @@ export class NamecheapApiClient {
             const apiResponse = parsedXml as NamecheapApiResponse<TResponsePayload>;
 
             if (apiResponse === 'ERROR') {
-                const errors = ensureArray(apiResponse.Errors?.Error ||);
+                const errors = ensureArray(apiResponse.Errors?.Error as Exclude<typeof apiResponse["Errors"]["Error"], undefined>);
                 const errorMessages = errors.map(err => `Error ${err.Number}: ${err.Message}`).join(', ') || 'Unknown error';
                 throw new Error(`Namecheap API Error for ${command}: ${errorMessages}`);
             }

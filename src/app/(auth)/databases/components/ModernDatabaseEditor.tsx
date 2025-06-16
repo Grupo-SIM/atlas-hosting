@@ -50,6 +50,10 @@ import {
   ArrowUpDown,
   SortAsc,
   SortDesc,
+  Table as TableIcon,
+  Columns3,
+  PlusCircle,
+  UserPlus,
 } from "lucide-react";
 import { useCallback, useEffect, useState, useMemo, memo } from "react";
 import {
@@ -61,6 +65,8 @@ import {
   deleteTableRowAction,
   getTableSchemaAction,
   bulkDeleteRowsAction,
+  addColumnAction,
+  dropColumnAction,
 } from "../actions";
 import type { 
   TableColumn, 
@@ -89,6 +95,15 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
@@ -107,18 +122,18 @@ import { isEqual } from "lodash";
 // Optimized Table Cell Component
 interface TableCellContentProps {
   value: unknown;
-  rowIndex: number;
+  rowId: string;
   columnName: string;
   editingCell: EditingCell | undefined;
-  onStartEditing: (rowIndex: number, columnName: string, value: unknown) => void;
-  onUpdateCellValue: (rowIndex: number, columnName: string, value: string) => void;
-  onSaveCell: (rowIndex: number, columnName: string) => void;
-  onCancelEditing: (rowIndex: number, columnName: string) => void;
+  onStartEditing: (rowId: string, columnName: string, value: unknown) => void;
+  onUpdateCellValue: (rowId: string, columnName: string, value: string) => void;
+  onSaveCell: (rowId: string, columnName: string) => void;
+  onCancelEditing: (rowId: string, columnName: string) => void;
 }
 
 const TableCellContent = memo<TableCellContentProps>(({
   value,
-  rowIndex,
+  rowId,
   columnName,
   editingCell,
   onStartEditing,
@@ -128,27 +143,27 @@ const TableCellContent = memo<TableCellContentProps>(({
 }) => {
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      onSaveCell(rowIndex, columnName);
+      onSaveCell(rowId, columnName);
     } else if (e.key === "Escape") {
-      onCancelEditing(rowIndex, columnName);
+      onCancelEditing(rowId, columnName);
     }
-  }, [onSaveCell, onCancelEditing, rowIndex, columnName]);
+  }, [onSaveCell, onCancelEditing, rowId, columnName]);
 
   const handleStartEditing = useCallback(() => {
-    onStartEditing(rowIndex, columnName, value);
-  }, [onStartEditing, rowIndex, columnName, value]);
+    onStartEditing(rowId, columnName, value);
+  }, [onStartEditing, rowId, columnName, value]);
 
   const handleUpdateValue = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdateCellValue(rowIndex, columnName, e.target.value);
-  }, [onUpdateCellValue, rowIndex, columnName]);
+    onUpdateCellValue(rowId, columnName, e.target.value);
+  }, [onUpdateCellValue, rowId, columnName]);
 
   const handleSave = useCallback(() => {
-    onSaveCell(rowIndex, columnName);
-  }, [onSaveCell, rowIndex, columnName]);
+    onSaveCell(rowId, columnName);
+  }, [onSaveCell, rowId, columnName]);
 
   const handleCancel = useCallback(() => {
-    onCancelEditing(rowIndex, columnName);
-  }, [onCancelEditing, rowIndex, columnName]);
+    onCancelEditing(rowId, columnName);
+  }, [onCancelEditing, rowId, columnName]);
 
   const displayValue = useMemo(() => String(value ?? ""), [value]);
 
@@ -214,6 +229,7 @@ interface ColumnHeaderProps {
   colData: TableColumn;
   filter: ColumnFilter | undefined;
   onFilterChange: (columnName: string, value: string) => void;
+  onColumnDrop?: (columnName: string) => void;
 }
 
 const ColumnHeader = memo<ColumnHeaderProps>(({
@@ -221,6 +237,7 @@ const ColumnHeader = memo<ColumnHeaderProps>(({
   colData,
   filter,
   onFilterChange,
+  onColumnDrop,
 }) => {
   const handleSortToggle = useCallback(() => {
     column.toggleSorting(column.getIsSorted() === "asc");
@@ -253,14 +270,36 @@ const ColumnHeader = memo<ColumnHeaderProps>(({
             {colData.type}
           </Badge>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 p-0 lg:p-1"
-          onClick={handleSortToggle}
-        >
-          {sortIcon}
-        </Button>
+        <div className="flex items-center space-x-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 p-0 lg:p-1"
+            onClick={handleSortToggle}
+          >
+            {sortIcon}
+          </Button>
+          {onColumnDrop && !colData.isPrimaryKey && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Ações da Coluna</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onColumnDrop(colData.name)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remover Coluna
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
       <Input
         placeholder={`Filtrar ${colData.name}...`}
@@ -289,17 +328,26 @@ interface TableRowItemProps {
 }
 
 const TableRowItem = memo<TableRowItemProps>(({ row, columns }) => {
+  // Generate unique cell keys using row ID + column name
+  const generateCellKey = useCallback((cellId: string, columnName: string) => {
+    return `${row.id}-${columnName}-${cellId}`;
+  }, [row.id]);
+
   return (
     <TableRow
-      key={row.id}
       data-state={row.getIsSelected() && "selected"}
       className="hover:bg-muted/50"
     >
-      {row.getVisibleCells().map((cell: Cell<TableRowData, unknown>) => (
-        <TableCell key={cell.id} className="p-2">
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
-      ))}
+      {row.getVisibleCells().map((cell: Cell<TableRowData, unknown>) => {
+        const columnName = cell.column.id;
+        const cellKey = generateCellKey(cell.id, columnName);
+        
+        return (
+          <TableCell key={cellKey} className="p-2">
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        );
+      })}
     </TableRow>
   );
 }, (prevProps, nextProps) => {
@@ -318,7 +366,7 @@ interface ModernDatabaseEditorProps {
 }
 
 interface EditingCell {
-  rowIndex: number;
+  rowId: string;
   columnName: string;
   value: string;
 }
@@ -370,6 +418,17 @@ export default function ModernDatabaseEditor({
   // Dialog states
   const [showSchemaDialog, setShowSchemaDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showAddRowDialog, setShowAddRowDialog] = useState(false);
+  const [showAddColumnDialog, setShowAddColumnDialog] = useState(false);
+  
+  // New row/column form data
+  const [newRowData, setNewRowData] = useState<Record<string, string>>({});
+  const [newColumnForm, setNewColumnForm] = useState({
+    name: "",
+    type: "VARCHAR(255)",
+    isNullable: true,
+    defaultValue: "",
+  });
 
   const fetchTables = useCallback(async () => {
     setIsLoadingTables(true);
@@ -470,48 +529,75 @@ export default function ModernDatabaseEditor({
   }, [instanceId, query]);
 
   // Cell editing functions
-  const startEditing = useCallback((rowIndex: number, columnName: string, currentValue: unknown) => {
+  const startEditing = useCallback((rowId: string, columnName: string, currentValue: unknown) => {
     const editingCell: EditingCell = {
-      rowIndex,
+      rowId,
       columnName,
       value: String(currentValue ?? ""),
     };
     
     setEditingCells(prev => {
       const filtered = prev.filter(
-        cell => !(cell.rowIndex === rowIndex && cell.columnName === columnName)
+        cell => !(cell.rowId === rowId && cell.columnName === columnName)
       );
       return [...filtered, editingCell];
     });
   }, []);
 
-  const updateCellValue = useCallback((rowIndex: number, columnName: string, value: string) => {
+  const updateCellValue = useCallback((rowId: string, columnName: string, value: string) => {
     setEditingCells(prev =>
       prev.map(cell =>
-        cell.rowIndex === rowIndex && cell.columnName === columnName
+        cell.rowId === rowId && cell.columnName === columnName
           ? { ...cell, value }
           : cell
       )
     );
   }, []);
 
-  const cancelEditing = useCallback((rowIndex: number, columnName: string) => {
+  const cancelEditing = useCallback((rowId: string, columnName: string) => {
     setEditingCells(prev =>
       prev.filter(
-        cell => !(cell.rowIndex === rowIndex && cell.columnName === columnName)
+        cell => !(cell.rowId === rowId && cell.columnName === columnName)
       )
     );
   }, []);
 
-  const saveCell = useCallback(async (rowIndex: number, columnName: string) => {
+  const saveCell = useCallback(async (rowId: string, columnName: string) => {
     const editingCell = editingCells.find(
-      cell => cell.rowIndex === rowIndex && cell.columnName === columnName
+      cell => cell.rowId === rowId && cell.columnName === columnName
     );
     
     if (!editingCell || !selectedTable) return;
 
+    // Find the row data by using the getRowId function to match the ID
+    const rowIndex = tableData.findIndex((row, index) => {
+      const generatedId = tableColumns.length > 0 ? (() => {
+        const primaryKeyColumns = tableColumns.filter(col => col.isPrimaryKey);
+        if (primaryKeyColumns.length > 0) {
+          const pkValues = primaryKeyColumns.map(col => {
+            const value = row[col.name];
+            return value !== null && value !== undefined ? String(value) : "";
+          }).join("-");
+          return pkValues.length > 0 ? `pk-${pkValues}` : `row-${index}`;
+        }
+        const firstCol = tableColumns[0];
+        if (firstCol && row[firstCol.name] !== null && row[firstCol.name] !== undefined) {
+          const firstValue = String(row[firstCol.name]);
+          return `col-${firstCol.name}-${firstValue}-${index}`;
+        }
+        return `row-${index}`;
+      })() : `row-${index}`;
+      return generatedId === rowId;
+    });
+    
+    if (rowIndex === -1) {
+      console.error(`Could not find row with ID: ${rowId}`);
+      return;
+    }
+
     const originalRow = originalData[rowIndex];
-    const newRowData = { ...tableData[rowIndex], [columnName]: editingCell.value };
+    const currentRow = tableData[rowIndex];
+    const newRowData = { ...currentRow, [columnName]: editingCell.value };
     
     try {
       const result = await updateTableRowAction(
@@ -536,7 +622,7 @@ export default function ModernDatabaseEditor({
           )
         );
         
-        cancelEditing(rowIndex, columnName);
+        cancelEditing(rowId, columnName);
         
         toast({
           title: "Sucesso",
@@ -556,45 +642,7 @@ export default function ModernDatabaseEditor({
         variant: "destructive",
       });
     }
-  }, [editingCells, selectedTable, originalData, tableData, tableColumns, instanceId, cancelEditing]);
-
-  const bulkDeleteSelected = useCallback(async () => {
-    if (!selectedTable || Object.keys(rowSelection).length === 0) return;
-    
-    const selectedRows = Object.keys(rowSelection)
-      .map(index => tableData[Number.parseInt(index)])
-      .filter(Boolean);
-    
-    try {
-      const result = await bulkDeleteRowsAction(
-        instanceId,
-        selectedTable,
-        tableColumns,
-        selectedRows
-      );
-      
-      if (result.success) {
-        await fetchTableData(selectedTable);
-        setRowSelection({});
-        toast({
-          title: "Sucesso",
-          description: result.message,
-        });
-      } else {
-        toast({
-          title: "Erro ao Deletar",
-          description: result.message,
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro ao Deletar",
-        description: "Erro inesperado ao deletar linhas.",
-        variant: "destructive",
-      });
-    }
-  }, [selectedTable, rowSelection, tableData, instanceId, tableColumns, fetchTableData]);
+  }, [editingCells, selectedTable, tableData, originalData, tableColumns, instanceId, cancelEditing]);
 
   // Optimized column filter handler
   const handleColumnFilterChange = useCallback((columnName: string, value: string) => {
@@ -642,20 +690,22 @@ export default function ModernDatabaseEditor({
             colData={col}
             filter={filter}
             onFilterChange={handleColumnFilterChange}
+            onColumnDrop={handleColumnDrop}
           />
         );
       },
       cell: ({ row, column }) => {
         const value = row.getValue(column.id);
-        const rowIndex = row.index;
+        const rowId = row.id;
         const editingCell = editingCells.find(
-          cell => cell.rowIndex === rowIndex && cell.columnName === col.name
+          cell => cell.rowId === rowId && cell.columnName === col.name
         );
         
         return (
           <TableCellContent
+            key={`${rowId}-${col.name}`}
             value={value}
-            rowIndex={rowIndex}
+            rowId={rowId}
             columnName={col.name}
             editingCell={editingCell}
             onStartEditing={startEditing}
@@ -695,10 +745,40 @@ export default function ModernDatabaseEditor({
     );
   }, [tableData, columnFilters]);
 
+  // Generate unique row ID using primary key columns (memoized for stability)
+  const getRowId = useCallback((row: TableRowData, index: number) => {
+    if (!tableColumns.length) return `row-${index}`;
+    
+    // Find primary key columns
+    const primaryKeyColumns = tableColumns.filter(col => col.isPrimaryKey);
+    
+    if (primaryKeyColumns.length > 0) {
+      // Create composite key from all primary key columns
+      const pkValues = primaryKeyColumns.map(col => {
+        const value = row[col.name];
+        return value !== null && value !== undefined ? String(value) : "";
+      }).join("-");
+      
+      // Ensure we always have a valid ID
+      return pkValues.length > 0 ? `pk-${pkValues}` : `row-${index}`;
+    }
+    
+    // Fallback: use first column value + index for uniqueness
+    const firstCol = tableColumns[0];
+    if (firstCol && row[firstCol.name] !== null && row[firstCol.name] !== undefined) {
+      const firstValue = String(row[firstCol.name]);
+      return `col-${firstCol.name}-${firstValue}-${index}`;
+    }
+    
+    // Final fallback
+    return `row-${index}`;
+  }, [tableColumns]);
+
   // Memoized table configuration
   const tableConfig = useMemo(() => ({
     data: filteredData,
     columns,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -713,9 +793,13 @@ export default function ModernDatabaseEditor({
       rowSelection,
       globalFilter,
     },
+    // Ensure selection is preserved across data changes
+    enableRowSelection: true,
+    enableMultiRowSelection: true,
   }), [
     filteredData,
     columns,
+    getRowId,
     sorting,
     columnVisibility,
     rowSelection,
@@ -723,6 +807,44 @@ export default function ModernDatabaseEditor({
   ]);
 
   const table = useReactTable(tableConfig);
+
+  // Bulk delete function - must be after table declaration
+  const bulkDeleteSelected = useCallback(async () => {
+    if (!selectedTable || Object.keys(rowSelection).length === 0) return;
+    
+    // Get selected rows using the table instance for accurate row mapping
+    const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
+    
+    try {
+      const result = await bulkDeleteRowsAction(
+        instanceId,
+        selectedTable,
+        tableColumns,
+        selectedRows
+      );
+      
+      if (result.success) {
+        await fetchTableData(selectedTable);
+        setRowSelection({});
+        toast({
+          title: "Sucesso",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Erro ao Deletar",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao Deletar",
+        description: "Erro inesperado ao deletar linhas.",
+        variant: "destructive",
+      });
+    }
+  }, [selectedTable, rowSelection, table, instanceId, tableColumns, fetchTableData]);
 
   // Performance monitoring
   const performanceMetrics = useMemo(() => {
@@ -739,7 +861,7 @@ export default function ModernDatabaseEditor({
       isLargeDataset: tableRowCount > 1000,
       filteringActive: columnFilters.length > 0 || globalFilter.length > 0,
     };
-  }, [tableData.length, filteredData.length, tableColumns.length, editingCells.length, columnFilters.length, globalFilter.length]);
+  }, [tableData.length, filteredData.length, tableColumns.length, editingCells.length, columnFilters, globalFilter]);
 
   // Memoized filtered tables
   const filteredTables = useMemo(() => 
@@ -809,12 +931,14 @@ export default function ModernDatabaseEditor({
           </TableHeader>
           <TableBody>
             {queryResult.rows.map((row, rowIndex) => {
-              // Generate a unique key based on row data or use a combination approach  
-              const rowKey = `query-result-${rowIndex}-${JSON.stringify(row).slice(0, 50)}`;
+              // Generate a unique key based on first column value + row index for better uniqueness
+              const firstCol = queryResult.columns?.[0];
+              const firstValue = firstCol ? String(row[firstCol.name] ?? "") : "";
+              const rowKey = `query-result-${firstValue}-${rowIndex}`;
               return (
                 <TableRow key={rowKey}>
                   {queryResult.columns?.map((col) => (
-                    <TableCell key={col.name} className="whitespace-nowrap max-w-xs truncate">
+                    <TableCell key={`${rowKey}-${col.name}`} className="whitespace-nowrap max-w-xs truncate">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span>{String(row[col.name] ?? "")}</span>
@@ -918,6 +1042,113 @@ export default function ModernDatabaseEditor({
     bulkDeleteSelected();
     setShowDeleteDialog(false);
   }, [bulkDeleteSelected]);
+
+  // New row/column handlers
+  const handleAddRowSubmit = useCallback(async () => {
+    if (!selectedTable) return;
+    
+    try {
+      const result = await insertTableRowAction(instanceId, selectedTable, newRowData);
+      
+      if (result.success) {
+        await fetchTableData(selectedTable);
+        setNewRowData({});
+        setShowAddRowDialog(false);
+        toast({
+          title: "Sucesso",
+          description: "Nova linha adicionada com sucesso.",
+        });
+      } else {
+        toast({
+          title: "Erro ao Adicionar Linha",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao Adicionar Linha",
+        description: "Erro inesperado ao adicionar linha.",
+        variant: "destructive",
+      });
+    }
+  }, [selectedTable, newRowData, instanceId, fetchTableData]);
+
+  const handleAddColumnSubmit = useCallback(async () => {
+    if (!selectedTable || !newColumnForm.name.trim()) return;
+    
+    try {
+      const result = await addColumnAction(
+        instanceId,
+        selectedTable,
+        newColumnForm.name.trim(),
+        newColumnForm.type,
+        newColumnForm.isNullable,
+        newColumnForm.defaultValue || undefined
+      );
+      
+      if (result.success) {
+        await fetchTableData(selectedTable);
+        setNewColumnForm({
+          name: "",
+          type: "VARCHAR(255)",
+          isNullable: true,
+          defaultValue: "",
+        });
+        setShowAddColumnDialog(false);
+        toast({
+          title: "Sucesso",
+          description: "Nova coluna adicionada com sucesso.",
+        });
+      } else {
+        toast({
+          title: "Erro ao Adicionar Coluna",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao Adicionar Coluna",
+        description: "Erro inesperado ao adicionar coluna.",
+        variant: "destructive",
+      });
+    }
+  }, [selectedTable, newColumnForm, instanceId, fetchTableData]);
+
+  const handleColumnDrop = useCallback(async (columnName: string) => {
+    if (!selectedTable) return;
+    
+    const confirmDelete = window.confirm(
+      `Tem certeza de que deseja remover a coluna "${columnName}"? Esta ação não pode ser desfeita.`
+    );
+    
+    if (!confirmDelete) return;
+    
+    try {
+      const result = await dropColumnAction(instanceId, selectedTable, columnName);
+      
+      if (result.success) {
+        await fetchTableData(selectedTable);
+        toast({
+          title: "Sucesso",
+          description: "Coluna removida com sucesso.",
+        });
+      } else {
+        toast({
+          title: "Erro ao Remover Coluna",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao Remover Coluna",
+        description: "Erro inesperado ao remover coluna.",
+        variant: "destructive",
+      });
+    }
+  }, [selectedTable, instanceId, fetchTableData]);
 
   return (
     <TooltipProvider>
@@ -1032,6 +1263,24 @@ export default function ModernDatabaseEditor({
               {/* Action Buttons */}
               {selectedTable && (
                 <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAddRowDialog(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Nova Linha
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAddColumnDialog(true)}
+                  >
+                    <Columns3 className="h-4 w-4 mr-1" />
+                    Nova Coluna
+                  </Button>
+                  
                   {actionButtonProps.hasSelectedRows && (
                     <Button
                       variant="destructive"
@@ -1333,6 +1582,143 @@ export default function ModernDatabaseEditor({
               onClick={handleDeleteConfirm}
             >
               Deletar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Row Dialog */}
+      <Dialog open={showAddRowDialog} onOpenChange={setShowAddRowDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Nova Linha</DialogTitle>
+            <DialogDescription>
+              Preencha os valores para a nova linha na tabela {selectedTable}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {tableColumns.map((col) => (
+              <div key={col.name} className="space-y-2">
+                <Label htmlFor={`new-row-${col.name}`}>
+                  {col.name}
+                  {col.isPrimaryKey && <Key className="h-3 w-3 inline ml-1 text-yellow-500" />}
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    {col.type}
+                  </Badge>
+                </Label>
+                <Input
+                  id={`new-row-${col.name}`}
+                  placeholder={col.isNullable ? "Opcional" : "Obrigatório"}
+                  value={newRowData[col.name] || ""}
+                  onChange={(e) => setNewRowData(prev => ({
+                    ...prev,
+                    [col.name]: e.target.value
+                  }))}
+                />
+              </div>
+            ))}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddRowDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddRowSubmit}>
+              <Plus className="h-4 w-4 mr-1" />
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Column Dialog */}
+      <Dialog open={showAddColumnDialog} onOpenChange={setShowAddColumnDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Nova Coluna</DialogTitle>
+            <DialogDescription>
+              Configure a nova coluna para a tabela {selectedTable}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="column-name">Nome da Coluna</Label>
+              <Input
+                id="column-name"
+                placeholder="nome_da_coluna"
+                value={newColumnForm.name}
+                onChange={(e) => setNewColumnForm(prev => ({
+                  ...prev,
+                  name: e.target.value
+                }))}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="column-type">Tipo de Dados</Label>
+              <Select
+                value={newColumnForm.type}
+                onValueChange={(value) => setNewColumnForm(prev => ({
+                  ...prev,
+                  type: value
+                }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="VARCHAR(255)">VARCHAR(255)</SelectItem>
+                  <SelectItem value="TEXT">TEXT</SelectItem>
+                  <SelectItem value="INT">INT</SelectItem>
+                  <SelectItem value="BIGINT">BIGINT</SelectItem>
+                  <SelectItem value="DECIMAL(10,2)">DECIMAL(10,2)</SelectItem>
+                  <SelectItem value="DATETIME">DATETIME</SelectItem>
+                  <SelectItem value="DATE">DATE</SelectItem>
+                  <SelectItem value="TIME">TIME</SelectItem>
+                  <SelectItem value="BOOLEAN">BOOLEAN</SelectItem>
+                  <SelectItem value="JSON">JSON</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="column-nullable"
+                checked={newColumnForm.isNullable}
+                onCheckedChange={(checked) => setNewColumnForm(prev => ({
+                  ...prev,
+                  isNullable: checked
+                }))}
+              />
+              <Label htmlFor="column-nullable">Permite valores nulos</Label>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="column-default">Valor Padrão (Opcional)</Label>
+              <Input
+                id="column-default"
+                placeholder="NULL"
+                value={newColumnForm.defaultValue}
+                onChange={(e) => setNewColumnForm(prev => ({
+                  ...prev,
+                  defaultValue: e.target.value
+                }))}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddColumnDialog(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleAddColumnSubmit}
+              disabled={!newColumnForm.name.trim()}
+            >
+              <Columns3 className="h-4 w-4 mr-1" />
+              Adicionar
             </Button>
           </DialogFooter>
         </DialogContent>

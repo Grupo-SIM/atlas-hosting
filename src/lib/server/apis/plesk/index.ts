@@ -166,6 +166,7 @@ export class PleskApi {
           php_handler_id: "fastcgi",
           php_version: "8.2.28",
           ssl: true,
+          webmail: true,
           ftp_login: `user_${Math.random().toString(36).substring(2, 10)}`,
           ftp_password: `D%$%${Math.random().toString(36).substring(2, 10)}`,
         },

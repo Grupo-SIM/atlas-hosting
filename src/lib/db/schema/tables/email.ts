@@ -68,6 +68,7 @@ export const pgUserEmailAccountConfigs = pgTable(
 
     isPleskManaged: boolean("is_plesk_managed").default(false),
     pleskSiteId: integer("plesk_site_id"), // Store if provisioned via Plesk for the domain
+    pleskMailId: integer("plesk_mail_id"), // Store the Plesk mail account ID for management
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()

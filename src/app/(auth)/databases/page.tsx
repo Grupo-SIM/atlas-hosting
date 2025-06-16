@@ -2,12 +2,12 @@ import { getUser } from "@/lib/auth";
 import { getUserWordPressSites } from "@/lib/server/utils";
 import WpCliApi from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
 import DbStatusChecklist from "./components/DbStatusChecklist";
+import { DatabaseEditor } from "./components/DatabaseEditor";
 import { Suspense, memo } from "react";
 import { AlertTriangle, Database } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ModernDatabaseEditor from "./components/ModernDatabaseEditor";
 
 interface WpDomainWithCli {
   id: number;
@@ -59,20 +59,18 @@ WordPressNotFoundCard.displayName = "WordPressNotFoundCard";
 interface DatabaseEditorSectionProps {
   selectedDomainName: string;
   instanceId: number;
+  searchParams: Record<string, string | undefined>;
 }
 
 const DatabaseEditorSection = memo<DatabaseEditorSectionProps>(({ 
   selectedDomainName, 
-  instanceId 
+  instanceId,
+  searchParams
 }) => (
   <div className="mt-8">
-    <h2 className="text-2xl font-semibold mb-4 flex items-center">
-      <Database className="h-6 w-6 mr-2 text-primary" />
-      Visualizador de Banco de Dados para {selectedDomainName}
-    </h2>
-    <ModernDatabaseEditor
+    <DatabaseEditor
       instanceId={instanceId}
-      domainName={selectedDomainName}
+      searchParams={searchParams}
     />
   </div>
 ));
@@ -129,8 +127,10 @@ async function fetchDomainStatuses(
 }
 
 export default async function DatabasesPage({
-  searchParams: _searchParams,
-}: { searchParams: Promise<Record<string, string>> }) {
+  searchParams,
+}: { 
+  searchParams: Promise<Record<string, string | string[] | undefined>> 
+}) {
   const user = await getUser();
   if (!user) {
     return <p>Por favor, faça login para visualizar os bancos de dados.</p>;
@@ -144,6 +144,15 @@ export default async function DatabasesPage({
 
   // Fetch statuses in the Server Component
   const domainStatuses = await fetchDomainStatuses(wpDomains);
+
+  // Await search params and normalize them
+  const resolvedSearchParams = await searchParams;
+  const normalizedSearchParams = Object.fromEntries(
+    Object.entries(resolvedSearchParams).map(([key, value]) => [
+      key,
+      Array.isArray(value) ? value[0] : value
+    ])
+  ) as Record<string, string | undefined>;
 
   const selectedDomainName = user.selectedDomain;
   const currentDomainHasWordPress = wpDomains.some((d) =>
@@ -178,6 +187,7 @@ export default async function DatabasesPage({
         <DatabaseEditorSection
           selectedDomainName={selectedDomainName}
           instanceId={selectedWpDomain.instanceId}
+          searchParams={normalizedSearchParams}
         />
       )}
 
