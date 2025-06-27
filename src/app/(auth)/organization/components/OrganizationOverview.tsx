@@ -34,7 +34,7 @@ export function OrganizationOverview({ user }: { user: User }) {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{members?.length || 0}</div>
+            <div className="text-2xl font-bold">{organization.members?.length || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Membros da organização
             </p>
@@ -60,13 +60,11 @@ export function OrganizationOverview({ user }: { user: User }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Uso de armazenamento
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Uso de Armazenamento</CardTitle>
             <HardDrive className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">75 GB</div>
+            <div className="text-2xl font-bold">75 GB</div> {/* TODO: Replace with real data */}
             <p className="text-xs text-muted-foreground mt-1">
               of 100 GB quota
             </p>
@@ -75,9 +73,7 @@ export function OrganizationOverview({ user }: { user: User }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Nome da organização
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Nome da Organização</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -94,13 +90,13 @@ export function OrganizationOverview({ user }: { user: User }) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Subscription & Usage</CardTitle>
+              <CardTitle>Assinatura e Uso</CardTitle>
               <CardDescription>
-                Current plan details and resource usage
+                Detalhes do plano atual e uso de recursos.
               </CardDescription>
             </div>
             <Button>
-              Manage Subscription
+              Gerenciar Assinatura
               <ArrowUpRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
@@ -112,7 +108,7 @@ export function OrganizationOverview({ user }: { user: User }) {
                 <UserPlanBadge user={user} />
               </div>
               <p className="text-sm text-muted-foreground">
-                Active until May 30, 2026
+                Ativo até 30 de Maio, 2026 {/* TODO: Replace with real data */}
               </p>
             </div>
             <Button variant="outline">Atualizar Plano</Button>
@@ -124,7 +120,7 @@ export function OrganizationOverview({ user }: { user: User }) {
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Uso de Armazenamento</p>
                   <p className="text-sm text-muted-foreground">
-                    75 GB of 100 GB used
+                    75 GB de 100 GB usados {/* TODO: Replace with real data */}
                   </p>
                 </div>
                 <span className="text-sm font-medium">75%</span>
@@ -136,15 +132,15 @@ export function OrganizationOverview({ user }: { user: User }) {
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Membros da Equipe</p>
                   <p className="text-sm text-muted-foreground">
-                    {members?.length || 0} of 20 seats used
+                    {organization.members?.length || 0} de 20 {/* TODO: Replace with real data for limit */}
                   </p>
                 </div>
                 <span className="text-sm font-medium">
-                  {Math.round(((members?.length || 0) / 75) * 100)}%
+                  {Math.round(((organization.members?.length || 0) / 20) * 100)}% {/* TODO: Replace with real data for limit */}
                 </span>
               </div>
               <Progress
-                value={Math.round(((members?.length || 0) / 75) * 100)}
+                value={Math.round(((organization.members?.length || 0) / 20) * 100)}
                 className="h-2"
               />
             </div>

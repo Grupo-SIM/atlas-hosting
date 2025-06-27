@@ -29,7 +29,10 @@ import Link from "next/link";
 export default function InvoiceCard({
   isExpanded,
   invoice,
-}: { isExpanded?: boolean; invoice: Invoice }) {
+}: {
+  isExpanded?: boolean;
+  invoice: Invoice;
+}) {
   const breakdownInformation = (() => {
     if (invoice.type === "subscription") {
       return [
@@ -91,6 +94,7 @@ export default function InvoiceCard({
                 </div>
               </div>
               <Link
+                prefetch
                 href={isExpanded ? "?" : `?id=${invoice.id}`}
                 scroll={false}
                 replace
@@ -253,6 +257,7 @@ export default function InvoiceCard({
                 {/* Action Buttons */}
                 <div className="flex gap-2 pt-4">
                   <Link
+                    prefetch
                     className="flex-1 grid !cursor-pointer"
                     href={`/checkout/${invoice.id}`}
                   >

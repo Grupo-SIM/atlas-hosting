@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { pgOrganizationDomains, pgUserEmailAccountConfigs } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { addMailAccount, deleteMailAccount, getMailAccounts, getDomain } from "@/lib/server/apis/plesk-xml/client";
+import { createMailAccount, deleteMailAccount, getMailAccounts, getDomain } from "@/lib/server/apis/plesk-xml/client";
 import type { MailName } from "@/lib/server/apis/plesk-xml/types";
 import { encrypt } from "@/lib/encryption";
 import { getUserCurrentDomain } from "@/lib/server/utils";
@@ -42,34 +42,37 @@ export async function getPleskMailAccounts() {
 }
 
 // Create new Plesk mail account
-export async function createPleskMailAccount(formData: FormData) {
+export async function createPleskMailAccount(formData: FormData): Promise<void> {
   try {
     const user = await getUser();
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
     const displayName = formData.get("displayName") as string;
-    const quota = Number.parseInt(formData.get("quota") as string) || 1000; // Default 1GB in MB
+    // const quota = Number.parseInt(formData.get("quota") as string) || 1000; // Default 1GB in MB
 
     if (!username || !password) {
-      return { success: false, error: "Missing required fields: username and password" };
+      // return { success: false, error: "Missing required fields: username and password" };
+      return;
     }
 
     // Get user's currently selected domain
     const selectedDomain = await getUserCurrentDomain(user);
     
     if (!selectedDomain) {
-      return { success: false, error: "No domain selected. Please select a domain first." };
+      // return { success: false, error: "No domain selected. Please select a domain first." };
+      return;
     }
 
     // Get the Plesk site ID for the selected domain
     const pleskSite = await getDomain(selectedDomain.domain);
     
     if (!pleskSite?.id) {
-      return { success: false, error: `Domain ${selectedDomain.domain} not found in Plesk or not configured for hosting.` };
+      // return { success: false, error: `Domain ${selectedDomain.domain} not found in Plesk or not configured for hosting.` };
+      return;
     }
 
     // Create mail account in Plesk
-    const pleskResponse = await addMailAccount(pleskSite.id, {
+    const pleskResponse = await createMailAccount(pleskSite.id, {
       name: username, // This is the local part (before @)
       mailbox: {
         enabled: true,
@@ -112,10 +115,12 @@ export async function createPleskMailAccount(formData: FormData) {
     });
 
     revalidatePath("/email");
-    return { success: true, data: { id: pleskResponse.id, emailAddress } };
+    // return { success: true, data: { id: pleskResponse.id, emailAddress } };
+    return;
   } catch (error) {
     console.error("Error creating Plesk mail account:", error);
-    return { success: false, error: "Failed to create mail account" };
+    // return { success: false, error: "Failed to create mail account" };
+    return;
   }
 }
 

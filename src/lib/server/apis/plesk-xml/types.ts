@@ -61,9 +61,61 @@ export interface AddMailNamePayload {
     name: string; // e.g., 'user' for user@domain.com
     mailbox?: { enabled: boolean; quota?: number };
     password?: { value: string; type: "plain" | "crypt" };
+    // antivir?: "inout"
     // ... other properties like mailgroup, autoresponder, etc.
   };
 }
+
+export interface CreateMailPayload {
+  filter: AddMailNamePayload;
+}
+
+export interface ChangeMailSettingsPayload {
+  filter: {
+    "site-id": number;
+  };
+  prefs: EmailPrefs;
+}
+
+export interface EmailPrefs {
+  /**
+   * Specifies the way the server handles messages sent to unknown mail users (not registered on the site).
+   * By default, such messages are sent back to the sender with a message: “this address no longer accepts mail”.
+   *
+   *  - The bounce node is used to modify the default rejection message. Data type: string.
+   *  - The forward node specifies the mail address to which undelivered mail should be forwarded. Data type: string.
+   *  - The reject node is used to reject such mail messages (they will not be accepted by the mail server). Data type: none.
+   */
+  "nonexistent-user"?:
+    | {
+        bounce?: string;
+      }
+    | {
+        forward?: string;
+      }
+    | {
+        reject?: object;
+      };
+  /**
+   * Specifies whether mail users will have access to their mail via a webmail application.
+   */
+  webmail?: boolean;
+  /**
+   * Switches on or off the mail service on a specified domain.
+   */
+  mailservice?: boolean;
+}
+
+export interface GetSetMailPrefsPayload {
+  filter: {
+    "site-id": number;
+  }
+}
+
+export interface EnableMailServicePayload {
+  "site-id": number;
+}
+
 export interface GetSubscriptionResult {
   status: string;
   "filter-id": string;
@@ -141,4 +193,34 @@ export interface GetDnsRecordsResult {
     value: string;
     opt: string; // e.g 0 0 465 (in SRV, means priority, weight, port)
   };
+}
+
+
+export interface DiskUsageStats {
+  httpdocs?: number;
+  httpsdocs?: number;
+  subdomains?: number;
+  web_users?: number;
+  anonftp?: number;
+  logs?: number;
+  dbases?: number;
+  mailboxes?: number;
+  maillists?: number;
+  domaindumps?: number;
+  configs?: number; // optional
+  chroot?: number;  // optional
+}
+
+export interface WebspaceDiskUsageData {
+  disk_usage: DiskUsageStats;
+}
+
+export interface GetWebspaceDiskUsageResult {
+  status: "ok" | "error";
+  id?: number; // webspace ID
+  guid?: string;
+  data?: WebspaceDiskUsageData;
+  // if status is "error"
+  errcode?: number;
+  errtext?: string;
 }

@@ -3,6 +3,7 @@ import { RecentActivities } from "@/components/dashboard/RecentActivities";
 import { ServerStatus } from "@/components/dashboard/ServerStatus";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { getUser } from "@/lib/auth";
+import { Suspense } from "react";
 
 export default async function Dashboard({
   searchParams: _searchParams,
@@ -18,10 +19,14 @@ export default async function Dashboard({
       <QuickActions />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8">
-          <RecentActivities searchParams={searchParams} />
+          <Suspense>
+            <RecentActivities searchParams={searchParams} />
+          </Suspense>
         </div>
         <div className="lg:col-span-4">
-          <ServerStatus />
+          <Suspense>
+            <ServerStatus user={user} />
+          </Suspense>
         </div>
       </div>
     </div>

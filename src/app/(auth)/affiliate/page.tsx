@@ -156,11 +156,18 @@ export default async function AffiliatePage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{conversionRate}%</div>
-            <Progress value={conversionRate} className="mt-4" />
-            <p className="text-xs text-muted-foreground mt-2">
-              Média do mercado: 25%
-            </p>
+            <div className="relative overflow-visible">
+              <div className="absolute top-0 left-0 w-full h-full grid place-items-center !z-2 text-lg font-bold">
+                Em Breve
+              </div>
+              <div className="opacity-5">
+                <div className="text-2xl font-bold">{conversionRate}%</div>
+                <Progress value={conversionRate} className="mt-4" />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Média do mercado: 25%
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -251,7 +258,6 @@ export default async function AffiliatePage() {
                     <TableRow>
                       <TableHead>Usuário</TableHead>
                       <TableHead>Data de Registro</TableHead>
-                      <TableHead>Comissão</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -269,7 +275,6 @@ export default async function AffiliatePage() {
                             locale: ptBR,
                           })}
                         </TableCell>
-                        <TableCell>??</TableCell>
                         <TableCell>
                           {!user.deletedAt ? (
                             <Badge

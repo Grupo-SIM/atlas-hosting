@@ -1,7 +1,9 @@
 import { getUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import type { Variants } from "framer-motion";
 import {
+  ArrowRight,
+  ArrowRightLeft,
   BookPlus,
   Building2,
   CreditCard,
@@ -10,16 +12,19 @@ import {
   HousePlus,
   LucideBookMarked,
   Mail,
-  ShieldCheck,
-  Train as Transfer,
   Sparkles,
-  ArrowRight,
-  Zap,
+  Train as Transfer
 } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { FaTasks } from "react-icons/fa";
-import { Badge } from "../ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { Skeleton } from "../ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 import { MotionDiv } from "./MotionDiv";
 
 const containerVariants = {
@@ -33,7 +38,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { y: 30, opacity: 0, scale: 0.95 },
   visible: {
     y: 0,
@@ -47,15 +52,9 @@ const itemVariants = {
   },
 };
 
-export async function QuickActions() {
-  const user = await getUser();
-
-  const canAdministrate = !!(
-    user.organization.planId && user.organization.domains.length > 0
-  );
-
+export function QuickActions() {
   return (
-    <MotionDiv 
+    <MotionDiv
       className="space-y-8"
       variants={containerVariants}
       initial="hidden"
@@ -117,41 +116,9 @@ export async function QuickActions() {
             pattern="grid"
           />
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <QuickActionCard
-                    Icon={ShieldCheck}
-                    title="Painel de Administrador"
-                    subtitle={
-                      canAdministrate
-                        ? `Acesse o painel WordPress do site ${user.selectedDomain}`
-                        : "Adicione um plano ou compre um domínio para acessar"
-                    }
-                    disabled={!canAdministrate}
-                    target="_blank"
-                    href={
-                      canAdministrate
-                        ? `https://www.${user.selectedDomain}/wp-admin`
-                        : "#"
-                    }
-                    gradient="from-red-500 to-rose-500"
-                    pattern="waves"
-                  />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent
-                hidden={canAdministrate}
-                align="center"
-                className="p-4 max-w-xs"
-              >
-                <p className="text-sm">
-                  Adicione um plano ou compre um domínio para acessar esta área.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Suspense fallback={<Skeleton className="h-44 w-full rounded-2xl" />}>
+            <AdminPanelCard />
+          </Suspense>
         </div>
       </MotionDiv>
 
@@ -235,7 +202,7 @@ interface QuickActionCardProps {
   subtitle: string;
   href: string;
   gradient: string;
-  pattern: 'dots' | 'grid' | 'waves';
+  pattern: "dots" | "grid" | "waves";
   disabled?: boolean;
   target?: string;
 }
@@ -260,30 +227,36 @@ function QuickActionCard({
           )}
         >
           {/* Background Pattern */}
-          <div className={cn(
-            "absolute inset-0 opacity-10",
-            pattern === 'dots' && "bg-dots-pattern",
-            pattern === 'grid' && "bg-grid-pattern", 
-            pattern === 'waves' && "bg-waves-pattern"
-          )} />
-          
+          <div
+            className={cn(
+              "absolute inset-0 opacity-10",
+              pattern === "dots" && "bg-dots-pattern",
+              pattern === "grid" && "bg-grid-pattern",
+              pattern === "waves" && "bg-waves-pattern"
+            )}
+          />
+
           {/* Gradient Background */}
-          <div className={cn(
-            "absolute inset-0 bg-gradient-to-br opacity-5 transition-opacity duration-300",
-            gradient
-          )} />
-          
+          <div
+            className={cn(
+              "absolute inset-0 bg-gradient-to-br opacity-5 transition-opacity duration-300",
+              gradient
+            )}
+          />
+
           {/* Content */}
           <div className="relative p-6 h-full flex flex-col">
             {/* Icon */}
-            <div className={cn(
-              "flex items-center justify-center w-12 h-12 rounded-xl mb-4 transition-all duration-300",
-              "bg-gradient-to-br shadow-lg",
-              gradient
-            )}>
+            <div
+              className={cn(
+                "flex items-center justify-center w-12 h-12 rounded-xl mb-4 transition-all duration-300",
+                "bg-gradient-to-br shadow-lg",
+                gradient
+              )}
+            >
               <Icon className="w-6 h-6 text-white" />
             </div>
-            
+
             {/* Text Content */}
             <div className="flex-1">
               <h3 className="font-semibold text-lg mb-2 text-foreground transition-colors duration-200">
@@ -293,7 +266,7 @@ function QuickActionCard({
                 {subtitle}
               </p>
             </div>
-            
+
             {/* Arrow Icon */}
             <div className="flex justify-end mt-4">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted/50 transition-all duration-200">
@@ -304,6 +277,7 @@ function QuickActionCard({
         </div>
       ) : (
         <Link
+          prefetch
           href={href}
           target={target}
           className={cn(
@@ -312,30 +286,36 @@ function QuickActionCard({
           )}
         >
           {/* Background Pattern */}
-          <div className={cn(
-            "absolute inset-0 opacity-10",
-            pattern === 'dots' && "bg-dots-pattern",
-            pattern === 'grid' && "bg-grid-pattern", 
-            pattern === 'waves' && "bg-waves-pattern"
-          )} />
-          
+          <div
+            className={cn(
+              "absolute inset-0 opacity-10",
+              pattern === "dots" && "bg-dots-pattern",
+              pattern === "grid" && "bg-grid-pattern",
+              pattern === "waves" && "bg-waves-pattern"
+            )}
+          />
+
           {/* Gradient Background */}
-          <div className={cn(
-            "absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity duration-300",
-            gradient
-          )} />
-          
+          <div
+            className={cn(
+              "absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity duration-300",
+              gradient
+            )}
+          />
+
           {/* Content */}
           <div className="relative p-6 h-full flex flex-col">
             {/* Icon */}
-            <div className={cn(
-              "flex items-center justify-center w-12 h-12 rounded-xl mb-4 transition-all duration-300",
-              "bg-gradient-to-br shadow-lg group-hover:shadow-xl group-hover:scale-110",
-              gradient
-            )}>
+            <div
+              className={cn(
+                "flex items-center justify-center w-12 h-12 rounded-xl mb-4 transition-all duration-300",
+                "bg-gradient-to-br shadow-lg group-hover:shadow-xl group-hover:scale-110",
+                gradient
+              )}
+            >
               <Icon className="w-6 h-6 text-white" />
             </div>
-            
+
             {/* Text Content */}
             <div className="flex-1">
               <h3 className="font-semibold text-lg mb-2 text-foreground group-hover:text-primary transition-colors duration-200">
@@ -345,23 +325,71 @@ function QuickActionCard({
                 {subtitle}
               </p>
             </div>
-            
+
             {/* Arrow Icon */}
             <div className="flex justify-end mt-4">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted/50 group-hover:bg-primary/10 transition-all duration-200">
                 <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200" />
               </div>
             </div>
-            
+
             {/* Hover Glow Effect */}
-            <div className={cn(
-              "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none",
-              "bg-gradient-to-br",
-              gradient
-            )} />
+            <div
+              className={cn(
+                "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none",
+                "bg-gradient-to-br",
+                gradient
+              )}
+            />
           </div>
         </Link>
       )}
     </MotionDiv>
+  );
+}
+
+async function AdminPanelCard() {
+  const user = await getUser();
+
+  const canAdministrate = !!(
+    user.organization.planId && user.organization.domains.length > 0
+  );
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div>
+            <QuickActionCard
+              Icon={ArrowRightLeft}
+              title="Transferir Instalação WordPress"
+              subtitle={
+                canAdministrate
+                  ? `Transferir uma instalação existente para o Atlas Hosting`
+                  : "Adicione um plano ou compre um domínio para acessar"
+              }
+              disabled={!canAdministrate}
+              target="_blank"
+              href={
+                canAdministrate
+                  ? `/wordpress/transfer`
+                  : "#"
+              }
+              gradient="from-red-500 to-rose-500"
+              pattern="waves"
+            />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent
+          hidden={canAdministrate}
+          align="center"
+          className="p-4 max-w-xs"
+        >
+          <p className="text-sm">
+            Adicione um plano ou compre um domínio para acessar esta área.
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

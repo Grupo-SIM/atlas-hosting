@@ -37,7 +37,10 @@
       "name": "Next.js: debug server-side",
       "type": "node-terminal",
       "request": "launch",
-      "command": "bun run dev"
+      "command": "bun --bun dev",
+      "cwd": "${workspaceFolder}",
+      "smartStep": true,
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }

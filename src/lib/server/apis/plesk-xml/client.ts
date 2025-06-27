@@ -4,7 +4,13 @@ import {
   PLESK_API_PASSWORD,
 } from "@/lib/server/apis/plesk-xml/config";
 import type {
+  ChangeMailSettingsPayload,
+  CreateMailPayload,
+  EnableMailServicePayload,
+  DiskUsageStats,
   GetDnsRecordsResult,
+  GetWebspaceDiskUsageResult,
+  GetSetMailPrefsPayload,
   GetSubscriptionResult,
 } from "@/lib/server/apis/plesk-xml/types";
 import axios, { type AxiosError } from "axios";
@@ -162,6 +168,34 @@ export async function setSiteProperties(
   });
 }
 
+export const getDomainDiskUsage = cache(
+  async (domainName: string): Promise<DiskUsageStats | undefined> => {
+    if (!domainName) {
+      console.error("Invalid domainName passed to getDomainDiskUsage:", domainName);
+      // It's better to throw an error for invalid input to prevent silent failures.
+      throw new Error("Invalid domainName provided for fetching disk usage.");
+    }
+
+    const response = await requestPleskApi<GetWebspaceDiskUsageResult>({
+      operator: "webspace",
+      operation: "get",
+      params: {
+        filter: { name: domainName },
+        dataset: { disk_usage: {} }, // Specifically request only disk_usage
+      },
+    });
+
+    if (response?.status === "ok" && response.data?.disk_usage) {
+      return response.data.disk_usage;
+    }
+    if (response?.status === "error") {
+      console.error(`Error fetching disk usage for ${domainName}: Plesk API Error ${response.errcode} - ${response.errtext}`);
+    }
+    // Return undefined if not successful or data is not in the expected shape
+    return undefined;
+  }
+);
+
 export async function setSiteCertificate(domainName: string, certName: string) {
   return await setSiteProperties(domainName, {
     hosting: {
@@ -213,14 +247,50 @@ export async function* installCertificate(domainName: string) {
   return;
 }
 
-export async function addMailAccount(
+export async function activateMailForSite(siteId: number) {
+  // const payload: ChangeMailSettingsPayload = {
+  //   filter: { "site-id": siteId },
+  //   prefs: {
+  //     mailservice: true, // Enable mail service
+  //     webmail: true, // Enable webmail access
+  //   },
+  // };
+
+  // const response = await requestPleskApi<{ status: string }>({
+  //   operator: "mail",
+  //   operation: "set_prefs",
+  //   params: payload,
+  // });
+
+  // if (response?.status !== "ok") {
+  //   throw new Error("Failed to activate mail service for the site.");
+  // }
+
+  // return response;
+
+  const payload: EnableMailServicePayload = {
+    "site-id": siteId,
+  };
+
+  const response = await requestPleskApi<{ status: string }>({
+    operator: "mail",
+    operation: "enable",
+    params: payload,
+  });
+
+  if (response?.status !== "ok") {
+    throw new Error("Failed to activate mail service for the site.");
+  }
+}
+
+export async function createMailAccount(
   siteId: number,
-  mailAccountData: AddMailNamePayload["mailname"]
+  mailAccountData: CreateMailPayload["filter"]["mailname"]
 ): Promise<{ id: number }> {
-  const payload: AddMailNamePayload = {
+  const payload: CreateMailPayload = {
     filter: {
       "site-id": siteId,
-      mailname: mailAccountData
+      mailname: mailAccountData,
     },
   };
 
@@ -230,7 +300,7 @@ export async function addMailAccount(
     params: payload,
   });
 
-  console.log(response)
+  console.log(response);
 
   if (!response?.mailname?.id) {
     throw new Error("Failed to create mail account: No ID returned.");

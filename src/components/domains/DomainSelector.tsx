@@ -41,9 +41,9 @@ export default function DomainSelector({
 
   return (
     <div className="flex items-center gap-2">
-      <Globe className="h-4 w-4 text-muted-foreground" />
+      <Globe className="h-4 w-4 text-muted-foreground hidden md:block" />
       <Select value={selectedDomain?.domain} onValueChange={onValueChange}>
-        <SelectTrigger className="w-[280px] h-9 text-foreground bg-card border-border hover:bg-accent hover:text-accent-foreground transition-colors">
+        <SelectTrigger className="w-fit md:w-[280px] h-9 text-foreground bg-card border-border hover:bg-accent hover:text-accent-foreground transition-colors">
           <div className="flex items-center gap-2 flex-1">
             <SelectValue
               placeholder="Selecione um domínio"

@@ -1617,3 +1617,61 @@ export interface DomainPrivacyRenewCommandResponse {
     "@_ChargedAmount": string; // Parsed to number
   };
 }
+
+export type RequestParams =
+  | DomainsGetListParams
+  | DomainsGetContactsParams
+  | DomainsCreateParams
+  | DomainsSetContactsParams
+  | DomainsCheckParams
+  | DomainsReactivateParams
+  | DomainsRenewParams
+  | DomainsGetRegistrarLockParams
+  | DomainsSetRegistrarLockParams
+  | DomainsGetInfoParams
+  | DomainsDnsSetDefaultParams
+  | DomainsDnsSetCustomParams
+  | DomainsDnsGetListParams
+  | DomainsDnsGetHostsParams
+  | DomainsDnsGetEmailForwardingParams
+  | DomainsDnsSetEmailForwardingParams
+  | DomainsDnsSetHostsParams
+  | DomainsNsCreateParams
+  | DomainsNsDeleteParams
+  | DomainsNsGetInfoParams
+  | DomainsNsUpdateParams
+  | DomainsTransferCreateParams
+  | DomainsTransferGetStatusParams
+  | DomainsTransferUpdateStatusParams
+  | DomainsTransferGetListParams
+  | SslCreateParams
+  | SslGetListParams
+  | SslParseCSRParams
+  | SslGetApproverEmailListParams
+  | SslActivateParams
+  | SslResendApproverEmailParams
+  | SslGetInfoParams
+  | SslRenewParams
+  | SslReissueParams
+  | SslResendFulfillmentEmailParams
+  | SslPurchaseMoreSansParams
+  | SslRevokeCertificateParams
+  | SslEditDCVMethodParams
+  | UsersGetPricingParams
+  | UsersChangePasswordParams
+  | UsersUpdateParams
+  | UsersCreateAddFundsRequestParams
+  | UsersGetAddFundsStatusParams
+  | UsersCreateParams
+  | UsersLoginParams
+  | UsersResetPasswordParams
+  | UsersAddressCreateParams
+  | UsersAddressDeleteParams
+  | UsersAddressGetInfoParams
+  | UsersAddressSetDefaultParams
+  | UsersAddressUpdateParams
+  | DomainPrivacyChangeEmailAddressParams
+  | DomainPrivacyEnableParams
+  | DomainPrivacyDisableParams
+  | DomainPrivacyGetListParams
+  | DomainPrivacyRenewParams;

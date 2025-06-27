@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "atlas-hosting",
+			"path": "."
+		},
+		{
+			"name": "src",
+			"path": "wp-plugin-atlashosting/admin/src/src"
+		},
+		{
+			"name": "wp-plugin-atlashosting",
+			"path": "wp-plugin-atlashosting"
+		}
+	],
+	"settings": {}
+}

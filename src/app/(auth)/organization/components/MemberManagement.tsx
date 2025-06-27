@@ -36,14 +36,22 @@ import {
   UserCog,
   UserMinus,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import type { User } from "@/lib/db/schema/tables/user"; // Changed from RawUser
+import { toast } from "@/hooks/use-toast"; // For potential actions
+import { removeMemberFromOrganizationAction, updateMemberRoleAction } from "@/app/(auth)/settings/actions"; // Assuming actions are shared or similar ones exist for this context
 
 interface MemberManagementProps {
-  members: RawUser[];
+  members: RawUser[]; // Changed from RawUser to User for consistency with OrganizationSection
+  currentUserId: string;
+  organizationId: string;
+  isOwner: boolean;
 }
 
-export function MemberManagement({ members }: MemberManagementProps) {
+export function MemberManagement({ members, currentUserId, organizationId, isOwner }: MemberManagementProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isPending, startTransition] = useTransition();
+  // Add state for edit role dialog if needed, similar to OrganizationSection
 
   const filteredMembers = members.filter(
     (member) =>
@@ -51,16 +59,38 @@ export function MemberManagement({ members }: MemberManagementProps) {
       (member.email?.toLowerCase() || "").includes(searchQuery.toLowerCase())
   );
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
+  const getStatusBadgeInfo = (member: RawUser) => {
+    if (member.deletedAt) {
+      return { text: "Suspenso", className: "bg-red-500/10 text-red-500 border-red-200 dark:border-red-800" };
+    }
+    // Add logic for 'invited' if you have such a status
+    // if (!member.emailVerified && !member.lastLoginAt) { // Example for invited
+    //   return { text: "Convidado", className: "bg-yellow-500/10 text-yellow-500 border-yellow-200 dark:border-yellow-800" };
+    // }
+    return { text: "Ativo", className: "bg-green-500/10 text-green-500 border-green-200 dark:border-green-800" };
+  };
+
+  const getRoleDisplayName = (role?: string | null) => {
+    switch (role) {
       case "active":
-        return "bg-green-500/10 text-green-500 border-green-200 dark:border-green-800";
-      case "invited":
-        return "bg-yellow-500/10 text-yellow-500 border-yellow-200 dark:border-yellow-800";
-      case "suspended":
-        return "bg-red-500/10 text-red-500 border-red-200 dark:border-red-800";
+        return "Ativo";
+      case "admin":
+        return "Administrador";
+      case "developer":
+        return "Desenvolvedor";
+      case "member":
+        return "Membro";
       default:
-        return "";
+        return "Membro";
+    }
+  };
+
+  const getRoleIcon = (role?: string | null) => {
+    switch (role) {
+      case "admin": return <Shield className="h-3 w-3 mr-1" />;
+      // Add other icons if needed
+      default:
+        return null;
     }
   };
 
@@ -69,9 +99,9 @@ export function MemberManagement({ members }: MemberManagementProps) {
       <CardHeader>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <CardTitle>Membros da Organização</CardTitle>
+            <CardTitle>Gerenciamento de Membros</CardTitle>
             <CardDescription>
-              Gerencie os membros da sua organização e seus papéis
+              Visualize, adicione, ou modifique membros da sua organização.
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -92,12 +122,12 @@ export function MemberManagement({ members }: MemberManagementProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Membro</TableHead>
-                <TableHead>Papel</TableHead>
-                <TableHead>Data de Adesão</TableHead>
-                <TableHead>Última Atividade</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead>Função</TableHead>
+                <TableHead>Adicionado em</TableHead>
+                <TableHead>Último Acesso</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                {isOwner && <TableHead className="text-right">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -108,79 +138,76 @@ export function MemberManagement({ members }: MemberManagementProps) {
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={member.image || undefined} />
                         <AvatarFallback>
-                          {member.name?.charAt(0) ||
-                            member.email?.charAt(0) ||
-                            "?"}
+                          {member.name?.split(" ").map(n => n[0]).join("").toUpperCase() || member.email?.charAt(0).toUpperCase() || "?"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <p className="font-medium">
-                          {member.name || "Unnamed User"}
+                          {member.name || "Usuário sem nome"}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {member.email || "No email"}
+                          {member.email || "Sem email"}
                         </p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {member.organizationRole === "admin" && (
-                        <Shield className="h-3 w-3 mr-1" />
-                      )}
-                      {member.organizationRole?.charAt(0).toUpperCase() +
-                        member.organizationRole?.slice(1) || "Member"}
+                      {getRoleIcon(member.organizationRole)}
+                      {getRoleDisplayName(member.organizationRole)}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     {member.createdAt
                       ? new Date(member.createdAt).toLocaleDateString()
-                      : "Unknown"}
+                      : "Desconhecido"}
                   </TableCell>
                   <TableCell>
-                    {member.updatedAt
+                    {member.updatedAt // Assuming you have lastLoginAt
                       ? new Date(member.updatedAt).toLocaleDateString()
-                      : "Never"}
+                      : "Nunca"}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={getStatusBadgeColor(
-                        member.deletedAt ? "suspended" : "active"
-                      )}
-                    >
-                      {member.deletedAt ? "Suspended" : "Active"}
+                    <Badge variant="outline" className={getStatusBadgeInfo(member).className}>
+                      {getStatusBadgeInfo(member).text}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Ações</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <UserCog className="h-4 w-4 mr-2" />
-                          Alterar Papel
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Mail className="h-4 w-4 mr-2" />
-                          Reenviar Convite
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-amber-600 dark:text-amber-400">
-                          <Ban className="h-4 w-4 mr-2" />
-                          Suspender Membro
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600 dark:text-red-400">
-                          <UserMinus className="h-4 w-4 mr-2" />
-                          Remover Membro
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                  {isOwner && (
+                    <TableCell className="text-right">
+                      {member.id !== currentUserId && ( // Prevent owner from acting on themselves here
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Ações</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => {/* TODO: Open edit role dialog */}}>
+                              <UserCog className="h-4 w-4 mr-2" />
+                              Alterar Função
+                            </DropdownMenuItem>
+                            {/* Add other actions like resend invite or suspend if applicable */}
+                            {/* <DropdownMenuItem>
+                              <Mail className="h-4 w-4 mr-2" />
+                              Reenviar Convite
+                            </DropdownMenuItem> */}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-600 dark:text-red-400 hover:!text-red-50 hover:!bg-red-600" onClick={async () => {
+                                if (!confirm(`Tem certeza que deseja remover ${member.name || member.email}?`)) return;
+                                startTransition(async () => {
+                                  const result = await removeMemberFromOrganizationAction(member.id, organizationId);
+                                  toast({ title: result.success ? "Sucesso" : "Erro", description: result.message, variant: result.success ? "default" : "destructive" });
+                                });
+                              }}>
+                              <UserMinus className="h-4 w-4 mr-2" />
+                              Remover Membro
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

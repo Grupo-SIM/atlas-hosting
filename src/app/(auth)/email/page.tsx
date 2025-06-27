@@ -9,37 +9,27 @@ import {
 import { getUser } from "@/lib/auth";
 import { getUserCurrentDomain } from "@/lib/server/utils";
 import { HardDrive, Mail, RefreshCw, Server, Shield } from "lucide-react";
-import { revalidatePath } from "next/cache";
-import { getPleskMailAccounts, reloadEmailAccounts } from "./actions";
-import { PleskEmailClient } from "./components/PleskEmailClient";
-import { CreateEmailAccountDialog } from "./components/CreateEmailAccountDialog";
 import Form from "next/form";
+import { ErrorBoundary } from "../databases/components/ErrorBoundary";
+import { getPleskMailAccounts, reloadEmailAccounts } from "./actions";
+import { CreateEmailAccountDialog } from "./components/CreateEmailAccountDialog";
+import {
+  PleskEmailClient,
+  type PleskEmailSearchParams,
+} from "./components/PleskEmailClient";
+import { Suspense } from "react";
+import pleskApi from "@/lib/server/apis/plesk";
+import { activateMailForSite } from "@/lib/server/apis/plesk-xml/client";
 
-export default async function EmailPage() {
+export default async function EmailPage({
+  searchParams,
+}: {
+  searchParams: Promise<PleskEmailSearchParams>;
+}) {
   const user = await getUser();
 
   // Get user's currently selected domain for email management
   const selectedDomain = await getUserCurrentDomain(user);
-
-  // Transform the selected domain to match the expected interface
-  const domains = selectedDomain
-    ? [
-        {
-          id: selectedDomain.id,
-          name: selectedDomain.domain,
-          pleskId: undefined,
-          pleskSiteId: undefined,
-          status: selectedDomain.active ? "active" : "inactive",
-        },
-      ]
-    : [];
-
-  // Get Plesk mail accounts
-  const mailAccountsResult = await getPleskMailAccounts();
-  const mailAccounts = mailAccountsResult.success
-    ? mailAccountsResult.data
-    : [];
-  const hasError = !mailAccountsResult.success;
 
   if (!selectedDomain) {
     return (
@@ -76,6 +66,71 @@ export default async function EmailPage() {
       </div>
     );
   }
+
+  // Transform the selected domain to match the expected interface
+  const domains = selectedDomain
+    ? [
+        {
+          id: selectedDomain.id,
+          name: selectedDomain.domain,
+          pleskId: undefined,
+          pleskSiteId: undefined,
+          status: selectedDomain.active ? "active" : "inactive",
+        },
+      ]
+    : [];
+
+  const site = await pleskApi.getDomain(selectedDomain?.domain ?? "");
+
+  if (!site || !selectedDomain.active) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+              E-mail Profissional
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Acesse e gerencie suas contas de e-mail com integração Plesk
+            </p>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Server className="h-5 w-5 text-red-500" />
+              Erro na Configuração
+            </CardTitle>
+            <CardDescription>
+              O domínio selecionado não está configurado corretamente no Plesk.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Verifique se o domínio{" "}
+              <strong>{selectedDomain.domain}</strong> está ativo e configurado
+              para hospedagem no Plesk.
+            </p>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Tentar Novamente
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  await activateMailForSite(site.id);
+
+  // Get Plesk mail accounts
+  const mailAccountsResult = await getPleskMailAccounts();
+  console.log(mailAccountsResult)
+  const mailAccounts = mailAccountsResult.success
+    ? mailAccountsResult.data
+    : [];
+  const hasError = !mailAccountsResult.success;
 
   if (hasError) {
     return (
@@ -236,11 +291,14 @@ export default async function EmailPage() {
           </Card>
         </div>
       ) : (
-        <PleskEmailClient
-          user={user}
-          domains={domains}
-          initialMailAccounts={mailAccounts}
-        />
+        <Suspense>
+          <PleskEmailClient
+            user={user}
+            domains={domains}
+            initialMailAccounts={mailAccounts}
+            searchParams={searchParams}
+          />
+        </Suspense>
       )}
     </div>
   );

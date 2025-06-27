@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { 
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -38,6 +38,7 @@ import { getUser } from "@/lib/auth";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Suspense } from "react";
+import Link from "next/link";
 
 // Map severity to icons
 const severityToIcon: Record<string, LucideIcon> = {
@@ -67,28 +68,36 @@ const getActivityIcon = (type: string, severity: string): LucideIcon => {
 // Map severity to colors with modern gradients
 const severityToColor = {
   info: {
-    gradient: "bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950/30 dark:to-indigo-950/30",
+    gradient:
+      "bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950/30 dark:to-indigo-950/30",
     icon: "text-blue-600 dark:text-blue-400",
-    badge: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800",
-    glow: "shadow-blue-200/50 dark:shadow-blue-900/30"
+    badge:
+      "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800",
+    glow: "shadow-blue-200/50 dark:shadow-blue-900/30",
   },
   warning: {
-    gradient: "bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-950/30 dark:to-orange-950/30",
+    gradient:
+      "bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-950/30 dark:to-orange-950/30",
     icon: "text-amber-600 dark:text-amber-400",
-    badge: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800",
-    glow: "shadow-amber-200/50 dark:shadow-amber-900/30"
+    badge:
+      "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800",
+    glow: "shadow-amber-200/50 dark:shadow-amber-900/30",
   },
   danger: {
-    gradient: "bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-950/30 dark:to-rose-950/30",
+    gradient:
+      "bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-950/30 dark:to-rose-950/30",
     icon: "text-red-600 dark:text-red-400",
-    badge: "bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
-    glow: "shadow-red-200/50 dark:shadow-red-900/30"
+    badge:
+      "bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
+    glow: "shadow-red-200/50 dark:shadow-red-900/30",
   },
   success: {
-    gradient: "bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-950/30 dark:to-green-950/30",
+    gradient:
+      "bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-950/30 dark:to-green-950/30",
     icon: "text-emerald-600 dark:text-emerald-400",
-    badge: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800",
-    glow: "shadow-emerald-200/50 dark:shadow-emerald-900/30"
+    badge:
+      "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800",
+    glow: "shadow-emerald-200/50 dark:shadow-emerald-900/30",
   },
 };
 
@@ -107,28 +116,32 @@ interface ActivityCardProps {
 
 function ActivityCard({ activity }: ActivityCardProps) {
   const Icon = activity.icon;
-  
+
   return (
-    <div className={`
+    <div
+      className={`
       group relative rounded-2xl border border-border/40 p-5 transition-all duration-300 ease-out
       hover:border-border/60 hover:shadow-lg hover:-translate-y-1
       ${activity.colors.gradient} ${activity.colors.glow}
       backdrop-blur-sm
-    `}>
+    `}
+    >
       {/* Hover effect overlay */}
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/5 dark:from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
+
       <div className="relative flex gap-4">
         {/* Icon with modern styling */}
-        <div className={`
+        <div
+          className={`
           flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl
           bg-white/80 dark:bg-white/10 backdrop-blur-sm border border-white/50 dark:border-white/20
           shadow-sm group-hover:shadow-md transition-all duration-300
           ${activity.colors.icon}
-        `}>
+        `}
+        >
           <Icon className="w-5 h-5" />
         </div>
-        
+
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3 mb-2">
@@ -136,23 +149,26 @@ function ActivityCard({ activity }: ActivityCardProps) {
               {activity.title}
             </h3>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <Badge variant="outline" className={`text-xs font-medium ${activity.colors.badge}`}>
+              <Badge
+                variant="outline"
+                className={`text-xs font-medium ${activity.colors.badge}`}
+              >
                 {activity.type}
               </Badge>
             </div>
           </div>
-          
+
           <p className="text-sm text-muted-foreground leading-relaxed mb-3">
             {activity.description}
           </p>
-          
+
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Clock className="w-3 h-3" />
             <span>{activity.time}</span>
           </div>
         </div>
       </div>
-      
+
       {/* Decorative element */}
       <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-current opacity-20 group-hover:opacity-40 transition-opacity duration-300" />
     </div>
@@ -160,9 +176,9 @@ function ActivityCard({ activity }: ActivityCardProps) {
 }
 
 export async function RecentActivities({
-  searchParams
+  searchParams,
 }: {
-  searchParams?: { page?: string; type?: string }
+  searchParams?: { page?: string; type?: string };
 }) {
   const user = await getUser();
 
@@ -205,7 +221,10 @@ export async function RecentActivities({
 
   // Get total count for pagination
   const whereCondition = eq(pgLog.userId, user.id);
-  const [totalResult] = await db.select({ count: count() }).from(pgLog).where(whereCondition);
+  const [totalResult] = await db
+    .select({ count: count() })
+    .from(pgLog)
+    .where(whereCondition);
   const totalItems = totalResult.count;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -220,7 +239,7 @@ export async function RecentActivities({
   const activities = logs.map((log) => {
     const severity = log.severity as keyof typeof severityToColor;
     const colors = severityToColor[severity] || severityToColor.info;
-    
+
     return {
       id: log.id,
       type: log.type,
@@ -238,7 +257,9 @@ export async function RecentActivities({
 
   // Filter activities by type
   const getFilteredActivities = (type: string) => {
-    return type === "all" ? activities : activities.filter(activity => activity.type === type);
+    return type === "all"
+      ? activities
+      : activities.filter((activity) => activity.type === type);
   };
 
   const renderActivitiesList = (activityList: typeof activities) => {
@@ -248,12 +269,13 @@ export async function RecentActivities({
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 flex items-center justify-center mx-auto mb-6">
             <Sparkles className="h-10 w-10 text-muted-foreground" />
           </div>
-          <h3 className="font-semibold text-lg mb-2">Nenhuma atividade encontrada</h3>
+          <h3 className="font-semibold text-lg mb-2">
+            Nenhuma atividade encontrada
+          </h3>
           <p className="text-muted-foreground">
-            {activeType === "all" 
+            {activeType === "all"
               ? "Suas atividades aparecerão aqui assim que você começar a usar a plataforma."
-              : `Nenhuma atividade de ${activeType} encontrada.`
-            }
+              : `Nenhuma atividade de ${activeType} encontrada.`}
           </p>
         </div>
       );
@@ -285,55 +307,59 @@ export async function RecentActivities({
               </CardDescription>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs font-medium">
-              {totalItems} {totalItems === 1 ? 'atividade' : 'atividades'}
+              {totalItems} {totalItems === 1 ? "atividade" : "atividades"}
             </Badge>
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-6">
         <Suspense fallback={<div>Carregando...</div>}>
           <Tabs value={activeType} className="w-full">
             <div className="flex items-center justify-between mb-6">
               <TabsList className="grid grid-cols-4 bg-muted/50 p-1 rounded-xl">
-                <TabsTrigger 
-                  value="all" 
-                  className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200"
+                <TabsTrigger
+                  value="all"
+                  className="flex items-center gap-2 rounded-lg data-[state=active]:shadow-sm transition-all duration-200"
+                  asChild
                 >
-                  <div className="flex items-center gap-2">
+                  <Link prefetch className="all:unset" href="?type=all" scroll={false}>
                     <Filter className="h-3 w-3" />
                     <span className="hidden sm:inline">Todos</span>
-                  </div>
+                  </Link>
                 </TabsTrigger>
-                <TabsTrigger 
+                <TabsTrigger
                   value="hosting"
-                  className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200"
+                  className="flex items-center gap-2 rounded-lg data-[state=active]:shadow-sm transition-all duration-200"
+                  asChild
                 >
-                  <div className="flex items-center gap-2">
+                  <Link prefetch href="?type=hosting" scroll={false}>
                     <Server className="h-3 w-3" />
                     <span className="hidden sm:inline">Hospedagem</span>
-                  </div>
+                  </Link>
                 </TabsTrigger>
-                <TabsTrigger 
+                <TabsTrigger
                   value="account"
-                  className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200"
+                  className="flex items-center gap-2 rounded-lg data-[state=active]:shadow-sm transition-all duration-200"
+                  asChild
                 >
-                  <div className="flex items-center gap-2">
+                  <Link prefetch href="?type=account" scroll={false}>
                     <User className="h-3 w-3" />
                     <span className="hidden sm:inline">Conta</span>
-                  </div>
+                  </Link>
                 </TabsTrigger>
-                <TabsTrigger 
+                <TabsTrigger
                   value="security"
-                  className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200"
+                  className="flex items-center gap-2 rounded-lg data-[state=active]:shadow-sm transition-all duration-200"
+                  asChild
                 >
-                  <div className="flex items-center gap-2">
+                  <Link prefetch href="?type=security" scroll={false}>
                     <Shield className="h-3 w-3" />
                     <span className="hidden sm:inline">Segurança</span>
-                  </div>
+                  </Link>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -354,19 +380,27 @@ export async function RecentActivities({
               {renderActivitiesList(getFilteredActivities("security"))}
             </TabsContent>
           </Tabs>
-          
+
           {/* Modern Pagination */}
           {totalPages > 1 && (
             <div className="mt-8 pt-6 border-t border-border/40">
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
-                    <PaginationPrevious 
-                      href={currentPage > 1 ? `?page=${currentPage - 1}${activeType !== 'all' ? `&type=${activeType}` : ''}` : undefined}
-                      className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'hover:bg-primary/10 hover:text-primary'}
+                    <PaginationPrevious
+                      href={
+                        currentPage > 1
+                          ? `?page=${currentPage - 1}${activeType !== "all" ? `&type=${activeType}` : ""}`
+                          : undefined
+                      }
+                      className={
+                        currentPage <= 1
+                          ? "pointer-events-none opacity-50"
+                          : "hover:bg-primary/10 hover:text-primary"
+                      }
                     />
                   </PaginationItem>
-                  
+
                   {/* Page numbers */}
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum: number;
@@ -379,15 +413,16 @@ export async function RecentActivities({
                     } else {
                       pageNum = currentPage - 2 + i;
                     }
-                    
+
                     return (
                       <PaginationItem key={pageNum}>
                         <PaginationLink
-                          href={`?page=${pageNum}${activeType !== 'all' ? `&type=${activeType}` : ''}`}
+                          href={`?page=${pageNum}${activeType !== "all" ? `&type=${activeType}` : ""}`}
                           isActive={currentPage === pageNum}
-                          className={currentPage === pageNum 
-                            ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                            : 'hover:bg-primary/10 hover:text-primary'
+                          className={
+                            currentPage === pageNum
+                              ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                              : "hover:bg-primary/10 hover:text-primary"
                           }
                         >
                           {pageNum}
@@ -395,7 +430,7 @@ export async function RecentActivities({
                       </PaginationItem>
                     );
                   })}
-                  
+
                   {totalPages > 5 && currentPage < totalPages - 2 && (
                     <>
                       <PaginationItem>
@@ -403,7 +438,7 @@ export async function RecentActivities({
                       </PaginationItem>
                       <PaginationItem>
                         <PaginationLink
-                          href={`?page=${totalPages}${activeType !== 'all' ? `&type=${activeType}` : ''}`}
+                          href={`?page=${totalPages}${activeType !== "all" ? `&type=${activeType}` : ""}`}
                           className="hover:bg-primary/10 hover:text-primary"
                         >
                           {totalPages}
@@ -411,19 +446,28 @@ export async function RecentActivities({
                       </PaginationItem>
                     </>
                   )}
-                  
+
                   <PaginationItem>
-                    <PaginationNext 
-                      href={currentPage < totalPages ? `?page=${currentPage + 1}${activeType !== 'all' ? `&type=${activeType}` : ''}` : undefined}
-                      className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-primary/10 hover:text-primary'}
+                    <PaginationNext
+                      href={
+                        currentPage < totalPages
+                          ? `?page=${currentPage + 1}${activeType !== "all" ? `&type=${activeType}` : ""}`
+                          : undefined
+                      }
+                      className={
+                        currentPage >= totalPages
+                          ? "pointer-events-none opacity-50"
+                          : "hover:bg-primary/10 hover:text-primary"
+                      }
                     />
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
-              
+
               <div className="text-center mt-4">
                 <p className="text-xs text-muted-foreground">
-                  Mostrando {Math.min(itemsPerPage, activities.length)} de {totalItems} atividades
+                  Mostrando {Math.min(itemsPerPage, activities.length)} de{" "}
+                  {totalItems} atividades
                 </p>
               </div>
             </div>

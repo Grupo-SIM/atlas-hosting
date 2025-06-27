@@ -43,7 +43,7 @@ export function PluginBulkActions({ sites }: PluginBulkActionsProps) {
 
       for (const { plugin, instanceId } of pluginsWithUpdates) {
         try {
-          const result = await updatePlugin(instanceId, plugin.name);
+          const result = await updatePlugin(instanceId, plugin.name.toString());
           if (result.success) {
             successCount++;
           } else {

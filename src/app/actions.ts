@@ -37,7 +37,7 @@ import ip2Location from "@/lib/server/apis/ip2location";
 import ipaddrJs from "ipaddr.js";
 import { auth, signIn, signOut } from "@/auth";
 import { AppLogger } from "@/lib/server/logs";
-import type { DomainPageParams } from "./(auth)/domains/(register-transfer)/types";
+import type { DomainPageParams } from "./(auth)/domains/[action]/types";
 import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
 
 export async function login(

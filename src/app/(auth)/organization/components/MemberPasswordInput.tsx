@@ -36,7 +36,7 @@ export default function MemberPasswordInput() {
         variant="outline"
         size="icon"
         onClick={handleGenerateNewPassword}
-        title="Gerar senha aleatória"
+        title="Gerar nova senha"
       >
         <RefreshCw className="h-4 w-4" />
       </Button>
@@ -45,7 +45,7 @@ export default function MemberPasswordInput() {
         variant="outline"
         size="icon"
         onClick={handleCopyPassword}
-        title="Copiar senha"
+        title={passwordCopied ? "Senha copiada!" : "Copiar senha"}
       >
         {passwordCopied ? (
           <Check className="h-4 w-4" />

@@ -58,10 +58,10 @@ export function InviteMemberDialog({
     <InviteMemberDialogWrapper open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Criar novo usuário</DialogTitle>
+          <DialogTitle>Convidar Novo Membro</DialogTitle>
           <DialogDescription>
-            Adicione um novo usuário à sua organização com permissões
-            especificadas.
+            Adicione um novo membro à sua organização e defina suas permissões.
+            Uma senha temporária será gerada.
           </DialogDescription>
         </DialogHeader>
 
@@ -86,7 +86,7 @@ export function InviteMemberDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="role">Cargo</Label>
+            <Label htmlFor="role">Função</Label>
             <Select required name="role" defaultValue="member">
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um cargo" />
@@ -102,8 +102,7 @@ export function InviteMemberDialog({
             <Label htmlFor="password">Senha</Label>
             <MemberPasswordInput />
             <p className="text-xs text-muted-foreground">
-              Certifique-se de compartilhar esta senha com segurança com o
-              usuário
+              Uma senha segura será gerada. Compartilhe-a com o novo membro.
             </p>
           </div>
 
@@ -115,7 +114,7 @@ export function InviteMemberDialog({
                 Cancelar
               </Link>
             </Button>
-            <Button type="submit">Criar usuário</Button>
+            <Button type="submit">Adicionar Membro</Button>
           </div>
         </form>
       </DialogContent>

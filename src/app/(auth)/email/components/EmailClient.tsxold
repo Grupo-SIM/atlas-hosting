@@ -1,38 +1,13 @@
 "use client";
 
+import { Card, CardContent } from "@/components/ui/card";
+import { Mail, User } from "lucide-react";
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Mail, 
-  Inbox, 
-  Send, 
-  Archive, 
-  Trash2, 
-  Search, 
-  Compose,
-  Settings,
-  Star,
-  MoreHorizontal,
-  Paperclip,
-  Reply,
-  ReplyAll,
-  Forward,
-  RefreshCw,
-  Filter,
-  User,
-  Calendar,
-  Users,
-  FolderOpen
-} from "lucide-react";
-import { EmailSidebar } from "./EmailSidebar";
-import { EmailList } from "./EmailList";
-import { EmailView } from "./EmailView";
 import { ComposeEmail } from "./ComposeEmail";
-import { EmailHeader } from "./EmailHeader";
+import { EmailHeader } from "./EmailHeader.tsxold";
+import { EmailList } from "./EmailList";
+import { EmailSidebar } from "./EmailSidebar.tsxold";
+import { EmailView } from "./EmailView";
 
 interface Domain {
   id: string;
@@ -61,7 +36,7 @@ export function EmailClient({ user, domains }: EmailClientProps) {
   return (
     <div className="h-[calc(100vh-12rem)] flex flex-col">
       {/* Email Header */}
-      <EmailHeader 
+      <EmailHeader
         onCompose={() => setIsComposing(true)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -70,7 +45,7 @@ export function EmailClient({ user, domains }: EmailClientProps) {
       {/* Main Email Interface */}
       <div className="flex-1 flex gap-4 min-h-0">
         {/* Sidebar */}
-        <EmailSidebar 
+        <EmailSidebar
           selectedFolder={selectedFolder}
           onFolderChange={setSelectedFolder}
           onCompose={() => setIsComposing(true)}
@@ -80,7 +55,7 @@ export function EmailClient({ user, domains }: EmailClientProps) {
         <div className="flex-1 flex gap-4 min-h-0">
           {/* Email List */}
           <div className="w-80 min-h-0">
-            <EmailList 
+            <EmailList
               folder={selectedFolder}
               searchQuery={searchQuery}
               selectedEmailId={selectedEmail}
@@ -91,7 +66,7 @@ export function EmailClient({ user, domains }: EmailClientProps) {
           {/* Email View */}
           <div className="flex-1 min-h-0">
             {selectedEmail ? (
-              <EmailView 
+              <EmailView
                 emailId={selectedEmail}
                 onReply={() => setIsComposing(true)}
                 onClose={() => setSelectedEmail(null)}
@@ -115,7 +90,7 @@ export function EmailClient({ user, domains }: EmailClientProps) {
 
       {/* Compose Email Modal/Panel */}
       {isComposing && (
-        <ComposeEmail 
+        <ComposeEmail
           onClose={() => setIsComposing(false)}
           onSend={() => {
             setIsComposing(false);

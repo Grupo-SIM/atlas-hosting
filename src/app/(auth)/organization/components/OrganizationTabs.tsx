@@ -28,14 +28,20 @@ interface OrganizationTabsProps {
       email: string | null;
     };
   }>;
+  currentUserId: string;
+  organizationId: string;
+  isOwner: boolean;
 }
 
 export function OrganizationTabs({
   user,
   auditLogs = [],
+  currentUserId,
+  organizationId,
+  isOwner,
 }: OrganizationTabsProps) {
   const { organization } = user;
-  const { members } = organization || [];
+  const members = organization?.members || []; // Ensure members is an array
 
   return (
     <Tabs defaultValue="overview" className="space-y-6">
@@ -51,7 +57,12 @@ export function OrganizationTabs({
       </TabsContent>
 
       <TabsContent value="members">
-        <MemberManagement members={members} />
+        <MemberManagement 
+          members={members} 
+          currentUserId={currentUserId}
+          organizationId={organizationId}
+          isOwner={isOwner}
+        />
       </TabsContent>
 
       <TabsContent value="roles">

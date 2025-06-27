@@ -4,6 +4,14 @@ import { range } from "lodash";
 export default function HomeLoading() {
   return (
     <div className="space-y-8 p-6 pb-16">
+      <QuickActionsSkeleton />
+    </div>
+  );
+}
+
+export function QuickActionsSkeleton() {
+  return (
+    <>
       <Skeleton className="h-10 w-84" />
       <div className="flex items-center gap-2">
         <Skeleton className="h-10 w-30" />
@@ -27,6 +35,6 @@ export default function HomeLoading() {
           <Skeleton key={i} className="h-44 w-full rounded-lg" />
         ))}
       </div>
-    </div>
+    </>
   );
 }

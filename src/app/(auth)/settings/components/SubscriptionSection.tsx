@@ -1,23 +1,4 @@
-"use client";
-
-import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { UserPlanBadge } from "@/components/dashboard/WelcomeHeader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,40 +10,74 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  CreditCard,
-  Calendar,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { db } from "@/lib/db";
+import type { User } from "@/lib/db/schema/tables/user";
+import { toBrl } from "@/lib/utils";
+import { addMonths } from "date-fns";
+import {
   AlertTriangle,
-  CheckCircle,
-  Package,
   ArrowUpRight,
-  Server,
+  Calendar,
+  CheckCircle,
+  CreditCard,
   HardDrive,
   Mail,
+  Package,
+  Server,
   Shield,
 } from "lucide-react";
-import type { User } from "@/lib/db/schema/tables/user";
-import { UserPlanBadge } from "@/components/dashboard/WelcomeHeader";
-import { toBrl } from "@/lib/utils";
 import Link from "next/link";
-import { capitalize } from "lodash";
+import { redirect } from "next/navigation";
+import type { DomainResponse } from "@/plesk/models"; // Assuming this type is available from your Plesk SDK
+import { getDomain, getDomainDiskUsage } from "@/lib/server/apis/plesk-xml/client";
+import pleskApi from "@/lib/server/apis/plesk";
+import { sum } from "lodash";
 
 interface SubscriptionSectionProps {
   user: User;
 }
 
-export function SubscriptionSection({ user }: SubscriptionSectionProps) {
-  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
+  if (!user.organization.plan) {
+    return redirect("/settings?");
+  }
 
   const plan = user.organization.plan;
   const hasActivePlan = !!plan;
 
+  const lastBillingInvoice = await db.query.pgInvoice.findFirst({
+    where: (pgInvoice, { eq }) =>
+      eq(pgInvoice.reference, user.organization.planId ?? ""),
+    orderBy: (pgInvoice, { desc }) => desc(pgInvoice.createdAt),
+  });
+
   // Mock data for demonstration
-  const nextBillingDate = new Date("2025-07-06");
-  const storageUsed = 75; // GB
+  const nextBillingDate = addMonths(
+    lastBillingInvoice?.createdAt ?? new Date(),
+    1
+  );
+
+  let totalStorageUsedBytes = 0;
+  try {
+    const usages = await Promise.all(user.organization.domains.filter(domain =>domain.active).map(domain => getDomainDiskUsage(domain.domain).then(d => sum(Object.values(d ?? {})))));
+    totalStorageUsedBytes = sum(usages)
+  } catch (error) {
+    console.error("Failed to initialize Plesk API or process domains for storage usage:", error);
+  }
+
+  const calculatedStorageUsedGB = totalStorageUsedBytes / (1024 * 1024 * 1024); // Convert bytes to GB
   const storageLimit = plan?.maxStorage || 100; // GB
-  const storagePercentage = (storageUsed / storageLimit) * 100;
+  const storagePercentage = storageLimit > 0 ? (calculatedStorageUsedGB / storageLimit) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -189,7 +204,7 @@ export function SubscriptionSection({ user }: SubscriptionSectionProps) {
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Armazenamento</p>
                   <p className="text-sm text-muted-foreground">
-                    {storageUsed} GB de {storageLimit} GB utilizados
+                    {calculatedStorageUsedGB.toFixed(2)} GB de {storageLimit} GB utilizados
                   </p>
                 </div>
                 <Badge
@@ -299,13 +314,7 @@ export function SubscriptionSection({ user }: SubscriptionSectionProps) {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Manter Assinatura</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      onClick={() => {
-                        // Handle cancellation logic here
-                        console.log("Cancelling subscription...");
-                      }}
-                    >
+                    <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                       Confirmar Cancelamento
                     </AlertDialogAction>
                   </AlertDialogFooter>

@@ -1,8 +1,3 @@
-import type {
-  DomainData,
-  DomainPageParams,
-} from "@/app/(auth)/domains/(register-transfer)/types";
-import { getDomainData } from "@/app/(auth)/domains/(register-transfer)/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,6 +31,8 @@ import {
 } from "../ui/tooltip";
 import Form from "next/form";
 import { createDomainInvoice } from "@/app/actions";
+import { getDomainData } from "@/app/(auth)/domains/(register-transfer)/utils";
+import { DomainData, DomainPageParams } from "@/app/(auth)/domains/(register-transfer)/types";
 
 export async function DomainResult({
   searchParams,

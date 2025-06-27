@@ -27,11 +27,11 @@ export async function OrganizationHeaderActions({
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            {organizationName} - Administração
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight capitalize">
+            {organizationName} - Administração Geral
           </h1>
           <p className="text-muted-foreground">
-            Gerencie sua organização, membros da equipe e configurações
+            Gerencie sua organização, membros da equipe e outras configurações
           </p>
         </div>
         <div className="flex gap-3">
@@ -43,13 +43,15 @@ export async function OrganizationHeaderActions({
               }}
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Adicionar membro
+              Adicionar Membro
             </Link>
           </Button>
-          <Button>
-            <Settings className="h-4 w-4 mr-2" />
-            Configurações da Organização
-          </Button>
+          <Link href="/settings?tab=organization">
+            <Button>
+              <Settings className="h-4 w-4 mr-2" />
+              Configurações da Organização
+            </Button>
+          </Link>
         </div>
       </div>
       <InviteMemberDialog

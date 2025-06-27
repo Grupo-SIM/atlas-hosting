@@ -29,6 +29,7 @@ import axios from "axios";
 import { eq } from "drizzle-orm";
 import type { InstallWpData } from "../types";
 import type { AddWebspaceParams } from "./types";
+import { generateSslForDomain } from "@/app/actions";
 
 self.onmessage = async (event: MessageEvent<InstallWpData>) => {
   const {
@@ -400,7 +401,13 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
         activate: true,
         force: true,
       });
-      wpCli.language.plugin("elementor", "pt_BR").catch(() => null);
+
+      await wpCli.language
+        .plugin(`install elementor`, "pt_BR")
+        .catch(() => null);
+      await wpCli.language
+        .plugin(`activate elementor`, "pt_BR")
+        .catch(() => null);
 
       sendProgress(
         "INFO",
@@ -408,13 +415,19 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
       );
 
       await wpCli.plugin.install(
-        "https://wpnull.my/download/elementor/?wpdmdl=1464",
+        "https://download2272.mediafire.com/ql54ryzib14gJIzJNyrJEiH2Wso021rIb5P6-0rZ-xlWSqRa9bJk8XXytcyUU0WJDFVtnCfCqWbfDfBz2UdwVXTuITDaeHg4fEMJA41PpUhljT1zOFCeZBpotodtjGeYxcTdiMpHLKU2vWgyGnPiA7_ykPyavHMd0S7iKuBE3se2q8M/x6nktu6wkjvjxp1/elementor-pro.3.29.1.zip",
         {
           activate: true,
           force: true,
         }
       );
-      wpCli.language.plugin("elementor-pro", "pt_BR").catch(() => null);
+
+      await wpCli.language
+        .plugin(`install elementor-pro`, "pt_BR")
+        .catch(() => null);
+      await wpCli.language
+        .plugin(`activate elementor-pro`, "pt_BR")
+        .catch(() => null);
 
       // sendProgress(
       //   "INFO",
@@ -427,32 +440,40 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
           force: true,
         });
 
-        wpCli.language.plugin(plugin, "pt_BR").catch(() => null);
+        await wpCli.language
+          .plugin(`install ${plugin}`, "pt_BR")
+          .catch(() => null);
+        await wpCli.language
+          .plugin(`activate ${plugin}`, "pt_BR")
+          .catch(() => null);
 
-        // sendProgress(
-        //   "INFO",
-        //   "Instalação de plugin [".concat(
-        //     plugin,
-        //     "]",
-        //     " realizada com sucesso."
-        //   )
-        // );
+        sendProgress(
+          "INFO",
+          "Instalação de plugin [".concat(
+            plugin,
+            "]",
+            " realizada com sucesso."
+          )
+        );
         console.log("Plugin install result: ", result);
       }
     } catch (error) {
       sendProgress("ERROR", "Erro ao instalar plugins", error);
     }
 
-    sendProgress(
-      "INFO",
-      "Iniciando instalação de temas"
-    );
+    sendProgress("INFO", "Iniciando instalação de temas");
 
     const result = await wpCli.theme.install("hello-biz", {
       activate: true,
       force: true,
     });
     console.log("Theme install result: ", result);
+
+    sendProgress(
+      "INFO",
+      "Gerando certificado de segurança."
+    );
+    // await generateSslForDomain(domainName);
 
     const userLogger = new AppLogger(user);
     userLogger.log({

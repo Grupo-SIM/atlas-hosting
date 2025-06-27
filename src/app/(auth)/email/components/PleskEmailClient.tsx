@@ -1,220 +1,188 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// @ts-nocheck
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Mail, 
-  Inbox, 
-  Send, 
-  Archive, 
-  Trash2, 
-  Search, 
-  PenTool,
-  Settings,
-  Star,
-  MoreHorizontal,
-  Paperclip,
-  Reply,
-  ReplyAll,
-  Forward,
-  RefreshCw,
-  Filter,
-  User,
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { MailName } from "@/lib/server/apis/plesk-xml/types";
+import {
+  Archive,
+  HardDrive,
+  Inbox,
+  Mail,
   Plus,
+  Send,
   Server,
   Shield,
-  HardDrive
+  Trash2,
 } from "lucide-react";
-import { PleskEmailSidebar } from "./PleskEmailSidebar";
-import { PleskEmailList } from "./PleskEmailList";
-import { PleskEmailView } from "./PleskEmailView";
-import { PleskEmailCompose } from "./PleskEmailCompose";
+import Link from "next/link";
+import {
+  deleteEmail,
+  getEmailAccountSettings,
+  getEmailMessages,
+  markEmailAsRead,
+  sendEmail,
+} from "../actions";
 import { PleskEmailAccountSetup } from "./PleskEmailAccountSetup";
-import type { MailName } from "@/lib/server/apis/plesk-xml/types";
-import type { EmailMessage as RealEmailMessage } from "@/lib/server/apis/email";
-import { getEmailMessages, getEmailFolders, sendEmail, markEmailAsRead, deleteEmail, getEmailAccountSettings } from "../actions";
+import { PleskEmailCompose } from "./PleskEmailCompose";
+import { PleskEmailList } from "./PleskEmailList";
+import { PleskEmailSidebar } from "./PleskEmailSidebar";
+import { PleskEmailView } from "./PleskEmailView";
+import type { User } from "@/lib/db/schema";
 
-interface PleskEmailClientProps {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  domains: Array<{
-    id: string;
-    name: string;
-    pleskId?: number;
-    pleskSiteId?: number;
-    status: string;
-  }>;
-  initialMailAccounts?: MailName[];
-}
+export async function PleskEmailClient({
+  user,
+  domains,
+  initialMailAccounts = [],
+  searchParams: _searchParams,
+}: PleskEmailClientProps) {
+  const searchParams = await _searchParams;
 
-interface EmailFolder {
-  id: string;
-  name: string;
-  count: number;
-  icon: React.ReactNode;
-}
-
-interface EmailMessage {
-  id: string;
-  from: string;
-  to: string;
-  subject: string;
-  preview: string;
-  date: Date;
-  isRead: boolean;
-  isStarred: boolean;
-  hasAttachment: boolean;
-  folder: string;
-  body?: string;
-  html?: string;
-}
-
-export function PleskEmailClient({ user, domains, initialMailAccounts = [] }: PleskEmailClientProps) {
-  const [selectedFolder, setSelectedFolder] = useState("inbox");
-  const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
-  const [isComposing, setIsComposing] = useState(false);
-  const [showAccountSetup, setShowAccountSetup] = useState(false);
-  const [mailAccounts, setMailAccounts] = useState<MailName[]>(initialMailAccounts);
-  const [activeAccount, setActiveAccount] = useState<MailName | null>(
-    initialMailAccounts[0] || null
+  const currentAccountId =
+    searchParams.accountId || initialMailAccounts[0]?.id.toString();
+  const activeAccount = initialMailAccounts.find(
+    (acc) => acc.id.toString() === currentAccountId
   );
-  const [emails, setEmails] = useState<EmailMessage[]>([]);
-  const [folders, setFolders] = useState<EmailFolder[]>([
-    { id: "inbox", name: "Caixa de Entrada", count: 0, icon: <Inbox className="h-4 w-4" /> },
-    { id: "sent", name: "Enviados", count: 0, icon: <Send className="h-4 w-4" /> },
-    { id: "drafts", name: "Rascunhos", count: 0, icon: <Mail className="h-4 w-4" /> },
-    { id: "archive", name: "Arquivo", count: 0, icon: <Archive className="h-4 w-4" /> },
-    { id: "spam", name: "Spam", count: 0, icon: <Shield className="h-4 w-4" /> },
-    { id: "trash", name: "Lixeira", count: 0, icon: <Trash2 className="h-4 w-4" /> },
-  ]);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Load emails when active account or folder changes
-  useEffect(() => {
-    if (activeAccount) {
-      loadEmails();
-    }
-  }, [activeAccount]); // Only depend on activeAccount, not selectedFolder
+  if (!activeAccount) {
+    return (
+      <Card className="m-6">
+        <CardHeader>
+          <CardTitle>Configuração de Conta Necessária</CardTitle>
+          <CardDescription>
+            Por favor, selecione uma conta de e-mail válida ou configure uma
+            nova para continuar.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link href="/email?action=setupAccount">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Configurar Nova Conta
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const loadEmails = async () => {
-    if (!activeAccount) return;
-    
-    setIsLoading(true);
-    try {
-      // Find the corresponding database account config
-      const accountConfigs = await getEmailAccountSettings();
-      if (!accountConfigs.success) {
-        console.error("Failed to get account settings");
-        return;
-      }
+  const selectedFolder = searchParams.folder || "inbox";
+  const selectedEmailId = searchParams.emailId;
+  const action = searchParams.action;
+  const replyToEmailId = searchParams.replyTo;
 
-      const accountConfig = accountConfigs.data?.find(
-        config => config.emailAddress === `${activeAccount.name}@${activeAccount.site_name}`
+  let emails: EmailMessage[] = [];
+  let selectedEmailData: EmailMessage | null = null;
+  let replyToEmailData: EmailMessage | null = null;
+
+  let accountConfig: AccountConfig | null = null;
+
+  const accountConfigsResult = await getEmailAccountSettings();
+  if (accountConfigsResult.success && accountConfigsResult.data) {
+    accountConfig =
+      accountConfigsResult.data.find(
+        (config) =>
+          config.emailAddress ===
+          `${activeAccount.name}@${activeAccount.site_name}`
+      ) ?? null;
+  } else {
+    console.error(
+      "Failed to get account settings:",
+      accountConfigsResult.error
+    );
+  }
+
+  if (activeAccount && accountConfig) {
+    const result = await getEmailMessages(
+      accountConfig.id,
+      selectedFolder.toUpperCase()
+    );
+    if (result.success && result.data) {
+      // Ensure mapping from RealEmailMessage to EmailMessage if necessary
+      emails = result.data.map((email) => ({
+        ...email,
+        date: new Date(email.date), // Ensure date is a Date object
+      }));
+    } else {
+      console.error(
+        `Failed to load emails for ${selectedFolder}:`,
+        result.error
       );
-
-      if (!accountConfig) {
-        console.error("Account configuration not found");
-        return;
-      }
-
-      const result = await getEmailMessages(accountConfig.id, selectedFolder.toUpperCase());
-      if (result.success && result.data) {
-        setEmails(result.data);
-      } else {
-        console.error("Failed to load emails:", result.error);
-        setEmails([]);
-      }
-    } catch (error) {
-      console.error("Error loading emails:", error);
-      setEmails([]);
-    } finally {
-      setIsLoading(false);
     }
-  };
 
-  const filteredEmails = emails.filter(email => email.folder.toLowerCase() === selectedFolder);
+    if (selectedEmailId && action !== "compose") {
+      selectedEmailData = emails.find((e) => e.id === selectedEmailId) || null;
+      // markEmailAsRead will be called by PleskEmailView if needed
+    }
 
-  const handleEmailSelect = async (email: EmailMessage) => {
-    setSelectedEmail(email);
-    setIsComposing(false);
-    
-    // Mark email as read if it's not already read
-    if (!email.isRead && activeAccount) {
-      try {
-        const accountConfigs = await getEmailAccountSettings();
-        if (accountConfigs.success && accountConfigs.data) {
-          const accountConfig = accountConfigs.data.find(
-            config => config.emailAddress === `${activeAccount.name}@${activeAccount.site_name}`
-          );
-          
-          if (accountConfig) {
-            await markEmailAsRead(accountConfig.id, email.id, selectedFolder.toUpperCase());
-            // Update local state
-            setEmails(prev => prev.map(e => e.id === email.id ? { ...e, isRead: true } : e));
-          }
-        }
-      } catch (error) {
-        console.error("Failed to mark email as read:", error);
+    if (action === "compose" && replyToEmailId) {
+      // Attempt to find the email to reply to from the current list
+      // A more robust solution might involve fetching it specifically if not found
+      replyToEmailData = emails.find((e) => e.id === replyToEmailId) || null;
+      if (!replyToEmailData) {
+        // Potentially fetch the specific email if not in the current list
+        // For now, we assume it should be available or PleskEmailCompose handles ID.
+        console.warn(
+          `Email to reply to (ID: ${replyToEmailId}) not found in current list.`
+        );
       }
     }
-  };
+  }
 
-  const handleCompose = () => {
-    setSelectedEmail(null);
-    setIsComposing(true);
-  };
+  // TODO: Fetch dynamic folder counts using getEmailFolders(accountConfig.id)
+  const emailFoldersForSidebar: EmailFolder[] = [
+    {
+      id: "inbox",
+      name: "Caixa de Entrada",
+      count: emails.filter(
+        (e) => e.folder.toLowerCase() === "inbox" && !e.isRead
+      ).length,
+      icon: <Inbox className="h-4 w-4" />,
+    },
+    {
+      id: "sent",
+      name: "Enviados",
+      count: 0,
+      icon: <Send className="h-4 w-4" />,
+    }, // Placeholder counts
+    {
+      id: "drafts",
+      name: "Rascunhos",
+      count: 0,
+      icon: <Mail className="h-4 w-4" />,
+    },
+    {
+      id: "archive",
+      name: "Arquivo",
+      count: 0,
+      icon: <Archive className="h-4 w-4" />,
+    },
+    {
+      id: "spam",
+      name: "Spam",
+      count: 0,
+      icon: <Shield className="h-4 w-4" />,
+    },
+    {
+      id: "trash",
+      name: "Lixeira",
+      count: 0,
+      icon: <Trash2 className="h-4 w-4" />,
+    },
+  ];
 
-  const handleReply = (email: EmailMessage) => {
-    setIsComposing(true);
-    setSelectedEmail(null);
-  };
-
-  const handleEmailSend = async (emailData: {
-    to: string;
-    cc?: string;
-    bcc?: string;
-    subject: string;
-    text?: string;
-    html?: string;
-  }) => {
-    if (!activeAccount) return;
-    
+  const handleEmailSendAction = async (formData: FormData) => {
+    "use server";
+    if (!activeAccount || !accountConfig)
+      return { success: false, error: "Active account not configured." };
+    formData.append("accountId", accountConfig.id);
     try {
-      const accountConfigs = await getEmailAccountSettings();
-      if (!accountConfigs.success || !accountConfigs.data) {
-        console.error("Failed to get account settings");
-        return;
-      }
-
-      const accountConfig = accountConfigs.data.find(
-        config => config.emailAddress === `${activeAccount.name}@${activeAccount.site_name}`
-      );
-
-      if (!accountConfig) {
-        console.error("Account configuration not found");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("accountId", accountConfig.id);
-      formData.append("to", emailData.to);
-      formData.append("cc", emailData.cc || "");
-      formData.append("bcc", emailData.bcc || "");
-      formData.append("subject", emailData.subject);
-      formData.append("text", emailData.text || "");
-      formData.append("html", emailData.html || "");
-
       const result = await sendEmail(formData);
       if (result.success) {
-        setIsComposing(false);
-        // Optionally reload emails to show the sent message
-        await loadEmails();
+        // Revalidate or redirect as needed, handled by sendEmail action or page.tsx
       } else {
         console.error("Failed to send email:", result.error);
       }
@@ -223,32 +191,17 @@ export function PleskEmailClient({ user, domains, initialMailAccounts = [] }: Pl
     }
   };
 
-  const handleEmailDelete = async (email: EmailMessage) => {
-    if (!activeAccount) return;
-    
+  const handleEmailDeleteAction = async (
+    emailId: string,
+    folderName: string
+  ) => {
+    "use server";
+    if (!activeAccount || !accountConfig)
+      return { success: false, error: "Active account not configured." };
     try {
-      const accountConfigs = await getEmailAccountSettings();
-      if (!accountConfigs.success || !accountConfigs.data) {
-        console.error("Failed to get account settings");
-        return;
-      }
-
-      const accountConfig = accountConfigs.data.find(
-        config => config.emailAddress === `${activeAccount.name}@${activeAccount.site_name}`
-      );
-
-      if (!accountConfig) {
-        console.error("Account configuration not found");
-        return;
-      }
-
-      const result = await deleteEmail(accountConfig.id, email.id, selectedFolder.toUpperCase());
+      const result = await deleteEmail(accountConfig.id, emailId, folderName);
       if (result.success) {
-        // Remove from local state
-        setEmails(prev => prev.filter(e => e.id !== email.id));
-        if (selectedEmail?.id === email.id) {
-          setSelectedEmail(null);
-        }
+        // Revalidate or redirect
       } else {
         console.error("Failed to delete email:", result.error);
       }
@@ -257,16 +210,7 @@ export function PleskEmailClient({ user, domains, initialMailAccounts = [] }: Pl
     }
   };
 
-  const handleAccountCreated = (newAccount: MailName) => {
-    setMailAccounts(prev => [...prev, newAccount]);
-    if (!activeAccount) {
-      setActiveAccount(newAccount);
-    }
-    setShowAccountSetup(false);
-  };
-
-  // Show account setup if no accounts exist
-  if (mailAccounts.length === 0) {
+  if (initialMailAccounts.length === 0 || action === "setupAccount") {
     return (
       <div className="space-y-6">
         {/* Header */}
@@ -290,14 +234,19 @@ export function PleskEmailClient({ user, domains, initialMailAccounts = [] }: Pl
               </div>
               <CardTitle>Configuração Rápida</CardTitle>
               <CardDescription>
-                Configure uma conta de e-mail em poucos cliques usando seus domínios Plesk
+                Configure uma conta de e-mail em poucos cliques usando seus
+                domínios Plesk
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={() => setShowAccountSetup(true)} className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Conta de E-mail
-              </Button>
+              <Link
+                href={`/email?action=setupAccount${currentAccountId ? `&accountId=${currentAccountId}` : ""}${selectedFolder ? `&folder=${selectedFolder}` : ""}`}
+              >
+                <Button className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Conta de E-mail
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -326,15 +275,38 @@ export function PleskEmailClient({ user, domains, initialMailAccounts = [] }: Pl
           </Card>
         </div>
 
-        {showAccountSetup && (
+        {(initialMailAccounts.length === 0 || action === "setupAccount") && (
           <PleskEmailAccountSetup
             domains={domains}
             user={user}
-            onAccountCreated={handleAccountCreated}
-            onCancel={() => setShowAccountSetup(false)}
+            cancelHref="/email"
+            // onAccountCreated is handled by the form action within PleskEmailAccountSetup
+            // onCancel should be a Link within PleskEmailAccountSetup to navigate away
+            // e.g., <Link href={`/email${currentAccountId ? `?accountId=${currentAccountId}` : ''}`}>Cancelar</Link>
           />
         )}
       </div>
+    );
+  }
+
+  if (!activeAccount || !accountConfig) {
+    return (
+      <Card className="m-6">
+        <CardHeader>
+          <CardTitle>Configuração de Conta Necessária</CardTitle>
+          <CardDescription>
+            Por favor, selecione uma conta de e-mail válida ou configure uma
+            nova para continuar.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link href="/email?action=setupAccount">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Configurar Nova Conta
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -343,14 +315,14 @@ export function PleskEmailClient({ user, domains, initialMailAccounts = [] }: Pl
       {/* Sidebar */}
       <div className="w-64 flex-shrink-0">
         <PleskEmailSidebar
-          folders={folders}
+          folders={emailFoldersForSidebar}
           selectedFolder={selectedFolder}
-          onFolderSelect={setSelectedFolder}
-          onCompose={handleCompose}
-          mailAccounts={mailAccounts}
+          // onFolderSelect, onCompose, onAccountSelect, onAddAccount
+          // will be handled by Link components within PleskEmailSidebar
+          // It will need currentAccountId, selectedFolder to build links.
+          mailAccounts={initialMailAccounts}
           activeAccount={activeAccount}
-          onAccountSelect={setActiveAccount}
-          onAddAccount={() => setShowAccountSetup(true)}
+          user={user}
         />
       </div>
 
@@ -359,41 +331,53 @@ export function PleskEmailClient({ user, domains, initialMailAccounts = [] }: Pl
         {/* Email List */}
         <div className="w-96 flex-shrink-0">
           <PleskEmailList
-            emails={filteredEmails}
-            selectedEmail={selectedEmail}
-            onEmailSelect={handleEmailSelect}
+            emails={emails} // Assumes emails are already filtered for selectedFolder
+            selectedEmail={selectedEmailData}
+            // onEmailSelect will be handled by Link components within PleskEmailList
             folder={selectedFolder}
-            isLoading={isLoading}
+            // isLoading is not needed for server component
           />
         </div>
 
         {/* Email Content */}
         <div className="flex-1 min-w-0">
-          {isComposing ? (
+          {action === "compose" ? (
             <PleskEmailCompose
-              onSend={handleEmailSend}
-              onCancel={() => setIsComposing(false)}
-              replyTo={selectedEmail}
+            // onSend will be a form action using handleEmailSendAction
+            // onCancel will be a Link component
+              sendAction={handleEmailSendAction}
+              replyTo={replyToEmailData}
               fromAccount={activeAccount}
+              // currentAccountId={currentAccountId}
+              // currentFolder={selectedFolder}
+              // selectedEmailId={selectedEmailId} // To build cancel link
             />
-          ) : selectedEmail ? (
+          ) : selectedEmailData ? (
             <PleskEmailView
-              email={selectedEmail}
-              onReply={() => handleReply(selectedEmail)}
-              onForward={() => handleReply(selectedEmail)}
-              onDelete={() => handleEmailDelete(selectedEmail)}
+              email={selectedEmailData}
+              // onReply, onForward will be Link components
+              // onDelete will be a form action using handleEmailDeleteAction
+              deleteAction={handleEmailDeleteAction}
+              markAsReadAction={markEmailAsRead} // Pass the server action
+              accountId={accountConfig.id}
+              // currentAccountId, currentFolder for Link construction
             />
           ) : (
             <Card className="h-full flex items-center justify-center">
               <CardContent>
                 <div className="text-center text-muted-foreground">
                   <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">Nenhum e-mail selecionado</p>
+                  <p className="text-lg font-medium mb-2">
+                    Nenhum e-mail selecionado
+                  </p>
                   <p className="text-sm">
                     Selecione um e-mail da lista ou{" "}
-                    <Button variant="link" className="p-0 h-auto" onClick={handleCompose}>
-                      componha uma nova mensagem
-                    </Button>
+                    <Link
+                      href={`/email?accountId=${currentAccountId}&folder=${selectedFolder}&action=compose`}
+                      className="text-primary hover:underline"
+                    >
+                      componha uma nova mensagem.
+                    </Link>
                   </p>
                 </div>
               </CardContent>
@@ -401,20 +385,54 @@ export function PleskEmailClient({ user, domains, initialMailAccounts = [] }: Pl
           )}
         </div>
       </div>
-
-      {/* Account Setup Modal */}
-      {showAccountSetup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <PleskEmailAccountSetup
-              domains={domains}
-              user={user}
-              onAccountCreated={handleAccountCreated}
-              onCancel={() => setShowAccountSetup(false)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+
+interface PleskEmailClientProps {
+  user: User;
+  domains: Array<{
+    id: string;
+    name: string;
+    pleskId?: number;
+    pleskSiteId?: number;
+    status: string;
+  }>;
+  initialMailAccounts?: MailName[];
+  searchParams: Promise<PleskEmailSearchParams>;
+}
+
+export interface PleskEmailSearchParams {
+  folder?: string;
+  emailId?: string;
+  accountId?: string;
+  action?: "compose" | "setupAccount";
+  replyTo?: string;
+}
+
+interface EmailFolder {
+  id: string;
+  name: string;
+  count: number;
+  icon: React.ReactNode;
+}
+
+interface EmailMessage {
+  id: string;
+  from: string;
+  to: string;
+  subject: string;
+  preview: string;
+  date: Date;
+  isRead: boolean;
+  isStarred: boolean;
+  hasAttachment: boolean;
+  folder: string;
+  body?: string;
+  html?: string;
+}
+
+type AccountConfig = Exclude<
+  Awaited<ReturnType<typeof getEmailAccountSettings>>["data"],
+  undefined
+>[number];

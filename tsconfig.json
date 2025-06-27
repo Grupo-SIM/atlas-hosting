@@ -38,9 +38,10 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     ".next/types/**/*.ts"
-  ],
+, "src/app/(auth)/email/components/EmailHeader.tsxold", "src/app/(auth)/email/components/EmailSidebar.tsxold"  ],
   "exclude": [
     "node_modules/**/*",
-    "src/plesk/**/*"
+    "src/plesk/**/*",
+    "**/*.tsxold",
   ]
 }

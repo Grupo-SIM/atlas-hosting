@@ -21,19 +21,58 @@ import {
   CreditCard,
   Key,
   LogOut,
+  Menu,
   Settings,
   User as UserIcon,
   Users,
 } from "lucide-react";
+import Form from "next/form";
 import Link from "next/link";
 import { Suspense, type HTMLAttributes, type PropsWithChildren } from "react";
+import { CgClose } from "react-icons/cg";
 import { FaUserAlt } from "react-icons/fa";
 
-export default function Topbar({ children, className, ...props }: PropsWithChildren<HTMLAttributes<HTMLHeadElement>>) {
+export default async function Topbar({
+  children,
+  className,
+  params,
+  ...props
+}: PropsWithChildren<
+  HTMLAttributes<HTMLHeadElement> & {
+    params: Promise<{ tpo?: string }>;
+  }
+>) {
+  const searchParams = await params;
+  console.log(searchParams);
+  const sidebarOpen = searchParams?.tpo && searchParams.tpo == "1";
+
   return (
-    <header className={clsx("h-16 bg-card flex items-center justify-between px-6 relative z-2", className)} {...props}>
-      <h1 className="text-lg md:text-xl font-semibold">Painel</h1>
-      <div className="flex items-center space-x-4">
+    <header
+      className={clsx(
+        "display-none min-h-16 bg-card md:flex items-center justify-between px-6 relative z-2",
+        className
+      )}
+      {...props}
+    >
+      <Form action="">
+        <input type="hidden" name="tpo" value={sidebarOpen ? "0" : "1"} />
+        <button className="all:unset" type="submit">
+          {sidebarOpen ? (
+            <CgClose
+              className={clsx(
+                "text-lg md:text-xl font-semibold block md:hidden"
+              )}
+            />
+          ) : (
+            <Menu
+              className={clsx(
+                "text-lg md:text-xl font-semibold block md:hidden"
+              )}
+            />
+          )}
+        </button>
+      </Form>
+      <div className="flex items-center justify-end w-full space-x-4">
         {children}
         <ModeToggle />
         <DropdownMenu>
@@ -130,7 +169,7 @@ async function OrganizationName() {
   const user = await getUser();
 
   return (
-    <div className="text-sm border-l-1 border-muted-foreground/20 pl-4 border-solid">
+    <div className="text-sm border-l-1 border-muted-foreground/20 pl-4 border-solid hidden md:block">
       {user.organization.name}
     </div>
   );

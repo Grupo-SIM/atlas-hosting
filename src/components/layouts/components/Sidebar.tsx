@@ -15,7 +15,6 @@ import Link from "next/link";
 import { navigation } from "../navigation";
 
 export default function Sidebar() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(true);
 
   return (
@@ -27,7 +26,7 @@ export default function Sidebar() {
         width: isCompact ? "min-content" : "auto",
         transition: {
           duration: 0.3,
-          ease: sidebarOpen ? "easeIn" : "easeOut",
+          ease: isCompact ? "easeIn" : "easeOut",
         },
       }}
       transition={{
@@ -36,8 +35,8 @@ export default function Sidebar() {
       }}
       className={cn(
         "fixed inset-y-0 left-0 bg-card whitespace-nowrap max-h-screen z-2",
-        "lg:relative lg:flex lg:flex-col",
-        isCompact ? "w-[60px]" : "w-64"
+        "lg:relative lg:flex lg:flex-col -translate-x-[60px] md:translate-x-0",
+        isCompact ? "w-[60px] -translate-x-[60px]" : "w-64"
       )}
     >
       <motion.div

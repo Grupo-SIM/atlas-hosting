@@ -8011,7 +8011,7 @@ class LanguageCommand extends WpCliCommand {
     language: `${string[0]}${string[0]}_${string[0]}${string[0]}`
   ): Promise<string> {
     const command = this.buildCommand(
-      `language plugin install ${plugin} ${language}`,
+      `language plugin ${plugin} ${language}`,
       []
     );
     return this.execute<string>(command);

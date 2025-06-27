@@ -43,7 +43,7 @@ export function CreateEmailAccountDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.username || !formData.password) {
       toast.error("Nome de usuário e senha são obrigatórios");
       return;
@@ -67,21 +67,19 @@ export function CreateEmailAccountDialog({
         formDataToSend.append("displayName", formData.displayName);
         formDataToSend.append("quota", formData.quota);
 
-        const result = await createPleskMailAccount(formDataToSend);
+        await createPleskMailAccount(formDataToSend);
 
-        if (result.success) {
-          toast.success(`Conta ${formData.username}@${domainName} criada com sucesso!`);
-          setOpen(false);
-          setFormData({
-            username: "",
-            password: "",
-            confirmPassword: "",
-            displayName: "",
-            quota: "1000",
-          });
-        } else {
-          toast.error(result.error || "Erro ao criar conta de email");
-        }
+        toast.success(
+          `Conta ${formData.username}@${domainName} criada com sucesso!`
+        );
+        setOpen(false);
+        setFormData({
+          username: "",
+          password: "",
+          confirmPassword: "",
+          displayName: "",
+          quota: "1000",
+        });
       } catch (error) {
         console.error("Error creating email account:", error);
         toast.error("Erro inesperado ao criar conta de email");
@@ -90,12 +88,13 @@ export function CreateEmailAccountDialog({
   };
 
   const generateSecurePassword = () => {
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    const charset =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
     let password = "";
     for (let i = 0; i < 12; i++) {
       password += charset.charAt(Math.floor(Math.random() * charset.length));
     }
-    setFormData(prev => ({ ...prev, password, confirmPassword: password }));
+    setFormData((prev) => ({ ...prev, password, confirmPassword: password }));
     toast.info("Senha segura gerada automaticamente");
   };
 
@@ -114,10 +113,11 @@ export function CreateEmailAccountDialog({
             Criar Nova Conta de Email
           </DialogTitle>
           <DialogDescription>
-            Crie uma nova conta de email para o domínio <strong>{domainName}</strong>
+            Crie uma nova conta de email para o domínio{" "}
+            <strong>{domainName}</strong>
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Username */}
           <div className="space-y-2">
@@ -130,7 +130,12 @@ export function CreateEmailAccountDialog({
                 id="username"
                 placeholder="usuario"
                 value={formData.username}
-                onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value.toLowerCase() }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    username: e.target.value.toLowerCase(),
+                  }))
+                }
                 className="rounded-r-none"
                 disabled={isPending}
                 required
@@ -151,7 +156,12 @@ export function CreateEmailAccountDialog({
               id="displayName"
               placeholder="João Silva"
               value={formData.displayName}
-              onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  displayName: e.target.value,
+                }))
+              }
               disabled={isPending}
             />
           </div>
@@ -178,7 +188,9 @@ export function CreateEmailAccountDialog({
               type="password"
               placeholder="Digite uma senha segura"
               value={formData.password}
-              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, password: e.target.value }))
+              }
               disabled={isPending}
               required
               minLength={8}
@@ -193,7 +205,12 @@ export function CreateEmailAccountDialog({
               type="password"
               placeholder="Digite a senha novamente"
               value={formData.confirmPassword}
-              onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  confirmPassword: e.target.value,
+                }))
+              }
               disabled={isPending}
               required
               minLength={8}
@@ -208,7 +225,9 @@ export function CreateEmailAccountDialog({
             </Label>
             <Select
               value={formData.quota}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, quota: value }))}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, quota: value }))
+              }
               disabled={isPending}
             >
               <SelectTrigger>
@@ -228,16 +247,32 @@ export function CreateEmailAccountDialog({
           <div className="p-3 bg-muted rounded-lg">
             <p className="text-sm font-medium mb-2">Requisitos da Senha:</p>
             <ul className="text-xs text-muted-foreground space-y-1">
-              <li className={formData.password.length >= 8 ? "text-green-600" : ""}>
+              <li
+                className={
+                  formData.password.length >= 8 ? "text-green-600" : ""
+                }
+              >
                 • Mínimo de 8 caracteres
               </li>
-              <li className={/[A-Z]/.test(formData.password) ? "text-green-600" : ""}>
+              <li
+                className={
+                  /[A-Z]/.test(formData.password) ? "text-green-600" : ""
+                }
+              >
                 • Pelo menos uma letra maiúscula
               </li>
-              <li className={/[0-9]/.test(formData.password) ? "text-green-600" : ""}>
+              <li
+                className={
+                  /[0-9]/.test(formData.password) ? "text-green-600" : ""
+                }
+              >
                 • Pelo menos um número
               </li>
-              <li className={/[!@#$%^&*]/.test(formData.password) ? "text-green-600" : ""}>
+              <li
+                className={
+                  /[!@#$%^&*]/.test(formData.password) ? "text-green-600" : ""
+                }
+              >
                 • Pelo menos um caractere especial
               </li>
             </ul>
