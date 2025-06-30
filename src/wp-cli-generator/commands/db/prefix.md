@@ -1,0 +1,12 @@
+# wp db prefix
+
+Displays the database table prefix.
+
+Display the database table prefix, as defined by the database handler's interpretation of the current site.
+
+### EXAMPLES
+
+    $ wp db prefix
+    wp_
+
+

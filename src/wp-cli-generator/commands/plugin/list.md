@@ -1,0 +1,110 @@
+# wp plugin list
+
+Gets a list of plugins.
+
+Displays a list of the plugins installed on the site with activation status, whether or not there's an update available, etc.
+
+Use `--status=dropin` to list installed dropins (e.g. `object-cache.php`).
+
+### OPTIONS
+
+[--<field>=<value>]
+: Filter results based on the value of a field.
+
+[--field=<field>]
+: Prints the value of a single field for each plugin.
+
+[--fields=<fields>]
+: Limit the output to specific object fields.
+
+[--format=<format>]
+: Render output in a particular format.
+---
+default: table
+options:
+  - table
+  - csv
+  - count
+  - json
+  - yaml
+---
+
+[--status=<status>]
+: Filter the output by plugin status.
+---
+options:
+  - active
+  - active-network
+  - dropin
+  - inactive
+  - must-use
+---
+
+[--skip-update-check]
+: If set, the plugin update check will be skipped.
+
+[--recently-active]
+: If set, only recently active plugins will be shown and the status filter will be ignored.
+
+### AVAILABLE FIELDS
+
+These fields will be displayed by default for each plugin:
+
+* name
+* status
+* update
+* version
+* update_version
+* auto_update
+
+These fields are optionally available:
+
+* update_package
+* update_id
+* title
+* description
+* file
+* author
+* tested_up_to
+* requires
+* requires_php
+* wporg_status
+* wporg_last_updated
+
+### EXAMPLES
+
+    # List active plugins on the site.
+    $ wp plugin list --status=active --format=json
+    [{"name":"dynamic-hostname","status":"active","update":"none","version":"0.4.2","update_version":"","auto_update":"off"},{"name":"tinymce-templates","status":"active","update":"none","version":"4.8.1","update_version":"","auto_update":"off"},{"name":"wp-multibyte-patch","status":"active","update":"none","version":"2.9","update_version":"","auto_update":"off"},{"name":"wp-total-hacks","status":"active","update":"none","version":"4.7.2","update_version":"","auto_update":"off"}]
+
+    # List plugins on each site in a network.
+    $ wp site list --field=url | xargs -I % wp plugin list --url=%
+    +---------+----------------+-----------+---------+-----------------+------------+
+    | name    | status         | update    | version | update_version | auto_update |
+    +---------+----------------+-----------+---------+----------------+-------------+
+    | akismet | active-network | none      | 5.3.1   |                | on          |
+    | hello   | inactive       | available | 1.6     | 1.7.2          | off         |
+    +---------+----------------+-----------+---------+----------------+-------------+
+    +---------+----------------+-----------+---------+----------------+-------------+
+    | name    | status         | update    | version | update_version | auto_update |
+    +---------+----------------+-----------+---------+----------------+-------------+
+    | akismet | active-network | none      | 5.3.1   |                | on          |
+    | hello   | inactive       | available | 1.6     | 1.7.2          | off         |
+    +---------+----------------+-----------+---------+----------------+-------------+
+
+    # Check whether plugins are still active on WordPress.org
+    $ wp plugin list --fields=name,wporg_status,wporg_last_updated
+    +--------------------+--------------+--------------------+
+    | name               | wporg_status | wporg_last_updated |
+    +--------------------+--------------+--------------------+
+    | akismet            | active       | 2023-12-11         |
+    | user-switching     | active       | 2023-11-17         |
+    | wordpress-importer | active       | 2023-04-28         |
+    | local              |              |                    |
+    +--------------------+--------------+--------------------+
+
+    # List recently active plugins on the site.
+    $ wp plugin list --recently-active --field=name --format=json
+    ["akismet","bbpress","buddypress"]
+
+
