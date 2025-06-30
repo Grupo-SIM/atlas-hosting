@@ -1,4 +1,4 @@
-import type { DomainData } from "@/app/(auth)/domains/(register-transfer)/types";
+import type { DomainData } from "@/app/(auth)/domain/(register-transfer)/types";
 import { db } from "@/lib/db";
 import { pgDomainPricingCache } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";

@@ -1023,7 +1023,7 @@ export function NewWordPressSiteForm({
               Você não possui domínios registrados em sua conta ou todos os seus
               domínios já possuem WordPress instalado. Por favor,{" "}
               <Link
-                href="/domains/register"
+                href="/domain/register"
                 className="font-medium text-primary underline underline-offset-4"
               >
                 registre um novo domínio

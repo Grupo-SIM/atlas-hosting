@@ -135,7 +135,7 @@ export default async function DomainsPage({
                   por uma extensão diferente.
                 </p>
                 <Button variant="outline" asChild={true}>
-                  <Link href="/domains/register">Fazer uma nova pesquisa</Link>
+                  <Link href="/domain/register">Fazer uma nova pesquisa</Link>
                 </Button>
               </CardContent>
             </Card>

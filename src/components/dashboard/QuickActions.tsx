@@ -146,7 +146,7 @@ export function QuickActions() {
             Icon={HousePlus}
             title="Novo Domínio"
             subtitle="Registre um novo domínio"
-            href="/domains/register"
+            href="/domain/register"
             gradient="from-green-500 to-emerald-500"
             pattern="dots"
           />

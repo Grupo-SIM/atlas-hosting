@@ -29,7 +29,7 @@ export default function RegisterDomainForm({
   // );
 
   return (
-    <Form action="/domains/register" className="flex items-center gap-2">
+    <Form action="/domain/register" className="flex items-center gap-2">
       <input
         type="hidden"
         name="domain"

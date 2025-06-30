@@ -21,10 +21,10 @@ export default async function DomainsRegisterTransferLayout({
       <Tabs defaultValue="register" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-2xl mx-auto">
           <TabsTrigger asChild value="register">
-            <Link href="/domains/register">Encontrar novo domínio</Link>
+            <Link href="/domain/register">Encontrar novo domínio</Link>
           </TabsTrigger>
           <TabsTrigger value="transfer" asChild>
-            <Link href="/domains/transfer" className="flex items-center gap-2">
+            <Link href="/domain/transfer" className="flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               Transferir domínio existente
             </Link>

@@ -11,7 +11,7 @@ export default function NoDomains() {
         Você ainda não registrou nenhum domínio.
       </p>
       <Button asChild={true}>
-        <Link href="/domains/register">
+        <Link href="/domain/register">
           <Globe className="mr-2 h-4 w-4" /> Registrar Novo Domínio
         </Link>
       </Button>

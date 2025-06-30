@@ -37,7 +37,7 @@ import ip2Location from "@/lib/server/apis/ip2location";
 import ipaddrJs from "ipaddr.js";
 import { auth, signIn, signOut } from "@/auth";
 import { AppLogger } from "@/lib/server/logs";
-import type { DomainPageParams } from "./(auth)/domains/[action]/types";
+import type { DomainPageParams } from "./(auth)/domain/[action]/types";
 import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
 
 export async function login(
@@ -1264,7 +1264,7 @@ export async function addDomainForTransfer(
       active: false,
     });
 
-    revalidatePath("/domains/transfer");
+    revalidatePath("/domain/transfer");
 
     return {
       status: "success",
@@ -1304,7 +1304,7 @@ export async function checkDomainNameservers(
     const isCorrect = mockNameservers.every(ns => expectedNameservers.includes(ns)) &&
                      expectedNameservers.every(ns => mockNameservers.includes(ns));
 
-    revalidatePath("/domains/transfer");
+    revalidatePath("/domain/transfer");
 
     return {
       status: "success",
