@@ -7,13 +7,13 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { 
-  Table, 
-  Search, 
-  Loader2, 
+import {
+  Table,
+  Search,
+  Loader2,
   RefreshCw,
   Database,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import { getDbTablesAction } from "../actions";
 import { cn } from "@/lib/utils";
@@ -40,7 +40,8 @@ export function TableList({ instanceId, selectedTable }: TableListProps) {
       setTables(tableList);
       setFilteredTables(tableList);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
       setError(errorMessage);
       toast({
         title: "Erro ao carregar tabelas",
@@ -57,7 +58,7 @@ export function TableList({ instanceId, selectedTable }: TableListProps) {
   }, [fetchTables]);
 
   useEffect(() => {
-    const filtered = tables.filter(table =>
+    const filtered = tables.filter((table) =>
       table.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredTables(filtered);
@@ -113,7 +114,8 @@ export function TableList({ instanceId, selectedTable }: TableListProps) {
         </div>
         <div className="flex items-center justify-between">
           <Badge variant="secondary" className="text-xs">
-            {filteredTables.length} {filteredTables.length === 1 ? "tabela" : "tabelas"}
+            {filteredTables.length}{" "}
+            {filteredTables.length === 1 ? "tabela" : "tabelas"}
           </Badge>
           <Button onClick={handleRefresh} size="sm" variant="ghost">
             <RefreshCw className="h-4 w-4" />
@@ -127,7 +129,9 @@ export function TableList({ instanceId, selectedTable }: TableListProps) {
             <div className="text-center py-8">
               <Database className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">
-                {searchTerm ? "Nenhuma tabela encontrada" : "Nenhuma tabela disponível"}
+                {searchTerm
+                  ? "Nenhuma tabela encontrada"
+                  : "Nenhuma tabela disponível"}
               </p>
             </div>
           ) : (

@@ -1,6 +1,7 @@
 import { pgZohoDomainOrganizations } from "@/lib/db/schema/tables/email";
 import { relations } from "drizzle-orm";
 import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import type { UserCard } from "./card";
 import {
   pgOrganization,
   pgUserPermission,
@@ -8,10 +9,9 @@ import {
   type OrganizationDomain,
   type UserDomainAccess,
 } from "./organization";
-import { pgSession, type Session } from "./session";
 import type { Plan } from "./plan";
+import { pgSession, type Session } from "./session";
 import type { Wallet } from "./wallet";
-import type { UserCard } from "./card";
 
 export const pgUser = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -35,6 +35,20 @@ export const pgUser = pgTable("users", {
   deletedAt: timestamp("deleted_at", { mode: "date" }),
 });
 
+export const userSettings = pgTable("user_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .references(() => pgUser.id)
+    .notNull(),
+  emailNotifications: boolean("email_notifications").default(true),
+  smsNotifications: boolean("sms_notifications").default(false),
+  pushNotifications: boolean("push_notifications").default(true),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" })
+    .$default(() => new Date())
+    .notNull(),
+});
+
 export const userRelations = relations(pgUser, ({ one, many }) => ({
   zohoOrgs: many(pgZohoDomainOrganizations),
   referrer: one(pgUser, {
@@ -52,22 +66,30 @@ export const userRelations = relations(pgUser, ({ one, many }) => ({
   }),
   domainAccess: many(pgUserPermission),
   sessions: many(pgSession),
+  settings: one(userSettings, {
+    fields: [pgUser.id],
+    references: [userSettings.userId],
+  }),
 }));
 
 export type RawUser = typeof pgUser.$inferSelect;
+export type UserSettings = typeof userSettings.$inferSelect;
 
-export type User = RawUser & {
-  organization: Organization & {
-    domains: OrganizationDomain[];
-    plan: Plan | null;
-    owner: RawUser | null;
-    wallet: (Wallet & { cards: UserCard[] }) | null;
-    members: RawUser[];
-  };
+export interface User extends Omit<RawUser, "organization"> {
+  organization: Required<
+    Exclude<Organization, null> & {
+      domains: OrganizationDomain[];
+      plan: Plan | null;
+      owner: RawUser | null;
+      wallet: (Wallet & { cards: UserCard[] }) | null;
+      members: RawUser[];
+    }
+  >;
   domainAccess: UserDomainAccess[];
   referrer: RawUser | null;
   referredUsers: RawUser[];
   sessions: Session[];
-};
+  settings: UserSettings;
+}
 
 export type UserInsert = typeof pgUser.$inferInsert;

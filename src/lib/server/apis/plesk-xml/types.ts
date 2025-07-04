@@ -109,7 +109,7 @@ export interface EmailPrefs {
 export interface GetSetMailPrefsPayload {
   filter: {
     "site-id": number;
-  }
+  };
 }
 
 export interface EnableMailServicePayload {
@@ -195,7 +195,6 @@ export interface GetDnsRecordsResult {
   };
 }
 
-
 export interface DiskUsageStats {
   httpdocs?: number;
   httpsdocs?: number;
@@ -208,7 +207,7 @@ export interface DiskUsageStats {
   maillists?: number;
   domaindumps?: number;
   configs?: number; // optional
-  chroot?: number;  // optional
+  chroot?: number; // optional
 }
 
 export interface WebspaceDiskUsageData {

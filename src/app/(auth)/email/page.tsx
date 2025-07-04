@@ -108,9 +108,8 @@ export default async function EmailPage({
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Verifique se o domínio{" "}
-              <strong>{selectedDomain.domain}</strong> está ativo e configurado
-              para hospedagem no Plesk.
+              Verifique se o domínio <strong>{selectedDomain.domain}</strong>{" "}
+              está ativo e configurado para hospedagem no Plesk.
             </p>
             <Button variant="outline" onClick={() => window.location.reload()}>
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -126,7 +125,7 @@ export default async function EmailPage({
 
   // Get Plesk mail accounts
   const mailAccountsResult = await getPleskMailAccounts();
-  console.log(mailAccountsResult)
+  console.log(mailAccountsResult);
   const mailAccounts = mailAccountsResult.success
     ? mailAccountsResult.data
     : [];

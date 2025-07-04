@@ -343,8 +343,8 @@ export async function PleskEmailClient({
         <div className="flex-1 min-w-0">
           {action === "compose" ? (
             <PleskEmailCompose
-            // onSend will be a form action using handleEmailSendAction
-            // onCancel will be a Link component
+              // onSend will be a form action using handleEmailSendAction
+              // onCancel will be a Link component
               sendAction={handleEmailSendAction}
               replyTo={replyToEmailData}
               fromAccount={activeAccount}

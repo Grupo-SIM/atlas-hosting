@@ -414,11 +414,18 @@ export class CertificatesApi {
 
     const subscriptionResult = await getSubscription(domainName);
     if (!subscriptionResult?.data) {
-      throw new Error(`Could not find subscription data for domain: ${domainName}`);
+      throw new Error(
+        `Could not find subscription data for domain: ${domainName}`
+      );
     }
 
     const hostingData = Object.fromEntries(
-      subscriptionResult.data.hosting.vrt_hst.property.map(({ name, value }: { name: string; value: string | number }) => [name, value])
+      subscriptionResult.data.hosting.vrt_hst.property.map(
+        ({ name, value }: { name: string; value: string | number }) => [
+          name,
+          value,
+        ]
+      )
     );
 
     const { ftp_login, ftp_password } = hostingData;
@@ -527,11 +534,18 @@ export class CertificatesApi {
     try {
       const subscriptionResult = await getSubscription(domainName);
       if (!subscriptionResult?.data) {
-        throw new Error(`Could not find subscription data for domain: ${domainName}`);
+        throw new Error(
+          `Could not find subscription data for domain: ${domainName}`
+        );
       }
 
       const hostingData = Object.fromEntries(
-        subscriptionResult.data.hosting.vrt_hst.property.map(({ name, value }: { name: string; value: string | number }) => [name, value])
+        subscriptionResult.data.hosting.vrt_hst.property.map(
+          ({ name, value }: { name: string; value: string | number }) => [
+            name,
+            value,
+          ]
+        )
       );
 
       const { ftp_login, ftp_password } = hostingData;

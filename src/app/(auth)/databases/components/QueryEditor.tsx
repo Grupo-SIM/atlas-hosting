@@ -38,10 +38,13 @@ interface QueryEditorProps {
   initialQuery?: string;
 }
 
-export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps) {
+export function QueryEditor({
+  instanceId,
+  initialQuery = "",
+}: QueryEditorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [query, setQuery] = useState(initialQuery);
   const [isExecuting, setIsExecuting] = useState(false);
   const [result, setResult] = useState<TableDataResult | string | null>(null);
@@ -68,7 +71,7 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
       const endTime = Date.now();
       setExecutionTime(endTime - startTime);
       setResult(queryResult);
-      
+
       // Update URL to persist query
       const params = new URLSearchParams(searchParams);
       params.set("query", query.trim());
@@ -79,7 +82,8 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
         description: `Consulta executada em ${endTime - startTime}ms`,
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
       setError(errorMessage);
       setExecutionTime(null);
       toast({
@@ -97,7 +101,7 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
     setResult(null);
     setError(null);
     setExecutionTime(null);
-    
+
     // Clear URL parameter
     const params = new URLSearchParams(searchParams);
     params.delete("query");
@@ -106,18 +110,21 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
 
   const saveQuery = useCallback(() => {
     // For now, just copy to clipboard
-    navigator.clipboard.writeText(query).then(() => {
-      toast({
-        title: "Consulta copiada",
-        description: "A consulta foi copiada para a área de transferência.",
+    navigator.clipboard
+      .writeText(query)
+      .then(() => {
+        toast({
+          title: "Consulta copiada",
+          description: "A consulta foi copiada para a área de transferência.",
+        });
+      })
+      .catch(() => {
+        toast({
+          title: "Erro ao copiar",
+          description: "Não foi possível copiar a consulta.",
+          variant: "destructive",
+        });
       });
-    }).catch(() => {
-      toast({
-        title: "Erro ao copiar",
-        description: "Não foi possível copiar a consulta.",
-        variant: "destructive",
-      });
-    });
   }, [query]);
 
   const downloadResults = useCallback(() => {
@@ -127,18 +134,25 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
       // Convert result to CSV
       const csv = [
         // Header
-        result.columns.map(col => col.name).join(","),
+        result.columns
+          .map((col) => col.name)
+          .join(","),
         // Rows
-        ...result.rows.map(row => 
-          result.columns.map(col => {
-            const value = row[col.name];
-            // Escape values that contain commas or quotes
-            if (typeof value === "string" && (value.includes(",") || value.includes('"'))) {
-              return `"${value.replace(/"/g, '""')}"`;
-            }
-            return String(value ?? "");
-          }).join(",")
-        )
+        ...result.rows.map((row) =>
+          result.columns
+            .map((col) => {
+              const value = row[col.name];
+              // Escape values that contain commas or quotes
+              if (
+                typeof value === "string" &&
+                (value.includes(",") || value.includes('"'))
+              ) {
+                return `"${value.replace(/"/g, '""')}"`;
+              }
+              return String(value ?? "");
+            })
+            .join(",")
+        ),
       ].join("\n");
 
       // Create and download file
@@ -214,7 +228,7 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
               Baixar CSV
             </Button>
           </div>
-          
+
           <ScrollArea className="flex-1">
             <Table>
               <TableHeader>
@@ -234,13 +248,18 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
               <TableBody>
                 {result.rows.map((row, rowIndex) => {
                   const firstCol = result.columns[0];
-                  const firstValue = firstCol ? String(row[firstCol.name] ?? "") : "";
+                  const firstValue = firstCol
+                    ? String(row[firstCol.name] ?? "")
+                    : "";
                   const rowKey = `query-result-${firstValue}-${rowIndex}`;
-                  
+
                   return (
                     <TableRow key={rowKey}>
                       {result.columns.map((col) => (
-                        <TableCell key={col.name} className="whitespace-nowrap max-w-xs">
+                        <TableCell
+                          key={col.name}
+                          className="whitespace-nowrap max-w-xs"
+                        >
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -278,15 +297,29 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium">Consulta SQL</h3>
           <div className="flex items-center space-x-2">
-            <Button onClick={saveQuery} size="sm" variant="outline" disabled={!query.trim()}>
+            <Button
+              onClick={saveQuery}
+              size="sm"
+              variant="outline"
+              disabled={!query.trim()}
+            >
               <Save className="h-4 w-4 mr-2" />
               Copiar
             </Button>
-            <Button onClick={clearQuery} size="sm" variant="outline" disabled={!query.trim()}>
+            <Button
+              onClick={clearQuery}
+              size="sm"
+              variant="outline"
+              disabled={!query.trim()}
+            >
               <RotateCcw className="h-4 w-4 mr-2" />
               Limpar
             </Button>
-            <Button onClick={executeQuery} size="sm" disabled={isExecuting || !query.trim()}>
+            <Button
+              onClick={executeQuery}
+              size="sm"
+              disabled={isExecuting || !query.trim()}
+            >
               {isExecuting ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
@@ -296,7 +329,7 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
             </Button>
           </div>
         </div>
-        
+
         <Textarea
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -310,7 +343,7 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
           className="min-h-[120px] font-mono text-sm"
           disabled={isExecuting}
         />
-        
+
         {query.trim() && (
           <div className="flex items-center space-x-2">
             <Database className="h-4 w-4 text-muted-foreground" />
@@ -328,7 +361,9 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
             <div className="p-4">
               <div className="flex items-center space-x-2 mb-3">
                 <AlertCircle className="h-5 w-5 text-destructive" />
-                <span className="font-medium text-destructive">Erro na Consulta</span>
+                <span className="font-medium text-destructive">
+                  Erro na Consulta
+                </span>
               </div>
               <pre className="text-sm whitespace-pre-wrap bg-destructive/10 border border-destructive/20 rounded-md p-3 font-mono">
                 {error}
@@ -345,12 +380,17 @@ export function QueryEditor({ instanceId, initialQuery = "" }: QueryEditorProps)
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-4">
             <Database className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Pronto para executar consultas</h3>
+            <h3 className="text-lg font-medium mb-2">
+              Pronto para executar consultas
+            </h3>
             <p className="text-muted-foreground mb-4 max-w-md">
-              Digite uma consulta SQL acima e clique em "Executar" para ver os resultados.
+              Digite uma consulta SQL acima e clique em "Executar" para ver os
+              resultados.
             </p>
             <div className="text-sm text-muted-foreground space-y-1">
-              <p><strong>Dicas:</strong></p>
+              <p>
+                <strong>Dicas:</strong>
+              </p>
               <p>• Use LIMIT para evitar resultados muito grandes</p>
               <p>• Teste consultas SELECT antes de modificar dados</p>
               <p>• Use aspas graves (`) ao redor de nomes de tabelas/colunas</p>

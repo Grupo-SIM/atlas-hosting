@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +17,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Palette, RefreshCw, Settings, Eye } from "lucide-react";
+import {
+  MoreHorizontal,
+  Palette,
+  RefreshCw,
+  Settings,
+  Eye,
+} from "lucide-react";
 import type { WordPressThemeInfo } from "../types";
 
 interface ThemeCardProps {
@@ -27,13 +39,17 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
     setIsLoading(true);
     try {
       // Theme management actions will be implemented here
-      console.log(`Theme action: ${action} for ${theme.name} on site ${siteId}`);
-      
+      console.log(
+        `Theme action: ${action} for ${theme.name} on site ${siteId}`
+      );
+
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
-      console.error(`Error performing ${action} on theme ${theme.name}:`, error);
+      console.error(
+        `Error performing ${action} on theme ${theme.name}:`,
+        error
+      );
     } finally {
       setIsLoading(false);
     }
@@ -56,12 +72,12 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
               </CardDescription>
             </div>
           </div>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className="h-8 w-8 p-0" 
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0"
                 disabled={isLoading}
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -69,7 +85,7 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {theme.status === "inactive" ? (
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => handleAction("activate")}
                   disabled={isLoading}
                 >
@@ -82,10 +98,10 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
                   Tema Ativo
                 </DropdownMenuItem>
               )}
-              
+
               {theme.update === "available" && theme.update_version && (
                 <>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => handleAction("update")}
                     disabled={isLoading}
                   >
@@ -95,8 +111,8 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
                   <DropdownMenuSeparator />
                 </>
               )}
-              
-              <DropdownMenuItem 
+
+              <DropdownMenuItem
                 onClick={() => handleAction("customize")}
                 disabled={isLoading}
               >
@@ -117,15 +133,15 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
                 v{theme.version || "N/A"}
               </span>
             </div>
-            
+
             <div className="flex items-center space-x-2">
-              <Badge 
+              <Badge
                 variant={theme.status === "active" ? "default" : "secondary"}
                 className="text-xs"
               >
                 {theme.status === "active" ? "Ativo" : "Inativo"}
               </Badge>
-              
+
               {theme.update === "available" && theme.update_version && (
                 <Badge variant="destructive" className="text-xs">
                   Atualização para v{theme.update_version}
@@ -155,7 +171,7 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
                 Atualizar para v{theme.update_version}
               </Button>
             )}
-            
+
             {theme.status === "inactive" && (
               <Button
                 size="sm"
@@ -167,7 +183,7 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
                 Ativar
               </Button>
             )}
-            
+
             <Button
               size="sm"
               variant="outline"

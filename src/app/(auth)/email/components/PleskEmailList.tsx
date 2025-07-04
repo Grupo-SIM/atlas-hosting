@@ -6,17 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Search, 
-  Star, 
-  Paperclip, 
+import {
+  Search,
+  Star,
+  Paperclip,
   MoreHorizontal,
   RefreshCw,
   Filter,
   Archive,
   Trash2,
   MailOpen,
-  Mail
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -44,14 +44,21 @@ interface PleskEmailListProps {
   isLoading?: boolean;
 }
 
-export function PleskEmailList({ emails, selectedEmail, onEmailSelect, folder, isLoading = false }: PleskEmailListProps) {
+export function PleskEmailList({
+  emails,
+  selectedEmail,
+  onEmailSelect,
+  folder,
+  isLoading = false,
+}: PleskEmailListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
 
-  const filteredEmails = emails.filter(email => 
-    email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    email.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    email.preview.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredEmails = emails.filter(
+    (email) =>
+      email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      email.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      email.preview.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleEmailClick = (email: EmailMessage) => {
@@ -79,7 +86,7 @@ export function PleskEmailList({ emails, selectedEmail, onEmailSelect, folder, i
       drafts: "Rascunhos",
       archive: "Arquivo",
       spam: "Spam",
-      trash: "Lixeira"
+      trash: "Lixeira",
     };
     return folderNames[folderId] || "E-mails";
   };
@@ -159,10 +166,9 @@ export function PleskEmailList({ emails, selectedEmail, onEmailSelect, folder, i
                 {searchQuery ? "Nenhum e-mail encontrado" : "Pasta vazia"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {searchQuery 
+                {searchQuery
                   ? "Tente ajustar os termos de busca"
-                  : "Não há e-mails nesta pasta"
-                }
+                  : "Não há e-mails nesta pasta"}
               </p>
             </div>
           ) : (
@@ -198,11 +204,13 @@ export function PleskEmailList({ emails, selectedEmail, onEmailSelect, folder, i
                       email.isStarred = !email.isStarred;
                     }}
                   >
-                    <Star 
+                    <Star
                       className={cn(
-                        "h-4 w-4", 
-                        email.isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
-                      )} 
+                        "h-4 w-4",
+                        email.isStarred
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-muted-foreground"
+                      )}
                     />
                   </Button>
 
@@ -210,10 +218,12 @@ export function PleskEmailList({ emails, selectedEmail, onEmailSelect, folder, i
                   <div className="flex-1 min-w-0 space-y-1">
                     {/* Header */}
                     <div className="flex items-center justify-between">
-                      <p className={cn(
-                        "text-sm truncate",
-                        !email.isRead ? "font-semibold" : "font-medium"
-                      )}>
+                      <p
+                        className={cn(
+                          "text-sm truncate",
+                          !email.isRead ? "font-semibold" : "font-medium"
+                        )}
+                      >
                         {getFromDisplay(email)}
                       </p>
                       <div className="flex items-center space-x-2 flex-shrink-0">
@@ -221,19 +231,21 @@ export function PleskEmailList({ emails, selectedEmail, onEmailSelect, folder, i
                           <Paperclip className="h-3 w-3 text-muted-foreground" />
                         )}
                         <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(email.date, { 
+                          {formatDistanceToNow(email.date, {
                             addSuffix: true,
-                            locale: ptBR 
+                            locale: ptBR,
                           })}
                         </span>
                       </div>
                     </div>
 
                     {/* Subject */}
-                    <p className={cn(
-                      "text-sm truncate",
-                      !email.isRead ? "font-semibold" : "font-normal"
-                    )}>
+                    <p
+                      className={cn(
+                        "text-sm truncate",
+                        !email.isRead ? "font-semibold" : "font-normal"
+                      )}
+                    >
                       {email.subject}
                     </p>
 

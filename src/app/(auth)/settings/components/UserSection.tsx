@@ -57,7 +57,7 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react";
-import type { User } from "@/lib/db/schema/tables/user";
+import type { User, UserSettings } from "@/lib/db/schema/tables/user";
 import { formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -65,6 +65,7 @@ import {
   changePasswordAction,
   sendEmailVerificationAction,
   deleteUserAccountAction,
+  type ProfileUpdateMessage,
 } from "../actions";
 
 interface UserSectionProps {
@@ -86,33 +87,44 @@ export function UserSection({ user }: UserSectionProps) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // User preferences state
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: true,
-    security: true,
-    billing: true,
-    marketing: false,
-  });
-
-  const [preferences, setPreferences] = useState({
-    language: "pt-BR",
-    timezone: "America/Sao_Paulo",
-    dateFormat: "DD/MM/YYYY",
-    theme: "system",
-  });
+  const [preferences, setPreferences] = useState(user.settings);
 
   const handleSaveProfile = () => {
     startTransition(async () => {
       try {
-        const result = await updateUserProfileAction(userName, userEmail);
-        
+        const result = await updateUserProfileAction(
+          userName,
+          userEmail,
+          preferences
+        );
+
         if (result.success) {
           toast({
             title: "Sucesso",
             description: result.message,
           });
           setIsEditingProfile(false);
+
+          const updateMessage = JSON.parse(
+            result.message
+          ) as ProfileUpdateMessage;
+
+          setPreferences((prev) => {
+            if (
+              updateMessage.settings &&
+              updateMessage.settings?.emailNotifications !==
+                preferences.emailNotifications
+            ) {
+              return {
+                ...prev,
+                email: updateMessage.settings.emailNotifications ?? false,
+              };
+            }
+
+            return prev;
+          });
+
+          setUserEmail(updateMessage.email);
         } else {
           toast({
             title: "Erro",
@@ -132,7 +144,7 @@ export function UserSection({ user }: UserSectionProps) {
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (newPassword !== confirmPassword) {
       toast({
         title: "Erro",
@@ -154,7 +166,7 @@ export function UserSection({ user }: UserSectionProps) {
     startTransition(async () => {
       try {
         const result = await changePasswordAction(currentPassword, newPassword);
-        
+
         if (result.success) {
           toast({
             title: "Sucesso",
@@ -185,7 +197,7 @@ export function UserSection({ user }: UserSectionProps) {
     startTransition(async () => {
       try {
         const result = await sendEmailVerificationAction();
-        
+
         toast({
           title: result.success ? "Sucesso" : "Erro",
           description: result.message,
@@ -205,7 +217,7 @@ export function UserSection({ user }: UserSectionProps) {
     startTransition(async () => {
       try {
         const result = await deleteUserAccountAction();
-        
+
         if (result.success) {
           toast({
             title: "Conta Excluída",
@@ -324,8 +336,8 @@ export function UserSection({ user }: UserSectionProps) {
                     className="flex-1"
                   />
                   {!user.emailVerified && (
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={handleEmailVerification}
                       disabled={isPending}
@@ -339,10 +351,7 @@ export function UserSection({ user }: UserSectionProps) {
 
             {isEditingProfile && (
               <div className="flex gap-2">
-                <Button 
-                  onClick={handleSaveProfile}
-                  disabled={isPending}
-                >
+                <Button onClick={handleSaveProfile} disabled={isPending}>
                   <Save className="h-4 w-4 mr-2" />
                   {isPending ? "Salvando..." : "Salvar Alterações"}
                 </Button>
@@ -494,8 +503,8 @@ export function UserSection({ user }: UserSectionProps) {
                         </Button>
                       </div>
                     </div>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="w-full"
                       disabled={isPending}
                     >
@@ -544,36 +553,43 @@ export function UserSection({ user }: UserSectionProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-4">
-            {Object.entries(notifications).map(([key, value]) => (
+            {(
+              Object.entries(preferences) as [
+                "emailNotifications" | "pushNotifications" | "smsNotifications",
+                UserSettings[
+                  | "emailNotifications"
+                  | "pushNotifications"
+                  | "smsNotifications"],
+              ][]
+            ).map(([key, value]) => (
               <div key={key} className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">
-                    {key === "email"
+                    {key === "emailNotifications"
                       ? "Notificações por E-mail"
-                      : key === "push"
+                      : key === "pushNotifications"
                         ? "Notificações Push"
-                        : key === "security"
-                          ? "Alertas de Segurança"
-                          : key === "billing"
-                            ? "Avisos de Cobrança"
-                            : "Marketing e Promoções"}
+                        : key === "smsNotifications"
+                          ? "Alertas por telefone"
+                          : "Ofertas especiais e novidades"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {key === "email"
+                    {key === "emailNotifications"
                       ? "Receba atualizações importantes por e-mail"
-                      : key === "push"
+                      : key === "pushNotifications"
                         ? "Notificações em tempo real no navegador"
-                        : key === "security"
-                          ? "Alertas sobre atividades suspeitas"
-                          : key === "billing"
-                            ? "Lembretes de pagamento e faturas"
-                            : "Ofertas especiais e novidades"}
+                        : key === "smsNotifications"
+                          ? "Alertas por telefone"
+                          : "Ofertas especiais e novidades"}
                   </p>
                 </div>
                 <Switch
-                  checked={value}
+                  checked={value ?? false}
                   onCheckedChange={(checked) =>
-                    setNotifications((prev) => ({ ...prev, [key]: checked }))
+                    setPreferences((prev) => ({
+                      ...prev,
+                      [key]: checked,
+                    }))
                   }
                 />
               </div>
@@ -622,7 +638,7 @@ export function UserSection({ user }: UserSectionProps) {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogAction
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       onClick={handleDeleteAccount}
                       disabled={isPending}
@@ -638,4 +654,12 @@ export function UserSection({ user }: UserSectionProps) {
       </Card>
     </div>
   );
+}
+
+export interface NotificationsSettings {
+  email: boolean;
+  push: boolean;
+  security: boolean;
+  billing: boolean;
+  marketing: boolean;
 }

@@ -89,7 +89,9 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
               !output.includes("Success:");
           }
 
-          const pluginsWithUpdates = plugins.filter((p) => p.version < (p.updateVersion ?? 0));
+          const pluginsWithUpdates = plugins.filter(
+            (p) => p.version < (p.updateVersion ?? 0)
+          );
           const themesWithUpdates = themes.filter(
             (t) => t.update === "available"
           );

@@ -39,7 +39,10 @@ import {
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { DomainResponse } from "@/plesk/models"; // Assuming this type is available from your Plesk SDK
-import { getDomain, getDomainDiskUsage } from "@/lib/server/apis/plesk-xml/client";
+import {
+  getDomain,
+  getDomainDiskUsage,
+} from "@/lib/server/apis/plesk-xml/client";
 import pleskApi from "@/lib/server/apis/plesk";
 import { sum } from "lodash";
 
@@ -69,15 +72,27 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
 
   let totalStorageUsedBytes = 0;
   try {
-    const usages = await Promise.all(user.organization.domains.filter(domain =>domain.active).map(domain => getDomainDiskUsage(domain.domain).then(d => sum(Object.values(d ?? {})))));
-    totalStorageUsedBytes = sum(usages)
+    const usages = await Promise.all(
+      user.organization.domains
+        .filter((domain) => domain.active)
+        .map((domain) =>
+          getDomainDiskUsage(domain.domain).then((d) =>
+            sum(Object.values(d ?? {}))
+          )
+        )
+    );
+    totalStorageUsedBytes = sum(usages);
   } catch (error) {
-    console.error("Failed to initialize Plesk API or process domains for storage usage:", error);
+    console.error(
+      "Failed to initialize Plesk API or process domains for storage usage:",
+      error
+    );
   }
 
   const calculatedStorageUsedGB = totalStorageUsedBytes / (1024 * 1024 * 1024); // Convert bytes to GB
   const storageLimit = plan?.maxStorage || 100; // GB
-  const storagePercentage = storageLimit > 0 ? (calculatedStorageUsedGB / storageLimit) * 100 : 0;
+  const storagePercentage =
+    storageLimit > 0 ? (calculatedStorageUsedGB / storageLimit) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -204,7 +219,8 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Armazenamento</p>
                   <p className="text-sm text-muted-foreground">
-                    {calculatedStorageUsedGB.toFixed(2)} GB de {storageLimit} GB utilizados
+                    {calculatedStorageUsedGB.toFixed(2)} GB de {storageLimit} GB
+                    utilizados
                   </p>
                 </div>
                 <Badge

@@ -13,7 +13,7 @@ import {
   LucideBookMarked,
   Mail,
   Sparkles,
-  Train as Transfer
+  Train as Transfer,
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -370,11 +370,7 @@ async function AdminPanelCard() {
               }
               disabled={!canAdministrate}
               target="_blank"
-              href={
-                canAdministrate
-                  ? `/wordpress/transfer`
-                  : "#"
-              }
+              href={canAdministrate ? `/wordpress/transfer` : "#"}
               gradient="from-red-500 to-rose-500"
               pattern="waves"
             />

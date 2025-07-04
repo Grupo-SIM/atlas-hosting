@@ -89,7 +89,12 @@ export default async function DomainsPage({
 
   return (
     <span>
-      <TabsContent key="rt" defaultValue="register" value="register" className="space-y-8 mt-8">
+      <TabsContent
+        key="rt"
+        defaultValue="register"
+        value="register"
+        className="space-y-8 mt-8"
+      >
         <div className="text-center space-y-4">
           <p className="text-muted-foreground">
             Digite no campo de pesquisa o nome de domínio que você deseja e

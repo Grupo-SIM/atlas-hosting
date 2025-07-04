@@ -17,14 +17,18 @@ export function DbStatusCard({ domainName, status, error }: DbStatusCardProps) {
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold flex items-center justify-between">
           <span>{domainName}</span>
-          {isLoading && <AlertTriangle className="h-5 w-5 text-yellow-500 animate-pulse" />}
+          {isLoading && (
+            <AlertTriangle className="h-5 w-5 text-yellow-500 animate-pulse" />
+          )}
           {isSuccess && <CheckCircle className="h-5 w-5 text-green-500" />}
           {isError && <XCircle className="h-5 w-5 text-red-500" />}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading && (
-          <p className="text-sm text-muted-foreground">Verificando status do banco de dados...</p>
+          <p className="text-sm text-muted-foreground">
+            Verificando status do banco de dados...
+          </p>
         )}
         {isSuccess && (
           <p className="text-sm text-green-600">Banco de dados operacional.</p>

@@ -39,8 +39,8 @@ const WordPressNotFoundCard = memo<ErrorCardProps>(({ selectedDomainName }) => (
     <CardContent className="text-center">
       <p className="mb-4 text-amber-600">
         Seu domínio selecionado (<strong>{selectedDomainName}</strong>) não
-        possui uma instalação do WordPress. Portanto, seus bancos de dados não podem
-        ser exibidos aqui.
+        possui uma instalação do WordPress. Portanto, seus bancos de dados não
+        podem ser exibidos aqui.
       </p>
       <Button
         asChild
@@ -62,18 +62,13 @@ interface DatabaseEditorSectionProps {
   searchParams: Record<string, string | undefined>;
 }
 
-const DatabaseEditorSection = memo<DatabaseEditorSectionProps>(({ 
-  selectedDomainName, 
-  instanceId,
-  searchParams
-}) => (
-  <div className="mt-8">
-    <DatabaseEditor
-      instanceId={instanceId}
-      searchParams={searchParams}
-    />
-  </div>
-));
+const DatabaseEditorSection = memo<DatabaseEditorSectionProps>(
+  ({ selectedDomainName, instanceId, searchParams }) => (
+    <div className="mt-8">
+      <DatabaseEditor instanceId={instanceId} searchParams={searchParams} />
+    </div>
+  )
+);
 
 DatabaseEditorSection.displayName = "DatabaseEditorSection";
 
@@ -88,7 +83,8 @@ const DomainSelectionCard = memo(() => (
     </CardHeader>
     <CardContent>
       <p className="text-blue-600">
-        Por favor, selecione um domínio para visualizar os detalhes de seu banco de dados.
+        Por favor, selecione um domínio para visualizar os detalhes de seu banco
+        de dados.
       </p>
     </CardContent>
   </Card>
@@ -128,8 +124,8 @@ async function fetchDomainStatuses(
 
 export default async function DatabasesPage({
   searchParams,
-}: { 
-  searchParams: Promise<Record<string, string | string[] | undefined>> 
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getUser();
   if (!user) {
@@ -150,7 +146,7 @@ export default async function DatabasesPage({
   const normalizedSearchParams = Object.fromEntries(
     Object.entries(resolvedSearchParams).map(([key, value]) => [
       key,
-      Array.isArray(value) ? value[0] : value
+      Array.isArray(value) ? value[0] : value,
     ])
   ) as Record<string, string | undefined>;
 

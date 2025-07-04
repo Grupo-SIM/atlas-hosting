@@ -43,7 +43,9 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.state.error?.message || "Erro inesperado no componente"}
             </p>
             <Button
-              onClick={() => this.setState({ hasError: false, error: undefined })}
+              onClick={() =>
+                this.setState({ hasError: false, error: undefined })
+              }
               variant="outline"
             >
               <RefreshCw className="h-4 w-4 mr-2" />

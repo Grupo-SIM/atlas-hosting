@@ -43,24 +43,14 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "count", "yaml"]
           },
           {
             "name": "--status",
             "description": "Filter the output by theme status.",
             "required": false,
             "type": "status",
-            "choices": [
-              "active",
-              "parent",
-              "inactive"
-            ]
+            "choices": ["active", "parent", "inactive"]
           },
           {
             "name": "--skip-update-check",
@@ -195,13 +185,7 @@
                 "required": false,
                 "type": "format",
                 "default": "table",
-                "choices": [
-                  "table",
-                  "csv",
-                  "json",
-                  "yaml",
-                  "count"
-                ]
+                "choices": ["table", "csv", "json", "yaml", "count"]
               }
             ],
             "examples": [
@@ -296,12 +280,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "summary"
-            ]
+            "choices": ["table", "csv", "json", "summary"]
           },
           {
             "name": "--version",
@@ -444,12 +423,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "yaml"]
           }
         ],
         "examples": [
@@ -494,13 +468,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "count", "yaml"]
           }
         ],
         "examples": [
@@ -643,13 +611,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "count", "yaml"]
           }
         ],
         "examples": [
@@ -710,12 +672,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "yaml"]
           }
         ],
         "examples": [
@@ -858,10 +815,7 @@
         "required": false,
         "type": "format",
         "default": "table",
-        "choices": [
-          "table",
-          "count"
-        ]
+        "choices": ["table", "count"]
       },
       {
         "name": "--report",
@@ -964,13 +918,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "count",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "count", "json", "yaml"]
           },
           {
             "name": "--status",
@@ -1182,13 +1130,7 @@
                 "required": false,
                 "type": "format",
                 "default": "table",
-                "choices": [
-                  "table",
-                  "csv",
-                  "json",
-                  "yaml",
-                  "count"
-                ]
+                "choices": ["table", "csv", "json", "yaml", "count"]
               }
             ],
             "examples": [
@@ -1321,12 +1263,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "summary"
-            ]
+            "choices": ["table", "csv", "json", "summary"]
           },
           {
             "name": "--version",
@@ -1386,13 +1323,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "json",
-              "csv",
-              "yaml",
-              "count"
-            ]
+            "choices": ["table", "json", "csv", "yaml", "count"]
           },
           {
             "name": "--insecure",
@@ -1470,12 +1401,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "yaml"]
           }
         ],
         "examples": [
@@ -1551,13 +1477,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "count",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "count", "json", "yaml"]
           }
         ],
         "examples": [
@@ -1798,14 +1718,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "ids",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "ids", "json", "count", "yaml"]
           }
         ],
         "examples": [
@@ -1981,14 +1894,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "ids",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "ids", "json", "count", "yaml"]
           }
         ],
         "examples": [
@@ -2389,10 +2295,7 @@
             "required": false,
             "type": "format",
             "default": "progress",
-            "choices": [
-              "progress",
-              "ids"
-            ]
+            "choices": ["progress", "ids"]
           }
         ],
         "examples": [
@@ -2441,12 +2344,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "yaml"]
           }
         ],
         "examples": [
@@ -2806,13 +2704,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml",
-              "dotenv"
-            ]
+            "choices": ["table", "csv", "json", "yaml", "dotenv"]
           },
           {
             "name": "--strict",
@@ -2854,11 +2746,7 @@
             "required": false,
             "type": "type",
             "default": "all",
-            "choices": [
-              "constant",
-              "variable",
-              "all"
-            ]
+            "choices": ["constant", "variable", "all"]
           },
           {
             "name": "--config-file",
@@ -2930,10 +2818,7 @@
             "required": false,
             "type": "placement",
             "default": "'before'",
-            "choices": [
-              "before",
-              "after"
-            ]
+            "choices": ["before", "after"]
           },
           {
             "name": "--separator",
@@ -2947,11 +2832,7 @@
             "required": false,
             "type": "type",
             "default": "all",
-            "choices": [
-              "constant",
-              "variable",
-              "all"
-            ]
+            "choices": ["constant", "variable", "all"]
           },
           {
             "name": "--config-file",
@@ -2978,11 +2859,7 @@
             "required": false,
             "type": "type",
             "default": "all",
-            "choices": [
-              "constant",
-              "variable",
-              "all"
-            ]
+            "choices": ["constant", "variable", "all"]
           },
           {
             "name": "--format",
@@ -2990,12 +2867,7 @@
             "required": false,
             "type": "format",
             "default": "var_export",
-            "choices": [
-              "var_export",
-              "json",
-              "yaml",
-              "dotenv"
-            ]
+            "choices": ["var_export", "json", "yaml", "dotenv"]
           },
           {
             "name": "--config-file",
@@ -3022,11 +2894,7 @@
             "required": false,
             "type": "type",
             "default": "all",
-            "choices": [
-              "constant",
-              "variable",
-              "all"
-            ]
+            "choices": ["constant", "variable", "all"]
           },
           {
             "name": "--config-file",
@@ -3192,11 +3060,7 @@
             "required": false,
             "type": "type",
             "default": "all",
-            "choices": [
-              "constant",
-              "variable",
-              "all"
-            ]
+            "choices": ["constant", "variable", "all"]
           },
           {
             "name": "--config-file",
@@ -3325,9 +3189,7 @@
             "name": "--porcelain",
             "description": "Output a single field for each imported image. Defaults to attachment ID when used as flag.",
             "required": false,
-            "choices": [
-              "url"
-            ]
+            "choices": ["url"]
           }
         ],
         "examples": [
@@ -3450,13 +3312,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "json",
-              "csv",
-              "yaml",
-              "count"
-            ]
+            "choices": ["table", "json", "csv", "yaml", "count"]
           }
         ],
         "examples": [
@@ -3625,10 +3481,7 @@
             "required": false,
             "type": "format",
             "default": "list",
-            "choices": [
-              "list",
-              "csv"
-            ]
+            "choices": ["list", "csv"]
           }
         ],
         "examples": [
@@ -3897,12 +3750,7 @@
             "description": "Render output in a particular format.",
             "required": false,
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "yaml"]
           }
         ],
         "examples": [
@@ -4040,14 +3888,7 @@
             "description": "Render output in a particular format.",
             "required": false,
             "type": "format",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml",
-              "ids",
-              "count"
-            ]
+            "choices": ["table", "csv", "json", "yaml", "ids", "count"]
           }
         ],
         "examples": [
@@ -4165,12 +4006,7 @@
             "description": "Render output in a particular format.",
             "required": false,
             "type": "format",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "yaml"]
           },
           {
             "name": "--scope",
@@ -4205,10 +4041,7 @@
             "required": false,
             "type": "order",
             "default": "asc",
-            "choices": [
-              "asc",
-              "desc"
-            ]
+            "choices": ["asc", "desc"]
           },
           {
             "name": "--orderby",
@@ -4216,10 +4049,7 @@
             "required": false,
             "type": "orderby",
             "default": "name",
-            "choices": [
-              "name",
-              "size"
-            ]
+            "choices": ["name", "size"]
           }
         ],
         "examples": [
@@ -4359,12 +4189,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "json",
-              "yaml",
-              "csv"
-            ]
+            "choices": ["table", "json", "yaml", "csv"]
           },
           {
             "name": "--order",
@@ -4372,10 +4197,7 @@
             "required": false,
             "type": "order",
             "default": "ASC",
-            "choices": [
-              "ASC",
-              "DESC"
-            ]
+            "choices": ["ASC", "DESC"]
           },
           {
             "name": "--orderby",
@@ -4424,12 +4246,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "json",
-              "yaml",
-              "csv"
-            ]
+            "choices": ["table", "json", "yaml", "csv"]
           },
           {
             "name": "--order",
@@ -4437,10 +4254,7 @@
             "required": false,
             "type": "order",
             "default": "ASC",
-            "choices": [
-              "ASC",
-              "DESC"
-            ]
+            "choices": ["ASC", "DESC"]
           },
           {
             "name": "--orderby",
@@ -4483,12 +4297,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "json",
-              "yaml",
-              "csv"
-            ]
+            "choices": ["table", "json", "yaml", "csv"]
           },
           {
             "name": "--order",
@@ -4496,10 +4305,7 @@
             "required": false,
             "type": "order",
             "default": "ASC",
-            "choices": [
-              "ASC",
-              "DESC"
-            ]
+            "choices": ["ASC", "DESC"]
           },
           {
             "name": "--orderby",
@@ -4548,12 +4354,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "json",
-              "yaml",
-              "csv"
-            ]
+            "choices": ["table", "json", "yaml", "csv"]
           },
           {
             "name": "--order",
@@ -4561,10 +4362,7 @@
             "required": false,
             "type": "order",
             "default": "ASC",
-            "choices": [
-              "ASC",
-              "DESC"
-            ]
+            "choices": ["ASC", "DESC"]
           },
           {
             "name": "--orderby",
@@ -4652,14 +4450,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "count",
-              "ids",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "count", "ids", "yaml"]
           }
         ],
         "examples": [
@@ -4755,14 +4546,7 @@
                 "required": false,
                 "type": "format",
                 "default": "table",
-                "choices": [
-                  "table",
-                  "csv",
-                  "json",
-                  "count",
-                  "yaml",
-                  "ids"
-                ]
+                "choices": ["table", "csv", "json", "count", "yaml", "ids"]
               }
             ],
             "examples": [
@@ -5118,13 +4902,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "count",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "count", "json", "yaml"]
           }
         ],
         "examples": [
@@ -5356,10 +5134,7 @@
             "required": false,
             "type": "format",
             "default": "list",
-            "choices": [
-              "list",
-              "json"
-            ]
+            "choices": ["list", "json"]
           }
         ],
         "examples": [
@@ -5385,10 +5160,7 @@
             "required": false,
             "type": "format",
             "default": "json",
-            "choices": [
-              "var_export",
-              "json"
-            ]
+            "choices": ["var_export", "json"]
           }
         ],
         "examples": [
@@ -5545,13 +5317,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "count", "yaml"]
           }
         ],
         "examples": [
@@ -5683,14 +5449,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "ids",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "ids", "json", "count", "yaml"]
           }
         ],
         "examples": [
@@ -5958,10 +5717,7 @@
             "required": false,
             "type": "format",
             "default": "progress",
-            "choices": [
-              "progress",
-              "ids"
-            ]
+            "choices": ["progress", "ids"]
           }
         ],
         "examples": [
@@ -6009,14 +5765,7 @@
             "required": false,
             "type": "format",
             "default": "list",
-            "choices": [
-              "list",
-              "table",
-              "csv",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["list", "table", "csv", "json", "count", "yaml"]
           },
           {
             "name": "--origin",
@@ -6024,11 +5773,7 @@
             "required": false,
             "type": "origin",
             "default": "all",
-            "choices": [
-              "all",
-              "user",
-              "role"
-            ]
+            "choices": ["all", "user", "role"]
           },
           {
             "name": "--exclude-role-names",
@@ -6247,14 +5992,7 @@
                 "required": false,
                 "type": "format",
                 "default": "table",
-                "choices": [
-                  "table",
-                  "csv",
-                  "ids",
-                  "json",
-                  "count",
-                  "yaml"
-                ]
+                "choices": ["table", "csv", "ids", "json", "count", "yaml"]
               },
               {
                 "name": "--per_page",
@@ -6333,12 +6071,7 @@
                 "required": false,
                 "type": "format",
                 "default": "table",
-                "choices": [
-                  "table",
-                  "csv",
-                  "json",
-                  "yaml"
-                ]
+                "choices": ["table", "csv", "json", "yaml"]
               }
             ],
             "examples": [
@@ -6407,12 +6140,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "yaml"]
           }
         ],
         "examples": [
@@ -6692,13 +6420,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "count", "yaml"]
           }
         ],
         "examples": [
@@ -6815,14 +6537,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "ids",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "ids", "json", "count", "yaml"]
           }
         ],
         "examples": [
@@ -6874,10 +6589,7 @@
             "required": false,
             "type": "field",
             "default": "id",
-            "choices": [
-              "slug",
-              "id"
-            ]
+            "choices": ["slug", "id"]
           },
           {
             "name": "--name",
@@ -6927,10 +6639,7 @@
             "required": false,
             "type": "field",
             "default": "id",
-            "choices": [
-              "slug",
-              "id"
-            ]
+            "choices": ["slug", "id"]
           },
           {
             "name": "--from",
@@ -6977,10 +6686,7 @@
             "required": false,
             "type": "format",
             "default": "progress",
-            "choices": [
-              "progress",
-              "ids"
-            ]
+            "choices": ["progress", "ids"]
           }
         ],
         "examples": [
@@ -7023,10 +6729,7 @@
             "required": false,
             "type": "field",
             "default": "id",
-            "choices": [
-              "slug",
-              "id"
-            ]
+            "choices": ["slug", "id"]
           },
           {
             "name": "--field",
@@ -7046,12 +6749,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "yaml"]
           }
         ],
         "examples": [
@@ -7140,10 +6838,7 @@
             "required": false,
             "type": "field",
             "default": "id",
-            "choices": [
-              "slug",
-              "id"
-            ]
+            "choices": ["slug", "id"]
           }
         ],
         "examples": [
@@ -7215,14 +6910,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "ids",
-              "csv",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "ids", "csv", "json", "count", "yaml"]
           }
         ],
         "examples": [
@@ -7355,10 +7043,7 @@
             "required": false,
             "type": "format",
             "default": "progress",
-            "choices": [
-              "progress",
-              "ids"
-            ]
+            "choices": ["progress", "ids"]
           }
         ],
         "examples": [
@@ -7468,12 +7153,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "yaml"]
           }
         ],
         "examples": [
@@ -7713,13 +7393,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "count", "yaml"]
           }
         ],
         "examples": [
@@ -7783,12 +7457,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "yaml"]
           }
         ],
         "examples": [
@@ -7930,14 +7599,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "ids",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "ids", "count", "yaml"]
           }
         ],
         "examples": [
@@ -8071,13 +7733,7 @@
             "required": false,
             "type": "category",
             "default": "widgets",
-            "choices": [
-              "common",
-              "embed",
-              "formatting",
-              "layout",
-              "widgets"
-            ]
+            "choices": ["common", "embed", "formatting", "layout", "widgets"]
           },
           {
             "name": "--theme",
@@ -8149,12 +7805,7 @@
             "required": false,
             "type": "provider",
             "default": "circle",
-            "choices": [
-              "circle",
-              "gitlab",
-              "bitbucket",
-              "github"
-            ]
+            "choices": ["circle", "gitlab", "bitbucket", "github"]
           },
           {
             "name": "--activate",
@@ -8195,12 +7846,7 @@
             "required": false,
             "type": "provider",
             "default": "circle",
-            "choices": [
-              "circle",
-              "gitlab",
-              "bitbucket",
-              "github"
-            ]
+            "choices": ["circle", "gitlab", "bitbucket", "github"]
           },
           {
             "name": "--force",
@@ -8397,12 +8043,7 @@
             "required": false,
             "type": "provider",
             "default": "circle",
-            "choices": [
-              "circle",
-              "gitlab",
-              "bitbucket",
-              "github"
-            ]
+            "choices": ["circle", "gitlab", "bitbucket", "github"]
           },
           {
             "name": "--force",
@@ -8452,15 +8093,7 @@
             "required": false,
             "type": "format",
             "default": "list",
-            "choices": [
-              "list",
-              "table",
-              "csv",
-              "json",
-              "count",
-              "ids",
-              "yaml"
-            ]
+            "choices": ["list", "table", "csv", "json", "count", "ids", "yaml"]
           }
         ],
         "examples": [
@@ -8529,14 +8162,7 @@
             "required": false,
             "type": "format",
             "default": "list",
-            "choices": [
-              "list",
-              "table",
-              "csv",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["list", "table", "csv", "json", "count", "yaml"]
           },
           {
             "name": "--show-grant",
@@ -8562,10 +8188,7 @@
             "description": "Adds the capability as an explicit boolean value, instead of implicitly defaulting to `true`.",
             "required": false,
             "default": "true",
-            "choices": [
-              "true",
-              "false"
-            ]
+            "choices": ["true", "false"]
           }
         ],
         "examples": [
@@ -8644,13 +8267,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "count", "yaml"]
           }
         ],
         "examples": [
@@ -8829,14 +8446,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "json",
-              "csv",
-              "count",
-              "yaml",
-              "total_bytes"
-            ]
+            "choices": ["table", "json", "csv", "count", "yaml", "total_bytes"]
           },
           {
             "name": "--orderby",
@@ -8844,11 +8454,7 @@
             "required": false,
             "type": "fields",
             "default": "option_id",
-            "choices": [
-              "option_id",
-              "option_name",
-              "option_value"
-            ]
+            "choices": ["option_id", "option_name", "option_value"]
           },
           {
             "name": "--order",
@@ -8856,10 +8462,7 @@
             "required": false,
             "type": "order",
             "default": "asc",
-            "choices": [
-              "asc",
-              "desc"
-            ]
+            "choices": ["asc", "desc"]
           }
         ],
         "examples": [
@@ -8932,22 +8535,14 @@
             "required": false,
             "type": "format",
             "default": "plaintext",
-            "choices": [
-              "plaintext",
-              "json"
-            ]
+            "choices": ["plaintext", "json"]
           },
           {
             "name": "--autoload",
             "description": "Should this option be automatically loaded.",
             "required": false,
             "type": "autoload",
-            "choices": [
-              "'on'",
-              "'off'",
-              "'yes'",
-              "'no'"
-            ]
+            "choices": ["'on'", "'off'", "'yes'", "'no'"]
           }
         ],
         "examples": [
@@ -8978,10 +8573,7 @@
             "required": false,
             "type": "format",
             "default": "plaintext",
-            "choices": [
-              "plaintext",
-              "json"
-            ]
+            "choices": ["plaintext", "json"]
           }
         ],
         "examples": [
@@ -9026,12 +8618,7 @@
             "description": "Requires WP 4.2. Should this option be automatically loaded.",
             "required": false,
             "type": "autoload",
-            "choices": [
-              "'on'",
-              "'off'",
-              "'yes'",
-              "'no'"
-            ]
+            "choices": ["'on'", "'off'", "'yes'", "'no'"]
           },
           {
             "name": "--format",
@@ -9039,10 +8626,7 @@
             "required": false,
             "type": "format",
             "default": "plaintext",
-            "choices": [
-              "plaintext",
-              "json"
-            ]
+            "choices": ["plaintext", "json"]
           }
         ],
         "examples": [
@@ -9093,11 +8677,7 @@
             "required": false,
             "type": "format",
             "default": "plaintext",
-            "choices": [
-              "plaintext",
-              "json",
-              "yaml"
-            ]
+            "choices": ["plaintext", "json", "yaml"]
           }
         ],
         "examples": []
@@ -9124,11 +8704,7 @@
             "required": false,
             "type": "format",
             "default": "var_export",
-            "choices": [
-              "var_export",
-              "json",
-              "yaml"
-            ]
+            "choices": ["var_export", "json", "yaml"]
           }
         ],
         "examples": [
@@ -9240,14 +8816,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "count",
-              "ids",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "count", "ids", "json", "yaml"]
           }
         ],
         "examples": [
@@ -9361,10 +8930,7 @@
             "required": false,
             "type": "format",
             "default": "progress",
-            "choices": [
-              "progress",
-              "ids"
-            ]
+            "choices": ["progress", "ids"]
           }
         ],
         "examples": []
@@ -9829,10 +9395,7 @@
             "description": "Render raw oEmbed data in a particular format. Defaults to json. Can only be specified in conjunction with the 'raw' option.",
             "required": false,
             "type": "json|xml",
-            "choices": [
-              "json",
-              "xml"
-            ]
+            "choices": ["json", "xml"]
           }
         ],
         "examples": [
@@ -9918,13 +9481,7 @@
                 "required": false,
                 "type": "format",
                 "default": "table",
-                "choices": [
-                  "table",
-                  "csv",
-                  "ids",
-                  "json",
-                  "yaml"
-                ]
+                "choices": ["table", "csv", "ids", "json", "yaml"]
               }
             ],
             "examples": [
@@ -10033,13 +9590,7 @@
         "required": false,
         "type": "format",
         "default": "table",
-        "choices": [
-          "table",
-          "json",
-          "csv",
-          "yaml",
-          "count"
-        ]
+        "choices": ["table", "json", "csv", "yaml", "count"]
       },
       {
         "name": "--verbose",
@@ -10458,12 +10009,7 @@
                 "required": false,
                 "type": "format",
                 "default": "table",
-                "choices": [
-                  "table",
-                  "csv",
-                  "json",
-                  "count"
-                ]
+                "choices": ["table", "csv", "json", "count"]
               }
             ],
             "examples": [
@@ -10512,12 +10058,7 @@
                 "required": false,
                 "type": "format",
                 "default": "table",
-                "choices": [
-                  "table",
-                  "csv",
-                  "json",
-                  "summary"
-                ]
+                "choices": ["table", "csv", "json", "summary"]
               }
             ],
             "examples": [
@@ -10578,12 +10119,7 @@
                 "required": false,
                 "type": "format",
                 "default": "table",
-                "choices": [
-                  "table",
-                  "csv",
-                  "json",
-                  "summary"
-                ]
+                "choices": ["table", "csv", "json", "summary"]
               }
             ],
             "examples": [
@@ -10667,12 +10203,7 @@
                 "required": false,
                 "type": "format",
                 "default": "table",
-                "choices": [
-                  "table",
-                  "csv",
-                  "json",
-                  "count"
-                ]
+                "choices": ["table", "csv", "json", "count"]
               }
             ],
             "examples": [
@@ -10861,13 +10392,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "json",
-              "csv",
-              "count",
-              "yaml"
-            ]
+            "choices": ["table", "json", "csv", "count", "yaml"]
           }
         ],
         "examples": [
@@ -10909,10 +10434,7 @@
             "required": false,
             "type": "format",
             "default": "plaintext",
-            "choices": [
-              "plaintext",
-              "json"
-            ]
+            "choices": ["plaintext", "json"]
           },
           {
             "name": "--expiration",
@@ -10949,11 +10471,7 @@
             "required": false,
             "type": "format",
             "default": "plaintext",
-            "choices": [
-              "plaintext",
-              "json",
-              "yaml"
-            ]
+            "choices": ["plaintext", "json", "yaml"]
           },
           {
             "name": "--network",
@@ -10990,12 +10508,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "json", "yaml"]
           },
           {
             "name": "--network",
@@ -11106,13 +10619,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "ids",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "ids", "json", "yaml"]
           }
         ],
         "examples": [
@@ -11205,13 +10712,7 @@
             "required": false,
             "type": "format",
             "default": "table",
-            "choices": [
-              "table",
-              "csv",
-              "ids",
-              "json",
-              "yaml"
-            ]
+            "choices": ["table", "csv", "ids", "json", "yaml"]
           }
         ],
         "examples": [
@@ -11316,10 +10817,7 @@
         "required": false,
         "type": "format",
         "default": "zip",
-        "choices": [
-          "zip",
-          "targz"
-        ]
+        "choices": ["zip", "targz"]
       },
       {
         "name": "--filename-format",
@@ -11448,10 +10946,7 @@
             "required": false,
             "type": "format",
             "default": "plaintext",
-            "choices": [
-              "plaintext",
-              "json"
-            ]
+            "choices": ["plaintext", "json"]
           }
         ],
         "examples": []
@@ -11497,11 +10992,7 @@
             "required": false,
             "type": "format",
             "default": "plaintext",
-            "choices": [
-              "plaintext",
-              "json",
-              "yaml"
-            ]
+            "choices": ["plaintext", "json", "yaml"]
           }
         ],
         "examples": []

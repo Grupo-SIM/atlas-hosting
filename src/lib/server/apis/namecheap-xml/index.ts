@@ -165,7 +165,7 @@ import type {
   DomainPrivacyRenewCommandResponse,
   RequestParams,
 } from "./types";
-import { XMLParser } from 'fast-xml-parser'; // Example import
+import { XMLParser } from "fast-xml-parser"; // Example import
 
 // Helper to ensure a value is an array
 function ensureArray<T>(data: T | T | undefined): T {
@@ -197,20 +197,22 @@ export class NamecheapApiClient {
       parseAttributeValue: true,
       parseTagValue: true,
       // Define paths that should always be arrays for consistency
-    //   isArray: (name, jpath) => {
-    //     const arrayPaths = [
-    //       "ApiResponse.Errors.Error",
-    //     "ApiResponse.CommandResponse.DomainCheckResult",
-    //     "ApiResponse.CommandResponse.DomainRenewDetails",
-            
-    //     return arrayPaths.includes(jpath);
-    //   }
+      //   isArray: (name, jpath) => {
+      //     const arrayPaths = [
+      //       "ApiResponse.Errors.Error",
+      //     "ApiResponse.CommandResponse.DomainCheckResult",
+      //     "ApiResponse.CommandResponse.DomainRenewDetails",
+
+      //     return arrayPaths.includes(jpath);
+      //   }
     });
   }
 
   private async request<
     TResponsePayload,
-    TRequestParams extends RequestParams | undefined = RequestParams | undefined,
+    TRequestParams extends RequestParams | undefined =
+      | RequestParams
+      | undefined,
   >(
     command: string,
     params: TRequestParams,
@@ -224,7 +226,9 @@ export class NamecheapApiClient {
       Command: command,
     };
 
-    let allParams: Record<string, string | number | boolean> = { ...globalParams };
+    let allParams: Record<string, string | number | boolean> = {
+      ...globalParams,
+    };
 
     if (params) {
       // Omit UserName if changing password with a reset code
@@ -241,7 +245,9 @@ export class NamecheapApiClient {
         if (params[key as keyof RequestParams] !== undefined) {
           const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
           if (Array.isArray(params[key as keyof RequestParams])) {
-            apiParams[pascalKey] = (params[key as keyof RequestParams] as unknown[]).join(",");
+            apiParams[pascalKey] = (
+              params[key as keyof RequestParams] as unknown[]
+            ).join(",");
           } else {
             // @ts-expect-error We don't know the type of the params
             apiParams[pascalKey] = params[key];
@@ -404,10 +410,10 @@ export class NamecheapApiClient {
     getList: (
       params?: DomainsGetListParams
     ): Promise<NamecheapApiResponse<DomainsGetListCommandResponse>> => {
-      return this.request<DomainsGetListCommandResponse, DomainsGetListParams | undefined>(
-        "namecheap.domains.getList",
-        params
-      );
+      return this.request<
+        DomainsGetListCommandResponse,
+        DomainsGetListParams | undefined
+      >("namecheap.domains.getList", params);
     },
     /**
      * Gets contact information of the requested domain. [2]

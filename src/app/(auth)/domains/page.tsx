@@ -80,7 +80,9 @@ export default async function MyDomainsPage({
   };
 
   try {
-    const dbDomains = user.organization.domains.filter(domain => domain.active);
+    const dbDomains = user.organization.domains.filter(
+      (domain) => domain.active
+    );
 
     const domains = await Promise.all(
       dbDomains.map(async (domain) => {
@@ -116,13 +118,17 @@ export default async function MyDomainsPage({
     // Calculate stats
     domainStats = {
       total: domains.length,
-      active: domains.filter(d => d.status === "active").length,
-      expired: domains.filter(d => d.status === "expired").length,
-      expiringThisMonth: domains.filter(d => {
+      active: domains.filter((d) => d.status === "active").length,
+      expired: domains.filter((d) => d.status === "expired").length,
+      expiringThisMonth: domains.filter((d) => {
         if (d.expiryDate === "Nunca") return false;
         try {
-          const [day, month, year] = d.expiryDate.split('/');
-          const expiryDate = new Date(Number.parseInt(year, 10), Number.parseInt(month, 10) - 1, Number.parseInt(day, 10));
+          const [day, month, year] = d.expiryDate.split("/");
+          const expiryDate = new Date(
+            Number.parseInt(year, 10),
+            Number.parseInt(month, 10) - 1,
+            Number.parseInt(day, 10)
+          );
           const nextMonth = new Date();
           nextMonth.setMonth(nextMonth.getMonth() + 1);
           return expiryDate <= nextMonth && expiryDate > new Date();
@@ -168,7 +174,9 @@ export default async function MyDomainsPage({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-2xl font-bold">{domainStats.total}</p>
-                  <p className="text-sm text-muted-foreground">Total de Domínios</p>
+                  <p className="text-sm text-muted-foreground">
+                    Total de Domínios
+                  </p>
                 </div>
                 <Globe className="h-8 w-8 text-blue-500" />
               </div>
@@ -179,8 +187,12 @@ export default async function MyDomainsPage({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-green-600">{domainStats.active}</p>
-                  <p className="text-sm text-muted-foreground">Domínios Ativos</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {domainStats.active}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Domínios Ativos
+                  </p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-500" />
               </div>
@@ -191,8 +203,12 @@ export default async function MyDomainsPage({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-orange-600">{domainStats.expiringThisMonth}</p>
-                  <p className="text-sm text-muted-foreground">Expiram em 30 dias</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {domainStats.expiringThisMonth}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Expiram em 30 dias
+                  </p>
                 </div>
                 <Calendar className="h-8 w-8 text-orange-500" />
               </div>
@@ -203,8 +219,12 @@ export default async function MyDomainsPage({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-red-600">{domainStats.expired}</p>
-                  <p className="text-sm text-muted-foreground">Domínios Expirados</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {domainStats.expired}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Domínios Expirados
+                  </p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-red-500" />
               </div>
@@ -227,37 +247,55 @@ export default async function MyDomainsPage({
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button variant="outline" className="justify-start h-auto p-4" asChild>
+              <Button
+                variant="outline"
+                className="justify-start h-auto p-4"
+                asChild
+              >
                 <Link href="/dns">
                   <div className="flex items-center gap-3">
                     <Server className="h-5 w-5 text-blue-500" />
                     <div className="text-left">
                       <p className="font-medium">Gerenciar DNS</p>
-                      <p className="text-sm text-muted-foreground">Configure registros DNS</p>
+                      <p className="text-sm text-muted-foreground">
+                        Configure registros DNS
+                      </p>
                     </div>
                   </div>
                 </Link>
               </Button>
 
-              <Button variant="outline" className="justify-start h-auto p-4" asChild>
+              <Button
+                variant="outline"
+                className="justify-start h-auto p-4"
+                asChild
+              >
                 <Link href="/domains/privacy">
                   <div className="flex items-center gap-3">
                     <Shield className="h-5 w-5 text-green-500" />
                     <div className="text-left">
                       <p className="font-medium">Privacidade</p>
-                      <p className="text-sm text-muted-foreground">Proteja suas informações</p>
+                      <p className="text-sm text-muted-foreground">
+                        Proteja suas informações
+                      </p>
                     </div>
                   </div>
                 </Link>
               </Button>
 
-              <Button variant="outline" className="justify-start h-auto p-4" asChild>
+              <Button
+                variant="outline"
+                className="justify-start h-auto p-4"
+                asChild
+              >
                 <Link href="/email">
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 text-purple-500" />
                     <div className="text-left">
                       <p className="font-medium">Email</p>
-                      <p className="text-sm text-muted-foreground">Configure emails</p>
+                      <p className="text-sm text-muted-foreground">
+                        Configure emails
+                      </p>
                     </div>
                   </div>
                 </Link>
@@ -275,7 +313,8 @@ export default async function MyDomainsPage({
             Seus Domínios
           </CardTitle>
           <CardDescription>
-            Lista de todos os seus domínios registrados com informações detalhadas
+            Lista de todos os seus domínios registrados com informações
+            detalhadas
           </CardDescription>
         </CardHeader>
         <CardContent
@@ -288,7 +327,9 @@ export default async function MyDomainsPage({
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
-                    <TableHead className="font-semibold">Nome do Domínio</TableHead>
+                    <TableHead className="font-semibold">
+                      Nome do Domínio
+                    </TableHead>
                     <TableHead className="hidden md:table-cell text-center font-semibold">
                       Data de Registro
                     </TableHead>
@@ -298,12 +339,17 @@ export default async function MyDomainsPage({
                     <TableHead className="hidden lg:table-cell font-semibold">
                       Renovação
                     </TableHead>
-                    <TableHead className="text-right font-semibold">Ações</TableHead>
+                    <TableHead className="text-right font-semibold">
+                      Ações
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {processedDomains.map((domain) => (
-                    <TableRow key={domain.id} className="hover:bg-muted/50 transition-colors">
+                    <TableRow
+                      key={domain.id}
+                      className="hover:bg-muted/50 transition-colors"
+                    >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="flex items-center">
@@ -322,9 +368,9 @@ export default async function MyDomainsPage({
                               <p className="font-medium">{domain.name}</p>
                               <div className="flex gap-1 mt-1">
                                 {domain.features.slice(0, 2).map((feature) => (
-                                  <Badge 
-                                    key={feature} 
-                                    variant="secondary" 
+                                  <Badge
+                                    key={feature}
+                                    variant="secondary"
                                     className="text-xs"
                                   >
                                     {feature}
@@ -342,12 +388,16 @@ export default async function MyDomainsPage({
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-center">
                         <div className="flex flex-col">
-                          <span className="font-medium">{domain.registrationDate}</span>
+                          <span className="font-medium">
+                            {domain.registrationDate}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col items-center gap-1">
-                          <span className="font-medium">{domain.expiryDate}</span>
+                          <span className="font-medium">
+                            {domain.expiryDate}
+                          </span>
                           {domain.status === "expired" && (
                             <Badge variant="destructive" className="text-xs">
                               Expirado
@@ -366,7 +416,10 @@ export default async function MyDomainsPage({
                               Automática
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-orange-500/10 text-orange-700 border-orange-200">
+                            <Badge
+                              variant="outline"
+                              className="bg-orange-500/10 text-orange-700 border-orange-200"
+                            >
                               Manual
                             </Badge>
                           )}
@@ -387,14 +440,17 @@ export default async function MyDomainsPage({
                           <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuItem asChild={true}>
                               <Link href={`/dns?domain=${domain.id}`}>
-                                <Server className="h-4 w-4 mr-2" /> Gerenciar DNS
+                                <Server className="h-4 w-4 mr-2" /> Gerenciar
+                                DNS
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem>
-                              <Lock className="h-4 w-4 mr-2" /> Configurar Privacidade
+                              <Lock className="h-4 w-4 mr-2" /> Configurar
+                              Privacidade
                             </DropdownMenuItem>
                             <DropdownMenuItem>
-                              <RefreshCw className="h-4 w-4 mr-2" /> Renovar Domínio
+                              <RefreshCw className="h-4 w-4 mr-2" /> Renovar
+                              Domínio
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Mail className="h-4 w-4 mr-2" /> Configurar Email
@@ -405,7 +461,8 @@ export default async function MyDomainsPage({
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
-                                <ExternalLink className="h-4 w-4 mr-2" /> Visitar Site
+                                <ExternalLink className="h-4 w-4 mr-2" />{" "}
+                                Visitar Site
                               </a>
                             </DropdownMenuItem>
                           </DropdownMenuContent>

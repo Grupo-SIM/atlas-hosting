@@ -26,7 +26,12 @@ export default async function DomainsTransferPage({
   );
 
   return (
-    <TabsContent key="tf" defaultValue="transfer" value="transfer" className="space-y-8 mt-8">
+    <TabsContent
+      key="tf"
+      defaultValue="transfer"
+      value="transfer"
+      className="space-y-8 mt-8"
+    >
       <div className="grid grid-cols-[1fr_auto] gap-8">
         <Card className="w-full max-w-2xl">
           <CardHeader className="text-center">

@@ -8,7 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 
 export function TransferForm({ defaultDomain }: { defaultDomain?: string }) {
   const { toast } = useToast();
-  const [state, formAction, isPending] = useActionState(addDomainForTransfer, null);
+  const [state, formAction, isPending] = useActionState(
+    addDomainForTransfer,
+    null
+  );
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {

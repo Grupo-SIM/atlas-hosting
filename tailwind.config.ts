@@ -88,9 +88,7 @@ const config: Config = {
     },
   },
   plugins: [tailwindAnimate],
-  content: [
-    "./src/**/*.{js,ts,jsx,tsx}"
-  ]
+  content: ["./src/**/*.{js,ts,jsx,tsx}"],
 };
 
 export default config;

@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 
 interface NoWordPressWarningProps {
@@ -30,8 +36,8 @@ export default function NoWordPressWarning({
       </CardHeader>
       <CardContent className="flex flex-col items-center space-y-6">
         <p className="text-center text-muted-foreground">
-          Por favor, instale o WordPress em seu domínio para prosseguir, ou selecione um domínio
-          que já possui o WordPress instalado.
+          Por favor, instale o WordPress em seu domínio para prosseguir, ou
+          selecione um domínio que já possui o WordPress instalado.
         </p>
         <Button
           asChild

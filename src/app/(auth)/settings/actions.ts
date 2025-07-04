@@ -2,11 +2,18 @@
 
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { pgOrganization, pgUser } from "@/lib/db/schema";
+import {
+  pgOrganization,
+  pgUser,
+  type UserSettings,
+  userSettings,
+} from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { hash, verify } from "@node-rs/argon2";
 import { revalidatePath } from "next/cache";
 import { createUserForOrganization } from "@/lib/auth/utils"; // Assuming this utility exists
+import type { NotificationsSettings } from "./components/UserSection";
+import { difference } from "lodash";
 
 export interface ActionResponse {
   success: boolean;
@@ -15,25 +22,51 @@ export interface ActionResponse {
 
 export async function updateUserProfileAction(
   name: string,
-  email: string
+  email: string,
+  preferences: UserSettings
 ): Promise<ActionResponse> {
   try {
     const user = await getUser();
-    
-    await db
+
+    const newUser = await db
       .update(pgUser)
       .set({
         name,
         email: email.toLowerCase(),
         updatedAt: new Date(),
       })
-      .where(eq(pgUser.id, user.id));
+      .where(eq(pgUser.id, user.id))
+      .returning();
 
     revalidatePath("/settings");
-    
+
+    const { settings } = user;
+
+    if (settings?.emailNotifications !== preferences.emailNotifications) {
+      const newSettings = await db
+        .update(userSettings)
+        .set({
+          emailNotifications: preferences.emailNotifications,
+          updatedAt: new Date(),
+        })
+        .where(eq(pgUser.id, user.id))
+        .returning();
+
+      return {
+        success: true,
+        message: JSON.stringify({
+          email: newUser[0].email,
+          settings: newSettings[0],
+        }),
+      };
+    }
+
     return {
       success: true,
-      message: "Perfil atualizado com sucesso.",
+      message: JSON.stringify({
+        email: newUser[0].email,
+        settings: null,
+      }),
     };
   } catch (error) {
     console.error("Error updating user profile:", error);
@@ -42,6 +75,11 @@ export async function updateUserProfileAction(
       message: "Erro ao atualizar perfil. Tente novamente.",
     };
   }
+}
+
+export interface ProfileUpdateMessage {
+  email: string;
+  settings: UserSettings | null;
 }
 
 export async function addMemberToOrganizationAction(
@@ -60,7 +98,10 @@ export async function addMemberToOrganizationAction(
     }
 
     // Ensure the current user is the owner of the organization they are adding to
-    if (user.organizationId !== organizationId || user.organization.ownerId !== user.id) {
+    if (
+      user.organizationId !== organizationId ||
+      user.organization?.ownerId !== user.id
+    ) {
       return {
         success: false,
         message: "Apenas o proprietário pode adicionar membros à organização.",
@@ -85,8 +126,9 @@ export async function addMemberToOrganizationAction(
   } catch (error) {
     console.error("Error adding member to organization:", error);
     // Check for unique constraint violation (e.g., email already exists)
-    if ((error as { code?: string }).code === '23505') { // PostgreSQL unique violation error code
-        return { success: false, message: "Este e-mail já está em uso." };
+    if ((error as { code?: string }).code === "23505") {
+      // PostgreSQL unique violation error code
+      return { success: false, message: "Este e-mail já está em uso." };
     }
     return {
       success: false,
@@ -102,7 +144,10 @@ export async function removeMemberFromOrganizationAction(
   try {
     const user = await getUser();
 
-    if (user.organizationId !== organizationId || user.organization.ownerId !== user.id) {
+    if (
+      user.organizationId !== organizationId ||
+      user.organization?.ownerId !== user.id
+    ) {
       return {
         success: false,
         message: "Apenas o proprietário pode remover membros.",
@@ -123,11 +168,11 @@ export async function removeMemberFromOrganizationAction(
       .update(pgUser)
       .set({
         organizationId: null,
-        organizationRole: undefined, 
+        organizationRole: undefined,
         updatedAt: new Date(),
         deletedAt: new Date(), // Optional: mark as deleted
         // Consider if deletedAt should be set if they are fully removed from the platform
-        // deletedAt: new Date(), 
+        // deletedAt: new Date(),
       })
       .where(eq(pgUser.id, memberId));
 
@@ -154,17 +199,29 @@ export async function updateMemberRoleAction(
   try {
     const user = await getUser();
 
-    if (user.organizationId !== organizationId || user.organization.ownerId !== user.id) {
-      return { success: false, message: "Apenas o proprietário pode alterar funções." };
+    if (
+      user.organizationId !== organizationId ||
+      user.organization?.ownerId !== user.id
+    ) {
+      return {
+        success: false,
+        message: "Apenas o proprietário pode alterar funções.",
+      };
     }
 
     await db
       .update(pgUser)
-      .set({ organizationRole: newRole as "admin" | "developer" | "member", updatedAt: new Date() })
+      .set({
+        organizationRole: newRole as "admin" | "developer" | "member",
+        updatedAt: new Date(),
+      })
       .where(eq(pgUser.id, memberId));
 
     revalidatePath("/settings");
-    return { success: true, message: "Função do membro atualizada com sucesso." };
+    return {
+      success: true,
+      message: "Função do membro atualizada com sucesso.",
+    };
   } catch (error) {
     console.error("Error updating member role:", error);
     return { success: false, message: "Erro ao atualizar função do membro." };
@@ -177,7 +234,7 @@ export async function changePasswordAction(
 ): Promise<ActionResponse> {
   try {
     const user = await getUser();
-    
+
     // Get current password hash from database
     const userData = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, user.id),
@@ -194,8 +251,11 @@ export async function changePasswordAction(
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await verify(userData.password, currentPassword);
-    
+    const isCurrentPasswordValid = await verify(
+      userData.password,
+      currentPassword
+    );
+
     if (!isCurrentPasswordValid) {
       return {
         success: false,
@@ -205,7 +265,7 @@ export async function changePasswordAction(
 
     // Hash new password
     const hashedNewPassword = await hash(newPassword);
-    
+
     // Update password
     await db
       .update(pgUser)
@@ -216,7 +276,7 @@ export async function changePasswordAction(
       .where(eq(pgUser.id, user.id));
 
     revalidatePath("/settings");
-    
+
     return {
       success: true,
       message: "Senha alterada com sucesso.",
@@ -235,9 +295,9 @@ export async function updateOrganizationNameAction(
 ): Promise<ActionResponse> {
   try {
     const user = await getUser();
-    
+
     // Check if user is owner
-    if (user.organization.ownerId !== user.id) {
+    if (user.organization?.ownerId !== user.id) {
       return {
         success: false,
         message: "Apenas o proprietário pode alterar o nome da organização.",
@@ -250,7 +310,7 @@ export async function updateOrganizationNameAction(
         message: "Organização não encontrada.",
       };
     }
-    
+
     await db
       .update(pgOrganization)
       .set({
@@ -260,7 +320,7 @@ export async function updateOrganizationNameAction(
       .where(eq(pgOrganization.id, user.organizationId));
 
     revalidatePath("/settings");
-    
+
     return {
       success: true,
       message: "Nome da organização atualizado com sucesso.",
@@ -277,7 +337,7 @@ export async function updateOrganizationNameAction(
 export async function sendEmailVerificationAction(): Promise<ActionResponse> {
   try {
     const user = await getUser();
-    
+
     // TODO: Implement email verification logic
     // For now, just mark as verified (in a real app, you'd send an email)
     await db
@@ -289,7 +349,7 @@ export async function sendEmailVerificationAction(): Promise<ActionResponse> {
       .where(eq(pgUser.id, user.id));
 
     revalidatePath("/settings");
-    
+
     return {
       success: true,
       message: "Email de verificação enviado. Verifique sua caixa de entrada.",
@@ -306,7 +366,7 @@ export async function sendEmailVerificationAction(): Promise<ActionResponse> {
 export async function deleteUserAccountAction(): Promise<ActionResponse> {
   try {
     const user = await getUser();
-    
+
     // Soft delete - mark as deleted
     await db
       .update(pgUser)
@@ -318,10 +378,10 @@ export async function deleteUserAccountAction(): Promise<ActionResponse> {
 
     // In a real app, you might want to:
     // - Delete all user data
-    // - Cancel subscriptions  
+    // - Cancel subscriptions
     // - Transfer organization ownership
     // - Send confirmation email
-    
+
     return {
       success: true,
       message: "Conta excluída com sucesso.",

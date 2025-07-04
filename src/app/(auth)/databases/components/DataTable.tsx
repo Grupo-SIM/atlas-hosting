@@ -93,10 +93,14 @@ interface EditingCell {
   value: string;
 }
 
-export function DataTable({ instanceId, tableName, searchParams }: DataTableProps) {
+export function DataTable({
+  instanceId,
+  tableName,
+  searchParams,
+}: DataTableProps) {
   const router = useRouter();
   const params = useSearchParams();
-  
+
   // State
   const [data, setData] = useState<TableRowData[]>([]);
   const [originalData, setOriginalData] = useState<TableRowData[]>([]);
@@ -115,39 +119,46 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
   const pageSize = Number.parseInt(searchParams.limit || "50", 10);
 
   // Generate stable row ID
-  const getRowId = useCallback((row: TableRowData, index: number): string => {
-    if (columns.length === 0) return `row-${index}`;
-    
-    const primaryKeyColumns = columns.filter(col => col.isPrimaryKey);
-    if (primaryKeyColumns.length > 0) {
-      const pkValues = primaryKeyColumns
-        .map(col => String(row[col.name] ?? ""))
-        .join("-");
-      return pkValues ? `pk-${pkValues}` : `row-${index}`;
-    }
-    
-    // Fallback to first column + index
-    const firstCol = columns[0];
-    if (firstCol && row[firstCol.name] != null) {
-      return `col-${firstCol.name}-${String(row[firstCol.name])}-${index}`;
-    }
-    
-    return `row-${index}`;
-  }, [columns]);
+  const getRowId = useCallback(
+    (row: TableRowData, index: number): string => {
+      if (columns.length === 0) return `row-${index}`;
+
+      const primaryKeyColumns = columns.filter((col) => col.isPrimaryKey);
+      if (primaryKeyColumns.length > 0) {
+        const pkValues = primaryKeyColumns
+          .map((col) => String(row[col.name] ?? ""))
+          .join("-");
+        return pkValues ? `pk-${pkValues}` : `row-${index}`;
+      }
+
+      // Fallback to first column + index
+      const firstCol = columns[0];
+      if (firstCol && row[firstCol.name] != null) {
+        return `col-${firstCol.name}-${String(row[firstCol.name])}-${index}`;
+      }
+
+      return `row-${index}`;
+    },
+    [columns]
+  );
 
   // Fetch table data
   const fetchTableData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const result: TableDataResult = await getDbTableDataAction(instanceId, tableName);
+      const result: TableDataResult = await getDbTableDataAction(
+        instanceId,
+        tableName
+      );
       setColumns(result.columns);
       setData(result.rows);
       setOriginalData(result.rows);
       setRowSelection({});
       setEditingCell(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
       setError(errorMessage);
       toast({
         title: "Erro ao carregar dados",
@@ -164,31 +175,37 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
   }, [fetchTableData]);
 
   // Update URL when filters change
-  const updateURL = useCallback((updates: Record<string, string | undefined>) => {
-    const newParams = new URLSearchParams(params);
-    
-    for (const [key, value] of Object.entries(updates)) {
-      if (value) {
-        newParams.set(key, value);
-      } else {
-        newParams.delete(key);
-      }
-    }
+  const updateURL = useCallback(
+    (updates: Record<string, string | undefined>) => {
+      const newParams = new URLSearchParams(params);
 
-    router.push(`?${newParams.toString()}`);
-  }, [params, router]);
+      for (const [key, value] of Object.entries(updates)) {
+        if (value) {
+          newParams.set(key, value);
+        } else {
+          newParams.delete(key);
+        }
+      }
+
+      router.push(`?${newParams.toString()}`);
+    },
+    [params, router]
+  );
 
   // Cell editing functions
-  const startEditing = useCallback((rowId: string, columnName: string, currentValue: unknown) => {
-    setEditingCell({
-      rowId,
-      columnName,
-      value: String(currentValue ?? ""),
-    });
-  }, []);
+  const startEditing = useCallback(
+    (rowId: string, columnName: string, currentValue: unknown) => {
+      setEditingCell({
+        rowId,
+        columnName,
+        value: String(currentValue ?? ""),
+      });
+    },
+    []
+  );
 
   const updateCellValue = useCallback((value: string) => {
-    setEditingCell(prev => prev ? { ...prev, value } : null);
+    setEditingCell((prev) => (prev ? { ...prev, value } : null));
   }, []);
 
   const cancelEditing = useCallback(() => {
@@ -198,45 +215,65 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
   const saveCell = useCallback(async () => {
     if (!editingCell) return;
 
-    const rowIndex = data.findIndex((_, index) => getRowId(data[index], index) === editingCell.rowId);
+    const rowIndex = data.findIndex(
+      (_, index) => getRowId(data[index], index) === editingCell.rowId
+    );
     if (rowIndex === -1) return;
 
     const originalRow = originalData[rowIndex];
     const currentRow = data[rowIndex];
-    const newRowData = { ...currentRow, [editingCell.columnName]: editingCell.value };
+    const newRowData = {
+      ...currentRow,
+      [editingCell.columnName]: editingCell.value,
+    };
 
     try {
-      const primaryKeyColumns = columns.filter(col => col.isPrimaryKey);
-      await updateTableRowAction(instanceId, tableName, primaryKeyColumns, originalRow, newRowData);
-      
+      const primaryKeyColumns = columns.filter((col) => col.isPrimaryKey);
+      await updateTableRowAction(
+        instanceId,
+        tableName,
+        primaryKeyColumns,
+        originalRow,
+        newRowData
+      );
+
       // Update local data
-      setData(prev => prev.map((row, index) => 
-        index === rowIndex ? newRowData : row
-      ));
-      setOriginalData(prev => prev.map((row, index) => 
-        index === rowIndex ? newRowData : row
-      ));
-      
+      setData((prev) =>
+        prev.map((row, index) => (index === rowIndex ? newRowData : row))
+      );
+      setOriginalData((prev) =>
+        prev.map((row, index) => (index === rowIndex ? newRowData : row))
+      );
+
       setEditingCell(null);
       toast({
         title: "Célula atualizada",
         description: "Os dados foram salvos com sucesso.",
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
       toast({
         title: "Erro ao salvar",
         description: errorMessage,
         variant: "destructive",
       });
     }
-  }, [editingCell, data, originalData, getRowId, instanceId, tableName, columns]);
+  }, [
+    editingCell,
+    data,
+    originalData,
+    getRowId,
+    instanceId,
+    tableName,
+    columns,
+  ]);
 
   // Delete functions
   const deleteSelectedRows = useCallback(async () => {
     const selectedRowIds = Object.keys(rowSelection);
     const selectedRows = selectedRowIds
-      .map(rowId => {
+      .map((rowId) => {
         const index = data.findIndex((_, i) => getRowId(data[i], i) === rowId);
         return index !== -1 ? originalData[index] : null;
       })
@@ -246,8 +283,13 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
 
     try {
       setIsDeleting(true);
-      const primaryKeyColumns = columns.filter(col => col.isPrimaryKey);
-      await bulkDeleteRowsAction(instanceId, tableName, primaryKeyColumns, selectedRows);
+      const primaryKeyColumns = columns.filter((col) => col.isPrimaryKey);
+      await bulkDeleteRowsAction(
+        instanceId,
+        tableName,
+        primaryKeyColumns,
+        selectedRows
+      );
       await fetchTableData(); // Refresh data
       setDeleteDialogOpen(false);
       toast({
@@ -255,7 +297,8 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
         description: `${selectedRows.length} linha(s) foram excluídas com sucesso.`,
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
       toast({
         title: "Erro ao excluir",
         description: errorMessage,
@@ -264,7 +307,16 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
     } finally {
       setIsDeleting(false);
     }
-  }, [rowSelection, data, originalData, getRowId, instanceId, tableName, fetchTableData, columns]);
+  }, [
+    rowSelection,
+    data,
+    originalData,
+    getRowId,
+    instanceId,
+    tableName,
+    fetchTableData,
+    columns,
+  ]);
 
   // Table columns configuration
   const tableColumns = useMemo<ColumnDef<TableRowData>[]>(() => {
@@ -276,7 +328,9 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
         header: ({ table }) => (
           <Checkbox
             checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
             aria-label="Selecionar todas"
           />
         ),
@@ -302,10 +356,14 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
               variant="ghost"
               size="sm"
               className="h-8 p-1"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
             >
               <span className="font-medium">{col.name}</span>
-              {col.isPrimaryKey && <Key className="h-3 w-3 text-yellow-500 ml-1" />}
+              {col.isPrimaryKey && (
+                <Key className="h-3 w-3 text-yellow-500 ml-1" />
+              )}
               <Badge variant="secondary" className="text-xs ml-1">
                 {col.type}
               </Badge>
@@ -323,7 +381,9 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
           const value = row.getValue(column.id);
           const rowId = getRowId(row.original, row.index);
           const columnName = col.name;
-          const isEditing = editingCell?.rowId === rowId && editingCell?.columnName === columnName;
+          const isEditing =
+            editingCell?.rowId === rowId &&
+            editingCell?.columnName === columnName;
 
           return (
             <div className="min-w-[100px] max-w-[300px]">
@@ -367,7 +427,15 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
     });
 
     return cols;
-  }, [columns, editingCell, getRowId, startEditing, updateCellValue, saveCell, cancelEditing]);
+  }, [
+    columns,
+    editingCell,
+    getRowId,
+    startEditing,
+    updateCellValue,
+    saveCell,
+    cancelEditing,
+  ]);
 
   // Table instance
   const table = useReactTable({
@@ -438,7 +506,10 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
               value={globalFilter}
               onChange={(e) => {
                 setGlobalFilter(e.target.value);
-                updateURL({ search: e.target.value || undefined, page: undefined });
+                updateURL({
+                  search: e.target.value || undefined,
+                  page: undefined,
+                });
               }}
               className="pl-9 w-[300px]"
             />
@@ -476,7 +547,10 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
                     <TableHead key={header.id} className="whitespace-nowrap">
                       {header.isPlaceholder
                         ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -492,14 +566,20 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="whitespace-nowrap">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length + 1} className="h-24 text-center">
+                  <TableCell
+                    colSpan={columns.length + 1}
+                    className="h-24 text-center"
+                  >
                     Nenhum resultado encontrado.
                   </TableCell>
                 </TableRow>
@@ -514,16 +594,22 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <p className="text-sm text-muted-foreground">
-            Mostrando {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} a{" "}
+            Mostrando{" "}
+            {table.getState().pagination.pageIndex *
+              table.getState().pagination.pageSize +
+              1}{" "}
+            a{" "}
             {Math.min(
-              (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+              (table.getState().pagination.pageIndex + 1) *
+                table.getState().pagination.pageSize,
               table.getFilteredRowModel().rows.length
             )}{" "}
             de {table.getFilteredRowModel().rows.length} resultado(s)
           </p>
           {table.getPageCount() > 1 && (
             <p className="text-sm text-muted-foreground">
-              Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+              Página {table.getState().pagination.pageIndex + 1} de{" "}
+              {table.getPageCount()}
             </p>
           )}
         </div>
@@ -544,7 +630,9 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
             size="sm"
             onClick={() => {
               table.previousPage();
-              updateURL({ page: String(table.getState().pagination.pageIndex) });
+              updateURL({
+                page: String(table.getState().pagination.pageIndex),
+              });
             }}
             disabled={!table.getCanPreviousPage()}
           >
@@ -555,7 +643,9 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
             size="sm"
             onClick={() => {
               table.nextPage();
-              updateURL({ page: String(table.getState().pagination.pageIndex + 2) });
+              updateURL({
+                page: String(table.getState().pagination.pageIndex + 2),
+              });
             }}
             disabled={!table.getCanNextPage()}
           >
@@ -581,12 +671,15 @@ export function DataTable({ instanceId, tableName, searchParams }: DataTableProp
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
             <DialogDescription>
-              Tem certeza de que deseja excluir {selectedCount} linha(s) selecionada(s)?
-              Esta ação não pode ser desfeita.
+              Tem certeza de que deseja excluir {selectedCount} linha(s)
+              selecionada(s)? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
               Cancelar
             </Button>
             <Button

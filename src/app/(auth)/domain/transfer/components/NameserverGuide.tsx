@@ -38,8 +38,8 @@ const registrars = [
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Clique em Salvar e depois em Continuar",
       "Se tiver Proteção de Domínio ativada, complete a verificação de identidade (SMS ou email)",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "namecheap",
@@ -53,8 +53,8 @@ const registrars = [
       "No menu dropdown, selecione CustomDNS",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Clique em Salvar Alterações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "network-solutions",
@@ -68,8 +68,8 @@ const registrars = [
       "Selecione a opção de usar nameservers externos",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Salve as alterações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "squarespace",
@@ -83,8 +83,8 @@ const registrars = [
       "Selecione a opção Nameservers Personalizados",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Clique em Salvar",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "ionos",
@@ -99,8 +99,8 @@ const registrars = [
       "Altere para nameservers externos",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Confirme as alterações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "hostinger",
@@ -115,8 +115,8 @@ const registrars = [
       "Selecione a opção Nameservers Personalizados",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Clique em Salvar Alterações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "namesilo",
@@ -130,8 +130,8 @@ const registrars = [
       "Escolha a opção para usar nameservers personalizados",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Clique em Enviar",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "dynadot",
@@ -145,8 +145,8 @@ const registrars = [
       "Selecione a opção Nameservers Personalizados",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Clique em Salvar Nameservers",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "porkbun",
@@ -160,8 +160,8 @@ const registrars = [
       "Clique em Editar",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Clique em Enviar",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "cloudflare",
@@ -175,8 +175,8 @@ const registrars = [
       "Clique em Alterar para nameservers externos",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Confirme a alteração",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "registro-br",
@@ -190,8 +190,8 @@ const registrars = [
       "Clique em Alterar DNS",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Confirme as alterações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "hover",
@@ -206,8 +206,8 @@ const registrars = [
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Adicione mais campos se necessário",
       "Clique em Salvar nameservers",
-      "Aguarde 24-48 horas para propagação completa"
-    ]
+      "Aguarde 24-48 horas para propagação completa",
+    ],
   },
   {
     id: "enom",
@@ -221,8 +221,8 @@ const registrars = [
       "Selecione a opção Custom para usar nameservers de terceiros",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Salve suas alterações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "alibaba-cloud",
@@ -236,8 +236,8 @@ const registrars = [
       "Encontre as configurações de nameserver",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Confirme as alterações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "gmo-onamae",
@@ -251,8 +251,8 @@ const registrars = [
       "Encontre as configurações de nameserver",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Salve as configurações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "gname",
@@ -266,8 +266,8 @@ const registrars = [
       "Acesse as configurações de nameserver",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Confirme as alterações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "reg-ru",
@@ -281,8 +281,8 @@ const registrars = [
       "Encontre as configurações de DNS/nameserver",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Salve as alterações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "chengdu-west",
@@ -296,8 +296,8 @@ const registrars = [
       "Acesse as configurações de nameserver",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Confirme as mudanças",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "name-com",
@@ -311,8 +311,8 @@ const registrars = [
       "Encontre a seção de nameservers",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Salve as configurações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "wix",
@@ -326,8 +326,8 @@ const registrars = [
       "Navegue até as configurações DNS/nameserver",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Confirme as alterações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "domain-com",
@@ -342,8 +342,8 @@ const registrars = [
       "Exclua as entradas existentes antes de adicionar as novas",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Clique em Salvar, Atualizar ou Enviar para aplicar as alterações",
-      "Aguarde até 48 horas para propagação completa"
-    ]
+      "Aguarde até 48 horas para propagação completa",
+    ],
   },
   {
     id: "register-com",
@@ -358,23 +358,25 @@ const registrars = [
       "Remova as entradas de nameserver existentes para evitar conflitos",
       "Digite os nameservers: dns1.registrar-servers.com e dns2.registrar-servers.com",
       "Clique em Salvar, Atualizar ou Enviar",
-      "Aguarde até 48 horas para propagação completa"
-    ]
-  }
+      "Aguarde até 48 horas para propagação completa",
+    ],
+  },
 ] as const;
 
 export function NameserverGuide() {
   const [selectedRegistrar, setSelectedRegistrar] = useState<string>("");
   const [open, setOpen] = useState(false);
 
-  const selectedRegistrarData = registrars.find(r => r.id === selectedRegistrar);
+  const selectedRegistrarData = registrars.find(
+    (r) => r.id === selectedRegistrar
+  );
 
   return (
     <div className="space-y-4">
       <h4 className="font-semibold text-sm text-muted-foreground">
         Guia para Alterar Nameservers
       </h4>
-      
+
       <div className="flex gap-3">
         <Select value={selectedRegistrar} onValueChange={setSelectedRegistrar}>
           <SelectTrigger className="flex-1">
@@ -391,8 +393,8 @@ export function NameserverGuide() {
 
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               disabled={!selectedRegistrar}
               className="flex items-center gap-2"
             >
@@ -410,13 +412,15 @@ export function NameserverGuide() {
                       Como alterar nameservers no {selectedRegistrarData.name}
                     </h3>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div className="text-sm">
                       <div className="font-medium mb-1">Portal de acesso:</div>{" "}
                       <Link
-                        href={new URL(selectedRegistrarData.loginUrl).toString()} 
-                        target="_blank" 
+                        href={new URL(
+                          selectedRegistrarData.loginUrl
+                        ).toString()}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-violet-400 hover:underline flex items-center gap-2"
                       >
@@ -424,18 +428,25 @@ export function NameserverGuide() {
                         {selectedRegistrarData.loginUrl}
                       </Link>
                     </div>
-                    
+
                     <div className="space-y-2">
-                      <span className="font-medium text-sm">Passo a passo:</span>
+                      <span className="font-medium text-sm">
+                        Passo a passo:
+                      </span>
                       <ol className="mt-2 flex flex-col gap-2 text-sm text-muted-foreground">
-                        {selectedRegistrarData.instructions.map((step, index) => (
-                          <li className="leading-[1.2] flex gap-2" key={`${selectedRegistrarData.id}-step-${index}`}>
-                            <span className="flex-shrink-0 w-4 h-4 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-medium">
-                              {index + 1}
-                            </span>
-                            <span>{step}</span>
-                          </li>
-                        ))}
+                        {selectedRegistrarData.instructions.map(
+                          (step, index) => (
+                            <li
+                              className="leading-[1.2] flex gap-2"
+                              key={`${selectedRegistrarData.id}-step-${index}`}
+                            >
+                              <span className="flex-shrink-0 w-4 h-4 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-medium">
+                                {index + 1}
+                              </span>
+                              <span>{step}</span>
+                            </li>
+                          )
+                        )}
                       </ol>
                     </div>
                   </div>

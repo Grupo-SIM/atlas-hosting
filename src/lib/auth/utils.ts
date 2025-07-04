@@ -4,6 +4,7 @@ import {
   pgSession,
   pgUser,
   pgWallet,
+  userSettings,
   type Session,
   type SessionInsert,
   type User,
@@ -68,6 +69,7 @@ export async function validateSessionToken(token: string) {
           referrer: true,
           referredUsers: true,
           sessions: true,
+          settings: true,
         },
       },
     },
@@ -142,7 +144,7 @@ export async function createUser(
         walletId,
       })
       .returning();
-
+    
     const newUser = await db
       .insert(pgUser)
       .values({
@@ -162,6 +164,18 @@ export async function createUser(
         createdAt: pgUser.createdAt,
         updatedAt: pgUser.updatedAt,
         deletedAt: pgUser.deletedAt,
+      });
+
+    // Create user settings after user creation
+    await db
+      .insert(userSettings)
+      .values({
+        userId: newUser[0].id,
+        emailNotifications: true,
+        smsNotifications: false,
+        pushNotifications: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
     await db
@@ -209,6 +223,18 @@ export async function createUserForOrganization(
         createdAt: pgUser.createdAt,
         updatedAt: pgUser.updatedAt,
         deletedAt: pgUser.deletedAt,
+      });
+
+    // Create user settings after user creation
+    await db
+      .insert(userSettings)
+      .values({
+        userId: newUser[0].id,
+        emailNotifications: true,
+        smsNotifications: false,
+        pushNotifications: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
     const logger = new AppLogger(user);

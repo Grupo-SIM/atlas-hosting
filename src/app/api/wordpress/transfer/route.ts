@@ -1,5 +1,5 @@
 import { getUser } from "@/lib/auth";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    if (!file.name.toLowerCase().endsWith('.zip')) {
+    if (!file.name.toLowerCase().endsWith(".zip")) {
       return NextResponse.json(
         { message: "Apenas arquivos ZIP são permitidos" },
         { status: 400 }
@@ -54,11 +54,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Create temporary directory for processing
-    const tempDir = path.join(process.cwd(), 'temp', `transfer_${Date.now()}`);
+    const tempDir = path.join(process.cwd(), "temp", `transfer_${Date.now()}`);
     await mkdir(tempDir, { recursive: true });
 
     const zipPath = path.join(tempDir, file.name);
-    const extractDir = path.join(tempDir, 'extracted');
+    const extractDir = path.join(tempDir, "extracted");
 
     try {
       // Save uploaded file
@@ -97,43 +97,40 @@ export async function POST(request: NextRequest) {
         message: "Site WordPress transferido com sucesso",
         siteUrl,
         adminUrl,
-        instanceId: wpInstance.instanceId
+        instanceId: wpInstance.instanceId,
       });
-
     } catch (error) {
       // Cleanup on error
       await cleanupTempFiles(tempDir).catch(() => {});
       throw error;
     }
-
   } catch (error) {
     console.error("Erro na transferência do WordPress:", error);
-    
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : "Erro interno do servidor";
 
-    return NextResponse.json(
-      { message: errorMessage },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro interno do servidor";
+
+    return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }
 
-async function parseWordPressExport(extractDir: string): Promise<ExtractedWordPressData> {
-  const configPath = path.join(extractDir, 'wp-config.php');
-  const dbPath = path.join(extractDir, 'database.csv');
-  const filesPath = path.join(extractDir, 'files');
+async function parseWordPressExport(
+  extractDir: string
+): Promise<ExtractedWordPressData> {
+  const configPath = path.join(extractDir, "wp-config.php");
+  const dbPath = path.join(extractDir, "database.csv");
+  const filesPath = path.join(extractDir, "files");
 
   // Read wp-config.php to extract database settings
   const { stdout: configContent } = await execAsync(`cat "${configPath}"`);
-  
+
   // Parse database configuration from wp-config.php
-  const dbName = extractConfigValue(configContent, 'DB_NAME');
-  const dbUser = extractConfigValue(configContent, 'DB_USER');
-  const dbPassword = extractConfigValue(configContent, 'DB_PASSWORD');
-  const dbHost = extractConfigValue(configContent, 'DB_HOST') || 'localhost';
-  const tablePrefix = extractConfigValue(configContent, 'table_prefix') || 'wp_';
+  const dbName = extractConfigValue(configContent, "DB_NAME");
+  const dbUser = extractConfigValue(configContent, "DB_USER");
+  const dbPassword = extractConfigValue(configContent, "DB_PASSWORD");
+  const dbHost = extractConfigValue(configContent, "DB_HOST") || "localhost";
+  const tablePrefix =
+    extractConfigValue(configContent, "table_prefix") || "wp_";
 
   // Extract site URLs from database CSV
   const { stdout: dbContent } = await execAsync(`head -100 "${dbPath}"`);
@@ -151,33 +148,40 @@ async function parseWordPressExport(extractDir: string): Promise<ExtractedWordPr
       tablePrefix,
       siteUrl,
       homeUrl,
-    }
+    },
   };
 }
 
 function extractConfigValue(configContent: string, key: string): string {
-  const regex = new RegExp(`define\\s*\\(\\s*['"]${key}['"]\\s*,\\s*['"]([^'"]+)['"]`, 'i');
+  const regex = new RegExp(
+    `define\\s*\\(\\s*['"]${key}['"]\\s*,\\s*['"]([^'"]+)['"]`,
+    "i"
+  );
   const match = configContent.match(regex);
-  return match ? match[1] : '';
+  return match ? match[1] : "";
 }
 
 function extractSiteUrlFromDb(dbContent: string): string {
   // Look for siteurl option in the database dump
-  const lines = dbContent.split('\n');
+  const lines = dbContent.split("\n");
   for (const line of lines) {
-    if (line.includes('siteurl') && line.includes('http')) {
+    if (line.includes("siteurl") && line.includes("http")) {
       const urlMatch = line.match(/https?:\/\/[^,'"]+/);
       if (urlMatch) return urlMatch[0];
     }
   }
-  return '';
+  return "";
 }
 
 function extractHomeUrlFromDb(dbContent: string): string | null {
   // Look for home option in the database dump
-  const lines = dbContent.split('\n');
+  const lines = dbContent.split("\n");
   for (const line of lines) {
-    if (line.includes('home') && line.includes('http') && !line.includes('siteurl')) {
+    if (
+      line.includes("home") &&
+      line.includes("http") &&
+      !line.includes("siteurl")
+    ) {
       const urlMatch = line.match(/https?:\/\/[^,'"]+/);
       if (urlMatch) return urlMatch[0];
     }
@@ -222,7 +226,11 @@ async function createPleskSubscription(domain: string, user: any) {
   }
 }
 
-async function installWordPressOnPlesk(domain: string, wpData: ExtractedWordPressData, user: any) {
+async function installWordPressOnPlesk(
+  domain: string,
+  wpData: ExtractedWordPressData,
+  user: any
+) {
   // Install WordPress using Plesk WP Toolkit
   try {
     const adminPassword = generateRandomPassword();
@@ -233,13 +241,13 @@ async function installWordPressOnPlesk(domain: string, wpData: ExtractedWordPres
       "Site WordPress Transferido",
       user.email
     );
-    
+
     if (!installResult || !installResult.stdout) {
       throw new Error("Falha na instalação do WordPress");
     }
 
     const stdOut = JSON.parse(installResult.stdout || "{}");
-    
+
     if (!stdOut["instance-id"]) {
       throw new Error("ID da instância WordPress não encontrado");
     }
@@ -254,7 +262,11 @@ async function installWordPressOnPlesk(domain: string, wpData: ExtractedWordPres
   }
 }
 
-async function importWordPressData(instanceId: number, wpData: ExtractedWordPressData, extractDir: string) {
+async function importWordPressData(
+  instanceId: number,
+  wpData: ExtractedWordPressData,
+  extractDir: string
+) {
   try {
     // Import database
     await pleskApi.wordpress.callWp(
@@ -263,7 +275,7 @@ async function importWordPressData(instanceId: number, wpData: ExtractedWordPres
 
     // Get WordPress installation path
     const wpPath = await getWordPressPath(instanceId);
-    
+
     // Sync files (copy WordPress files to the installation directory)
     await execAsync(`rsync -av "${wpData.files}/" "${wpPath}/"`);
 
@@ -276,15 +288,19 @@ async function importWordPressData(instanceId: number, wpData: ExtractedWordPres
   }
 }
 
-async function configureWordPressSettings(instanceId: number, domain: string, wpData: ExtractedWordPressData) {
+async function configureWordPressSettings(
+  instanceId: number,
+  domain: string,
+  wpData: ExtractedWordPressData
+) {
   try {
     const newSiteUrl = `https://${domain}`;
-    
+
     // Update site URLs in the database
     await pleskApi.wordpress.callWp(
       `--wp-cli -instance-id ${instanceId} -- option update siteurl "${newSiteUrl}"`
     );
-    
+
     await pleskApi.wordpress.callWp(
       `--wp-cli -instance-id ${instanceId} -- option update home "${newSiteUrl}"`
     );
@@ -316,7 +332,7 @@ async function getWordPressPath(instanceId: number): Promise<string> {
     const result = await pleskApi.wordpress.callWp(
       `--wp-cli -instance-id ${instanceId} -- eval "echo ABSPATH;"`
     );
-    
+
     return result.stdout.trim();
   } catch (error) {
     console.error("Erro ao obter caminho do WordPress:", error);
@@ -333,7 +349,8 @@ async function cleanupTempFiles(tempDir: string) {
 }
 
 function generateRandomPassword(length = 16): string {
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  const charset =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
   let password = "";
   for (let i = 0; i < length; i++) {
     password += charset.charAt(Math.floor(Math.random() * charset.length));

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { User } from "@/lib/db/schema";
+import type { User } from "@/lib/db/schema";
 import type { MailName } from "@/lib/server/apis/plesk-xml/types";
 import { cn } from "@/lib/utils";
 import { Mail, PenTool, Plus, Settings, User as UserIcon } from "lucide-react";

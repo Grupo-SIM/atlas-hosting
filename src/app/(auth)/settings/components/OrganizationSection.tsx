@@ -64,12 +64,12 @@ import type { RawUser, User } from "@/lib/db/schema/tables/user";
 import { formatDate } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { 
-  updateOrganizationNameAction, 
+import {
+  updateOrganizationNameAction,
   addMemberToOrganizationAction, // New action to be created
   removeMemberFromOrganizationAction, // New action to be created
-  updateMemberRoleAction // New action to be created
-} from "../actions"; 
+  updateMemberRoleAction, // New action to be created
+} from "../actions";
 import MemberPasswordInput from "@/app/(auth)/organization/components/MemberPasswordInput"; // Assuming path
 
 interface OrganizationSectionProps {
@@ -96,7 +96,7 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
     startTransition(async () => {
       try {
         const result = await updateOrganizationNameAction(orgName);
-        
+
         if (result.success) {
           toast({
             title: "Sucesso",
@@ -136,38 +136,63 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
           setNewMemberEmail("");
           setNewMemberRole("member");
         } else {
-          toast({ title: "Erro", description: result.message, variant: "destructive" });
+          toast({
+            title: "Erro",
+            description: result.message,
+            variant: "destructive",
+          });
         }
       } catch (error) {
-        toast({ title: "Erro", description: "Erro inesperado ao adicionar membro.", variant: "destructive" });
+        toast({
+          title: "Erro",
+          description: "Erro inesperado ao adicionar membro.",
+          variant: "destructive",
+        });
       }
     });
   };
 
   const handleRemoveMember = (memberId: string) => {
-    if (!confirm("Tem certeza que deseja remover este membro? Esta ação não pode ser desfeita.")) {
+    if (
+      !confirm(
+        "Tem certeza que deseja remover este membro? Esta ação não pode ser desfeita."
+      )
+    ) {
       return;
     }
     startMemberActionTransition(async () => {
       try {
-        const result = await removeMemberFromOrganizationAction(memberId, organization.id);
+        const result = await removeMemberFromOrganizationAction(
+          memberId,
+          organization.id
+        );
         if (result.success) {
           toast({ title: "Sucesso", description: result.message });
         } else {
-          toast({ title: "Erro", description: result.message, variant: "destructive" });
+          toast({
+            title: "Erro",
+            description: result.message,
+            variant: "destructive",
+          });
         }
       } catch (error) {
-        toast({ title: "Erro", description: "Erro inesperado ao remover membro.", variant: "destructive" });
+        toast({
+          title: "Erro",
+          description: "Erro inesperado ao remover membro.",
+          variant: "destructive",
+        });
       }
     });
   };
-  
+
   const handleOpenEditRoleDialog = (member: RawUser) => {
     setEditingMember(member);
     // setNewMemberRole(member.organizationRole || "member"); // Pre-fill current role
   };
 
-  const handleUpdateMemberRole = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUpdateMemberRole = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
     if (!editingMember) return;
 
@@ -176,20 +201,30 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
 
     startMemberActionTransition(async () => {
       try {
-        const result = await updateMemberRoleAction(editingMember.id, organization.id, role);
+        const result = await updateMemberRoleAction(
+          editingMember.id,
+          organization.id,
+          role
+        );
         if (result.success) {
           toast({ title: "Sucesso", description: result.message });
-          setEditingMember(null); 
+          setEditingMember(null);
         } else {
-          toast({ title: "Erro", description: result.message, variant: "destructive" });
+          toast({
+            title: "Erro",
+            description: result.message,
+            variant: "destructive",
+          });
         }
       } catch (error) {
-        toast({ title: "Erro", description: "Erro inesperado ao atualizar função.", variant: "destructive" });
+        toast({
+          title: "Erro",
+          description: "Erro inesperado ao atualizar função.",
+          variant: "destructive",
+        });
       }
     });
   };
-
-
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -240,8 +275,8 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                       className="flex-1"
                       disabled={!isOwner}
                     />
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       onClick={handleSaveOrgName}
                       disabled={isPending}
                     >
@@ -316,14 +351,17 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
             </CardDescription>
           </div>
           {isOwner && (
-            <Dialog open={isAddMemberOpen} onOpenChange={(isOpen) => {
-              setIsAddMemberOpen(isOpen);
-              if (!isOpen) {
-                setNewMemberFullName("");
-                setNewMemberEmail("");
-                setNewMemberRole("member");
-              }
-            }}>
+            <Dialog
+              open={isAddMemberOpen}
+              onOpenChange={(isOpen) => {
+                setIsAddMemberOpen(isOpen);
+                if (!isOpen) {
+                  setNewMemberFullName("");
+                  setNewMemberEmail("");
+                  setNewMemberRole("member");
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <Button>
                   <UserPlus className="mr-2 h-4 w-4" />
@@ -340,15 +378,35 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                 <form onSubmit={handleAddMember} className="space-y-4 mt-4">
                   <div className="space-y-2">
                     <Label htmlFor="newMemberFullName">Nome Completo</Label>
-                    <Input id="newMemberFullName" name="fullName" value={newMemberFullName} onChange={(e) => setNewMemberFullName(e.target.value)} placeholder="Nome do membro" required />
+                    <Input
+                      id="newMemberFullName"
+                      name="fullName"
+                      value={newMemberFullName}
+                      onChange={(e) => setNewMemberFullName(e.target.value)}
+                      placeholder="Nome do membro"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="newMemberEmail">Endereço de email</Label>
-                    <Input id="newMemberEmail" type="email" name="email" value={newMemberEmail} onChange={(e) => setNewMemberEmail(e.target.value)} placeholder="nome@example.com" required />
+                    <Input
+                      id="newMemberEmail"
+                      type="email"
+                      name="email"
+                      value={newMemberEmail}
+                      onChange={(e) => setNewMemberEmail(e.target.value)}
+                      placeholder="nome@example.com"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="newMemberRole">Função</Label>
-                    <Select required name="role" value={newMemberRole} onValueChange={setNewMemberRole}>
+                    <Select
+                      required
+                      name="role"
+                      value={newMemberRole}
+                      onValueChange={setNewMemberRole}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um cargo" />
                       </SelectTrigger>
@@ -361,17 +419,22 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="newMemberPassword">Senha</Label>
-                    <MemberPasswordInput /> {/* Name="password" is handled inside */}
+                    <MemberPasswordInput />{" "}
+                    {/* Name="password" is handled inside */}
                     <p className="text-xs text-muted-foreground">
                       Uma senha segura será gerada. Compartilhe com o usuário.
                     </p>
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
-                      <Button type="button" variant="outline">Cancelar</Button>
+                      <Button type="button" variant="outline">
+                        Cancelar
+                      </Button>
                     </DialogClose>
                     <Button type="submit" disabled={isMemberActionPending}>
-                      {isMemberActionPending && <Save className="mr-2 h-4 w-4 animate-spin" />}
+                      {isMemberActionPending && (
+                        <Save className="mr-2 h-4 w-4 animate-spin" />
+                      )}
                       Adicionar Membro
                     </Button>
                   </DialogFooter>
@@ -388,7 +451,9 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                   <TableHead>Membro</TableHead>
                   <TableHead>Função</TableHead>
                   <TableHead>Adicionado em</TableHead>
-                  {isOwner && <TableHead className="text-right">Ações</TableHead>}
+                  {isOwner && (
+                    <TableHead className="text-right">Ações</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -445,16 +510,25 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                         {member.id !== user.id && ( // Owner cannot remove or edit their own role directly here
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleOpenEditRoleDialog(member)}>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenEditRoleDialog(member)}
+                              >
                                 <Edit className="mr-2 h-4 w-4" />
                                 Editar Função
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive hover:!text-destructive-foreground hover:!bg-destructive" onClick={() => handleRemoveMember(member.id)}>
+                              <DropdownMenuItem
+                                className="text-destructive hover:!text-destructive-foreground hover:!bg-destructive"
+                                onClick={() => handleRemoveMember(member.id)}
+                              >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Remover Membro
                               </DropdownMenuItem>
@@ -536,7 +610,10 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
 
       {/* Edit Role Dialog */}
       {editingMember && (
-        <Dialog open={!!editingMember} onOpenChange={(isOpen) => !isOpen && setEditingMember(null)}>
+        <Dialog
+          open={!!editingMember}
+          onOpenChange={(isOpen) => !isOpen && setEditingMember(null)}
+        >
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Editar Função de {editingMember.name}</DialogTitle>
@@ -547,7 +624,11 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
             <form onSubmit={handleUpdateMemberRole} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="editMemberRole">Função</Label>
-                <Select required name="role" defaultValue={editingMember.organizationRole || "member"}>
+                <Select
+                  required
+                  name="role"
+                  defaultValue={editingMember.organizationRole || "member"}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um cargo" />
                   </SelectTrigger>
@@ -560,10 +641,18 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button type="button" variant="outline" onClick={() => setEditingMember(null)}>Cancelar</Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingMember(null)}
+                  >
+                    Cancelar
+                  </Button>
                 </DialogClose>
                 <Button type="submit" disabled={isMemberActionPending}>
-                  {isMemberActionPending && <Save className="mr-2 h-4 w-4 animate-spin" />}
+                  {isMemberActionPending && (
+                    <Save className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Salvar Alterações
                 </Button>
               </DialogFooter>

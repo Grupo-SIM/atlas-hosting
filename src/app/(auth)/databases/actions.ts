@@ -8,9 +8,9 @@ import type {
 
 // Define a more specific type for table row data if possible, for now, keep it generic
 export type TableRowData = Record<string, unknown>;
-export type TableColumn = { 
-  name: string; 
-  type: string; 
+export type TableColumn = {
+  name: string;
+  type: string;
   isPrimaryKey?: boolean;
   isNullable?: boolean;
   defaultValue?: string;
@@ -63,7 +63,7 @@ export async function getDbTableDataAction(
     try {
       const describeQuery = `DESCRIBE \`${tableName}\``; // Corrected backtick escaping
       const describeOutput = await wpCli.db.query(describeQuery);
-      
+
       if (typeof describeOutput === "string" && describeOutput.trim() !== "") {
         const lines = describeOutput.trim().split("\n");
         if (lines.length > 1) {
@@ -73,7 +73,7 @@ export async function getDbTableDataAction(
           const keyIndex = headers.indexOf("Key");
 
           if (fieldIndex !== -1 && typeIndex !== -1) {
-            result.columns = lines.slice(1).map(line => {
+            result.columns = lines.slice(1).map((line) => {
               const values = line.split("\t");
               return {
                 name: values[fieldIndex],
@@ -82,16 +82,25 @@ export async function getDbTableDataAction(
               };
             });
           } else {
-            console.warn(`Could not find 'Field' or 'Type' headers in DESCRIBE output for table: ${tableName}`);
+            console.warn(
+              `Could not find 'Field' or 'Type' headers in DESCRIBE output for table: ${tableName}`
+            );
           }
         } else {
-           console.warn(`DESCRIBE output for table has insufficient lines: ${tableName}`);
+          console.warn(
+            `DESCRIBE output for table has insufficient lines: ${tableName}`
+          );
         }
       } else {
-        console.warn(`DESCRIBE output for table was empty or not a string: ${tableName}`);
+        console.warn(
+          `DESCRIBE output for table was empty or not a string: ${tableName}`
+        );
       }
     } catch (describeError: unknown) {
-      const message = describeError instanceof Error ? describeError.message : String(describeError);
+      const message =
+        describeError instanceof Error
+          ? describeError.message
+          : String(describeError);
       console.error(
         `Error fetching column descriptions for ${tableName} on instance ${instanceId}:`,
         message
@@ -108,27 +117,32 @@ export async function getDbTableDataAction(
       const lines = dataString.trim().split("\n");
       if (lines.length > 1) {
         // Skip the first line as it contains column headers, not data
-        const dataRows = lines.slice(1); 
+        const dataRows = lines.slice(1);
 
         if (result.columns.length > 0) {
-          parsedData = dataRows.map(line => {
+          parsedData = dataRows.map((line) => {
             const values = line.split("\t");
             const row: TableRowData = {};
             result.columns.forEach((col, index) => {
-              row[col.name] = values[index] !== undefined ? values[index] : null;
+              row[col.name] =
+                values[index] !== undefined ? values[index] : null;
             });
             return row;
           });
         } else {
-          console.warn(`Cannot parse rows for ${tableName} because column information is missing (DESCRIBE likely failed). Data will be empty.`);
+          console.warn(
+            `Cannot parse rows for ${tableName} because column information is missing (DESCRIBE likely failed). Data will be empty.`
+          );
         }
       }
     } else if (typeof dataString === "string" && dataString.trim() === "") {
       console.log(`No data returned for table ${tableName}.`);
     } else {
-      console.warn(`dataString for ${tableName} was not a string or was unexpectedly empty. Type: ${typeof dataString}, Value: "${dataString}"`);
+      console.warn(
+        `dataString for ${tableName} was not a string or was unexpectedly empty. Type: ${typeof dataString}, Value: "${dataString}"`
+      );
     }
-    
+
     result.rows = parsedData;
 
     // Final check: if columns are empty but we somehow got rows, clear rows.
@@ -136,21 +150,27 @@ export async function getDbTableDataAction(
       console.warn(
         `Table ${tableName} has data rows but column structure could not be determined. Clearing rows to prevent inconsistency.`
       );
-      result.rows = []; 
+      result.rows = [];
     }
-    
+
     // If DESCRIBE failed and the table isn't simply empty, log a warning.
-    if (result.columns.length === 0 && !(typeof dataString === "string" && dataString.trim() === "")) {
-        console.warn(`Failed to determine columns for table ${tableName}. Data shown might be incomplete or missing.`);
+    if (
+      result.columns.length === 0 &&
+      !(typeof dataString === "string" && dataString.trim() === "")
+    ) {
+      console.warn(
+        `Failed to determine columns for table ${tableName}. Data shown might be incomplete or missing.`
+      );
     }
 
     return result;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`Error in getDbTableDataAction for table ${tableName}, instance ${instanceId}:`, error);
-    throw new Error(
-      `Falha ao buscar dados da tabela ${tableName}: ${message}`
+    console.error(
+      `Error in getDbTableDataAction for table ${tableName}, instance ${instanceId}:`,
+      error
     );
+    throw new Error(`Falha ao buscar dados da tabela ${tableName}: ${message}`);
   }
 }
 
@@ -158,23 +178,25 @@ export async function runDbQueryAction(
   instanceId: number,
   sql: string,
   options?: DbQueryOptions
-): Promise<string> { // Return type is now always string
+): Promise<string> {
+  // Return type is now always string
   try {
     const wpCli = new WpCliApi(instanceId);
     const rawResult = await wpCli.db.query(sql, options);
 
     if (typeof rawResult === "string") {
       return rawResult; // Always return the raw string output
-    } 
-    
-    // This case should be rare, as wpCli.db.query is expected to return a string.
-    console.warn(`runDbQueryAction: wpCli.db.query did not return a string. Type: ${typeof rawResult}. SQL: "${sql}"`);
-    return String(rawResult); // Coerce to string if not already
+    }
 
+    // This case should be rare, as wpCli.db.query is expected to return a string.
+    console.warn(
+      `runDbQueryAction: wpCli.db.query did not return a string. Type: ${typeof rawResult}. SQL: "${sql}"`
+    );
+    return String(rawResult); // Coerce to string if not already
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(
-      `Error in runDbQueryAction for instance ${instanceId} with query "${sql.substring(0,100)}...":`,
+      `Error in runDbQueryAction for instance ${instanceId} with query "${sql.substring(0, 100)}...":`,
       error
     );
     // Return the error message as a string to be displayed in the query result area
@@ -214,39 +236,64 @@ export async function updateTableRowAction(
     }
 
     let whereClauses = "";
-    const pkColsInOldData = primaryKeyColumns.filter(col => col.isPrimaryKey && Object.prototype.hasOwnProperty.call(oldRowData, col.name));
+    const pkColsInOldData = primaryKeyColumns.filter(
+      (col) =>
+        col.isPrimaryKey &&
+        Object.prototype.hasOwnProperty.call(oldRowData, col.name)
+    );
 
     if (pkColsInOldData.length > 0) {
       whereClauses = pkColsInOldData
-        .map(col => `\`${col.name}\` = ${escapeSqlValue(oldRowData[col.name])}`)
+        .map(
+          (col) => `\`${col.name}\` = ${escapeSqlValue(oldRowData[col.name])}`
+        )
         .join(" AND ");
     } else {
-      console.warn(`No primary key columns for update, using all columns in WHERE for table: ${tableName}`);
+      console.warn(
+        `No primary key columns for update, using all columns in WHERE for table: ${tableName}`
+      );
       whereClauses = Object.keys(oldRowData)
         .map((key) => `\`${key}\` = ${escapeSqlValue(oldRowData[key])}`)
         .join(" AND ");
     }
-    
+
     if (!whereClauses) {
-        return { success: false, message: "Cannot update row without a WHERE clause." };
+      return {
+        success: false,
+        message: "Cannot update row without a WHERE clause.",
+      };
     }
 
     const sql = `UPDATE \`${tableName}\` SET ${setClauses} WHERE ${whereClauses} LIMIT 1`;
 
     const result = await wpCli.db.query(sql);
 
-    if (typeof result === "string" && (result.trim() === "" || /Rows matched: [1-9]\d* Changed: [1-9]\d*/.test(result) || /Query OK, [1-9]\d* row affected/.test(result) )) {
+    if (
+      typeof result === "string" &&
+      (result.trim() === "" ||
+        /Rows matched: [1-9]\d* Changed: [1-9]\d*/.test(result) ||
+        /Query OK, [1-9]\d* row affected/.test(result))
+    ) {
       return { success: true, message: "Row updated successfully." };
     }
-    
+
     if (typeof result === "string") {
-      return { success: false, message: `Update failed or no rows affected: ${result}` };
+      return {
+        success: false,
+        message: `Update failed or no rows affected: ${result}`,
+      };
     }
 
-    return { success: false, message: "Update failed: Unexpected response from server." };
+    return {
+      success: false,
+      message: "Update failed: Unexpected response from server.",
+    };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`Error in updateTableRowAction for table ${tableName}:`, error);
+    console.error(
+      `Error in updateTableRowAction for table ${tableName}:`,
+      error
+    );
     return { success: false, message: `Error updating row: ${message}` };
   }
 }
@@ -258,28 +305,41 @@ export async function insertTableRowAction(
 ): Promise<{ success: boolean; message: string; insertId?: string | number }> {
   try {
     const wpCli = new WpCliApi(instanceId);
-    const columns = Object.keys(newRowData).map(key => `\`${key}\``).join(", ");
+    const columns = Object.keys(newRowData)
+      .map((key) => `\`${key}\``)
+      .join(", ");
     const values = Object.values(newRowData).map(escapeSqlValue).join(", ");
 
     if (!columns || !values) {
-        return { success: false, message: "No data provided for insert." };
+      return { success: false, message: "No data provided for insert." };
     }
 
     const sql = `INSERT INTO \`${tableName}\` (${columns}) VALUES (${values})`;
     const result = await wpCli.db.query(sql);
 
-    if (typeof result === "string" && (result.trim() === "" || /Query OK, [1-9]\d* row affected/.test(result) || /1 row inserted./.test(result) )) {
+    if (
+      typeof result === "string" &&
+      (result.trim() === "" ||
+        /Query OK, [1-9]\d* row affected/.test(result) ||
+        /1 row inserted./.test(result))
+    ) {
       return { success: true, message: "Row inserted successfully." };
     }
-    
+
     if (typeof result === "string") {
       return { success: false, message: `Insert failed: ${result}` };
     }
-    
-    return { success: false, message: "Insert failed: Unexpected response from server." };
+
+    return {
+      success: false,
+      message: "Insert failed: Unexpected response from server.",
+    };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`Error in insertTableRowAction for table ${tableName}:`, error);
+    console.error(
+      `Error in insertTableRowAction for table ${tableName}:`,
+      error
+    );
     return { success: false, message: `Error inserting row: ${message}` };
   }
 }
@@ -293,39 +353,65 @@ export async function deleteTableRowAction(
   try {
     const wpCli = new WpCliApi(instanceId);
     let whereClauses = "";
-    const pkColsInRowData = primaryKeyColumns.filter(col => col.isPrimaryKey && Object.prototype.hasOwnProperty.call(rowDataToDelete, col.name));
+    const pkColsInRowData = primaryKeyColumns.filter(
+      (col) =>
+        col.isPrimaryKey &&
+        Object.prototype.hasOwnProperty.call(rowDataToDelete, col.name)
+    );
 
     if (pkColsInRowData.length > 0) {
       whereClauses = pkColsInRowData
-        .map(col => `\`${col.name}\` = ${escapeSqlValue(rowDataToDelete[col.name])}`)
+        .map(
+          (col) =>
+            `\`${col.name}\` = ${escapeSqlValue(rowDataToDelete[col.name])}`
+        )
         .join(" AND ");
     } else {
-      console.warn(`No primary key columns for delete, using all columns in WHERE for table: ${tableName}`);
+      console.warn(
+        `No primary key columns for delete, using all columns in WHERE for table: ${tableName}`
+      );
       whereClauses = Object.keys(rowDataToDelete)
         .map((key) => `\`${key}\` = ${escapeSqlValue(rowDataToDelete[key])}`)
         .join(" AND ");
     }
 
     if (!whereClauses) {
-        return { success: false, message: "Cannot delete row without a WHERE clause." };
+      return {
+        success: false,
+        message: "Cannot delete row without a WHERE clause.",
+      };
     }
 
     const sql = `DELETE FROM \`${tableName}\` WHERE ${whereClauses} LIMIT 1`;
 
     const result = await wpCli.db.query(sql);
 
-    if (typeof result === "string" && (result.trim() === "" || /Rows affected: [1-9]\d*/.test(result) || /Query OK, [1-9]\d* row affected/.test(result))) {
+    if (
+      typeof result === "string" &&
+      (result.trim() === "" ||
+        /Rows affected: [1-9]\d*/.test(result) ||
+        /Query OK, [1-9]\d* row affected/.test(result))
+    ) {
       return { success: true, message: "Row deleted successfully." };
     }
-    
+
     if (typeof result === "string") {
-      return { success: false, message: `Delete failed or no rows affected: ${result}` };
+      return {
+        success: false,
+        message: `Delete failed or no rows affected: ${result}`,
+      };
     }
 
-    return { success: false, message: "Delete failed: Unexpected response from server." };
+    return {
+      success: false,
+      message: "Delete failed: Unexpected response from server.",
+    };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`Error in deleteTableRowAction for table ${tableName}:`, error);
+    console.error(
+      `Error in deleteTableRowAction for table ${tableName}:`,
+      error
+    );
     return { success: false, message: `Error deleting row: ${message}` };
   }
 }
@@ -368,14 +454,14 @@ export async function getTableSchemaAction(
 ): Promise<TableSchema> {
   try {
     const wpCli = new WpCliApi(instanceId);
-    
+
     // Get basic column information
     const describeQuery = `DESCRIBE \`${tableName}\``;
     const describeOutput = await wpCli.db.query(describeQuery);
-    
+
     const columns: TableColumn[] = [];
     const primaryKeys: string[] = [];
-    
+
     if (typeof describeOutput === "string" && describeOutput.trim() !== "") {
       const lines = describeOutput.trim().split("\n");
       if (lines.length > 1) {
@@ -387,26 +473,30 @@ export async function getTableSchemaAction(
         const defaultIndex = headers.indexOf("Default");
         const extraIndex = headers.indexOf("Extra");
 
-        lines.slice(1).forEach(line => {
+        lines.slice(1).forEach((line) => {
           const values = line.split("\t");
           const isPrimaryKey = keyIndex !== -1 && values[keyIndex] === "PRI";
-          
+
           if (isPrimaryKey) {
             primaryKeys.push(values[fieldIndex]);
           }
-          
+
           columns.push({
             name: values[fieldIndex],
             type: values[typeIndex],
             isPrimaryKey,
             isNullable: nullIndex !== -1 && values[nullIndex] === "YES",
-            defaultValue: defaultIndex !== -1 ? (values[defaultIndex] || undefined) : undefined,
-            extra: extraIndex !== -1 ? (values[extraIndex] || undefined) : undefined,
+            defaultValue:
+              defaultIndex !== -1
+                ? values[defaultIndex] || undefined
+                : undefined,
+            extra:
+              extraIndex !== -1 ? values[extraIndex] || undefined : undefined,
           });
         });
       }
     }
-    
+
     // Get foreign key constraints
     const foreignKeys: ForeignKey[] = [];
     try {
@@ -421,11 +511,11 @@ export async function getTableSchemaAction(
         AND REFERENCED_TABLE_NAME IS NOT NULL
       `;
       const fkOutput = await wpCli.db.query(fkQuery);
-      
+
       if (typeof fkOutput === "string" && fkOutput.trim() !== "") {
         const fkLines = fkOutput.trim().split("\n");
         if (fkLines.length > 1) {
-          fkLines.slice(1).forEach(line => {
+          fkLines.slice(1).forEach((line) => {
             const values = line.split("\t");
             if (values.length >= 4) {
               foreignKeys.push({
@@ -439,19 +529,22 @@ export async function getTableSchemaAction(
         }
       }
     } catch (error) {
-      console.warn(`Could not fetch foreign keys for table ${tableName}:`, error);
+      console.warn(
+        `Could not fetch foreign keys for table ${tableName}:`,
+        error
+      );
     }
-    
+
     // Get indexes
     const indexes: TableIndex[] = [];
     try {
       const indexQuery = `SHOW INDEX FROM \`${tableName}\``;
       const indexOutput = await wpCli.db.query(indexQuery);
-      
+
       if (typeof indexOutput === "string" && indexOutput.trim() !== "") {
         const indexLines = indexOutput.trim().split("\n");
         if (indexLines.length > 1) {
-          indexLines.slice(1).forEach(line => {
+          indexLines.slice(1).forEach((line) => {
             const values = line.split("\t");
             if (values.length >= 13) {
               indexes.push({
@@ -467,7 +560,7 @@ export async function getTableSchemaAction(
     } catch (error) {
       console.warn(`Could not fetch indexes for table ${tableName}:`, error);
     }
-    
+
     return {
       tableName,
       columns,
@@ -477,8 +570,13 @@ export async function getTableSchemaAction(
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`Error in getTableSchemaAction for table ${tableName}:`, error);
-    throw new Error(`Falha ao buscar esquema da tabela ${tableName}: ${message}`);
+    console.error(
+      `Error in getTableSchemaAction for table ${tableName}:`,
+      error
+    );
+    throw new Error(
+      `Falha ao buscar esquema da tabela ${tableName}: ${message}`
+    );
   }
 }
 
@@ -493,23 +591,26 @@ export async function addColumnAction(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const wpCli = new WpCliApi(instanceId);
-    
+
     let sql = `ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}\` ${columnType}`;
-    
+
     if (!isNullable) {
       sql += " NOT NULL";
     }
-    
+
     if (defaultValue !== undefined) {
       sql += ` DEFAULT ${escapeSqlValue(defaultValue)}`;
     }
-    
+
     const result = await wpCli.db.query(sql);
-    
-    if (typeof result === "string" && (result.trim() === "" || /Query OK/.test(result))) {
+
+    if (
+      typeof result === "string" &&
+      (result.trim() === "" || /Query OK/.test(result))
+    ) {
       return { success: true, message: "Coluna adicionada com sucesso." };
     }
-    
+
     return { success: false, message: `Falha ao adicionar coluna: ${result}` };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -528,11 +629,14 @@ export async function dropColumnAction(
     const wpCli = new WpCliApi(instanceId);
     const sql = `ALTER TABLE \`${tableName}\` DROP COLUMN \`${columnName}\``;
     const result = await wpCli.db.query(sql);
-    
-    if (typeof result === "string" && (result.trim() === "" || /Query OK/.test(result))) {
+
+    if (
+      typeof result === "string" &&
+      (result.trim() === "" || /Query OK/.test(result))
+    ) {
       return { success: true, message: "Coluna removida com sucesso." };
     }
-    
+
     return { success: false, message: `Falha ao remover coluna: ${result}` };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -550,11 +654,14 @@ export async function dropTableAction(
     const wpCli = new WpCliApi(instanceId);
     const sql = `DROP TABLE \`${tableName}\``;
     const result = await wpCli.db.query(sql);
-    
-    if (typeof result === "string" && (result.trim() === "" || /Query OK/.test(result))) {
+
+    if (
+      typeof result === "string" &&
+      (result.trim() === "" || /Query OK/.test(result))
+    ) {
       return { success: true, message: "Tabela removida com sucesso." };
     }
-    
+
     return { success: false, message: `Falha ao remover tabela: ${result}` };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -569,11 +676,11 @@ export async function getDatabaseInfoAction(
 ): Promise<DatabaseInfo> {
   try {
     const wpCli = new WpCliApi(instanceId);
-    
+
     // Get database name
     const dbNameQuery = "SELECT DATABASE() as db_name";
     const dbNameResult = await wpCli.db.query(dbNameQuery);
-    
+
     let dbName = "Unknown";
     if (typeof dbNameResult === "string" && dbNameResult.trim() !== "") {
       const lines = dbNameResult.trim().split("\n");
@@ -581,10 +688,10 @@ export async function getDatabaseInfoAction(
         dbName = lines[1].split("\t")[0] || "Unknown";
       }
     }
-    
+
     // Get tables
     const tables = await getDbTablesAction(instanceId);
-    
+
     // Get database size (approximate)
     const sizeQuery = `
       SELECT 
@@ -592,7 +699,7 @@ export async function getDatabaseInfoAction(
       FROM information_schema.tables 
       WHERE table_schema = DATABASE()
     `;
-    
+
     let size = "Unknown";
     try {
       const sizeResult = await wpCli.db.query(sizeQuery);
@@ -605,14 +712,14 @@ export async function getDatabaseInfoAction(
     } catch (error) {
       console.warn("Could not fetch database size:", error);
     }
-    
+
     // Get charset and collation
     const charsetQuery = `
       SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME 
       FROM information_schema.SCHEMATA 
       WHERE SCHEMA_NAME = DATABASE()
     `;
-    
+
     let charset = "Unknown";
     let collation = "Unknown";
     try {
@@ -628,7 +735,7 @@ export async function getDatabaseInfoAction(
     } catch (error) {
       console.warn("Could not fetch charset and collation:", error);
     }
-    
+
     return {
       name: dbName,
       tables,
@@ -639,7 +746,9 @@ export async function getDatabaseInfoAction(
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error in getDatabaseInfoAction:", error);
-    throw new Error(`Falha ao buscar informações do banco de dados: ${message}`);
+    throw new Error(
+      `Falha ao buscar informações do banco de dados: ${message}`
+    );
   }
 }
 
@@ -653,46 +762,52 @@ export async function bulkDeleteRowsAction(
   try {
     const wpCli = new WpCliApi(instanceId);
     let deletedCount = 0;
-    
+
     for (const row of rowsToDelete) {
-      const pkColsInRowData = primaryKeyColumns.filter(col => 
-        col.isPrimaryKey && Object.prototype.hasOwnProperty.call(row, col.name)
+      const pkColsInRowData = primaryKeyColumns.filter(
+        (col) =>
+          col.isPrimaryKey &&
+          Object.prototype.hasOwnProperty.call(row, col.name)
       );
-      
+
       let whereClauses = "";
       if (pkColsInRowData.length > 0) {
         whereClauses = pkColsInRowData
-          .map(col => `\`${col.name}\` = ${escapeSqlValue(row[col.name])}`)
+          .map((col) => `\`${col.name}\` = ${escapeSqlValue(row[col.name])}`)
           .join(" AND ");
       } else {
         whereClauses = Object.keys(row)
           .map((key) => `\`${key}\` = ${escapeSqlValue(row[key])}`)
           .join(" AND ");
       }
-      
+
       if (whereClauses) {
         const sql = `DELETE FROM \`${tableName}\` WHERE ${whereClauses} LIMIT 1`;
         const result = await wpCli.db.query(sql);
-        
-        if (typeof result === "string" && 
-            (result.trim() === "" || /Query OK/.test(result) || /Rows affected/.test(result))) {
+
+        if (
+          typeof result === "string" &&
+          (result.trim() === "" ||
+            /Query OK/.test(result) ||
+            /Rows affected/.test(result))
+        ) {
           deletedCount++;
         }
       }
     }
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       message: `${deletedCount} linha(s) removida(s) com sucesso.`,
-      deletedCount 
+      deletedCount,
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error in bulkDeleteRowsAction:", error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       message: `Erro ao remover linhas: ${message}`,
-      deletedCount: 0 
+      deletedCount: 0,
     };
   }
 }
@@ -706,50 +821,62 @@ export async function exportTableDataAction(
   try {
     const wpCli = new WpCliApi(instanceId);
     const result = await getDbTableDataAction(instanceId, tableName);
-    
+
     if (format === "csv") {
       // Generate CSV
-      const headers = result.columns.map(col => col.name).join(",");
-      const rows = result.rows.map(row => 
-        result.columns.map(col => {
-          const value = row[col.name];
-          // Escape CSV values
-          if (value === null || value === undefined) return "";
-          const stringValue = String(value);
-          if (stringValue.includes(",") || stringValue.includes('"') || stringValue.includes("\n")) {
-            return `"${stringValue.replace(/"/g, '""')}"`;
-          }
-          return stringValue;
-        }).join(",")
-      ).join("\n");
-      
+      const headers = result.columns.map((col) => col.name).join(",");
+      const rows = result.rows
+        .map((row) =>
+          result.columns
+            .map((col) => {
+              const value = row[col.name];
+              // Escape CSV values
+              if (value === null || value === undefined) return "";
+              const stringValue = String(value);
+              if (
+                stringValue.includes(",") ||
+                stringValue.includes('"') ||
+                stringValue.includes("\n")
+              ) {
+                return `"${stringValue.replace(/"/g, '""')}"`;
+              }
+              return stringValue;
+            })
+            .join(",")
+        )
+        .join("\n");
+
       const csvData = `${headers}\n${rows}`;
-      return { 
-        success: true, 
-        data: csvData, 
-        message: "Dados exportados como CSV com sucesso." 
+      return {
+        success: true,
+        data: csvData,
+        message: "Dados exportados como CSV com sucesso.",
       };
     } else {
       // Generate JSON
-      const jsonData = JSON.stringify({
-        table: tableName,
-        columns: result.columns,
-        rows: result.rows,
-        exportDate: new Date().toISOString()
-      }, null, 2);
-      
-      return { 
-        success: true, 
-        data: jsonData, 
-        message: "Dados exportados como JSON com sucesso." 
+      const jsonData = JSON.stringify(
+        {
+          table: tableName,
+          columns: result.columns,
+          rows: result.rows,
+          exportDate: new Date().toISOString(),
+        },
+        null,
+        2
+      );
+
+      return {
+        success: true,
+        data: jsonData,
+        message: "Dados exportados como JSON com sucesso.",
       };
     }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error in exportTableDataAction:", error);
-    return { 
-      success: false, 
-      message: `Erro ao exportar dados: ${message}` 
+    return {
+      success: false,
+      message: `Erro ao exportar dados: ${message}`,
     };
   }
 }
@@ -768,32 +895,37 @@ export async function createTableAction(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const wpCli = new WpCliApi(instanceId);
-    
-    const columnDefinitions = columns.map(col => {
-      let definition = `\`${col.name}\` ${col.type}`;
-      
-      if (!col.isNullable) {
-        definition += " NOT NULL";
-      }
-      
-      if (col.defaultValue !== undefined) {
-        definition += ` DEFAULT ${escapeSqlValue(col.defaultValue)}`;
-      }
-      
-      if (col.isPrimaryKey) {
-        definition += " PRIMARY KEY";
-      }
-      
-      return definition;
-    }).join(", ");
-    
+
+    const columnDefinitions = columns
+      .map((col) => {
+        let definition = `\`${col.name}\` ${col.type}`;
+
+        if (!col.isNullable) {
+          definition += " NOT NULL";
+        }
+
+        if (col.defaultValue !== undefined) {
+          definition += ` DEFAULT ${escapeSqlValue(col.defaultValue)}`;
+        }
+
+        if (col.isPrimaryKey) {
+          definition += " PRIMARY KEY";
+        }
+
+        return definition;
+      })
+      .join(", ");
+
     const sql = `CREATE TABLE \`${tableName}\` (${columnDefinitions})`;
     const result = await wpCli.db.query(sql);
-    
-    if (typeof result === "string" && (result.trim() === "" || /Query OK/.test(result))) {
+
+    if (
+      typeof result === "string" &&
+      (result.trim() === "" || /Query OK/.test(result))
+    ) {
       return { success: true, message: "Tabela criada com sucesso." };
     }
-    
+
     return { success: false, message: `Falha ao criar tabela: ${result}` };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -803,9 +935,7 @@ export async function createTableAction(
 }
 
 // Get database size and statistics
-export async function getDatabaseStatsAction(
-  instanceId: number
-): Promise<{
+export async function getDatabaseStatsAction(instanceId: number): Promise<{
   success: boolean;
   data?: {
     totalTables: number;
@@ -822,20 +952,20 @@ export async function getDatabaseStatsAction(
 }> {
   try {
     const wpCli = new WpCliApi(instanceId);
-    
+
     // Get table list
     const tables = await getDbTablesAction(instanceId);
-    
+
     // Get detailed stats for each table
     const tableStats = [];
     let totalRows = 0;
-    
+
     for (const table of tables) {
       try {
         // Get row count
         const countQuery = `SELECT COUNT(*) as row_count FROM \`${table}\``;
         const countResult = await wpCli.db.query(countQuery);
-        
+
         let rowCount = 0;
         if (typeof countResult === "string" && countResult.trim() !== "") {
           const lines = countResult.trim().split("\n");
@@ -843,7 +973,7 @@ export async function getDatabaseStatsAction(
             rowCount = Number.parseInt(lines[1]) || 0;
           }
         }
-        
+
         // Get table size
         const sizeQuery = `
           SELECT 
@@ -851,7 +981,7 @@ export async function getDatabaseStatsAction(
           FROM information_schema.TABLES 
           WHERE table_schema = DATABASE() AND table_name = '${table}'
         `;
-        
+
         let sizeInMB = 0;
         try {
           const sizeResult = await wpCli.db.query(sizeQuery);
@@ -864,25 +994,26 @@ export async function getDatabaseStatsAction(
         } catch (error) {
           console.warn(`Could not get size for table ${table}:`, error);
         }
-        
+
         tableStats.push({
           tableName: table,
           rowCount,
           sizeInMB,
         });
-        
+
         totalRows += rowCount;
       } catch (error) {
         console.warn(`Could not get stats for table ${table}:`, error);
       }
     }
-    
+
     // Find largest table
-    const largestTable = tableStats.reduce((largest, current) => 
-      current.sizeInMB > largest.sizeInMB ? current : largest, 
+    const largestTable = tableStats.reduce(
+      (largest, current) =>
+        current.sizeInMB > largest.sizeInMB ? current : largest,
       tableStats[0] || { tableName: "N/A", sizeInMB: 0 }
     );
-    
+
     // Get total database size
     const totalSizeQuery = `
       SELECT 
@@ -890,11 +1021,14 @@ export async function getDatabaseStatsAction(
       FROM information_schema.tables 
       WHERE table_schema = DATABASE()
     `;
-    
+
     let databaseSize = "0 MB";
     try {
       const totalSizeResult = await wpCli.db.query(totalSizeQuery);
-      if (typeof totalSizeResult === "string" && totalSizeResult.trim() !== "") {
+      if (
+        typeof totalSizeResult === "string" &&
+        totalSizeResult.trim() !== ""
+      ) {
         const totalSizeLines = totalSizeResult.trim().split("\n");
         if (totalSizeLines.length > 1) {
           const sizeMB = totalSizeLines[1];
@@ -904,7 +1038,7 @@ export async function getDatabaseStatsAction(
     } catch (error) {
       console.warn("Could not get total database size:", error);
     }
-    
+
     return {
       success: true,
       data: {
@@ -919,9 +1053,9 @@ export async function getDatabaseStatsAction(
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error in getDatabaseStatsAction:", error);
-    return { 
-      success: false, 
-      message: `Erro ao carregar estatísticas: ${message}` 
+    return {
+      success: false,
+      message: `Erro ao carregar estatísticas: ${message}`,
     };
   }
 }

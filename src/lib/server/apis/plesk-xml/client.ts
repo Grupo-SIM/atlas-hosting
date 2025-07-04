@@ -171,7 +171,10 @@ export async function setSiteProperties(
 export const getDomainDiskUsage = cache(
   async (domainName: string): Promise<DiskUsageStats | undefined> => {
     if (!domainName) {
-      console.error("Invalid domainName passed to getDomainDiskUsage:", domainName);
+      console.error(
+        "Invalid domainName passed to getDomainDiskUsage:",
+        domainName
+      );
       // It's better to throw an error for invalid input to prevent silent failures.
       throw new Error("Invalid domainName provided for fetching disk usage.");
     }
@@ -189,7 +192,9 @@ export const getDomainDiskUsage = cache(
       return response.data.disk_usage;
     }
     if (response?.status === "error") {
-      console.error(`Error fetching disk usage for ${domainName}: Plesk API Error ${response.errcode} - ${response.errtext}`);
+      console.error(
+        `Error fetching disk usage for ${domainName}: Plesk API Error ${response.errcode} - ${response.errtext}`
+      );
     }
     // Return undefined if not successful or data is not in the expected shape
     return undefined;

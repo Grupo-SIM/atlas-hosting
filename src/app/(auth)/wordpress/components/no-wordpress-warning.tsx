@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { AlertTriangle, PlusCircle } from "lucide-react";
 import Link from "next/link";
 
@@ -22,9 +28,14 @@ export function NoWordPressWarning({ domainName }: NoWordPressWarningProps) {
       </CardHeader>
       <CardContent className="text-center">
         <p className="mb-6 text-muted-foreground">
-          Para gerenciar um banco de dados, primeiro é necessário ter uma instalação ativa do WordPress.
+          Para gerenciar um banco de dados, primeiro é necessário ter uma
+          instalação ativa do WordPress.
         </p>
-        <Button asChild size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-600 dark:hover:bg-yellow-700">
+        <Button
+          asChild
+          size="lg"
+          className="bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-600 dark:hover:bg-yellow-700"
+        >
           <Link href="/sites/new">
             <PlusCircle className="mr-2 h-5 w-5" />
             Criar Nova Instalação WordPress

@@ -2,7 +2,14 @@
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { pgUser, type Session, type User } from "@/lib/db/schema";
+import {
+  pgUser,
+  userSettings,
+  type UserSettings,
+  type Session,
+  type User,
+} from "@/lib/db/schema";
+
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -13,7 +20,7 @@ export type SessionValidationResult =
   | { session: Session; user: User }
   | { session: null; user: null };
 
-export async function getUser(): Promise<User> {
+export async function getUser() {
   "use server";
 
   const session = await auth();
@@ -38,6 +45,8 @@ export async function getUser(): Promise<User> {
         domainAccess: true,
         referrer: true,
         referredUsers: true,
+        settings: true,
+        sessions: true,
       },
     });
 
@@ -68,6 +77,19 @@ export async function getUser(): Promise<User> {
 
   return user as User;
 }
+
+export async function getUserSettings(
+  userId: string
+): Promise<UserSettings | undefined> {
+  return await db.query.userSettings
+    .findFirst({
+      where: eq(userSettings.userId, userId),
+    })
+    .execute();
+}
+
+// '{ id: string; name: string; ownerId: string | null; domId: string | null; pleskId: string | null; planId: string | null; namecheapId: number | null; createdAt: Date; updatedAt: Date; ... 6 more ...; domains: { ...; }[]; } | null'
+// '{ id: string; name: string; ownerId: string | null; domId: string | null; pleskId: string | null; planId: string | null; namecheapId: number | null; createdAt: Date; updatedAt: Date; deletedAt: Date | null; walletId: string; } & { ...; }'.
 
 export interface UserWithLogger extends User {
   logger: AppLogger;

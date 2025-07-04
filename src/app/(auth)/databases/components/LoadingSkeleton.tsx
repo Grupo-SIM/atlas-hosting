@@ -29,7 +29,7 @@ export function TableLoadingSkeleton() {
           <Skeleton className="h-10 w-24" />
         </div>
       </div>
-      
+
       {/* Table skeleton */}
       <div className="rounded-md border">
         <div className="border-b">
@@ -39,7 +39,7 @@ export function TableLoadingSkeleton() {
             ))}
           </div>
         </div>
-        
+
         {Array.from({ length: 10 }, (_, i) => (
           <div key={`row-${i}`} className="border-b last:border-b-0">
             <div className="flex items-center space-x-4 p-4">
@@ -50,7 +50,7 @@ export function TableLoadingSkeleton() {
           </div>
         ))}
       </div>
-      
+
       {/* Pagination skeleton */}
       <div className="flex items-center justify-between">
         <Skeleton className="h-4 w-48" />

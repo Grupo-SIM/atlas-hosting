@@ -89,7 +89,7 @@ export class NamecheapApiWrapper {
   constructor(userName: string) {
     this.userName = userName;
     this.axiosInstance = axios.create({
-      headers: {"Content-Type": "application/xml"}
+      headers: { "Content-Type": "application/xml" },
     });
   }
 

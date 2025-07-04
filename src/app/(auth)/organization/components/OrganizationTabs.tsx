@@ -57,8 +57,8 @@ export function OrganizationTabs({
       </TabsContent>
 
       <TabsContent value="members">
-        <MemberManagement 
-          members={members} 
+        <MemberManagement
+          members={members}
           currentUserId={currentUserId}
           organizationId={organizationId}
           isOwner={isOwner}

@@ -37,12 +37,13 @@ export default async function OrganizationPage({
         dialogOpen={params.action === "createMember"}
         searchParams={params}
       />
-      <OrganizationTabs 
-        user={user} 
-        auditLogs={auditLogs} 
-        currentUserId={user.id} 
+      <OrganizationTabs
+        user={user}
+        auditLogs={auditLogs}
+        currentUserId={user.id}
         organizationId={user.organizationId ?? ""}
-        isOwner={user.id === user.organization.ownerId} />
+        isOwner={user.id === user.organization.ownerId}
+      />
     </div>
   );
 }

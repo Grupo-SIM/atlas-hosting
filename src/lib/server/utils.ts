@@ -89,11 +89,13 @@ export const getUserNamecheapDomains = cache(async function getUserDomains(
 ): Promise<(DomainsGetInfoCleanedResponse & { inPlesk: boolean })[]> {
   try {
     const allDomains = await Promise.all(
-      (user.organization.domains).filter(domain => domain.active).map(async (domain) => {
-        return namecheapApi.getInfo({
-          DomainName: domain.domain,
-        });
-      })
+      user.organization.domains
+        .filter((domain) => domain.active)
+        .map(async (domain) => {
+          return namecheapApi.getInfo({
+            DomainName: domain.domain,
+          });
+        })
     );
 
     const wpInstances = await getUserWordPressSites(user); // Reuse the existing function

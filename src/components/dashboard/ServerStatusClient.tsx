@@ -25,7 +25,7 @@ export function SslFixButton({ domainName, serviceStatus }: SslFixButtonProps) {
     try {
       // Start SSL generation
       generateSslForDomain(domainName);
-      
+
       // Simulate progress over 30 seconds
       const interval = setInterval(() => {
         setProgress((prev) => {
@@ -33,13 +33,13 @@ export function SslFixButton({ domainName, serviceStatus }: SslFixButtonProps) {
             clearInterval(interval);
             return 100;
           }
-          return prev + (100 / 30); // Progress over 30 seconds
+          return prev + 100 / 30; // Progress over 30 seconds
         });
       }, 1000);
 
       // Wait for 30 seconds
       await new Promise((resolve) => setTimeout(resolve, 30000));
-      
+
       clearInterval(interval);
       setProgress(100);
 
@@ -64,12 +64,15 @@ export function SslFixButton({ domainName, serviceStatus }: SslFixButtonProps) {
       {isFixing ? (
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Instalando certificado SSL...</span>
+            <span className="text-muted-foreground">
+              Instalando certificado SSL...
+            </span>
             <span className="font-mono">{Math.round(progress)}%</span>
           </div>
           <Progress value={progress} className="h-2" />
           <p className="text-xs text-muted-foreground">
-            Aguarde enquanto configuramos seu certificado SSL. Isso pode levar até 30 segundos.
+            Aguarde enquanto configuramos seu certificado SSL. Isso pode levar
+            até 30 segundos.
           </p>
         </div>
       ) : (
@@ -79,9 +82,10 @@ export function SslFixButton({ domainName, serviceStatus }: SslFixButtonProps) {
           size="sm"
           className={`
             w-full text-xs font-medium transition-all duration-200
-            ${serviceStatus === "error" 
-              ? "bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700" 
-              : "bg-amber-600 hover:bg-amber-700 text-white border-amber-600 hover:border-amber-700"
+            ${
+              serviceStatus === "error"
+                ? "bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700"
+                : "bg-amber-600 hover:bg-amber-700 text-white border-amber-600 hover:border-amber-700"
             }
             disabled:opacity-50 disabled:cursor-not-allowed
             shadow-sm hover:shadow-md
@@ -94,10 +98,9 @@ export function SslFixButton({ domainName, serviceStatus }: SslFixButtonProps) {
               <Shield className="h-3 w-3" />
             )}
             <span>
-              {serviceStatus === "error" 
-                ? "Instalar Certificado SSL" 
-                : "Corrigir SSL"
-              }
+              {serviceStatus === "error"
+                ? "Instalar Certificado SSL"
+                : "Corrigir SSL"}
             </span>
           </div>
         </Button>

@@ -6,20 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Send, 
-  Paperclip, 
-  Type, 
-  Bold, 
-  Italic, 
+import {
+  Send,
+  Paperclip,
+  Type,
+  Bold,
+  Italic,
   Underline,
   X,
   Upload,
   Save,
-  MoreHorizontal
+  MoreHorizontal,
 } from "lucide-react";
 import type { MailName } from "@/lib/server/apis/plesk-xml/types";
 
@@ -51,7 +57,12 @@ interface PleskEmailComposeProps {
   fromAccount?: MailName | null;
 }
 
-export function PleskEmailCompose({ onSend, onCancel, replyTo, fromAccount }: PleskEmailComposeProps) {
+export function PleskEmailCompose({
+  onSend,
+  onCancel,
+  replyTo,
+  fromAccount,
+}: PleskEmailComposeProps) {
   const [to, setTo] = useState(replyTo ? replyTo.from : "");
   const [cc, setCc] = useState("");
   const [bcc, setBcc] = useState("");
@@ -59,7 +70,9 @@ export function PleskEmailCompose({ onSend, onCancel, replyTo, fromAccount }: Pl
     replyTo ? `Re: ${replyTo.subject.replace(/^Re: /, "")}` : ""
   );
   const [body, setBody] = useState(
-    replyTo ? `\n\n--- Mensagem original ---\nDe: ${replyTo.from}\nPara: ${replyTo.to}\nAssunto: ${replyTo.subject}\nData: ${replyTo.date.toLocaleString('pt-BR')}\n\n${replyTo.body || replyTo.preview}` : ""
+    replyTo
+      ? `\n\n--- Mensagem original ---\nDe: ${replyTo.from}\nPara: ${replyTo.to}\nAssunto: ${replyTo.subject}\nData: ${replyTo.date.toLocaleString("pt-BR")}\n\n${replyTo.body || replyTo.preview}`
+      : ""
   );
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
@@ -68,11 +81,11 @@ export function PleskEmailCompose({ onSend, onCancel, replyTo, fromAccount }: Pl
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    setAttachments(prev => [...prev, ...files]);
+    setAttachments((prev) => [...prev, ...files]);
   };
 
   const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSend = () => {
@@ -87,7 +100,7 @@ export function PleskEmailCompose({ onSend, onCancel, replyTo, fromAccount }: Pl
       bcc: bcc.trim() || undefined,
       subject: subject.trim(),
       text: body.trim(),
-      html: `<p>${body.trim().replace(/\n/g, '</p><p>')}</p>`
+      html: `<p>${body.trim().replace(/\n/g, "</p><p>")}</p>`,
     });
   };
 
@@ -98,11 +111,11 @@ export function PleskEmailCompose({ onSend, onCancel, replyTo, fromAccount }: Pl
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${Number.parseFloat((bytes / (k ** i)).toFixed(2))} ${sizes[i]}`;
+    return `${Number.parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
   };
 
   return (
@@ -239,7 +252,10 @@ export function PleskEmailCompose({ onSend, onCancel, replyTo, fromAccount }: Pl
             <Label>Anexos ({attachments.length})</Label>
             <div className="space-y-2">
               {attachments.map((file, index) => (
-                <div key={`${file.name}-${file.size}-${index}`} className="flex items-center justify-between p-2 border rounded">
+                <div
+                  key={`${file.name}-${file.size}-${index}`}
+                  className="flex items-center justify-between p-2 border rounded"
+                >
                   <div className="flex items-center space-x-2">
                     <Paperclip className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">{file.name}</span>
@@ -310,11 +326,7 @@ export function PleskEmailCompose({ onSend, onCancel, replyTo, fromAccount }: Pl
         {/* Actions */}
         <div className="flex items-center justify-between pt-4 border-t">
           <div className="flex items-center space-x-2">
-            {isDraft && (
-              <Badge variant="secondary">
-                Salvo como rascunho
-              </Badge>
-            )}
+            {isDraft && <Badge variant="secondary">Salvo como rascunho</Badge>}
           </div>
           <div className="flex items-center space-x-2">
             <Button variant="outline" onClick={onCancel}>

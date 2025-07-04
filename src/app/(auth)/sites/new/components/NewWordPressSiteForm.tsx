@@ -215,7 +215,7 @@ export function NewWordPressSiteForm({
             title: "Instalação Concluída!",
             description:
               message || "Seu site WordPress foi instalado com sucesso.",
-            variant: "default", 
+            variant: "default",
           });
           setTimeout(() => {
             setIsComplete(true);
@@ -246,9 +246,13 @@ export function NewWordPressSiteForm({
       case 1:
         return <Globe className="h-8 w-8 text-blue-600 dark:text-blue-400" />;
       case 2:
-        return <Settings className="h-8 w-8 text-green-600 dark:text-green-400" />;
+        return (
+          <Settings className="h-8 w-8 text-green-600 dark:text-green-400" />
+        );
       case 3:
-        return <Package className="h-8 w-8 text-purple-600 dark:text-purple-400" />;
+        return (
+          <Package className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+        );
       default:
         return null;
     }

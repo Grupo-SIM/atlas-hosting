@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { pgInvoice } from "@/lib/db/schema";
+import { type Organization, pgInvoice } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { OrganizationSection } from "./components/OrganizationSection";
@@ -11,14 +11,18 @@ import { WalletSection } from "./components/WalletSection";
 
 export default async function SettingsPage({
   searchParams,
-}: { searchParams: Promise<{ tab?: string }> }) {
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const params = await searchParams;
   const user = await getUser();
+
+  console.log("settings", user.settings);
 
   // Fetch recent invoices for wallet information
   const invoices = await db.query.pgInvoice.findMany({
     where: and(
-      eq(pgInvoice.orgId, user.organization.id),
+      eq(pgInvoice.orgId, (user.organization as Organization).id),
       eq(pgInvoice.status, "paid")
     ),
     orderBy: (pgInvoice, { desc }) => [pgInvoice.createdAt],

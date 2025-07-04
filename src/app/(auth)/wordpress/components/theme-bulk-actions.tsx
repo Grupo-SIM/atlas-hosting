@@ -37,13 +37,13 @@ export function ThemeBulkActions({ sites }: ThemeBulkActionsProps) {
 
   const totalActiveThemes = sites.reduce(
     (acc, site) =>
-      acc + (site.themes?.filter((theme) => theme.status === "active").length || 0),
+      acc +
+      (site.themes?.filter((theme) => theme.status === "active").length || 0),
     0
   );
 
   const totalThemeUpdates = sites.reduce(
-    (acc, site) =>
-      acc + (site.updatesAvailable?.themes?.length || 0),
+    (acc, site) => acc + (site.updatesAvailable?.themes?.length || 0),
     0
   );
 
@@ -124,19 +124,21 @@ export function ThemeBulkActions({ sites }: ThemeBulkActionsProps) {
               <DropdownMenuSeparator />
             </>
           )}
-          
-          <DropdownMenuItem onClick={() => handleBulkAction("activate-defaults")}>
+
+          <DropdownMenuItem
+            onClick={() => handleBulkAction("activate-defaults")}
+          >
             <CheckCircle className="mr-2 h-4 w-4" />
             Ativar Temas Padrão
           </DropdownMenuItem>
-          
+
           <DropdownMenuItem onClick={() => handleBulkAction("backup-themes")}>
             <Settings className="mr-2 h-4 w-4" />
             Backup de Temas
           </DropdownMenuItem>
-          
+
           <DropdownMenuSeparator />
-          
+
           <DropdownMenuItem onClick={() => handleBulkAction("scan-updates")}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Verificar Atualizações
@@ -150,7 +152,9 @@ export function ThemeBulkActions({ sites }: ThemeBulkActionsProps) {
         onClick={() => handleBulkAction("scan-updates")}
         disabled={isLoading || totalThemes === 0}
       >
-        <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        <RefreshCw
+          className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+        />
         Atualizar
       </Button>
     </div>

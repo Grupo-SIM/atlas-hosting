@@ -1,1 +1,1 @@
-export { WordPressTransferForm } from './WordPressTransferForm';
+export { WordPressTransferForm } from "./WordPressTransferForm";

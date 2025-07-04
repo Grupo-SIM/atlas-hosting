@@ -12,7 +12,10 @@ async function testWordPressPlugins() {
     // First, let's list all WordPress instances
     console.log("1️⃣ Getting WordPress instances list...");
     const wpListResult = await pleskApi.wordpress.callWp("-list -format=json");
-    console.log("WP List Result:", JSON.stringify(wpListResult.stdout, null, 2));
+    console.log(
+      "WP List Result:",
+      JSON.stringify(wpListResult.stdout, null, 2)
+    );
 
     if (wpListResult.stdout) {
       console.log("Raw stdout:", wpListResult.stdout);

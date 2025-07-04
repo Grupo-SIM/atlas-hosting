@@ -254,7 +254,8 @@ const ModernCheckoutForm = forwardRef<
     if (paymentMethod === "new") {
       // For new card with existing user, we need card data and billing data
       const values = getValues();
-      const { cardNumber, cardExpiration, cardCvv, fullName, document } = values;
+      const { cardNumber, cardExpiration, cardCvv, fullName, document } =
+        values;
 
       if (!cardNumber || !cardExpiration || !cardCvv) {
         toast.error("Por favor, preencha todos os dados do cartão");
@@ -262,7 +263,9 @@ const ModernCheckoutForm = forwardRef<
       }
 
       if (!fullName || !document) {
-        toast.error("Por favor, preencha o nome e documento do titular do cartão");
+        toast.error(
+          "Por favor, preencha o nome e documento do titular do cartão"
+        );
         return;
       }
 
@@ -287,7 +290,7 @@ const ModernCheckoutForm = forwardRef<
           });
 
           if (result.status === "success") {
-            router.push("/payment/success")
+            router.push("/payment/success");
           } else {
             toast.error(result.message);
           }
@@ -659,8 +662,8 @@ const ModernCheckoutForm = forwardRef<
               <ArrowLeft size={16} />
               Voltar
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={handleSubmit(onSubmit)}
               disabled={!canCompleteCheckout() || isPending}
               className="min-w-40"
@@ -1089,7 +1092,7 @@ function NewCardFormSection({
             )}
           </div>
         </div>
-        
+
         {/* Billing Information for Card Holder */}
         <div className="mt-6 space-y-4">
           <h3 className="text-sm font-medium text-muted-foreground">

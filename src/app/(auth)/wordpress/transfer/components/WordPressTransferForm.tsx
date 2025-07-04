@@ -80,7 +80,7 @@ export function WordPressTransferForm({
 
     if (!formData.file) {
       errors.file = "Selecione o arquivo ZIP para fazer upload";
-    } else if (!formData.file.name.toLowerCase().endsWith('.zip')) {
+    } else if (!formData.file.name.toLowerCase().endsWith(".zip")) {
       errors.file = "Por favor, selecione apenas arquivos ZIP";
     }
 
@@ -91,9 +91,9 @@ export function WordPressTransferForm({
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFormData(prev => ({ ...prev, file }));
+      setFormData((prev) => ({ ...prev, file }));
       if (formErrors.file) {
-        setFormErrors(prev => ({ ...prev, file: undefined }));
+        setFormErrors((prev) => ({ ...prev, file: undefined }));
       }
     }
   };
@@ -124,8 +124,8 @@ export function WordPressTransferForm({
     const progressInterval = simulateProgress();
 
     try {
-      const targetDomain = formData.useSelectedDomain 
-        ? selectedDomain?.domain 
+      const targetDomain = formData.useSelectedDomain
+        ? selectedDomain?.domain
         : formData.domain;
 
       if (!targetDomain || !formData.file) {
@@ -139,7 +139,7 @@ export function WordPressTransferForm({
       uploadData.append("userEmail", userEmail);
 
       setStatusMessage("Validando arquivo...");
-      
+
       // Upload and process the WordPress site
       const response = await fetch("/api/wordpress/transfer", {
         method: "POST",
@@ -166,19 +166,19 @@ export function WordPressTransferForm({
         title: "Transferência Concluída",
         description: `Seu site WordPress foi transferido com sucesso para ${targetDomain}`,
       });
-
     } catch (error) {
       clearInterval(progressInterval);
       setTransferStatus("error");
       setStatusMessage(
-        error instanceof Error 
-          ? error.message 
+        error instanceof Error
+          ? error.message
           : "Erro inesperado durante a transferência"
       );
 
       toast({
         title: "Erro na Transferência",
-        description: "Houve um problema ao transferir seu site WordPress. Tente novamente.",
+        description:
+          "Houve um problema ao transferir seu site WordPress. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -200,7 +200,8 @@ export function WordPressTransferForm({
     }
   };
 
-  const isProcessing = transferStatus === "uploading" || transferStatus === "processing";
+  const isProcessing =
+    transferStatus === "uploading" || transferStatus === "processing";
 
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -222,8 +223,10 @@ export function WordPressTransferForm({
             >
               {/* Domain Selection */}
               <div className="space-y-4">
-                <Label className="text-base font-medium">Domínio de Destino</Label>
-                
+                <Label className="text-base font-medium">
+                  Domínio de Destino
+                </Label>
+
                 {selectedDomain && (
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
@@ -232,17 +235,26 @@ export function WordPressTransferForm({
                         id="useSelected"
                         name="domainChoice"
                         checked={formData.useSelectedDomain}
-                        onChange={() => setFormData(prev => ({ 
-                          ...prev, 
-                          useSelectedDomain: true,
-                          domain: selectedDomain.domain 
-                        }))}
+                        onChange={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            useSelectedDomain: true,
+                            domain: selectedDomain.domain,
+                          }))
+                        }
                         className="w-4 h-4 text-primary focus:ring-primary"
                       />
-                      <Label htmlFor="useSelected" className="flex items-center gap-2 cursor-pointer">
+                      <Label
+                        htmlFor="useSelected"
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
                         <Globe className="h-4 w-4" />
-                        Usar domínio selecionado: <strong>{selectedDomain.domain}</strong>
-                        <Badge variant="default" className="bg-green-500/10 text-green-700">
+                        Usar domínio selecionado:{" "}
+                        <strong>{selectedDomain.domain}</strong>
+                        <Badge
+                          variant="default"
+                          className="bg-green-500/10 text-green-700"
+                        >
                           Atual
                         </Badge>
                       </Label>
@@ -254,11 +266,13 @@ export function WordPressTransferForm({
                         id="useOther"
                         name="domainChoice"
                         checked={!formData.useSelectedDomain}
-                        onChange={() => setFormData(prev => ({ 
-                          ...prev, 
-                          useSelectedDomain: false,
-                          domain: "" 
-                        }))}
+                        onChange={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            useSelectedDomain: false,
+                            domain: "",
+                          }))
+                        }
                         className="w-4 h-4 text-primary focus:ring-primary"
                       />
                       <Label htmlFor="useOther" className="cursor-pointer">
@@ -272,12 +286,16 @@ export function WordPressTransferForm({
                   <div className="space-y-2">
                     <Select
                       value={formData.domain}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, domain: value }))}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, domain: value }))
+                      }
                     >
-                      <SelectTrigger className={cn(
-                        "w-full",
-                        formErrors.domain && "border-destructive"
-                      )}>
+                      <SelectTrigger
+                        className={cn(
+                          "w-full",
+                          formErrors.domain && "border-destructive"
+                        )}
+                      >
                         <SelectValue placeholder="Selecione um domínio" />
                       </SelectTrigger>
                       <SelectContent>
@@ -291,7 +309,10 @@ export function WordPressTransferForm({
                             <SelectItem key={domain.id} value={domain.domain}>
                               <div className="flex items-center justify-between w-full">
                                 <span>{domain.domain}</span>
-                                <Badge variant="default" className="bg-green-500/10 text-green-700">
+                                <Badge
+                                  variant="default"
+                                  className="bg-green-500/10 text-green-700"
+                                >
                                   Ativo
                                 </Badge>
                               </div>
@@ -301,7 +322,9 @@ export function WordPressTransferForm({
                       </SelectContent>
                     </Select>
                     {formErrors.domain && (
-                      <p className="text-sm text-destructive">{formErrors.domain}</p>
+                      <p className="text-sm text-destructive">
+                        {formErrors.domain}
+                      </p>
                     )}
                   </div>
                 )}
@@ -309,13 +332,15 @@ export function WordPressTransferForm({
 
               {/* File Upload */}
               <div className="space-y-4">
-                <Label className="text-base font-medium">Arquivo de Exportação</Label>
-                
+                <Label className="text-base font-medium">
+                  Arquivo de Exportação
+                </Label>
+
                 <div
                   className={cn(
                     "border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer",
-                    formData.file 
-                      ? "border-green-300 bg-green-50/50 dark:bg-green-950/20" 
+                    formData.file
+                      ? "border-green-300 bg-green-50/50 dark:bg-green-950/20"
                       : "border-border hover:border-primary/50",
                     formErrors.file && "border-destructive"
                   )}
@@ -328,13 +353,17 @@ export function WordPressTransferForm({
                     onChange={handleFileSelect}
                     className="hidden"
                   />
-                  
+
                   {formData.file ? (
                     <div className="space-y-2">
                       <CheckCircle className="h-8 w-8 text-green-600 mx-auto" />
                       <div>
-                        <p className="font-medium text-green-700">Arquivo selecionado</p>
-                        <p className="text-sm text-muted-foreground">{formData.file.name}</p>
+                        <p className="font-medium text-green-700">
+                          Arquivo selecionado
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {formData.file.name}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {(formData.file.size / 1024 / 1024).toFixed(2)} MB
                         </p>
@@ -344,7 +373,9 @@ export function WordPressTransferForm({
                     <div className="space-y-2">
                       <FileArchive className="h-8 w-8 text-muted-foreground mx-auto" />
                       <div>
-                        <p className="font-medium">Clique para selecionar arquivo ZIP</p>
+                        <p className="font-medium">
+                          Clique para selecionar arquivo ZIP
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           Arquivo gerado pelo plugin AtlasHosting Migrator
                         </p>
@@ -352,7 +383,7 @@ export function WordPressTransferForm({
                     </div>
                   )}
                 </div>
-                
+
                 {formErrors.file && (
                   <p className="text-sm text-destructive">{formErrors.file}</p>
                 )}
@@ -393,7 +424,9 @@ export function WordPressTransferForm({
                 </div>
                 <div className="space-y-2">
                   <Progress value={progress} className="w-full" />
-                  <p className="text-sm text-muted-foreground">{Math.round(progress)}% concluído</p>
+                  <p className="text-sm text-muted-foreground">
+                    {Math.round(progress)}% concluído
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -413,20 +446,29 @@ export function WordPressTransferForm({
                   Transferência Concluída!
                 </AlertTitle>
                 <AlertDescription className="text-green-700 dark:text-green-300">
-                  Seu site WordPress foi transferido com sucesso. Você pode acessá-lo nos links abaixo.
+                  Seu site WordPress foi transferido com sucesso. Você pode
+                  acessá-lo nos links abaixo.
                 </AlertDescription>
               </Alert>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button variant="outline" asChild>
-                  <a href={transferResult.siteUrl} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={transferResult.siteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <Globe className="h-4 w-4 mr-2" />
                     Ver Site
                   </a>
                 </Button>
-                
+
                 <Button asChild>
-                  <a href={transferResult.adminUrl} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={transferResult.adminUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <ArrowRight className="h-4 w-4 mr-2" />
                     Painel Admin
                   </a>
@@ -454,7 +496,11 @@ export function WordPressTransferForm({
               </Alert>
 
               <div className="flex gap-3">
-                <Button variant="outline" onClick={resetForm} className="flex-1">
+                <Button
+                  variant="outline"
+                  onClick={resetForm}
+                  className="flex-1"
+                >
                   Tentar Novamente
                 </Button>
               </div>

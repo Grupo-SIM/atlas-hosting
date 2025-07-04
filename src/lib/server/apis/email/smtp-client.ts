@@ -1,5 +1,5 @@
-import nodemailer from 'nodemailer';
-import { decrypt } from '@/lib/encryption';
+import nodemailer from "nodemailer";
+import { decrypt } from "@/lib/encryption";
 
 export interface SmtpConfig {
   host: string;
@@ -42,48 +42,60 @@ export class SmtpEmailClient {
         pass: this.config.password,
       },
       tls: {
-        rejectUnauthorized: false // For self-signed certificates
-      }
+        rejectUnauthorized: false, // For self-signed certificates
+      },
     });
 
     // Verify connection
     if (this.transporter) {
       try {
         await this.transporter.verify();
-        console.log('SMTP connection verified');
+        console.log("SMTP connection verified");
       } catch (error) {
-        console.error('SMTP verification failed:', error);
+        console.error("SMTP verification failed:", error);
         throw error;
       }
     }
   }
 
-  async sendEmail(emailData: EmailToSend): Promise<{ messageId: string; accepted: string[]; rejected: string[] }> {
+  async sendEmail(
+    emailData: EmailToSend
+  ): Promise<{ messageId: string; accepted: string[]; rejected: string[] }> {
     if (!this.transporter) {
-      throw new Error('SMTP connection not established');
+      throw new Error("SMTP connection not established");
     }
 
     try {
       const mailOptions = {
         from: emailData.from,
-        to: Array.isArray(emailData.to) ? emailData.to.join(', ') : emailData.to,
-        cc: emailData.cc ? (Array.isArray(emailData.cc) ? emailData.cc.join(', ') : emailData.cc) : undefined,
-        bcc: emailData.bcc ? (Array.isArray(emailData.bcc) ? emailData.bcc.join(', ') : emailData.bcc) : undefined,
+        to: Array.isArray(emailData.to)
+          ? emailData.to.join(", ")
+          : emailData.to,
+        cc: emailData.cc
+          ? Array.isArray(emailData.cc)
+            ? emailData.cc.join(", ")
+            : emailData.cc
+          : undefined,
+        bcc: emailData.bcc
+          ? Array.isArray(emailData.bcc)
+            ? emailData.bcc.join(", ")
+            : emailData.bcc
+          : undefined,
         subject: emailData.subject,
         text: emailData.text,
         html: emailData.html,
-        attachments: emailData.attachments
+        attachments: emailData.attachments,
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      
+
       return {
         messageId: result.messageId,
         accepted: result.accepted as string[],
-        rejected: result.rejected as string[]
+        rejected: result.rejected as string[],
       };
     } catch (error) {
-      console.error('Failed to send email:', error);
+      console.error("Failed to send email:", error);
       throw error;
     }
   }
@@ -104,17 +116,17 @@ export async function createSmtpClient(accountConfig: {
   smtpSecure: boolean;
 }): Promise<SmtpEmailClient> {
   const password = await decrypt(accountConfig.encryptedSmtpPassword);
-  
+
   const config: SmtpConfig = {
     host: accountConfig.smtpHost,
     port: accountConfig.smtpPort,
     secure: accountConfig.smtpSecure,
     username: accountConfig.smtpUsername,
-    password
+    password,
   };
 
   const client = new SmtpEmailClient(config);
   await client.connect();
-  
+
   return client;
 }

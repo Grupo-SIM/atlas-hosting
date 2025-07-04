@@ -45,5 +45,11 @@ export default async function CheckoutPage({
     notFound();
   }
 
-  return <CheckoutClient invoice={invoice as Invoice} user={user} reference={reference} />;
+  return (
+    <CheckoutClient
+      invoice={invoice as Invoice}
+      user={user}
+      reference={reference}
+    />
+  );
 }

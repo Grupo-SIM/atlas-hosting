@@ -33,7 +33,7 @@ import {
   XCircle,
   Zap,
 } from "lucide-react";
-import { User } from "@/lib/db/schema";
+import type { User } from "@/lib/db/schema";
 
 interface Service {
   id: string;
@@ -52,10 +52,10 @@ interface Service {
 }
 
 // Async component for Web Hosting service status
-async function HostingServiceBlock({ 
+async function HostingServiceBlock({
   domainName,
-  hostingPromise 
-}: { 
+  hostingPromise,
+}: {
   domainName: string;
   hostingPromise: Promise<Service>;
 }) {
@@ -64,10 +64,10 @@ async function HostingServiceBlock({
 }
 
 // Async component for SSL Certificate service status
-async function SslServiceBlock({ 
+async function SslServiceBlock({
   domainName,
-  sslPromise 
-}: { 
+  sslPromise,
+}: {
   domainName: string;
   sslPromise: Promise<Service>;
 }) {
@@ -76,10 +76,10 @@ async function SslServiceBlock({
 }
 
 // Async component for DNS Records service status
-async function DnsServiceBlock({ 
+async function DnsServiceBlock({
   domainName,
-  dnsPromise 
-}: { 
+  dnsPromise,
+}: {
   domainName: string;
   dnsPromise: Promise<Service>;
 }) {
@@ -88,10 +88,10 @@ async function DnsServiceBlock({
 }
 
 // Async component for WordPress services status
-async function WordPressServicesBlock({ 
+async function WordPressServicesBlock({
   domainName,
-  wpPromise 
-}: { 
+  wpPromise,
+}: {
   domainName: string;
   wpPromise: Promise<Service[]>;
 }) {
@@ -106,10 +106,10 @@ async function WordPressServicesBlock({
 }
 
 // Async component for Site Access service status
-async function SiteAccessServiceBlock({ 
+async function SiteAccessServiceBlock({
   domainName,
-  siteAccessPromise 
-}: { 
+  siteAccessPromise,
+}: {
   domainName: string;
   siteAccessPromise: Promise<Service>;
 }) {
@@ -206,8 +206,7 @@ function ServiceBlock({ service }: { service: Service }) {
               <h3 className="font-semibold text-sm text-foreground">
                 {service.name}
               </h3>
-              {service.metrics?.trend &&
-                getTrendIcon(service.metrics.trend)}
+              {service.metrics?.trend && getTrendIcon(service.metrics.trend)}
             </div>
 
             <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
@@ -228,10 +227,7 @@ function ServiceBlock({ service }: { service: Service }) {
                         {service.metrics.value}%
                       </span>
                     </div>
-                    <Progress
-                      value={service.metrics.value}
-                      className="h-1.5"
-                    />
+                    <Progress value={service.metrics.value} className="h-1.5" />
                   </div>
                 ) : (
                   service.metrics.value && (
@@ -239,10 +235,7 @@ function ServiceBlock({ service }: { service: Service }) {
                       <span className="text-xs font-medium text-muted-foreground">
                         {service.metrics.label}
                       </span>
-                      <Badge
-                        variant="outline"
-                        className="text-xs font-mono"
-                      >
+                      <Badge variant="outline" className="text-xs font-mono">
                         {service.metrics.value}
                       </Badge>
                     </div>
@@ -252,14 +245,12 @@ function ServiceBlock({ service }: { service: Service }) {
             )}
 
             {/* SSL Fix Button */}
-            {service.id === "ssl" &&
-              service.fixable &&
-              service.domainName && (
-                <SslFixButton
-                  domainName={service.domainName}
-                  serviceStatus={service.status}
-                />
-              )}
+            {service.id === "ssl" && service.fixable && service.domainName && (
+              <SslFixButton
+                domainName={service.domainName}
+                serviceStatus={service.status}
+              />
+            )}
           </div>
         </div>
 
@@ -282,9 +273,7 @@ function ServiceBlock({ service }: { service: Service }) {
           >
             <span className="flex items-center space-x-1.5">
               {getStatusIcon(service.status)}
-              <span className="capitalize font-medium">
-                {service.status}
-              </span>
+              <span className="capitalize font-medium">{getStatusName(service.status)}</span>
             </span>
           </Badge>
         </div>
@@ -415,8 +404,7 @@ async function fetchSslStatus(domainName: string): Promise<Service> {
           id: "ssl",
           name: "Certificado SSL",
           status: "issues",
-          details:
-            "Site acessível via HTTP mas SSL/HTTPS não está funcionando",
+          details: "Site acessível via HTTP mas SSL/HTTPS não está funcionando",
           icon: <ShieldCheck className="h-5 w-5" />,
           fixable: true,
           domainName,
@@ -570,9 +558,8 @@ async function fetchWordPressStatus(domainName: string): Promise<Service[]> {
 
             const sitePluginCount = plugins?.length || 0;
             const sitePluginUpdates =
-              plugins?.filter(
-                (plugin) => String(plugin.update) === "available"
-              ).length || 0;
+              plugins?.filter((plugin) => String(plugin.update) === "available")
+                .length || 0;
 
             totalPluginCount += sitePluginCount;
             totalPluginUpdates += sitePluginUpdates;
@@ -612,10 +599,7 @@ async function fetchWordPressStatus(domainName: string): Promise<Service[]> {
             sitesWithIssues++;
           }
         } catch (error) {
-          console.error(
-            `Error processing WordPress site ${wpSite.id}:`,
-            error
-          );
+          console.error(`Error processing WordPress site ${wpSite.id}:`, error);
           sitesWithIssues++;
         }
       }
@@ -767,7 +751,7 @@ async function AsyncServerStatusContent({
   const siteAccessPromise = fetchSiteAccessStatus(domainName);
 
   // Determine if we need to show WordPress services or site access
-  const wpSites = await getWordPressSitesForSelectedDomain().then(sites => 
+  const wpSites = await getWordPressSitesForSelectedDomain().then((sites) =>
     sites.filter((site) => {
       try {
         const siteHostname = new URL(site.domain).hostname;
@@ -801,7 +785,7 @@ async function AsyncServerStatusContent({
           {/* Health Score Display - async component with suspense */}
           <div className="flex items-center space-x-3">
             <Suspense fallback={<HealthScoreSkeleton />}>
-              <HealthScoreDisplay 
+              <HealthScoreDisplay
                 hostingPromise={hostingPromise}
                 sslPromise={sslPromise}
                 dnsPromise={dnsPromise}
@@ -830,48 +814,46 @@ async function AsyncServerStatusContent({
         <div className="grid gap-4">
           {/* Hosting Service Block */}
           <Suspense fallback={<ServiceBlockSkeleton />}>
-            <HostingServiceBlock 
-              domainName={domainName} 
-              hostingPromise={hostingPromise} 
+            <HostingServiceBlock
+              domainName={domainName}
+              hostingPromise={hostingPromise}
             />
           </Suspense>
 
           {/* SSL Service Block */}
           <Suspense fallback={<ServiceBlockSkeleton />}>
-            <SslServiceBlock 
-              domainName={domainName} 
-              sslPromise={sslPromise} 
-            />
+            <SslServiceBlock domainName={domainName} sslPromise={sslPromise} />
           </Suspense>
 
           {/* DNS Service Block */}
           <Suspense fallback={<ServiceBlockSkeleton />}>
-            <DnsServiceBlock 
-              domainName={domainName} 
-              dnsPromise={dnsPromise} 
-            />
+            <DnsServiceBlock domainName={domainName} dnsPromise={dnsPromise} />
           </Suspense>
 
           {/* WordPress Services Block - only if WordPress sites exist */}
           {showWordPress ? (
-            <Suspense fallback={<>
-              <ServiceBlockSkeleton />
-              <ServiceBlockSkeleton />
-              <ServiceBlockSkeleton />
-              <ServiceBlockSkeleton />
-              <ServiceBlockSkeleton />
-            </>}>
-              <WordPressServicesBlock 
-                domainName={domainName} 
-                wpPromise={wpPromise} 
+            <Suspense
+              fallback={
+                <>
+                  <ServiceBlockSkeleton />
+                  <ServiceBlockSkeleton />
+                  <ServiceBlockSkeleton />
+                  <ServiceBlockSkeleton />
+                  <ServiceBlockSkeleton />
+                </>
+              }
+            >
+              <WordPressServicesBlock
+                domainName={domainName}
+                wpPromise={wpPromise}
               />
             </Suspense>
           ) : (
             /* Site Access Service Block - only if no WordPress sites */
             <Suspense fallback={<ServiceBlockSkeleton />}>
-              <SiteAccessServiceBlock 
-                domainName={domainName} 
-                siteAccessPromise={siteAccessPromise} 
+              <SiteAccessServiceBlock
+                domainName={domainName}
+                siteAccessPromise={siteAccessPromise}
               />
             </Suspense>
           )}
@@ -970,7 +952,13 @@ async function HealthScoreDisplay({
   showWordPress: boolean;
 }) {
   // Await all promises to calculate health score
-  const [hostingService, sslService, dnsService, wpServices, siteAccessService] = await Promise.all([
+  const [
+    hostingService,
+    sslService,
+    dnsService,
+    wpServices,
+    siteAccessService,
+  ] = await Promise.all([
     hostingPromise,
     sslPromise,
     dnsPromise,
@@ -1005,14 +993,10 @@ async function HealthScoreDisplay({
   return (
     <>
       <div className="text-right">
-        <div
-          className={`text-2xl font-bold ${getHealthColor(healthScore)}`}
-        >
+        <div className={`text-2xl font-bold ${getHealthColor(healthScore)}`}>
           {healthScore}%
         </div>
-        <div className="text-xs text-muted-foreground">
-          Score de Saúde
-        </div>
+        <div className="text-xs text-muted-foreground">Score de Saúde</div>
       </div>
       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
         <Monitor className="h-6 w-6 text-primary" />
@@ -1051,7 +1035,13 @@ async function HealthProgressBar({
   showWordPress: boolean;
 }) {
   // Await all promises to calculate health metrics
-  const [hostingService, sslService, dnsService, wpServices, siteAccessService] = await Promise.all([
+  const [
+    hostingService,
+    sslService,
+    dnsService,
+    wpServices,
+    siteAccessService,
+  ] = await Promise.all([
     hostingPromise,
     sslPromise,
     dnsPromise,
@@ -1100,9 +1090,7 @@ function HealthProgressSkeleton() {
         <span className="text-xs font-medium text-muted-foreground">
           Saúde Geral do Sistema
         </span>
-        <span className="text-xs text-muted-foreground">
-          Carregando...
-        </span>
+        <span className="text-xs text-muted-foreground">Carregando...</span>
       </div>
       <Progress value={0} className="h-2 bg-muted/50" />
     </div>
@@ -1126,7 +1114,13 @@ async function ServiceSummaryFooter({
   showWordPress: boolean;
 }) {
   // Await all promises to calculate status counts
-  const [hostingService, sslService, dnsService, wpServices, siteAccessService] = await Promise.all([
+  const [
+    hostingService,
+    sslService,
+    dnsService,
+    wpServices,
+    siteAccessService,
+  ] = await Promise.all([
     hostingPromise,
     sslPromise,
     dnsPromise,
@@ -1142,7 +1136,9 @@ async function ServiceSummaryFooter({
     ...(showWordPress ? wpServices : [siteAccessService]),
   ];
 
-  const operationalCount = allServices.filter((s) => s.status === "operational").length;
+  const operationalCount = allServices.filter(
+    (s) => s.status === "operational"
+  ).length;
   const issuesCount = allServices.filter((s) => s.status === "issues").length;
   const errorCount = allServices.filter((s) => s.status === "error").length;
 
@@ -1151,9 +1147,7 @@ async function ServiceSummaryFooter({
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <div className="flex items-center space-x-1">
           <Clock className="h-3 w-3" />
-          <span>
-            Última atualização: {new Date().toLocaleTimeString()}
-          </span>
+          <span>Última atualização: {new Date().toLocaleTimeString()}</span>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-1">
@@ -1187,9 +1181,7 @@ function ServiceSummaryFooterSkeleton() {
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <div className="flex items-center space-x-1">
           <Clock className="h-3 w-3" />
-          <span>
-            Última atualização: {new Date().toLocaleTimeString()}
-          </span>
+          <span>Última atualização: {new Date().toLocaleTimeString()}</span>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-1">
@@ -1232,4 +1224,19 @@ function getDomainParts(
   const sld = domainParts.join(".");
   if (!tld || !sld) return null;
   return { sld, tld };
+}
+
+function getStatusName(
+  status: "error" | "operational" | "issues" | "unknown"
+): string {
+  switch (status) {
+    case "operational":
+      return "Operacional";
+    case "issues":
+      return "Problemas";
+    case "error":
+      return "Erro";
+    default:
+      return "Desconhecido";
+  }
 }

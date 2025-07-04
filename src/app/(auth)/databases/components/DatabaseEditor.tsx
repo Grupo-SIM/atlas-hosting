@@ -6,7 +6,13 @@ import { QueryEditor } from "./QueryEditor";
 import { DataTable } from "./DataTable";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Database, Terminal } from "lucide-react";
 
@@ -23,7 +29,10 @@ interface DatabaseEditorProps {
   };
 }
 
-export function DatabaseEditor({ instanceId, searchParams }: DatabaseEditorProps) {
+export function DatabaseEditor({
+  instanceId,
+  searchParams,
+}: DatabaseEditorProps) {
   const currentTable = searchParams.table;
   const currentQuery = searchParams.query;
 
@@ -31,14 +40,19 @@ export function DatabaseEditor({ instanceId, searchParams }: DatabaseEditorProps
     <div className="h-full flex flex-col space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editor de Banco de Dados</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Editor de Banco de Dados
+          </h1>
           <p className="text-muted-foreground">
             Gerencie suas tabelas e execute consultas SQL
           </p>
         </div>
       </div>
 
-      <Tabs defaultValue={currentTable ? "table" : "query"} className="flex-1 flex flex-col">
+      <Tabs
+        defaultValue={currentTable ? "table" : "query"}
+        className="flex-1 flex flex-col"
+      >
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="table" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
@@ -62,8 +76,8 @@ export function DatabaseEditor({ instanceId, searchParams }: DatabaseEditorProps
               <CardContent className="p-0">
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingSkeleton />}>
-                    <TableList 
-                      instanceId={instanceId} 
+                    <TableList
+                      instanceId={instanceId}
                       selectedTable={currentTable}
                     />
                   </Suspense>
@@ -74,20 +88,21 @@ export function DatabaseEditor({ instanceId, searchParams }: DatabaseEditorProps
             <Card className="lg:col-span-3 flex flex-col">
               <CardHeader>
                 <CardTitle className="text-base">
-                  {currentTable ? `Dados da Tabela: ${currentTable}` : "Dados da Tabela"}
+                  {currentTable
+                    ? `Dados da Tabela: ${currentTable}`
+                    : "Dados da Tabela"}
                 </CardTitle>
                 <CardDescription>
-                  {currentTable 
+                  {currentTable
                     ? "Visualize e edite os dados da tabela"
-                    : "Selecione uma tabela para visualizar os dados"
-                  }
+                    : "Selecione uma tabela para visualizar os dados"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col p-0">
                 {currentTable ? (
                   <ErrorBoundary>
                     <Suspense fallback={<LoadingSkeleton />}>
-                      <DataTable 
+                      <DataTable
                         instanceId={instanceId}
                         tableName={currentTable}
                         searchParams={searchParams}
@@ -110,7 +125,9 @@ export function DatabaseEditor({ instanceId, searchParams }: DatabaseEditorProps
         <TabsContent value="query" className="flex-1 flex flex-col">
           <Card className="flex-1 flex flex-col">
             <CardHeader>
-              <CardTitle className="text-base">Editor de Consultas SQL</CardTitle>
+              <CardTitle className="text-base">
+                Editor de Consultas SQL
+              </CardTitle>
               <CardDescription>
                 Execute consultas personalizadas no banco de dados
               </CardDescription>
@@ -118,7 +135,7 @@ export function DatabaseEditor({ instanceId, searchParams }: DatabaseEditorProps
             <CardContent className="flex-1 flex flex-col p-0">
               <ErrorBoundary>
                 <Suspense fallback={<LoadingSkeleton />}>
-                  <QueryEditor 
+                  <QueryEditor
                     instanceId={instanceId}
                     initialQuery={currentQuery}
                   />

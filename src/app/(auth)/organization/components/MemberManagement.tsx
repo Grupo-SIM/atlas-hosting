@@ -39,7 +39,10 @@ import {
 import { useState, useTransition } from "react";
 import type { User } from "@/lib/db/schema/tables/user"; // Changed from RawUser
 import { toast } from "@/hooks/use-toast"; // For potential actions
-import { removeMemberFromOrganizationAction, updateMemberRoleAction } from "@/app/(auth)/settings/actions"; // Assuming actions are shared or similar ones exist for this context
+import {
+  removeMemberFromOrganizationAction,
+  updateMemberRoleAction,
+} from "@/app/(auth)/settings/actions"; // Assuming actions are shared or similar ones exist for this context
 
 interface MemberManagementProps {
   members: RawUser[]; // Changed from RawUser to User for consistency with OrganizationSection
@@ -48,7 +51,12 @@ interface MemberManagementProps {
   isOwner: boolean;
 }
 
-export function MemberManagement({ members, currentUserId, organizationId, isOwner }: MemberManagementProps) {
+export function MemberManagement({
+  members,
+  currentUserId,
+  organizationId,
+  isOwner,
+}: MemberManagementProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   // Add state for edit role dialog if needed, similar to OrganizationSection
@@ -61,13 +69,21 @@ export function MemberManagement({ members, currentUserId, organizationId, isOwn
 
   const getStatusBadgeInfo = (member: RawUser) => {
     if (member.deletedAt) {
-      return { text: "Suspenso", className: "bg-red-500/10 text-red-500 border-red-200 dark:border-red-800" };
+      return {
+        text: "Suspenso",
+        className:
+          "bg-red-500/10 text-red-500 border-red-200 dark:border-red-800",
+      };
     }
     // Add logic for 'invited' if you have such a status
     // if (!member.emailVerified && !member.lastLoginAt) { // Example for invited
     //   return { text: "Convidado", className: "bg-yellow-500/10 text-yellow-500 border-yellow-200 dark:border-yellow-800" };
     // }
-    return { text: "Ativo", className: "bg-green-500/10 text-green-500 border-green-200 dark:border-green-800" };
+    return {
+      text: "Ativo",
+      className:
+        "bg-green-500/10 text-green-500 border-green-200 dark:border-green-800",
+    };
   };
 
   const getRoleDisplayName = (role?: string | null) => {
@@ -87,7 +103,8 @@ export function MemberManagement({ members, currentUserId, organizationId, isOwn
 
   const getRoleIcon = (role?: string | null) => {
     switch (role) {
-      case "admin": return <Shield className="h-3 w-3 mr-1" />;
+      case "admin":
+        return <Shield className="h-3 w-3 mr-1" />;
       // Add other icons if needed
       default:
         return null;
@@ -138,7 +155,13 @@ export function MemberManagement({ members, currentUserId, organizationId, isOwn
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={member.image || undefined} />
                         <AvatarFallback>
-                          {member.name?.split(" ").map(n => n[0]).join("").toUpperCase() || member.email?.charAt(0).toUpperCase() || "?"}
+                          {member.name
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase() ||
+                            member.email?.charAt(0).toUpperCase() ||
+                            "?"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
@@ -168,7 +191,10 @@ export function MemberManagement({ members, currentUserId, organizationId, isOwn
                       : "Nunca"}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={getStatusBadgeInfo(member).className}>
+                    <Badge
+                      variant="outline"
+                      className={getStatusBadgeInfo(member).className}
+                    >
                       {getStatusBadgeInfo(member).text}
                     </Badge>
                   </TableCell>
@@ -177,13 +203,21 @@ export function MemberManagement({ members, currentUserId, organizationId, isOwn
                       {member.id !== currentUserId && ( // Prevent owner from acting on themselves here
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                            >
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Ações</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {/* TODO: Open edit role dialog */}}>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                /* TODO: Open edit role dialog */
+                              }}
+                            >
                               <UserCog className="h-4 w-4 mr-2" />
                               Alterar Função
                             </DropdownMenuItem>
@@ -193,13 +227,31 @@ export function MemberManagement({ members, currentUserId, organizationId, isOwn
                               Reenviar Convite
                             </DropdownMenuItem> */}
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600 dark:text-red-400 hover:!text-red-50 hover:!bg-red-600" onClick={async () => {
-                                if (!confirm(`Tem certeza que deseja remover ${member.name || member.email}?`)) return;
+                            <DropdownMenuItem
+                              className="text-red-600 dark:text-red-400 hover:!text-red-50 hover:!bg-red-600"
+                              onClick={async () => {
+                                if (
+                                  !confirm(
+                                    `Tem certeza que deseja remover ${member.name || member.email}?`
+                                  )
+                                )
+                                  return;
                                 startTransition(async () => {
-                                  const result = await removeMemberFromOrganizationAction(member.id, organizationId);
-                                  toast({ title: result.success ? "Sucesso" : "Erro", description: result.message, variant: result.success ? "default" : "destructive" });
+                                  const result =
+                                    await removeMemberFromOrganizationAction(
+                                      member.id,
+                                      organizationId
+                                    );
+                                  toast({
+                                    title: result.success ? "Sucesso" : "Erro",
+                                    description: result.message,
+                                    variant: result.success
+                                      ? "default"
+                                      : "destructive",
+                                  });
                                 });
-                              }}>
+                              }}
+                            >
                               <UserMinus className="h-4 w-4 mr-2" />
                               Remover Membro
                             </DropdownMenuItem>

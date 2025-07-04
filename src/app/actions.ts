@@ -37,8 +37,8 @@ import ip2Location from "@/lib/server/apis/ip2location";
 import ipaddrJs from "ipaddr.js";
 import { auth, signIn, signOut } from "@/auth";
 import { AppLogger } from "@/lib/server/logs";
-import type { DomainPageParams } from "./(auth)/domain/[action]/types";
 import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
+import { DomainPageParams } from "./(auth)/domain/types";
 
 export async function login(
   prevState: unknown,
@@ -1182,7 +1182,7 @@ export async function revalidateCurrentPath() {
 
 export async function getMonthlyAffiliateEarnings(userId: string) {
   "use server";
-  
+
   // Get the system configuration for commission rate
   const systemConfig = await db.query.pgSystemConfig.findFirst();
   if (!systemConfig) {
@@ -1209,13 +1209,16 @@ export async function getMonthlyAffiliateEarnings(userId: string) {
 
   // Transform the data and calculate earnings
   const chartData = monthlyData.map((row) => {
-    const earnings = +(row.total_amount || 0) * (systemConfig.referrerCommission / 100);
-    const month = new Date(row.month).toLocaleDateString('pt-BR', { month: 'short' });
-    
+    const earnings =
+      +(row.total_amount || 0) * (systemConfig.referrerCommission / 100);
+    const month = new Date(row.month).toLocaleDateString("pt-BR", {
+      month: "short",
+    });
+
     return {
       month: month.charAt(0).toUpperCase() + month.slice(1),
       earnings: earnings,
-      referrals: +row.referrals_count || 0
+      referrals: +row.referrals_count || 0,
     };
   });
 
@@ -1239,7 +1242,8 @@ export async function addDomainForTransfer(
   }
 
   // Basic domain validation
-  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
+  const domainRegex =
+    /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
   if (!domainRegex.test(domain.trim())) {
     return { status: "error", message: "Formato de domínio inválido" };
   }
@@ -1254,7 +1258,10 @@ export async function addDomainForTransfer(
     });
 
     if (existingDomain) {
-      return { status: "error", message: "Este domínio já foi adicionado à sua organização" };
+      return {
+        status: "error",
+        message: "Este domínio já foi adicionado à sua organização",
+      };
     }
 
     // Add domain to organization with active = false (pending transfer)
@@ -1268,7 +1275,8 @@ export async function addDomainForTransfer(
 
     return {
       status: "success",
-      message: "Domínio adicionado com sucesso. Agora configure os nameservers para completar a transferência.",
+      message:
+        "Domínio adicionado com sucesso. Agora configure os nameservers para completar a transferência.",
     };
   } catch (error) {
     console.error("Erro ao adicionar domínio:", error);
@@ -1289,34 +1297,38 @@ export async function checkDomainNameservers(
   try {
     // For now, we'll use a simple mock since dns-query installation failed
     // In production, you would use the dns-query package as provided in the user request
-    
+
     // Mock nameserver check - replace with real implementation
     const mockNameservers = [
       "dns1.registrar-servers.com",
-      "dns2.registrar-servers.com"
+      "dns2.registrar-servers.com",
     ];
 
     const expectedNameservers = [
       "dns1.registrar-servers.com",
-      "dns2.registrar-servers.com"
+      "dns2.registrar-servers.com",
     ];
 
-    const isCorrect = mockNameservers.every(ns => expectedNameservers.includes(ns)) &&
-                     expectedNameservers.every(ns => mockNameservers.includes(ns));
+    const isCorrect =
+      mockNameservers.every((ns) => expectedNameservers.includes(ns)) &&
+      expectedNameservers.every((ns) => mockNameservers.includes(ns));
 
     revalidatePath("/domain/transfer");
 
     return {
       status: "success",
-      message: isCorrect ? "Nameservers configurados corretamente!" : "Nameservers ainda não configurados corretamente",
+      message: isCorrect
+        ? "Nameservers configurados corretamente!"
+        : "Nameservers ainda não configurados corretamente",
       nameservers: mockNameservers,
       isCorrect,
     };
   } catch (error) {
     console.error("Erro ao verificar nameservers:", error);
-    return { 
-      status: "error", 
-      message: "Erro ao verificar nameservers. Tente novamente em alguns minutos." 
+    return {
+      status: "error",
+      message:
+        "Erro ao verificar nameservers. Tente novamente em alguns minutos.",
     };
   }
 }

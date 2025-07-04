@@ -396,67 +396,83 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
 
     const wpCli = new WpCliApi(+stdOut["instance-id"]);
 
+    const installations: Promise<unknown>[] = [];
+
     try {
-      await wpCli.plugin.install("elementor", {
-        activate: true,
-        force: true,
-      });
+      installations.push(
+        (async () => {
+          await wpCli.plugin.install("elementor", {
+            activate: true,
+            force: true,
+          });
 
-      await wpCli.language
-        .plugin(`install elementor`, "pt_BR")
-        .catch(() => null);
-      await wpCli.language
-        .plugin(`activate elementor`, "pt_BR")
-        .catch(() => null);
+          await wpCli.language
+            .plugin("install elementor", "pt_BR")
+            .catch(() => null);
+          await wpCli.language
+            .plugin("activate elementor", "pt_BR")
+            .catch(() => null);
 
-      sendProgress(
-        "INFO",
-        "Instalação de plugin [elementor] realizada com sucesso"
+          sendProgress(
+            "INFO",
+            "Instalação de plugin [elementor] realizada com sucesso"
+          );
+        })()
       );
 
-      await wpCli.plugin.install(
-        "https://download2272.mediafire.com/ql54ryzib14gJIzJNyrJEiH2Wso021rIb5P6-0rZ-xlWSqRa9bJk8XXytcyUU0WJDFVtnCfCqWbfDfBz2UdwVXTuITDaeHg4fEMJA41PpUhljT1zOFCeZBpotodtjGeYxcTdiMpHLKU2vWgyGnPiA7_ykPyavHMd0S7iKuBE3se2q8M/x6nktu6wkjvjxp1/elementor-pro.3.29.1.zip",
-        {
-          activate: true,
-          force: true,
-        }
+      installations.push(
+        (async () => {
+          await wpCli.plugin.install(
+            "https://github.com/proelements/proelements/releases/download/v3.29.0/pro-elements.zip",
+            {
+              activate: true,
+              force: true,
+            }
+          );
+
+          await wpCli.language
+            .plugin("install pro-elements", "pt_BR")
+            .catch(() => null);
+          await wpCli.language
+            .plugin("activate pro-elements", "pt_BR")
+            .catch(() => null);
+
+          sendProgress(
+            "INFO",
+            "Instalação de plugin [elementor-pro] realizada com sucesso"
+          );
+        })()
       );
-
-      await wpCli.language
-        .plugin(`install elementor-pro`, "pt_BR")
-        .catch(() => null);
-      await wpCli.language
-        .plugin(`activate elementor-pro`, "pt_BR")
-        .catch(() => null);
-
-      // sendProgress(
-      //   "INFO",
-      //   "Instalação de plugin [elementor-pro] realizada com sucesso"
-      // );
 
       for (const plugin of plugins) {
-        const result = await wpCli.plugin.install(plugin, {
-          activate: true,
-          force: true,
-        });
+        installations.push(
+          (async () => {
+            const result = await wpCli.plugin.install(plugin, {
+              activate: true,
+              force: true,
+            });
 
-        await wpCli.language
-          .plugin(`install ${plugin}`, "pt_BR")
-          .catch(() => null);
-        await wpCli.language
-          .plugin(`activate ${plugin}`, "pt_BR")
-          .catch(() => null);
+            await wpCli.language
+              .plugin(`install ${plugin}`, "pt_BR")
+              .catch(() => null);
+            await wpCli.language
+              .plugin(`activate ${plugin}`, "pt_BR")
+              .catch(() => null);
 
-        sendProgress(
-          "INFO",
-          "Instalação de plugin [".concat(
-            plugin,
-            "]",
-            " realizada com sucesso."
-          )
+            sendProgress(
+              "INFO",
+              "Instalação de plugin [".concat(
+                plugin,
+                "]",
+                " realizada com sucesso."
+              )
+            );
+            console.log("Plugin install result: ", result);
+          })()
         );
-        console.log("Plugin install result: ", result);
       }
+
+      await Promise.allSettled(installations);
     } catch (error) {
       sendProgress("ERROR", "Erro ao instalar plugins", error);
     }
@@ -469,10 +485,7 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
     });
     console.log("Theme install result: ", result);
 
-    sendProgress(
-      "INFO",
-      "Gerando certificado de segurança."
-    );
+    sendProgress("INFO", "Gerando certificado de segurança.");
     // await generateSslForDomain(domainName);
 
     const userLogger = new AppLogger(user);

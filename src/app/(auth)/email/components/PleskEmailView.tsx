@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { 
-  Reply, 
-  ReplyAll, 
-  Forward, 
+import {
+  Reply,
+  ReplyAll,
+  Forward,
   MoreHorizontal,
   Star,
   Archive,
@@ -18,7 +18,7 @@ import {
   Paperclip,
   User,
   Calendar,
-  Clock
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -45,7 +45,12 @@ interface PleskEmailViewProps {
   onDelete: () => void;
 }
 
-export function PleskEmailView({ email, onReply, onForward, onDelete }: PleskEmailViewProps) {
+export function PleskEmailView({
+  email,
+  onReply,
+  onForward,
+  onDelete,
+}: PleskEmailViewProps) {
   const [isStarred, setIsStarred] = useState(email.isStarred);
 
   const toggleStar = () => {
@@ -55,27 +60,29 @@ export function PleskEmailView({ email, onReply, onForward, onDelete }: PleskEma
 
   const getInitials = (name: string) => {
     return name
-      .split('@')[0]
-      .split('.')
-      .map(part => part.charAt(0).toUpperCase())
-      .join('')
+      .split("@")[0]
+      .split(".")
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("")
       .slice(0, 2);
   };
 
-  const mockAttachments = email.hasAttachment ? [
-    {
-      id: "1",
-      name: "proposta-website.pdf",
-      size: "2.4 MB",
-      type: "application/pdf"
-    },
-    {
-      id: "2", 
-      name: "briefing-projeto.docx",
-      size: "156 KB",
-      type: "application/docx"
-    }
-  ] : [];
+  const mockAttachments = email.hasAttachment
+    ? [
+        {
+          id: "1",
+          name: "proposta-website.pdf",
+          size: "2.4 MB",
+          type: "application/pdf",
+        },
+        {
+          id: "2",
+          name: "briefing-projeto.docx",
+          size: "156 KB",
+          type: "application/docx",
+        },
+      ]
+    : [];
 
   return (
     <Card className="h-full flex flex-col">
@@ -87,7 +94,9 @@ export function PleskEmailView({ email, onReply, onForward, onDelete }: PleskEma
               {email.subject}
             </h1>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Badge variant={email.folder === "spam" ? "destructive" : "secondary"}>
+              <Badge
+                variant={email.folder === "spam" ? "destructive" : "secondary"}
+              >
                 {email.folder === "inbox" && "Caixa de Entrada"}
                 {email.folder === "sent" && "Enviados"}
                 {email.folder === "drafts" && "Rascunhos"}
@@ -107,10 +116,14 @@ export function PleskEmailView({ email, onReply, onForward, onDelete }: PleskEma
           {/* Actions */}
           <div className="flex items-center space-x-1">
             <Button variant="ghost" size="sm" onClick={toggleStar}>
-              <Star className={cn(
-                "h-4 w-4",
-                isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
-              )} />
+              <Star
+                className={cn(
+                  "h-4 w-4",
+                  isStarred
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-muted-foreground"
+                )}
+              />
             </Button>
             <Button variant="ghost" size="sm">
               <Archive className="h-4 w-4" />
@@ -150,9 +163,7 @@ export function PleskEmailView({ email, onReply, onForward, onDelete }: PleskEma
           {/* From */}
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
-              <AvatarFallback>
-                {getInitials(email.from)}
-              </AvatarFallback>
+              <AvatarFallback>{getInitials(email.from)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-2">
@@ -161,9 +172,7 @@ export function PleskEmailView({ email, onReply, onForward, onDelete }: PleskEma
                   Remetente
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Para: {email.to}
-              </p>
+              <p className="text-xs text-muted-foreground">Para: {email.to}</p>
             </div>
             <div className="text-right">
               <p className="text-sm font-medium">
@@ -181,7 +190,9 @@ export function PleskEmailView({ email, onReply, onForward, onDelete }: PleskEma
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <Paperclip className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Anexos ({mockAttachments.length})</span>
+                <span className="text-sm font-medium">
+                  Anexos ({mockAttachments.length})
+                </span>
               </div>
               <div className="grid gap-2">
                 {mockAttachments.map((attachment) => (
@@ -195,7 +206,9 @@ export function PleskEmailView({ email, onReply, onForward, onDelete }: PleskEma
                       </div>
                       <div>
                         <p className="text-sm font-medium">{attachment.name}</p>
-                        <p className="text-xs text-muted-foreground">{attachment.size}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {attachment.size}
+                        </p>
                       </div>
                     </div>
                     <Button variant="ghost" size="sm">
@@ -220,9 +233,9 @@ export function PleskEmailView({ email, onReply, onForward, onDelete }: PleskEma
             ) : (
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
                 {email.preview}
-                
+
                 {"\n\n"}
-                
+
                 {/* Extended mock content */}
                 {email.id === "1" && (
                   <>
@@ -241,7 +254,7 @@ export function PleskEmailView({ email, onReply, onForward, onDelete }: PleskEma
                     {"joao@cliente.com"}
                   </>
                 )}
-                
+
                 {email.id === "2" && (
                   <>
                     {"Principais destaques desta semana:\n\n"}

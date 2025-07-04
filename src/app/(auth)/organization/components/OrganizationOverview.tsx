@@ -34,7 +34,9 @@ export function OrganizationOverview({ user }: { user: User }) {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{organization.members?.length || 0}</div>
+            <div className="text-2xl font-bold">
+              {organization.members?.length || 0}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               Membros da organização
             </p>
@@ -60,11 +62,14 @@ export function OrganizationOverview({ user }: { user: User }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Uso de Armazenamento</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Uso de Armazenamento
+            </CardTitle>
             <HardDrive className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">75 GB</div> {/* TODO: Replace with real data */}
+            <div className="text-2xl font-bold">75 GB</div>{" "}
+            {/* TODO: Replace with real data */}
             <p className="text-xs text-muted-foreground mt-1">
               of 100 GB quota
             </p>
@@ -73,7 +78,9 @@ export function OrganizationOverview({ user }: { user: User }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Nome da Organização</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Nome da Organização
+            </CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -132,15 +139,19 @@ export function OrganizationOverview({ user }: { user: User }) {
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Membros da Equipe</p>
                   <p className="text-sm text-muted-foreground">
-                    {organization.members?.length || 0} de 20 {/* TODO: Replace with real data for limit */}
+                    {organization.members?.length || 0} de 20{" "}
+                    {/* TODO: Replace with real data for limit */}
                   </p>
                 </div>
                 <span className="text-sm font-medium">
-                  {Math.round(((organization.members?.length || 0) / 20) * 100)}% {/* TODO: Replace with real data for limit */}
+                  {Math.round(((organization.members?.length || 0) / 20) * 100)}
+                  % {/* TODO: Replace with real data for limit */}
                 </span>
               </div>
               <Progress
-                value={Math.round(((organization.members?.length || 0) / 20) * 100)}
+                value={Math.round(
+                  ((organization.members?.length || 0) / 20) * 100
+                )}
                 className="h-2"
               />
             </div>

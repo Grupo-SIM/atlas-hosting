@@ -2,10 +2,18 @@
 
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { pgOrganizationDomains, pgUserEmailAccountConfigs } from "@/lib/db/schema";
+import {
+  pgOrganizationDomains,
+  pgUserEmailAccountConfigs,
+} from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { createMailAccount, deleteMailAccount, getMailAccounts, getDomain } from "@/lib/server/apis/plesk-xml/client";
+import {
+  createMailAccount,
+  deleteMailAccount,
+  getMailAccounts,
+  getDomain,
+} from "@/lib/server/apis/plesk-xml/client";
 import type { MailName } from "@/lib/server/apis/plesk-xml/types";
 import { encrypt } from "@/lib/encryption";
 import { getUserCurrentDomain } from "@/lib/server/utils";
@@ -16,33 +24,44 @@ import type { EmailMessage, EmailToSend } from "@/lib/server/apis/email";
 export async function getPleskMailAccounts() {
   try {
     const user = await getUser();
-    
+
     // Get user's currently selected domain
     const selectedDomain = await getUserCurrentDomain(user);
-    
+
     if (!selectedDomain) {
-      return { success: false, error: "No domain selected. Please select a domain first." };
+      return {
+        success: false,
+        error: "No domain selected. Please select a domain first.",
+      };
     }
 
     // Get the Plesk site ID for the selected domain
     const pleskSite = await getDomain(selectedDomain.domain);
-    
+
     if (!pleskSite?.id) {
-      return { success: false, error: `Domain ${selectedDomain.domain} not found in Plesk or not configured for hosting.` };
+      return {
+        success: false,
+        error: `Domain ${selectedDomain.domain} not found in Plesk or not configured for hosting.`,
+      };
     }
 
     // Fetch real mail accounts from Plesk
     const mailAccounts = await getMailAccounts(pleskSite.id);
-    
+
     return { success: true, data: mailAccounts };
   } catch (error) {
     console.error("Error fetching Plesk mail accounts:", error);
-    return { success: false, error: "Failed to fetch mail accounts from server" };
+    return {
+      success: false,
+      error: "Failed to fetch mail accounts from server",
+    };
   }
 }
 
 // Create new Plesk mail account
-export async function createPleskMailAccount(formData: FormData): Promise<void> {
+export async function createPleskMailAccount(
+  formData: FormData
+): Promise<void> {
   try {
     const user = await getUser();
     const username = formData.get("username") as string;
@@ -57,7 +76,7 @@ export async function createPleskMailAccount(formData: FormData): Promise<void> 
 
     // Get user's currently selected domain
     const selectedDomain = await getUserCurrentDomain(user);
-    
+
     if (!selectedDomain) {
       // return { success: false, error: "No domain selected. Please select a domain first." };
       return;
@@ -65,7 +84,7 @@ export async function createPleskMailAccount(formData: FormData): Promise<void> 
 
     // Get the Plesk site ID for the selected domain
     const pleskSite = await getDomain(selectedDomain.domain);
-    
+
     if (!pleskSite?.id) {
       // return { success: false, error: `Domain ${selectedDomain.domain} not found in Plesk or not configured for hosting.` };
       return;
@@ -80,8 +99,8 @@ export async function createPleskMailAccount(formData: FormData): Promise<void> 
       },
       password: {
         value: password,
-        type: "plain"
-      }
+        type: "plain",
+      },
     });
 
     // Store account in database
@@ -93,21 +112,21 @@ export async function createPleskMailAccount(formData: FormData): Promise<void> 
       userId: user.id,
       emailAddress,
       emailPassword: encryptedPassword,
-      
+
       // IMAP settings (Plesk default)
       imapHost: `mail.${selectedDomain.domain}`,
       imapPort: 993,
       imapUsername: emailAddress,
       encryptedImapPassword: encryptedPassword,
       imapSecure: true,
-      
+
       // SMTP settings (Plesk default)
       smtpHost: `mail.${selectedDomain.domain}`,
       smtpPort: 465,
       smtpUsername: emailAddress,
       encryptedSmtpPassword: encryptedPassword,
       smtpSecure: true,
-      
+
       // Plesk integration
       isPleskManaged: true,
       pleskSiteId: pleskSite.id,
@@ -128,7 +147,7 @@ export async function createPleskMailAccount(formData: FormData): Promise<void> 
 export async function deletePleskMailAccount(mailAccountId: number) {
   try {
     const user = await getUser();
-    
+
     // Find the email account config that matches the Plesk mail ID
     const accountConfig = await db.query.pgUserEmailAccountConfigs.findFirst({
       where: and(
@@ -139,17 +158,20 @@ export async function deletePleskMailAccount(mailAccountId: number) {
     });
 
     if (!accountConfig) {
-      return { success: false, error: "Mail account not found or not managed by Plesk" };
+      return {
+        success: false,
+        error: "Mail account not found or not managed by Plesk",
+      };
     }
-    
+
     // Delete from Plesk using the real API
     await deleteMailAccount(mailAccountId);
-    
+
     // Delete from database
-    await db.delete(pgUserEmailAccountConfigs).where(
-      eq(pgUserEmailAccountConfigs.id, accountConfig.id)
-    );
-    
+    await db
+      .delete(pgUserEmailAccountConfigs)
+      .where(eq(pgUserEmailAccountConfigs.id, accountConfig.id));
+
     revalidatePath("/email");
     return { success: true };
   } catch (error) {
@@ -162,14 +184,17 @@ export async function deletePleskMailAccount(mailAccountId: number) {
 export async function getDomainsForEmail() {
   try {
     const user = await getUser();
-    
+
     // Get user's currently selected domain for email management
     const selectedDomain = await getUserCurrentDomain(user);
-    
+
     if (!selectedDomain) {
-      return { success: false, error: "No domain selected. Please select a domain first." };
+      return {
+        success: false,
+        error: "No domain selected. Please select a domain first.",
+      };
     }
-    
+
     // Return the selected domain as the available domain for email
     return { success: true, data: [selectedDomain] };
   } catch (error) {
@@ -182,7 +207,7 @@ export async function getDomainsForEmail() {
 export async function getEmailAccountSettings() {
   try {
     const user = await getUser();
-    
+
     const accounts = await db.query.pgUserEmailAccountConfigs.findMany({
       where: and(
         eq(pgUserEmailAccountConfigs.userId, user.id),
@@ -201,7 +226,7 @@ export async function getEmailAccountSettings() {
 export async function getEmailMessages(accountId: string, folder = "INBOX") {
   try {
     const user = await getUser();
-    
+
     // Get the email account configuration
     const accountConfig = await db.query.pgUserEmailAccountConfigs.findFirst({
       where: and(
@@ -218,7 +243,7 @@ export async function getEmailMessages(accountId: string, folder = "INBOX") {
     // Create IMAP client and fetch emails
     const imapClient = await createImapClient(accountConfig);
     await imapClient.connect();
-    
+
     try {
       const emails = await imapClient.getEmails(folder, 50);
       return { success: true, data: emails };
@@ -235,7 +260,7 @@ export async function getEmailMessages(accountId: string, folder = "INBOX") {
 export async function getEmailFolders(accountId: string) {
   try {
     const user = await getUser();
-    
+
     // Get the email account configuration
     const accountConfig = await db.query.pgUserEmailAccountConfigs.findFirst({
       where: and(
@@ -252,7 +277,7 @@ export async function getEmailFolders(accountId: string) {
     // Create IMAP client and fetch folders
     const imapClient = await createImapClient(accountConfig);
     await imapClient.connect();
-    
+
     try {
       const folders = await imapClient.getFolders();
       return { success: true, data: folders };
@@ -296,27 +321,27 @@ export async function sendEmail(formData: FormData) {
 
     // Create SMTP client and send email
     const smtpClient = await createSmtpClient(accountConfig);
-    
+
     try {
       const emailToSend: EmailToSend = {
         from: accountConfig.emailAddress,
-        to: to.split(",").map(email => email.trim()),
-        cc: cc ? cc.split(",").map(email => email.trim()) : undefined,
-        bcc: bcc ? bcc.split(",").map(email => email.trim()) : undefined,
+        to: to.split(",").map((email) => email.trim()),
+        cc: cc ? cc.split(",").map((email) => email.trim()) : undefined,
+        bcc: bcc ? bcc.split(",").map((email) => email.trim()) : undefined,
         subject,
         text: text || undefined,
         html: html || undefined,
       };
 
       const result = await smtpClient.sendEmail(emailToSend);
-      
-      return { 
-        success: true, 
+
+      return {
+        success: true,
         data: {
           messageId: result.messageId,
           accepted: result.accepted,
-          rejected: result.rejected
-        }
+          rejected: result.rejected,
+        },
       };
     } finally {
       await smtpClient.disconnect();
@@ -328,10 +353,14 @@ export async function sendEmail(formData: FormData) {
 }
 
 // Mark email as read
-export async function markEmailAsRead(accountId: string, messageId: string, folder = "INBOX") {
+export async function markEmailAsRead(
+  accountId: string,
+  messageId: string,
+  folder = "INBOX"
+) {
   try {
     const user = await getUser();
-    
+
     // Get the email account configuration
     const accountConfig = await db.query.pgUserEmailAccountConfigs.findFirst({
       where: and(
@@ -348,7 +377,7 @@ export async function markEmailAsRead(accountId: string, messageId: string, fold
     // Create IMAP client and mark as read
     const imapClient = await createImapClient(accountConfig);
     await imapClient.connect();
-    
+
     try {
       await imapClient.markAsRead(messageId, folder);
       return { success: true };
@@ -362,10 +391,14 @@ export async function markEmailAsRead(accountId: string, messageId: string, fold
 }
 
 // Delete email
-export async function deleteEmail(accountId: string, messageId: string, folder = "INBOX") {
+export async function deleteEmail(
+  accountId: string,
+  messageId: string,
+  folder = "INBOX"
+) {
   try {
     const user = await getUser();
-    
+
     // Get the email account configuration
     const accountConfig = await db.query.pgUserEmailAccountConfigs.findFirst({
       where: and(
@@ -382,7 +415,7 @@ export async function deleteEmail(accountId: string, messageId: string, folder =
     // Create IMAP client and delete email
     const imapClient = await createImapClient(accountConfig);
     await imapClient.connect();
-    
+
     try {
       await imapClient.deleteMessage(messageId, folder);
       return { success: true };

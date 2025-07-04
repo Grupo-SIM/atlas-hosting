@@ -111,7 +111,9 @@ async function testWordPressThemes() {
       try {
         const updatableThemes = JSON.parse(updateCheckResult.stdout);
         if (updatableThemes.length > 0) {
-          console.log(`\n🔄 Found ${updatableThemes.length} themes with updates available:`);
+          console.log(
+            `\n🔄 Found ${updatableThemes.length} themes with updates available:`
+          );
           updatableThemes.forEach((theme: any) => {
             console.log("Update Available:", {
               name: theme.name,
@@ -138,7 +140,6 @@ async function testWordPressThemes() {
     console.log("stderr:", statusResult.stderr);
 
     console.log("\n🎉 WordPress themes testing completed!");
-
   } catch (error) {
     console.error("❌ Error during themes testing:", error);
     throw error;

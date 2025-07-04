@@ -132,7 +132,7 @@ export async function addCard(cardData: AddCardData): Promise<ActionResponse> {
     if (axios.isAxiosError(error)) {
       console.error("DOM API error:", error.response?.data || error.message);
     }
-    
+
     console.error("Error adding card:", error);
     return {
       status: "error",

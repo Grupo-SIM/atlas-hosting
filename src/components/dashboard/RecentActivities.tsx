@@ -153,7 +153,7 @@ function ActivityCard({ activity }: ActivityCardProps) {
                 variant="outline"
                 className={`text-xs font-medium ${activity.colors.badge}`}
               >
-                {activity.type}
+                {getActivityName(activity.type)}
               </Badge>
             </div>
           </div>
@@ -173,6 +173,19 @@ function ActivityCard({ activity }: ActivityCardProps) {
       <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-current opacity-20 group-hover:opacity-40 transition-opacity duration-300" />
     </div>
   );
+}
+
+function getActivityName(type: string): string {
+  switch (type) {
+    case "hosting":
+      return "Hospedagem";
+    case "account":
+      return "Conta";
+    case "security":
+      return "Segurança";
+    default:
+      return "Atividade";
+  }
 }
 
 export async function RecentActivities({
@@ -326,7 +339,12 @@ export async function RecentActivities({
                   className="flex items-center gap-2 rounded-lg data-[state=active]:shadow-sm transition-all duration-200"
                   asChild
                 >
-                  <Link prefetch className="all:unset" href="?type=all" scroll={false}>
+                  <Link
+                    prefetch
+                    className="all:unset"
+                    href="?type=all"
+                    scroll={false}
+                  >
                     <Filter className="h-3 w-3" />
                     <span className="hidden sm:inline">Todos</span>
                   </Link>

@@ -1,6 +1,16 @@
-import { db } from "@/lib/db";
-import { type LogInsert, pgLog, type User } from "@/lib/db/schema";
 import EventEmitter from "node:events";
+import { getUserSettings } from "@/lib/auth";
+import { emailService } from "@/lib/consts/singletons";
+import { db } from "@/lib/db";
+import {
+  type Log,
+  type LogInsert,
+  type User,
+  pgLog,
+  pgUser,
+} from "@/lib/db/schema";
+import { format } from "date-fns";
+import { eq } from "drizzle-orm";
 
 // biome-ignore lint/complexity/noStaticOnlyClass: <explanation>
 class AppLoggerQueue {
@@ -15,10 +25,44 @@ class AppLoggerQueue {
 
     try {
       await db.insert(pgLog).values(event).returning();
+      this.sendNotifications(event as Log);
     } catch (error) {
       console.error("Failed to log message:", error);
     }
   };
+
+  private static async sendNotifications(message: Log): Promise<void> {
+    const { userId } = message;
+    const settings = await getUserSettings(userId);
+
+    if (!settings) {
+      return;
+    }
+
+    if (settings.emailNotifications) {
+      const { email } = (await db.query.pgUser.findFirst({
+        where: eq(pgUser.id, userId),
+      })) as Pick<User, "email">;
+
+      if (!email) {
+        console.warn(
+          `User with ID ${userId} not found for email notification.`
+        );
+        return;
+      }
+
+      try {
+        await emailService.sendEmail({
+          from: "Atlas Hosting <noreply@atlashosting.com.br>",
+          to: email,
+          subject: `${message.title} - Atlas Hosting`,
+          body: `Há uma nova notificação sobre sua conta no Atlas Hosting\n${message.title}\n[Gerado às ${format(Date.now(), "PPP")}`,
+        });
+      } catch (error) {
+        console.error(`Failed to send email notification to ${email}:`, error);
+      }
+    }
+  }
 
   private static _constructor = (() => {
     this.eventTarget.on("log", AppLoggerQueue.onLogEvent);
