@@ -27,7 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { DomainPriceInfo } from "@/app/(auth)/domains/[action]/types";
+import type { DomainPriceInfo } from "@/app/(auth)/domain/types";
 
 const ITEMS_PER_TLD_PAGE = 10; // Or make this a prop
 

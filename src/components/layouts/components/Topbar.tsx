@@ -35,17 +35,8 @@ import { FaUserAlt } from "react-icons/fa";
 export default async function Topbar({
   children,
   className,
-  params,
   ...props
-}: PropsWithChildren<
-  HTMLAttributes<HTMLHeadElement> & {
-    params: Promise<{ tpo?: string }>;
-  }
->) {
-  const searchParams = await params;
-  console.log(searchParams);
-  const sidebarOpen = searchParams?.tpo && searchParams.tpo == "1";
-
+}: PropsWithChildren<HTMLAttributes<HTMLHeadElement>>) {
   return (
     <header
       className={clsx(
@@ -54,8 +45,7 @@ export default async function Topbar({
       )}
       {...props}
     >
-      <Form action="">
-        <input type="hidden" name="tpo" value={sidebarOpen ? "0" : "1"} />
+      {/* <div>
         <button className="all:unset" type="submit">
           {sidebarOpen ? (
             <CgClose
@@ -71,7 +61,7 @@ export default async function Topbar({
             />
           )}
         </button>
-      </Form>
+      </div> */}
       <div className="flex items-center justify-end w-full space-x-4">
         {children}
         <ModeToggle />

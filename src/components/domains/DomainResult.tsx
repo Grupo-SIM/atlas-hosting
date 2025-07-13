@@ -35,7 +35,7 @@ import { getDomainData } from "@/app/(auth)/domain/utils";
 import type {
   DomainData,
   DomainPageParams,
-} from "@/app/(auth)/domain/(register-transfer)/types";
+} from "@/app/(auth)/domain/types";
 
 export async function DomainResult({
   searchParams,

@@ -1,4 +1,4 @@
-import type { DomainData } from "@/app/(auth)/domains/[action]/types";
+import type { DomainData } from "@/app/(auth)/domain/types";
 import { Button } from "@/components/ui/button";
 import {
   Card,

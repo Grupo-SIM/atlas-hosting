@@ -11,7 +11,7 @@ import {
 } from "@/lib/db/schema";
 
 import { eq } from "drizzle-orm";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { AppLogger } from "../server/logs";
 import { invalidateSession, validateSession } from "./utils";
@@ -20,7 +20,25 @@ export type SessionValidationResult =
   | { session: Session; user: User }
   | { session: null; user: null };
 
-export async function getUser() {
+async function redirectToLogin(): Promise<Error> {
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || headersList.get("referer");
+
+  try {
+    if (pathname && pathname !== "/login") {
+      // Extract just the pathname from the URL if it's a full URL
+      redirect(`/login?redirect=${encodeURIComponent(pathname)}`);
+    } else {
+      redirect("/login");
+    }
+
+    return new Error();
+  } catch (error) {
+    return error as Error;
+  }
+}
+
+export async function getUser(): Promise<User> {
   "use server";
 
   const session = await auth();
@@ -51,7 +69,7 @@ export async function getUser() {
     });
 
     if (!user) {
-      redirect("/login");
+      throw await redirectToLogin();
     }
 
     const { organization } = user;
@@ -72,7 +90,7 @@ export async function getUser() {
   invalidateSession(sessionToken as string);
 
   if (!user) {
-    redirect("/login");
+    throw await redirectToLogin();
   }
 
   return user as User;

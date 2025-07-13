@@ -1,81 +1,22 @@
-// src/app/(authenticated)/(dashboard)/sites/page.tsx
-import { getUser } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Globe } from "lucide-react";
 import Link from "next/link";
-import { SitesList } from "./components/SitesList";
-import dns from "node:dns";
-import { promisify } from "node:util";
-import { getUserWordPressSites } from "@/lib/server/utils";
-import { cookies } from "next/headers";
-import { query } from "dns-query";
-
-export interface ParsedWordPressInstance {
-  id: number; // This likely refers to Plesk's internal ID for the WP instance
-  instanceId: number; // Often the same as id from WP Toolkit
-  name: string; // Name of the WordPress installation (e.g., "My Blog")
-  domain: string; // The primary domain/URL of the WordPress site (e.g., "http://example.com")
-  path: string; // Installation path relative to the domain's webroot
-  status: string; // Status text from Plesk (e.g., "Active", "Broken")
-}
-
-const resolve4 = promisify(dns.resolve4);
-
-async function checkDomain(domain: string): Promise<boolean> {
-  try {
-    const { answers } = await query(
-      { question: { type: "A", name: domain } },
-      {
-        endpoints: ["1.1.1.1", "8.8.8.8"],
-      }
-    );
-    return (answers ?? [])
-      .map((answer) => answer.data)
-      .includes(process.env.SERVER_IP!);
-  } catch (_error) {
-    // console.error(`DNS resolution failed for ${domain}:`, error);
-    return false;
-  }
-}
+import { SiteCard } from "./components/SiteCard";
+import { SiteStats } from "./components/SiteStats";
+import coolifyApi from "@/lib/server/apis/coolify";
 
 export default async function SitesPage() {
-  const user = await getUser();
-
-  // Filter WordPress instances to only show those associated with the user's Namecheap domains
-  const wpInstances = await getUserWordPressSites(user);
-
-  // Do DNS check for each filtered instance
-  const dnsResults = await Promise.all(
-    wpInstances.map(async (instance) => {
-      let hostname = "";
-      try {
-        hostname = new URL(instance.domain).hostname;
-        const ready = await checkDomain(hostname);
-        return { ...instance, ready, hostname };
-      } catch (_e) {
-        return { ...instance, ready: false, hostname: "" };
-      }
-    })
-  );
-
-  const readyInstances = dnsResults.filter((i) => i.ready);
-  const processingInstances = dnsResults.filter((i) => !i.ready);
+  const applications = await coolifyApi.listApplications();
 
   return (
     <div className="space-y-6 p-6 pb-16">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            Sites WordPress
+            Sites
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie seus sites WordPress e acesse o painel administrativo
+            Gerencie seus sites e aplicações
           </p>
         </div>
         <div className="flex gap-3">
@@ -87,10 +28,14 @@ export default async function SitesPage() {
         </div>
       </div>
 
-      <SitesList
-        readyInstances={readyInstances}
-        processingInstances={processingInstances}
-      />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {applications.map((app: any) => (
+          <div key={app.id} className="space-y-6">
+            <SiteCard site={app} />
+            <SiteStats />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -154,12 +154,12 @@ export default async function MyDomainsPage({
         </div>
         <div className="flex gap-3">
           <Button variant="outline" asChild={true}>
-            <Link href="/domain/register">
+            <Link href="/domain?tab=register">
               <Plus className="mr-2 h-4 w-4" /> Registrar Novo
             </Link>
           </Button>
           <Button asChild={true}>
-            <Link href="/domain/transfer">
+            <Link href="/domain?tab=transfer">
               <Globe className="mr-2 h-4 w-4" /> Transferir Domínio
             </Link>
           </Button>

@@ -10,3 +10,4 @@ export * from "./tables/card";
 export * from "./tables/email";
 export * from "./tables/system";
 export * from "./tables/organization";
+export * from "./tables/tokens";

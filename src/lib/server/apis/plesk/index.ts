@@ -191,6 +191,38 @@ export class PleskApi {
     const data = await this.subscriptions.list();
     return data;
   }
+
+  public async createCoolifySubscription(domainName: string, pleskId: number) {
+    const user = await this.getUserById(pleskId);
+
+    try {
+      const { data } = await this.domainsApi.domainsPost({
+        name: domainName,
+        ownerClient: {
+          externalId: user.guid,
+          guid: user.guid,
+          id: user.id,
+          login: user.login,
+        },
+        hosting_type: Plesk.DomainRequestHostingTypeEnum.Virtual,
+        plan: {
+          name: "Coolify",
+        },
+        hosting_settings: {
+          ftp_login: `user_${Math.random().toString(36).substring(2, 10)}`,
+          ftp_password: `D%$%${Math.random().toString(36).substring(2, 10)}`,
+        },
+      });
+
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.log(JSON.stringify(error.response?.data));
+      }
+
+      throw error;
+    }
+  }
 }
 
 const pleskApi = new PleskApi();

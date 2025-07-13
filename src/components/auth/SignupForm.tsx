@@ -50,7 +50,7 @@ export default function SignupForm({
 
   useEffect(() => {
     if (actionState.status === "success") {
-      router.push("/");
+      router.push("/verify-email");
     } else if (actionState.status === "error") {
       setFormError(actionState.message ?? "Erro ao criar conta");
     }

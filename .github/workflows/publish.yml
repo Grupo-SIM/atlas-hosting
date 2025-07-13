@@ -19,4 +19,5 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: eurmn/atlas-hosting-frontend:latest
+          tags:
+            - eurmn/atlas-hosting-frontend:latest

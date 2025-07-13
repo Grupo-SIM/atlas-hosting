@@ -1,26 +1,32 @@
 "use client";
 
-import { type ActionResponse, login, signInWithGithub } from "@/app/actions"; // Renamed LoginProps to avoid conflict
+import { type ActionResponse, login } from "@/app/actions"; // Renamed LoginProps to avoid conflict
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
+  FormEvent,
+  type ReactNode,
   startTransition,
   useActionState,
-  useCallback,
   useEffect,
   useState,
 } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
-import { FaGithub, FaGoogle } from "react-icons/fa6";
 import * as yup from "yup";
-import GithubAuthButton from "./GithubAuthButton";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle } from "lucide-react";
 
-export default function LoginForm() {
+interface LoginFormProps {
+  redirectTo?: string;
+}
+
+export default function LoginForm({ redirectTo }: LoginFormProps) {
   const { register, getValues, control, ...methods } = useForm<LoginFormInputs>(
     {
       resolver: yupResolver(schema),
@@ -31,7 +37,10 @@ export default function LoginForm() {
 
   const { errors, isValid, isValidating } = useFormState({ control });
   const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+  const [formError, setFormError] = useState<ReactNode>(null);
+  const [showEmailChangeSuccess, setShowEmailChangeSuccess] = useState(false);
 
   const [actionState, doLogin, isPending] = useActionState<
     ActionResponse,
@@ -40,6 +49,19 @@ export default function LoginForm() {
     status: "idle",
     message: "",
   });
+
+  // Check for email change success message
+  useEffect(() => {
+    const message = searchParams.get("message");
+    if (message === "email-changed") {
+      setShowEmailChangeSuccess(true);
+      toast({
+        title: "Email alterado com sucesso",
+        description: "Seu email foi alterado com sucesso. Você pode agora fazer login com o novo endereço.",
+        duration: 5000,
+      });
+    }
+  }, [searchParams, toast]);
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -52,20 +74,68 @@ export default function LoginForm() {
     setFormError(null);
 
     startTransition(() => {
-      doLogin(data);
+      doLogin({ ...data, redirectTo });
     });
   };
 
   useEffect(() => {
+    const resendEmail = async () => {
+      await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: getValues("email") }),
+      });
+    };
+
     if (actionState.status === "success") {
-      router.push("/");
+      // The redirect is handled server-side in the login action
+      // But we can also handle it client-side as a fallback
+      const redirectPath = redirectTo?.startsWith("/") ? redirectTo : "/";
+      router.push(redirectPath);
     } else if (actionState.status === "error") {
+      if (actionState.error === "email_not_verified") {
+        setFormError(
+          <span>
+            Você precisa verificar seu email antes de fazer login. Verifique sua
+            caixa de entrada.{" "}
+            <button
+              type="button"
+              onClick={resendEmail}
+              disabled={isPending}
+              className="all:unset text-red-400 font-semibold underline cursor-pointer"
+            >
+              Clique aqui
+            </button>{" "}
+            para reenviar o email.
+          </span>
+        );
+        return;
+      }
       setFormError(actionState.message ?? "Erro ao fazer login");
     }
-  }, [actionState.status, actionState.message, router]);
+  }, [
+    actionState.status,
+    actionState.message,
+    actionState.error,
+    isPending,
+    getValues,
+    router,
+    redirectTo,
+  ]);
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      {showEmailChangeSuccess && (
+        <Alert className="border-green-200 bg-green-50">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-700">
+            <strong>Email alterado com sucesso!</strong> Você pode agora fazer login com o novo endereço de email.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="space-y-2">
         <Label htmlFor="email">E-mail</Label>
         <Input
@@ -82,7 +152,10 @@ export default function LoginForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Senha</Label>
-          <Link href="#" className="text-sm text-primary hover:underline">
+          <Link
+            href="/forgot-password"
+            className="text-sm text-primary hover:underline"
+          >
             Esqueceu a senha?
           </Link>
         </div>
@@ -135,6 +208,7 @@ const schema = yup
       .email("Digite um e-mail válido")
       .required("E-mail é obrigatório"),
     password: yup.string().required("Senha é obrigatória"),
+    redirectTo: yup.string().optional(),
     // remember: yup.boolean().optional(),
   })
   .required();

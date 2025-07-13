@@ -2,4 +2,5 @@
   "path-autocomplete.pathMappings": {
     "@/": "${workspaceFolder}/src/"
   },
+  "git.ignoreLimitWarning": true,
 }

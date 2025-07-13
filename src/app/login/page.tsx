@@ -1,6 +1,7 @@
 import AuthPage from "@/components/auth/AuthPage";
 import LoginForm from "@/components/auth/LoginForm";
 import type { Metadata } from "next";
+import { use } from "react";
 
 export const metadata: Metadata = {
   title: "Login - Atlas Hosting",
@@ -8,7 +9,17 @@ export const metadata: Metadata = {
     "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
 };
 
-export default function LoginPage() {
+interface LoginPageProps {
+  searchParams: Promise<{
+    redirect?: string;
+  }>;
+}
+
+export default function LoginPage({
+  searchParams: _searchParams,
+}: LoginPageProps) {
+  const searchParams = use(_searchParams);
+
   return (
     <AuthPage
       title="Bem-vindo de volta"
@@ -17,7 +28,7 @@ export default function LoginPage() {
       switchTitle="Não possui uma conta?"
       switchText="Criar uma conta"
     >
-      <LoginForm />
+      <LoginForm redirectTo={searchParams.redirect} />
     </AuthPage>
   );
 }

@@ -112,14 +112,12 @@ const refreshVariants: Variants = {
   initial: {
     left: "0.75rem",
     top: "50%",
-    translateX: 0,
-    translateY: "-50%",
+    translate: "0 -50%",
   },
   reloading: {
     left: "50%",
     top: "50%",
-    translateX: "-50%",
-    translateY: "-50%",
+    translate: "-50% -50%",
     transition: { duration: 0.3, ease: "easeInOut" },
   },
   spin: {

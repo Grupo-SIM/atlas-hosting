@@ -24,11 +24,11 @@ export default class EmailService {
 
   public async sendEmail(message: EmailMessage): Promise<void> {
     await this.transporter.sendMail({
-      from: message.from,
+      from: "noreply@atlashosting.com.br",
       to: message.to,
       subject: message.subject,
-      text: message.body,
-      sender: "Atlas Hosting",
+      sender: message.from,
+      html: message.body
     });
   }
 }

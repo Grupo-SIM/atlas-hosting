@@ -21,16 +21,14 @@ export const dynamic = "force-dynamic"; // Force dynamic rendering for this layo
 
 export default function AuthLayout({
   children,
-  params: searchParams,
 }: {
-  params: Promise<{ tpo?: string }>;
   children: React.ReactNode;
 }) {
   return (
     <div className="max-h-screen min-h-screen flex bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar params={searchParams}>
+        <Topbar>
           <UserSiteSelect />
         </Topbar>
 

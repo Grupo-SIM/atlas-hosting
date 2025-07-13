@@ -22,6 +22,9 @@ import { hash, verify } from "./scrypt";
 import type { RawUser } from "@/lib/db/schema/tables/user";
 import { auth } from "@/auth";
 import { getUser } from ".";
+import { emailService } from "../consts/singletons";
+import { createEmailVerificationToken } from "./tokens";
+import { sendWelcomeEmail, sendEmailVerificationEmail } from "../email/service";
 
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);
@@ -144,7 +147,7 @@ export async function createUser(
         walletId,
       })
       .returning();
-    
+
     const newUser = await db
       .insert(pgUser)
       .values({
@@ -167,16 +170,14 @@ export async function createUser(
       });
 
     // Create user settings after user creation
-    await db
-      .insert(userSettings)
-      .values({
-        userId: newUser[0].id,
-        emailNotifications: true,
-        smsNotifications: false,
-        pushNotifications: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+    await db.insert(userSettings).values({
+      userId: newUser[0].id,
+      emailNotifications: true,
+      smsNotifications: false,
+      pushNotifications: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     await db
       .update(pgOrganization)
@@ -184,6 +185,25 @@ export async function createUser(
         ownerId: newUser[0].id,
       })
       .where(eq(pgOrganization.id, newOrg[0].id));
+
+    // Create email verification token
+    const verificationToken = await createEmailVerificationToken(
+      newUser[0].id,
+      newUser[0].email
+    );
+
+    // Send welcome email and verification email
+    await sendWelcomeEmail(
+      newUser[0].email,
+      newUser[0].name,
+      organizationName
+    );
+
+    await sendEmailVerificationEmail(
+      newUser[0].email,
+      newUser[0].name,
+      verificationToken.token
+    );
 
     return newUser[0];
   } catch (error) {
@@ -226,16 +246,14 @@ export async function createUserForOrganization(
       });
 
     // Create user settings after user creation
-    await db
-      .insert(userSettings)
-      .values({
-        userId: newUser[0].id,
-        emailNotifications: true,
-        smsNotifications: false,
-        pushNotifications: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+    await db.insert(userSettings).values({
+      userId: newUser[0].id,
+      emailNotifications: true,
+      smsNotifications: false,
+      pushNotifications: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     const logger = new AppLogger(user);
     logger.log({

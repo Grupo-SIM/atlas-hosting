@@ -1,4 +1,4 @@
-import { getWordPressSitesForSelectedDomain } from "@/app/(auth)/wordpress/actions";
+import { getWordPressSitesForSelectedDomain } from "@/app/(auth)/sites/wordpress-specific/actions";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {

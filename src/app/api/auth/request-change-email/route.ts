@@ -1,0 +1,90 @@
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { db } from "@/lib/db";
+import { pgUser } from "@/lib/db/schema";
+import { eq, and, ne } from "drizzle-orm";
+import { createChangeEmailToken } from "@/lib/auth/tokens";
+import { sendChangeEmailVerificationEmail } from "@/lib/email/service";
+import { auth } from "@/auth";
+import { verify } from "@node-rs/argon2";
+import { AppError } from "@/lib/errors";
+import { errorHandler } from "@/lib/error-handler";
+
+const requestChangeEmailSchema = z.object({
+  newEmail: z.string().email("Email inválido"),
+  currentPassword: z.string().min(1, "Senha atual é obrigatória"),
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { newEmail, currentPassword } = requestChangeEmailSchema.parse(body);
+
+    // Validate session
+    const session = await auth();
+    if (!session?.user?.id) {
+      throw new AppError("Não autorizado", 401);
+    }
+
+    // Get current user
+    const [user] = await db
+      .select()
+      .from(pgUser)
+      .where(eq(pgUser.id, session.user.id))
+      .limit(1);
+
+    if (!user) {
+      throw new AppError("Usuário não encontrado", 404);
+    }
+
+    // Check if the new email is the same as current
+    if (user.email === newEmail) {
+      throw new AppError("O novo email deve ser diferente do atual", 400);
+    }
+
+    // Verify current password
+    if (!user.password) {
+      throw new AppError("Conta não possui senha definida", 400);
+    }
+
+    const passwordValid = await verify(user.password, currentPassword);
+    if (!passwordValid) {
+      throw new AppError("Senha atual incorreta", 400);
+    }
+
+    // Check if the new email is already in use by another user
+    const [existingUser] = await db
+      .select()
+      .from(pgUser)
+      .where(
+        and(
+          eq(pgUser.email, newEmail),
+          ne(pgUser.id, user.id)
+        )
+      )
+      .limit(1);
+
+    if (existingUser) {
+      throw new AppError("Este email já está em uso", 400);
+    }
+
+    // Create verification token for the new email
+    const changeEmailToken = await createChangeEmailToken(user.id, newEmail);
+
+    // Send verification email to the new email address
+    await sendChangeEmailVerificationEmail(
+      newEmail,
+      user.name || "Usuário",
+      user.email,
+      changeEmailToken.token
+    );
+
+    return NextResponse.json({
+      message: "Email de verificação enviado para o novo endereço",
+      newEmail,
+    });
+  } catch (error) {
+    return errorHandler(error);
+  }
+}

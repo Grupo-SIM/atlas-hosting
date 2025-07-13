@@ -1,6 +1,15 @@
 "use client";
 
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -11,125 +20,96 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Globe } from "lucide-react";
-import Link from "next/link";
-import { useMemo } from "react";
-import { CgSpinner } from "react-icons/cg";
-import { FaTimes } from "react-icons/fa";
-import type { ParsedWordPressInstance } from "../page";
+import { manageApplication } from "../actions";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
-export interface SiteCardProps {
-  instance: ParsedWordPressInstance;
-  isLoading: boolean;
-  isBulkMode: boolean;
-  isPending: boolean;
-  selectedInstances: number[];
-  onToggleSelection: (instanceId: number) => void;
-  onDelete: (instance: ParsedWordPressInstance) => void;
+interface Site {
+  id: string;
+  name: string;
+  fqdn: string;
+  status: string;
 }
 
-export function SiteCard({
-  instance,
-  isLoading,
-  isBulkMode,
-  isPending,
-  selectedInstances,
-  onToggleSelection,
-  onDelete,
-}: SiteCardProps) {
-  const redirectUrl = useMemo(
-    // https://www.testeatlas.xyz/wp-login.php?redirect_to=https%3A%2F%2Fwww.testeatlas.xyz%2Fwp-admin%2F&reauth=1
-    () =>
-      `${instance.domain}/wp-login.php?redirect_to=${encodeURIComponent(instance.domain.concat("/wp-admin/admin.php?page=elementor-app#onboarding/goodToGo"))}`,
-    [instance.domain]
-  );
+interface SiteCardProps {
+  site: Site;
+}
+
+export function SiteCard({ site }: SiteCardProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleAction = async (action: "start" | "stop" | "delete") => {
+    setIsLoading(true);
+    const result = await manageApplication(site.id, action);
+    setIsLoading(false);
+
+    if (result.success) {
+      toast({
+        title: "Sucesso!",
+        description: `Ação ${action} executada com sucesso.`,
+      });
+    } else {
+      toast({
+        title: "Erro!",
+        description: result.error,
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
-    <Card key={instance.id}>
-      <CardHeader className="relative">
-        <div className="absolute right-4 top-4 flex items-center gap-2">
-          {isBulkMode ? (
-            <Checkbox
-              checked={selectedInstances.includes(instance.id)}
-              onCheckedChange={() => onToggleSelection(instance.id)}
-              className="mr-2 cursor-pointer"
-            />
-          ) : (
-            <AlertDialog>
-              <TooltipProvider>
-                <Tooltip>
-                  <AlertDialogTrigger asChild={true}>
-                    <TooltipTrigger asChild={true}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                        disabled={isPending}
-                      >
-                        {isPending ? (
-                          <CgSpinner className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <FaTimes className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                  </AlertDialogTrigger>
-                  <TooltipContent>Excluir Site</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir Site</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza que deseja excluir o site {instance.name}? Esta
-                    ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onDelete(instance)}>
-                    Excluir
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </div>
-        <CardTitle className="flex items-center gap-2">
-          <Globe className="h-4 w-4" />
-          {instance.name}
-        </CardTitle>
-        <CardDescription>{instance.domain}</CardDescription>
+    <Card>
+      <CardHeader>
+        <CardTitle>{site.name}</CardTitle>
+        <CardDescription>{site.fqdn}</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading && selectedInstances.includes(instance.id) ? (
-          <div className="flex items-center justify-center gap-2 text-muted-foreground">
-            <CgSpinner className="h-4 w-4 animate-spin" />
-            <span>Em processamento</span>
-          </div>
-        ) : (
-          <Button variant="outline" asChild={true} className="w-full">
-            <Link href={redirectUrl} target="_blank" rel="noopener noreferrer">
-              Editar Site
-            </Link>
-          </Button>
-        )}
+        <p className="text-sm text-gray-500">
+          Status: {site.status}
+        </p>
       </CardContent>
+      <CardFooter className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={() => handleAction("start")}
+          disabled={isLoading}
+        >
+          {isLoading ? "Iniciando..." : "Iniciar"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => handleAction("stop")}
+          disabled={isLoading}
+        >
+          {isLoading ? "Parando..." : "Parar"}
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" disabled={isLoading}>
+              {isLoading ? "Excluindo..." : "Excluir"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser desfeita. Isso excluirá permanentemente sua
+                aplicação e removerá seus dados de nossos servidores.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleAction("delete")}
+                disabled={isLoading}
+              >
+                Continuar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardFooter>
     </Card>
   );
 }

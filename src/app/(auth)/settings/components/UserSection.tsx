@@ -60,6 +60,7 @@ import {
 import type { User, UserSettings } from "@/lib/db/schema/tables/user";
 import { formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { ChangeEmailSection } from "@/components/auth/ChangeEmailSection";
 import {
   updateUserProfileAction,
   changePasswordAction,
@@ -75,7 +76,6 @@ interface UserSectionProps {
 export function UserSection({ user }: UserSectionProps) {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [userName, setUserName] = useState(user.name);
-  const [userEmail, setUserEmail] = useState(user.email);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -94,7 +94,7 @@ export function UserSection({ user }: UserSectionProps) {
       try {
         const result = await updateUserProfileAction(
           userName,
-          userEmail,
+          user.email, // Keep the current email - don't allow changing it here
           preferences
         );
 
@@ -123,8 +123,6 @@ export function UserSection({ user }: UserSectionProps) {
 
             return prev;
           });
-
-          setUserEmail(updateMessage.email);
         } else {
           toast({
             title: "Erro",
@@ -330,9 +328,8 @@ export function UserSection({ user }: UserSectionProps) {
                   <Input
                     id="emailAddress"
                     type="email"
-                    value={isEditingProfile ? userEmail : user.email}
-                    onChange={(e) => setUserEmail(e.target.value)}
-                    readOnly={!isEditingProfile}
+                    value={user.email}
+                    readOnly
                     className="flex-1"
                   />
                   {!user.emailVerified && (
@@ -346,6 +343,9 @@ export function UserSection({ user }: UserSectionProps) {
                     </Button>
                   )}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Para alterar seu email, use a seção "Alterar Email" abaixo.
+                </p>
               </div>
             </div>
 
@@ -359,7 +359,6 @@ export function UserSection({ user }: UserSectionProps) {
                   variant="outline"
                   onClick={() => {
                     setUserName(user.name);
-                    setUserEmail(user.email);
                     setIsEditingProfile(false);
                   }}
                   disabled={isPending}
@@ -383,6 +382,9 @@ export function UserSection({ user }: UserSectionProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Change Email Section */}
+      <ChangeEmailSection user={user} />
 
       {/* Security Settings */}
       <Card>

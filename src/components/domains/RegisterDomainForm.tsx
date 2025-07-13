@@ -1,7 +1,5 @@
-import type {
-  DomainData,
-  DomainPageParams,
-} from "@/app/(auth)/domains/[action]/types";
+import type { DomainData } from "@/app/(auth)/domain/types";
+
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import Form from "next/form";

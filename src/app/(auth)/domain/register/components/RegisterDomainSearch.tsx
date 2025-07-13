@@ -4,7 +4,7 @@ import Form from "next/form";
 
 export default function RegisterDomainSearch({ domain }: DomainPageParams) {
   return (
-    <Form action="" className="flex flex-col gap-4 w-full">
+    <Form action="/domain?tab=register" className="flex flex-col gap-4 w-full">
       <div className="flex flex-col sm:flex-row gap-3">
         <Input
           type="search"

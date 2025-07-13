@@ -38,11 +38,13 @@ import ipaddrJs from "ipaddr.js";
 import { auth, signIn, signOut } from "@/auth";
 import { AppLogger } from "@/lib/server/logs";
 import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
-import { DomainPageParams } from "./(auth)/domain/types";
+import type { DomainPageParams } from "./(auth)/domain/types";
+import { AtlasNotificationEmail } from "@/emails";
+import { render } from "@react-email/render";
 
 export async function login(
   prevState: unknown,
-  { email, password }: LoginFormInputs
+  { email, password, redirectTo }: LoginFormInputs
 ): Promise<ActionResponse> {
   if (!email || !password) {
     return { status: "error", message: "Email e senha são obrigatórios" };
@@ -61,6 +63,16 @@ export async function login(
 
     if (!user) {
       return { status: "error", message: "Email ou senha inválidos" };
+    }
+
+    // Check if email is verified
+    if (!user.emailVerified) {
+      return {
+        status: "error",
+        message:
+          "Você precisa verificar seu email antes de fazer login. Verifique sua caixa de entrada.",
+        error: "email_not_verified",
+      };
     }
 
     const sessionToken = generateSessionToken();
@@ -105,7 +117,9 @@ export async function login(
     return { status: "error", message: "Erro ao fazer login" };
   }
 
-  redirect("/");
+  // Redirect to the specified page or default to home
+  const redirectPath = redirectTo?.startsWith("/") ? redirectTo : "/";
+  redirect(redirectPath);
 }
 
 export async function signup(
@@ -156,18 +170,7 @@ export async function signup(
       };
     }
 
-    const sessionToken = generateSessionToken();
-    await createSession(sessionToken, user.id);
-
-    const cookieStore = await cookies();
-    cookieStore.set("session_token", sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-    });
-
+    // Don't auto-login, let user verify email first
     if (referrerId) {
       const userLogger = new AppLogger({ id: referrerId });
       userLogger.log({
@@ -179,13 +182,15 @@ export async function signup(
       });
     }
 
-    revalidateTag("session-validate");
+    return {
+      status: "success",
+      message:
+        "Conta criada com sucesso! Verifique seu email para ativar a conta.",
+    };
   } catch (error) {
     console.error("Signup error:", error);
     return { status: "error", message: "Erro ao criar conta" };
   }
-
-  redirect("/");
 }
 
 export async function logout(): Promise<void> {

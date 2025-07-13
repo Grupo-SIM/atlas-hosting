@@ -1,5 +1,5 @@
 import EventEmitter from "node:events";
-import { getUserSettings } from "@/lib/auth";
+import { getUser, getUserSettings } from "@/lib/auth";
 import { emailService } from "@/lib/consts/singletons";
 import { db } from "@/lib/db";
 import {
@@ -11,6 +11,9 @@ import {
 } from "@/lib/db/schema";
 import { format } from "date-fns";
 import { eq } from "drizzle-orm";
+import { ptBR } from "date-fns/locale";
+import { render } from "@react-email/render";
+import { AtlasNotificationEmail } from "@/emails";
 
 // biome-ignore lint/complexity/noStaticOnlyClass: <explanation>
 class AppLoggerQueue {
@@ -52,11 +55,25 @@ class AppLoggerQueue {
       }
 
       try {
+        const user = await getUser();
+
+        const rendered = await render(
+          AtlasNotificationEmail({
+            firstName: user?.name,
+            title: message.title,
+            message: message.title,
+            severity: message.severity,
+            timestamp: new Date().toLocaleString("pt-BR"),
+            supportEmail: "contact@atlashosting.com.br",
+            organizationName: user?.organization?.name,
+          })
+        );
+
         await emailService.sendEmail({
           from: "Atlas Hosting <noreply@atlashosting.com.br>",
           to: email,
           subject: `${message.title} - Atlas Hosting`,
-          body: `Há uma nova notificação sobre sua conta no Atlas Hosting\n${message.title}\n[Gerado às ${format(Date.now(), "PPP")}`,
+          body: rendered,
         });
       } catch (error) {
         console.error(`Failed to send email notification to ${email}:`, error);
