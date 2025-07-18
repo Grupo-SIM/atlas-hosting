@@ -1,0 +1,27 @@
+---
+version: "2.1"
+services:
+  swag:
+    image: lscr.io/linuxserver/swag
+    container_name: swag
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Fortaleza
+      - URL=coolify.atlashosting.com.br
+      # - SUBDOMAINS=www,
+      - VALIDATION=http
+      # - CERTPROVIDER= #optional
+      - DNSPLUGIN=cloudflare #optional
+      - EMAIL=lucasgarrafielo@gmail.com #optional
+      - ONLY_SUBDOMAINS=false #optional
+      # - EXTRA_DOMAINS=<extradomains> #optional
+      - STAGING=false #optional
+    volumes:
+      - ./.config/swag:/config
+    ports:
+      - 443:443
+      - 80:80
+    restart: unless-stopped

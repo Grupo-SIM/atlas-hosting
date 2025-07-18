@@ -1,48 +1,20 @@
-import axios, { type AxiosInstance } from "axios";
+import { User } from "@/coolify";
+import axios from "axios";
+import { Resource } from "./types";
 
 export class CoolifyApi {
-  private apiUrl: string;
-  private apiToken: string;
-  public coolifyAxios: AxiosInstance;
+  private readonly client = axios.create({
+    baseURL: process.env.COOLIFY_API_URL,
+    headers: {
+      Authorization: `Bearer ${process.env.COOLIFY_API_KEY}`,
+    },
+  });
 
-  constructor() {
-    this.apiUrl = process.env.COOLIFY_API_URL as string;
-    this.apiToken = process.env.COOLIFY_API_TOKEN as string;
+  constructor(private readonly user: User) {}
 
-    this.coolifyAxios = axios.create({
-      baseURL: this.apiUrl,
-      headers: {
-        Authorization: `Bearer ${this.apiToken}`,
-        "Content-Type": "application/json",
-      },
-    });
-  }
-
-  public async listApplications() {
-    try {
-      const response = await this.coolifyAxios.get("/applications");
-      return response.data;
-    } catch (error) {
-      console.error("Error listing applications:", error);
-      throw error;
-    }
-  }
-
-  public async getApplicationStats(applicationId: string) {
-    try {
-      const response = await this.coolifyAxios.get(
-        `/applications/${applicationId}/stats`
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        `Error getting stats for application ${applicationId}:`,
-        error
-      );
-      throw error;
-    }
+  public async getAvailableResources(): Promise<Resource[]> {
+    return await this.client
+      .get<Resource[]>("/resources")
+      .then((response) => response.data);
   }
 }
-
-const coolifyApi = new CoolifyApi();
-export default coolifyApi;

@@ -20,6 +20,8 @@ export const pgUser = pgTable("users", {
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
   password: text("password"),
+  dokployId: text("dokploy_id"),
+  githubToken: text("github_token"),
   namesiloId: text("namesilo_id"),
   isAdmin: boolean("is_admin").default(false),
   selectedDomain: text("selected_domain"),

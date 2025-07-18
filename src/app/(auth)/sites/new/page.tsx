@@ -1,40 +1,34 @@
-"use client";
+import { getUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import BentoGridComponent from "./components/BentoGrid";
+import { TemplateResponse } from "./interface";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useState } from "react";
-import { DeploymentOptions } from "./components/DeploymentOptions";
-import { CoolifyDeploymentForm } from "./components/CoolifyDeploymentForm";
-import { WordPressDeploymentForm } from "./components/WordPressDeploymentForm";
+export default async function NewSitePage() {
+  const user = await getUser();
+  if (!user) {
+    redirect("/login");
+  }
 
-export default function NewSitePage() {
-  const [selectedOption, setSelectedOption] = useState<"wordpress" | "coolify" | null>(null);
+  if (!user.organization.dokployId) {
+    redirect("/organization");
+  }
+
+  const templatesResponse = await fetch("https://deploys.atlashosting.com.br/api/trpc/compose.templates,compose.getTags?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22baseUrl%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22baseUrl%22%3A%5B%22undefined%22%5D%7D%7D%7D%2C%221%22%3A%7B%22json%22%3A%7B%22baseUrl%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22baseUrl%22%3A%5B%22undefined%22%5D%7D%7D%7D%7D", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.DOKPLOY_API_KEY!,
+    },
+  });
+
+  const templates = await templatesResponse.json() as TemplateApiResponse;
+  const templateData = templates[0].result.data.json;
+  const tagsData = templates[1].result.data.json;
 
   return (
-    <div className="space-y-6 p-6 pb-16">
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-        Criar Novo Site
-      </h1>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Tipo de Aplicação</CardTitle>
-          <CardDescription>
-            Selecione o tipo de aplicação que você deseja criar.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DeploymentOptions onSelect={setSelectedOption} />
-        </CardContent>
-      </Card>
-
-      {selectedOption === "coolify" && <CoolifyDeploymentForm />}
-      {selectedOption === "wordpress" && <WordPressDeploymentForm />}
+    <div className="container mx-auto py-8">
+      <BentoGridComponent templates={templateData} tags={tagsData} />
     </div>
   );
 }
+

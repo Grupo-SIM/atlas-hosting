@@ -12,6 +12,7 @@
   "dependencies": {
     "@auth/drizzle-adapter": "^1.9.1",
     "@biomejs/biome": "^1.9.4",
+    "@dokploy/cli": "^0.2.7",
     "@eslint/eslintrc": "^3.3.1",
     "@hookform/resolvers": "^3.10.0",
     "@next/bundle-analyzer": "^15.3.3",
@@ -89,6 +90,7 @@
     "jsonwebtoken": "^9.0.2",
     "libphonenumber-js": "^1.12.8",
     "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "lucide-react": "^0.511.0",
     "motion": "^12.16.0",
     "next": "^15.4.0-canary.84",
@@ -108,6 +110,7 @@
     "react-payment-inputs": "^1.2.0",
     "react-resizable-panels": "^3.0.2",
     "recharts": "^2.15.3",
+    "request": "^2.88.2",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.3.0",
     "tailwindcss": "4.1.7",

@@ -13,6 +13,7 @@ import {
 import { pgUser } from "./user";
 
 export const pgOrganization = pgTable("organization", {
+  dokployId: text("dokploy_id"),
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   ownerId: uuid("owner_id"),
@@ -48,7 +49,7 @@ export const organizationRelations = relations(
     domains: many(pgOrganizationDomains, {
       relationName: "organization_domains",
     }),
-  })
+  }),
 );
 
 export const pgOrganizationDomains = pgTable("organization_domains", {
@@ -71,7 +72,7 @@ export const pgUserPermission = pgTable(
       .notNull()
       .references(() => pgOrganizationDomains.id),
   },
-  (t) => [primaryKey({ columns: [t.userId, t.domainId] })]
+  (t) => [primaryKey({ columns: [t.userId, t.domainId] })],
 );
 export const domainToUserRelations = relations(pgUserPermission, ({ one }) => ({
   domain: one(pgOrganizationDomains, {
@@ -93,7 +94,7 @@ export const organizationDomainsRelations = relations(
       references: [pgOrganization.id],
       relationName: "organization_domains",
     }),
-  })
+  }),
 );
 
 export type Organization = typeof pgOrganization.$inferSelect;

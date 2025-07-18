@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getUser } from "@/lib/auth";
+import {} from "@/lib/auth";
 import {
   activateTheme,
   updateTheme,
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     if (!action || !instanceId) {
       return NextResponse.json(
         { error: "Missing required parameters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         if (!themeName) {
           return NextResponse.json(
             { error: "Theme name is required for activation" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         result = await activateTheme(instanceId, themeName);
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         if (!themeName) {
           return NextResponse.json(
             { error: "Theme name is required for update" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         result = await updateTheme(instanceId, themeName);
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         if (!themeName) {
           return NextResponse.json(
             { error: "Theme name is required for deletion" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         result = await deleteTheme(instanceId, themeName);
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         if (!themeSlug) {
           return NextResponse.json(
             { error: "Theme slug is required for installation" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         result = await installTheme(instanceId, themeSlug);
@@ -81,14 +81,14 @@ export async function POST(req: NextRequest) {
           success: false,
           error: result.message,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } catch (error) {
     console.error("Theme API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

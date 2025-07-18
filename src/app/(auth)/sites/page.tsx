@@ -1,41 +1,35 @@
-import { Button } from "@/components/ui/button";
-import { Globe } from "lucide-react";
-import Link from "next/link";
-import { SiteCard } from "./components/SiteCard";
-import { SiteStats } from "./components/SiteStats";
-import coolifyApi from "@/lib/server/apis/coolify";
+import { getUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { TemplateApiResponse } from "./new/interface";
+import BentoGridComponent from "./new/components/BentoGrid";
 
 export default async function SitesPage() {
-  const applications = await coolifyApi.listApplications();
+  const user = await getUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const response = await fetch(
+    "https://deploys.atlashosting.com.br/api/trpc/compose.templates,compose.getTags?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22baseUrl%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22baseUrl%22%3A%5B%22undefined%22%5D%7D%7D%7D%2C%221%22%3A%7B%22json%22%3A%7B%22baseUrl%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22baseUrl%22%3A%5B%22undefined%22%5D%7D%7D%7D%7D",
+    {
+      method: "GET",
+      headers: {
+        "x-api-key": process.env.DOKPLOY_API_KEY!,
+      },
+    },
+  );
+
+  const templates: TemplateApiResponse = await response.json();
+  const templateData = templates[0].result.data.json;
+  const tagsData = templates[1].result.data.json;
 
   return (
     <div className="space-y-6 p-6 pb-16">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            Sites
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie seus sites e aplicações
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" asChild={true}>
-            <Link href="/sites/new">
-              <Globe className="mr-2 h-4 w-4" /> Criar Novo Site
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {applications.map((app: any) => (
-          <div key={app.id} className="space-y-6">
-            <SiteCard site={app} />
-            <SiteStats />
-          </div>
-        ))}
-      </div>
+      <BentoGridComponent
+        templates={templateData}
+        tags={tagsData}
+        user={user}
+      />
     </div>
   );
 }
