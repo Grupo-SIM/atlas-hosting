@@ -33,17 +33,15 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
   );
 }
 
-async function UserName({ user }: WelcomeHeaderProps) {
-  const userData = await user;
-  const firstName = userData?.name.split(" ")[0];
-
+function UserName({ user }: WelcomeHeaderProps) {
+  const firstName = user?.name?.split(" ")[0];
   return firstName
     ? `Bem-vindo de volta, ${firstName}!`
     : "Bem-vindo de volta!";
 }
 
 export function UserPlanBadge({ user }: WelcomeHeaderProps) {
-  if (user.organization.plan) {
+  if (user?.organization?.plan) {
     return (
       <div className="flex items-center gap-2 h-min">
         <Badge variant="default">Plano {user.organization.plan.name}</Badge>

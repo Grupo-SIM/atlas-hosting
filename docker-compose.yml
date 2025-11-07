@@ -1,6 +1,26 @@
 ---
 version: "2.1"
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: atlas-hosting-postgres
+    environment:
+      - POSTGRES_USER=atlas
+      - POSTGRES_PASSWORD=atlas123
+      - POSTGRES_DB=atlas_hosting
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atlas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   swag:
     image: lscr.io/linuxserver/swag
     container_name: swag
@@ -25,3 +45,9 @@ services:
       - 443:443
       - 80:80
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

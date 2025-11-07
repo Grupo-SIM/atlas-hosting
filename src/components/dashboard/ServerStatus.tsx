@@ -876,7 +876,7 @@ async function AsyncServerStatusContent({
 }
 
 export function ServerStatus({ user }: { user: User }) {
-  if (!user.selectedDomain) {
+  if (!user?.selectedDomain) {
     return (
       <Card className="shadow-lg">
         <CardHeader className="border-b border-border/60 pb-4">
