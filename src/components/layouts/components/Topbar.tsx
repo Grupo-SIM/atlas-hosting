@@ -1,5 +1,5 @@
-import { logout } from "@/app/actions";
 import { ModeToggle } from "@/components/ModeToggle";
+import { LogoutButton } from "./LogoutButton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,13 +20,11 @@ import clsx from "clsx";
 import {
   CreditCard,
   Key,
-  LogOut,
   Menu,
   Settings,
   User as UserIcon,
   Users,
 } from "lucide-react";
-import Form from "next/form";
 import Link from "next/link";
 import { Suspense, type HTMLAttributes, type PropsWithChildren } from "react";
 import { CgClose } from "react-icons/cg";
@@ -134,16 +132,7 @@ export default async function Topbar({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="cursor-pointer">
-              <form action={logout}>
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  className="w-full justify-start"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
-                </Button>
-              </form>
+              <LogoutButton />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -21,6 +21,7 @@ export const pgEmailVerificationToken = pgTable("email_verification_tokens", {
     .references(() => pgUser.id, { onDelete: "cascade" })
     .notNull(),
   token: text("token").notNull().unique(),
+  code: text("code"), // 5-digit verification code (nullable for migration)
   email: text("email").notNull(), // The email being verified
   expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
   used: boolean("used").default(false).notNull(),

@@ -172,14 +172,19 @@ export async function signup(
 
     // Don't auto-login, let user verify email first
     if (referrerId) {
-      const userLogger = new AppLogger({ id: referrerId });
-      userLogger.log({
-        type: "account",
-        title: "Usuário cadastrado com seu link de afiliado",
-        description:
-          "Um novo usuário se cadastrou usando seu link de afiliado.",
-        severity: "success",
-      });
+      try {
+        const userLogger = new AppLogger({ id: referrerId });
+        userLogger.log({
+          type: "account",
+          title: "Usuário cadastrado com seu link de afiliado",
+          description:
+            "Um novo usuário se cadastrou usando seu link de afiliado.",
+          severity: "success",
+        });
+      } catch (error) {
+        console.error("Failed to log affiliate:", error);
+        // Don't fail signup if affiliate logging fails
+      }
     }
 
     return {

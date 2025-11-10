@@ -14,7 +14,7 @@ import { eq } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { AppLogger } from "../server/logs";
-import { invalidateSession, validateSession } from "./utils";
+import { validateSession } from "./utils";
 
 export type SessionValidationResult =
   | { session: Session; user: User }
@@ -87,7 +87,6 @@ export async function getUser(): Promise<User> {
   const sessionToken = cookieStore.get("session_token")?.value;
 
   const { user } = await validateSession(sessionToken);
-  invalidateSession(sessionToken as string);
 
   if (!user) {
     throw await redirectToLogin();

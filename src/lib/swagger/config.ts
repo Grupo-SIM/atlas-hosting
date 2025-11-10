@@ -571,6 +571,80 @@ export const swaggerConfig = {
         },
       },
     },
+    "/api/auth/logout": {
+      post: {
+        tags: ["Autenticação"],
+        summary: "Fazer logout do usuário",
+        description:
+          "Encerra a sessão do usuário atual. Remove os cookies de autenticação, invalida a sessão no banco de dados (NextAuth e sessões customizadas) e limpa todos os tokens de autenticação.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          200: {
+            description: "Logout realizado com sucesso",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    status: {
+                      type: "string",
+                      enum: ["success"],
+                      example: "success",
+                    },
+                    message: {
+                      type: "string",
+                      example: "Logout realizado com sucesso",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: {
+            description: "Usuário não autenticado",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    status: {
+                      type: "string",
+                      enum: ["error"],
+                      example: "error",
+                    },
+                    message: {
+                      type: "string",
+                      example: "Usuário não autenticado",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          500: {
+            description: "Erro interno do servidor",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    status: {
+                      type: "string",
+                      enum: ["error"],
+                      example: "error",
+                    },
+                    message: {
+                      type: "string",
+                      example: "Erro ao fazer logout. Tente novamente.",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     "/api/auth/signup": {
       post: {
         tags: ["Autenticação"],

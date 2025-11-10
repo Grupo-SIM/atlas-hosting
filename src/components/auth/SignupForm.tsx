@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import type { User } from "@/lib/db/schema";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import * as yup from "yup";
@@ -29,11 +29,7 @@ export default function SignupForm({
 
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
-
-  const [actionState, doSignup, isPending] = useActionState(signup, {
-    status: "idle",
-    message: "",
-  });
+  const [isLoading, setIsLoading] = useState(false);
 
   // Define the submit handler
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -42,19 +38,28 @@ export default function SignupForm({
     const data = methods.getValues();
 
     setFormError(null);
+    setIsLoading(true);
 
-    startTransition(() => {
-      doSignup({ ...data, referrerId: referrer?.id });
-    });
+    try {
+      const result = await signup(
+        { status: "idle", message: "" },
+        { ...data, referrerId: referrer?.id }
+      );
+
+      if (result.status === "success") {
+        const email = data.email;
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      } else {
+        setFormError(result.message ?? "Erro ao criar conta");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      setFormError("Erro ao criar conta. Tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  useEffect(() => {
-    if (actionState.status === "success") {
-      router.push("/verify-email");
-    } else if (actionState.status === "error") {
-      setFormError(actionState.message ?? "Erro ao criar conta");
-    }
-  }, [actionState.message, actionState.status, router]);
 
   return (
     <>
@@ -75,7 +80,7 @@ export default function SignupForm({
           <Label htmlFor="email">E-mail</Label>
           <Input
             type="email"
-            placeholder="exemplo@exemplo.com"
+            placeholder="Digite seu e-mail"
             autoComplete="email"
             {...register("email")}
           />
@@ -101,6 +106,7 @@ export default function SignupForm({
           <Label htmlFor="password">Senha</Label>
           <Input
             type="password"
+            placeholder="Digite sua senha"
             autoComplete="new-password"
             {...register("password")}
           />
@@ -112,6 +118,7 @@ export default function SignupForm({
           <Label htmlFor="confirmPassword">Confirmar Senha</Label>
           <Input
             type="password"
+            placeholder="Confirme sua senha"
             autoComplete="new-password"
             {...register("confirmPassword")}
           />
@@ -127,9 +134,9 @@ export default function SignupForm({
         <Button
           type="submit"
           className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-          disabled={!isValid || isValidating || isPending}
+          disabled={!isValid || isValidating || isLoading}
         >
-          {isPending ? (
+          {isLoading ? (
             <CgSpinner className="h-6 w-6 animate-spin" />
           ) : (
             "Cadastrar"

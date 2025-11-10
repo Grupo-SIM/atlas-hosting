@@ -1,5 +1,5 @@
 import AuthPage from "@/components/auth/AuthPage";
-import EmailVerificationForm from "@/components/auth/EmailVerificationForm";
+import EmailVerificationCodeForm from "@/components/auth/EmailVerificationCodeForm";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,23 +9,27 @@ export const metadata: Metadata = {
 };
 
 interface VerifyEmailPageProps {
-  searchParams: {
+  searchParams: Promise<{
     token?: string;
-  };
+    email?: string;
+  }>;
 }
 
-export default function VerifyEmailPage({ searchParams }: VerifyEmailPageProps) {
-  const { token } = searchParams;
+export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageProps) {
+  const resolvedParams = await searchParams;
+  const { token, email } = resolvedParams;
 
+  // If token is provided, redirect to old flow (for backward compatibility)
+  // Otherwise, show code verification form
   return (
     <AuthPage
       title="Verificar email"
-      subtitle={token ? "Verificando seu email..." : "Digite seu email para receber um link de verificação"}
+      subtitle={email ? `Digite o código de 5 dígitos enviado para ${email}` : "Digite seu email e o código de verificação que você recebeu"}
       switchHref="/login"
       switchTitle="Já verificou seu email?"
       switchText="Fazer login"
     >
-      <EmailVerificationForm token={token} />
+      <EmailVerificationCodeForm email={email} />
     </AuthPage>
   );
 }

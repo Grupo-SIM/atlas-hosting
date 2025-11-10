@@ -6,7 +6,7 @@ import {
   type PasswordResetToken,
   type EmailVerificationToken 
 } from "@/lib/db/schema";
-import { eq, and, gt, lt } from "drizzle-orm";
+import { eq, and, gt, lt, isNotNull } from "drizzle-orm";
 
 /**
  * Generate a secure random token
@@ -16,10 +16,10 @@ export function generateSecureToken(length = 32): string {
 }
 
 /**
- * Generate a human-readable code (6 digits)
+ * Generate a human-readable code (5 digits)
  */
 export function generateVerificationCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(10000 + Math.random() * 90000).toString();
 }
 
 /**
@@ -85,6 +85,7 @@ export async function createEmailVerificationToken(userId: string, email: string
     );
 
   const token = generateSecureToken();
+  const code = generateVerificationCode(); // 5-digit code
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
 
   const [verificationToken] = await db
@@ -93,6 +94,7 @@ export async function createEmailVerificationToken(userId: string, email: string
       userId,
       email,
       token,
+      code: code, // Always generate code for new tokens
       expiresAt,
       used: false,
     })
@@ -108,6 +110,27 @@ export async function validateEmailVerificationToken(token: string): Promise<Ema
     .where(
       and(
         eq(pgEmailVerificationToken.token, token),
+        eq(pgEmailVerificationToken.used, false),
+        gt(pgEmailVerificationToken.expiresAt, new Date())
+      )
+    )
+    .limit(1);
+
+  return verificationToken || null;
+}
+
+/**
+ * Validate email verification code (5 digits) with email
+ */
+export async function validateEmailVerificationCode(code: string, email: string): Promise<EmailVerificationToken | null> {
+  const [verificationToken] = await db
+    .select()
+    .from(pgEmailVerificationToken)
+    .where(
+      and(
+        eq(pgEmailVerificationToken.code, code),
+        isNotNull(pgEmailVerificationToken.code),
+        eq(pgEmailVerificationToken.email, email.toLowerCase()),
         eq(pgEmailVerificationToken.used, false),
         gt(pgEmailVerificationToken.expiresAt, new Date())
       )

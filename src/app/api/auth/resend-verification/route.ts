@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
     await sendEmailVerificationEmail(
       user.email,
       user.name,
-      verificationToken.token
+      verificationToken.token,
+      verificationToken.code
     );
 
     return NextResponse.json({

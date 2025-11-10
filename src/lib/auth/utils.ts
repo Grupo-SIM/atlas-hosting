@@ -193,17 +193,28 @@ export async function createUser(
     );
 
     // Send welcome email and verification email
-    await sendWelcomeEmail(
-      newUser[0].email,
-      newUser[0].name,
-      organizationName
-    );
+    try {
+      await sendWelcomeEmail(
+        newUser[0].email,
+        newUser[0].name,
+        organizationName
+      );
+    } catch (error) {
+      console.error("Failed to send welcome email:", error);
+      // Don't fail user creation if email fails
+    }
 
-    await sendEmailVerificationEmail(
-      newUser[0].email,
-      newUser[0].name,
-      verificationToken.token
-    );
+    try {
+      await sendEmailVerificationEmail(
+        newUser[0].email,
+        newUser[0].name,
+        verificationToken.token,
+        verificationToken.code
+      );
+    } catch (error) {
+      console.error("Failed to send verification email:", error);
+      // Don't fail user creation if email fails, but log it
+    }
 
     return newUser[0];
   } catch (error) {

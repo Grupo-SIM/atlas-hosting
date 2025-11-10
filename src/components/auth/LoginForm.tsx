@@ -1,6 +1,6 @@
 "use client";
 
-import { type ActionResponse, login } from "@/app/actions"; // Renamed LoginProps to avoid conflict
+import { type ActionResponse, login } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -141,7 +141,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
         <Input
           id="email"
           type="email"
-          placeholder="seu@email.com"
+          placeholder="Digite seu e-mail"
           autoComplete="email"
           {...register("email")}
         />
@@ -162,6 +162,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
         <Input
           id="password"
           type="password"
+          placeholder="Digite sua senha"
           autoComplete="current-password"
           {...register("password")}
         />

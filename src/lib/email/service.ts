@@ -114,7 +114,8 @@ export async function sendPasswordResetEmail(
 export async function sendEmailVerificationEmail(
   email: string,
   firstName: string,
-  verificationToken: string
+  verificationToken: string,
+  verificationCode: string
 ): Promise<void> {
   const verificationLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify-email?token=${verificationToken}`;
 
@@ -124,14 +125,14 @@ export async function sendEmailVerificationEmail(
       organizationName: "Atlas Hosting",
       title: "Verificar seu endereço de email",
       message:
-        "Para completar o cadastro da sua conta, você precisa verificar seu endereço de email. Clique no botão abaixo para verificar.",
+        `Para completar o cadastro da sua conta, você precisa verificar seu endereço de email. Use o código abaixo na página de verificação:\n\nCódigo: ${verificationCode}`,
       severity: "info",
       actionUrl: verificationLink,
       actionText: "Verificar Email",
       timestamp: new Date().toLocaleString("pt-BR"),
       supportEmail: "contact@atlashosting.com.br",
       additionalInfo:
-        "Este link expira em 24 horas. Se você não solicitou esta verificação, pode ignorar este email.",
+        `Código de verificação: ${verificationCode}\nEste código expira em 24 horas. Se você não solicitou esta verificação, pode ignorar este email.`,
     })
   );
 
