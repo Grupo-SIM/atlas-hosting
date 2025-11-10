@@ -1,40 +1,59 @@
-import { getUser } from "@/lib/auth";
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { pgOrganization, pgUser, pgWallet } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export async function GET() {
-  const user = await getUser();
+  // Buscar usuário diretamente da sessão do NextAuth, sem usar getUser() que redireciona
+  const session = await auth();
 
-  if (!user.organizationId) {
-    const walletResult = await db
-      .insert(pgWallet)
-      .values({
-        balance: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-
-    const { id: walletId } = walletResult[0];
-
-    const newOrg = await db
-      .insert(pgOrganization)
-      .values({
-        name: user.name,
-        walletId,
-        ownerId: user.id,
-      })
-      .returning();
-
-    await db
-      .update(pgUser)
-      .set({
-        organizationId: newOrg[0].id,
-      })
-      .where(eq(pgUser.id, user.id));
+  if (!session?.user?.id) {
+    redirect("/login");
   }
 
+  // Buscar usuário do banco de dados
+  const user = await db.query.pgUser.findFirst({
+    where: eq(pgUser.id, session.user.id),
+  });
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // Se o usuário já tem organização, redirecionar direto para o dashboard
+  if (user.organizationId) {
+    redirect("/");
+  }
+
+  // Criar organização se não existir
+  const walletResult = await db
+    .insert(pgWallet)
+    .values({
+      balance: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .returning();
+
+  const { id: walletId } = walletResult[0];
+
+  const newOrg = await db
+    .insert(pgOrganization)
+    .values({
+      name: user.name,
+      walletId,
+      ownerId: user.id,
+    })
+    .returning();
+
+  await db
+    .update(pgUser)
+    .set({
+      organizationId: newOrg[0].id,
+    })
+    .where(eq(pgUser.id, user.id));
+
+  // Redirecionar para o dashboard após criar a organização
   redirect("/");
 }
