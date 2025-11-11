@@ -1,0 +1,83 @@
+/* Isolar Swagger UI do tema da aplicação - sobrescrever variáveis do :root */
+
+/* Criar um novo contexto :root apenas para o Swagger */
+.swagger-isolated {
+  /* Sobrescrever TODAS as variáveis CSS do tema para valores light */
+  --background: 255, 255, 255 !important;
+  --foreground: 59, 65, 81 !important;
+  --card: 255, 255, 255 !important;
+  --card-foreground: 59, 65, 81 !important;
+  --popover: 255, 255, 255 !important;
+  --popover-foreground: 59, 65, 81 !important;
+  --primary: 59, 65, 81 !important;
+  --primary-foreground: 255, 255, 255 !important;
+  --secondary: 243, 244, 246 !important;
+  --secondary-foreground: 59, 65, 81 !important;
+  --muted: 243, 244, 246 !important;
+  --muted-foreground: 107, 114, 128 !important;
+  --accent: 243, 244, 246 !important;
+  --accent-foreground: 59, 65, 81 !important;
+  --destructive: 239, 68, 68 !important;
+  --destructive-foreground: 255, 255, 255 !important;
+  --border: 229, 231, 235 !important;
+  --input: 229, 231, 235 !important;
+  --ring: 59, 65, 81 !important;
+  color-scheme: light !important;
+  /* Forçar tema light no container */
+  background-color: rgb(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Prevenir que estilos globais do body afetem o Swagger */
+.swagger-isolated .swagger-ui {
+  /* Resetar variáveis CSS que podem ser herdadas */
+  --background: 255, 255, 255 !important;
+  --foreground: 59, 65, 81 !important;
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
+/* Garantir que mesmo com tema dark, o Swagger use variáveis light */
+html.dark .swagger-isolated,
+html.dark .swagger-isolated .swagger-ui {
+  --background: 255, 255, 255 !important;
+  --foreground: 59, 65, 81 !important;
+  --card: 255, 255, 255 !important;
+  --card-foreground: 59, 65, 81 !important;
+  --popover: 255, 255, 255 !important;
+  --popover-foreground: 59, 65, 81 !important;
+  --primary: 59, 65, 81 !important;
+  --primary-foreground: 255, 255, 255 !important;
+  --secondary: 243, 244, 246 !important;
+  --secondary-foreground: 59, 65, 81 !important;
+  --muted: 243, 244, 246 !important;
+  --muted-foreground: 107, 114, 128 !important;
+  --accent: 243, 244, 246 !important;
+  --accent-foreground: 59, 65, 81 !important;
+  --destructive: 239, 68, 68 !important;
+  --destructive-foreground: 255, 255, 255 !important;
+  --border: 229, 231, 235 !important;
+  --input: 229, 231, 235 !important;
+  --ring: 59, 65, 81 !important;
+  color-scheme: light !important;
+  background-color: rgb(255, 255, 255) !important;
+  color: rgb(59, 65, 81) !important;
+}
+
+/* Prevenir que elementos do Swagger herdem estilos do tema */
+.swagger-isolated .swagger-ui * {
+  /* Garantir que cores não sejam herdadas do tema dark */
+  /* Não forçar cores específicas, apenas prevenir herança de variáveis CSS */
+}
+
+/* Garantir que inputs e elementos do Swagger não herdem estilos do tema */
+.swagger-isolated .swagger-ui input,
+.swagger-isolated .swagger-ui textarea,
+.swagger-isolated .swagger-ui select,
+.swagger-isolated .swagger-ui button {
+  /* Não forçar cores, apenas prevenir herança do tema dark */
+  color: inherit;
+  background-color: inherit;
+  border-color: inherit;
+}
+
