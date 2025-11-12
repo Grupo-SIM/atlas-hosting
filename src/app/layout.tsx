@@ -24,7 +24,7 @@ export default async function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning={true} className="dark">
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning={true}>
         <Suspense>
           <ThemeProvider
             attribute="class"
