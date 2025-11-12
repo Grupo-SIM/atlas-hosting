@@ -46,3 +46,6 @@ php-api/
 
 src/z.docs/wp-cli/index.ts
 src/wp-cli-generator/commands/
+
+# videos
+public/globe.webm
