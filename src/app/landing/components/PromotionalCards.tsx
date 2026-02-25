@@ -10,12 +10,31 @@ export function PromotionalCards() {
   const [domainInput, setDomainInput] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
+  const handleSearch = () => {
+    if (!domainInput.trim()) {
+      return;
+    }
+
+    // Redirect to search results page
+    window.location.href = `/domains/search?q=${encodeURIComponent(domainInput.trim())}`;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDomainInput(e.target.value);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
     <section id="comprar-dominio" className="py-20 px-4 relative overflow-hidden" style={{ backgroundColor: '#000319' }}>
       <div className="container mx-auto max-w-[95%] lg:max-w-[98%]">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* Card Esquerdo - Cashback */}
-          <div className="relative rounded-4xl p-6 text-white overflow-hidden bg-slate-200/10 backdrop-blur-[20px] border border-green-500/30 shadow-[0_8px_32px_0_rgba(34,197,94,0.15)]">
+          <div className="relative rounded-4xl p-6 text-white overflow-hidden bg-slate-200/10 backdrop-blur-[20px] border border-green-500/30 shadow-[0_8px_32px_0_rgba(34,197,94,0.15)] h-fit">
             {/* Background com padrão de pontos */}
             <div className="absolute inset-0 -z-10 h-full w-full bg-transparent bg-[radial-gradient(rgba(34,197,94,0.2)_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
             
@@ -76,14 +95,19 @@ export function PromotionalCards() {
                   <input
                     type="text"
                     value={domainInput}
-                    onChange={(e) => setDomainInput(e.target.value)}
+                    onChange={handleInputChange}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
+                    onKeyPress={handleKeyPress}
                     className="flex-1 bg-transparent text-white placeholder-transparent outline-none text-base w-full relative z-10"
                     placeholder=""
                   />
                 </div>
-                <Button className="bg-green-500 hover:bg-green-600 text-white rounded-4xl px-6">
+                        <Button
+                          onClick={handleSearch}
+                          disabled={!domainInput.trim()}
+                          className="bg-green-500 hover:bg-green-600 text-white rounded-4xl px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                   Pesquisar
                 </Button>
               </div>

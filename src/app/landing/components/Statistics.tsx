@@ -1,25 +1,26 @@
 "use client";
 
+import Link from "next/link";
 import CountUp from "./CountUp";
 
 const stats = [
   {
-    value: 7.2,
+    value: 0,
     suffix: "K+",
     label: "Sites desenvolvidos",
   },
   {
-    value: 5,
+    value: 0,
     suffix: "K+",
     label: "Clientes satisfeitos",
   },
   {
-    value: 20,
+    value: 0,
     suffix: "+",
     label: "Anos de Experiência no mercado",
   },
   {
-    value: 4.7,
+    value: 0,
     suffix: "",
     label: "Avaliação média",
   },
@@ -59,9 +60,20 @@ export function Statistics() {
             <br />
             preço justo, retorno real
           </h2>
-          <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8">
             Você trabalha muito, seu negócio merece um lugar que valorize isso!
           </p>
+          <p className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto">
+            Seu sucesso digital começa aqui
+          </p>
+          <p className="text-base md:text-lg text-white/60 max-w-3xl mx-auto mt-4">
+            Tenha desempenho incomparável para seu site, hospedagem de alta velocidade e segurança em que você pode confiar. Seu crescimento é o nosso objetivo.
+          </p>
+          <div className="mt-8">
+            <Link href="#plans" className="custom-animated-button inline-flex items-center gap-2">
+              ver planos
+            </Link>
+          </div>
         </div>
 
         {/* Cards de Estatísticas */}

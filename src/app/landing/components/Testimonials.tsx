@@ -5,40 +5,34 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const testimonials = [
   {
-    name: "Maria Silva",
-    handle: "@mariasilva",
+    name: "Júlia Alba",
+    role: "Empreendedora Digital",
     image: "https://i.pravatar.cc/150?img=47",
-    text: "A Atlas Hosting transformou meu negócio online. O suporte é excepcional e a performance é incrível!",
+    text: "Sempre achei difícil entender termos técnicos, mas o suporte do Atlas é diferente. Gente real, explicação simples. Me senti segura desde o primeiro contato.",
   },
   {
-    name: "João Santos",
-    handle: "@joaosantos",
+    name: "Fernando Collins",
+    role: "Criador de Conteúdo",
     image: "https://i.pravatar.cc/150?img=12",
-    text: "Como desenvolvedor, preciso de confiabilidade e velocidade. A Atlas Hosting entrega tudo isso e mais!",
+    text: "O cashback mensal foi um diferencial que eu nunca vi em outras hospedagens. Já recuperei parte do valor e continuo com performance altíssima no meu site.",
   },
   {
-    name: "Ana Costa",
-    handle: "@anacosta",
+    name: "Fabricio dos Santos",
+    role: "Gestor de Projetos Web",
     image: "https://i.pravatar.cc/150?img=45",
-    text: "Migrei meu site para a Atlas Hosting e a diferença foi imediata. Site mais rápido e sem problemas!",
+    text: "Estou há 2 anos com o Atlas. Nunca precisei abrir chamado por instabilidade. Me surpreendeu.",
   },
   {
-    name: "Carlos Oliveira",
-    handle: "@carlosoliveira",
+    name: "Luiz Vieira",
+    role: "Desenvolvedor WordPress",
     image: "https://i.pravatar.cc/150?img=33",
-    text: "A melhor hospedagem que já usei. Interface intuitiva e suporte 24/7 que realmente funciona!",
+    text: "Além do Elementor Pro incluso, ainda recebo sugestões de otimização com frequência. O Atlas vai além da hospedagem, é parceiro de crescimento.",
   },
   {
-    name: "Patricia Lima",
-    handle: "@patricialima",
+    name: "Rafael Carrilho",
+    role: "Especialista em Tráfego Pago",
     image: "https://i.pravatar.cc/150?img=20",
-    text: "Recomendo a Atlas Hosting para todos os meus clientes. Performance excepcional e preço justo!",
-  },
-  {
-    name: "Roberto Alves",
-    handle: "@robertoalves",
-    image: "https://i.pravatar.cc/150?img=68",
-    text: "Uso a Atlas Hosting há mais de 2 anos e nunca tive problemas. Estabilidade e velocidade garantidas!",
+    text: "Achei que era só mais uma hospedagem, mas o Atlas entrega mesmo. Meu site ficou mais rápido, seguro e ainda economizo com ferramentas que antes eu pagava por fora.",
   },
 ];
 
@@ -101,15 +95,12 @@ export function Testimonials() {
         <div className="text-center mb-16 px-4">
           <div className="inline-block mb-4">
             <span className="px-4 py-2 rounded-full bg-purple-600/30 backdrop-blur-md border border-purple-500/50 text-white text-sm font-semibold">
-              Depoimentos
+              depoimentos
             </span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
-            Confiança de quem entende de tecnologia
+            Feedback & Avaliações
           </h2>
-          <p className="text-xl text-white/70 max-w-2xl mx-auto">
-            Veja o que nossos clientes têm a dizer sobre a qualidade dos nossos serviços
-          </p>
         </div>
 
         {/* Linha de cima - carrossel para esquerda */}
@@ -129,7 +120,7 @@ export function Testimonials() {
                   </Avatar>
                   <div>
                     <p className="font-semibold text-white">{testimonial.name}</p>
-                    <p className="text-sm text-purple-300">{testimonial.handle}</p>
+                    <p className="text-sm text-purple-300">{(testimonial as any).role}</p>
                   </div>
                 </div>
                 <p className="text-white/80 text-sm leading-relaxed">
@@ -157,7 +148,7 @@ export function Testimonials() {
                   </Avatar>
                   <div>
                     <p className="font-semibold text-white">{testimonial.name}</p>
-                    <p className="text-sm text-purple-300">{testimonial.handle}</p>
+                    <p className="text-sm text-purple-300">{(testimonial as any).role}</p>
                   </div>
                 </div>
                 <p className="text-white/80 text-sm leading-relaxed">

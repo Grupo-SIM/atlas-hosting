@@ -5,117 +5,153 @@ import { FaThreads, FaTiktok } from "react-icons/fa6";
 
 export function Footer() {
   return (
-    <footer className="py-12 px-4 border-t bg-muted/30">
+    <footer className="py-12 px-4 border-t border-white/10" style={{ backgroundColor: '#000319' }}>
       <div className="container mx-auto max-w-6xl">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <AtlasLogo className="h-8 w-auto" />
-              <span className="text-xl font-bold">Atlas Hosting</span>
-            </Link>
-            <p className="text-sm text-muted-foreground">
-              Hospedagem profissional com alta performance e suporte
-              especializado.
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">A</span>
+              </div>
+              <span className="text-lg font-bold text-cyan-400">Atlashost</span>
+            </div>
+            <p className="text-sm text-white/70 mb-4">
+              Feito pra quem quer mais do que só<br />
+              "estar no ar"
             </p>
+            <div className="flex gap-4">
+              <Link href="https://www.instagram.com/hostingatlas/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-cyan-400 transition-colors">
+                <Instagram className="h-5 w-5" />
+              </Link>
+              <Link href="https://www.youtube.com/@hostingatlas" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-cyan-400 transition-colors">
+                <Youtube className="h-5 w-5" />
+              </Link>
+              <Link href="https://x.com/hostingatlasbr" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-cyan-400 transition-colors">
+                <Twitter className="h-5 w-5" />
+              </Link>
+              <Link href="https://www.threads.com/@hostingatlas" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-cyan-400 transition-colors">
+                <FaThreads className="h-5 w-5" />
+              </Link>
+              <Link href="https://www.tiktok.com/@hostingatlas" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-cyan-400 transition-colors">
+                <FaTiktok className="h-5 w-5" />
+              </Link>
+              <Link href="https://www.facebook.com/hostingatlasbr/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-cyan-400 transition-colors">
+                <Facebook className="h-5 w-5" />
+              </Link>
+            </div>
           </div>
           <div>
-            <h3 className="font-semibold mb-4">Produtos</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <h3 className="font-semibold mb-4 text-white">Menu</h3>
+            <ul className="space-y-2 text-sm text-white/70">
               <li>
-                <Link href="#plans" className="hover:text-foreground">
-                  Planos de Hospedagem
+                <Link href="#how-it-works" className="hover:text-cyan-400 transition-colors">
+                  Como Funciona
                 </Link>
               </li>
               <li>
-                <Link href="#features" className="hover:text-foreground">
-                  Recursos
+                <Link href="#servicos" className="hover:text-cyan-400 transition-colors">
+                  Serviços
                 </Link>
               </li>
               <li>
-                <Link href="#testimonials" className="hover:text-foreground">
-                  Depoimentos
+                <Link href="#features" className="hover:text-cyan-400 transition-colors">
+                  Benefícios
                 </Link>
               </li>
               <li>
-                <Link href="#faq" className="hover:text-foreground">
-                  Perguntas Frequentes
+                <Link href="#plans" className="hover:text-cyan-400 transition-colors">
+                  Planos
+                </Link>
+              </li>
+              <li>
+                <Link href="#projetos" className="hover:text-cyan-400 transition-colors">
+                  Projetos
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="hover:text-cyan-400 transition-colors">
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link href="#faq" className="hover:text-cyan-400 transition-colors">
+                  FAQ
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold mb-4">Legal</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <h3 className="font-semibold mb-4 text-white">Serviços</h3>
+            <ul className="space-y-2 text-sm text-white/70">
               <li>
-                <Link href="#privacy" className="hover:text-foreground">
-                  Privacidade
+                <Link href="#servicos" className="hover:text-cyan-400 transition-colors">
+                  Hospedagem otimizada
                 </Link>
               </li>
               <li>
-                <Link href="#terms" className="hover:text-foreground">
-                  Termos de Uso
-                </Link>
-              </li>
-              <li>
-                <Link href="https://api.whatsapp.com/send/?phone=5547997801802&text&type=phone_number&app_absent=0" target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
-                  Suporte
+                <Link href="#comprar-dominio" className="hover:text-cyan-400 transition-colors">
+                  Compra de domínios
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold mb-4">Redes Sociais</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <h3 className="font-semibold mb-4 text-white">Blogs Recomendados</h3>
+            <ul className="space-y-2 text-sm text-white/70">
               <li>
-                <Link href="https://www.instagram.com/hostingatlas/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground flex items-center gap-2">
-                  <Instagram className="h-4 w-4" />
-                  Instagram
+                <Link href="#" className="hover:text-cyan-400 transition-colors">
+                  007SpyHacker
                 </Link>
               </li>
               <li>
-                <Link href="https://www.youtube.com/@hostingatlas" target="_blank" rel="noopener noreferrer" className="hover:text-foreground flex items-center gap-2">
-                  <Youtube className="h-4 w-4" />
-                  YouTube
+                <Link href="#" className="hover:text-cyan-400 transition-colors">
+                  Central do Marketing
                 </Link>
               </li>
               <li>
-                <Link href="https://x.com/hostingatlasbr" target="_blank" rel="noopener noreferrer" className="hover:text-foreground flex items-center gap-2">
-                  <Twitter className="h-4 w-4" />
-                  Twitter
+                <Link href="#" className="hover:text-cyan-400 transition-colors">
+                  Seguidores em Alta
                 </Link>
               </li>
               <li>
-                <Link href="https://www.threads.com/@hostingatlas" target="_blank" rel="noopener noreferrer" className="hover:text-foreground flex items-center gap-2">
-                  <FaThreads className="h-4 w-4" />
-                  Threads
+                <Link href="#" className="hover:text-cyan-400 transition-colors">
+                  Marketing Raiz
                 </Link>
               </li>
               <li>
-                <Link href="https://www.tiktok.com/@hostingatlas" target="_blank" rel="noopener noreferrer" className="hover:text-foreground flex items-center gap-2">
-                  <FaTiktok className="h-4 w-4" />
-                  TikTok
+                <Link href="#" className="hover:text-cyan-400 transition-colors">
+                  Zyrion Brazil
                 </Link>
               </li>
               <li>
-                <Link href="https://kwai.com/@atlashosting" target="_blank" rel="noopener noreferrer" className="hover:text-foreground flex items-center gap-2">
-                  <span className="h-4 w-4 flex items-center justify-center font-bold">K</span>
-                  Kawai
-                </Link>
-              </li>
-              <li>
-                <Link href="https://www.facebook.com/hostingatlasbr/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground flex items-center gap-2">
-                  <Facebook className="h-4 w-4" />
-                  Facebook
+                <Link href="#" className="hover:text-cyan-400 transition-colors">
+                  Frendz
                 </Link>
               </li>
             </ul>
+            <div className="mt-6">
+              <p className="text-sm text-white/70 mb-2">Acesse nosso blog e fique por dentro de tudo!</p>
+              <Link href="#" className="text-cyan-400 hover:text-cyan-300 text-sm font-semibold">
+                Acessar Agora →
+              </Link>
+            </div>
           </div>
         </div>
-        <div className="border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>© 2024 Atlas Hosting. Todos os direitos reservados.</p>
+        <div className="border-t border-white/10 pt-8 text-center text-sm text-white/70">
+          <p>Copyright © 2025 JB Mídia, Todos os direitos reservados.</p>
+          <div className="flex justify-center gap-4 mt-4">
+            <Link href="#" className="hover:text-cyan-400 transition-colors">
+              Termos de Uso
+            </Link>
+            <span className="text-white/30">|</span>
+            <Link href="#" className="hover:text-cyan-400 transition-colors">
+              Política de Privacidade
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
+
 

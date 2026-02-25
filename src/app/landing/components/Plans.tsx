@@ -18,9 +18,9 @@ import { Meteors } from "@/components/ui/meteors";
 const plans = [
   {
     name: "START",
-    description: "Perfeito para sites pessoais e blogs",
+    description: "",
     monthlyPrice: "R$49,90",
-    yearlyPrice: "R$499,00",
+    yearlyPrice: "R$39,92",
     popular: false,
     features: [
       "1 site",
@@ -35,9 +35,9 @@ const plans = [
   },
   {
     name: "PREMIUM",
-    description: "Ideal para pequenas empresas",
+    description: "",
     monthlyPrice: "R$79,90",
-    yearlyPrice: "R$799,00",
+    yearlyPrice: "R$63,92",
     popular: false,
     features: [
       "5 sites",
@@ -52,10 +52,10 @@ const plans = [
   },
   {
     name: "BUSINESS",
-    description: "Para grandes projetos e empresas",
+    description: "",
     monthlyPrice: "R$109,90",
-    yearlyPrice: "R$1.099,00",
-    popular: true,
+    yearlyPrice: "R$87,92",
+    popular: false,
     features: [
       "10 sites",
       "Até 50.000 visitas mensais",
@@ -69,9 +69,9 @@ const plans = [
   },
   {
     name: "ELITE",
-    description: "Para empresas de grande porte",
+    description: "",
     monthlyPrice: "R$159,90",
-    yearlyPrice: "R$1.599,00",
+    yearlyPrice: "R$127,92",
     popular: false,
     features: [
       "15 sites",
@@ -97,12 +97,11 @@ export function Plans() {
       
       <div className="container mx-auto max-w-6xl relative z-10">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Planos que se adaptam ao seu negócio
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+            Escolha o plano ideal para você
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Escolha o plano ideal para suas necessidades. Todos incluem SSL
-            grátis e suporte 24/7
+          <p className="text-xl text-white/70 max-w-2xl mx-auto mb-8">
+            Comece com o pé direito. Oferecemos 30 dias para pedir reembolso, ou seja, risco zero para você.
           </p>
           
           {/* Toggle Mensal/Anual */}
@@ -189,15 +188,14 @@ export function Plans() {
               </div>
               
               <CardHeader className="pt-8 relative z-10">
-                <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                    <CardDescription className="text-base">
-                      {plan.description}
-                    </CardDescription>
-                    <div className="mt-4">
+                <CardTitle className="text-2xl text-white mb-4">{plan.name}</CardTitle>
+                    <div className="mt-4 mb-6">
                       <span className="text-4xl font-bold text-white">
                         {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
                       </span>
-                      <span className="text-muted-foreground">/{isYearly ? 'ano' : 'mês'}</span>
+                    </div>
+                    <div className="mb-4">
+                      <p className="text-white/70 text-sm font-semibold">Incluso:</p>
                     </div>
               </CardHeader>
               <CardContent className="relative z-10 flex flex-col">
@@ -205,19 +203,31 @@ export function Plans() {
                   {plan.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm">{feature}</span>
+                      <span className="text-sm text-white/80">{feature}</span>
                     </li>
                   ))}
                 </ul>
                 <Link 
                   href="/signup"
-                  className="w-full custom-animated-button inline-flex items-center justify-center mx-auto"
+                  className="w-full custom-animated-button inline-flex items-center justify-center mx-auto mb-2"
                 >
-                  Começar Agora
+                  Adquirir Agora
                 </Link>
+                <p className="text-center text-xs text-white/50">Pagamento 100% Seguro.</p>
               </CardContent>
             </Card>
           ))}
+        </div>
+        
+        <div className="text-center mt-12">
+          <p className="text-white/70 text-lg mb-4">
+            Caso deseje um plano maior entre em contato agora mesmo:
+          </p>
+          <Link href="https://api.whatsapp.com/send/?phone=5547997801802&text&type=phone_number&app_absent=0" target="_blank" rel="noopener noreferrer">
+            <Button className="bg-emerald-400 hover:bg-emerald-500 text-black font-bold px-8 py-3">
+              Clique aqui
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

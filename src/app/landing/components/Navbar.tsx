@@ -1,57 +1,61 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import AtlasLogo from "@/assets/atlas.svg";
 import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 export function Navbar() {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   return (
-    <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <AtlasLogo className="h-8 w-auto" />
-          <span className="text-xl font-bold">Atlas Hosting</span>
-        </Link>
-        <div className="hidden md:flex items-center gap-6">
-          <Link
-            href="#how-it-works"
-            className="text-muted-foreground hover:text-foreground transition-colors"
+    <header className="fixed top-0 w-full z-50 border-b border-white/10 backdrop-blur-md bg-black/20">
+      <nav className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">A</span>
+          </div>
+          <span className="text-lg font-bold text-cyan-400">Atlashost</span>
+        </div>
+        <div className="hidden md:flex items-center gap-12">
+          <div 
+            className="relative"
+            onMouseEnter={() => setIsDropdownOpen(true)}
+            onMouseLeave={() => setIsDropdownOpen(false)}
           >
-            Como funciona
-          </Link>
-          <Link
-            href="#features"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Recursos
-          </Link>
-          <Link
-            href="#plans"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
+            <button className="text-white hover:text-cyan-400 transition-colors flex items-center gap-1 text-sm font-medium">
+              Como Funciona
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            {isDropdownOpen && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-black/90 backdrop-blur-md border border-white/10 rounded-lg shadow-lg py-2">
+                <Link href="#how-it-works" className="block px-4 py-2 text-white hover:bg-white/10 text-sm">
+                  Serviços
+                </Link>
+                <Link href="#features" className="block px-4 py-2 text-white hover:bg-white/10 text-sm">
+                  Benefícios
+                </Link>
+              </div>
+            )}
+          </div>
+          <a href="#plans" className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
             Planos
-          </Link>
-          <Link
-            href="#testimonials"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Depoimentos
-          </Link>
-          <Link
-            href="#faq"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
+          </a>
+          <a href="#projetos" className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
+            Projetos
+          </a>
+          <a href="#" className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
+            Blog
+          </a>
+          <a href="#faq" className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
             FAQ
-          </Link>
+          </a>
         </div>
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" asChild>
-            <Link href="/login">Entrar</Link>
-          </Button>
-          <Button asChild>
-            <Link href="#comprar-dominio">Comprar Domínio</Link>
-          </Button>
-        </div>
-      </div>
-    </nav>
+        <Button className="bg-emerald-400 hover:bg-emerald-500 text-black font-bold px-6 py-2 text-sm" asChild>
+          <Link href="/login">LOGIN</Link>
+        </Button>
+      </nav>
+    </header>
   );
 }
 

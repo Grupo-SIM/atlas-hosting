@@ -16,14 +16,26 @@ const leftFeatures = [
     description:
       "Hospedagem preparada para lojas virtuais, funis, blogs e páginas de alta conversão.",
   },
+  {
+    icon: Globe,
+    title: "CDN global incluso",
+    description:
+      "Seu site carrega rápido em qualquer lugar do mundo, com distribuição inteligente de conteúdo.",
+  },
 ];
 
 const rightFeatures = [
   {
+    icon: Globe,
+    title: "CDN global incluso",
+    description:
+      "Seu site carrega rápido em qualquer lugar do mundo, com distribuição inteligente de conteúdo.",
+  },
+  {
     icon: Settings,
     title: "Backups diários automáticos",
     description:
-      "Recuperação fácil e rápida em caso de imprevistos <br /> sem perder nada.",
+      "Recuperação fácil e rápida em caso de imprevistos — sem perder nada.",
   },
   {
     icon: Trophy,
@@ -81,10 +93,10 @@ export function MoreFeatures() {
                 <Globe className="h-5 w-5 text-green-400" strokeWidth={2} />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-white">
-                CDN global incluso
+                Interface Intuitiva
               </h3>
               <p className="text-white/80 text-xs leading-relaxed max-w-md">
-                Seu site carrega rápido em qualquer lugar do mundo, com distribuição inteligente de conteúdo.
+                Painel de controle moderno e fácil de usar, desenvolvido para simplificar o gerenciamento do seu site.
               </p>
             </div>
 

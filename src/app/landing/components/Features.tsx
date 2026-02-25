@@ -44,16 +44,18 @@ const features = [
 
 export function Features() {
   return (
-    <section id="features" className="py-20 px-4 bg-muted/30">
+    <section id="features" className="py-20 px-4 relative overflow-hidden" style={{ backgroundColor: '#000319' }}>
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Por que escolher a Atlas Hosting?
+          <div className="inline-flex items-center gap-2 mb-6">
+            <div className="w-1 h-6 bg-green-500 rounded-full" />
+            <span className="text-green-400 text-sm font-semibold uppercase tracking-wide">
+              Benefícios
+            </span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+            Por que escolher o Atlas?
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Oferecemos a melhor infraestrutura e suporte para garantir o
-            sucesso do seu projeto online
-          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

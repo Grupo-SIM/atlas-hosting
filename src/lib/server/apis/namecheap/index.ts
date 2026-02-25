@@ -826,6 +826,18 @@ export class NamecheapApiWrapper {
     );
   }
 
+  /**
+   * Public method to force refresh of domain pricing database cache
+   * This will fetch all domain pricing from Namecheap and populate the database
+   */
+  public async refreshDomainPricingCache(): Promise<void> {
+    await this._fetchAndCacheFullDomainPricing();
+    // Wait for DB cache refresh to complete
+    if (this.dbRefreshPromise) {
+      await this.dbRefreshPromise;
+    }
+  }
+
   // --- Method 6: namecheap.domains.create ---
   private _flattenContactDetails = (
     contact: NamecheapContactDetails,
