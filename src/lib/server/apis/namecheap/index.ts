@@ -394,11 +394,19 @@ export class NamecheapApiWrapper {
       if (parsedXml.ApiResponse.$.Status === "ERROR") {
         let errMsg = `NC API Error for ${command}.`;
         const errNode = parsedXml.ApiResponse.Errors?.[0];
-        if (typeof errNode === "object" && errNode.Error)
+        if (typeof errNode === "object" && errNode.Error) {
           errMsg += errNode.Error.map((e) => ` Err ${e.$.Number}: ${e._}`).join(
             "; "
           );
-        else if (typeof errNode === "string" && errNode.trim())
+
+          // Specific check for IP whitelist error (5050166)
+          const ipError = errNode.Error.find((e) => e.$.Number === "5050166");
+          if (ipError) {
+            const ipMatch = ipError._.match(/(\d+\.\d+\.\d+\.\d+)/);
+            const detectedIP = ipMatch ? ipMatch[1] : "desconhecido";
+            throw new Error(`Invalid request IP: ${detectedIP}. O IP ${detectedIP} precisa ser adicionado à whitelist da Namecheap.`);
+          }
+        } else if (typeof errNode === "string" && errNode.trim())
           // Use isString from lodash if preferred
           errMsg += ` Details: ${errNode}`;
         else if (parsedXml.ApiResponse.Errors)
@@ -773,9 +781,9 @@ export class NamecheapApiWrapper {
                   ),
                   CouponPrice: pAttrs.CouponPrice
                     ? await this._convertPrice(
-                        Number.parseFloat(pAttrs.CouponPrice),
-                        originalCurrency
-                      )
+                      Number.parseFloat(pAttrs.CouponPrice),
+                      originalCurrency
+                    )
                     : 0,
                   Currency: TARGET_CURRENCY as "BRL",
                 });
@@ -968,10 +976,10 @@ export class NamecheapApiWrapper {
       ID: whoisguardRaw?.ID,
       EmailDetails: whoisguardRaw?.EmailDetails?.$
         ? {
-            ForwardedTo: whoisguardRaw.EmailDetails.$.ForwardedTo,
-            LastAutoRenew: whoisguardRaw.EmailDetails.$.LastAutoRenew,
-            AutoRenew: whoisguardRaw.EmailDetails.$.AutoRenew === "true",
-          }
+          ForwardedTo: whoisguardRaw.EmailDetails.$.ForwardedTo,
+          LastAutoRenew: whoisguardRaw.EmailDetails.$.LastAutoRenew,
+          AutoRenew: whoisguardRaw.EmailDetails.$.AutoRenew === "true",
+        }
         : undefined,
     };
 
@@ -1002,9 +1010,9 @@ export class NamecheapApiWrapper {
       DnsDetails: dnsDetails,
       Modificationrights: resultNode.Modificationrights?.[0]?.$
         ? {
-            All: resultNode.Modificationrights[0].$.All === "true",
-            ChangeDNS: resultNode.Modificationrights[0].$.ChangeDNS === "true",
-          }
+          All: resultNode.Modificationrights[0].$.All === "true",
+          ChangeDNS: resultNode.Modificationrights[0].$.ChangeDNS === "true",
+        }
         : undefined,
     };
   };

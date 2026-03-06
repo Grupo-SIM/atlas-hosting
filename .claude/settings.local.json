@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:napoleon.com.br)",
+      "WebFetch(domain:api.umbler.com)"
+    ]
+  }
+}
