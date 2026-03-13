@@ -63,8 +63,10 @@ export const getDomainData = cache(async function getDomainData(
 
         const standardBrlPrices = pricingRecord[tldForLookup];
 
-        const fee =
-          1 + ((await db.query.pgSystemConfig.findFirst())?.domainFee ?? 1);
+        const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
+        const fee = feeEnabled
+          ? 1 + ((await db.query.pgSystemConfig.findFirst())?.domainFee ?? 1)
+          : 1;
 
         return {
           domain: fullDomainName,

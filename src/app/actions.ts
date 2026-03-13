@@ -124,12 +124,14 @@ export async function login(
 
 export async function signup(
   prevState: unknown,
-  { email, password, fullName, referrerId, organizationName }: SignupFormInputs
+  { email, password, firstName, lastName, referrerId, organizationName }: SignupFormInputs
 ): Promise<ActionResponse> {
-  if (!email || !password || !fullName || !organizationName) {
+  const fullName = `${firstName.trim()} ${lastName.trim()}`;
+
+  if (!email || !password || !firstName || !lastName || !organizationName) {
     return {
       status: "error",
-      message: "Nome, email e senha são obrigatórios",
+      message: "Nome, sobrenome, email e senha são obrigatórios",
     };
   }
 
@@ -143,13 +145,6 @@ export async function signup(
     return {
       status: "error",
       message: "A senha deve ter no máximo 100 caracteres",
-    };
-  }
-
-  if (fullName.split(" ").length < 2) {
-    return {
-      status: "error",
-      message: "Digite seu nome completo",
     };
   }
 
@@ -381,19 +376,32 @@ export async function createDomainInvoice({
 
   let redirectUrl: string | null = null;
 
+  console.log(`\n[INVOICE] ==================== CRIANDO FATURA DE DOMÍNIO ====================`);
+  console.log(`[INVOICE] Domínio: ${domain} | Anos: ${years} | Whoisguard: ${whoisguard ?? "off"} | Usuário: ${user.id}`);
+
   try {
+    console.log(`[NAMECHEAP] Verificando disponibilidade de: ${domain}`);
     const namecheapResult = await namecheapApi
       .check({
         DomainList: domain,
       })
       .then((r) => r.Results[0]);
 
+    console.log(`[NAMECHEAP] Resultado da verificação:`, {
+      domain: namecheapResult.Domain,
+      available: namecheapResult.Available,
+      isPremium: namecheapResult.IsPremiumName,
+      premiumPrice: namecheapResult.PremiumRegistrationPrice || "N/A",
+    });
+
     const isAvailable = namecheapResult.Available;
 
     if (!isAvailable) {
+      console.warn(`[INVOICE] Domínio ${domain} não está disponível. Fatura não criada.`);
       return;
     }
 
+    console.log(`[NAMECHEAP] Buscando preços para TLD: .${domain.split(".").pop()}`);
     const pricesInfo = await getDomainPricing(
       domain.split(".").pop() as string
     );
@@ -401,9 +409,18 @@ export async function createDomainInvoice({
       (p) => p.Duration === +years && p.DurationType === "YEAR"
     );
 
+    console.log(`[NAMECHEAP] Preços disponíveis:`, pricesInfo.Prices.map(p => ({
+      duration: `${p.Duration} ${p.DurationType}`,
+      price: p.Price,
+      currency: p.Currency,
+    })));
+
     if (!priceInfo) {
+      console.error(`[INVOICE] Nenhum preço encontrado para ${years} ano(s). Fatura não criada.`);
       return;
     }
+
+    console.log(`[INVOICE] Preço selecionado (${years} ano):`, { price: priceInfo.Price, currency: priceInfo.Currency });
 
     let priceInBrl = priceInfo.Price;
 
@@ -414,16 +431,24 @@ export async function createDomainInvoice({
         to: "brl",
         amount: priceInfo.Price,
       });
+      console.log(`[INVOICE] Conversão ${priceInfo.Currency}→BRL: ${priceInfo.Price} → R$ ${priceInBrl.toFixed(2)}`);
     }
 
-    const fee =
-      1 + ((await db.query.pgSystemConfig.findFirst())?.domainFee ?? 1);
+    const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
+    const fee = feeEnabled
+      ? 1 + ((await db.query.pgSystemConfig.findFirst())?.domainFee ?? 5) / 100
+      : 1;
 
+    const precoSemTaxa = priceInBrl;
     priceInBrl *= fee;
+    console.log(`[INVOICE] Taxa aplicada: feeEnabled=${feeEnabled} | fee=${fee}x | R$ ${precoSemTaxa.toFixed(2)} → R$ ${priceInBrl.toFixed(2)}`);
 
     if (whoisguard === "on") {
       priceInBrl += 3;
+      console.log(`[INVOICE] Whoisguard adicionado: +R$ 3,00 → Total: R$ ${priceInBrl.toFixed(2)}`);
     }
+
+    console.log(`[INVOICE] Valor final da fatura: R$ ${priceInBrl.toFixed(2)}`);
 
     const [newInvoice] = await db
       .insert(pgInvoice)
@@ -443,16 +468,14 @@ export async function createDomainInvoice({
       .returning();
 
     if (!newInvoice || !newInvoice.id) {
-      console.error(
-        "Falha ao criar a fatura ou obter o ID de retorno do banco de dados.",
-        newInvoice
-      );
+      console.error(`[INVOICE] Falha ao criar fatura no banco de dados.`, newInvoice);
       return;
     }
 
+    console.log(`[INVOICE] Fatura criada com sucesso! ID: ${newInvoice.id} | Valor: R$ ${priceInBrl.toFixed(2)}`);
     redirectUrl = `/checkout/${newInvoice.id}`;
   } catch (error) {
-    console.error("Erro ao criar fatura do domínio:", error);
+    console.error(`[INVOICE] ERRO ao criar fatura do domínio:`, error);
     return;
   }
 
@@ -481,23 +504,35 @@ export async function completeCheckout(
     return { status: "error", message: "ID da fatura é obrigatório." };
   }
 
+  console.log(`\n[CHECKOUT] ==================== INICIANDO CHECKOUT (NOVO CARTÃO) ====================`);
+  console.log(`[CHECKOUT] Invoice ID: ${invoiceId} | Usuário: ${user.id}`);
+
   const invoice = await db
     .update(pgInvoice)
-    .set({
-      status: "processing",
-    })
+    .set({ status: "processing" })
     .where(eq(pgInvoice.id, invoiceId))
     .returning()
     .execute()
     .then((r) => r[0]);
 
   if (!invoice) {
+    console.error(`[CHECKOUT] Fatura ${invoiceId} não encontrada no banco.`);
     return { status: "error", message: "Fatura não encontrada." };
   }
 
+  console.log(`[CHECKOUT] Fatura carregada:`, {
+    id: invoice.id,
+    type: invoice.type,
+    reference: invoice.reference,
+    amount: `R$ ${invoice.amount.toFixed(2)}`,
+    status: invoice.status,
+    metadata: invoice.metadata,
+  });
+
   if (!user.organization?.domId) {
+    console.log(`[DOM] Organização sem cliente DOM. Criando novo cliente...`);
     try {
-      const { id } = await domApi.createClient({
+      const clientPayload = {
         name: user.name,
         email: user.email,
         document: values.document.replace(/\D/g, ""),
@@ -512,40 +547,26 @@ export async function completeCheckout(
           neighborhood: values.address.neighborhood,
         },
         codeExternal: user.id,
-      });
+      };
+      console.log(`[DOM] → Enviando createClient:`, { name: clientPayload.name, email: clientPayload.email, document: `***${clientPayload.document.slice(-4)}` });
+
+      const { id } = await domApi.createClient(clientPayload);
+      console.log(`[DOM] ✓ Cliente DOM criado com ID: ${id}`);
 
       await db
         .update(pgOrganization)
-        .set({
-          domId: id,
-        })
+        .set({ domId: id })
         .where(eq(pgOrganization.id, user.organizationId ?? ""));
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        if (error.response) {
-          console.error(
-            "Erro ao criar cliente no DOM (Axios Response Error):",
-            error.response.data
-          );
-        } else if (error.request) {
-          console.error(
-            "Erro ao criar cliente no DOM (Axios Request Error):",
-            error.request
-          );
-        } else {
-          console.error(
-            "Erro ao criar cliente no DOM (Axios Setup Error):",
-            error.message
-          );
-        }
+        console.error(`[DOM] ✗ ERRO ao criar cliente:`, error.response?.data ?? error.request ?? error.message);
       } else {
-        console.error("Erro ao criar cliente no DOM (Non-Axios Error):", error);
+        console.error(`[DOM] ✗ ERRO ao criar cliente:`, error);
       }
-      return {
-        status: "error",
-        message: "Erro ao criar cliente no sistema de domínios.",
-      }; // User-friendly message
+      return { status: "error", message: "Erro ao criar cliente no sistema de domínios." };
     }
+  } else {
+    console.log(`[DOM] Cliente DOM já existe: ${user.organization.domId}`);
   }
 
   const [expMonth, expYear] = values.cardExpiration.split("/");
@@ -554,31 +575,31 @@ export async function completeCheckout(
   let { cardToken } = values;
 
   if (!cardToken) {
+    console.log(`[DOM] Tokenizando cartão: **** **** **** ${values.cardNumber.replace(/\D/g, "").slice(-4)} | Portador: ${values.firstName} ${values.lastName} | Validade: ${values.cardExpiration}`);
     try {
       const tokenData = await domApi.createCardToken(user.id, {
         number: values.cardNumber.replace(/\D/g, ""),
         cvv: values.cardCvv,
         exp_month: Number.parseInt(expMonth),
         exp_year: fullYear,
-        holder_name: values.fullName,
+        holder_name: `${values.firstName} ${values.lastName}`,
         holder_document: values.document.replace(/\D/g, ""),
       });
 
+      console.log(`[DOM] ✓ Cartão tokenizado:`, { token: tokenData.token, last4: tokenData.last4, brand: tokenData.brand, expiryMonth: tokenData.expiryMonth, expiryYear: tokenData.expiryYear });
+
       if (!user?.organization?.wallet) {
-        return {
-          status: "error",
-          message: "Carteira não encontrada",
-        };
+        console.error(`[CHECKOUT] Carteira da organização não encontrada.`);
+        return { status: "error", message: "Carteira não encontrada" };
       }
 
       const existingCards = await db.$count(
         pgUserCard,
         eq(pgUserCard.walletId, user.organization.wallet.id)
       );
-
       const isFirstCard = existingCards === 0;
+      console.log(`[CHECKOUT] Cartões existentes: ${existingCards} | É o cartão padrão: ${isFirstCard}`);
 
-      // Save card to database
       await db.insert(pgUserCard).values({
         walletId: user.organization.wallet.id,
         cardToken: tokenData.token,
@@ -593,66 +614,131 @@ export async function completeCheckout(
       cardToken = tokenData.token;
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        if (err.response) {
-          // A request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          console.error(
-            "Erro ao criar token do cartão no DOM:",
-            err.response.data
-          );
-        } else if (err.request) {
-          // The request was made but no response was received
-          console.error("Erro ao criar token do cartão no DOM:", err.request);
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          console.error("Erro ao criar token do cartão no DOM:", err.message);
-        }
+        console.error(`[DOM] ✗ ERRO na tokenização do cartão:`, err.response?.data ?? err.request ?? err.message);
+      } else {
+        console.error(`[DOM] ✗ ERRO na tokenização do cartão:`, err);
       }
-
       throw err;
     }
+  } else {
+    console.log(`[DOM] Usando cardToken já fornecido: ${cardToken}`);
   }
 
+  if (invoice.type === "domain") {
+    console.log(`\n[DOM] ── PAGAMENTO ÚNICO (DOMÍNIO) ──`);
+    const domPayload = {
+      description: `Atlas Hosting ${invoice.reference}`,
+      externalReference: invoiceId,
+      card: { token: cardToken, installments: 1 },
+      userId: user.id,
+      value: invoice.amount,
+    };
+    console.log(`[DOM] → Enviando createOneTimePayment:`, { ...domPayload, card: { token: `${cardToken.substring(0, 8)}...`, installments: 1 } });
+
+    try {
+      const domResult = await domApi.createOneTimePayment(domPayload);
+      console.log(`[DOM] ✓ Pagamento único processado:`, domResult);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        console.error(`[DOM] ✗ ERRO no pagamento único:`, JSON.stringify(err.response?.data ?? err.message, null, 2));
+      } else {
+        console.error(`[DOM] ✗ ERRO no pagamento único:`, err);
+      }
+      return { status: "error", message: "Erro ao processar pagamento do domínio." };
+    }
+
+    const contact = {
+      FirstName: values.firstName.trim(),
+      LastName: values.lastName.trim(),
+      Address1: `${values.address.street}, ${values.address.number}`,
+      City: values.address.city,
+      StateProvince: values.address.state,
+      PostalCode: values.address.zipCode.replace(/\D/g, ""),
+      Country: "BR",
+      Phone: `+55.${values.phoneNumber.replace(/\D/g, "")}`,
+      EmailAddress: user.email,
+    };
+    const meta = invoice.metadata as { years?: string; whoisguard?: string } | null;
+    const years = parseInt(meta?.years ?? "1", 10);
+    const whoisguard = meta?.whoisguard === "on";
+
+    console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO ──`);
+    const ncPayload = {
+      DomainName: invoice.reference,
+      Years: years,
+      AddFreeWhoisguard: whoisguard ? "yes" : "no",
+      WGEnabled: whoisguard ? "yes" : "no",
+      Nameservers: ["dns1.registrar-servers.com", "dns2.registrar-servers.com"],
+      Registrant: contact,
+    };
+    console.log(`[NAMECHEAP] → Enviando createDomain:`, ncPayload);
+
+    try {
+      const domainResult = await namecheapApi.createDomain({
+        DomainName: invoice.reference,
+        Years: years,
+        Registrant: contact,
+        Admin: contact,
+        Tech: contact,
+        AuxBilling: contact,
+        AddFreeWhoisguard: whoisguard ? "yes" : "no",
+        WGEnabled: whoisguard ? "yes" : "no",
+        Nameservers: ["dns1.registrar-servers.com", "dns2.registrar-servers.com"],
+      });
+
+      console.log(`[NAMECHEAP] ← Resposta createDomain:`, domainResult);
+
+      if (domainResult.Registered) {
+        console.log(`[NAMECHEAP] ✓ Domínio ${invoice.reference} REGISTRADO com sucesso! OrderID: ${domainResult.OrderID} | TransactionID: ${domainResult.TransactionID} | Cobrado: R$ ${domainResult.ChargedAmount}`);
+        await db.insert(pgOrganizationDomains).values({
+          organizationId: user.organization.id,
+          domain: invoice.reference,
+          active: true,
+        });
+        console.log(`[CHECKOUT] ✓ Domínio vinculado à organização ${user.organization.id}`);
+      } else {
+        console.warn(`[NAMECHEAP] ✗ Domínio NÃO registrado. Resposta completa:`, domainResult);
+      }
+    } catch (domainErr) {
+      console.error(`[NAMECHEAP] ✗ ERRO ao registrar domínio ${invoice.reference}:`, domainErr);
+    }
+
+    await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
+    console.log(`[CHECKOUT] ✓ Fatura ${invoiceId} marcada como PAGA. Redirecionando para /domains.`);
+    redirect("/domains");
+  }
+
+  console.log(`\n[DOM] ── PAGAMENTO RECORRENTE (ASSINATURA) ──`);
+  const recPayload = {
+    description: `Atlas Hosting ${invoice.reference}`,
+    externalReference: invoiceId,
+    frequency: "MONTH" as const,
+    card: { token: `${cardToken.substring(0, 8)}...`, installments: 1 },
+    userId: user.id,
+    value: invoice.amount,
+  };
+  console.log(`[DOM] → Enviando createRecurrentPayment:`, recPayload);
+
   try {
-    console.log({ cardToken });
     const result = await domApi.createRecurrentPayment({
       description: `Atlas Hosting ${invoice.reference}`,
       externalReference: invoiceId,
       frequency: "MONTH",
-      card: {
-        token: cardToken,
-        installments: 1,
-      },
+      card: { token: cardToken, installments: 1 },
       userId: user.id,
       value: invoice.amount,
     });
-    console.log("Nova assinatura criada", result);
+    console.log(`[DOM] ✓ Assinatura recorrente criada:`, result);
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      if (err.response) {
-        // A request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error(
-          "Erro ao criar pagamento recorrente no DOM:",
-          err.response.data
-        );
-      } else if (err.request) {
-        // The request was made but no response was received
-        console.error(
-          "Erro ao criar pagamento recorrente no DOM:",
-          err.request
-        );
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error(
-          "Erro ao criar pagamento recorrente no DOM:",
-          err.message
-        );
-      }
+      console.error(`[DOM] ✗ ERRO no pagamento recorrente:`, JSON.stringify(err.response?.data ?? err.request ?? err.message, null, 2));
+    } else {
+      console.error(`[DOM] ✗ ERRO no pagamento recorrente:`, err);
     }
     return { status: "error", message: "Erro ao criar pagamento recorrente." };
   }
 
+  console.log(`[CHECKOUT] ✓ Checkout concluído. Redirecionando para /payment/success.`);
   redirect("/payment/success");
 
   return { status: "success", message: "Plano adquirido com sucesso!" };
@@ -697,13 +783,25 @@ export async function completeCheckoutWithSavedCard(
     .then((r) => r[0]);
 
   if (!invoice) {
+    console.error(`[CHECKOUT-SAVED] Fatura ${invoiceId} não encontrada.`);
     return { status: "error", message: "Fatura não encontrada." };
   }
 
+  console.log(`\n[CHECKOUT-SAVED] ==================== INICIANDO CHECKOUT (CARTÃO SALVO) ====================`);
+  console.log(`[CHECKOUT-SAVED] Invoice ID: ${invoiceId} | Usuário: ${user.id} | Cartão: **** ${card.last4} (${card.brand})`);
+  console.log(`[CHECKOUT-SAVED] Fatura:`, {
+    id: invoice.id,
+    type: invoice.type,
+    reference: invoice.reference,
+    amount: `R$ ${invoice.amount.toFixed(2)}`,
+    metadata: invoice.metadata,
+  });
+
   // Ensure DOM client exists
   if (!user.organization?.domId) {
+    console.log(`[DOM] Organização sem cliente DOM. Criando novo cliente...`);
     try {
-      const { id } = await domApi.createClient({
+      const clientPayload = {
         name: user.name,
         email: user.email,
         document: values.document.replace(/\D/g, ""),
@@ -718,55 +816,149 @@ export async function completeCheckoutWithSavedCard(
           neighborhood: values.address.neighborhood,
         },
         codeExternal: user.id,
-      });
+      };
+      console.log(`[DOM] → Enviando createClient:`, { name: clientPayload.name, email: clientPayload.email, document: `***${clientPayload.document.slice(-4)}` });
+
+      const { id } = await domApi.createClient(clientPayload);
+      console.log(`[DOM] ✓ Cliente DOM criado com ID: ${id}`);
 
       await db
         .update(pgOrganization)
-        .set({
-          domId: id,
-        })
+        .set({ domId: id })
         .where(eq(pgOrganization.id, user.organizationId ?? ""));
     } catch (error) {
-      console.error("Error creating DOM client:", error);
-      return {
-        status: "error",
-        message: "Erro ao criar cliente no sistema de pagamentos.",
-      };
+      if (axios.isAxiosError(error)) {
+        console.error(`[DOM] ✗ ERRO ao criar cliente:`, error.response?.data ?? error.request ?? error.message);
+      } else {
+        console.error(`[DOM] ✗ ERRO ao criar cliente:`, error);
+      }
+      return { status: "error", message: "Erro ao criar cliente no sistema de pagamentos." };
     }
+  } else {
+    console.log(`[DOM] Cliente DOM já existe: ${user.organization.domId}`);
   }
 
+  if (invoice.type === "domain") {
+    console.log(`\n[DOM] ── PAGAMENTO ÚNICO (DOMÍNIO / CARTÃO SALVO) ──`);
+    const domPayload = {
+      description: `Atlas Hosting ${invoice.reference}`,
+      externalReference: invoiceId,
+      card: { token: `${cardToken.substring(0, 8)}...`, installments: 1 },
+      userId: user.id,
+      value: invoice.amount,
+    };
+    console.log(`[DOM] → Enviando createOneTimePayment:`, domPayload);
+
+    try {
+      const domResult = await domApi.createOneTimePayment({
+        description: `Atlas Hosting ${invoice.reference}`,
+        externalReference: invoiceId,
+        card: { token: cardToken, installments: 1 },
+        userId: user.id,
+        value: invoice.amount,
+      });
+      console.log(`[DOM] ✓ Pagamento único processado:`, domResult);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        console.error(`[DOM] ✗ ERRO no pagamento único:`, JSON.stringify(err.response?.data ?? err.message, null, 2));
+      } else {
+        console.error(`[DOM] ✗ ERRO no pagamento único:`, err);
+      }
+      return { status: "error", message: "Erro ao processar pagamento do domínio." };
+    }
+
+    const contact = {
+      FirstName: values.firstName.trim(),
+      LastName: values.lastName.trim(),
+      Address1: `${values.address.street}, ${values.address.number}`,
+      City: values.address.city,
+      StateProvince: values.address.state,
+      PostalCode: values.address.zipCode.replace(/\D/g, ""),
+      Country: "BR",
+      Phone: `+55.${values.phoneNumber.replace(/\D/g, "")}`,
+      EmailAddress: user.email,
+    };
+    const meta = invoice.metadata as { years?: string; whoisguard?: string } | null;
+    const years = parseInt(meta?.years ?? "1", 10);
+    const whoisguard = meta?.whoisguard === "on";
+
+    console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO (CARTÃO SALVO) ──`);
+    console.log(`[NAMECHEAP] → Enviando createDomain:`, {
+      DomainName: invoice.reference,
+      Years: years,
+      AddFreeWhoisguard: whoisguard ? "yes" : "no",
+      WGEnabled: whoisguard ? "yes" : "no",
+      Nameservers: ["dns1.registrar-servers.com", "dns2.registrar-servers.com"],
+      Registrant: contact,
+    });
+
+    try {
+      const domainResult = await namecheapApi.createDomain({
+        DomainName: invoice.reference,
+        Years: years,
+        Registrant: contact,
+        Admin: contact,
+        Tech: contact,
+        AuxBilling: contact,
+        AddFreeWhoisguard: whoisguard ? "yes" : "no",
+        WGEnabled: whoisguard ? "yes" : "no",
+        Nameservers: ["dns1.registrar-servers.com", "dns2.registrar-servers.com"],
+      });
+
+      console.log(`[NAMECHEAP] ← Resposta createDomain:`, domainResult);
+
+      if (domainResult.Registered) {
+        console.log(`[NAMECHEAP] ✓ Domínio ${invoice.reference} REGISTRADO! OrderID: ${domainResult.OrderID} | TransactionID: ${domainResult.TransactionID} | Cobrado: R$ ${domainResult.ChargedAmount}`);
+        await db.insert(pgOrganizationDomains).values({
+          organizationId: user.organization.id,
+          domain: invoice.reference,
+          active: true,
+        });
+        console.log(`[CHECKOUT-SAVED] ✓ Domínio vinculado à organização ${user.organization.id}`);
+      } else {
+        console.warn(`[NAMECHEAP] ✗ Domínio NÃO registrado. Resposta:`, domainResult);
+      }
+    } catch (domainErr) {
+      console.error(`[NAMECHEAP] ✗ ERRO ao registrar domínio ${invoice.reference}:`, domainErr);
+    }
+
+    await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
+    console.log(`[CHECKOUT-SAVED] ✓ Fatura ${invoiceId} marcada como PAGA.`);
+
+    return { status: "success", message: "/domains" };
+  }
+
+  console.log(`\n[DOM] ── PAGAMENTO RECORRENTE (ASSINATURA / CARTÃO SALVO) ──`);
+  console.log(`[DOM] → Enviando createRecurrentPayment:`, {
+    description: `Atlas Hosting ${invoice.reference}`,
+    externalReference: invoiceId,
+    frequency: "MONTH",
+    card: { token: `${cardToken.substring(0, 8)}...`, installments: 1 },
+    userId: user.id,
+    value: invoice.amount,
+  });
+
   try {
-    // Create subscription using saved card token
     const result = await domApi.createRecurrentPayment({
       description: `Atlas Hosting ${invoice.reference}`,
       externalReference: invoiceId,
       frequency: "MONTH",
-      card: {
-        token: cardToken,
-        installments: 1,
-      },
+      card: { token: cardToken, installments: 1 },
       userId: user.id,
       value: invoice.amount,
     });
-
-    console.log("Nova assinatura criada com cartão salvo", result);
+    console.log(`[DOM] ✓ Assinatura recorrente criada (cartão salvo):`, result);
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      console.error(
-        "Error creating recurrent payment with saved card:",
-        err.response?.data
-      );
+      console.error(`[DOM] ✗ ERRO no pagamento recorrente (cartão salvo):`, JSON.stringify(err.response?.data, null, 2));
+    } else {
+      console.error(`[DOM] ✗ ERRO no pagamento recorrente (cartão salvo):`, err);
     }
-    return {
-      status: "error",
-      message: "Erro ao processar pagamento com cartão salvo.",
-    };
+    return { status: "error", message: "Erro ao processar pagamento com cartão salvo." };
   }
 
-  return {
-    status: "success",
-    message: "/payment/success",
-  };
+  console.log(`[CHECKOUT-SAVED] ✓ Checkout concluído com cartão salvo.`);
+  return { status: "success", message: "/payment/success" };
 }
 
 // export async function createWordPressInstance(
@@ -1084,7 +1276,8 @@ export interface ActionResponse {
 }
 
 export interface PayInvoice {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   document: string;
   cardNumber: string;
   cardCvv: string;

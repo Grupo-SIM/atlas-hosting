@@ -5,33 +5,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { User } from "@/lib/db/schema";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
-import * as yup from "yup";
+import { z } from "zod";
 import GithubAuthButton from "./GithubAuthButton";
 import GoogleAuthButton from "./GoogleAuthButton";
-import { signInWithGithub } from "@/app/actions";
 
 export default function SignupForm({
   referrer,
-}: { referrer?: Pick<User, "name" | "email" | "id"> }) {
+  redirect,
+}: { referrer?: Pick<User, "name" | "email" | "id">; redirect?: string }) {
   const { register, handleSubmit, control, ...methods } =
     useForm<SignupFormInputs>({
-      resolver: yupResolver(schema),
+      resolver: zodResolver(schema),
       mode: "onChange",
       reValidateMode: "onChange",
     });
 
   const { errors, isValid, isValidating } = useFormState({ control });
 
-  const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Define the submit handler
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -48,7 +45,10 @@ export default function SignupForm({
 
       if (result.status === "success") {
         const email = data.email;
-        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        const verifyUrl = redirect
+          ? `/verify-email?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirect)}`
+          : `/verify-email?email=${encodeURIComponent(email)}`;
+        window.location.href = verifyUrl;
       } else {
         setFormError(result.message ?? "Erro ao criar conta");
       }
@@ -60,21 +60,36 @@ export default function SignupForm({
     }
   };
 
-
   return (
     <>
       <form onSubmit={onSubmit} className="space-y-2">
-        <div className="space-y-2">
-          <Label htmlFor="fullName">Nome completo</Label>
-          <Input
-            type="text"
-            placeholder="Seu nome completo"
-            autoComplete="name"
-            {...register("fullName")}
-          />
-          {errors.fullName && (
-            <p className="text-xs text-red-400">{errors.fullName.message}</p>
-          )}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">Nome</Label>
+            <Input
+              id="firstName"
+              type="text"
+              placeholder="Seu nome"
+              autoComplete="given-name"
+              {...register("firstName")}
+            />
+            {errors.firstName && (
+              <p className="text-xs text-red-400">{errors.firstName.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Sobrenome</Label>
+            <Input
+              id="lastName"
+              type="text"
+              placeholder="Seu sobrenome"
+              autoComplete="family-name"
+              {...register("lastName")}
+            />
+            {errors.lastName && (
+              <p className="text-xs text-red-400">{errors.lastName.message}</p>
+            )}
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">E-mail</Label>
@@ -158,34 +173,36 @@ export default function SignupForm({
   );
 }
 
-const schema = yup
+const schema = z
   .object({
-    fullName: yup
+    firstName: z
       .string()
       .trim()
-      .required("Nome completo é obrigatório")
-      .matches(/(\s)/, "Digite seu nome completo"),
-    email: yup
-      .string()
-      .email("Digite um e-mail válido")
-      .required("E-mail é obrigatório"),
-    organizationName: yup
+      .min(2, "Nome deve ter pelo menos 2 caracteres"),
+    lastName: z
       .string()
       .trim()
-      .max(100, "O nome da organização deve ter no máximo 100 caracteres")
-      .required("Nome da organização é obrigatório"),
-    password: yup
+      .min(2, "Sobrenome deve ter pelo menos 2 caracteres"),
+    email: z
+      .string()
+      .min(1, "E-mail é obrigatório")
+      .email("Digite um e-mail válido"),
+    organizationName: z
+      .string()
+      .trim()
+      .min(1, "Nome da organização é obrigatório")
+      .max(100, "O nome da organização deve ter no máximo 100 caracteres"),
+    password: z
       .string()
       .min(8, "A senha deve ter pelo menos 8 caracteres")
-      .max(100, "A senha deve ter no máximo 100 caracteres")
-      .required("Senha é obrigatória"),
-    confirmPassword: yup
-      .string()
-      .oneOf([yup.ref("password")], "As senhas devem ser iguais")
-      .required("Confirmação de senha é obrigatória"),
+      .max(100, "A senha deve ter no máximo 100 caracteres"),
+    confirmPassword: z.string().min(1, "Confirmação de senha é obrigatória"),
   })
-  .required();
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "As senhas devem ser iguais",
+    path: ["confirmPassword"],
+  });
 
-export type SignupFormInputs = yup.InferType<typeof schema> & {
+export type SignupFormInputs = z.infer<typeof schema> & {
   referrerId?: string;
 };

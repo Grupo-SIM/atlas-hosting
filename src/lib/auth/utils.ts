@@ -186,25 +186,19 @@ export async function createUser(
       })
       .where(eq(pgOrganization.id, newOrg[0].id));
 
-    // Create email verification token
-    const verificationToken = await createEmailVerificationToken(
-      newUser[0].id,
-      newUser[0].email
-    );
-
-    // Send welcome email and verification email
+    // Create email verification token and send emails — none of this must block user creation
     try {
+      const verificationToken = await createEmailVerificationToken(
+        newUser[0].id,
+        newUser[0].email
+      );
+
       await sendWelcomeEmail(
         newUser[0].email,
         newUser[0].name,
         organizationName
       );
-    } catch (error) {
-      console.error("Failed to send welcome email:", error);
-      // Don't fail user creation if email fails
-    }
 
-    try {
       await sendEmailVerificationEmail(
         newUser[0].email,
         newUser[0].name,
@@ -212,8 +206,8 @@ export async function createUser(
         verificationToken.code
       );
     } catch (error) {
-      console.error("Failed to send verification email:", error);
-      // Don't fail user creation if email fails, but log it
+      console.error("Failed to send verification/welcome email:", error);
+      // Don't fail user creation if token creation or email sending fails
     }
 
     return newUser[0];

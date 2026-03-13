@@ -13,6 +13,12 @@ import type { LucideProps } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { navigation } from "../navigation";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../ui/tooltip";
 
 export default function Sidebar() {
   const [isCompact, setIsCompact] = useState(true);
@@ -23,20 +29,15 @@ export default function Sidebar() {
       onMouseEnter={() => setIsCompact(false)}
       onMouseLeave={() => setIsCompact(true)}
       animate={{
-        width: isCompact ? "min-content" : "auto",
-        transition: {
-          duration: 0.3,
-          ease: isCompact ? "easeIn" : "easeOut",
-        },
+        width: isCompact ? 60 : 256,
       }}
       transition={{
-        duration: 0.3,
-        ease: isCompact ? "easeIn" : "easeOut",
+        duration: 0.25,
+        ease: "easeInOut",
       }}
       className={cn(
-        "fixed inset-y-0 left-0 bg-card whitespace-nowrap max-h-screen z-2",
-        "lg:relative lg:flex lg:flex-col -translate-x-[60px] md:translate-x-0",
-        isCompact ? "w-[60px] -translate-x-[60px]" : "w-64"
+        "bg-card whitespace-nowrap h-screen z-10 border-r border-border shrink-0",
+        "relative flex flex-col overflow-hidden"
       )}
     >
       <motion.div
@@ -77,9 +78,11 @@ export default function Sidebar() {
         </AnimatePresence>
       </motion.div>
       <motion.nav className="flex-1 px-2 py-4 w-auto space-y-1 overflow-y-auto flex flex-col box-border m-0 relative z-90 inset-shadow-border inset-shadow-[0_1px_0_0]">
-        {navigation.map((item) => (
-          <NavItem item={item} key={item.name} isCompact={isCompact} />
-        ))}
+        <TooltipProvider delayDuration={0}>
+          {navigation.map((item) => (
+            <NavItem item={item} key={item.name} isCompact={isCompact} />
+          ))}
+        </TooltipProvider>
       </motion.nav>
     </motion.div>
   );
@@ -96,6 +99,7 @@ function NavItem({
     icon: ForwardRefExoticComponent<
       Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
     >;
+    disabled?: boolean;
   };
 }) {
   const pathname = usePathname();
@@ -103,26 +107,31 @@ function NavItem({
   const itemNameRef = useRef<HTMLSpanElement>(null);
   const itemWidth = itemNameRef.current?.scrollWidth;
 
-  return (
+  const content = (
     <MotionLink
       layout={true}
       initial={{ marginLeft: 0, marginRight: 0 }}
       key={item.name}
-      href={item.href}
+      href={item.disabled ? "#" : item.href}
+      onClick={(e) => item.disabled && e.preventDefault()}
       className={cn(
-        "flex items-center px-3 py-2 text-sm font-medium rounded-md group transition-colors relative w-full box-border",
-        pathname === item.href
-          ? "bg-accent text-accent-foreground"
-          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        "flex items-center px-3 py-2 text-sm font-medium rounded-md group transition-all relative w-full box-border",
+        item.disabled
+          ? "opacity-50 cursor-not-allowed grayscale-[0.5]"
+          : pathname === item.href
+            ? "bg-accent text-accent-foreground"
+            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       )}
-      title={item.name}
+      title={isCompact ? undefined : item.name}
     >
       <item.icon
         className={cn(
           "h-5 w-5 flex-shrink-0",
-          pathname === item.href
-            ? "text-accent-foreground"
-            : "text-muted-foreground group-hover:text-accent-foreground"
+          item.disabled
+            ? "text-muted-foreground"
+            : pathname === item.href
+              ? "text-accent-foreground"
+              : "text-muted-foreground group-hover:text-accent-foreground"
         )}
       />
       <AnimatePresence mode="sync">
@@ -146,8 +155,26 @@ function NavItem({
           </motion.span>
         )}
       </AnimatePresence>
+      {item.disabled && !isCompact && (
+        <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-primary/70 bg-primary/10 px-1.5 py-0.5 rounded">
+          Breve
+        </span>
+      )}
     </MotionLink>
   );
+
+  if (item.disabled) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{content}</TooltipTrigger>
+        <TooltipContent side="right" className="font-medium">
+          Em breve
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return content;
 }
 
 const MotionLink = motion.create(Link);

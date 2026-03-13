@@ -3,6 +3,12 @@ import type { User } from "@/lib/db/schema";
 import { CircleFadingArrowUp, PlusCircle } from "lucide-react";
 import { Badge } from "../ui/badge";
 import Link from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 export function WelcomeHeader({ user }: WelcomeHeaderProps) {
   return (
@@ -16,18 +22,37 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
         </div>
       </div>
       <div className="flex space-x-3">
-        <Button variant="outline" asChild>
-          <Link href="/plans">
-            <CircleFadingArrowUp className="mr-2 h-4 w-4" />
-            Atualizar Plano
-          </Link>
-        </Button>
-        <Button asChild>
-          <Link href="/sites/new">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Novo Serviço
-          </Link>
-        </Button>
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button variant="outline" disabled className="opacity-50 cursor-not-allowed">
+                  <CircleFadingArrowUp className="mr-2 h-4 w-4" />
+                  Atualizar Plano
+                </Button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="font-medium">
+              Em breve
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button disabled className="opacity-50 cursor-not-allowed">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Novo Serviço
+                </Button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="font-medium">
+              Em breve
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );

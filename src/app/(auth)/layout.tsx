@@ -25,14 +25,14 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="max-h-screen min-h-screen flex bg-background">
+    <div className="max-h-screen min-h-screen flex bg-background overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <Topbar>
           <UserSiteSelect />
         </Topbar>
 
-        <main className="flex-1 overflow-y-auto border-1 border-solid border-border border-b-0 border-r-0 min-h-max">
+        <main className="flex-1 overflow-y-auto border-l border-border bg-background">
           {children}
         </main>
       </div>

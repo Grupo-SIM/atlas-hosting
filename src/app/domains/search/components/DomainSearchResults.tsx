@@ -12,6 +12,8 @@ interface DomainResult {
   renewBRL: number;
   transferBRL: number;
   isPremium: boolean;
+  /** Presente quando o TLD não é suportado pela plataforma */
+  unavailableReason?: string;
 }
 
 interface PaginationInfo {
@@ -147,7 +149,7 @@ export default function DomainSearchResults({
                 <p className="text-white/70 text-sm">
                   {mainResult.available
                     ? "Este domínio está disponível para registro"
-                    : "Este domínio não está disponível"}
+                    : (mainResult.unavailableReason ?? "Este domínio não está disponível")}
                 </p>
               </div>
             </div>

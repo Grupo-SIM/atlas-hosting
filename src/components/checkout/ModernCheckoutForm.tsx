@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import {
   ArrowLeft,
@@ -46,7 +46,7 @@ import {
 import { IMaskInput } from "react-imask";
 import { usePaymentInputs } from "react-payment-inputs";
 import { toast } from "sonner";
-import * as yup from "yup";
+import { z } from "zod";
 import { Skeleton } from "../ui/skeleton";
 import clsx from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
@@ -76,65 +76,66 @@ export interface ModernCheckoutFormHandle {
 
 type CheckoutStep = "billing" | "payment";
 
-const billingAddressSchema = yup
-  .object({
-    fullName: yup
+const billingAddressSchema = z.object({
+  firstName: z
+    .string()
+    .trim()
+    .min(2, "Nome deve ter pelo menos 2 caracteres"),
+  lastName: z
+    .string()
+    .trim()
+    .min(2, "Sobrenome deve ter pelo menos 2 caracteres"),
+  document: z
+    .string()
+    .min(1, "Documento é obrigatório")
+    .refine(
+      (v) => {
+        const d = v.replace(/\D/g, "");
+        return isValidCPF(d) || isValidCNPJ(d);
+      },
+      { message: "Documento inválido" }
+    ),
+  phoneNumber: z
+    .string()
+    .min(1, "Telefone é obrigatório")
+    .refine(
+      (v) => isValidPhoneNumber(`55${v.replace(/\D/g, "")}`, "BR"),
+      { message: "Número de telefone inválido" }
+    ),
+  address: z.object({
+    street: z.string().min(1, "Rua é obrigatória"),
+    number: z.string().min(1, "Número é obrigatório"),
+    neighborhood: z.string().min(1, "Bairro é obrigatório"),
+    city: z.string().min(1, "Cidade é obrigatória"),
+    state: z.string().length(2, "Digite o código de 2 dígitos do estado"),
+    zipCode: z
       .string()
-      .trim()
-      .required("Nome completo é obrigatório")
-      .matches(/(\s)/, "Digite seu nome completo"),
-    document: yup
-      .string()
-      .transform((value) => value.replace(/\D/g, ""))
-      .test({
-        test: (value) => isValidCPF(value) || isValidCNPJ(value),
-        message: "Documento inválido",
-      })
-      .required("Documento é obrigatório"),
-    phoneNumber: yup
-      .string()
-      .required("Número de telefone é obrigatório")
-      .transform((value) => `55${value.replace(/\D/g, "")}`)
-      .test({
-        test: (value) => isValidPhoneNumber(value, "BR"),
-        message: "Número de telefone inválido",
-      }),
-    address: yup.object({
-      street: yup.string().required("Rua é obrigatória"),
-      number: yup.string().required("Número é obrigatório"),
-      neighborhood: yup.string().required("Bairro é obrigatório"),
-      city: yup.string().required("Cidade é obrigatória"),
-      state: yup
-        .string()
-        .length(2, "Digite o código de 2 dígitos do estado")
-        .required("Estado é obrigatório"),
-      zipCode: yup
-        .string()
-        .required("CEP é obrigatório")
-        .matches(/^\d{5}-\d{3}$/, "CEP inválido"),
-    }),
-  })
-  .required();
+      .min(1, "CEP é obrigatório")
+      .regex(/^\d{8}$/, "CEP inválido"),
+  }),
+});
 
-const newCardSchema = billingAddressSchema.concat(
-  yup.object({
-    cardNumber: yup
+const newCardSchema = billingAddressSchema.merge(
+  z.object({
+    cardNumber: z
       .string()
-      .transform((value) => value.replace(/\D/g, ""))
-      .required("Número do cartão é obrigatório")
-      .matches(/^\d{16}$/, "Número do cartão deve ter 16 dígitos"),
-    cardCvv: yup
+      .min(1, "Número do cartão é obrigatório")
+      .refine(
+        (v) => /^\d{16}$/.test(v.replace(/\D/g, "")),
+        "Número do cartão deve ter 16 dígitos"
+      ),
+    cardCvv: z
       .string()
-      .required("CVV é obrigatório")
-      .matches(/^\d{3}$/, "CVV deve ter 3 dígitos"),
-    cardExpiration: yup
+      .min(1, "CVV é obrigatório")
+      .refine((v) => /^\d{3,4}$/.test(v.replace(/\D/g, "")), "CVV inválido"),
+    cardExpiration: z
       .string()
-      .required("Data de validade é obrigatória")
-      .matches(/^[0-9]{2}\/[0-9]{2}$/, "Data inválida"),
+      .min(1, "Data de validade é obrigatória")
+      .regex(/^[0-9]{2}\/[0-9]{2}$/, "Data inválida"),
   })
 );
 
-type NewCardFormInputs = yup.InferType<typeof newCardSchema>;
+type NewCardFormInputs = z.infer<typeof newCardSchema>;
 
 interface OpenCepResponse {
   error?: true;
@@ -159,7 +160,7 @@ const ModernCheckoutForm = forwardRef<
 
   // Always use the full schema for form management
   const methods = useForm<NewCardFormInputs>({
-    resolver: yupResolver(newCardSchema),
+    resolver: zodResolver(newCardSchema),
     mode: "onChange",
   });
 
@@ -254,7 +255,7 @@ const ModernCheckoutForm = forwardRef<
     if (paymentMethod === "new") {
       // For new card with existing user, we need card data and billing data
       const values = getValues();
-      const { cardNumber, cardExpiration, cardCvv, fullName, document } =
+      const { cardNumber, cardExpiration, cardCvv, firstName, lastName, document } =
         values;
 
       if (!cardNumber || !cardExpiration || !cardCvv) {
@@ -262,9 +263,9 @@ const ModernCheckoutForm = forwardRef<
         return;
       }
 
-      if (!fullName || !document) {
+      if (!firstName || !lastName || !document) {
         toast.error(
-          "Por favor, preencha o nome e documento do titular do cartão"
+          "Por favor, preencha o nome, sobrenome e documento do titular do cartão"
         );
         return;
       }
@@ -272,8 +273,9 @@ const ModernCheckoutForm = forwardRef<
       startTransition(async () => {
         try {
           const result = await completeCheckout(null, {
-            fullName,
-            document,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            document: document.replace(/\D/g, ""),
             phoneNumber: "", // Will be populated from existing user data on server
             address: {
               street: "",
@@ -310,7 +312,8 @@ const ModernCheckoutForm = forwardRef<
     startTransition(async () => {
       try {
         const result = await completeCheckoutWithSavedCard(null, {
-          fullName: "", // Will be populated from existing user data on server
+          firstName: "", // Will be populated from existing user data on server
+          lastName: "",
           document: "",
           phoneNumber: "",
           address: {
@@ -376,7 +379,8 @@ const ModernCheckoutForm = forwardRef<
   function isFirstStepValid() {
     const billingFields = pick(
       getValues(),
-      "fullName",
+      "firstName",
+      "lastName",
       "document",
       "phoneNumber",
       "address"
@@ -385,7 +389,7 @@ const ModernCheckoutForm = forwardRef<
     console.log({ billingFields });
 
     const isTouched = Object.values(
-      pick(billingFields, "fullName", "document", "phoneNumber", "address")
+      pick(billingFields, "firstName", "lastName", "document", "phoneNumber", "address")
     ).every((e) => {
       if (!isString(e)) {
         return e && Object.values(e).every((v) => !!v);
@@ -400,7 +404,7 @@ const ModernCheckoutForm = forwardRef<
     }
 
     const isValid = Object.values(
-      pick(errors, "fullName", "document", "phoneNumber", "address")
+      pick(errors, "firstName", "lastName", "document", "phoneNumber", "address")
     ).every((e) => {
       if (!isString(e)) {
         console.log(e);
@@ -416,7 +420,7 @@ const ModernCheckoutForm = forwardRef<
 
   console.log({
     canProceedToPayment,
-    err: pick(errors, "fullName", "document", "phoneNumber", "address"),
+    err: pick(errors, "firstName", "lastName", "document", "phoneNumber", "address"),
   });
 
   const canCompleteCheckout = () => {
@@ -709,20 +713,37 @@ function BillingInformationSection({
         {/* Personal Information */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor={`${id}-fullName`} className="text-muted-foreground">
-              Nome completo
+            <Label htmlFor={`${id}-firstName`} className="text-muted-foreground">
+              Nome
             </Label>
             <Input
-              id={`${id}-fullName`}
-              placeholder="Seu nome completo"
-              autoComplete="name"
-              {...register("fullName")}
+              id={`${id}-firstName`}
+              placeholder="Seu nome"
+              autoComplete="given-name"
+              {...register("firstName")}
             />
-            {errors.fullName && (
-              <p className="text-xs text-red-400">{errors.fullName.message}</p>
+            {errors.firstName && (
+              <p className="text-xs text-red-400">{errors.firstName.message}</p>
             )}
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor={`${id}-lastName`} className="text-muted-foreground">
+              Sobrenome
+            </Label>
+            <Input
+              id={`${id}-lastName`}
+              placeholder="Seu sobrenome"
+              autoComplete="family-name"
+              {...register("lastName")}
+            />
+            {errors.lastName && (
+              <p className="text-xs text-red-400">{errors.lastName.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor={`${id}-document`} className="text-muted-foreground">
               CPF ou CNPJ
@@ -748,9 +769,7 @@ function BillingInformationSection({
               <p className="text-xs text-red-400">{errors.document.message}</p>
             )}
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label
               htmlFor={`${id}-phoneNumber`}
@@ -778,55 +797,55 @@ function BillingInformationSection({
               </p>
             )}
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label
-              htmlFor={`${id}-address.zipCode`}
-              className="text-muted-foreground"
-            >
-              CEP
-            </Label>
-            <Controller
-              name="address.zipCode"
-              control={control}
-              render={({ field }) => (
-                <IMaskInput
-                  {...field}
-                  mask="00000-000"
-                  placeholder="00000-000"
-                  autoComplete="postal-code"
-                  className={inputClasses}
-                  onAccept={(value) => {
-                    field.onChange(value);
+        <div className="space-y-2">
+          <Label
+            htmlFor={`${id}-address.zipCode`}
+            className="text-muted-foreground"
+          >
+            CEP
+          </Label>
+          <Controller
+            name="address.zipCode"
+            control={control}
+            render={({ field }) => (
+              <IMaskInput
+                {...field}
+                mask="00000-000"
+                unmask={true}
+                placeholder="00000-000"
+                autoComplete="postal-code"
+                className={inputClasses}
+                onAccept={(value) => {
+                  field.onChange(value);
 
-                    (async () => {
-                      const zipCode = value?.replace(/\D/g, "");
+                  (async () => {
+                    const digits = value as string;
+                    if (digits && digits.length === 8) {
+                      const { data } = await axios.get(
+                        `https://opencep.com/v1/${digits}.json`
+                      );
 
-                      if (zipCode && zipCode.length === 8) {
-                        const { data } = await axios.get(
-                          `https://opencep.com/v1/${zipCode}.json`
-                        );
-
-                        if (data.error) {
-                          return;
-                        }
-
-                        setValue("address.street", data.logradouro);
-                        setValue("address.neighborhood", data.bairro);
-                        setValue("address.city", data.localidade);
-                        setValue("address.state", data.uf);
+                      if (data.error) {
+                        return;
                       }
-                    })();
-                  }}
-                />
-              )}
-            />
-            {errors.address?.zipCode && (
-              <p className="text-xs text-red-400">
-                {errors.address.zipCode.message}
-              </p>
+
+                      setValue("address.street", data.logradouro);
+                      setValue("address.neighborhood", data.bairro);
+                      setValue("address.city", data.localidade);
+                      setValue("address.state", data.uf);
+                    }
+                  })();
+                }}
+              />
             )}
-          </div>
+          />
+          {errors.address?.zipCode && (
+            <p className="text-xs text-red-400">
+              {errors.address.zipCode.message}
+            </p>
+          )}
         </div>
 
         {/* Address Information */}
@@ -973,7 +992,7 @@ function BillingSummaryCard({
         <div className="space-y-3 text-sm">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
-              <span className="font-medium">{values.fullName}</span>
+              <span className="font-medium">{values.firstName} {values.lastName}</span>
               <div className="text-muted-foreground">{values.document}</div>
             </div>
             <div>
@@ -1000,7 +1019,7 @@ function BillingSummaryCard({
 function NewCardFormSection({
   register,
   control,
-  formState: { errors },
+  formState: { errors, touchedFields },
 }: UseFormReturn<NewCardFormInputs>) {
   return (
     <MotionCard
@@ -1036,7 +1055,7 @@ function NewCardFormSection({
                 />
               )}
             />
-            {errors.cardNumber && (
+            {errors.cardNumber && touchedFields.cardNumber && (
               <p className="text-xs text-red-400">
                 {errors.cardNumber.message}
               </p>
@@ -1061,7 +1080,7 @@ function NewCardFormSection({
                 />
               )}
             />
-            {errors.cardCvv && (
+            {errors.cardCvv && touchedFields.cardCvv && (
               <p className="text-xs text-red-400">{errors.cardCvv.message}</p>
             )}
           </div>
@@ -1085,7 +1104,7 @@ function NewCardFormSection({
                 />
               )}
             />
-            {errors.cardExpiration && (
+            {errors.cardExpiration && touchedFields.cardExpiration && (
               <p className="text-xs text-red-400">
                 {errors.cardExpiration.message}
               </p>
@@ -1100,47 +1119,62 @@ function NewCardFormSection({
           </h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-muted-foreground">
+              <Label htmlFor="firstName" className="text-muted-foreground">
                 Nome do Titular
               </Label>
               <Input
-                placeholder="Assim como escrito no cartão"
-                autoComplete="name"
-                {...register("fullName")}
+                placeholder="Nome"
+                autoComplete="given-name"
+                {...register("firstName")}
               />
-              {errors.fullName && (
+              {errors.firstName && (
                 <p className="text-xs text-red-400">
-                  {errors.fullName.message}
+                  {errors.firstName.message}
                 </p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="document" className="text-muted-foreground">
-                CPF ou CNPJ do titular
+              <Label htmlFor="lastName" className="text-muted-foreground">
+                Sobrenome do Titular
               </Label>
-              <Controller
-                name="document"
-                control={control}
-                render={({ field }) => (
-                  <IMaskInput
-                    {...field}
-                    mask={[
-                      { mask: "000.000.000-00" },
-                      { mask: "00.000.000/0000-00" },
-                    ]}
-                    placeholder="000.000.000-00"
-                    autoComplete="document"
-                    className={inputClasses}
-                    onAccept={(value) => field.onChange(value)}
-                  />
-                )}
+              <Input
+                placeholder="Sobrenome"
+                autoComplete="family-name"
+                {...register("lastName")}
               />
-              {errors.document && (
+              {errors.lastName && (
                 <p className="text-xs text-red-400">
-                  {errors.document.message}
+                  {errors.lastName.message}
                 </p>
               )}
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="document" className="text-muted-foreground">
+              CPF ou CNPJ do titular
+            </Label>
+            <Controller
+              name="document"
+              control={control}
+              render={({ field }) => (
+                <IMaskInput
+                  {...field}
+                  mask={[
+                    { mask: "000.000.000-00" },
+                    { mask: "00.000.000/0000-00" },
+                  ]}
+                  placeholder="000.000.000-00"
+                  autoComplete="document"
+                  className={inputClasses}
+                  onAccept={(value) => field.onChange(value)}
+                />
+              )}
+            />
+            {errors.document && (
+              <p className="text-xs text-red-400">
+                {errors.document.message}
+              </p>
+            )}
           </div>
         </div>
       </CardContent>

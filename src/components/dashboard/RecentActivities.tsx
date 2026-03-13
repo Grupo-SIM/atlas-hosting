@@ -304,7 +304,8 @@ export async function RecentActivities({
   };
 
   return (
-    <Card className="border-0 shadow-xl bg-gradient-to-br from-background to-muted/30 overflow-hidden">
+    <div className="relative opacity-50 pointer-events-none select-none">
+    <Card className="h-full border-0 shadow-xl bg-gradient-to-br from-background to-muted/30 overflow-hidden flex flex-col">
       <CardHeader className="border-b border-border/40 pb-6 bg-gradient-to-r from-background to-muted/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -329,7 +330,7 @@ export async function RecentActivities({
         </div>
       </CardHeader>
 
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 flex-1 flex flex-col">
         <Suspense fallback={<div>Carregando...</div>}>
           <Tabs value={activeType} className="w-full">
             <div className="flex items-center justify-between mb-6">
@@ -493,5 +494,6 @@ export async function RecentActivities({
         </Suspense>
       </CardContent>
     </Card>
+    </div>
   );
 }

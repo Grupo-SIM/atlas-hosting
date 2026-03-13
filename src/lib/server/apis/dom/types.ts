@@ -1,5 +1,13 @@
 export type PixKeyType = "EMAIL" | "CPF" | "CNPJ" | "CHAVE_ALEATORIA";
 
+export interface CreateOneTimePaymentParams {
+  userId: string;
+  value: number;
+  description: string;
+  externalReference: string;
+  card: { token: string; installments?: number };
+}
+
 export interface CreateRecurrentPaymentParams {
   userId: string;
   frequency: FrequencyType;

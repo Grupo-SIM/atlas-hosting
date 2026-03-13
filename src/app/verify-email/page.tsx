@@ -12,15 +12,14 @@ interface VerifyEmailPageProps {
   searchParams: Promise<{
     token?: string;
     email?: string;
+    redirect?: string;
   }>;
 }
 
 export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageProps) {
   const resolvedParams = await searchParams;
-  const { token, email } = resolvedParams;
+  const { token, email, redirect } = resolvedParams;
 
-  // If token is provided, redirect to old flow (for backward compatibility)
-  // Otherwise, show code verification form
   return (
     <AuthPage
       title="Verificar email"
@@ -29,7 +28,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
       switchTitle="Já verificou seu email?"
       switchText="Fazer login"
     >
-      <EmailVerificationCodeForm email={email} />
+      <EmailVerificationCodeForm email={email} redirect={redirect} />
     </AuthPage>
   );
 }

@@ -50,9 +50,15 @@ export async function DomainResult({
     domain?.split(".").pop() as string
   ).catch(() => null);
 
-  let price = domainPricing?.Prices?.find(
-    (p) => p.DurationType === "YEAR" && p.Duration === 1
-  )?.Price;
+  const selectedYears = searchParams.years ? parseInt(searchParams.years) : 1;
+
+  let price =
+    domainPricing?.Prices?.find(
+      (p) => p.DurationType === "YEAR" && p.Duration === selectedYears
+    )?.Price ??
+    domainPricing?.Prices?.find(
+      (p) => p.DurationType === "YEAR" && p.Duration === 1
+    )?.Price;
 
   if (!domainData?.domain || !price) {
     return (
@@ -111,9 +117,11 @@ export async function DomainResult({
             </div>
           </div>
 
-          {searchParams.domain && searchParams.years && (
+          {searchParams.domain && available && price && (
             <div className="grid grid-cols-[1fr_auto_auto] grid-rows-[auto_1fr] gap-x-3 gap-y-1 grid-flow-col">
-              <div className="text-xs text-muted-foreground">Primeiro ano</div>
+              <div className="text-xs text-muted-foreground">
+                {selectedYears === 1 ? "Primeiro ano" : `${selectedYears} anos`}
+              </div>
               <h2 className="font-semibold text-2xl m-0">{toBrl(price)}</h2>
               <Separator
                 orientation="vertical"

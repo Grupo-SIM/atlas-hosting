@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input, inputClasses } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import Script from "next/script";
@@ -14,7 +14,7 @@ import { Controller, useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import { IMaskInput } from "react-imask";
 import { toast } from "sonner";
-import * as yup from "yup";
+import { z } from "zod";
 
 const domPk = process.env.NEXT_PUBLIC_DOM_PUBLIC_KEY ?? "";
 
@@ -27,12 +27,8 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
     }
   );
 
-  // useEffect(() => {
-  //   console.log({ state });
-  // }, [state]);
-
   const { register, control, getValues } = useForm<CheckoutFormInputs>({
-    resolver: yupResolver(schema),
+    resolver: zodResolver(schema),
     mode: "onChange",
     reValidateMode: "onChange",
   });
@@ -49,7 +45,8 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
       const _publicKey = domPk ?? "";
       const values = getValues();
       const {
-        fullName,
+        firstName,
+        lastName,
         document,
         phoneNumber,
         cardCvv,
@@ -62,8 +59,8 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
       const cardNumber = values.cardNumber.replace(/\D/g, "");
 
       const _dataCard = {
-        name: fullName,
-        document: document,
+        name: `${firstName} ${lastName}`,
+        document,
         number: cardNumber,
         cvv: cardCvv,
         month,
@@ -75,9 +72,10 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
       try {
         startTransition(() => {
           doCompleteCheckout({
-            fullName,
-            document,
-            phoneNumber,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            document: document.replace(/\D/g, ""),
+            phoneNumber: phoneNumber.replace(/\D/g, ""),
             cardNumber,
             cardCvv,
             cardExpiration,
@@ -89,8 +87,6 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
             cardToken: "",
           });
         });
-        // getTokenCard(public_key, dataCard, installments, function ({ token }) {
-        // });
       } catch {
         toast("Dados de cartão inválido");
       }
@@ -105,19 +101,35 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
         src="https://hml-apiv3.dompagamentos.com.br/js/sdk-dompagamentos.min.js"
       />
       <form onSubmit={onSubmit} className="space-y-2">
-        <div className="space-y-2">
-          <Label htmlFor="fullName">Nome completo</Label>
-          <Input // Standard input for non-masked field
-            id="fullName"
-            type="text"
-            placeholder="Seu nome completo"
-            autoComplete="name"
-            {...register("fullName")}
-            className={inputClasses} // Ensure consistency if Input component doesn't apply it by default
-          />
-          {errors.fullName && (
-            <p className="text-xs text-red-400">{errors.fullName.message}</p>
-          )}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">Nome</Label>
+            <Input
+              id="firstName"
+              type="text"
+              placeholder="Seu nome"
+              autoComplete="given-name"
+              {...register("firstName")}
+              className={inputClasses}
+            />
+            {errors.firstName && (
+              <p className="text-xs text-red-400">{errors.firstName.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Sobrenome</Label>
+            <Input
+              id="lastName"
+              type="text"
+              placeholder="Seu sobrenome"
+              autoComplete="family-name"
+              {...register("lastName")}
+              className={inputClasses}
+            />
+            {errors.lastName && (
+              <p className="text-xs text-red-400">{errors.lastName.message}</p>
+            )}
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="document">CPF ou CNPJ</Label>
@@ -131,7 +143,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
                   { mask: "000.000.000-00", lazy: true, maxLength: 11 },
                   { mask: "00.000.000/0000-00", lazy: false },
                 ]}
-                unmask={true} // Get unmasked value
+                unmask={true}
                 placeholder="Seu CPF ou CNPJ"
                 autoComplete="document"
                 className={inputClasses}
@@ -374,57 +386,57 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
   );
 }
 
-const schema = yup
-  .object({
-    fullName: yup
+const schema = z.object({
+  firstName: z
+    .string()
+    .trim()
+    .min(2, "Nome deve ter pelo menos 2 caracteres"),
+  lastName: z
+    .string()
+    .trim()
+    .min(2, "Sobrenome deve ter pelo menos 2 caracteres"),
+  document: z
+    .string()
+    .min(1, "Documento é obrigatório")
+    .refine(
+      (v) => {
+        const d = v.replace(/\D/g, "");
+        return isValidCPF(d) || isValidCNPJ(d);
+      },
+      { message: "Documento inválido" }
+    ),
+  cardNumber: z
+    .string()
+    .min(1, "Número do cartão é obrigatório")
+    .regex(/^\d{16}$/, "Número do cartão deve ter 16 dígitos"),
+  cardCvv: z
+    .string()
+    .min(1, "CVV é obrigatório")
+    .regex(/^\d{3}$/, "CVV deve ter 3 dígitos"),
+  cardExpiration: z
+    .string()
+    .min(1, "Data de validade é obrigatória")
+    .regex(/^[0-9]{2}\/[0-9]{2}$/, "Data inválida"),
+  phoneNumber: z
+    .string()
+    .min(1, "Telefone é obrigatório")
+    .refine(
+      (v) => isValidPhoneNumber(`55${v.replace(/\D/g, "")}`, "BR"),
+      { message: "Número de telefone inválido" }
+    ),
+  address: z.object({
+    street: z.string().min(1, "Rua é obrigatória"),
+    number: z.string().min(1, "Número é obrigatório"),
+    neighborhood: z.string().min(1, "Bairro é obrigatório"),
+    city: z.string().min(1, "Cidade é obrigatória"),
+    state: z
       .string()
-      .trim()
-      .required("Nome completo é obrigatório")
-      .matches(/(\s)/, "Digite seu nome completo"),
-    document: yup
+      .length(2, "Digite o código de 2 dígitos do estado"),
+    zipCode: z
       .string()
-      .transform((value) => value.replace(/\D/g, ""))
-      .test({
-        test: (value) => isValidCPF(value) || isValidCNPJ(value),
-        message: "Documento inválido",
-      })
-      .required("Documento é obrigatório"),
-    cardNumber: yup
-      .string()
-      .transform((value) => value.replace(/\D/g, ""))
-      .required("Número do cartão é obrigatório")
-      .matches(/^\d{16}$/, "Número do cartão deve ter 16 dígitos"),
-    cardCvv: yup
-      .string()
-      .required("CVV é obrigatório")
-      .matches(/^\d{3}$/, "CVV deve ter 3 dígitos"),
-    cardExpiration: yup
-      .string()
-      .required("Data de validade é obrigatória")
-      .matches(/^[0-9]{2}\/[0-9]{2}$/, "Data inválida"),
-    phoneNumber: yup
-      .string()
-      .required("Número de telefone é obrigatório")
-      .transform((value) => `55${value.replace(/\D/g, "")}`)
-      .test({
-        test: (value) => isValidPhoneNumber(value, "BR"),
-        message: "Número de telefone inválido",
-      }),
-    address: yup.object({
-      street: yup.string().required("Rua é obrigatória"),
-      number: yup.string().required("Número é obrigatório"),
-      neighborhood: yup.string().required("Bairro é obrigatório"),
-      city: yup.string().required("Cidade é obrigatória"),
-      state: yup
-        .string()
-        .length(2, "Digite o código de 2 dígitos do estado")
-        .required("Estado é obrigatório"),
-      zipCode: yup
-        .string()
-        .required("CEP é obrigatório")
-        .matches(/^\d{5}-\d{3}$/, "CEP inválido"),
-    }),
-  })
-  .required();
+      .min(1, "CEP é obrigatório")
+      .regex(/^\d{8}$/, "CEP inválido"),
+  }),
+});
 
-export type CheckoutFormInputs = yup.InferType<typeof schema>;
+export type CheckoutFormInputs = z.infer<typeof schema>;

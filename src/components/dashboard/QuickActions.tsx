@@ -60,68 +60,6 @@ export function QuickActions() {
       initial="hidden"
       animate="visible"
     >
-      {/* Sites Section */}
-      <MotionDiv variants={itemVariants}>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-            Sites
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          <QuickActionCard
-            Icon={FaTasks}
-            title="Planos de Hospedagem"
-            subtitle="Escolha o plano ideal para seu projeto"
-            href="/plans"
-            gradient="from-blue-500 to-cyan-500"
-            pattern="dots"
-          />
-
-          <QuickActionCard
-            Icon={Building2}
-            title="Organização"
-            subtitle="Administre as configurações de sua organização"
-            href="/organization"
-            gradient="from-purple-500 to-pink-500"
-            pattern="grid"
-          />
-
-          <QuickActionCard
-            Icon={BookPlus}
-            title="Nova Instalação WordPress"
-            subtitle="Crie novas instalações a partir de seus domínios"
-            href="/sites/new"
-            gradient="from-emerald-500 to-teal-500"
-            pattern="waves"
-          />
-
-          <QuickActionCard
-            Icon={Mail}
-            title="Meu Email"
-            subtitle="Acesse suas caixas de email"
-            href="/email"
-            gradient="from-orange-500 to-red-500"
-            pattern="dots"
-          />
-
-          <QuickActionCard
-            Icon={LucideBookMarked}
-            title="Meus Sites"
-            subtitle="Gerencie seus sites WordPress"
-            href="/wordpress"
-            gradient="from-indigo-500 to-blue-500"
-            pattern="grid"
-          />
-
-          <Suspense fallback={<Skeleton className="h-44 w-full rounded-2xl" />}>
-            <AdminPanelCard />
-          </Suspense>
-        </div>
-      </MotionDiv>
-
       {/* Domains Section */}
       <MotionDiv variants={itemVariants}>
         <div className="flex items-center gap-3 mb-6">
@@ -190,6 +128,140 @@ export function QuickActions() {
             gradient="from-blue-500 to-cyan-500"
             pattern="dots"
           />
+        </div>
+      </MotionDiv>
+
+    </MotionDiv>
+  );
+}
+
+export function SitesQuickActions() {
+  return (
+    <MotionDiv
+      className="space-y-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Sites Section */}
+      <MotionDiv variants={itemVariants}>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+            Sites
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <QuickActionCard
+                    Icon={FaTasks}
+                    title="Planos de Hospedagem"
+                    subtitle="Escolha o plano ideal para seu projeto"
+                    href="/plans"
+                    gradient="from-blue-500 to-cyan-500"
+                    pattern="dots"
+                    disabled={true}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="font-medium">
+                Em breve
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <QuickActionCard
+                    Icon={Building2}
+                    title="Organização"
+                    subtitle="Administre as configurações de sua organização"
+                    href="/organization"
+                    gradient="from-purple-500 to-pink-500"
+                    pattern="grid"
+                    disabled={true}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="font-medium">
+                Em breve
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <QuickActionCard
+                    Icon={BookPlus}
+                    title="Nova Instalação WordPress"
+                    subtitle="Crie novas instalações a partir de seus domínios"
+                    href="/sites/new"
+                    gradient="from-emerald-500 to-teal-500"
+                    pattern="waves"
+                    disabled={true}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="font-medium">
+                Em breve
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <QuickActionCard
+                    Icon={Mail}
+                    title="Meu Email"
+                    subtitle="Acesse suas caixas de email"
+                    href="/email"
+                    gradient="from-orange-500 to-red-500"
+                    pattern="dots"
+                    disabled={true}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="font-medium">
+                Em breve
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <QuickActionCard
+                    Icon={LucideBookMarked}
+                    title="Meus Sites"
+                    subtitle="Gerencie seus sites WordPress"
+                    href="/wordpress"
+                    gradient="from-indigo-500 to-blue-500"
+                    pattern="grid"
+                    disabled={true}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="font-medium">
+                Em breve
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <Suspense fallback={<Skeleton className="h-44 w-full rounded-2xl" />}>
+            <AdminPanelCard />
+          </Suspense>
         </div>
       </MotionDiv>
     </MotionDiv>
@@ -363,26 +435,21 @@ async function AdminPanelCard() {
             <QuickActionCard
               Icon={ArrowRightLeft}
               title="Transferir Instalação WordPress"
-              subtitle={
-                canAdministrate
-                  ? `Transferir uma instalação existente para o Atlas Hosting`
-                  : "Adicione um plano ou compre um domínio para acessar"
-              }
-              disabled={!canAdministrate}
+              subtitle="Transferir uma instalação existente para o Atlas Hosting"
+              disabled={true}
               target="_blank"
-              href={canAdministrate ? `/wordpress/transfer` : "#"}
+              href="#"
               gradient="from-red-500 to-rose-500"
               pattern="waves"
             />
           </div>
         </TooltipTrigger>
         <TooltipContent
-          hidden={canAdministrate}
           align="center"
-          className="p-4 max-w-xs"
+          className="p-4 max-w-xs font-medium"
         >
           <p className="text-sm">
-            Adicione um plano ou compre um domínio para acessar esta área.
+            Em breve
           </p>
         </TooltipContent>
       </Tooltip>

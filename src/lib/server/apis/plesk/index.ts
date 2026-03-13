@@ -1,10 +1,12 @@
 import * as Plesk from "@/plesk";
 import axios, { type AxiosInstance, type AxiosResponse } from "axios";
+import https from "https";
 import SubscriptionApi from "./subscriptions";
 import PleskWpToolkitApi from "./wp-toolkit";
 
 export class PleskApi {
   private apiUrl: string;
+  private apiKey: string | undefined;
   private rootUser: string;
   private rootPassword: string;
   private apiConfig: Plesk.Configuration;
@@ -26,15 +28,42 @@ export class PleskApi {
     this.apiUrl = process.env.PLESK_API_URL as string;
     this.rootUser = process.env.PLESK_ROOT_USER as string;
     this.rootPassword = process.env.PLESK_ROOT_PASSWORD as string;
+    this.apiKey = process.env.PLESK_API_KEY;
+
+    console.log(`[PleskApi] Initializing for ${this.apiUrl} using ${this.apiKey ? "API Key" : "Basic Auth"}`);
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+      "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+      "Cache-Control": "no-cache",
+      Referer: `${this.apiUrl}/`,
+    };
+
+    if (this.apiKey) {
+      headers["X-API-Key"] = this.apiKey;
+    }
 
     this.pleskAxios = axios.create({
       baseURL: this.apiUrl,
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+      headers,
+      ...(this.apiKey
+        ? {}
+        : {
+            auth: {
+              username: this.rootUser,
+              password: this.rootPassword,
+            },
+          }),
     });
 
     this.apiConfig = new Plesk.Configuration({
       basePath: this.apiUrl,
-      password: this.rootPassword,
-      username: this.rootUser,
+      apiKey: this.apiKey,
+      username: this.apiKey ? undefined : this.rootUser,
+      password: this.apiKey ? undefined : this.rootPassword,
     });
 
     const initParameters: ConstructorParameters<typeof Plesk.ClientsApi> = [
@@ -136,7 +165,12 @@ export class PleskApi {
 
       return domains[0];
     } catch (error) {
-      if (axios.isAxiosError(error) && !error.response?.data?.code) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        console.log(
+          `401 Unauthorized for domain ${domainName}. Response:`,
+          JSON.stringify(error.response?.data)
+        );
+      } else if (axios.isAxiosError(error) && !error.response?.data?.code) {
         console.log(
           `Axios error fetching domain ${domainName}:`,
           JSON.stringify(error.response?.data || error.message)

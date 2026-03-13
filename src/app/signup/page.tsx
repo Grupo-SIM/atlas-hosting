@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default async function SignupPage({
   searchParams,
-}: { searchParams: Promise<{ ref?: string }> }) {
+}: { searchParams: Promise<{ ref?: string; redirect?: string }> }) {
   const resolvedParams = await searchParams;
 
   let refUser: Pick<User, "name" | "email" | "id"> | undefined;
@@ -36,7 +36,7 @@ export default async function SignupPage({
       switchTitle="Já possui uma conta?"
       switchText="Faça login"
     >
-      <SignupForm referrer={refUser} />
+      <SignupForm referrer={refUser} redirect={resolvedParams.redirect} />
     </AuthPage>
   );
 }

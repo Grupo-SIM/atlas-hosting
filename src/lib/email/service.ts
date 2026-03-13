@@ -49,7 +49,7 @@ async function sendEmail(data: EmailData): Promise<void> {
     });
   } catch (error) {
     console.error("Failed to send email:", error);
-    throw new Error("Email sending failed");
+    // Do not re-throw — email failures must never block user creation or other actions
   }
 }
 

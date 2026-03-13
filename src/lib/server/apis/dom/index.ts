@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import {
   Receiver,
   type CreateClientParams,
+  type CreateOneTimePaymentParams,
   type CreateRecurrentPaymentParams,
   type CreateSubscriptionParams,
   type PayloadWebhook,
@@ -41,6 +42,15 @@ export class DomApi {
     externalReference,
     newClient,
   }: CreateRecurrentPaymentParams) {
+    console.log(`[DOM][createRecurrentPayment] Iniciando pagamento recorrente`, {
+      userId,
+      externalReference,
+      value,
+      description,
+      hasNewClient: !!newClient,
+      cardType: "token" in card ? "token" : "raw_card",
+    });
+
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, userId),
       with: {
@@ -49,17 +59,28 @@ export class DomApi {
     });
 
     if (!user) {
+      console.error(`[DOM][createRecurrentPayment] Usuário não encontrado: ${userId}`);
       throw new Error("User not found");
     }
+
+    console.log(`[DOM][createRecurrentPayment] Usuário encontrado:`, {
+      userId: user.id,
+      email: user.email,
+      organizationId: user.organization?.id,
+      domId: user.organization?.domId ?? "(sem DOM ID)",
+    });
 
     let domId = user.organization?.domId ?? "";
 
     if (!domId) {
       if (!newClient) {
+        console.error(`[DOM][createRecurrentPayment] Sem DOM ID e sem dados para criar cliente`);
         throw new Error("User does not have a DOM ID");
       }
 
+      console.log(`[DOM][createRecurrentPayment] Criando novo cliente DOM...`);
       const client = await this.createClient(newClient);
+      console.log(`[DOM][createRecurrentPayment] Cliente DOM criado: ${client.id}`);
 
       await db
         .update(pgOrganization)
@@ -80,6 +101,7 @@ export class DomApi {
     let cardToken = "token" in card ? card.token : "";
 
     if (!("token" in card)) {
+      console.log(`[DOM][createRecurrentPayment] Tokenizando cartão para customerId=${domId}...`);
       const {
         data: { token },
       } = await this.api.post<{ token: string }>(
@@ -94,8 +116,10 @@ export class DomApi {
       );
 
       cardToken = token;
+      console.log(`[DOM][createRecurrentPayment] Cartão tokenizado com sucesso`);
     } else {
       cardToken = card.token;
+      console.log(`[DOM][createRecurrentPayment] Usando token de cartão existente`);
     }
 
     const params: CreateSubscriptionParams = {
@@ -119,13 +143,104 @@ export class DomApi {
       postbackurl: `${process.env.PUBLIC_URL}/webhook/dom`,
     };
 
-    console.log(params);
+    console.log(`[DOM][createRecurrentPayment] Enviando para DOM API:`, JSON.stringify(params, null, 2));
 
-    const { data } = await this.api.post("/recurrence/subscriptions", params);
+    try {
+      const { data } = await this.api.post("/recurrence/subscriptions", params);
+      console.log(`[DOM][createRecurrentPayment] Resposta da DOM API (SUCESSO):`, JSON.stringify(data, null, 2));
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(`[DOM][createRecurrentPayment] ERRO na DOM API:`, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: JSON.stringify(error.response?.data, null, 2),
+          message: error.message,
+        });
+      } else {
+        console.error(`[DOM][createRecurrentPayment] ERRO inesperado:`, error);
+      }
+      throw error;
+    }
+  }
 
-    console.log(data);
+  public async createOneTimePayment({
+    card,
+    value,
+    description,
+    userId,
+    externalReference,
+  }: CreateOneTimePaymentParams) {
+    console.log(`[DOM][createOneTimePayment] Iniciando pagamento único (domínio)`, {
+      userId,
+      externalReference,
+      value,
+      description,
+    });
 
-    return data;
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, userId),
+      with: { organization: true },
+    });
+
+    if (!user) {
+      console.error(`[DOM][createOneTimePayment] Usuário não encontrado: ${userId}`);
+      throw new Error("User not found");
+    }
+
+    console.log(`[DOM][createOneTimePayment] Usuário encontrado:`, {
+      userId: user.id,
+      email: user.email,
+      organizationId: user.organization?.id,
+      domId: user.organization?.domId ?? "(sem DOM ID)",
+    });
+
+    const domId = user.organization?.domId;
+    if (!domId) {
+      console.error(`[DOM][createOneTimePayment] Usuário sem DOM customer ID`);
+      throw new Error("User does not have a DOM ID");
+    }
+
+    const params: CreateSubscriptionParams = {
+      card: {
+        token: card.token,
+        installments: card.installments ?? 1,
+      },
+      customer_id: domId,
+      external_reference: externalReference,
+      payment_method: "credit_card",
+      auto_recurring: {
+        description,
+        value,
+        frequency_type: "MONTH",
+        frequency: 1,
+        repetitions: 1,
+        billing_type: "prepaid",
+        retry_days: 3,
+      },
+      cashback_active: true,
+      postbackurl: `${process.env.PUBLIC_URL}/webhook/dom`,
+    };
+
+    console.log(`[DOM][createOneTimePayment] Enviando para DOM API (repetitions=1, cobrança única):`, JSON.stringify(params, null, 2));
+
+    try {
+      const { data } = await this.api.post("/recurrence/subscriptions", params);
+      console.log(`[DOM][createOneTimePayment] Resposta da DOM API (SUCESSO):`, JSON.stringify(data, null, 2));
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(`[DOM][createOneTimePayment] ERRO na DOM API:`, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: JSON.stringify(error.response?.data, null, 2),
+          message: error.message,
+        });
+      } else {
+        console.error(`[DOM][createOneTimePayment] ERRO inesperado:`, error);
+      }
+      throw error;
+    }
   }
 
   public async createClient({
@@ -139,35 +254,61 @@ export class DomApi {
     address,
     userId,
   }: CreateClientParams) {
+    console.log(`[DOM][createClient] Criando cliente DOM para userId=${userId}`, {
+      name,
+      email,
+      document: `${document.substring(0, 3)}...${document.slice(-2)}`,
+      documentType: document.length === 11 ? "CPF" : "CNPJ",
+      codeExternal,
+      mobilePhone,
+    });
+
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, userId),
     });
 
     if (!user) {
+      console.error(`[DOM][createClient] Usuário não encontrado: ${userId}`);
       throw new Error("User not found");
     }
+
+    const payload = {
+      name,
+      email,
+      document,
+      document_type: document.length === 11 ? "CPF" : "CNPJ",
+      code_external: codeExternal,
+      // gender,
+      // birthdate,
+      mobile_phone: mobilePhone,
+      address,
+    };
+
+    console.log(`[DOM][createClient] Enviando para DOM API /customers:`, JSON.stringify(payload, null, 2));
 
     try {
       const { data } = await this.api.post<CreateClientParams & { id: string }>(
         "/customers",
-        {
-          name,
-          email,
-          document,
-          document_type: document.length === 11 ? "CPF" : "CNPJ",
-          code_external: codeExternal,
-          // gender,
-          // birthdate,
-          mobile_phone: mobilePhone,
-          address,
-        }
+        payload
       );
+      console.log(`[DOM][createClient] Cliente criado com SUCESSO. DOM customer ID: ${data.id}`);
       return data;
     } catch (error) {
-      console.log("error adding client", error);
-
       if (axios.isAxiosError(error)) {
-        return { id: error.response?.data.id as string };
+        console.error(`[DOM][createClient] ERRO na DOM API:`, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: JSON.stringify(error.response?.data, null, 2),
+          message: error.message,
+        });
+
+        // Se o cliente já existe, retorna o ID existente
+        if (error.response?.data?.id) {
+          console.log(`[DOM][createClient] Cliente já existe na DOM, retornando ID: ${error.response.data.id}`);
+          return { id: error.response.data.id as string };
+        }
+      } else {
+        console.error(`[DOM][createClient] ERRO inesperado:`, error);
       }
 
       throw error;
@@ -239,6 +380,14 @@ export class DomApi {
       holder_document: string;
     }
   ) {
+    console.log(`[DOM][createCardToken] Tokenizando cartão para userId=${userId}`, {
+      last4: cardData.number.slice(-4),
+      exp_month: cardData.exp_month,
+      exp_year: cardData.exp_year,
+      holder_name: cardData.holder_name,
+      holder_document: `${cardData.holder_document.substring(0, 3)}...`,
+    });
+
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, userId),
       with: {
@@ -247,33 +396,57 @@ export class DomApi {
     });
 
     if (!user) {
+      console.error(`[DOM][createCardToken] Usuário não encontrado: ${userId}`);
       throw new Error("User not found");
     }
 
     const domId = user.organization?.domId;
     if (!domId) {
+      console.error(`[DOM][createCardToken] Usuário sem DOM customer ID`);
       throw new Error("User does not have a DOM customer ID");
     }
 
-    const { data } = await this.api.post<{ token: string }>(
-      `/customers/${domId}/card-token`,
-      cardData,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      }
-    );
+    console.log(`[DOM][createCardToken] Enviando para DOM API /customers/${domId}/card-token`);
 
-    return {
-      token: data.token,
-      last4: cardData.number.slice(-4),
-      brand: this.detectCardBrand(cardData.number),
-      expiryMonth: cardData.exp_month.toString().padStart(2, "0"),
-      expiryYear: cardData.exp_year.toString(),
-      holderName: cardData.holder_name,
-    };
+    try {
+      const { data } = await this.api.post<{ token: string }>(
+        `/customers/${domId}/card-token`,
+        cardData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      console.log(`[DOM][createCardToken] Cartão tokenizado com SUCESSO:`, {
+        token: data.token,
+        last4: cardData.number.slice(-4),
+        brand: this.detectCardBrand(cardData.number),
+      });
+
+      return {
+        token: data.token,
+        last4: cardData.number.slice(-4),
+        brand: this.detectCardBrand(cardData.number),
+        expiryMonth: cardData.exp_month.toString().padStart(2, "0"),
+        expiryYear: cardData.exp_year.toString(),
+        holderName: cardData.holder_name,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(`[DOM][createCardToken] ERRO na DOM API:`, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: JSON.stringify(error.response?.data, null, 2),
+          message: error.message,
+        });
+      } else {
+        console.error(`[DOM][createCardToken] ERRO inesperado:`, error);
+      }
+      throw error;
+    }
   }
 
   /**

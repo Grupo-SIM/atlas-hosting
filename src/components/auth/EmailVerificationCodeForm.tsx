@@ -24,9 +24,10 @@ type EmailVerificationCodeFormInputs = {
 
 interface EmailVerificationCodeFormProps {
   email?: string;
+  redirect?: string;
 }
 
-export default function EmailVerificationCodeForm({ email: initialEmail }: EmailVerificationCodeFormProps) {
+export default function EmailVerificationCodeForm({ email: initialEmail, redirect }: EmailVerificationCodeFormProps) {
   const { handleSubmit, control, setValue, watch } = useForm<EmailVerificationCodeFormInputs>({
     resolver: yupResolver(schema),
     mode: "onChange",
@@ -114,10 +115,8 @@ export default function EmailVerificationCodeForm({ email: initialEmail }: Email
       if (response.ok && result.success) {
         setMessage("Email verificado com sucesso! Redirecionando...");
         setIsSuccess(true);
-        // Redirect to dashboard after successful verification and auto-login
         setTimeout(() => {
-          router.push("/");
-          router.refresh();
+          window.location.href = redirect || "/";
         }, 1500);
       } else {
         setMessage(result.error || "Código inválido ou expirado");

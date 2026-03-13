@@ -3,32 +3,34 @@ import nodemailer from "nodemailer";
 export default class EmailService {
   private transporter: nodemailer.Transporter;
 
-  /**
-   */
   public constructor(
     private readonly username: string,
     private readonly host: string,
     private readonly port: number,
-    private readonly password: string
+    private readonly password: string,
+    private readonly secure: boolean = true,
+    private readonly fromEmail: string = "noreply@atlashosting.com.br"
   ) {
     this.transporter = nodemailer.createTransport({
       host: this.host,
       port: this.port,
-      secure: this.port === 465,
+      secure: this.secure,
       auth: {
         user: this.username,
         pass: this.password,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
   }
 
   public async sendEmail(message: EmailMessage): Promise<void> {
     await this.transporter.sendMail({
-      from: "noreply@atlashosting.com.br",
+      from: this.fromEmail,
       to: message.to,
       subject: message.subject,
-      sender: message.from,
-      html: message.body
+      html: message.body,
     });
   }
 }

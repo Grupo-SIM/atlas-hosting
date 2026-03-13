@@ -185,15 +185,14 @@ function ServiceBlock({ service }: { service: Service }) {
           <div
             className={`
             p-3 rounded-xl transition-colors duration-200
-            ${
-              service.status === "operational"
+            ${service.status === "operational"
                 ? "bg-emerald-100 dark:bg-emerald-500/20"
                 : service.status === "issues"
                   ? "bg-amber-100 dark:bg-amber-500/20"
                   : service.status === "error"
                     ? "bg-red-100 dark:bg-red-500/20"
                     : "bg-slate-100 dark:bg-slate-500/20"
-            }
+              }
             ${getStatusColor(service.status)}
           `}
           >
@@ -217,7 +216,7 @@ function ServiceBlock({ service }: { service: Service }) {
             {service.metrics && (
               <div className="space-y-2">
                 {typeof service.metrics.max === "number" &&
-                typeof service.metrics.value === "number" ? (
+                  typeof service.metrics.value === "number" ? (
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-medium text-muted-foreground">
@@ -260,14 +259,13 @@ function ServiceBlock({ service }: { service: Service }) {
             variant="outline"
             className={`
               text-xs font-medium px-3 py-1 border-0 shadow-sm
-              ${
-                service.status === "operational"
-                  ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
-                  : service.status === "issues"
-                    ? "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300"
-                    : service.status === "error"
-                      ? "bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300"
-                      : "bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300"
+              ${service.status === "operational"
+                ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                : service.status === "issues"
+                  ? "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300"
+                  : service.status === "error"
+                    ? "bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300"
+                    : "bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300"
               }
             `}
           >
@@ -770,7 +768,7 @@ async function AsyncServerStatusContent({
 
   // Render the Card structure and async service blocks
   return (
-    <Card className="shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out border-0 bg-gradient-to-br from-background to-muted/30">
+    <Card className="h-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out border-0 bg-gradient-to-br from-background to-muted/30 flex flex-col">
       <CardHeader className="border-b border-border/40 pb-6 bg-gradient-to-r from-background to-muted/20">
         <div className="flex items-center justify-between">
           <div>
@@ -810,7 +808,7 @@ async function AsyncServerStatusContent({
         </Suspense>
       </CardHeader>
 
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 flex-1 flex flex-col">
         <div className="grid gap-4">
           {/* Hosting Service Block */}
           <Suspense fallback={<ServiceBlockSkeleton />}>
@@ -875,10 +873,117 @@ async function AsyncServerStatusContent({
   );
 }
 
+// Desativar para não fazer requisições ao Plesk/DNS. Reativar quando hospedagem estiver disponível.
+const HOSTING_STATUS_ENABLED = false;
+
+const COMING_SOON_SERVICES: Service[] = [
+  {
+    id: "hosting",
+    name: "Hospedagem Web",
+    status: "operational",
+    details: "Em breve disponível para seus domínios",
+    icon: <Server className="h-5 w-5" />,
+  },
+  {
+    id: "ssl",
+    name: "Certificado SSL",
+    status: "operational",
+    details: "Certificados SSL automáticos gratuitos",
+    icon: <ShieldCheck className="h-5 w-5" />,
+  },
+  {
+    id: "dns",
+    name: "Registros DNS",
+    status: "operational",
+    details: "Gerenciamento completo de DNS",
+    icon: <Globe className="h-5 w-5" />,
+  },
+  {
+    id: "site-access",
+    name: "Acessibilidade do Site",
+    status: "operational",
+    details: "Monitoramento 24/7 de uptime",
+    icon: <Globe className="h-5 w-5" />,
+  },
+];
+
+function ServerStatusComingSoon({ domainName }: { domainName?: string }) {
+  return (
+    <div className="relative opacity-50 pointer-events-none select-none">
+    <Card className="h-full shadow-lg border-0 bg-gradient-to-br from-background to-muted/30 flex flex-col">
+      <CardHeader className="border-b border-border/40 pb-6 bg-gradient-to-r from-background to-muted/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              Status dos Serviços
+            </CardTitle>
+            <CardDescription className="text-sm mt-1">
+              {domainName ? (
+                <>
+                  Monitoramento para{" "}
+                  <span className="font-semibold text-primary">{domainName}</span>
+                </>
+              ) : (
+                "Monitoramento em tempo real"
+              )}
+            </CardDescription>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="text-right">
+              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                Em Breve
+              </div>
+              <div className="text-xs text-muted-foreground">Hospedagem</div>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center">
+              <Monitor className="h-6 w-6 text-emerald-500" />
+            </div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Saúde Geral do Sistema
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {COMING_SOON_SERVICES.length}/{COMING_SOON_SERVICES.length} serviços operacionais
+            </span>
+          </div>
+          <Progress value={100} className="h-2 bg-muted/50" />
+        </div>
+      </CardHeader>
+      <CardContent className="pt-6 flex-1 flex flex-col">
+        <div className="grid gap-4">
+          {COMING_SOON_SERVICES.map((service) => (
+            <ServiceBlock key={service.id} service={service} />
+          ))}
+          <div className="mt-6 pt-4 border-t border-border/40">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center space-x-1">
+                <Clock className="h-3 w-3" />
+                <span>Funcionalidade em desenvolvimento</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span>{COMING_SOON_SERVICES.length} Operacionais</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+    </div>
+  );
+}
+
 export function ServerStatus({ user }: { user: User }) {
+  if (!HOSTING_STATUS_ENABLED) {
+    return <ServerStatusComingSoon domainName={user?.selectedDomain ?? undefined} />;
+  }
+
   if (!user?.selectedDomain) {
     return (
-      <Card className="shadow-lg">
+      <Card className="h-full shadow-lg flex flex-col">
         <CardHeader className="border-b border-border/60 pb-4">
           <CardTitle className="text-lg font-semibold">
             Status dos Serviços
@@ -905,7 +1010,7 @@ export function ServerStatus({ user }: { user: User }) {
 
 function ServerStatusSkeleton() {
   return (
-    <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-muted/30">
+    <Card className="h-full shadow-lg border-0 bg-gradient-to-br from-background to-muted/30 flex flex-col">
       <CardHeader className="border-b border-border/40 pb-6 bg-gradient-to-r from-background to-muted/20">
         <div className="flex items-center justify-between">
           <div>

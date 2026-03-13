@@ -1,15 +1,24 @@
 "use server";
 
-import type { ParsedWordPressInstance } from "@/app/(auth)/sites/page";
 import { eq } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "../db";
+import axios from "axios";
 import { pgUser, type OrganizationDomain, type User } from "../db/schema/index";
 import namecheapApi from "./apis/namecheap";
 import type { DomainListItem } from "./apis/namecheap/types";
 import pleskApi from "./apis/plesk";
 import type { WordPressInstance } from "./apis/plesk/wp-toolkit";
 import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
+
+export interface ParsedWordPressInstance {
+  id: number;
+  instanceId: number;
+  name: string;
+  domain: string;
+  path: string;
+  status: string;
+}
 
 export async function domainHasWordPress(
   domain: DomainListItem,
@@ -60,7 +69,14 @@ export const getUserWordPressSites = cache(async function getUserWordPressSites(
       );
     }
   } catch (error) {
-    console.error("Error fetching WordPress instances from Plesk:", error);
+    if (axios.isAxiosError(error)) {
+      console.error(
+        `Error fetching WordPress instances from Plesk: ${error.response?.status}`,
+        JSON.stringify(error.response?.data)
+      );
+    } else {
+      console.error("Error fetching WordPress instances from Plesk:", error);
+    }
   }
 
   // Filter WordPress instances to only show those associated with the user's Namecheap domains
