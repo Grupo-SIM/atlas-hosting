@@ -32,18 +32,18 @@ export function PromotionalCards() {
   return (
     <section id="comprar-dominio" className="py-20 px-4 relative overflow-hidden" style={{ backgroundColor: '#000319' }}>
       <div className="container mx-auto max-w-[95%] lg:max-w-[98%]">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           {/* Card Esquerdo - Cashback */}
-          <div className="relative rounded-4xl p-6 text-white overflow-hidden bg-slate-200/10 backdrop-blur-[20px] border border-green-500/30 shadow-[0_8px_32px_0_rgba(34,197,94,0.15)] h-fit">
+          <div className="flex flex-col relative rounded-4xl p-6 text-white overflow-hidden bg-slate-200/10 backdrop-blur-[20px] border border-green-500/30 shadow-[0_8px_32px_0_rgba(34,197,94,0.15)] h-full">
             {/* Background com padrão de pontos */}
             <div className="absolute inset-0 -z-10 h-full w-full bg-transparent bg-[radial-gradient(rgba(34,197,94,0.2)_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
             
             {/* Ícone circular verde com carteira */}
-            <div className="absolute right-6 top-6 w-20 h-20 rounded-full bg-green-500/20 backdrop-blur-md border border-green-500/30 flex items-center justify-center">
-              <Wallet className="w-10 h-10 text-gray-200" strokeWidth={2} />
+            <div className="absolute right-6 top-6 w-16 h-16 md:w-20 md:h-20 rounded-full bg-green-500/20 backdrop-blur-md border border-green-500/30 flex items-center justify-center">
+              <Wallet className="w-8 h-8 md:w-10 md:h-10 text-gray-200" strokeWidth={2} />
             </div>
             
-            <div className="relative z-10">
+            <div className="relative z-10 pr-20 md:pr-24 flex-1 flex flex-col items-start justify-center">
               <h3 className="text-2xl md:text-3xl font-bold mb-3">
                 Cashback
               </h3>
@@ -52,17 +52,19 @@ export function PromotionalCards() {
                 Em todas as compras você receberá imediatamente o seu dinheiro de volta pelo Vale Bônus.
               </p>
 
-              <Link
-                href="#plans"
-                className="custom-animated-button inline-flex items-center gap-2"
-              >
-                VER PLANOS
-              </Link>
+              <div className="mt-auto">
+                <Link
+                  href="#plans"
+                  className="custom-animated-button inline-flex items-center gap-2"
+                >
+                  VER PLANOS
+                </Link>
+              </div>
             </div>
           </div>
 
           {/* Card Direito - Busca de Domínio */}
-          <div className="relative rounded-4xl p-6 text-white overflow-hidden bg-slate-100/10 backdrop-blur-[20px] border border-green-500/30 shadow-[0_8px_32px_0_rgba(34,197,94,0.15)]">
+          <div className="flex flex-col relative rounded-4xl p-6 text-white overflow-hidden bg-slate-100/10 backdrop-blur-[20px] border border-green-500/30 shadow-[0_8px_32px_0_rgba(34,197,94,0.15)] h-full">
             {/* Background com padrão de pontos */}
             <div className="absolute inset-0 -z-10 h-full w-full bg-transparent bg-[radial-gradient(rgba(34,197,94,0.2)_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
             

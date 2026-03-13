@@ -58,16 +58,21 @@ export default async function SettingsPage({
               Organização
             </TabsTrigger>
           </Link>
-          <Link href="/settings?tab=subscription" className="block w-full">
+          <Link href="/settings?tab=subscription" className="block w-full pointer-events-none">
             <TabsTrigger
               value="subscription"
-              className="pointer-events-none w-full"
+              className="w-full"
+              disabled
             >
               Assinatura
             </TabsTrigger>
           </Link>
-          <Link href="/settings?tab=wallet" className="block w-full">
-            <TabsTrigger value="wallet" className="pointer-events-none w-full">
+          <Link href="/settings?tab=wallet" className="block w-full pointer-events-none">
+            <TabsTrigger 
+              value="wallet" 
+              className="w-full"
+              disabled
+            >
               Carteira
             </TabsTrigger>
           </Link>

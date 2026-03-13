@@ -1,8 +1,9 @@
 import { Suspense } from "react";
-import { Search, Loader2, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import DomainSearchResults from "./components/DomainSearchResults";
-import SearchButton from "./components/SearchButton";
+import SearchForm from "./components/SearchForm";
+import LoadingState from "./components/LoadingState";
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -34,32 +35,15 @@ export default async function DomainSearchPage({
           </p>
         </div>
 
-        {/* Search Bar */}
         <div className="mb-8">
-          <div className="relative rounded-4xl p-2 bg-white/5 backdrop-blur-[20px] border border-green-500/30 shadow-[0_8px_32px_0_rgba(34,197,94,0.15)]">
-            <div className="flex items-center gap-2">
-              <Search className="w-5 h-5 text-white/70 ml-2" />
-              <input
-                type="text"
-                defaultValue={query}
-                placeholder="Digite o nome do domínio..."
-                className="flex-1 bg-transparent text-white placeholder-white/50 outline-none text-base py-2"
-                id="domain-search-input"
-              />
-              <SearchButton />
-            </div>
+          <div className="relative rounded-4xl p-2 bg-white/5 backdrop-blur-[20px] border border-green-500/30 shadow-[0_8px_32px_0_rgba(34,197,94,0.15)] flex">
+            <SearchForm defaultValue={query} />
           </div>
         </div>
 
         {/* Results */}
         {query ? (
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-green-500" />
-              </div>
-            }
-          >
+          <Suspense fallback={<LoadingState />}>
             <DomainSearchResults query={query} />
           </Suspense>
         ) : (

@@ -304,9 +304,9 @@ export async function RecentActivities({
   };
 
   return (
-    <div className="relative opacity-50 pointer-events-none select-none">
-    <Card className="h-full border-0 shadow-xl bg-gradient-to-br from-background to-muted/30 overflow-hidden flex flex-col">
-      <CardHeader className="border-b border-border/40 pb-6 bg-gradient-to-r from-background to-muted/20">
+    <div className="relative opacity-50 pointer-events-none select-none h-full">
+      <Card className="h-full border-0 shadow-xl bg-gradient-to-br from-background to-muted/30 overflow-hidden flex flex-col">
+        <CardHeader className="border-b border-border/40 pb-6 bg-gradient-to-r from-background to-muted/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5">

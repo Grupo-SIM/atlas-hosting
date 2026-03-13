@@ -5,18 +5,18 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 
+import AtlasLogo from "@/assets/atlas.svg";
+
 export function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
     <header className="fixed top-0 w-full z-50 border-b border-white/10 backdrop-blur-md bg-black/20">
       <nav className="container mx-auto px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">A</span>
-          </div>
-          <span className="text-lg font-bold text-cyan-400">Atlashost</span>
-        </div>
+        <Link href="/" className="flex items-center gap-2">
+          <AtlasLogo className="h-8 w-8 object-contain" />
+          <span className="text-lg font-bold text-cyan-400">Atlas Hosting</span>
+        </Link>
         <div className="hidden md:flex items-center gap-12">
           <div 
             className="relative"

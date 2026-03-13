@@ -93,16 +93,16 @@ export default async function Topbar({
                   <span>Perfil</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/settings?tab=wallet">
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  <span>Pagamentos</span>
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/settings">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Configurações</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer pointer-events-none" disabled>
+                <Link href="/settings?tab=wallet">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Pagamentos</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
@@ -113,7 +113,7 @@ export default async function Topbar({
             <DropdownMenuSeparator />
             <DropdownMenuGroup className="[&>*]:cursor-pointer">
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger disabled className="pointer-events-none opacity-50">
                   <Users className="mr-2 h-4 w-4" />
                   <span>Acesso</span>
                 </DropdownMenuSubTrigger>

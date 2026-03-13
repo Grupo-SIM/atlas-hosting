@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { CheckCircle2, XCircle, Loader2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import LoadingState from "./LoadingState";
 
 interface DomainResult {
   domain: string;
@@ -107,11 +108,7 @@ export default function DomainSearchResults({
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-green-500" />
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error) {
@@ -250,8 +247,7 @@ export default function DomainSearchResults({
               <Button
                 onClick={handleLoadMore}
                 disabled={isLoadingMore}
-                variant="outline"
-                className="border-white/20 text-white hover:bg-white/10 hover:border-green-500/50 px-8 py-5 rounded-xl gap-2"
+                className="bg-transparent border border-white/20 text-white hover:bg-white/10 hover:border-green-500/50 px-8 py-5 rounded-xl gap-2"
               >
                 {isLoadingMore ? (
                   <>

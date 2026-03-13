@@ -5,22 +5,22 @@ import CountUp from "./CountUp";
 
 const stats = [
   {
-    value: 0,
+    value: 50,
     suffix: "K+",
     label: "Sites desenvolvidos",
   },
   {
-    value: 0,
+    value: 10,
     suffix: "K+",
     label: "Clientes satisfeitos",
   },
   {
-    value: 0,
+    value: 5,
     suffix: "+",
     label: "Anos de Experiência no mercado",
   },
   {
-    value: 0,
+    value: 5,
     suffix: "",
     label: "Avaliação média",
   },

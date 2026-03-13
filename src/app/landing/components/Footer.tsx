@@ -1,20 +1,19 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import AtlasLogo from "@/assets/atlas.svg";
-import { Instagram, Youtube, Twitter, Facebook } from "lucide-react";
+import { Instagram, Youtube, Twitter, Facebook, MessageSquare, Phone, Mail } from "lucide-react";
 import { FaThreads, FaTiktok } from "react-icons/fa6";
 
 export function Footer() {
   return (
-    <footer className="py-12 px-4 border-t border-white/10" style={{ backgroundColor: '#000319' }}>
-      <div className="container mx-auto max-w-6xl">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
-              </div>
-              <span className="text-lg font-bold text-cyan-400">Atlashost</span>
-            </div>
+    <footer className="border-t border-white/10 bg-black pt-20 pb-10">
+      <div className="container mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+          <div className="space-y-4">
+            <Link href="/" className="flex items-center gap-2">
+              <AtlasLogo className="h-8 w-8 object-contain" />
+              <span className="text-lg font-bold text-cyan-400">Atlas Hosting</span>
+            </Link>
             <p className="text-sm text-white/70 mb-4">
               Feito pra quem quer mais do que só<br />
               "estar no ar"

@@ -18,13 +18,13 @@ export default async function Dashboard({
       <WelcomeHeader user={user} />
       <QuickActions />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        <div className="lg:col-span-8 flex flex-col">
-          <Suspense>
+        <div className="lg:col-span-8 flex flex-col h-full">
+          <Suspense fallback={<div className="h-full" />}>
             <RecentActivities searchParams={searchParams} />
           </Suspense>
         </div>
-        <div className="lg:col-span-4 flex flex-col">
-          <Suspense>
+        <div className="lg:col-span-4 flex flex-col h-full">
+          <Suspense fallback={<div className="h-full" />}>
             <ServerStatus user={user} />
           </Suspense>
         </div>

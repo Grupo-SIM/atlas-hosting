@@ -9,7 +9,6 @@ import { Services } from "./components/Services";
 import { Statistics } from "./components/Statistics";
 import { Partners } from "./components/Partners";
 import { Plans } from "./components/Plans";
-import { ContactPlans } from "./components/ContactPlans";
 import { Testimonials } from "./components/Testimonials";
 import { MoreFeatures } from "./components/MoreFeatures";
 import { Projects } from "./components/Projects";
@@ -27,7 +26,7 @@ export const metadata: Metadata = {
 export default function LandingPage() {
   return (
     <SmoothScroll>
-      <div className="min-h-screen bg-[#0a0e27]">
+      <div className="min-h-screen bg-[#0a0e27] overflow-x-hidden w-full">
         <Navbar />
         <Hero />
         <HowItWorks />
@@ -37,7 +36,6 @@ export default function LandingPage() {
         <Features />
         <Partners />
         <Plans />
-        <ContactPlans />
         <div className="relative w-full bg-[#0a0a0a] overflow-hidden">
           <Testimonials />
           <MoreFeatures />

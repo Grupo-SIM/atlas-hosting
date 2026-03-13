@@ -4,15 +4,15 @@ import LogoLoop from './LogoLoop';
 import { SiReact, SiNextdotjs, SiTypescript, SiTailwindcss } from 'react-icons/si';
 
 const techLogos = [
-  { node: <SiReact />, title: "React", href: "https://react.dev" },
-  { node: <SiNextdotjs />, title: "Next.js", href: "https://nextjs.org" },
-  { node: <SiTypescript />, title: "TypeScript", href: "https://www.typescriptlang.org" },
-  { node: <SiTailwindcss />, title: "Tailwind CSS", href: "https://tailwindcss.com" },
+  { node: <SiReact className="text-white/80" />, title: "React", href: "https://react.dev" },
+  { node: <SiNextdotjs className="text-white/80" />, title: "Next.js", href: "https://nextjs.org" },
+  { node: <SiTypescript className="text-white/80" />, title: "TypeScript", href: "https://www.typescriptlang.org" },
+  { node: <SiTailwindcss className="text-white/80" />, title: "Tailwind CSS", href: "https://tailwindcss.com" },
 ];
 
 export function Partners() {
   return (
-    <section className="py-12 bg-background w-full">
+    <section className="py-12 w-full" style={{ backgroundColor: '#000319' }}>
       <div className="w-full">
         <LogoLoop
           logos={techLogos}
@@ -23,7 +23,7 @@ export function Partners() {
           hoverSpeed={0}
           scaleOnHover
           fadeOut
-          fadeOutColor="#0a0a0a"
+          fadeOutColor="#000319"
           ariaLabel="Technology partners"
           width="100%"
         />
