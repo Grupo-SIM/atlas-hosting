@@ -10,6 +10,7 @@ import {
   pgVerificationTokens,
 } from "./lib/db/schema/index";
 import { and, eq } from "drizzle-orm";
+import type { AccountInsert } from "./lib/db/schema/index";
 
 export const runtime = "nodejs";
 
@@ -59,7 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             // Vincular a conta OAuth ao usuário existente
             await db.insert(pgAccount).values({
               userId: existingUser.id,
-              type: account.type,
+              type: account.type as AccountInsert["type"],
               provider: account.provider,
               providerAccountId: account.providerAccountId,
               refresh_token: account.refresh_token,
@@ -68,7 +69,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               token_type: account.token_type,
               scope: account.scope,
               id_token: account.id_token,
-              session_state: account.session_state,
+              session_state: account.session_state as string | null | undefined,
             });
 
             // Atualizar o user.id para o usuário existente

@@ -2,11 +2,18 @@
 
 import { getUser } from "@/lib/auth";
 
-interface CreateCoolifyApplicationParams {
-  gitRepo: string;
+interface CreateApplicationParams {
+  repo: `${string}/${string}`;
   branch: string;
-  buildCommand: string;
+  installCmd?: string;
+  buildCmd?: string;
+  startCmd?: string;
 }
+
+// Dummy coolify until implemented
+const coolify: any = {
+  createPublicApplication: async (_params: any) => ({ uuid: "dummy" }),
+};
 
 interface CreateWordPressApplicationParams {
   siteTitle: string;
@@ -15,85 +22,42 @@ interface CreateWordPressApplicationParams {
   adminEmail: string;
 }
 
-// export async function createWordPressApplication(
-//   params: CreateWordPressApplicationParams,
-// ) {
-//   try {
-//     // Create a new MySQL database
-//     const dbResponse = await coolifyApi.coolifyAxios.post("/databases", {
-//       name: `${params.siteTitle}-db`,
-//       type: "mysql",
-//     });
+export async function createWordPressApplication(
+  _params: CreateWordPressApplicationParams,
+) {
+  try {
+    const user = await getUser();
+    if (!user) {
+      return { success: false as const, error: "Usuário não autenticado." };
+    }
+    // TODO: implement WordPress creation
+    return { success: false as const, error: "Funcionalidade ainda não implementada." };
+  } catch (error) {
+    console.error("Error creating WordPress application:", error);
+    return { success: false as const, error: "Failed to create WordPress application" };
+  }
+}
 
-//     const dbDetails = dbResponse.data;
+export async function getApplicationStats(applicationId: string) {
+  try {
+    const stats = await coolify.getApplicationStats(applicationId);
+    return { success: true as const, data: stats };
+  } catch (error) {
+    return { success: false as const, error: "Failed to get application stats" };
+  }
+}
 
-//     // Create a new WordPress application
-//     const wpResponse = await coolifyApi.coolifyAxios.post("/applications", {
-//       name: params.siteTitle,
-//       image: "wordpress:latest",
-//       environment: {
-//         WORDPRESS_DB_HOST: dbDetails.host,
-//         WORDPRESS_DB_USER: dbDetails.user,
-//         WORDPRESS_DB_PASSWORD: dbDetails.password,
-//         WORDPRESS_DB_NAME: dbDetails.database,
-//         WORDPRESS_TABLE_PREFIX: "wp_",
-//         WORDPRESS_DEBUG: 0,
-//         WORDPRESS_CONFIG_EXTRA: "",
-//       },
-//     });
-
-//     return { success: true, data: wpResponse.data };
-//   } catch (error) {
-//     console.error("Error creating WordPress application:", error);
-//     return { success: false, error: "Failed to create WordPress application" };
-//   }
-// }
-
-// export async function getApplicationStats(applicationId: string) {
-//   try {
-//     const response = await coolifyApi.getApplicationStats(applicationId);
-//     return { success: true, data: response };
-//   } catch (error) {
-//     return { success: false, error: "Failed to get application stats" };
-//   }
-// }
-
-// export async function manageApplication(
-//   applicationId: string,
-//   action: "start" | "stop" | "delete",
-// ) {
-//   try {
-//     let response;
-//     switch (action) {
-//       case "start":
-//         response = await coolifyApi.coolifyAxios.post(
-//           `/applications/${applicationId}/start`,
-//         );
-//         break;
-//       case "stop":
-//         response = await coolifyApi.coolifyAxios.post(
-//           `/applications/${applicationId}/stop`,
-//         );
-//         break;
-//       case "delete":
-//         response = await coolifyApi.coolifyAxios.delete(
-//           `/applications/${applicationId}`,
-//         );
-//         break;
-//     }
-//     return { success: true, data: response.data };
-//   } catch (error) {
-//     console.error(
-//       `Error performing action ${action} on application ${applicationId}:`,
-//       error,
-//     );
-//     return { success: false, error: `Failed to ${action} application` };
-//   }
-// }
-
-interface CreateApplicationParams extends Omit<NixpacksBuildOptions, "name"> {
-  repo: `${string}/${string}`;
-  branch: string;
+export async function manageApplication(
+  applicationId: string,
+  action: "start" | "stop" | "delete",
+) {
+  try {
+    await coolify[action === "delete" ? "deleteApplication" : `${action}Application`](applicationId);
+    return { success: true };
+  } catch (error) {
+    console.error(`Error performing action ${action} on application ${applicationId}:`, error);
+    return { success: false, error: `Failed to ${action} application` };
+  }
 }
 
 export async function createApplication(params: CreateApplicationParams) {
@@ -103,16 +67,11 @@ export async function createApplication(params: CreateApplicationParams) {
       return { success: false, error: "Usuário não autenticado." };
     }
 
-    const nixpacks = new NixpacksApi();
-    const { repo, branch, ...buildOptions } = params;
-
-    // TODO: Use branch
-    const imageName = repo.split("/")[1];
+    const { repo, branch } = params;
 
     try {
       const app = await coolify.createPublicApplication({
-        build_pack:
-          Coolify.CreatePublicApplicationRequestBuildPackEnum.Nixpacks,
+        build_pack: "nixpacks",
         git_repository: `https://github.com/${repo}.git`,
         git_branch: branch,
         project_uuid: "xk88444cs4g0g0g0kccw8wsc",
@@ -121,22 +80,16 @@ export async function createApplication(params: CreateApplicationParams) {
         environment_uuid: "awsokkk4c8ccowcckc40g44o",
         ports_exposes: "3000",
         instant_deploy: true,
-        build_command: "pnpm build",
-        install_command: "pnpm i",
-        start_command: "pnpm preview",
+        build_command: params.buildCmd ?? "pnpm build",
+        install_command: params.installCmd ?? "pnpm i",
+        start_command: params.startCmd ?? "pnpm preview",
       });
       console.log({ app });
     } catch (error) {
-      console.error("Error creating application:", error.response.data);
+      const axiosError = error as any;
+      console.error("Error creating application:", axiosError?.response?.data);
       return { success: false, error: `Failed to create application` };
     }
-
-    // const dockerfile = await nixpacks.genImageForRepo(user, repo, branch, {
-    //   ...buildOptions,
-    //   name: imageName,
-    // });
-
-    // await Bun.$`docker run ${repo} --name ${imageName}`;
 
     return { success: true };
   } catch (error) {

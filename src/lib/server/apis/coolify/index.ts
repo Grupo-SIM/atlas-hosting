@@ -1,4 +1,4 @@
-import { User } from "@/coolify";
+import type { User } from "@/lib/db/schema";
 import axios from "axios";
 import { Resource } from "./types";
 
@@ -10,7 +10,7 @@ export class CoolifyApi {
     },
   });
 
-  constructor(private readonly user: User) {}
+  constructor(private readonly user: User) { }
 
   public async getAvailableResources(): Promise<Resource[]> {
     return await this.client

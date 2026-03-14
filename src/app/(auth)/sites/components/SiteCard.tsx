@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,73 +21,57 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { manageApplication } from "../actions";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import type { ParsedWordPressInstance } from "@/lib/server/utils";
 
-interface Site {
-  id: string;
-  name: string;
-  fqdn: string;
-  status: string;
+export interface SiteCardProps {
+  instance: ParsedWordPressInstance;
+  isLoading: boolean;
+  isBulkMode: boolean;
+  isPending: boolean;
+  selectedInstances: number[];
+  onToggleSelection: (instanceId: number) => void;
+  onDelete: (instance: ParsedWordPressInstance) => void;
 }
 
-interface SiteCardProps {
-  site: Site;
-}
-
-export function SiteCard({ site }: SiteCardProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-
-  const handleAction = async (action: "start" | "stop" | "delete") => {
-    setIsLoading(true);
-    const result = await manageApplication(site.id, action);
-    setIsLoading(false);
-
-    if (result.success) {
-      toast({
-        title: "Sucesso!",
-        description: `Ação ${action} executada com sucesso.`,
-      });
-    } else {
-      toast({
-        title: "Erro!",
-        description: result.error,
-        variant: "destructive",
-      });
-    }
-  };
+export function SiteCard({
+  instance,
+  isLoading,
+  isBulkMode,
+  isPending,
+  selectedInstances,
+  onToggleSelection,
+  onDelete,
+}: SiteCardProps) {
+  const isSelected = selectedInstances.includes(instance.id);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{site.name}</CardTitle>
-        <CardDescription>{site.fqdn}</CardDescription>
+    <Card className={isSelected ? "border-primary" : undefined}>
+      <CardHeader className="flex flex-row items-start gap-3">
+        {isBulkMode && (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onToggleSelection(instance.id)}
+            disabled={isPending}
+            className="mt-1"
+          />
+        )}
+        <div className="flex-1">
+          <CardTitle>{instance.name}</CardTitle>
+          <CardDescription>{instance.domain}</CardDescription>
+        </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-gray-500">
-          Status: {site.status}
-        </p>
+        <p className="text-sm text-gray-500">Status: {instance.status}</p>
+        <p className="text-sm text-gray-500">Caminho: {instance.path}</p>
       </CardContent>
       <CardFooter className="flex justify-end gap-2">
-        <Button
-          variant="outline"
-          onClick={() => handleAction("start")}
-          disabled={isLoading}
-        >
-          {isLoading ? "Iniciando..." : "Iniciar"}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => handleAction("stop")}
-          disabled={isLoading}
-        >
-          {isLoading ? "Parando..." : "Parar"}
-        </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" disabled={isLoading}>
+            <Button
+              variant="destructive"
+              disabled={isLoading || isPending}
+              size="sm"
+            >
               {isLoading ? "Excluindo..." : "Excluir"}
             </Button>
           </AlertDialogTrigger>
@@ -94,16 +79,13 @@ export function SiteCard({ site }: SiteCardProps) {
             <AlertDialogHeader>
               <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
               <AlertDialogDescription>
-                Esta ação não pode ser desfeita. Isso excluirá permanentemente sua
-                aplicação e removerá seus dados de nossos servidores.
+                Esta ação não pode ser desfeita. Isso excluirá permanentemente
+                sua aplicação e removerá seus dados de nossos servidores.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => handleAction("delete")}
-                disabled={isLoading}
-              >
+              <AlertDialogAction onClick={() => onDelete(instance)}>
                 Continuar
               </AlertDialogAction>
             </AlertDialogFooter>

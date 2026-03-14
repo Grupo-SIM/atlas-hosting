@@ -1,0 +1,67 @@
+src/app/(auth)/sites/actions.ts(94,48): error TS2304: Cannot find name 'NixpacksBuildOptions'.
+src/app/(auth)/sites/actions.ts(106,26): error TS2552: Cannot find name 'NixpacksApi'. Did you mean 'nixpacks'?
+src/app/(auth)/sites/actions.ts(113,25): error TS2304: Cannot find name 'coolify'.
+src/app/(auth)/sites/actions.ts(115,11): error TS2304: Cannot find name 'Coolify'.
+src/app/(auth)/sites/actions.ts(130,52): error TS18046: 'error' is of type 'unknown'.
+src/app/(auth)/sites/components/SiteCard.tsx(23,10): error TS2305: Module '"../actions"' has no exported member 'manageApplication'.
+src/app/(auth)/sites/components/SitesList.tsx(22,15): error TS2614: Module '"../page"' has no exported member 'ParsedWordPressInstance'. Did you mean to use 'import ParsedWordPressInstance from "../page"' instead?
+src/app/(auth)/sites/components/SitesList.tsx(200,16): error TS2741: Property 'site' is missing in type '{ instance: ParsedWordPressInstance; isLoading: boolean; isBulkMode: boolean; isPending: boolean; selectedInstances: number[]; onToggleSelection: (instanceId: number) => void; onDelete: (instance: ParsedWordPressInstance) => void; key: any; }' but required in type 'SiteCardProps'.
+src/app/(auth)/sites/components/SitesList.tsx(214,16): error TS2741: Property 'site' is missing in type '{ instance: ParsedWordPressInstance; isLoading: boolean; isBulkMode: boolean; isPending: boolean; selectedInstances: number[]; onToggleSelection: (instanceId: number) => void; onDelete: (instance: ParsedWordPressInstance) => void; key: any; }' but required in type 'SiteCardProps'.
+src/app/(auth)/sites/components/SiteStats.tsx(11,10): error TS2305: Module '"../actions"' has no exported member 'getApplicationStats'.
+src/app/(auth)/sites/new/components/DeploymentForm.tsx(68,7): error TS2322: Type 'string' is not assignable to type '`${string}/${string}`'.
+src/app/(auth)/sites/new/components/WordPressDeploymentForm.tsx(17,10): error TS2305: Module '"../../actions"' has no exported member 'createWordPressApplication'.
+src/app/(auth)/sites/new/page.tsx(4,10): error TS2724: '"./interface"' has no exported member named 'TemplateResponse'. Did you mean 'TemplateApiResponse'?
+src/app/(auth)/sites/new/page.tsx(24,55): error TS2304: Cannot find name 'TemplateApiResponse'.
+src/app/(auth)/sites/new/page.tsx(30,8): error TS2741: Property 'user' is missing in type '{ templates: any; tags: any; }' but required in type '{ templates: TemplateData[]; tags: string[]; user: User & { githubToken?: string | null | undefined; }; }'.
+src/app/api-docs/page.tsx(8,16): error TS7016: Could not find a declaration file for module 'swagger-ui-react'. 'C:/Users/breno/Desktop/JB/atlas-hosting/node_modules/swagger-ui-react/index.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/swagger-ui-react` if it exists or add a new declaration (.d.ts) file containing `declare module 'swagger-ui-react';`
+src/app/api-docs/page.tsx(46,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: {}, context?: any): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<...> | Component<...> | null | undefined', gave the following error.
+    Type '{ spec: any; }' is not assignable to type 'IntrinsicAttributes'.
+      Property 'spec' does not exist on type 'IntrinsicAttributes'.
+  Overload 2 of 2, '(props: {}): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<...> | Component<...> | null | undefined', gave the following error.
+    Type '{ spec: any; }' is not assignable to type 'IntrinsicAttributes'.
+      Property 'spec' does not exist on type 'IntrinsicAttributes'.
+src/app/api/auth/resend-verification/route.ts(47,7): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/landing/components/hyperspeed/Hyperspeed.tsx(4,24): error TS7016: Could not find a declaration file for module 'three'. 'C:/Users/breno/Desktop/JB/atlas-hosting/node_modules/three/build/three.module.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/three` if it exists or add a new declaration (.d.ts) file containing `declare module 'three';`
+src/app/landing/components/hyperspeed/Hyperspeed.tsx(472,33): error TS7006: Parameter 'shader' implicitly has an 'any' type.
+src/app/landing/components/hyperspeed/Hyperspeed.tsx(596,33): error TS7006: Parameter 'shader' implicitly has an 'any' type.
+src/app/landing/components/hyperspeed/Hyperspeed.tsx(728,33): error TS7006: Parameter 'shader' implicitly has an 'any' type.
+src/auth.ts(61,15): error TS2769: No overload matches this call.
+  Overload 2 of 2, '(values: { userId: string | SQL<unknown> | Placeholder<string, any>; type: SQL<unknown> | AdapterAccountType | Placeholder<string, any>; ... 8 more ...; session_state?: string | ... 3 more ... | undefined; }[]): PgInsertBase<...>', gave the following error.
+    Object literal may only specify known properties, and 'userId' does not exist in type '{ userId: string | SQL<unknown> | Placeholder<string, any>; type: SQL<unknown> | AdapterAccountType | Placeholder<string, any>; ... 8 more ...; session_state?: string | ... 3 more ... | undefined; }[]'.
+src/components/auth/EmailVerificationCodeForm.tsx(162,15): error TS2322: Type '(el: HTMLInputElement | null) => HTMLInputElement | null' is not assignable to type 'Ref<HTMLInputElement> | undefined'.
+  Type '(el: HTMLInputElement | null) => HTMLInputElement | null' is not assignable to type '(instance: HTMLInputElement | null) => void | (() => VoidOrUndefinedOnly)'.
+    Type 'HTMLInputElement | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+      Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+src/components/Hyperspeed.tsx(2,24): error TS7016: Could not find a declaration file for module 'three'. 'C:/Users/breno/Desktop/JB/atlas-hosting/node_modules/three/build/three.module.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/three` if it exists or add a new declaration (.d.ts) file containing `declare module 'three';`
+src/components/Hyperspeed.tsx(535,32): error TS7006: Parameter 'shader' implicitly has an 'any' type.
+src/components/Hyperspeed.tsx(665,32): error TS7006: Parameter 'shader' implicitly has an 'any' type.
+src/components/Hyperspeed.tsx(801,32): error TS7006: Parameter 'shader' implicitly has an 'any' type.
+src/lib/auth/utils.ts(206,9): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/lib/server/apis/coolify/index.ts(1,22): error TS2307: Cannot find module '@/coolify' or its corresponding type declarations.
+src/plesk/apis/authentication-api.ts(187,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/cli-api.ts(178,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/clients-api.ts(493,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/clients-api.ts(726,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/databases-api.ts(261,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/databases-api.ts(570,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/databases-api.ts(651,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/dnsapi.ts(350,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/dnsapi.ts(444,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/domains-api.ts(421,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/domains-api.ts(590,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/domains-api.ts(671,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/extensions-api.ts(479,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/ftp-users-api.ts(276,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/ftp-users-api.ts(357,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/server-api.ts(173,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/server-api.ts(318,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/tests/test-complete-themes.ts(3,52): error TS2307: Cannot find module '@/app/(auth)/wordpress/actions' or its corresponding type declarations.
+src/tests/test-complete-themes.ts(15,20): error TS7006: Parameter 'site' implicitly has an 'any' type.
+src/tests/test-complete-themes.ts(15,26): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/tests/test-complete-themes.ts(22,30): error TS7006: Parameter 'theme' implicitly has an 'any' type.

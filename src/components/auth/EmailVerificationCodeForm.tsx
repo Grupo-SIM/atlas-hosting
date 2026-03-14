@@ -62,7 +62,7 @@ export default function EmailVerificationCodeForm({ email: initialEmail, redirec
   const handleInputChange = (index: number, value: string) => {
     // Only allow digits
     const digit = value.replace(/\D/g, "").slice(0, 1);
-    
+
     if (digit) {
       const newCode = codeValue.split("");
       newCode[index] = digit;
@@ -159,7 +159,7 @@ export default function EmailVerificationCodeForm({ email: initialEmail, redirec
           {[0, 1, 2, 3, 4].map((index) => (
             <input
               key={index}
-              ref={(el) => (inputRefs.current[index] = el)}
+              ref={(el) => { inputRefs.current[index] = el; }}
               type="text"
               inputMode="numeric"
               maxLength={1}

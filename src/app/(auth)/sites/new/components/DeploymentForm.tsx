@@ -65,7 +65,7 @@ export function DeploymentForm({ user }: DeploymentFormProps) {
     }
 
     const result = await createApplication({
-      repo: gitRepo,
+      repo: gitRepo as `${string}/${string}`,
       branch,
       installCmd: installCommand || undefined,
       buildCmd: buildCommand || undefined,

@@ -19,7 +19,7 @@ import {
 } from "react";
 import { BulkActionButtons } from "./BulkActionsButton";
 import { SiteCard } from "./SiteCard";
-import type { ParsedWordPressInstance } from "../page";
+import type { ParsedWordPressInstance } from "@/lib/server/utils";
 
 export interface SitesListProps {
   readyInstances: ParsedWordPressInstance[];

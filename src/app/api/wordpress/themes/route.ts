@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import {} from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import {
   activateTheme,
   updateTheme,
   deleteTheme,
   installTheme,
-} from "@/app/(auth)/wordpress/actions";
+} from "@/app/(auth)/sites/wordpress-specific/actions";
 
 export async function POST(req: NextRequest) {
   try {

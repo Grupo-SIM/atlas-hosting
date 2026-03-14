@@ -1,0 +1,25 @@
+src/app/(auth)/sites/components/SiteStats.tsx(29,20): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string | null>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string | null>'.
+src/app/landing/components/hyperspeed/Hyperspeed.tsx(472,47): error TS2694: Namespace '"C:/Users/breno/Desktop/JB/atlas-hosting/node_modules/@types/three/build/three.module"' has no exported member 'Shader'.
+src/app/landing/components/hyperspeed/Hyperspeed.tsx(596,47): error TS2694: Namespace '"C:/Users/breno/Desktop/JB/atlas-hosting/node_modules/@types/three/build/three.module"' has no exported member 'Shader'.
+src/app/landing/components/hyperspeed/Hyperspeed.tsx(728,47): error TS2694: Namespace '"C:/Users/breno/Desktop/JB/atlas-hosting/node_modules/@types/three/build/three.module"' has no exported member 'Shader'.
+src/components/Hyperspeed.tsx(535,47): error TS2694: Namespace '"C:/Users/breno/Desktop/JB/atlas-hosting/node_modules/@types/three/build/three.module"' has no exported member 'Shader'.
+src/components/Hyperspeed.tsx(665,47): error TS2694: Namespace '"C:/Users/breno/Desktop/JB/atlas-hosting/node_modules/@types/three/build/three.module"' has no exported member 'Shader'.
+src/lib/server/apis/coolify/index.ts(1,22): error TS2307: Cannot find module '@/coolify' or its corresponding type declarations.
+src/plesk/apis/authentication-api.ts(187,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/cli-api.ts(178,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/clients-api.ts(493,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/clients-api.ts(726,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/databases-api.ts(261,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/databases-api.ts(570,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/databases-api.ts(651,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/dnsapi.ts(350,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/dnsapi.ts(444,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/domains-api.ts(421,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/domains-api.ts(590,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/domains-api.ts(671,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/extensions-api.ts(479,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/ftp-users-api.ts(276,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/ftp-users-api.ts(357,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/server-api.ts(173,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.
+src/plesk/apis/server-api.ts(318,7): error TS18048: 'localVarRequestOptions.headers' is possibly 'undefined'.

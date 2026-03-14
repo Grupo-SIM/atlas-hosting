@@ -203,7 +203,7 @@ export async function createUser(
         newUser[0].email,
         newUser[0].name,
         verificationToken.token,
-        verificationToken.code
+        verificationToken.code ?? ""
       );
     } catch (error) {
       console.error("Failed to send verification/welcome email:", error);

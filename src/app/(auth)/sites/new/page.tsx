@@ -1,7 +1,7 @@
 import { getUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import BentoGridComponent from "./components/BentoGrid";
-import { TemplateResponse } from "./interface";
+import { TemplateApiResponse } from "./interface";
 
 export default async function NewSitePage() {
   const user = await getUser();
@@ -27,7 +27,7 @@ export default async function NewSitePage() {
 
   return (
     <div className="container mx-auto py-8">
-      <BentoGridComponent templates={templateData} tags={tagsData} />
+      <BentoGridComponent templates={templateData} tags={tagsData} user={user} />
     </div>
   );
 }

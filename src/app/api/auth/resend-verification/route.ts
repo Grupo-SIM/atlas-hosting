@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       user.email,
       user.name,
       verificationToken.token,
-      verificationToken.code
+      verificationToken.code ?? ""
     );
 
     return NextResponse.json({

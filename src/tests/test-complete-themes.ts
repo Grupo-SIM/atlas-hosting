@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { getWordPressSitesForSelectedDomain } from "@/app/(auth)/wordpress/actions";
+import { getWordPressSitesForSelectedDomain } from "@/app/(auth)/sites/wordpress-specific/actions";
 
 async function testCompleteThemesImplementation() {
   console.log("🎨 Testing Complete Themes Implementation\n");
