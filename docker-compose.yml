@@ -1,53 +1,125 @@
----
-version: "2.1"
+version: "3.8"
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: atlas-hosting-postgres
+  atlas-hosting:
+    image: brenolima1706/atlas-hosting:latest
     environment:
-      - POSTGRES_USER=atlas
-      - POSTGRES_PASSWORD=atlas123
-      - POSTGRES_DB=atlas_hosting
-      - PGDATA=/var/lib/postgresql/data/pgdata
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U atlas"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - NODE_ENV=production
+      - NEXT_PUBLIC_URL=https://app.atlashosting.com.br
+      - NEXT_PUBLIC_BASE_URL=https://app.atlashosting.com.br
+      - AUTH_TRUST_HOST=true
 
-  swag:
-    image: lscr.io/linuxserver/swag
-    container_name: swag
-    cap_add:
-      - NET_ADMIN
-    environment:
-      - PUID=1000
-      - PGID=1000
+      # Database
+      - DATABASE_URL=postgresql://postgres:postgres@postgres_prod:5432/atlas_hosting
+      - DIRECT_URL=postgresql://postgres:postgres@postgres_prod:5432/atlas_hosting
+
+      # Auth
+      - AUTH_SECRET=QrfzhYA9oJ5aWqkrFoY55M+6Olm6Mj2ow9knfm/U6hA=
+      - JWT_AUTH_SECRET=JALFnsUaALAKwmltCWhWYvyqpmjc6Wlq
+      - AUTH_GITHUB_ID=Ov23liVTVJJKRFMyVISJ
+      - AUTH_GITHUB_SECRET=6a54fff1a3a579ba946f79890cd89e6210dac5f5
+      - AUTH_GOOGLE_ID=404406884763-8krdr3j009p43741msrht7ir0dpcdcce.apps.googleusercontent.com
+      - AUTH_GOOGLE_SECRET=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
+
+      # SMTP
+      - SMTP_HOST=177.154.190.249
+      - SMTP_PORT=465
+      - SMTP_SECURE=true
+      - SMTP_USER=noreply@jbmidia.com
+      - SMTP_PASSWORD=j0M$$s5e55
+      - SMTP_FROM_EMAIL=noreply@jbmidia.com
+
+      # Plesk API
+      - PLESK_API_URL=https://pro120.dns-pro.com.br:8443/api/v2
+      - PLESK_API_KEY=63d8cf19-4805-7419-c0c7-ba587299fee3
+      - PLESK_ROOT_USER=jbmi4779
+      - PLESK_ROOT_PASSWORD=p.9:gxH513nCGE
+      - PLESK_XML_API_URL=https://genesis-br.meuservidor.inf.br/enterprise/control/agent.php
+      - PLESK_API_LOGIN=jbmi4779
+      - PLESK_API_PASSWORD=p.9:gxH513nCGE
+      - NEXT_PUBLIC_PLESK_URL=https://painel.meuservidor.inf.br/api/
+
+      # Namesilo
+      - NAMESILO_API_KEY=904ec79639114d657c9567
+      - NAMESILO_API_USER=atlasHosting
+      - NAMESILO_API_URL=https://api.namecheap.com/xml.response
+      - NAMESILO_PROFIT_FEE=0.05
+      - DOMAIN_FEE_ENABLED=false
+
+      # Namecheap
+      - NAMECHEAP_API_KEY=5f0b033319554c989b81d552885f1559
+      - NAMECHEAP_API_USER=atlasHosting
+      - NAMECHEAP_API_URL=https://api.namecheap.com/xml.response
+
+      # DOM API
+      - DOM_API_KEY=68c879c7-a907-4fc9-be25-233aac301d25
+      - NEXT_PUBLIC_DOM_PUBLIC_KEY=pk_17549ed4-649c-4a1b-9eae-ed2e9f3a5236
+      - DOM_WITHDRAWAL_RECEIVER_NAME=Lucas Garrafielo
+      - DOM_WITHDRAWAL_RECEIVER_DOCUMENT=38486051000148
+      - DOM_WITHDRAWAL_PIX_KEY=9ed08c0f-2df5-4b78-b30a-61494ec8ca3b
+      - DOM_WITHDRAWAL_KEY_TYPE=CHAVE_ALEATORIA
+      - DOM_WITHDRAWAL_FEE_PERCENTAGE=0.01
+      - DOM_WITHDRAWAL_SIGNATURE_KEY_PATH=dom_signature_key.pem
+
+      # Coolify
+      - COOLIFY_API_KEY=1|Obt21a1DyTPkD7Af89Vs5sWoZOcLU8T2nxk179GR518d2d3d
+      - COOLIFY_API_URL=http://34.201.12.154:8000/api/v1
+
+      # Dokploy
+      - DOKPLOY_API_KEY=luOLpOjSaIspnjqiAKGeosnNkhIUtMnoLWRXfhvHEYxWCuMdxEQieTGuKyFzKkIQ
+
+      # Zoho
+      - ZOHO_CLIENT_ID=1000.MR9M50OWLP1GLPV3GER0HLGW4R8UVO
+      - ZOHO_CLIENT_SECRET=98532f0ce0832f5edf30fdd308baf7a09d9a1a055f
+
+      # Encryption
+      - ENCRYPT_KEY=c59914a31fbcf56c174c51a34c52f8db698cc923d22a580c713078a01f6a667cc253a20e6913304c0bb30b29d58267d46bfa8243e1c01904246736fe0db0a8a50cdc12b1b0afd933018dc2ac690209083e509957095154e37df2b2e8fc8d4d9d78725f2b8f9affc8d9dce6a260531c9c10104962fcfe893e1bec214a0bf9
+      - EMAIL_CREDENTIALS_ENCRYPTION_KEY=b3c7f83b3a4d44fe8f73cebdbdec76ef4a63ae6564b6e71212522ee9ae1e4154
+
+      # Mailserver DB
+      - MAILSERVER_DB_HOST=localhost
+      - MAILSERVER_DB_PORT=5433
+      - MAILSERVER_DB_NAME=mailserver
+      - MAILSERVER_DB_USER=mailserver
+      - MAILSERVER_DB_PASSWORD=atlas_mailserver_db_2024!
+
+      # Misc
+      - SERVER_IP=186.194.55.237
+      - PUBLIC_IP=177.37.141.133
+      - ADMIN_PHONENUMBER=+55.83991598702
+      - IP2LOCATION_API_KEY=5D1A8CDD138DB84ADBB3E8F26657860A
+      - GEMINI_API_KEY=AIzaSyCis8juz6gOqAkXXSLwSvbzgzpUW2AIVWM
+      - DYNV6_TOKEN=LzeSetzo1Ry6fvsR7Zsmq4gofomKD3
       - TZ=America/Fortaleza
-      - URL=coolify.atlashosting.com.br
-      # - SUBDOMAINS=www,
-      - VALIDATION=http
-      # - CERTPROVIDER= #optional
-      - DNSPLUGIN=cloudflare #optional
-      - EMAIL=lucasgarrafielo@gmail.com #optional
-      - ONLY_SUBDOMAINS=false #optional
-      # - EXTRA_DOMAINS=<extradomains> #optional
-      - STAGING=false #optional
-    volumes:
-      - ./.config/swag:/config
-    ports:
-      - 443:443
-      - 80:80
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - DS_TAG=25844
+      - DS_ALGO=13
+      - DS_DIGEST_TYPE=2
+      - DS_DIGEST=d9adf8df22f42e6805f4c18b26ef5357164ed776af6963770719eaccd113891e
+    networks:
+      - externa
+      - interna
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        parallelism: 2
+        order: stop-first
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.atlas-hosting.loadbalancer.server.port=3000"
+        - "traefik.http.services.atlas-hosting.loadbalancer.passHostHeader=true"
+        - "traefik.http.routers.atlas-hosting.service=atlas-hosting"
+        - "traefik.http.routers.atlas-hosting.rule=Host(`app.atlashosting.com.br`)"
+        - "traefik.http.routers.atlas-hosting.tls.certresolver=le"
+        - "traefik.http.routers.atlas-hosting.entrypoints=websecure"
+        - "traefik.http.routers.atlas-hosting.tls=true"
 
-volumes:
-  postgres_data:
+networks:
+  externa:
+    external: true
+  interna:
+    external: true

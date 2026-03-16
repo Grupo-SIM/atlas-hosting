@@ -7,6 +7,7 @@ import type { DomainsCheckUserParams } from "@/lib/server/apis/namecheap/types";
 import { inArray } from "drizzle-orm";
 import { cache } from "react";
 
+
 export const getDomainData = cache(async function getDomainData(
   searchQuery: string
 ): Promise<DomainData> {
@@ -30,12 +31,32 @@ export const getDomainData = cache(async function getDomainData(
       return null;
     }
 
-    const pricings = await db.query.pgDomainPricingCache.findMany({
-      where: inArray(
-        pgDomainPricingCache.tld,
-        domainsToSearch.map((d) => d.split(".").pop() as string)
-      ),
-    });
+    const tldKeys = [...new Set(domainsToSearch.map((d) => d.split(".").pop() as string))];
+
+    let pricings: Array<{ tld: string; price: number | null; renew: number | null; transfer: number | null; currency?: string | null }> =
+      await db.query.pgDomainPricingCache.findMany({
+        where: inArray(pgDomainPricingCache.tld, tldKeys),
+      });
+
+    // Fallback: busca direto na Namecheap para TLDs sem cache
+    const missingTlds = tldKeys.filter((t) => !pricings.some((p) => p.tld === t));
+    if (missingTlds.length > 0) {
+      const settled = await Promise.allSettled(
+        missingTlds.map(async (tld) => {
+          const data = await namecheapApi.getPricing(tld);
+          const p = data[0]?.Prices.find(
+            (x) => x.Duration === 1 && x.DurationType === "YEAR"
+          );
+          const raw = p?.YourPrice ?? p?.Price ?? 0;
+          return { tld, price: raw, renew: raw * 1.1, transfer: raw * 0.8, currency: p?.Currency?.toUpperCase() ?? "USD" };
+        })
+      );
+      for (const result of settled) {
+        if (result.status === "fulfilled" && result.value.price) {
+          pricings.push(result.value);
+        }
+      }
+    }
 
     const pricingRecord = Object.fromEntries(pricings.map((p) => [p.tld, p]));
 
@@ -67,6 +88,17 @@ export const getDomainData = cache(async function getDomainData(
         const fee = feeEnabled
           ? 1 + ((await db.query.pgSystemConfig.findFirst())?.domainFee ?? 1)
           : 1;
+
+        if (!standardBrlPrices) {
+          return {
+            domain: fullDomainName,
+            available: domainDetail.Available,
+            priceBRL: 0,
+            renewBRL: 0,
+            transferBRL: 0,
+            isPremium: domainDetail.IsPremiumName,
+          };
+        }
 
         return {
           domain: fullDomainName,
