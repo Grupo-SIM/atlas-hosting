@@ -85,9 +85,26 @@ export const getDomainData = cache(async function getDomainData(
         const standardBrlPrices = pricingRecord[tldForLookup];
 
         const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
-        const fee = feeEnabled
-          ? 1 + ((await db.query.pgSystemConfig.findFirst())?.domainFee ?? 1)
-          : 1;
+        let fee = 1;
+        if (feeEnabled) {
+          try {
+            const config = await db.query.pgSystemConfig.findFirst();
+            fee = config ? 1 + (config.domainFee ?? 5) / 100 : 1.05;
+            console.log("[getDomainData] fee config:", { domainFee: config?.domainFee, fee });
+          } catch { fee = 1.05; }
+        }
+
+        console.log("[getDomainData]", {
+          domain: fullDomainName,
+          tldForLookup,
+          DOMAIN_FEE_ENABLED: process.env.DOMAIN_FEE_ENABLED,
+          feeEnabled,
+          fee,
+          rawPriceUSD: standardBrlPrices?.price,
+          rawRenewUSD: standardBrlPrices?.renew,
+          currency: standardBrlPrices?.currency,
+          source: standardBrlPrices ? "cache/namecheap" : "missing",
+        });
 
         if (!standardBrlPrices) {
           return {
@@ -100,27 +117,26 @@ export const getDomainData = cache(async function getDomainData(
           };
         }
 
+        const alreadyBrl = standardBrlPrices.currency === "BRL";
+        const toPrice = async (amount: number) =>
+          alreadyBrl
+            ? amount
+            : await currencyConversion.convert({ from: "usd", to: "brl", amount });
+
+        console.log("[getDomainData] price calc:", {
+          domain: fullDomainName,
+          alreadyBrl,
+          fee,
+          price: standardBrlPrices.price,
+          finalPrice: (standardBrlPrices.price ?? 0) * fee,
+        });
+
         return {
           domain: fullDomainName,
           available: domainDetail.Available,
-          priceBRL:
-            (await currencyConversion.convert({
-              from: "usd",
-              to: "brl",
-              amount: standardBrlPrices.price ?? 0,
-            })) * fee,
-          renewBRL:
-            (await currencyConversion.convert({
-              from: "usd",
-              to: "brl",
-              amount: standardBrlPrices.renew ?? 0,
-            })) * fee,
-          transferBRL:
-            (await currencyConversion.convert({
-              from: "usd",
-              to: "brl",
-              amount: standardBrlPrices.transfer ?? 0,
-            })) * fee,
+          priceBRL: (await toPrice(standardBrlPrices.price ?? 0)) * fee,
+          renewBRL: (await toPrice(standardBrlPrices.renew ?? 0)) * fee,
+          transferBRL: (await toPrice(standardBrlPrices.transfer ?? 0)) * fee,
           isPremium: domainDetail.IsPremiumName,
         };
       })

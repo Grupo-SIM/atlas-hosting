@@ -1,5 +1,4 @@
 import type { DomainData } from "@/app/(auth)/domain/types";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -7,9 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { toBrl } from "@/lib/utils";
-import { CheckCircle2, XCircle } from "lucide-react";
-import Link from "next/link";
+import { DomainSuggestionsClient } from "./DomainSuggestionsClient";
 
 export async function DomainSuggestions({
   domainDataPromise,
@@ -19,6 +16,10 @@ export async function DomainSuggestions({
   searchQuery: string;
 }) {
   const domainData = await domainDataPromise;
+
+  const domainName = searchQuery.includes(".")
+    ? searchQuery.split(".")[0]
+    : searchQuery;
 
   if (!domainData?.extraDomains || domainData.extraDomains.length === 0) {
     return (
@@ -45,48 +46,10 @@ export async function DomainSuggestions({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4 max-h-full">
-          {domainData.extraDomains.map((domain) => (
-            <div
-              key={domain.domain}
-              className="flex items-center justify-between gap-4 p-4 border rounded-lg"
-            >
-              <div className="flex items-center gap-4">
-                {domain.available ? (
-                  <CheckCircle2 className="h-6 w-6 text-green-500 flex-shrink-0" />
-                ) : (
-                  <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />
-                )}
-                <div>
-                  <h3 className="font-semibold">{domain.domain}</h3>
-                  {domain.available ? (
-                    <div className="flex flex-col gap-1 my-1">
-                      <p className="text-sm text-muted-foreground">
-                        Preço de registro: {toBrl(domain.priceBRL)}
-                        {domain.isPremium && " (Premium)"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Preço de renovação: {toBrl(domain.renewBRL)}
-                        {domain.isPremium && " (Premium)"}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Domínio não disponível
-                    </p>
-                  )}
-                </div>
-              </div>
-              {domain.available && (
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/domain/register?domain=${domain.domain}`}>
-                    Registrar
-                  </Link>
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
+        <DomainSuggestionsClient
+          initialDomains={domainData.extraDomains}
+          domainName={domainName}
+        />
       </CardContent>
     </Card>
   );

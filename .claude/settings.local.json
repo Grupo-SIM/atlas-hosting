@@ -5,7 +5,9 @@
       "WebFetch(domain:api.umbler.com)",
       "Bash(ls:*)",
       "Bash(ping:*)",
-      "Bash(bun run build:*)"
+      "Bash(bun run build:*)",
+      "Bash(docker builder prune:*)",
+      "Bash(docker build:*)"
     ]
   }
 }

@@ -186,11 +186,12 @@ export default async function DomainPage({
           <RegisterDomainSearch domain={domain} />
         </div>
 
-        <Suspense fallback={<div>Carregando extensões de domínio...</div>}>
+        {/* TODO: reativar quando necessário */}
+        {/* <Suspense fallback={<div>Carregando extensões de domínio...</div>}>
           <DomainExtensionsGrid
             allDomainPricesFromDbPromise={allDomainPricesFromDbPromise}
           />
-        </Suspense>
+        </Suspense> */}
 
         {domain && (
           <Suspense fallback={<div>Verificando disponibilidade...</div>}>

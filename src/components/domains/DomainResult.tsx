@@ -46,19 +46,11 @@ export async function DomainResult({
 
   const domainData = await getDomainData(domain as string);
 
-  const domainPricing = await getDomainPricing(
-    domain?.split(".").pop() as string
-  ).catch(() => null);
-
   const selectedYears = searchParams.years ? parseInt(searchParams.years) : 1;
 
-  let price =
-    domainPricing?.Prices?.find(
-      (p) => p.DurationType === "YEAR" && p.Duration === selectedYears
-    )?.Price ??
-    domainPricing?.Prices?.find(
-      (p) => p.DurationType === "YEAR" && p.Duration === 1
-    )?.Price;
+  let price = domainData?.domain?.priceBRL
+    ? domainData.domain.priceBRL * selectedYears
+    : undefined;
 
   if (!domainData?.domain || !price) {
     return (
