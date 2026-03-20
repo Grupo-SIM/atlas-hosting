@@ -86,25 +86,13 @@ export const getDomainData = cache(async function getDomainData(
 
         const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
         let fee = 1;
+        const flatFee = feeEnabled ? 4 : 0;
         if (feeEnabled) {
           try {
             const config = await db.query.pgSystemConfig.findFirst();
-            fee = config ? 1 + (config.domainFee ?? 5) / 100 : 1.05;
-            console.log("[getDomainData] fee config:", { domainFee: config?.domainFee, fee });
-          } catch { fee = 1.05; }
+            fee = config ? 1 + (config.domainFee ?? 10) / 100 : 1.10;
+          } catch { fee = 1.10; }
         }
-
-        console.log("[getDomainData]", {
-          domain: fullDomainName,
-          tldForLookup,
-          DOMAIN_FEE_ENABLED: process.env.DOMAIN_FEE_ENABLED,
-          feeEnabled,
-          fee,
-          rawPriceUSD: standardBrlPrices?.price,
-          rawRenewUSD: standardBrlPrices?.renew,
-          currency: standardBrlPrices?.currency,
-          source: standardBrlPrices ? "cache/namecheap" : "missing",
-        });
 
         if (!standardBrlPrices) {
           return {
@@ -123,20 +111,12 @@ export const getDomainData = cache(async function getDomainData(
             ? amount
             : await currencyConversion.convert({ from: "usd", to: "brl", amount });
 
-        console.log("[getDomainData] price calc:", {
-          domain: fullDomainName,
-          alreadyBrl,
-          fee,
-          price: standardBrlPrices.price,
-          finalPrice: (standardBrlPrices.price ?? 0) * fee,
-        });
-
         return {
           domain: fullDomainName,
           available: domainDetail.Available,
-          priceBRL: (await toPrice(standardBrlPrices.price ?? 0)) * fee,
-          renewBRL: (await toPrice(standardBrlPrices.renew ?? 0)) * fee,
-          transferBRL: (await toPrice(standardBrlPrices.transfer ?? 0)) * fee,
+          priceBRL: (await toPrice(standardBrlPrices.price ?? 0)) * fee + flatFee,
+          renewBRL: (await toPrice(standardBrlPrices.renew ?? 0)) * fee + flatFee,
+          transferBRL: (await toPrice(standardBrlPrices.transfer ?? 0)) * fee + flatFee,
           isPremium: domainDetail.IsPremiumName,
         };
       })

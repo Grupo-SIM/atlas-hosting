@@ -78,13 +78,15 @@ export async function loadMoreDomainSuggestions(
 
     const pricingRecord = Object.fromEntries(pricings.map((p) => [p.tld, p]));
 
-    let fee = 1.05;
-    if (process.env.DOMAIN_FEE_ENABLED !== "false") {
+    const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
+    let fee = 1;
+    const flatFee = feeEnabled ? 4 : 0;
+    if (feeEnabled) {
       try {
         const config = await db.query.pgSystemConfig.findFirst();
-        fee = config ? 1 + (config.domainFee ?? 5) / 100 : 1.05;
+        fee = config ? 1 + (config.domainFee ?? 10) / 100 : 1.10;
       } catch {
-        fee = 1.05;
+        fee = 1.10;
       }
     }
 
@@ -131,9 +133,9 @@ export async function loadMoreDomainSuggestions(
         return {
           domain: fullDomainName,
           available: domainDetail.Available,
-          priceBRL: (await toPrice(pricing.price ?? 0)) * fee,
-          renewBRL: (await toPrice(pricing.renew ?? 0)) * fee,
-          transferBRL: (await toPrice(pricing.transfer ?? 0)) * fee,
+          priceBRL: (await toPrice(pricing.price ?? 0)) * fee + flatFee,
+          renewBRL: (await toPrice(pricing.renew ?? 0)) * fee + flatFee,
+          transferBRL: (await toPrice(pricing.transfer ?? 0)) * fee + flatFee,
           isPremium: domainDetail.IsPremiumName,
         };
       })
