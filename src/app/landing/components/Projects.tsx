@@ -1,92 +1,136 @@
 "use client";
 
-import { MousePointerClick, Zap, Network, GraduationCap, Code, Globe2 } from "lucide-react";
+import { motion } from "motion/react";
+import Image from "next/image";
 
 const projects = [
   {
-    icon: MousePointerClick,
-    title: "Um site, um clique",
-    subtitle: "Construtor de sites inteligente",
-    description: "Defina o padrão de sites que desejar, seja uma página de vendas, institucional ou outro, e, com um único clique, ele estará pronto. Basta substituir textos e imagens e seu site estará no ar.",
-    status: "EM BREVE",
+    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/2150169850.jpg",
+    tag: "UM SITE, UM CLIQUE",
+    title: "Construtor de sites inteligente",
+    desc: "Defina o padrão de sites que desejar, seja uma página de vendas, institucional ou outro, e, com um único clique, ele estará pronto. Basta substituir textos e imagens e seu site estará no ar.",
   },
   {
-    icon: Zap,
-    title: "Otimização da experiência",
-    subtitle: "Ferramentas Exclusivas",
-    description: "Trazer recursos avançados e mais poder para o seu site — sem custos adicionais. Nosso objetivo é fornecer ferramentas práticas para otimizar o tempo de todos que trabalham com alguma estrutura digital.",
-    status: "EM BREVE",
+    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/it-engineers-in-server-room.jpg",
+    tag: "OTIMIZAÇÃO DA EXPERIÊNCIA",
+    title: "Ferramentas Exclusivas",
+    desc: "Trazer recursos avançados e mais poder para o seu site — sem custos adicionais. Nosso objetivo é fornecer ferramentas práticas para otimizar o tempo de todos que trabalham com alguma estrutura digital.",
   },
   {
-    icon: Network,
-    title: "nETWORK",
-    subtitle: "Parcerias Estratégicas",
-    description: "Estamos sempre em busca das melhores ferramentas do mercado para integrar diretamente à nossa plataforma. Uma boa parceria abre portas, fortalece o branding e melhora a experiência dos usuários.",
-    status: "EM BREVE",
+    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/governmental-hackers-analyzing-cyber-threats-on-big-screens.jpg",
+    tag: "NETWORK",
+    title: "Parcerias Estratégicas",
+    desc: "Estamos sempre em busca das melhores ferramentas do mercado para integrar diretamente à nossa plataforma. Uma boa parceria abre portas, fortalece o branding e melhora a experiência dos usuários.",
   },
   {
-    icon: GraduationCap,
-    title: "Conhecimento",
-    subtitle: "Academia Atlas",
-    description: "Uma seção de cursos e tutoriais exclusivos para nossos clientes, cobrindo desde como criar seu primeiro site até estratégias avançadas de marketing digital.",
-    status: "EM BREVE",
+    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/2150169858.jpg",
+    tag: "CONHECIMENTO",
+    title: "Academia Atlas",
+    desc: "Uma seção de cursos e tutoriais exclusivos para nossos clientes, cobrindo desde como criar seu primeiro site até estratégias avançadas de marketing digital.",
   },
   {
-    icon: Code,
-    title: "Tecnologia",
-    subtitle: "Infraestrutura pra sistemas",
-    description: "Estamos preparando uma estrutura robusta, segura e escalável para quem precisa hospedar sistemas web, APIs e aplicações mais exigentes. sem as complicações dos servidores tradicionais.",
-    status: "EM BREVE",
+    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/2151003791.jpg",
+    tag: "TECNOLOGIA",
+    title: "Infraestrutura pra sistemas",
+    desc: "Estamos preparando uma estrutura robusta, segura e escalável para quem precisa hospedar sistemas web, APIs e aplicações mais exigentes. sem as complicações dos servidores tradicionais.",
   },
   {
-    icon: Globe2,
-    title: "Expansão",
-    subtitle: "Servidores no mundo todo",
-    description: "Servidores em diferentes regiões do planeta. Isso garante mais velocidade e estabilidade. Não importa onde seu público esteja, seu site carregando rápido em qualquer lugar do mundo.",
-    status: "EM BREVE",
-  },
+    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/108506.jpg",
+    tag: "EXPANSÃO",
+    title: "Servidores no mundo todo",
+    desc: "Servidores em diferentes regiões do planeta. Isso garante mais velocidade e estabilidade. Não importa onde seu público esteja, seu site carregando rápido em qualquer lugar do mundo.",
+  }
 ];
 
 export function Projects() {
   return (
-    <section id="projetos" className="py-20 px-4 relative overflow-hidden" style={{ backgroundColor: '#000319' }}>
-      <div className="container mx-auto max-w-7xl relative z-10">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 mb-6">
-            <div className="w-1 h-6 bg-green-500 rounded-full" />
-            <span className="text-green-400 text-sm font-semibold uppercase tracking-wide">
-              Nossos projetos
+    <section id="projetos" className="py-24 px-4 relative bg-[#0a0e27] w-full">
+      <div className="container mx-auto max-w-[1200px] relative z-10">
+        
+        {/* Header Section */}
+        <div className="text-center mb-16 flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
+          <div className="inline-flex flex-row items-center gap-3 mb-6 bg-[#0e132e] py-1.5 px-3 rounded border border-white/5">
+            <div className="w-1 h-4 bg-[#01FC8D]"></div>
+            <span className="text-xs font-semibold tracking-wider text-[#01FC8D] uppercase">
+              NOSSOS PROJETOS
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-            Mais que hospedagem: somos Tecnologia em movimento
+          
+          <h2 className="text-3xl md:text-[2.5rem] font-bold text-white mb-6 tracking-normal">
+            Mais que hospedagem: somos <br className="hidden md:block"/> Tecnologia em movimento
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project, index) => {
-            const Icon = project.icon;
-            return (
-              <div
-                key={index}
-                className="relative rounded-4xl p-6 text-white overflow-hidden bg-slate-200/10 backdrop-blur-[20px] border border-green-500/30 shadow-[0_8px_32px_0_rgba(34,197,94,0.15)]"
-              >
-                <div className="absolute inset-0 -z-10 h-full w-full bg-transparent bg-[radial-gradient(rgba(34,197,94,0.2)_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
+        {/* Grid Area */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+          {projects.map((project, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "200px" }}
+              transition={{ duration: 0.35, delay: index * 0.05 }}
+              className="relative p-[1px] rounded-[10px] bg-[#1d233c] hover:bg-[#01FC8D]/50 transition-colors group flex flex-col overflow-visible shadow-xl"
+            >
+              {/* This inner container mimics the Elementor styled card box */}
+              <div className="w-full h-full bg-[#12172f] rounded-[9px] flex flex-col overflow-hidden">
                 
-                <div className="relative z-10">
-                  <div className="w-12 h-12 rounded-full bg-green-500/20 backdrop-blur-md border border-green-500/30 flex items-center justify-center mb-4">
-                    <Icon className="w-6 h-6 text-green-400" strokeWidth={2} />
+                {/* Visual "cyber" frame cut at the top-left using background blocks overlay */}
+                <div className="relative shrink-0 overflow-hidden group h-[220px]">
+                  {/* Top-left angled overlay */}
+                  <div 
+                    className="absolute top-0 left-0 z-10 w-[50px] h-[30px] bg-[#12172f]" 
+                    style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} 
+                  />
+                  {/* Top-right angled overlay */}
+                  <div 
+                    className="absolute top-0 right-0 z-10 w-[80px] h-[15px] bg-[#12172f]" 
+                    style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }} 
+                  />
+                  
+                  <img 
+                    src={project.image}
+                    alt={project.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    style={{
+                      clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 40px), calc(100% - 40px) 100%, 0 100%)"
+                    }}
+                    {...({ fetchPriority: "low" } as any)}
+                    loading="lazy"
+                  />
+                </div>
+
+                <div className="flex-1 flex flex-col z-20 -mt-[1px]">
+                  {/* Stripes Header */}
+                  <div className="relative py-4 px-6 bg-[#1b223c] border-b border-white/5 border-t border-[#12172f]">
+                    <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(-45deg,#000_0,#000_10px,transparent_10px,transparent_20px)] pointer-events-none" />
+                    <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#01FC8D]" />
+                    
+                    <div className="relative z-10 flex flex-col gap-1.5">
+                      <span className="text-[#01FC8D] text-[10px] uppercase font-bold tracking-widest leading-none">
+                        {project.tag}
+                      </span>
+                      <h3 className="text-gray-100 text-[18px] md:text-[19px] font-semibold leading-tight capitalize">
+                        {project.title.toLowerCase()}
+                      </h3>
+                    </div>
                   </div>
-                  <div className="inline-block px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded text-xs font-semibold mb-3">
-                    {project.status}
+
+                  {/* Body Content */}
+                  <div className="p-6 bg-[#161c33] flex-1 flex flex-col justify-between items-start pt-5">
+                    <p className="text-gray-400 text-[13px] leading-[1.65] font-light mb-8">
+                      {project.desc}
+                    </p>
+                    
+                    <span className="inline-block bg-[#01FC8D] text-[#0a0e27] font-extrabold text-[10px] uppercase tracking-widest px-4 py-2 rounded-[4px] shadow-[0_2px_10px_0_rgba(1,252,141,0.2)]">
+                      EM BREVE
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold mb-2">{project.title}</h3>
-                  <p className="text-green-400 text-sm font-semibold mb-3">{project.subtitle}</p>
-                  <p className="text-white/70 text-sm leading-relaxed">{project.description}</p>
                 </div>
               </div>
-            );
-          })}
+
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

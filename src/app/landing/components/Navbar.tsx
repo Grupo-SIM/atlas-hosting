@@ -1,59 +1,104 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Rajdhani } from "next/font/google";
 import { ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
-import AtlasLogo from "@/assets/atlas.svg";
+const rajdhani = Rajdhani({ 
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
 
 export function Navbar() {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 w-full z-50 border-b border-white/10 backdrop-blur-md bg-black/20">
-      <nav className="container mx-auto px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <AtlasLogo className="h-8 w-8 object-contain" />
-          <span className="text-lg font-bold text-cyan-400">Atlas Hosting</span>
-        </Link>
-        <div className="hidden md:flex items-center gap-12">
-          <div 
-            className="relative"
-            onMouseEnter={() => setIsDropdownOpen(true)}
-            onMouseLeave={() => setIsDropdownOpen(false)}
-          >
-            <button className="text-white hover:text-cyan-400 transition-colors flex items-center gap-1 text-sm font-medium">
-              Como Funciona
-              <ChevronDown className="w-4 h-4" />
-            </button>
-            {isDropdownOpen && (
-              <div className="absolute top-full left-0 mt-2 w-48 bg-black/90 backdrop-blur-md border border-white/10 rounded-lg shadow-lg py-2">
-                <Link href="#how-it-works" className="block px-4 py-2 text-white hover:bg-white/10 text-sm">
-                  Serviços
-                </Link>
-                <Link href="#features" className="block px-4 py-2 text-white hover:bg-white/10 text-sm">
-                  Benefícios
-                </Link>
-              </div>
-            )}
+    <header id="site-header" className="fixed top-0 w-full z-[100] bg-[#0a0e27]/90 backdrop-blur-md border-b border-white/5 py-4 lg:py-1">
+      <nav className="container mx-auto px-6 h-16 flex items-center justify-between relative">
+        {/* Logo */}
+        <Link href="/" className="flex items-center shrink-0">
+          <div className="relative w-[180px] h-[45px]">
+            <Image 
+              src="http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/IMG_5796.png"
+              alt="Atlashost Logo"
+              fill
+              className="object-contain"
+              priority
+              unoptimized
+            />
           </div>
-          <a href="#plans" className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
+        </Link>
+        
+        {/* Nav Links - Centered */}
+        <div className="hidden md:flex items-center gap-6 lg:gap-10 absolute left-1/2 -translate-x-1/2">
+          {/* Menu Item with Sub-menu */}
+          <div 
+            className="relative group py-2"
+            onMouseEnter={() => setIsHowItWorksOpen(true)}
+            onMouseLeave={() => setIsHowItWorksOpen(false)}
+          >
+            <a 
+              href="#comofunciona" 
+              className={`${rajdhani.className} flex items-center gap-1.5 text-white/90 group-hover:text-[#01FC8D] transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}
+            >
+              Como Funciona
+              <ChevronDown className="w-4 h-4 text-white/40 group-hover:text-[#01FC8D] transition-transform duration-300 group-hover:rotate-180" strokeWidth={2.5} />
+            </a>
+            
+            {/* Dropdown Menu */}
+            <AnimatePresence>
+              {isHowItWorksOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="absolute top-full left-0 mt-1 min-w-[180px] bg-[#11172f] border border-white/5 rounded-[6px] shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden"
+                >
+                  <a 
+                    href="#servicos" 
+                    className={`${rajdhani.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase`}
+                  >
+                    Serviços
+                  </a>
+                  <a 
+                    href="#beneficios" 
+                    className={`${rajdhani.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase border-t border-white/5`}
+                  >
+                    Benefícios
+                  </a>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <a href="#planos" className={`${rajdhani.className} text-white/90 hover:text-[#01FC8D] transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}>
             Planos
           </a>
-          <a href="#projetos" className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
+          <a href="#projetos" className={`${rajdhani.className} text-white/90 hover:text-[#01FC8D] transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}>
             Projetos
           </a>
-          <a href="#" className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
+          <a href="#blog" className={`${rajdhani.className} text-white/90 hover:text-[#01FC8D] transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}>
             Blog
           </a>
-          <a href="#faq" className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
+          <a href="#faq" className={`${rajdhani.className} text-white/90 hover:text-[#01FC8D] transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}>
             FAQ
           </a>
         </div>
-        <Button className="bg-emerald-400 hover:bg-emerald-500 text-black font-bold px-6 py-2 text-sm" asChild>
-          <Link href="/login">LOGIN</Link>
-        </Button>
+        
+        {/* Auth Button */}
+        <div className="shrink-0">
+          <Button 
+            className={`${rajdhani.className} bg-[#01FC8D] hover:bg-[#01fc8d]/90 text-black font-extrabold px-8 py-5 text-[14px] rounded-[6px] transition-all duration-300 shadow-[0_0_20px_rgba(1,252,141,0.15)] hover:shadow-[0_0_30px_rgba(1,252,141,0.3)] tracking-wider`} 
+            asChild
+          >
+            <a href="https://wa.me/5547997801802" target="_blank" rel="noopener noreferrer">LOGIN</a>
+          </Button>
+        </div>
       </nav>
     </header>
   );
