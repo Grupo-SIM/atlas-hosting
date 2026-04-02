@@ -1,6 +1,7 @@
 "use client";
 
 import ModernCheckoutForm, {
+  type CheckoutSidebarActionState,
   type ModernCheckoutFormHandle,
 } from "@/components/checkout/ModernCheckoutForm";
 import Topbar from "@/components/layouts/components/Topbar";
@@ -11,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import type { Invoice } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
 import { CreditCard, ShieldCheck } from "lucide-react";
-import { useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
 
 interface User {
@@ -35,11 +36,29 @@ export default function CheckoutClient({
   const checkoutFormRef = useRef<ModernCheckoutFormHandle>(null);
   const userHasDomId = !!user?.organization?.domId;
 
+  const [sidebarAction, setSidebarAction] = useState<CheckoutSidebarActionState>(
+    {
+      label: "Finalizar Transação",
+      disabled: false,
+    }
+  );
+
+  const onSidebarActionStateChange = useCallback(
+    (next: CheckoutSidebarActionState) => {
+      setSidebarAction((prev) =>
+        prev.label === next.label && prev.disabled === next.disabled
+          ? prev
+          : next
+      );
+    },
+    []
+  );
+
   const whoisGuard = invoice.metadata?.whoisguard === "on";
 
   return (
-    <div className="h-full w-full overflow-x-hidden absolute top-0 left-0 z-2 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 flex items-center justify-center">
-      <div className="container mx-auto px-4 py-6">
+    <div className="relative z-0 w-full min-h-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 pb-12 pt-4 md:pt-6">
+      <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-6">
@@ -58,12 +77,13 @@ export default function CheckoutClient({
                 ref={checkoutFormRef}
                 invoiceId={invoice.id}
                 hasExistingUser={userHasDomId}
+                onSidebarActionStateChange={onSidebarActionStateChange}
               />
             </div>
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <div className="sticky top-8 space-y-6">
+              <div className="sticky top-4 z-10 space-y-6 lg:top-6">
                 {/* Order Details */}
                 <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
                   <CardHeader className="pb-4">
@@ -167,16 +187,8 @@ export default function CheckoutClient({
                       </div>
                       <p className="text-xs text-gray-600 dark:text-gray-400">
                         Seus dados estão protegidos com criptografia SSL de
-                        ponta a ponta. Aceitamos cartões de crédito e débito.
+                        ponta a ponta. Aceitamos cartão e PIX.
                       </p>
-                      <div className="flex items-center gap-2 pt-2">
-                        <span className="text-xs text-gray-500">
-                          Powered by
-                        </span>
-                        <span className="text-xs font-medium">
-                          DOM Pagamentos
-                        </span>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -199,12 +211,13 @@ export default function CheckoutClient({
                 </Card>
 
                 <GradientButton
-                  className="w-full text-lg px-4 min-w-full cursor-pointer"
+                  className="w-full text-lg px-4 min-w-full cursor-pointer disabled:opacity-60"
+                  disabled={sidebarAction.disabled}
                   onClick={() => {
                     checkoutFormRef.current?.submit();
                   }}
                 >
-                  Finalizar Transação
+                  {sidebarAction.label}
                 </GradientButton>
               </div>
             </div>

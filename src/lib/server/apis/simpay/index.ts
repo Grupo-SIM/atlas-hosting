@@ -5,8 +5,14 @@
  * que por sua vez processa via DOM Pagamentos internamente.
  *
  * Endpoints utilizados:
- *   POST /atlas/payments/credit-card  — pagamento com cartão (domínio ou assinatura)
- *   GET  /atlas/payments/status/:id   — consulta de status
+ *   POST /atlas/payments/credit-card — cartão (domínio ou assinatura)
+ *   POST /atlas/payments/pix         — PIX (mesmo contrato que renovada, rota atlas)
+ *   GET  /atlas/payments/status/:id  — status (ex.: COMPLETED)
+ *
+ * URL base (primeira definida vence):
+ *   ATLAS_SIMPAY_API_URL — use no .env para ignorar SIMPAY_API_URL do sistema (Windows).
+ *   SIMPAY_API_URL — fallback
+ *   ATLAS_SIMPAY_STORE / SIMPAY_STORE — obrigatório no body PIX (rota atlas)
  */
 
 export interface SimpayCardPaymentParams {
@@ -37,13 +43,64 @@ export interface SimpayPaymentResponse {
   };
 }
 
-class SimpayApi {
-  private readonly baseUrl: string;
+export interface SimpayPixPaymentParams {
+  price: number;
+  document: string;
+  document_type: string;
+  email: string;
+  name: string;
+  mobile_phone: string;
+  /** Identificador do produto; use prefixo `atlas ` para conciliação no back Simpay */
+  description: string;
+  /** Loja no Simpay; se omitido, usa ATLAS_SIMPAY_STORE / SIMPAY_STORE / "atlas" */
+  store?: string;
+}
 
-  constructor() {
-    this.baseUrl = process.env.SIMPAY_API_URL || "https://api.simpay.com.br";
+export interface SimpayPixCreateResponse {
+  pix_qrcode: string;
+  pix_content: string;
+  id?: string;
+  paymentId?: string;
+  transactionId?: string;
+  message?: string;
+}
+
+function normalizeSimpayBaseUrl(raw: string | undefined): string {
+  const fallback = "https://simpay-back.simintermediacoes.com";
+  const s = raw?.trim();
+  if (!s) return fallback;
+  return s.replace(/\/+$/, "");
+}
+
+/** Lido a cada chamada: reflete .env após restart; ATLAS vence SIMPAY (útil vs. env global do SO). */
+function resolveSimpayBaseUrl(): string {
+  const raw =
+    process.env.ATLAS_SIMPAY_API_URL?.trim() ||
+    process.env.SIMPAY_API_URL?.trim();
+  return normalizeSimpayBaseUrl(raw || undefined);
+}
+
+function resolveSimpayStore(override?: string): string {
+  const s = override?.trim();
+  if (s) return s;
+  return (
+    process.env.ATLAS_SIMPAY_STORE?.trim() ||
+    process.env.SIMPAY_STORE?.trim() ||
+    "atlas"
+  );
+}
+
+function formatSimpayErrorMessage(data: unknown): string | undefined {
+  if (!data || typeof data !== "object") return undefined;
+  const m = (data as { message?: unknown }).message;
+  if (typeof m === "string") return m;
+  if (Array.isArray(m) && m.every((x) => typeof x === "string")) {
+    return m.join(" ");
   }
+  return undefined;
+}
 
+class SimpayApi {
   private get headers(): Record<string, string> {
     return {
       "Content-Type": "application/json",
@@ -54,7 +111,7 @@ class SimpayApi {
   async createCardPayment(
     params: SimpayCardPaymentParams
   ): Promise<SimpayPaymentResponse> {
-    const url = `${this.baseUrl}/atlas/payments/credit-card`;
+    const url = `${resolveSimpayBaseUrl()}/atlas/payments/credit-card`;
 
     console.log(`[SIMPAY] → Enviando pagamento de cartão para Simpay`, {
       url,
@@ -75,7 +132,8 @@ class SimpayApi {
     if (!response.ok) {
       console.error(`[SIMPAY] ✗ Erro na requisição (${response.status}):`, data);
       throw new Error(
-        data?.message || `Erro ao processar pagamento via Simpay (HTTP ${response.status})`
+        formatSimpayErrorMessage(data) ||
+          `Erro ao processar pagamento via Simpay (HTTP ${response.status})`
       );
     }
 
@@ -88,8 +146,61 @@ class SimpayApi {
     return data as SimpayPaymentResponse;
   }
 
+  async createPixPayment(
+    params: SimpayPixPaymentParams
+  ): Promise<SimpayPixCreateResponse> {
+    const url = `${resolveSimpayBaseUrl()}/atlas/payments/pix`;
+    const { store: storeParam, ...pixFields } = params;
+    const body = {
+      ...pixFields,
+      store: resolveSimpayStore(storeParam),
+    };
+
+    console.log(`[SIMPAY] → Criando cobrança PIX (atlas)`, {
+      url,
+      store: body.store,
+      price: params.price,
+      email: params.email,
+      description: params.description,
+    });
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify(body),
+      });
+    } catch (e) {
+      const msg =
+        e instanceof Error ? e.message : "Falha de rede ao contatar Simpay.";
+      throw new Error(
+        `${msg} Defina ATLAS_SIMPAY_API_URL ou SIMPAY_API_URL (host acessível pelo servidor; env do Windows sobrescreve o .env).`
+      );
+    }
+
+    let data: unknown;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error(
+        `Resposta PIX inválida (HTTP ${response.status}). Confira a URL base da Simpay.`
+      );
+    }
+
+    if (!response.ok) {
+      console.error(`[SIMPAY] ✗ Erro PIX (${response.status}):`, data);
+      throw new Error(
+        formatSimpayErrorMessage(data) ||
+          `Erro ao gerar PIX via Simpay (HTTP ${response.status})`
+      );
+    }
+
+    return data as SimpayPixCreateResponse;
+  }
+
   async getPaymentStatus(paymentId: string): Promise<{ paymentId: string; status: string }> {
-    const url = `${this.baseUrl}/atlas/payments/status/${paymentId}`;
+    const url = `${resolveSimpayBaseUrl()}/atlas/payments/status/${paymentId}`;
 
     const response = await fetch(url, {
       method: "GET",

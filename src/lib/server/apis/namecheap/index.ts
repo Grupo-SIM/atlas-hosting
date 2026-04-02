@@ -88,8 +88,13 @@ export class NamecheapApiWrapper {
 
   constructor(userName: string) {
     this.userName = userName;
+    // Não definir Content-Type no cliente global: em GET isso quebra negociação
+    // (406 + HTML) em alguns proxies/CDNs. POST define Content-Type por requisição.
     this.axiosInstance = axios.create({
-      headers: { "Content-Type": "application/xml" },
+      timeout: 60_000,
+      headers: {
+        Accept: "application/xml, text/xml;q=0.9, */*;q=0.8",
+      },
     });
   }
 
@@ -384,7 +389,6 @@ export class NamecheapApiWrapper {
       } else {
         response = await this.axiosInstance.get(this.baseUrl, {
           params: allParams,
-          headers: { Accept: "application/xml" },
         });
       }
       const parsedXml: RawNamecheapApiResponse<TCommandResponseContent> =

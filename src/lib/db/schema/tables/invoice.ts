@@ -56,7 +56,26 @@ export type Invoice = typeof pgInvoice.$inferSelect;
 export type InvoiceInsert = typeof pgInvoice.$inferInsert;
 export type InvoiceSelect = typeof pgInvoice.$inferSelect;
 
+export type PixCheckoutSnapshot = {
+  firstName: string;
+  lastName: string;
+  document: string;
+  phoneNumber: string;
+  address: {
+    street: string;
+    number: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+};
+
 export type DomainRegisterInvoiceOptions = Pick<
   DomainPageParams,
   "whoisguard" | "years"
->;
+> & {
+  simpayPaymentId?: string;
+  pixTransactionId?: string;
+  pixCheckout?: PixCheckoutSnapshot;
+};

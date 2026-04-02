@@ -25,7 +25,11 @@ import {
   pgSession,
   pgUser,
   pgUserCard,
+  type Invoice,
   type Plan,
+  type User,
+  type DomainRegisterInvoiceOptions,
+  type PixCheckoutSnapshot,
 } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
@@ -43,6 +47,8 @@ import type { DomainPageParams } from "./(auth)/domain/types";
 import { AtlasNotificationEmail } from "@/emails";
 import { render } from "@react-email/render";
 import { DEFAULT_POST_LOGIN_PATH } from "@/lib/consts/default-auth-path";
+import { isValidCNPJ, isValidCPF } from "@/lib/utils";
+import { isValidPhoneNumber } from "libphonenumber-js";
 
 export async function login(
   prevState: unknown,
@@ -487,6 +493,237 @@ export async function createDomainInvoice({
   }
 
   return redirectUrl;
+}
+
+type PixSnapResult =
+  | { ok: true; billing: PixCheckoutSnapshot }
+  | { ok: false; message: string };
+
+function buildPixCheckoutSnapshot(
+  input: InitiateCheckoutPixPayload
+): PixSnapResult {
+  const doc = input.document.replace(/\D/g, "");
+  if (!isValidCPF(doc) && !isValidCNPJ(doc)) {
+    return { ok: false, message: "Documento inválido." };
+  }
+  if (!isValidPhoneNumber(`55${input.phoneNumber.replace(/\D/g, "")}`, "BR")) {
+    return { ok: false, message: "Telefone inválido." };
+  }
+  const z = input.address.zipCode.replace(/\D/g, "");
+  if (z.length !== 8) {
+    return { ok: false, message: "CEP inválido." };
+  }
+  return {
+    ok: true,
+    billing: {
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
+      document: input.document,
+      phoneNumber: input.phoneNumber,
+      address: {
+        street: input.address.street.trim(),
+        number: input.address.number.trim(),
+        neighborhood: input.address.neighborhood.trim(),
+        city: input.address.city.trim(),
+        state: input.address.state.trim().toUpperCase().slice(0, 2),
+        zipCode: z,
+      },
+    },
+  };
+}
+
+async function fulfillCheckoutAfterPixPaid(
+  invoice: Invoice,
+  user: User,
+  billing: PixCheckoutSnapshot
+): Promise<void> {
+  const meta = invoice.metadata as DomainRegisterInvoiceOptions;
+
+  if (invoice.type === "domain") {
+    const contact = {
+      FirstName: billing.firstName.trim(),
+      LastName: billing.lastName.trim(),
+      Address1: `${billing.address.street}, ${billing.address.number}`,
+      City: billing.address.city,
+      StateProvince: billing.address.state,
+      PostalCode: billing.address.zipCode,
+      Country: "BR",
+      Phone: `+55.${billing.phoneNumber.replace(/\D/g, "")}`,
+      EmailAddress: user.email,
+    };
+    const years = parseInt(String(meta?.years ?? "1"), 10);
+    const whoisguard = meta?.whoisguard === "on";
+
+    try {
+      const domainResult = await namecheapApi.createDomain({
+        DomainName: invoice.reference,
+        Years: years,
+        Registrant: contact,
+        Admin: contact,
+        Tech: contact,
+        AuxBilling: contact,
+        AddFreeWhoisguard: whoisguard ? "yes" : "no",
+        WGEnabled: whoisguard ? "yes" : "no",
+        Nameservers: [
+          "dns1.registrar-servers.com",
+          "dns2.registrar-servers.com",
+        ],
+      });
+
+      if (domainResult.Registered) {
+        await db.insert(pgOrganizationDomains).values({
+          organizationId: user.organization.id,
+          domain: invoice.reference,
+          active: true,
+        });
+      }
+    } catch (domainErr) {
+      console.error(`[CHECKOUT-PIX] Namecheap:`, domainErr);
+    }
+
+    await db
+      .update(pgInvoice)
+      .set({ status: "paid" })
+      .where(eq(pgInvoice.id, invoice.id));
+    redirect("/domains");
+  }
+
+  await db
+    .update(pgInvoice)
+    .set({ status: "paid" })
+    .where(eq(pgInvoice.id, invoice.id));
+  redirect("/payment/success");
+}
+
+export type InitiateCheckoutPixPayload = {
+  invoiceId: string;
+  firstName: string;
+  lastName: string;
+  document: string;
+  phoneNumber: string;
+  address: {
+    street: string;
+    number: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+};
+
+export async function initiateCheckoutPix(
+  payload: InitiateCheckoutPixPayload
+): Promise<
+  | { status: "error"; message: string }
+  | {
+      status: "success";
+      pix_qrcode: string;
+      pix_content: string;
+      paymentId: string;
+      transactionId: string;
+    }
+> {
+  const user = await getUser();
+  const snap = buildPixCheckoutSnapshot(payload);
+  if (!snap.ok) {
+    return { status: "error", message: snap.message };
+  }
+  const billing = snap.billing;
+
+  const invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, payload.invoiceId),
+  });
+
+  if (!invoice || invoice.orgId !== user.organization.id) {
+    return { status: "error", message: "Fatura não encontrada." };
+  }
+
+  if (invoice.status === "paid") {
+    return { status: "error", message: "Esta fatura já foi paga." };
+  }
+
+  const docDigits = billing.document.replace(/\D/g, "");
+
+  try {
+    const pixRes = await simpayApi.createPixPayment({
+      price: invoice.amount,
+      document: docDigits,
+      document_type: docDigits.length === 11 ? "CPF" : "CNPJ",
+      email: user.email,
+      name: `${billing.firstName} ${billing.lastName}`.trim(),
+      mobile_phone: billing.phoneNumber.replace(/\D/g, ""),
+      description: `atlas ${invoice.reference}`,
+    });
+
+    const paymentId = pixRes.paymentId ?? pixRes.id ?? "";
+    if (!paymentId) {
+      return { status: "error", message: "Resposta PIX sem identificador." };
+    }
+
+    const mergedMeta: DomainRegisterInvoiceOptions = {
+      ...(invoice.metadata as DomainRegisterInvoiceOptions),
+      simpayPaymentId: paymentId,
+      pixTransactionId: pixRes.transactionId ?? "",
+      pixCheckout: billing,
+    };
+
+    await db
+      .update(pgInvoice)
+      .set({
+        metadata: mergedMeta,
+        status: "pending",
+      })
+      .where(eq(pgInvoice.id, invoice.id));
+
+    return {
+      status: "success",
+      pix_qrcode: pixRes.pix_qrcode,
+      pix_content: pixRes.pix_content,
+      paymentId,
+      transactionId: pixRes.transactionId ?? "",
+    };
+  } catch (err) {
+    console.error("[CHECKOUT-PIX] initiate:", err);
+    return {
+      status: "error",
+      message: err instanceof Error ? err.message : "Erro ao gerar PIX.",
+    };
+  }
+}
+
+/** Polling do status PIX (Simpay). Quando COMPLETED, conclui pedido e redireciona. */
+export async function syncCheckoutPixPayment(
+  invoiceId: string
+): Promise<{ status: "PENDING" }> {
+  const user = await getUser();
+
+  const invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, invoiceId),
+  });
+
+  if (!invoice || invoice.orgId !== user.organization.id) {
+    return { status: "PENDING" };
+  }
+
+  if (invoice.status === "paid") {
+    redirect(invoice.type === "domain" ? "/domains" : "/payment/success");
+  }
+
+  const meta = invoice.metadata as DomainRegisterInvoiceOptions;
+  const paymentId = meta.simpayPaymentId;
+  const billing = meta.pixCheckout;
+
+  if (!paymentId || !billing) {
+    return { status: "PENDING" };
+  }
+
+  const remote = await simpayApi.getPaymentStatus(paymentId);
+
+  if (remote.status === "COMPLETED") {
+    await fulfillCheckoutAfterPixPaid(invoice, user, billing);
+  }
+
+  return { status: "PENDING" };
 }
 
 export async function completeCheckout(
