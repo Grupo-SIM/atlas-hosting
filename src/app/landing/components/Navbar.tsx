@@ -96,7 +96,7 @@ export function Navbar() {
             className={`${rajdhani.className} bg-[#01FC8D] hover:bg-[#01fc8d]/90 text-black font-extrabold px-8 py-5 text-[14px] rounded-[6px] transition-all duration-300 shadow-[0_0_20px_rgba(1,252,141,0.15)] hover:shadow-[0_0_30px_rgba(1,252,141,0.3)] tracking-wider`} 
             asChild
           >
-            <a href="https://wa.me/5547997801802" target="_blank" rel="noopener noreferrer">LOGIN</a>
+            <Link href="/login">LOGIN</Link>
           </Button>
         </div>
       </nav>

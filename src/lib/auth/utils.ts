@@ -22,7 +22,6 @@ import { hash, verify } from "./scrypt";
 import type { RawUser } from "@/lib/db/schema/tables/user";
 import { auth } from "@/auth";
 import { getUser } from ".";
-import { emailService } from "../consts/singletons";
 import { createEmailVerificationToken } from "./tokens";
 import { sendWelcomeEmail, sendEmailVerificationEmail } from "../email/service";
 

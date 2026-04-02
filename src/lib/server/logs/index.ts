@@ -1,6 +1,6 @@
 import EventEmitter from "node:events";
 import { getUser, getUserSettings } from "@/lib/auth";
-import { emailService } from "@/lib/consts/singletons";
+import { getEmailService } from "@/lib/consts/singletons";
 import { db } from "@/lib/db";
 import {
   type Log,
@@ -69,12 +69,15 @@ class AppLoggerQueue {
           })
         );
 
-        await emailService.sendEmail({
-          from: "Atlas Hosting <noreply@atlashosting.com.br>",
-          to: email,
-          subject: `${message.title} - Atlas Hosting`,
-          body: rendered,
-        });
+        const emailService = getEmailService();
+        if (emailService) {
+          await emailService.sendEmail({
+            from: "Atlas Hosting <noreply@atlashosting.com.br>",
+            to: email,
+            subject: `${message.title} - Atlas Hosting`,
+            body: rendered,
+          });
+        }
       } catch (error) {
         console.error(`Failed to send email notification to ${email}:`, error);
       }

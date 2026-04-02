@@ -10,8 +10,8 @@ import { useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import { z } from "zod";
-import GithubAuthButton from "./GithubAuthButton";
-import GoogleAuthButton from "./GoogleAuthButton";
+// import GithubAuthButton from "./GithubAuthButton";
+// import GoogleAuthButton from "./GoogleAuthButton";
 
 export default function SignupForm({
   referrer,
@@ -158,6 +158,7 @@ export default function SignupForm({
           )}
         </Button>
 
+        {/*
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
@@ -168,6 +169,7 @@ export default function SignupForm({
             </span>
           </div>
         </div>
+        */}
       </form>
     </>
   );

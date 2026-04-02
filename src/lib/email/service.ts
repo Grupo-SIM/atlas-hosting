@@ -5,7 +5,7 @@ import {
   AtlasNotificationEmail,
   AtlasChangeEmail,
 } from "@/emails";
-import { emailService } from "../consts/singletons";
+import { getEmailService } from "../consts/singletons";
 
 // Email configuration - you'll need to configure this with your email provider
 interface EmailConfig {
@@ -40,6 +40,14 @@ async function sendEmail(data: EmailData): Promise<void> {
 
   // TODO: Implement actual email sending based on provider
   // For now, we'll just log it
+  const emailService = getEmailService();
+  if (!emailService) {
+    console.error(
+      `[email] Não foi possível enviar para ${data.to}: SMTP não configurado.`
+    );
+    return;
+  }
+
   try {
     await emailService.sendEmail({
       from: "noreply@atlashosting.com.br",
@@ -48,7 +56,7 @@ async function sendEmail(data: EmailData): Promise<void> {
       body: data.html,
     });
   } catch (error) {
-    console.error("Failed to send email:", error);
+    console.error(`Failed to send email to ${data.to}:`, error);
     // Do not re-throw — email failures must never block user creation or other actions
   }
 }

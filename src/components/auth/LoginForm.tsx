@@ -188,6 +188,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
         {isPending ? <CgSpinner className="animate-spin h-5 w-5" /> : "Entrar"}
       </Button>
 
+      {/*
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
@@ -198,6 +199,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           </span>
         </div>
       </div>
+      */}
     </form>
   );
 }

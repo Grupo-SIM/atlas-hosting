@@ -29,6 +29,7 @@ import {
 } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
+import simpayApi from "@/lib/server/apis/simpay";
 import namecheapApi, { getDomainPricing } from "@/lib/server/apis/namecheap";
 import axios from "axios";
 import { eq, sql, and } from "drizzle-orm";
@@ -625,25 +626,29 @@ export async function completeCheckout(
   }
 
   if (invoice.type === "domain") {
-    console.log(`\n[DOM] ── PAGAMENTO ÚNICO (DOMÍNIO) ──`);
-    const domPayload = {
-      description: `Atlas Hosting ${invoice.reference}`,
-      externalReference: invoiceId,
-      card: { token: cardToken, installments: 1 },
-      userId: user.id,
-      value: invoice.amount,
-    };
-    console.log(`[DOM] → Enviando createOneTimePayment:`, { ...domPayload, card: { token: `${cardToken.substring(0, 8)}...`, installments: 1 } });
-
+    console.log(`\n[SIMPAY] ── PAGAMENTO ÚNICO (DOMÍNIO) ──`);
     try {
-      const domResult = await domApi.createOneTimePayment(domPayload);
-      console.log(`[DOM] ✓ Pagamento único processado:`, domResult);
+      const simpayResult = await simpayApi.createCardPayment({
+        price: invoice.amount,
+        document: values.document.replace(/\D/g, ""),
+        document_type: values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
+        email: user.email,
+        name: `${values.firstName} ${values.lastName}`.trim(),
+        mobile_phone: values.phoneNumber.replace(/\D/g, ""),
+        description: `atlas ${invoice.reference}`,
+        holder_name: `${values.firstName} ${values.lastName}`.trim(),
+        token: cardToken,
+        bin: cardToken.substring(0, 6),
+        brand: "unknown",
+        installments: 1,
+      });
+      console.log(`[SIMPAY] ✓ Pagamento registrado na Simpay:`, {
+        transactionId: simpayResult.transactionId,
+        paymentId: simpayResult.paymentId,
+        status: simpayResult.status,
+      });
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        console.error(`[DOM] ✗ ERRO no pagamento único:`, JSON.stringify(err.response?.data ?? err.message, null, 2));
-      } else {
-        console.error(`[DOM] ✗ ERRO no pagamento único:`, err);
-      }
+      console.error(`[SIMPAY] ✗ ERRO ao registrar pagamento na Simpay:`, err);
       return { status: "error", message: "Erro ao processar pagamento do domínio." };
     }
 
@@ -708,33 +713,29 @@ export async function completeCheckout(
     redirect("/domains");
   }
 
-  console.log(`\n[DOM] ── PAGAMENTO RECORRENTE (ASSINATURA) ──`);
-  const recPayload = {
-    description: `Atlas Hosting ${invoice.reference}`,
-    externalReference: invoiceId,
-    frequency: "MONTH" as const,
-    card: { token: `${cardToken.substring(0, 8)}...`, installments: 1 },
-    userId: user.id,
-    value: invoice.amount,
-  };
-  console.log(`[DOM] → Enviando createRecurrentPayment:`, recPayload);
-
+  console.log(`\n[SIMPAY] ── PAGAMENTO RECORRENTE (ASSINATURA) ──`);
   try {
-    const result = await domApi.createRecurrentPayment({
-      description: `Atlas Hosting ${invoice.reference}`,
-      externalReference: invoiceId,
-      frequency: "MONTH",
-      card: { token: cardToken, installments: 1 },
-      userId: user.id,
-      value: invoice.amount,
+    const result = await simpayApi.createCardPayment({
+      price: invoice.amount,
+      document: values.document.replace(/\D/g, ""),
+      document_type: values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
+      email: user.email,
+      name: `${values.firstName} ${values.lastName}`.trim(),
+      mobile_phone: values.phoneNumber.replace(/\D/g, ""),
+      description: `atlas ${invoice.reference}`,
+      holder_name: `${values.firstName} ${values.lastName}`.trim(),
+      token: cardToken,
+      bin: cardToken.substring(0, 6),
+      brand: "unknown",
+      installments: 1,
     });
-    console.log(`[DOM] ✓ Assinatura recorrente criada:`, result);
+    console.log(`[SIMPAY] ✓ Assinatura registrada na Simpay:`, {
+      transactionId: result.transactionId,
+      paymentId: result.paymentId,
+      status: result.status,
+    });
   } catch (err) {
-    if (axios.isAxiosError(err)) {
-      console.error(`[DOM] ✗ ERRO no pagamento recorrente:`, JSON.stringify(err.response?.data ?? err.request ?? err.message, null, 2));
-    } else {
-      console.error(`[DOM] ✗ ERRO no pagamento recorrente:`, err);
-    }
+    console.error(`[SIMPAY] ✗ ERRO ao registrar assinatura na Simpay:`, err);
     return { status: "error", message: "Erro ao criar pagamento recorrente." };
   }
 
@@ -839,31 +840,29 @@ export async function completeCheckoutWithSavedCard(
   }
 
   if (invoice.type === "domain") {
-    console.log(`\n[DOM] ── PAGAMENTO ÚNICO (DOMÍNIO / CARTÃO SALVO) ──`);
-    const domPayload = {
-      description: `Atlas Hosting ${invoice.reference}`,
-      externalReference: invoiceId,
-      card: { token: `${cardToken.substring(0, 8)}...`, installments: 1 },
-      userId: user.id,
-      value: invoice.amount,
-    };
-    console.log(`[DOM] → Enviando createOneTimePayment:`, domPayload);
-
+    console.log(`\n[SIMPAY] ── PAGAMENTO ÚNICO (DOMÍNIO / CARTÃO SALVO) ──`);
     try {
-      const domResult = await domApi.createOneTimePayment({
-        description: `Atlas Hosting ${invoice.reference}`,
-        externalReference: invoiceId,
-        card: { token: cardToken, installments: 1 },
-        userId: user.id,
-        value: invoice.amount,
+      const domResult = await simpayApi.createCardPayment({
+        price: invoice.amount,
+        document: values.document.replace(/\D/g, ""),
+        document_type: values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
+        email: user.email,
+        name: `${values.firstName} ${values.lastName}`.trim(),
+        mobile_phone: values.phoneNumber.replace(/\D/g, ""),
+        description: `atlas ${invoice.reference}`,
+        holder_name: card.holderName || `${values.firstName} ${values.lastName}`.trim(),
+        token: cardToken,
+        bin: card.last4 || cardToken.substring(0, 6),
+        brand: card.brand || "unknown",
+        installments: 1,
       });
-      console.log(`[DOM] ✓ Pagamento único processado:`, domResult);
+      console.log(`[SIMPAY] ✓ Pagamento registrado na Simpay:`, {
+        transactionId: domResult.transactionId,
+        paymentId: domResult.paymentId,
+        status: domResult.status,
+      });
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        console.error(`[DOM] ✗ ERRO no pagamento único:`, JSON.stringify(err.response?.data ?? err.message, null, 2));
-      } else {
-        console.error(`[DOM] ✗ ERRO no pagamento único:`, err);
-      }
+      console.error(`[SIMPAY] ✗ ERRO ao registrar pagamento na Simpay:`, err);
       return { status: "error", message: "Erro ao processar pagamento do domínio." };
     }
 
@@ -928,32 +927,29 @@ export async function completeCheckoutWithSavedCard(
     return { status: "success", message: "/domains" };
   }
 
-  console.log(`\n[DOM] ── PAGAMENTO RECORRENTE (ASSINATURA / CARTÃO SALVO) ──`);
-  console.log(`[DOM] → Enviando createRecurrentPayment:`, {
-    description: `Atlas Hosting ${invoice.reference}`,
-    externalReference: invoiceId,
-    frequency: "MONTH",
-    card: { token: `${cardToken.substring(0, 8)}...`, installments: 1 },
-    userId: user.id,
-    value: invoice.amount,
-  });
-
+  console.log(`\n[SIMPAY] ── PAGAMENTO RECORRENTE (ASSINATURA / CARTÃO SALVO) ──`);
   try {
-    const result = await domApi.createRecurrentPayment({
-      description: `Atlas Hosting ${invoice.reference}`,
-      externalReference: invoiceId,
-      frequency: "MONTH",
-      card: { token: cardToken, installments: 1 },
-      userId: user.id,
-      value: invoice.amount,
+    const result = await simpayApi.createCardPayment({
+      price: invoice.amount,
+      document: values.document.replace(/\D/g, ""),
+      document_type: values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
+      email: user.email,
+      name: `${values.firstName} ${values.lastName}`.trim(),
+      mobile_phone: values.phoneNumber.replace(/\D/g, ""),
+      description: `atlas ${invoice.reference}`,
+      holder_name: card.holderName || `${values.firstName} ${values.lastName}`.trim(),
+      token: cardToken,
+      bin: card.last4 || cardToken.substring(0, 6),
+      brand: card.brand || "unknown",
+      installments: 1,
     });
-    console.log(`[DOM] ✓ Assinatura recorrente criada (cartão salvo):`, result);
+    console.log(`[SIMPAY] ✓ Assinatura registrada na Simpay (cartão salvo):`, {
+      transactionId: result.transactionId,
+      paymentId: result.paymentId,
+      status: result.status,
+    });
   } catch (err) {
-    if (axios.isAxiosError(err)) {
-      console.error(`[DOM] ✗ ERRO no pagamento recorrente (cartão salvo):`, JSON.stringify(err.response?.data, null, 2));
-    } else {
-      console.error(`[DOM] ✗ ERRO no pagamento recorrente (cartão salvo):`, err);
-    }
+    console.error(`[SIMPAY] ✗ ERRO ao registrar assinatura na Simpay (cartão salvo):`, err);
     return { status: "error", message: "Erro ao processar pagamento com cartão salvo." };
   }
 
