@@ -116,7 +116,7 @@ export default function EmailVerificationCodeForm({ email: initialEmail, redirec
         setMessage("Email verificado com sucesso! Redirecionando...");
         setIsSuccess(true);
         setTimeout(() => {
-          window.location.href = redirect || "/";
+          window.location.href = redirect && redirect !== "/" ? redirect : "/home";
         }, 1500);
       } else {
         setMessage(result.error || "Código inválido ou expirado");

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export const navigation = [
-  { name: "Painel", href: "/", icon: LayoutDashboard },
+  { name: "Painel", href: "/home", icon: LayoutDashboard },
   { name: "Hospedagem", href: "/sites/new", icon: Server, disabled: true },
   { name: "Domínios", href: "/domains", icon: Globe },
   { name: "Bancos de Dados", href: "/databases", icon: Database, disabled: true },

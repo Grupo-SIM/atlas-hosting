@@ -27,7 +27,7 @@ const baseUrl = process.env.VERCEL_URL
 export const AtlasWelcomeEmail = ({
   firstName = 'there',
   organizationName = 'Your Organization',
-  dashboardUrl = 'https://atlashosting.com/dashboard',
+  dashboardUrl = 'https://atlashosting.com.br/home',
   supportEmail = 'support@atlashosting.com',
 }: AtlasWelcomeEmailProps) => (
   <Html>
@@ -106,7 +106,7 @@ export const AtlasWelcomeEmail = ({
 AtlasWelcomeEmail.PreviewProps = {
   firstName: 'John',
   organizationName: 'Acme Corp',
-  dashboardUrl: 'https://atlashosting.com/dashboard',
+  dashboardUrl: 'https://atlashosting.com.br/home',
   supportEmail: 'support@atlashosting.com',
 } as AtlasWelcomeEmailProps;
 

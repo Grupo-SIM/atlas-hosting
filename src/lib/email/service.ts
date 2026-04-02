@@ -5,7 +5,8 @@ import {
   AtlasNotificationEmail,
   AtlasChangeEmail,
 } from "@/emails";
-import { getEmailService } from "../consts/singletons";
+import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
+import { getEmailService, getSmtpRedactedMeta } from "../consts/singletons";
 
 // Email configuration - you'll need to configure this with your email provider
 interface EmailConfig {
@@ -57,6 +58,7 @@ async function sendEmail(data: EmailData): Promise<void> {
     });
   } catch (error) {
     console.error(`Failed to send email to ${data.to}:`, error);
+    console.error("[email] SMTP usado no envio (sem senha):", getSmtpRedactedMeta());
     // Do not re-throw — email failures must never block user creation or other actions
   }
 }
@@ -69,7 +71,8 @@ export async function sendWelcomeEmail(
   firstName: string,
   organizationName: string
 ): Promise<void> {
-  const dashboardUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`;
+  const siteUrl = getServerPublicBaseUrl();
+  const dashboardUrl = `${siteUrl}/home`;
 
   const html = await render(
     AtlasWelcomeEmail({
@@ -96,7 +99,8 @@ export async function sendPasswordResetEmail(
   resetToken: string,
   resetCode: string
 ): Promise<void> {
-  const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${resetToken}`;
+  const siteUrl = getServerPublicBaseUrl();
+  const resetLink = `${siteUrl}/reset-password?token=${encodeURIComponent(resetToken)}`;
 
   const html = await render(
     AtlasPasswordResetEmail({
@@ -106,6 +110,7 @@ export async function sendPasswordResetEmail(
       resetCode,
       expirationTime: "1 hora",
       supportEmail: "contact@atlashosting.com.br",
+      publicSiteUrl: siteUrl,
     })
   );
 
@@ -125,7 +130,8 @@ export async function sendEmailVerificationEmail(
   verificationToken: string,
   verificationCode: string
 ): Promise<void> {
-  const verificationLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify-email?token=${verificationToken}`;
+  const siteUrl = getServerPublicBaseUrl();
+  const verificationLink = `${siteUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
 
   const html = await render(
     AtlasNotificationEmail({
@@ -203,7 +209,8 @@ export async function sendChangeEmailVerificationEmail(
   currentEmail: string,
   verificationToken: string
 ): Promise<void> {
-  const verificationLink = `${process.env.NEXT_PUBLIC_BASE_URL}/change-email/verify?token=${verificationToken}&email=${encodeURIComponent(newEmail)}`;
+  const siteUrl = getServerPublicBaseUrl();
+  const verificationLink = `${siteUrl}/change-email/verify?token=${encodeURIComponent(verificationToken)}&email=${encodeURIComponent(newEmail)}`;
 
   const html = await render(
     AtlasChangeEmail({

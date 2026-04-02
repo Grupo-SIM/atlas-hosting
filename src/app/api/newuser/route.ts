@@ -23,7 +23,7 @@ export async function GET() {
 
   // Se o usuário já tem organização, redirecionar direto para o dashboard
   if (user.organizationId) {
-    redirect("/");
+    redirect("/home");
   }
 
   // Criar organização se não existir
@@ -55,5 +55,5 @@ export async function GET() {
     .where(eq(pgUser.id, user.id));
 
   // Redirecionar para o dashboard após criar a organização
-  redirect("/");
+  redirect("/home");
 }

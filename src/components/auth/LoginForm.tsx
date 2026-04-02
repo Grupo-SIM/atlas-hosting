@@ -92,7 +92,10 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     if (actionState.status === "success") {
       // The redirect is handled server-side in the login action
       // But we can also handle it client-side as a fallback
-      const redirectPath = redirectTo?.startsWith("/") ? redirectTo : "/";
+      const redirectPath =
+        redirectTo?.startsWith("/") && redirectTo !== "/"
+          ? redirectTo
+          : "/home";
       router.push(redirectPath);
     } else if (actionState.status === "error") {
       if (actionState.error === "email_not_verified") {

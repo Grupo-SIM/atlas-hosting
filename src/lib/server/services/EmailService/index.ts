@@ -22,6 +22,8 @@ export default class EmailService {
       tls: {
         rejectUnauthorized: false,
       },
+      debug: process.env.SMTP_DEBUG === "true",
+      logger: process.env.SMTP_DEBUG === "true",
     });
   }
 

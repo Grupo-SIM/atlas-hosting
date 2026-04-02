@@ -1,6 +1,9 @@
 import EventEmitter from "node:events";
 import { getUser, getUserSettings } from "@/lib/auth";
-import { getEmailService } from "@/lib/consts/singletons";
+import {
+  getEmailService,
+  getSmtpRedactedMeta,
+} from "@/lib/consts/singletons";
 import { db } from "@/lib/db";
 import {
   type Log,
@@ -80,6 +83,10 @@ class AppLoggerQueue {
         }
       } catch (error) {
         console.error(`Failed to send email notification to ${email}:`, error);
+        console.error(
+          "[email] SMTP no envio de notificação (sem senha):",
+          getSmtpRedactedMeta()
+        );
       }
     }
   }

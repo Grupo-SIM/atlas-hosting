@@ -42,6 +42,7 @@ import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
 import type { DomainPageParams } from "./(auth)/domain/types";
 import { AtlasNotificationEmail } from "@/emails";
 import { render } from "@react-email/render";
+import { DEFAULT_POST_LOGIN_PATH } from "@/lib/consts/default-auth-path";
 
 export async function login(
   prevState: unknown,
@@ -118,8 +119,13 @@ export async function login(
     return { status: "error", message: "Erro ao fazer login" };
   }
 
-  // Redirect to the specified page or default to home
-  const redirectPath = redirectTo?.startsWith("/") ? redirectTo : "/";
+  // Landing fica em `/`; painel autenticado em `/home` (evita conflito de rotas).
+  let redirectPath = redirectTo?.startsWith("/")
+    ? redirectTo
+    : DEFAULT_POST_LOGIN_PATH;
+  if (redirectPath === "/") {
+    redirectPath = DEFAULT_POST_LOGIN_PATH;
+  }
   redirect(redirectPath);
 }
 

@@ -188,7 +188,7 @@ AtlasNotificationEmail.PreviewProps = {
   title: 'Website Deployment Successful',
   message: 'Your website has been successfully deployed to production. All systems are running smoothly and your site is now live.',
   severity: 'success' as NotificationSeverity,
-  actionUrl: 'https://atlashosting.com/dashboard',
+  actionUrl: 'https://atlashosting.com.br/home',
   actionText: 'View Dashboard',
   timestamp: new Date().toLocaleString(),
   supportEmail: 'support@atlashosting.com',

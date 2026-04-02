@@ -1037,7 +1037,7 @@ export function NewWordPressSiteForm({
           </Alert>
         </Card>
         <Button asChild>
-          <Link href="/">Voltar à página inicial</Link>
+          <Link href="/home">Voltar ao painel</Link>
         </Button>
       </div>
     );
