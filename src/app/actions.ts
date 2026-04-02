@@ -495,6 +495,75 @@ export async function createDomainInvoice({
   return redirectUrl;
 }
 
+const TEST_PAYMENT_AMOUNT_BRL = 1;
+
+/**
+ * Texto de conciliação na Simpay (PIX e cartão): "atlas " + reference da fatura.
+ * Fatura teste R$1 usa o mesmo padrão; muda só amount e reference.
+ */
+function atlasSimpayInvoiceDescription(reference: string): string {
+  return `atlas ${reference.trim()}`;
+}
+
+/**
+ * Fatura tipo "domínio" com R$ 1,00 para testar PIX e cartão de verdade (Simpay/DOM).
+ * Não registra domínio na Namecheap (metadata.testPaymentOnly).
+ *
+ * Ativo se NODE_ENV=development ou ALLOW_TEST_PAYMENT_INVOICE=true
+ */
+export async function createTestPaymentInvoice(): Promise<
+  | { ok: false; message: string }
+  | { ok: true; invoiceId: string }
+> {
+  "use server";
+
+  const allowed =
+    process.env.NODE_ENV === "development" ||
+    process.env.ALLOW_TEST_PAYMENT_INVOICE === "true";
+
+  if (!allowed) {
+    return {
+      ok: false,
+      message: "Fatura de teste desativada (defina ALLOW_TEST_PAYMENT_INVOICE=true ou use ambiente de desenvolvimento).",
+    };
+  }
+
+  const user = await getUser();
+  if (!user) {
+    return { ok: false, message: "Faça login para continuar." };
+  }
+
+  const reference = `teste-pagamento-${Date.now()}`;
+
+  const [newInvoice] = await db
+    .insert(pgInvoice)
+    .values({
+      orgId: user.organization.id,
+      userId: user.id,
+      type: "domain",
+      reference,
+      amount: TEST_PAYMENT_AMOUNT_BRL,
+      status: "pending",
+      dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      metadata: {
+        years: "1",
+        whoisguard: "off",
+        testPaymentOnly: true,
+      },
+    })
+    .returning();
+
+  if (!newInvoice?.id) {
+    return { ok: false, message: "Não foi possível criar a fatura." };
+  }
+
+  console.log(
+    `[TEST-PAYMENT] Fatura de teste criada: ${newInvoice.id} | R$ ${TEST_PAYMENT_AMOUNT_BRL} | ref=${reference}`
+  );
+
+  return { ok: true, invoiceId: newInvoice.id };
+}
+
 type PixSnapResult =
   | { ok: true; billing: PixCheckoutSnapshot }
   | { ok: false; message: string };
@@ -540,6 +609,17 @@ async function fulfillCheckoutAfterPixPaid(
   const meta = invoice.metadata as DomainRegisterInvoiceOptions;
 
   if (invoice.type === "domain") {
+    if (meta.testPaymentOnly) {
+      await db
+        .update(pgInvoice)
+        .set({ status: "paid" })
+        .where(eq(pgInvoice.id, invoice.id));
+      console.log(
+        `[CHECKOUT-PIX] Fatura de teste paga (sem Namecheap): ${invoice.id}`
+      );
+      redirect("/payment/success");
+    }
+
     const contact = {
       FirstName: billing.firstName.trim(),
       LastName: billing.lastName.trim(),
@@ -652,7 +732,7 @@ export async function initiateCheckoutPix(
       email: user.email,
       name: `${billing.firstName} ${billing.lastName}`.trim(),
       mobile_phone: billing.phoneNumber.replace(/\D/g, ""),
-      description: `atlas ${invoice.reference}`,
+      description: atlasSimpayInvoiceDescription(invoice.reference),
     });
 
     const paymentId = pixRes.paymentId ?? pixRes.id ?? "";
@@ -706,7 +786,12 @@ export async function syncCheckoutPixPayment(
   }
 
   if (invoice.status === "paid") {
-    redirect(invoice.type === "domain" ? "/domains" : "/payment/success");
+    const paidMeta = invoice.metadata as DomainRegisterInvoiceOptions;
+    const path =
+      invoice.type === "domain" && !paidMeta.testPaymentOnly
+        ? "/domains"
+        : "/payment/success";
+    redirect(path);
   }
 
   const meta = invoice.metadata as DomainRegisterInvoiceOptions;
@@ -878,7 +963,7 @@ export async function completeCheckout(
         email: user.email,
         name: `${values.firstName} ${values.lastName}`.trim(),
         mobile_phone: values.phoneNumber.replace(/\D/g, ""),
-        description: `atlas ${invoice.reference}`,
+        description: atlasSimpayInvoiceDescription(invoice.reference),
         holder_name: `${values.firstName} ${values.lastName}`.trim(),
         token: cardToken,
         bin: cardToken.substring(0, 6),
@@ -893,6 +978,16 @@ export async function completeCheckout(
     } catch (err) {
       console.error(`[SIMPAY] ✗ ERRO ao registrar pagamento na Simpay:`, err);
       return { status: "error", message: "Erro ao processar pagamento do domínio." };
+    }
+
+    const domainMeta = invoice.metadata as DomainRegisterInvoiceOptions;
+    if (domainMeta.testPaymentOnly) {
+      await db
+        .update(pgInvoice)
+        .set({ status: "paid" })
+        .where(eq(pgInvoice.id, invoiceId));
+      console.log(`[CHECKOUT] Fatura de teste paga (cartão, sem Namecheap).`);
+      redirect("/payment/success");
     }
 
     const contact = {
@@ -965,7 +1060,7 @@ export async function completeCheckout(
       email: user.email,
       name: `${values.firstName} ${values.lastName}`.trim(),
       mobile_phone: values.phoneNumber.replace(/\D/g, ""),
-      description: `atlas ${invoice.reference}`,
+      description: atlasSimpayInvoiceDescription(invoice.reference),
       holder_name: `${values.firstName} ${values.lastName}`.trim(),
       token: cardToken,
       bin: cardToken.substring(0, 6),
@@ -1092,7 +1187,7 @@ export async function completeCheckoutWithSavedCard(
         email: user.email,
         name: `${values.firstName} ${values.lastName}`.trim(),
         mobile_phone: values.phoneNumber.replace(/\D/g, ""),
-        description: `atlas ${invoice.reference}`,
+        description: atlasSimpayInvoiceDescription(invoice.reference),
         holder_name: card.holderName || `${values.firstName} ${values.lastName}`.trim(),
         token: cardToken,
         bin: card.last4 || cardToken.substring(0, 6),
@@ -1107,6 +1202,16 @@ export async function completeCheckoutWithSavedCard(
     } catch (err) {
       console.error(`[SIMPAY] ✗ ERRO ao registrar pagamento na Simpay:`, err);
       return { status: "error", message: "Erro ao processar pagamento do domínio." };
+    }
+
+    const domainMetaSaved = invoice.metadata as DomainRegisterInvoiceOptions;
+    if (domainMetaSaved.testPaymentOnly) {
+      await db
+        .update(pgInvoice)
+        .set({ status: "paid" })
+        .where(eq(pgInvoice.id, invoiceId));
+      console.log(`[CHECKOUT-SAVED] Fatura de teste paga (sem Namecheap).`);
+      return { status: "success", message: "/payment/success" };
     }
 
     const contact = {
@@ -1179,7 +1284,7 @@ export async function completeCheckoutWithSavedCard(
       email: user.email,
       name: `${values.firstName} ${values.lastName}`.trim(),
       mobile_phone: values.phoneNumber.replace(/\D/g, ""),
-      description: `atlas ${invoice.reference}`,
+      description: atlasSimpayInvoiceDescription(invoice.reference),
       holder_name: card.holderName || `${values.firstName} ${values.lastName}`.trim(),
       token: cardToken,
       bin: card.last4 || cardToken.substring(0, 6),

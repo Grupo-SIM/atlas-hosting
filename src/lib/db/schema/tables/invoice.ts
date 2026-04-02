@@ -78,4 +78,6 @@ export type DomainRegisterInvoiceOptions = Pick<
   simpayPaymentId?: string;
   pixTransactionId?: string;
   pixCheckout?: PixCheckoutSnapshot;
+  /** Cobrança real só para testar PIX/cartão; não chama Namecheap nem vincula domínio */
+  testPaymentOnly?: boolean;
 };

@@ -12,7 +12,7 @@
  * URL base (primeira definida vence):
  *   ATLAS_SIMPAY_API_URL — use no .env para ignorar SIMPAY_API_URL do sistema (Windows).
  *   SIMPAY_API_URL — fallback
- *   ATLAS_SIMPAY_STORE / SIMPAY_STORE — obrigatório no body PIX (rota atlas)
+ *   ATLAS_SIMPAY_STORE / SIMPAY_STORE — enviado no body PIX e cartão (rota atlas)
  */
 
 export interface SimpayCardPaymentParams {
@@ -28,6 +28,8 @@ export interface SimpayCardPaymentParams {
   bin: string;
   brand: string;
   installments: number;
+  /** Loja no Simpay; se omitido, usa ATLAS_SIMPAY_STORE / SIMPAY_STORE / "atlas" */
+  store?: string;
 }
 
 export interface SimpayPaymentResponse {
@@ -112,9 +114,15 @@ class SimpayApi {
     params: SimpayCardPaymentParams
   ): Promise<SimpayPaymentResponse> {
     const url = `${resolveSimpayBaseUrl()}/atlas/payments/credit-card`;
+    const { store: storeParam, ...cardFields } = params;
+    const body = {
+      ...cardFields,
+      store: resolveSimpayStore(storeParam),
+    };
 
     console.log(`[SIMPAY] → Enviando pagamento de cartão para Simpay`, {
       url,
+      store: body.store,
       price: params.price,
       email: params.email,
       installments: params.installments,
@@ -124,7 +132,7 @@ class SimpayApi {
     const response = await fetch(url, {
       method: "POST",
       headers: this.headers,
-      body: JSON.stringify(params),
+      body: JSON.stringify(body),
     });
 
     const data = await response.json();
