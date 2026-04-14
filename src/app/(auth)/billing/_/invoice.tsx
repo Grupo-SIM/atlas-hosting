@@ -48,14 +48,14 @@ export default function InvoiceCard({
     const breakdownInformation = [
       {
         label: invoice.reference,
-        value: invoice.amount - (whoisGuard ? 3 : 0),
+        value: invoice.amount,
       },
     ];
 
     if (whoisGuard) {
       breakdownInformation.push({
-        label: "Proteção de Privacidade",
-        value: whoisGuard ? 3 : 0,
+        label: "Proteção de Privacidade (WHOIS)",
+        value: 0,
       });
     }
 

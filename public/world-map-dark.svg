@@ -1,0 +1,22 @@
+<svg width="1200" height="560" viewBox="0 0 1200 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g opacity="0.95">
+    <ellipse cx="220" cy="235" rx="170" ry="95" fill="#243A5F"/>
+    <ellipse cx="305" cy="318" rx="92" ry="126" fill="#2A456E"/>
+    <ellipse cx="470" cy="198" rx="95" ry="58" fill="#2A456E"/>
+    <ellipse cx="548" cy="250" rx="80" ry="106" fill="#243A5F"/>
+    <ellipse cx="640" cy="192" rx="62" ry="45" fill="#2F4E79"/>
+    <ellipse cx="682" cy="302" rx="108" ry="126" fill="#2A456E"/>
+    <ellipse cx="818" cy="220" rx="122" ry="72" fill="#2F4E79"/>
+    <ellipse cx="885" cy="332" rx="68" ry="45" fill="#243A5F"/>
+    <ellipse cx="1000" cy="365" rx="115" ry="66" fill="#2A456E"/>
+    <ellipse cx="1090" cy="462" rx="70" ry="40" fill="#2F4E79"/>
+  </g>
+  <g opacity="0.32" stroke="#7ED6FF" stroke-width="2">
+    <path d="M120 210C260 178 338 176 470 198"/>
+    <path d="M470 198C560 206 640 212 774 236"/>
+    <path d="M774 236C896 258 996 292 1090 340"/>
+    <path d="M220 318C310 308 390 296 548 250"/>
+    <path d="M548 250C610 278 645 300 682 302"/>
+    <path d="M682 302C760 322 834 326 940 334"/>
+  </g>
+</svg>

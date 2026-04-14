@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { OrganizationDomain } from "@/lib/db/schema";
 import { startTransition, useActionState } from "react";
-import { Globe, ChevronDown, Check, AlertCircle } from "lucide-react";
+import { Globe, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function DomainSelector({
@@ -43,8 +43,11 @@ export default function DomainSelector({
     <div className="flex items-center gap-2">
       <Globe className="h-4 w-4 text-muted-foreground hidden md:block" />
       <Select value={selectedDomain?.domain} onValueChange={onValueChange}>
-        <SelectTrigger className="w-fit md:w-[280px] h-9 text-foreground bg-card border-border hover:bg-accent hover:text-accent-foreground transition-colors">
-          <div className="flex items-center gap-2 flex-1">
+        <SelectTrigger
+          id="domainName"
+          className="w-fit md:w-[280px] h-9 text-foreground bg-card border-border transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          <div className="flex flex-1 items-center gap-2">
             <SelectValue
               placeholder="Selecione um domínio"
               className="text-sm"

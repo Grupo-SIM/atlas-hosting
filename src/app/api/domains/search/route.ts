@@ -22,6 +22,29 @@ const UNSUPPORTED_TLD_PATTERNS = [
 const isUnsupportedTld = (domain: string): boolean =>
   UNSUPPORTED_TLD_PATTERNS.some((re) => re.test(domain.toLowerCase()));
 
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+function isNamecheapRateLimit(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return (
+    /too many requests/i.test(msg) ||
+    /500000/i.test(msg) ||
+    /rate ?limit/i.test(msg)
+  );
+}
+
+async function namecheapCheckBatch(domainList: string): Promise<Awaited<ReturnType<typeof namecheapApi.check>>> {
+  try {
+    return await namecheapApi.check({ DomainList: domainList });
+  } catch (e) {
+    if (isNamecheapRateLimit(e)) {
+      await sleep(2000);
+      return await namecheapApi.check({ DomainList: domainList });
+    }
+    throw e;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     if (!process.env.NAMECHEAP_API_USER || !process.env.NAMECHEAP_API_KEY) {
@@ -76,10 +99,20 @@ export async function GET(request: NextRequest) {
       batches.push(domainsToSearch.slice(i, i + MAX_PER_BATCH));
     }
 
-    // Checa disponibilidade via Namecheap
-    const batchResults = await Promise.allSettled(
-      batches.map((batch) => namecheapApi.check({ DomainList: batch.join(",") }))
-    );
+    // Checa disponibilidade em série + pausa entre lotes (evita "Too many requests" da Namecheap)
+    const batchResults: PromiseSettledResult<Awaited<ReturnType<typeof namecheapApi.check>>>[] = [];
+    for (let i = 0; i < batches.length; i++) {
+      if (i > 0) {
+        await sleep(550);
+      }
+      const batch = batches[i]!;
+      try {
+        const value = await namecheapCheckBatch(batch.join(","));
+        batchResults.push({ status: "fulfilled", value });
+      } catch (reason) {
+        batchResults.push({ status: "rejected", reason });
+      }
+    }
 
     const results = batchResults.flatMap((r) => {
       if (r.status === "fulfilled") return r.value.Results ?? [];
@@ -110,9 +143,16 @@ export async function GET(request: NextRequest) {
     let fee = 1;
     if (feeEnabled) {
       try {
+        const envFee = process.env.NAMESILO_PROFIT_FEE ? parseFloat(process.env.NAMESILO_PROFIT_FEE) : undefined;
+        // Se o valor no env for 0.05, tratamos como 5%. Se for 20, tratamos como 20%.
+        const envFeeNormalized = envFee !== undefined ? (envFee < 1 ? envFee * 100 : envFee) : undefined;
+        
         const config = await db.query.pgSystemConfig.findFirst();
-        fee = config ? 1 + (config.domainFee ?? 5) / 100 : 1.05;
-      } catch { fee = 1.05; }
+        const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 20;
+        fee = 1 + finalFeePercent / 100;
+      } catch { 
+        fee = 1.20; 
+      }
     }
 
     // Taxa de câmbio USD→BRL (uma única chamada)
@@ -139,27 +179,53 @@ export async function GET(request: NextRequest) {
       });
     } catch { /* sem DB */ }
 
-    // Fallback: busca direto na Namecheap para TLDs sem cache
-    if (pricingRows.length === 0) {
-      const settled = await Promise.allSettled(
-        tldKeys.map(async (tld) => {
+    // Só chama getPricing para TLDs que faltam no DB, em série + pausa (evita rajada paralela)
+    const missingTlds = tldKeys.filter((tld) => !pricingRows.some((p) => p.tld === tld));
+    for (let i = 0; i < missingTlds.length; i++) {
+      if (i > 0) {
+        await sleep(220);
+      }
+      const tld = missingTlds[i]!;
+      try {
+        const data = await namecheapApi.getPricing(tld);
+        const p = data[0]?.Prices.find(
+          (x) => x.Duration === 1 && x.DurationType === "YEAR"
+        );
+        const raw = p?.YourPrice ?? p?.Price ?? 0;
+        if (raw > 0) {
+          const currency = p?.Currency?.toUpperCase() ?? "USD";
+          pricingRows.push({
+            tld,
+            price: raw,
+            renew: raw * 1.1,
+            transfer: raw * 0.8,
+            currency,
+          });
+        }
+      } catch (e) {
+        if (isNamecheapRateLimit(e)) {
+          await sleep(2000);
           try {
             const data = await namecheapApi.getPricing(tld);
             const p = data[0]?.Prices.find(
               (x) => x.Duration === 1 && x.DurationType === "YEAR"
             );
             const raw = p?.YourPrice ?? p?.Price ?? 0;
-            const currency = p?.Currency?.toUpperCase() ?? "USD";
-            return { tld, price: raw, renew: raw * 1.1, transfer: raw * 0.8, currency };
+            if (raw > 0) {
+              const currency = p?.Currency?.toUpperCase() ?? "USD";
+              pricingRows.push({
+                tld,
+                price: raw,
+                renew: raw * 1.1,
+                transfer: raw * 0.8,
+                currency,
+              });
+            }
           } catch {
-            return { tld, price: null, renew: null, transfer: null };
+            /* ignora TLD sem preço */
           }
-        })
-      );
-      pricingRows = settled
-        .filter((r) => r.status === "fulfilled")
-        .map((r) => (r as PromiseFulfilledResult<typeof pricingRows[0]>).value)
-        .filter((p) => p.price != null);
+        }
+      }
     }
 
     const pricingMap = Object.fromEntries(pricingRows.map((p) => [p.tld, p]));

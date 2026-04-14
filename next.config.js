@@ -10,6 +10,14 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'i.pravatar.cc',
       },
+      {
+        protocol: 'https',
+        hostname: 'atlashosting.com.br',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.atlashosting.com.br',
+      },
     ],
   },
   turbopack: {

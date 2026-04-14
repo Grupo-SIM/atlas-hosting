@@ -31,7 +31,7 @@ export default function LoadingState() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="absolute text-green-400 font-medium text-lg text-center w-full"
+            className="absolute text-center text-lg font-medium text-[#01FC8D] w-full"
           >
             {phrases[index]}
           </motion.div>
@@ -52,7 +52,7 @@ export default function LoadingState() {
               repeat: Infinity,
               delay: i * 0.2,
             }}
-            className="w-2 h-2 bg-green-500 rounded-full"
+            className="h-2 w-2 rounded-full bg-[#01FC8D]"
           />
         ))}
       </div>

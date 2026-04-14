@@ -41,7 +41,7 @@ const rightFeatures = [
 
 export function MoreFeatures() {
   return (
-    <section className="py-24 px-4 relative overflow-hidden bg-[#0a0e27]">
+    <section id="beneficios" className="py-24 px-4 relative overflow-hidden bg-[#0a0e27]">
       <div className="container mx-auto max-w-[1100px]">
         {/* Badge e Título */}
         <div className="text-center mb-16 flex flex-col items-center">

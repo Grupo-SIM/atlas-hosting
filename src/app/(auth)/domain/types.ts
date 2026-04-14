@@ -46,6 +46,8 @@ export interface DomainPageParams {
   whoisguard?: string;
   years?: string;
   domain?: string;
+  /** Lista separada por vírgulas (ex.: pacote .net+.org+.io) */
+  bundle?: string;
   confirm?: string;
   action?: "search";
 }

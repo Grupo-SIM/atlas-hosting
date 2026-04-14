@@ -1,10 +1,23 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { CheckCircle2, XCircle, Loader2, ChevronDown } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Check, CheckCircle2, ChevronDown, Loader2, XCircle } from "lucide-react";
+import { Rajdhani } from "next/font/google";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import LoadingState from "./LoadingState";
+
+const rajdhani = Rajdhani({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
 
 interface DomainResult {
   domain: string;
@@ -13,7 +26,6 @@ interface DomainResult {
   renewBRL: number;
   transferBRL: number;
   isPremium: boolean;
-  /** Presente quando o TLD não é suportado pela plataforma */
   unavailableReason?: string;
 }
 
@@ -36,15 +48,81 @@ interface DomainSearchResultsProps {
 
 const PAGE_SIZE = 9;
 
-export default function DomainSearchResults({
-  query,
-}: DomainSearchResultsProps) {
+const INCLUDED_FEATURES = [
+  "Administração de DNS incluída",
+  "Proteção WHOIS opcional (grátis)",
+  "Suporte 24/7 em português",
+];
+
+function tldOf(domain: string) {
+  const i = domain.indexOf(".");
+  return i >= 0 ? domain.slice(i).toLowerCase() : "";
+}
+
+type FilterId = "all" | "popular" | "business" | "tech";
+
+const FILTERS: { id: FilterId; label: string; match: (domain: string) => boolean }[] = [
+  { id: "all", label: "Todos", match: () => true },
+  {
+    id: "popular",
+    label: "Populares",
+    match: (d) => [".com", ".net", ".org"].includes(tldOf(d)),
+  },
+  {
+    id: "business",
+    label: "Negócios",
+    match: (d) =>
+      [".co", ".online", ".site", ".store", ".world", ".ink", ".inc"].includes(tldOf(d)),
+  },
+  {
+    id: "tech",
+    label: "Tecnologia",
+    match: (d) =>
+      [".io", ".dev", ".tech", ".app", ".cloud", ".xyz", ".space"].includes(tldOf(d)),
+  },
+];
+
+function pathAfterAuthSingle(domain: string) {
+  return `/domain?domain=${encodeURIComponent(domain)}`;
+}
+
+function pathAfterAuthBundle(domains: string[]) {
+  return `/domain?tab=register&bundle=${encodeURIComponent(domains.join(","))}`;
+}
+
+export default function DomainSearchResults({ query }: DomainSearchResultsProps) {
+  const router = useRouter();
   const [mainResult, setMainResult] = useState<DomainResult | null>(null);
   const [suggestions, setSuggestions] = useState<DomainResult[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filterId, setFilterId] = useState<FilterId>("all");
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [postAuthPath, setPostAuthPath] = useState<string | null>(null);
+
+  const openAuthModal = (path: string) => {
+    setPostAuthPath(path);
+    setAuthModalOpen(true);
+  };
+
+  const onAuthModalOpenChange = (open: boolean) => {
+    setAuthModalOpen(open);
+    if (!open) {
+      setPostAuthPath(null);
+    }
+  };
+
+  const goToLogin = () => {
+    if (!postAuthPath) return;
+    router.push(`/login?redirect=${encodeURIComponent(postAuthPath)}`);
+  };
+
+  const goToSignup = () => {
+    if (!postAuthPath) return;
+    router.push(`/signup?redirect=${encodeURIComponent(postAuthPath)}`);
+  };
 
   const fetchPage = useCallback(
     async (page: number, append: boolean) => {
@@ -77,6 +155,7 @@ export default function DomainSearchResults({
     setMainResult(null);
     setSuggestions([]);
     setPagination(null);
+    setFilterId("all");
 
     fetchPage(1, false)
       .catch((err) => {
@@ -100,12 +179,44 @@ export default function DomainSearchResults({
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(price);
-  };
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(price);
+
+  const availableSuggestions = useMemo(
+    () => suggestions.filter((s) => s.available),
+    [suggestions]
+  );
+
+  const bundleItems = useMemo(() => availableSuggestions.slice(0, 3), [availableSuggestions]);
+
+  const bundleDomainSet = useMemo(
+    () => new Set(bundleItems.map((b) => b.domain)),
+    [bundleItems]
+  );
+
+  /** Sem duplicar o card “Amplie sua marca” (3 primeiros). */
+  const listPool = useMemo(
+    () => availableSuggestions.filter((s) => !bundleDomainSet.has(s.domain)),
+    [availableSuggestions, bundleDomainSet]
+  );
+
+  /**
+   * Filtros por categoria usam todas as sugestões (incluindo as do pacote).
+   * Caso contrário, .com/.net/.org só no pacote sumiam de “Populares”.
+   * “Todos” continua sem repetir linhas que já estão no pacote.
+   */
+  const filteredList = useMemo(() => {
+    const match = FILTERS.find((f) => f.id === filterId)?.match ?? (() => true);
+    const source = filterId === "all" ? listPool : availableSuggestions;
+    return source.filter((s) => match(s.domain));
+  }, [listPool, availableSuggestions, filterId]);
+
+  const bundleTotal = useMemo(
+    () => bundleItems.reduce((acc, s) => acc + s.priceBRL, 0),
+    [bundleItems]
+  );
+
+  const hasMore = pagination ? pagination.page < pagination.totalPages : false;
 
   if (isLoading) {
     return <LoadingState />;
@@ -113,9 +224,11 @@ export default function DomainSearchResults({
 
   if (error) {
     return (
-      <div className="rounded-4xl p-6 bg-red-500/20 border border-red-500/30 text-red-200">
-        <p className="font-semibold mb-2">Erro ao buscar domínio</p>
-        <p className="text-sm">{error}</p>
+      <div className="rounded-2xl border border-red-500/35 bg-red-500/10 p-6 text-red-100">
+        <p className={`${rajdhani.className} mb-2 text-lg font-semibold uppercase tracking-wide`}>
+          Erro ao buscar
+        </p>
+        <p className="text-sm text-red-100/90">{error}</p>
       </div>
     );
   }
@@ -124,155 +237,308 @@ export default function DomainSearchResults({
     return null;
   }
 
-  const availableSuggestions = suggestions.filter((s) => s.available);
-  const hasMore = pagination ? pagination.page < pagination.totalPages : false;
-
   return (
-    <div className="space-y-6">
-      {/* Main Result */}
-      <div className="relative rounded-4xl p-6 text-white overflow-hidden bg-slate-200/10 backdrop-blur-[20px] border border-green-500/30 shadow-[0_8px_32px_0_rgba(34,197,94,0.15)]">
-        <div className="absolute inset-0 -z-10 h-full w-full bg-transparent bg-[radial-gradient(rgba(34,197,94,0.2)_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
+    <div className="space-y-12 md:space-y-14">
+      {/* Destaques: correspondência + pacote sugerido */}
+      <div className="grid gap-6 md:grid-cols-2 md:gap-8">
+        {/* Card 1 — correspondência com a busca */}
+        <article className="flex flex-col rounded-2xl border border-white/12 bg-[#0d1225]/85 p-6 shadow-[0_16px_48px_rgba(0,0,0,0.35)] backdrop-blur-md md:p-8">
+          <span
+            className={`${rajdhani.className} mb-4 inline-flex w-fit rounded-full border border-[#01FC8D]/35 bg-[#01FC8D]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#01FC8D]`}
+          >
+            Correspondência exata
+          </span>
 
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              {mainResult.available ? (
-                <CheckCircle2 className="w-6 h-6 text-green-400" />
-              ) : (
-                <XCircle className="w-6 h-6 text-red-400" />
-              )}
-              <div>
-                <h2 className="text-2xl font-bold">{mainResult.domain}</h2>
-                <p className="text-white/70 text-sm">
-                  {mainResult.available
-                    ? "Este domínio está disponível para registro"
-                    : (mainResult.unavailableReason ?? "Este domínio não está disponível")}
-                </p>
-              </div>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2
+                className={`${rajdhani.className} break-all text-2xl font-bold tracking-tight text-white md:text-[1.65rem]`}
+              >
+                {mainResult.domain}
+              </h2>
+              <p className="mt-2 text-sm text-white/60">
+                {mainResult.available
+                  ? "Disponível para registro na Atlas."
+                  : (mainResult.unavailableReason ?? "Indisponível no momento.")}
+              </p>
             </div>
-            {mainResult.isPremium && (
-              <span className="px-3 py-1 text-sm bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+            {mainResult.isPremium ? (
+              <span className="shrink-0 rounded-full border border-amber-400/40 bg-amber-400/15 px-2.5 py-1 text-xs font-semibold text-amber-200">
                 Premium
               </span>
-            )}
+            ) : null}
           </div>
 
-          {mainResult.available && (
-            <div className="mt-6 pt-6 border-t border-white/10">
-              <div className="flex items-center justify-between mb-4">
+          {mainResult.available ? (
+            <>
+              <div className="mt-6 flex flex-wrap items-end gap-6 border-t border-white/10 pt-6">
                 <div>
-                  <p className="text-white/70 text-sm mb-1">Preço anual</p>
-                  <p className="text-3xl font-bold">
+                  <p className="text-xs font-medium uppercase tracking-wide text-white/45">
+                    Primeiro ano
+                  </p>
+                  <p className={`${rajdhani.className} mt-1 text-3xl font-bold text-white`}>
                     {formatPrice(mainResult.priceBRL)}
                   </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-white/70 text-sm mb-1">Renovação</p>
-                  <p className="text-xl text-white/80">
-                    {formatPrice(mainResult.renewBRL)}
+                  <p className="mt-1 text-xs text-white/45">
+                    Renovação {formatPrice(mainResult.renewBRL)}/ano
                   </p>
                 </div>
               </div>
-              <Link
-                href={`/signup?redirect=/domain?domain=${encodeURIComponent(
-                  mainResult.domain
-                )}`}
-                className="block"
+
+              <ul className="mt-6 flex flex-col gap-2.5">
+                {INCLUDED_FEATURES.map((t) => (
+                  <li key={t} className="flex items-start gap-2.5 text-sm text-white/80">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#01FC8D]" strokeWidth={2.5} />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+
+              <Button
+                type="button"
+                className={`${rajdhani.className} mt-8 h-12 w-full rounded-xl bg-[#01FC8D] text-sm font-bold uppercase tracking-wide text-black shadow-[0_8px_24px_rgba(1,252,141,0.25)] hover:bg-[#01e67d]`}
+                onClick={() => openAuthModal(pathAfterAuthSingle(mainResult.domain))}
               >
-                <Button className="w-full bg-green-500 hover:bg-green-600 text-white rounded-lg py-6 text-lg">
-                  Registrar Agora
-                </Button>
-              </Link>
+                Registrar agora
+              </Button>
+            </>
+          ) : (
+            <div className="mt-6 flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-4">
+              <XCircle className="h-8 w-8 shrink-0 text-red-400/90" />
+              <p className="text-sm text-white/65">
+                Experimente outra extensão ou varie o nome — veja sugestões ao lado e na lista
+                abaixo.
+              </p>
             </div>
           )}
-        </div>
+        </article>
+
+        {/* Card 2 — pacote / extensões sugeridas */}
+        <article className="flex flex-col rounded-2xl border border-white/12 bg-[#0a1026]/75 p-6 shadow-[0_16px_48px_rgba(0,0,0,0.28)] backdrop-blur-md md:p-8">
+          <span
+            className={`${rajdhani.className} mb-4 inline-flex w-fit rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white/80`}
+          >
+            Amplie sua marca
+          </span>
+
+          {bundleItems.length > 0 ? (
+            <>
+              <p className="text-sm text-white/60">
+                Combine estas extensões para proteger o nome do seu projeto.
+              </p>
+              <ul className="mt-5 space-y-3">
+                {bundleItems.map((s) => (
+                  <li
+                    key={s.domain}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2.5"
+                  >
+                    <span className={`${rajdhani.className} font-semibold text-white`}>
+                      {s.domain}
+                    </span>
+                    <span className="shrink-0 text-sm text-[#01FC8D]">
+                      {formatPrice(s.priceBRL)}
+                      <span className="text-white/40">/ano</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-5 text-xs uppercase tracking-wide text-white/45">Total estimado</p>
+              <p className={`${rajdhani.className} text-2xl font-bold text-white`}>
+                {formatPrice(bundleTotal)}
+                <span className="text-base font-medium text-white/45"> / primeiro ano</span>
+              </p>
+              <p className="mt-1 text-xs text-white/45">
+                Compre estes domínios em uma única fatura e um único pagamento (disponível só neste
+                pacote sugerido).
+              </p>
+              {bundleItems.length >= 2 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={`${rajdhani.className} mt-8 h-12 w-full rounded-xl border-2 border-[#01FC8D]/50 bg-transparent text-sm font-bold uppercase tracking-wide text-[#01FC8D] hover:bg-[#01FC8D]/10 hover:text-[#01FC8D]`}
+                  onClick={() =>
+                    openAuthModal(pathAfterAuthBundle(bundleItems.map((b) => b.domain)))
+                  }
+                >
+                  Comprar pacote — 1 fatura
+                </Button>
+              ) : bundleItems.length === 1 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={`${rajdhani.className} mt-8 h-12 w-full rounded-xl border-2 border-[#01FC8D]/50 bg-transparent text-sm font-bold uppercase tracking-wide text-[#01FC8D] hover:bg-[#01FC8D]/10 hover:text-[#01FC8D]`}
+                  onClick={() => openAuthModal(pathAfterAuthSingle(bundleItems[0]!.domain))}
+                >
+                  Registrar esta extensão
+                </Button>
+              ) : null}
+            </>
+          ) : (
+            <div className="flex flex-1 flex-col justify-center">
+              <p className="text-sm text-white/60">
+                Assim que houver sugestões disponíveis para o seu termo, mostraremos um pacote de
+                extensões aqui.
+              </p>
+              <p className="mt-4 text-sm text-white/45">
+                Tente buscar apenas o nome (sem TLD) para ver mais opções.
+              </p>
+            </div>
+          )}
+        </article>
       </div>
 
-      {/* Suggestions */}
-      {availableSuggestions.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-white">
-              Sugestões alternativas
-            </h3>
-            {pagination && (
-              <span className="text-white/50 text-sm">
-                {availableSuggestions.length} de {pagination.total} disponíveis
-              </span>
-            )}
-          </div>
+      {/* Mais opções */}
+      <section id="mais-opcoes" className="scroll-mt-28">
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <h3 className={`${rajdhani.className} text-xl font-bold text-white md:text-2xl`}>
+            Mais opções
+          </h3>
+          {pagination ? (
+            <span className="text-sm text-white/45">
+              {availableSuggestions.length} disponíveis nesta busca
+              {pagination.total > 0 ? ` · ${pagination.total} no total` : ""}
+            </span>
+          ) : null}
+        </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {availableSuggestions.map((suggestion) => (
-              <div
-                key={suggestion.domain}
-                className="relative rounded-2xl p-4 text-white overflow-hidden bg-slate-200/10 backdrop-blur-[20px] border border-white/10 hover:border-green-500/30 transition-all"
+        <div className="mb-8 flex flex-wrap gap-2">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFilterId(f.id)}
+              className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                filterId === f.id
+                  ? "border-[#01FC8D]/55 bg-[#01FC8D]/12 text-[#01FC8D]"
+                  : "border-white/15 bg-white/[0.04] text-white/75 hover:border-white/25 hover:text-white"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {filteredList.length > 0 ? (
+          <ul className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-[#0d1225]/40">
+            {filteredList.map((s) => (
+              <li
+                key={s.domain}
+                className="flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6"
               >
-                <div className="absolute inset-0 -z-10 h-full w-full bg-transparent bg-[radial-gradient(rgba(34,197,94,0.1)_1px,transparent_1px)] [background-size:8px_8px] opacity-20"></div>
-
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-white font-semibold text-lg">
-                      {suggestion.domain}
-                    </span>
-                    {suggestion.isPremium && (
-                      <span className="px-2 py-0.5 text-xs bg-yellow-500/20 text-yellow-300 rounded">
-                        Premium
+                <div className="min-w-0 flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#01FC8D]" />
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`${rajdhani.className} text-lg font-semibold text-white md:text-xl`}
+                      >
+                        {s.domain}
                       </span>
-                    )}
-                  </div>
-                  <div className="mb-3">
-                    <p className="text-white/70 text-xs mb-1">Preço anual</p>
-                    <p className="text-xl font-bold">
-                      {formatPrice(suggestion.priceBRL)}
+                      {s.isPremium ? (
+                        <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-200">
+                          Premium
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-[#01FC8D]/12 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#01FC8D]">
+                          Disponível
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-xs text-white/45">
+                      Renovação a partir de {formatPrice(s.renewBRL)}/ano
                     </p>
                   </div>
-                  <Link
-                    href={`/signup?redirect=/domain?domain=${encodeURIComponent(
-                      suggestion.domain
-                    )}`}
-                  >
-                    <Button className="w-full bg-green-500 hover:bg-green-600 text-white rounded-lg">
-                      Registrar
-                    </Button>
-                  </Link>
                 </div>
-              </div>
+
+                <div className="flex shrink-0 items-center gap-4 sm:gap-6">
+                  <div className="text-right">
+                    <p className={`${rajdhani.className} text-lg font-bold text-white md:text-xl`}>
+                      {formatPrice(s.priceBRL)}
+                    </p>
+                    <p className="text-xs text-white/45">/ano</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={`${rajdhani.className} h-10 min-w-[7.5rem] shrink-0 rounded-xl border-white/25 bg-transparent text-xs font-bold uppercase tracking-wide text-white hover:border-[#01FC8D]/50 hover:bg-[#01FC8D]/5 hover:text-[#01FC8D]`}
+                    onClick={() => openAuthModal(pathAfterAuthSingle(s.domain))}
+                  >
+                    Registrar
+                  </Button>
+                </div>
+              </li>
             ))}
+          </ul>
+        ) : (
+          <div className="rounded-2xl border border-white/10 bg-[#0d1225]/35 px-6 py-14 text-center">
+            <p className="text-white/60">
+              Nenhum resultado nesta categoria. Escolha outro filtro ou carregue mais sugestões.
+            </p>
           </div>
+        )}
 
-          {/* Load More */}
-          {hasMore && (
-            <div className="mt-6 flex justify-center">
-              <Button
-                onClick={handleLoadMore}
-                disabled={isLoadingMore}
-                className="bg-transparent border border-white/20 text-white hover:bg-white/10 hover:border-green-500/50 px-8 py-5 rounded-xl gap-2"
-              >
-                {isLoadingMore ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Carregando...
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-4 h-4" />
-                    Carregar mais domínios
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+        {hasMore ? (
+          <div className="mt-8 flex justify-center">
+            <Button
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              variant="outline"
+              className="gap-2 rounded-xl border-white/20 bg-transparent px-8 py-6 text-white hover:border-[#01FC8D]/45 hover:bg-[#01FC8D]/5"
+            >
+              {isLoadingMore ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-[#01FC8D]" />
+                  Carregando…
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4 text-[#01FC8D]" />
+                  Carregar mais
+                </>
+              )}
+            </Button>
+          </div>
+        ) : null}
+      </section>
 
-      {availableSuggestions.length === 0 && (
-        <div className="text-center py-12 rounded-4xl bg-white/5 border border-white/10">
-          <p className="text-white/70">
-            Nenhuma sugestão alternativa disponível no momento.
-          </p>
-        </div>
-      )}
+      <Dialog open={authModalOpen} onOpenChange={onAuthModalOpenChange}>
+        <DialogContent className="border-white/10 bg-[#0d1225] text-white sm:max-w-md [&_.text-muted-foreground]:text-white/65 [&_button.absolute]:text-white/80">
+          <DialogHeader>
+            <DialogTitle className={`${rajdhani.className} text-xl text-white`}>
+              Continuar compra
+            </DialogTitle>
+            <DialogDescription className="text-base text-white/70">
+              Você já possui conta na Atlas Hosting? Escolha uma opção para seguir para o pagamento
+              com segurança.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 pt-2">
+            <Button
+              type="button"
+              className={`${rajdhani.className} h-11 w-full bg-[#01FC8D] font-bold uppercase tracking-wide text-black hover:bg-[#01e67d]`}
+              onClick={goToLogin}
+            >
+              Sim — entrar com minha conta
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className={`${rajdhani.className} h-11 w-full border-white/25 bg-transparent font-bold uppercase tracking-wide text-white hover:bg-white/10`}
+              onClick={goToSignup}
+            >
+              Não — criar conta nova
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-white/55 hover:bg-white/5 hover:text-white"
+              onClick={() => onAuthModalOpenChange(false)}
+            >
+              Voltar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

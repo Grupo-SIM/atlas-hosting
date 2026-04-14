@@ -101,8 +101,8 @@ export function PromotionalCards() {
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     onKeyPress={handleKeyPress}
-                    className="flex-1 bg-transparent text-white placeholder-transparent outline-none text-base w-full relative z-10"
-                    placeholder=""
+                    className="flex-1 bg-transparent text-white placeholder:text-white/50 outline-none text-base w-full relative z-10"
+                    placeholder="Digite o domínio que você quer registrar"
                   />
                 </div>
                         <Button

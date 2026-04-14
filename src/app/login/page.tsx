@@ -20,11 +20,15 @@ export default function LoginPage({
 }: LoginPageProps) {
   const searchParams = use(_searchParams);
 
+  const signupSwitchHref = searchParams.redirect
+    ? `/signup?redirect=${encodeURIComponent(searchParams.redirect)}`
+    : "/signup";
+
   return (
     <AuthPage
       title="Bem-vindo de volta"
       subtitle="Faça login para acessar sua conta de hospedagem"
-      switchHref="/signup"
+      switchHref={signupSwitchHref}
       switchTitle="Não possui uma conta?"
       switchText="Criar uma conta"
     >

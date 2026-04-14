@@ -179,6 +179,8 @@ const ModernCheckoutForm = forwardRef<
     paymentId: string;
     transactionId: string;
   } | null>(null);
+  const [pixCopied, setPixCopied] = useState(false);
+  const pixCopiedResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("billing");
 
   // Always use the full schema for form management
@@ -237,6 +239,36 @@ const ModernCheckoutForm = forwardRef<
       clearTimeout(stopAt);
     };
   }, [pixSession, invoiceId]);
+
+  useEffect(() => {
+    setPixCopied(false);
+    if (pixCopiedResetRef.current) {
+      clearTimeout(pixCopiedResetRef.current);
+      pixCopiedResetRef.current = null;
+    }
+  }, [pixSession?.pix_content]);
+
+  useEffect(
+    () => () => {
+      if (pixCopiedResetRef.current) clearTimeout(pixCopiedResetRef.current);
+    },
+    []
+  );
+
+  const copyPixToClipboard = useCallback(() => {
+    if (!pixSession) return;
+    void navigator.clipboard
+      .writeText(pixSession.pix_content)
+      .then(() => {
+        if (pixCopiedResetRef.current) clearTimeout(pixCopiedResetRef.current);
+        setPixCopied(true);
+        pixCopiedResetRef.current = setTimeout(() => {
+          setPixCopied(false);
+          pixCopiedResetRef.current = null;
+        }, 2200);
+      })
+      .catch(() => toast.error("Não foi possível copiar."));
+  }, [pixSession]);
 
   const handleInitiatePix = useCallback(async () => {
     const ok = await trigger([
@@ -735,15 +767,32 @@ const ModernCheckoutForm = forwardRef<
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
-                onClick={() => {
-                  void navigator.clipboard
-                    .writeText(pixSession.pix_content)
-                    .then(() => toast.success("Código PIX copiado."))
-                    .catch(() => toast.error("Não foi possível copiar."));
-                }}
+                className={clsx(
+                  "w-full overflow-hidden transition-[color,background-color,border-color] duration-300",
+                  pixCopied &&
+                    "border-emerald-500/45 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
+                )}
+                onClick={copyPixToClipboard}
               >
-                Copiar código PIX
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={pixCopied ? "copied" : "copy"}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="inline-flex items-center justify-center gap-2"
+                  >
+                    {pixCopied ? (
+                      <>
+                        <Check className="size-4 shrink-0" strokeWidth={2.5} />
+                        Copiado!
+                      </>
+                    ) : (
+                      "Copiar código PIX"
+                    )}
+                  </motion.span>
+                </AnimatePresence>
               </Button>
               <p className="text-center text-xs text-muted-foreground">
                 Após o pagamento, a confirmação é automática (pode levar alguns
@@ -924,15 +973,32 @@ const ModernCheckoutForm = forwardRef<
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    void navigator.clipboard
-                      .writeText(pixSession.pix_content)
-                      .then(() => toast.success("Código PIX copiado."))
-                      .catch(() => toast.error("Não foi possível copiar."));
-                  }}
+                  className={clsx(
+                    "w-full overflow-hidden transition-[color,background-color,border-color] duration-300",
+                    pixCopied &&
+                      "border-emerald-500/45 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
+                  )}
+                  onClick={copyPixToClipboard}
                 >
-                  Copiar código PIX
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.span
+                      key={pixCopied ? "copied" : "copy"}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="inline-flex items-center justify-center gap-2"
+                    >
+                      {pixCopied ? (
+                        <>
+                          <Check className="size-4 shrink-0" strokeWidth={2.5} />
+                          Copiado!
+                        </>
+                      ) : (
+                        "Copiar código PIX"
+                      )}
+                    </motion.span>
+                  </AnimatePresence>
                 </Button>
                 <p className="text-center text-xs text-muted-foreground">
                   Após o pagamento, a confirmação é automática (pode levar alguns

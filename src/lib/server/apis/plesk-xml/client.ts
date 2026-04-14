@@ -1,8 +1,12 @@
+<<<<<<< HEAD
 import type { AddWebspaceParams } from "@/app/api/wp-install-w/worker/types";
+=======
+>>>>>>> main
 import {
   PLESK_API_LOGIN,
   PLESK_API_PASSWORD,
 } from "@/lib/server/apis/plesk-xml/config";
+<<<<<<< HEAD
 import type {
   ChangeMailSettingsPayload,
   CreateMailPayload,
@@ -19,6 +23,11 @@ import { XMLParser } from "fast-xml-parser";
 import type { DeepPartial } from "react-hook-form";
 import { create } from "xmlbuilder2";
 import certificatesApi from "../certificates";
+=======
+import axios, { type AxiosError } from "axios";
+import { XMLParser } from "fast-xml-parser";
+import { create } from "xmlbuilder2";
+>>>>>>> main
 import { PLESK_API_KEY, PLESK_XML_API_URL } from "./config";
 import type {
   AddMailNamePayload,
@@ -27,7 +36,17 @@ import type {
   PleskApiError,
   PleskPacket,
 } from "./types";
+<<<<<<< HEAD
 import { cache } from "react";
+=======
+import { format } from "date-fns";
+import certificatesApi from "../certificates";
+import pleskApi from "../plesk";
+
+const axiosInstance = axios.create({
+  adapter: "xhr",
+});
+>>>>>>> main
 
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
@@ -48,7 +67,11 @@ interface PleskRequestOptions {
 
 async function requestPleskApi<TResponsePayload>(
   options: PleskRequestOptions
+<<<<<<< HEAD
 ): Promise<TResponsePayload | undefined> {
+=======
+): Promise<TResponsePayload> {
+>>>>>>> main
   const xmlRequest = create({ version: "1.0", encoding: "UTF-8" })
     .ele("packet")
     .ele(options.operator)
@@ -59,6 +82,11 @@ async function requestPleskApi<TResponsePayload>(
     .up()
     .end({ prettyPrint: true });
 
+<<<<<<< HEAD
+=======
+  console.log("Plesk API Request XML being sent:", xmlRequest); // Log the generated XML
+
+>>>>>>> main
   try {
     const response = await axios.post(PLESK_XML_API_URL, xmlRequest, {
       headers: {
@@ -69,6 +97,11 @@ async function requestPleskApi<TResponsePayload>(
       },
     });
 
+<<<<<<< HEAD
+=======
+    console.log(response.data);
+
+>>>>>>> main
     const parsedResponse = xmlParser.parse(
       response.data
     ) as PleskPacket<TResponsePayload>;
@@ -102,6 +135,12 @@ async function requestPleskApi<TResponsePayload>(
     if (result.status === "error") {
       const error = result as PleskApiError; // Type assertion
       console.error("Plesk API Operation Error:", error);
+<<<<<<< HEAD
+=======
+      throw new Error(
+        `Plesk API Operation Error ${error.errcode}: ${error.errtext}`
+      );
+>>>>>>> main
     }
 
     // The actual payload might be directly in result, or nested further
@@ -121,6 +160,10 @@ async function requestPleskApi<TResponsePayload>(
       );
     }
     console.error("Error in requestPleskApi:", error);
+<<<<<<< HEAD
+=======
+    throw error; // Re-throw other errors (like parsing or Plesk API errors)
+>>>>>>> main
   }
 }
 
@@ -144,7 +187,11 @@ export async function getMailAccounts(pleskId: number): Promise<MailName[]> {
       // aliases: {}
     },
   });
+<<<<<<< HEAD
   if (response?.mailname) {
+=======
+  if (response.mailname) {
+>>>>>>> main
     return Array.isArray(response.mailname)
       ? response.mailname
       : [response.mailname];
@@ -152,10 +199,14 @@ export async function getMailAccounts(pleskId: number): Promise<MailName[]> {
   return [];
 }
 
+<<<<<<< HEAD
 export async function setSiteProperties(
   domainName: string,
   params: DeepPartial<AddWebspaceParams>
 ) {
+=======
+export async function setSiteCertificate(domainName: string, certName: string) {
+>>>>>>> main
   return await requestPleskApi({
     operator: "site",
     operation: "set",
@@ -163,6 +214,7 @@ export async function setSiteProperties(
       filter: {
         name: domainName,
       },
+<<<<<<< HEAD
       values: params,
     },
   });
@@ -226,6 +278,26 @@ export async function* installCertificate(domainName: string) {
 
   yield keyAuthorization;
 
+=======
+      values: {
+        hosting: {
+          vrt_hst: {
+            property: {
+              name: "certificate_name",
+              value: certName,
+            },
+          },
+        },
+      },
+    },
+  })
+}
+
+export async function* installCertificate(domainName: string) {
+  const { certificate, csr, privateKey, ca } =
+    await certificatesApi.getCertificate(domainName);
+
+>>>>>>> main
   yield 1;
 
   const certName = domainName.concat(format(new Date(), "dLy"));
@@ -252,6 +324,7 @@ export async function* installCertificate(domainName: string) {
   return;
 }
 
+<<<<<<< HEAD
 export async function activateMailForSite(siteId: number) {
   // const payload: ChangeMailSettingsPayload = {
   //   filter: { "site-id": siteId },
@@ -312,6 +385,28 @@ export async function createMailAccount(
   }
 
   return { id: response.mailname.id }; // Assuming 'id' is returned on successful creation
+=======
+export async function addMailAccount(
+  siteId: number,
+  mailAccountData: AddMailNamePayload["mailname"]
+): Promise<{ id: number }> {
+  const payload: AddMailNamePayload = {
+    "site-id": siteId,
+    mailname: mailAccountData,
+  };
+
+  const response = await requestPleskApi<{ id: number }>({
+    operator: "mail",
+    operation: "add_mail_name",
+    params: payload,
+  });
+
+  if (!response.id) {
+    throw new Error("Failed to create mail account: No ID returned.");
+  }
+
+  return { id: response.id }; // Assuming 'id' is returned on successful creation
+>>>>>>> main
 }
 
 export async function deleteMailAccount(mailNameId: number): Promise<void> {
@@ -325,6 +420,7 @@ export async function deleteMailAccount(mailNameId: number): Promise<void> {
   });
 }
 
+<<<<<<< HEAD
 export async function getPermissionDescriptor() {
   return await requestPleskApi({
     operator: "webspace",
@@ -531,3 +627,28 @@ export async function deleteFtpUser(ftpLogin: string) {
     },
   });
 }
+=======
+// --- Example of how to build more complex XML for specific operations ---
+// This is a helper, you might integrate it or call it from specific functions
+/*
+function buildMailNameXml(data: AddMailNamePayload['mailname']): object {
+  const mailnameNode: any = { name: data.name };
+  if (data.mailbox) {
+    mailnameNode.mailbox = { enabled: data.mailbox.enabled };
+    if (data.mailbox.quota !== undefined) {
+      mailnameNode.mailbox.quota = data.mailbox.quota;
+    }
+  }
+  if (data.password) {
+    mailnameNode.password = { value: data.password.value, type: data.password.type };
+  }
+  // Add other elements like mailgroup, autoresponder, forward, antispam, antivirus here
+  return mailnameNode;
+}
+*/
+
+// You would continue to add more functions here for other operations:
+// - updateMailAccount
+// - getMailAliases, addMailAlias, deleteMailAlias
+// - manageAutoresponders, etc.
+>>>>>>> main

@@ -1,14 +1,13 @@
 import { adminNamecheapDetails } from "@/components/domains/DomainResult";
+import { registerDomainsFromPaidInvoice } from "@/lib/server/domains/registerFromPaidInvoice";
+import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
 import { db } from "@/lib/db";
 import {
   pgInvoice,
   pgOrganization,
-  pgOrganizationDomains,
   pgUser,
 } from "@/lib/db/schema";
 import type { PayloadWebhook } from "@/lib/server/apis/dom/types";
-import namecheapApi from "@/lib/server/apis/namecheap";
-import type { DomainsCreateUserParams } from "@/lib/server/apis/namecheap/types";
 import { AppLogger } from "@/lib/server/logs";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -112,15 +111,6 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
   }
 
   if (invoice.type === "domain") {
-    const domainName = invoice.reference;
-
-    if (!domainName) {
-      throw new Error("Nome do domínio é obrigatório.");
-    }
-
-    const yearsToRegister = Number.parseInt(invoice.metadata.years ?? "1");
-    const whoisGuard = invoice.metadata.whoisguard === "on";
-
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.organizationId, invoice.orgId),
     });
@@ -131,29 +121,17 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
 
     const logger = new AppLogger(user);
 
-    const params: DomainsCreateUserParams = {
-      DomainName: domainName,
-      Years: yearsToRegister,
-      Registrant: adminNamecheapDetails,
-      Admin: adminNamecheapDetails,
-      Tech: adminNamecheapDetails,
-      AuxBilling: adminNamecheapDetails,
-      AddFreeWhoisguard: whoisGuard ? "yes" : "no",
-      WGEnabled: whoisGuard ? "yes" : "no",
-    };
-
     try {
-      console.log(
-        "Attempting to register domain with params:",
-        JSON.stringify(params, null, 2)
+      const { registered, failed } = await registerDomainsFromPaidInvoice(
+        invoice,
+        adminNamecheapDetails as NamecheapContactDetails
       );
 
-      const registrationResult = await namecheapApi.createDomain(params);
-
-      await db.insert(pgOrganizationDomains).values({
-        domain: domainName,
-        organizationId: invoice.orgId,
-      });
+      if (registered.length === 0) {
+        throw new Error(
+          `Falha ao registrar domínio(s) via Namecheap: ${failed.join(", ") || "nenhum"}`
+        );
+      }
 
       await db
         .update(pgInvoice)
@@ -162,49 +140,33 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
         })
         .where(eq(pgInvoice.id, invoiceId));
 
-      console.log("Namecheap registration result:", registrationResult);
+      console.log("Namecheap registration result:", { registered, failed });
 
-      if (!registrationResult.Registered) {
-        throw new Error(
-          `Falha ao registrar o domínio ${domainName} via Namecheap. Motivo desconhecido.`
-        );
+      try {
+        logger.log({
+          title: "Novo(s) domínio(s) registrado(s)",
+          description: `Domínios: ${registered.join(", ")}.`,
+          severity: "success",
+          type: "hosting",
+        });
+      } catch {
+        /* ignore log errors */
       }
     } catch (error) {
       logger.log({
         title: "Erro ao registrar domínio",
-        description: `Erro ao registrar o domínio ${domainName}.`,
+        description: `Erro ao processar fatura de domínio.`,
         severity: "danger",
         type: "hosting",
       });
 
-      console.error(
-        `Erro ao registrar o domínio ${domainName} com Namecheap:`,
-        error
-      );
+      console.error(`Erro ao registrar domínio(s) com Namecheap:`, error);
 
       if (error instanceof Error) {
-        throw new Error(`Falha ao registrar ${domainName}: ${error.message}`);
+        throw error;
       }
 
-      throw new Error(
-        `Falha ao registrar ${domainName}. Por favor, tente novamente.`
-      );
-    }
-
-    try {
-      logger.log({
-        title: "Novo domínio registrado",
-        description: `Domínio ${domainName} registrado com sucesso.`,
-        severity: "success",
-        type: "hosting",
-      });
-    } catch (error) {
-      logger.log({
-        title: "Erro ao registrar domínio",
-        description: `Erro ao registrar o domínio ${domainName}.`,
-        severity: "danger",
-        type: "hosting",
-      });
+      throw new Error(`Falha ao registrar domínio(s). Por favor, tente novamente.`);
     }
   }
 }

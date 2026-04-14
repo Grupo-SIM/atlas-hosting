@@ -1,9 +1,16 @@
 import { Suspense } from "react";
-import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Rajdhani } from "next/font/google";
+import { Navbar } from "@/app/landing/components/Navbar";
 import DomainSearchResults from "./components/DomainSearchResults";
 import SearchForm from "./components/SearchForm";
 import LoadingState from "./components/LoadingState";
+
+const rajdhani = Rajdhani({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -16,45 +23,58 @@ export default async function DomainSearchPage({
   const query = resolvedParams.q || "";
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#000319' }}>
-      <div className="container mx-auto max-w-7xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#0a0e27]">
+      <div
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{
+          background:
+            "linear-gradient(180deg, #061224 0%, #07182b 38%, #081427 68%, #08091a 100%)",
+        }}
+      />
+      <div
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(70% 42% at 50% 0%, rgba(1,252,141,0.16) 0%, rgba(1,252,141,0.06) 38%, rgba(1,252,141,0) 72%)",
+        }}
+      />
+      <Navbar />
+      <main className="w-full pt-20 md:pt-24">
+        <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 md:px-8 md:pb-24 md:pt-10">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-4"
+            className="mb-8 inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-[#01FC8D]"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Voltar para a página inicial</span>
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao início
           </Link>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-            Buscar Domínio
-          </h1>
-          <p className="text-white/70">
-            Encontre o domínio perfeito para o seu projeto
-          </p>
-        </div>
 
-        <div className="mb-8">
-          <div className="relative rounded-4xl p-2 bg-white/5 backdrop-blur-[20px] border border-green-500/30 shadow-[0_8px_32px_0_rgba(34,197,94,0.15)] flex">
-            <SearchForm defaultValue={query} />
-          </div>
-        </div>
-
-        {/* Results */}
-        {query ? (
-          <Suspense fallback={<LoadingState />}>
-            <DomainSearchResults query={query} />
-          </Suspense>
-        ) : (
-          <div className="text-center py-20">
-            <p className="text-white/70 text-lg">
-              Digite um domínio no campo de busca acima para começar
+          <header className="mx-auto mb-10 max-w-3xl text-center md:mb-12">
+            <h1
+              className={`${rajdhani.className} text-balance text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-[2.65rem] lg:leading-tight`}
+            >
+              Encontre o nome do seu domínio
+            </h1>
+            <p className="mt-3 text-base text-white/65 md:text-lg">
+              Pesquise, compare extensões e registre em poucos cliques.
             </p>
+          </header>
+
+          <SearchForm defaultValue={query} />
+
+          <div className="mt-12 md:mt-14">
+            {query ? (
+              <Suspense fallback={<LoadingState />}>
+                <DomainSearchResults query={query} />
+              </Suspense>
+            ) : (
+              <p className="text-center text-base text-white/55 md:text-lg">
+                Digite um nome ou domínio acima para ver disponibilidade e sugestões.
+              </p>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
-

@@ -1,116 +1,126 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import Image from "next/image";
-import { motion } from "motion/react";
+import { ArrowRight } from "lucide-react";
+import CountUp from "./CountUp";
 
-const features = [
-  "Servidores no brasil",
-  "Cashback todos os meses",
-  "Programa de afiliados",
-  "alta velocidade",
-  "benefícios exclusivos",
-  "Atendimento no WhatsAPP",
+const stats = [
+  { value: 4, suffix: "M+", label: "Hosts on average" },
+  { value: 150, suffix: "+", label: "Countries served" },
+  { value: 20, suffix: "+", label: "Anos no mercado" },
+  { value: 10, suffix: "M+", label: "Website customers" },
 ];
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-24 px-4 bg-[#0a0e27] relative w-full">
-      <div className="container mx-auto px-2 md:px-6 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          
-          {/* Lado Esquerdo - Imagem com borda verde e cortes no canto */}
-          <div className="relative w-full max-w-[550px] mx-auto animate-in fade-in slide-in-from-left-10 duration-700 fill-mode-both">
-            {/* ... image content ... */}
-            <div
-              className="relative w-full"
-              style={{
-                padding: "6px",
-                background: "#01FC8D",
-                clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 80px), calc(100% - 80px) 100%, 0 100%)",
-                borderRadius: "20px 20px 0 20px",
-              }}
-            >
-              <div
-                className="relative w-full h-[420px] md:h-[560px] overflow-hidden bg-[#0a0e27]"
-                style={{
-                  clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 76px), calc(100% - 76px) 100%, 0 100%)",
-                  borderRadius: "15px 15px 0 15px",
-                }}
+    <section id="how-it-works" className="bg-[#08091a] px-4 pb-0">
+      <div className="mx-auto w-[92vw] max-w-[2400px]">
+
+        {/* Two feature cards */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+          {/* Card 1 — More power & control */}
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0f1130] p-7 flex flex-col gap-5">
+            {/* Icon */}
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-600">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-white">
+                <rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor" />
+                <rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor" opacity="0.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor" opacity="0.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor" opacity="0.3" />
+              </svg>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-2xl font-bold text-white leading-tight">
+              More power &amp; control
+            </h3>
+
+            {/* Inner subtitle */}
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+              Automate the busywork
+            </p>
+
+            {/* Description */}
+            <p className="text-sm text-gray-400 leading-relaxed -mt-2">
+              Use Atlas Hosting to handle all the hosting tasks so you can focus on what you
+              love, create content. You can focus on doing what matters most.
+            </p>
+
+            {/* Divider + CTA */}
+            <div className="mt-auto border-t border-white/10 pt-5">
+              <Link
+                href="/hosting/premium"
+                className="inline-flex items-center gap-2 text-sm font-medium text-white/80 hover:text-white transition-colors group"
               >
-                <img
-                  src="http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/cybersecurity-woman-and-writing-global-location-info-with-map-graphic-for-phishing-and-hacker-data.jpg"
-                  alt="Como Funciona o Atlas"
-                  className="w-full h-full object-cover object-center"
-                  {...({ fetchPriority: "high" } as any)}
-                />
-              </div>
+                Performance you can rely on
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
           </div>
 
-          {/* Lado Direito - Conteúdo */}
-          <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-10 duration-700 delay-150 fill-mode-both">
-            {/* Badge "Como funciona?" */}
-            <div className="inline-flex items-center gap-2 self-start bg-[#0e132e] border border-white/10 px-3 py-1.5 rounded-sm animate-in fade-in slide-in-from-bottom-5 duration-500 delay-300 fill-mode-both">
-              <div className="w-[3px] h-4 bg-[#01FC8D] rounded-full" />
-              <span className="text-[11px] font-bold tracking-widest text-[#01FC8D] uppercase">
-                Como funciona?
-              </span>
+          {/* Card 2 — More flexible growth */}
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0f1130] p-7 flex flex-col gap-5">
+            {/* Icon */}
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-600">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-white">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.4" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.2" />
+              </svg>
             </div>
 
-            {/* Título */}
-            <h2 className="text-[2rem] md:text-[2.5rem] font-bold text-white leading-tight">
-              Hospedar seu site nunca foi tão fácil
-            </h2>
+            {/* Title */}
+            <h3 className="text-2xl font-bold text-white leading-tight">
+              More flexible growth
+            </h3>
 
-            {/* Descrição */}
-            <p className="text-[14px] md:text-[15px] text-gray-400 leading-relaxed max-w-md">
-              Nossa interface é altamente simples e intuitiva para que você com pouquíssimos cliques coloque seu site rapidamente no ar.
+            {/* Inner subtitle */}
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+              Hosting that grows with you
             </p>
 
-            {/* Grid de features — 2 colunas de chips */}
-            <div className="grid grid-cols-2 gap-3 mt-1">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 5 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "200px" }}
-                  transition={{ duration: 0.2, delay: 0.05 * index }}
-                  className="flex items-center gap-2.5 border border-[#01FC8D] rounded-[4px] px-3 py-2.5 bg-transparent"
-                >
-                  {/* Ícone circular preenchido com check */}
-                  <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0 fill-[#01FC8D]" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5l-4-4 1.41-1.41L10 13.67l6.59-6.59L18 8.5l-8 8z"/>
-                  </svg>
-                  <span className="text-[#01FC8D] text-[11px] md:text-[12px] font-bold uppercase tracking-wide leading-snug">
-                    {feature}
-                  </span>
-                </motion.div>
-              ))}
-            </div>
+            {/* Description */}
+            <p className="text-sm text-gray-400 leading-relaxed -mt-2">
+              Cloud hosting offers premium solutions that ensures your needs which keep
+              growing with reliable uptime, powerful performance, enhanced security, and flexible
+              pricing.
+            </p>
 
-            {/* CTA Row */}
-            <div className="flex flex-row items-center gap-6 mt-2">
+            {/* Divider + CTA */}
+            <div className="mt-auto border-t border-white/10 pt-5">
               <Link
-                href="#planos"
-                className="inline-flex items-center gap-1.5 bg-[#01FC8D] hover:bg-[#01FC8D]/90 text-[#0a0e27] font-extrabold uppercase text-[11px] tracking-widest px-6 py-4 rounded-[4px] transition-all hover:scale-105 shadow-[0_4px_14px_0_rgba(1,252,141,0.2)] group"
+                href="/domain/register"
+                className="inline-flex items-center gap-2 text-sm font-medium text-white/80 hover:text-white transition-colors group"
               >
-                ver planos
-                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              <Link
-                href="#planos"
-                className="text-white hover:text-[#01FC8D] font-bold text-[15px] transition-colors underline underline-offset-4 decoration-[#01FC8D]/80 hover:decoration-[#01FC8D]"
-              >
-                Comece agora
+                Hosting for agencies
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
         </div>
+
+        {/* Stats bar */}
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 rounded-2xl overflow-hidden">
+          {stats.map((stat, i) => (
+            <div
+              key={stat.label}
+              className={[
+                "flex flex-col items-center justify-center gap-1 bg-violet-600 px-6 py-8",
+                i < stats.length - 1 ? "border-r border-violet-500/40" : "",
+              ].join(" ")}
+            >
+              <span className="text-3xl font-extrabold text-white flex items-baseline gap-0.5">
+                <CountUp from={0} to={stat.value} duration={2} />
+                <span>{stat.suffix}</span>
+              </span>
+              <span className="text-xs text-violet-200 text-center leading-tight">{stat.label}</span>
+            </div>
+          ))}
+        </div>
+
       </div>
     </section>
   );
 }
-

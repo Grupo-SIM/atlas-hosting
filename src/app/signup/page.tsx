@@ -28,11 +28,15 @@ export default async function SignupPage({
     });
   }
 
+  const loginSwitchHref = resolvedParams.redirect
+    ? `/login?redirect=${encodeURIComponent(resolvedParams.redirect)}`
+    : "/login";
+
   return (
     <AuthPage
       title="Bem-vindo ao Atlas Hosting"
       subtitle="Preencha os campos para criar sua conta na plataforma"
-      switchHref="/login"
+      switchHref={loginSwitchHref}
       switchTitle="Já possui uma conta?"
       switchText="Faça login"
     >

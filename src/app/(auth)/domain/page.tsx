@@ -24,7 +24,8 @@ import RegisterDomainSearch from "./register/components/RegisterDomainSearch";
 import { TransferForm } from "./register/components/TransferForm";
 import { TransferDomainsList } from "./register/components/TransferDomainsList";
 import { NameserverGuide } from "./register/components/NameserverGuide";
-import { createDomainInvoice } from "@/app/actions";
+import { createDomainBundleInvoice, createDomainInvoice } from "@/app/actions";
+import { DomainBundleSection } from "./register/components/DomainBundleSection";
 import currencyConversion from "@/lib/server/apis/currency";
 import { query } from "dns-query";
 
@@ -81,6 +82,21 @@ async function getAllDomainPricesFromDb(tlds: string[]) {
   return convertedPrices;
 }
 
+function parseBundleDomains(
+  raw: string | string[] | undefined
+): string[] {
+  const s = Array.isArray(raw) ? raw[0] : raw;
+  if (!s?.trim()) return [];
+  return [
+    ...new Set(
+      s
+        .split(",")
+        .map((d) => d.trim().toLowerCase())
+        .filter((d) => d.includes("."))
+    ),
+  ].slice(0, 5);
+}
+
 export default async function DomainPage({
   searchParams,
 }: DomainMainPageProps) {
@@ -89,6 +105,7 @@ export default async function DomainPage({
   const domain = resolvedSearchParams.domain
     ? String(resolvedSearchParams.domain).trim()
     : "";
+  const bundleDomains = parseBundleDomains(resolvedSearchParams.bundle);
 
   // Validate tab parameter
   if (activeTab !== "register" && activeTab !== "transfer") {
@@ -120,8 +137,21 @@ export default async function DomainPage({
     }
   }
 
-  // Handle domain registration confirmation
-  if (resolvedSearchParams.confirm && domain) {
+  // Pacote (2–5 domínios): uma fatura
+  if (resolvedSearchParams.confirm && bundleDomains.length >= 2) {
+    const redirectUrl = await createDomainBundleInvoice({
+      domains: bundleDomains,
+      years: resolvedSearchParams.years ?? "1",
+      whoisguard: resolvedSearchParams.whoisguard === "on" ? "on" : "off",
+    });
+
+    if (redirectUrl) {
+      redirect(redirectUrl);
+    }
+  }
+
+  // Domínio único
+  if (resolvedSearchParams.confirm && domain && bundleDomains.length < 2) {
     const redirectUrl = await createDomainInvoice({
       whoisguard: resolvedSearchParams.whoisguard,
       domain: domain,
@@ -178,6 +208,12 @@ export default async function DomainPage({
       </TabsList>
 
       <TabsContent value="register" className="space-y-8 mt-8">
+        {bundleDomains.length >= 2 ? (
+          <Suspense fallback={<div className="text-center text-muted-foreground">Carregando pacote…</div>}>
+            <DomainBundleSection domains={bundleDomains} />
+          </Suspense>
+        ) : null}
+
         <div className="text-center space-y-4">
           <p className="text-muted-foreground">
             Digite no campo de pesquisa o nome de domínio que você deseja e

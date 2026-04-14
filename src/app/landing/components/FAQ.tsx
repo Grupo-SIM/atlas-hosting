@@ -92,7 +92,7 @@ export function FAQ() {
                     className="border-none rounded-[6px] overflow-hidden bg-[#11172f] shadow-sm data-[state=open]:shadow-md"
                   >
                     <AccordionTrigger 
-                      className="px-5 py-4 hover:no-underline font-semibold text-[13px] md:text-[14px] data-[state=open]:bg-[#01FC8D] data-[state=open]:text-[#0a0e27] text-gray-200 transition-colors duration-300 [&>svg]:w-5 [&>svg]:h-5"
+                      className="cursor-pointer px-5 py-4 hover:no-underline font-semibold text-[13px] md:text-[14px] data-[state=open]:bg-[#01FC8D] data-[state=open]:text-[#0a0e27] text-gray-200 transition-colors duration-300 [&>svg]:w-5 [&>svg]:h-5"
                     >
                       <span className="text-left w-full pr-4">{faq.question}</span>
                     </AccordionTrigger>
@@ -123,7 +123,7 @@ export function FAQ() {
                   <div 
                     className="w-full h-full bg-cover bg-center"
                     style={{
-                      backgroundImage: "url('/imgs/faq.jpg')",
+                      backgroundImage: "url('/man-with-headphones-looking-laptop.jpg')",
                     }}
                   />
                </div>

@@ -6,11 +6,11 @@ import { FaThreads, FaTiktok, FaXTwitter, FaFacebook, FaVideo } from "react-icon
 export function Footer() {
   return (
     <footer className="bg-[#030616] pt-24 pb-12 w-full overflow-hidden">
-      <div className="container mx-auto max-w-[1200px] px-4">
+      <div className="w-full px-4 md:px-8">
         
         {/* Main Rounded Footer Card */}
         <div className="bg-[#090d23] rounded-[24px] px-8 py-16 md:px-12 md:py-20 mb-8 border border-white/5 shadow-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-8">
             
             {/* Column 1: Logo, Text, Socials */}
             <div className="flex flex-col items-center lg:items-center text-center">
@@ -127,20 +127,6 @@ export function Footer() {
                   </li>
                 ))}
               </ul>
-            </div>
-
-            {/* Column 4: CTA */}
-            <div className="flex flex-col lg:pl-6 pt-2 lg:pt-0">
-              <h4 className="text-[19px] md:text-[21px] font-semibold text-gray-300 leading-snug tracking-tight mb-8">
-                Acesse nosso blog e fique por <br className="hidden xl:block" />
-                dentro de tudo!
-              </h4>
-              <Link 
-                href="/blog"
-                className="inline-flex items-center justify-center bg-[#01FC8D] hover:bg-[#01FC8D]/90 transition-colors text-[#0a0e27] font-extrabold uppercase text-[11px] px-8 py-3.5 rounded-[4px] tracking-widest shadow-[0_4px_14px_0_rgba(1,252,141,0.2)] w-fit"
-              >
-                Acessar Agora
-              </Link>
             </div>
 
           </div>

@@ -104,21 +104,26 @@ export default function CheckoutClient({
                           </p>
                         </div>
                         <p className="font-semibold text-right">
-                          {toBrl(invoice.amount - (whoisGuard ? 3 : 0))}
+                          {toBrl(invoice.amount)}
                         </p>
                       </div>
 
                       {invoice.type === "domain" && (
                         <>
                           {whoisGuard && (
-                            <div className="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-700">
-                              <div className="flex items-center gap-2">
-                                <ShieldCheck className="h-4 w-4 text-green-500" />
+                            <div className="flex items-center justify-between gap-2 border-t border-gray-100 py-2 dark:border-gray-700">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <ShieldCheck className="h-4 w-4 shrink-0 text-green-500" />
                                 <span className="text-sm">
                                   Proteção de privacidade WHOIS
                                 </span>
                               </div>
-                              <span className="font-medium">{toBrl(3)}</span>
+                              <div className="flex shrink-0 items-center gap-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  Grátis
+                                </Badge>
+                                <span className="font-medium">{toBrl(0)}</span>
+                              </div>
                             </div>
                           )}
                           <div className="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-700">

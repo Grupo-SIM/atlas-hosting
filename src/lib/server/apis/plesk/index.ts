@@ -203,6 +203,7 @@ export class PleskApi {
           webmail: true,
           ftp_login: `user_${Math.random().toString(36).substring(2, 10)}`,
           ftp_password: `D%$%${Math.random().toString(36).substring(2, 10)}`,
+          upload_max_filesize: "10M",
         },
       });
 

@@ -44,6 +44,8 @@ import { auth, signIn, signOut } from "@/auth";
 import { AppLogger } from "@/lib/server/logs";
 import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
 import type { DomainPageParams } from "./(auth)/domain/types";
+import { registerDomainsFromPaidInvoice } from "@/lib/server/domains/registerFromPaidInvoice";
+import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
 import { AtlasNotificationEmail } from "@/emails";
 import { render } from "@react-email/render";
 import { DEFAULT_POST_LOGIN_PATH } from "@/lib/consts/default-auth-path";
@@ -373,10 +375,6 @@ export async function createDomainInvoice({
 }: DomainPageParams) {
   "use server";
 
-  if (!domain || !years) {
-    return;
-  }
-
   const user = await getUser();
 
   if (!user) {
@@ -387,10 +385,12 @@ export async function createDomainInvoice({
     return;
   }
 
+  const yearStr = years ?? "1";
+
   let redirectUrl: string | null = null;
 
   console.log(`\n[INVOICE] ==================== CRIANDO FATURA DE DOMÍNIO ====================`);
-  console.log(`[INVOICE] Domínio: ${domain} | Anos: ${years} | Whoisguard: ${whoisguard ?? "off"} | Usuário: ${user.id}`);
+  console.log(`[INVOICE] Domínio: ${domain} | Anos: ${yearStr} | Whoisguard: ${whoisguard ?? "off"} | Usuário: ${user.id}`);
 
   try {
     console.log(`[NAMECHEAP] Verificando disponibilidade de: ${domain}`);
@@ -419,7 +419,7 @@ export async function createDomainInvoice({
       domain.split(".").pop() as string
     );
     const priceInfo = pricesInfo.Prices.find(
-      (p) => p.Duration === +years && p.DurationType === "YEAR"
+      (p) => p.Duration === +yearStr && p.DurationType === "YEAR"
     );
 
     console.log(`[NAMECHEAP] Preços disponíveis:`, pricesInfo.Prices.map(p => ({
@@ -429,11 +429,11 @@ export async function createDomainInvoice({
     })));
 
     if (!priceInfo) {
-      console.error(`[INVOICE] Nenhum preço encontrado para ${years} ano(s). Fatura não criada.`);
+      console.error(`[INVOICE] Nenhum preço encontrado para ${yearStr} ano(s). Fatura não criada.`);
       return;
     }
 
-    console.log(`[INVOICE] Preço selecionado (${years} ano):`, { price: priceInfo.Price, currency: priceInfo.Currency });
+    console.log(`[INVOICE] Preço selecionado (${yearStr} ano):`, { price: priceInfo.Price, currency: priceInfo.Currency });
 
     let priceInBrl = priceInfo.Price;
 
@@ -448,17 +448,23 @@ export async function createDomainInvoice({
     }
 
     const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
-    const fee = feeEnabled
-      ? 1 + ((await db.query.pgSystemConfig.findFirst())?.domainFee ?? 5) / 100
-      : 1;
+    
+    let fee = 1;
+    if (feeEnabled) {
+      const envFee = process.env.NAMESILO_PROFIT_FEE ? parseFloat(process.env.NAMESILO_PROFIT_FEE) : undefined;
+      const envFeeNormalized = envFee !== undefined ? (envFee < 1 ? envFee * 100 : envFee) : undefined;
+      
+      const dbConfig = await db.query.pgSystemConfig.findFirst();
+      const finalFeePercent = envFeeNormalized ?? dbConfig?.domainFee ?? 20;
+      fee = 1 + finalFeePercent / 100;
+    }
 
     const precoSemTaxa = priceInBrl;
     priceInBrl *= fee;
     console.log(`[INVOICE] Taxa aplicada: feeEnabled=${feeEnabled} | fee=${fee}x | R$ ${precoSemTaxa.toFixed(2)} → R$ ${priceInBrl.toFixed(2)}`);
 
     if (whoisguard === "on") {
-      priceInBrl += 3;
-      console.log(`[INVOICE] Whoisguard adicionado: +R$ 3,00 → Total: R$ ${priceInBrl.toFixed(2)}`);
+      console.log(`[INVOICE] Whoisguard ativado (sem custo adicional) | Total: R$ ${priceInBrl.toFixed(2)}`);
     }
 
     console.log(`[INVOICE] Valor final da fatura: R$ ${priceInBrl.toFixed(2)}`);
@@ -474,7 +480,7 @@ export async function createDomainInvoice({
         status: "pending",
         dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
         metadata: {
-          years,
+          years: yearStr,
           whoisguard,
         },
       })
@@ -489,6 +495,118 @@ export async function createDomainInvoice({
     redirectUrl = `/checkout/${newInvoice.id}`;
   } catch (error) {
     console.error(`[INVOICE] ERRO ao criar fatura do domínio:`, error);
+    return;
+  }
+
+  return redirectUrl;
+}
+
+/** Pacote só pela URL “Amplie sua marca” (2–5 domínios), uma fatura e registro múltiplo após pagamento. */
+export async function createDomainBundleInvoice({
+  domains,
+  years = "1",
+  whoisguard,
+}: {
+  domains: string[];
+  years?: string;
+  whoisguard?: string;
+}) {
+  "use server";
+
+  const user = await getUser();
+  if (!user) {
+    return;
+  }
+
+  const yearStr = years ?? "1";
+  const list = [
+    ...new Set(
+      domains.map((d) => d.trim().toLowerCase()).filter((d) => d.includes("."))
+    ),
+  ].slice(0, 5);
+
+  if (list.length < 2) {
+    console.warn(`[INVOICE-PACOTE] Menos de 2 domínios válidos.`);
+    return;
+  }
+
+  let redirectUrl: string | null = null;
+
+  try {
+    let totalBrl = 0;
+    const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
+    const fee = feeEnabled
+      ? 1 + ((await db.query.pgSystemConfig.findFirst())?.domainFee ?? 5) / 100
+      : 1;
+
+    for (const domain of list) {
+      const namecheapResult = await namecheapApi
+        .check({ DomainList: domain })
+        .then((r) => r.Results[0]);
+
+      if (!namecheapResult?.Available) {
+        console.warn(`[INVOICE-PACOTE] Domínio indisponível: ${domain}`);
+        return;
+      }
+
+      const pricesInfo = await getDomainPricing(domain.split(".").pop() as string);
+      const priceInfo = pricesInfo.Prices.find(
+        (p) => p.Duration === +yearStr && p.DurationType === "YEAR"
+      );
+
+      if (!priceInfo) {
+        console.error(`[INVOICE-PACOTE] Sem preço para ${domain} (${yearStr}a).`);
+        return;
+      }
+
+      let priceInBrl = priceInfo.Price;
+      if (priceInfo.Currency.toUpperCase() !== "BRL") {
+        priceInBrl = await currencyConversion.convert({
+          from: priceInfo.Currency.toLowerCase(),
+          to: "brl",
+          amount: priceInfo.Price,
+        });
+      }
+
+      totalBrl += priceInBrl * fee;
+    }
+
+    const wgOn = whoisguard === "on";
+
+    const refLabel =
+      list.length <= 3
+        ? `Pacote: ${list.join(" · ")}`
+        : `Pacote (${list.length} domínios)`;
+
+    const [newInvoice] = await db
+      .insert(pgInvoice)
+      .values({
+        orgId: user.organization.id,
+        userId: user.id,
+        type: "domain",
+        reference: refLabel.slice(0, 280),
+        amount: totalBrl,
+        status: "pending",
+        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        metadata: {
+          years: yearStr,
+          whoisguard: wgOn ? "on" : "off",
+          bundleDomains: list,
+        },
+      })
+      .returning();
+
+    if (!newInvoice?.id) {
+      console.error(`[INVOICE-PACOTE] Falha ao gravar fatura.`);
+      return;
+    }
+
+    redirectUrl = `/checkout/${newInvoice.id}`;
+    console.log(
+      `[INVOICE-PACOTE] Fatura ${newInvoice.id} | R$ ${totalBrl.toFixed(2)} | ${list.join(", ")}`
+    );
+  } catch (error) {
+    console.error(`[INVOICE-PACOTE] ERRO:`, error);
     return;
   }
 
@@ -631,34 +749,15 @@ async function fulfillCheckoutAfterPixPaid(
       Phone: `+55.${billing.phoneNumber.replace(/\D/g, "")}`,
       EmailAddress: user.email,
     };
-    const years = parseInt(String(meta?.years ?? "1"), 10);
-    const whoisguard = meta?.whoisguard === "on";
-
-    try {
-      const domainResult = await namecheapApi.createDomain({
-        DomainName: invoice.reference,
-        Years: years,
-        Registrant: contact,
-        Admin: contact,
-        Tech: contact,
-        AuxBilling: contact,
-        AddFreeWhoisguard: whoisguard ? "yes" : "no",
-        WGEnabled: whoisguard ? "yes" : "no",
-        Nameservers: [
-          "dns1.registrar-servers.com",
-          "dns2.registrar-servers.com",
-        ],
-      });
-
-      if (domainResult.Registered) {
-        await db.insert(pgOrganizationDomains).values({
-          organizationId: user.organization.id,
-          domain: invoice.reference,
-          active: true,
-        });
-      }
-    } catch (domainErr) {
-      console.error(`[CHECKOUT-PIX] Namecheap:`, domainErr);
+    const { registered, failed } = await registerDomainsFromPaidInvoice(
+      invoice,
+      contact as NamecheapContactDetails
+    );
+    if (failed.length) {
+      console.error(`[CHECKOUT-PIX] Falha ao registrar domínio(s):`, failed);
+    }
+    if (registered.length === 0) {
+      console.error(`[CHECKOUT-PIX] Nenhum domínio registrado para fatura ${invoice.id}`);
     }
 
     await db
@@ -1001,49 +1100,19 @@ export async function completeCheckout(
       Phone: `+55.${values.phoneNumber.replace(/\D/g, "")}`,
       EmailAddress: user.email,
     };
-    const meta = invoice.metadata as { years?: string; whoisguard?: string } | null;
-    const years = parseInt(meta?.years ?? "1", 10);
-    const whoisguard = meta?.whoisguard === "on";
 
-    console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO ──`);
-    const ncPayload = {
-      DomainName: invoice.reference,
-      Years: years,
-      AddFreeWhoisguard: whoisguard ? "yes" : "no",
-      WGEnabled: whoisguard ? "yes" : "no",
-      Nameservers: ["dns1.registrar-servers.com", "dns2.registrar-servers.com"],
-      Registrant: contact,
-    };
-    console.log(`[NAMECHEAP] → Enviando createDomain:`, ncPayload);
-
-    try {
-      const domainResult = await namecheapApi.createDomain({
-        DomainName: invoice.reference,
-        Years: years,
-        Registrant: contact,
-        Admin: contact,
-        Tech: contact,
-        AuxBilling: contact,
-        AddFreeWhoisguard: whoisguard ? "yes" : "no",
-        WGEnabled: whoisguard ? "yes" : "no",
-        Nameservers: ["dns1.registrar-servers.com", "dns2.registrar-servers.com"],
-      });
-
-      console.log(`[NAMECHEAP] ← Resposta createDomain:`, domainResult);
-
-      if (domainResult.Registered) {
-        console.log(`[NAMECHEAP] ✓ Domínio ${invoice.reference} REGISTRADO com sucesso! OrderID: ${domainResult.OrderID} | TransactionID: ${domainResult.TransactionID} | Cobrado: R$ ${domainResult.ChargedAmount}`);
-        await db.insert(pgOrganizationDomains).values({
-          organizationId: user.organization.id,
-          domain: invoice.reference,
-          active: true,
-        });
-        console.log(`[CHECKOUT] ✓ Domínio vinculado à organização ${user.organization.id}`);
-      } else {
-        console.warn(`[NAMECHEAP] ✗ Domínio NÃO registrado. Resposta completa:`, domainResult);
-      }
-    } catch (domainErr) {
-      console.error(`[NAMECHEAP] ✗ ERRO ao registrar domínio ${invoice.reference}:`, domainErr);
+    console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO(S) ──`);
+    const { registered, failed } = await registerDomainsFromPaidInvoice(
+      invoice,
+      contact as NamecheapContactDetails
+    );
+    if (failed.length) {
+      console.error(`[NAMECHEAP] Falha parcial/total:`, failed);
+    }
+    if (registered.length) {
+      console.log(`[NAMECHEAP] ✓ Registrados:`, registered.join(", "));
+    } else {
+      console.warn(`[NAMECHEAP] ✗ Nenhum domínio registrado para fatura ${invoiceId}`);
     }
 
     await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
@@ -1225,48 +1294,17 @@ export async function completeCheckoutWithSavedCard(
       Phone: `+55.${values.phoneNumber.replace(/\D/g, "")}`,
       EmailAddress: user.email,
     };
-    const meta = invoice.metadata as { years?: string; whoisguard?: string } | null;
-    const years = parseInt(meta?.years ?? "1", 10);
-    const whoisguard = meta?.whoisguard === "on";
 
-    console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO (CARTÃO SALVO) ──`);
-    console.log(`[NAMECHEAP] → Enviando createDomain:`, {
-      DomainName: invoice.reference,
-      Years: years,
-      AddFreeWhoisguard: whoisguard ? "yes" : "no",
-      WGEnabled: whoisguard ? "yes" : "no",
-      Nameservers: ["dns1.registrar-servers.com", "dns2.registrar-servers.com"],
-      Registrant: contact,
-    });
-
-    try {
-      const domainResult = await namecheapApi.createDomain({
-        DomainName: invoice.reference,
-        Years: years,
-        Registrant: contact,
-        Admin: contact,
-        Tech: contact,
-        AuxBilling: contact,
-        AddFreeWhoisguard: whoisguard ? "yes" : "no",
-        WGEnabled: whoisguard ? "yes" : "no",
-        Nameservers: ["dns1.registrar-servers.com", "dns2.registrar-servers.com"],
-      });
-
-      console.log(`[NAMECHEAP] ← Resposta createDomain:`, domainResult);
-
-      if (domainResult.Registered) {
-        console.log(`[NAMECHEAP] ✓ Domínio ${invoice.reference} REGISTRADO! OrderID: ${domainResult.OrderID} | TransactionID: ${domainResult.TransactionID} | Cobrado: R$ ${domainResult.ChargedAmount}`);
-        await db.insert(pgOrganizationDomains).values({
-          organizationId: user.organization.id,
-          domain: invoice.reference,
-          active: true,
-        });
-        console.log(`[CHECKOUT-SAVED] ✓ Domínio vinculado à organização ${user.organization.id}`);
-      } else {
-        console.warn(`[NAMECHEAP] ✗ Domínio NÃO registrado. Resposta:`, domainResult);
-      }
-    } catch (domainErr) {
-      console.error(`[NAMECHEAP] ✗ ERRO ao registrar domínio ${invoice.reference}:`, domainErr);
+    console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO(S) (CARTÃO SALVO) ──`);
+    const { registered, failed } = await registerDomainsFromPaidInvoice(
+      invoice,
+      contact as NamecheapContactDetails
+    );
+    if (failed.length) {
+      console.error(`[NAMECHEAP] Falha parcial/total (cartão salvo):`, failed);
+    }
+    if (registered.length) {
+      console.log(`[NAMECHEAP] ✓ Registrados:`, registered.join(", "));
     }
 
     await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
