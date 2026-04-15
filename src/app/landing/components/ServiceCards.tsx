@@ -52,18 +52,18 @@ function ServiceCard({
           <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200" />
         </div>
 
-        <h3 className="text-2xl font-semibold leading-tight text-foreground group-hover:text-primary transition-colors duration-200">
+        <h3 className="text-2xl font-semibold leading-tight text-white group-hover:text-[#01FC8D] transition-colors duration-200">
           {title}
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-400">{subtitle}</p>
 
         <div className="mt-auto pt-6">
           {price ? (
-            <p className="text-sm text-muted-foreground">
-              A partir de <span className="font-semibold text-foreground">{price}</span>
+            <p className="text-sm text-slate-400">
+              A partir de <span className="font-semibold text-white">{price}</span>
             </p>
           ) : null}
-          <p className="mt-1 text-base font-semibold text-foreground">{cta}</p>
+          <p className="mt-1 text-base font-semibold text-white">{cta}</p>
           <p className="mt-2 text-xs font-semibold text-[#01FC8D]">100% de cashback</p>
           <p className="mt-1 text-xs font-semibold text-[#38bdf8]">Suporte 24/7</p>
         </div>

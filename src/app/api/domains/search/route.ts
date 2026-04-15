@@ -45,6 +45,13 @@ async function namecheapCheckBatch(domainList: string): Promise<Awaited<ReturnTy
   }
 }
 
+// Cache de resultados em memória (simples para dev/pequena escala)
+const SEARCH_CACHE = new Map<string, {
+  data: any;
+  timestamp: number;
+}>();
+const CACHE_TTL = 1000 * 60 * 15; // 15 minutos
+
 export async function GET(request: NextRequest) {
   try {
     if (!process.env.NAMECHEAP_API_USER || !process.env.NAMECHEAP_API_KEY) {
@@ -53,11 +60,31 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get("q")?.trim() ?? "";
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const pageSize = Math.min(50, Math.max(5, parseInt(searchParams.get("pageSize") || "20", 10)));
+    const pageString = searchParams.get("page") || "1";
+    const pageSizeString = searchParams.get("pageSize") || "20";
+    const page = Math.max(1, parseInt(pageString, 10));
+    const pageSize = Math.min(50, Math.max(5, parseInt(pageSizeString, 10)));
 
     if (!query) {
       return NextResponse.json({ error: "Query parameter 'q' is required" }, { status: 400 });
+    }
+
+    // 1. Verificamos Cache primeiro
+    const cacheKey = query.toLowerCase();
+    const cached = SEARCH_CACHE.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      const suggestions = cached.data.suggestions;
+      const pagedSuggestions = suggestions.slice((page - 1) * pageSize, page * pageSize);
+      return NextResponse.json({
+        main: cached.data.main,
+        suggestions: pagedSuggestions,
+        pagination: {
+          page,
+          pageSize,
+          total: suggestions.length,
+          totalPages: Math.ceil(suggestions.length / pageSize),
+        },
+      });
     }
 
     // Se o usuário pesquisou um TLD não suportado, retorna mensagem clara
@@ -92,25 +119,33 @@ export async function GET(request: NextRequest) {
     }
     domainsToSearch = [...new Set(domainsToSearch)];
 
-    // Batches (Namecheap aceita até 50, usamos 30 por segurança)
-    const MAX_PER_BATCH = 30;
+    // Batches (Namecheap aceita até 50)
+    const MAX_PER_BATCH = 50; 
     const batches: string[][] = [];
     for (let i = 0; i < domainsToSearch.length; i += MAX_PER_BATCH) {
       batches.push(domainsToSearch.slice(i, i + MAX_PER_BATCH));
     }
 
-    // Checa disponibilidade em série + pausa entre lotes (evita "Too many requests" da Namecheap)
+    // Checa disponibilidade. Se for apenas 1 lote, não precisa de sleep.
     const batchResults: PromiseSettledResult<Awaited<ReturnType<typeof namecheapApi.check>>>[] = [];
-    for (let i = 0; i < batches.length; i++) {
-      if (i > 0) {
-        await sleep(550);
-      }
-      const batch = batches[i]!;
+    if (batches.length === 1) {
+      const batch = batches[0]!;
       try {
         const value = await namecheapCheckBatch(batch.join(","));
         batchResults.push({ status: "fulfilled", value });
       } catch (reason) {
         batchResults.push({ status: "rejected", reason });
+      }
+    } else {
+      for (let i = 0; i < batches.length; i++) {
+        if (i > 0) await sleep(600);
+        const batch = batches[i]!;
+        try {
+          const value = await namecheapCheckBatch(batch.join(","));
+          batchResults.push({ status: "fulfilled", value });
+        } catch (reason) {
+          batchResults.push({ status: "rejected", reason });
+        }
       }
     }
 
@@ -156,10 +191,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Taxa de câmbio USD→BRL (uma única chamada)
-    let usdToBrl = 1;
+    let usdToBrl = 5.90; // Fallback conservador e seguro (nunca 1.0)
     try {
-      usdToBrl = await currencyConversion.convert({ from: "usd", to: "brl", amount: 1 });
-    } catch { /* usa 1 como fallback */ }
+      const val = await currencyConversion.convert({ from: "usd", to: "brl", amount: 1 });
+      if (val > 0) usdToBrl = val;
+    } catch { /* usa o fallback de 5.90 */ }
 
     // Preços do DB cache
     const tldKeys = [
@@ -179,37 +215,16 @@ export async function GET(request: NextRequest) {
       });
     } catch { /* sem DB */ }
 
-    // Só chama getPricing para TLDs que faltam no DB, em série + pausa (evita rajada paralela)
+    // Só chama getPricing para TLDs que faltam no DB, em paralelo (limitado ou staggered)
     const missingTlds = tldKeys.filter((tld) => !pricingRows.some((p) => p.tld === tld));
-    for (let i = 0; i < missingTlds.length; i++) {
-      if (i > 0) {
-        await sleep(220);
-      }
-      const tld = missingTlds[i]!;
-      try {
-        const data = await namecheapApi.getPricing(tld);
-        const p = data[0]?.Prices.find(
-          (x) => x.Duration === 1 && x.DurationType === "YEAR"
-        );
-        const raw = p?.YourPrice ?? p?.Price ?? 0;
-        if (raw > 0) {
-          const currency = p?.Currency?.toUpperCase() ?? "USD";
-          pricingRows.push({
-            tld,
-            price: raw,
-            renew: raw * 1.1,
-            transfer: raw * 0.8,
-            currency,
-          });
-        }
-      } catch (e) {
-        if (isNamecheapRateLimit(e)) {
-          await sleep(2000);
+    if (missingTlds.length > 0) {
+      // Usamos Promise.all para ser mais rápido, Namecheap aguenta algumas requisições paralelas de pricing
+      await Promise.all(
+        missingTlds.map(async (tld, index) => {
+          if (index > 0) await sleep(Math.floor(Math.random() * 100));
           try {
             const data = await namecheapApi.getPricing(tld);
-            const p = data[0]?.Prices.find(
-              (x) => x.Duration === 1 && x.DurationType === "YEAR"
-            );
+            const p = data[0]?.Prices.find((x) => x.Duration === 1 && x.DurationType === "YEAR");
             const raw = p?.YourPrice ?? p?.Price ?? 0;
             if (raw > 0) {
               const currency = p?.Currency?.toUpperCase() ?? "USD";
@@ -221,23 +236,21 @@ export async function GET(request: NextRequest) {
                 currency,
               });
             }
-          } catch {
-            /* ignora TLD sem preço */
+          } catch (e) {
+            console.error(`Error fetching pricing for ${tld}:`, e);
           }
-        }
-      }
+        })
+      );
     }
 
     const pricingMap = Object.fromEntries(pricingRows.map((p) => [p.tld, p]));
 
     // TLDs válidos para filtrar resultados
-    const validTlds = new Set(
-      SUPPORTED_TLDS.map((t) => t.replace(/^\./, "").toLowerCase())
-    );
+    const validTlds = new Set(SUPPORTED_TLDS.map((t) => t.replace(/^\./, "").toLowerCase()));
     if (queryTld && query.split(".").length === 2) validTlds.add(queryTld);
 
     // Mapeia resultados
-    const mapped = await Promise.all(
+    const mapped = (await Promise.all(
       results
         .filter((d) => {
           const tld = d.Domain.split(".").pop()?.toLowerCase() ?? "";
@@ -247,11 +260,7 @@ export async function GET(request: NextRequest) {
           const tldKey = (() => {
             let best = "";
             for (const k of Object.keys(pricingMap)) {
-              if (
-                d.Domain.toLowerCase().endsWith(`.${k}`) &&
-                k.length > best.length
-              )
-                best = k;
+              if (d.Domain.toLowerCase().endsWith(`.${k}`) && k.length > best.length) best = k;
             }
             return best || d.Domain.split(".").pop()!.toLowerCase();
           })();
@@ -265,26 +274,25 @@ export async function GET(request: NextRequest) {
             transferBRL = (d.PremiumTransferPrice ?? 0) * fee;
           } else if (pricing?.price) {
             const alreadyBrl = (pricing as { currency?: string }).currency === "BRL";
-            priceBRL =
-              (alreadyBrl ? (pricing.price ?? 0) : (pricing.price ?? 0) * usdToBrl) * fee;
-            renewBRL =
-              (alreadyBrl ? (pricing.renew ?? 0) : (pricing.renew ?? 0) * usdToBrl) * fee;
-            transferBRL =
-              (alreadyBrl
-                ? (pricing.transfer ?? 0)
-                : (pricing.transfer ?? 0) * usdToBrl) * fee;
+            priceBRL = (alreadyBrl ? (pricing.price ?? 0) : (pricing.price ?? 0) * usdToBrl) * fee;
+            renewBRL = (alreadyBrl ? (pricing.renew ?? 0) : (pricing.renew ?? 0) * usdToBrl) * fee;
+            transferBRL = (alreadyBrl ? (pricing.transfer ?? 0) : (pricing.transfer ?? 0) * usdToBrl) * fee;
           }
+
+          // Segurança: Se o preço deu 0 e o domínio estava "disponível", forçamos indisponível
+          // para nunca exibir preço 0 para algo que o usuário queira comprar.
+          const isActuallyAvailable = d.Available && priceBRL > 0;
 
           return {
             domain: d.Domain,
-            available: d.Available,
+            available: isActuallyAvailable,
             priceBRL,
             renewBRL,
             transferBRL,
             isPremium: d.IsPremiumName,
           };
         })
-    );
+    )).filter(r => !r.available || r.priceBRL > 0); // Filtra qualquer erro residual de preço 0 em disponíveis
 
     const mainDomain =
       mapped.find((r) => r.domain.toLowerCase() === query.toLowerCase()) ??
@@ -298,9 +306,12 @@ export async function GET(request: NextRequest) {
         isPremium: false,
       };
 
-    const suggestions = mapped.filter(
-      (r) => r.domain.toLowerCase() !== mainDomain.domain.toLowerCase()
-    );
+    const suggestions = mapped.filter((r) => r.domain.toLowerCase() !== mainDomain.domain.toLowerCase());
+
+    // 2. Salva no Cache antes de paginar
+    const finalData = { main: mainDomain, suggestions };
+    SEARCH_CACHE.set(cacheKey, { data: finalData, timestamp: Date.now() });
+
     const pagedSuggestions = suggestions.slice((page - 1) * pageSize, page * pageSize);
 
     return NextResponse.json({

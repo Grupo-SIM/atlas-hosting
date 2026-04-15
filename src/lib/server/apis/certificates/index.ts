@@ -12,12 +12,8 @@ import { mkdir } from "node:fs/promises";
 export class CertificatesApi {
   private readonly letsEncryptDirectoryUrl =
     acme.directory.letsencrypt.production;
-<<<<<<< HEAD
   private readonly certEmail = "lucasgarrafielo04@gmail.com";
   private readonly challengeDirectory = ".well-known/acme-challenge"; // Change this to your desired directory
-=======
-  private readonly certEmail = "lucasgarrafielo@gmail.com";
->>>>>>> main
 
   public async getCertificate(domainName: string) {
     const sld = domainName.split(".")[0];
@@ -32,7 +28,6 @@ export class CertificatesApi {
       .then(({ Hosts }) =>
         Hosts.filter(
           ({ Type, Address }) => Type !== "TXT" || Address === "_acme-challenge"
-<<<<<<< HEAD
         )
           .map((host) => ({
             HostName: host.Name,
@@ -44,13 +39,6 @@ export class CertificatesApi {
               predicate.HostName !== "_acme-challenge" ||
               predicate.RecordType !== "TXT"
           )
-=======
-        ).map((host) => ({
-          HostName: host.Name,
-          RecordType: host.Type as DnsRecordType,
-          Address: host.Address,
-        })).filter(predicate => predicate.HostName !== "_acme-challenge" || predicate.RecordType !== "TXT")
->>>>>>> main
       );
     try {
       // --- 1. Initialize ACME Client & Account ---
@@ -135,7 +123,6 @@ export class CertificatesApi {
           "TXT record creation initiated. Waiting for propagation..."
         );
 
-<<<<<<< HEAD
         await this.checkDnsPropagation(
           `_acme-challenge.${domainName}`,
           keyAuthorization
@@ -147,20 +134,6 @@ export class CertificatesApi {
           `_acme-challenge.${domainName}`,
           keyAuthorization
         );
-=======
-        // // --- 3b. Wait for DNS Propagation ---
-        // // Implement a loop with a delay to check if the TXT record is visible publicly.
-        // // Use a DNS lookup tool (e.g., 'dns' module in Node, or an external API)
-        // // This is crucial as Let's Encrypt needs to see it.
-        // await Promise.all([
-        //   this.checkDnsPropagation(
-        //     `_acme-challenge.${domainName}`,
-        //     keyAuthorization
-        //   ),
-        // ]); // You'll need to implement this
-
-        await Bun.sleep(15000);
->>>>>>> main
 
         console.log("DNS record propagated.");
 
@@ -226,10 +199,7 @@ export class CertificatesApi {
         privateKey: key.toString(),
         csr: csr.toString(),
         ca: caCertificates.trim(),
-<<<<<<< HEAD
         keyAuthorization,
-=======
->>>>>>> main
       };
       // TODO: Save the certificate and private key to files securely.
       // e.g., fs.writeFileSync('certificate.pem', certificate);

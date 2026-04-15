@@ -2,7 +2,6 @@ import { getUser } from "@/lib/auth";
 import dns from "node:dns";
 import { promisify } from "node:util";
 
-export const runtime = "nodejs";
 
 const resolve4 = promisify(dns.resolve4);
 

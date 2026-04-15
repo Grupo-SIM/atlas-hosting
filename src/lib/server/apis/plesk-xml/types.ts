@@ -1,9 +1,6 @@
-<<<<<<< HEAD
 import type { HostingProperties } from "@/app/api/wp-install-w/worker/types/hosting";
 import type { WebspaceHosting } from "@/app/api/wp-install-w/worker/types/index";
 
-=======
->>>>>>> main
 export interface PleskApiError {
   status: "error";
   errcode: number;
@@ -64,9 +61,6 @@ export interface AddMailNamePayload {
     name: string; // e.g., 'user' for user@domain.com
     mailbox?: { enabled: boolean; quota?: number };
     password?: { value: string; type: "plain" | "crypt" };
-<<<<<<< HEAD
-    // antivir?: "inout"
-    // ... other properties like mailgroup, autoresponder, etc.
   };
 }
 
@@ -227,8 +221,3 @@ export interface GetWebspaceDiskUsageResult {
   errcode?: number;
   errtext?: string;
 }
-=======
-    // ... other properties like mailgroup, autoresponder, etc.
-  };
-}
->>>>>>> main

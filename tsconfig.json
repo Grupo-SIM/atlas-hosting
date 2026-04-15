@@ -40,11 +40,13 @@
     ".next/types/**/*.ts",
     "src/app/(auth)/email/components/EmailHeader.tsxold",
     "src/app/(auth)/email/components/EmailSidebar.tsxold",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    ".next/dev/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules/**/*",
     "src/plesk/**/*",
-    "**/*.tsxold"
+    "**/*.tsxold",
+    "src/tests/**/*"
   ]
 }

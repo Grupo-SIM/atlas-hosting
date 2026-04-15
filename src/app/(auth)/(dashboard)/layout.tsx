@@ -7,12 +7,12 @@ export const metadata: Metadata = {
   description: "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = getUser();
+  const user = await getUser();
 
   return (
     <DashboardLayout user={user}>{children}</DashboardLayout>

@@ -12,7 +12,6 @@ import {
 import { and, eq } from "drizzle-orm";
 import type { AccountInsert } from "./lib/db/schema/index";
 
-export const runtime = "nodejs";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: DrizzleAdapter(db, {

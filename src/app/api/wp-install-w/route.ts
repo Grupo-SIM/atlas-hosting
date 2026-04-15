@@ -4,7 +4,6 @@ import { getUser } from "@/lib/auth/index";
 import axios from "axios";
 import { getSSEPayload, sendSSE } from "./utils";
 
-export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const urlParams = new URL(request.url).searchParams;

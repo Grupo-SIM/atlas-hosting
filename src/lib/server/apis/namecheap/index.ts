@@ -1189,7 +1189,7 @@ export const namecheapApi = new NamecheapApiWrapper(
 );
 
 export async function getDomainPricing(tld: string) {
-  "use cache";
+
   cacheTag(`pricing-${tld}`);
   return await namecheapApi.getPricing(tld).then((r) => r[0]);
 }

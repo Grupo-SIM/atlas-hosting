@@ -1,12 +1,10 @@
-<<<<<<< HEAD
-import type { AddWebspaceParams } from "@/app/api/wp-install-w/worker/types";
-=======
->>>>>>> main
 import {
   PLESK_API_LOGIN,
   PLESK_API_PASSWORD,
+  PLESK_API_KEY,
+  PLESK_XML_API_URL,
 } from "@/lib/server/apis/plesk-xml/config";
-<<<<<<< HEAD
+import type { AddWebspaceParams } from "@/app/api/wp-install-w/worker/types";
 import type {
   ChangeMailSettingsPayload,
   CreateMailPayload,
@@ -16,6 +14,10 @@ import type {
   GetWebspaceDiskUsageResult,
   GetSetMailPrefsPayload,
   GetSubscriptionResult,
+  MailName,
+  PleskApiError,
+  PleskPacket,
+  GetMailNamesResult,
 } from "@/lib/server/apis/plesk-xml/types";
 import axios, { type AxiosError } from "axios";
 import { format } from "date-fns";
@@ -23,55 +25,27 @@ import { XMLParser } from "fast-xml-parser";
 import type { DeepPartial } from "react-hook-form";
 import { create } from "xmlbuilder2";
 import certificatesApi from "../certificates";
-=======
-import axios, { type AxiosError } from "axios";
-import { XMLParser } from "fast-xml-parser";
-import { create } from "xmlbuilder2";
->>>>>>> main
-import { PLESK_API_KEY, PLESK_XML_API_URL } from "./config";
-import type {
-  AddMailNamePayload,
-  GetMailNamesResult,
-  MailName,
-  PleskApiError,
-  PleskPacket,
-} from "./types";
-<<<<<<< HEAD
 import { cache } from "react";
-=======
-import { format } from "date-fns";
-import certificatesApi from "../certificates";
-import pleskApi from "../plesk";
-
-const axiosInstance = axios.create({
-  adapter: "xhr",
-});
->>>>>>> main
 
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",
-  parseTagValue: true, // Attempt to parse numbers and booleans
-  isArray: (tagName, jPath, isLeafNode, isAttribute) => {
-    // Treat 'mailname' under 'get_info.result' as an array always for consistency
+  parseTagValue: true,
+  isArray: (tagName, jPath) => {
     if (jPath === "packet.mail.get_info.result.mailname") return true;
     return false;
   },
 });
 
 interface PleskRequestOptions {
-  operator: string; // e.g., 'mail'
-  operation: string; // e.g., 'get' or 'add_mail_name'
+  operator: string;
+  operation: string;
   params: object;
 }
 
 async function requestPleskApi<TResponsePayload>(
   options: PleskRequestOptions
-<<<<<<< HEAD
 ): Promise<TResponsePayload | undefined> {
-=======
-): Promise<TResponsePayload> {
->>>>>>> main
   const xmlRequest = create({ version: "1.0", encoding: "UTF-8" })
     .ele("packet")
     .ele(options.operator)
@@ -82,11 +56,6 @@ async function requestPleskApi<TResponsePayload>(
     .up()
     .end({ prettyPrint: true });
 
-<<<<<<< HEAD
-=======
-  console.log("Plesk API Request XML being sent:", xmlRequest); // Log the generated XML
-
->>>>>>> main
   try {
     const response = await axios.post(PLESK_XML_API_URL, xmlRequest, {
       headers: {
@@ -97,11 +66,6 @@ async function requestPleskApi<TResponsePayload>(
       },
     });
 
-<<<<<<< HEAD
-=======
-    console.log(response.data);
-
->>>>>>> main
     const parsedResponse = xmlParser.parse(
       response.data
     ) as PleskPacket<TResponsePayload>;
@@ -117,8 +81,6 @@ async function requestPleskApi<TResponsePayload>(
       );
     }
 
-    // Navigate to the actual result object
-    // e.g. parsedResponse.packet.mail.get.result
     const operationResultContainer =
       "system" in parsedResponse.packet
         ? undefined
@@ -133,19 +95,10 @@ async function requestPleskApi<TResponsePayload>(
     const result = operationResultContainer.result;
 
     if (result.status === "error") {
-      const error = result as PleskApiError; // Type assertion
+      const error = result as PleskApiError;
       console.error("Plesk API Operation Error:", error);
-<<<<<<< HEAD
-=======
-      throw new Error(
-        `Plesk API Operation Error ${error.errcode}: ${error.errtext}`
-      );
->>>>>>> main
     }
 
-    // The actual payload might be directly in result, or nested further
-    // For 'get' operations, the data is often directly under 'result'
-    // For 'add', 'set', 'del', it might just be status 'ok' and an 'id'.
     return result as TResponsePayload;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -160,38 +113,28 @@ async function requestPleskApi<TResponsePayload>(
       );
     }
     console.error("Error in requestPleskApi:", error);
-<<<<<<< HEAD
-=======
-    throw error; // Re-throw other errors (like parsing or Plesk API errors)
->>>>>>> main
+    throw error;
   }
 }
 
 export async function getMailAccounts(pleskId: number): Promise<MailName[]> {
   if (typeof pleskId !== "number" || Number.isNaN(pleskId)) {
-    console.error("Invalid pleskId passed to getMailAccounts:", pleskId);
-    throw new Error(
-      "Invalid pleskId provided for fetching mail accounts. It must be a valid number."
-    );
+    throw new Error("Invalid pleskId provided for fetching mail accounts.");
   }
 
   const response = await requestPleskApi<GetMailNamesResult>({
     operator: "mail",
-    operation: "get_info", // Corrected operation name
+    operation: "get_info",
     params: {
       filter: { "site-id": pleskId },
       mailbox: {},
       "mailbox-usage": {},
       forwarding: {},
       autoresponder: {},
-      // aliases: {}
     },
   });
-<<<<<<< HEAD
+
   if (response?.mailname) {
-=======
-  if (response.mailname) {
->>>>>>> main
     return Array.isArray(response.mailname)
       ? response.mailname
       : [response.mailname];
@@ -199,14 +142,10 @@ export async function getMailAccounts(pleskId: number): Promise<MailName[]> {
   return [];
 }
 
-<<<<<<< HEAD
 export async function setSiteProperties(
   domainName: string,
   params: DeepPartial<AddWebspaceParams>
 ) {
-=======
-export async function setSiteCertificate(domainName: string, certName: string) {
->>>>>>> main
   return await requestPleskApi({
     operator: "site",
     operation: "set",
@@ -214,7 +153,6 @@ export async function setSiteCertificate(domainName: string, certName: string) {
       filter: {
         name: domainName,
       },
-<<<<<<< HEAD
       values: params,
     },
   });
@@ -223,11 +161,6 @@ export async function setSiteCertificate(domainName: string, certName: string) {
 export const getDomainDiskUsage = cache(
   async (domainName: string): Promise<DiskUsageStats | undefined> => {
     if (!domainName) {
-      console.error(
-        "Invalid domainName passed to getDomainDiskUsage:",
-        domainName
-      );
-      // It's better to throw an error for invalid input to prevent silent failures.
       throw new Error("Invalid domainName provided for fetching disk usage.");
     }
 
@@ -236,19 +169,13 @@ export const getDomainDiskUsage = cache(
       operation: "get",
       params: {
         filter: { name: domainName },
-        dataset: { disk_usage: {} }, // Specifically request only disk_usage
+        dataset: { disk_usage: {} },
       },
     });
 
     if (response?.status === "ok" && response.data?.disk_usage) {
       return response.data.disk_usage;
     }
-    if (response?.status === "error") {
-      console.error(
-        `Error fetching disk usage for ${domainName}: Plesk API Error ${response.errcode} - ${response.errtext}`
-      );
-    }
-    // Return undefined if not successful or data is not in the expected shape
     return undefined;
   }
 );
@@ -277,27 +204,6 @@ export async function* installCertificate(domainName: string) {
     await certificatesApi.getCertificate(domainName);
 
   yield keyAuthorization;
-
-=======
-      values: {
-        hosting: {
-          vrt_hst: {
-            property: {
-              name: "certificate_name",
-              value: certName,
-            },
-          },
-        },
-      },
-    },
-  })
-}
-
-export async function* installCertificate(domainName: string) {
-  const { certificate, csr, privateKey, ca } =
-    await certificatesApi.getCertificate(domainName);
-
->>>>>>> main
   yield 1;
 
   const certName = domainName.concat(format(new Date(), "dLy"));
@@ -318,34 +224,11 @@ export async function* installCertificate(domainName: string) {
   });
 
   await setSiteCertificate(domainName, certName);
-
   yield 2;
-
   return;
 }
 
-<<<<<<< HEAD
 export async function activateMailForSite(siteId: number) {
-  // const payload: ChangeMailSettingsPayload = {
-  //   filter: { "site-id": siteId },
-  //   prefs: {
-  //     mailservice: true, // Enable mail service
-  //     webmail: true, // Enable webmail access
-  //   },
-  // };
-
-  // const response = await requestPleskApi<{ status: string }>({
-  //   operator: "mail",
-  //   operation: "set_prefs",
-  //   params: payload,
-  // });
-
-  // if (response?.status !== "ok") {
-  //   throw new Error("Failed to activate mail service for the site.");
-  // }
-
-  // return response;
-
   const payload: EnableMailServicePayload = {
     "site-id": siteId,
   };
@@ -378,81 +261,19 @@ export async function createMailAccount(
     params: payload,
   });
 
-  console.log(response);
-
   if (!response?.mailname?.id) {
     throw new Error("Failed to create mail account: No ID returned.");
   }
 
-  return { id: response.mailname.id }; // Assuming 'id' is returned on successful creation
-=======
-export async function addMailAccount(
-  siteId: number,
-  mailAccountData: AddMailNamePayload["mailname"]
-): Promise<{ id: number }> {
-  const payload: AddMailNamePayload = {
-    "site-id": siteId,
-    mailname: mailAccountData,
-  };
-
-  const response = await requestPleskApi<{ id: number }>({
-    operator: "mail",
-    operation: "add_mail_name",
-    params: payload,
-  });
-
-  if (!response.id) {
-    throw new Error("Failed to create mail account: No ID returned.");
-  }
-
-  return { id: response.id }; // Assuming 'id' is returned on successful creation
->>>>>>> main
+  return { id: response.mailname.id };
 }
 
 export async function deleteMailAccount(mailNameId: number): Promise<void> {
   await requestPleskApi<void>({
-    // Expects no specific payload on success, just status 'ok'
     operator: "mail",
-    operation: "remove_mail_name", // As per Plesk docs
+    operation: "remove_mail_name",
     params: {
-      filter: { mn_id: mailNameId }, // mn_id is the mailname ID
-    },
-  });
-}
-
-<<<<<<< HEAD
-export async function getPermissionDescriptor() {
-  return await requestPleskApi({
-    operator: "webspace",
-    operation: "get-permission-descriptor",
-    params: {
-      filter: {
-        name: "lucasgarrafielo.xyz",
-      },
-    },
-  });
-}
-
-export async function getHostingDescriptor() {
-  return await requestPleskApi({
-    operator: "webspace",
-    operation: "get-physical-hosting-descriptor",
-    params: {
-      filter: {
-        name: "lucasgarrafielo.xyz",
-      },
-    },
-  });
-}
-
-export async function getLimitsDescriptor() {
-  return await requestPleskApi({
-    operator: "webspace",
-    operation: "get-limit-descriptor",
-    params: {
-      filter: {
-        name: "lucasgarrafielo.xyz",
-      },
+      filter: { mn_id: mailNameId },
     },
   });
 }
@@ -535,26 +356,17 @@ export async function getSubscription(domainName: string) {
       dataset: {
         gen_info: {},
         hosting: {},
-        // "hosting-basic": {},
-        // limits: {},
         stat: {},
-        // prefs: {},
         disk_usage: {},
         performance: {},
         subscriptions: {},
-        // permissions: {},
-        // "plan-items": {},
-        // "php-settings": {},
         "resource-usage": {},
-        // mail: {},
-        // "aps-filter": {},
-        // packages: {}
       },
     },
   });
 }
 
-export async function deleteSubscription(domainName: number) {
+export async function deleteSubscription(domainName: string) {
   return await requestPleskApi({
     operator: "webspace",
     operation: "del",
@@ -571,10 +383,8 @@ export async function installCertificateHttp(domainName: string) {
     const certificateData =
       await certificatesApi.getCertificateHttp(domainName);
 
-    // Install the certificate in Plesk
     const certName = `${domainName}-${Date.now()}`;
 
-    // Create certificate in Plesk
     await createCertificate({
       name: certName,
       certificate: certificateData.certificate,
@@ -582,7 +392,6 @@ export async function installCertificateHttp(domainName: string) {
       ca: certificateData.ca,
     });
 
-    // Assign certificate to the domain
     await setSiteCertificate(domainName, certName);
 
     return certificateData;
@@ -627,28 +436,3 @@ export async function deleteFtpUser(ftpLogin: string) {
     },
   });
 }
-=======
-// --- Example of how to build more complex XML for specific operations ---
-// This is a helper, you might integrate it or call it from specific functions
-/*
-function buildMailNameXml(data: AddMailNamePayload['mailname']): object {
-  const mailnameNode: any = { name: data.name };
-  if (data.mailbox) {
-    mailnameNode.mailbox = { enabled: data.mailbox.enabled };
-    if (data.mailbox.quota !== undefined) {
-      mailnameNode.mailbox.quota = data.mailbox.quota;
-    }
-  }
-  if (data.password) {
-    mailnameNode.password = { value: data.password.value, type: data.password.type };
-  }
-  // Add other elements like mailgroup, autoresponder, forward, antispam, antivirus here
-  return mailnameNode;
-}
-*/
-
-// You would continue to add more functions here for other operations:
-// - updateMailAccount
-// - getMailAliases, addMailAlias, deleteMailAlias
-// - manageAutoresponders, etc.
->>>>>>> main

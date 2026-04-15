@@ -60,67 +60,78 @@ export const getDomainData = cache(async function getDomainData(
 
     const pricingRecord = Object.fromEntries(pricings.map((p) => [p.tld, p]));
 
-    const domainDataMapped = await Promise.all(
-      checkResult.Results.map(async (domainDetail) => {
-        const fullDomainName = domainDetail.Domain;
-        let tldForLookup = "";
-        const parts = fullDomainName.split(".");
-        if (parts.length > 1) {
-          let bestMatch = "";
-          for (const knownTld of Object.keys(pricingRecord)) {
-            if (fullDomainName.toLowerCase().endsWith(`.${knownTld}`)) {
-              if (knownTld.length > bestMatch.length) {
-                bestMatch = knownTld;
-              }
+    // Fetch config and exchange rate once, outside the loop
+    const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
+    let fee = 1;
+    const flatFee = feeEnabled ? 4 : 0;
+    if (feeEnabled) {
+      try {
+        const config = await db.query.pgSystemConfig.findFirst();
+        fee = config ? 1 + (config.domainFee ?? 10) / 100 : 1.10;
+      } catch { fee = 1.10; }
+    }
+
+    // Pre-fetch USD→BRL rate once for all conversions
+    const hasUsdPricing = Object.values(pricingRecord).some(
+      (p) => p.currency !== "BRL" && (p.price || p.renew || p.transfer)
+    );
+    let usdToBrlRate = 1;
+    if (hasUsdPricing) {
+      const [sampleBrl] = await currencyConversion.convertMultiple({
+        from: "usd",
+        to: "brl",
+        amounts: [1],
+      });
+      usdToBrlRate = sampleBrl;
+    }
+
+    const domainDataMapped = checkResult.Results.map((domainDetail) => {
+      const fullDomainName = domainDetail.Domain;
+      let tldForLookup = "";
+      const parts = fullDomainName.split(".");
+      if (parts.length > 1) {
+        let bestMatch = "";
+        for (const knownTld of Object.keys(pricingRecord)) {
+          if (fullDomainName.toLowerCase().endsWith(`.${knownTld}`)) {
+            if (knownTld.length > bestMatch.length) {
+              bestMatch = knownTld;
             }
           }
-          tldForLookup =
-            bestMatch ||
-            parts
-              .slice(parts.length > 2 ? -2 : -1)
-              .join(".")
-              .toLowerCase();
         }
+        tldForLookup =
+          bestMatch ||
+          parts
+            .slice(parts.length > 2 ? -2 : -1)
+            .join(".")
+            .toLowerCase();
+      }
 
-        const standardBrlPrices = pricingRecord[tldForLookup];
+      const standardBrlPrices = pricingRecord[tldForLookup];
 
-        const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
-        let fee = 1;
-        const flatFee = feeEnabled ? 4 : 0;
-        if (feeEnabled) {
-          try {
-            const config = await db.query.pgSystemConfig.findFirst();
-            fee = config ? 1 + (config.domainFee ?? 10) / 100 : 1.10;
-          } catch { fee = 1.10; }
-        }
-
-        if (!standardBrlPrices) {
-          return {
-            domain: fullDomainName,
-            available: domainDetail.Available,
-            priceBRL: 0,
-            renewBRL: 0,
-            transferBRL: 0,
-            isPremium: domainDetail.IsPremiumName,
-          };
-        }
-
-        const alreadyBrl = standardBrlPrices.currency === "BRL";
-        const toPrice = async (amount: number) =>
-          alreadyBrl
-            ? amount
-            : await currencyConversion.convert({ from: "usd", to: "brl", amount });
-
+      if (!standardBrlPrices) {
         return {
           domain: fullDomainName,
           available: domainDetail.Available,
-          priceBRL: (await toPrice(standardBrlPrices.price ?? 0)) * fee + flatFee,
-          renewBRL: (await toPrice(standardBrlPrices.renew ?? 0)) * fee + flatFee,
-          transferBRL: (await toPrice(standardBrlPrices.transfer ?? 0)) * fee + flatFee,
+          priceBRL: 0,
+          renewBRL: 0,
+          transferBRL: 0,
           isPremium: domainDetail.IsPremiumName,
         };
-      })
-    );
+      }
+
+      const alreadyBrl = standardBrlPrices.currency === "BRL";
+      const toPrice = (amount: number) =>
+        alreadyBrl ? amount : amount * usdToBrlRate;
+
+      return {
+        domain: fullDomainName,
+        available: domainDetail.Available,
+        priceBRL: toPrice(standardBrlPrices.price ?? 0) * fee + flatFee,
+        renewBRL: toPrice(standardBrlPrices.renew ?? 0) * fee + flatFee,
+        transferBRL: toPrice(standardBrlPrices.transfer ?? 0) * fee + flatFee,
+        isPremium: domainDetail.IsPremiumName,
+      };
+    });
 
     let mainDomainData = domainDataMapped.find(
       (item) => item.domain.toLowerCase() === searchQuery.toLowerCase()

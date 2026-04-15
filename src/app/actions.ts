@@ -98,7 +98,7 @@ export async function login(
       maxAge: 60 * 60 * 24 * 30,
     });
 
-    revalidateTag("session-validate");
+    revalidateTag("session-validate", "default");
 
     let description = "Novo login realizado";
     let severity: "success" | "info" | "warning" | "danger" = "info";
@@ -1742,8 +1742,8 @@ export async function changeSelectedDomain(
       .set({ selectedDomain: domainName })
       .where(eq(pgUser.id, user.id));
 
-    revalidateTag("current-domain");
-    revalidateTag("session-validate");
+    revalidateTag("current-domain", "default");
+    revalidateTag("session-validate", "default");
 
     return {
       status: "success",
@@ -1867,6 +1867,13 @@ export async function addDomainForTransfer(
     console.error("Erro ao adicionar domínio:", error);
     return { status: "error", message: "Erro ao adicionar domínio" };
   }
+}
+
+export async function searchDomains(
+  _prevState: unknown,
+  searchQuery: string
+): Promise<void> {
+  redirect(`/domains/register?search=${encodeURIComponent(searchQuery)}`);
 }
 
 export async function checkDomainNameservers(

@@ -4,14 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Rajdhani } from "next/font/google";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
-const rajdhani = Rajdhani({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
+const rajdhani = { className: "[font-family:var(--font-rajdhani)]" };
 
 export function Navbar() {
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);

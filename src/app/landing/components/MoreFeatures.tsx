@@ -123,7 +123,7 @@ export function MoreFeatures() {
 
               <div className="relative w-full mt-auto flex justify-center items-end flex-grow min-h-[250px] md:min-h-0">
                 <img 
-                  src="http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/phone_img12.webp" 
+                  src="/landing/features/phone.webp" 
                   alt="CDN Global Console App" 
                   className="w-[75%] lg:w-[90%] max-w-[280px] object-cover object-top translate-y-2 lg:translate-y-4"
                 />

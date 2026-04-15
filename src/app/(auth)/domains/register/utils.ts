@@ -5,13 +5,14 @@ import type {
 } from "@/lib/server/apis/namecheap/types";
 import { cache } from "react";
 import type { DomainPricing } from "@/lib/db/schema";
+import { db } from "@/lib/db";
 import currencyConversion from "@/lib/server/apis/currency";
 import type { DomainData } from "@/app/(auth)/domains/register/types";
 
 export const getDomainData = cache(async function getDomainData(
   searchQuery: string
 ): Promise<DomainData> {
-  "use cache";
+
 
   if (!searchQuery || searchQuery.trim() === "") {
     return null;
@@ -32,7 +33,7 @@ export const getDomainData = cache(async function getDomainData(
     domainsToSearch.length > 0
       ? check({ DomainList: domainsToSearch.join(",") })
       : Promise.resolve(null),
-    namecheapApi.getPricing(),
+    db.query.pgDomainPricingCache.findMany(),
   ]);
 
   if (!checkResult?.Results || checkResult.Results.length === 0) {
@@ -41,52 +42,45 @@ export const getDomainData = cache(async function getDomainData(
 
   const pricingRecord = Object.fromEntries(pricings.map((p) => [p.tld, p]));
 
-  const domainDataMapped = await Promise.all(
-    checkResult.Results.map(async (domainDetail) => {
-      const fullDomainName = domainDetail.Domain;
-      let tldForLookup = "";
-      const parts = fullDomainName.split(".");
-      if (parts.length > 1) {
-        let bestMatch = "";
-        for (const knownTld of Object.keys(pricingRecord)) {
-          if (fullDomainName.toLowerCase().endsWith(`.${knownTld}`)) {
-            if (knownTld.length > bestMatch.length) {
-              bestMatch = knownTld;
-            }
+  // Fetch exchange rate once for all conversions
+  const [usdToBrlRate] = await currencyConversion.convertMultiple({
+    from: "usd",
+    to: "brl",
+    amounts: [1],
+  });
+
+  const domainDataMapped = checkResult.Results.map((domainDetail) => {
+    const fullDomainName = domainDetail.Domain;
+    let tldForLookup = "";
+    const parts = fullDomainName.split(".");
+    if (parts.length > 1) {
+      let bestMatch = "";
+      for (const knownTld of Object.keys(pricingRecord)) {
+        if (fullDomainName.toLowerCase().endsWith(`.${knownTld}`)) {
+          if (knownTld.length > bestMatch.length) {
+            bestMatch = knownTld;
           }
         }
-        tldForLookup =
-          bestMatch ||
-          parts
-            .slice(parts.length > 2 ? -2 : -1)
-            .join(".")
-            .toLowerCase();
       }
+      tldForLookup =
+        bestMatch ||
+        parts
+          .slice(parts.length > 2 ? -2 : -1)
+          .join(".")
+          .toLowerCase();
+    }
 
-      const standardBrlPrices = pricingRecord[tldForLookup];
+    const standardBrlPrices = pricingRecord[tldForLookup];
 
-      return {
-        domain: fullDomainName,
-        available: domainDetail.Available,
-        priceBRL: await currencyConversion.convert({
-          from: "usd",
-          to: "brl",
-          amount: standardBrlPrices.price ?? 0,
-        }),
-        renewBRL: await currencyConversion.convert({
-          from: "usd",
-          to: "brl",
-          amount: standardBrlPrices.renew ?? 0,
-        }),
-        transferBRL: await currencyConversion.convert({
-          from: "usd",
-          to: "brl",
-          amount: standardBrlPrices.transfer ?? 0,
-        }),
-        isPremium: domainDetail.IsPremiumName,
-      };
-    })
-  );
+    return {
+      domain: fullDomainName,
+      available: domainDetail.Available,
+      priceBRL: (standardBrlPrices?.price ?? 0) * usdToBrlRate,
+      renewBRL: (standardBrlPrices?.renew ?? 0) * usdToBrlRate,
+      transferBRL: (standardBrlPrices?.transfer ?? 0) * usdToBrlRate,
+      isPremium: domainDetail.IsPremiumName,
+    };
+  });
 
   let mainDomainData = domainDataMapped.find(
     (item) => item.domain.toLowerCase() === searchQuery.toLowerCase()

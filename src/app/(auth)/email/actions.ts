@@ -17,8 +17,8 @@ import {
 import type { MailName } from "@/lib/server/apis/plesk-xml/types";
 import { encrypt } from "@/lib/encryption";
 import { getUserCurrentDomain } from "@/lib/server/utils";
-import { createImapClient, createSmtpClient } from "@/lib/server/apis/email";
-import type { EmailMessage, EmailToSend } from "@/lib/server/apis/email";
+import { createImapClient, createSmtpClient } from "@/lib/server/apis/plesk-xml";
+import type { EmailMessage, EmailToSend } from "@/lib/server/apis/plesk-xml";
 
 // Get user's Plesk mail accounts
 export async function getPleskMailAccounts() {

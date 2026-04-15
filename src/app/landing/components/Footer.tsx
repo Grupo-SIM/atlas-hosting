@@ -16,7 +16,7 @@ export function Footer() {
             <div className="flex flex-col items-center lg:items-center text-center">
               <Link href="/" className="mb-6 block">
                 <Image
-                  src="http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/IMG_5796.png"
+                  src="/atlas-logo.png"
                   alt="Atlas Hosting"
                   width={250}
                   height={63}

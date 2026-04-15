@@ -182,34 +182,29 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(price);
 
-  const availableSuggestions = useMemo(
-    () => suggestions.filter((s) => s.available),
-    [suggestions]
-  );
 
-  const bundleItems = useMemo(() => availableSuggestions.slice(0, 3), [availableSuggestions]);
+  const allAvailable = useMemo(() => {
+    const list: DomainResult[] = [];
+    if (mainResult && mainResult.available) {
+      list.push(mainResult);
+    }
+    suggestions.forEach((s) => {
+      if (s.available && !list.some((existing) => existing.domain === s.domain)) {
+        list.push(s);
+      }
+    });
+    return list;
+  }, [mainResult, suggestions]);
 
-  const bundleDomainSet = useMemo(
-    () => new Set(bundleItems.map((b) => b.domain)),
-    [bundleItems]
-  );
+  const bundleItems = useMemo(() => {
+    // Keep bundle items coming from suggestions for "Amplie sua marca"
+    return suggestions.filter((s) => s.available).slice(0, 3);
+  }, [suggestions]);
 
-  /** Sem duplicar o card “Amplie sua marca” (3 primeiros). */
-  const listPool = useMemo(
-    () => availableSuggestions.filter((s) => !bundleDomainSet.has(s.domain)),
-    [availableSuggestions, bundleDomainSet]
-  );
-
-  /**
-   * Filtros por categoria usam todas as sugestões (incluindo as do pacote).
-   * Caso contrário, .com/.net/.org só no pacote sumiam de “Populares”.
-   * “Todos” continua sem repetir linhas que já estão no pacote.
-   */
   const filteredList = useMemo(() => {
     const match = FILTERS.find((f) => f.id === filterId)?.match ?? (() => true);
-    const source = filterId === "all" ? listPool : availableSuggestions;
-    return source.filter((s) => match(s.domain));
-  }, [listPool, availableSuggestions, filterId]);
+    return allAvailable.filter((s) => match(s.domain));
+  }, [allAvailable, filterId]);
 
   const bundleTotal = useMemo(
     () => bundleItems.reduce((acc, s) => acc + s.priceBRL, 0),
@@ -395,14 +390,14 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
           </h3>
           {pagination ? (
             <span className="text-sm text-white/45">
-              {availableSuggestions.length} disponíveis nesta busca
+              {allAvailable.length} disponíveis nesta busca
               {pagination.total > 0 ? ` · ${pagination.total} no total` : ""}
             </span>
           ) : null}
         </div>
 
         <div className="mb-8 flex flex-wrap gap-2">
-          {FILTERS.map((f) => (
+          {FILTERS.filter(f => f.id === 'all' || allAvailable.some(s => f.match(s.domain))).map((f) => (
             <button
               key={f.id}
               type="button"

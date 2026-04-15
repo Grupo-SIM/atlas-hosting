@@ -13,11 +13,7 @@ const FAQ = dynamic(() => import("./landing/components/FAQ").then(mod => mod.FAQ
 const Footer = dynamic(() => import("./landing/components/Footer").then(mod => mod.Footer), { ssr: true });
 import { SmoothScroll } from "./landing/components/SmoothScroll";
 
-export const metadata: Metadata = {
-  title: "Atlas Hosting - Hospedagem Profissional de Sites",
-  description:
-    "Hospedagem de sites profissional com alta performance, segurança e suporte 24/7. SSL grátis, 99.9% de uptime e painel de controle fácil.",
-};
+
 
 export default function Home() {
   return (

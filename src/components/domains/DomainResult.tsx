@@ -6,8 +6,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getDomainPricing } from "@/lib/server/apis/namecheap/index";
+import { db } from "@/lib/db";
+import { pgDomainPricingCache } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
+import { eq } from "drizzle-orm";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
 import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
 import { Suspense } from "react";
@@ -175,16 +177,20 @@ async function DomainAvailable({
   domainData: DomainData;
   searchParams: DomainPageParams;
 }) {
-  const pricing = domainData
-    ? await getDomainPricing(domainData.domain.domain.split(".").pop() as string)
+  const tld = domainData?.domain?.domain?.split(".").pop() ?? "";
+  const tldRow = tld
+    ? await db.query.pgDomainPricingCache.findFirst({
+        where: eq(pgDomainPricingCache.tld, tld),
+        columns: { minRegisterYears: true, maxRegisterYears: true },
+      })
     : null;
 
-  const registerOptions = (pricing?.Prices ?? [])
-    .filter((p) => p.DurationType === "YEAR")
-    .map((p) => ({
-      duration: p.Duration,
-      price: p.YourPrice,
-    }));
+  const minYear = tldRow?.minRegisterYears ?? 1;
+  const maxYear = tldRow?.maxRegisterYears ?? 10;
+  const registerOptions = Array.from(
+    { length: maxYear - minYear + 1 },
+    (_, i) => ({ duration: minYear + i })
+  );
 
   const defaultYears =
     searchParams.years ??

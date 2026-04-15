@@ -16,8 +16,6 @@ import { ELEMENTOR_PRO_PLUGIN_ID } from "@/lib/server/apis/plesk/wp-toolkit";
 import { AppLogger } from "@/lib/server/logs";
 import axios from "axios";
 import { eq } from "drizzle-orm";
-
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Helper function to send SSE messages

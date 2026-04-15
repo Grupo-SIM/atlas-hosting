@@ -5,37 +5,37 @@ import Image from "next/image";
 
 const projects = [
   {
-    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/2150169850.jpg",
+    image: "/landing/projects/construtor.jpg",
     tag: "UM SITE, UM CLIQUE",
     title: "Construtor de sites inteligente",
     desc: "Defina o padrão de sites que desejar, seja uma página de vendas, institucional ou outro, e, com um único clique, ele estará pronto. Basta substituir textos e imagens e seu site estará no ar.",
   },
   {
-    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/it-engineers-in-server-room.jpg",
+    image: "/landing/projects/engenharia.jpg",
     tag: "OTIMIZAÇÃO DA EXPERIÊNCIA",
     title: "Ferramentas Exclusivas",
     desc: "Trazer recursos avançados e mais poder para o seu site — sem custos adicionais. Nosso objetivo é fornecer ferramentas práticas para otimizar o tempo de todos que trabalham com alguma estrutura digital.",
   },
   {
-    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/governmental-hackers-analyzing-cyber-threats-on-big-screens.jpg",
+    image: "/landing/projects/hacking.jpg",
     tag: "NETWORK",
     title: "Parcerias Estratégicas",
     desc: "Estamos sempre em busca das melhores ferramentas do mercado para integrar diretamente à nossa plataforma. Uma boa parceria abre portas, fortalece o branding e melhora a experiência dos usuários.",
   },
   {
-    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/2150169858.jpg",
+    image: "/landing/projects/academia.jpg",
     tag: "CONHECIMENTO",
     title: "Academia Atlas",
     desc: "Uma seção de cursos e tutoriais exclusivos para nossos clientes, cobrindo desde como criar seu primeiro site até estratégias avançadas de marketing digital.",
   },
   {
-    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/2151003791.jpg",
+    image: "/landing/projects/infra.jpg",
     tag: "TECNOLOGIA",
     title: "Infraestrutura pra sistemas",
     desc: "Estamos preparando uma estrutura robusta, segura e escalável para quem precisa hospedar sistemas web, APIs e aplicações mais exigentes. sem as complicações dos servidores tradicionais.",
   },
   {
-    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/108506.jpg",
+    image: "/landing/projects/servidores.jpg",
     tag: "EXPANSÃO",
     title: "Servidores no mundo todo",
     desc: "Servidores em diferentes regiões do planeta. Isso garante mais velocidade e estabilidade. Não importa onde seu público esteja, seu site carregando rápido em qualquer lugar do mundo.",

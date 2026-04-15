@@ -35,7 +35,8 @@ function resolveSmtpPassword(): string {
   const filePath = envTrim(process.env.SMTP_PASSWORD_FILE);
   if (filePath) {
     try {
-      const raw = readFileSync(filePath, "utf8");
+      // @ts-ignore
+      const raw = readFileSync(/*turbopackIgnore: true*/ filePath, "utf8");
       const fromFile = raw.replace(/\r?\n$/, "").trim();
       if (fromFile.length > 0) {
         return fromFile;

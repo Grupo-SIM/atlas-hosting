@@ -17,6 +17,7 @@ type VpsPlan = {
   name: string;
   priceOld: string;
   priceNew: string;
+  priceBackup: string;
   popular?: boolean;
   vcpu: string;
   ram: string;
@@ -31,6 +32,7 @@ const plans: VpsPlan[] = [
     name: "Cloud VPS 10",
     priceOld: "R$ 49,48",
     priceNew: "R$ 39,58",
+    priceBackup: "R$ 48,68",
     vcpu: "4 núcleos",
     ram: "8 GB",
     storage: "75 GB NVMe ou SSD 150 GB",
@@ -42,6 +44,7 @@ const plans: VpsPlan[] = [
     name: "Cloud VPS 20",
     priceOld: "R$ 79,45",
     priceNew: "R$ 63,56",
+    priceBackup: "R$ 75,56",
     popular: true,
     vcpu: "6 núcleos",
     ram: "12 GB",
@@ -54,6 +57,7 @@ const plans: VpsPlan[] = [
     name: "Cloud VPS 30",
     priceOld: "R$ 149,90",
     priceNew: "R$ 119,92",
+    priceBackup: "R$ 140,68",
     vcpu: "8 núcleos",
     ram: "24 GB",
     storage: "200 GB NVMe ou SSD 400 GB",
@@ -65,6 +69,7 @@ const plans: VpsPlan[] = [
     name: "Cloud VPS 40",
     priceOld: "R$ 259,83",
     priceNew: "R$ 207,86",
+    priceBackup: "R$ 243,72",
     vcpu: "12 núcleos",
     ram: "48 GB",
     storage: "250 GB NVMe ou SSD 500 GB",
@@ -76,6 +81,7 @@ const plans: VpsPlan[] = [
     name: "Cloud VPS 50",
     priceOld: "R$ 459,68",
     priceNew: "R$ 367,74",
+    priceBackup: "R$ 412,48",
     vcpu: "16 núcleos",
     ram: "64 GB",
     storage: "300 GB NVMe ou SSD 600 GB",
@@ -87,6 +93,7 @@ const plans: VpsPlan[] = [
     name: "Cloud VPS 60",
     priceOld: "R$ 589,60",
     priceNew: "R$ 471,68",
+    priceBackup: "R$ 527,98",
     vcpu: "18 núcleos",
     ram: "96 GB",
     storage: "350 GB NVMe ou SSD 700 GB",
@@ -103,7 +110,7 @@ const bullets = [
 
 export function VpsCloudPage() {
   const [backupEnabled, setBackupEnabled] = useState(false);
-  const gridCols = `minmax(11.5rem, 14rem) repeat(${plans.length}, minmax(0, 1fr))`;
+  const gridCols = `minmax(14.5rem, 16rem) repeat(${plans.length}, minmax(0, 1fr))`;
 
   return (
     <div className="w-full min-w-0">
@@ -146,16 +153,21 @@ export function VpsCloudPage() {
 
           <div className="mt-4 w-full overflow-x-auto overflow-y-visible pt-1 pb-4 scrollbar-thin md:mt-5">
             <div
-              className="grid w-full min-w-[920px] gap-x-3 gap-y-0 md:min-w-full"
+              className="grid w-full min-w-[1700px] gap-x-3 gap-y-0 md:min-w-full"
               style={{ gridTemplateColumns: gridCols }}
             >
               {/* corner */}
-              <div className="sticky left-0 z-20 rounded-tl-xl border border-white/10 border-b-0 bg-[#0d1225] p-3 text-left">
+              <div className="md:sticky md:left-0 md:z-20 rounded-tl-xl border border-white/10 border-b-0 bg-[#0d1225] p-3 text-left">
                 <p className={`${rajdhani.className} text-[11px] font-bold uppercase tracking-wide text-white/90`}>
                   Especificações da embalagem
                 </p>
               </div>
-              {plans.map((p, idx) => (
+              {plans.map((p, idx) => {
+                const currentPrice = backupEnabled ? p.priceBackup : p.priceNew;
+                const [priceSymbol, priceValue] = currentPrice.split(" ");
+                const [priceMain, priceCents] = priceValue.split(",");
+
+                return (
                 <div
                   key={p.id}
                   className={`relative overflow-hidden rounded-t-xl border border-b-0 p-3.5 ${
@@ -177,15 +189,17 @@ export function VpsCloudPage() {
                   <div className="mt-2 flex flex-wrap items-end gap-1.5">
                     <span className="text-xs font-medium text-[#ff4d4d]/90 line-through">{p.priceOld}</span>
                   </div>
-                  <div className="mt-0.5 flex flex-wrap items-end gap-1">
-                    <span className="text-xl font-extrabold leading-none tracking-tight text-white md:text-2xl">
-                      {p.priceNew}
+                  <div className="mt-0.5 flex items-baseline gap-0.5 whitespace-nowrap">
+                    <span className="text-[12px] font-bold text-white mb-0.5">{priceSymbol}</span>
+                    <span className="text-2xl font-extrabold leading-none tracking-tight text-white md:text-3xl">
+                      {priceMain},
                     </span>
-                    <span className="mb-0.5 text-[10px] font-medium leading-tight text-gray-400">/mês</span>
+                    <span className="text-base font-bold text-white">{priceCents}</span>
+                    <span className="text-[10px] font-medium text-gray-400 ml-1">/mês</span>
                   </div>
                   <p className="mt-0.5 text-[10px] font-light leading-snug text-gray-500">12 meses</p>
                   <Link
-                    href={`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano ${p.name} e gostaria de dar continuidade ao processo.`)}`}
+                    href={`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano ${p.name} ${backupEnabled ? "com Backup Automático" : ""} e gostaria de dar continuidade ao processo.`)}`}
                     target="_blank"
                     className={`${rajdhani.className} mt-3 block w-full rounded-md py-2 text-center text-[11px] font-bold uppercase tracking-wide transition-colors ${
                       p.popular
@@ -198,10 +212,11 @@ export function VpsCloudPage() {
                   <p className="mt-2 text-[10px] font-semibold text-[#01FC8D]">100% de cashback</p>
                   <p className="mt-1 text-[10px] font-semibold text-[#38bdf8]">Suporte 24/7</p>
                 </div>
-              ))}
+                );
+              })}
 
               {/* toggle row */}
-              <div className="sticky left-0 z-20 flex flex-col justify-center gap-1.5 border border-white/10 border-t-0 bg-[#0d1225] p-3 text-left">
+              <div className="md:sticky md:left-0 md:z-20 flex flex-col justify-center gap-1.5 border border-white/10 border-t-0 bg-[#0d1225] p-3 text-left">
                 <span className="text-xs font-medium text-white/85">VPS com backup automático</span>
                 <div className="flex items-center gap-2">
                   <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} />
@@ -232,7 +247,7 @@ export function VpsCloudPage() {
               ].map((row) => (
                 <Fragment key={row.key}>
                   <div
-                    className={`sticky left-0 z-20 flex flex-col justify-center border border-white/10 border-t-0 bg-[#0d1225] p-3 text-left ${
+                    className={`md:sticky md:left-0 md:z-20 flex flex-col justify-center border border-white/10 border-t-0 bg-[#0d1225] p-3 text-left ${
                       row.key === "traffic" ? "rounded-b-xl border-b" : ""
                     }`}
                   >

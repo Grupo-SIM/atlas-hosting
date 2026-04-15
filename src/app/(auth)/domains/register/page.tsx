@@ -30,7 +30,7 @@ import { db } from "@/lib/db";
 import { pgDomainPricingCache } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import { inArray } from "drizzle-orm";
-import RegisterDomainSearch from "./components/RegisterDomainSearch";
+import RegisterDomainSearch from "@/app/(auth)/domain/register/components/RegisterDomainSearch";
 import type {
   DomainData,
   DomainPageParams,

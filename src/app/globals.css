@@ -5,7 +5,7 @@
   html {
     scroll-behavior: smooth;
   }
-  
+
   :root {
     --background: 3, 7, 17;
     --foreground: 213 31% 91%;
@@ -59,8 +59,14 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  button, 
+  [role="button"] {
+    cursor: pointer;
   }
 }
 
@@ -74,6 +80,7 @@
   box-sizing: border-box;
   animation: rotation 1s linear infinite;
 }
+
 .loader::after {
   content: "";
   box-sizing: border-box;
@@ -87,10 +94,12 @@
   border-bottom: 4px solid transparent;
   animation: rotation 0.5s linear infinite reverse;
 }
+
 @keyframes rotation {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -99,19 +108,15 @@
 /* Grid pattern backgrounds */
 .bg-grid-white\/\[0\.02\] {
   @apply opacity-70 dark:opacity-40;
-  background-image: radial-gradient(
-    rgba(255, 255, 255, 0.02) 1px,
-    transparent 1px
-  );
+  background-image: radial-gradient(rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px);
   background-size: 16px 16px;
 }
 
 .bg-grid-white\/\[0\.05\] {
   @apply opacity-70 dark:opacity-40;
-  background-image: radial-gradient(
-    rgba(255, 255, 255, 0.05) 1px,
-    transparent 1px
-  );
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px);
   background-size: 16px 16px;
 }
 
@@ -131,13 +136,11 @@
 
 .bg-waves-pattern {
   @apply text-foreground/50 dark:text-foreground/15;
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 10px,
-    currentColor 10px,
-    currentColor 11px
-  );
+  background-image: repeating-linear-gradient(45deg,
+      transparent,
+      transparent 10px,
+      currentColor 10px,
+      currentColor 11px);
 }
 
 /* Custom animated button for landing page */

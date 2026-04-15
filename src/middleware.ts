@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export const runtime = "nodejs";
 
 // https://github.com/vercel/next.js/discussions/55037#discussioncomment-12454718
 export function middleware(request: NextRequest) {

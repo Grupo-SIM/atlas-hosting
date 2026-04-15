@@ -1,0 +1,107 @@
+$ next build --turbopack
+ÔÜá You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+ÔÜá `eslint` configuration in next.config.js is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+ÔÜá Invalid next.config.js options detected: 
+ÔÜá     Unrecognized key(s) in object: 'eslint'
+ÔÜá See more info here: https://nextjs.org/docs/messages/invalid-next-config
+Ôû▓ Next.js 16.2.3 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  ┬À staleTimes
+  Ô£ô useCache
+
+ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./next.config.js
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.js
+    ./src/lib/consts/singletons.ts
+    ./src/lib/server/logs/index.ts
+    ./src/app/api/sites/[instanceId]/route.ts
+
+
+Ô£ô Compiled successfully in 14.0s
+  Skipping validation of types
+  Finished TypeScript config validation in 26ms ...
+  Collecting page data using 11 workers ...
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+[PleskApi] Initializing for https://pro120.dns-pro.com.br:8443/api/v2 using API Key
+  Generating static pages using 11 workers (0/43) ...
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <__next_viewport_boundary__>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <__next_viewport_boundary__>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <meta>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <head>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <meta>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <head>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <meta>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <head>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <meta>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <head>. See https://react.dev/link/warning-keys for more information.
+Error occurred prerendering page "/_global-error". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: null is not an object (evaluating 'k.H.useContext')
+    at ignore-listed frames {
+  digest: '4181947286'
+}
+Export encountered an error on /_global-error/page: /_global-error, exiting the build.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <meta>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <head>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <meta>. See https://react.dev/link/warning-keys for more information.
+Each child in a list should have a unique "key" prop.
+
+Check the top-level render call using <head>. See https://react.dev/link/warning-keys for more information.
+  Generating static pages using 11 workers (10/43) 
+Error occurred prerendering page "/change-email/verify". Read more: https://nextjs.org/docs/messages/prerender-error
+Ô¿» Next.js build worker exited with code: 1 and signal: null
+error: script "build" exited with code 1

@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: { 
     unoptimized: true,
     remotePatterns: [
@@ -28,16 +25,10 @@ const nextConfig = {
       },
     },
   },
-  // output: "standalone",
   experimental: {
-    nodeMiddleware: true,
-    useCache: true,
-    staleTimes: {
-      dynamic: 30,
-      static: 180,
-    },
+    useCache: false,
+    workerThreads: false,
   },
-  // For webpack (when not using turbopack)
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.watchOptions = {

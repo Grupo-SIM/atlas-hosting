@@ -73,7 +73,7 @@ async function performDnsOperation(
     });
 
     if (response.IsSuccess) {
-      revalidateTag("dns-records");
+      revalidateTag("dns-records", "default");
       return {
         success: true,
         message: "Registros DNS atualizados com sucesso.",

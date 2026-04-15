@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { instanceId: string } }
+  { params }: { params: Promise<{ instanceId: string }> }
 ) {
   try {
     const user = await getUser();
@@ -15,8 +15,10 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { instanceId } = await params;
+
     // Handle both single instanceId and comma-separated list
-    const instanceIds = params.instanceId
+    const instanceIds = instanceId
       .split(",")
       .map((id) => Number.parseInt(id, 10));
 

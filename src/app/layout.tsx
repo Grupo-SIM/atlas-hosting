@@ -18,9 +18,6 @@ export const metadata: Metadata = {
     "Hospedagem de sites profissional com alta performance, segurança e suporte 24/7. SSL grátis, 99.9% de uptime e painel de controle fácil.",
 };
 
-export const experimental_ppr = true;
-// export const dynamic = "force-dynamic";
-
 export default async function RootLayout({
   children,
 }: {
@@ -32,7 +29,7 @@ export default async function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          enableSystem={true}
+          enableSystem={false}
           disableTransitionOnChange={true}
         >
           {children}

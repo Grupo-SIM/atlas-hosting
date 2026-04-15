@@ -1,41 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-
-const phrases = [
-  "Buscando domínios na velocidade da luz...",
-  "Verificando disponibilidade nas galáxias...",
-  "Consultando os registros globais...",
-  "Quase lá, preparando os melhores resultados...",
-];
+import { motion } from "framer-motion";
 
 export default function LoadingState() {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % phrases.length);
-    }, 2500); // Change phrase every 2.5 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="flex flex-col items-center justify-center py-20 min-h-[200px]">
-      <div className="relative h-8 w-full max-w-md overflow-hidden flex justify-center items-center">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-            className="absolute text-center text-lg font-medium text-[#01FC8D] w-full"
-          >
-            {phrases[index]}
-          </motion.div>
-        </AnimatePresence>
+      <div className="relative h-8 w-full max-w-md flex justify-center items-center">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center text-lg font-medium text-[#01FC8D] w-full"
+        >
+          Verificando disponibilidade...
+        </motion.div>
       </div>
       
       {/* Decorative dots loading indicator */}

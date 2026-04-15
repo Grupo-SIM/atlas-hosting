@@ -52,4 +52,5 @@ export interface DomainPageParams {
   years?: string;
   whois?: string;
   autoRenew?: string;
+  error?: string;
 }

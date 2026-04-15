@@ -43,11 +43,11 @@ export function Hero() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSearch();
                 }}
-                placeholder="Domain que você quer conquistar..."
+                placeholder="Domínio que você quer conquistar..."
                 className={`${rajdhani.className} w-full bg-transparent border-none outline-none text-white/95 text-[14px] md:text-[15px] h-10`}
               />
               <button
-                className={`${rajdhani.className} bg-[#01FC8D] text-[#0a0e27] border-none rounded-lg px-6 py-2.5 text-[13px] md:text-[14px] font-bold uppercase tracking-wider hover:brightness-110 transition-all shrink-0`}
+                className={`${rajdhani.className} bg-[#01FC8D] text-[#0a0e27] border-none rounded-lg px-6 py-2.5 text-[13px] md:text-[14px] font-bold uppercase tracking-wider hover:brightness-110 transition-all shrink-0 cursor-pointer`}
                 onClick={handleSearch}
               >
                 Buscar
@@ -91,7 +91,7 @@ export function Hero() {
 
                 <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
                   <button
-                    className={`${rajdhani.className} bg-white text-[#08091a] border-none rounded-lg px-10 py-4 text-[14px] md:text-[15px] font-bold tracking-wider uppercase shadow-xl hover:bg-gray-100 transition-colors w-full sm:w-auto`}
+                    className={`${rajdhani.className} bg-white text-[#08091a] border-none rounded-lg px-10 py-4 text-[14px] md:text-[15px] font-bold tracking-wider uppercase shadow-xl hover:bg-gray-100 transition-colors w-full sm:w-auto cursor-pointer`}
                   >
                     Começar agora
                   </button>

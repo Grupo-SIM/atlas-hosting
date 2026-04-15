@@ -8,31 +8,31 @@ const testimonials = [
   {
     name: "Júlia Alba",
     role: "Empreendedora Digital",
-    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/Julia-Alba.jpg",
+    image: "/landing/testimonials/julia.jpg",
     text: "Sempre achei difícil entender termos técnicos, mas o suporte do Atlas é diferente. Gente real, explicação simples. Me senti segura desde o primeiro contato.",
   },
   {
     name: "Fernando Collins",
     role: "Criador de Conteúdo",
-    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/Fernando-Collins.jpg",
+    image: "/landing/testimonials/fernando.jpg",
     text: "O cashback mensal foi um diferencial que eu nunca vi em outras hospedagens. Já recuperei parte do valor e continuo com performance altíssima no meu site.",
   },
   {
     name: "Fabricio dos Santos",
     role: "Gestor de Projetos Web",
-    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/Fabricio-dos-Santos.jpg",
+    image: "/landing/testimonials/fabricio.jpg",
     text: "Estou há 2 anos com o Atlas. Nunca precisei abrir chamado por instabilidade. Me surpreendeu.",
   },
   {
     name: "Luiz Vieira",
     role: "Desenvolvedor WordPress",
-    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/Luiz-Vieira.jpg",
+    image: "/landing/testimonials/luiz.jpg",
     text: "Além do Elementor Pro incluso, ainda recebo sugestões de otimização com frequência. O Atlas vai além da hospedagem, é parceiro de crescimento.",
   },
   {
     name: "Rafael Carrilho",
     role: "Especialista em Tráfego Pago",
-    image: "http://177.154.190.249/plesk-site-preview/atlashosting.com.br/https/177.154.190.249/wp-content/uploads/2025/04/Rafael-Carrilho.jpg",
+    image: "/landing/testimonials/rafael.jpg",
     text: "Achei que era só mais uma hospedagem, mas o Atlas entrega mesmo. Meu site ficou mais rápido, seguro e ainda economizo com ferramentas que antes eu pagava por fora.",
   },
 ];
