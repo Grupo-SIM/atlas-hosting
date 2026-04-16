@@ -97,8 +97,7 @@ export async function sendWelcomeEmail(
 export async function sendPasswordResetEmail(
   email: string,
   firstName: string,
-  resetToken: string,
-  resetCode: string
+  resetToken: string
 ): Promise<void> {
   const siteUrl = getServerPublicBaseUrl();
   const resetLink = `${siteUrl}/reset-password?token=${encodeURIComponent(resetToken)}`;
@@ -108,7 +107,6 @@ export async function sendPasswordResetEmail(
       firstName,
       email,
       resetLink,
-      resetCode,
       expirationTime: "1 hora",
       supportEmail: "contact@atlashosting.com.br",
       publicSiteUrl: siteUrl,

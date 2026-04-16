@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
       .update(pgUser)
       .set({
         password: hashedPassword,
+        emailVerified: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(pgUser.id, resetToken.userId));

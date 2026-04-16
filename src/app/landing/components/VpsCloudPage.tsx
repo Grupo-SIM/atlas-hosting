@@ -159,7 +159,7 @@ export function VpsCloudPage() {
             >
               {/* corner */}
               <div className="md:sticky md:left-0 md:z-20 rounded-tl-xl border border-white/10 border-b-0 bg-[#0d1225] p-3 text-left">
-                <p className={`${roboto.className} text-[11px] font-bold uppercase tracking-wide text-white/90`}>
+                <p className={`${roboto.className} text-sm font-bold uppercase tracking-wide text-white/90`}>
                   Especificações da embalagem
                 </p>
               </div>
@@ -185,17 +185,17 @@ export function VpsCloudPage() {
                         </span>
                       </div>
                     ) : null}
-                    <p className={`${roboto.className} pr-[4.5rem] text-[13px] font-bold tracking-wide text-white`}>{p.name}</p>
+                    <p className={`${roboto.className} pr-[4.5rem] text-base font-bold tracking-wide text-white`}>{p.name}</p>
                     <div className="mt-2 flex flex-wrap items-end gap-1.5">
                       <span className="text-xs font-medium text-[#ff4d4d]/90 line-through">{p.priceOld}</span>
                     </div>
                     <div className="mt-0.5 flex items-baseline gap-0.5 whitespace-nowrap">
                       <span className="text-[12px] font-bold text-white mb-0.5">{priceSymbol}</span>
-                      <span className="text-2xl font-extrabold leading-none tracking-tight text-white md:text-3xl">
+                      <span className="text-xl font-extrabold leading-none tracking-tight text-white md:text-4xl">
                         {priceMain},
                       </span>
-                      <span className="text-base font-bold text-white">{priceCents}</span>
-                      <span className="text-[10px] font-medium text-gray-400 ml-1">/mês</span>
+                      <span className="text-xl font-bold text-white">{priceCents}</span>
+                      <span className="text-xs font-medium text-gray-400 ml-1">/mês</span>
                     </div>
                     <p className="mt-0.5 text-[10px] font-light leading-snug text-gray-500">12 meses</p>
                     <Link
@@ -208,8 +208,8 @@ export function VpsCloudPage() {
                     >
                       Começar agora →
                     </Link>
-                    <p className="mt-2 text-[10px] font-semibold text-[#01FC8D]">100% de cashback</p>
-                    <p className="mt-1 text-[10px] font-semibold text-[#38bdf8]">Suporte 24/7</p>
+                    <p className="mt-2 text-xs font-semibold text-[#01FC8D]">100% de cashback</p>
+                    <p className="mt-1 text-xs font-semibold text-[#38bdf8]">Suporte 24/7</p>
                   </div>
                 );
               })}
@@ -248,7 +248,7 @@ export function VpsCloudPage() {
                     className={`md:sticky md:left-0 md:z-20 flex flex-col justify-center border border-white/10 border-t-0 bg-[#0d1225] p-3 text-left ${row.key === "traffic" ? "rounded-b-xl border-b" : ""
                       }`}
                   >
-                    <span className="text-[11px] font-semibold leading-tight text-white/90">{row.label}</span>
+                    <span className="text-base font-semibold leading-tight text-white/90">{row.label}</span>
                     {"sub" in row && row.sub ? (
                       <span className="mt-0.5 text-[9px] leading-tight text-gray-500">{row.sub}</span>
                     ) : null}
@@ -256,7 +256,7 @@ export function VpsCloudPage() {
                   {plans.map((p, colIdx) => (
                     <div
                       key={`${row.key}-${p.id}`}
-                      className={`flex items-center border border-t-0 px-2 py-2.5 text-center text-[11px] font-light leading-snug text-gray-300 md:text-xs ${p.popular ? "border-[#01FC8D]/60 bg-[#0f1628]" : "border-white/10 bg-[#0d1225]"
+                      className={`flex items-center border border-t-0 px-2 py-2.5 text-center text-lg font-bold leading-snug text-gray-100 ${p.popular ? "border-[#01FC8D]/60 bg-[#0f1628]" : "border-white/10 bg-[#0d1225]"
                         } ${row.key === "traffic" ? "rounded-b-xl border-b" : ""} ${row.key === "traffic" ? "border-b" : ""
                         }`}
                     >

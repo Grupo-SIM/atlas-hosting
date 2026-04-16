@@ -147,7 +147,7 @@ export function Plans() {
                   ESPECIFICAÇÕES DA EMBALAGEM
                 </p>
                 <div className="flex flex-col gap-3">
-                  <span className="text-xs font-medium text-white/50">VPS com backup automático</span>
+                  <span className="text-sm font-medium text-white/50">VPS com backup automático</span>
                   <div className="flex items-center gap-3">
                     <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} />
                     <span className="text-xs text-gray-500">{backupEnabled ? "Ativado" : "Desativado"}</span>
@@ -158,8 +158,8 @@ export function Plans() {
               <div className="flex-grow">
                 {rowSpecs.map((row, i) => (
                   <div key={row.key} className={`px-8 h-[72px] flex flex-col justify-center border-t border-white/5 ${i === rowSpecs.length - 1 ? 'border-b-0' : ''}`}>
-                    <span className="text-[11px] font-bold text-white/90 uppercase tracking-widest leading-none">{row.label}</span>
-                    {row.sub && <span className="text-[9px] text-gray-500 mt-1 sm:mt-2 leading-tight">{row.sub}</span>}
+                    <span className="text-base font-bold text-white/90 uppercase tracking-widest leading-none">{row.label}</span>
+                    {row.sub && <span className="text-sm text-gray-500 mt-1 sm:mt-2 leading-tight">{row.sub}</span>}
                   </div>
                 ))}
               </div>
@@ -186,15 +186,15 @@ export function Plans() {
                           </div>
                         )}
                         <div>
-                          <p className={`${roboto.className} text-xl font-bold text-white mb-4`}>{p.name}</p>
-                          <span className="text-xs text-[#ff4d4d] line-through opacity-70 mb-1 block">{p.priceOld}</span>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-sm font-bold text-white mb-2">{priceSymbol}</span>
-                            <span className="text-4xl font-extrabold text-white">{priceMain},</span>
-                            <span className="text-xl font-bold text-white">{priceCents}</span>
-                            <span className="text-xs font-medium text-gray-400 ml-1.5 opacity-60">/mês</span>
+                          <p className={`${roboto.className} text-2xl font-bold text-white mb-4`}>{p.name}</p>
+                          <span className="text-sm text-[#ff4d4d] line-through opacity-70 mb-1 block">{p.priceOld}</span>
+                          <div className="flex items-baseline gap-1 whitespace-nowrap">
+                            <span className="text-base font-bold text-white mb-2">{priceSymbol}</span>
+                            <span className="text-5xl font-extrabold text-white">{priceMain},</span>
+                            <span className="text-2xl font-bold text-white">{priceCents}</span>
+                            <span className="text-sm font-medium text-gray-400 ml-1.5 opacity-60">/mês</span>
                           </div>
-                          <p className="mt-1 text-[10px] text-gray-500 uppercase tracking-wide">12 meses</p>
+                          <p className="mt-1 text-xs text-gray-500 uppercase tracking-wide">12 meses</p>
                         </div>
 
                         <Link
@@ -211,7 +211,7 @@ export function Plans() {
                       <div className="flex-grow bg-white/[0.01]">
                         {rowSpecs.map((row) => (
                           <div key={`${p.id}-${row.key}`} className="h-[72px] flex items-center justify-center border-t border-white/5 px-6 text-center">
-                            <span className="text-xs font-medium text-gray-300">{p[row.key]}</span>
+                            <span className="text-lg font-bold text-gray-100">{p[row.key]}</span>
                           </div>
                         ))}
                       </div>
@@ -219,11 +219,11 @@ export function Plans() {
                       <div className="p-6 border-t border-white/5 flex flex-col gap-2">
                         <div className="flex items-center gap-2 text-[#01FC8D]">
                           <Check className="h-3 w-3" strokeWidth={4} />
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider">100% de cashback</span>
+                          <span className="text-xs font-extrabold uppercase tracking-wider">100% de cashback</span>
                         </div>
                         <div className="flex items-center gap-2 text-[#38bdf8]">
                           <Check className="h-3 w-3" strokeWidth={4} />
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider">Suporte 24/7 Ativo</span>
+                          <span className="text-xs font-extrabold uppercase tracking-wider">Suporte 24/7 Ativo</span>
                         </div>
                       </div>
 

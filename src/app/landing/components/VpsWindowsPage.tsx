@@ -126,22 +126,22 @@ export function VpsWindowsPage() {
         </div>
 
         <div className="mt-4 overflow-x-auto pb-3 scrollbar-thin md:mt-5">
-          <div className="flex min-w-[1380px] gap-4 md:justify-center">
+          <div className="flex min-w-[1640px] gap-4 md:justify-center">
             {windowsPlans.map((plan) => (
               <article
                 key={plan.name}
-                className="w-[230px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#0d1225]"
+                className="w-[260px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#0d1225]"
               >
                 <div className="p-3.5">
-                  <p className={`${roboto.className} text-[13px] font-bold tracking-wide text-white`}>{plan.name}</p>
+                  <p className={`${roboto.className} text-base font-bold tracking-wide text-white`}>{plan.name}</p>
                   <p className="mt-1 text-sm font-bold text-gray-300">Servidor Windows</p>
                   <p className="mt-2 text-xs font-medium text-[#ff4d4d]/90 line-through">{plan.oldPrice}</p>
-                  <p className="mt-0.5 leading-none text-white">
+                  <div className="mt-0.5 flex items-baseline gap-1 whitespace-nowrap leading-none text-white">
                     <span className="text-4xl font-extrabold">{plan.newPrice}</span>
-                    <span className="align-top text-lg font-bold">{plan.cents}</span>
-                    <span className="ml-1 text-[10px] font-medium text-gray-400">/mês</span>
-                  </p>
-                  <p className="mt-0.5 text-[10px] font-light leading-snug text-gray-500">por um período de 12 meses</p>
+                    <span className="text-lg font-bold">{plan.cents}</span>
+                    <span className="ml-1 text-xs font-medium text-gray-400">/mês</span>
+                  </div>
+                  <p className="mt-0.5 text-xs font-light leading-snug text-gray-500">por um período de 12 meses</p>
                   <Link
                     href={`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano Windows ${plan.name} e gostaria de dar continuidade ao processo.`)}`}
                     target="_blank"
@@ -151,7 +151,7 @@ export function VpsWindowsPage() {
                   </Link>
                 </div>
 
-                <div className="space-y-0 border-t border-white/10 text-[11px] text-gray-300 md:text-xs">
+                <div className="space-y-0 border-t border-white/10 text-lg font-bold text-gray-100">
                   <p className="border-t border-white/10 px-3 py-2.5 font-semibold first:border-t-0">
                     <span className="inline-flex items-start gap-2">
                       <Check className="mt-[1px] h-3.5 w-3.5 text-[#f5be2f]" />

@@ -17,7 +17,7 @@ export default async function Dashboard({
     <div className="space-y-8 p-6 pb-16">
       <WelcomeHeader user={user} />
       <QuickActions />
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+{/* <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         <div className="lg:col-span-8 flex flex-col h-full">
           <Suspense fallback={<div className="h-full" />}>
             <RecentActivities searchParams={searchParams} />
@@ -28,7 +28,7 @@ export default async function Dashboard({
             <ServerStatus user={user} />
           </Suspense>
         </div>
-      </div>
+      </div> */}
       <SitesQuickActions />
     </div>
   );

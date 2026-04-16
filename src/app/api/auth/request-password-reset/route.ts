@@ -31,14 +31,12 @@ export async function POST(request: NextRequest) {
 
     // Create password reset token
     const resetToken = await createPasswordResetToken(user.id);
-    const resetCode = generateVerificationCode();
 
     // Send password reset email
     await sendPasswordResetEmail(
       user.email,
       user.name,
-      resetToken.token,
-      resetCode
+      resetToken.token
     );
 
     return NextResponse.json({

@@ -17,7 +17,6 @@ interface AtlasPasswordResetEmailProps {
   firstName?: string;
   email?: string;
   resetLink?: string;
-  resetCode?: string;
   expirationTime?: string;
   supportEmail?: string;
   /** Base URL do site (logo e consistência com o link de reset). */
@@ -36,7 +35,6 @@ export const AtlasPasswordResetEmail = ({
   firstName = "cliente",
   email = "usuario@exemplo.com",
   resetLink = "https://atlashosting.com.br/reset-password?token=abc123",
-  resetCode = "000000",
   expirationTime = "1 hora",
   supportEmail = "contact@atlashosting.com.br",
   publicSiteUrl,
@@ -79,17 +77,6 @@ export const AtlasPasswordResetEmail = ({
             </Link>
           </Text>
           <Hr style={hr} />
-          <Text style={paragraph}>
-            <strong>Outra opção:</strong> use este código de redefinição:
-          </Text>
-          <Section style={codeContainer}>
-            <Text style={code}>{resetCode}</Text>
-          </Section>
-          <Text style={paragraph}>
-            Informe esse código na página de redefinição de senha para confirmar
-            que é você.
-          </Text>
-          <Hr style={hr} />
           <Section style={warningBox}>
             <Text style={warningText}>
               <strong>Segurança:</strong> se você não pediu esta redefinição,
@@ -98,7 +85,7 @@ export const AtlasPasswordResetEmail = ({
             </Text>
           </Section>
           <Text style={paragraph}>
-            Por segurança, o link e o código expiram em {expirationTime}. Depois
+            Por segurança, o link expira em {expirationTime}. Depois
             disso, solicite um novo e-mail de redefinição.
           </Text>
           <Text style={paragraph}>
@@ -123,7 +110,6 @@ AtlasPasswordResetEmail.PreviewProps = {
   firstName: "Breno",
   email: "breno@exemplo.com",
   resetLink: "https://atlashosting.com.br/reset-password?token=abc123",
-  resetCode: "54666",
   expirationTime: "1 hora",
   supportEmail: "contact@atlashosting.com.br",
   publicSiteUrl: "https://atlashosting.com.br",
