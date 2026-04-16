@@ -27,9 +27,9 @@ interface AtlasPasswordResetEmailProps {
 function logoSrc(publicSiteUrl?: string): string {
   const base = publicSiteUrl?.replace(/\/$/, "").trim();
   if (base) {
-    return `${base}/static/atlas-logo.png`;
+    return `${base}/atlas-logo.png`;
   }
-  return "https://atlashosting.com.br/static/atlas-logo.png";
+  return "https://atlashosting.com.br/atlas-logo.png";
 }
 
 export const AtlasPasswordResetEmail = ({

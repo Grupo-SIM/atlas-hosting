@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, CheckCircle2, ChevronDown, Loader2, XCircle } from "lucide-react";
-import { Rajdhani } from "next/font/google";
+import { Roboto } from "next/font/google";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,9 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import LoadingState from "./LoadingState";
 
-const rajdhani = Rajdhani({
+const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["100", "300", "400", "500", "700", "900"],
 });
 
 interface DomainResult {
@@ -220,7 +220,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
   if (error) {
     return (
       <div className="rounded-2xl border border-red-500/35 bg-red-500/10 p-6 text-red-100">
-        <p className={`${rajdhani.className} mb-2 text-lg font-semibold uppercase tracking-wide`}>
+        <p className={`${roboto.className} mb-2 text-lg font-semibold uppercase tracking-wide`}>
           Erro ao buscar
         </p>
         <p className="text-sm text-red-100/90">{error}</p>
@@ -239,7 +239,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
         {/* Card 1 — correspondência com a busca */}
         <article className="flex flex-col rounded-2xl border border-white/12 bg-[#0d1225]/85 p-6 shadow-[0_16px_48px_rgba(0,0,0,0.35)] backdrop-blur-md md:p-8">
           <span
-            className={`${rajdhani.className} mb-4 inline-flex w-fit rounded-full border border-[#01FC8D]/35 bg-[#01FC8D]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#01FC8D]`}
+            className={`${roboto.className} mb-4 inline-flex w-fit rounded-full border border-[#01FC8D]/35 bg-[#01FC8D]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#01FC8D]`}
           >
             Correspondência exata
           </span>
@@ -247,7 +247,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <h2
-                className={`${rajdhani.className} break-all text-2xl font-bold tracking-tight text-white md:text-[1.65rem]`}
+                className={`${roboto.className} break-all text-2xl font-bold tracking-tight text-white md:text-[1.65rem]`}
               >
                 {mainResult.domain}
               </h2>
@@ -271,7 +271,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                   <p className="text-xs font-medium uppercase tracking-wide text-white/45">
                     Primeiro ano
                   </p>
-                  <p className={`${rajdhani.className} mt-1 text-3xl font-bold text-white`}>
+                  <p className={`${roboto.className} mt-1 text-3xl font-bold text-white`}>
                     {formatPrice(mainResult.priceBRL)}
                   </p>
                   <p className="mt-1 text-xs text-white/45">
@@ -291,7 +291,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
 
               <Button
                 type="button"
-                className={`${rajdhani.className} mt-8 h-12 w-full rounded-xl bg-[#01FC8D] text-sm font-bold uppercase tracking-wide text-black shadow-[0_8px_24px_rgba(1,252,141,0.25)] hover:bg-[#01e67d]`}
+                className={`${roboto.className} mt-8 h-12 w-full rounded-xl bg-[#01FC8D] text-sm font-bold uppercase tracking-wide text-black shadow-[0_8px_24px_rgba(1,252,141,0.25)] hover:bg-[#01e67d]`}
                 onClick={() => openAuthModal(pathAfterAuthSingle(mainResult.domain))}
               >
                 Registrar agora
@@ -311,7 +311,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
         {/* Card 2 — pacote / extensões sugeridas */}
         <article className="flex flex-col rounded-2xl border border-white/12 bg-[#0a1026]/75 p-6 shadow-[0_16px_48px_rgba(0,0,0,0.28)] backdrop-blur-md md:p-8">
           <span
-            className={`${rajdhani.className} mb-4 inline-flex w-fit rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white/80`}
+            className={`${roboto.className} mb-4 inline-flex w-fit rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white/80`}
           >
             Amplie sua marca
           </span>
@@ -327,7 +327,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                     key={s.domain}
                     className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2.5"
                   >
-                    <span className={`${rajdhani.className} font-semibold text-white`}>
+                    <span className={`${roboto.className} font-semibold text-white`}>
                       {s.domain}
                     </span>
                     <span className="shrink-0 text-sm text-[#01FC8D]">
@@ -338,7 +338,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                 ))}
               </ul>
               <p className="mt-5 text-xs uppercase tracking-wide text-white/45">Total estimado</p>
-              <p className={`${rajdhani.className} text-2xl font-bold text-white`}>
+              <p className={`${roboto.className} text-2xl font-bold text-white`}>
                 {formatPrice(bundleTotal)}
                 <span className="text-base font-medium text-white/45"> / primeiro ano</span>
               </p>
@@ -350,7 +350,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                 <Button
                   type="button"
                   variant="outline"
-                  className={`${rajdhani.className} mt-8 h-12 w-full rounded-xl border-2 border-[#01FC8D]/50 bg-transparent text-sm font-bold uppercase tracking-wide text-[#01FC8D] hover:bg-[#01FC8D]/10 hover:text-[#01FC8D]`}
+                  className={`${roboto.className} mt-8 h-12 w-full rounded-xl border-2 border-[#01FC8D]/50 bg-transparent text-sm font-bold uppercase tracking-wide text-[#01FC8D] hover:bg-[#01FC8D]/10 hover:text-[#01FC8D]`}
                   onClick={() =>
                     openAuthModal(pathAfterAuthBundle(bundleItems.map((b) => b.domain)))
                   }
@@ -361,7 +361,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                 <Button
                   type="button"
                   variant="outline"
-                  className={`${rajdhani.className} mt-8 h-12 w-full rounded-xl border-2 border-[#01FC8D]/50 bg-transparent text-sm font-bold uppercase tracking-wide text-[#01FC8D] hover:bg-[#01FC8D]/10 hover:text-[#01FC8D]`}
+                  className={`${roboto.className} mt-8 h-12 w-full rounded-xl border-2 border-[#01FC8D]/50 bg-transparent text-sm font-bold uppercase tracking-wide text-[#01FC8D] hover:bg-[#01FC8D]/10 hover:text-[#01FC8D]`}
                   onClick={() => openAuthModal(pathAfterAuthSingle(bundleItems[0]!.domain))}
                 >
                   Registrar esta extensão
@@ -385,7 +385,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
       {/* Mais opções */}
       <section id="mais-opcoes" className="scroll-mt-28">
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <h3 className={`${rajdhani.className} text-xl font-bold text-white md:text-2xl`}>
+          <h3 className={`${roboto.className} text-xl font-bold text-white md:text-2xl`}>
             Mais opções
           </h3>
           {pagination ? (
@@ -425,7 +425,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`${rajdhani.className} text-lg font-semibold text-white md:text-xl`}
+                        className={`${roboto.className} text-lg font-semibold text-white md:text-xl`}
                       >
                         {s.domain}
                       </span>
@@ -447,7 +447,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
 
                 <div className="flex shrink-0 items-center gap-4 sm:gap-6">
                   <div className="text-right">
-                    <p className={`${rajdhani.className} text-lg font-bold text-white md:text-xl`}>
+                    <p className={`${roboto.className} text-lg font-bold text-white md:text-xl`}>
                       {formatPrice(s.priceBRL)}
                     </p>
                     <p className="text-xs text-white/45">/ano</p>
@@ -455,7 +455,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                   <Button
                     type="button"
                     variant="outline"
-                    className={`${rajdhani.className} h-10 min-w-[7.5rem] shrink-0 rounded-xl border-white/25 bg-transparent text-xs font-bold uppercase tracking-wide text-white hover:border-[#01FC8D]/50 hover:bg-[#01FC8D]/5 hover:text-[#01FC8D]`}
+                    className={`${roboto.className} h-10 min-w-[7.5rem] shrink-0 rounded-xl border-white/25 bg-transparent text-xs font-bold uppercase tracking-wide text-white hover:border-[#01FC8D]/50 hover:bg-[#01FC8D]/5 hover:text-[#01FC8D]`}
                     onClick={() => openAuthModal(pathAfterAuthSingle(s.domain))}
                   >
                     Registrar
@@ -499,7 +499,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
       <Dialog open={authModalOpen} onOpenChange={onAuthModalOpenChange}>
         <DialogContent className="border-white/10 bg-[#0d1225] text-white sm:max-w-md [&_.text-muted-foreground]:text-white/65 [&_button.absolute]:text-white/80">
           <DialogHeader>
-            <DialogTitle className={`${rajdhani.className} text-xl text-white`}>
+            <DialogTitle className={`${roboto.className} text-xl text-white`}>
               Continuar compra
             </DialogTitle>
             <DialogDescription className="text-base text-white/70">
@@ -510,7 +510,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
           <div className="flex flex-col gap-3 pt-2">
             <Button
               type="button"
-              className={`${rajdhani.className} h-11 w-full bg-[#01FC8D] font-bold uppercase tracking-wide text-black hover:bg-[#01e67d]`}
+              className={`${roboto.className} h-11 w-full bg-[#01FC8D] font-bold uppercase tracking-wide text-black hover:bg-[#01e67d]`}
               onClick={goToLogin}
             >
               Sim — entrar com minha conta
@@ -518,7 +518,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
             <Button
               type="button"
               variant="outline"
-              className={`${rajdhani.className} h-11 w-full border-white/25 bg-transparent font-bold uppercase tracking-wide text-white hover:bg-white/10`}
+              className={`${roboto.className} h-11 w-full border-white/25 bg-transparent font-bold uppercase tracking-wide text-white hover:bg-white/10`}
               onClick={goToSignup}
             >
               Não — criar conta nova

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Star } from "lucide-react";
+import LetterGlitch from "./LetterGlitch";
 
 const testimonials = [
   {
@@ -75,6 +76,23 @@ export function Testimonials() {
 
   return (
     <section id="testimonials" className="py-24 relative overflow-hidden bg-[#0a0e27] w-full">
+      {/* Background Animation Layers */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
+        {/* Letter Glitch Layer */}
+        <div className="absolute inset-0 opacity-[0.25]">
+          <LetterGlitch 
+            glitchSpeed={50}
+            centerVignette={true}
+            outerVignette={false}
+            smooth={true}
+          />
+        </div>
+        
+        {/* Overlay Gradients to blend properly with the site theme */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_20%,#0a0e27_95%)]" />
+        <div className="absolute inset-0 bg-[#0a0e27]/20" />
+      </div>
+
       <div className="container mx-auto max-w-[1240px] relative z-10">
         
         {/* Top Header */}
@@ -169,4 +187,3 @@ export function Testimonials() {
     </section>
   );
 }
-

@@ -1,15 +1,15 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { Rajdhani } from "next/font/google";
+import { Roboto } from "next/font/google";
 import { Navbar } from "@/app/landing/components/Navbar";
 import DomainSearchResults from "./components/DomainSearchResults";
 import SearchForm from "./components/SearchForm";
 import LoadingState from "./components/LoadingState";
 
-const rajdhani = Rajdhani({
+const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: ["100", "300", "400", "500", "700", "900"],
 });
 
 interface SearchPageProps {
@@ -51,7 +51,7 @@ export default async function DomainSearchPage({
 
           <header className="mx-auto mb-10 max-w-3xl text-center md:mb-12">
             <h1
-              className={`${rajdhani.className} text-balance text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-[2.65rem] lg:leading-tight`}
+              className={`${roboto.className} text-balance text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-[2.65rem] lg:leading-tight`}
             >
               Encontre o nome do seu domínio
             </h1>

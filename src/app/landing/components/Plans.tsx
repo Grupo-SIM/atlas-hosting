@@ -1,14 +1,16 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
-import { Rajdhani } from "next/font/google";
+import { Roboto } from "next/font/google";
 import { Switch } from "@/components/ui/switch";
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 
-const rajdhani = Rajdhani({
+const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["100", "300", "400", "500", "700", "900"],
 });
 
 type VpsPlan = {
@@ -103,151 +105,139 @@ const plans: VpsPlan[] = [
 
 export function Plans() {
   const [backupEnabled, setBackupEnabled] = useState(false);
-  const gridCols = `minmax(14.5rem, 16rem) repeat(${plans.length}, minmax(0, 1fr))`;
+  const [emblaRef] = useEmblaCarousel({ 
+    loop: false, 
+    align: 'start',
+    containScroll: 'trimSnaps'
+  }, [Autoplay({ delay: 4000, stopOnInteraction: false })]);
+
+  const rowSpecs = [
+    { label: "Núcleos de vCPU", key: "vcpu" as const },
+    { label: "RAM (GB)", key: "ram" as const },
+    {
+      label: "NVMe (GB) / SSD (GB)",
+      sub: "+ Espaço de armazenamento extra",
+      key: "storage" as const,
+    },
+    { label: "Instantâneos", key: "snapshots" as const },
+    { label: "Tráfego (entrada ilimitada)", key: "traffic" as const },
+  ];
 
   return (
-    <section id="planos" className="relative bg-[#0a0e27] px-4 py-10 md:px-8 md:py-12">
+    <section id="planos" className="relative bg-[#0a0e27] px-4 py-20 md:px-8 md:py-32">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
-      <div className="relative z-10 mx-auto w-full max-w-[min(92vw,1760px)] px-0">
-        <div className="mb-6 text-center">
-          <h2 className={`${rajdhani.className} text-2xl font-bold tracking-tight text-white md:text-4xl`}>
+
+      <div className="relative z-10 mx-auto w-full max-w-[1760px]">
+        <div className="mb-16 text-center">
+          <h2 className={`${roboto.className} text-3xl font-bold tracking-tight text-white md:text-5xl`}>
             Potência dedicada para tirar seus projetos do papel.
           </h2>
-          <p className="mt-2 text-sm text-gray-400 md:text-base">
+          <p className="mt-4 text-base text-gray-400 md:text-lg max-w-2xl mx-auto">
             Escolha o plano VPS ideal e escale com performance, estabilidade e suporte 24/7.
           </p>
         </div>
-        <div className="w-full overflow-x-auto overflow-y-visible pb-4 scrollbar-thin">
-          <div
-            className="grid w-full min-w-[1700px] gap-x-3 gap-y-0 md:min-w-full"
-            style={{ gridTemplateColumns: gridCols }}
-          >
-            <div className="md:sticky md:left-0 md:z-20 rounded-tl-xl border border-white/10 border-b-0 bg-[#0d1225] p-3 text-left">
-              <p className={`${rajdhani.className} text-[11px] font-bold uppercase tracking-wide text-white/90`}>
-                Especificações da embalagem
-              </p>
-            </div>
-            {plans.map((p, idx) => {
-              const currentPrice = backupEnabled ? p.priceBackup : p.priceNew;
-              const [priceSymbol, priceValue] = currentPrice.split(" ");
-              const [priceMain, priceCents] = priceValue.split(",");
 
-              return (
-                <div
-                  key={p.id}
-                  className={`relative overflow-hidden rounded-t-xl border border-b-0 p-3.5 ${
-                    p.popular
-                      ? "border-[#01FC8D]/60 bg-[#0f1628] shadow-[0_0_28px_rgba(1,252,141,0.06)]"
-                      : "border-white/10 bg-[#0d1225]"
-                  } ${idx === plans.length - 1 ? "rounded-tr-xl" : ""}`}
-                >
-                  {p.popular ? (
-                    <div className="absolute top-2.5 right-2.5">
-                      <span
-                        className={`${rajdhani.className} rounded-full bg-[#01FC8D] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-black`}
-                      >
-                        Mais vendido
-                      </span>
-                    </div>
-                  ) : null}
-                  <p className={`${rajdhani.className} pr-[4.5rem] text-[13px] font-bold tracking-wide text-white`}>{p.name}</p>
-                  <div className="mt-2 flex flex-wrap items-end gap-1.5">
-                    <span className="text-xs font-medium text-[#ff4d4d]/90 line-through">{p.priceOld}</span>
+        <div className="flex flex-col xl:flex-row items-stretch justify-start gap-4">
+
+          {/* Card de Especificações Fixo */}
+          <div className="w-full xl:w-[280px] shrink-0">
+            <div className="bg-[#0d1225] border border-white/10 rounded-2xl h-full flex flex-col shadow-xl">
+              <div className="p-8 h-[280px] flex flex-col justify-between border-b border-white/10">
+                <p className={`${roboto.className} text-[13px] font-bold uppercase tracking-[0.2em] text-[#01FC8D]`}>
+                  ESPECIFICAÇÕES DA EMBALAGEM
+                </p>
+                <div className="flex flex-col gap-3">
+                  <span className="text-xs font-medium text-white/50">VPS com backup automático</span>
+                  <div className="flex items-center gap-3">
+                    <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} />
+                    <span className="text-xs text-gray-500">{backupEnabled ? "Ativado" : "Desativado"}</span>
                   </div>
-                  <div className="mt-0.5 flex items-baseline gap-0.5 whitespace-nowrap">
-                    <span className="text-[12px] font-bold text-white mb-0.5">{priceSymbol}</span>
-                    <span className="text-2xl font-extrabold leading-none tracking-tight text-white md:text-3xl">
-                      {priceMain},
-                    </span>
-                    <span className="text-base font-bold text-white">{priceCents}</span>
-                    <span className="text-[10px] font-medium text-gray-400 ml-1">/mês</span>
-                  </div>
-                  <p className="mt-0.5 text-[10px] font-light leading-snug text-gray-500">12 meses</p>
-                  <Link
-                    href={`https://wa.me/558398849027?text=${encodeURIComponent(
-                      `Olá! Escolhi o plano ${p.name} ${
-                        backupEnabled ? "com Backup Automático" : ""
-                      } e gostaria de dar continuidade ao processo.`
-                    )}`}
-                    target="_blank"
-                    className={`${rajdhani.className} mt-3 block w-full rounded-md py-2 text-center text-[11px] font-bold uppercase tracking-wide transition-colors ${
-                      p.popular
-                        ? "bg-[#01FC8D] text-black shadow-[0_4px_14px_rgba(1,252,141,0.2)] hover:bg-[#01FC8D]/90"
-                        : "border border-white/20 bg-transparent text-white hover:bg-white/5"
-                    }`}
-                  >
-                    Começar agora →
-                  </Link>
-                  <p className="mt-2 text-[10px] font-semibold text-[#01FC8D]">100% de cashback</p>
-                  <p className="mt-1 text-[10px] font-semibold text-[#38bdf8]">Suporte 24/7</p>
                 </div>
-              );
-            })}
-
-            <div className="md:sticky md:left-0 md:z-20 flex flex-col justify-center gap-1.5 border border-white/10 border-t-0 bg-[#0d1225] p-3 text-left">
-              <span className="text-xs font-medium text-white/85">VPS com backup automático</span>
-              <div className="flex items-center gap-2">
-                <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} />
-                <span className="text-[11px] text-gray-500">{backupEnabled ? "Ativado" : "Desativado"}</span>
               </div>
-            </div>
-            {plans.map((p) => (
-              <div
-                key={`b-${p.id}`}
-                className={`flex items-center justify-center border border-t-0 px-2 py-2.5 text-center text-[11px] text-gray-400 ${
-                  p.popular ? "border-[#01FC8D]/60 bg-[#0f1628]" : "border-white/10 bg-[#0d1225]"
-                }`}
-              >
-                {backupEnabled ? <Check className="h-4 w-4 text-[#01FC8D]" strokeWidth={2.8} /> : null}
-              </div>
-            ))}
 
-            {[
-              { label: "Núcleos de vCPU", key: "vcpu" as const },
-              { label: "RAM (GB)", key: "ram" as const },
-              {
-                label: "NVMe (GB) / SSD (GB)",
-                sub: "+ Espaço de armazenamento extra",
-                key: "storage" as const,
-              },
-              { label: "Instantâneos", key: "snapshots" as const },
-              { label: "Tráfego (entrada ilimitada)", key: "traffic" as const },
-            ].map((row) => (
-              <Fragment key={row.key}>
-                <div
-                  className={`md:sticky md:left-0 md:z-20 flex flex-col justify-center border border-white/10 border-t-0 bg-[#0d1225] p-3 text-left ${
-                    row.key === "traffic" ? "rounded-b-xl border-b" : ""
-                  }`}
-                >
-                  <span className="text-[11px] font-semibold leading-tight text-white/90">{row.label}</span>
-                  {"sub" in row && row.sub ? (
-                    <span className="mt-0.5 text-[9px] leading-tight text-gray-500">{row.sub}</span>
-                  ) : null}
-                </div>
-                {plans.map((p) => (
-                  <div
-                    key={`${row.key}-${p.id}`}
-                    className={`flex items-center border border-t-0 px-2 py-2.5 text-center text-[11px] font-light leading-snug text-gray-300 md:text-xs ${
-                      p.popular ? "border-[#01FC8D]/60 bg-[#0f1628]" : "border-white/10 bg-[#0d1225]"
-                    } ${row.key === "traffic" ? "rounded-b-xl border-b" : ""} ${
-                      row.key === "traffic" ? "border-b" : ""
-                    }`}
-                  >
-                    <span className="w-full">{p[row.key]}</span>
+              <div className="flex-grow">
+                {rowSpecs.map((row, i) => (
+                  <div key={row.key} className={`px-8 h-[72px] flex flex-col justify-center border-t border-white/5 ${i === rowSpecs.length - 1 ? 'border-b-0' : ''}`}>
+                    <span className="text-[11px] font-bold text-white/90 uppercase tracking-widest leading-none">{row.label}</span>
+                    {row.sub && <span className="text-[9px] text-gray-500 mt-1 sm:mt-2 leading-tight">{row.sub}</span>}
                   </div>
                 ))}
-              </Fragment>
-            ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Slider de Cartões de Planos */}
+          <div className="flex-grow overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
+            <div className="flex gap-4 px-2 py-2">
+              {plans.map((p) => {
+                const currentPrice = backupEnabled ? p.priceBackup : p.priceNew;
+                const [priceSymbol, priceValue] = currentPrice.split(" ");
+                const [priceMain, priceCents] = priceValue.split(",");
+
+                return (
+                  <div key={p.id} className="flex-[0_0_100%] sm:flex-[0_0_45%] lg:flex-[0_0_31%] 2xl:flex-[0_0_24%] min-w-0">
+                    <div className={`bg-[#0d1225] border rounded-2xl h-full flex flex-col transition-all duration-300 ${p.popular ? 'border-[#01FC8D]/60 shadow-[0_0_40px_rgba(1,252,141,0.08)] ring-1 ring-[#01FC8D]/20' : 'border-white/10 hover:border-white/20'}`}>
+
+                      {/* Plan Header */}
+                      <div className="p-8 h-[280px] flex flex-col justify-between border-b border-white/10 relative">
+                        {p.popular && (
+                          <div className="absolute top-6 right-6">
+                            <span className="rounded-full bg-[#01FC8D] px-3 py-1 text-[9px] font-extrabold uppercase tracking-widest text-black shadow-lg">MAIS VENDIDO</span>
+                          </div>
+                        )}
+                        <div>
+                          <p className={`${roboto.className} text-xl font-bold text-white mb-4`}>{p.name}</p>
+                          <span className="text-xs text-[#ff4d4d] line-through opacity-70 mb-1 block">{p.priceOld}</span>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-sm font-bold text-white mb-2">{priceSymbol}</span>
+                            <span className="text-4xl font-extrabold text-white">{priceMain},</span>
+                            <span className="text-xl font-bold text-white">{priceCents}</span>
+                            <span className="text-xs font-medium text-gray-400 ml-1.5 opacity-60">/mês</span>
+                          </div>
+                          <p className="mt-1 text-[10px] text-gray-500 uppercase tracking-wide">12 meses</p>
+                        </div>
+
+                        <Link
+                          href={`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano ${p.name} e gostaria de dar continuidade.`)}`}
+                          target="_blank"
+                          className={`${roboto.className} block w-full rounded-xl py-3 text-center text-[11px] font-bold uppercase tracking-[0.15em] transition-all ${p.popular ? 'bg-[#01FC8D] text-black shadow-lg hover:brightness-110' : 'border border-white/20 text-white hover:bg-white/5'
+                            }`}
+                        >
+                          Começar agora →
+                        </Link>
+                      </div>
+
+                      {/* Plan Specs Values */}
+                      <div className="flex-grow bg-white/[0.01]">
+                        {rowSpecs.map((row) => (
+                          <div key={`${p.id}-${row.key}`} className="h-[72px] flex items-center justify-center border-t border-white/5 px-6 text-center">
+                            <span className="text-xs font-medium text-gray-300">{p[row.key]}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="p-6 border-t border-white/5 flex flex-col gap-2">
+                        <div className="flex items-center gap-2 text-[#01FC8D]">
+                          <Check className="h-3 w-3" strokeWidth={4} />
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider">100% de cashback</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[#38bdf8]">
+                          <Check className="h-3 w-3" strokeWidth={4} />
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider">Suporte 24/7 Ativo</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col items-center gap-4 text-center md:flex-row md:items-center md:justify-end md:text-left">
-          <p className="text-sm text-gray-400 md:text-right">
-            Quer ainda mais potência?{" "}
-            <Link href="/vds" className="font-semibold text-[#01FC8D] underline-offset-2 hover:underline">
-              Escolha um VDS
-            </Link>
-            .
+        <div className="mt-16 text-right">
+          <p className="text-sm text-gray-500">
+            Quer ainda mais potência? <Link href="/vds" className="font-bold text-[#01FC8D] hover:underline underline-offset-4">Escolha um VDS</Link>.
           </p>
         </div>
       </div>

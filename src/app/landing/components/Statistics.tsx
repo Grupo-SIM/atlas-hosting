@@ -1,12 +1,13 @@
 "use client";
 
 import CountUp from "./CountUp";
-import { Rajdhani } from 'next/font/google';
+import { Roboto } from 'next/font/google';
+import LottieMap from "./LottieMap";
 
-const rajdhani = Rajdhani({ 
+const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-rajdhani"
+  weight: ["100", "300", "400", "500", "700", "900"],
+  variable: "--font-roboto"
 });
 
 const stats = [
@@ -35,16 +36,12 @@ const stats = [
 export function Statistics() {
   return (
     <section className="bg-[#0a0e27] relative w-full pt-24 overflow-hidden">
-      {/* World Map Background Image */}
-      <div className="absolute inset-0 z-[1] pointer-events-none flex justify-center items-start pt-0">
-        <div className="absolute inset-0 bg-[radial-gradient(70%_55%_at_50%_22%,rgba(1,252,141,0.16)_0%,rgba(1,252,141,0.05)_36%,rgba(10,14,39,0)_78%)]" />
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/2000px-World_map_-_low_resolution.svg.png"
-          alt=""
-          className="w-[150%] max-w-[1700px] opacity-[0.14] select-none pointer-events-none object-contain"
-          style={{ filter: "invert(1) brightness(12) contrast(1.05)" }}
-          aria-hidden="true"
-        />
+      {/* World Map Background animation */}
+      <div className="absolute inset-0 z-[1] pointer-events-none flex justify-center items-start pt-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(70%_55%_at_50%_22%,rgba(1,252,141,0.22)_0%,rgba(1,252,141,0.08)_36%,rgba(10,14,39,0)_78%)] z-[2]" />
+        <div className="w-[150%] max-w-[1700px] opacity-[0.25] scale-[1.25] translate-y-[-10%]">
+          <LottieMap />
+        </div>
       </div>
 
       <div className="container mx-auto max-w-7xl relative z-10 px-4">
@@ -53,7 +50,7 @@ export function Statistics() {
           <span className="inline-flex items-center rounded-full border border-[#01FC8D]/25 bg-[#01FC8D]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9BFDD2] mb-4">
             Resultados Reais
           </span>
-          <h2 className={`${rajdhani.className} text-[2.2rem] md:text-[3.1rem] font-bold text-white mb-5 leading-[1.05] tracking-tight`}>
+          <h2 className={`${roboto.className} text-[2.2rem] md:text-[3.1rem] font-bold text-white mb-5 leading-[1.05] tracking-tight`}>
             Performance Garantida,<br className="hidden md:block" />
             preço justo, retorno real
           </h2>
@@ -71,7 +68,7 @@ export function Statistics() {
             >
               <div className="absolute inset-x-0 bottom-0 h-[3px] bg-gradient-to-r from-[#01FC8D]/0 via-[#01FC8D] to-[#01FC8D]/0" />
               <div className="mb-2">
-                <span className={`${rajdhani.className} text-[38px] md:text-[46px] font-bold text-[#01FC8D] flex items-baseline justify-center`}>
+                <span className={`${roboto.className} text-[38px] md:text-[46px] font-bold text-[#01FC8D] flex items-baseline justify-center`}>
                   <CountUp
                     from={0}
                     to={stat.value}

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
-const rajdhani = { className: "[font-family:var(--font-rajdhani)]" };
+const roboto = { className: "[font-family:var(--font-roboto)]" };
 
 export function Navbar() {
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
@@ -79,7 +79,7 @@ export function Navbar() {
           >
             <Link
               href="/#servicos"
-              className={`${rajdhani.className} flex items-center gap-1.5 text-white/90 group-hover:text-[#01FC8D] transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}
+              className={`${roboto.className} flex items-center gap-1.5 text-white/90 group-hover:text-[#01FC8D] transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}
             >
               Serviços
               <ChevronDown className="w-4 h-4 text-white/40 group-hover:text-[#01FC8D] transition-transform duration-300 group-hover:rotate-180" strokeWidth={2.5} />
@@ -96,13 +96,13 @@ export function Navbar() {
                 >
                   <Link
                     href="/#servicos"
-                    className={`${rajdhani.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase`}
+                    className={`${roboto.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase`}
                   >
                     Serviços
                   </Link>
                   <Link
                     href="/#beneficios"
-                    className={`${rajdhani.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase border-t border-white/5`}
+                    className={`${roboto.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase border-t border-white/5`}
                   >
                     Benefícios
                   </Link>
@@ -119,7 +119,7 @@ export function Navbar() {
           >
             <Link
               href="/vps"
-              className={`${rajdhani.className} flex items-center gap-1.5 text-white/90 group-hover:text-[#01FC8D] transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}
+              className={`${roboto.className} flex items-center gap-1.5 text-white/90 group-hover:text-[#01FC8D] transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}
             >
               VPS
               <ChevronDown className="w-4 h-4 text-white/40 group-hover:text-[#01FC8D] transition-transform duration-300 group-hover:rotate-180" strokeWidth={2.5} />
@@ -134,17 +134,17 @@ export function Navbar() {
                   transition={{ duration: 0.2, ease: "easeOut" }}
                   className="absolute top-full left-0 mt-1 min-w-[280px] bg-[#11172f] border border-white/5 rounded-[6px] shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden"
                 >
-                  <Link href="/vps" className={`${rajdhani.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase`}>VPS em nuvem</Link>
-                  <Link href="/vds" className={`${rajdhani.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase border-t border-white/5`}>Cloud VDS</Link>
-                  <Link href="/vps-armazenamento" className={`${rajdhani.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase border-t border-white/5`}>VPS de armazenamento</Link>
-                  <Link href="/vps-windows" className={`${rajdhani.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase border-t border-white/5`}>VPS Windows</Link>
+                  <Link href="/vps" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase`}>VPS em nuvem</Link>
+                  <Link href="/vds" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase border-t border-white/5`}>Cloud VDS</Link>
+                  <Link href="/vps-armazenamento" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase border-t border-white/5`}>VPS de armazenamento</Link>
+                  <Link href="/vps-windows" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] transition-all uppercase border-t border-white/5`}>VPS Windows</Link>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
           {navLinks.map((link) => (
-            <Link key={link.name} href={link.href} className={`${rajdhani.className} text-white/90 hover:text-[#01FC8D] transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}>
+            <Link key={link.name} href={link.href} className={`${roboto.className} text-white/90 hover:text-[#01FC8D] transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}>
               {link.name}
             </Link>
           ))}
@@ -154,13 +154,13 @@ export function Navbar() {
         <div className="flex-1 md:flex-none flex items-center justify-end gap-3">
           <div className="hidden md:flex items-center gap-3">
             <Button
-              className={`${rajdhani.className} bg-transparent border border-white/30 hover:border-white/50 hover:bg-white/10 text-white font-bold px-5 py-2 h-auto text-[13px] rounded-full transition-all duration-300 tracking-wide uppercase`}
+              className={`${roboto.className} bg-transparent border border-white/30 hover:border-white/50 hover:bg-white/10 text-white font-bold px-5 py-2 h-auto text-[13px] rounded-full transition-all duration-300 tracking-wide uppercase`}
               asChild
             >
               <Link href="/signup">Cadastre-se</Link>
             </Button>
             <Button
-              className={`${rajdhani.className} bg-white hover:bg-white/90 text-[#0b112a] font-extrabold px-6 py-2 h-auto text-[13px] rounded-full transition-all duration-300 shadow-[0_8px_26px_rgba(255,255,255,0.2)] tracking-wide uppercase`}
+              className={`${roboto.className} bg-white hover:bg-white/90 text-[#0b112a] font-extrabold px-6 py-2 h-auto text-[13px] rounded-full transition-all duration-300 shadow-[0_8px_26px_rgba(255,255,255,0.2)] tracking-wide uppercase`}
               asChild
             >
               <Link href="/login">Começar</Link>
@@ -201,28 +201,28 @@ export function Navbar() {
                 <Link
                   href="/vps"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${rajdhani.className} text-3xl font-bold text-white hover:text-[#01FC8D] transition-colors uppercase tracking-wider`}
+                  className={`${roboto.className} text-3xl font-bold text-white hover:text-[#01FC8D] transition-colors uppercase tracking-wider`}
                 >
                   VPS em Nuvem
                 </Link>
                 <Link
                   href="/vds"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${rajdhani.className} text-3xl font-bold text-white hover:text-[#01FC8D] transition-colors uppercase tracking-wider`}
+                  className={`${roboto.className} text-3xl font-bold text-white hover:text-[#01FC8D] transition-colors uppercase tracking-wider`}
                 >
                   Cloud VDS
                 </Link>
                 <Link
                   href="/vps-armazenamento"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${rajdhani.className} text-3xl font-bold text-white hover:text-[#01FC8D] transition-colors uppercase tracking-wider`}
+                  className={`${roboto.className} text-3xl font-bold text-white hover:text-[#01FC8D] transition-colors uppercase tracking-wider`}
                 >
                   Armazenamento
                 </Link>
                 <Link
                   href="/vps-windows"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${rajdhani.className} text-3xl font-bold text-white hover:text-[#01FC8D] transition-colors uppercase tracking-wider`}
+                  className={`${roboto.className} text-3xl font-bold text-white hover:text-[#01FC8D] transition-colors uppercase tracking-wider`}
                 >
                   Windows
                 </Link>
@@ -236,7 +236,7 @@ export function Navbar() {
                     key={link.name}
                     href={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${rajdhani.className} text-xl font-bold text-white/60 hover:text-[#01FC8D] transition-colors uppercase tracking-widest`}
+                    className={`${roboto.className} text-xl font-bold text-white/60 hover:text-[#01FC8D] transition-colors uppercase tracking-widest`}
                   >
                     {link.name}
                   </Link>
@@ -247,14 +247,14 @@ export function Navbar() {
             {/* Mobile Auth Buttons - Centered */}
             <div className="mt-12 flex flex-col gap-4 w-full max-w-xs">
               <Button
-                className={`${rajdhani.className} w-full bg-[#01FC8D] hover:bg-[#01FC8D]/90 text-black font-extrabold py-6 h-auto text-lg rounded-xl transition-all shadow-[0_8px_26px_rgba(1,252,141,0.2)] tracking-wide uppercase`}
+                className={`${roboto.className} w-full bg-[#01FC8D] hover:bg-[#01FC8D]/90 text-black font-extrabold py-6 h-auto text-lg rounded-xl transition-all shadow-[0_8px_26px_rgba(1,252,141,0.2)] tracking-wide uppercase`}
                 asChild
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Link href="/login">Começar Agora</Link>
               </Button>
               <Button
-                className={`${rajdhani.className} w-full bg-transparent border-2 border-white/20 hover:border-white/40 text-white font-bold py-6 h-auto text-lg rounded-xl transition-all tracking-wide uppercase`}
+                className={`${roboto.className} w-full bg-transparent border-2 border-white/20 hover:border-white/40 text-white font-bold py-6 h-auto text-lg rounded-xl transition-all tracking-wide uppercase`}
                 asChild
                 onClick={() => setIsMobileMenuOpen(false)}
               >

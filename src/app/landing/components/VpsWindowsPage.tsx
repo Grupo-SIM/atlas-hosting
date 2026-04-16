@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { Check, MonitorCog } from "lucide-react";
-import { Rajdhani } from "next/font/google";
+import { Roboto } from "next/font/google";
+import LottieMap from "./LottieMap";
 
-const rajdhani = Rajdhani({
+const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["100", "300", "400", "500", "700", "900"],
 });
 
 type WindowsPlan = {
@@ -98,27 +99,27 @@ export function VpsWindowsPage() {
 
       <div className="relative z-10 mx-auto w-full max-w-[min(92vw,1700px)] mt-[6rem]">
         <div className="flex flex-col justify-start pb-4 md:pb-6">
-        <div className="mx-auto max-w-5xl text-center">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/15 bg-[#0e132e] px-3 py-1.5">
-            <MonitorCog className="h-4 w-4 text-[#01FC8D]" />
-            <span className={`${rajdhani.className} text-xs font-bold uppercase tracking-wider text-[#01FC8D]`}>
-              VPS Windows
-            </span>
+          <div className="mx-auto max-w-5xl text-center">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/15 bg-[#0e132e] px-3 py-1.5">
+              <MonitorCog className="h-4 w-4 text-[#01FC8D]" />
+              <span className={`${roboto.className} text-xs font-bold uppercase tracking-wider text-[#01FC8D]`}>
+                VPS Windows
+              </span>
+            </div>
+
+            <h1 className={`${roboto.className} mx-auto max-w-5xl text-4xl font-bold leading-tight text-white md:text-6xl`}>
+              Servidor VPS Windows - Acessível, rápido e flexível
+            </h1>
+
+            <p className="mx-auto mt-5 max-w-4xl text-base leading-relaxed text-gray-300 md:text-lg">
+              Hospedagem VPS Windows escalável, projetada para todos — de iniciantes a profissionais de tecnologia.
+              Desfrute de configuração rápida, desempenho consistente e soluções seguras.
+            </p>
           </div>
-
-          <h1 className={`${rajdhani.className} mx-auto max-w-5xl text-4xl font-bold leading-tight text-white md:text-6xl`}>
-            Servidor VPS Windows - Acessível, rápido e flexível
-          </h1>
-
-          <p className="mx-auto mt-5 max-w-4xl text-base leading-relaxed text-gray-300 md:text-lg">
-            Hospedagem VPS Windows escalável, projetada para todos — de iniciantes a profissionais de tecnologia.
-            Desfrute de configuração rápida, desempenho consistente e soluções seguras.
-          </p>
-        </div>
         </div>
 
         <div className="mx-auto mt-4 w-full max-w-5xl rounded-2xl border border-white/10 bg-[linear-gradient(90deg,#0b1b38_0%,#0a1c3d_45%,#0a1730_100%)] px-6 py-4 text-center shadow-[0_10px_30px_rgba(0,0,0,0.35)] md:mt-5">
-          <h3 className={`${rajdhani.className} text-2xl font-bold text-white md:text-[2rem]`}>Windows Server Incluso</h3>
+          <h3 className={`${roboto.className} text-2xl font-bold text-white md:text-[2rem]`}>Windows Server Incluso</h3>
           <p className="mt-1 text-lg text-[#8cb7de]">
             VPS com ambiente Windows pronto para aplicações, RDP e workloads corporativos.
           </p>
@@ -132,7 +133,7 @@ export function VpsWindowsPage() {
                 className="w-[230px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#0d1225]"
               >
                 <div className="p-3.5">
-                  <p className={`${rajdhani.className} text-[13px] font-bold tracking-wide text-white`}>{plan.name}</p>
+                  <p className={`${roboto.className} text-[13px] font-bold tracking-wide text-white`}>{plan.name}</p>
                   <p className="mt-1 text-sm font-bold text-gray-300">Servidor Windows</p>
                   <p className="mt-2 text-xs font-medium text-[#ff4d4d]/90 line-through">{plan.oldPrice}</p>
                   <p className="mt-0.5 leading-none text-white">
@@ -144,7 +145,7 @@ export function VpsWindowsPage() {
                   <Link
                     href={`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano Windows ${plan.name} e gostaria de dar continuidade ao processo.`)}`}
                     target="_blank"
-                    className={`${rajdhani.className} mt-3 block w-full rounded-md border border-white/20 bg-transparent py-2 text-center text-[11px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-white/5`}
+                    className={`${roboto.className} mt-3 block w-full rounded-md border border-white/20 bg-transparent py-2 text-center text-[11px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-white/5`}
                   >
                     Começar agora →
                   </Link>
@@ -196,7 +197,7 @@ export function VpsWindowsPage() {
         </div>
 
         <div className="mx-auto mt-16 max-w-5xl text-center">
-          <h3 className={`${rajdhani.className} text-3xl font-semibold tracking-tight text-white md:text-[2.2rem]`}>
+          <h3 className={`${roboto.className} text-3xl font-semibold tracking-tight text-white md:text-[2.2rem]`}>
             9 regiões, 11 localidades, disponibilidade global.
           </h3>
           <p className="mx-auto mt-4 max-w-3xl text-lg text-gray-300">
@@ -208,12 +209,7 @@ export function VpsWindowsPage() {
           <div className="relative overflow-hidden rounded-2xl bg-[radial-gradient(120%_90%_at_50%_50%,#101933_0%,#0d152d_55%,#0b1228_100%)] p-6 md:p-10">
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:36px_36px]" />
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <img
-                src="/6864935_23322.jpg"
-                alt=""
-                aria-hidden="true"
-                className="h-[115%] w-[115%] object-contain"
-              />
+              <LottieMap />
             </div>
             <div className="relative min-h-[300px] md:min-h-[360px]" />
           </div>

@@ -20,11 +20,12 @@ interface AtlasChangeEmailProps {
   verificationLink?: string;
   expirationTime?: string;
   supportEmail?: string;
+  publicSiteUrl?: string;
 }
 
 const baseUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : '';
+  : 'https://atlashosting.com.br';
 
 export const AtlasChangeEmail = ({
   firstName = 'Cliente',
@@ -33,6 +34,7 @@ export const AtlasChangeEmail = ({
   verificationLink = '#',
   expirationTime = '24 horas',
   supportEmail = 'contact@atlashosting.com.br',
+  publicSiteUrl = baseUrl,
 }: AtlasChangeEmailProps) => {
   const previewText = `Confirme a alteração do seu email para ${newEmail}`;
 
@@ -44,7 +46,7 @@ export const AtlasChangeEmail = ({
         <Container style={container}>
           <Section style={header}>
             <Img
-              src={`${baseUrl}/images/atlas-logo.png`}
+              src={`${publicSiteUrl}/atlas-logo.png`}
               width="120"
               height="40"
               alt="Atlas Hosting"

@@ -80,6 +80,7 @@ export async function sendWelcomeEmail(
       organizationName,
       dashboardUrl,
       supportEmail: "contact@atlashosting.com.br",
+      publicSiteUrl: siteUrl,
     })
   );
 
@@ -139,14 +140,16 @@ export async function sendEmailVerificationEmail(
       organizationName: "Atlas Hosting",
       title: "Verificar seu endereço de email",
       message:
-        `Para completar o cadastro da sua conta, você precisa verificar seu endereço de email. Use o código abaixo na página de verificação:\n\nCódigo: ${verificationCode}`,
+        "Para completar o cadastro da sua conta, você precisa verificar seu endereço de email. Use o código abaixo na página de verificação:",
+      verificationCode,
       severity: "info",
       actionUrl: verificationLink,
       actionText: "Verificar Email",
       timestamp: new Date().toLocaleString("pt-BR"),
       supportEmail: "contact@atlashosting.com.br",
       additionalInfo:
-        `Código de verificação: ${verificationCode}\nEste código expira em 24 horas. Se você não solicitou esta verificação, pode ignorar este email.`,
+        "Este código expira em 24 horas. Se você não solicitou esta verificação, pode ignorar este e-mail.",
+      publicSiteUrl: siteUrl,
     })
   );
 
@@ -183,6 +186,7 @@ export async function sendNotificationEmail(
       timestamp: new Date().toLocaleString("pt-BR"),
       supportEmail: "contact@atlashosting.com.br",
       additionalInfo,
+      publicSiteUrl: getServerPublicBaseUrl(),
     })
   );
 
@@ -220,6 +224,7 @@ export async function sendChangeEmailVerificationEmail(
       verificationLink,
       expirationTime: "24 horas",
       supportEmail: "contact@atlashosting.com.br",
+      publicSiteUrl: siteUrl,
     })
   );
 

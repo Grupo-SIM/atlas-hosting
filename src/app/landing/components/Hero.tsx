@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { Search, Shield } from "lucide-react";
-import { Rajdhani } from 'next/font/google';
+import { Roboto } from 'next/font/google';
 
-const rajdhani = Rajdhani({
+const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-rajdhani"
+  weight: ["100", "300", "400", "500", "700", "900"],
+  variable: "--font-roboto"
 });
 
 export function Hero() {
@@ -44,10 +44,10 @@ export function Hero() {
                   if (e.key === "Enter") handleSearch();
                 }}
                 placeholder="Domínio que você quer conquistar..."
-                className={`${rajdhani.className} w-full bg-transparent border-none outline-none text-white/95 text-[14px] md:text-[15px] h-10`}
+                className={`${roboto.className} w-full bg-transparent border-none outline-none text-white/95 text-[14px] md:text-[15px] h-10`}
               />
               <button
-                className={`${rajdhani.className} bg-[#01FC8D] text-[#0a0e27] border-none rounded-lg px-6 py-2.5 text-[13px] md:text-[14px] font-bold uppercase tracking-wider hover:brightness-110 transition-all shrink-0 cursor-pointer`}
+                className={`${roboto.className} bg-[#01FC8D] text-[#0a0e27] border-none rounded-lg px-6 py-2.5 text-[13px] md:text-[14px] font-bold uppercase tracking-wider hover:brightness-110 transition-all shrink-0 cursor-pointer`}
                 onClick={handleSearch}
               >
                 Buscar
@@ -77,13 +77,13 @@ export function Hero() {
             <div className="absolute inset-0 flex items-center px-6 md:px-[clamp(1.5rem,6vw,5rem)]">
               <div className="max-w-[580px] w-full text-center md:text-left">
                 <h1
-                  className={`${rajdhani.className} text-[2rem] sm:text-[2.5rem] md:text-[3.8rem] font-bold leading-[1.1] text-white mb-4 md:mb-6 text-shadow-xl drop-shadow-2xl`}
+                  className={`${roboto.className} text-[2rem] sm:text-[2.5rem] md:text-[3.8rem] font-bold leading-[1.1] text-white mb-4 md:mb-6 text-shadow-xl drop-shadow-2xl`}
                 >
                   Seu sucesso online<br />começa agora
                 </h1>
 
                 <p
-                  className={`${rajdhani.className} text-[14px] sm:text-[16px] md:text-[1.05rem] text-white/80 mb-8 md:mb-10 leading-relaxed max-w-[440px] mx-auto md:mx-0`}
+                  className={`${roboto.className} text-[14px] sm:text-[16px] md:text-[1.05rem] text-white/80 mb-8 md:mb-10 leading-relaxed max-w-[440px] mx-auto md:mx-0`}
                 >
                   Do domínio ao servidor de alta performance —
                   coloque seu projeto no ar em minutos, com suporte 24/7.
@@ -91,7 +91,7 @@ export function Hero() {
 
                 <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
                   <button
-                    className={`${rajdhani.className} bg-white text-[#08091a] border-none rounded-lg px-10 py-4 text-[14px] md:text-[15px] font-bold tracking-wider uppercase shadow-xl hover:bg-gray-100 transition-colors w-full sm:w-auto cursor-pointer`}
+                    className={`${roboto.className} bg-white text-[#08091a] border-none rounded-lg px-10 py-4 text-[14px] md:text-[15px] font-bold tracking-wider uppercase shadow-xl hover:bg-gray-100 transition-colors w-full sm:w-auto cursor-pointer`}
                   >
                     Começar agora
                   </button>

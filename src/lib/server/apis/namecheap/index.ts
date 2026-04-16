@@ -49,7 +49,7 @@ import type {
   UsersGetPricingCleanedResponse,
   UsersGetPricingUserParams,
 } from "./types";
-import { cacheTag } from "next/dist/server/use-cache/cache-tag";
+
 
 const TARGET_CURRENCY = "BRL";
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -1190,7 +1190,7 @@ export const namecheapApi = new NamecheapApiWrapper(
 
 export async function getDomainPricing(tld: string) {
 
-  cacheTag(`pricing-${tld}`);
+
   return await namecheapApi.getPricing(tld).then((r) => r[0]);
 }
 

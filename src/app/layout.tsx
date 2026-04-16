@@ -1,14 +1,14 @@
 import { ThemeProvider } from "@/components/ThemeProvider";
-import type { Metadata } from "next";
-import { Inter, Rajdhani } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import Script from "next/script";
+import type { Metadata } from "next";
 
-const inter = Inter({ subsets: ["latin"], display: 'swap' });
-const rajdhani = Rajdhani({ 
+const roboto = Roboto({ 
   subsets: ["latin"], 
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-rajdhani",
+  weight: ["100", "300", "400", "500", "700", "900"],
+  variable: "--font-roboto",
   display: 'swap'
 });
 
@@ -25,7 +25,7 @@ export default async function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning={true} className="dark">
-      <body className={`${inter.className} ${rajdhani.variable} antialiased`} suppressHydrationWarning={true}>
+      <body className={`${roboto.className} ${roboto.variable} antialiased`} suppressHydrationWarning={true}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -34,6 +34,10 @@ export default async function RootLayout({
         >
           {children}
           <Toaster />
+          <Script 
+            src="https://app.dante-ai.com/bubble-embed.js?kb_id=e6479ec5-8d25-437d-8bdb-9a3606e3b54e&token=b75d931e-c9f0-4460-b81d-5c0a5ba26045"
+            strategy="lazyOnload"
+          />
         </ThemeProvider>
       </body>
     </html>

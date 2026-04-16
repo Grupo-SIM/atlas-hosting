@@ -3,13 +3,14 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { Check, Globe2, MessageCircle, Rocket, Star, Wallet } from "lucide-react";
-import { Rajdhani } from "next/font/google";
+import { Roboto } from "next/font/google";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
+import LottieMap from "./LottieMap";
 
-const rajdhani = Rajdhani({
+const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["100", "300", "400", "500", "700", "900"],
 });
 
 type VpsPlan = {
@@ -118,37 +119,37 @@ export function VpsCloudPage() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
         <div className="relative z-10 mx-auto w-full max-w-[min(92vw,1760px)] px-0 mt-[6rem]">
           <div className="flex flex-col justify-start pb-4 md:pb-6">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded border border-white/10 bg-[#0e132e] px-3 py-1.5">
-              <span className="h-3 w-1 rounded-sm bg-[#01FC8D]" />
-              <span className={`${rajdhani.className} text-[11px] font-bold uppercase tracking-widest text-[#01FC8D]`}>
-                VPS em nuvem
-              </span>
-            </div>
-            <h1
-              className={`${rajdhani.className} text-center text-3xl font-bold leading-tight tracking-tight text-white md:text-[2.35rem]`}
-            >
-              O melhor VPS em nuvem em termos de custo-benefício do mundo.
-            </h1>
-            <ul className="mx-auto mt-6 max-w-xl space-y-3 text-left text-sm text-gray-300">
-              {bullets.map((t) => (
-                <li key={t} className="flex items-start gap-2.5">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#01FC8D]" strokeWidth={2.5} />
-                  <span>{t}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-3 text-sm text-gray-400">
-              <span className="text-white/90">Nossos clientes dizem</span>
-              <span className="font-semibold text-white">Excelente</span>
-              <span className="flex text-[#01FC8D]">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" strokeWidth={0} />
+            <div className="mx-auto max-w-3xl text-center">
+              <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded border border-white/10 bg-[#0e132e] px-3 py-1.5">
+                <span className="h-3 w-1 rounded-sm bg-[#01FC8D]" />
+                <span className={`${roboto.className} text-[11px] font-bold uppercase tracking-widest text-[#01FC8D]`}>
+                  VPS em nuvem
+                </span>
+              </div>
+              <h1
+                className={`${roboto.className} text-center text-3xl font-bold leading-tight tracking-tight text-white md:text-[2.35rem]`}
+              >
+                O melhor VPS em nuvem em termos de custo-benefício do mundo.
+              </h1>
+              <ul className="mx-auto mt-6 max-w-xl space-y-3 text-left text-sm text-gray-300">
+                {bullets.map((t) => (
+                  <li key={t} className="flex items-start gap-2.5">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#01FC8D]" strokeWidth={2.5} />
+                    <span>{t}</span>
+                  </li>
                 ))}
-              </span>
-              <span className="text-gray-500">4,5 de 5 com base em 9.032 avaliações</span>
+              </ul>
+              <div className="mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-3 text-sm text-gray-400">
+                <span className="text-white/90">Nossos clientes dizem</span>
+                <span className="font-semibold text-white">Excelente</span>
+                <span className="flex text-[#01FC8D]">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-current" strokeWidth={0} />
+                  ))}
+                </span>
+                <span className="text-gray-500">4,5 de 5 com base em 9.032 avaliações</span>
+              </div>
             </div>
-          </div>
           </div>
 
           <div className="mt-4 w-full overflow-x-auto overflow-y-visible pt-1 pb-4 scrollbar-thin md:mt-5">
@@ -158,7 +159,7 @@ export function VpsCloudPage() {
             >
               {/* corner */}
               <div className="md:sticky md:left-0 md:z-20 rounded-tl-xl border border-white/10 border-b-0 bg-[#0d1225] p-3 text-left">
-                <p className={`${rajdhani.className} text-[11px] font-bold uppercase tracking-wide text-white/90`}>
+                <p className={`${roboto.className} text-[11px] font-bold uppercase tracking-wide text-white/90`}>
                   Especificações da embalagem
                 </p>
               </div>
@@ -168,50 +169,48 @@ export function VpsCloudPage() {
                 const [priceMain, priceCents] = priceValue.split(",");
 
                 return (
-                <div
-                  key={p.id}
-                  className={`relative overflow-hidden rounded-t-xl border border-b-0 p-3.5 ${
-                    p.popular
-                      ? "border-[#01FC8D]/60 bg-[#0f1628] shadow-[0_0_28px_rgba(1,252,141,0.06)]"
-                      : "border-white/10 bg-[#0d1225]"
-                  } ${idx === plans.length - 1 ? "rounded-tr-xl" : ""}`}
-                >
-                  {p.popular ? (
-                    <div className="absolute top-2.5 right-2.5">
-                      <span
-                        className={`${rajdhani.className} rounded-full bg-[#01FC8D] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-black`}
-                      >
-                        Mais vendido
-                      </span>
-                    </div>
-                  ) : null}
-                  <p className={`${rajdhani.className} pr-[4.5rem] text-[13px] font-bold tracking-wide text-white`}>{p.name}</p>
-                  <div className="mt-2 flex flex-wrap items-end gap-1.5">
-                    <span className="text-xs font-medium text-[#ff4d4d]/90 line-through">{p.priceOld}</span>
-                  </div>
-                  <div className="mt-0.5 flex items-baseline gap-0.5 whitespace-nowrap">
-                    <span className="text-[12px] font-bold text-white mb-0.5">{priceSymbol}</span>
-                    <span className="text-2xl font-extrabold leading-none tracking-tight text-white md:text-3xl">
-                      {priceMain},
-                    </span>
-                    <span className="text-base font-bold text-white">{priceCents}</span>
-                    <span className="text-[10px] font-medium text-gray-400 ml-1">/mês</span>
-                  </div>
-                  <p className="mt-0.5 text-[10px] font-light leading-snug text-gray-500">12 meses</p>
-                  <Link
-                    href={`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano ${p.name} ${backupEnabled ? "com Backup Automático" : ""} e gostaria de dar continuidade ao processo.`)}`}
-                    target="_blank"
-                    className={`${rajdhani.className} mt-3 block w-full rounded-md py-2 text-center text-[11px] font-bold uppercase tracking-wide transition-colors ${
-                      p.popular
-                        ? "bg-[#01FC8D] text-black shadow-[0_4px_14px_rgba(1,252,141,0.2)] hover:bg-[#01FC8D]/90"
-                        : "border border-white/20 bg-transparent text-white hover:bg-white/5"
-                    }`}
+                  <div
+                    key={p.id}
+                    className={`relative overflow-hidden rounded-t-xl border border-b-0 p-3.5 ${p.popular
+                        ? "border-[#01FC8D]/60 bg-[#0f1628] shadow-[0_0_28px_rgba(1,252,141,0.06)]"
+                        : "border-white/10 bg-[#0d1225]"
+                      } ${idx === plans.length - 1 ? "rounded-tr-xl" : ""}`}
                   >
-                    Começar agora →
-                  </Link>
-                  <p className="mt-2 text-[10px] font-semibold text-[#01FC8D]">100% de cashback</p>
-                  <p className="mt-1 text-[10px] font-semibold text-[#38bdf8]">Suporte 24/7</p>
-                </div>
+                    {p.popular ? (
+                      <div className="absolute top-2.5 right-2.5">
+                        <span
+                          className={`${roboto.className} rounded-full bg-[#01FC8D] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-black`}
+                        >
+                          Mais vendido
+                        </span>
+                      </div>
+                    ) : null}
+                    <p className={`${roboto.className} pr-[4.5rem] text-[13px] font-bold tracking-wide text-white`}>{p.name}</p>
+                    <div className="mt-2 flex flex-wrap items-end gap-1.5">
+                      <span className="text-xs font-medium text-[#ff4d4d]/90 line-through">{p.priceOld}</span>
+                    </div>
+                    <div className="mt-0.5 flex items-baseline gap-0.5 whitespace-nowrap">
+                      <span className="text-[12px] font-bold text-white mb-0.5">{priceSymbol}</span>
+                      <span className="text-2xl font-extrabold leading-none tracking-tight text-white md:text-3xl">
+                        {priceMain},
+                      </span>
+                      <span className="text-base font-bold text-white">{priceCents}</span>
+                      <span className="text-[10px] font-medium text-gray-400 ml-1">/mês</span>
+                    </div>
+                    <p className="mt-0.5 text-[10px] font-light leading-snug text-gray-500">12 meses</p>
+                    <Link
+                      href={`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano ${p.name} ${backupEnabled ? "com Backup Automático" : ""} e gostaria de dar continuidade ao processo.`)}`}
+                      target="_blank"
+                      className={`${roboto.className} mt-3 block w-full rounded-md py-2 text-center text-[11px] font-bold uppercase tracking-wide transition-colors ${p.popular
+                          ? "bg-[#01FC8D] text-black shadow-[0_4px_14px_rgba(1,252,141,0.2)] hover:bg-[#01FC8D]/90"
+                          : "border border-white/20 bg-transparent text-white hover:bg-white/5"
+                        }`}
+                    >
+                      Começar agora →
+                    </Link>
+                    <p className="mt-2 text-[10px] font-semibold text-[#01FC8D]">100% de cashback</p>
+                    <p className="mt-1 text-[10px] font-semibold text-[#38bdf8]">Suporte 24/7</p>
+                  </div>
                 );
               })}
 
@@ -226,9 +225,8 @@ export function VpsCloudPage() {
               {plans.map((p) => (
                 <div
                   key={`b-${p.id}`}
-                  className={`flex items-center justify-center border border-t-0 px-2 py-2.5 text-center text-[11px] text-gray-400 ${
-                    p.popular ? "border-[#01FC8D]/60 bg-[#0f1628]" : "border-white/10 bg-[#0d1225]"
-                  }`}
+                  className={`flex items-center justify-center border border-t-0 px-2 py-2.5 text-center text-[11px] text-gray-400 ${p.popular ? "border-[#01FC8D]/60 bg-[#0f1628]" : "border-white/10 bg-[#0d1225]"
+                    }`}
                 >
                   {backupEnabled ? <Check className="h-4 w-4 text-[#01FC8D]" strokeWidth={2.8} /> : null}
                 </div>
@@ -247,9 +245,8 @@ export function VpsCloudPage() {
               ].map((row) => (
                 <Fragment key={row.key}>
                   <div
-                    className={`md:sticky md:left-0 md:z-20 flex flex-col justify-center border border-white/10 border-t-0 bg-[#0d1225] p-3 text-left ${
-                      row.key === "traffic" ? "rounded-b-xl border-b" : ""
-                    }`}
+                    className={`md:sticky md:left-0 md:z-20 flex flex-col justify-center border border-white/10 border-t-0 bg-[#0d1225] p-3 text-left ${row.key === "traffic" ? "rounded-b-xl border-b" : ""
+                      }`}
                   >
                     <span className="text-[11px] font-semibold leading-tight text-white/90">{row.label}</span>
                     {"sub" in row && row.sub ? (
@@ -259,11 +256,9 @@ export function VpsCloudPage() {
                   {plans.map((p, colIdx) => (
                     <div
                       key={`${row.key}-${p.id}`}
-                      className={`flex items-center border border-t-0 px-2 py-2.5 text-center text-[11px] font-light leading-snug text-gray-300 md:text-xs ${
-                        p.popular ? "border-[#01FC8D]/60 bg-[#0f1628]" : "border-white/10 bg-[#0d1225]"
-                      } ${row.key === "traffic" ? "rounded-b-xl border-b" : ""} ${
-                        row.key === "traffic" ? "border-b" : ""
-                      }`}
+                      className={`flex items-center border border-t-0 px-2 py-2.5 text-center text-[11px] font-light leading-snug text-gray-300 md:text-xs ${p.popular ? "border-[#01FC8D]/60 bg-[#0f1628]" : "border-white/10 bg-[#0d1225]"
+                        } ${row.key === "traffic" ? "rounded-b-xl border-b" : ""} ${row.key === "traffic" ? "border-b" : ""
+                        }`}
                     >
                       <span className="w-full">{p[row.key]}</span>
                     </div>
@@ -288,7 +283,7 @@ export function VpsCloudPage() {
       <section className="bg-[#0a0e27] px-4 py-14 md:px-8 md:py-20">
         <div className="mx-auto w-full max-w-[min(92vw,1280px)]">
           <div className="mx-auto max-w-4xl text-center">
-            <h2 className={`${rajdhani.className} text-3xl font-semibold tracking-tight text-white md:text-[2.35rem]`}>
+            <h2 className={`${roboto.className} text-3xl font-semibold tracking-tight text-white md:text-[2.35rem]`}>
               Construido pensando nas suas necessidades.
             </h2>
             <p className="mx-auto mt-4 max-w-3xl text-lg text-gray-300">
@@ -344,7 +339,7 @@ export function VpsCloudPage() {
           </div>
 
           <div className="mx-auto mt-16 max-w-5xl text-center">
-            <h3 className={`${rajdhani.className} text-3xl font-semibold tracking-tight text-white md:text-[2.2rem]`}>
+            <h3 className={`${roboto.className} text-3xl font-semibold tracking-tight text-white md:text-[2.2rem]`}>
               9 regiões, 11 localidades, disponibilidade global.
             </h3>
             <p className="mx-auto mt-4 max-w-3xl text-lg text-gray-300">
@@ -356,12 +351,7 @@ export function VpsCloudPage() {
             <div className="relative overflow-hidden rounded-2xl bg-[radial-gradient(120%_90%_at_50%_50%,#101933_0%,#0d152d_55%,#0b1228_100%)] p-6 md:p-10">
               <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:36px_36px]" />
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <img
-                  src="/6864935_23322.jpg"
-                  alt=""
-                  aria-hidden="true"
-                  className="h-[115%] w-[115%] object-contain"
-                />
+                <LottieMap />
               </div>
               <div className="relative min-h-[300px] md:min-h-[360px]" />
             </div>

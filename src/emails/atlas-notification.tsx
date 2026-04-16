@@ -26,11 +26,11 @@ interface AtlasNotificationEmailProps {
   timestamp?: string;
   supportEmail?: string;
   additionalInfo?: string;
+  publicSiteUrl?: string;
+  verificationCode?: string;
 }
 
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : '';
+const baseUrlLocal = 'https://atlashosting.com.br';
 
 const severityConfig = {
   success: {
@@ -64,16 +64,18 @@ const severityConfig = {
 };
 
 export const AtlasNotificationEmail = ({
-  firstName = 'there',
-  organizationName = 'Your Organization',
-  title = 'System Notification',
-  message = 'This is a system notification from Atlas Hosting.',
+  firstName = 'Cliente',
+  organizationName = 'Atlas Hosting',
+  title = 'Notificação do Sistema',
+  message = 'Esta é uma notificação do sistema Atlas Hosting.',
   severity = 'info',
   actionUrl,
-  actionText = 'View Details',
-  timestamp = new Date().toLocaleString(),
-  supportEmail = 'support@atlashosting.com',
+  actionText = 'Ver Detalhes',
+  timestamp = new Date().toLocaleString('pt-BR'),
+  supportEmail = 'contact@atlashosting.com.br',
   additionalInfo,
+  publicSiteUrl = baseUrlLocal,
+  verificationCode,
 }: AtlasNotificationEmailProps) => {
   const config = severityConfig[severity];
   const previewText = `${config.icon} ${title}`;
@@ -86,7 +88,7 @@ export const AtlasNotificationEmail = ({
         <Container style={container}>
           <Section style={box}>
             <Img
-              src={`${baseUrl}/static/atlas-logo.png`}
+              src={`${publicSiteUrl}/atlas-logo.png`}
               width="120"
               height="40"
               alt="Atlas Hosting"
@@ -108,11 +110,11 @@ export const AtlasNotificationEmail = ({
             </Section>
 
             <Text style={paragraph}>
-              Hi {firstName},
+              Olá {firstName},
             </Text>
             
             <Text style={paragraph}>
-              We're writing to inform you about an important update regarding your Atlas Hosting account for <strong>{organizationName}</strong>.
+              Estamos entrando em contato para informar sobre uma atualização importante na sua conta Atlas Hosting para <strong>{organizationName}</strong>.
             </Text>
             
             <Text style={paragraph}>
@@ -126,11 +128,17 @@ export const AtlasNotificationEmail = ({
                 borderColor: '#e2e8f0',
               }}>
                 <Text style={infoText}>
-                  <strong>Additional Information:</strong>
+                  <strong>Informações Adicionais:</strong>
                 </Text>
                 <Text style={infoText}>
                   {additionalInfo}
                 </Text>
+              </Section>
+            )}
+
+            {verificationCode && (
+              <Section style={codeContainer}>
+                <Text style={codeStyle}>{verificationCode}</Text>
               </Section>
             )}
 
@@ -149,31 +157,25 @@ export const AtlasNotificationEmail = ({
             
             <Section style={metadataBox}>
               <Text style={metadataText}>
-                <strong>Notification Details:</strong>
+                <strong>Detalhes da Notificação:</strong>
               </Text>
               <Text style={metadataText}>
-                • <strong>Type:</strong> {severity.charAt(0).toUpperCase() + severity.slice(1)}
+                • <strong>Tipo:</strong> {severity.charAt(0).toUpperCase() + severity.slice(1)}
               </Text>
               <Text style={metadataText}>
-                • <strong>Time:</strong> {timestamp}
+                • <strong>Data/Hora:</strong> {timestamp}
               </Text>
               <Text style={metadataText}>
-                • <strong>Organization:</strong> {organizationName}
+                • <strong>Organização:</strong> {organizationName}
               </Text>
             </Section>
 
-            <Text style={paragraph}>
-              If you have any questions or concerns about this notification, please don't hesitate to contact our support team at{' '}
-              <Link style={anchor} href={`mailto:${supportEmail}`}>
-                {supportEmail}
-              </Link>
-              .
-            </Text>
+          
 
             <Text style={footer}>
-              Best regards,
+              Atenciosamente,
               <br />
-              The Atlas Hosting Team
+              Equipe Atlas Hosting
             </Text>
           </Section>
         </Container>
@@ -183,16 +185,17 @@ export const AtlasNotificationEmail = ({
 };
 
 AtlasNotificationEmail.PreviewProps = {
-  firstName: 'John',
-  organizationName: 'Acme Corp',
-  title: 'Website Deployment Successful',
-  message: 'Your website has been successfully deployed to production. All systems are running smoothly and your site is now live.',
+  firstName: 'Breno',
+  organizationName: 'Atlas Hosting',
+  title: 'Implantação de Site Concluída',
+  message: 'Seu site foi implantado com sucesso para produção. Todos os sistemas estão funcionando normalmente.',
   severity: 'success' as NotificationSeverity,
   actionUrl: 'https://atlashosting.com.br/home',
-  actionText: 'View Dashboard',
-  timestamp: new Date().toLocaleString(),
-  supportEmail: 'support@atlashosting.com',
-  additionalInfo: 'Deployment took 2 minutes and 34 seconds. No errors or warnings detected.',
+  actionText: 'Ver Painel',
+  timestamp: new Date().toLocaleString('pt-BR'),
+  supportEmail: 'contact@atlashosting.com.br',
+  publicSiteUrl: 'https://atlashosting.com.br',
+  additionalInfo: 'O deploy levou 2 minutos e 34 segundos. Nenhum erro detectado.',
 } as AtlasNotificationEmailProps;
 
 export default AtlasNotificationEmail;
@@ -290,6 +293,24 @@ const metadataText = {
   fontSize: '14px',
   lineHeight: '20px',
   margin: '0 0 8px',
+};
+
+const codeContainer = {
+  textAlign: 'center' as const,
+  margin: '20px 0',
+};
+
+const codeStyle = {
+  backgroundColor: '#f4f4f5',
+  border: '1px solid #e4e4e7',
+  borderRadius: '6px',
+  color: '#1a1a1a',
+  fontSize: '18px',
+  fontWeight: '600',
+  padding: '16px 24px',
+  letterSpacing: '2px',
+  fontFamily: 'monospace',
+  display: 'inline-block',
 };
 
 const anchor = {

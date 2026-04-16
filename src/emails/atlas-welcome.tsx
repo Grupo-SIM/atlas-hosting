@@ -18,26 +18,26 @@ interface AtlasWelcomeEmailProps {
   organizationName?: string;
   dashboardUrl?: string;
   supportEmail?: string;
+  publicSiteUrl?: string;
 }
 
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : '';
+const baseUrlLocal = 'https://atlashosting.com.br';
 
 export const AtlasWelcomeEmail = ({
   firstName = 'there',
   organizationName = 'Your Organization',
   dashboardUrl = 'https://atlashosting.com.br/home',
   supportEmail = 'support@atlashosting.com',
+  publicSiteUrl = baseUrlLocal,
 }: AtlasWelcomeEmailProps) => (
   <Html>
     <Head />
-    <Preview>Welcome to Atlas Hosting! Your hosting journey starts here.</Preview>
+    <Preview>Bem-vindo ao Atlas Hosting! Sua jornada começa aqui.</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={box}>
           <Img
-            src={`${baseUrl}/static/atlas-logo.png`}
+            src={`${publicSiteUrl}/atlas-logo.png`}
             width="120"
             height="40"
             alt="Atlas Hosting"
@@ -45,57 +45,23 @@ export const AtlasWelcomeEmail = ({
           />
           <Hr style={hr} />
           <Heading style={heading}>
-            Welcome to Atlas Hosting, {firstName}!
+            Bem-vindo ao Atlas Hosting, {firstName}!
           </Heading>
           <Text style={paragraph}>
-            We're thrilled to have you join the Atlas Hosting family! Your account for{' '}
-            <strong>{organizationName}</strong> has been successfully created, and you're now ready to start hosting your websites with ease.
+            Estamos muito felizes em ter você na família Atlas Hosting! Sua conta para{' '}
+            <strong>{organizationName}</strong> foi criada com sucesso, e você já está pronto para começar a hospedar seus sites com facilidade.
           </Text>
-          <Text style={paragraph}>
-            Here's what you can do next:
-          </Text>
-          <Section style={bulletPoints}>
-            <Text style={bulletPoint}>
-              🚀 <strong>Deploy your first website</strong> - Upload your files and get online in minutes
-            </Text>
-            <Text style={bulletPoint}>
-              🌐 <strong>Manage your domains</strong> - Connect your existing domains or register new ones
-            </Text>
-            <Text style={bulletPoint}>
-              📊 <strong>Monitor your sites</strong> - Track performance and uptime from your dashboard
-            </Text>
-            <Text style={bulletPoint}>
-              💳 <strong>Manage billing</strong> - View usage and manage your subscription
-            </Text>
-          </Section>
+
           <Section style={buttonContainer}>
             <Button style={button} href={dashboardUrl}>
-              Access Your Dashboard
+              Acessar seu Painel
             </Button>
           </Section>
           <Hr style={hr} />
-          <Text style={paragraph}>
-            Need help getting started? Check out our{' '}
-            <Link style={anchor} href="https://docs.atlashosting.com">
-              documentation
-            </Link>{' '}
-            or{' '}
-            <Link style={anchor} href="https://atlashosting.com/tutorials">
-              video tutorials
-            </Link>{' '}
-            to make the most of your hosting experience.
-          </Text>
-          <Text style={paragraph}>
-            If you have any questions or need assistance, don't hesitate to reach out to our support team at{' '}
-            <Link style={anchor} href={`mailto:${supportEmail}`}>
-              {supportEmail}
-            </Link>
-            . We're here to help you succeed!
-          </Text>
           <Text style={footer}>
-            Welcome aboard,
+            Bem-vindo a bordo,
             <br />
-            The Atlas Hosting Team
+            Equipe Atlas Hosting
           </Text>
         </Section>
       </Container>
@@ -104,10 +70,11 @@ export const AtlasWelcomeEmail = ({
 );
 
 AtlasWelcomeEmail.PreviewProps = {
-  firstName: 'John',
-  organizationName: 'Acme Corp',
+  firstName: 'Breno',
+  organizationName: 'Atlas Hosting',
   dashboardUrl: 'https://atlashosting.com.br/home',
-  supportEmail: 'support@atlashosting.com',
+  supportEmail: 'contact@atlashosting.com.br',
+  publicSiteUrl: 'https://atlashosting.com.br',
 } as AtlasWelcomeEmailProps;
 
 export default AtlasWelcomeEmail;
@@ -153,17 +120,9 @@ const paragraph = {
   margin: '0 0 20px',
 };
 
-const bulletPoints = {
-  margin: '20px 0',
-};
 
-const bulletPoint = {
-  color: '#525f7f',
-  fontSize: '16px',
-  lineHeight: '24px',
-  textAlign: 'left' as const,
-  margin: '0 0 12px',
-};
+
+
 
 const buttonContainer = {
   textAlign: 'center' as const,
