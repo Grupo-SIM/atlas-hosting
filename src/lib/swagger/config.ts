@@ -16,7 +16,7 @@ export const swaggerConfig = {
       description: "Servidor de desenvolvimento",
     },
     {
-      url: "https://api.atlashosting.com.br",
+      url: "https://atlashosting.com.br",
       description: "Servidor de produção",
     },
   ],
@@ -477,6 +477,56 @@ export const swaggerConfig = {
               },
             },
           },
+        },
+      },
+    },
+    "/api/domains/sync": {
+      post: {
+        tags: ["DNS"],
+        summary: "Sincronizar domínios Namecheap",
+        description:
+          "Sincroniza os domínios da conta master da Namecheap com o banco de dados da organização vinculada ao e-mail fornecido.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    description: "E-mail do usuário dono da organização",
+                  },
+                },
+                required: ["email"],
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Sincronização concluída",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    details: { type: "string" },
+                    syncedDomains: {
+                      type: "array",
+                      items: { type: "string" },
+                    },
+                    count: { type: "number" },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: "Requisição inválida (falta e-mail)" },
+          404: { description: "Usuário ou organização não encontrados" },
+          500: { description: "Erro interno no servidor" },
         },
       },
     },

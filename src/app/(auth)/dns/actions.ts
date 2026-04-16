@@ -7,7 +7,7 @@ import type {
   DnsHostRecordItem,
   DnsRecordType,
 } from "@/lib/server/apis/namecheap/types";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { getUser } from "@/lib/auth";
 import { parseDomainForSldTld } from "./utils"; // We'll create this util
 import { isError } from "lodash";
@@ -74,6 +74,7 @@ async function performDnsOperation(
 
     if (response.IsSuccess) {
       revalidateTag("dns-records", "default");
+      revalidatePath("/dns"); // Ensure the DNS page is revalidated
       return {
         success: true,
         message: "Registros DNS atualizados com sucesso.",

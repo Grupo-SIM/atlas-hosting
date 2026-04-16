@@ -1744,6 +1744,7 @@ export async function changeSelectedDomain(
 
     revalidateTag("current-domain", "default");
     revalidateTag("session-validate", "default");
+    revalidatePath("/", "layout");
 
     return {
       status: "success",

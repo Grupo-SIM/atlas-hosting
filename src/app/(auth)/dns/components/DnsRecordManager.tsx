@@ -9,6 +9,7 @@ import {
   useActionState,
   startTransition,
 } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -153,6 +154,7 @@ export function DnsRecordsManager({
   domainName,
   initialRecords,
 }: DnsRecordsManagerProps) {
+  const router = useRouter();
   const [records, setRecords] = useState<DnsHostRecordItem[]>(initialRecords);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -202,6 +204,7 @@ export function DnsRecordsManager({
       if (state.success) {
         toast.success(successMessage);
         modalCloser?.();
+        router.refresh();
         // Records will be updated by parent component re-render due to revalidateTag
       } else {
         toast.error(state.message || "Ocorreu um erro desconhecido.", {

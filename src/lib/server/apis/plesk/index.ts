@@ -25,12 +25,17 @@ export class PleskApi {
   public subscriptions: SubscriptionApi;
 
   constructor() {
-    this.apiUrl = process.env.PLESK_API_URL as string;
-    this.rootUser = process.env.PLESK_ROOT_USER as string;
-    this.rootPassword = process.env.PLESK_ROOT_PASSWORD as string;
+    this.apiUrl = process.env.PLESK_API_URL || "http://placeholder";
+    this.rootUser = process.env.PLESK_ROOT_USER || "";
+    this.rootPassword = process.env.PLESK_ROOT_PASSWORD || "";
     this.apiKey = process.env.PLESK_API_KEY;
 
-    console.log(`[PleskApi] Initializing for ${this.apiUrl} using ${this.apiKey ? "API Key" : "Basic Auth"}`);
+    // Se estivermos em build, evita logs de inicialização e configurações pesadas
+    const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
+    
+    if (!isBuild) {
+      console.log(`[PleskApi] Initializing for ${this.apiUrl} using ${this.apiKey ? "API Key" : "Basic Auth"}`);
+    }
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",

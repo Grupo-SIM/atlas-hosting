@@ -11,18 +11,26 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { OrganizationDomain } from "@/lib/db/schema";
-import { startTransition, useActionState } from "react";
+import { startTransition, useActionState, useEffect } from "react";
 import { Globe, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function DomainSelector({
   domains,
   selectedDomain,
 }: DomainSelectorProps) {
-  const [_state, setSelectedDomain, isLoading] = useActionState(
+  const router = useRouter();
+  const [state, setSelectedDomain, isLoading] = useActionState(
     changeSelectedDomain,
     { message: "", status: "idle" }
   );
+
+  useEffect(() => {
+    if (state.status === "success") {
+      router.refresh();
+    }
+  }, [state, router]);
 
   const onValueChange = (domain: string) => {
     startTransition(() => {
