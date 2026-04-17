@@ -11,7 +11,6 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     
-    // Mapeamos os nomes que vêm do bot para o nosso banco
     const { 
       token, 
       cpu_usage, 
@@ -19,14 +18,9 @@ export async function POST(req: Request) {
       disk_usage, 
       uptime, 
       process_count,
-      processes 
+      processes,
+      metadata 
     } = body;
-
-    console.log(`[Telemetry] Recebendo sinal de "${token.substring(0, 10)}...". Processos: ${processes?.length || 0}`);
-
-    if (!token) {
-      return NextResponse.json({ error: "Token é obrigatório" }, { status: 400 });
-    }
 
     // 1. Validar se o servidor existe com este token
     const vps = await db.query.pgVpsServers.findFirst({
@@ -38,6 +32,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Token inválido ou servidor não registrado" }, { status: 401 });
     }
 
+    console.log("------------------------------------------");
+    console.log(`[VPS API] Servidor: ${vps.name}`);
+    console.log(`[VPS API] CPU: ${cpu_usage}% | RAM: ${ram_usage}%`);
+    console.log(`[VPS API] METADATA CHAVES: ${metadata ? Object.keys(metadata).join(", ") : "NENHUMA"}`);
+    console.log("------------------------------------------");
+
     // 2. Inserir as métricas no histórico
     await db.insert(pgVpsMetrics).values({
       vpsId: vps.id,
@@ -46,6 +46,7 @@ export async function POST(req: Request) {
       diskUsage: disk_usage || 0,
       uptime: uptime || "Desconhecido",
       processCount: process_count || 0,
+      metadata: metadata || {}
     });
 
     // 3. Atualizar o status do servidor e o último sinal de vida (Heartbeat)
@@ -56,6 +57,7 @@ export async function POST(req: Request) {
         isBotInstalled: true,
         status: "active",
         topProcesses: processes || [],
+        metadata: metadata || {},
         updatedAt: new Date()
       })
       .where(eq(pgVpsServers.id, vps.id));
@@ -75,13 +77,43 @@ export async function POST(req: Request) {
   }
 }
 
+/**
+ * Novo: GET usado pelo bot para verificar comandos pendentes (ex: atualização forçada)
+ */
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get("token");
+
+  if (!token) return NextResponse.json({ error: "Token ausente" }, { status: 400 });
+
+  const vps = await db.query.pgVpsServers.findFirst({
+    where: eq(pgVpsServers.token, token),
+  });
+
+  if (!vps) return NextResponse.json({ error: "Inválido" }, { status: 401 });
+
+  const shouldRefresh = vps.forceRefresh;
+
+  // Se houver um pedido de refresh, nós o "consumimos" (voltamos para false)
+  if (shouldRefresh) {
+    await db.update(pgVpsServers)
+      .set({ forceRefresh: false })
+      .where(eq(pgVpsServers.id, vps.id));
+  }
+
+  return NextResponse.json({ 
+    refresh: shouldRefresh,
+    interval: 60 // Informamos ao bot o intervalo padrão também
+  });
+}
+
 // OPTIONS para permitir chamadas de diferentes origens se necessário (CORS)
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     },
   });

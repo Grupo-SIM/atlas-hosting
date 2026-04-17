@@ -15,8 +15,10 @@ export const pgVpsServers = pgTable("vps_nodes", {
   token: text("token").notNull().unique(), // Token que o bot usará para se autenticar
   status: text("status").default("pending"), // pending, active, suspended
   isBotInstalled: boolean("is_bot_installed").default(false),
-  topProcesses: jsonb("top_processes").$type<{ name: string, cpu: number, ram: number, pid: number }[]>(),
+  topProcesses: jsonb("top_processes").$type<{ name: string, cpu: number, mem_abs: string, pid: number, ram?: number, user?: string, threads?: number }[]>(),
+  metadata: jsonb("metadata").$type<any>().default({}), // Novos dados (Cores, RAM Detalhada, Discos)
   lastHeartbeat: timestamp("last_heartbeat"), // Última vez que o bot enviou dados
+  forceRefresh: boolean("force_refresh").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -34,5 +36,6 @@ export const pgVpsMetrics = pgTable("vps_node_metrics", {
   diskUsage: real("disk_usage").notNull(), // Em porcentagem
   uptime: text("uptime"),
   processCount: real("process_count"),
+  metadata: jsonb("metadata").$type<any>(), // Histórico de dados ricos
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });

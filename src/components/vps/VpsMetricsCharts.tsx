@@ -124,7 +124,7 @@ export default function VpsMetricsCharts({ data }: VpsMetricsChartsProps) {
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Gráfico de Disco */}
       <Card className="col-span-2">
         <CardHeader>

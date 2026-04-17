@@ -68,3 +68,18 @@ export async function getVpsMetricsAction(vpsId: string, limit = 20) {
     orderBy: [desc(pgVpsMetrics.timestamp)],
   });
 }
+
+/**
+ * Força a revalidação dos dados do painel VPS e sinaliza o bot.
+ */
+export async function refreshVpsDataAction(vpsId?: string) {
+  if (vpsId) {
+    // Liga o sinalizador para o bot
+    await db.update(pgVpsServers)
+      .set({ forceRefresh: true })
+      .where(eq(pgVpsServers.id, vpsId));
+  }
+
+  revalidatePath("/manage/vps");
+  return { success: true, timestamp: new Date().toISOString() };
+}
