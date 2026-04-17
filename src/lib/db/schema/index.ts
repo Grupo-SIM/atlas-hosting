@@ -11,3 +11,4 @@ export * from "./tables/email";
 export * from "./tables/system";
 export * from "./tables/organization";
 export * from "./tables/tokens";
+export * from "./tables/vps";
