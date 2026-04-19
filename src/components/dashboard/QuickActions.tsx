@@ -111,14 +111,14 @@ export function QuickActions() {
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <QuickActionCard
+          {/* <QuickActionCard
             Icon={CreditCard}
             title="Assinaturas"
             subtitle="Gerencie suas assinaturas ativas"
             href="/subscriptions"
             gradient="from-purple-500 to-violet-500"
             pattern="grid"
-          />
+          /> */}
 
           <QuickActionCard
             Icon={History}

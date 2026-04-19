@@ -32,6 +32,16 @@ export function generateSessionToken(): string {
   return token;
 }
 
+export function generateAffiliateCode(): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+
 export async function createSession(
   token: string,
   userId: string
@@ -156,6 +166,7 @@ export async function createUser(
         createdAt: new Date(),
         updatedAt: new Date(),
         referrerId,
+        affiliateCode: generateAffiliateCode(),
         organizationRole: "admin",
         organizationId: newOrg[0].id,
       })

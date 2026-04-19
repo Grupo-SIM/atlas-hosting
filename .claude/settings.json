@@ -3,7 +3,14 @@
     "allow": [
       "Bash(grep -l \"useContext\" c:/Users/breno/Desktop/JB/atlas-hosting/src/app/landing/components/*.tsx)",
       "Bash(npm show:*)",
-      "Bash(node -e \"const v = JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); console.log\\(v.slice\\(-10\\).join\\('\\\\n'\\)\\)\")"
+      "Bash(node -e \"const v = JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); console.log\\(v.slice\\(-10\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(nslookup -type=NS ebooksim.com 1.1.1.1)",
+      "Bash(nslookup -type=NS ebooksim.com 8.8.8.8)",
+      "Bash(nslookup -type=NS ebooksim.com)",
+      "Bash(powershell -Command \"Resolve-DnsName -Name ebooksim.com -Type NS -Server 1.1.1.1 2>&1\")",
+      "Bash(powershell -Command \"Resolve-DnsName -Name ebooksim.com -Type A -Server 8.8.8.8 2>&1\")"
     ]
   }
 }

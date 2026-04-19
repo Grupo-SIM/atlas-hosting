@@ -23,7 +23,6 @@ import { getDomainData, popularExtensions } from "./utils";
 import RegisterDomainSearch from "./register/components/RegisterDomainSearch";
 import { TransferForm } from "./register/components/TransferForm";
 import { TransferDomainsList } from "./register/components/TransferDomainsList";
-import { NameserverGuide } from "./register/components/NameserverGuide";
 import { createDomainBundleInvoice, createDomainInvoice } from "@/app/actions";
 import { DomainBundleSection } from "./register/components/DomainBundleSection";
 import currencyConversion from "@/lib/server/apis/currency";
@@ -43,26 +42,26 @@ async function getAllDomainPricesFromDb(tlds: string[]) {
     domainPricesFromDb.map(async (item) => {
       const registrationPrice = item.price
         ? await currencyConversion.convert({
-            from: "usd",
-            to: "brl",
-            amount: item.price,
-          })
+          from: "usd",
+          to: "brl",
+          amount: item.price,
+        })
         : 0;
 
       const renewalPrice = item.renew
         ? await currencyConversion.convert({
-            from: "usd",
-            to: "brl",
-            amount: item.renew,
-          })
+          from: "usd",
+          to: "brl",
+          amount: item.renew,
+        })
         : 0;
 
       const transferPrice = item.transfer
         ? await currencyConversion.convert({
-            from: "usd",
-            to: "brl",
-            amount: item.transfer,
-          })
+          from: "usd",
+          to: "brl",
+          amount: item.transfer,
+        })
         : 0;
 
       return {
@@ -177,7 +176,7 @@ export default async function DomainPage({
         { endpoints: ["1.1.1.1", "8.8.8.8"] }
       );
       if (
-        !r.answers?.some(
+        r.answers?.some(
           (answer) =>
             answer.type === "NS" &&
             [
@@ -186,26 +185,42 @@ export default async function DomainPage({
             ].includes(answer.data.trim())
         )
       ) {
-        console.log(`Nameservers already registered for ${domain.domain}`);
-      } else {
         done.push(domain.domain);
       }
     })
   );
 
   return (
-    <Tabs value={activeTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-2 max-w-2xl mx-auto">
-        <TabsTrigger value="register" asChild>
-          <Link href="/domain?tab=register">Encontrar novo domínio</Link>
-        </TabsTrigger>
-        <TabsTrigger value="transfer" asChild>
-          <Link href="/domain?tab=transfer" className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            Transferir domínio existente
-          </Link>
-        </TabsTrigger>
-      </TabsList>
+    <div className="w-full">
+      {/* Tabs navigation oculta — aba de transferência desativada temporariamente */}
+      {/* 
+      <div className="flex w-full max-w-2xl mx-auto bg-muted/50 p-1 rounded-xl mb-8">
+        <Link 
+          href="/domain?tab=register" 
+          className={`flex-1 flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-200 font-medium ${
+            activeTab === "register" 
+              ? "bg-background text-foreground shadow-sm" 
+              : "text-muted-foreground hover:text-foreground/80"
+          }`}
+        >
+          Encontrar novo domínio
+        </Link>
+        <Link 
+          href="/domain?tab=transfer" 
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg transition-all duration-200 font-medium ${
+            activeTab === "transfer" 
+              ? "bg-background text-foreground shadow-sm" 
+              : "text-muted-foreground hover:text-foreground/80"
+          }`}
+        >
+          <Sparkles className="h-4 w-4" />
+          Transferir domínio existente
+        </Link>
+      </div>
+      */}
+
+      <Tabs value={activeTab} className="w-full">
+        {/* Usamos apenas o TabsContent agora, pois a navegação acima muda a URL e o value={activeTab} */}
 
       <TabsContent value="register" className="space-y-8 mt-8">
         {bundleDomains.length >= 2 ? (
@@ -259,10 +274,11 @@ export default async function DomainPage({
                   Como funciona a transferência:
                 </h3>
                 <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>• Adicione seu domínio existente</p>
-                  <p>• Configure os nameservers no seu registrador atual</p>
-                  <p>• Aguarde a propagação DNS (1-24 horas)</p>
-                  <p>• Seu domínio ficará ativo na organização</p>
+                  <p>• Adicione seu domínio existente acima</p>
+                  <p>• No painel do seu registrador atual, crie ou edite o <strong>Registro A</strong></p>
+                  <p>• Aponte o registro A para o IP do nosso servidor: <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-xs">{process.env.SERVER_IP || "186.194.55.237"}</code></p>
+                  <p>• Aguarde a propagação DNS (geralmente 5 min a 24 horas)</p>
+                  <p>• Clique em &quot;Verificar&quot; para confirmar e ativar</p>
                 </div>
               </div>
             </CardContent>
@@ -270,28 +286,35 @@ export default async function DomainPage({
 
           <Card className="max-w-2xl flex flex-col">
             <CardHeader>
-              <CardTitle>Guia de Transferência</CardTitle>
+              <CardTitle>Guia de Configuração</CardTitle>
               <CardDescription>
-                Instruções para transferir seu domínio para a Atlas Hosting
+                Como apontar seu domínio para a Atlas Hosting
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-6 justify-center h-full">
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">
-                  Nameservers Atlas Hosting
+                  IP do Servidor Atlas
                 </h3>
                 <div className="space-y-2">
-                  <div className="p-3 bg-muted rounded-md font-mono text-sm">
-                    dns1.registrar-servers.com
+                  <div className="p-3 bg-muted rounded-md font-mono text-sm flex items-center justify-between">
+                    <span>Registro A → {process.env.SERVER_IP || "186.194.55.237"}</span>
                   </div>
-                  <div className="p-3 bg-muted rounded-md font-mono text-sm">
-                    dns2.registrar-servers.com
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Configure este IP como valor do registro A (tipo A) no seu registrador atual (Hostinger, GoDaddy, Registro.br, etc.)
+                  </p>
                 </div>
-              </div>
 
-              <div className="border-t pt-6">
-                <NameserverGuide />
+                <div className="space-y-2 border-t pt-4">
+                  <h4 className="font-medium text-sm">Passo a passo rápido:</h4>
+                  <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                    <li>Acesse o painel DNS do seu registrador</li>
+                    <li>Encontre ou crie um registro do tipo <strong>A</strong></li>
+                    <li>No campo &quot;Host&quot; ou &quot;Nome&quot;, coloque <code className="bg-muted px-1 rounded text-xs">@</code></li>
+                    <li>No campo &quot;Valor&quot; ou &quot;Aponta para&quot;, cole: <code className="bg-muted px-1 rounded text-xs">{process.env.SERVER_IP || "186.194.55.237"}</code></li>
+                    <li>Salve e aguarde a propagação</li>
+                  </ol>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -300,6 +323,7 @@ export default async function DomainPage({
         <TransferDomainsList domains={transferDomains} />
       </TabsContent>
     </Tabs>
+    </div>
   );
 }
 
@@ -351,7 +375,7 @@ function DomainSearchResults({
     : Promise.resolve(null);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div key={searchParams.domain} className="max-w-4xl mx-auto space-y-6">
       <DomainResult searchParams={searchParams} />
       <DomainSuggestions
         domainDataPromise={domainDataPromise}

@@ -18,7 +18,7 @@ export async function registerVpsAction(
   os?: string
 ) {
   const admin = await getUser();
-  if (!admin) throw new Error("Não autorizado");
+  if (!admin || !admin.isAdmin) throw new Error("Não autorizado. Apenas administradores podem registrar novas VPS.");
 
   // Se o identificador for um e-mail, buscamos o usuário real no banco
   let targetUserId = userIdOrEmail;
@@ -82,4 +82,51 @@ export async function refreshVpsDataAction(vpsId?: string) {
 
   revalidatePath("/manage/vps");
   return { success: true, timestamp: new Date().toISOString() };
+}
+
+/**
+ * [ADMIN] Busca TODOS os servidores registrados no sistema.
+ */
+export async function getAllVpsServersAction() {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) throw new Error("Não autorizado.");
+
+  return await db.query.pgVpsServers.findMany({
+    with: {
+      user: true // Note: ensure relations are defined in schema
+    },
+    orderBy: [desc(pgVpsServers.createdAt)],
+  });
+}
+
+/**
+ * [ADMIN] Busca todos os usuários para o formulário de cadastro.
+ */
+export async function getAllUsersAction() {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) throw new Error("Não autorizado.");
+
+  return await db.query.pgUser.findMany({
+    columns: {
+      id: true,
+      email: true,
+      name: true
+    },
+    orderBy: [pgUser.name]
+  });
+}
+
+/**
+ * [ADMIN] Deleta uma VPS do sistema (Desvincular).
+ */
+export async function deleteVpsAction(vpsId: string) {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) throw new Error("Não autorizado.");
+
+  await db.delete(pgVpsServers).where(eq(pgVpsServers.id, vpsId));
+  
+  revalidatePath("/admin/vps");
+  revalidatePath("/manage/vps");
+  
+  return { success: true };
 }

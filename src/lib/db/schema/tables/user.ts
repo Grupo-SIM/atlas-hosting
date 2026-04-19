@@ -26,6 +26,7 @@ export const pgUser = pgTable("users", {
   isAdmin: boolean("is_admin").default(false),
   selectedDomain: text("selected_domain"),
   referrerId: uuid("referrer_id"),
+  affiliateCode: text("affiliate_code").unique(),
   organizationId: uuid("organization_id").references(() => pgOrganization.id),
   organizationRole: text("organization_role", {
     enum: ["member", "admin", "developer"],

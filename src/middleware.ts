@@ -21,11 +21,22 @@ export function middleware(request: NextRequest) {
   // Set the current pathname for redirect purposes
   requestHeaders.set("x-pathname", request.nextUrl.pathname);
 
-  return NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   });
+
+  // Capture referral code and set cookie
+  const ref = request.nextUrl.searchParams.get("ref");
+  if (ref) {
+    response.cookies.set("referrer_code", ref, {
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: "/",
+    });
+  }
+
+  return response;
 }
 
 export const config = {

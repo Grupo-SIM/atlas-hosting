@@ -17,12 +17,25 @@ const signupSchema = z.object({
   ),
   organizationName: z.string().min(1, "Nome da organização é obrigatório"),
   referrerId: z.string().optional(),
+  ref: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, fullName, organizationName, referrerId } = signupSchema.parse(body);
+    const { email, password, fullName, organizationName, referrerId: initialReferrerId, ref } = signupSchema.parse(body);
+
+    let referrerId = initialReferrerId;
+
+    // Se houver um código de afiliado (ref), buscar o ID do usuário correspondente
+    if (ref && !referrerId) {
+      const referringUser = await db.query.pgUser.findFirst({
+        where: eq(pgUser.affiliateCode, ref),
+      });
+      if (referringUser) {
+        referrerId = referringUser.id;
+      }
+    }
 
     // Verificar se o email já existe
     const existingUser = await db.query.pgUser.findFirst({

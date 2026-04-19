@@ -38,9 +38,14 @@ export default function SignupForm({
     setIsLoading(true);
 
     try {
+      // Obter código de indicação do cookie
+      const cookies = document.cookie.split("; ");
+      const refCookie = cookies.find(row => row.startsWith("referrer_code="));
+      const ref = refCookie ? refCookie.split("=")[1] : undefined;
+
       const result = await signup(
         { status: "idle", message: "" },
-        { ...data, referrerId: referrer?.id }
+        { ...data, referrerId: referrer?.id, ref }
       );
 
       if (result.status === "success") {
@@ -207,4 +212,5 @@ const schema = z
 
 export type SignupFormInputs = z.infer<typeof schema> & {
   referrerId?: string;
+  ref?: string;
 };

@@ -1797,6 +1797,32 @@ export const swaggerConfig = {
         },
       },
     },
+    "/api/admin/promote": {
+      post: {
+        tags: ["Admin"],
+        summary: "Promover usuário para Admin",
+        description: "Promove um usuário ao cargo de Administrador pelo e-mail. Requer ser Admin ou usar o Secret Key.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  email: { type: "string", description: "E-mail do usuário a ser promovido" },
+                },
+                required: ["email"],
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Usuário promovido com sucesso" },
+          403: { description: "Não autorizado" },
+          404: { description: "Usuário não encontrado" },
+        },
+      },
+    },
     "/sites/edit": {
       get: {
         tags: ["Sites"],

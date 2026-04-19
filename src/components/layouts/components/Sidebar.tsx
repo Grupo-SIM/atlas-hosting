@@ -20,8 +20,12 @@ import {
   TooltipTrigger,
 } from "../../ui/tooltip";
 
-export default function Sidebar() {
+export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
   const [isCompact, setIsCompact] = useState(true);
+
+  const filteredNavigation = navigation.filter(item => 
+    !(item as any).isAdmin || isAdmin
+  );
 
   return (
     <motion.div
@@ -79,8 +83,8 @@ export default function Sidebar() {
       </motion.div>
       <motion.nav className="flex-1 px-2 py-4 w-auto space-y-1 overflow-y-auto flex flex-col box-border m-0 relative z-90 inset-shadow-border inset-shadow-[0_1px_0_0]">
         <TooltipProvider delayDuration={0}>
-          {navigation.map((item) => (
-            <NavItem item={item} key={item.name} isCompact={isCompact} />
+          {filteredNavigation.map((item) => (
+            <NavItem item={item as any} key={item.name} isCompact={isCompact} />
           ))}
         </TooltipProvider>
       </motion.nav>

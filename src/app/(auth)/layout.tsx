@@ -19,14 +19,17 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic"; // Force dynamic rendering for this layout
 
-export default function AuthLayout({
+export default async function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getUser();
+  if (!user) redirect("/login");
+
   return (
     <div className="max-h-screen min-h-screen flex bg-background overflow-hidden">
-      <Sidebar />
+      <Sidebar isAdmin={user.isAdmin || false} />
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <Topbar>
           <UserSiteSelect />

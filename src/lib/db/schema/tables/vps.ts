@@ -39,3 +39,20 @@ export const pgVpsMetrics = pgTable("vps_node_metrics", {
   metadata: jsonb("metadata").$type<any>(), // Histórico de dados ricos
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
+
+import { relations } from "drizzle-orm";
+
+export const vpsServersRelations = relations(pgVpsServers, ({ one, many }) => ({
+  user: one(pgUser, {
+    fields: [pgVpsServers.userId],
+    references: [pgUser.id],
+  }),
+  metrics: many(pgVpsMetrics),
+}));
+
+export const vpsMetricsRelations = relations(pgVpsMetrics, ({ one }) => ({
+  server: one(pgVpsServers, {
+    fields: [pgVpsMetrics.vpsId],
+    references: [pgVpsServers.id],
+  }),
+}));

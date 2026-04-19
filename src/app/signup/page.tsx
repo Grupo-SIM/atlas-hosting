@@ -19,7 +19,7 @@ export default async function SignupPage({
   let refUser: Pick<User, "name" | "email" | "id"> | undefined;
   if (resolvedParams.ref) {
     refUser = await db.query.pgUser.findFirst({
-      where: eq(pgUser.id, resolvedParams.ref),
+      where: eq(pgUser.affiliateCode, resolvedParams.ref),
       columns: {
         id: true,
         name: true,

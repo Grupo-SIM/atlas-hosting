@@ -13,6 +13,9 @@ import { CheckCircle, Clock, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
 import { motion, type Variants } from "motion/react";
+import { checkDomainNameservers } from "@/app/actions";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface TransferDomainsListProps {
   domains: OrganizationDomain[];
@@ -20,13 +23,36 @@ interface TransferDomainsListProps {
 
 export function TransferDomainsList({ domains }: TransferDomainsListProps) {
   const [refreshing, setRefreshing] = useState<string[]>([]);
+  const { toast } = useToast();
+  const router = useRouter();
 
-  const handleRefresh = async (domainId: string) => {
-    setRefreshing((prev) => [...prev, domainId]);
-    // Simulate checking nameservers - replace with actual implementation
-    setTimeout(() => {
-      setRefreshing((prev) => prev.filter((id) => id !== domainId));
-    }, 2000);
+  const handleRefresh = async (domain: OrganizationDomain) => {
+    setRefreshing((prev) => [...prev, domain.id]);
+
+    const formData = new FormData();
+    formData.set("domain", domain.domain);
+
+    try {
+      const result = await checkDomainNameservers(null, formData);
+
+      toast({
+        title: result.isCorrect ? "Transferência concluída!" : "Nameservers pendentes",
+        description: result.message,
+        variant: result.isCorrect ? "default" : "destructive",
+      });
+
+      if (result.isCorrect) {
+        router.refresh();
+      }
+    } catch {
+      toast({
+        title: "Erro",
+        description: "Não foi possível verificar os nameservers.",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing((prev) => prev.filter((id) => id !== domain.id));
+    }
   };
 
   if (domains.length === 0) {
@@ -75,7 +101,7 @@ export function TransferDomainsList({ domains }: TransferDomainsListProps) {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => handleRefresh(domain.id)}
+                  onClick={() => handleRefresh(domain)}
                   disabled={refreshing.includes(domain.id)}
                   className="flex items-center gap-1 relative"
                 >

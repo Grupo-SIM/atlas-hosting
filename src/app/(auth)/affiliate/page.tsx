@@ -48,10 +48,8 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { AffiliateChart } from "./components/AffiliateChart";
 import AffiliateLinkDisplay from "./components/AffiliateLinkDisplay";
 import { DatePickerWithRange } from "./components/DateRangePicker";
-import { getMonthlyAffiliateEarnings } from "../../actions";
 
 export const metadata: Metadata = {
   title: "Afiliado - Atlas Hosting",
@@ -62,12 +60,17 @@ export const metadata: Metadata = {
 export default async function AffiliatePage() {
   const user = await getUser();
 
-  const affiliateLink = `${process.env.PUBLIC_URL}/signup?ref=${user.id}`;
+  const baseUrl = process.env.NEXT_PUBLIC_URL || "https://app.atlashosting.com.br";
+  const affiliateLink = `${baseUrl}/signup?ref=${user.affiliateCode}`;
 
-  const systemConfig = await db.query.pgSystemConfig.findFirst();
+  let systemConfig = await db.query.pgSystemConfig.findFirst();
 
   if (!systemConfig) {
-    throw new Error("Configuração de comissão de afiliados não encontrada");
+    systemConfig = {
+      domainFee: 5.0,
+      referrerCommission: 10.0,
+      minWithdrawalAmount: 50.0,
+    };
   }
 
   const allTimeValues = await db
@@ -106,9 +109,6 @@ export default async function AffiliatePage() {
   const minimumWithdrawal = systemConfig.minWithdrawalAmount;
   const totalReferrals = referredUsers.length;
 
-  // Get monthly earnings data for the chart
-  const monthlyEarnings = await getMonthlyAffiliateEarnings(user.id);
-
   const conversionRate = 10;
 
   return (
@@ -135,60 +135,6 @@ export default async function AffiliatePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalReferrals}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Ganho</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{toBrl(allTimeValues)}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Taxa de Conversão
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="relative overflow-visible">
-              <div className="absolute top-0 left-0 w-full h-full grid place-items-center !z-2 text-lg font-bold">
-                Em Breve
-              </div>
-              <div className="opacity-5">
-                <div className="text-2xl font-bold">{conversionRate}%</div>
-                <Progress value={conversionRate} className="mt-4" />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Média do mercado: 25%
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Saldo Disponível
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{toBrl(availableBalance)}</div>
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              Mínimo para saque: {toBrl(minimumWithdrawal)}
-            </p>
-            <Button
-              className="w-full mt-4"
-              disabled={availableBalance < minimumWithdrawal}
-            >
-              Solicitar saque
-            </Button>
           </CardContent>
         </Card>
       </div>
@@ -304,18 +250,6 @@ export default async function AffiliatePage() {
         </CardContent>
       </Card>
 
-      {/* Performance Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Desempenho</CardTitle>
-          <CardDescription>
-            Análise de ganhos e indicações ao longo do tempo
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AffiliateChart data={monthlyEarnings} />
-        </CardContent>
-      </Card>
     </div>
   );
 }

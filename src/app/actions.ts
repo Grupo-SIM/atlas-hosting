@@ -51,6 +51,7 @@ import { render } from "@react-email/render";
 import { DEFAULT_POST_LOGIN_PATH } from "@/lib/consts/default-auth-path";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
 import { isValidPhoneNumber } from "libphonenumber-js";
+import { query } from "dns-query";
 
 export async function login(
   prevState: unknown,
@@ -139,9 +140,20 @@ export async function login(
 
 export async function signup(
   prevState: unknown,
-  { email, password, firstName, lastName, referrerId, organizationName }: SignupFormInputs
+  { email, password, firstName, lastName, referrerId: initialReferrerId, ref, organizationName }: SignupFormInputs
 ): Promise<ActionResponse> {
   const fullName = `${firstName.trim()} ${lastName.trim()}`;
+
+  let referrerId = initialReferrerId;
+
+  if (ref && !referrerId) {
+    const referringUser = await db.query.pgUser.findFirst({
+      where: eq(pgUser.affiliateCode, ref),
+    });
+    if (referringUser) {
+      referrerId = referringUser.id;
+    }
+  }
 
   if (!email || !password || !firstName || !lastName || !organizationName) {
     return {
@@ -1811,6 +1823,37 @@ export async function getMonthlyAffiliateEarnings(userId: string) {
   return chartData;
 }
 
+/**
+ * Tenta adicionar o domínio ao Plesk para criar a zona DNS e hosting.
+ * O Plesk cria automaticamente a zona DNS ao adicionar um domínio.
+ */
+async function addDomainToPlesk(domain: string): Promise<boolean> {
+  try {
+    // Verifica se o domínio já existe no Plesk
+    const existing = await pleskApi.getDomain(domain).catch(() => null);
+    if (existing) {
+      console.log(`[PLESK] Domínio ${domain} já existe no Plesk (id: ${existing.id})`);
+      return true;
+    }
+
+    // Adiciona o domínio ao Plesk — isso cria a zona DNS automaticamente
+    await pleskApi.domainsApi.domainsPost({
+      name: domain,
+      hosting_type: "none" as any, // Sem hosting, só DNS
+    });
+    console.log(`[PLESK] Domínio ${domain} adicionado ao Plesk com sucesso`);
+    return true;
+  } catch (err) {
+    console.warn(`[PLESK] Falha ao adicionar domínio ${domain} ao Plesk:`, err);
+    return false;
+  }
+}
+
+/** IP do servidor para onde os domínios transferidos devem apontar */
+function getServerIp(): string {
+  return process.env.SERVER_IP || "186.194.55.237";
+}
+
 export async function addDomainForTransfer(
   prevState: unknown,
   formData: FormData
@@ -1857,12 +1900,15 @@ export async function addDomainForTransfer(
       active: false,
     });
 
-    revalidatePath("/domain/transfer");
+    // Tenta adicionar o domínio ao Plesk em background (cria zona DNS)
+    addDomainToPlesk(domain.trim().toLowerCase()).catch(() => {});
+
+    revalidatePath("/domain");
 
     return {
       status: "success",
       message:
-        "Domínio adicionado com sucesso. Agora configure os nameservers para completar a transferência.",
+        `Domínio adicionado com sucesso! Agora aponte o registro A do seu domínio para ${getServerIp()} no seu registrador atual.`,
     };
   } catch (error) {
     console.error("Erro ao adicionar domínio:", error);
@@ -1880,48 +1926,70 @@ export async function searchDomains(
 export async function checkDomainNameservers(
   prevState: unknown,
   formData: FormData
-): Promise<ActionResponse & { nameservers?: string[]; isCorrect?: boolean }> {
+): Promise<ActionResponse & { nameservers?: string[]; isCorrect?: boolean; serverIp?: string }> {
   const domain = formData.get("domain") as string;
 
   if (!domain) {
     return { status: "error", message: "Domínio é obrigatório" };
   }
 
+  const expectedIp = getServerIp();
+
   try {
-    // For now, we'll use a simple mock since dns-query installation failed
-    // In production, you would use the dns-query package as provided in the user request
+    // Consulta o registro A do domínio nos resolvers públicos
+    const response = await query(
+      { question: { name: domain, type: "A" } },
+      { endpoints: ["1.1.1.1", "8.8.8.8"] }
+    ).catch(() => null);
 
-    // Mock nameserver check - replace with real implementation
-    const mockNameservers = [
-      "dns1.registrar-servers.com",
-      "dns2.registrar-servers.com",
-    ];
+    const resolvedIps = response?.answers
+      ?.filter((ans) => ans.type === "A")
+      .map((ans) => (ans.data as string).trim()) ?? [];
 
-    const expectedNameservers = [
-      "dns1.registrar-servers.com",
-      "dns2.registrar-servers.com",
-    ];
+    const isCorrect = resolvedIps.some((ip) => ip === expectedIp);
 
-    const isCorrect =
-      mockNameservers.every((ns) => expectedNameservers.includes(ns)) &&
-      expectedNameservers.every((ns) => mockNameservers.includes(ns));
+    console.log(`[DNS Check] ${domain}: A records=[${resolvedIps.join(",")}] expected=${expectedIp} correct=${isCorrect}`);
 
-    revalidatePath("/domain/transfer");
+    if (isCorrect) {
+      // A record está correto — ativa o domínio
+      const user = await getUser();
+      if (user) {
+        await db.update(pgOrganizationDomains)
+          .set({ active: true })
+          .where(and(
+            eq(pgOrganizationDomains.organizationId, user.organization.id),
+            eq(pgOrganizationDomains.domain, domain.toLowerCase())
+          ));
+      }
 
+      // Tenta adicionar o domínio ao Plesk (se ainda não foi)
+      addDomainToPlesk(domain.toLowerCase()).catch(() => {});
+
+      revalidatePath("/domain");
+      return {
+        status: "success",
+        message: "Registro A confirmado! Seu domínio agora está ativo na Atlas Hosting.",
+        nameservers: resolvedIps,
+        isCorrect: true,
+        serverIp: expectedIp,
+      };
+    }
+
+    revalidatePath("/domain");
     return {
       status: "success",
-      message: isCorrect
-        ? "Nameservers configurados corretamente!"
-        : "Nameservers ainda não configurados corretamente",
-      nameservers: mockNameservers,
-      isCorrect,
+      message: resolvedIps.length > 0
+        ? `O domínio está apontando para ${resolvedIps.join(", ")} — esperávamos ${expectedIp}. Atualize o registro A no seu registrador.`
+        : `Nenhum registro A encontrado para ${domain}. Configure o registro A apontando para ${expectedIp} no seu registrador.`,
+      nameservers: resolvedIps,
+      isCorrect: false,
+      serverIp: expectedIp,
     };
   } catch (error) {
-    console.error("Erro ao verificar nameservers:", error);
+    console.error("Erro ao verificar DNS:", error);
     return {
       status: "error",
-      message:
-        "Erro ao verificar nameservers. Tente novamente em alguns minutos.",
+      message: "Erro ao verificar DNS. Tente novamente em alguns minutos.",
     };
   }
 }
