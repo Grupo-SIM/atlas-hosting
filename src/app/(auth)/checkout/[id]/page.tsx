@@ -11,6 +11,36 @@ export const metadata: Metadata = {
   description: "Pagamento de fatura",
 };
 
+export type CheckoutRates = {
+  buyerCcRate: number;      // MDR_CC_1X — taxa DOM sobre cartão (ex: 0.0399)
+  vendorCcPercent: number;  // TAXA_LINK_PERCENT — taxa % da plataforma ao vendedor (ex: 0.0699)
+  vendorCcFixed: number;    // TAXA_LINK_FIXA — taxa fixa da plataforma ao vendedor (ex: 4.00)
+  vendorPixPercent: number; // LIQUIDEZ — taxa PIX ao vendedor (ex: 0.09)
+};
+
+async function fetchCheckoutRates(): Promise<CheckoutRates | null> {
+  const apiUrl = process.env.SIMPAY_API_URL;
+  if (!apiUrl) return null;
+  try {
+    const res = await fetch(`${apiUrl}/public/cc-rates/ATLAS`, {
+      cache: "force-cache",
+    });
+    if (!res.ok) return null;
+    const json = await res.json() as CheckoutRates;
+    if (
+      typeof json.buyerCcRate !== "number" ||
+      typeof json.vendorCcPercent !== "number" ||
+      typeof json.vendorCcFixed !== "number" ||
+      typeof json.vendorPixPercent !== "number"
+    ) {
+      return null;
+    }
+    return json;
+  } catch {
+    return null;
+  }
+}
+
 export default async function CheckoutPage({
   params,
 }: {
@@ -45,11 +75,14 @@ export default async function CheckoutPage({
     notFound();
   }
 
+  const rates = await fetchCheckoutRates();
+
   return (
     <CheckoutClient
       invoice={invoice as Invoice}
       user={user}
       reference={reference}
+      rates={rates}
     />
   );
 }
