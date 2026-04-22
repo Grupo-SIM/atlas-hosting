@@ -11,6 +11,7 @@ import { GradientButton } from "@/components/ui/gradient-button";
 import { Separator } from "@/components/ui/separator";
 import type { Invoice } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
+import type { CheckoutRates } from "./page";
 import { CreditCard, ShieldCheck } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
@@ -26,13 +27,24 @@ interface CheckoutClientProps {
   invoice: Invoice;
   user: User;
   reference: string;
+  rates: CheckoutRates | null;
+}
+
+function pct(rate: number) {
+  return `${(rate * 100).toFixed(2).replace(".", ",")}%`;
 }
 
 export default function CheckoutClient({
   invoice,
   user,
   reference,
+  rates,
 }: CheckoutClientProps) {
+  const base = invoice.amount;
+  const buyerFee    = rates ? Math.round(base * rates.buyerCcRate * 100) / 100 : null;
+  const buyerTotal  = rates ? Math.round((base + buyerFee!) * 100) / 100 : base;
+  const vendorCcFee = rates ? Math.round((base * rates.vendorCcPercent + rates.vendorCcFixed) * 100) / 100 : null;
+  const vendorPixFee = rates ? Math.round(base * rates.vendorPixPercent * 100) / 100 : null;
   const checkoutFormRef = useRef<ModernCheckoutFormHandle>(null);
   const userHasDomId = !!user?.organization?.domId;
 
@@ -142,6 +154,17 @@ export default function CheckoutClient({
                       )}
                     </div>
 
+                    {buyerFee !== null && buyerFee > 0 && rates && (
+                      <div className="flex items-center justify-between gap-2 border-t border-gray-100 py-2 dark:border-gray-700">
+                        <span className="text-sm text-gray-600 dark:text-gray-300">
+                          Taxa cartão ({pct(rates.buyerCcRate)})
+                        </span>
+                        <span className="font-medium text-orange-500">
+                          +{toBrl(buyerFee)}
+                        </span>
+                      </div>
+                    )}
+
                     <Separator />
 
                     <div className="flex items-center justify-between pt-2">
@@ -149,7 +172,7 @@ export default function CheckoutClient({
                         Total
                       </span>
                       <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                        {toBrl(invoice.amount)}
+                        {toBrl(buyerTotal)}
                       </span>
                     </div>
 
@@ -179,6 +202,33 @@ export default function CheckoutClient({
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Vendor Fee Section */}
+                {rates && vendorCcFee !== null && vendorPixFee !== null && (
+                  <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+                    <CardContent className="pt-6 space-y-3">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+                        Sua taxa (vendedor)
+                      </p>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-300">
+                          Cartão ({pct(rates.vendorCcPercent)} + {toBrl(rates.vendorCcFixed)})
+                        </span>
+                        <span className="font-semibold text-rose-500">
+                          −{toBrl(vendorCcFee)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-300">
+                          PIX (liquidez {pct(rates.vendorPixPercent)})
+                        </span>
+                        <span className="font-semibold text-rose-500">
+                          −{toBrl(vendorPixFee)}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Security & Trust */}
                 <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">

@@ -922,6 +922,19 @@ export async function syncCheckoutPixPayment(
   return { status: "PENDING" };
 }
 
+async function fetchAtlasBuyerCcRate(): Promise<number | null> {
+  const apiUrl = process.env.SIMPAY_API_URL;
+  if (!apiUrl) return null;
+  try {
+    const res = await fetch(`${apiUrl}/public/cc-rates/ATLAS`, { cache: "force-cache" });
+    if (!res.ok) return null;
+    const json = await res.json() as { buyerCcRate?: number };
+    return typeof json.buyerCcRate === "number" ? json.buyerCcRate : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function completeCheckout(
   prevState: unknown,
   {
@@ -942,6 +955,11 @@ export async function completeCheckout(
 
   if (!invoiceId) {
     return { status: "error", message: "ID da fatura é obrigatório." };
+  }
+
+  const buyerCcRate = await fetchAtlasBuyerCcRate();
+  if (buyerCcRate === null) {
+    return { status: "error", message: "Não foi possível obter as taxas de pagamento. Tente novamente." };
   }
 
   console.log(`\n[CHECKOUT] ==================== INICIANDO CHECKOUT (NOVO CARTÃO) ====================`);
@@ -1064,11 +1082,14 @@ export async function completeCheckout(
     console.log(`[DOM] Usando cardToken já fornecido: ${cardToken}`);
   }
 
+  const chargeAmount = Math.round(invoice.amount * (1 + buyerCcRate) * 100) / 100;
+  console.log(`[CHECKOUT] Valor base: R$ ${invoice.amount.toFixed(2)} | Taxa DOM (${(buyerCcRate * 100).toFixed(2)}%): R$ ${(chargeAmount - invoice.amount).toFixed(2)} | Total: R$ ${chargeAmount.toFixed(2)}`);
+
   if (invoice.type === "domain") {
     console.log(`\n[SIMPAY] ── PAGAMENTO ÚNICO (DOMÍNIO) ──`);
     try {
       const simpayResult = await simpayApi.createCardPayment({
-        price: invoice.amount,
+        price: chargeAmount,
         document: values.document.replace(/\D/g, ""),
         document_type: values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
         email: user.email,
@@ -1135,7 +1156,7 @@ export async function completeCheckout(
   console.log(`\n[SIMPAY] ── PAGAMENTO RECORRENTE (ASSINATURA) ──`);
   try {
     const result = await simpayApi.createCardPayment({
-      price: invoice.amount,
+      price: chargeAmount,
       document: values.document.replace(/\D/g, ""),
       document_type: values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
       email: user.email,
@@ -1190,6 +1211,11 @@ export async function completeCheckoutWithSavedCard(
 
   if (!card) {
     return { status: "error", message: "Token do cartão é obrigatório." };
+  }
+
+  const savedCardBuyerCcRate = await fetchAtlasBuyerCcRate();
+  if (savedCardBuyerCcRate === null) {
+    return { status: "error", message: "Não foi possível obter as taxas de pagamento. Tente novamente." };
   }
 
   const invoice = await db
@@ -1258,11 +1284,14 @@ export async function completeCheckoutWithSavedCard(
     console.log(`[DOM] Cliente DOM já existe: ${user.organization.domId}`);
   }
 
+  const savedChargeAmount = Math.round(invoice.amount * (1 + savedCardBuyerCcRate) * 100) / 100;
+  console.log(`[CHECKOUT-SAVED] Valor base: R$ ${invoice.amount.toFixed(2)} | Taxa DOM (${(savedCardBuyerCcRate * 100).toFixed(2)}%): R$ ${(savedChargeAmount - invoice.amount).toFixed(2)} | Total: R$ ${savedChargeAmount.toFixed(2)}`);
+
   if (invoice.type === "domain") {
     console.log(`\n[SIMPAY] ── PAGAMENTO ÚNICO (DOMÍNIO / CARTÃO SALVO) ──`);
     try {
       const domResult = await simpayApi.createCardPayment({
-        price: invoice.amount,
+        price: savedChargeAmount,
         document: values.document.replace(/\D/g, ""),
         document_type: values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
         email: user.email,
@@ -1328,7 +1357,7 @@ export async function completeCheckoutWithSavedCard(
   console.log(`\n[SIMPAY] ── PAGAMENTO RECORRENTE (ASSINATURA / CARTÃO SALVO) ──`);
   try {
     const result = await simpayApi.createCardPayment({
-      price: invoice.amount,
+      price: savedChargeAmount,
       document: values.document.replace(/\D/g, ""),
       document_type: values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
       email: user.email,
