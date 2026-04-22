@@ -12,3 +12,4 @@ export * from "./tables/system";
 export * from "./tables/organization";
 export * from "./tables/tokens";
 export * from "./tables/vps";
+export * from "./tables/voucher";

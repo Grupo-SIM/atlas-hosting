@@ -49,9 +49,9 @@ export async function DomainResult({
 
   const selectedYears = searchParams.years ? parseInt(searchParams.years, 10) : 1;
 
-  let price = domainData?.domain?.priceBRL
-    ? domainData.domain.priceBRL * selectedYears
-    : undefined;
+  let price = (domainData?.domain?.multiYearPricesBRL && domainData.domain.multiYearPricesBRL[selectedYears]) 
+    ? domainData.domain.multiYearPricesBRL[selectedYears]
+    : (domainData?.domain?.priceBRL ? domainData.domain.priceBRL * selectedYears : undefined);
 
   if (!domainData?.domain || !price) {
     return (
@@ -71,7 +71,7 @@ export async function DomainResult({
 
   const {
     available,
-    domain: { renewBRL, isPremium },
+    domain: { domain: fullDomain, renewBRL, isPremium },
   } = domainData;
 
   if (searchParams.whoisguard) {
@@ -81,7 +81,7 @@ export async function DomainResult({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Resultado da Busca: {domain}</CardTitle>
+        <CardTitle>Resultado da Busca: {fullDomain}</CardTitle>
         <CardDescription>
           {available
             ? "Este domínio está disponível para registro!"
@@ -97,7 +97,7 @@ export async function DomainResult({
               <XCircle className="h-8 w-8 shrink-0 text-red-500" />
             )}
             <div className="flex-1">
-              <h3 className="text-lg font-semibold">{domain}</h3>
+              <h3 className="text-lg font-semibold">{fullDomain}</h3>
               {available ? (
                 <p className="text-sm text-muted-foreground">
                   Este domínio está disponível para registro

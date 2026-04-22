@@ -6,14 +6,17 @@ import ModernCheckoutForm, {
 } from "@/components/checkout/ModernCheckoutForm";
 import Topbar from "@/components/layouts/components/Topbar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientButton } from "@/components/ui/gradient-button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import type { Invoice } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
-import { CreditCard, ShieldCheck } from "lucide-react";
+import { CreditCard, ShieldCheck, Ticket, X, Loader2 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
+import { applyVoucher, consumeVoucher } from "@/app/(auth)/vouchers/actions";
 
 interface User {
   id: string;
@@ -43,6 +46,17 @@ export default function CheckoutClient({
     }
   );
 
+  // Voucher state
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherLoading, setVoucherLoading] = useState(false);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [appliedVoucher, setAppliedVoucher] = useState<{
+    voucherId: string;
+    discount: number;
+    finalAmount: number;
+    message: string;
+  } | null>(null);
+
   const onSidebarActionStateChange = useCallback(
     (next: CheckoutSidebarActionState) => {
       setSidebarAction((prev) =>
@@ -54,7 +68,44 @@ export default function CheckoutClient({
     []
   );
 
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) return;
+
+    setVoucherLoading(true);
+    setVoucherError(null);
+
+    try {
+      const result = await applyVoucher(invoice.id, voucherCode);
+
+      if (result.status === "error") {
+        setVoucherError(result.message);
+      } else {
+        setAppliedVoucher({
+          voucherId: result.voucherId,
+          discount: result.discount,
+          finalAmount: result.finalAmount,
+          message: result.message,
+        });
+        // Consumir o voucher imediatamente (atualiza a fatura)
+        await consumeVoucher(invoice.id, result.voucherId);
+      }
+    } catch {
+      setVoucherError("Erro ao aplicar voucher.");
+    } finally {
+      setVoucherLoading(false);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null);
+    setVoucherCode("");
+    setVoucherError(null);
+  };
+
   const whoisGuard = invoice.metadata?.whoisguard === "on";
+  const displayTotal = appliedVoucher
+    ? appliedVoucher.finalAmount
+    : invoice.amount;
 
   return (
     <div className="relative z-0 w-full min-h-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 pb-12 pt-4 md:pt-6">
@@ -142,14 +193,87 @@ export default function CheckoutClient({
                       )}
                     </div>
 
+                    {/* Voucher Input */}
+                    <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Ticket className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Voucher de Desconto</span>
+                      </div>
+
+                      {appliedVoucher ? (
+                        <div className="flex items-center justify-between bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md px-3 py-2">
+                          <div>
+                            <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                              {voucherCode.toUpperCase()}
+                            </p>
+                            <p className="text-xs text-green-600 dark:text-green-500">
+                              -{toBrl(appliedVoucher.discount)}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRemoveVoucher}
+                            className="h-6 w-6 p-0"
+                          >
+                            <X className="h-4 w-4 text-green-700 dark:text-green-400" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Código do voucher"
+                            value={voucherCode}
+                            onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                            className="text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleApplyVoucher();
+                              }
+                            }}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleApplyVoucher}
+                            disabled={voucherLoading || !voucherCode.trim()}
+                            className="shrink-0"
+                          >
+                            {voucherLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Aplicar"
+                            )}
+                          </Button>
+                        </div>
+                      )}
+
+                      {voucherError && (
+                        <p className="text-xs text-red-500 mt-1">{voucherError}</p>
+                      )}
+                    </div>
+
                     <Separator />
+
+                    {/* Discount line */}
+                    {appliedVoucher && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-green-600 dark:text-green-400">
+                          Desconto do voucher
+                        </span>
+                        <span className="font-medium text-green-600 dark:text-green-400">
+                          -{toBrl(appliedVoucher.discount)}
+                        </span>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between pt-2">
                       <span className="text-lg font-semibold text-gray-900 dark:text-white">
                         Total
                       </span>
                       <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                        {toBrl(invoice.amount)}
+                        {toBrl(displayTotal)}
                       </span>
                     </div>
 
@@ -232,3 +356,4 @@ export default function CheckoutClient({
     </div>
   );
 }
+

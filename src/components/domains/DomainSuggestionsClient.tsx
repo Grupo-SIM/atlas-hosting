@@ -63,7 +63,7 @@ export function DomainSuggestionsClient({
             </div>
             {domain.available && (
               <Button asChild variant="outline" size="sm">
-                <Link href={`/domain/register?domain=${domain.domain}`}>
+                <Link href={`/domain?domain=${domain.domain}`}>
                   Registrar
                 </Link>
               </Button>

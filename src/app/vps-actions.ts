@@ -73,14 +73,25 @@ export async function getVpsMetricsAction(vpsId: string, limit = 20) {
  * Força a revalidação dos dados do painel VPS e sinaliza o bot.
  */
 export async function refreshVpsDataAction(vpsId?: string) {
+  console.log(`[VPS-Action] refreshVpsDataAction called, vpsId=${vpsId ?? "NONE"}`);
+
   if (vpsId) {
     // Liga o sinalizador para o bot
+    console.log(`[VPS-Action] Setting forceRefresh=true for vpsId=${vpsId}...`);
     await db.update(pgVpsServers)
       .set({ forceRefresh: true })
       .where(eq(pgVpsServers.id, vpsId));
+    
+    // Confirma que foi salvo
+    const check = await db.query.pgVpsServers.findFirst({
+      where: eq(pgVpsServers.id, vpsId),
+      columns: { id: true, forceRefresh: true },
+    });
+    console.log(`[VPS-Action] DB confirm: forceRefresh=${check?.forceRefresh} for vpsId=${vpsId}`);
   }
 
   revalidatePath("/manage/vps");
+  console.log(`[VPS-Action] revalidatePath done, returning success`);
   return { success: true, timestamp: new Date().toISOString() };
 }
 

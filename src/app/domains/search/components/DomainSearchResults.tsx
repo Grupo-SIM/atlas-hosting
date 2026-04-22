@@ -183,13 +183,13 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(price);
 
 
-  const allAvailable = useMemo(() => {
+  const allResults = useMemo(() => {
     const list: DomainResult[] = [];
-    if (mainResult && mainResult.available) {
+    if (mainResult) {
       list.push(mainResult);
     }
     suggestions.forEach((s) => {
-      if (s.available && !list.some((existing) => existing.domain === s.domain)) {
+      if (!list.some((existing) => existing.domain === s.domain)) {
         list.push(s);
       }
     });
@@ -203,8 +203,8 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
 
   const filteredList = useMemo(() => {
     const match = FILTERS.find((f) => f.id === filterId)?.match ?? (() => true);
-    return allAvailable.filter((s) => match(s.domain));
-  }, [allAvailable, filterId]);
+    return allResults.filter((s) => match(s.domain));
+  }, [allResults, filterId]);
 
   const bundleTotal = useMemo(
     () => bundleItems.reduce((acc, s) => acc + s.priceBRL, 0),
@@ -390,14 +390,14 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
           </h3>
           {pagination ? (
             <span className="text-sm text-white/45">
-              {allAvailable.length} disponíveis nesta busca
+              {allResults.filter(r => r.available).length} disponíveis nesta busca
               {pagination.total > 0 ? ` · ${pagination.total} no total` : ""}
             </span>
           ) : null}
         </div>
 
         <div className="mb-8 flex flex-wrap gap-2">
-          {FILTERS.filter(f => f.id === 'all' || allAvailable.some(s => f.match(s.domain))).map((f) => (
+          {FILTERS.filter(f => f.id === 'all' || allResults.some(s => f.match(s.domain))).map((f) => (
             <button
               key={f.id}
               type="button"
@@ -421,45 +421,74 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                 className="flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6"
               >
                 <div className="min-w-0 flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#01FC8D]" />
+                  {s.available ? (
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#01FC8D]" />
+                  ) : (
+                    <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-white/20" />
+                  )}
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`${roboto.className} text-lg font-semibold text-white md:text-xl`}
+                        className={`${roboto.className} text-lg font-semibold text-white md:text-xl ${!s.available ? 'opacity-50' : ''}`}
                       >
                         {s.domain}
                       </span>
-                      {s.isPremium ? (
-                        <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-200">
-                          Premium
-                        </span>
+                      {s.available ? (
+                        s.isPremium ? (
+                          <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-200">
+                            Premium
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-[#01FC8D]/12 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#01FC8D]">
+                            Disponível
+                          </span>
+                        )
                       ) : (
-                        <span className="rounded-full bg-[#01FC8D]/12 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#01FC8D]">
-                          Disponível
+                        <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/40">
+                          Indisponível
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs text-white/45">
-                      Renovação a partir de {formatPrice(s.renewBRL)}/ano
-                    </p>
+                    {s.available ? (
+                      <p className="mt-0.5 text-xs text-white/45">
+                        Renovação a partir de {formatPrice(s.renewBRL)}/ano
+                      </p>
+                    ) : (
+                      <p className="mt-0.5 text-xs text-white/30">
+                        Já registrado ou não disponível
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-4 sm:gap-6">
-                  <div className="text-right">
-                    <p className={`${roboto.className} text-lg font-bold text-white md:text-xl`}>
-                      {formatPrice(s.priceBRL)}
-                    </p>
-                    <p className="text-xs text-white/45">/ano</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={`${roboto.className} h-10 min-w-[7.5rem] shrink-0 rounded-xl border-white/25 bg-transparent text-xs font-bold uppercase tracking-wide text-white hover:border-[#01FC8D]/50 hover:bg-[#01FC8D]/5 hover:text-[#01FC8D]`}
-                    onClick={() => openAuthModal(pathAfterAuthSingle(s.domain))}
-                  >
-                    Registrar
-                  </Button>
+                  {s.available ? (
+                    <>
+                      <div className="text-right">
+                        <p className={`${roboto.className} text-lg font-bold text-white md:text-xl`}>
+                          {formatPrice(s.priceBRL)}
+                        </p>
+                        <p className="text-xs text-white/45">/ano</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className={`${roboto.className} h-10 min-w-[7.5rem] shrink-0 rounded-xl border-white/25 bg-transparent text-xs font-bold uppercase tracking-wide text-white hover:border-[#01FC8D]/50 hover:bg-[#01FC8D]/5 hover:text-[#01FC8D]`}
+                        onClick={() => openAuthModal(pathAfterAuthSingle(s.domain))}
+                      >
+                        Registrar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      type="button"
+                      disabled
+                      variant="outline"
+                      className="h-10 min-w-[7.5rem] shrink-0 rounded-xl border-white/10 bg-white/5 text-xs font-bold uppercase tracking-wide text-white/30"
+                    >
+                      Indisponível
+                    </Button>
+                  )}
                 </div>
               </li>
             ))}

@@ -65,6 +65,10 @@ export const swaggerConfig = {
       name: "Sites",
       description: "Endpoints para gerenciamento de sites e edição",
     },
+    {
+      name: "VPS",
+      description: "Endpoints para telemetria e gerenciamento de servidores VPS",
+    },
   ],
   components: {
     securitySchemes: {
@@ -1862,6 +1866,257 @@ export const swaggerConfig = {
                 schema: {
                   $ref: "#/components/schemas/Error",
                 },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/vps/telemetry": {
+      post: {
+        tags: ["VPS"],
+        summary: "Enviar métricas de telemetria",
+        description:
+          "Recebe métricas do bot Sentinel instalado na VPS (CPU, RAM, disco, processos). Autentica via token do servidor.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  token: {
+                    type: "string",
+                    description: "Token de autenticação do servidor VPS",
+                    example: "atlas_abc123...",
+                  },
+                  cpu_usage: {
+                    type: "number",
+                    description: "Uso de CPU em porcentagem",
+                    example: 42.5,
+                  },
+                  ram_usage: {
+                    type: "number",
+                    description: "Uso de RAM em porcentagem",
+                    example: 31.8,
+                  },
+                  disk_usage: {
+                    type: "number",
+                    description: "Uso de disco em porcentagem",
+                    example: 61.0,
+                  },
+                  uptime: {
+                    type: "string",
+                    description: "Tempo desde o último boot",
+                    example: "107d 19h",
+                  },
+                  process_count: {
+                    type: "number",
+                    description: "Número total de PIDs",
+                    example: 568,
+                  },
+                  processes: {
+                    type: "array",
+                    description: "Lista dos top processos por CPU",
+                    items: {
+                      type: "object",
+                      properties: {
+                        pid: { type: "number" },
+                        name: { type: "string" },
+                        cpu: { type: "number" },
+                        mem_abs: { type: "string" },
+                      },
+                    },
+                  },
+                  metadata: {
+                    type: "object",
+                    description: "Metadados adicionais (cores, load avg, discos)",
+                  },
+                },
+                required: ["token"],
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Métricas recebidas com sucesso",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: "Token ausente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          401: {
+            description: "Token inválido ou servidor não registrado",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          500: {
+            description: "Erro interno",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+        },
+      },
+      get: {
+        tags: ["VPS"],
+        summary: "Consultar sinal de refresh",
+        description:
+          "O bot Sentinel consulta este endpoint periodicamente para verificar se deve enviar dados atualizados (forceRefresh). Autentica via token na query string.",
+        parameters: [
+          {
+            name: "token",
+            in: "query",
+            required: true,
+            description: "Token de autenticação do servidor VPS",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Status de refresh",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    refresh: {
+                      type: "boolean",
+                      description: "true se o bot deve enviar dados imediatamente",
+                    },
+                    interval: {
+                      type: "number",
+                      description: "Intervalo sugerido entre envios (segundos)",
+                      example: 60,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: "Token ausente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          401: {
+            description: "Token inválido",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/vps/fix-token": {
+      post: {
+        tags: ["VPS"],
+        summary: "Atualizar token de um servidor VPS",
+        description:
+          "Atualiza o token de autenticação de um servidor VPS no banco de dados. Informe o IP do VPS e o novo token desejado.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  ip: {
+                    type: "string",
+                    description: "IP do servidor VPS",
+                    example: "192.168.1.100",
+                  },
+                  newToken: {
+                    type: "string",
+                    description: "Novo token que o bot Sentinel vai utilizar",
+                    example: "atlas_abc123def456...",
+                  },
+                },
+                required: ["vpsId", "newToken"],
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Token atualizado com sucesso",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    vpsName: {
+                      type: "string",
+                      description: "Nome do servidor",
+                    },
+                    vpsIp: {
+                      type: "string",
+                      description: "IP do servidor",
+                    },
+                    oldToken: {
+                      type: "string",
+                      description: "Token anterior",
+                    },
+                    newToken: {
+                      type: "string",
+                      description: "Token novo aplicado",
+                    },
+                    match: {
+                      type: "boolean",
+                      description: "true se a gravação foi confirmada",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: "Campos obrigatórios faltando",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          404: {
+            description: "VPS não encontrado",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          500: {
+            description: "Erro interno",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
               },
             },
           },

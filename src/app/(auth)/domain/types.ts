@@ -34,6 +34,7 @@ export type DomainWithAvailability = {
   renewBRL: number; // Final BRL price
   transferBRL: number; // Final BRL price
   isPremium: boolean;
+  multiYearPricesBRL?: Record<number, number>;
 };
 
 export type DomainData = {

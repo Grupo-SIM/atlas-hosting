@@ -178,9 +178,10 @@ export async function GET(request: NextRequest) {
     let fee = 1;
     if (feeEnabled) {
       try {
-        const envFee = process.env.NAMESILO_PROFIT_FEE ? parseFloat(process.env.NAMESILO_PROFIT_FEE) : undefined;
-        // Se o valor no env for 0.05, tratamos como 5%. Se for 20, tratamos como 20%.
-        const envFeeNormalized = envFee !== undefined ? (envFee < 1 ? envFee * 100 : envFee) : undefined;
+        const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
+        const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
+        // Se o valor no env for 0.20, tratamos como 20%. Se for 20, tratamos como 20%.
+        const envFeeNormalized = envFee !== undefined ? (envFee > 0 && envFee < 1 ? envFee * 100 : envFee) : undefined;
         
         const config = await db.query.pgSystemConfig.findFirst();
         const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 20;
@@ -281,7 +282,8 @@ export async function GET(request: NextRequest) {
 
           // Segurança: Se o preço deu 0 e o domínio estava "disponível", forçamos indisponível
           // para nunca exibir preço 0 para algo que o usuário queira comprar.
-          const isActuallyAvailable = d.Available && priceBRL > 0;
+          // Premium: se for premium e tiver preço, consideramos disponível mesmo que o Available da NC venha false.
+          const isActuallyAvailable = (d.Available || (d.IsPremiumName && priceBRL > 0)) && priceBRL > 0;
 
           return {
             domain: d.Domain,

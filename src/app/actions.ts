@@ -426,50 +426,50 @@ export async function createDomainInvoice({
       return;
     }
 
-    console.log(`[NAMECHEAP] Buscando preços para TLD: .${domain.split(".").pop()}`);
-    const pricesInfo = await getDomainPricing(
-      domain.split(".").pop() as string
-    );
-    const priceInfo = pricesInfo.Prices.find(
-      (p) => p.Duration === +yearStr && p.DurationType === "YEAR"
-    );
-
-    console.log(`[NAMECHEAP] Preços disponíveis:`, pricesInfo.Prices.map(p => ({
-      duration: `${p.Duration} ${p.DurationType}`,
-      price: p.Price,
-      currency: p.Currency,
-    })));
-
-    if (!priceInfo) {
-      console.error(`[INVOICE] Nenhum preço encontrado para ${yearStr} ano(s). Fatura não criada.`);
-      return;
-    }
-
-    console.log(`[INVOICE] Preço selecionado (${yearStr} ano):`, { price: priceInfo.Price, currency: priceInfo.Currency });
-
-    let priceInBrl = priceInfo.Price;
-
-    // Pode vir em USD, pode vir em BRL (?)
-    if (priceInfo.Currency.toUpperCase() !== "BRL") {
-      priceInBrl = await currencyConversion.convert({
-        from: priceInfo.Currency.toLowerCase(),
-        to: "brl",
-        amount: priceInfo.Price,
-      });
-      console.log(`[INVOICE] Conversão ${priceInfo.Currency}→BRL: ${priceInfo.Price} → R$ ${priceInBrl.toFixed(2)}`);
-    }
-
-    const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
-    
     let fee = 1;
     if (feeEnabled) {
-      const envFee = process.env.NAMESILO_PROFIT_FEE ? parseFloat(process.env.NAMESILO_PROFIT_FEE) : undefined;
-      const envFeeNormalized = envFee !== undefined ? (envFee < 1 ? envFee * 100 : envFee) : undefined;
-      
-      const dbConfig = await db.query.pgSystemConfig.findFirst();
-      const finalFeePercent = envFeeNormalized ?? dbConfig?.domainFee ?? 20;
-      fee = 1 + finalFeePercent / 100;
+      try {
+        const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
+        const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
+        const envFeeNormalized = envFee !== undefined ? (envFee > 0 && envFee < 1 ? envFee * 100 : envFee) : undefined;
+        
+        const dbConfig = await db.query.pgSystemConfig.findFirst();
+        const finalFeePercent = envFeeNormalized ?? dbConfig?.domainFee ?? 20;
+        fee = 1 + finalFeePercent / 100;
+      } catch { 
+        fee = 1.20; 
+      }
     }
+
+    let basePriceUSD = 0;
+
+    // Se for premium, usamos o preço premium retornado no check
+    if (namecheapResult.IsPremiumName && (namecheapResult.PremiumRegistrationPrice ?? 0) > 0) {
+      basePriceUSD = namecheapResult.PremiumRegistrationPrice ?? 0;
+      console.log(`[INVOICE] Usando PREÇO PREMIUM: $${basePriceUSD}`);
+    } else {
+      console.log(`[NAMECHEAP] Buscando preços para TLD: .${domain.split(".").pop()}`);
+      const pricesInfo = await getDomainPricing(
+        domain.split(".").pop() as string
+      );
+      const priceInfo = pricesInfo.Prices.find(
+        (p) => p.Duration === +yearStr && p.DurationType === "YEAR"
+      );
+
+      if (!priceInfo) {
+        console.error(`[INVOICE] Nenhum preço encontrado para ${yearStr} ano(s). Fatura não criada.`);
+        return;
+      }
+      basePriceUSD = priceInfo.Price;
+      console.log(`[INVOICE] Preço BASE selecionado: $${basePriceUSD}`);
+    }
+
+    let priceInBrl = await currencyConversion.convert({
+      from: "usd",
+      to: "brl",
+      amount: basePriceUSD,
+    });
+    console.log(`[INVOICE] Conversão USD→BRL: $${basePriceUSD} → R$ ${priceInBrl.toFixed(2)}`);
 
     const precoSemTaxa = priceInBrl;
     priceInBrl *= fee;
@@ -547,38 +547,52 @@ export async function createDomainBundleInvoice({
   try {
     let totalBrl = 0;
     const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
-    const fee = feeEnabled
-      ? 1 + ((await db.query.pgSystemConfig.findFirst())?.domainFee ?? 5) / 100
-      : 1;
+    let fee = 1;
+    if (feeEnabled) {
+      try {
+        const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
+        const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
+        const envFeeNormalized = envFee !== undefined ? (envFee > 0 && envFee < 1 ? envFee * 100 : envFee) : undefined;
+        
+        const config = await db.query.pgSystemConfig.findFirst();
+        const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 20;
+        fee = 1 + finalFeePercent / 100;
+      } catch { 
+        fee = 1.20; 
+      }
+    }
 
     for (const domain of list) {
       const namecheapResult = await namecheapApi
         .check({ DomainList: domain })
         .then((r) => r.Results[0]);
 
-      if (!namecheapResult?.Available) {
+      if (!namecheapResult?.Available && !(namecheapResult?.IsPremiumName && (namecheapResult?.PremiumRegistrationPrice ?? 0) > 0)) {
         console.warn(`[INVOICE-PACOTE] Domínio indisponível: ${domain}`);
         return;
       }
 
-      const pricesInfo = await getDomainPricing(domain.split(".").pop() as string);
-      const priceInfo = pricesInfo.Prices.find(
-        (p) => p.Duration === +yearStr && p.DurationType === "YEAR"
-      );
+      let priceUSD = 0;
+      if (namecheapResult.IsPremiumName && (namecheapResult.PremiumRegistrationPrice ?? 0) > 0) {
+        priceUSD = namecheapResult.PremiumRegistrationPrice ?? 0;
+      } else {
+        const pricesInfo = await getDomainPricing(domain.split(".").pop() as string);
+        const priceInfo = pricesInfo.Prices.find(
+          (p) => p.Duration === +yearStr && p.DurationType === "YEAR"
+        );
 
-      if (!priceInfo) {
-        console.error(`[INVOICE-PACOTE] Sem preço para ${domain} (${yearStr}a).`);
-        return;
+        if (!priceInfo) {
+          console.error(`[INVOICE-PACOTE] Sem preço para ${domain} (${yearStr}a).`);
+          return;
+        }
+        priceUSD = priceInfo.Price;
       }
 
-      let priceInBrl = priceInfo.Price;
-      if (priceInfo.Currency.toUpperCase() !== "BRL") {
-        priceInBrl = await currencyConversion.convert({
-          from: priceInfo.Currency.toLowerCase(),
-          to: "brl",
-          amount: priceInfo.Price,
-        });
-      }
+      const priceInBrl = await currencyConversion.convert({
+        from: "usd",
+        to: "brl",
+        amount: priceUSD,
+      });
 
       totalBrl += priceInBrl * fee;
     }

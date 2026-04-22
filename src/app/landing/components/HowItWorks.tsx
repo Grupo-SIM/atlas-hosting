@@ -91,7 +91,7 @@ export function HowItWorks() {
             {/* Divider + CTA */}
             <div className="mt-auto border-t border-white/10 pt-5">
               <Link
-                href="/domain/register"
+                href="/domains/register"
                 className="inline-flex items-center gap-2 text-sm font-medium text-white/80 hover:text-white transition-colors group"
               >
                 Hosting for agencies

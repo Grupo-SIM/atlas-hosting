@@ -80,13 +80,17 @@ export async function loadMoreDomainSuggestions(
 
     const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
     let fee = 1;
-    const flatFee = feeEnabled ? 4 : 0;
     if (feeEnabled) {
       try {
+        const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
+        const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
+        const envFeeNormalized = envFee !== undefined ? (envFee > 0 && envFee < 1 ? envFee * 100 : envFee) : undefined;
+        
         const config = await db.query.pgSystemConfig.findFirst();
-        fee = config ? 1 + (config.domainFee ?? 10) / 100 : 1.10;
-      } catch {
-        fee = 1.10;
+        const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 20;
+        fee = 1 + finalFeePercent / 100;
+      } catch { 
+        fee = 1.20; 
       }
     }
 
@@ -112,30 +116,32 @@ export async function loadMoreDomainSuggestions(
         }
 
         const pricing = pricingRecord[tldForLookup];
-
-        if (!pricing) {
-          return {
-            domain: fullDomainName,
-            available: domainDetail.Available,
-            priceBRL: 0,
-            renewBRL: 0,
-            transferBRL: 0,
-            isPremium: domainDetail.IsPremiumName,
-          };
-        }
-
-        const alreadyBrl = pricing.currency === "BRL";
+        const alreadyBrl = pricing?.currency === "BRL";
         const toPrice = async (amount: number) =>
           alreadyBrl
             ? amount
             : await currencyConversion.convert({ from: "usd", to: "brl", amount });
 
+        let priceBRL = 0;
+        let renewBRL = 0;
+        let transferBRL = 0;
+
+        if (domainDetail.IsPremiumName && (domainDetail.PremiumRegistrationPrice ?? 0) > 0) {
+          priceBRL = (domainDetail.PremiumRegistrationPrice ?? 0) * fee;
+          renewBRL = (domainDetail.PremiumRenewalPrice ?? 0) * fee;
+          transferBRL = (domainDetail.PremiumTransferPrice ?? 0) * fee;
+        } else if (pricing?.price) {
+          priceBRL = (await toPrice(pricing.price ?? 0)) * fee;
+          renewBRL = (await toPrice(pricing.renew ?? 0)) * fee;
+          transferBRL = (await toPrice(pricing.transfer ?? 0)) * fee;
+        }
+
         return {
           domain: fullDomainName,
-          available: domainDetail.Available,
-          priceBRL: (await toPrice(pricing.price ?? 0)) * fee + flatFee,
-          renewBRL: (await toPrice(pricing.renew ?? 0)) * fee + flatFee,
-          transferBRL: (await toPrice(pricing.transfer ?? 0)) * fee + flatFee,
+          available: (domainDetail.Available || (domainDetail.IsPremiumName && priceBRL > 0)) && priceBRL > 0,
+          priceBRL,
+          renewBRL,
+          transferBRL,
           isPremium: domainDetail.IsPremiumName,
         };
       })

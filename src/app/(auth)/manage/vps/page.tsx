@@ -40,9 +40,6 @@ export default async function VpsDashboardPage({
   const currentServerId = searchParams.id || servers[0].id;
   const currentServer = servers.find(s => s.id === currentServerId) || servers[0];
 
-  // LOG DE DEPURAÇÃO (Visível no terminal local)
-  console.log("SERVER DEBUG:", currentServer?.name, "PROCESSES:", currentServer?.topProcesses?.length || 0);
-
   // Busca métricas do servidor selecionado
   const metrics = await getVpsMetricsAction(currentServer.id);
   const latest = metrics[0] || { cpuUsage: 0, ramUsage: 0, diskUsage: 0, uptime: "Desconhecido" };

@@ -90,7 +90,7 @@ export function ServiceCards() {
           pattern="grid"
         />
         <ServiceCard
-          href="/domain/register"
+          href="/domains/register"
           title="Compra de Domínio"
           subtitle="Registre o domínio ideal para sua marca e proteja sua identidade online desde o primeiro dia."
           cta="Buscar domínio"

@@ -464,27 +464,27 @@ export class NamecheapApiWrapper {
           Description: attrs.Description || undefined,
           IsPremiumName: attrs.IsPremiumName === "true",
           PremiumRegistrationPrice: await this._convertPrice(
-            Number.parseFloat(attrs.PremiumRegistrationPrice),
+            Number.parseFloat(String(attrs.PremiumRegistrationPrice || "0").replace(/,/g, "")),
             originalCurrency
           ),
           PremiumRenewalPrice: await this._convertPrice(
-            Number.parseFloat(attrs.PremiumRenewalPrice),
+            Number.parseFloat(String(attrs.PremiumRenewalPrice || "0").replace(/,/g, "")),
             originalCurrency
           ),
           PremiumRestorePrice: await this._convertPrice(
-            Number.parseFloat(attrs.PremiumRestorePrice),
+            Number.parseFloat(String(attrs.PremiumRestorePrice || "0").replace(/,/g, "")),
             originalCurrency
           ),
           PremiumTransferPrice: await this._convertPrice(
-            Number.parseFloat(attrs.PremiumTransferPrice),
+            Number.parseFloat(String(attrs.PremiumTransferPrice || "0").replace(/,/g, "")),
             originalCurrency
           ),
           IcannFee: await this._convertPrice(
-            Number.parseFloat(attrs.IcannFee),
+            Number.parseFloat(String(attrs.IcannFee || "0").replace(/,/g, "")),
             originalCurrency
           ),
           EapFee: await this._convertPrice(
-            Number.parseFloat(attrs.EapFee),
+            Number.parseFloat(String(attrs.EapFee || "0").replace(/,/g, "")),
             originalCurrency
           ),
         });
