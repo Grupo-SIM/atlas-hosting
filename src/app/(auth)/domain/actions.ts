@@ -4,7 +4,7 @@ import type { DomainWithAvailability } from "@/app/(auth)/domain/types";
 import { db } from "@/lib/db";
 import { pgDomainPricingCache, pgSystemConfig } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
-import { namecheapApi } from "@/lib/server/apis/namecheap";
+import { namecheapApi, getDomainPricing } from "@/lib/server/apis/namecheap";
 import { inArray } from "drizzle-orm";
 
 const extendedTlds: `.${string}`[] = [
@@ -55,9 +55,9 @@ export async function loadMoreDomainSuggestions(
     if (missingTlds.length > 0) {
       const settled = await Promise.allSettled(
         missingTlds.map(async (tld) => {
-          const data = await namecheapApi.getPricing(tld);
-          const p = data[0]?.Prices.find(
-            (x) => x.Duration === 1 && x.DurationType === "YEAR"
+          const product = await getDomainPricing(tld);
+          const p = product?.Prices.find(
+            (x: any) => x.Duration === 1 && x.DurationType === "YEAR"
           );
           const raw = p?.YourPrice ?? p?.Price ?? 0;
           return {

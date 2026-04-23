@@ -1,4 +1,4 @@
-import { namecheapApi } from "@/lib/server/apis/namecheap";
+import { namecheapApi, getDomainPricing } from "@/lib/server/apis/namecheap";
 import type {
   DomainsCheckCleanedResponse,
   DomainsCheckUserParams,
@@ -102,16 +102,19 @@ export const getDomainData = cache(async function getDomainData(
       renewBRL = toPrice(standardBrlPrices.renew ?? 0) * fee;
       transferBRL = toPrice(standardBrlPrices.transfer ?? 0) * fee;
     }
-
+    
     let multiYearPricesBRL: Record<number, number> | undefined = undefined;
 
-    // Se for o domínio principal, buscamos os preços de múltiplos anos
-    if (fullDomainName.toLowerCase() === searchQuery.toLowerCase()) {
+    // Se for o domínio principal (ou o primeiro resultado relevante), buscamos os preços de múltiplos anos
+    const isMainResult = fullDomainName.toLowerCase() === searchQuery.toLowerCase() || 
+                        fullDomainName.toLowerCase().startsWith(searchQuery.toLowerCase() + ".");
+
+    if (isMainResult && !multiYearPricesBRL) {
       try {
-        const fullPricing = await namecheapApi.getPricing(tldForLookup);
-        if (fullPricing && fullPricing[0]?.Prices) {
+        const product = await getDomainPricing(tldForLookup);
+        if (product?.Prices) {
           multiYearPricesBRL = {};
-          for (const p of fullPricing[0].Prices) {
+          for (const p of product.Prices) {
             if (p.DurationType === "YEAR" && p.Duration >= 1 && p.Duration <= 10) {
               const priceInBrl = p.Currency.toUpperCase() === "BRL" 
                 ? p.Price 
@@ -150,6 +153,7 @@ export const getDomainData = cache(async function getDomainData(
             renewBRL: 0,
             transferBRL: 0,
             isPremium: false,
+            multiYearPricesBRL: undefined,
           };
   }
   return {

@@ -14,7 +14,7 @@ import { TooltipArrow } from "@radix-ui/react-tooltip";
 import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
 import { Suspense } from "react";
 import { FaCircleQuestion } from "react-icons/fa6";
-import Skeleton from "react-loading-skeleton";
+import { Skeleton } from "../ui/skeleton";
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
 import {
@@ -34,6 +34,7 @@ import {
 import Form from "next/form";
 import { getDomainData } from "@/app/(auth)/domain/utils";
 import type { DomainData, DomainPageParams } from "@/app/(auth)/domain/types";
+import { DomainPriceSelector } from "./DomainPriceSelector";
 
 export async function DomainResult({
   searchParams,
@@ -78,6 +79,21 @@ export async function DomainResult({
     price += 3;
   }
 
+  const tld = fullDomain.split(".").pop() ?? "";
+  const tldRow = tld
+    ? await db.query.pgDomainPricingCache.findFirst({
+        where: eq(pgDomainPricingCache.tld, tld),
+        columns: { minRegisterYears: true, maxRegisterYears: true },
+      })
+    : null;
+
+  const minYear = tldRow?.minRegisterYears ?? 1;
+  const maxYear = tldRow?.maxRegisterYears ?? 10;
+  const registerOptions = Array.from(
+    { length: maxYear - minYear + 1 },
+    (_, i) => ({ duration: minYear + i })
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -107,18 +123,6 @@ export async function DomainResult({
               )}
             </div>
           </div>
-
-          {searchParams.domain && available && price ? (
-            <div className="grid grid-flow-col grid-cols-[1fr_auto_auto] grid-rows-[auto_1fr] gap-x-3 gap-y-1">
-              <div className="text-xs text-muted-foreground">
-                {selectedYears === 1 ? "Primeiro ano" : `${selectedYears} anos`}
-              </div>
-              <h2 className="m-0 text-2xl font-semibold">{toBrl(price)}</h2>
-              <Separator orientation="vertical" className="row-span-2 my-auto h-3/4" />
-              <div className="text-right text-xs text-muted-foreground">Renovação</div>
-              <span className="flex items-center text-muted-foreground">{toBrl(renewBRL)}</span>
-            </div>
-          ) : null}
         </div>
 
         {isPremium && available ? (
@@ -129,21 +133,23 @@ export async function DomainResult({
             </p>
           </div>
         ) : null}
-      </CardContent>
-
-      <Suspense
-        fallback={
-          <div className="p-4">
-            <Skeleton height={40} />
-          </div>
-        }
-      >
         {available ? (
-          <DomainAvailable domainData={domainData} searchParams={searchParams} />
+          <>
+            <DomainPriceSelector 
+              domain={fullDomain}
+              defaultYears={selectedYears.toString()}
+              whoisguard={searchParams.whoisguard ?? "off"}
+              registerOptions={registerOptions}
+              isConfirming={!!searchParams.confirm}
+              price={price}
+              renewBRL={renewBRL}
+              multiYearPricesBRL={domainData.domain.multiYearPricesBRL}
+            />
+          </>
         ) : (
           <DomainUnavailable domainData={domainData} />
         )}
-      </Suspense>
+      </CardContent>
     </Card>
   );
 }
@@ -170,138 +176,6 @@ async function DomainUnavailable({ domainData }: { domainData: DomainData }) {
   );
 }
 
-async function DomainAvailable({
-  domainData,
-  searchParams,
-}: {
-  domainData: DomainData;
-  searchParams: DomainPageParams;
-}) {
-  const tld = domainData?.domain?.domain?.split(".").pop() ?? "";
-  const tldRow = tld
-    ? await db.query.pgDomainPricingCache.findFirst({
-        where: eq(pgDomainPricingCache.tld, tld),
-        columns: { minRegisterYears: true, maxRegisterYears: true },
-      })
-    : null;
-
-  const minYear = tldRow?.minRegisterYears ?? 1;
-  const maxYear = tldRow?.maxRegisterYears ?? 10;
-  const registerOptions = Array.from(
-    { length: maxYear - minYear + 1 },
-    (_, i) => ({ duration: minYear + i })
-  );
-
-  const defaultYears =
-    searchParams.years ??
-    (registerOptions[0] ? registerOptions[0].duration.toString() : "1");
-
-  return (
-    domainData?.available &&
-    domainData.domain && (
-      <div>
-        <Separator className="mb-4 w-full" />
-        <Form
-          action=""
-          className="grid grid-cols-[1fr_1fr_auto] grid-rows-[auto_1fr] gap-4 px-4 pb-4"
-        >
-          <h2 className="col-span-3 text-xl font-medium">Opções de registro</h2>
-          <Select name="years" defaultValue={defaultYears}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {registerOptions.length === 0 ? (
-                <SelectItem value="1">1 ano</SelectItem>
-              ) : (
-                registerOptions.map((option) => (
-                  <SelectItem key={option.duration} value={option.duration.toString()}>
-                    {option.duration} ano{option.duration > 1 ? "s" : ""}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-          <TooltipProvider>
-            <Tooltip delayDuration={100}>
-              <TooltipTrigger asChild>
-                <div className="mr-auto flex items-center space-x-2">
-                  <Checkbox name="whoisguard" defaultChecked={searchParams.whoisguard === "on"} />
-                  <Label htmlFor="whoisguard" className="flex items-center space-x-2 text-sm">
-                    <span>Proteção de Privacidade</span>
-                    <FaCircleQuestion className="h-4 w-4 text-muted-foreground" />
-                  </Label>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent align="start" side="top">
-                <div className="mr-auto max-w-sm space-y-1 p-2 text-center text-sm text-foreground/90">
-                  <div>
-                    Protege suas informações pessoais de serem exibidas publicamente ao buscar seu
-                    domínio.
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    *Opcional e sem custo adicional neste registro
-                  </div>
-                </div>
-                <TooltipArrow className="fill-border" />
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <input type="hidden" name="domain" value={domainData.domain.domain} />
-          <Button type="submit" variant={searchParams.years ? "secondary" : "default"}>
-            {searchParams.years ? "Alterar opções" : "Continuar"}
-          </Button>
-        </Form>
-        {searchParams.years ? (
-          <Form action="">
-            <Separator className="m-0 w-full" />
-            <div className="animate-in duration-300 ease-out animate-accordion-down">
-              <div className="bg-green-50 p-4 dark:bg-green-900/10">
-                <div className="flex w-full items-center justify-between gap-2">
-                  <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-                    <p className="flex items-center whitespace-nowrap text-sm font-medium text-green-700 dark:text-green-400">
-                      <Check className="mr-1 h-4 w-4 shrink-0" />
-                      Domínio inclui serviços gratuitos:
-                    </p>
-                    <ul className="flex w-full flex-nowrap items-center justify-end gap-2">
-                      <li className="rounded bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-800/30 dark:text-green-400">
-                        Administração de DNS
-                      </li>
-                      <li className="rounded bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-800/30 dark:text-green-400">
-                        Encaminhamento de email
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="mt-2 flex flex-1 items-center justify-end gap-2 sm:mt-0">
-                    <div className="flex w-full justify-end">
-                      <input type="hidden" name="domain" value={domainData.domain.domain} />
-                      <input type="hidden" name="years" value={searchParams.years} />
-                      <input
-                        type="hidden"
-                        name="whoisguard"
-                        value={searchParams.whoisguard ?? "off"}
-                      />
-                      <input type="hidden" name="confirm" value="true" />
-                      <Button
-                        disabled={!domainData || !!searchParams.confirm}
-                        isLoading={!!searchParams.confirm}
-                        className="w-45"
-                        type="submit"
-                        variant="action"
-                      >
-                        Registrar domínio
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Form>
-        ) : null}
-      </div>
-    )
-  );
-}
 
 export const adminNamecheapDetails = {
   Address1: "Beco Neuteu Maia",

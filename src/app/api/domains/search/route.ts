@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { namecheapApi } from "@/lib/server/apis/namecheap";
+import { namecheapApi, getDomainPricing } from "@/lib/server/apis/namecheap";
 import { db } from "@/lib/db";
 import { pgDomainPricingCache } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
@@ -224,8 +224,8 @@ export async function GET(request: NextRequest) {
         missingTlds.map(async (tld, index) => {
           if (index > 0) await sleep(Math.floor(Math.random() * 100));
           try {
-            const data = await namecheapApi.getPricing(tld);
-            const p = data[0]?.Prices.find((x) => x.Duration === 1 && x.DurationType === "YEAR");
+            const product = await getDomainPricing(tld);
+            const p = product?.Prices.find((x: any) => x.Duration === 1 && x.DurationType === "YEAR");
             const raw = p?.YourPrice ?? p?.Price ?? 0;
             if (raw > 0) {
               const currency = p?.Currency?.toUpperCase() ?? "USD";

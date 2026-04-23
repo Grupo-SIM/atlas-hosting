@@ -51,7 +51,7 @@ import type {
 } from "./types";
 
 
-const TARGET_CURRENCY = "BRL";
+const TARGET_CURRENCY = "USD";
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export class NamecheapApiWrapper {
@@ -61,6 +61,8 @@ export class NamecheapApiWrapper {
   private readonly userName: string;
   private readonly clientIp = process.env.PUBLIC_IP as string;
   private readonly baseUrl = "https://api.namecheap.com/xml.response";
+  private pricingCache: Map<string, { data: UsersGetPricingCleanedResponse | null, timestamp: number }> = new Map();
+  private readonly PRICING_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   private db = db;
   private domainPricingCacheTable = schema.pgDomainPricingCache;
@@ -816,11 +818,15 @@ export class NamecheapApiWrapper {
     return await Promise.all(tlds.map(this.getPricing));
   }
 
-  public async getPricing(tld: string) {
+  public async getPricing(tld: string): Promise<UsersGetPricingCleanedResponse | null> {
+    const cached = this.pricingCache.get(tld);
+    if (cached && Date.now() - cached.timestamp < this.PRICING_CACHE_TTL) {
+      return cached.data;
+    }
+
     const apiParams = this._parseUsersGetPricingParams({
       ProductType: "DOMAIN",
       ProductName: tld,
-      ActionName: "REGISTER",
     });
 
     const response = await this._makeRequest<
@@ -833,9 +839,8 @@ export class NamecheapApiWrapper {
       "GET"
     );
 
-    return (
-      response.ProductType?.Categories.flatMap((cat) => cat.Products) ?? []
-    );
+    this.pricingCache.set(tld, { data: response, timestamp: Date.now() });
+    return response;
   }
 
   /**
@@ -1189,9 +1194,9 @@ export const namecheapApi = new NamecheapApiWrapper(
 );
 
 export async function getDomainPricing(tld: string) {
-
-
-  return await namecheapApi.getPricing(tld).then((r) => r[0]);
+  const response = await namecheapApi.getPricing(tld);
+  const products = response?.ProductType?.Categories.flatMap(c => c.Products) || [];
+  return products[0] || null;
 }
 
 export default namecheapApi;

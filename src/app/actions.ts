@@ -380,24 +380,34 @@ export async function createPlanInvoice(
   };
 }
 
-export async function createDomainInvoice({
-  domain,
-  years,
-  whoisguard,
-}: DomainPageParams) {
+export async function createDomainInvoice(data: DomainPageParams | FormData) {
   "use server";
+
+  let domain: string | undefined;
+  let years: string | undefined;
+  let whoisguard: string | undefined;
+
+  if (data instanceof FormData) {
+    domain = data.get("domain") as string;
+    years = data.get("years") as string;
+    whoisguard = data.get("whoisguard") as string;
+  } else {
+    domain = data.domain;
+    years = data.years;
+    whoisguard = data.whoisguard;
+  }
 
   const user = await getUser();
 
   if (!user) {
-    return;
+    return { error: "Usuário não autenticado." };
   }
 
   if (!domain) {
-    return;
+    return { error: "Domínio não informado." };
   }
 
-  const yearStr = years ?? "1";
+  const yearStr = (years && years.trim() !== "") ? years : "1";
 
   let redirectUrl: string | null = null;
 
@@ -423,9 +433,10 @@ export async function createDomainInvoice({
 
     if (!isAvailable) {
       console.warn(`[INVOICE] Domínio ${domain} não está disponível. Fatura não criada.`);
-      return;
+      return { error: "Domínio não está disponível para registro." };
     }
 
+    const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
     let fee = 1;
     if (feeEnabled) {
       try {
@@ -441,45 +452,84 @@ export async function createDomainInvoice({
       }
     }
 
-    let basePriceUSD = 0;
+    let priceInBrl = 0;
 
     // Se for premium, usamos o preço premium retornado no check
     if (namecheapResult.IsPremiumName && (namecheapResult.PremiumRegistrationPrice ?? 0) > 0) {
-      basePriceUSD = namecheapResult.PremiumRegistrationPrice ?? 0;
+      const basePriceUSD = namecheapResult.PremiumRegistrationPrice ?? 0;
       console.log(`[INVOICE] Usando PREÇO PREMIUM: $${basePriceUSD}`);
+      priceInBrl = await currencyConversion.convert({
+        from: "usd",
+        to: "brl",
+        amount: basePriceUSD,
+      });
+      priceInBrl *= fee;
     } else {
-      console.log(`[NAMECHEAP] Buscando preços para TLD: .${domain.split(".").pop()}`);
-      const pricesInfo = await getDomainPricing(
-        domain.split(".").pop() as string
-      );
-      const priceInfo = pricesInfo.Prices.find(
-        (p) => p.Duration === +yearStr && p.DurationType === "YEAR"
-      );
+      const tld = domain.split(".").pop() as string;
+      console.log(`[NAMECHEAP] Buscando preços para TLD: .${tld}`);
+      
+      // Buscamos o preço de 1 ano e o de renovação
+      const pricing = await db.query.pgDomainPricingCache.findFirst({
+        where: eq(pgDomainPricingCache.tld, tld),
+      });
 
-      if (!priceInfo) {
-        console.error(`[INVOICE] Nenhum preço encontrado para ${yearStr} ano(s). Fatura não criada.`);
-        return;
+      let p1USD = 0;
+      let renewUSD = 0;
+      let allPricesUSD: Record<number, number> = {};
+
+      if (pricing) {
+        p1USD = pricing.price ?? 0;
+        renewUSD = pricing.renew ?? (p1USD * 1.1);
+      } else {
+        const pricingData = await namecheapApi.getPricing(tld);
+        const categories = pricingData?.ProductType?.Categories || [];
+        
+        const regCat = categories.find(c => c.Name.toUpperCase() === "REGISTER");
+        const renewCat = categories.find(c => c.Name.toUpperCase() === "RENEW");
+
+        const products = regCat?.Products || [];
+        const prod = products.find((p: any) => p.Name.toLowerCase() === tld.toLowerCase());
+        
+        if (prod) {
+          prod.Prices.forEach((p: any) => {
+            if (p.DurationType === "YEAR" && p.Duration >= 1 && p.Duration <= 10) {
+              allPricesUSD[p.Duration] = p.YourPrice ?? p.Price ?? 0;
+            }
+          });
+        }
+
+        p1USD = allPricesUSD[1] || 0;
+        
+        const get1YearPrice = (cat: any) => {
+          const products = cat?.Products || [];
+          const prod = products.find((p: any) => p.Name.toLowerCase() === tld.toLowerCase());
+          const priceDetail = prod?.Prices.find((p: any) => p.Duration === 1 && p.DurationType === "YEAR");
+          return priceDetail?.YourPrice ?? priceDetail?.Price ?? 0;
+        };
+        renewUSD = get1YearPrice(renewCat) || p1USD * 1.2;
       }
-      basePriceUSD = priceInfo.Price;
-      console.log(`[INVOICE] Preço BASE selecionado: $${basePriceUSD}`);
+
+      // Cálculo final baseado na tabela ou na renovação
+      const targetYears = parseInt(yearStr, 10);
+      let totalUSD = 0;
+
+      if (allPricesUSD[targetYears]) {
+        totalUSD = allPricesUSD[targetYears];
+      } else {
+        totalUSD = p1USD + (renewUSD * (targetYears - 1));
+      }
+
+      priceInBrl = await currencyConversion.convert({
+        from: "usd",
+        to: "brl",
+        amount: totalUSD,
+      });
+      priceInBrl *= fee;
     }
-
-    let priceInBrl = await currencyConversion.convert({
-      from: "usd",
-      to: "brl",
-      amount: basePriceUSD,
-    });
-    console.log(`[INVOICE] Conversão USD→BRL: $${basePriceUSD} → R$ ${priceInBrl.toFixed(2)}`);
-
-    const precoSemTaxa = priceInBrl;
-    priceInBrl *= fee;
-    console.log(`[INVOICE] Taxa aplicada: feeEnabled=${feeEnabled} | fee=${fee}x | R$ ${precoSemTaxa.toFixed(2)} → R$ ${priceInBrl.toFixed(2)}`);
 
     if (whoisguard === "on") {
-      console.log(`[INVOICE] Whoisguard ativado (sem custo adicional) | Total: R$ ${priceInBrl.toFixed(2)}`);
+      // Whoisguard sem custo
     }
-
-    console.log(`[INVOICE] Valor final da fatura: R$ ${priceInBrl.toFixed(2)}`);
 
     const [newInvoice] = await db
       .insert(pgInvoice)
@@ -500,17 +550,15 @@ export async function createDomainInvoice({
 
     if (!newInvoice || !newInvoice.id) {
       console.error(`[INVOICE] Falha ao criar fatura no banco de dados.`, newInvoice);
-      return;
+      return { error: "Erro ao criar fatura no banco de dados." };
     }
 
     console.log(`[INVOICE] Fatura criada com sucesso! ID: ${newInvoice.id} | Valor: R$ ${priceInBrl.toFixed(2)}`);
-    redirectUrl = `/checkout/${newInvoice.id}`;
+    return { status: "success", invoiceId: newInvoice.id, redirectUrl: `/checkout/${newInvoice.id}` };
   } catch (error) {
     console.error(`[INVOICE] ERRO ao criar fatura do domínio:`, error);
-    return;
+    return { error: "Erro interno ao processar o pedido." };
   }
-
-  return redirectUrl;
 }
 
 /** Pacote só pela URL “Amplie sua marca” (2–5 domínios), uma fatura e registro múltiplo após pagamento. */
@@ -577,8 +625,8 @@ export async function createDomainBundleInvoice({
         priceUSD = namecheapResult.PremiumRegistrationPrice ?? 0;
       } else {
         const pricesInfo = await getDomainPricing(domain.split(".").pop() as string);
-        const priceInfo = pricesInfo.Prices.find(
-          (p) => p.Duration === +yearStr && p.DurationType === "YEAR"
+        const priceInfo = pricesInfo?.Prices.find(
+          (p: any) => p.Duration === +yearStr && p.DurationType === "YEAR"
         );
 
         if (!priceInfo) {
@@ -631,12 +679,11 @@ export async function createDomainBundleInvoice({
     console.log(
       `[INVOICE-PACOTE] Fatura ${newInvoice.id} | R$ ${totalBrl.toFixed(2)} | ${list.join(", ")}`
     );
+    return { status: "success", invoiceId: newInvoice.id, redirectUrl };
   } catch (error) {
     console.error(`[INVOICE-PACOTE] ERRO:`, error);
-    return;
+    return { error: "Erro ao criar fatura do pacote." };
   }
-
-  return redirectUrl;
 }
 
 const TEST_PAYMENT_AMOUNT_BRL = 1;

@@ -138,27 +138,27 @@ export default async function DomainPage({
 
   // Pacote (2–5 domínios): uma fatura
   if (resolvedSearchParams.confirm && bundleDomains.length >= 2) {
-    const redirectUrl = await createDomainBundleInvoice({
+    const res = await createDomainBundleInvoice({
       domains: bundleDomains,
       years: resolvedSearchParams.years ?? "1",
       whoisguard: resolvedSearchParams.whoisguard === "on" ? "on" : "off",
     });
 
-    if (redirectUrl) {
-      redirect(redirectUrl);
+    if (res && "redirectUrl" in res && res.redirectUrl) {
+      redirect(res.redirectUrl);
     }
   }
 
   // Domínio único
   if (resolvedSearchParams.confirm && domain && bundleDomains.length < 2) {
-    const redirectUrl = await createDomainInvoice({
+    const res = await createDomainInvoice({
       whoisguard: resolvedSearchParams.whoisguard,
       domain: domain,
       years: resolvedSearchParams.years ?? "1",
     });
 
-    if (redirectUrl) {
-      redirect(redirectUrl);
+    if (res && "redirectUrl" in res && res.redirectUrl) {
+      redirect(res.redirectUrl);
     }
   }
 

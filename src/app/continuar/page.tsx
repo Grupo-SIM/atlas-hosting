@@ -14,6 +14,8 @@ export const metadata: Metadata = {
   description: "Faça login ou crie uma conta para concluir o registro do domínio.",
 };
 
+export const dynamic = "force-dynamic";
+
 /** Evita open redirect: só caminhos relativos internos. */
 function sanitizeNext(raw: string | undefined): string {
   const n = (raw ?? "").trim();
