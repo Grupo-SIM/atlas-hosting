@@ -15,7 +15,7 @@ import type { Invoice } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
 import type { CheckoutRates } from "./page";
 import { CreditCard, Loader2, ShieldCheck, Ticket, X } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
 import { applyVoucher, consumeVoucher } from "@/app/(auth)/vouchers/actions";
 
@@ -30,26 +30,31 @@ interface CheckoutClientProps {
   invoice: Invoice;
   user: User;
   reference: string;
-  rates: CheckoutRates | null;
 }
 
-function pct(rate: number) {
-  return `${(rate * 100).toFixed(2).replace(".", ",")}%`;
-}
 
 export default function CheckoutClient({
   invoice,
   user,
   reference,
-  rates,
 }: CheckoutClientProps) {
   const base = invoice.amount;
-  const buyerFee    = rates ? Math.round(base * rates.buyerCcRate * 100) / 100 : null;
-  const buyerTotal  = rates ? Math.round((base + buyerFee!) * 100) / 100 : base;
-  const vendorCcFee = rates ? Math.round((base * rates.vendorCcPercent + rates.vendorCcFixed) * 100) / 100 : null;
-  const vendorPixFee = rates ? Math.round(base * rates.vendorPixPercent * 100) / 100 : null;
   const checkoutFormRef = useRef<ModernCheckoutFormHandle>(null);
   const userHasDomId = !!user?.organization?.domId;
+
+  const [rates, setRates] = useState<CheckoutRates | null>(null);
+
+  useEffect(() => {
+    const apiUrl = (process.env.NEXT_PUBLIC_SIMPAY_API_URL ?? "https://simpay-back.simintermediacoes.com").replace(/\/+$/, "");
+    fetch(`${apiUrl}/checkout/public/cc-rates/ATLAS`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => {
+        if (json && typeof json.domCcRate === "number" && typeof json.masterCcRate === "number") {
+          setRates(json as CheckoutRates);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const [sidebarAction, setSidebarAction] = useState<CheckoutSidebarActionState>(
     {
@@ -57,6 +62,14 @@ export default function CheckoutClient({
       disabled: false,
     }
   );
+
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+  // Mostra taxa CC por padrão; esconde apenas quando PIX for explicitamente selecionado
+  const isCreditCard = selectedMethod !== "pix";
+
+  const onPaymentMethodChange = useCallback((method: string | null) => {
+    setSelectedMethod(method);
+  }, []);
 
   // Voucher state
   const [voucherCode, setVoucherCode] = useState("");
@@ -115,9 +128,10 @@ export default function CheckoutClient({
   };
 
   const whoisGuard = invoice.metadata?.whoisguard === "on";
-  const displayTotal = appliedVoucher
-    ? appliedVoucher.finalAmount
-    : invoice.amount;
+  const displayBase  = appliedVoucher ? appliedVoucher.finalAmount : base;
+  // Taxa CC só se aplica ao comprador quando método é cartão (não PIX)
+  const buyerFee     = isCreditCard && rates ? Math.round(displayBase * (rates.domCcRate + rates.masterCcRate) * 100) / 100 : null;
+  const displayTotal = buyerFee !== null ? Math.round((displayBase + buyerFee) * 100) / 100 : displayBase;
 
   return (
     <div className="relative z-0 w-full min-h-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 pb-12 pt-4 md:pt-6">
@@ -141,6 +155,7 @@ export default function CheckoutClient({
                 invoiceId={invoice.id}
                 hasExistingUser={userHasDomId}
                 onSidebarActionStateChange={onSidebarActionStateChange}
+                onPaymentMethodChange={onPaymentMethodChange}
               />
             </div>
 
@@ -268,7 +283,7 @@ export default function CheckoutClient({
                     {buyerFee !== null && buyerFee > 0 && rates && (
                       <div className="flex items-center justify-between gap-2 border-t border-gray-100 py-2 dark:border-gray-700">
                         <span className="text-sm text-gray-600 dark:text-gray-300">
-                          Taxa cartão ({pct(rates.buyerCcRate)})
+                          Taxa cartão
                         </span>
                         <span className="font-medium text-orange-500">
                           +{toBrl(buyerFee)}
@@ -326,32 +341,6 @@ export default function CheckoutClient({
                   </CardContent>
                 </Card>
 
-                {/* Vendor Fee Section */}
-                {rates && vendorCcFee !== null && vendorPixFee !== null && (
-                  <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-                    <CardContent className="pt-6 space-y-3">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-                        Sua taxa (vendedor)
-                      </p>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-300">
-                          Cartão ({pct(rates.vendorCcPercent)} + {toBrl(rates.vendorCcFixed)})
-                        </span>
-                        <span className="font-semibold text-rose-500">
-                          −{toBrl(vendorCcFee)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-300">
-                          PIX (liquidez {pct(rates.vendorPixPercent)})
-                        </span>
-                        <span className="font-semibold text-rose-500">
-                          −{toBrl(vendorPixFee)}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
 
                 {/* Security & Trust */}
                 <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">

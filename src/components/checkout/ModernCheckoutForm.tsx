@@ -82,6 +82,8 @@ interface ModernCheckoutFormProps {
   hasExistingUser?: boolean;
   /** Atualiza texto/estado do botão principal da coluna lateral (checkout-client). */
   onSidebarActionStateChange?: (state: CheckoutSidebarActionState) => void;
+  /** Notifica o sidebar quando o método de pagamento muda ("pix", "new", ou ID do cartão salvo). */
+  onPaymentMethodChange?: (method: string | null) => void;
 }
 
 export interface ModernCheckoutFormHandle {
@@ -164,10 +166,12 @@ interface OpenCepResponse {
 const ModernCheckoutForm = forwardRef<
   ModernCheckoutFormHandle,
   ModernCheckoutFormProps
->(({ invoiceId, hasExistingUser = false, onSidebarActionStateChange }, ref) => {
+>(({ invoiceId, hasExistingUser = false, onSidebarActionStateChange, onPaymentMethodChange }, ref) => {
   const id = useId();
   const sidebarActionCbRef = useRef(onSidebarActionStateChange);
   sidebarActionCbRef.current = onSidebarActionStateChange;
+  const paymentMethodCbRef = useRef(onPaymentMethodChange);
+  paymentMethodCbRef.current = onPaymentMethodChange;
   const [paymentMethod, setPaymentMethod] = useState<"new" | "pix" | string | null>();
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [isLoadingCards, setIsLoadingCards] = useState(true);
@@ -639,6 +643,10 @@ const ModernCheckoutForm = forwardRef<
     canProceedToPayment,
     allowCardFinalize,
   ]);
+
+  useEffect(() => {
+    paymentMethodCbRef.current?.(paymentMethod ?? null);
+  }, [paymentMethod]);
 
   // Render simplified version for existing users with domId
   if (hasExistingUser) {
