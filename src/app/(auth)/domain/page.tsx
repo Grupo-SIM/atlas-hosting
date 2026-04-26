@@ -222,107 +222,107 @@ export default async function DomainPage({
       <Tabs value={activeTab} className="w-full">
         {/* Usamos apenas o TabsContent agora, pois a navegação acima muda a URL e o value={activeTab} */}
 
-      <TabsContent value="register" className="space-y-8 mt-8">
-        {bundleDomains.length >= 2 ? (
-          <Suspense fallback={<div className="text-center text-muted-foreground">Carregando pacote…</div>}>
-            <DomainBundleSection domains={bundleDomains} />
-          </Suspense>
-        ) : null}
+        <TabsContent value="register" className="space-y-8 mt-8">
+          {bundleDomains.length >= 2 ? (
+            <Suspense fallback={<div className="text-center text-muted-foreground">Carregando pacote…</div>}>
+              <DomainBundleSection domains={bundleDomains} />
+            </Suspense>
+          ) : null}
 
-        <div className="text-center space-y-4">
-          <p className="text-muted-foreground">
-            Digite no campo de pesquisa o nome de domínio que você deseja e
-            descubra se ele está disponível!
-          </p>
-          <RegisterDomainSearch domain={domain} />
-        </div>
+          <div className="text-center space-y-4">
+            <p className="text-muted-foreground">
+              Digite no campo de pesquisa o nome de domínio que você deseja e
+              descubra se ele está disponível!
+            </p>
+            <RegisterDomainSearch domain={domain} />
+          </div>
 
-        {/* TODO: reativar quando necessário */}
-        {/* <Suspense fallback={<div>Carregando extensões de domínio...</div>}>
+          {/* TODO: reativar quando necessário */}
+          {/* <Suspense fallback={<div>Carregando extensões de domínio...</div>}>
           <DomainExtensionsGrid
             allDomainPricesFromDbPromise={allDomainPricesFromDbPromise}
           />
         </Suspense> */}
 
-        {domain && (
-          <Suspense fallback={<div>Verificando disponibilidade...</div>}>
-            {isError ? (
-              <DomainErrorCard />
-            ) : (
-              <DomainSearchResults searchParams={resolvedSearchParams} />
-            )}
-          </Suspense>
-        )}
-      </TabsContent>
+          {domain && (
+            <Suspense fallback={<div>Verificando disponibilidade...</div>}>
+              {isError ? (
+                <DomainErrorCard />
+              ) : (
+                <DomainSearchResults searchParams={resolvedSearchParams} />
+              )}
+            </Suspense>
+          )}
+        </TabsContent>
 
-      <TabsContent value="transfer" className="space-y-8 mt-8">
-        <div className="grid grid-cols-[1fr_auto] gap-8">
-          <Card className="w-full max-w-2xl">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">
-                Transferir Domínio Existente
-              </CardTitle>
-              <CardDescription>
-                Adicione seu domínio existente à sua organização Atlas Hosting
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <TransferForm defaultDomain={domain} />
+        <TabsContent value="transfer" className="space-y-8 mt-8">
+          <div className="grid grid-cols-[1fr_auto] gap-8">
+            <Card className="w-full max-w-2xl">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl">
+                  Transferir Domínio Existente
+                </CardTitle>
+                <CardDescription>
+                  Adicione seu domínio existente à sua organização Atlas Hosting
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <TransferForm defaultDomain={domain} />
 
-              <div className="border-t pt-6">
-                <h3 className="font-semibold mb-3">
-                  Como funciona a transferência:
-                </h3>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>• Adicione seu domínio existente acima</p>
-                  <p>• No painel do seu registrador atual, crie ou edite o <strong>Registro A</strong></p>
-                  <p>• Aponte o registro A para o IP do nosso servidor: <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-xs">{process.env.SERVER_IP || "186.194.55.237"}</code></p>
-                  <p>• Aguarde a propagação DNS (geralmente 5 min a 24 horas)</p>
-                  <p>• Clique em &quot;Verificar&quot; para confirmar e ativar</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="max-w-2xl flex flex-col">
-            <CardHeader>
-              <CardTitle>Guia de Configuração</CardTitle>
-              <CardDescription>
-                Como apontar seu domínio para a Atlas Hosting
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-6 justify-center h-full">
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">
-                  IP do Servidor Atlas
-                </h3>
-                <div className="space-y-2">
-                  <div className="p-3 bg-muted rounded-md font-mono text-sm flex items-center justify-between">
-                    <span>Registro A → {process.env.SERVER_IP || "186.194.55.237"}</span>
+                <div className="border-t pt-6">
+                  <h3 className="font-semibold mb-3">
+                    Como funciona a transferência:
+                  </h3>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• Adicione seu domínio existente acima</p>
+                    <p>• No painel do seu registrador atual, crie ou edite o <strong>Registro A</strong></p>
+                    <p>• Aponte o registro A para o IP do nosso servidor: <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-xs">{process.env.SERVER_IP || "186.194.55.237"}</code></p>
+                    <p>• Aguarde a propagação DNS (geralmente 5 min a 24 horas)</p>
+                    <p>• Clique em &quot;Verificar&quot; para confirmar e ativar</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Configure este IP como valor do registro A (tipo A) no seu registrador atual (Hostinger, GoDaddy, Registro.br, etc.)
-                  </p>
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-2 border-t pt-4">
-                  <h4 className="font-medium text-sm">Passo a passo rápido:</h4>
-                  <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
-                    <li>Acesse o painel DNS do seu registrador</li>
-                    <li>Encontre ou crie um registro do tipo <strong>A</strong></li>
-                    <li>No campo &quot;Host&quot; ou &quot;Nome&quot;, coloque <code className="bg-muted px-1 rounded text-xs">@</code></li>
-                    <li>No campo &quot;Valor&quot; ou &quot;Aponta para&quot;, cole: <code className="bg-muted px-1 rounded text-xs">{process.env.SERVER_IP || "186.194.55.237"}</code></li>
-                    <li>Salve e aguarde a propagação</li>
-                  </ol>
+            <Card className="max-w-2xl flex flex-col">
+              <CardHeader>
+                <CardTitle>Guia de Configuração</CardTitle>
+                <CardDescription>
+                  Como apontar seu domínio para a Atlas Hosting
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-6 justify-center h-full">
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">
+                    IP do Servidor Atlas
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="p-3 bg-muted rounded-md font-mono text-sm flex items-center justify-between">
+                      <span>Registro A → {process.env.SERVER_IP || "186.194.55.237"}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Configure este IP como valor do registro A (tipo A) no seu registrador atual (Hostinger, GoDaddy, Registro.br, etc.)
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 border-t pt-4">
+                    <h4 className="font-medium text-sm">Passo a passo rápido:</h4>
+                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                      <li>Acesse o painel DNS do seu registrador</li>
+                      <li>Encontre ou crie um registro do tipo <strong>A</strong></li>
+                      <li>No campo &quot;Host&quot; ou &quot;Nome&quot;, coloque <code className="bg-muted px-1 rounded text-xs">@</code></li>
+                      <li>No campo &quot;Valor&quot; ou &quot;Aponta para&quot;, cole: <code className="bg-muted px-1 rounded text-xs">{process.env.SERVER_IP || "186.194.55.237"}</code></li>
+                      <li>Salve e aguarde a propagação</li>
+                    </ol>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        <TransferDomainsList domains={transferDomains} />
-      </TabsContent>
-    </Tabs>
+          <TransferDomainsList domains={transferDomains} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
