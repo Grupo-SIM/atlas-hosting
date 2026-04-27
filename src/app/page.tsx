@@ -33,7 +33,7 @@ export default function Home() {
         {/* <Partners /> */}
         <div className="relative w-full bg-[#0a0e27] overflow-hidden">
           <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
-            <Threads amplitude={0.5} distance={1.1} enableMouseInteraction={false} color={[1, 1, 1]} />
+            <Threads amplitude={0.5} distance={1.8} enableMouseInteraction={false} color={[1, 1, 1]} />
           </div>
           <div className="relative z-10">
             <LazySection offset="400px">

@@ -49,8 +49,26 @@ export function ChatContact() {
       },
     });
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      // Verifica se o evento veio de um textarea dentro do nosso chat
+      if (target.tagName === 'TEXTAREA' && 
+          (target.closest('#n8n-chat-embed') || target.closest('#n8n-chat-bubble')) && 
+          e.key === 'Enter' && !e.shiftKey) {
+        
+        e.preventDefault();
+        const sendButton = target.closest('form')?.querySelector('button[class*="send"]') as HTMLButtonElement | null;
+        if (sendButton && !sendButton.disabled) {
+          sendButton.click();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
     return () => {
       Element.prototype.scrollIntoView = originalScrollIntoView;
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -58,85 +76,261 @@ export function ChatContact() {
     <>
       <style>{`
         #n8n-chat-embed {
-          --chat--color--primary: #5865F2;
-          --chat--color--primary-shade-50: #4752c4;
-          --chat--color--primary--shade-100: #3c45a5;
-          --chat--color--secondary: #5865F2;
+          --chat--color--primary: #01FC8D;
+          --chat--color--primary-shade-50: #01e680;
+          --chat--color--primary--shade-100: #01cf73;
+          --chat--color--secondary: #01FC8D;
           
           --chat--spacing: 1rem;
-          --chat--border-radius: 2rem;
+          --chat--border-radius: 1.5rem;
           --chat--font-family: var(--font-roboto), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-          --chat--body--background: #060b17;
-          --chat--header--background: #060b17;
+          --chat--body--background: transparent;
+          --chat--header--background: transparent;
           --chat--header--color: #ffffff;
           --chat--header--border-bottom: none;
 
-          --chat--message--font-size: 0.95rem;
-          --chat--message--bot--background: #1f2937;
-          --chat--message--bot--color: #f3f4f6;
+          --chat--message--font-size: 0.9rem;
+          --chat--message--bot--background: rgba(26, 32, 44, 0.7);
+          --chat--message--bot--color: #e2e8f0;
           --chat--message--bot--border: none;
-          --chat--message--user--background: #5865F2;
-          --chat--message--user--color: #ffffff;
-          --chat--message--border-radius: 1.5rem;
+          --chat--message--user--background: #01FC8D;
+          --chat--message--user--color: #060b17;
+          --chat--message--border-radius: 1.25rem;
           
-          --chat--messages-list--padding: 1.5rem;
+          --chat--messages-list--padding: 1.25rem;
 
-          --chat--input--background: #111827;
+          --chat--input--background: rgba(13, 18, 31, 0.5);
           --chat--input--text-color: #ffffff;
           --chat--input--border: none;
           --chat--input--container--background: transparent;
           --chat--input--container--border: none;
-          --chat--input--container--padding: 1rem;
+          --chat--input--container--padding: 0.75rem;
           
-          --chat--footer--background: #060b17;
-          --chat--window--border-radius: 2rem;
+          --chat--footer--background: transparent;
+          --chat--window--border-radius: 1.5rem;
         }
 
-        /* Estilização do Campo de Input como Pilula/Cápsula */
-        #n8n-chat-embed [class*="n8n-chat-ui-input-container"] {
-          background-color: #111827 !important;
-          border-radius: 3rem !important;
-          margin: 1.25rem !important;
-          padding: 0.25rem 1rem !important;
-          border: 1px solid rgba(255,255,255,0.05) !important;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+        /* Reset total e definitivo para qualquer linha interna */
+        #n8n-chat-embed *,
+        #n8n-chat-embed [class*="n8n-chat-ui"] {
+          border: none !important;
+          border-top: none !important;
+          box-shadow: none !important;
+        }
+        #n8n-chat-embed [class*="n8n-chat-ui"]::before,
+        #n8n-chat-embed [class*="n8n-chat-ui"]::after {
+          display: none !important;
+        }
+
+        /* Container adjustment for minimalist look */
+        #n8n-chat-embed [class*="n8n-chat-ui-window"] {
+          background-color: rgba(6, 11, 23, 0.6) !important;
+          backdrop-filter: blur(40px);
+        }
+
+        /* Minimalist Header - More compact */
+        #n8n-chat-embed [class*="n8n-chat-ui-header"] {
+          padding: 1.25rem 1.25rem 0.25rem 1.25rem !important;
+          background: transparent !important;
+        }
+        
+        #n8n-chat-embed [class*="n8n-chat-ui-header-title"] {
+          font-weight: 700 !important;
+          letter-spacing: -0.02em !important;
+          font-size: 1.15rem !important;
+        }
+
+        #n8n-chat-embed [class*="n8n-chat-ui-header-subtitle"] {
+          color: #01FC8D !important;
+          font-size: 0.75rem !important;
+          opacity: 0.9;
+          font-weight: 500 !important;
+        }
+
+        /* Glassmorphism Input Field - Formato de Pílula (Centralização Final) */
+        div#n8n-chat-embed [class*="footer"] form,
+        div#n8n-chat-embed [class*="footer"] > div {
+          background: rgba(255, 255, 255, 0.15) !important;
+          backdrop-filter: blur(25px) !important;
+          border-radius: 9999px !important;
+          margin: 0 auto 1.5rem auto !important;
+          padding: 2px 45px 0 1.25rem !important; /* Adicionado 2px top padding */
+          border: 1px solid rgba(255, 255, 255, 0.15) !important;
+          transition: all 0.3s ease;
+          min-height: 44px !important;
+          height: 44px !important;
+          display: flex !important;
+          align-items: center !important;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+          width: 90% !important;
+          box-sizing: border-box !important;
+          position: relative !important;
+          overflow: visible !important;
+        }
+
+        /* Limpa bordas de qualquer div interno para evitar duplicidade */
+        div#n8n-chat-embed [class*="footer"] form div,
+        div#n8n-chat-embed [class*="footer"] > div div {
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
+        #n8n-chat-embed [class*="n8n-chat-ui-footer"] {
+          padding: 1rem 1.25rem 5rem 1.25rem !important;
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          display: flex !important;
+          justify-content: center !important;
+        }
+
+        #n8n-chat-embed [class*="n8n-chat-ui-messages-list"] {
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+
+        div#n8n-chat-embed [class*="n8n-chat-ui-input-container"]:focus-within {
+          background-color: #1a202c !important;
+          border-color: #01FC8D !important;
+          box-shadow: 0 0 25px rgba(1, 252, 141, 0.2) !important;
         }
 
         #n8n-chat-embed textarea {
           background-color: transparent !important;
           color: #ffffff !important;
-          padding: 0.75rem 0 !important;
+          padding: 11px 0 0 0 !important; /* Centralização manual por padding */
+          font-size: 0.85rem !important;
+          height: 44px !important; /* Altura total da pílula */
+          line-height: 20px !important;
+          text-align: left !important;
+          resize: none !important;
+          overflow-y: hidden !important;
+          margin: 0 !important;
+          flex: 1 !important;
+          display: block !important;
+          box-sizing: border-box !important;
+        }
+
+        /* Forçando centralização em possíveis containers internos */
+        div#n8n-chat-embed [class*="footer"] form > div,
+        div#n8n-chat-embed [class*="footer"] > div > div {
+          display: flex !important;
+          align-items: center !important;
+          height: 100% !important;
+          border: none !important;
+          background: transparent !important;
+        }
+
+        /* Garantindo que o placeholder siga o alinhamento */
+        #n8n-chat-embed textarea::placeholder {
+          line-height: 20px !important;
+          display: flex !important;
+          align-items: center !important;
         }
 
         #n8n-chat-embed [class*="n8n-chat-ui-messages-list"] {
-          background-color: #060b17 !important;
+          background-color: transparent !important;
           overscroll-behavior: contain !important;
-          overflow-y: auto !important;
+          border: none !important;
         }
 
-        #n8n-chat-embed {
-          overscroll-behavior: contain;
-        }
-
-        /* Ajuste das Bolhas de Mensagem */
+        /* Message Bubbles Refinement */
         [class*="n8n-chat-ui-message"] {
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          margin-bottom: 0.75rem !important;
+          border-radius: 1.25rem !important;
+          padding: 0.85rem 1.1rem !important;
+          line-height: 1.5 !important;
+          max-width: 85% !important;
+          font-weight: 400 !important;
         }
 
-        /* Botão de Enviar */
-        [class*="n8n-chat-ui-send-button"] {
-          background: transparent !important;
-          color: #5865F2 !important;
+        [class*="n8n-chat-ui-message-bot"] {
+          border-bottom-left-radius: 0.25rem !important;
+          background: #1a202c !important;
+          color: #e2e8f0 !important;
         }
-        #n8n-chat-embed textarea::placeholder,
-        #n8n-chat-embed input::placeholder {
-          color: #4b5563 !important;
+
+        [class*="n8n-chat-ui-message-user"] {
+          border-bottom-right-radius: 0.25rem !important;
+          background: #01FC8D !important;
+          color: #060b17 !important;
+          font-weight: 600 !important;
+        }
+
+        /* Botão de Enviar na Pílula - Estados Dinâmicos */
+        #n8n-chat-embed [class*="footer"] button,
+        #n8n-chat-embed [class*="footer"] [class*="send"],
+        #n8n-chat-embed [class*="send"] {
+          position: absolute !important;
+          right: 12px !important;
+          top: 50% !important;
+          transform: translateY(-50%) !important;
+          border-radius: 50% !important;
+          width: 26px !important;
+          height: 26px !important;
+          min-width: 26px !important;
+          min-height: 26px !important;
+          padding: 0 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          border: none !important;
+          z-index: 99 !important;
+          transition: all 0.2s ease !important;
+          margin: 0 !important;
+        }
+
+        /* Estado Desativado (Vazio) */
+        #n8n-chat-embed [class*="send"]:disabled,
+        #n8n-chat-embed [class*="send"][disabled] {
+          background: #ffffff !important;
+          opacity: 0.4 !important;
+          cursor: not-allowed !important;
+          box-shadow: none !important;
+        }
+
+        /* Estado Ativo (Com texto) */
+        #n8n-chat-embed [class*="send"]:not(:disabled) {
+          background: #01FC8D !important;
+          opacity: 1 !important;
+          cursor: pointer !important;
+          box-shadow: 0 2px 8px rgba(1, 252, 141, 0.3) !important;
+        }
+
+        #n8n-chat-embed [class*="send"] svg {
+          width: 14px !important;
+          height: 14px !important;
+          color: #060b17 !important;
+          transition: transform 0.2s ease !important;
+        }
+
+        #n8n-chat-embed [class*="send"]:not(:disabled):hover {
+          transform: translateY(-50%) scale(1.1) !important;
+        }
+
+
+        #n8n-chat-embed textarea::placeholder {
+          color: rgba(255, 255, 255, 0.3) !important;
+        }
+
+        /* Custom Scrollbar for minimalist look */
+        [class*="n8n-chat-ui-messages-list"]::-webkit-scrollbar {
+          width: 4px;
+        }
+        [class*="n8n-chat-ui-messages-list"]::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        [class*="n8n-chat-ui-messages-list"]::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
         }
       `}</style>
 
-      <section className="">
+      <section className="py-20 lg:py-32 overflow-hidden relative">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#01FC8D]/5 rounded-full blur-[120px]" />
         </div>
@@ -204,15 +398,12 @@ export function ChatContact() {
                 viewport={{ once: true }}
                 className="relative w-full max-w-[480px]"
               >
-                {/* Glow */}
-                <div className="absolute -inset-1 bg-gradient-to-br from-[#01FC8D]/20 via-transparent to-[#01FC8D]/5 rounded-[1.5rem] blur-md" />
+                {/* Subtle Glow */}
+                <div className="absolute -inset-1 bg-gradient-to-br from-[#01FC8D]/10 via-transparent to-transparent rounded-[1.5rem] blur-xl opacity-50" />
 
                 {/* Card */}
-                <div className="relative rounded-[1.25rem] overflow-hidden border border-white/10 shadow-[0_32px_64px_rgba(0,0,0,0.6)] bg-[#060b17]">
-                  {/* Header decorative bar */}
-                  <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#01FC8D]/60 to-transparent" />
-
-                  <div id="n8n-chat-embed" style={{ width: '100%', height: '560px' }} />
+                <div className="relative rounded-[1.5rem] overflow-hidden border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.4)] bg-black/20 backdrop-blur-sm">
+                  <div id="n8n-chat-embed" style={{ width: '100%', height: '620px' }} />
                 </div>
               </motion.div>
             </div>

@@ -188,6 +188,9 @@ const Threads: React.FC<ThreadsProps> = ({
       program.uniforms.iResolution.value.g = clientHeight;
       program.uniforms.iResolution.value.b = clientWidth / clientHeight;
     }
+    const resizeObserver = new ResizeObserver(() => resize());
+    resizeObserver.observe(container);
+    
     window.addEventListener('resize', resize);
     resize();
 
@@ -232,6 +235,7 @@ const Threads: React.FC<ThreadsProps> = ({
 
     return () => {
       observer.disconnect();
+      resizeObserver.disconnect();
       if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
       window.removeEventListener('resize', resize);
 
