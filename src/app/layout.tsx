@@ -2,7 +2,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { Roboto } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { N8nChatBubble } from "@/components/N8nChatBubble";
+import { N8nChatWrapper } from "@/components/N8nChatWrapper";
 import type { Metadata } from "next";
 
 const roboto = Roboto({ 
@@ -34,7 +34,7 @@ export default async function RootLayout({
         >
           {children}
           <Toaster />
-          <N8nChatBubble />
+          <N8nChatWrapper />
         </ThemeProvider>
       </body>
     </html>
