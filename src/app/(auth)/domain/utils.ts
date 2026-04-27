@@ -175,13 +175,15 @@ export const getDomainData = cache(async function getDomainData(
 
       let multiYearPricesBRL: Record<number, number> = {};
 
-      if (standardBrlPrices?.allPrices && Object.keys(standardBrlPrices.allPrices).length > 0) {
+      // Se for PREMIUM, ignoramos a tabela de preços padrão do TLD (pois domínios premium têm preços únicos)
+      if (!domainDetail.IsPremiumName && standardBrlPrices?.allPrices && Object.keys(standardBrlPrices.allPrices).length > 0) {
         for (const [year, usdPrice] of Object.entries(standardBrlPrices.allPrices)) {
           const yearNum = parseInt(year, 10);
           multiYearPricesBRL[yearNum] = Math.round(toPrice(usdPrice as number) * fee * 100) / 100;
         }
       } else {
-        // Fallback robusto caso não tenhamos a tabela
+        // Fallback robusto para Premium ou TLDs sem tabela completa: 
+        // preço = registro + (anos-1) * renovação
         multiYearPricesBRL[1] = priceBRL;
         for (let year = 2; year <= 10; year++) {
           const total = priceBRL + (renewBRL * (year - 1));

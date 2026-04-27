@@ -1195,8 +1195,14 @@ export const namecheapApi = new NamecheapApiWrapper(
 
 export async function getDomainPricing(tld: string) {
   const response = await namecheapApi.getPricing(tld);
-  const products = response?.ProductType?.Categories.flatMap(c => c.Products) || [];
-  return products[0] || null;
+  const categories = response?.ProductType?.Categories || [];
+  const registerCategory = categories.find(c => c.Name.toUpperCase() === "REGISTER");
+  if (registerCategory) {
+    return registerCategory.Products.find(p => p.Name.toLowerCase() === tld.toLowerCase())
+      ?? registerCategory.Products[0]
+      ?? null;
+  }
+  return categories.flatMap(c => c.Products)[0] ?? null;
 }
 
 export default namecheapApi;

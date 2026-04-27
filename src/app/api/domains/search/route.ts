@@ -270,9 +270,9 @@ export async function GET(request: NextRequest) {
           let priceBRL = 0, renewBRL = 0, transferBRL = 0;
 
           if (d.IsPremiumName && (d.PremiumRegistrationPrice ?? 0) > 0) {
-            priceBRL = (d.PremiumRegistrationPrice ?? 0) * fee;
-            renewBRL = (d.PremiumRenewalPrice ?? 0) * fee;
-            transferBRL = (d.PremiumTransferPrice ?? 0) * fee;
+            priceBRL = (d.PremiumRegistrationPrice ?? 0) * usdToBrl * fee;
+            renewBRL = (d.PremiumRenewalPrice ?? 0) * usdToBrl * fee;
+            transferBRL = (d.PremiumTransferPrice ?? 0) * usdToBrl * fee;
           } else if (pricing?.price) {
             const alreadyBrl = (pricing as { currency?: string }).currency === "BRL";
             priceBRL = (alreadyBrl ? (pricing.price ?? 0) : (pricing.price ?? 0) * usdToBrl) * fee;

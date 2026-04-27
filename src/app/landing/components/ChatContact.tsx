@@ -52,10 +52,10 @@ export function ChatContact() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       // Verifica se o evento veio de um textarea dentro do nosso chat
-      if (target.tagName === 'TEXTAREA' && 
-          (target.closest('#n8n-chat-embed') || target.closest('#n8n-chat-bubble')) && 
-          e.key === 'Enter' && !e.shiftKey) {
-        
+      if (target.tagName === 'TEXTAREA' &&
+        (target.closest('#n8n-chat-embed') || target.closest('#n8n-chat-bubble')) &&
+        e.key === 'Enter' && !e.shiftKey) {
+
         e.preventDefault();
         const sendButton = target.closest('form')?.querySelector('button[class*="send"]') as HTMLButtonElement | null;
         if (sendButton && !sendButton.disabled) {
