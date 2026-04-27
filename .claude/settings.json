@@ -10,7 +10,9 @@
       "Bash(nslookup -type=NS ebooksim.com 8.8.8.8)",
       "Bash(nslookup -type=NS ebooksim.com)",
       "Bash(powershell -Command \"Resolve-DnsName -Name ebooksim.com -Type NS -Server 1.1.1.1 2>&1\")",
-      "Bash(powershell -Command \"Resolve-DnsName -Name ebooksim.com -Type A -Server 8.8.8.8 2>&1\")"
+      "Bash(powershell -Command \"Resolve-DnsName -Name ebooksim.com -Type A -Server 8.8.8.8 2>&1\")",
+      "Bash(xargs grep *)",
+      "Bash(npm install *)"
     ]
   }
 }
