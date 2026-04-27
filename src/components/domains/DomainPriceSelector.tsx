@@ -138,9 +138,6 @@ export function DomainPriceSelector({
               Administração de DNS
             </li>
             <li className="rounded bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-800/30 dark:text-green-400">
-              Encaminhamento de email
-            </li>
-            <li className="rounded bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-800/30 dark:text-green-400">
               Proteção de Privacidade
             </li>
           </ul>
