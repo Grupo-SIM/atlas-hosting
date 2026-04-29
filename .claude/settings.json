@@ -16,7 +16,8 @@
       "Bash(awk -F: '{print $2}')",
       "Bash(python3 -c ' *)",
       "Bash(node -e ' *)",
-      "Read(//c/c/Users/breno/Desktop/JB/atlas-hosting/src/lib/db/schema/**)"
+      "Read(//c/c/Users/breno/Desktop/JB/atlas-hosting/src/lib/db/schema/**)",
+      "Read(//c/Users/breno/Desktop/JB/checkout-form-generic/**)"
     ]
   }
 }

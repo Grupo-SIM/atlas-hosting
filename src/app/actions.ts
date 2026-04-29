@@ -1086,6 +1086,35 @@ export async function initiateCheckoutPix(
   }
 }
 
+/**
+ * Chamado pelo cliente quando SSE confirma o pagamento.
+ * Marca a fatura como paga e agenda o processamento em background.
+ * Não chama a API Simpay (o cliente já confirmou via SSE).
+ */
+export async function markPixPaymentComplete(invoiceId: string): Promise<void> {
+  const user = await getUser();
+
+  const invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, invoiceId),
+  });
+
+  if (!invoice || invoice.orgId !== user.organization.id) return;
+  if (invoice.status === "paid") return;
+
+  await db
+    .update(pgInvoice)
+    .set({ status: "paid" })
+    .where(eq(pgInvoice.id, invoice.id));
+
+  const meta = invoice.metadata as DomainRegisterInvoiceOptions;
+  const billing = meta.pixCheckout;
+  if (billing) {
+    after(async () => {
+      await processInvoiceAfterPayment(invoice, user, billing);
+    });
+  }
+}
+
 /** Polling do status PIX (Simpay). Quando COMPLETED, marca como pago e processa em background. */
 export async function syncCheckoutPixPayment(
   invoiceId: string

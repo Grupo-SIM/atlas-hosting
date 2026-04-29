@@ -5,6 +5,7 @@ import {
   completeCheckout,
   completeCheckoutWithSavedCard,
   initiateCheckoutPix,
+  markPixPaymentComplete,
   syncCheckoutPixPayment,
 } from "@/app/actions";
 import {
@@ -706,32 +707,58 @@ const ModernCheckoutForm = forwardRef<
     paymentMethodCbRef.current?.(paymentMethod ?? null);
   }, [paymentMethod]);
 
-  // Polling para o status do PIX
+  // Detecção do pagamento PIX: SSE primário (push em tempo real) + polling fallback
   useEffect(() => {
     if (!pixSession || isPixLoading) return;
 
-    let stopped = false;
+    const paymentId = pixSession.paymentId;
+    const simApi = (process.env.NEXT_PUBLIC_SIMPAY_API_URL ?? "https://simpay-back.simintermediacoes.com").replace(/\/+$/, "");
+    let done = false;
 
-    const poll = async () => {
-      if (stopped) return;
+    // Chamado quando SSE confirma o pagamento (sem nova chamada à API Simpay)
+    const handleSseConfirmed = async () => {
+      if (done) return;
+      done = true;
+      await markPixPaymentComplete(invoiceId);
+      setIsPaymentConfirmed(true);
+      router.push("/payment/success");
+    };
+
+    // SSE primário: Simpay faz push instantâneo ao confirmar o pagamento
+    let es: EventSource | null = new EventSource(`${simApi}/checkout/pix/${paymentId}/sse`);
+    es.addEventListener("payment-status", (e) => {
+      try {
+        const d = JSON.parse((e as MessageEvent).data) as { status?: string };
+        if (d.status === "COMPLETED") { es?.close(); void handleSseConfirmed(); }
+      } catch { /* ignore */ }
+    });
+    es.addEventListener("heartbeat", () => { /* keepalive */ });
+    es.onerror = () => { es?.close(); es = null; };
+
+    // Fallback: polling via servidor a cada 4s (caso SSE não esteja disponível)
+    const intervalId = setInterval(async () => {
+      if (done) { clearInterval(intervalId); return; }
       const result = await syncCheckoutPixPayment(invoiceId);
-      if (!stopped && result.status === "COMPLETED") {
-        stopped = true;
+      if (!done && result.status === "COMPLETED") {
+        done = true;
+        clearInterval(intervalId);
+        es?.close();
         setIsPaymentConfirmed(true);
         router.push("/payment/success");
       }
-    };
+    }, 4000);
 
-    const intervalId = setInterval(() => void poll(), 1500);
     const stopAt = setTimeout(() => {
-      stopped = true;
+      done = true;
       clearInterval(intervalId);
+      es?.close();
     }, 15 * 60 * 1000);
 
     return () => {
-      stopped = true;
+      done = true;
       clearInterval(intervalId);
       clearTimeout(stopAt);
+      es?.close();
     };
   }, [pixSession, isPixLoading, invoiceId, router]);
 
