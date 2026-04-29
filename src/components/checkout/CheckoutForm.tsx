@@ -435,7 +435,7 @@ const schema = z.object({
     zipCode: z
       .string()
       .min(1, "CEP é obrigatório")
-      .regex(/^\d{8}$/, "CEP inválido"),
+      .refine((v) => v.replace(/\D/g, "").length === 8, "CEP inválido"),
   }),
 });
 

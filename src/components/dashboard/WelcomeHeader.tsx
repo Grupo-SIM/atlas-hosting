@@ -22,7 +22,7 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
         </div>
       </div>
       <div className="flex space-x-3">
-        <TooltipProvider delayDuration={0}>
+       {/*  <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
               <div>
@@ -36,9 +36,9 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
               Em breve
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
+        </TooltipProvider> */}
 
-        <TooltipProvider delayDuration={0}>
+        {/* <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
               <div>
@@ -52,7 +52,7 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
               Em breve
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
+        </TooltipProvider> */}
       </div>
     </div>
   );
@@ -75,7 +75,7 @@ export function UserPlanBadge({ user }: WelcomeHeaderProps) {
     );
   }
 
-  return "Nenhum plano ativo no momento.";
+  return "";
 }
 
 export interface WelcomeHeaderProps {

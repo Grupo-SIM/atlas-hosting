@@ -45,7 +45,7 @@ export const getDomainData = cache(async function getDomainData(
         missingTlds.map(async (tld) => {
           const pricingData = await namecheapApi.getPricing(tld);
           const categories = pricingData?.ProductType?.Categories || [];
-          
+
           const regCat = categories.find(c => c.Name.toUpperCase() === "REGISTER");
           const renewCat = categories.find(c => c.Name.toUpperCase() === "RENEW");
           const transCat = categories.find(c => c.Name.toUpperCase() === "TRANSFER");
@@ -62,7 +62,7 @@ export const getDomainData = cache(async function getDomainData(
             const products = cat?.Products || [];
             const prod = products.find((p: any) => p.Name.toLowerCase() === tld.toLowerCase());
             if (!prod) return {};
-            
+
             const yearPrices: Record<number, number> = {};
             prod.Prices.forEach((p: any) => {
               if (p.DurationType === "YEAR" && p.Duration >= 1 && p.Duration <= 10) {
@@ -77,11 +77,11 @@ export const getDomainData = cache(async function getDomainData(
           const renew = get1YearPrice(renewCat) || p1 * 1.2;
           const transfer = get1YearPrice(transCat) || p1;
 
-          return { 
-            tld, 
-            price: p1, 
-            renew: renew, 
-            transfer: transfer, 
+          return {
+            tld,
+            price: p1,
+            renew: renew,
+            transfer: transfer,
             currency: "USD",
             allPrices: regPrices
           };
@@ -105,12 +105,12 @@ export const getDomainData = cache(async function getDomainData(
         const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
         // Se o valor no env for 0.20, tratamos como 20%. Se for 20, tratamos como 20%.
         const envFeeNormalized = envFee !== undefined ? (envFee > 0 && envFee < 1 ? envFee * 100 : envFee) : undefined;
-        
+
         const config = await db.query.pgSystemConfig.findFirst();
-        const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 20;
+        const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 30;
         fee = 1 + finalFeePercent / 100;
-      } catch { 
-        fee = 1.20; 
+      } catch {
+        fee = 1.20;
       }
     }
 
@@ -163,14 +163,17 @@ export const getDomainData = cache(async function getDomainData(
       let renewBRL = 0;
       let transferBRL = 0;
 
+      const fixedFee = Number(process.env.DOMAIN_FIXED_FEE || 4);
+      const feeMarkup = fee;
+
       if (domainDetail.IsPremiumName && (domainDetail.PremiumRegistrationPrice ?? 0) > 0) {
-        priceBRL = toPrice(domainDetail.PremiumRegistrationPrice ?? 0) * fee;
-        renewBRL = toPrice(domainDetail.PremiumRenewalPrice ?? 0) * fee;
-        transferBRL = toPrice(domainDetail.PremiumTransferPrice ?? 0) * fee;
+        priceBRL = Math.round((toPrice(domainDetail.PremiumRegistrationPrice ?? 0) * feeMarkup + fixedFee) * 100) / 100;
+        renewBRL = Math.round((toPrice(domainDetail.PremiumRenewalPrice ?? 0) * feeMarkup + fixedFee) * 100) / 100;
+        transferBRL = Math.round((toPrice(domainDetail.PremiumTransferPrice ?? 0) * feeMarkup + fixedFee) * 100) / 100;
       } else if (standardBrlPrices?.price) {
-        priceBRL = toPrice(standardBrlPrices.price ?? 0) * fee;
-        renewBRL = toPrice(standardBrlPrices.renew ?? 0) * fee;
-        transferBRL = toPrice(standardBrlPrices.transfer ?? 0) * fee;
+        priceBRL = Math.round((toPrice(standardBrlPrices.price ?? 0) * feeMarkup + fixedFee) * 100) / 100;
+        renewBRL = Math.round((toPrice(standardBrlPrices.renew ?? 0) * feeMarkup + fixedFee) * 100) / 100;
+        transferBRL = Math.round((toPrice(standardBrlPrices.transfer ?? 0) * feeMarkup + fixedFee) * 100) / 100;
       }
 
       let multiYearPricesBRL: Record<number, number> = {};
@@ -179,7 +182,7 @@ export const getDomainData = cache(async function getDomainData(
       if (!domainDetail.IsPremiumName && standardBrlPrices?.allPrices && Object.keys(standardBrlPrices.allPrices).length > 0) {
         for (const [year, usdPrice] of Object.entries(standardBrlPrices.allPrices)) {
           const yearNum = parseInt(year, 10);
-          multiYearPricesBRL[yearNum] = Math.round(toPrice(usdPrice as number) * fee * 100) / 100;
+          multiYearPricesBRL[yearNum] = Math.round((toPrice(usdPrice as number) * fee + (fixedFee * yearNum)) * 100) / 100;
         }
       } else {
         // Fallback robusto para Premium ou TLDs sem tabela completa: 
@@ -210,14 +213,14 @@ export const getDomainData = cache(async function getDomainData(
         domainDataMapped.length > 0
           ? domainDataMapped[0]
           : {
-              domain: searchQuery,
-              available: false,
-              priceBRL: 0,
-              renewBRL: 0,
-              transferBRL: 0,
-              isPremium: false,
-              multiYearPricesBRL: undefined,
-            };
+            domain: searchQuery,
+            available: false,
+            priceBRL: 0,
+            renewBRL: 0,
+            transferBRL: 0,
+            isPremium: false,
+            multiYearPricesBRL: undefined,
+          };
     }
     return {
       available: mainDomainData.available,
@@ -246,6 +249,67 @@ export const recommendedTlds: `.${string}`[] = [
   ".app",
   ".online",
 ];
+
+export async function getAllDomainPrices(tlds: string[]) {
+  const domainPricesFromDb = await db
+    .select()
+    .from(pgDomainPricingCache)
+    .where(inArray(pgDomainPricingCache.tld, tlds));
+
+  const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
+  let fee = 1;
+  if (feeEnabled) {
+    try {
+      const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
+      const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
+      
+      let finalFeePercent: number;
+      if (envFee !== undefined) {
+        if (envFee > 0 && envFee < 1) {
+          finalFeePercent = envFee * 100;
+        } else if (envFee >= 1 && envFee < 5) {
+          finalFeePercent = (envFee - 1) * 100;
+        } else {
+          finalFeePercent = envFee;
+        }
+      } else {
+        const config = await db.query.pgSystemConfig.findFirst();
+        finalFeePercent = config?.domainFee ?? 30;
+      }
+      fee = 1 + finalFeePercent / 100;
+    } catch {
+      fee = 1.20;
+    }
+  }
+
+  const fixedFee = Number(process.env.DOMAIN_FIXED_FEE) || 4;
+
+  const [usdToBrlRate] = await currencyConversion.convertMultiple({
+    from: "usd",
+    to: "brl",
+    amounts: [1],
+  });
+
+  return await Promise.all(
+    domainPricesFromDb.map(async (item) => {
+      const baseReg = (item.price ?? 0) * usdToBrlRate;
+      const baseRenew = (item.renew ?? 0) * usdToBrlRate;
+      const baseTransfer = (item.transfer ?? 0) * usdToBrlRate;
+
+      return {
+        tld: item.tld,
+        price: item.price ?? undefined,
+        renew: item.renew ?? undefined,
+        transfer: item.transfer ?? undefined,
+        minRegisterYears: item.minRegisterYears ?? undefined,
+        maxRegisterYears: item.maxRegisterYears ?? undefined,
+        registrationPrice: baseReg > 0 ? (baseReg * fee) + fixedFee : 0,
+        renewalPrice: baseRenew > 0 ? (baseRenew * fee) + fixedFee : 0,
+        transferPrice: baseTransfer > 0 ? (baseTransfer * fee) + fixedFee : 0,
+      };
+    })
+  );
+}
 
 const check = cache(async (params: DomainsCheckUserParams) =>
   namecheapApi.check(params)

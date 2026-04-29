@@ -9,10 +9,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input, inputClasses } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { IMaskInput } from "react-imask";
 import {
   Select,
   SelectContent,
@@ -56,11 +57,17 @@ import {
   Key,
   Trash2,
   AlertTriangle,
+  CreditCard,
+  MapPin,
+  Phone,
+  FileText,
 } from "lucide-react";
 import type { User, UserSettings } from "@/lib/db/schema/tables/user";
 import { formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { ChangeEmailSection } from "@/components/auth/ChangeEmailSection";
+import { saveUserBillingInfo } from "@/app/(auth)/billing/actions";
+import axios from "axios";
 import {
   updateUserProfileAction,
   changePasswordAction,
@@ -81,6 +88,21 @@ export function UserSection({ user }: UserSectionProps) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // Billing state
+  const [isEditingBilling, setIsEditingBilling] = useState(false);
+  const [billingInfo, setBillingInfo] = useState({
+    document: user.billingDocument || "",
+    phoneNumber: user.billingPhone || "",
+    address: {
+      street: user.billingStreet || "",
+      number: user.billingNumber || "",
+      neighborhood: user.billingNeighborhood || "",
+      city: user.billingCity || "",
+      state: user.billingState || "",
+      zipCode: user.billingZipCode || "",
+    },
+  });
 
   // Password form state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -205,6 +227,34 @@ export function UserSection({ user }: UserSectionProps) {
         toast({
           title: "Erro",
           description: "Erro inesperado ao enviar verificação.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
+  const handleSaveBilling = () => {
+    startTransition(async () => {
+      try {
+        const result = await saveUserBillingInfo(billingInfo);
+
+        if (result.status === "success") {
+          toast({
+            title: "Sucesso",
+            description: result.message,
+          });
+          setIsEditingBilling(false);
+        } else {
+          toast({
+            title: "Erro",
+            description: result.message,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao salvar informações de cobrança.",
           variant: "destructive",
         });
       }
@@ -383,11 +433,227 @@ export function UserSection({ user }: UserSectionProps) {
         </CardContent>
       </Card>
 
+      {/* Billing Information */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Dados de Faturamento
+              </CardTitle>
+              <CardDescription>
+                Informações utilizadas para geração de faturas e notas fiscais
+              </CardDescription>
+            </div>
+            {!isEditingBilling && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsEditingBilling(true)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Editar
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-muted-foreground font-medium">
+                  <FileText className="h-4 w-4" />
+                  CPF ou CNPJ
+                </Label>
+                <IMaskInput
+                  mask={[
+                    { mask: "000.000.000-00" },
+                    { mask: "00.000.000/0000-00" },
+                  ]}
+                  value={billingInfo.document}
+                  onAccept={(value) => setBillingInfo({ ...billingInfo, document: value })}
+                  readOnly={!isEditingBilling}
+                  placeholder="000.000.000-00"
+                  className={inputClasses}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-muted-foreground font-medium">
+                  <Phone className="h-4 w-4" />
+                  Telefone de Contato
+                </Label>
+                <IMaskInput
+                  mask="(00) 00000-0000"
+                  value={billingInfo.phoneNumber}
+                  onAccept={(value) => setBillingInfo({ ...billingInfo, phoneNumber: value })}
+                  readOnly={!isEditingBilling}
+                  placeholder="(00) 00000-0000"
+                  className={inputClasses}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-muted-foreground font-medium">
+                  <MapPin className="h-4 w-4" />
+                  CEP
+                </Label>
+                <IMaskInput
+                  mask="00000-000"
+                  unmask={true}
+                  value={billingInfo.address.zipCode}
+                  onAccept={(value) => {
+                    const digits = value.replace(/\D/g, "");
+                    setBillingInfo((prev) => ({ 
+                      ...prev, 
+                      address: { ...prev.address, zipCode: digits } 
+                    }));
+
+                    if (digits && digits.length === 8) {
+                      (async () => {
+                        try {
+                          const { data } = await axios.get(`https://opencep.com/v1/${digits}.json`);
+                          if (data && !data.error) {
+                            setBillingInfo((prev) => ({
+                              ...prev,
+                              address: {
+                                ...prev.address,
+                                street: data.logradouro || prev.address.street,
+                                neighborhood: data.bairro || prev.address.neighborhood,
+                                city: data.localidade || prev.address.city,
+                                state: data.uf || prev.address.state,
+                                zipCode: digits
+                              }
+                            }));
+                          }
+                        } catch (error) {
+                          console.error("Error fetching CEP:", error);
+                        }
+                      })();
+                    }
+                  }}
+                  readOnly={!isEditingBilling}
+                  placeholder="00000-000"
+                  className={inputClasses}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t border-border/50">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2 space-y-2">
+                <Label className="text-muted-foreground font-medium">Rua</Label>
+                <Input
+                  value={billingInfo.address.street}
+                  onChange={(e) => setBillingInfo({ 
+                    ...billingInfo, 
+                    address: { ...billingInfo.address, street: e.target.value } 
+                  })}
+                  readOnly={!isEditingBilling}
+                  placeholder="Nome da rua"
+                  className="bg-muted/30"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground font-medium">Número</Label>
+                <Input
+                  value={billingInfo.address.number}
+                  onChange={(e) => setBillingInfo({ 
+                    ...billingInfo, 
+                    address: { ...billingInfo.address, number: e.target.value } 
+                  })}
+                  readOnly={!isEditingBilling}
+                  placeholder="123"
+                  className="bg-muted/30"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label className="text-muted-foreground font-medium">Bairro</Label>
+                <Input
+                  value={billingInfo.address.neighborhood}
+                  onChange={(e) => setBillingInfo({ 
+                    ...billingInfo, 
+                    address: { ...billingInfo.address, neighborhood: e.target.value } 
+                  })}
+                  readOnly={!isEditingBilling}
+                  placeholder="Nome do bairro"
+                  className="bg-muted/30"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground font-medium">Cidade</Label>
+                <Input
+                  value={billingInfo.address.city}
+                  onChange={(e) => setBillingInfo({ 
+                    ...billingInfo, 
+                    address: { ...billingInfo.address, city: e.target.value } 
+                  })}
+                  readOnly={!isEditingBilling}
+                  placeholder="Nome da cidade"
+                  className="bg-muted/30"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground font-medium">Estado</Label>
+                <Input
+                  value={billingInfo.address.state}
+                  onChange={(e) => setBillingInfo({ 
+                    ...billingInfo, 
+                    address: { ...billingInfo.address, state: e.target.value } 
+                  })}
+                  readOnly={!isEditingBilling}
+                  placeholder="SP"
+                  maxLength={2}
+                  className="bg-muted/30"
+                />
+              </div>
+            </div>
+          </div>
+
+          {isEditingBilling && (
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleSaveBilling} disabled={isPending}>
+                <Save className="h-4 w-4 mr-2" />
+                {isPending ? "Salvando..." : "Salvar Dados de Cobrança"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setBillingInfo({
+                    document: user.billingDocument || "",
+                    phoneNumber: user.billingPhone || "",
+                    address: {
+                      street: user.billingStreet || "",
+                      number: user.billingNumber || "",
+                      neighborhood: user.billingNeighborhood || "",
+                      city: user.billingCity || "",
+                      state: user.billingState || "",
+                      zipCode: user.billingZipCode || "",
+                    },
+                  });
+                  setIsEditingBilling(false);
+                }}
+                disabled={isPending}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Change Email Section */}
-      <ChangeEmailSection user={user} />
+    {/*   <ChangeEmailSection user={user} /> */}
 
       {/* Security Settings */}
-      <Card>
+     {/*  <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
@@ -540,10 +806,10 @@ export function UserSection({ user }: UserSectionProps) {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Notification Preferences */}
-      <Card>
+{/*       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
@@ -598,7 +864,7 @@ export function UserSection({ user }: UserSectionProps) {
             ))}
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Danger Zone */}
       <Card className="border-destructive">

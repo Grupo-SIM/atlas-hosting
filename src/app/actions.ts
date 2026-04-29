@@ -14,6 +14,7 @@ import pleskApi from "@/lib/server/apis/plesk";
 import { ClientRequestTypeEnum } from "@/plesk";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 
 import { db } from "@/lib/db";
 import {
@@ -29,6 +30,7 @@ import {
   type Plan,
   type User,
   type DomainRegisterInvoiceOptions,
+  type DomainRenewInvoiceOptions,
   type PixCheckoutSnapshot,
 } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
@@ -45,6 +47,7 @@ import { AppLogger } from "@/lib/server/logs";
 import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
 import type { DomainPageParams } from "./(auth)/domain/types";
 import { registerDomainsFromPaidInvoice } from "@/lib/server/domains/registerFromPaidInvoice";
+import { renewDomainFromPaidInvoice } from "@/lib/server/domains/renewFromPaidInvoice";
 import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
 import { AtlasNotificationEmail } from "@/emails";
 import { render } from "@react-email/render";
@@ -140,9 +143,14 @@ export async function login(
 
 export async function signup(
   prevState: unknown,
-  { email, password, firstName, lastName, referrerId: initialReferrerId, ref, organizationName }: SignupFormInputs
+  { email, password, firstName, lastName, referrerId: initialReferrerId, ref, organizationName }: any
 ): Promise<ActionResponse> {
-  const fullName = `${firstName.trim()} ${lastName.trim()}`;
+  // Garantir valores para campos que agora são omitidos no form
+  const safeFirstName = firstName || email.split("@")[0];
+  const safeLastName = lastName || "";
+  const safeOrgName = organizationName || "Minha Organização";
+  
+  const fullName = `${safeFirstName.trim()} ${safeLastName.trim()}`.trim();
 
   let referrerId = initialReferrerId;
 
@@ -155,10 +163,10 @@ export async function signup(
     }
   }
 
-  if (!email || !password || !firstName || !lastName || !organizationName) {
+  if (!email || !password) {
     return {
       status: "error",
-      message: "Nome, sobrenome, email e senha são obrigatórios",
+      message: "Email e senha são obrigatórios",
     };
   }
 
@@ -180,7 +188,7 @@ export async function signup(
       fullName,
       email,
       password,
-      organizationName,
+      safeOrgName,
       referrerId
     );
 
@@ -359,11 +367,10 @@ export async function createPlanInvoice(
 
     redirectUrl = `/checkout/${newInvoice.id}`;
   } catch (error) {
-    console.error("Erro ao criar fatura do domínio:", error);
+    console.error("Erro ao criar fatura do plano:", error);
     return {
       status: "error",
-      message:
-        "Erro interno ao processar o pedido. Por favor, tente mais tarde.",
+      message: "Erro interno ao processar o pedido. Por favor, tente mais tarde.",
     };
   }
 
@@ -379,6 +386,37 @@ export async function createPlanInvoice(
     message: "Erro ao processar o pedido. Por favor, tente mais tarde.",
   };
 }
+
+/** Helper to calculate the domain profit fee (markup) */
+const getDomainProfitFee = async (): Promise<number> => {
+  const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
+  if (!feeEnabled) return 1;
+
+  try {
+    const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
+    const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
+    
+    let finalFeePercent: number;
+    
+    if (envFee !== undefined) {
+      // Normalize: 0.2 -> 20, 1.2 -> 20, 20 -> 20
+      if (envFee > 0 && envFee < 1) {
+        finalFeePercent = envFee * 100;
+      } else if (envFee >= 1 && envFee < 5) {
+        finalFeePercent = (envFee - 1) * 100;
+      } else {
+        finalFeePercent = envFee;
+      }
+    } else {
+      const dbConfig = await db.query.pgSystemConfig.findFirst();
+      finalFeePercent = dbConfig?.domainFee ?? 30;
+    }
+    
+    return 1 + (finalFeePercent / 100);
+  } catch {
+    return 1.20;
+  }
+};
 
 export async function createDomainInvoice(data: DomainPageParams | FormData) {
   "use server";
@@ -409,8 +447,6 @@ export async function createDomainInvoice(data: DomainPageParams | FormData) {
 
   const yearStr = (years && years.trim() !== "") ? years : "1";
 
-  let redirectUrl: string | null = null;
-
   console.log(`\n[INVOICE] ==================== CRIANDO FATURA DE DOMÍNIO ====================`);
   console.log(`[INVOICE] Domínio: ${domain} | Anos: ${yearStr} | Whoisguard: ${whoisguard ?? "off"} | Usuário: ${user.id}`);
 
@@ -436,21 +472,7 @@ export async function createDomainInvoice(data: DomainPageParams | FormData) {
       return { error: "Domínio não está disponível para registro." };
     }
 
-    const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
-    let fee = 1;
-    if (feeEnabled) {
-      try {
-        const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
-        const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
-        const envFeeNormalized = envFee !== undefined ? (envFee > 0 && envFee < 1 ? envFee * 100 : envFee) : undefined;
-        
-        const dbConfig = await db.query.pgSystemConfig.findFirst();
-        const finalFeePercent = envFeeNormalized ?? dbConfig?.domainFee ?? 20;
-        fee = 1 + finalFeePercent / 100;
-      } catch { 
-        fee = 1.20; 
-      }
-    }
+    const fee = await getDomainProfitFee();
 
     let priceInBrl = 0;
 
@@ -463,7 +485,9 @@ export async function createDomainInvoice(data: DomainPageParams | FormData) {
         to: "brl",
         amount: basePriceUSD,
       });
-      priceInBrl *= fee;
+      const targetYears = parseInt(yearStr, 10);
+      const fixedFee = Number(process.env.DOMAIN_FIXED_FEE) || 4;
+      priceInBrl = (priceInBrl * fee) + (fixedFee * targetYears);
     } else {
       const tld = domain.split(".").pop() as string;
       console.log(`[NAMECHEAP] Buscando preços para TLD: .${tld}`);
@@ -524,7 +548,9 @@ export async function createDomainInvoice(data: DomainPageParams | FormData) {
         to: "brl",
         amount: totalUSD,
       });
-      priceInBrl *= fee;
+      const envFixedFee = process.env.DOMAIN_FIXED_FEE;
+      const fixedFee = envFixedFee !== undefined ? Number(envFixedFee) : 4;
+      priceInBrl = (priceInBrl * fee) + (fixedFee * targetYears);
     }
 
     if (whoisguard === "on") {
@@ -603,7 +629,7 @@ export async function createDomainBundleInvoice({
         const envFeeNormalized = envFee !== undefined ? (envFee > 0 && envFee < 1 ? envFee * 100 : envFee) : undefined;
         
         const config = await db.query.pgSystemConfig.findFirst();
-        const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 20;
+        const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 30;
         fee = 1 + finalFeePercent / 100;
       } catch { 
         fee = 1.20; 
@@ -641,8 +667,9 @@ export async function createDomainBundleInvoice({
         to: "brl",
         amount: priceUSD,
       });
-
-      totalBrl += priceInBrl * fee;
+      const envFixedFee = process.env.DOMAIN_FIXED_FEE;
+      const fixedFee = envFixedFee !== undefined ? parseFloat(envFixedFee) : 4;
+      totalBrl += (priceInBrl * fee) + fixedFee;
     }
 
     const wgOn = whoisguard === "on";
@@ -684,6 +711,80 @@ export async function createDomainBundleInvoice({
     console.error(`[INVOICE-PACOTE] ERRO:`, error);
     return { error: "Erro ao criar fatura do pacote." };
   }
+}
+
+export async function createDomainRenewalInvoice(domainName: string): Promise<
+  { status: "error"; message: string } | { status: "success"; invoiceId: string; priceBRL: number }
+> {
+  const user = await getUser();
+  if (!user) return { status: "error", message: "Usuário não autenticado." };
+
+  const tld = domainName.split(".").slice(1).join(".");
+  let pricing = await db.query.pgDomainPricingCache.findFirst({
+    where: eq(pgDomainPricingCache.tld, tld),
+  });
+
+  let renewUSD = pricing?.renew;
+
+  if (!renewUSD) {
+    console.log(`[RENEWAL] Preço não encontrado no cache para .${tld}. Buscando na Namecheap API...`);
+    try {
+      const pricingData = await namecheapApi.getPricing(tld);
+      const categories = pricingData?.ProductType?.Categories || [];
+      const renewCat = categories.find(c => c.Name.toUpperCase() === "RENEW");
+      const products = renewCat?.Products || [];
+      const prod = products.find((p: any) => p.Name.toLowerCase() === tld.toLowerCase());
+      
+      if (prod) {
+        const priceDetail = prod.Prices.find((p: any) => p.Duration === 1 && p.DurationType === "YEAR");
+        renewUSD = priceDetail?.YourPrice ?? priceDetail?.Price;
+      }
+      
+      if (!renewUSD) {
+        // Fallback para o preço de registro + 20% se renovação não for encontrada
+        const regCat = categories.find(c => c.Name.toUpperCase() === "REGISTER");
+        const regProd = regCat?.Products.find((p: any) => p.Name.toLowerCase() === tld.toLowerCase());
+        const regPriceDetail = regProd?.Prices.find((p: any) => p.Duration === 1 && p.DurationType === "YEAR");
+        const regPrice = regPriceDetail?.YourPrice ?? regPriceDetail?.Price;
+        if (regPrice) {
+          renewUSD = regPrice * 1.2;
+        }
+      }
+    } catch (error) {
+      console.error(`[RENEWAL] Erro ao buscar preço na Namecheap:`, error);
+    }
+  }
+
+  if (!renewUSD) {
+    return { status: "error", message: "Preço de renovação não encontrado para este domínio." };
+  }
+
+  const fee = await getDomainProfitFee();
+  const fixedFee = parseFloat(process.env.DOMAIN_FIXED_FEE || "4");
+
+  const baseBrl = await currencyConversion.convert({ from: "usd", to: "brl", amount: renewUSD });
+  const amountBRL = Math.ceil((baseBrl * fee + fixedFee) * 100) / 100;
+
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 1);
+
+  const [newInvoice] = await db
+    .insert(pgInvoice)
+    .values({
+      orgId: user.organization.id,
+      userId: user.id,
+      type: "domain",
+      reference: domainName,
+      amount: amountBRL,
+      status: "pending",
+      dueDate,
+      metadata: { type: "renew", domain: domainName } as unknown as DomainRenewInvoiceOptions,
+    })
+    .returning();
+
+  if (!newInvoice?.id) return { status: "error", message: "Erro ao criar fatura de renovação." };
+
+  return { status: "success", invoiceId: newInvoice.id, priceBRL: Math.round(amountBRL * 100) };
 }
 
 const TEST_PAYMENT_AMOUNT_BRL = 1;
@@ -792,6 +893,37 @@ function buildPixCheckoutSnapshot(
   };
 }
 
+async function processInvoiceAfterPayment(
+  invoice: Invoice,
+  user: User,
+  billing: PixCheckoutSnapshot
+): Promise<void> {
+  if (invoice.type !== "domain") return;
+
+  const meta = invoice.metadata as DomainRegisterInvoiceOptions;
+  if (meta.testPaymentOnly) return;
+
+  const domainMeta = invoice.metadata as DomainRegisterInvoiceOptions | DomainRenewInvoiceOptions;
+  if ((domainMeta as DomainRenewInvoiceOptions).type === "renew") {
+    await renewDomainFromPaidInvoice(invoice);
+    return;
+  }
+
+  const contact = {
+    FirstName: billing.firstName.trim(),
+    LastName: billing.lastName.trim(),
+    Address1: `${billing.address.street}, ${billing.address.number}`,
+    City: billing.address.city,
+    StateProvince: billing.address.state,
+    PostalCode: billing.address.zipCode,
+    Country: "BR",
+    Phone: `+55.${billing.phoneNumber.replace(/\D/g, "")}`,
+    EmailAddress: user.email,
+  };
+
+  await registerDomainsFromPaidInvoice(invoice, contact as NamecheapContactDetails);
+}
+
 async function fulfillCheckoutAfterPixPaid(
   invoice: Invoice,
   user: User,
@@ -808,6 +940,17 @@ async function fulfillCheckoutAfterPixPaid(
       console.log(
         `[CHECKOUT-PIX] Fatura de teste paga (sem Namecheap): ${invoice.id}`
       );
+      redirect("/payment/success");
+    }
+
+    const domainMeta = invoice.metadata as DomainRegisterInvoiceOptions | DomainRenewInvoiceOptions;
+
+    if ((domainMeta as DomainRenewInvoiceOptions).type === "renew") {
+      const { renewed } = await renewDomainFromPaidInvoice(invoice);
+      if (!renewed) {
+        console.error(`[CHECKOUT-PIX] Falha ao renovar domínio para fatura ${invoice.id}`);
+      }
+      await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoice.id));
       redirect("/payment/success");
     }
 
@@ -837,7 +980,7 @@ async function fulfillCheckoutAfterPixPaid(
       .update(pgInvoice)
       .set({ status: "paid" })
       .where(eq(pgInvoice.id, invoice.id));
-    redirect("/domains");
+    redirect("/payment/success");
   }
 
   await db
@@ -943,10 +1086,10 @@ export async function initiateCheckoutPix(
   }
 }
 
-/** Polling do status PIX (Simpay). Quando COMPLETED, conclui pedido e redireciona. */
+/** Polling do status PIX (Simpay). Quando COMPLETED, marca como pago e processa em background. */
 export async function syncCheckoutPixPayment(
   invoiceId: string
-): Promise<{ status: "PENDING" }> {
+): Promise<{ status: "PENDING" | "COMPLETED" }> {
   const user = await getUser();
 
   const invoice = await db.query.pgInvoice.findFirst({
@@ -958,12 +1101,7 @@ export async function syncCheckoutPixPayment(
   }
 
   if (invoice.status === "paid") {
-    const paidMeta = invoice.metadata as DomainRegisterInvoiceOptions;
-    const path =
-      invoice.type === "domain" && !paidMeta.testPaymentOnly
-        ? "/domains"
-        : "/payment/success";
-    redirect(path);
+    return { status: "COMPLETED" };
   }
 
   const meta = invoice.metadata as DomainRegisterInvoiceOptions;
@@ -977,7 +1115,16 @@ export async function syncCheckoutPixPayment(
   const remote = await simpayApi.getPaymentStatus(paymentId);
 
   if (remote.status === "COMPLETED") {
-    await fulfillCheckoutAfterPixPaid(invoice, user, billing);
+    await db
+      .update(pgInvoice)
+      .set({ status: "paid" })
+      .where(eq(pgInvoice.id, invoice.id));
+
+    after(async () => {
+      await processInvoiceAfterPayment(invoice, user, billing);
+    });
+
+    return { status: "COMPLETED" };
   }
 
   return { status: "PENDING" };
@@ -1183,6 +1330,14 @@ export async function completeCheckout(
       redirect("/payment/success");
     }
 
+    const domainMetaTyped = invoice.metadata as DomainRegisterInvoiceOptions | DomainRenewInvoiceOptions;
+    if ((domainMetaTyped as DomainRenewInvoiceOptions).type === "renew") {
+      const { renewed } = await renewDomainFromPaidInvoice(invoice);
+      if (!renewed) console.error(`[NAMECHEAP] Falha ao renovar domínio para fatura ${invoiceId}`);
+      await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
+      redirect("/domains");
+    }
+
     const contact = {
       FirstName: values.firstName.trim(),
       LastName: values.lastName.trim(),
@@ -1210,8 +1365,8 @@ export async function completeCheckout(
     }
 
     await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
-    console.log(`[CHECKOUT] ✓ Fatura ${invoiceId} marcada como PAGA. Redirecionando para /domains.`);
-    redirect("/domains");
+    console.log(`[CHECKOUT] ✓ Fatura ${invoiceId} marcada como PAGA. Redirecionando para /payment/success.`);
+    redirect("/payment/success");
   }
 
   console.log(`\n[SIMPAY] ── PAGAMENTO RECORRENTE (ASSINATURA) ──`);
@@ -1385,6 +1540,14 @@ export async function completeCheckoutWithSavedCard(
       return { status: "success", message: "/payment/success" };
     }
 
+    const domainMetaSavedTyped = invoice.metadata as DomainRegisterInvoiceOptions | DomainRenewInvoiceOptions;
+    if ((domainMetaSavedTyped as DomainRenewInvoiceOptions).type === "renew") {
+      const { renewed } = await renewDomainFromPaidInvoice(invoice);
+      if (!renewed) console.error(`[NAMECHEAP] Falha ao renovar domínio (cartão salvo) para fatura ${invoiceId}`);
+      await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
+      return { status: "success", message: "/domains" };
+    }
+
     const contact = {
       FirstName: values.firstName.trim(),
       LastName: values.lastName.trim(),
@@ -1412,7 +1575,7 @@ export async function completeCheckoutWithSavedCard(
     await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
     console.log(`[CHECKOUT-SAVED] ✓ Fatura ${invoiceId} marcada como PAGA.`);
 
-    return { status: "success", message: "/domains" };
+    return { status: "success", message: "/payment/success" };
   }
 
   console.log(`\n[SIMPAY] ── PAGAMENTO RECORRENTE (ASSINATURA / CARTÃO SALVO) ──`);

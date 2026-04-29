@@ -1,10 +1,11 @@
-// src/app/(authenticated)/(dashboard)/sites/[domain]/dns/page.tsx
+import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { getUserCurrentDomain } from "@/lib/server/utils";
 import { isError } from "lodash";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DnsRecordsManager } from "./components/DnsRecordManager";
@@ -18,11 +19,21 @@ export const metadata: Metadata = {
 };
 
 export default async function DnsManagementPage({
-  params,
-}: { params: { domain: string } }) {
+  searchParams,
+}: { searchParams: Promise<{ domain?: string }> }) {
+  const { domain: domainFromQuery } = await searchParams;
   const user = await getUser();
 
-  const domain = await getUserCurrentDomain(user);
+  // Se veio domain na query, tentamos achar na organização
+  let domain = null;
+  if (domainFromQuery) {
+    domain = user.organization.domains.find(d => d.domain === domainFromQuery);
+  }
+  
+  // Fallback para o domínio selecionado se não veio na query ou não foi encontrado
+  if (!domain) {
+    domain = await getUserCurrentDomain(user);
+  }
 
   if (!domain) {
     return (
@@ -49,21 +60,28 @@ export default async function DnsManagementPage({
 
   const breadcrumbItems = [
     { label: "Sites", href: "/sites" }, // Adjust href as needed
-    { label: domainName, href: `/sites/${params.domain}` }, // Adjust href as needed
+    { label: domainName, href: `/sites/${domainName}` }, // Adjust href as needed
     { label: "Gerenciamento de DNS" },
   ];
 
   return (
     <div className="space-y-6 p-4 md:p-6 pb-16">
       {/* <Breadcrumb items={breadcrumbItems} /> */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            Editor de Zona DNS
-          </h1>
-          <p className="text-muted-foreground">
-            Gerenciar registros DNS para {domainName}
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" asChild={true}>
+            <Link href="/domains">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+              Editor de Zona DNS
+            </h1>
+            <p className="text-muted-foreground">
+              Gerenciar registros DNS para {domainName}
+            </p>
+          </div>
         </div>
       </div>
 

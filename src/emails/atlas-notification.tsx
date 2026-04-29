@@ -88,7 +88,9 @@ export const AtlasNotificationEmail = ({
         <Container style={container}>
           <Section style={box}>
             <Img
-              src={`${publicSiteUrl}/atlas-logo.png`}
+              src={publicSiteUrl && !publicSiteUrl.includes("localhost") 
+                ? `${publicSiteUrl.replace(/\/$/, "")}/atlas-logo.png` 
+                : "https://atlashosting.com.br/atlas-logo.png"}
               width="120"
               height="40"
               alt="Atlas Hosting"

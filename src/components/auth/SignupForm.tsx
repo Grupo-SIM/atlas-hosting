@@ -13,15 +13,28 @@ import { z } from "zod";
 // import GithubAuthButton from "./GithubAuthButton";
 // import GoogleAuthButton from "./GoogleAuthButton";
 
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+
 export default function SignupForm({
   referrer,
   redirect,
 }: { referrer?: Pick<User, "name" | "email" | "id">; redirect?: string }) {
-  const { register, handleSubmit, control, ...methods } =
+  const [userType, setUserType] = useState<"PF" | "PJ">("PF");
+  
+  const { register, handleSubmit, control, setValue, watch, ...methods } =
     useForm<SignupFormInputs>({
       resolver: zodResolver(schema),
       mode: "onChange",
       reValidateMode: "onChange",
+      defaultValues: {
+        userType: "PF",
+      }
     });
 
   const { errors, isValid, isValidating } = useFormState({ control });
@@ -38,14 +51,23 @@ export default function SignupForm({
     setIsLoading(true);
 
     try {
-      // Obter código de indicação do cookie
       const cookies = document.cookie.split("; ");
       const refCookie = cookies.find(row => row.startsWith("referrer_code="));
       const ref = refCookie ? refCookie.split("=")[1] : undefined;
 
+      // Adaptar campos removidos para o backend (usando email como nome/org temporário se necessário)
+      const signupData = {
+        ...data,
+        firstName: data.email.split("@")[0],
+        lastName: userType === "PF" ? "Pessoa Física" : "Pessoa Jurídica",
+        organizationName: data.document,
+        referrerId: referrer?.id,
+        ref
+      };
+
       const result = await signup(
         { status: "idle", message: "" },
-        { ...data, referrerId: referrer?.id, ref }
+        signupData as any
       );
 
       if (result.status === "success") {
@@ -65,37 +87,70 @@ export default function SignupForm({
     }
   };
 
+  const handleUserTypeChange = (val: "PF" | "PJ") => {
+    setUserType(val);
+    setValue("userType", val);
+    setValue("document", ""); // Clear document on type change
+  };
+
+  const formatDocument = (value: string, type: "PF" | "PJ") => {
+    const digits = value.replace(/\D/g, "");
+    if (type === "PF") {
+      return digits
+        .slice(0, 11)
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    } else {
+      return digits
+        .slice(0, 14)
+        .replace(/^(\d{2})(\d)/, "$1.$2")
+        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1/$2")
+        .replace(/(\d{4})(\d)/, "$1-$2");
+    }
+  };
+
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatDocument(e.target.value, userType);
+    setValue("document", formatted, { shouldValidate: true });
+  };
+
   return (
     <>
-      <form onSubmit={onSubmit} className="space-y-2">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">Nome</Label>
-            <Input
-              id="firstName"
-              type="text"
-              placeholder="Seu nome"
-              autoComplete="given-name"
-              {...register("firstName")}
-            />
-            {errors.firstName && (
-              <p className="text-xs text-red-400">{errors.firstName.message}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastName">Sobrenome</Label>
-            <Input
-              id="lastName"
-              type="text"
-              placeholder="Seu sobrenome"
-              autoComplete="family-name"
-              {...register("lastName")}
-            />
-            {errors.lastName && (
-              <p className="text-xs text-red-400">{errors.lastName.message}</p>
-            )}
-          </div>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="userType">Tipo de Conta</Label>
+          <Select 
+            onValueChange={(val: "PF" | "PJ") => handleUserTypeChange(val)} 
+            defaultValue="PF"
+          >
+            <SelectTrigger id="userType" className="w-full">
+              <SelectValue placeholder="Selecione o tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PF">Pessoa Física (CPF)</SelectItem>
+              <SelectItem value="PJ">Pessoa Jurídica (CNPJ)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="document">
+            {userType === "PF" ? "CPF" : "CNPJ"}
+          </Label>
+          <Input
+            id="document"
+            type="text"
+            placeholder={userType === "PF" ? "000.000.000-00" : "00.000.000/0000-00"}
+            {...register("document")}
+            onChange={handleDocumentChange}
+          />
+          {errors.document && (
+            <p className="text-xs text-red-400">{errors.document.message}</p>
+          )}
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="email">E-mail</Label>
           <Input
@@ -108,20 +163,7 @@ export default function SignupForm({
             <p className="text-xs text-red-400">{errors.email.message}</p>
           )}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="organizationName">Nome da organização</Label>
-          <Input
-            type="text"
-            placeholder="Nome da sua organização"
-            autoComplete="organizationName"
-            {...register("organizationName")}
-          />
-          {errors.organizationName && (
-            <p className="text-xs text-red-400">
-              {errors.organizationName.message}
-            </p>
-          )}
-        </div>
+
         <div className="space-y-2">
           <Label htmlFor="password">Senha</Label>
           <Input
@@ -134,26 +176,12 @@ export default function SignupForm({
             <p className="text-xs text-red-400">{errors.password.message}</p>
           )}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-          <Input
-            type="password"
-            placeholder="Confirme sua senha"
-            autoComplete="new-password"
-            {...register("confirmPassword")}
-          />
-          {errors.confirmPassword && (
-            <p className="text-xs text-red-400">
-              {errors.confirmPassword.message}
-            </p>
-          )}
-        </div>
 
         {formError && <p className="text-xs text-red-400">{formError}</p>}
 
         <Button
           type="submit"
-          className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+          className="w-full h-12 text-base bg-gradient-to-r from-[#01FC8D] to-[#01e67d] text-[#0a0e27] font-bold hover:brightness-110"
           disabled={!isValid || isValidating || isLoading}
         >
           {isLoading ? (
@@ -162,53 +190,23 @@ export default function SignupForm({
             "Cadastrar"
           )}
         </Button>
-
-        {/*
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Ou cadastre-se com
-            </span>
-          </div>
-        </div>
-        */}
       </form>
     </>
   );
 }
 
-const schema = z
-  .object({
-    firstName: z
-      .string()
-      .trim()
-      .min(2, "Nome deve ter pelo menos 2 caracteres"),
-    lastName: z
-      .string()
-      .trim()
-      .min(2, "Sobrenome deve ter pelo menos 2 caracteres"),
-    email: z
-      .string()
-      .min(1, "E-mail é obrigatório")
-      .email("Digite um e-mail válido"),
-    organizationName: z
-      .string()
-      .trim()
-      .min(1, "Nome da organização é obrigatório")
-      .max(100, "O nome da organização deve ter no máximo 100 caracteres"),
-    password: z
-      .string()
-      .min(8, "A senha deve ter pelo menos 8 caracteres")
-      .max(100, "A senha deve ter no máximo 100 caracteres"),
-    confirmPassword: z.string().min(1, "Confirmação de senha é obrigatória"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "As senhas devem ser iguais",
-    path: ["confirmPassword"],
-  });
+const schema = z.object({
+  userType: z.enum(["PF", "PJ"]),
+  document: z.string().min(11, "Documento inválido").max(18, "Documento inválido"),
+  email: z
+    .string()
+    .min(1, "E-mail é obrigatório")
+    .email("Digite um e-mail válido"),
+  password: z
+    .string()
+    .min(8, "A senha deve ter pelo menos 8 caracteres")
+    .max(100, "A senha deve ter no máximo 100 caracteres"),
+});
 
 export type SignupFormInputs = z.infer<typeof schema> & {
   referrerId?: string;

@@ -203,18 +203,14 @@ export async function createUser(
         newUser[0].email
       );
 
-      await sendWelcomeEmail(
-        newUser[0].email,
-        newUser[0].name,
-        organizationName
-      );
-
-      await sendEmailVerificationEmail(
+      // Envia apenas o email de verificação em background
+      sendEmailVerificationEmail(
         newUser[0].email,
         newUser[0].name,
         verificationToken.token,
         verificationToken.code ?? ""
-      );
+      ).catch(err => console.error("Background verification email error:", err));
+      
     } catch (error) {
       console.error("Failed to send verification/welcome email:", error);
       // Don't fail user creation if token creation or email sending fails

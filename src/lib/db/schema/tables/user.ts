@@ -36,6 +36,16 @@ export const pgUser = pgTable("users", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   deletedAt: timestamp("deleted_at", { mode: "date" }),
+  
+  // Billing Information
+  billingDocument: text("billing_document"),
+  billingPhone: text("billing_phone"),
+  billingStreet: text("billing_street"),
+  billingNumber: text("billing_number"),
+  billingNeighborhood: text("billing_neighborhood"),
+  billingCity: text("billing_city"),
+  billingState: text("billing_state"),
+  billingZipCode: text("billing_zip_code"),
 });
 
 export const userSettings = pgTable("user_settings", {

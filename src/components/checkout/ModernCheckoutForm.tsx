@@ -7,6 +7,10 @@ import {
   initiateCheckoutPix,
   syncCheckoutPixPayment,
 } from "@/app/actions";
+import {
+  getUserBillingInfo,
+  saveUserBillingInfo,
+} from "@/app/(auth)/billing/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +31,7 @@ import {
   ArrowLeft,
   Check,
   CreditCard,
+  Loader2,
   Plus,
   QrCode,
   Store,
@@ -75,6 +80,7 @@ export interface SavedCard {
 export type CheckoutSidebarActionState = {
   label: string;
   disabled: boolean;
+  hidden?: boolean;
 };
 
 interface ModernCheckoutFormProps {
@@ -127,7 +133,7 @@ const billingAddressSchema = z.object({
     zipCode: z
       .string()
       .min(1, "CEP é obrigatório")
-      .regex(/^\d{8}$/, "CEP inválido"),
+      .refine((v) => v.replace(/\D/g, "").length === 8, "CEP inválido"),
   }),
 });
 
@@ -177,6 +183,8 @@ const ModernCheckoutForm = forwardRef<
   const [isLoadingCards, setIsLoadingCards] = useState(true);
   const [isPending, startTransition] = useTransition();
   const [isPixLoading, setIsPixLoading] = useState(false);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
   const [pixSession, setPixSession] = useState<{
     pix_qrcode: string;
     pix_content: string;
@@ -186,6 +194,18 @@ const ModernCheckoutForm = forwardRef<
   const [pixCopied, setPixCopied] = useState(false);
   const pixCopiedResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("billing");
+  const [savedBillingInfo, setSavedBillingInfo] = useState<any>(null);
+
+  // Fetch saved billing info on mount
+  useEffect(() => {
+    const fetchBilling = async () => {
+      const info = await getUserBillingInfo();
+      if (info) {
+        setSavedBillingInfo(info);
+      }
+    };
+    fetchBilling();
+  }, []);
 
   // Always use the full schema for form management
   const methods = useForm<NewCardFormInputs>({
@@ -200,7 +220,41 @@ const ModernCheckoutForm = forwardRef<
     formState: { errors, touchedFields },
     control,
     setValue,
+    watch,
   } = methods;
+
+  // Watch billing fields to trigger re-renders for the sidebar button
+  const watchedBillingFields = watch([
+    "firstName",
+    "lastName",
+    "document",
+    "phoneNumber",
+    "address.zipCode",
+    "address.street",
+    "address.number",
+    "address.neighborhood",
+    "address.city",
+    "address.state",
+  ]);
+
+  const handleAutoFill = useCallback(() => {
+    if (!savedBillingInfo) return;
+    
+    const options = { shouldValidate: true, shouldDirty: true };
+    
+    setValue("firstName", savedBillingInfo.firstName, options);
+    setValue("lastName", savedBillingInfo.lastName, options);
+    setValue("document", savedBillingInfo.document, options);
+    setValue("phoneNumber", savedBillingInfo.phoneNumber, options);
+    setValue("address.zipCode", savedBillingInfo.address.zipCode, options);
+    setValue("address.street", savedBillingInfo.address.street, options);
+    setValue("address.number", savedBillingInfo.address.number, options);
+    setValue("address.neighborhood", savedBillingInfo.address.neighborhood, options);
+    setValue("address.city", savedBillingInfo.address.city, options);
+    setValue("address.state", savedBillingInfo.address.state, options);
+    
+    toast.success("Dados preenchidos com as informações do seu perfil!");
+  }, [savedBillingInfo, setValue]);
 
   // Load saved cards only
   useEffect(() => {
@@ -232,17 +286,6 @@ const ModernCheckoutForm = forwardRef<
     }
   }, [paymentMethod]);
 
-  useEffect(() => {
-    if (!pixSession) return;
-    const intervalId = setInterval(() => {
-      void syncCheckoutPixPayment(invoiceId);
-    }, 2500);
-    const stopAt = setTimeout(() => clearInterval(intervalId), 15 * 60 * 1000);
-    return () => {
-      clearInterval(intervalId);
-      clearTimeout(stopAt);
-    };
-  }, [pixSession, invoiceId]);
 
   useEffect(() => {
     setPixCopied(false);
@@ -310,6 +353,12 @@ const ModernCheckoutForm = forwardRef<
           transactionId: res.transactionId,
         });
         toast.success("PIX gerado. Escaneie ou copie o código.");
+        // Save billing info for future use
+        void saveUserBillingInfo({
+          document: v.document,
+          phoneNumber: v.phoneNumber,
+          address: v.address,
+        });
       } else {
         toast.error(res.message);
       }
@@ -333,6 +382,8 @@ const ModernCheckoutForm = forwardRef<
 
             if (result.status === "success") {
               toast.success(result.message);
+              // Save billing info for future use
+              void saveUserBillingInfo(values);
             } else {
               toast.error(result.message);
             }
@@ -373,6 +424,16 @@ const ModernCheckoutForm = forwardRef<
   );
 
   const router = useRouter();
+
+  const handleCheckPayment = useCallback(async () => {
+    setIsVerifyingPayment(true);
+    const result = await syncCheckoutPixPayment(invoiceId);
+    if (result.status === "COMPLETED") {
+      setIsPaymentConfirmed(true);
+      router.push("/payment/success");
+    }
+    // isVerifyingPayment stays true after click — polling will redirect when confirmed
+  }, [invoiceId, router]);
 
   // Simplified submit for existing users (only payment method)
   const onSimpleSubmit = useCallback(() => {
@@ -498,8 +559,6 @@ const ModernCheckoutForm = forwardRef<
       "address"
     );
 
-    console.log({ billingFields });
-
     const isTouched = Object.values(
       pick(billingFields, "firstName", "lastName", "document", "phoneNumber", "address")
     ).every((e) => {
@@ -509,8 +568,6 @@ const ModernCheckoutForm = forwardRef<
       return !!e;
     });
 
-    console.log({ isTouched });
-
     if (!isTouched) {
       return false;
     }
@@ -519,7 +576,6 @@ const ModernCheckoutForm = forwardRef<
       pick(errors, "firstName", "lastName", "document", "phoneNumber", "address")
     ).every((e) => {
       if (!isString(e)) {
-        console.log(e);
         return Object.values(e).some((v) => !v);
       }
       return !e;
@@ -529,11 +585,6 @@ const ModernCheckoutForm = forwardRef<
   }
 
   const canProceedToPayment = isFirstStepValid();
-
-  console.log({
-    canProceedToPayment,
-    err: pick(errors, "firstName", "lastName", "document", "phoneNumber", "address"),
-  });
 
   const canCompleteCheckout = () => {
     if (paymentMethod === "pix") {
@@ -563,7 +614,7 @@ const ModernCheckoutForm = forwardRef<
             if (!pixSession) {
               void handleInitiatePix();
             } else {
-              void syncCheckoutPixPayment(invoiceId);
+              void handleCheckPayment();
             }
             return;
           }
@@ -580,7 +631,7 @@ const ModernCheckoutForm = forwardRef<
           if (!pixSession) {
             void handleInitiatePix();
           } else {
-            void syncCheckoutPixPayment(invoiceId);
+            void handleCheckPayment();
           }
           return;
         }
@@ -597,6 +648,7 @@ const ModernCheckoutForm = forwardRef<
       onSubmit,
       onSimpleSubmit,
       handleInitiatePix,
+      handleCheckPayment,
       invoiceId,
     ]
   );
@@ -607,6 +659,7 @@ const ModernCheckoutForm = forwardRef<
 
     let label = "Finalizar Transação";
     let disabled = false;
+    let hidden = false;
 
     if (!hasExistingUser && currentStep === "billing") {
       label = "Continuar";
@@ -616,8 +669,10 @@ const ModernCheckoutForm = forwardRef<
         label = "Gerando PIX...";
         disabled = true;
       } else if (pixSession) {
-        label = "Finalizar Transação";
-        disabled = false;
+        // QR code visível: oculta o botão lateral, o usuário usa "Já paguei"
+        hidden = true;
+        disabled = true;
+        label = "";
       } else {
         label = "Gerar PIX";
         disabled = !canProceedToPayment;
@@ -632,27 +687,58 @@ const ModernCheckoutForm = forwardRef<
       }
     }
 
-    notify({ label, disabled });
+    notify({ label, disabled, hidden });
   }, [
     hasExistingUser,
     currentStep,
     paymentMethod,
     pixSession,
     isPixLoading,
+    isVerifyingPayment,
+    isPaymentConfirmed,
     isPending,
     canProceedToPayment,
     allowCardFinalize,
+    watchedBillingFields,
   ]);
 
   useEffect(() => {
     paymentMethodCbRef.current?.(paymentMethod ?? null);
   }, [paymentMethod]);
 
+  // Polling para o status do PIX
+  useEffect(() => {
+    if (!pixSession || isPixLoading) return;
+
+    let stopped = false;
+
+    const poll = async () => {
+      if (stopped) return;
+      const result = await syncCheckoutPixPayment(invoiceId);
+      if (!stopped && result.status === "COMPLETED") {
+        stopped = true;
+        setIsPaymentConfirmed(true);
+        router.push("/payment/success");
+      }
+    };
+
+    const intervalId = setInterval(() => void poll(), 1500);
+    const stopAt = setTimeout(() => {
+      stopped = true;
+      clearInterval(intervalId);
+    }, 15 * 60 * 1000);
+
+    return () => {
+      stopped = true;
+      clearInterval(intervalId);
+      clearTimeout(stopAt);
+    };
+  }, [pixSession, isPixLoading, invoiceId, router]);
+
   // Render simplified version for existing users with domId
   if (hasExistingUser) {
     return (
       <div className="space-y-6">
-        {/* Payment Method Selection Only */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -661,7 +747,9 @@ const ModernCheckoutForm = forwardRef<
               </div>
               <div>
                 <CardTitle>Método de Pagamento</CardTitle>
-                <CardDescription>Escolha como deseja pagar</CardDescription>
+                <CardDescription>
+                  Escolha como deseja pagar
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -718,7 +806,8 @@ const ModernCheckoutForm = forwardRef<
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {card.holderName} • {card.expiryMonth}/{card.expiryYear}
+                        {card.holderName} • {card.expiryMonth}/
+                        {card.expiryYear}
                       </div>
                     </div>
                   </Label>
@@ -747,68 +836,25 @@ const ModernCheckoutForm = forwardRef<
         </Card>
 
         {paymentMethod === "pix" && (
-          <BillingInformationSection methods={methods} id={id} />
+          pixSession ? (
+            <PixQrCodeCard 
+              pixSession={pixSession} 
+              pixCopied={pixCopied} 
+              copyPixToClipboard={copyPixToClipboard} 
+              onBack={() => setPixSession(null)}
+              onCheckPayment={() => void handleCheckPayment()}
+              isPixLoading={isPixLoading}
+              isVerifyingPayment={isVerifyingPayment}
+              isPaymentConfirmed={isPaymentConfirmed}
+            />
+          ) : (
+            <BillingInformationSection methods={methods} id={id} savedInfo={savedBillingInfo} onAutoFill={handleAutoFill} />
+          )
         )}
 
-        {/* New Card Form - Only show if "new" is selected */}
         <AnimatePresence>
           {paymentMethod === "new" && <NewCardFormSection {...methods} />}
         </AnimatePresence>
-
-        {paymentMethod === "pix" && pixSession && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Pague com PIX</CardTitle>
-              <CardDescription>
-                Escaneie o QR ou copie o código no app do banco
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {pixSession.pix_qrcode ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={pixSession.pix_qrcode}
-                  alt="QR Code PIX"
-                  className="mx-auto max-w-[240px] rounded-lg border border-border"
-                />
-              ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                className={clsx(
-                  "w-full overflow-hidden transition-[color,background-color,border-color] duration-300",
-                  pixCopied &&
-                    "border-emerald-500/45 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
-                )}
-                onClick={copyPixToClipboard}
-              >
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.span
-                    key={pixCopied ? "copied" : "copy"}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="inline-flex items-center justify-center gap-2"
-                  >
-                    {pixCopied ? (
-                      <>
-                        <Check className="size-4 shrink-0" strokeWidth={2.5} />
-                        Copiado!
-                      </>
-                    ) : (
-                      "Copiar código PIX"
-                    )}
-                  </motion.span>
-                </AnimatePresence>
-              </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                Após o pagamento, a confirmação é automática (pode levar alguns
-                instantes).
-              </p>
-            </CardContent>
-          </Card>
-        )}
       </div>
     );
   }
@@ -818,7 +864,20 @@ const ModernCheckoutForm = forwardRef<
       {/* Billing Information Step */}
       {currentStep === "billing" && (
         <>
-          <BillingInformationSection methods={methods} id={id} />
+          {paymentMethod === "pix" && pixSession ? (
+            <PixQrCodeCard 
+              pixSession={pixSession} 
+              pixCopied={pixCopied} 
+              copyPixToClipboard={copyPixToClipboard} 
+              onBack={() => setPixSession(null)}
+              onCheckPayment={() => void handleCheckPayment()}
+              isPixLoading={isPixLoading}
+              isVerifyingPayment={isVerifyingPayment}
+              isPaymentConfirmed={isPaymentConfirmed}
+            />
+          ) : (
+            <BillingInformationSection methods={methods} id={id} savedInfo={savedBillingInfo} onAutoFill={handleAutoFill} />
+          )}
 
           {/* Payment Card - Collapsed/Preview */}
           <Card className="opacity-50">
@@ -854,13 +913,25 @@ const ModernCheckoutForm = forwardRef<
       {/* Payment Step */}
       {currentStep === "payment" && (
         <>
-          {/* Billing Summary Card */}
-          <BillingSummaryCard
-            values={getValues()}
-            onEdit={handleBackToBilling}
-          />
+          {/* Billing Summary Card or PIX QR Code */}
+          {paymentMethod === "pix" && pixSession ? (
+            <PixQrCodeCard 
+              pixSession={pixSession} 
+              pixCopied={pixCopied} 
+              copyPixToClipboard={copyPixToClipboard} 
+              onBack={() => setPixSession(null)}
+              onCheckPayment={() => void handleCheckPayment()}
+              isPixLoading={isPixLoading}
+              isVerifyingPayment={isVerifyingPayment}
+              isPaymentConfirmed={isPaymentConfirmed}
+            />
+          ) : (
+            <BillingSummaryCard
+              values={getValues()}
+              onEdit={handleBackToBilling}
+            />
+          )}
 
-          {/* Payment Method Selection */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -873,7 +944,9 @@ const ModernCheckoutForm = forwardRef<
                 </div>
                 <div>
                   <CardTitle>Método de Pagamento</CardTitle>
-                  <CardDescription>Escolha como deseja pagar</CardDescription>
+                  <CardDescription>
+                    Escolha como deseja pagar
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -889,7 +962,10 @@ const ModernCheckoutForm = forwardRef<
                     className="sr-only after:absolute after:inset-0"
                   />
                   <div className="flex size-8 items-center justify-center rounded-full border-2 border-emerald-500/30 bg-emerald-500/10">
-                    <QrCode size={16} className="text-emerald-600 dark:text-emerald-400" />
+                    <QrCode
+                      size={16}
+                      className="text-emerald-600 dark:text-emerald-400"
+                    />
                   </div>
                   <div>
                     <span className="font-medium">PIX</span>
@@ -961,117 +1037,188 @@ const ModernCheckoutForm = forwardRef<
           {/* New Card Form - Only show if "new" is selected */}
           {paymentMethod === "new" && <NewCardFormSection {...methods} />}
 
-          {paymentMethod === "pix" && pixSession && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Pague com PIX</CardTitle>
-                <CardDescription>
-                  Escaneie o QR ou copie o código no app do banco
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {pixSession.pix_qrcode ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={pixSession.pix_qrcode}
-                    alt="QR Code PIX"
-                    className="mx-auto max-w-[240px] rounded-lg border border-border"
-                  />
-                ) : null}
+              {/* Navigation Buttons */}
+              <div className="flex justify-between">
                 <Button
-                  type="button"
                   variant="outline"
-                  className={clsx(
-                    "w-full overflow-hidden transition-[color,background-color,border-color] duration-300",
-                    pixCopied &&
-                      "border-emerald-500/45 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
-                  )}
-                  onClick={copyPixToClipboard}
+                  onClick={handleBackToBilling}
+                  className="flex items-center gap-2"
                 >
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.span
-                      key={pixCopied ? "copied" : "copy"}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.18, ease: "easeOut" }}
-                      className="inline-flex items-center justify-center gap-2"
-                    >
-                      {pixCopied ? (
-                        <>
-                          <Check className="size-4 shrink-0" strokeWidth={2.5} />
-                          Copiado!
-                        </>
-                      ) : (
-                        "Copiar código PIX"
-                      )}
-                    </motion.span>
-                  </AnimatePresence>
+                  <ArrowLeft size={16} />
+                  Voltar
                 </Button>
-                <p className="text-center text-xs text-muted-foreground">
-                  Após o pagamento, a confirmação é automática (pode levar alguns
-                  instantes).
-                </p>
-              </CardContent>
-            </Card>
-          )}
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={handleBackToBilling}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft size={16} />
-              Voltar
-            </Button>
-
-            <Button
-              onClick={() => {
-                if (paymentMethod === "pix") {
-                  if (pixSession) {
-                    void syncCheckoutPixPayment(invoiceId);
-                  } else {
-                    void handleInitiatePix();
+                <Button
+                  onClick={() => {
+                    if (paymentMethod === "pix") {
+                      void handleInitiatePix();
+                    } else {
+                      handleSubmit(onSubmit)();
+                    }
+                  }}
+                  disabled={
+                    isPixLoading ||
+                    isPending ||
+                    (paymentMethod === "pix" && !canProceedToPayment) ||
+                    (paymentMethod !== "pix" && !canCompleteCheckout())
                   }
-                } else {
-                  handleSubmit(onSubmit)();
-                }
-              }}
-              disabled={
-                isPixLoading ||
-                isPending ||
-                (paymentMethod === "pix" &&
-                  !pixSession &&
-                  !canProceedToPayment) ||
-                (paymentMethod !== "pix" && !canCompleteCheckout())
-              }
-              className="min-w-40"
-            >
-              {isPixLoading
-                ? "Gerando PIX..."
-                : paymentMethod === "pix" && pixSession
-                  ? "Finalizar Transação"
-                  : paymentMethod === "pix"
-                    ? "Gerar PIX"
-                    : isPending
-                      ? "Processando..."
-                      : "Finalizar Transação"}
-            </Button>
-          </div>
+                  className="min-w-40"
+                >
+                  {isPixLoading
+                    ? "Gerando PIX..."
+                    : paymentMethod === "pix"
+                      ? "Gerar PIX"
+                      : isPending
+                        ? "Processando..."
+                        : "Finalizar Transação"}
+                </Button>
+              </div>
         </>
       )}
     </div>
   );
 });
 
+function PixQrCodeCard({
+  pixSession,
+  pixCopied,
+  copyPixToClipboard,
+  onBack,
+  onCheckPayment,
+  isPixLoading,
+  isVerifyingPayment,
+  isPaymentConfirmed,
+}: {
+  pixSession: any;
+  pixCopied: boolean;
+  copyPixToClipboard: () => void;
+  onBack: () => void;
+  onCheckPayment: () => void;
+  isPixLoading: boolean;
+  isVerifyingPayment: boolean;
+  isPaymentConfirmed: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-emerald-50 dark:bg-emerald-500/10">
+              <QrCode
+                className="text-emerald-600 dark:text-emerald-400"
+                size={18}
+                strokeWidth={2.5}
+              />
+            </div>
+            <div>
+              <CardTitle>Pague com PIX</CardTitle>
+              <CardDescription>
+                Escaneie o QR ou copie o código no app do banco
+              </CardDescription>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft size={16} className="mr-2" />
+            Voltar
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {pixSession.pix_qrcode ? (
+          <div className="relative mx-auto w-fit">
+            <div className="absolute -inset-1 rounded-xl bg-gradient-to-tr from-emerald-500/20 to-emerald-500/0 blur-sm" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={pixSession.pix_qrcode}
+              alt="QR Code PIX"
+              className="relative mx-auto max-w-[320px] rounded-lg border border-border bg-white p-2"
+            />
+          </div>
+        ) : null}
+
+        <div className="space-y-3">
+          <Button
+            type="button"
+            variant="outline"
+            className={clsx(
+              "w-full h-12 text-base font-medium overflow-hidden transition-all duration-300",
+              pixCopied
+                ? "border-emerald-500/45 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
+                : "hover:border-emerald-500/30 hover:bg-emerald-500/5"
+            )}
+            onClick={copyPixToClipboard}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={pixCopied ? "copied" : "copy"}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="inline-flex items-center justify-center gap-2"
+              >
+                {pixCopied ? (
+                  <>
+                    <Check className="size-5 shrink-0" strokeWidth={3} />
+                    Código Copiado!
+                  </>
+                ) : (
+                  <>
+                    <QrCode className="size-5 shrink-0" />
+                    Copiar código PIX
+                  </>
+                )}
+              </motion.span>
+            </AnimatePresence>
+          </Button>
+
+          <p className="text-center text-xs text-muted-foreground px-4">
+            Após o pagamento, a confirmação é automática e seu pedido
+            será processado instantaneamente.
+          </p>
+        </div>
+
+        <div className="pt-2">
+          <Button
+            className="w-full h-11"
+            onClick={onCheckPayment}
+            disabled={isPixLoading || isVerifyingPayment || isPaymentConfirmed}
+          >
+            {isPaymentConfirmed ? (
+              <>
+                <Check className="mr-2 h-4 w-4" />
+                Pagamento confirmado!
+              </>
+            ) : isVerifyingPayment ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Verificando pagamento...
+              </>
+            ) : (
+              "Já paguei"
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function BillingInformationSection({
   methods,
   id,
+  savedInfo,
+  onAutoFill,
 }: {
   methods: UseFormReturn<NewCardFormInputs>;
   id: string;
+  savedInfo?: any;
+  onAutoFill?: () => void;
 }) {
   const {
     register,
@@ -1087,10 +1234,24 @@ function BillingInformationSection({
           <div className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border">
             <User className="opacity-80" size={16} strokeWidth={2} />
           </div>
-          <div>
-            <CardTitle className="text-xl font-semibold">
-              Informações de Cobrança
-            </CardTitle>
+          <div className="flex flex-1 items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-semibold">
+                Informações de Cobrança
+              </CardTitle>
+            </div>
+            {savedInfo && onAutoFill && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onAutoFill}
+                className="flex items-center gap-2 border-emerald-500/50 bg-emerald-500/5 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400"
+              >
+                <UserCheck size={16} />
+                Usar dados do perfil
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>

@@ -162,6 +162,41 @@ export default function CheckoutClient({
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="sticky top-4 z-10 space-y-6 lg:top-6">
+                {/* Money Back Guarantee */}
+                <Card className="shadow-lg border-0 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 border-emerald-200 dark:border-emerald-800">
+                  <CardContent className="pt-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <FaMoneyBillTrendUp className="h-5 w-5 text-emerald-600" />
+                        <span className="font-medium text-emerald-800 dark:text-emerald-200">
+                          100% de cashback garantido
+                        </span>
+                      </div>
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                        Todos os seus gastos serão convertidos em vale-compras.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Security & Trust */}
+                <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+                  <CardContent className="pt-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="h-5 w-5 text-green-500" />
+                        <span className="font-medium text-sm">
+                          Pagamento 100% Seguro
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Seus dados estão protegidos com criptografia SSL de
+                        ponta a ponta. Aceitamos cartão e PIX.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Order Details */}
                 <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
                   <CardHeader className="pb-4">
@@ -341,51 +376,17 @@ export default function CheckoutClient({
                   </CardContent>
                 </Card>
 
-
-                {/* Security & Trust */}
-                <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-                  <CardContent className="pt-6">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <ShieldCheck className="h-5 w-5 text-green-500" />
-                        <span className="font-medium text-sm">
-                          Pagamento 100% Seguro
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Seus dados estão protegidos com criptografia SSL de
-                        ponta a ponta. Aceitamos cartão e PIX.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Money Back Guarantee */}
-                <Card className="shadow-lg border-0 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 border-emerald-200 dark:border-emerald-800">
-                  <CardContent className="pt-6">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <FaMoneyBillTrendUp className="h-5 w-5 text-emerald-600" />
-                        <span className="font-medium text-emerald-800 dark:text-emerald-200">
-                          100% de cashback garantido
-                        </span>
-                      </div>
-                      <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                        Todos os seus gastos serão convertidos em vale-compras.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <GradientButton
-                  className="w-full text-lg px-4 min-w-full cursor-pointer disabled:opacity-60"
-                  disabled={sidebarAction.disabled}
-                  onClick={() => {
-                    checkoutFormRef.current?.submit();
-                  }}
-                >
-                  {sidebarAction.label}
-                </GradientButton>
+                {!sidebarAction.hidden && (
+                  <GradientButton
+                    className="w-full text-lg px-4 min-w-full cursor-pointer disabled:opacity-60"
+                    disabled={sidebarAction.disabled}
+                    onClick={() => {
+                      checkoutFormRef.current?.submit();
+                    }}
+                  >
+                    {sidebarAction.label}
+                  </GradientButton>
+                )}
               </div>
             </div>
           </div>

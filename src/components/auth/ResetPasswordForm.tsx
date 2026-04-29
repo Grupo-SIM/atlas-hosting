@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import * as yup from "yup";
@@ -30,7 +30,7 @@ interface ResetPasswordFormProps {
 }
 
 export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
-  const { register, handleSubmit, control } = useForm<ResetPasswordFormInputs>({
+  const { register, handleSubmit, control, trigger, watch } = useForm<ResetPasswordFormInputs>({
     resolver: yupResolver(schema),
     mode: "onChange",
   });
@@ -40,6 +40,16 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
+
+  const password = watch("password");
+  const confirmPassword = watch("confirmPassword");
+
+  // Re-validar confirmação quando a senha principal mudar
+  useEffect(() => {
+    if (confirmPassword) {
+      trigger("confirmPassword");
+    }
+  }, [password, confirmPassword, trigger]);
 
   const onSubmit = async (data: ResetPasswordFormInputs) => {
     setIsLoading(true);
@@ -137,7 +147,7 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
       <Button
         type="submit"
-        className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+        className="w-full h-12 text-base bg-gradient-to-r from-[#01FC8D] to-[#01e67d] text-[#0a0e27] font-bold hover:brightness-110"
         disabled={!isValid || isLoading}
       >
         {isLoading ? (

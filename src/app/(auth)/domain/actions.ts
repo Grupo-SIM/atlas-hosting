@@ -85,12 +85,12 @@ export async function loadMoreDomainSuggestions(
         const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
         const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
         const envFeeNormalized = envFee !== undefined ? (envFee > 0 && envFee < 1 ? envFee * 100 : envFee) : undefined;
-        
+
         const config = await db.query.pgSystemConfig.findFirst();
-        const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 20;
+        const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 30;
         fee = 1 + finalFeePercent / 100;
-      } catch { 
-        fee = 1.20; 
+      } catch {
+        fee = 1.20;
       }
     }
 
@@ -122,18 +122,21 @@ export async function loadMoreDomainSuggestions(
             ? amount
             : await currencyConversion.convert({ from: "usd", to: "brl", amount });
 
+        const envFixedFee = process.env.DOMAIN_FIXED_FEE;
+        const fixedFee = envFixedFee !== undefined ? Number(envFixedFee) : 4;
+
         let priceBRL = 0;
         let renewBRL = 0;
         let transferBRL = 0;
 
         if (domainDetail.IsPremiumName && (domainDetail.PremiumRegistrationPrice ?? 0) > 0) {
-          priceBRL = (domainDetail.PremiumRegistrationPrice ?? 0) * fee;
-          renewBRL = (domainDetail.PremiumRenewalPrice ?? 0) * fee;
-          transferBRL = (domainDetail.PremiumTransferPrice ?? 0) * fee;
+          priceBRL = (await toPrice(domainDetail.PremiumRegistrationPrice ?? 0)) * fee + fixedFee;
+          renewBRL = (await toPrice(domainDetail.PremiumRenewalPrice ?? 0)) * fee + fixedFee;
+          transferBRL = (await toPrice(domainDetail.PremiumTransferPrice ?? 0)) * fee + fixedFee;
         } else if (pricing?.price) {
-          priceBRL = (await toPrice(pricing.price ?? 0)) * fee;
-          renewBRL = (await toPrice(pricing.renew ?? 0)) * fee;
-          transferBRL = (await toPrice(pricing.transfer ?? 0)) * fee;
+          priceBRL = (await toPrice(pricing.price ?? 0)) * fee + fixedFee;
+          renewBRL = (await toPrice(pricing.renew ?? 0)) * fee + fixedFee;
+          transferBRL = (await toPrice(pricing.transfer ?? 0)) * fee + fixedFee;
         }
 
         return {

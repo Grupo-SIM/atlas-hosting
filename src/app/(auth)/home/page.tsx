@@ -29,7 +29,7 @@ export default async function Dashboard({
           </Suspense>
         </div>
       </div> */}
-      <SitesQuickActions />
+      {/* <SitesQuickActions /> */}
     </div>
   );
 }

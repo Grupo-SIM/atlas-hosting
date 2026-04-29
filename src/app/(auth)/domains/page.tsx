@@ -7,12 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DomainActionsMenu } from "./components/DomainActionsMenu";
 import {
   Table,
   TableBody,
@@ -84,34 +79,51 @@ export default async function MyDomainsPage({
       (domain) => domain.active
     );
 
-    const domains = await Promise.all(
+    const domainsRaw = await Promise.all(
       dbDomains.map(async (domain) => {
-        const d = await namecheapApi.getInfo({
-          DomainName: domain.domain,
-        });
+        try {
+          const d = await namecheapApi.getInfo({
+            DomainName: domain.domain,
+          });
 
-        return {
-          id: d.DomainName,
-          name: d.DomainName,
-          registrationDate: d.CreatedDate
-            ? format(d.CreatedDate, "dd/MM/yyyy", { locale: ptBR })
-            : "N/A",
-          expiryDate: d.ExpireDate
-            ? format(d.ExpireDate, "dd/MM/yyyy", { locale: ptBR })
-            : "Nunca",
-          status: isBefore(d.ExpireDate, new Date()) ? "expired" : "active",
-          autoRenew: d.AutoRenew,
-          isLocked: d.IsLocked,
-          usesOurDNS: d.DnsDetails.IsUsingOurDNS,
-          features: [
-            d.DnsDetails.IsUsingOurDNS && "DNS Management",
-            d.Whoisguard.Enabled && "Domain Privacy",
-            d.AutoRenew && "Auto-Renew",
-            // "Email Forwarding" - This info might come from a different API call or be assumed
-          ].filter(Boolean) as string[],
-        } as ProcessedDomain;
+          return {
+            id: d.DomainName,
+            name: d.DomainName,
+            registrationDate: d.CreatedDate
+              ? format(d.CreatedDate, "dd/MM/yyyy", { locale: ptBR })
+              : "N/A",
+            expiryDate: d.ExpireDate
+              ? format(d.ExpireDate, "dd/MM/yyyy", { locale: ptBR })
+              : "Nunca",
+            status: isBefore(d.ExpireDate, new Date()) ? "expired" : "active",
+            autoRenew: d.AutoRenew,
+            isLocked: d.IsLocked,
+            usesOurDNS: d.DnsDetails?.IsUsingOurDNS ?? false,
+            features: [
+              d.DnsDetails?.IsUsingOurDNS && "DNS Management",
+              d.Whoisguard?.Enabled && "Domain Privacy",
+              d.AutoRenew && "Auto-Renew",
+            ].filter(Boolean) as string[],
+          } as ProcessedDomain;
+        } catch (error) {
+          console.error(`Failed to fetch Namecheap info for ${domain.domain}:`, error);
+          // Retorna fallback para que o erro num domínio não quebre a página inteira
+          return {
+            id: domain.domain,
+            name: domain.domain,
+            registrationDate: "Indisponível",
+            expiryDate: "Indisponível",
+            status: "unknown",
+            autoRenew: false,
+            isLocked: false,
+            usesOurDNS: false,
+            features: ["Falha na Sincronização"],
+          } as ProcessedDomain;
+        }
       })
     );
+
+    const domains = domainsRaw.filter(Boolean);
 
     processedDomains = domains;
 
@@ -153,16 +165,19 @@ export default async function MyDomainsPage({
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" asChild={true}>
+          <Button 
+            className="bg-gradient-to-r from-[#01FC8D] to-[#01e67d] text-[#0a0e27] font-bold hover:brightness-110 border-0" 
+            asChild={true}
+          >
             <Link href="/domain?tab=register">
               <Plus className="mr-2 h-4 w-4" /> Registrar Novo
             </Link>
           </Button>
-          <Button asChild={true}>
+         {/*  <Button asChild={true}>
             <Link href="/domain?tab=transfer">
               <Globe className="mr-2 h-4 w-4" /> Transferir Domínio
             </Link>
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -234,7 +249,7 @@ export default async function MyDomainsPage({
       )}
 
       {/* Quick Actions Card */}
-      {processedDomains.length > 0 && (
+      {/* {processedDomains.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -320,7 +335,7 @@ export default async function MyDomainsPage({
         <CardContent
           className={cn({ "max-w-2xl mx-auto": processedDomains.length === 0 })}
         >
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg overflow-visible">
             {processedDomains.length === 0 ? (
               <NoDomains />
             ) : (
@@ -410,7 +425,7 @@ export default async function MyDomainsPage({
                           {domain.autoRenew ? (
                             <Badge
                               variant="outline"
-                              className="bg-green-500/10 text-green-700 border-green-200"
+                              className="bg-[#01FC8D]/10 text-[#00b363] dark:text-[#01FC8D] border-[#01FC8D]/30"
                             >
                               <RefreshCw className="h-3 w-3 mr-1" />
                               Automática
@@ -418,55 +433,19 @@ export default async function MyDomainsPage({
                           ) : (
                             <Badge
                               variant="outline"
-                              className="bg-orange-500/10 text-orange-700 border-orange-200"
+                              className="bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
                             >
                               Manual
                             </Badge>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild={true}>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Ações</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem asChild={true}>
-                              <Link href={`/dns?domain=${domain.id}`}>
-                                <Server className="h-4 w-4 mr-2" /> Gerenciar
-                                DNS
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Lock className="h-4 w-4 mr-2" /> Configurar
-                              Privacidade
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <RefreshCw className="h-4 w-4 mr-2" /> Renovar
-                              Domínio
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Mail className="h-4 w-4 mr-2" /> Configurar Email
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild={true}>
-                              <a
-                                href={`http://${domain.name}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <ExternalLink className="h-4 w-4 mr-2" />{" "}
-                                Visitar Site
-                              </a>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <TableCell className="text-right w-12">
+                        <DomainActionsMenu 
+                          key={`actions-${domain.id}`} 
+                          domainId={domain.id} 
+                          domainName={domain.name} 
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

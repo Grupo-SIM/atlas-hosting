@@ -60,7 +60,7 @@ export const metadata: Metadata = {
 export default async function AffiliatePage() {
   const user = await getUser();
 
-  const baseUrl = process.env.NEXT_PUBLIC_URL || "https://app.atlashosting.com.br";
+  const baseUrl = process.env.NEXT_PUBLIC_URL || "https://atlashosting.com.br";
   const affiliateLink = `${baseUrl}/signup?ref=${user.affiliateCode}`;
 
   let systemConfig = await db.query.pgSystemConfig.findFirst();

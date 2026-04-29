@@ -80,6 +80,14 @@ export type DomainRegisterInvoiceOptions = Pick<
   pixCheckout?: PixCheckoutSnapshot;
   /** Cobrança real só para testar PIX/cartão; não chama Namecheap nem vincula domínio */
   testPaymentOnly?: boolean;
-  /** Pacote “Amplie sua marca”: uma fatura, vários `createDomain` após pagamento */
+  /** Pacote "Amplie sua marca": uma fatura, vários `createDomain` após pagamento */
   bundleDomains?: string[];
+};
+
+export type DomainRenewInvoiceOptions = {
+  type: "renew";
+  domain: string;
+  simpayPaymentId?: string;
+  pixTransactionId?: string;
+  pixCheckout?: PixCheckoutSnapshot;
 };

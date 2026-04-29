@@ -1,25 +1,23 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { Separator } from "@/components/ui/separator";
-import { db } from "@/lib/db";
-import { pgPlan, type Invoice } from "@/lib/db/schema";
+import { type Invoice } from "@/lib/db/schema";
 import { cn, toBrl } from "@/lib/utils";
+import { useState } from "react";
 import {
-  add,
   addDays,
   format,
   formatDistanceToNow,
-  formatDistanceToNowStrict,
   isBefore,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { eq } from "drizzle-orm";
 import {
   CalendarDays,
   ChevronDown,
-  ChevronUp,
   FileText,
   Package,
   Tag,
@@ -27,12 +25,14 @@ import {
 import Link from "next/link";
 
 export default function InvoiceCard({
-  isExpanded,
   invoice,
+  isExpanded: initialExpanded = false,
 }: {
   isExpanded?: boolean;
   invoice: Invoice;
 }) {
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
+
   const breakdownInformation = (() => {
     if (invoice.type === "subscription") {
       return [
@@ -67,64 +67,76 @@ export default function InvoiceCard({
 
   return (
     <div>
-      <Card className="w-full transition-all duration-300">
+      <Card className={cn(
+        "w-full transition-all duration-200 border border-border/50 shadow-sm hover:shadow-md bg-card/50 backdrop-blur-sm group",
+        isExpanded && "ring-1 ring-primary/20 bg-card shadow-md border-primary/20"
+      )}>
         {/* Collapsed Summary View */}
-        <CardHeader className="pb-4">
+        <CardHeader 
+          className="pb-4 cursor-pointer" 
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <FileText className="h-5 w-5 text-primary" />
+            <div className="flex items-center gap-4">
+              <div className={cn(
+                "p-3 rounded-xl transition-colors",
+                invoice.status === "paid" ? "bg-green-500/10 text-green-500" : "bg-primary/10 text-primary",
+                "group-hover:bg-primary group-hover:text-primary-foreground"
+              )}>
+                <FileText className="h-6 w-6" />
               </div>
               <div>
-                <CardTitle className="text-base">
+                <CardTitle className="text-lg font-bold tracking-tight">
                   Fatura #{invoice.id.slice(0, 8).toUpperCase()}
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {format(invoice.createdAt, "PPP", { locale: ptBR })}
-                </p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  {format(invoice.createdAt, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <div className="text-xl font-bold text-primary">
-                  {toBrl(invoice.amount)}
+
+            <div className="flex items-center gap-6">
+              <div className="hidden sm:flex items-center gap-2">
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "capitalize px-3 py-1 font-bold",
+                    invoice.type === "domain" 
+                      ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" 
+                      : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                  )}
+                >
+                  {invoice.type === "domain" ? "Domínio" : "Plano"}
+                </Badge>
+                <Badge
+                  className={cn(
+                    "px-3 py-1 shadow-sm font-bold border",
+                    getStatusStyles(invoice.status)
+                  )}
+                >
+                  {statusLabel[invoice.status] || "Status desconhecido"}
+                </Badge>
+              </div>
+
+              <div className="text-right flex items-center gap-4">
+                <div>
+                  <div className="text-xl font-black text-primary tracking-tighter">
+                    {toBrl(invoice.amount)}
+                  </div>
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
+                    Valor total
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Valor da fatura
+                <div className={cn(
+                  "p-1 rounded-full bg-muted transition-transform duration-300",
+                  isExpanded && "rotate-180 bg-primary/10 text-primary"
+                )}>
+                  <ChevronDown className="h-4 w-4" />
                 </div>
               </div>
-              <Link
-                prefetch
-                href={isExpanded ? "?" : `?id=${invoice.id}`}
-                scroll={false}
-                replace
-              >
-                <Button variant="ghost" size="sm">
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 transition-transform ease-[easeOutCubic] duration-300",
-                      { "rotate-180": isExpanded }
-                    )}
-                  />
-                </Button>
-              </Link>
             </div>
           </div>
-
-          {/* Quick Summary Bar */}
-          {!isExpanded && (
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t">
-              <Badge variant="secondary" className="text-xs">
-                {invoice.type === "domain" ? "Domínio" : "Plano"}
-              </Badge>
-              <Badge
-                variant={getStatusVariant(invoice.status)}
-                className="text-xs"
-              >
-                {statusLabel[invoice.status] || "Status desconhecido"}
-              </Badge>
-            </div>
-          )}
         </CardHeader>
 
         {/* Expanded Detailed View */}
@@ -293,12 +305,31 @@ const getStatusVariant = (
       return "action";
     case "pending":
     case "pendente":
-      return "secondary";
+      return "outline";
     case "overdue":
     case "vencida":
+    case "failed":
       return "destructive";
+    case "processing":
+      return "secondary";
     default:
       return "outline";
+  }
+};
+
+const getStatusStyles = (status: string) => {
+  switch (status) {
+    case "paid":
+      return "bg-green-500/10 text-green-500 border-green-500/20";
+    case "pending":
+      return "bg-amber-500/10 text-amber-500 border-amber-500/20";
+    case "overdue":
+    case "failed":
+      return "bg-red-500/10 text-red-500 border-red-500/20";
+    case "processing":
+      return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+    default:
+      return "bg-muted text-muted-foreground";
   }
 };
 

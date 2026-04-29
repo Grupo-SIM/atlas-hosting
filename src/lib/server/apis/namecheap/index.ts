@@ -24,6 +24,8 @@ import type {
   DomainsGetTldListCleanedResponse,
   DomainsNsCreateCleanedResponse,
   DomainsNsCreateUserParams,
+  DomainsRenewCleanedResponse,
+  DomainsRenewUserParams,
   NamecheapContactDetails,
   NamecheapDnsDetails,
   NamecheapRequestParams,
@@ -40,6 +42,7 @@ import type {
   RawDomainsGetListCommandResponseContent,
   RawDomainsGetTldListCommandResponseContent,
   RawDomainsNsCreateCommandResponseContent,
+  RawDomainsRenewCommandResponseContent,
   RawNamecheapApiResponse,
   RawUsersCreateCommandResponseContent,
   RawUsersGetPricingCommandResponseContent,
@@ -946,6 +949,29 @@ export class NamecheapApiWrapper {
       this._parseDomainsCreateResponse,
       "GET"
     );
+
+  // --- Method: namecheap.domains.renew ---
+  private _parseDomainsRenewParams = (params: DomainsRenewUserParams): NamecheapRequestParams => ({
+    DomainName: params.DomainName,
+    Years: String(params.Years),
+  });
+
+  private _parseDomainsRenewResponse = async (raw: RawDomainsRenewCommandResponseContent): Promise<DomainsRenewCleanedResponse> => {
+    const r = raw.DomainRenewResult?.[0]?.$;
+    if (!r) throw new Error("DomainRenewResult ausente.");
+    const chargedAmountBRL = await this._convertPrice(parseFloat(r.ChargedAmount), "USD");
+    return {
+      Domain: r.Domain,
+      Renewed: r.Renewed === "true",
+      ChargedAmount: chargedAmountBRL,
+      OrderId: parseInt(r.OrderID),
+      TransactionId: parseInt(r.TransactionID),
+      ExpireDate: r.ExpireDate,
+    };
+  };
+
+  public renewDomain = async (params: DomainsRenewUserParams): Promise<DomainsRenewCleanedResponse> =>
+    this._makeRequest("namecheap.domains.renew", this._parseDomainsRenewParams(params), this._parseDomainsRenewResponse, "GET");
 
   // --- Method 7: namecheap.domains.getInfo ---
   private _parseDomainsGetInfoParams = (

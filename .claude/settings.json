@@ -12,7 +12,11 @@
       "Bash(powershell -Command \"Resolve-DnsName -Name ebooksim.com -Type NS -Server 1.1.1.1 2>&1\")",
       "Bash(powershell -Command \"Resolve-DnsName -Name ebooksim.com -Type A -Server 8.8.8.8 2>&1\")",
       "Bash(xargs grep *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(awk -F: '{print $2}')",
+      "Bash(python3 -c ' *)",
+      "Bash(node -e ' *)",
+      "Read(//c/c/Users/breno/Desktop/JB/atlas-hosting/src/lib/db/schema/**)"
     ]
   }
 }

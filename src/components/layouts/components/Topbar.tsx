@@ -105,10 +105,7 @@ export default async function Topbar({
                   <span>Pagamentos</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Key className="mr-2 h-4 w-4" />
-                <span>Alterar Senha</span>
-              </DropdownMenuItem>
+             {/*  */}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup className="[&>*]:cursor-pointer">

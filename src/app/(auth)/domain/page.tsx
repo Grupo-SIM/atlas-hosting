@@ -19,7 +19,11 @@ import { pgDomainPricingCache } from "@/lib/db/schema";
 import { inArray } from "drizzle-orm";
 import type { DomainPageParams } from "./types";
 import type { OrganizationDomain } from "@/lib/db/schema/tables/organization";
-import { getDomainData, popularExtensions } from "./utils";
+import { 
+  getDomainData, 
+  popularExtensions, 
+  getAllDomainPrices 
+} from "./utils";
 import RegisterDomainSearch from "./register/components/RegisterDomainSearch";
 import { TransferForm } from "./register/components/TransferForm";
 import { TransferDomainsList } from "./register/components/TransferDomainsList";
@@ -30,55 +34,6 @@ import { query } from "dns-query";
 
 interface DomainMainPageProps {
   searchParams: Promise<DomainPageParams & { tab?: string }>;
-}
-
-async function getAllDomainPricesFromDb(tlds: string[]) {
-  const domainPricesFromDb = await db
-    .select()
-    .from(pgDomainPricingCache)
-    .where(inArray(pgDomainPricingCache.tld, tlds));
-
-  const convertedPrices = await Promise.all(
-    domainPricesFromDb.map(async (item) => {
-      const registrationPrice = item.price
-        ? await currencyConversion.convert({
-          from: "usd",
-          to: "brl",
-          amount: item.price,
-        })
-        : 0;
-
-      const renewalPrice = item.renew
-        ? await currencyConversion.convert({
-          from: "usd",
-          to: "brl",
-          amount: item.renew,
-        })
-        : 0;
-
-      const transferPrice = item.transfer
-        ? await currencyConversion.convert({
-          from: "usd",
-          to: "brl",
-          amount: item.transfer,
-        })
-        : 0;
-
-      return {
-        tld: item.tld,
-        price: item.price ?? undefined,
-        renew: item.renew ?? undefined,
-        transfer: item.transfer ?? undefined,
-        minRegisterYears: item.minRegisterYears ?? undefined,
-        maxRegisterYears: item.maxRegisterYears ?? undefined,
-        registrationPrice,
-        renewalPrice,
-        transferPrice,
-      };
-    })
-  );
-
-  return convertedPrices;
 }
 
 function parseBundleDomains(
@@ -121,7 +76,7 @@ export default async function DomainPage({
   let isError = false;
   let domainData = null;
 
-  const allDomainPricesFromDbPromise = getAllDomainPricesFromDb(
+  const allDomainPricesFromDbPromise = getAllDomainPrices(
     popularExtensions.map((tld: string) => tld.substring(1))
   );
 

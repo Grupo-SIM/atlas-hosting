@@ -35,6 +35,7 @@ import Form from "next/form";
 import { getDomainData } from "@/app/(auth)/domain/utils";
 import type { DomainData, DomainPageParams } from "@/app/(auth)/domain/types";
 import { DomainPriceSelector } from "./DomainPriceSelector";
+import { getUser } from "@/lib/auth";
 
 export async function DomainResult({
   searchParams,
@@ -46,7 +47,14 @@ export async function DomainResult({
     return null;
   }
 
-  const domainData = await getDomainData(domain);
+  const [domainData, user] = await Promise.all([
+    getDomainData(domain),
+    getUser(),
+  ]);
+
+  const isAlreadyOwned = user.organization.domains.some(
+    (d) => d.domain.toLowerCase() === domain.toLowerCase()
+  );
 
   const selectedYears = searchParams.years ? parseInt(searchParams.years, 10) : 1;
 
@@ -71,9 +79,11 @@ export async function DomainResult({
   }
 
   const {
-    available,
+    available: availableFromApi,
     domain: { domain: fullDomain, renewBRL, isPremium },
   } = domainData;
+
+  const available = availableFromApi && !isAlreadyOwned;
 
   if (searchParams.whoisguard) {
     price += 3;
@@ -101,7 +111,9 @@ export async function DomainResult({
         <CardDescription>
           {available
             ? "Este domínio está disponível para registro!"
-            : "Este domínio não está disponível para registro."}
+            : isAlreadyOwned
+              ? "Este domínio já está registrado em sua conta."
+              : "Este domínio não está disponível para registro."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -118,6 +130,8 @@ export async function DomainResult({
                 <p className="text-sm text-muted-foreground">
                   Este domínio está disponível para registro
                 </p>
+              ) : isAlreadyOwned ? (
+                <p className="text-sm text-green-600 dark:text-green-400">Este domínio já pertence à sua conta.</p>
               ) : (
                 <p className="text-sm text-muted-foreground">Este domínio já está registrado.</p>
               )}
@@ -144,35 +158,45 @@ export async function DomainResult({
               price={price}
               renewBRL={renewBRL}
               multiYearPricesBRL={domainData.domain.multiYearPricesBRL}
+              isPremium={isPremium}
             />
           </>
         ) : (
-          <DomainUnavailable domainData={domainData} />
+          <DomainUnavailable domainData={domainData} isAlreadyOwned={isAlreadyOwned} />
         )}
       </CardContent>
     </Card>
   );
 }
 
-async function DomainUnavailable({ domainData }: { domainData: DomainData }) {
-  return (
-    !domainData?.available && (
+function DomainUnavailable({ domainData, isAlreadyOwned }: { domainData: DomainData; isAlreadyOwned: boolean }) {
+  if (isAlreadyOwned) {
+    return (
       <div className="flex items-center justify-end gap-2 border-t p-4">
         <Button variant="outline" disabled={true}>
-          <X className="mr-2 h-4 w-4" />
-          Indisponível
-        </Button>
-        <Button variant="link" className="text-sm" asChild={true}>
-          <a
-            href={`https://www.whois.com/whois/${domainData?.domain?.domain}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Tentar pesquisa WHOIS
-          </a>
+          <Check className="mr-2 h-4 w-4 text-green-500" />
+          Já registrado em sua conta
         </Button>
       </div>
-    )
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-end gap-2 border-t p-4">
+      <Button variant="outline" disabled={true}>
+        <X className="mr-2 h-4 w-4" />
+        Indisponível
+      </Button>
+      <Button variant="link" className="text-sm" asChild={true}>
+        <a
+          href={`https://www.whois.com/whois/${domainData?.domain?.domain}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Tentar pesquisa WHOIS
+        </a>
+      </Button>
+    </div>
   );
 }
 

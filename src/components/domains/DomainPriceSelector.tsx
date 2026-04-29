@@ -25,6 +25,7 @@ interface DomainPriceSelectorProps {
   price: number;
   renewBRL: number;
   multiYearPricesBRL?: Record<number, number>;
+  isPremium?: boolean;
 }
 
 export function DomainPriceSelector({
@@ -36,6 +37,7 @@ export function DomainPriceSelector({
   price,
   renewBRL,
   multiYearPricesBRL,
+  isPremium,
 }: DomainPriceSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,11 +64,11 @@ export function DomainPriceSelector({
 
 
 
-  const currentPrice = (multiYearPricesBRL && multiYearPricesBRL[parseInt(localYears, 10)]) 
-    ? multiYearPricesBRL[parseInt(localYears, 10)] 
-    : price;
+  const selectedYears = isPremium ? 1 : parseInt(localYears, 10);
 
-  const selectedYears = parseInt(localYears, 10);
+  const currentPrice = (isPremium || !multiYearPricesBRL || !multiYearPricesBRL[selectedYears]) 
+    ? price 
+    : multiYearPricesBRL[selectedYears];
 
   return (
     <div>
@@ -92,12 +94,19 @@ export function DomainPriceSelector({
       <div className="grid grid-cols-[1fr_1fr_auto] grid-rows-[auto_1fr] gap-4 px-4 pb-4">
         <h2 className="col-span-3 text-xl font-medium">Opções de registro</h2>
         
-        <Select name="years" value={localYears} onValueChange={handleYearsChange}>
-          <SelectTrigger>
+        <Select 
+          name="years" 
+          value={isPremium ? "1" : localYears} 
+          onValueChange={handleYearsChange}
+          disabled={isPremium}
+        >
+          <SelectTrigger className={isPremium ? "opacity-50 cursor-not-allowed" : ""}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {registerOptions.length === 0 ? (
+            {isPremium ? (
+              <SelectItem value="1">1 ano (Máximo para Premium)</SelectItem>
+            ) : registerOptions.length === 0 ? (
               <SelectItem value="1">1 ano</SelectItem>
             ) : (
               registerOptions.map((option) => (
