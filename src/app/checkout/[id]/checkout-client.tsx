@@ -4,7 +4,6 @@ import ModernCheckoutForm, {
   type CheckoutSidebarActionState,
   type ModernCheckoutFormHandle,
 } from "@/components/checkout/ModernCheckoutForm";
-import Topbar from "@/components/layouts/components/Topbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,15 +27,16 @@ interface User {
 
 interface CheckoutClientProps {
   invoice: Invoice;
-  user: User;
+  user: User | null;
   reference: string;
+  initialStep?: "billing" | "payment";
 }
-
 
 export default function CheckoutClient({
   invoice,
   user,
   reference,
+  initialStep,
 }: CheckoutClientProps) {
   const base = invoice.amount;
   const checkoutFormRef = useRef<ModernCheckoutFormHandle>(null);
@@ -56,22 +56,18 @@ export default function CheckoutClient({
       .catch(() => {});
   }, []);
 
-  const [sidebarAction, setSidebarAction] = useState<CheckoutSidebarActionState>(
-    {
-      label: "Finalizar Transação",
-      disabled: false,
-    }
-  );
+  const [sidebarAction, setSidebarAction] = useState<CheckoutSidebarActionState>({
+    label: "Finalizar Transação",
+    disabled: false,
+  });
 
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  // Mostra taxa CC por padrão; esconde apenas quando PIX for explicitamente selecionado
   const isCreditCard = selectedMethod !== "pix";
 
   const onPaymentMethodChange = useCallback((method: string | null) => {
     setSelectedMethod(method);
   }, []);
 
-  // Voucher state
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherLoading, setVoucherLoading] = useState(false);
   const [voucherError, setVoucherError] = useState<string | null>(null);
@@ -111,7 +107,6 @@ export default function CheckoutClient({
           finalAmount: result.finalAmount,
           message: result.message,
         });
-        // Consumir o voucher imediatamente (atualiza a fatura)
         await consumeVoucher(invoice.id, result.voucherId);
       }
     } catch {
@@ -127,17 +122,15 @@ export default function CheckoutClient({
     setVoucherError(null);
   };
 
-  const whoisGuard = invoice.metadata?.whoisguard === "on";
-  const displayBase  = appliedVoucher ? appliedVoucher.finalAmount : base;
-  // Taxa CC só se aplica ao comprador quando método é cartão (não PIX)
-  const buyerFee     = isCreditCard && rates ? Math.round(displayBase * (rates.domCcRate + rates.masterCcRate) * 100) / 100 : null;
+  const whoisGuard = (invoice.metadata as any)?.whoisguard === "on";
+  const displayBase = appliedVoucher ? appliedVoucher.finalAmount : base;
+  const buyerFee = isCreditCard && rates ? Math.round(displayBase * (rates.domCcRate + rates.masterCcRate) * 100) / 100 : null;
   const displayTotal = buyerFee !== null ? Math.round((displayBase + buyerFee) * 100) / 100 : displayBase;
 
   return (
     <div className="relative z-0 w-full min-h-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 pb-12 pt-4 md:pt-6">
       <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
               Finalizar Compra
@@ -148,21 +141,19 @@ export default function CheckoutClient({
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Checkout Form */}
             <div className="lg:col-span-2">
               <ModernCheckoutForm
                 ref={checkoutFormRef}
                 invoiceId={invoice.id}
                 hasExistingUser={userHasDomId}
+                initialStep={initialStep}
                 onSidebarActionStateChange={onSidebarActionStateChange}
                 onPaymentMethodChange={onPaymentMethodChange}
               />
             </div>
 
-            {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="sticky top-4 z-10 space-y-6 lg:top-6">
-                {/* Money Back Guarantee */}
                 <Card className="shadow-lg border-0 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 border-emerald-200 dark:border-emerald-800">
                   <CardContent className="pt-6">
                     <div className="space-y-2">
@@ -179,7 +170,6 @@ export default function CheckoutClient({
                   </CardContent>
                 </Card>
 
-                {/* Security & Trust */}
                 <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
                   <CardContent className="pt-6">
                     <div className="space-y-3">
@@ -197,7 +187,6 @@ export default function CheckoutClient({
                   </CardContent>
                 </Card>
 
-                {/* Order Details */}
                 <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -255,7 +244,6 @@ export default function CheckoutClient({
                       )}
                     </div>
 
-                    {/* Voucher Input */}
                     <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Ticket className="h-4 w-4 text-muted-foreground" />
@@ -291,14 +279,14 @@ export default function CheckoutClient({
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
-                                handleApplyVoucher();
+                                void handleApplyVoucher();
                               }
                             }}
                           />
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={handleApplyVoucher}
+                            onClick={() => void handleApplyVoucher()}
                             disabled={voucherLoading || !voucherCode.trim()}
                             className="shrink-0"
                           >
@@ -315,6 +303,7 @@ export default function CheckoutClient({
                         <p className="text-xs text-red-500 mt-1">{voucherError}</p>
                       )}
                     </div>
+
                     {buyerFee !== null && buyerFee > 0 && rates && (
                       <div className="flex items-center justify-between gap-2 border-t border-gray-100 py-2 dark:border-gray-700">
                         <span className="text-sm text-gray-600 dark:text-gray-300">
@@ -328,7 +317,6 @@ export default function CheckoutClient({
 
                     <Separator />
 
-                    {/* Discount line */}
                     {appliedVoucher && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-green-600 dark:text-green-400">
@@ -349,7 +337,6 @@ export default function CheckoutClient({
                       </span>
                     </div>
 
-                    {/* Features */}
                     <div className="pt-4 space-y-2">
                       <h4 className="font-medium text-gray-900 dark:text-white text-sm">
                         Incluído no seu pedido:
@@ -395,4 +382,3 @@ export default function CheckoutClient({
     </div>
   );
 }
-

@@ -4,7 +4,7 @@ import { pgInvoice, pgPlan, type Invoice } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getUser } from "@/lib/auth";
+import { getOptionalUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Checkout - Atlas Hosting",
@@ -22,11 +22,14 @@ export type CheckoutRates = {
 
 export default async function CheckoutPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ initialStep?: string }>;
 }) {
-  const user = await getUser();
+  const user = await getOptionalUser();
   const resolvedParams = await params;
+  const resolvedSearch = await searchParams;
 
   const invoice = await db.query.pgInvoice.findFirst({
     where: eq(pgInvoice.id, resolvedParams.id),
@@ -50,15 +53,14 @@ export default async function CheckoutPage({
     reference = plan.name;
   }
 
-  if (!invoice) {
-    notFound();
-  }
+  const initialStep = resolvedSearch.initialStep === "payment" ? "payment" : "billing";
 
   return (
     <CheckoutClient
       invoice={invoice as Invoice}
-      user={user}
+      user={user ? { id: user.id, organization: user.organization } : null}
       reference={reference}
+      initialStep={initialStep}
     />
   );
 }

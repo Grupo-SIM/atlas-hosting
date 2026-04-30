@@ -75,52 +75,52 @@ export function Testimonials() {
   }, [itemsPerView]);
 
   return (
-    <section id="testimonials" className="py-24 relative overflow-hidden bg-[#0a0e27] w-full">
+    <section id="testimonials" className="py-24 relative overflow-hidden bg-slate-50 w-full">
       {/* Background Animation Layers */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
         {/* Letter Glitch Layer */}
-        <div className="absolute inset-0 opacity-[0.25]">
-          <LetterGlitch 
+        <div className="absolute inset-0 opacity-[0.05]">
+          <LetterGlitch
             glitchSpeed={50}
             centerVignette={true}
             outerVignette={false}
             smooth={true}
           />
         </div>
-        
+
         {/* Overlay Gradients to blend properly with the site theme */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_20%,#0a0e27_95%)]" />
-        <div className="absolute inset-0 bg-[#0a0e27]/20" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_20%,#f8fafc_95%)]" />
+        <div className="absolute inset-0 bg-slate-50/20" />
       </div>
 
       <div className="container mx-auto max-w-[1240px] relative z-10">
-        
+
         {/* Top Header */}
         <div className="text-center mb-16 px-4 flex flex-col items-center">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="inline-flex flex-row items-center gap-3 mb-6 bg-[#0e132e] py-1.5 px-3 rounded border border-white/5"
+            className="inline-flex flex-row items-center gap-3 mb-6 bg-white py-1.5 px-3 rounded border border-slate-200 shadow-sm"
           >
-            <div className="w-1 h-4 bg-[#01FC8D]"></div>
-            <span className="text-xs font-semibold tracking-wider text-[#01FC8D] uppercase">
+            <div className="w-1 h-4 bg-emerald-500"></div>
+            <span className="text-xs font-semibold tracking-wider text-emerald-600 uppercase">
               DEPOIMENTOS
             </span>
           </motion.div>
 
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-3xl md:text-[2.5rem] font-bold mb-4 text-white tracking-tight"
+            className="text-3xl md:text-[2.5rem] font-bold mb-4 text-slate-900 tracking-tight"
           >
             Feedback & Avaliações
           </motion.h2>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -128,18 +128,18 @@ export function Testimonials() {
             className="flex items-center gap-1.5 justify-center mb-4"
           >
             {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-[18px] h-[18px] text-[#01FC8D] fill-[#01FC8D]" />
+              <Star key={i} className="w-[18px] h-[18px] text-emerald-500 fill-emerald-500" />
             ))}
           </motion.div>
         </div>
 
         {/* Testimonials Carousel (Custom implemented Elementor 'bubble' skin css) */}
         <div className="px-4 overflow-hidden pt-4 pb-12 w-full">
-          <div 
+          <div
             className="flex transition-transform duration-700 ease-in-out gap-6"
-            style={{ 
-               // Shift correctly maintaining item percentage and gap adjustments based on screen
-               transform: `translateX(calc(-${currentIndex * (100 / itemsPerView)}% - ${currentIndex * (24 / itemsPerView)}px))` 
+            style={{
+              // Shift correctly maintaining item percentage and gap adjustments based on screen
+              transform: `translateX(calc(-${currentIndex * (100 / itemsPerView)}% - ${currentIndex * (24 / itemsPerView)}px))`
             }}
           >
             {testimonials.map((testimonial, index) => (
@@ -148,33 +148,35 @@ export function Testimonials() {
                 className="flex-shrink-0 w-[100%] md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] flex flex-col"
               >
                 {/* Bubble */}
-                <div className="relative bg-[#0e132e] border border-white/5 rounded-[6px] p-8 mb-6 h-full flex items-center shadow-xl">
-                  <p className="text-[#9ca3af] text-[15px] font-light leading-relaxed">
+                <div className="relative bg-white border border-slate-200 rounded-[6px] p-8 mb-6 h-full flex items-center shadow-sm hover:shadow-md transition-shadow">
+                  <p className="text-slate-600 text-[15px] font-normal leading-relaxed">
                     {testimonial.text}
                   </p>
-                  
+
                   {/* The Elementor 'bubble' arrow pointing down */}
-                  <div 
-                    className="absolute -bottom-[10px] left-10 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-[#0e132e] border-r-[10px] border-r-transparent drop-shadow-md z-10"
-                    style={{ filter: "drop-shadow(0px 1px 0px rgba(255,255,255,0.05))" }}
+                  <div
+                    className="absolute -bottom-[10px] left-10 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white border-r-[10px] border-r-transparent z-10"
+                  />
+                  <div
+                    className="absolute -bottom-[11px] left-10 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-slate-200 border-r-[10px] border-r-transparent z-0"
                   />
                 </div>
 
                 {/* Author Info */}
                 <div className="flex items-center gap-4 px-2">
-                  <div className="w-12 h-12 rounded-[4px] overflow-hidden shrink-0 border border-white/10 shadow-md">
-                    <img 
-                      src={testimonial.image} 
+                  <div className="w-12 h-12 rounded-[4px] overflow-hidden shrink-0 border border-slate-200 shadow-sm">
+                    <img
+                      src={testimonial.image}
                       alt={testimonial.name}
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-semibold text-white text-[14px]">
+                    <span className="font-semibold text-slate-900 text-[14px]">
                       {testimonial.name}
                     </span>
-                    <span className="text-[11px] text-gray-500 font-medium">
+                    <span className="text-[11px] text-slate-500 font-medium">
                       {testimonial.role}
                     </span>
                   </div>

@@ -76,10 +76,10 @@ export function ChatContact() {
     <>
       <style>{`
         #n8n-chat-embed {
-          --chat--color--primary: #01FC8D;
-          --chat--color--primary-shade-50: #01e680;
-          --chat--color--primary--shade-100: #01cf73;
-          --chat--color--secondary: #01FC8D;
+          --chat--color--primary: #10b981;
+          --chat--color--primary-shade-50: #059669;
+          --chat--color--primary--shade-100: #047857;
+          --chat--color--secondary: #10b981;
           
           --chat--spacing: 1rem;
           --chat--border-radius: 1.5rem;
@@ -87,21 +87,21 @@ export function ChatContact() {
 
           --chat--body--background: transparent;
           --chat--header--background: transparent;
-          --chat--header--color: #ffffff;
+          --chat--header--color: #1e293b;
           --chat--header--border-bottom: none;
 
           --chat--message--font-size: 0.9rem;
-          --chat--message--bot--background: rgba(26, 32, 44, 0.7);
-          --chat--message--bot--color: #e2e8f0;
+          --chat--message--bot--background: #f1f5f9;
+          --chat--message--bot--color: #334155;
           --chat--message--bot--border: none;
-          --chat--message--user--background: #01FC8D;
-          --chat--message--user--color: #060b17;
+          --chat--message--user--background: #10b981;
+          --chat--message--user--color: #ffffff;
           --chat--message--border-radius: 1.25rem;
           
           --chat--messages-list--padding: 1.25rem;
 
-          --chat--input--background: rgba(13, 18, 31, 0.5);
-          --chat--input--text-color: #ffffff;
+          --chat--input--background: #ffffff;
+          --chat--input--text-color: #1e293b;
           --chat--input--border: none;
           --chat--input--container--background: transparent;
           --chat--input--container--border: none;
@@ -125,8 +125,8 @@ export function ChatContact() {
 
         /* Container adjustment for minimalist look */
         #n8n-chat-embed [class*="n8n-chat-ui-window"] {
-          background-color: rgba(6, 11, 23, 0.6) !important;
-          backdrop-filter: blur(40px);
+          background-color: #ffffff !important;
+          backdrop-filter: none;
         }
 
         /* Minimalist Header - More compact */
@@ -139,10 +139,11 @@ export function ChatContact() {
           font-weight: 700 !important;
           letter-spacing: -0.02em !important;
           font-size: 1.15rem !important;
+          color: #0f172a !important;
         }
 
         #n8n-chat-embed [class*="n8n-chat-ui-header-subtitle"] {
-          color: #01FC8D !important;
+          color: #10b981 !important;
           font-size: 0.75rem !important;
           opacity: 0.9;
           font-weight: 500 !important;
@@ -151,18 +152,17 @@ export function ChatContact() {
         /* Glassmorphism Input Field - Formato de Pílula (Centralização Final) */
         div#n8n-chat-embed [class*="footer"] form,
         div#n8n-chat-embed [class*="footer"] > div {
-          background: rgba(255, 255, 255, 0.15) !important;
-          backdrop-filter: blur(25px) !important;
+          background: #f8fafc !important;
           border-radius: 9999px !important;
           margin: 0 auto 1.5rem auto !important;
-          padding: 2px 45px 0 1.25rem !important; /* Adicionado 2px top padding */
-          border: 1px solid rgba(255, 255, 255, 0.15) !important;
+          padding: 2px 45px 0 1.25rem !important;
+          border: 1px solid #e2e8f0 !important;
           transition: all 0.3s ease;
           min-height: 44px !important;
           height: 44px !important;
           display: flex !important;
           align-items: center !important;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
           width: 90% !important;
           box-sizing: border-box !important;
           position: relative !important;
@@ -195,17 +195,17 @@ export function ChatContact() {
         }
 
         div#n8n-chat-embed [class*="n8n-chat-ui-input-container"]:focus-within {
-          background-color: #1a202c !important;
-          border-color: #01FC8D !important;
-          box-shadow: 0 0 25px rgba(1, 252, 141, 0.2) !important;
+          background-color: #ffffff !important;
+          border-color: #10b981 !important;
+          box-shadow: 0 0 15px rgba(16, 185, 129, 0.1) !important;
         }
 
         #n8n-chat-embed textarea {
           background-color: transparent !important;
-          color: #ffffff !important;
-          padding: 11px 0 0 0 !important; /* Centralização manual por padding */
+          color: #1e293b !important;
+          padding: 11px 0 0 0 !important;
           font-size: 0.85rem !important;
-          height: 44px !important; /* Altura total da pílula */
+          height: 44px !important;
           line-height: 20px !important;
           text-align: left !important;
           resize: none !important;
@@ -216,21 +216,11 @@ export function ChatContact() {
           box-sizing: border-box !important;
         }
 
-        /* Forçando centralização em possíveis containers internos */
-        div#n8n-chat-embed [class*="footer"] form > div,
-        div#n8n-chat-embed [class*="footer"] > div > div {
-          display: flex !important;
-          align-items: center !important;
-          height: 100% !important;
-          border: none !important;
-          background: transparent !important;
-        }
-
-        /* Garantindo que o placeholder siga o alinhamento */
         #n8n-chat-embed textarea::placeholder {
           line-height: 20px !important;
           display: flex !important;
           align-items: center !important;
+          color: #94a3b8 !important;
         }
 
         #n8n-chat-embed [class*="n8n-chat-ui-messages-list"] {
@@ -250,14 +240,15 @@ export function ChatContact() {
 
         [class*="n8n-chat-ui-message-bot"] {
           border-bottom-left-radius: 0.25rem !important;
-          background: #1a202c !important;
-          color: #e2e8f0 !important;
+          background: #f1f5f9 !important;
+          color: #334155 !important;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02) !important;
         }
 
         [class*="n8n-chat-ui-message-user"] {
           border-bottom-right-radius: 0.25rem !important;
-          background: #01FC8D !important;
-          color: #060b17 !important;
+          background: #10b981 !important;
+          color: #ffffff !important;
           font-weight: 600 !important;
         }
 
@@ -287,34 +278,23 @@ export function ChatContact() {
         /* Estado Desativado (Vazio) */
         #n8n-chat-embed [class*="send"]:disabled,
         #n8n-chat-embed [class*="send"][disabled] {
-          background: #ffffff !important;
-          opacity: 0.4 !important;
+          background: #e2e8f0 !important;
+          opacity: 0.6 !important;
           cursor: not-allowed !important;
-          box-shadow: none !important;
         }
 
         /* Estado Ativo (Com texto) */
         #n8n-chat-embed [class*="send"]:not(:disabled) {
-          background: #01FC8D !important;
+          background: #10b981 !important;
           opacity: 1 !important;
           cursor: pointer !important;
-          box-shadow: 0 2px 8px rgba(1, 252, 141, 0.3) !important;
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
         }
 
         #n8n-chat-embed [class*="send"] svg {
           width: 14px !important;
           height: 14px !important;
-          color: #060b17 !important;
-          transition: transform 0.2s ease !important;
-        }
-
-        #n8n-chat-embed [class*="send"]:not(:disabled):hover {
-          transform: translateY(-50%) scale(1.1) !important;
-        }
-
-
-        #n8n-chat-embed textarea::placeholder {
-          color: rgba(255, 255, 255, 0.3) !important;
+          color: #ffffff !important;
         }
 
         /* Custom Scrollbar for minimalist look */
@@ -325,14 +305,14 @@ export function ChatContact() {
           background: transparent;
         }
         [class*="n8n-chat-ui-messages-list"]::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.1);
+          background: #e2e8f0;
           border-radius: 10px;
         }
       `}</style>
 
       <section className="py-20 lg:py-32 overflow-hidden relative">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#01FC8D]/5 rounded-full blur-[120px]" />
+          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px]" />
         </div>
 
         <div className="container mx-auto max-w-6xl relative z-10 px-4">
@@ -344,11 +324,11 @@ export function ChatContact() {
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#01FC8D]/10 border border-[#01FC8D]/20 text-[#01FC8D] text-xs font-bold uppercase tracking-widest mb-6"
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-bold uppercase tracking-widest mb-6"
               >
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#01FC8D] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#01FC8D]"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
                 Suporte Online agora
               </motion.div>
@@ -358,10 +338,10 @@ export function ChatContact() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.1 }}
-                className={`${roboto.className} text-4xl md:text-5xl font-bold text-white mb-6 leading-tight`}
+                className={`${roboto.className} text-4xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight`}
               >
                 Ficou com alguma dúvida? <br />
-                <span className="text-[#01FC8D]">Converse com nossa IA.</span>
+                <span className="text-emerald-500">Converse com nossa IA.</span>
               </motion.h2>
 
               <motion.p
@@ -369,7 +349,7 @@ export function ChatContact() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="text-gray-400 text-lg mb-8 max-w-lg"
+                className="text-slate-500 text-lg mb-8 max-w-lg"
               >
                 Tire suas dúvidas sobre planos, domínios e cashback em tempo real com o assistente inteligente Atlas.
               </motion.p>
@@ -379,11 +359,11 @@ export function ChatContact() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 }}
-                className="flex flex-col gap-3 text-sm text-gray-500"
+                className="flex flex-col gap-3 text-sm text-slate-400"
               >
                 {['Resposta em segundos', 'Disponível 24/7', 'Sem espera em filas'].map((item) => (
                   <span key={item} className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#01FC8D]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     {item}
                   </span>
                 ))}
@@ -399,10 +379,10 @@ export function ChatContact() {
                 className="relative w-full max-w-[480px]"
               >
                 {/* Subtle Glow */}
-                <div className="absolute -inset-1 bg-gradient-to-br from-[#01FC8D]/10 via-transparent to-transparent rounded-[1.5rem] blur-xl opacity-50" />
+                <div className="absolute -inset-1 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent rounded-[1.5rem] blur-xl opacity-30" />
 
                 {/* Card */}
-                <div className="relative rounded-[1.5rem] overflow-hidden border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.4)] bg-black/20 backdrop-blur-sm">
+                <div className="relative rounded-[1.5rem] overflow-hidden border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white">
                   <div id="n8n-chat-embed" style={{ width: '100%', height: '620px' }} />
                 </div>
               </motion.div>

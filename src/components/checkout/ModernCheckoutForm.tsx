@@ -87,6 +87,7 @@ export type CheckoutSidebarActionState = {
 interface ModernCheckoutFormProps {
   invoiceId: string;
   hasExistingUser?: boolean;
+  initialStep?: CheckoutStep;
   /** Atualiza texto/estado do botão principal da coluna lateral (checkout-client). */
   onSidebarActionStateChange?: (state: CheckoutSidebarActionState) => void;
   /** Notifica o sidebar quando o método de pagamento muda ("pix", "new", ou ID do cartão salvo). */
@@ -173,7 +174,7 @@ interface OpenCepResponse {
 const ModernCheckoutForm = forwardRef<
   ModernCheckoutFormHandle,
   ModernCheckoutFormProps
->(({ invoiceId, hasExistingUser = false, onSidebarActionStateChange, onPaymentMethodChange }, ref) => {
+>(({ invoiceId, hasExistingUser = false, initialStep, onSidebarActionStateChange, onPaymentMethodChange }, ref) => {
   const id = useId();
   const sidebarActionCbRef = useRef(onSidebarActionStateChange);
   sidebarActionCbRef.current = onSidebarActionStateChange;
@@ -194,7 +195,7 @@ const ModernCheckoutForm = forwardRef<
   } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
   const pixCopiedResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>("billing");
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>(initialStep || "billing");
   const [savedBillingInfo, setSavedBillingInfo] = useState<any>(null);
 
   // Fetch saved billing info on mount
@@ -203,9 +204,12 @@ const ModernCheckoutForm = forwardRef<
       const info = await getUserBillingInfo();
       if (info) {
         setSavedBillingInfo(info);
+      } else if (currentStep === "payment") {
+        setCurrentStep("billing");
       }
     };
     fetchBilling();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Always use the full schema for form management
@@ -240,9 +244,9 @@ const ModernCheckoutForm = forwardRef<
 
   const handleAutoFill = useCallback(() => {
     if (!savedBillingInfo) return;
-    
+
     const options = { shouldValidate: true, shouldDirty: true };
-    
+
     setValue("firstName", savedBillingInfo.firstName, options);
     setValue("lastName", savedBillingInfo.lastName, options);
     setValue("document", savedBillingInfo.document, options);
@@ -253,9 +257,28 @@ const ModernCheckoutForm = forwardRef<
     setValue("address.neighborhood", savedBillingInfo.address.neighborhood, options);
     setValue("address.city", savedBillingInfo.address.city, options);
     setValue("address.state", savedBillingInfo.address.state, options);
-    
+
     toast.success("Dados preenchidos com as informações do seu perfil!");
   }, [savedBillingInfo, setValue]);
+
+  // Auto-fill when starting directly at payment step (guest just submitted personal-data form)
+  useEffect(() => {
+    if (currentStep === "payment" && savedBillingInfo) {
+      const options = { shouldValidate: true, shouldDirty: true };
+      setValue("firstName", savedBillingInfo.firstName, options);
+      setValue("lastName", savedBillingInfo.lastName, options);
+      setValue("document", savedBillingInfo.document, options);
+      setValue("phoneNumber", savedBillingInfo.phoneNumber, options);
+      setValue("address.zipCode", savedBillingInfo.address.zipCode, options);
+      setValue("address.street", savedBillingInfo.address.street, options);
+      setValue("address.number", savedBillingInfo.address.number, options);
+      setValue("address.neighborhood", savedBillingInfo.address.neighborhood, options);
+      setValue("address.city", savedBillingInfo.address.city, options);
+      setValue("address.state", savedBillingInfo.address.state, options);
+    }
+  // Only run when savedBillingInfo first loads while on payment step
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedBillingInfo]);
 
   // Load saved cards only
   useEffect(() => {

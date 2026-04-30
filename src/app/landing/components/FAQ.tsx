@@ -45,13 +45,13 @@ const faqs = [
 
 export function FAQ() {
   return (
-    <section id="faq" className="py-24 px-4 relative bg-[#0a0e27] w-full overflow-hidden">
+    <section id="faq" className="py-24 px-4 relative bg-slate-50 w-full overflow-hidden">
       
       {/* Giant "FAQ" Watermark on the Left */}
-      <div className="absolute left-[-110px] top-[250px] -rotate-90 select-none hidden 2xl:block pointer-events-none opacity-20">
+      <div className="absolute left-[-110px] top-[250px] -rotate-90 select-none hidden 2xl:block pointer-events-none opacity-[0.05]">
         <span 
           className="text-[160px] font-black text-transparent tracking-widest"
-          style={{ WebkitTextStroke: '2px #ffffff' }}
+          style={{ WebkitTextStroke: '2px #0f172a' }}
         >
           FAQ
         </span>
@@ -65,14 +65,14 @@ export function FAQ() {
             
             {/* Header */}
             <div className="mb-10 animate-in fade-in slide-in-from-left-2 duration-300 fill-mode-both">
-              <div className="inline-flex flex-row items-center gap-3 mb-5 bg-[#0e132e] py-1.5 px-3 rounded border border-white/5">
-                <div className="w-1 h-4 bg-[#01FC8D]"></div>
-                <span className="text-xs font-semibold tracking-wider text-[#01FC8D] uppercase">
+              <div className="inline-flex flex-row items-center gap-3 mb-5 bg-white py-1.5 px-3 rounded border border-slate-200 shadow-sm">
+                <div className="w-1 h-4 bg-emerald-500"></div>
+                <span className="text-xs font-semibold tracking-wider text-emerald-600 uppercase">
                   TEM DÚVIDAS?
                 </span>
               </div>
               
-              <h2 className="text-3xl md:text-[2.2rem] font-bold text-white mb-2 tracking-normal">
+              <h2 className="text-3xl md:text-[2.2rem] font-bold text-slate-900 mb-2 tracking-normal">
                 Perguntas Frequentes
               </h2>
             </div>
@@ -89,19 +89,19 @@ export function FAQ() {
                   <AccordionItem
                     key={index}
                     value={`item-${index}`}
-                    className="border-none rounded-[6px] overflow-hidden bg-[#11172f] shadow-sm data-[state=open]:shadow-md"
+                    className="border-none rounded-[6px] overflow-hidden bg-white shadow-sm data-[state=open]:shadow-md border border-slate-100"
                   >
                     <AccordionTrigger 
-                      className="cursor-pointer px-5 py-4 hover:no-underline font-semibold text-[13px] md:text-[14px] data-[state=open]:bg-[#01FC8D] data-[state=open]:text-[#0a0e27] text-gray-200 transition-colors duration-300 [&>svg]:w-5 [&>svg]:h-5"
+                      className="cursor-pointer px-5 py-4 hover:no-underline font-semibold text-[13px] md:text-[14px] data-[state=open]:bg-emerald-500 data-[state=open]:text-white text-slate-700 transition-colors duration-300 [&>svg]:w-5 [&>svg]:h-5"
                     >
                       <span className="text-left w-full pr-4">{faq.question}</span>
                     </AccordionTrigger>
                     
                     <AccordionContent 
-                      className="bg-[#11172f] px-5 py-5 text-gray-400 text-[13.5px] leading-[1.7] border-t border-black/20"
+                      className="bg-white px-5 py-5 text-slate-500 text-[13.5px] leading-[1.7] border-t border-slate-100"
                     >
-                      {/* Subtle diagonal stripe pattern for active content background as seen in the dark panels */}
-                      <div className="absolute inset-0 opacity-[0.03] bg-[repeating-linear-gradient(-45deg,#fff_0,#fff_1px,transparent_1px,transparent_6px)] pointer-events-none" />
+                      {/* Subtle diagonal stripe pattern */}
+                      <div className="absolute inset-0 opacity-[0.02] bg-[repeating-linear-gradient(-45deg,#000_0,#000_1px,transparent_1px,transparent_6px)] pointer-events-none" />
                       <div className="relative z-10">
                         {faq.answer}
                       </div>
@@ -118,7 +118,7 @@ export function FAQ() {
              transition={{ duration: 0.5 }}
             className="hidden lg:flex flex-[0.7] justify-center items-start pt-[6px]"
           >
-            <div className="relative w-full max-w-[420px] aspect-[3/4.5] rounded-[16px] overflow-hidden border-[1px] border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] p-[6px] bg-gradient-to-b from-white/5 to-transparent">
+            <div className="relative w-full max-w-[420px] aspect-[3/4.5] rounded-[16px] overflow-hidden border-[1px] border-slate-200 shadow-xl p-[6px] bg-white">
                <div className="w-full h-full rounded-[10px] overflow-hidden">
                   <div 
                     className="w-full h-full bg-cover bg-center"

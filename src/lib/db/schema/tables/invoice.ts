@@ -26,12 +26,12 @@ export const pgInvoice = pgTable("invoices", {
     .references(() => pgUser.id),
   amount: doublePrecision("amount").notNull(),
   reference: text("reference").notNull(),
-  type: text("type", { enum: ["subscription", "domain"] }).notNull(),
+  type: text("type", { enum: ["subscription", "domain", "vps"] }).notNull(),
   status: text("status", {
     enum: ["pending", "paid", "failed", "processing"],
   }).notNull(),
   metadata: json("metadata")
-    .$type<DomainRegisterInvoiceOptions>()
+    .$type<DomainRegisterInvoiceOptions | VpsInvoiceOptions>()
     .default(defaultDomainRegisterOptions)
     .notNull(),
   dueDate: timestamp("due_date", { mode: "date" }).notNull(),
@@ -87,6 +87,14 @@ export type DomainRegisterInvoiceOptions = Pick<
 export type DomainRenewInvoiceOptions = {
   type: "renew";
   domain: string;
+  simpayPaymentId?: string;
+  pixTransactionId?: string;
+  pixCheckout?: PixCheckoutSnapshot;
+};
+
+export type VpsInvoiceOptions = {
+  vpsId: string;
+  config: any;
   simpayPaymentId?: string;
   pixTransactionId?: string;
   pixCheckout?: PixCheckoutSnapshot;

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { Roboto } from "next/font/google";
 import { Switch } from "@/components/ui/switch";
@@ -104,9 +105,10 @@ const plans: VpsPlan[] = [
 ];
 
 export function Plans() {
+  const router = useRouter();
   const [backupEnabled, setBackupEnabled] = useState(false);
-  const [emblaRef] = useEmblaCarousel({ 
-    loop: false, 
+  const [emblaRef] = useEmblaCarousel({
+    loop: false,
     align: 'start',
     containScroll: 'trimSnaps'
   }, [Autoplay({ delay: 4000, stopOnInteraction: false })]);
@@ -124,15 +126,15 @@ export function Plans() {
   ];
 
   return (
-    <section id="planos" className="relative bg-[#0a0e27] px-4 py-20 md:px-8 md:py-32">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+    <section id="planos" className="relative bg-slate-50 px-4 py-20 md:px-8 md:py-32">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
 
       <div className="relative z-10 mx-auto w-full max-w-[1760px]">
         <div className="mb-16 text-center">
-          <h2 className={`${roboto.className} text-3xl font-bold tracking-tight text-white md:text-5xl`}>
+          <h2 className={`${roboto.className} text-3xl font-bold tracking-tight text-slate-900 md:text-5xl`}>
             Potência dedicada para tirar seus projetos do papel.
           </h2>
-          <p className="mt-4 text-base text-gray-400 md:text-lg max-w-2xl mx-auto">
+          <p className="mt-4 text-base text-slate-500 md:text-lg max-w-2xl mx-auto">
             Escolha o plano VPS ideal e escale com performance, estabilidade e suporte 24/7.
           </p>
         </div>
@@ -141,25 +143,25 @@ export function Plans() {
 
           {/* Card de Especificações Fixo */}
           <div className="w-full xl:w-[280px] shrink-0">
-            <div className="bg-[#0d1225] border border-white/10 rounded-2xl h-full flex flex-col shadow-xl">
-              <div className="p-8 h-[280px] flex flex-col justify-between border-b border-white/10">
-                <p className={`${roboto.className} text-[13px] font-bold uppercase tracking-[0.2em] text-[#01FC8D]`}>
+            <div className="bg-white border border-slate-200 rounded-2xl h-full flex flex-col shadow-sm">
+              <div className="p-8 h-[280px] flex flex-col justify-between border-b border-slate-100">
+                <p className={`${roboto.className} text-[13px] font-bold uppercase tracking-[0.2em] text-emerald-600`}>
                   ESPECIFICAÇÕES DA EMBALAGEM
                 </p>
                 <div className="flex flex-col gap-3">
-                  <span className="text-sm font-medium text-white/50">VPS com backup automático</span>
+                  <span className="text-sm font-medium text-slate-400">VPS com backup automático</span>
                   <div className="flex items-center gap-3">
                     <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} />
-                    <span className="text-xs text-gray-500">{backupEnabled ? "Ativado" : "Desativado"}</span>
+                    <span className="text-xs text-slate-500">{backupEnabled ? "Ativado" : "Desativado"}</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex-grow">
                 {rowSpecs.map((row, i) => (
-                  <div key={row.key} className={`px-8 h-[72px] flex flex-col justify-center border-t border-white/5 ${i === rowSpecs.length - 1 ? 'border-b-0' : ''}`}>
-                    <span className="text-base font-bold text-white/90 uppercase tracking-widest leading-none">{row.label}</span>
-                    {row.sub && <span className="text-sm text-gray-500 mt-1 sm:mt-2 leading-tight">{row.sub}</span>}
+                  <div key={row.key} className={`px-8 h-[72px] flex flex-col justify-center border-t border-slate-50 ${i === rowSpecs.length - 1 ? 'border-b-0' : ''}`}>
+                    <span className="text-base font-bold text-slate-700 uppercase tracking-widest leading-none">{row.label}</span>
+                    {row.sub && <span className="text-sm text-slate-400 mt-1 sm:mt-2 leading-tight">{row.sub}</span>}
                   </div>
                 ))}
               </div>
@@ -176,52 +178,51 @@ export function Plans() {
 
                 return (
                   <div key={p.id} className="flex-[0_0_100%] sm:flex-[0_0_45%] lg:flex-[0_0_31%] 2xl:flex-[0_0_24%] min-w-0">
-                    <div className={`bg-[#0d1225] border rounded-2xl h-full flex flex-col transition-all duration-300 ${p.popular ? 'border-[#01FC8D]/60 shadow-[0_0_40px_rgba(1,252,141,0.08)] ring-1 ring-[#01FC8D]/20' : 'border-white/10 hover:border-white/20'}`}>
+                    <div className={`bg-white border rounded-2xl h-full flex flex-col transition-all duration-300 ${p.popular ? 'border-emerald-500 shadow-xl shadow-emerald-500/5 ring-1 ring-emerald-500/20' : 'border-slate-200 hover:border-slate-300'}`}>
 
                       {/* Plan Header */}
-                      <div className="p-8 h-[280px] flex flex-col justify-between border-b border-white/10 relative">
+                      <div className="p-8 h-[280px] flex flex-col justify-between border-b border-slate-100 relative">
                         {p.popular && (
                           <div className="absolute top-6 right-6">
-                            <span className="rounded-full bg-[#01FC8D] px-3 py-1 text-[9px] font-extrabold uppercase tracking-widest text-black shadow-lg">MAIS VENDIDO</span>
+                            <span className="rounded-full bg-emerald-500 px-3 py-1 text-[9px] font-extrabold uppercase tracking-widest text-white shadow-lg">MAIS VENDIDO</span>
                           </div>
                         )}
                         <div>
-                          <p className={`${roboto.className} text-2xl font-bold text-white mb-4`}>{p.name}</p>
-                          <span className="text-sm text-[#ff4d4d] line-through opacity-70 mb-1 block">{p.priceOld}</span>
+                          <p className={`${roboto.className} text-2xl font-bold text-slate-900 mb-4`}>{p.name}</p>
+                          <span className="text-sm text-rose-500 line-through opacity-70 mb-1 block">{p.priceOld}</span>
                           <div className="flex items-baseline gap-1 whitespace-nowrap">
-                            <span className="text-base font-bold text-white mb-2">{priceSymbol}</span>
-                            <span className="text-5xl font-extrabold text-white">{priceMain},</span>
-                            <span className="text-2xl font-bold text-white">{priceCents}</span>
-                            <span className="text-sm font-medium text-gray-400 ml-1.5 opacity-60">/mês</span>
+                            <span className="text-base font-bold text-slate-900 mb-2">{priceSymbol}</span>
+                            <span className="text-5xl font-extrabold text-slate-900">{priceMain},</span>
+                            <span className="text-2xl font-bold text-slate-900">{priceCents}</span>
+                            <span className="text-sm font-medium text-slate-400 ml-1.5 opacity-60">/mês</span>
                           </div>
-                          <p className="mt-1 text-xs text-gray-500 uppercase tracking-wide">12 meses</p>
+                          <p className="mt-1 text-xs text-slate-400 uppercase tracking-wide">12 meses</p>
                         </div>
 
-                        <Link
-                          href={`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano ${p.name} e gostaria de dar continuidade.`)}`}
-                          target="_blank"
-                          className={`${roboto.className} block w-full rounded-xl py-3 text-center text-[11px] font-bold uppercase tracking-[0.15em] transition-all ${p.popular ? 'bg-[#01FC8D] text-black shadow-lg hover:brightness-110' : 'border border-white/20 text-white hover:bg-white/5'
+                        <button
+                          onClick={() => router.push(`/vps/configure/${p.id}`)}
+                          className={`${roboto.className} block w-full rounded-xl py-3 text-center text-[11px] font-bold uppercase tracking-[0.15em] transition-all ${p.popular ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
                             }`}
                         >
                           Começar agora →
-                        </Link>
+                        </button>
                       </div>
 
                       {/* Plan Specs Values */}
-                      <div className="flex-grow bg-white/[0.01]">
+                      <div className="flex-grow bg-slate-50/30">
                         {rowSpecs.map((row) => (
-                          <div key={`${p.id}-${row.key}`} className="h-[72px] flex items-center justify-center border-t border-white/5 px-6 text-center">
-                            <span className="text-lg font-bold text-gray-100">{p[row.key]}</span>
+                          <div key={`${p.id}-${row.key}`} className="h-[72px] flex items-center justify-center border-t border-slate-100 px-6 text-center">
+                            <span className="text-lg font-bold text-slate-700">{p[row.key]}</span>
                           </div>
                         ))}
                       </div>
 
-                      <div className="p-6 border-t border-white/5 flex flex-col gap-2">
-                        <div className="flex items-center gap-2 text-[#01FC8D]">
+                      <div className="p-6 border-t border-slate-100 flex flex-col gap-2">
+                        <div className="flex items-center gap-2 text-emerald-600">
                           <Check className="h-3 w-3" strokeWidth={4} />
                           <span className="text-xs font-extrabold uppercase tracking-wider">100% de cashback</span>
                         </div>
-                        <div className="flex items-center gap-2 text-[#38bdf8]">
+                        <div className="flex items-center gap-2 text-sky-600">
                           <Check className="h-3 w-3" strokeWidth={4} />
                           <span className="text-xs font-extrabold uppercase tracking-wider">Suporte 24/7 Ativo</span>
                         </div>
@@ -236,8 +237,8 @@ export function Plans() {
         </div>
 
         <div className="mt-16 text-right">
-          <p className="text-sm text-gray-500">
-            Quer ainda mais potência? <Link href="/vds" className="font-bold text-[#01FC8D] hover:underline underline-offset-4">Escolha um VDS</Link>.
+          <p className="text-sm text-slate-500">
+            Quer ainda mais potência? <Link href="/vds" className="font-bold text-emerald-600 hover:underline underline-offset-4">Escolha um VDS</Link>.
           </p>
         </div>
       </div>

@@ -310,3 +310,14 @@ export async function authenticateUser(
 
   return userWithoutPassword;
 }
+
+export async function createGuestUser(
+  name: string,
+  email: string,
+  organizationName: string
+) {
+  const passwordPlain = Math.random().toString(36).slice(-8); // Random 8 chars password
+  const user = await createUser(name, email, passwordPlain, organizationName);
+  return { user, passwordPlain };
+}
+

@@ -13,9 +13,9 @@ export const metadata: Metadata = {
 export default function VpsStorageRoutePage() {
   return (
     <SmoothScroll>
-      <div className="min-h-screen w-full overflow-x-hidden bg-[#0a0e27]">
-        <Navbar />
-        <main className="w-full">
+      <div className="min-h-screen w-full overflow-x-hidden bg-slate-50">
+        <Navbar variant="light" />
+        <main className="w-full pt-24">
           <VpsStoragePage />
         </main>
         <Footer />

@@ -43,29 +43,29 @@ export default async function ContinuarPage({ searchParams }: PageProps) {
   const enc = encodeURIComponent(next);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0a0e27] px-4 py-16">
-      <Card className="w-full max-w-md border-white/10 bg-[#0d1225]/90 text-white shadow-xl backdrop-blur-md">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-16">
+      <Card className="w-full max-w-md border-slate-200 bg-white text-slate-900 shadow-xl">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-white">Continuar compra</CardTitle>
-          <CardDescription className="text-base text-white/65">
+          <CardTitle className="text-2xl font-bold text-slate-900">Continuar compra</CardTitle>
+          <CardDescription className="text-base text-slate-500">
             Você já possui conta na Atlas Hosting?
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Button
             asChild
-            className="h-11 w-full bg-[#01FC8D] font-semibold text-black hover:bg-[#01e67d]"
+            className="h-11 w-full bg-emerald-500 font-semibold text-white hover:bg-emerald-600"
           >
             <Link href={`/login?redirect=${enc}`}>Sim — entrar com minha conta</Link>
           </Button>
           <Button
             asChild
             variant="outline"
-            className="h-11 w-full border-white/25 bg-transparent text-white hover:bg-white/5"
+            className="h-11 w-full border-slate-200 bg-transparent text-slate-600 hover:bg-slate-50"
           >
             <Link href={`/signup?redirect=${enc}`}>Não — criar conta nova</Link>
           </Button>
-          <Button asChild variant="ghost" className="mt-1 text-white/60 hover:text-white">
+          <Button asChild variant="ghost" className="mt-1 text-slate-400 hover:text-slate-600">
             <Link href="/domains/search">Cancelar e voltar à busca</Link>
           </Button>
         </CardContent>

@@ -3,11 +3,12 @@
 import type { LoginFormInputs } from "@/components/auth/LoginForm";
 import type { SignupFormInputs } from "@/components/auth/SignupForm";
 import type { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
-import { getUser } from "@/lib/auth/index";
+import { getUser, getOptionalUser } from "@/lib/auth/index";
 import {
   authenticateUser,
   createSession,
   createUser,
+  createGuestUser,
   generateSessionToken,
 } from "@/lib/auth/utils";
 import pleskApi from "@/lib/server/apis/plesk";
@@ -32,6 +33,7 @@ import {
   type DomainRegisterInvoiceOptions,
   type DomainRenewInvoiceOptions,
   type PixCheckoutSnapshot,
+  type VpsInvoiceOptions,
 } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
@@ -55,6 +57,102 @@ import { DEFAULT_POST_LOGIN_PATH } from "@/lib/consts/default-auth-path";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { query } from "dns-query";
+import { sendNotificationEmail } from "@/lib/email/service";
+import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
+
+
+export type GuestInfo = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  document: string;
+  phoneNumber: string;
+  address: {
+    street: string;
+    number: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+};
+
+async function findOrCreateGuestUser(info: GuestInfo) {
+  const email = info.email.toLowerCase();
+  const name = `${info.firstName} ${info.lastName}`;
+  
+  let user = await db.query.pgUser.findFirst({
+    where: eq(pgUser.email, email),
+    with: { organization: true },
+  });
+
+  let isNew = false;
+  let passwordPlain = "";
+
+  if (!user) {
+    const guest = await createGuestUser(
+      name,
+      email,
+      "Minha Organização"
+    );
+    if (!guest.user) throw new Error("Erro ao criar usuário convidado.");
+    
+    passwordPlain = guest.passwordPlain || "";
+    isNew = true;
+    
+    // Refetch to get organization
+    user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, guest.user.id),
+      with: { organization: true },
+    }) as any;
+  }
+
+  // Update billing info regardless if new or existing (as per user request: "apos preencher essas informacoes... vincule")
+  if (user) {
+    await db.update(pgUser).set({
+      billingDocument: info.document.replace(/\D/g, ""),
+      billingPhone: info.phoneNumber.replace(/\D/g, ""),
+      billingStreet: info.address.street,
+      billingNumber: info.address.number,
+      billingNeighborhood: info.address.neighborhood,
+      billingCity: info.address.city,
+      billingState: info.address.state,
+      billingZipCode: info.address.zipCode.replace(/\D/g, ""),
+      updatedAt: new Date(),
+    }).where(eq(pgUser.id, user.id));
+  }
+
+  // Always create a session so subsequent payment actions work
+  const sessionToken = generateSessionToken();
+  await createSession(sessionToken, user.id);
+  const cookieStore = await cookies();
+  cookieStore.set("session_token", sessionToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
+
+  return { user, passwordPlain, isNew };
+}
+
+
+
+async function sendWelcomePasswordEmailIfGuest(invoice: Invoice, user: User) {
+  const meta = invoice.metadata as any;
+  if (meta?.guestPassword) {
+    await sendNotificationEmail(
+      user.email,
+      user.name.split(" ")[0],
+      "Atlas Hosting",
+      "Sua conta foi criada!",
+      `Olá! Sua compra foi confirmada e sua conta foi criada. Use a senha abaixo para acessar seu painel:\n\nSenha: ${meta.guestPassword}`,
+      "success",
+      `${getServerPublicBaseUrl()}/login`,
+      "Acessar Painel"
+    );
+  }
+}
 
 export async function login(
   prevState: unknown,
@@ -149,7 +247,7 @@ export async function signup(
   const safeFirstName = firstName || email.split("@")[0];
   const safeLastName = lastName || "";
   const safeOrgName = organizationName || "Minha Organização";
-  
+
   const fullName = `${safeFirstName.trim()} ${safeLastName.trim()}`.trim();
 
   let referrerId = initialReferrerId;
@@ -395,9 +493,9 @@ const getDomainProfitFee = async (): Promise<number> => {
   try {
     const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
     const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
-    
+
     let finalFeePercent: number;
-    
+
     if (envFee !== undefined) {
       // Normalize: 0.2 -> 20, 1.2 -> 20, 20 -> 20
       if (envFee > 0 && envFee < 1) {
@@ -411,19 +509,20 @@ const getDomainProfitFee = async (): Promise<number> => {
       const dbConfig = await db.query.pgSystemConfig.findFirst();
       finalFeePercent = dbConfig?.domainFee ?? 30;
     }
-    
+
     return 1 + (finalFeePercent / 100);
   } catch {
     return 1.20;
   }
 };
 
-export async function createDomainInvoice(data: DomainPageParams | FormData) {
+export async function createDomainInvoice(data: (DomainPageParams & { guestInfo?: GuestInfo }) | FormData) {
   "use server";
 
   let domain: string | undefined;
   let years: string | undefined;
   let whoisguard: string | undefined;
+  let guestInfo: GuestInfo | undefined;
 
   if (data instanceof FormData) {
     domain = data.get("domain") as string;
@@ -433,12 +532,24 @@ export async function createDomainInvoice(data: DomainPageParams | FormData) {
     domain = data.domain;
     years = data.years;
     whoisguard = data.whoisguard;
+    guestInfo = data.guestInfo;
   }
 
-  const user = await getUser();
+  let user = await getUser();
+  let guestPassword = "";
 
   if (!user) {
-    return { error: "Usuário não autenticado." };
+    if (guestInfo) {
+      const guest = await findOrCreateGuestUser(guestInfo);
+      user = guest.user as any;
+      guestPassword = guest.passwordPlain || "";
+    } else {
+      return { error: "Usuário não autenticado." };
+    }
+  }
+
+  if (!user) {
+    return { error: "Usuário não encontrado." };
   }
 
   if (!domain) {
@@ -491,7 +602,7 @@ export async function createDomainInvoice(data: DomainPageParams | FormData) {
     } else {
       const tld = domain.split(".").pop() as string;
       console.log(`[NAMECHEAP] Buscando preços para TLD: .${tld}`);
-      
+
       // Buscamos o preço de 1 ano e o de renovação
       const pricing = await db.query.pgDomainPricingCache.findFirst({
         where: eq(pgDomainPricingCache.tld, tld),
@@ -507,13 +618,13 @@ export async function createDomainInvoice(data: DomainPageParams | FormData) {
       } else {
         const pricingData = await namecheapApi.getPricing(tld);
         const categories = pricingData?.ProductType?.Categories || [];
-        
+
         const regCat = categories.find(c => c.Name.toUpperCase() === "REGISTER");
         const renewCat = categories.find(c => c.Name.toUpperCase() === "RENEW");
 
         const products = regCat?.Products || [];
         const prod = products.find((p: any) => p.Name.toLowerCase() === tld.toLowerCase());
-        
+
         if (prod) {
           prod.Prices.forEach((p: any) => {
             if (p.DurationType === "YEAR" && p.Duration >= 1 && p.Duration <= 10) {
@@ -523,7 +634,7 @@ export async function createDomainInvoice(data: DomainPageParams | FormData) {
         }
 
         p1USD = allPricesUSD[1] || 0;
-        
+
         const get1YearPrice = (cat: any) => {
           const products = cat?.Products || [];
           const prod = products.find((p: any) => p.Name.toLowerCase() === tld.toLowerCase());
@@ -570,6 +681,7 @@ export async function createDomainInvoice(data: DomainPageParams | FormData) {
         metadata: {
           years: yearStr,
           whoisguard,
+          guestPassword: guestPassword || undefined,
         },
       })
       .returning();
@@ -627,12 +739,12 @@ export async function createDomainBundleInvoice({
         const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
         const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
         const envFeeNormalized = envFee !== undefined ? (envFee > 0 && envFee < 1 ? envFee * 100 : envFee) : undefined;
-        
+
         const config = await db.query.pgSystemConfig.findFirst();
         const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 30;
         fee = 1 + finalFeePercent / 100;
-      } catch { 
-        fee = 1.20; 
+      } catch {
+        fee = 1.20;
       }
     }
 
@@ -734,12 +846,12 @@ export async function createDomainRenewalInvoice(domainName: string): Promise<
       const renewCat = categories.find(c => c.Name.toUpperCase() === "RENEW");
       const products = renewCat?.Products || [];
       const prod = products.find((p: any) => p.Name.toLowerCase() === tld.toLowerCase());
-      
+
       if (prod) {
         const priceDetail = prod.Prices.find((p: any) => p.Duration === 1 && p.DurationType === "YEAR");
         renewUSD = priceDetail?.YourPrice ?? priceDetail?.Price;
       }
-      
+
       if (!renewUSD) {
         // Fallback para o preço de registro + 20% se renovação não for encontrada
         const regCat = categories.find(c => c.Name.toUpperCase() === "REGISTER");
@@ -922,6 +1034,7 @@ async function processInvoiceAfterPayment(
   };
 
   await registerDomainsFromPaidInvoice(invoice, contact as NamecheapContactDetails);
+  await sendWelcomePasswordEmailIfGuest(invoice, user);
 }
 
 async function fulfillCheckoutAfterPixPaid(
@@ -1011,12 +1124,12 @@ export async function initiateCheckoutPix(
 ): Promise<
   | { status: "error"; message: string }
   | {
-      status: "success";
-      pix_qrcode: string;
-      pix_content: string;
-      paymentId: string;
-      transactionId: string;
-    }
+    status: "success";
+    pix_qrcode: string;
+    pix_content: string;
+    paymentId: string;
+    transactionId: string;
+  }
 > {
   const user = await getUser();
   const snap = buildPixCheckoutSnapshot(payload);
@@ -1092,13 +1205,21 @@ export async function initiateCheckoutPix(
  * Não chama a API Simpay (o cliente já confirmou via SSE).
  */
 export async function markPixPaymentComplete(invoiceId: string): Promise<void> {
-  const user = await getUser();
+  let user = await getUser();
 
   const invoice = await db.query.pgInvoice.findFirst({
     where: eq(pgInvoice.id, invoiceId),
+    with: { user: { with: { organization: true } } },
   });
 
-  if (!invoice || invoice.orgId !== user.organization.id) return;
+  if (!invoice) return;
+
+  // Fallback to invoice user if no session (guest checkout for existing user)
+  if (!user) {
+    user = invoice.user as any;
+  }
+
+  if (!user || invoice.orgId !== user.organization.id) return;
   if (invoice.status === "paid") return;
 
   await db
@@ -1119,13 +1240,21 @@ export async function markPixPaymentComplete(invoiceId: string): Promise<void> {
 export async function syncCheckoutPixPayment(
   invoiceId: string
 ): Promise<{ status: "PENDING" | "COMPLETED" }> {
-  const user = await getUser();
+  let user = await getUser();
 
   const invoice = await db.query.pgInvoice.findFirst({
     where: eq(pgInvoice.id, invoiceId),
+    with: { user: { with: { organization: true } } },
   });
 
-  if (!invoice || invoice.orgId !== user.organization.id) {
+  if (!invoice) return { status: "PENDING" };
+
+  // Fallback to invoice user if no session (guest checkout for existing user)
+  if (!user) {
+    user = invoice.user as any;
+  }
+
+  if (!user || invoice.orgId !== user.organization.id) {
     return { status: "PENDING" };
   }
 
@@ -1179,19 +1308,31 @@ export async function completeCheckout(
     ...values
   }: CheckoutFormInputs & { invoiceId: string; cardToken?: string }
 ): Promise<ActionResponse> {
-  const user = await getUser();
+  let user = await getUser();
 
-  console.log({ values });
+  if (!invoiceId) {
+    return { status: "error", message: "ID da fatura é obrigatório." };
+  }
+
+  let invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, invoiceId),
+    with: { user: { with: { organization: true } } },
+  });
+
+  if (!invoice) {
+    return { status: "error", message: "Fatura não encontrada." };
+  }
+
+  // Fallback to invoice user if no session
+  if (!user) {
+    user = invoice.user as any;
+  }
 
   if (!user) {
     return {
       status: "error",
-      message: "Usuário não autenticado. Faça login para continuar.",
+      message: "Usuário não encontrado. Faça login para continuar.",
     };
-  }
-
-  if (!invoiceId) {
-    return { status: "error", message: "ID da fatura é obrigatório." };
   }
 
   const buyerCcRate = await fetchAtlasBuyerCcRate();
@@ -1202,7 +1343,8 @@ export async function completeCheckout(
   console.log(`\n[CHECKOUT] ==================== INICIANDO CHECKOUT (NOVO CARTÃO) ====================`);
   console.log(`[CHECKOUT] Invoice ID: ${invoiceId} | Usuário: ${user.id}`);
 
-  const invoice = await db
+  // Update status to processing
+  const updatedInvoice = await db
     .update(pgInvoice)
     .set({ status: "processing" })
     .where(eq(pgInvoice.id, invoiceId))
@@ -1210,9 +1352,8 @@ export async function completeCheckout(
     .execute()
     .then((r) => r[0]);
 
-  if (!invoice) {
-    console.error(`[CHECKOUT] Fatura ${invoiceId} não encontrada no banco.`);
-    return { status: "error", message: "Fatura não encontrada." };
+  if (updatedInvoice) {
+    invoice = updatedInvoice as any;
   }
 
   console.log(`[CHECKOUT] Fatura carregada:`, {
@@ -1394,6 +1535,7 @@ export async function completeCheckout(
     }
 
     await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
+    await sendWelcomePasswordEmailIfGuest(invoice, user as any);
     console.log(`[CHECKOUT] ✓ Fatura ${invoiceId} marcada como PAGA. Redirecionando para /payment/success.`);
     redirect("/payment/success");
   }
@@ -1425,6 +1567,7 @@ export async function completeCheckout(
   }
 
   console.log(`[CHECKOUT] ✓ Checkout concluído. Redirecionando para /payment/success.`);
+  await sendWelcomePasswordEmailIfGuest(invoice, user as any);
   redirect("/payment/success");
 
   return { status: "success", message: "Plano adquirido com sucesso!" };
@@ -1441,17 +1584,31 @@ export async function completeCheckoutWithSavedCard(
     card: SavedCard;
   }
 ): Promise<ActionResponse> {
-  const user = await getUser();
+  let user = await getUser();
+
+  if (!invoiceId) {
+    return { status: "error", message: "ID da fatura é obrigatório." };
+  }
+
+  let invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, invoiceId),
+    with: { user: { with: { organization: true } } },
+  });
+
+  if (!invoice) {
+    return { status: "error", message: "Fatura não encontrada." };
+  }
+
+  // Fallback to invoice user if no session
+  if (!user) {
+    user = invoice.user as any;
+  }
 
   if (!user) {
     return {
       status: "error",
-      message: "Usuário não autenticado. Faça login para continuar.",
+      message: "Usuário não encontrado. Faça login para continuar.",
     };
-  }
-
-  if (!invoiceId) {
-    return { status: "error", message: "ID da fatura é obrigatório." };
   }
 
   if (!card) {
@@ -1463,7 +1620,8 @@ export async function completeCheckoutWithSavedCard(
     return { status: "error", message: "Não foi possível obter as taxas de pagamento. Tente novamente." };
   }
 
-  const invoice = await db
+  // Update status to processing
+  const updatedInvoice = await db
     .update(pgInvoice)
     .set({
       status: "processing",
@@ -1472,6 +1630,10 @@ export async function completeCheckoutWithSavedCard(
     .returning()
     .execute()
     .then((r) => r[0]);
+
+  if (updatedInvoice) {
+    invoice = updatedInvoice as any;
+  }
 
   if (!invoice) {
     console.error(`[CHECKOUT-SAVED] Fatura ${invoiceId} não encontrada.`);
@@ -2183,7 +2345,7 @@ export async function addDomainForTransfer(
     });
 
     // Tenta adicionar o domínio ao Plesk em background (cria zona DNS)
-    addDomainToPlesk(domain.trim().toLowerCase()).catch(() => {});
+    addDomainToPlesk(domain.trim().toLowerCase()).catch(() => { });
 
     revalidatePath("/domain");
 
@@ -2245,7 +2407,7 @@ export async function checkDomainNameservers(
       }
 
       // Tenta adicionar o domínio ao Plesk (se ainda não foi)
-      addDomainToPlesk(domain.toLowerCase()).catch(() => {});
+      addDomainToPlesk(domain.toLowerCase()).catch(() => { });
 
       revalidatePath("/domain");
       return {
@@ -2273,5 +2435,132 @@ export async function checkDomainNameservers(
       status: "error",
       message: "Erro ao verificar DNS. Tente novamente em alguns minutos.",
     };
+  }
+}
+export async function createVpsInvoice(data: {
+  planId: string;
+  config: any;
+  guestInfo?: GuestInfo;
+}) {
+  let user = await getOptionalUser();
+  let guestPassword = "";
+
+  const { planId, config, guestInfo } = data;
+
+  if (!user) {
+    if (guestInfo) {
+      const guest = await findOrCreateGuestUser(guestInfo);
+      user = guest.user as any;
+      guestPassword = guest.passwordPlain || "";
+    } else {
+      return { status: "error", message: "Usuário não autenticado." };
+    }
+  }
+
+  if (!user) return { status: "error", message: "Usuário não encontrado." };
+
+  // RATE: 5.86 (EUR to BRL) * 2 (markup) = 11.72
+  const RATE = 11.72;
+
+  // Base Prices in Euro
+  const basePrices: Record<string, number> = {
+    "10": 4.50,
+  };
+
+  const duration = parseInt(config.duration || "1", 10);
+  let monthlyEuro = basePrices[planId] || 4.50;
+
+  // Apply Duration Discounts (as in frontend)
+  if (duration === 6) monthlyEuro = 4.05; // 10% discount
+  if (duration === 12) monthlyEuro = 3.60; // 20% discount
+
+  // Setup Fees (Directly in BRL as per user request)
+  let setupBrl = 0;
+  if (duration === 1) setupBrl = 4.50 * RATE; // R$ 52,74
+  if (duration === 6) setupBrl = 26.28;
+  if (duration === 12) setupBrl = 0;
+
+  // Add-ons (Monthly in Euro)
+  let additionalMonthlyEuro = 0;
+
+  // Location
+  if (config.location === "us-east") additionalMonthlyEuro += 1.40;
+  if (config.location === "us-west") additionalMonthlyEuro += 1.40;
+  if (config.location === "eu-west") additionalMonthlyEuro += 1.40;
+
+  // Storage
+  if (config.storage === "ssd-300") additionalMonthlyEuro += 1.55;
+  if (config.storage === "nvme-150") additionalMonthlyEuro += 1.85;
+
+  // OS / Panels
+  const osPrices: Record<string, number> = {
+    "windows": 7.50,
+    "cpanel": 21.75,
+    "plesk-admin": 12.00,
+    "plesk-host": 36.50,
+    "plesk-pro": 19.00,
+    "plesk-win-admin": 18.25,
+    "plesk-win-host": 42.75,
+    "plesk-win-pro": 25.25,
+    "directadmin": 5.00,
+  };
+  additionalMonthlyEuro += osPrices[config.image] || 0;
+
+  // Add-ons
+  if (config.backup === "true") additionalMonthlyEuro += 1.50;
+  if (config.privateNetwork === "enabled") additionalMonthlyEuro += 2.29;
+  if (config.ipv4Address === "2ip") additionalMonthlyEuro += 3.50;
+
+  if (config.objectStorage) {
+    const objPrices: Record<string, number> = {
+      "250gb": 2.49,
+      "500gb": 4.98,
+      "750gb": 7.47,
+      "1tb": 9.96
+    };
+    additionalMonthlyEuro += objPrices[config.objectStorage] || 0;
+  }
+
+  if (config.management === "managed") additionalMonthlyEuro += 109.99;
+  if (config.monitoring === "full") additionalMonthlyEuro += 11.49;
+
+  const totalMonthlyBrl = (monthlyEuro + additionalMonthlyEuro) * RATE;
+  const qty = parseInt(config.qty || "1", 10);
+  
+  const finalAmountBrl = (totalMonthlyBrl * duration * qty) + (setupBrl * qty);
+
+  try {
+    const description = `Hospedagem VPS ${planId} (${duration} ${duration === 1 ? 'mês' : 'meses'})`;
+
+    const [newInvoice] = await db
+      .insert(pgInvoice)
+      .values({
+        orgId: user.organization.id,
+        userId: user.id,
+        type: "vps",
+        reference: `VPS-${planId}-${Date.now()}`,
+        amount: finalAmountBrl,
+        status: "pending",
+        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+        currency: "BRL",
+        description,
+        metadata: {
+          vpsId: planId,
+          config,
+          guestPassword: guestPassword || undefined,
+        },
+      })
+      .returning();
+
+    if (!newInvoice) throw new Error("Erro ao criar fatura.");
+
+    return {
+      status: "success",
+      invoiceId: newInvoice.id,
+      redirectUrl: `/checkout/${newInvoice.id}?initialStep=payment`,
+    };
+  } catch (error) {
+    console.error("Error creating VPS invoice:", error);
+    return { status: "error", message: "Erro ao processar o pedido." };
   }
 }

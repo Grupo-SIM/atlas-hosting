@@ -9,7 +9,7 @@ export default function LoadingState() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center text-lg font-medium text-[#01FC8D] w-full"
+          className="text-center text-lg font-medium text-emerald-600 w-full"
         >
           Verificando disponibilidade...
         </motion.div>
@@ -29,7 +29,7 @@ export default function LoadingState() {
               repeat: Infinity,
               delay: i * 0.2,
             }}
-            className="h-2 w-2 rounded-full bg-[#01FC8D]"
+            className="h-2.5 w-2.5 rounded-full bg-emerald-500"
           />
         ))}
       </div>

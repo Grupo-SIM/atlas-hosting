@@ -20,8 +20,8 @@ import { LazySection } from "./landing/components/LazySection";
 export default function Home() {
   return (
     <SmoothScroll>
-      <div className="min-h-screen bg-[#0a0e27] overflow-x-hidden w-full">
-        <Navbar />
+      <div className="min-h-screen bg-slate-50 overflow-x-hidden w-full">
+        <Navbar variant="light" />
         <Hero />
         <LazySection offset="100px">
           <Statistics />
@@ -31,9 +31,9 @@ export default function Home() {
           <Plans />
         </LazySection>
         {/* <Partners /> */}
-        <div className="relative w-full bg-[#0a0e27] overflow-hidden">
-          <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
-            <Threads amplitude={0.5} distance={1.8} enableMouseInteraction={false} color={[1, 1, 1]} />
+        <div className="relative w-full bg-slate-50 overflow-hidden">
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-10">
+            <Threads amplitude={0.5} distance={1.8} enableMouseInteraction={false} color={[0, 0, 0]} />
           </div>
           <div className="relative z-10">
             <LazySection offset="400px">

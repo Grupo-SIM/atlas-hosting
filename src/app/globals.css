@@ -57,8 +57,30 @@
     @apply border-border;
   }
 
+  html {
+    overflow-y: scroll;
+  }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* react-remove-scroll-bar adds data-scroll-locked to body + classes to fixed elements.
+     When Radix Select / Dialog opens, it sets overflow:hidden + padding-right on body to
+     compensate for scrollbar removal. We override ALL of that so the scrollbar stays visible
+     and no layout shift occurs. */
+  html body[data-scroll-locked] {
+    overflow: hidden !important;
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  html body .right-scroll-bar-position {
+    right: 0 !important;
+  }
+
+  html body .width-before-scroll-bar {
+    margin-right: 0 !important;
   }
 
   button, 

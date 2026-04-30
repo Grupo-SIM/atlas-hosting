@@ -15,14 +15,14 @@ const partners = [
 
 export function Partners() {
   return (
-    <section className="py-24 px-4 bg-[#0a0e27]">
+    <section className="py-24 px-4 bg-slate-50">
       <div className="container mx-auto max-w-[1000px] text-center">
         <motion.h3 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-white text-sm md:text-base mb-10 font-medium tracking-wide"
+          className="text-slate-900 text-sm md:text-base mb-10 font-medium tracking-wide"
         >
           Empresas que confiam no Atlas
         </motion.h3>
@@ -35,12 +35,12 @@ export function Partners() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.05 }}
-              className="bg-[#0e132e] border border-white/5 rounded-md flex items-center justify-center h-[90px] xl:h-[100px] p-6 shadow-sm transition-colors hover:bg-white/5"
+              className="bg-white border border-slate-200 rounded-md flex items-center justify-center h-[90px] xl:h-[100px] p-6 shadow-sm transition-colors hover:bg-slate-50"
             >
               <img 
                 src={logoUrl} 
                 alt={`Partner ${i + 1}`} 
-                className="max-h-full max-w-full object-contain opacity-80 hover:opacity-100 transition-opacity"
+                className="max-h-full max-w-full object-contain opacity-70 hover:opacity-100 transition-opacity filter grayscale hover:grayscale-0"
                 loading="lazy"
               />
             </motion.div>

@@ -26,7 +26,6 @@ async function redirectToLogin(): Promise<Error> {
 
   try {
     if (pathname && pathname !== "/login") {
-      // Extract just the pathname from the URL if it's a full URL
       redirect(`/login?redirect=${encodeURIComponent(pathname)}`);
     } else {
       redirect("/login");
@@ -95,6 +94,59 @@ export async function getUser(): Promise<User> {
   return user as User;
 }
 
+export async function checkIsAuthenticated(): Promise<boolean> {
+  "use server";
+  try {
+    const session = await auth();
+    if (session?.user?.id) return true;
+    
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get("session_token")?.value;
+    const { user } = await validateSession(sessionToken);
+    return !!user;
+  } catch {
+    return false;
+  }
+}
+
+export async function getOptionalUser(): Promise<User | null> {
+  "use server";
+  try {
+    const session = await auth();
+    if (session?.user?.id) {
+      const user = await db.query.pgUser.findFirst({
+        where: eq(pgUser.id, session.user.id),
+        with: {
+          organization: {
+            with: {
+              members: true,
+              plan: true,
+              wallet: { with: { cards: true } },
+              owner: true,
+              domains: true,
+            },
+          },
+          domainAccess: true,
+          referrer: true,
+          referredUsers: true,
+          settings: true,
+          sessions: true,
+        },
+      });
+      if (user && user.organization) {
+        return user as User;
+      }
+    }
+
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get("session_token")?.value;
+    const { user } = await validateSession(sessionToken);
+    return user as User | null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getUserSettings(
   userId: string
 ): Promise<UserSettings | undefined> {
@@ -104,9 +156,6 @@ export async function getUserSettings(
     })
     .execute();
 }
-
-// '{ id: string; name: string; ownerId: string | null; domId: string | null; pleskId: string | null; planId: string | null; namecheapId: number | null; createdAt: Date; updatedAt: Date; ... 6 more ...; domains: { ...; }[]; } | null'
-// '{ id: string; name: string; ownerId: string | null; domId: string | null; pleskId: string | null; planId: string | null; namecheapId: number | null; createdAt: Date; updatedAt: Date; deletedAt: Date | null; walletId: string; } & { ...; }'.
 
 export interface UserWithLogger extends User {
   logger: AppLogger;
