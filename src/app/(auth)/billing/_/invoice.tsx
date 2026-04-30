@@ -43,7 +43,7 @@ export default function InvoiceCard({
       ];
     }
 
-    const whoisGuard = invoice.metadata.whoisguard === "on";
+    const whoisGuard = invoice.type === "domain" && (invoice.metadata as any)?.whoisguard === "on";
 
     const breakdownInformation = [
       {
@@ -104,10 +104,12 @@ export default function InvoiceCard({
                     "capitalize px-3 py-1 font-bold",
                     invoice.type === "domain" 
                       ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" 
-                      : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                      : invoice.type === "vps"
+                        ? "bg-blue-600/10 text-blue-500 border-blue-500/20"
+                        : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
                   )}
                 >
-                  {invoice.type === "domain" ? "Domínio" : "Plano"}
+                  {invoice.type === "domain" ? "Domínio" : invoice.type === "vps" ? "VPS" : "Plano"}
                 </Badge>
                 <Badge
                   className={cn(
@@ -213,7 +215,7 @@ export default function InvoiceCard({
                     Tipo de produto:
                   </span>
                   <Badge variant="outline">
-                    {invoice.type === "domain" ? "Domínio" : "Plano"}
+                    {invoice.type === "domain" ? "Domínio" : invoice.type === "vps" ? "VPS" : "Plano"}
                   </Badge>
                 </div>
               </div>

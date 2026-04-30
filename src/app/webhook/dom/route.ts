@@ -11,6 +11,7 @@ import type { PayloadWebhook } from "@/lib/server/apis/dom/types";
 import { AppLogger } from "@/lib/server/logs";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { sendVpsPurchaseNotifications } from "@/lib/notifications/vps-purchase";
 
 // Placeholder functions for webhook actions
 async function onSignatureCreated(data: PayloadWebhook["data"]): Promise<void> {
@@ -168,6 +169,53 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
 
       throw new Error(`Falha ao registrar domínio(s). Por favor, tente novamente.`);
     }
+  }
+
+  // VPS invoice — send notifications
+  if (invoice.type === "vps") {
+    await db
+      .update(pgInvoice)
+      .set({ status: "paid" })
+      .where(eq(pgInvoice.id, invoiceId));
+
+    const user = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, invoice.userId),
+    });
+
+    if (user) {
+      const meta = invoice.metadata as any;
+      const config = meta?.config || {};
+      try {
+        await sendVpsPurchaseNotifications({
+          userName: user.name || "Cliente",
+          userEmail: user.email,
+          userPhone: (user as any).billingPhone || undefined,
+          userDocument: (user as any).billingDocument || undefined,
+          userAddress: (user as any).billingCity ? `${(user as any).billingStreet || ""}, ${(user as any).billingCity} - ${(user as any).billingState || ""}` : undefined,
+          isNewAccount: !!meta?.guestPassword,
+          guestPassword: meta?.guestPassword,
+          planId: meta?.vpsId || "10",
+          planName: `Cloud VPS ${meta?.vpsId || "10"}`,
+          quantity: parseInt(config.qty || "1", 10),
+          duration: parseInt(config.duration || "1", 10),
+          location: config.location || "eu",
+          storage: config.storage || "ssd-150",
+          image: config.image || "ubuntu",
+          backup: config.backup === "true",
+          management: config.management || "unmanaged",
+          monitoring: config.monitoring,
+          privateNetwork: config.privateNetwork,
+          ipv4Address: config.ipv4Address,
+          objectStorage: config.objectStorage,
+          invoiceId: invoice.id,
+          invoiceRef: invoice.reference,
+          totalAmount: invoice.amount,
+        });
+      } catch (err) {
+        console.error("[Webhook] Erro ao enviar notificações VPS:", err);
+      }
+    }
+    return;
   }
 }
 

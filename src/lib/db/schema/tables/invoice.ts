@@ -82,6 +82,8 @@ export type DomainRegisterInvoiceOptions = Pick<
   testPaymentOnly?: boolean;
   /** Pacote "Amplie sua marca": uma fatura, vários `createDomain` após pagamento */
   bundleDomains?: string[];
+  /** Senha temporária para contas criadas via guest checkout */
+  guestPassword?: string;
 };
 
 export type DomainRenewInvoiceOptions = {

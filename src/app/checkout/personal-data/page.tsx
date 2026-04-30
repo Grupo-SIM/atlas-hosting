@@ -225,7 +225,6 @@ export default function PersonalDataPage() {
               <div className="col-span-3 space-y-2">
                 <Label className="text-sm font-semibold text-slate-600">Saudação</Label>
                 <Select
-                  modal={false}
                   value={formData.salutation}
                   onValueChange={(v) => handleSelectChange("salutation", v)}
                 >

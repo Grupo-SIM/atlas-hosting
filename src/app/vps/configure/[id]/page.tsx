@@ -251,7 +251,7 @@ export default function VpsConfigurePage() {
 
           <div className="flex items-center gap-4">
             <span className="text-[11px] font-medium text-slate-500">Quantidade de servidores</span>
-            <Select modal={false} value={quantity} onValueChange={setQuantity}>
+            <Select value={quantity} onValueChange={setQuantity}>
               <SelectTrigger className="w-16 h-10 border border-slate-200">
                 <SelectValue />
               </SelectTrigger>
@@ -624,7 +624,7 @@ export default function VpsConfigurePage() {
                           <div className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-slate-400 text-[10px] cursor-help">?</div>
                         </div>
                         <div className="md:col-span-9">
-                          <Select modal={false} value={privateNetwork} onValueChange={setPrivateNetwork}>
+                          <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
                             <SelectTrigger className="h-12 border-slate-200 bg-white text-left justify-start">
                               <SelectValue placeholder="Selecione a rede" />
                             </SelectTrigger>
@@ -661,7 +661,7 @@ export default function VpsConfigurePage() {
                           <span className="text-sm font-bold text-slate-600">IPv4</span>
                         </div>
                         <div className="md:col-span-9">
-                          <Select modal={false} value={ipv4Address} onValueChange={setIpv4Address}>
+                          <Select value={ipv4Address} onValueChange={setIpv4Address}>
                             <SelectTrigger className="h-12 border-slate-200 bg-white text-left justify-start">
                               <SelectValue placeholder="Selecione o IP" />
                             </SelectTrigger>
@@ -697,7 +697,7 @@ export default function VpsConfigurePage() {
                           <span className="text-sm font-bold text-slate-600">Armazenamento de Objetos</span>
                         </div>
                         <div className="md:col-span-9">
-                          <Select modal={false} value={objectStorage} onValueChange={setObjectStorage}>
+                          <Select value={objectStorage} onValueChange={setObjectStorage}>
                             <SelectTrigger className="h-12 border-slate-200 text-left justify-start">
                               <SelectValue placeholder={objectStorage === "none" ? "Nenhum" : objectStorage === "250gb" ? "250 GB Armazenamento" : objectStorage === "500gb" ? "500 GB Armazenamento" : objectStorage === "750gb" ? "750 GB Armazenamento" : "1 TB Armazenamento"} />
                             </SelectTrigger>
@@ -739,7 +739,7 @@ export default function VpsConfigurePage() {
                           <div className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-slate-400 text-[10px] cursor-help">?</div>
                         </div>
                         <div className="md:col-span-9">
-                          <Select modal={false} value={serverManagement} onValueChange={setServerManagement}>
+                          <Select value={serverManagement} onValueChange={setServerManagement}>
                             <SelectTrigger className="h-12 border-slate-200 bg-white text-left justify-start">
                               <SelectValue placeholder="Selecione o gerenciamento" />
                             </SelectTrigger>
@@ -768,7 +768,7 @@ export default function VpsConfigurePage() {
                           <div className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-slate-400 text-[10px] cursor-help">?</div>
                         </div>
                         <div className="md:col-span-9">
-                          <Select modal={false} value={monitoring} onValueChange={setMonitoring}>
+                          <Select value={monitoring} onValueChange={setMonitoring}>
                             <SelectTrigger className="h-12 border-slate-200 bg-white text-left justify-start">
                               <SelectValue placeholder="Selecione o monitoramento" />
                             </SelectTrigger>
@@ -1122,7 +1122,7 @@ export default function VpsConfigurePage() {
 
                   <div className="space-y-4">
                     <label className="text-sm font-bold text-[#1e293b]">Versão</label>
-                    <Select modal={false} value={ubuntuVersion} onValueChange={setUbuntuVersion}>
+                    <Select value={ubuntuVersion} onValueChange={setUbuntuVersion}>
                       <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
                         <SelectValue />
                       </SelectTrigger>
@@ -1188,7 +1188,7 @@ export default function VpsConfigurePage() {
 
                   <div className="space-y-4">
                     <label className="text-sm font-bold text-[#1e293b]">Versão</label>
-                    <Select modal={false} value={customImageOption} onValueChange={setCustomImageOption}>
+                    <Select value={customImageOption} onValueChange={setCustomImageOption}>
                       <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
                         <SelectValue />
                       </SelectTrigger>
@@ -1258,7 +1258,7 @@ export default function VpsConfigurePage() {
 
                   <div className="space-y-4">
                     <label className="text-sm font-bold text-[#1e293b]">Versão</label>
-                    <Select modal={false} value={windowsVersion} onValueChange={setWindowsVersion}>
+                    <Select value={windowsVersion} onValueChange={setWindowsVersion}>
                       <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
                         <div className="flex items-center justify-between w-full pr-2">
                           <span className="text-sm">Windows Server {windowsVersion} Datacenter</span>
@@ -1348,7 +1348,7 @@ export default function VpsConfigurePage() {
                     {/* Licence Select */}
                     <div className="space-y-4">
                       <label className="text-sm font-bold text-[#1e293b]">Licença</label>
-                      <Select modal={false} value={cpanelLicence} onValueChange={setCpanelLicence}>
+                      <Select value={cpanelLicence} onValueChange={setCpanelLicence}>
                         <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
                           <div className="flex items-center justify-between w-full pr-2">
                             <span className="text-sm text-slate-700">cPanel/WHM ({cpanelLicence} contas)</span>
@@ -1419,7 +1419,7 @@ export default function VpsConfigurePage() {
                     {/* Version Select */}
                     <div className="space-y-4">
                       <label className="text-sm font-bold text-[#1e293b]">Versão</label>
-                      <Select modal={false} value={cpanelVersion} onValueChange={setCpanelVersion}>
+                      <Select value={cpanelVersion} onValueChange={setCpanelVersion}>
                         <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
                           <SelectValue />
                         </SelectTrigger>
@@ -1481,7 +1481,7 @@ export default function VpsConfigurePage() {
 
                   <div className="space-y-4">
                     <label className="text-sm font-bold text-[#1e293b]">Versão</label>
-                    <Select modal={false} value={rhelVersion} onValueChange={setRhelVersion}>
+                    <Select value={rhelVersion} onValueChange={setRhelVersion}>
                       <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
                         <SelectValue />
                       </SelectTrigger>
@@ -1546,7 +1546,7 @@ export default function VpsConfigurePage() {
 
                   <div className="space-y-4">
                     <label className="text-sm font-bold text-[#1e293b]">Licença</label>
-                    <Select modal={false} value={pleskLicence} onValueChange={setPleskLicence}>
+                    <Select value={pleskLicence} onValueChange={setPleskLicence}>
                       <SelectTrigger className="h-16 border-slate-200 rounded-xl text-slate-600">
                         <div className="flex items-center justify-between w-full pr-2">
                           <div className="flex flex-col items-start">
@@ -1644,7 +1644,7 @@ export default function VpsConfigurePage() {
 
                   <div className="space-y-4">
                     <label className="text-sm font-bold text-[#1e293b]">Versão</label>
-                    <Select modal={false} value={debianVersion} onValueChange={setDebianVersion}>
+                    <Select value={debianVersion} onValueChange={setDebianVersion}>
                       <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
                         <SelectValue />
                       </SelectTrigger>
@@ -1709,7 +1709,7 @@ export default function VpsConfigurePage() {
 
                   <div className="space-y-4">
                     <label className="text-sm font-bold text-[#1e293b]">Versão</label>
-                    <Select modal={false} value={dockerVersion} onValueChange={setDockerVersion}>
+                    <Select value={dockerVersion} onValueChange={setDockerVersion}>
                       <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
                         <SelectValue />
                       </SelectTrigger>
@@ -1786,7 +1786,7 @@ export default function VpsConfigurePage() {
 
                   <div className="space-y-4">
                     <label className="text-sm font-bold text-[#1e293b]">Versão</label>
-                    <Select modal={false} value={lampVersion} onValueChange={setLampVersion}>
+                    <Select value={lampVersion} onValueChange={setLampVersion}>
                       <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
                         <SelectValue />
                       </SelectTrigger>
@@ -1859,7 +1859,7 @@ export default function VpsConfigurePage() {
                     {/* Licence Select */}
                     <div className="space-y-4">
                       <label className="text-sm font-bold text-[#1e293b]">Licença</label>
-                      <Select modal={false} value={pleskWinLicence} onValueChange={setPleskWinLicence}>
+                      <Select value={pleskWinLicence} onValueChange={setPleskWinLicence}>
                         <SelectTrigger className="h-16 border-slate-200 rounded-xl text-slate-600">
                           <div className="flex items-center justify-between w-full pr-2">
                             <div className="flex items-center gap-2 text-left">
@@ -1910,7 +1910,7 @@ export default function VpsConfigurePage() {
                     {/* Version Select */}
                     <div className="space-y-4">
                       <label className="text-sm font-bold text-[#1e293b]">Versão</label>
-                      <Select modal={false} value={pleskWinVersion} onValueChange={setPleskWinVersion}>
+                      <Select value={pleskWinVersion} onValueChange={setPleskWinVersion}>
                         <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
                           <div className="flex items-center justify-between w-full pr-2">
                             <span className="text-sm text-slate-700">Windows Server {pleskWinVersion} Datacenter</span>
@@ -1993,7 +1993,7 @@ export default function VpsConfigurePage() {
 
                   <div className="space-y-4">
                     <label className="text-sm font-bold text-[#1e293b]">Versão</label>
-                    <Select modal={false} value={webminVersion} onValueChange={setWebminVersion}>
+                    <Select value={webminVersion} onValueChange={setWebminVersion}>
                       <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
                         <SelectValue />
                       </SelectTrigger>

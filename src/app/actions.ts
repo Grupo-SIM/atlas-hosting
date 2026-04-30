@@ -59,6 +59,7 @@ import { isValidPhoneNumber } from "libphonenumber-js";
 import { query } from "dns-query";
 import { sendNotificationEmail } from "@/lib/email/service";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
+import { sendVpsPurchaseNotifications } from "@/lib/notifications/vps-purchase";
 
 
 export type GuestInfo = {
@@ -123,6 +124,8 @@ async function findOrCreateGuestUser(info: GuestInfo) {
   }
 
   // Always create a session so subsequent payment actions work
+  if (!user) throw new Error("Usuário não encontrado ou falha ao criar conta.");
+  
   const sessionToken = generateSessionToken();
   await createSession(sessionToken, user.id);
   const cookieStore = await cookies();
@@ -1096,10 +1099,49 @@ async function fulfillCheckoutAfterPixPaid(
     redirect("/payment/success");
   }
 
+  // Generic (non-domain) invoice — mark as paid
   await db
     .update(pgInvoice)
     .set({ status: "paid" })
     .where(eq(pgInvoice.id, invoice.id));
+
+  // VPS purchase notifications (WhatsApp + email)
+  if (invoice.type === "vps") {
+    const meta = invoice.metadata as any;
+    const config = meta?.config || {};
+    after(async () => {
+      try {
+        await sendVpsPurchaseNotifications({
+          userName: user.name || "Cliente",
+          userEmail: user.email,
+          userPhone: billing?.phoneNumber,
+          userDocument: billing?.document,
+          userAddress: billing?.address ? `${billing.address.street}, ${billing.address.city} - ${billing.address.state}` : undefined,
+          isNewAccount: !!meta?.guestPassword,
+          guestPassword: meta?.guestPassword,
+          planId: meta?.vpsId || "10",
+          planName: `Cloud VPS ${meta?.vpsId || "10"}`,
+          quantity: parseInt(config.qty || "1", 10),
+          duration: parseInt(config.duration || "1", 10),
+          location: config.location || "eu",
+          storage: config.storage || "ssd-150",
+          image: config.image || "ubuntu",
+          backup: config.backup === "true",
+          management: config.management || "unmanaged",
+          monitoring: config.monitoring,
+          privateNetwork: config.privateNetwork,
+          ipv4Address: config.ipv4Address,
+          objectStorage: config.objectStorage,
+          invoiceId: invoice.id,
+          invoiceRef: invoice.reference,
+          totalAmount: invoice.amount,
+        });
+      } catch (err) {
+        console.error("[VPS-NOTIFY] Erro ao enviar notificações:", err);
+      }
+    });
+  }
+
   redirect("/payment/success");
 }
 
@@ -1355,6 +1397,8 @@ export async function completeCheckout(
   if (updatedInvoice) {
     invoice = updatedInvoice as any;
   }
+
+  if (!invoice) throw new Error("Fatura não encontrada");
 
   console.log(`[CHECKOUT] Fatura carregada:`, {
     id: invoice.id,
@@ -2527,7 +2571,16 @@ export async function createVpsInvoice(data: {
   const totalMonthlyBrl = (monthlyEuro + additionalMonthlyEuro) * RATE;
   const qty = parseInt(config.qty || "1", 10);
   
-  const finalAmountBrl = (totalMonthlyBrl * duration * qty) + (setupBrl * qty);
+  let finalAmountBrl = (totalMonthlyBrl * duration * qty) + (setupBrl * qty);
+
+  // Override final price for payment testing
+  if (process.env.VPS_TEST_PRICE) {
+    const testPrice = parseFloat(process.env.VPS_TEST_PRICE);
+    if (!isNaN(testPrice) && testPrice > 0) {
+      console.log(`[VPS] ⚠️ VPS_TEST_PRICE ativo: substituindo R$ ${finalAmountBrl.toFixed(2)} → R$ ${testPrice.toFixed(2)}`);
+      finalAmountBrl = testPrice;
+    }
+  }
 
   try {
     const description = `Hospedagem VPS ${planId} (${duration} ${duration === 1 ? 'mês' : 'meses'})`;

@@ -165,7 +165,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
               className={`${roboto.className} ${isLight ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-[0_8px_26px_rgba(16,185,129,0.2)]" : "bg-white text-[#0b112a] hover:bg-white/90 shadow-[0_8px_26px_rgba(255,255,255,0.2)]"} font-extrabold px-6 py-2 h-auto text-[13px] rounded-full transition-all duration-300 tracking-wide uppercase`}
               asChild
             >
-              <Link href="/login">Começar</Link>
+              <Link href="/login">Login</Link>
             </Button>
           </div>
 
