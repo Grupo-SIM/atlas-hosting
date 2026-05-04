@@ -176,6 +176,7 @@ export async function GET(request: NextRequest) {
     // Taxa de margem
     const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
     let fee = 1;
+    let fixedFee = 0;
     if (feeEnabled) {
       try {
         const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
@@ -186,8 +187,12 @@ export async function GET(request: NextRequest) {
         const config = await db.query.pgSystemConfig.findFirst();
         const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 20;
         fee = 1 + finalFeePercent / 100;
+
+        const envFixedFeeValue = process.env.DOMAIN_FIXED_FEE;
+        fixedFee = envFixedFeeValue ? parseFloat(envFixedFeeValue) : 0;
       } catch { 
         fee = 1.20; 
+        fixedFee = 0;
       }
     }
 
@@ -270,14 +275,14 @@ export async function GET(request: NextRequest) {
           let priceBRL = 0, renewBRL = 0, transferBRL = 0;
 
           if (d.IsPremiumName && (d.PremiumRegistrationPrice ?? 0) > 0) {
-            priceBRL = (d.PremiumRegistrationPrice ?? 0) * usdToBrl * fee;
-            renewBRL = (d.PremiumRenewalPrice ?? 0) * usdToBrl * fee;
-            transferBRL = (d.PremiumTransferPrice ?? 0) * usdToBrl * fee;
+            priceBRL = (d.PremiumRegistrationPrice ?? 0) * usdToBrl * fee + fixedFee;
+            renewBRL = (d.PremiumRenewalPrice ?? 0) * usdToBrl * fee + fixedFee;
+            transferBRL = (d.PremiumTransferPrice ?? 0) * usdToBrl * fee + fixedFee;
           } else if (pricing?.price) {
             const alreadyBrl = (pricing as { currency?: string }).currency === "BRL";
-            priceBRL = (alreadyBrl ? (pricing.price ?? 0) : (pricing.price ?? 0) * usdToBrl) * fee;
-            renewBRL = (alreadyBrl ? (pricing.renew ?? 0) : (pricing.renew ?? 0) * usdToBrl) * fee;
-            transferBRL = (alreadyBrl ? (pricing.transfer ?? 0) : (pricing.transfer ?? 0) * usdToBrl) * fee;
+            priceBRL = (alreadyBrl ? (pricing.price ?? 0) : (pricing.price ?? 0) * usdToBrl) * fee + fixedFee;
+            renewBRL = (alreadyBrl ? (pricing.renew ?? 0) : (pricing.renew ?? 0) * usdToBrl) * fee + fixedFee;
+            transferBRL = (alreadyBrl ? (pricing.transfer ?? 0) : (pricing.transfer ?? 0) * usdToBrl) * fee + fixedFee;
           }
 
           // Segurança: Se o preço deu 0 e o domínio estava "disponível", forçamos indisponível

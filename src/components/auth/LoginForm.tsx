@@ -20,7 +20,7 @@ import { CgSpinner } from "react-icons/cg";
 import * as yup from "yup";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Eye, EyeOff } from "lucide-react";
 
 interface LoginFormProps {
   redirectTo?: string;
@@ -41,6 +41,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   const { toast } = useToast();
   const [formError, setFormError] = useState<ReactNode>(null);
   const [showEmailChangeSuccess, setShowEmailChangeSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [actionState, doLogin, isPending] = useActionState<
     ActionResponse,
@@ -162,13 +163,28 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
             Esqueceu a senha?
           </Link>
         </div>
-        <Input
-          id="password"
-          type="password"
-          placeholder="Digite sua senha"
-          autoComplete="current-password"
-          {...register("password")}
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Digite sua senha"
+            autoComplete="current-password"
+            className="pr-10"
+            {...register("password")}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+            tabIndex={-1}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
         {errors.password && (
           <p className="text-xs text-red-400">{errors.password.message}</p>
         )}

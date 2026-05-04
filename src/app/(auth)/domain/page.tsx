@@ -31,6 +31,7 @@ import { createDomainBundleInvoice, createDomainInvoice } from "@/app/actions";
 import { DomainBundleSection } from "./register/components/DomainBundleSection";
 import currencyConversion from "@/lib/server/apis/currency";
 import { query } from "dns-query";
+import { BackButton } from "./components/BackButton";
 
 interface DomainMainPageProps {
   searchParams: Promise<DomainPageParams & { tab?: string }>;
@@ -147,6 +148,7 @@ export default async function DomainPage({
 
   return (
     <div className="w-full">
+      <BackButton />
       {/* Tabs navigation oculta — aba de transferência desativada temporariamente */}
       {/* 
       <div className="flex w-full max-w-2xl mx-auto bg-muted/50 p-1 rounded-xl mb-8">

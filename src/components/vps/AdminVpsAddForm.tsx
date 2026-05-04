@@ -1,20 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Server, Plus, Loader2 } from "lucide-react";
+import { Server, Plus, Loader2, Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { registerVpsAction } from "@/app/vps-actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -30,6 +37,7 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string>("");
+  const [open, setOpen] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     if (!userId) {
@@ -46,7 +54,7 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
       toast.success("Servidor registrado com sucesso!");
       router.refresh(); // Atualiza a lista de servidores
       
-      // Limpar campos de texto (o select a gente limpa via state)
+      // Limpar campos de texto
       (document.getElementById("vps-form") as HTMLFormElement)?.reset();
       setUserId("");
     } catch (error: any) {
@@ -56,22 +64,63 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
     }
   }
 
+  const selectedUser = users.find((u) => u.id === userId);
+
   return (
     <form id="vps-form" action={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="user-select">Usuário Destino</Label>
-        <Select value={userId} onValueChange={setUserId} required>
-          <SelectTrigger id="user-select" className="w-full">
-            <SelectValue placeholder="Selecione um cliente..." />
-          </SelectTrigger>
-          <SelectContent>
-            {users.map((u) => (
-              <SelectItem key={u.id} value={u.id}>
-                {u.name || "Sem Nome"} ({u.email})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full h-10 justify-between font-normal"
+              id="user-select"
+            >
+              {userId ? (
+                <span className="truncate">
+                  {selectedUser?.name || "Sem Nome"} ({selectedUser?.email})
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Selecione um cliente...</span>
+              )}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Buscar usuário..." />
+              <CommandList>
+                <CommandEmpty>Nenhum usuário encontrado.</CommandEmpty>
+                <CommandGroup>
+                  {users.map((u) => (
+                    <CommandItem
+                      key={u.id}
+                      value={`${u.name} ${u.email} ${u.id}`}
+                      onSelect={() => {
+                        setUserId(u.id);
+                        setOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          userId === u.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span>{u.name || "Sem Nome"}</span>
+                        <span className="text-xs text-muted-foreground">{u.email}</span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="space-y-2">

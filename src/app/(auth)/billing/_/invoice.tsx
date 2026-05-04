@@ -251,35 +251,7 @@ export default function InvoiceCard({
               </div>
             </div>
 
-            {!["paid", "processing"].includes(invoice.status) && (
-              <>
-                {/* Additional Info */}
-                <div className="bg-muted/20 rounded-lg p-4 border-l-4 border-primary">
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Vencimento:</strong>{" "}
-                    {format(expiryDate, "PPP", { locale: ptBR })},{" "}
-                    {formatDistanceToNow(expiryDate, {
-                      locale: ptBR,
-                      addSuffix: true,
-                    })}
-                    .
-                    <br />
-                    Essa fatura será vencida 3 dias após sua emissão.
-                  </p>
-                </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-2 pt-4">
-                  <Link
-                    prefetch
-                    className="flex-1 grid !cursor-pointer"
-                    href={`/checkout/${invoice.id}`}
-                  >
-                    <GradientButton>Pagar agora</GradientButton>
-                  </Link>
-                </div>
-              </>
-            )}
           </CardContent>
         )}
       </Card>

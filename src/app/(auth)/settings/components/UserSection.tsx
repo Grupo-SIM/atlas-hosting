@@ -73,6 +73,7 @@ import {
   changePasswordAction,
   sendEmailVerificationAction,
   deleteUserAccountAction,
+  updateUserProfileImageAction,
   type ProfileUpdateMessage,
 } from "../actions";
 
@@ -88,6 +89,7 @@ export function UserSection({ user }: UserSectionProps) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
 
   // Billing state
   const [isEditingBilling, setIsEditingBilling] = useState(false);
@@ -290,6 +292,49 @@ export function UserSection({ user }: UserSectionProps) {
     });
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tamanho (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Erro",
+        description: "A imagem deve ter no máximo 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    setIsUploading(true);
+    try {
+      const result = await updateUserProfileImageAction(formData);
+      if (result.success) {
+        toast({
+          title: "Sucesso",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao fazer upload da imagem.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Profile Information */}
@@ -305,24 +350,36 @@ export function UserSection({ user }: UserSectionProps) {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-6">
-            <div className="relative">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={user.image || undefined} />
-                <AvatarFallback className="text-lg">
-                  {user.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <Button
-                size="sm"
-                variant="outline"
-                className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-              >
-                <Camera className="h-4 w-4" />
-              </Button>
+            <div className="relative group">
+              <label className="cursor-pointer block relative">
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleFileChange}
+                  disabled={isUploading}
+                />
+                <Avatar className="h-20 w-20 transition-opacity group-hover:opacity-80">
+                  <AvatarImage src={user.image || undefined} />
+                  <AvatarFallback className="text-lg">
+                    {user.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                
+                {isUploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-full">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                )}
+                
+                <div className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-background border flex items-center justify-center shadow-sm group-hover:bg-accent transition-colors">
+                  <Camera className="h-4 w-4" />
+                </div>
+              </label>
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-lg">{user.name}</h3>

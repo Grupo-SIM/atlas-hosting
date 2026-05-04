@@ -10,8 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Plus, Check, ChevronsUpDown } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -28,6 +42,9 @@ export default function CreateVoucherForm({
 }) {
   const [discountType, setDiscountType] = useState("fixed");
   const [userId, setUserId] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const selectedUser = users.find((u) => u.id === userId);
 
   return (
     <form action={createAction} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -74,20 +91,72 @@ export default function CreateVoucherForm({
 
       <div className="space-y-2">
         <Label htmlFor="userId">Vincular a Usuário (opcional)</Label>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full h-10 justify-between font-normal"
+            >
+              {userId && userId !== "none" ? (
+                <span className="truncate">
+                  {selectedUser?.name} ({selectedUser?.email})
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Nenhum (disponível para todos)</span>
+              )}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Buscar usuário..." />
+              <CommandList>
+                <CommandEmpty>Nenhum usuário encontrado.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem
+                    value="none"
+                    onSelect={() => {
+                      setUserId("none");
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        userId === "none" || !userId ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    Disponível para todos
+                  </CommandItem>
+                  {users.map((u) => (
+                    <CommandItem
+                      key={u.id}
+                      value={`${u.name} ${u.email} ${u.id}`}
+                      onSelect={() => {
+                        setUserId(u.id);
+                        setOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          userId === u.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span>{u.name}</span>
+                        <span className="text-xs text-muted-foreground">{u.email}</span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
         <input type="hidden" name="userId" value={userId} />
-        <Select value={userId} onValueChange={setUserId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Nenhum (disponível para todos)" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Nenhum (disponível para todos)</SelectItem>
-            {users.map((u) => (
-              <SelectItem key={u.id} value={u.id}>
-                {u.name} ({u.email})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="space-y-2">

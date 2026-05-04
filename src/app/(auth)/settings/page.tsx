@@ -44,7 +44,7 @@ export default async function SettingsPage({
       </div>
 
       <Tabs value={params.tab ?? "user"} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <Link href="/settings?tab=user" className="block w-full">
             <TabsTrigger value="user" className="pointer-events-none w-full">
               Perfil
@@ -58,24 +58,6 @@ export default async function SettingsPage({
               Organização
             </TabsTrigger>
           </Link>
-          <Link href="/settings?tab=subscription" className="block w-full pointer-events-none">
-            <TabsTrigger
-              value="subscription"
-              className="w-full"
-              disabled
-            >
-              Assinatura
-            </TabsTrigger>
-          </Link>
-          <Link href="/settings?tab=wallet" className="block w-full pointer-events-none">
-            <TabsTrigger 
-              value="wallet" 
-              className="w-full"
-              disabled
-            >
-              Carteira
-            </TabsTrigger>
-          </Link>
         </TabsList>
 
         {currentTab === "user" && (
@@ -87,18 +69,6 @@ export default async function SettingsPage({
         {currentTab === "organization" && (
           <TabsContent value="organization" className="space-y-6">
             <OrganizationSection user={user} />
-          </TabsContent>
-        )}
-
-        {currentTab === "subscription" && (
-          <TabsContent value="subscription" className="space-y-6">
-            <SubscriptionSection user={user} />
-          </TabsContent>
-        )}
-
-        {currentTab === "wallet" && (
-          <TabsContent value="wallet" className="space-y-6">
-            <WalletSection user={user} invoices={invoices} />
           </TabsContent>
         )}
       </Tabs>

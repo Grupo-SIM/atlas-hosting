@@ -394,3 +394,43 @@ export async function deleteUserAccountAction(): Promise<ActionResponse> {
     };
   }
 }
+
+export async function updateUserProfileImageAction(
+  formData: FormData
+): Promise<ActionResponse> {
+  try {
+    const user = await getUser();
+    const file = formData.get("image") as File;
+
+    if (!file || file.size === 0) {
+      return { success: false, message: "Nenhuma imagem fornecida." };
+    }
+
+    const buffer = await file.arrayBuffer();
+    const { uploadProfilePicture, getStorjUrl } = await import("@/lib/storj");
+    
+    const key = await uploadProfilePicture(buffer, file.name);
+    const imageUrl = getStorjUrl(key);
+
+    await db
+      .update(pgUser)
+      .set({
+        image: imageUrl,
+        updatedAt: new Date(),
+      })
+      .where(eq(pgUser.id, user.id));
+
+    revalidatePath("/settings");
+
+    return {
+      success: true,
+      message: "Foto de perfil atualizada com sucesso.",
+    };
+  } catch (error) {
+    console.error("Error updating user profile image:", error);
+    return {
+      success: false,
+      message: "Erro ao atualizar foto de perfil. Tente novamente.",
+    };
+  }
+}

@@ -49,7 +49,7 @@ import {
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import AffiliateLinkDisplay from "./components/AffiliateLinkDisplay";
-import { DatePickerWithRange } from "./components/DateRangePicker";
+import { ReferredUsersTable } from "./components/ReferredUsersTable";
 
 export const metadata: Metadata = {
   title: "Afiliado - Atlas Hosting",
@@ -161,92 +161,7 @@ export default async function AffiliatePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {referredUsers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 text-center">
-              <Users className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold">
-                Nenhum usuário indicado ainda
-              </h3>
-              <p className="text-muted-foreground">
-                Compartilhe seu link de afiliado para começar a ganhar!
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Filters */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar usuários..."
-                    // value={searchQuery}
-                    // onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <DatePickerWithRange />
-                <Select value="all">
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="active">Ativos</SelectItem>
-                    <SelectItem value="inactive">Inativos</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Table */}
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Usuário</TableHead>
-                      <TableHead>Data de Registro</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {referredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <UserCircle className="mr-2 h-4 w-4" />
-                            <span className="font-medium">{user.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(user.createdAt), "PPP", {
-                            locale: ptBR,
-                          })}
-                        </TableCell>
-                        <TableCell>
-                          {!user.deletedAt ? (
-                            <Badge
-                              variant="outline"
-                              className="bg-green-500/10 text-green-500"
-                            >
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Ativo
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="outline"
-                              className="bg-red-500/10 text-red-500"
-                            >
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Inativo
-                            </Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
+          <ReferredUsersTable users={referredUsers} />
         </CardContent>
       </Card>
 

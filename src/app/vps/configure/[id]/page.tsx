@@ -122,7 +122,7 @@ const images = {
   ],
   os: [
     { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
-    { id: "windows", name: "Servidor Windows", price: "€7,50 /mês", icon: "/windows.png" },
+    { id: "windows", name: "Servidor Windows", price: "R$ 87,90 /mês", icon: "/windows.png" },
     { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
     { id: "debian", name: "Debian", price: "Incluído", icon: "/debian-svgrepo-com.svg" },
     { id: "almalinux", name: "AlmaLinux", price: "Incluído", icon: "/almalinux.png" },
@@ -138,9 +138,9 @@ const images = {
     { id: "openclaw", name: "OpenClaw Server", price: "Incluído", icon: "/openclaw.png" },
   ],
   panels: [
-    { id: "cpanel", name: "cPanel", price: "€ 21,75 /mês", icon: "/cpanel.png" },
-    { id: "plesk-win", name: "Plesk + Windows", price: "€ 18,25 /mês", icon: "/plesk.png" },
-    { id: "plesk-linux", name: "Plesk + Linux", price: "€ 12,00 /mês", icon: "/plesk.png" },
+    { id: "cpanel", name: "cPanel", price: "R$ 254,91 /mês", icon: "/cpanel.png" },
+    { id: "plesk-win", name: "Plesk + Windows", price: "R$ 213,89 /mês", icon: "/plesk.png" },
+    { id: "plesk-linux", name: "Plesk + Linux", price: "R$ 140,64 /mês", icon: "/plesk.png" },
     { id: "webmin", name: "Webmin", price: "Incluído", icon: "/webmin.png" },
     { id: "webmin-lamp", name: "Webmin + LAMP", price: "Incluído", icon: "/lamp.png" },
   ],
@@ -559,7 +559,7 @@ export default function VpsConfigurePage() {
                   </div>
                   <div className="mt-2">
                     <h3 className="text-lg font-bold text-[#0F172A] mb-1">Backup Automático</h3>
-                    <div className="text-xl font-bold text-[#0F172A] mb-2">€1.50 / mês</div>
+                    <div className="text-xl font-bold text-[#0F172A] mb-2">R$ 17,58 / mês</div>
                     <p className="text-xs text-slate-500 leading-tight">
                       Configure e esqueça.<br />Segurança de dados sem esforço.
                     </p>
@@ -633,7 +633,7 @@ export default function VpsConfigurePage() {
                               <SelectItem value="enabled">
                                 <div className="flex items-center justify-between w-full min-w-[300px]">
                                   <span className="text-left">Rede Privada Ativada</span>
-                                  <span className="text-slate-900 font-bold ml-4">€ 2,29 / mês</span>
+                                  <span className="text-slate-900 font-bold ml-4">R$ 26,84 / mês</span>
                                 </div>
                               </SelectItem>
                             </SelectContent>
@@ -1871,7 +1871,7 @@ export default function VpsConfigurePage() {
                               <span className="text-[11px] text-emerald-500 font-bold whitespace-nowrap">1 mês grátis</span>
                             </div>
                             <span className="text-xs text-slate-400 font-medium ml-4">
-                              € {pleskWinLicence === "admin" ? "12,00" : pleskWinLicence === "host" ? "36,50" : "19,00"} / mês | € 0,00 Taxa de instalação
+                              R$ {pleskWinLicence === "admin" ? "140,64" : pleskWinLicence === "host" ? "427,78" : "222,68"} / mês | R$ 0,00 Taxa de instalação
                             </span>
                           </div>
                         </SelectTrigger>
@@ -1882,7 +1882,7 @@ export default function VpsConfigurePage() {
                                 <span className={cn("text-sm", pleskWinLicence === "admin" ? "text-sky-500 font-medium" : "text-slate-700")}>Plesk Obsidian Web Admin Edition</span>
                                 <span className="text-[11px] text-emerald-500 font-bold">1 mês grátis</span>
                               </div>
-                              <span className="text-slate-900 font-bold ml-4">€ 12,00</span>
+                              <span className="text-slate-900 font-bold ml-4">R$ 140,64</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="host">
@@ -1891,7 +1891,7 @@ export default function VpsConfigurePage() {
                                 <span className={cn("text-sm", pleskWinLicence === "host" ? "text-sky-500 font-medium" : "text-slate-700")}>Plesk Obsidian Web Host Edition</span>
                                 <span className="text-[11px] text-emerald-500 font-bold">1 mês grátis</span>
                               </div>
-                              <span className="text-slate-900 font-bold ml-4">€ 36,50</span>
+                              <span className="text-slate-900 font-bold ml-4">R$ 427,78</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="pro">
@@ -1900,7 +1900,7 @@ export default function VpsConfigurePage() {
                                 <span className={cn("text-sm", pleskWinLicence === "pro" ? "text-sky-500 font-medium" : "text-slate-700")}>Plesk Obsidian Web Pro Edition</span>
                                 <span className="text-[11px] text-emerald-500 font-bold">1 mês grátis</span>
                               </div>
-                              <span className="text-slate-900 font-bold ml-4">€ 19,00</span>
+                              <span className="text-slate-900 font-bold ml-4">R$ 222,68</span>
                             </div>
                           </SelectItem>
                         </SelectContent>
@@ -1915,7 +1915,7 @@ export default function VpsConfigurePage() {
                           <div className="flex items-center justify-between w-full pr-2">
                             <span className="text-sm text-slate-700">Windows Server {pleskWinVersion} Datacenter</span>
                             <span className="text-xs text-slate-400 font-medium">
-                              € {pleskWinVersion === "2016" ? "6,25" : "7,50"} / mês | € 0,00 Taxa de instalação
+                              R$ {pleskWinVersion === "2016" ? "73,25" : "87,90"} / mês | R$ 0,00 Taxa de instalação
                             </span>
                           </div>
                         </SelectTrigger>
@@ -1923,19 +1923,19 @@ export default function VpsConfigurePage() {
                           <SelectItem value="2016">
                             <div className="flex items-center justify-between w-full min-w-[420px] py-1 text-left">
                               <span className={cn("text-sm", pleskWinVersion === "2016" ? "text-sky-500 font-medium" : "text-slate-700")}>Windows Server 2016 Datacenter</span>
-                              <span className="text-slate-900 font-bold ml-4">€ 6,25</span>
+                              <span className="text-slate-900 font-bold ml-4">R$ 73,25</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="2019">
                             <div className="flex items-center justify-between w-full min-w-[420px] py-1 border-t border-slate-50 text-left">
                               <span className={cn("text-sm", pleskWinVersion === "2019" ? "text-sky-500 font-medium" : "text-slate-700")}>Windows Server 2019 Datacenter</span>
-                              <span className="text-slate-900 font-bold ml-4">€ 7,50</span>
+                              <span className="text-slate-900 font-bold ml-4">R$ 87,90</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="2022">
                             <div className="flex items-center justify-between w-full min-w-[420px] py-1 border-t border-slate-50 text-left">
                               <span className={cn("text-sm", pleskWinVersion === "2022" ? "text-sky-500 font-medium" : "text-slate-700")}>Windows Server 2022 Datacenter</span>
-                              <span className="text-slate-900 font-bold ml-4">€ 7,50</span>
+                              <span className="text-slate-900 font-bold ml-4">R$ 87,90</span>
                             </div>
                           </SelectItem>
                         </SelectContent>

@@ -1,6 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Server {
   id: string;
@@ -17,25 +24,25 @@ export default function VpsServerSelector({
 }) {
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = e.target.value;
+  const handleValueChange = (value: string) => {
     // Redireciona para a mesma página com o novo ID na URL
-    router.push(`/manage/vps?id=${id}`);
+    router.push(`/manage/vps?id=${value}`);
   };
 
   return (
-    <div className="w-[240px]">
-      <select 
-        defaultValue={currentId}
-        onChange={handleChange}
-        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-      >
-        {servers.map(s => (
-          <option key={s.id} value={s.id}>
-            {s.name} ({s.ip})
-          </option>
-        ))}
-      </select>
+    <div className="w-[280px]">
+      <Select defaultValue={currentId} onValueChange={handleValueChange}>
+        <SelectTrigger className="w-full bg-background border-slate-200 dark:border-slate-800">
+          <SelectValue placeholder="Selecione um servidor" />
+        </SelectTrigger>
+        <SelectContent>
+          {servers.map((s) => (
+            <SelectItem key={s.id} value={s.id}>
+              {s.name} ({s.ip})
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

@@ -50,7 +50,6 @@ export function BillingFilters({
               <TabsTrigger value="all">Todas</TabsTrigger>
               <TabsTrigger value="pending">Pendentes</TabsTrigger>
               <TabsTrigger value="paid">Pagas</TabsTrigger>
-              <TabsTrigger value="overdue">Vencidas</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -66,7 +65,6 @@ export function BillingFilters({
         {[
           { label: "Todo período", value: "all" },
           { label: "Hoje", value: "today" },
-          { label: "Última Semana", value: "week" },
           { label: "Último Mês", value: "month" },
           { label: "Personalizado", value: "custom" },
         ].map((d) => (

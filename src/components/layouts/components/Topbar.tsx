@@ -1,6 +1,6 @@
 import { ModeToggle } from "@/components/ModeToggle";
 import { LogoutButton } from "./LogoutButton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -35,6 +35,8 @@ export default async function Topbar({
   className,
   ...props
 }: PropsWithChildren<HTMLAttributes<HTMLHeadElement>>) {
+  const user = await getUser();
+
   return (
     <header
       className={clsx(
@@ -70,6 +72,7 @@ export default async function Topbar({
               className="relative h-8 w-8 rounded-full bg-muted-foreground/10"
             >
               <Avatar className="h-8 w-8">
+                <AvatarImage src={user.image || undefined} />
                 <AvatarFallback>
                   <FaUserAlt className="h-4 w-4 color-white absolute top-1/2 left-1/2 -translate-1/2" />
                 </AvatarFallback>
@@ -93,39 +96,6 @@ export default async function Topbar({
                   <span>Perfil</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/settings">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configurações</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer pointer-events-none" disabled>
-                <Link href="/settings?tab=wallet">
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  <span>Pagamentos</span>
-                </Link>
-              </DropdownMenuItem>
-             {/*  */}
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup className="[&>*]:cursor-pointer">
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger disabled className="pointer-events-none opacity-50">
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>Acesso</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem>
-                    <span>Adicionar Administrador</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Adicionar Desenvolvedor</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Gerenciar Acessos</span>
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="cursor-pointer">

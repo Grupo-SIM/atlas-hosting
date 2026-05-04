@@ -118,12 +118,12 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">{label}</span>
+      {label && <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">{label}</span>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="flex h-11 items-center justify-between rounded-xl border border-zinc-200 dark:border-zinc-800 bg-background px-4 text-left outline-none transition-all hover:border-primary/50"
+            className="flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-left outline-none transition-all hover:border-primary/50"
           >
             <span className="inline-flex items-center gap-2 truncate">
               <CalendarDays className="h-4 w-4 shrink-0 text-zinc-400" />
@@ -145,7 +145,6 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
         <PopoverContent 
           side="bottom" 
           sideOffset={8}
-          avoidCollisions={false}
           className="w-[340px] p-4 bg-white dark:bg-zinc-950 rounded-2xl border-zinc-200 dark:border-white/10 shadow-2xl z-[100]" 
           align="start"
         >
@@ -201,8 +200,8 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
                 ? "border-2 border-primary text-primary"
                 : "";
               const edgeClass = isStart || isEnd
-                ? "bg-primary text-black dark:text-black rounded-full shadow-md"
-                : "rounded-full hover:bg-white dark:hover:bg-white transition-none";
+                ? "bg-primary text-white dark:text-white rounded-full shadow-md"
+                : "rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-none";
 
               return (
                 <button
@@ -220,7 +219,7 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
                     edgeClass
                   )}
                 >
-                  <span className="relative z-20 group-hover:!text-black dark:group-hover:!text-black">
+                  <span className="relative z-20 group-hover:!text-white dark:group-hover:!text-white">
                     {date.getDate().toString().padStart(2, "0")}
                   </span>
                 </button>
@@ -249,7 +248,7 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
                 }
                 setOpen(false);
               }}
-              className="bg-primary text-black px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
+              className="bg-primary text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
             >
               Aplicar
             </button>

@@ -10,7 +10,6 @@ import { motion, AnimatePresence } from "motion/react";
 const roboto = { className: "[font-family:var(--font-roboto)]" };
 
 export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
-  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   const [isVpsOpen, setIsVpsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -37,9 +36,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
 
   const navLinks = [
     { name: "Planos", href: "/#planos" },
-    { name: "Projetos", href: "/#projetos" },
     { name: "Depoimentos", href: "/#testimonials" },
-    { name: "FAQ", href: "/#faq" },
   ];
 
   const isLight = variant === "light";
@@ -73,46 +70,6 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
 
         {/* Nav Links - Centered (Desktop only) */}
         <div className="hidden md:flex flex-1 items-center justify-center gap-6 lg:gap-10 min-w-0">
-          {/* Menu Item with Sub-menu */}
-          <div
-            className="relative group py-2"
-            onMouseEnter={() => setIsHowItWorksOpen(true)}
-            onMouseLeave={() => setIsHowItWorksOpen(false)}
-          >
-            <Link
-              href="/#servicos"
-              className={`${roboto.className} flex items-center gap-1.5 ${isLight ? "text-slate-700 hover:text-emerald-500" : "text-white/90 hover:text-[#01FC8D]"} transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}
-            >
-              Serviços
-              <ChevronDown className={`w-4 h-4 ${isLight ? "text-slate-400" : "text-white/40"} group-hover:text-emerald-500 transition-transform duration-300 group-hover:rotate-180`} strokeWidth={2.5} />
-            </Link>
-
-            <AnimatePresence>
-              {isHowItWorksOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className={`absolute top-full left-0 mt-1 min-w-[180px] ${isLight ? "bg-white border-slate-200 shadow-xl" : "bg-[#11172f] border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]"} border rounded-[6px] overflow-hidden`}
-                >
-                  <Link
-                    href="/#servicos"
-                    className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50" : "text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D]"} transition-all uppercase`}
-                  >
-                    Serviços
-                  </Link>
-                  <Link
-                    href="/#beneficios"
-                    className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] border-white/5"} transition-all uppercase border-t`}
-                  >
-                    Benefícios
-                  </Link>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
           {/* VPS dropdown */}
           <div
             className="relative group py-2"

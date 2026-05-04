@@ -237,7 +237,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
       {/* Destaques: correspondência + pacote sugerido */}
       <div className="grid gap-6 md:grid-cols-2 md:gap-8">
         {/* Card 1 — correspondência com a busca */}
-        <article className="flex flex-col rounded-2xl border border-white/12 bg-[#0d1225]/85 p-6 shadow-[0_16px_48px_rgba(0,0,0,0.35)] backdrop-blur-md md:p-8">
+        <article className="flex flex-col rounded-2xl border border-white/12 bg-[#0d1225] p-6 shadow-[0_16px_48px_rgba(0,0,0,0.35)] md:p-8">
           <span
             className={`${roboto.className} mb-4 inline-flex w-fit rounded-full border border-[#01FC8D]/35 bg-[#01FC8D]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#01FC8D]`}
           >
@@ -309,7 +309,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
         </article>
 
         {/* Card 2 — pacote / extensões sugeridas */}
-        <article className="flex flex-col rounded-2xl border border-white/12 bg-[#0a1026]/75 p-6 shadow-[0_16px_48px_rgba(0,0,0,0.28)] backdrop-blur-md md:p-8">
+        <article className="flex flex-col rounded-2xl border border-white/12 bg-[#0d1225] p-6 shadow-[0_16px_48px_rgba(0,0,0,0.35)] md:p-8">
           <span
             className={`${roboto.className} mb-4 inline-flex w-fit rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white/80`}
           >
@@ -355,7 +355,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                     openAuthModal(pathAfterAuthBundle(bundleItems.map((b) => b.domain)))
                   }
                 >
-                  Comprar pacote — 1 fatura
+                  Comprar pacote
                 </Button>
               ) : bundleItems.length === 1 ? (
                 <Button
@@ -385,11 +385,11 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
       {/* Mais opções */}
       <section id="mais-opcoes" className="scroll-mt-28">
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <h3 className={`${roboto.className} text-xl font-bold text-white md:text-2xl`}>
+          <h3 className={`${roboto.className} text-xl font-bold text-slate-900 md:text-2xl`}>
             Mais opções
           </h3>
           {pagination ? (
-            <span className="text-sm text-white/45">
+            <span className="text-sm text-slate-500">
               {allResults.filter(r => r.available).length} disponíveis nesta busca
               {pagination.total > 0 ? ` · ${pagination.total} no total` : ""}
             </span>
@@ -404,8 +404,8 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
               onClick={() => setFilterId(f.id)}
               className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
                 filterId === f.id
-                  ? "border-[#01FC8D]/55 bg-[#01FC8D]/12 text-[#01FC8D]"
-                  : "border-white/15 bg-white/[0.04] text-white/75 hover:border-white/25 hover:text-white"
+                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900"
               }`}
             >
               {f.label}
@@ -414,7 +414,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
         </div>
 
         {filteredList.length > 0 ? (
-          <ul className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-[#0d1225]/40">
+          <ul className="divide-y divide-white/10 rounded-2xl border border-white/12 bg-[#0d1225] shadow-[0_16px_48px_rgba(0,0,0,0.35)]">
             {filteredList.map((s) => (
               <li
                 key={s.domain}
@@ -494,7 +494,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
             ))}
           </ul>
         ) : (
-          <div className="rounded-2xl border border-white/10 bg-[#0d1225]/35 px-6 py-14 text-center">
+          <div className="rounded-2xl border border-white/12 bg-[#0d1225] shadow-[0_16px_48px_rgba(0,0,0,0.35)] px-6 py-14 text-center">
             <p className="text-white/60">
               Nenhum resultado nesta categoria. Escolha outro filtro ou carregue mais sugestões.
             </p>
@@ -507,16 +507,16 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
               onClick={handleLoadMore}
               disabled={isLoadingMore}
               variant="outline"
-              className="gap-2 rounded-xl border-white/20 bg-transparent px-8 py-6 text-white hover:border-[#01FC8D]/45 hover:bg-[#01FC8D]/5"
+              className="gap-2 rounded-xl border-slate-200 bg-white px-8 py-6 text-slate-700 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 shadow-sm"
             >
               {isLoadingMore ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin text-[#01FC8D]" />
+                  <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
                   Carregando…
                 </>
               ) : (
                 <>
-                  <ChevronDown className="h-4 w-4 text-[#01FC8D]" />
+                  <ChevronDown className="h-4 w-4 text-emerald-600" />
                   Carregar mais
                 </>
               )}
