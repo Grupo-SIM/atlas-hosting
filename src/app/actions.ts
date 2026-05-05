@@ -2481,37 +2481,140 @@ export async function createVpsInvoice(data: {
   if (!user) return { status: "error", message: "Usuário não encontrado." };
 
   // RATE: 5.86 (EUR to BRL) * 2 (markup) = 11.72
-  const RATE = 11.72;
+  const RATE = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") ? 11.58 : 11.72;
 
   // Base Prices in Euro
   const basePrices: Record<string, number> = {
     "10": 4.50,
+    "20": 7.00,
+    "30": 14.00,
+    "40": 25.00,
+    "50": 37.00,
+    "60": 49.00,
+    "s": 34.40,
+    "m": 47.60,
+    "l": 71.80,
+    "xl": 95.30,
+    "xxl": 134.60
   };
 
   const duration = parseInt(config.duration || "1", 10);
   let monthlyEuro = basePrices[planId] || 4.50;
 
   // Apply Duration Discounts (as in frontend)
-  if (duration === 6) monthlyEuro = 4.05; // 10% discount
-  if (duration === 12) monthlyEuro = 3.60; // 20% discount
+  const isHighTier = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl");
+  if (isHighTier) {
+    if (duration === 6) {
+      if (planId === "20") monthlyEuro = 6.30;
+      else if (planId === "30") monthlyEuro = 12.60;
+      else if (planId === "40") monthlyEuro = 22.50;
+      else if (planId === "50") monthlyEuro = 33.30;
+      else if (planId === "60") monthlyEuro = 44.10;
+      else if (planId === "s") monthlyEuro = 32.68;
+    }
+    if (duration === 12) {
+      if (planId === "20") monthlyEuro = 5.60;
+      else if (planId === "30") monthlyEuro = 11.20;
+      else if (planId === "40") monthlyEuro = 20.00;
+      else if (planId === "50") monthlyEuro = 29.60;
+      else if (planId === "60") monthlyEuro = 39.20;
+      else if (planId === "s") monthlyEuro = 27.52;
+    }
+  } else {
+    if (duration === 6) monthlyEuro = monthlyEuro * 0.9; // 10% discount
+    if (duration === 12) monthlyEuro = monthlyEuro * 0.8; // 20% discount
+  }
 
-  // Setup Fees (Directly in BRL as per user request)
+  // Setup Fees
   let setupBrl = 0;
-  if (duration === 1) setupBrl = 4.50 * RATE; // R$ 52,74
-  if (duration === 6) setupBrl = 26.28;
-  if (duration === 12) setupBrl = 0;
+  if (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60") {
+    setupBrl = 0; // All plans for VPS 20/30/40/50/60 show "No Setup Fee" in image
+  } else {
+    if (duration === 1) setupBrl = 4.50 * RATE; // R$ 52,74
+    if (duration === 6) setupBrl = 26.28;
+    if (duration === 12) setupBrl = 0;
+  }
 
   // Add-ons (Monthly in Euro)
   let additionalMonthlyEuro = 0;
 
   // Location
-  if (config.location === "us-east") additionalMonthlyEuro += 1.40;
-  if (config.location === "us-west") additionalMonthlyEuro += 1.40;
-  if (config.location === "eu-west") additionalMonthlyEuro += 1.40;
+  const locationPrices: Record<string, Record<string, number>> = {
+    "40": {
+      "us-east": 7.85,
+      "uk": 5.25,
+      "us-central": 5.25,
+      "us-west": 6.55,
+      "sg": 12.70,
+      "jp": 13.00,
+      "in": 11.90,
+      "au-sydney": 10.80,
+      "eu": 0,
+    },
+    "50": {
+      "us-east": 11.60,
+      "uk": 7.80,
+      "us-central": 7.80,
+      "us-west": 9.65,
+      "sg": 18.80,
+      "jp": 19.25,
+      "in": 17.65,
+      "au-sydney": 15.95,
+      "eu": 0,
+    },
+    "60": {
+      "us-east": 15.35,
+      "uk": 10.30,
+      "us-central": 10.30,
+      "us-west": 12.80,
+      "sg": 24.90,
+      "jp": 25.50,
+      "in": 23.35,
+      "au-sydney": 21.15,
+      "eu": 0,
+    },
+    "s": {
+      "us-east": 10.40,
+      "uk": 8.10,
+      "eu": 0,
+    }
+  };
+
+  const planLocPrices = locationPrices[planId] || {};
+  if (planLocPrices[config.location] !== undefined) {
+    additionalMonthlyEuro += planLocPrices[config.location];
+  } else {
+    // Default / Fallback for other plans
+    if (config.location !== "eu" && config.location !== "best") {
+      additionalMonthlyEuro += 1.40;
+    }
+  }
 
   // Storage
-  if (config.storage === "ssd-300") additionalMonthlyEuro += 1.55;
-  if (config.storage === "nvme-150") additionalMonthlyEuro += 1.85;
+  if (planId === "20") {
+    if (config.storage === "ssd-400") additionalMonthlyEuro += 1.95;
+    if (config.storage === "nvme-200") additionalMonthlyEuro += 2.55;
+  } else if (planId === "30") {
+    if (config.storage === "ssd-800") additionalMonthlyEuro += 3.85;
+    if (config.storage === "nvme-400") additionalMonthlyEuro += 3.25;
+  } else if (planId === "50") {
+    if (config.storage === "ssd-1200") additionalMonthlyEuro += 6.15;
+    if (config.storage === "nvme-600") additionalMonthlyEuro += 4.75;
+  } else if (planId === "s") {
+    // VDS S storage logic
+    const upgrades = config.storageUpgrades || {};
+    const upgradePrices: Record<string, number> = {
+      "ssd-1tb": 24.99,
+      "ssd-2tb": 39.09,
+      "ssd-4tb": 103.49
+    };
+    Object.entries(upgrades).forEach(([id, qty]) => {
+      additionalMonthlyEuro += (upgradePrices[id] || 0) * (qty as number);
+    });
+  } else {
+    if (config.storage === "ssd-300") additionalMonthlyEuro += 1.55;
+    if (config.storage === "nvme-150") additionalMonthlyEuro += 1.85;
+  }
 
   // OS / Panels
   const osPrices: Record<string, number> = {
@@ -2534,7 +2637,14 @@ export async function createVpsInvoice(data: {
   additionalMonthlyEuro += osPrices[resolvedImageKey] || 0;
 
   // Add-ons
-  if (config.backup === "true") additionalMonthlyEuro += 1.50;
+  if (config.backup === "true") {
+    if (planId === "20") additionalMonthlyEuro += 2.00;
+    else if (planId === "30") additionalMonthlyEuro += 3.50;
+    else if (planId === "40") additionalMonthlyEuro += 6.00;
+    else if (planId === "50") additionalMonthlyEuro += 7.50;
+    else if (planId === "60") additionalMonthlyEuro += 9.50;
+    else additionalMonthlyEuro += 1.50;
+  }
   if (config.privateNetwork === "enabled") additionalMonthlyEuro += 2.29;
   if (config.ipv4Address === "2ip") additionalMonthlyEuro += 3.50;
 

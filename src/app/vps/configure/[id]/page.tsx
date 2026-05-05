@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
 // Mock data for plans
-const plans = {
+const plansData = {
   "10": {
     name: "Cloud VPS 10",
     vcpu: "4 núcleos de vCPU",
@@ -47,13 +47,203 @@ const plans = {
     storage: "75 GB NVMe ou SSD de 150 GB",
     snapshots: "1 Instantâneo",
     traffic: "Porta de 200 Mbit/s",
+    durations: [
+      { id: "1", label: "1 mês", price: "R$ 52,74", setupFee: "Taxa de configuração de R$ 52,74", discount: null },
+      { id: "6", label: "6 meses", price: "R$ 47,47", setupFee: "Taxa de configuração de R$ 26,28", discount: "ECONOMIZE 10%", oldPrice: "R$ 52,74" },
+      { id: "12", label: "12 meses", price: "R$ 42,19", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 52,74" },
+    ],
+    storageTypes: [
+      { id: "ssd-150", name: "SSD de 150 GB", price: "Livre" },
+      { id: "ssd-300", name: "SSD de 300 GB", price: "R$ 18,17/mês" },
+      { id: "nvme-75", name: "75 GB NVMe", price: "Livre" },
+      { id: "nvme-150", name: "NVMe de 150 GB", price: "R$ 21,68/mês" },
+    ],
+    rate: 11.72,
+    basePrice: 52.74,
+    backupPrice: "R$ 17,58 / mês"
+  },
+  "20": {
+    name: "Cloud VPS 20",
+    vcpu: "6 núcleos de vCPU",
+    ram: "12 GB de RAM",
+    storage: "100 GB NVMe ou SSD de 200 GB",
+    snapshots: "2 Instantâneos",
+    traffic: "Porta de 300 Mbit/s",
+    durations: [
+      { id: "1", label: "1 mês", price: "R$ 81,06", setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", price: "R$ 72,95", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldPrice: "R$ 81,06" },
+      { id: "12", label: "12 meses", price: "R$ 64,85", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 81,06" },
+    ],
+    storageTypes: [
+      { id: "ssd-200", name: "200 GB SSD", price: "Livre" },
+      { id: "ssd-400", name: "400 GB SSD", price: "R$ 22,58/mês" },
+      { id: "nvme-100", name: "100 GB NVMe", price: "Livre" },
+      { id: "nvme-200", name: "200 GB NVMe", price: "R$ 29,53/mês" },
+    ],
+    rate: 11.58,
+    basePrice: 81.06,
+    backupPrice: "R$ 23,16 / mês"
+  },
+  "30": {
+    name: "Cloud VPS 30",
+    vcpu: "8 núcleos de vCPU",
+    ram: "24 GB de RAM",
+    storage: "200 GB NVMe ou SSD de 400 GB",
+    snapshots: "3 Instantâneos",
+    traffic: "Porta de 600 Mbit/s",
+    durations: [
+      { id: "1", label: "1 mês", price: "R$ 162,12", setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", price: "R$ 145,91", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldPrice: "R$ 162,12" },
+      { id: "12", label: "12 meses", price: "R$ 129,70", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 162,12" },
+    ],
+    storageTypes: [
+      { id: "ssd-400", name: "400 GB SSD", price: "Livre" },
+      { id: "ssd-800", name: "800 GB SSD", price: "R$ 44,58/mês" },
+      { id: "nvme-200", name: "200 GB NVMe", price: "Livre" },
+      { id: "nvme-400", name: "400 GB NVMe", price: "R$ 37,64/mês" },
+    ],
+    rate: 11.58,
+    basePrice: 162.12,
+    backupPrice: "R$ 40,53 / mês"
+  },
+  "40": {
+    name: "Cloud VPS 40",
+    vcpu: "12 núcleos de vCPU",
+    ram: "48 GB de RAM",
+    storage: "250 GB NVMe ou SSD de 500 GB",
+    snapshots: "3 Instantâneos",
+    traffic: "Porta de 800 Mbit/s",
+    durations: [
+      { id: "1", label: "1 mês", price: "R$ 289,50", setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", price: "R$ 260,55", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldPrice: "R$ 289,50" },
+      { id: "12", label: "12 meses", price: "R$ 231,60", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 289,50" },
+    ],
+    storageTypes: [],
+    locations: {
+      europe: [
+        { id: "eu", name: "União Europeia", latency: "179 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "130 ms", price: "R$ 60,80" },
+      ],
+      best: [
+        { id: "eu", name: "União Europeia", latency: "179 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "85 ms", price: "R$ 90,90", recommended: true },
+      ],
+      america: [
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "114 ms", price: "R$ 60,80" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "85 ms", price: "R$ 90,90", recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "143 ms", price: "R$ 75,85" },
+      ],
+      asia: [
+        { id: "sg", name: "Ásia (Singapura)", latency: "332 ms", price: "R$ 147,07" },
+        { id: "jp", name: "Ásia (Japão)", latency: "264 ms", price: "R$ 150,54" },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", price: "R$ 137,80" },
+      ],
+      australia: [
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "346 ms", price: "R$ 125,06" },
+      ]
+    },
+    rate: 11.58,
+    basePrice: 289.50,
+    backupPrice: "R$ 69,48 / mês"
+  },
+  "50": {
+    name: "Cloud VPS 50",
+    vcpu: "16 núcleos de vCPU",
+    ram: "64 GB de RAM",
+    storage: "300 GB NVMe ou SSD de 600 GB",
+    snapshots: "3 Instantâneos",
+    traffic: "Porta de 1 Gbit/s",
+    durations: [
+      { id: "1", label: "1 mês", price: "R$ 428,46", setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", price: "R$ 385,61", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldPrice: "R$ 428,46" },
+      { id: "12", label: "12 meses", price: "R$ 342,77", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 428,46" },
+    ],
+    storageTypes: [
+      { id: "ssd-600", name: "600 GB SSD", price: "Livre" },
+      { id: "ssd-1200", name: "1.2 TB SSD", price: "R$ 71,22/mês" },
+      { id: "nvme-300", name: "300 GB NVMe", price: "Livre" },
+      { id: "nvme-600", name: "600 GB NVMe", price: "R$ 55,01/mês" },
+    ],
+    locations: {
+      europe: [
+        { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "130 ms", price: "R$ 90,32" },
+      ],
+      best: [
+        { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "84 ms", price: "R$ 134,33", recommended: true },
+      ],
+      america: [
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "114 ms", price: "R$ 90,32" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "84 ms", price: "R$ 134,33", recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "143 ms", price: "R$ 111,75" },
+      ],
+      asia: [
+        { id: "sg", name: "Ásia (Singapura)", latency: "332 ms", price: "R$ 217,70" },
+        { id: "jp", name: "Ásia (Japão)", latency: "264 ms", price: "R$ 222,92" },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", price: "R$ 204,39" },
+      ],
+      australia: [
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "345 ms", price: "R$ 184,70" },
+      ]
+    },
+    rate: 11.58,
+    basePrice: 428.46,
+    backupPrice: "R$ 86,85 / mês"
+  },
+  "60": {
+    name: "Cloud VPS 60",
+    vcpu: "18 núcleos de vCPU",
+    ram: "96 GB de RAM",
+    storage: "350 GB NVMe ou SSD de 700 GB",
+    snapshots: "3 Instantâneos",
+    traffic: "Porta de 1 Gbit/s",
+    durations: [
+      { id: "1", label: "1 mês", price: "R$ 567,42", setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", price: "R$ 510,68", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldPrice: "R$ 567,42" },
+      { id: "12", label: "12 meses", price: "R$ 453,94", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 567,42" },
+    ],
+    storageTypes: [],
+    locations: {
+      europe: [
+        { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "133 ms", price: "R$ 119,27" },
+      ],
+      best: [
+        { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "83 ms", price: "R$ 177,75", recommended: true },
+      ],
+      america: [
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "115 ms", price: "R$ 119,27" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "83 ms", price: "R$ 177,75", recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "143 ms", price: "R$ 148,22" },
+      ],
+      asia: [
+        { id: "sg", name: "Ásia (Singapura)", latency: "347 ms", price: "R$ 288,34" },
+        { id: "jp", name: "Ásia (Japão)", latency: "264 ms", price: "R$ 295,29" },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", price: "R$ 270,39" },
+      ],
+      australia: [
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "347 ms", price: "R$ 244,92" },
+      ]
+    },
+    rate: 11.58,
+    basePrice: 567.42,
+    backupPrice: "R$ 110,01 / mês"
   }
 };
 
-const durations = [
+const defaultDurations = [
   { id: "1", label: "1 mês", price: "R$ 52,74", setupFee: "Taxa de configuração de R$ 52,74", discount: null },
-  { id: "6", label: "6 meses", price: "R$ 47,47", setupFee: "Taxa de configuração de R$ 26,28", discount: "ECONOMIZE10%", oldPrice: "R$ 52,74" },
-  { id: "12", label: "12 meses", price: "R$ 42,19", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE20%", oldPrice: "R$ 52,74" },
+  { id: "6", label: "6 meses", price: "R$ 47,47", setupFee: "Taxa de configuração de R$ 26,28", discount: "ECONOMIZE 10%", oldPrice: "R$ 52,74" },
+  { id: "12", label: "12 meses", price: "R$ 42,19", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 52,74" },
+];
+
+const defaultStorageTypes = [
+  { id: "ssd-150", name: "SSD de 150 GB", price: "Livre" },
+  { id: "ssd-300", name: "SSD de 300 GB", price: "R$ 18,17/mês" },
+  { id: "nvme-75", name: "75 GB NVMe", price: "Livre" },
+  { id: "nvme-150", name: "NVMe de 150 GB", price: "R$ 21,68/mês" },
 ];
 
 const regions = [
@@ -96,12 +286,7 @@ const locations: Record<string, Location[]> = {
   ]
 };
 
-const storageTypes = [
-  { id: "ssd-150", name: "SSD de 150 GB", price: "Livre" },
-  { id: "ssd-300", name: "SSD de 300 GB", price: "R$ 18,17/mês" },
-  { id: "nvme-75", name: "75 GB NVMe", price: "Livre" },
-  { id: "nvme-150", name: "NVMe de 150 GB", price: "R$ 21,68/mês" },
-];
+// storageTypes and durations will be derived from planId
 
 const imageCategories = [
   { id: "popular", label: "Popular" },
@@ -155,13 +340,16 @@ export default function VpsConfigurePage() {
   const params = useParams();
   const router = useRouter();
   const planId = params.id as string;
-  const plan = plans[planId as keyof typeof plans] || plans["10"];
+  const plan = plansData[planId as keyof typeof plansData] || plansData["10"];
+  const durations = plan.durations && plan.durations.length > 0 ? plan.durations : defaultDurations;
+  const storageTypes = plan.storageTypes && plan.storageTypes.length > 0 ? plan.storageTypes : defaultStorageTypes;
+  const planLocations = (plan as any).locations || locations;
 
   const [quantity, setQuantity] = useState("1");
   const [duration, setDuration] = useState("1");
   const [regionTab, setRegionTab] = useState("best");
   const [location, setLocation] = useState("eu");
-  const [storageType, setStorageType] = useState("ssd-150");
+  const [storageType, setStorageType] = useState(storageTypes[0].id);
   const [imageCategory, setImageCategory] = useState("popular");
   const [osImage, setOsImage] = useState("ubuntu");
   const [autoBackup, setAutoBackup] = useState(false);
@@ -240,7 +428,7 @@ export default function VpsConfigurePage() {
             </div>
             <div className="space-y-1">
               <p className="text-[10px] font-bold text-slate-400 uppercase">SNAPSHOT</p>
-              <p className="text-[11px] font-medium leading-tight">1 Snapshot</p>
+              <p className="text-[11px] font-medium leading-tight">{plan.snapshots}</p>
             </div>
             <div className="space-y-1">
               <p className="text-[10px] font-bold text-slate-400 uppercase">TRÁFEGO</p>
@@ -335,7 +523,7 @@ export default function VpsConfigurePage() {
               </div>
 
               <div className="space-y-4">
-                {(locations[regionTab as keyof typeof locations] || []).map(loc => (
+                {(planLocations[regionTab as keyof typeof planLocations] || []).map((loc: any) => (
                   <button
                     key={loc.id}
                     onClick={() => setLocation(loc.id)}
@@ -559,7 +747,7 @@ export default function VpsConfigurePage() {
                   </div>
                   <div className="mt-2">
                     <h3 className="text-lg font-bold text-[#0F172A] mb-1">Backup Automático</h3>
-                    <div className="text-xl font-bold text-[#0F172A] mb-2">R$ 17,58 / mês</div>
+                    <div className="text-xl font-bold text-[#0F172A] mb-2">{plan.backupPrice}</div>
                     <p className="text-xs text-slate-500 leading-tight">
                       Configure e esqueça.<br />Segurança de dados sem esforço.
                     </p>
@@ -910,7 +1098,6 @@ export default function VpsConfigurePage() {
                     const selectedDuration = durations.find(d => d.id === duration) || durations[0];
                     const durationMonths = parseInt(duration);
                     const qty = parseInt(quantity) || 1;
-                    const RATE = 11.72;
                     
                     const items = [];
                     
@@ -925,7 +1112,7 @@ export default function VpsConfigurePage() {
                     }
                     
                     // Location
-                    const loc = Object.values(locations).flat().find(l => l.id === location);
+                    const loc = Object.values(planLocations).flat().find((l: any) => l.id === location) as any;
                     if (loc && loc.price !== "Livre") {
                       const p = parseFloat(loc.price.replace("R$ ", "").replace(",", "."));
                       items.push({ label: `Localização: ${loc.name}${qty > 1 ? ` × ${qty}` : ""}`, price: p * durationMonths * qty });
@@ -947,7 +1134,11 @@ export default function VpsConfigurePage() {
                     }
                     
                     // Add-ons
-                    if (autoBackup) items.push({ label: `Backup Automático${qty > 1 ? ` × ${qty}` : ""}`, price: 1.50 * RATE * durationMonths * qty });
+                    const RATE = plan.rate || 11.72;
+                    if (autoBackup) {
+                      const p = parseFloat(plan.backupPrice.replace("R$ ", "").replace(" / mês", "").replace(",", "."));
+                      items.push({ label: `Backup Automático${qty > 1 ? ` × ${qty}` : ""}`, price: p * durationMonths * qty });
+                    }
                     if (privateNetwork === "enabled") items.push({ label: `Rede Privada${qty > 1 ? ` × ${qty}` : ""}`, price: 2.29 * RATE * durationMonths * qty });
                     if (ipv4Address === "2ip") items.push({ label: `IP Adicional${qty > 1 ? ` × ${qty}` : ""}`, price: 3.50 * RATE * durationMonths * qty });
                     
@@ -1000,13 +1191,13 @@ export default function VpsConfigurePage() {
             {/* Middle: Savings */}
             {(() => {
               const selectedDuration = durations.find(d => d.id === duration) || durations[0];
-              const RATE = 11.72;
-              const monthlyBase = 4.50 * RATE; 
+              const RATE = plan.rate || 11.72;
+              const monthlyBase = plan.basePrice || 52.74; 
               const monthlyPrice = parseFloat(selectedDuration.price.replace("R$ ", "").replace(",", "."));
               const setupFee = selectedDuration.setupFee === "Sem taxa de instalação" ? 0 : parseFloat(selectedDuration.setupFee.replace("Taxa de configuração de R$ ", "").replace(",", "."));
               
               let additionalMonthly = 0;
-              const loc = Object.values(locations).flat().find(l => l.id === location);
+              const loc = Object.values(planLocations).flat().find((l: any) => l.id === location) as any;
               if (loc && loc.price !== "Livre") additionalMonthly += parseFloat(loc.price.replace("R$ ", "").replace(",", "."));
               
               const st = storageTypes.find(s => s.id === storageType);
@@ -1016,7 +1207,9 @@ export default function VpsConfigurePage() {
               const img = allImages.find(i => i.id === osImage);
               if (img && img.price !== "Incluído") additionalMonthly += parseFloat(img.price.replace("R$ ", "").replace("/mês", "").replace(",", "."));
 
-              if (autoBackup) additionalMonthly += 1.50 * RATE;
+              if (autoBackup) {
+                additionalMonthly += parseFloat(plan.backupPrice.replace("R$ ", "").replace(" / mês", "").replace(",", "."));
+              }
               if (privateNetwork === "enabled") additionalMonthly += 2.29 * RATE;
               if (ipv4Address === "2ip") additionalMonthly += 3.50 * RATE;
               if (objectStorage === "250gb") additionalMonthly += 2.49 * RATE;

@@ -66,6 +66,9 @@ export default function PersonalDataPage() {
     ipv4Address: searchParams.get("ipv4Address"),
     objectStorage: searchParams.get("objectStorage"),
     customImageOption: searchParams.get("customImageOption"),
+    password: searchParams.get("password"),
+    storageUpgrades: searchParams.get("storageUpgrades") ? JSON.parse(searchParams.get("storageUpgrades")!) : undefined,
+    type: searchParams.get("type") || "vps",
   };
 
   const maskCpfCnpj = (value: string) => {

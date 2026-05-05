@@ -24,54 +24,54 @@ type StoragePlan = {
 
 const storagePlans: StoragePlan[] = [
   {
-    name: "VPS de Armazenamento 10",
-    oldPrice: "R$ 49,48",
-    newPrice: "R$ 39,",
-    cents: "58",
+    name: "Storage VPS 10 (S)",
+    oldPrice: "R$ 52,74",
+    newPrice: "R$ 42,",
+    cents: "19",
     vcpu: "2 núcleos de vCPU",
     ram: "4 GB de RAM",
-    storage: "SSD de 300 GB",
+    storage: "300 GB SSD",
     speed: "Porta de 200 Mbit/s",
   },
   {
-    name: "VPS de Armazenamento 20",
-    oldPrice: "R$ 79,45",
-    newPrice: "R$ 63,",
-    cents: "56",
+    name: "Storage VPS 20 (M)",
+    oldPrice: "R$ 82,04",
+    newPrice: "R$ 65,",
+    cents: "63",
     vcpu: "3 núcleos de vCPU",
     ram: "8 GB de RAM",
-    storage: "SSD de 400 GB",
+    storage: "400 GB SSD",
     speed: "Porta de 300 Mbit/s",
     popular: true,
   },
   {
-    name: "VPS de Armazenamento 30",
-    oldPrice: "R$ 149,90",
-    newPrice: "R$ 119,",
-    cents: "92",
+    name: "Storage VPS 30 (L)",
+    oldPrice: "R$ 164,08",
+    newPrice: "R$ 131,",
+    cents: "26",
     vcpu: "6 núcleos de vCPU",
     ram: "18 GB de RAM",
-    storage: "SSD de 1 TB",
+    storage: "1 TB SSD",
     speed: "Porta de 600 Mbit/s",
   },
   {
-    name: "VPS de Armazenamento 40",
-    oldPrice: "R$ 259,83",
-    newPrice: "R$ 207,",
-    cents: "86",
+    name: "Storage VPS 40 (XL)",
+    oldPrice: "R$ 293,00",
+    newPrice: "R$ 234,",
+    cents: "40",
     vcpu: "8 núcleos de vCPU",
     ram: "30 GB de RAM",
-    storage: "SSD de 1,2 TB",
+    storage: "1.2 TB SSD",
     speed: "Porta de 800 Mbit/s",
   },
   {
-    name: "VPS de Armazenamento 50",
-    oldPrice: "R$ 459,68",
-    newPrice: "R$ 367,",
-    cents: "74",
+    name: "Storage VPS 50 (XXL)",
+    oldPrice: "R$ 433,64",
+    newPrice: "R$ 346,",
+    cents: "91",
     vcpu: "14 núcleos de vCPU",
     ram: "50 GB de RAM",
-    storage: "SSD de 1,4 TB",
+    storage: "1.4 TB SSD",
     speed: "Porta de 1 Gbit/s",
   },
 ];
@@ -129,8 +129,7 @@ export function VpsStoragePage() {
                   </p>
                   <p className="mt-0.5 text-[10px] font-light leading-snug text-slate-400">por um período de 12 meses</p>
                   <Link
-                    href={`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano ${plan.name} e gostaria de dar continuidade ao processo.`)}`}
-                    target="_blank"
+                    href={`/vps-armazenamento/configure/${plan.name.match(/\d+/)?.[0] || "10"}`}
                     className={`${roboto.className} mt-3 block w-full rounded-md border border-slate-200 bg-transparent py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-600 transition-colors hover:bg-slate-50`}
                   >
                     Começar agora →

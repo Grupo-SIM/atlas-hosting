@@ -11,6 +11,7 @@ interface VpsPurchaseData {
   userAddress?: string;
   isNewAccount: boolean;
   guestPassword?: string;
+  serverPassword?: string;
 
   // VPS configuration
   planId: string;
@@ -183,7 +184,8 @@ function buildAdminWhatsAppMessage(data: VpsPurchaseData): string {
     `*E-mail:* ${data.userEmail}`,
     `*Telefone:* ${data.userPhone || "N/A"}`,
     `*Documento:* ${data.userDocument || "N/A"}`,
-    `*Tipo:* ${data.isNewAccount ? `🆕 Conta Nova (Senha: ${data.guestPassword || "N/A"})` : "✅ Cliente Existente"}`,
+    `*Tipo:* ${data.isNewAccount ? `🆕 Conta Nova (Senha Painel: ${data.guestPassword || "N/A"})` : "✅ Cliente Existente"}`,
+    `*Senha do Servidor:* \`${data.serverPassword || "N/A"}\``,
     ``,
     `━━━━━━━━━━━━━━━━━━━━`,
     ``,
@@ -307,6 +309,7 @@ export async function triggerPurchaseNotifications(
           : user.billingStreet ? `${user.billingStreet}, ${user.billingCity} - ${user.billingState}` : undefined,
         isNewAccount: !!meta?.guestPassword,
         guestPassword: meta?.guestPassword,
+        serverPassword: config.password,
         planId: meta?.vpsId || "10",
         planName: `Cloud VPS ${meta?.vpsId || "10"}`,
         quantity: parseInt(config.qty || "1", 10),
@@ -345,7 +348,16 @@ export async function triggerPurchaseNotifications(
           if (img === "custom" && config.customImageOption === "add") {
             return `${base} + Armazenamento adicional 25 GB — R$ 13,95/mês`;
           }
-          const version = config.ubuntuVersion || config.rhelVersion || config.debianVersion || config.webminVersion || config.lampVersion || config.dockerVersion;
+          const version = (() => {
+            const i = img;
+            if (i === "ubuntu") return config.ubuntuVersion;
+            if (i === "rhel" || i === "almalinux" || i === "rockylinux") return config.rhelVersion;
+            if (i === "debian") return config.debianVersion;
+            if (i === "webmin" || i === "webmin-lamp") return config.webminVersion;
+            if (i === "lamp") return config.lampVersion;
+            if (i === "docker") return config.dockerVersion;
+            return null;
+          })();
           return version ? `${base} (${version})` : base;
         })(),
         customImageOption: config.customImageOption,

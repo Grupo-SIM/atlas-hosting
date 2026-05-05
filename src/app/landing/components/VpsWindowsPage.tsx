@@ -22,12 +22,13 @@ type WindowsPlan = {
   speed: string;
 };
 
-const windowsPlans: WindowsPlan[] = [
+const windowsPlans = [
   {
-    name: "Cloud VPS 10",
-    oldPrice: "R$ 165,63",
-    newPrice: "R$ 132,",
-    cents: "50",
+    id: "10",
+    name: "Cloud VPS 10 (S)",
+    oldPrice: "R$ 174,79",
+    newPrice: "R$ 139,",
+    cents: "83",
     vcpu: "4 núcleos de vCPU",
     ram: "8 GB de RAM",
     storage: "75 GB NVMe ou SSD 150 GB",
@@ -35,57 +36,62 @@ const windowsPlans: WindowsPlan[] = [
     speed: "Porta de 200 Mbit/s",
   },
   {
-    name: "Cloud VPS 20",
-    oldPrice: "R$ 318,03",
-    newPrice: "R$ 254,",
-    cents: "42",
+    id: "20",
+    name: "Cloud VPS 20 (M)",
+    oldPrice: "R$ 210,85",
+    newPrice: "R$ 168,",
+    cents: "68",
     vcpu: "6 núcleos de vCPU",
     ram: "12 GB de RAM",
-    storage: "NVMe de 100 GB ou SSD 200 GB",
+    storage: "100 GB NVMe ou SSD 200 GB",
     snapshots: "2 Instantâneos",
     speed: "Porta de 300 Mbit/s",
   },
   {
-    name: "Cloud VPS 30",
-    oldPrice: "R$ 549,63",
-    newPrice: "R$ 439,",
-    cents: "70",
+    id: "30",
+    name: "Cloud VPS 30 (L)",
+    oldPrice: "R$ 311,83",
+    newPrice: "R$ 249,",
+    cents: "46",
     vcpu: "8 núcleos de vCPU",
     ram: "24 GB de RAM",
-    storage: "NVMe de 200 GB ou SSD 400 GB",
+    storage: "200 GB NVMe ou SSD 400 GB",
     snapshots: "3 Instantâneos",
     speed: "Porta de 600 Mbit/s",
   },
   {
-    name: "Cloud VPS 40",
-    oldPrice: "R$ 1.013,05",
-    newPrice: "R$ 810,",
-    cents: "44",
+    id: "40",
+    name: "Cloud VPS 40 (XL)",
+    oldPrice: "R$ 470,50",
+    newPrice: "R$ 376,",
+    cents: "40",
     vcpu: "12 núcleos de vCPU",
     ram: "48 GB de RAM",
-    storage: "NVMe de 250 GB ou SSD 500 GB",
+    storage: "250 GB NVMe ou SSD 500 GB",
     snapshots: "3 Instantâneos",
     speed: "Porta de 800 Mbit/s",
   },
   {
-    name: "Cloud VPS 50",
-    oldPrice: "R$ 1.359,08",
-    newPrice: "R$ 1.087,",
-    cents: "26",
+    id: "50",
+    name: "Cloud VPS 50 (XXL)",
+    oldPrice: "R$ 1.377,31",
+    newPrice: "R$ 1.101,",
+    cents: "85",
     vcpu: "16 núcleos de vCPU",
     ram: "64 GB de RAM",
-    storage: "NVMe de 300 GB ou SSD 600 GB",
+    storage: "300 GB NVMe ou SSD 600 GB",
     snapshots: "3 Instantâneos",
     speed: "Porta de 1 Gbit/s",
   },
   {
-    name: "Cloud VPS 60",
-    oldPrice: "R$ 1.666,38",
-    newPrice: "R$ 1.333,",
-    cents: "10",
+    id: "60",
+    name: "Cloud VPS 60 (XXXL)",
+    oldPrice: "R$ 1.550,69",
+    newPrice: "R$ 1.240,",
+    cents: "55",
     vcpu: "18 núcleos de vCPU",
     ram: "96 GB de RAM",
-    storage: "NVMe de 350 GB ou SSD 700 GB",
+    storage: "350 GB NVMe ou SSD 700 GB",
     snapshots: "3 Instantâneos",
     speed: "Porta de 1 Gbit/s",
   },
@@ -142,8 +148,7 @@ export function VpsWindowsPage() {
                   </div>
                   <p className="mt-0.5 text-xs font-light leading-snug text-slate-400">por um período de 12 meses</p>
                   <Link
-                    href={`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano Windows ${plan.name} e gostaria de dar continuidade ao processo.`)}`}
-                    target="_blank"
+                    href={`/vps-windows/configure/${plan.id}`}
                     className={`${roboto.className} mt-3 block w-full rounded-md border border-slate-200 bg-transparent py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-600 transition-colors hover:bg-slate-50`}
                   >
                     Começar agora →

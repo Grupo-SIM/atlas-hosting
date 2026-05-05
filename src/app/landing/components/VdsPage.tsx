@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Cpu, HardDrive, ShieldCheck, Wallet } from "lucide-react";
 import { Roboto } from "next/font/google";
 import LottieMap from "./LottieMap";
@@ -81,6 +81,7 @@ const vdsPlans: VdsPlan[] = [
 ];
 
 export function VdsPage() {
+  const router = useRouter();
   return (
     <section className="relative overflow-hidden bg-slate-50 px-4 py-8 md:px-8 md:py-10">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] bg-[size:40px_40px]" />
@@ -138,13 +139,20 @@ export function VdsPage() {
                     <span className="ml-1 text-[10px] font-medium text-slate-400">/mês</span>
                   </p>
                   <p className="mt-0.5 text-[10px] font-light leading-snug text-slate-400">12 meses</p>
-                  <Link
-                    href={`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano ${plan.name} e gostaria de dar continuidade ao processo.`)}`}
-                    target="_blank"
+                  <button
+                    onClick={() => {
+                      const planId = plan.name.split(" ").pop()?.toLowerCase();
+                      const supportedPlans = ["s", "m", "l", "xl", "xxl"];
+                      if (supportedPlans.includes(planId || "")) {
+                        router.push(`/vds/configure/${planId}`);
+                      } else {
+                        window.open(`https://wa.me/558398849027?text=${encodeURIComponent(`Olá! Escolhi o plano ${plan.name} e gostaria de dar continuidade ao processo.`)}`, "_blank");
+                      }
+                    }}
                     className={`${roboto.className} mt-3 block w-full rounded-md border border-slate-200 bg-transparent py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-600 transition-colors hover:bg-slate-50`}
                   >
                     Começar agora →
-                  </Link>
+                  </button>
                 </div>
 
                 <div className="space-y-0 border-t border-slate-100 text-[11px] text-slate-600 md:text-xs">
