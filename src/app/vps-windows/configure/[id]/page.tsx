@@ -971,6 +971,8 @@ export default function ConfigureWindowsVps() {
                     }
                     if (serverManagement === "managed") items.push({ label: `Gerenciado`, price: 1289.08 * durMonths * qty });
                     if (monitoring === "full") items.push({ label: `Monitoramento Completo`, price: 134.66 * durMonths * qty });
+                    if (privateNetwork === "enabled") items.push({ label: `Rede Privada`, price: 26.84 * durMonths * qty });
+                    if (ipv4Address === "2ip") items.push({ label: `IP Adicional`, price: 41.02 * durMonths * qty });
 
                     // Image/OS Pricing
                     const pPrices = getPlanImagePrices(planId);
@@ -986,6 +988,11 @@ export default function ConfigureWindowsVps() {
                                        parsePrice(pPrices.pleskPro);
                       const verPrice = pleskWinVersion === "2016" ? parsePrice(pPrices.win2016) : parsePrice(pPrices.windows);
                       items.push({ label: `Plesk + Windows (${pleskWinLicence})`, price: (licPrice + verPrice) * durMonths * qty });
+                    } else if (osImage === "plesk" || osImage === "plesk-linux") {
+                      const price = pleskLicence === "admin" ? parsePrice(pPrices.pleskLinux) : 
+                                       pleskLicence === "host" ? parsePrice(pPrices.pleskHost) : 
+                                       parsePrice(pPrices.pleskPro);
+                      items.push({ label: `Plesk Linux (${pleskLicence})`, price: price * durMonths * qty });
                     } else if (osImage) {
                       const imgLabel = osImage.charAt(0).toUpperCase() + osImage.slice(1);
                       items.push({ label: `SO: ${imgLabel}`, price: 0 });
@@ -1045,6 +1052,10 @@ export default function ConfigureWindowsVps() {
                 additional += windowsVersion === "2016" ? parsePrice(pPrices.win2016) : parsePrice(pPrices.windows);
               } else if (osImage === "cpanel") {
                 additional += parsePrice(pPrices.cpanel);
+              } else if (osImage === "plesk" || osImage === "plesk-linux") {
+                additional += pleskLicence === "admin" ? parsePrice(pPrices.pleskLinux) : 
+                               pleskLicence === "host" ? parsePrice(pPrices.pleskHost) : 
+                               parsePrice(pPrices.pleskPro);
               } else if (osImage === "plesk-win") {
                 const licPrice = pleskWinLicence === "admin" ? parsePrice(pPrices.pleskLinux) : 
                                  pleskWinLicence === "host" ? parsePrice(pPrices.pleskHost) : 
@@ -1052,6 +1063,9 @@ export default function ConfigureWindowsVps() {
                 const verPrice = pleskWinVersion === "2016" ? parsePrice(pPrices.win2016) : parsePrice(pPrices.windows);
                 additional += (licPrice + verPrice);
               }
+
+              if (privateNetwork === "enabled") additional += 26.84;
+              if (ipv4Address === "2ip") additional += 41.02;
 
               const totalMonthly = basePriceMonthly + additional;
               const dueToday = (totalMonthly * durMonths * qty) + (setupFee * qty);

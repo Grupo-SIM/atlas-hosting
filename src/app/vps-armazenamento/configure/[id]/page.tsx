@@ -950,7 +950,7 @@ export default function ConfigureStorageVps() {
                       items.push({ label: `Windows Server ${windowsVersion}`, price: price * durMonths * qty });
                     } else if (osImage === "cpanel") {
                       items.push({ label: `cPanel License`, price: parsePrice(currentImagePrices.cpanel) * durMonths * qty });
-                    } else if (osImage === "plesk-linux") {
+                    } else if (osImage === "plesk" || osImage === "plesk-linux") {
                       const licPrice = pleskLicence === "admin" ? parsePrice(currentImagePrices.pleskLinux) : 
                                        pleskLicence === "host" ? parsePrice(currentImagePrices.pleskHost) : 
                                        parsePrice(currentImagePrices.pleskPro);
@@ -1016,7 +1016,7 @@ export default function ConfigureStorageVps() {
                 additional += windowsVersion === "2016" ? parsePrice(currentImagePrices.win2016) : parsePrice(currentImagePrices.windows);
               } else if (osImage === "cpanel") {
                 additional += parsePrice(currentImagePrices.cpanel);
-              } else if (osImage === "plesk-linux") {
+              } else if (osImage === "plesk" || osImage === "plesk-linux") {
                 const licPrice = pleskLicence === "admin" ? parsePrice(currentImagePrices.pleskLinux) : 
                                  pleskLicence === "host" ? parsePrice(currentImagePrices.pleskHost) : 
                                  parsePrice(currentImagePrices.pleskPro);

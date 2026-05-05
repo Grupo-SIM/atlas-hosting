@@ -1125,12 +1125,30 @@ export default function VpsConfigurePage() {
                       items.push({ label: `Upgrade de Disco: ${st.name}${qty > 1 ? ` × ${qty}` : ""}`, price: p * durationMonths * qty });
                     }
                     
-                    // OS / Panel
-                    const allImages = Object.values(images).flat();
-                    const img = allImages.find(i => i.id === osImage);
-                    if (img && img.price !== "Incluído") {
-                      const p = parseFloat(img.price.replace("R$ ", "").replace("/mês", "").replace(",", "."));
-                      items.push({ label: `SO/Painel: ${img.name}${qty > 1 ? ` × ${qty}` : ""}`, price: p * durationMonths * qty });
+                    // OS / Panel Pricing
+                    const parsePrice = (p: string) => parseFloat(p.replace("R$ ", "").replace(",", "."));
+                    if (osImage === "windows") {
+                      const price = windowsVersion === "2016" ? 73.25 : 87.90;
+                      items.push({ label: `Windows Server ${windowsVersion}`, price: price * durationMonths * qty });
+                    } else if (osImage === "cpanel") {
+                      const cpanelPrices: any = { "5": 254.91, "30": 339.88, "50": 451.22, "100": 550.84, "150": 685.62, "200": 920.02, "250": 1154.42, "300": 1388.82, "350": 1623.22, "400": 1857.62, "450": 2092.02, "500": 2326.42, "550": 2560.82, "600": 2795.22, "650": 3029.62, "700": 3264.02, "750": 3498.42, "800": 3732.82, "850": 3967.22, "900": 4201.62, "950": 4436.02, "1000": 4670.42 };
+                      const price = cpanelPrices[cpanelLicence] || 254.91;
+                      items.push({ label: `cPanel (${cpanelLicence} contas)`, price: price * durationMonths * qty });
+                    } else if (osImage === "plesk" || osImage === "plesk-linux") {
+                      const price = pleskLicence === "admin" ? 140.64 : pleskLicence === "host" ? 427.78 : 222.68;
+                      items.push({ label: `Plesk Linux (${pleskLicence})`, price: price * durationMonths * qty });
+                    } else if (osImage === "plesk-win") {
+                      const licPrice = pleskWinLicence === "admin" ? 213.89 : pleskWinLicence === "host" ? 427.78 : 222.68;
+                      const winPrice = pleskWinVersion === "2016" ? 73.25 : 87.90;
+                      items.push({ label: `Plesk Windows (${pleskWinLicence})`, price: (licPrice + winPrice) * durationMonths * qty });
+                    } else if (osImage) {
+                      const img = Object.values(images).flat().find(i => i.id === osImage);
+                      if (img && img.price !== "Incluído") {
+                        const p = parseFloat(img.price.replace("R$ ", "").replace("/mês", "").replace(",", "."));
+                        items.push({ label: `SO/Painel: ${img.name}`, price: p * durationMonths * qty });
+                      } else if (img) {
+                        items.push({ label: `SO: ${img.name}`, price: 0 });
+                      }
                     }
                     
                     // Add-ons
@@ -1203,9 +1221,24 @@ export default function VpsConfigurePage() {
               const st = storageTypes.find(s => s.id === storageType);
               if (st && st.price !== "Livre") additionalMonthly += parseFloat(st.price.replace("R$ ", "").replace("/mês", "").replace(",", "."));
               
-              const allImages = Object.values(images).flat();
-              const img = allImages.find(i => i.id === osImage);
-              if (img && img.price !== "Incluído") additionalMonthly += parseFloat(img.price.replace("R$ ", "").replace("/mês", "").replace(",", "."));
+              const parsePrice = (p: string) => parseFloat(p.replace("R$ ", "").replace(",", "."));
+              if (osImage === "windows") {
+                additionalMonthly += windowsVersion === "2016" ? 73.25 : 87.90;
+              } else if (osImage === "cpanel") {
+                const cpanelPrices: any = { "5": 254.91, "30": 339.88, "50": 451.22, "100": 550.84, "150": 685.62, "200": 920.02, "250": 1154.42, "300": 1388.82, "350": 1623.22, "400": 1857.62, "450": 2092.02, "500": 2326.42, "550": 2560.82, "600": 2795.22, "650": 3029.62, "700": 3264.02, "750": 3498.42, "800": 3732.82, "850": 3967.22, "900": 4201.62, "950": 4436.02, "1000": 4670.42 };
+                additionalMonthly += cpanelPrices[cpanelLicence] || 254.91;
+              } else if (osImage === "plesk" || osImage === "plesk-linux") {
+                additionalMonthly += pleskLicence === "admin" ? 140.64 : pleskLicence === "host" ? 427.78 : 222.68;
+              } else if (osImage === "plesk-win") {
+                const licPrice = pleskWinLicence === "admin" ? 213.89 : pleskWinLicence === "host" ? 427.78 : 222.68;
+                const winPrice = pleskWinVersion === "2016" ? 73.25 : 87.90;
+                additionalMonthly += (licPrice + winPrice);
+              } else if (osImage) {
+                const img = Object.values(images).flat().find(i => i.id === osImage);
+                if (img && img.price !== "Incluído") {
+                  additionalMonthly += parseFloat(img.price.replace("R$ ", "").replace("/mês", "").replace(",", "."));
+                }
+              }
 
               if (autoBackup) {
                 additionalMonthly += parseFloat(plan.backupPrice.replace("R$ ", "").replace(" / mês", "").replace(",", "."));

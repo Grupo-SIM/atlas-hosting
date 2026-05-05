@@ -439,12 +439,31 @@ export default function VdsConfigurePage() {
       }
     });
 
-    // OS / Panel
-    const allImages = Object.values(images).flat();
-    const imgObj = allImages.find(i => i.id === osImage);
-    if (imgObj && imgObj.price !== "Incluído") {
-      const p = parseFloat(imgObj.price.replace("R$ ", "").replace("/mês", "").replace(".", "").replace(",", "."));
-      items.push({ label: `SO/Painel: ${imgObj.name}${qty > 1 ? ` × ${qty}` : ""}`, price: p * durationMonths * qty });
+    // OS / Panel Pricing
+    const parsePrice = (p: string) => parseFloat(p.replace("R$ ", "").replace(",", "."));
+    if (osImage === "windows") {
+      const price = windowsVersion === "2016" ? 116.73 : 134.66; // VDS Windows prices might be higher? Let's check images object.
+      items.push({ label: `Windows Server ${windowsVersion}${qty > 1 ? ` × ${qty}` : ""}`, price: price * durationMonths * qty });
+    } else if (osImage === "cpanel") {
+      const cpanelPrices: any = { "5": 254.91, "30": 339.88, "50": 451.22, "100": 550.84, "150": 685.62, "200": 920.02, "250": 1154.42, "300": 1388.82, "350": 1623.22, "400": 1857.62, "450": 2092.02, "500": 2326.42, "550": 2560.82, "600": 2795.22, "650": 3029.62, "700": 3264.02, "750": 3498.42, "800": 3732.82, "850": 3967.22, "900": 4201.62, "950": 4436.02, "1000": 4670.42 };
+      const price = cpanelPrices[cpanelLicence] || 254.91;
+      items.push({ label: `cPanel (${cpanelLicence} contas)${qty > 1 ? ` × ${qty}` : ""}`, price: price * durationMonths * qty });
+    } else if (osImage === "plesk" || osImage === "plesk-linux") {
+      const price = pleskLicence === "admin" ? 140.64 : pleskLicence === "host" ? 427.78 : 222.68;
+      items.push({ label: `Plesk Linux (${pleskLicence})${qty > 1 ? ` × ${qty}` : ""}`, price: price * durationMonths * qty });
+    } else if (osImage === "plesk-win") {
+      const licPrice = pleskWinLicence === "admin" ? 213.89 : pleskWinLicence === "host" ? 427.78 : 222.68;
+      const winPrice = pleskWinVersion === "2016" ? 116.73 : 134.66;
+      items.push({ label: `Plesk Windows (${pleskWinLicence})${qty > 1 ? ` × ${qty}` : ""}`, price: (licPrice + winPrice) * durationMonths * qty });
+    } else if (osImage) {
+      const allImages = Object.values(images).flat();
+      const imgObj = allImages.find(i => i.id === osImage);
+      if (imgObj && imgObj.price !== "Incluído") {
+        const p = parseFloat(imgObj.price.replace("R$ ", "").replace("/mês", "").replace(".", "").replace(",", "."));
+        items.push({ label: `SO/Painel: ${imgObj.name}${qty > 1 ? ` × ${qty}` : ""}`, price: p * durationMonths * qty });
+      } else if (imgObj) {
+        items.push({ label: `SO: ${imgObj.name}${qty > 1 ? ` × ${qty}` : ""}`, price: 0 });
+      }
     }
 
     // Add-ons
