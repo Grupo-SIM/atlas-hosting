@@ -49,6 +49,23 @@ export default function PersonalDataPage() {
     image: searchParams.get("image") || "ubuntu",
     backup: searchParams.get("backup") || "false",
     management: searchParams.get("management") || "unmanaged",
+    ubuntuVersion: searchParams.get("ubuntuVersion"),
+    windowsVersion: searchParams.get("windowsVersion"),
+    rhelVersion: searchParams.get("rhelVersion"),
+    debianVersion: searchParams.get("debianVersion"),
+    pleskLicence: searchParams.get("pleskLicence"),
+    cpanelLicence: searchParams.get("cpanelLicence"),
+    cpanelVersion: searchParams.get("cpanelVersion"),
+    pleskWinLicence: searchParams.get("pleskWinLicence"),
+    pleskWinVersion: searchParams.get("pleskWinVersion"),
+    webminVersion: searchParams.get("webminVersion"),
+    lampVersion: searchParams.get("lampVersion"),
+    dockerVersion: searchParams.get("dockerVersion"),
+    monitoring: searchParams.get("monitoring"),
+    privateNetwork: searchParams.get("privateNetwork"),
+    ipv4Address: searchParams.get("ipv4Address"),
+    objectStorage: searchParams.get("objectStorage"),
+    customImageOption: searchParams.get("customImageOption"),
   };
 
   const maskCpfCnpj = (value: string) => {

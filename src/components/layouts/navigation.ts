@@ -20,6 +20,7 @@ export const navigation = [
   { name: "Afiliados", href: "/affiliate", icon: Users },
   { name: "Vouchers", href: "/vouchers", icon: Ticket },
   { name: "Administração", href: "/admin/vps", icon: Shield, isAdmin: true },
+  { name: "Planos VPS", href: "/admin/vps-plans", icon: Server, isAdmin: true },
   { name: "Afiliados Admin", href: "/admin/affiliates", icon: Users, isAdmin: true },
   { name: "Vouchers Admin", href: "/admin/vouchers", icon: Ticket, isAdmin: true },
 ];

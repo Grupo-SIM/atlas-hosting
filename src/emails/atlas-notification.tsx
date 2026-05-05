@@ -119,9 +119,14 @@ export const AtlasNotificationEmail = ({
               Estamos entrando em contato para informar sobre uma atualização importante na sua conta Atlas Hosting para <strong>{organizationName}</strong>.
             </Text>
             
-            <Text style={paragraph}>
-              {message}
-            </Text>
+            <div 
+              style={paragraph} 
+              dangerouslySetInnerHTML={{ 
+                __html: /<[a-z][\s\S]*>/i.test(message) 
+                  ? message 
+                  : message.replace(/\n/g, '<br />') 
+              }} 
+            />
 
             {additionalInfo && (
               <Section style={{

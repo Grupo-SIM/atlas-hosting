@@ -59,7 +59,7 @@ import { isValidPhoneNumber } from "libphonenumber-js";
 import { query } from "dns-query";
 import { sendNotificationEmail } from "@/lib/email/service";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
-import { sendVpsPurchaseNotifications } from "@/lib/notifications/vps-purchase";
+import { triggerPurchaseNotifications } from "@/lib/notifications/vps-purchase";
 
 
 export type GuestInfo = {
@@ -1105,42 +1105,10 @@ async function fulfillCheckoutAfterPixPaid(
     .set({ status: "paid" })
     .where(eq(pgInvoice.id, invoice.id));
 
-  // VPS purchase notifications (WhatsApp + email)
-  if (invoice.type === "vps") {
-    const meta = invoice.metadata as any;
-    const config = meta?.config || {};
-    after(async () => {
-      try {
-        await sendVpsPurchaseNotifications({
-          userName: user.name || "Cliente",
-          userEmail: user.email,
-          userPhone: billing?.phoneNumber,
-          userDocument: billing?.document,
-          userAddress: billing?.address ? `${billing.address.street}, ${billing.address.city} - ${billing.address.state}` : undefined,
-          isNewAccount: !!meta?.guestPassword,
-          guestPassword: meta?.guestPassword,
-          planId: meta?.vpsId || "10",
-          planName: `Cloud VPS ${meta?.vpsId || "10"}`,
-          quantity: parseInt(config.qty || "1", 10),
-          duration: parseInt(config.duration || "1", 10),
-          location: config.location || "eu",
-          storage: config.storage || "ssd-150",
-          image: config.image || "ubuntu",
-          backup: config.backup === "true",
-          management: config.management || "unmanaged",
-          monitoring: config.monitoring,
-          privateNetwork: config.privateNetwork,
-          ipv4Address: config.ipv4Address,
-          objectStorage: config.objectStorage,
-          invoiceId: invoice.id,
-          invoiceRef: invoice.reference,
-          totalAmount: invoice.amount,
-        });
-      } catch (err) {
-        console.error("[VPS-NOTIFY] Erro ao enviar notificações:", err);
-      }
-    });
-  }
+  // Notifications (WhatsApp + email) via Unified Helper
+  after(async () => {
+    await triggerPurchaseNotifications(invoice, user, billing);
+  });
 
   redirect("/payment/success");
 }
@@ -1271,11 +1239,12 @@ export async function markPixPaymentComplete(invoiceId: string): Promise<void> {
 
   const meta = invoice.metadata as DomainRegisterInvoiceOptions;
   const billing = meta.pixCheckout;
-  if (billing) {
-    after(async () => {
+  after(async () => {
+    if (billing) {
       await processInvoiceAfterPayment(invoice, user, billing);
-    });
-  }
+    }
+    await triggerPurchaseNotifications(invoice, user, billing ?? undefined);
+  });
 }
 
 /** Polling do status PIX (Simpay). Quando COMPLETED, marca como pago e processa em background. */
@@ -1322,6 +1291,7 @@ export async function syncCheckoutPixPayment(
 
     after(async () => {
       await processInvoiceAfterPayment(invoice, user, billing);
+      await triggerPurchaseNotifications(invoice, user, billing);
     });
 
     return { status: "COMPLETED" };
@@ -1546,9 +1516,11 @@ export async function completeCheckout(
 
     const domainMetaTyped = invoice.metadata as DomainRegisterInvoiceOptions | DomainRenewInvoiceOptions;
     if ((domainMetaTyped as DomainRenewInvoiceOptions).type === "renew") {
-      const { renewed } = await renewDomainFromPaidInvoice(invoice);
-      if (!renewed) console.error(`[NAMECHEAP] Falha ao renovar domínio para fatura ${invoiceId}`);
       await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
+      after(async () => {
+        const { renewed } = await renewDomainFromPaidInvoice(invoice);
+        if (!renewed) console.error(`[NAMECHEAP] Falha ao renovar domínio para fatura ${invoiceId}`);
+      });
       redirect("/domains");
     }
 
@@ -1564,22 +1536,18 @@ export async function completeCheckout(
       EmailAddress: user.email,
     };
 
-    console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO(S) ──`);
-    const { registered, failed } = await registerDomainsFromPaidInvoice(
-      invoice,
-      contact as NamecheapContactDetails
-    );
-    if (failed.length) {
-      console.error(`[NAMECHEAP] Falha parcial/total:`, failed);
-    }
-    if (registered.length) {
-      console.log(`[NAMECHEAP] ✓ Registrados:`, registered.join(", "));
-    } else {
-      console.warn(`[NAMECHEAP] ✗ Nenhum domínio registrado para fatura ${invoiceId}`);
-    }
-
     await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
-    await sendWelcomePasswordEmailIfGuest(invoice, user as any);
+    after(async () => {
+      console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO(S) ──`);
+      const { registered, failed } = await registerDomainsFromPaidInvoice(
+        invoice,
+        contact as NamecheapContactDetails
+      );
+      if (failed.length) console.error(`[NAMECHEAP] Falha parcial/total:`, failed);
+      if (registered.length) console.log(`[NAMECHEAP] ✓ Registrados:`, registered.join(", "));
+      else console.warn(`[NAMECHEAP] ✗ Nenhum domínio registrado para fatura ${invoiceId}`);
+      await sendWelcomePasswordEmailIfGuest(invoice, user as any);
+    });
     console.log(`[CHECKOUT] ✓ Fatura ${invoiceId} marcada como PAGA. Redirecionando para /payment/success.`);
     redirect("/payment/success");
   }
@@ -1611,7 +1579,11 @@ export async function completeCheckout(
   }
 
   console.log(`[CHECKOUT] ✓ Checkout concluído. Redirecionando para /payment/success.`);
-  await sendWelcomePasswordEmailIfGuest(invoice, user as any);
+  after(async () => {
+    await sendWelcomePasswordEmailIfGuest(invoice, user as any);
+    await triggerPurchaseNotifications(invoice, user, values);
+  });
+
   redirect("/payment/success");
 
   return { status: "success", message: "Plano adquirido com sucesso!" };
@@ -1777,9 +1749,11 @@ export async function completeCheckoutWithSavedCard(
 
     const domainMetaSavedTyped = invoice.metadata as DomainRegisterInvoiceOptions | DomainRenewInvoiceOptions;
     if ((domainMetaSavedTyped as DomainRenewInvoiceOptions).type === "renew") {
-      const { renewed } = await renewDomainFromPaidInvoice(invoice);
-      if (!renewed) console.error(`[NAMECHEAP] Falha ao renovar domínio (cartão salvo) para fatura ${invoiceId}`);
       await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
+      after(async () => {
+        const { renewed } = await renewDomainFromPaidInvoice(invoice);
+        if (!renewed) console.error(`[NAMECHEAP] Falha ao renovar domínio (cartão salvo) para fatura ${invoiceId}`);
+      });
       return { status: "success", message: "/domains" };
     }
 
@@ -1795,20 +1769,17 @@ export async function completeCheckoutWithSavedCard(
       EmailAddress: user.email,
     };
 
-    console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO(S) (CARTÃO SALVO) ──`);
-    const { registered, failed } = await registerDomainsFromPaidInvoice(
-      invoice,
-      contact as NamecheapContactDetails
-    );
-    if (failed.length) {
-      console.error(`[NAMECHEAP] Falha parcial/total (cartão salvo):`, failed);
-    }
-    if (registered.length) {
-      console.log(`[NAMECHEAP] ✓ Registrados:`, registered.join(", "));
-    }
-
     await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
     console.log(`[CHECKOUT-SAVED] ✓ Fatura ${invoiceId} marcada como PAGA.`);
+    after(async () => {
+      console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO(S) (CARTÃO SALVO) ──`);
+      const { registered, failed } = await registerDomainsFromPaidInvoice(
+        invoice,
+        contact as NamecheapContactDetails
+      );
+      if (failed.length) console.error(`[NAMECHEAP] Falha parcial/total (cartão salvo):`, failed);
+      if (registered.length) console.log(`[NAMECHEAP] ✓ Registrados:`, registered.join(", "));
+    });
 
     return { status: "success", message: "/payment/success" };
   }
@@ -1840,6 +1811,12 @@ export async function completeCheckoutWithSavedCard(
   }
 
   console.log(`[CHECKOUT-SAVED] ✓ Checkout concluído com cartão salvo.`);
+  
+  // Trigger notifications
+  after(async () => {
+    await triggerPurchaseNotifications(invoice, user, values);
+  });
+
   return { status: "success", message: "/payment/success" };
 }
 
@@ -2548,7 +2525,13 @@ export async function createVpsInvoice(data: {
     "plesk-win-pro": 25.25,
     "directadmin": 5.00,
   };
-  additionalMonthlyEuro += osPrices[config.image] || 0;
+  const resolvedImageKey = (() => {
+    const img = config.image || "ubuntu";
+    if (img === "plesk" || img === "plesk-linux") return `plesk-${config.pleskLicence || "admin"}`;
+    if (img === "plesk-win") return `plesk-win-${config.pleskWinLicence || "admin"}`;
+    return img;
+  })();
+  additionalMonthlyEuro += osPrices[resolvedImageKey] || 0;
 
   // Add-ons
   if (config.backup === "true") additionalMonthlyEuro += 1.50;

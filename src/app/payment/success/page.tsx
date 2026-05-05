@@ -63,7 +63,7 @@ export default function PaymentSuccessPage() {
                 Em instantes seu domínio ou serviço estará ativo em sua conta. 
                 Enviamos um resumo da transação para o seu e-mail.
               </p>
-            </motion.div>
+            </motion.div> 
           </CardContent>
           
           <CardFooter className="flex justify-center pb-10">

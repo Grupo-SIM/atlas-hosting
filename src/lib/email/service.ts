@@ -130,7 +130,7 @@ export async function sendEmailVerificationEmail(
   verificationCode: string
 ): Promise<void> {
   const siteUrl = getServerPublicBaseUrl();
-  const verificationLink = `${siteUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
+  const verificationLink = `${siteUrl}/verify-email?token=${encodeURIComponent(verificationToken)}&email=${encodeURIComponent(email)}`;
 
   const html = await render(
     AtlasNotificationEmail({

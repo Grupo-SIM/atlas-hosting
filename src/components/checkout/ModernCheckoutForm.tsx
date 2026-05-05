@@ -283,6 +283,12 @@ const ModernCheckoutForm = forwardRef<
   // Load saved cards only
   useEffect(() => {
     const loadCards = async () => {
+      if (!hasExistingUser) {
+        setIsLoadingCards(false);
+        setSavedCards([]);
+        return;
+      }
+
       setIsLoadingCards(true);
 
       try {
@@ -898,7 +904,13 @@ const ModernCheckoutForm = forwardRef<
               isPaymentConfirmed={isPaymentConfirmed}
             />
           ) : (
-            <BillingInformationSection methods={methods} id={id} savedInfo={savedBillingInfo} onAutoFill={handleAutoFill} />
+            <BillingInformationSection 
+              methods={methods} 
+              id={id} 
+              savedInfo={savedBillingInfo} 
+              onAutoFill={handleAutoFill} 
+              hasExistingUser={hasExistingUser}
+            />
           )
         )}
 
@@ -926,7 +938,13 @@ const ModernCheckoutForm = forwardRef<
               isPaymentConfirmed={isPaymentConfirmed}
             />
           ) : (
-            <BillingInformationSection methods={methods} id={id} savedInfo={savedBillingInfo} onAutoFill={handleAutoFill} />
+            <BillingInformationSection 
+              methods={methods} 
+              id={id} 
+              savedInfo={savedBillingInfo} 
+              onAutoFill={handleAutoFill} 
+              hasExistingUser={hasExistingUser}
+            />
           )}
 
           {/* Payment Card - Collapsed/Preview */}
@@ -948,7 +966,16 @@ const ModernCheckoutForm = forwardRef<
           </Card>
 
           {/* Continue Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => router.back()}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft size={16} className="mr-2" />
+              Voltar
+            </Button>
             <Button
               onClick={handleContinueToPayment}
               disabled={!canProceedToPayment}
@@ -1031,7 +1058,7 @@ const ModernCheckoutForm = forwardRef<
                   <div className="py-4 text-center text-sm text-muted-foreground">
                     <Skeleton className="h-21 w-full" />
                   </div>
-                ) : savedCards.length > 0 ? (
+                ) : hasExistingUser && savedCards.length > 0 ? (
                   <>
                     {savedCards.map((card) => (
                       <Label
@@ -1264,11 +1291,13 @@ function BillingInformationSection({
   id,
   savedInfo,
   onAutoFill,
+  hasExistingUser,
 }: {
   methods: UseFormReturn<NewCardFormInputs>;
   id: string;
   savedInfo?: any;
   onAutoFill?: () => void;
+  hasExistingUser?: boolean;
 }) {
   const {
     register,
@@ -1290,7 +1319,7 @@ function BillingInformationSection({
                 Informações de Cobrança
               </CardTitle>
             </div>
-            {savedInfo && onAutoFill && (
+            {hasExistingUser && savedInfo && onAutoFill && (
               <Button
                 type="button"
                 variant="outline"
