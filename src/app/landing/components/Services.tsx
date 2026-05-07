@@ -1,7 +1,6 @@
 "use client";
 
 import { Globe } from "lucide-react";
-import Image from "next/image";
 import AtlasLogo from "@/assets/atlas.svg";
 
 function CircularProgress({ value, children }: { value: number; children: React.ReactNode }) {

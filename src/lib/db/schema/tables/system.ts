@@ -1,5 +1,11 @@
 import { relations } from "drizzle-orm";
-import { doublePrecision, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import {
+  doublePrecision,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { pgUser } from "./user";
 
 export const pgSystemConfig = pgTable("system_config", {
@@ -9,7 +15,8 @@ export const pgSystemConfig = pgTable("system_config", {
     .default(0.1),
   minWithdrawalAmount: doublePrecision("min_withdrawal_amount")
     .notNull()
-    .default(10.0),
+    .default(100.0),
+  withdrawalFee: doublePrecision("withdrawal_fee").notNull().default(2.0),
 });
 
 export const pgWithdrawalRequests = pgTable("withdraw_requests", {
@@ -19,6 +26,12 @@ export const pgWithdrawalRequests = pgTable("withdraw_requests", {
     enum: ["pending", "approved", "rejected"],
   }).notNull(),
   amount: doublePrecision("amount").notNull(),
+  pixKey: text("pix_key"),
+  simpayWithdrawalId: text("simpay_withdrawal_id"),
+  fee: doublePrecision("fee").default(2.0),
+  rejectionReason: text("rejection_reason"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 export const pgWithdrawalRequestsRelations = relations(

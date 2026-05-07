@@ -460,7 +460,7 @@ const ModernCheckoutForm = forwardRef<
     const result = await syncCheckoutPixPayment(invoiceId);
     if (result.status === "COMPLETED") {
       setIsPaymentConfirmed(true);
-      router.push("/payment/success");
+      router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
     }
     // isVerifyingPayment stays true after click — polling will redirect when confirmed
   }, [invoiceId, router]);
@@ -507,7 +507,7 @@ const ModernCheckoutForm = forwardRef<
           });
 
           if (result.status === "success") {
-            router.push("/payment/success");
+            router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
           } else {
             toast.error(result.message);
           }
@@ -750,7 +750,7 @@ const ModernCheckoutForm = forwardRef<
       done = true;
       await markPixPaymentComplete(invoiceId);
       setIsPaymentConfirmed(true);
-      router.push("/payment/success");
+      router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
     };
 
     // SSE primário: Simpay faz push instantâneo ao confirmar o pagamento
@@ -764,7 +764,7 @@ const ModernCheckoutForm = forwardRef<
     es.addEventListener("heartbeat", () => { /* keepalive */ });
     es.onerror = () => { es?.close(); es = null; };
 
-    // Fallback: polling via servidor a cada 4s (caso SSE não esteja disponível)
+    // Fallback: polling via servidor a cada 1.5s (caso SSE não esteja disponível)
     const intervalId = setInterval(async () => {
       if (done) { clearInterval(intervalId); return; }
       const result = await syncCheckoutPixPayment(invoiceId);
@@ -773,9 +773,9 @@ const ModernCheckoutForm = forwardRef<
         clearInterval(intervalId);
         es?.close();
         setIsPaymentConfirmed(true);
-        router.push("/payment/success");
+        router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
       }
-    }, 4000);
+    }, 1500);
 
     const stopAt = setTimeout(() => {
       done = true;

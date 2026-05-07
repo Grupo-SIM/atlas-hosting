@@ -10,8 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, Server, Activity, HardDrive, Cpu, Database } from "lucide-react";
 import Link from "next/link";
 
-export default async function VpsDetailPage({ params }: { params: { id: string } }) {
-  const vpsId = params.id;
+export default async function VpsDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: vpsId } = await params;
 
   const vps = await db.query.pgVpsServers.findFirst({
     where: eq(pgVpsServers.id, vpsId),

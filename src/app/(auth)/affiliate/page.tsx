@@ -1,170 +1,92 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
-  pgInvoice,
-  pgOrganization,
+  pgAffiliateCommission,
   pgUser,
   pgWithdrawalRequests,
 } from "@/lib/db/schema";
-import { toBrl } from "@/lib/utils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { and, eq, sum } from "drizzle-orm";
-import {
-  ArrowUpRight,
-  CheckCircle,
-  DollarSign,
-  Search,
-  TrendingUp,
-  UserCircle,
-  Users,
-  XCircle,
-} from "lucide-react";
+import { desc, eq, sum } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
-import AffiliateLinkDisplay from "./components/AffiliateLinkDisplay";
-import { ReferredUsersTable } from "./components/ReferredUsersTable";
+import { getAffiliateBalance } from "./actions";
+import { AffiliateTabs } from "./components/AffiliateTabs";
+import type { CommissionRow, WithdrawalRow } from "./components/AffiliateTabs";
 
 export const metadata: Metadata = {
   title: "Afiliado - Atlas Hosting",
-  description:
-    "Gerencie suas indicações, comissões e solicite saques de forma fácil e rápida",
+  description: "Gerencie suas indicações, comissões e solicite saques",
 };
 
 export default async function AffiliatePage() {
   const user = await getUser();
 
   const baseUrl = process.env.NEXT_PUBLIC_URL || "https://atlashosting.com.br";
-  const affiliateLink = `${baseUrl}/signup?ref=${user.affiliateCode}`;
+  const affiliateLink = `${baseUrl}/?ref=${user.affiliateCode}`;
 
-  let systemConfig = await db.query.pgSystemConfig.findFirst();
+  const minWithdrawal = Number(process.env.AFFILIATE_MIN_WITHDRAWAL) || 100;
+  const fee = Number(process.env.AFFILIATE_WITHDRAWAL_FEE) || 2;
 
-  if (!systemConfig) {
-    systemConfig = {
-      domainFee: 5.0,
-      referrerCommission: 10.0,
-      minWithdrawalAmount: 50.0,
-    };
-  }
+  const { available, pendingWithdrawals } = await getAffiliateBalance(user.id);
 
-  const allTimeValues = await db
-    .select({ value: sum(pgInvoice.amount) })
-    .from(pgInvoice)
-    .leftJoin(pgUser, eq(pgInvoice.userId, pgUser.id))
-    .where(eq(pgUser.referrerId, user.id))
-    .then(
-      (result) =>
-        +(result[0].value ?? 0) * (systemConfig.referrerCommission / 100)
-    );
+  const [allTimeRow] = await db
+    .select({ total: sum(pgAffiliateCommission.commissionAmount) })
+    .from(pgAffiliateCommission)
+    .where(eq(pgAffiliateCommission.affiliateUserId, user.id));
+  const totalEarnedAllTime = Number(allTimeRow?.total ?? 0);
 
   const referredUsers = await db.query.pgUser.findMany({
     where: eq(pgUser.referrerId, user.id),
-    columns: {
-      id: true,
-      name: true,
-      email: true,
-      createdAt: true,
-      deletedAt: true,
-    },
+    columns: { id: true },
   });
 
-  const totalWithdrawn = await db
-    .select({ value: sum(pgWithdrawalRequests.amount) })
-    .from(pgWithdrawalRequests)
-    .where(
-      and(
-        eq(pgWithdrawalRequests.userId, user.id),
-        eq(pgWithdrawalRequests.status, "approved")
-      )
-    )
-    .then((result) => +(result[0].value ?? 0));
+  const rawCommissions = await db.query.pgAffiliateCommission.findMany({
+    where: eq(pgAffiliateCommission.affiliateUserId, user.id),
+    orderBy: (t, { desc }) => [desc(t.createdAt)],
+  });
+  const commissions: CommissionRow[] = rawCommissions.map((c) => ({
+    id: c.id,
+    grossAmount: c.grossAmount,
+    commissionAmount: c.commissionAmount,
+    commissionRate: c.commissionRate,
+    status: c.status,
+    createdAt: c.createdAt,
+  }));
 
-  const availableBalance = allTimeValues - totalWithdrawn;
-  const minimumWithdrawal = systemConfig.minWithdrawalAmount;
-  const totalReferrals = referredUsers.length;
-
-  const conversionRate = 10;
+  const rawWithdrawals = await db.query.pgWithdrawalRequests.findMany({
+    where: eq(pgWithdrawalRequests.userId, user.id),
+    orderBy: (t, { desc }) => [desc(t.createdAt)],
+  });
+  const withdrawals: WithdrawalRow[] = rawWithdrawals.map((w) => ({
+    id: w.id,
+    amount: w.amount,
+    fee: w.fee,
+    status: w.status,
+    rejectionReason: w.rejectionReason ?? null,
+    simpayWithdrawalId: w.simpayWithdrawalId ?? null,
+    createdAt: w.createdAt,
+  }));
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            Programa de Afiliados
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie suas indicações e comissões
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          Programa de Afiliados
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Gerencie suas indicações, comissões e saques
+        </p>
       </div>
 
-      {/* Referral Overview Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total de Indicações
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalReferrals}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Referral Link Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Seu Link de Afiliado</CardTitle>
-          <CardDescription>
-            Compartilhe este link para ganhar comissões em todas as vendas
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AffiliateLinkDisplay affiliateLink={affiliateLink} />
-        </CardContent>
-      </Card>
-
-      {/* Referred Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Usuários Indicados</CardTitle>
-          <CardDescription>
-            Lista de todos os usuários que se registraram através do seu link
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ReferredUsersTable users={referredUsers} />
-        </CardContent>
-      </Card>
-
+      <AffiliateTabs
+        affiliateLink={affiliateLink}
+        availableBalance={available}
+        pendingWithdrawals={pendingWithdrawals}
+        totalEarnedAllTime={totalEarnedAllTime}
+        totalReferrals={referredUsers.length}
+        commissions={commissions}
+        withdrawals={withdrawals}
+        minWithdrawal={minWithdrawal}
+        fee={fee}
+      />
     </div>
   );
 }

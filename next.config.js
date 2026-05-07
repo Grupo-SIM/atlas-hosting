@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  images: { 
+  images: {
     unoptimized: true,
     remotePatterns: [
       {
@@ -26,11 +26,17 @@ const nextConfig = {
       },
     },
   },
+  serverExternalPackages: ["pg", "pg-native"],
   experimental: {
     useCache: false,
     workerThreads: false,
   },
   webpack: (config, { isServer }) => {
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ["@svgr/webpack"],
+    });
+
     if (!isServer) {
       config.watchOptions = {
         ...config.watchOptions,

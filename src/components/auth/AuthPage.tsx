@@ -20,7 +20,7 @@ export default function AuthPage({
       <div className="w-full md:w-1/2 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 text-white p-8 md:p-16 flex flex-col justify-between relative overflow-hidden">
         <div className="relative z-10">
           <h1 className="text-3xl md:text-4xl font-bold flex items-center mb-12">
-            <AtlasLogo className="h-8 w-min object-contain mr-2" />
+            <AtlasLogo className="h-8 w-auto object-contain mr-2" />
             Atlas Hosting
           </h1>
 

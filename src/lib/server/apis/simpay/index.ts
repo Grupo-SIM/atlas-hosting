@@ -67,6 +67,20 @@ export interface SimpayPixCreateResponse {
   message?: string;
 }
 
+export interface SimpayWithdrawalParams {
+  valor: number;
+  chavePix: string;
+  description?: string;
+}
+
+export interface SimpayWithdrawalResponse {
+  id: string;
+  status: string;
+  amount?: number;
+  pixKey?: string;
+  rejectionReason?: string;
+}
+
 function normalizeSimpayBaseUrl(raw: string | undefined): string {
   const fallback = "https://simpay-back.simintermediacoes.com";
   const s = raw?.trim();
@@ -219,6 +233,64 @@ class SimpayApi {
 
     if (!response.ok) {
       throw new Error(`Erro ao consultar status do pagamento (HTTP ${response.status})`);
+    }
+
+    return data;
+  }
+
+  async requestWithdrawal(
+    params: SimpayWithdrawalParams
+  ): Promise<SimpayWithdrawalResponse> {
+    const url = `${resolveSimpayBaseUrl()}/atlas/saques`;
+    const token =
+      process.env.ATLAS_SIMPAY_INTERNAL_TOKEN ||
+      process.env.DOM_API_KEY ||
+      "";
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "x-internal-token": token,
+      },
+      body: JSON.stringify(params),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        formatSimpayErrorMessage(data) ||
+          `Erro ao solicitar saque (HTTP ${response.status})`
+      );
+    }
+
+    return data as SimpayWithdrawalResponse;
+  }
+
+  async getWithdrawalStatus(
+    withdrawalId: string
+  ): Promise<{ id: string; status: string; rejectionReason?: string }> {
+    const url = `${resolveSimpayBaseUrl()}/atlas/saques/${withdrawalId}`;
+    const token =
+      process.env.ATLAS_SIMPAY_INTERNAL_TOKEN ||
+      process.env.DOM_API_KEY ||
+      "";
+
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "x-internal-token": token,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        `Erro ao consultar status do saque (HTTP ${response.status})`
+      );
     }
 
     return data;

@@ -60,6 +60,8 @@ import { query } from "dns-query";
 import { sendNotificationEmail } from "@/lib/email/service";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { triggerPurchaseNotifications } from "@/lib/notifications/vps-purchase";
+import { recordAttribution } from "@/lib/affiliate/attribution";
+import { triggerCommissionIfApplicable } from "@/lib/affiliate/commission";
 
 
 export type GuestInfo = {
@@ -125,6 +127,30 @@ async function findOrCreateGuestUser(info: GuestInfo) {
 
   // Always create a session so subsequent payment actions work
   if (!user) throw new Error("Usuário não encontrado ou falha ao criar conta.");
+
+  try {
+    const cookieStore = await cookies();
+    const refCode = cookieStore.get("referrer_code")?.value;
+    if (refCode) {
+      await recordAttribution(refCode, user.id);
+
+      if (!user.referrerId) {
+        const affiliate = await db.query.pgUser.findFirst({
+          where: eq(pgUser.affiliateCode, refCode),
+          columns: { id: true },
+        });
+
+        if (affiliate && affiliate.id !== user.id) {
+          await db
+            .update(pgUser)
+            .set({ referrerId: affiliate.id, updatedAt: new Date() })
+            .where(eq(pgUser.id, user.id));
+        }
+      }
+    }
+  } catch (error) {
+    console.error("[AFFILIATE] Failed to record guest checkout attribution:", error);
+  }
   
   const sessionToken = generateSessionToken();
   await createSession(sessionToken, user.id);
@@ -137,6 +163,10 @@ async function findOrCreateGuestUser(info: GuestInfo) {
   });
 
   return { user, passwordPlain, isNew };
+}
+
+function paymentSuccessUrl(invoiceId: string): string {
+  return `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`;
 }
 
 
@@ -202,6 +232,16 @@ export async function login(
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 30,
     });
+
+    // Attribution: record affiliate link click if cookie present
+    try {
+      const refCode = cookieStore.get("referrer_code")?.value;
+      if (refCode) {
+        await recordAttribution(refCode, user.id);
+      }
+    } catch {
+      // Non-critical — don't fail login
+    }
 
     revalidateTag("session-validate", "default");
 
@@ -318,6 +358,17 @@ export async function signup(
       }
     }
 
+    // Attribution: record affiliate referral from cookie or ref param
+    try {
+      const cookieStore = await cookies();
+      const refCode = cookieStore.get("referrer_code")?.value || ref;
+      if (refCode && user) {
+        await recordAttribution(refCode, user.id);
+      }
+    } catch {
+      // Non-critical
+    }
+
     return {
       status: "success",
       message:
@@ -345,6 +396,36 @@ export async function logout(): Promise<void> {
   }
 
   redirect("/");
+}
+
+export async function clearGuestCheckoutSession(invoiceId?: string): Promise<void> {
+  if (!invoiceId) return;
+
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get("session_token")?.value;
+  if (!sessionToken) return;
+
+  const invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, invoiceId),
+    columns: {
+      userId: true,
+      metadata: true,
+    },
+  });
+
+  const meta = invoice?.metadata as Record<string, unknown> | null | undefined;
+  if (!invoice || (!meta?.guestCheckout && !meta?.guestPassword)) return;
+
+  const session = await db.query.pgSession.findFirst({
+    where: eq(pgSession.id, sessionToken),
+    columns: { userId: true },
+  });
+
+  if (session?.userId !== invoice.userId) return;
+
+  await db.delete(pgSession).where(eq(pgSession.id, sessionToken));
+  cookieStore.delete("session_token");
+  revalidateTag("session-validate", "default");
 }
 
 export async function createPlan(
@@ -539,6 +620,7 @@ export async function createDomainInvoice(data: (DomainPageParams & { guestInfo?
   }
 
   let user = await getUser();
+  const isGuestCheckout = !user && !!guestInfo;
   let guestPassword = "";
 
   if (!user) {
@@ -684,6 +766,7 @@ export async function createDomainInvoice(data: (DomainPageParams & { guestInfo?
         metadata: {
           years: yearStr,
           whoisguard,
+          guestCheckout: isGuestCheckout || undefined,
           guestPassword: guestPassword || undefined,
         },
       })
@@ -1056,7 +1139,7 @@ async function fulfillCheckoutAfterPixPaid(
       console.log(
         `[CHECKOUT-PIX] Fatura de teste paga (sem Namecheap): ${invoice.id}`
       );
-      redirect("/payment/success");
+      redirect(paymentSuccessUrl(invoice.id));
     }
 
     const domainMeta = invoice.metadata as DomainRegisterInvoiceOptions | DomainRenewInvoiceOptions;
@@ -1067,7 +1150,7 @@ async function fulfillCheckoutAfterPixPaid(
         console.error(`[CHECKOUT-PIX] Falha ao renovar domínio para fatura ${invoice.id}`);
       }
       await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoice.id));
-      redirect("/payment/success");
+      redirect(paymentSuccessUrl(invoice.id));
     }
 
     const contact = {
@@ -1096,7 +1179,7 @@ async function fulfillCheckoutAfterPixPaid(
       .update(pgInvoice)
       .set({ status: "paid" })
       .where(eq(pgInvoice.id, invoice.id));
-    redirect("/payment/success");
+    redirect(paymentSuccessUrl(invoice.id));
   }
 
   // Generic (non-domain) invoice — mark as paid
@@ -1110,7 +1193,7 @@ async function fulfillCheckoutAfterPixPaid(
     await triggerPurchaseNotifications(invoice, user, billing);
   });
 
-  redirect("/payment/success");
+  redirect(paymentSuccessUrl(invoice.id));
 }
 
 export type InitiateCheckoutPixPayload = {
@@ -1240,6 +1323,7 @@ export async function markPixPaymentComplete(invoiceId: string): Promise<void> {
   const meta = invoice.metadata as DomainRegisterInvoiceOptions;
   const billing = meta.pixCheckout;
   after(async () => {
+    await triggerCommissionIfApplicable(invoice as any).catch(() => {});
     if (billing) {
       await processInvoiceAfterPayment(invoice, user, billing);
     }
@@ -1290,6 +1374,7 @@ export async function syncCheckoutPixPayment(
       .where(eq(pgInvoice.id, invoice.id));
 
     after(async () => {
+      await triggerCommissionIfApplicable(invoice as any).catch(() => {});
       await processInvoiceAfterPayment(invoice, user, billing);
       await triggerPurchaseNotifications(invoice, user, billing);
     });
@@ -1511,7 +1596,7 @@ export async function completeCheckout(
         .set({ status: "paid" })
         .where(eq(pgInvoice.id, invoiceId));
       console.log(`[CHECKOUT] Fatura de teste paga (cartão, sem Namecheap).`);
-      redirect("/payment/success");
+      redirect(paymentSuccessUrl(invoiceId));
     }
 
     const domainMetaTyped = invoice.metadata as DomainRegisterInvoiceOptions | DomainRenewInvoiceOptions;
@@ -1537,6 +1622,7 @@ export async function completeCheckout(
     };
 
     await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
+    await triggerCommissionIfApplicable(invoice as any).catch(() => {});
     after(async () => {
       console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO(S) ──`);
       const { registered, failed } = await registerDomainsFromPaidInvoice(
@@ -1549,7 +1635,7 @@ export async function completeCheckout(
       await sendWelcomePasswordEmailIfGuest(invoice, user as any);
     });
     console.log(`[CHECKOUT] ✓ Fatura ${invoiceId} marcada como PAGA. Redirecionando para /payment/success.`);
-    redirect("/payment/success");
+    redirect(paymentSuccessUrl(invoiceId));
   }
 
   console.log(`\n[SIMPAY] ── PAGAMENTO RECORRENTE (ASSINATURA) ──`);
@@ -1579,12 +1665,14 @@ export async function completeCheckout(
   }
 
   console.log(`[CHECKOUT] ✓ Checkout concluído. Redirecionando para /payment/success.`);
+  await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
+  await triggerCommissionIfApplicable(invoice as any).catch(() => {});
   after(async () => {
     await sendWelcomePasswordEmailIfGuest(invoice, user as any);
     await triggerPurchaseNotifications(invoice, user, values);
   });
 
-  redirect("/payment/success");
+  redirect(paymentSuccessUrl(invoiceId));
 
   return { status: "success", message: "Plano adquirido com sucesso!" };
 }
@@ -1744,7 +1832,7 @@ export async function completeCheckoutWithSavedCard(
         .set({ status: "paid" })
         .where(eq(pgInvoice.id, invoiceId));
       console.log(`[CHECKOUT-SAVED] Fatura de teste paga (sem Namecheap).`);
-      return { status: "success", message: "/payment/success" };
+      return { status: "success", message: paymentSuccessUrl(invoiceId) };
     }
 
     const domainMetaSavedTyped = invoice.metadata as DomainRegisterInvoiceOptions | DomainRenewInvoiceOptions;
@@ -1770,6 +1858,7 @@ export async function completeCheckoutWithSavedCard(
     };
 
     await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
+    await triggerCommissionIfApplicable(invoice as any).catch(() => {});
     console.log(`[CHECKOUT-SAVED] ✓ Fatura ${invoiceId} marcada como PAGA.`);
     after(async () => {
       console.log(`\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO(S) (CARTÃO SALVO) ──`);
@@ -1781,7 +1870,7 @@ export async function completeCheckoutWithSavedCard(
       if (registered.length) console.log(`[NAMECHEAP] ✓ Registrados:`, registered.join(", "));
     });
 
-    return { status: "success", message: "/payment/success" };
+    return { status: "success", message: paymentSuccessUrl(invoiceId) };
   }
 
   console.log(`\n[SIMPAY] ── PAGAMENTO RECORRENTE (ASSINATURA / CARTÃO SALVO) ──`);
@@ -1811,13 +1900,15 @@ export async function completeCheckoutWithSavedCard(
   }
 
   console.log(`[CHECKOUT-SAVED] ✓ Checkout concluído com cartão salvo.`);
-  
+  await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
+  await triggerCommissionIfApplicable(invoice as any).catch(() => {});
+
   // Trigger notifications
   after(async () => {
     await triggerPurchaseNotifications(invoice, user, values);
   });
 
-  return { status: "success", message: "/payment/success" };
+  return { status: "success", message: paymentSuccessUrl(invoiceId) };
 }
 
 // export async function createWordPressInstance(
@@ -2463,10 +2554,10 @@ export async function createVpsInvoice(data: {
   config: any;
   guestInfo?: GuestInfo;
 }) {
-  let user = await getOptionalUser();
-  let guestPassword = "";
-
   const { planId, config, guestInfo } = data;
+  let user = await getOptionalUser();
+  const isGuestCheckout = !user && !!guestInfo;
+  let guestPassword = "";
 
   if (!user) {
     if (guestInfo) {
@@ -2480,8 +2571,21 @@ export async function createVpsInvoice(data: {
 
   if (!user) return { status: "error", message: "Usuário não encontrado." };
 
-  // RATE: 5.86 (EUR to BRL) * 2 (markup) = 11.72
-  const RATE = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") ? 11.58 : 11.72;
+  // Fetch real-time EUR to BRL rate
+  let RATE = 11.72; // Default/Fallback
+  try {
+    const [fetchedRate] = await currencyConversion.convertMultiple({
+      from: "eur",
+      to: "brl",
+      amounts: [1],
+    });
+    // Multiplier for profit/tax (x2)
+    RATE = fetchedRate * 2;
+  } catch (e) {
+    console.error("Failed to fetch dynamic rate for invoice:", e);
+    // Fallback based on plan tier if API fails
+    RATE = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") ? 11.58 : 11.72;
+  }
 
   // Base Prices in Euro
   const basePrices: Record<string, number> = {
@@ -2617,21 +2721,27 @@ export async function createVpsInvoice(data: {
   }
 
   // OS / Panels
-  const osPrices: Record<string, number> = {
-    "windows": 7.50,
-    "cpanel": 21.75,
-    "plesk-admin": 12.00,
-    "plesk-host": 36.50,
-    "plesk-pro": 19.00,
-    "plesk-win-admin": 18.25,
-    "plesk-win-host": 42.75,
-    "plesk-win-pro": 25.25,
-    "directadmin": 5.00,
+  const tierOsPrices: Record<string, Record<string, number>> = {
+    "10": { windows: 8.93, windows_2016: 7.44, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 35.95, pleskPro: 18.70, pleskWin: 18.25 },
+    "20": { windows: 18.45, windows_2016: 14.99, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 35.95, pleskPro: 18.70, pleskWin: 18.25 },
+    "30": { windows: 30.94, windows_2016: 27.49, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 36.50, pleskPro: 19.00, pleskWin: 36.50 },
+    "40": { windows: 58.31, windows_2016: 54.26, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 35.95, pleskPro: 18.70, pleskWin: 56.40 },
+    "50": { windows: 69.62, windows_2016: 66.28, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 72.80 },
+    "60": { windows: 83.30, windows_2016: 77.35, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 85.10 }
   };
+
+  const osPrices = tierOsPrices[planId] || tierOsPrices["10"];
   const resolvedImageKey = (() => {
     const img = config.image || "ubuntu";
-    if (img === "plesk" || img === "plesk-linux") return `plesk-${config.pleskLicence || "admin"}`;
-    if (img === "plesk-win") return `plesk-win-${config.pleskWinLicence || "admin"}`;
+    if (img === "windows") return config.windowsVersion === "2016" ? "windows_2016" : "windows";
+    if (img === "cpanel") return "cpanel";
+    if (img === "plesk" || img === "plesk-linux") {
+      const lic = config.pleskLicence || "admin";
+      if (lic === "host") return "pleskHost";
+      if (lic === "pro") return "pleskPro";
+      return "pleskLinux";
+    }
+    if (img === "plesk-win") return "pleskWin";
     return img;
   })();
   additionalMonthlyEuro += osPrices[resolvedImageKey] || 0;
@@ -2693,6 +2803,7 @@ export async function createVpsInvoice(data: {
         metadata: {
           vpsId: planId,
           config,
+          guestCheckout: isGuestCheckout || undefined,
           guestPassword: guestPassword || undefined,
         },
       })

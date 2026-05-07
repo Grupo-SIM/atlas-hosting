@@ -84,6 +84,8 @@ export type DomainRegisterInvoiceOptions = Pick<
   bundleDomains?: string[];
   /** Senha temporária para contas criadas via guest checkout */
   guestPassword?: string;
+  guestCheckout?: boolean;
+  isRenewal?: boolean;
 };
 
 export type DomainRenewInvoiceOptions = {
@@ -92,6 +94,9 @@ export type DomainRenewInvoiceOptions = {
   simpayPaymentId?: string;
   pixTransactionId?: string;
   pixCheckout?: PixCheckoutSnapshot;
+  guestCheckout?: boolean;
+  guestPassword?: string;
+  isRenewal?: boolean;
 };
 
 export type VpsInvoiceOptions = {
@@ -100,4 +105,5 @@ export type VpsInvoiceOptions = {
   simpayPaymentId?: string;
   pixTransactionId?: string;
   pixCheckout?: PixCheckoutSnapshot;
+  isRenewal?: boolean;
 };

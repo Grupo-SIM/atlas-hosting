@@ -25,9 +25,9 @@ import { ptBR } from "date-fns/locale";
 import { notFound } from "next/navigation";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function AffiliateDetailsPage({ params }: PageProps) {

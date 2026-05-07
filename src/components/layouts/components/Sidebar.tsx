@@ -48,7 +48,7 @@ export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
         layout
         className="h-16 flex items-center px-3.5 overflow-x-hidden max-w-inherit"
       >
-        <MotionLogo
+        <motion.div
           className="min-h-8 min-w-8 h-8 w-8 object-contain"
           animate={{
             marginRight: isCompact ? "0" : "0.5rem",
@@ -57,7 +57,9 @@ export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
             duration: 0.3,
             ease: "easeOut",
           }}
-        />
+        >
+          <AtlasLogo className="h-full w-full object-contain" />
+        </motion.div>
         <AnimatePresence mode="popLayout" propagate>
           {!isCompact && (
             <motion.span
@@ -182,4 +184,3 @@ function NavItem({
 }
 
 const MotionLink = motion.create(Link);
-const MotionLogo = motion.create(AtlasLogo);

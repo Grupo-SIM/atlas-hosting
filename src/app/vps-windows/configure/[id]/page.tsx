@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState, useLayoutEffect, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -38,8 +40,23 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
-// Multiplier: 1 Euro = 5.77 * 2 = 11.54 (Example used for XXL)
-const MULTIPLIER = 11.72;
+// Base rate for fallback if API fails
+const FALLBACK_EUR_RATE = 11.72;
+
+// Euro source values for software licensing
+const WINDOWS_LICENSE_EUR = {
+  "10": { windows: 8.93, win2016: 7.44, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 35.95, pleskPro: 18.70, pleskWin: 18.25 },
+  "20": { windows: 18.45, win2016: 14.99, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 35.95, pleskPro: 18.70, pleskWin: 18.25 },
+  "30": { windows: 30.94, win2016: 27.49, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 36.50, pleskPro: 19.00, pleskWin: 36.50 },
+  "40": { windows: 58.31, win2016: 54.26, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 35.95, pleskPro: 18.70, pleskWin: 56.40 },
+  "50": { windows: 69.62, win2016: 66.28, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 72.80 },
+  "60": { windows: 83.30, win2016: 77.35, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 85.10 }
+};
+
+const getPlanImagePrices = (planId: string, defaultPrices: any = {}) => {
+  const prices = WINDOWS_LICENSE_EUR[planId as keyof typeof WINDOWS_LICENSE_EUR] || WINDOWS_LICENSE_EUR["10"];
+  return { ...prices };
+};
 
 const plansData: Record<string, any> = {
   "10": {
@@ -51,42 +68,46 @@ const plansData: Record<string, any> = {
     port: "200 Mbit/s",
     traffic: "32 TB de tráfego",
     durations: [
-      { id: "1", label: "1 mês", price: "R$ 51,93", setupFee: "Taxa de configuração de R$ 51,93", discount: null },
-      { id: "6", label: "6 meses", price: "R$ 46,74", setupFee: "Taxa de configuração de R$ 25,97", discount: "ECONOMIZE 10%", oldPrice: "R$ 51,93" },
-      { id: "12", label: "12 meses", price: "R$ 41,54", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 51,93" },
+      { id: "1", label: "1 mês", eur: 4.50, setupEur: 4.50, discount: null },
+      { id: "6", label: "6 meses", eur: 4.05, setupEur: 2.25, discount: "ECONOMIZE 10%", oldEur: 4.50 },
+      { id: "12", label: "12 meses", eur: 3.60, setupEur: 0, discount: "ECONOMIZE 20%", oldEur: 4.50 },
     ],
     storageTypes: [
       { id: "ssd-150", name: "150 GB SSD", price: "Livre" },
-      { id: "ssd-300", name: "300 GB SSD", price: "R$ 17,89" },
+      { id: "ssd-300", name: "300 GB SSD", eur: 1.55 },
       { id: "nvme-75", name: "75 GB NVMe", price: "Livre" },
-      { id: "nvme-150", name: "150 GB NVMe", price: "R$ 21,35" },
+      { id: "nvme-150", name: "150 GB NVMe", eur: 1.85 },
     ],
     locations: {
       europe: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", price: 10.96 },
+        { id: "eu", name: "União Europeia", latency: "173 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 0.95 },
       ],
       best: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 16.16, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "173 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 1.40, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", price: 22.50 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", eur: 1.95 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", price: 10.96 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 16.16, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", price: 13.27 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", eur: 0.95 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 1.40, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 1.15 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", price: 26.54 },
-        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", price: 27.12 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", price: 24.81 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "347 ms", eur: 2.30 },
+        { id: "jp", name: "Ásia (Japão)", latency: "262 ms", eur: 2.35 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 2.15 },
       ]
     },
-    rate: MULTIPLIER,
-    basePrice: 138.48,
-    backupPrice: 17.31
+    backupEur: 1.50,
+    objectStorageTiers: [
+      { id: "250gb", name: "250 GB", eur: 2.49 },
+      { id: "500gb", name: "500 GB", eur: 4.98 },
+      { id: "750gb", name: "750 GB", eur: 7.47 },
+      { id: "1tb", name: "1 TB", eur: 9.96 },
+    ]
   },
   "20": {
     name: "Cloud VPS 20 (M) Windows",
@@ -95,44 +116,49 @@ const plansData: Record<string, any> = {
     storage: "100 GB NVMe ou SSD 200 GB",
     snapshots: "2 Instantâneos",
     port: "300 Mbit/s",
-    traffic: "32 TB de tráfego",
+    backupEur: 2.00,
+    privateNetworkEur: 2.29,
+    additionalIpEur: 3.50,
     durations: [
-      { id: "1", label: "1 mês", price: "R$ 80,78", setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", price: "R$ 72,70", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldPrice: "R$ 80,78" },
-      { id: "12", label: "12 meses", price: "R$ 64,62", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 80,78" },
+      { id: "1", label: "1 mês", eur: 7.00, setupEur: 0, discount: null },
+      { id: "6", label: "6 meses", eur: 6.30, setupEur: 0, discount: "ECONOMIZE 10%", oldEur: 7.00 },
+      { id: "12", label: "12 meses", eur: 5.60, setupEur: 0, discount: "ECONOMIZE 20%", oldEur: 7.00 },
     ],
     storageTypes: [
       { id: "ssd-200", name: "200 GB SSD", price: "Livre" },
-      { id: "ssd-400", name: "400 GB SSD", price: "R$ 22,50" },
+      { id: "ssd-400", name: "400 GB SSD", eur: 1.95 },
       { id: "nvme-100", name: "100 GB NVMe", price: "Livre" },
-      { id: "nvme-200", name: "200 GB NVMe", price: "R$ 29,43" },
+      { id: "nvme-200", name: "200 GB NVMe", eur: 2.55 },
     ],
     locations: {
       europe: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", price: 18.46 },
+        { id: "eu", name: "União Europeia", latency: "170 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "140 ms", eur: 1.45 },
       ],
       best: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 27.70, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "170 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 2.20, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", price: 39.24 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 3.00 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", price: 18.46 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 27.70, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", price: 21.35 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 1.45 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 2.20, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 1.85 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", price: 46.16 },
-        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", price: 47.31 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", price: 44.43 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "346 ms", eur: 3.55 },
+        { id: "jp", name: "Ásia (Japão)", latency: "262 ms", eur: 3.65 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 3.35 },
       ]
     },
-    rate: MULTIPLIER,
-    basePrice: 259.65,
-    backupPrice: 23.08
+    objectStorageTiers: [
+      { id: "250gb", name: "250 GB", eur: 2.49 },
+      { id: "500gb", name: "500 GB", eur: 4.98 },
+      { id: "750gb", name: "750 GB", eur: 7.47 },
+      { id: "1tb", name: "1 TB", eur: 9.96 },
+    ]
   },
   "30": {
     name: "Cloud VPS 30 (L) Windows",
@@ -143,42 +169,46 @@ const plansData: Record<string, any> = {
     port: "600 Mbit/s",
     traffic: "32 TB de tráfego",
     durations: [
-      { id: "1", label: "1 mês", price: "R$ 161,56", setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", price: "R$ 145,40", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldPrice: "R$ 161,56" },
-      { id: "12", label: "12 meses", price: "R$ 129,25", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 161,56" },
+      { id: "1", label: "1 mês", eur: 14.00, setupEur: 14.00, discount: null },
+      { id: "6", label: "6 meses", eur: 12.60, setupEur: 7.00, discount: "ECONOMIZE 10%", oldEur: 14.00 },
+      { id: "12", label: "12 meses", eur: 11.20, setupEur: 0, discount: "ECONOMIZE 20%", oldEur: 14.00 },
     ],
     storageTypes: [
       { id: "ssd-400", name: "400 GB SSD", price: "Livre" },
-      { id: "ssd-800", name: "800 GB SSD", price: "R$ 44,43" },
+      { id: "ssd-800", name: "800 GB SSD", eur: 3.85 },
       { id: "nvme-200", name: "200 GB NVMe", price: "Livre" },
-      { id: "nvme-400", name: "400 GB NVMe", price: "R$ 37,51" },
+      { id: "nvme-400", name: "400 GB NVMe", eur: 3.25 },
     ],
     locations: {
       europe: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", price: 36.93 },
+        { id: "eu", name: "União Europeia", latency: "156 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 3.20 },
       ],
       best: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 55.39, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "156 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 4.80, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", price: 78.47 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", eur: 6.80 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", price: 36.93 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 55.39, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", price: 42.69 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", eur: 3.20 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 4.80, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 3.70 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", price: 92.32 },
-        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", price: 94.63 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", price: 87.70 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", eur: 8.00 },
+        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", eur: 8.20 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 7.60 },
       ]
     },
-    rate: MULTIPLIER,
-    basePrice: 426.98,
-    backupPrice: 40.39
+    backupEur: 3.50,
+    objectStorageTiers: [
+      { id: "250gb", name: "250 GB", eur: 2.49 },
+      { id: "500gb", name: "500 GB", eur: 4.98 },
+      { id: "2tb", name: "2 TB", eur: 18.25 },
+      { id: "5tb", name: "5 TB", eur: 45.60 },
+    ]
   },
   "40": {
     name: "Cloud VPS 40 (XL) Windows",
@@ -189,42 +219,40 @@ const plansData: Record<string, any> = {
     port: "800 Mbit/s",
     traffic: "32 TB de tráfego",
     durations: [
-      { id: "1", label: "1 mês", price: "R$ 288,50", setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", price: "R$ 259,65", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldPrice: "R$ 288,50" },
-      { id: "12", label: "12 meses", price: "R$ 230,80", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 288,50" },
+      { id: "1", label: "1 mês", eur: 25.00, setupEur: 0, discount: null },
+      { id: "6", label: "6 meses", eur: 22.50, setupEur: 0, discount: "ECONOMIZE 10%", oldEur: 25.00 },
+      { id: "12", label: "12 meses", eur: 20.00, setupEur: 0, discount: "ECONOMIZE 20%", oldEur: 25.00 },
     ],
     storageTypes: [
       { id: "ssd-500", name: "500 GB SSD", price: "Livre" },
-      { id: "ssd-1000", name: "1 TB SSD", price: "R$ 57,12" },
+      { id: "ssd-1000", name: "1 TB SSD", eur: 4.95 },
       { id: "nvme-250", name: "250 GB NVMe", price: "Livre" },
-      { id: "nvme-500", name: "500 GB NVMe", price: "R$ 44,43" },
+      { id: "nvme-500", name: "500 GB NVMe", eur: 3.85 },
     ],
     locations: {
       europe: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", price: 63.47 },
+        { id: "eu", name: "União Europeia", latency: "156 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 5.50 },
       ],
       best: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 94.63, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "156 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 8.20, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", price: 132.71 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", eur: 11.50 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", price: 63.47 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 94.63, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", price: 72.70 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", eur: 5.50 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 8.20, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 6.30 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", price: 155.79 },
-        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", price: 159.25 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", price: 147.14 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", eur: 13.50 },
+        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", eur: 13.80 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 12.75 },
       ]
     },
-    rate: MULTIPLIER,
-    basePrice: 853.96,
-    backupPrice: 69.24
+    backupEur: 6.00
   },
   "50": {
     name: "Cloud VPS 50 (XXL) Windows",
@@ -235,42 +263,40 @@ const plansData: Record<string, any> = {
     port: "1 Gbit/s",
     traffic: "32 TB de tráfego",
     durations: [
-      { id: "1", label: "1 mês", price: "R$ 426,76", setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", price: "R$ 384,08", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldPrice: "R$ 426,76" },
-      { id: "12", label: "12 meses", price: "R$ 341,41", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 426,76" },
+      { id: "1", label: "1 mês", eur: 37.00, setupEur: 0, discount: null },
+      { id: "6", label: "6 meses", eur: 33.30, setupEur: 0, discount: "ECONOMIZE 10%", oldEur: 37.00 },
+      { id: "12", label: "12 meses", eur: 29.60, setupEur: 0, discount: "ECONOMIZE 20%", oldEur: 37.00 },
     ],
     storageTypes: [
       { id: "ssd-600", name: "600 GB SSD", price: "Livre" },
-      { id: "ssd-1200", name: "1.2 TB SSD", price: "R$ 70,97" },
+      { id: "ssd-1200", name: "1.2 TB SSD", eur: 6.15 },
       { id: "nvme-300", name: "300 GB NVMe", price: "Livre" },
-      { id: "nvme-600", name: "600 GB NVMe", price: "R$ 54,82" },
+      { id: "nvme-600", name: "600 GB NVMe", eur: 4.75 },
     ],
     locations: {
       europe: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", price: 89.96 },
+        { id: "eu", name: "União Europeia", latency: "156 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 7.80 },
       ],
       best: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 132.71, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "156 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 11.50, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", price: 184.64 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", eur: 16.00 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", price: 89.96 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 132.71, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", price: 111.30 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", eur: 7.80 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 11.50, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 9.65 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", price: 219.26 },
-        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", price: 225.03 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", price: 207.72 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", eur: 19.00 },
+        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", eur: 19.50 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 18.00 },
       ]
     },
-    rate: 11.72,
-    basePrice: 426.76,
-    backupPrice: 87.90
+    backupEur: 7.60
   },
   "60": {
     name: "Cloud VPS 60 (XXXL) Windows",
@@ -281,42 +307,40 @@ const plansData: Record<string, any> = {
     port: "1 Gbit/s",
     traffic: "32 TB de tráfego",
     durations: [
-      { id: "1", label: "1 mês", price: "R$ 565,46", setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", price: "R$ 508,91", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldPrice: "R$ 565,46" },
-      { id: "12", label: "12 meses", price: "R$ 452,37", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 565,46" },
+      { id: "1", label: "1 mês", eur: 49.00, setupEur: 0, discount: null },
+      { id: "6", label: "6 meses", eur: 44.10, setupEur: 0, discount: "ECONOMIZE 10%", oldEur: 49.00 },
+      { id: "12", label: "12 meses", eur: 39.20, setupEur: 0, discount: "ECONOMIZE 20%", oldEur: 49.00 },
     ],
     storageTypes: [
       { id: "ssd-700", name: "700 GB SSD", price: "Livre" },
-      { id: "ssd-1400", name: "1.4 TB SSD", price: "R$ 80,20/mês" },
+      { id: "ssd-1400", name: "1.4 TB SSD", eur: 6.95 },
       { id: "nvme-350", name: "350 GB NVMe", price: "Livre" },
-      { id: "nvme-700", name: "700 GB NVMe", price: "R$ 66,36/mês" },
+      { id: "nvme-700", name: "700 GB NVMe", eur: 5.75 },
     ],
     locations: {
       europe: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", price: 118.86 },
+        { id: "eu", name: "União Europeia", latency: "156 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 10.30 },
       ],
       best: [
-        { id: "eu", name: "União Europeia", latency: "156 ms", price: 0 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 177.14, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "156 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 15.35, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", price: 244.07 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", eur: 21.15 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", price: 118.86 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: 177.14, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", price: 147.71 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", eur: 10.30 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 15.35, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 12.80 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", price: 294.27 },
-        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", price: 294.27 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", price: 269.46 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", eur: 25.50 },
+        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", eur: 25.50 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 23.35 },
       ]
     },
-    rate: 11.72,
-    basePrice: 565.46,
-    backupPrice: 109.63
+    backupEur: 9.50
   }
 };
 
@@ -336,89 +360,21 @@ const imageCategories = [
   { id: "blockchain", label: "Blockchain" },
 ];
 
-// Standard image prices for base plans (10-40)
-const defaultImagePrices = {
-  windows: "R$ 87,90 /mês",
-  cpanel: "R$ 254,91 /mês",
-  pleskLinux: "R$ 140,64 /mês",
-  pleskWin: "R$ 213,89 /mês",
-  pleskHost: "R$ 421,21 /mês",
-  pleskPro: "R$ 219,26 /mês"
-};
-
-// Plan-specific image prices
-const getPlanImagePrices = (planId: string) => {
-  if (planId === "10") {
-    return {
-      windows: "R$ 54,82 /mês",
-      win2016: "R$ 46,16 /mês",
-      cpanel: "R$ 250,99 /mês",
-      pleskLinux: "R$ 138,48 /mês",
-      pleskHost: "R$ 421,21 /mês",
-      pleskPro: "R$ 219,26 /mês",
-      pleskWin: "R$ 184,64 /mês"
-    };
-  }
-  if (planId === "30") {
-    return {
-      windows: "R$ 300,04 /mês",
-      win2016: "R$ 279,04 /mês",
-      cpanel: "R$ 250,99 /mês",
-      pleskLinux: "R$ 138,48 /mês",
-      pleskHost: "R$ 421,21 /mês",
-      pleskPro: "R$ 219,26 /mês",
-      pleskWin: "R$ 426,98 /mês"
-    };
-  }
-  if (planId === "40") {
-    return {
-      windows: "R$ 565,46 /mês",
-      win2016: "R$ 526,22 /mês",
-      cpanel: "R$ 250,99 /mês",
-      pleskLinux: "R$ 138,48 /mês",
-      pleskHost: "R$ 421,21 /mês",
-      pleskPro: "R$ 219,26 /mês",
-      pleskWin: "R$ 675,09 /mês"
-    };
-  }
-  if (planId === "50") {
-    return {
-      windows: "R$ 675,09 /mês",
-      win2016: "R$ 642,78 /mês",
-      cpanel: "R$ 254,91 /mês",
-      pleskLinux: "R$ 140,64 /mês",
-      pleskHost: "R$ 427,78 /mês",
-      pleskPro: "R$ 222,68 /mês",
-      pleskWin: "R$ 781,26 /mês"
-    };
-  }
-  if (planId === "60") {
-    return {
-      windows: "R$ 807,80 /mês",
-      win2016: "R$ 751,72 /mês",
-      cpanel: "R$ 250,99 /mês",
-      pleskLinux: "R$ 138,48 /mês",
-      pleskHost: "R$ 421,21 /mês",
-      pleskPro: "R$ 219,26 /mês",
-      pleskWin: "R$ 807,80 /mês"
-    };
-  }
-  return { ...defaultImagePrices, win2016: "R$ 81,80 /mês" };
-};
+// (Function removed, logic moved up)
 
 const getImages = (planId: string) => {
   const p = getPlanImagePrices(planId);
   return {
     popular: [
-      { id: "windows", name: "Servidor Windows", price: p.windows, icon: "/windows.png" },
+      { id: "windows", name: "Servidor Windows", eur: p.windows, price: "", icon: "/windows.png" },
       { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
-      { id: "cpanel", name: "cPanel", price: p.cpanel, icon: "/cpanel.png" },
-      { id: "plesk-win", name: "Plesk + Windows", price: p.pleskWin, icon: "/plesk.png" },
+      { id: "cpanel", name: "cPanel", eur: p.cpanel, price: "", icon: "/cpanel.png" },
+      { id: "plesk-win", name: "Plesk + Windows", eur: p.pleskWin, price: "", icon: "/plesk.png" },
       { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
       { id: "debian", name: "Debian", price: "Incluído", icon: "/debian-svgrepo-com.svg" },
     ],
     os: [
-      { id: "windows", name: "Servidor Windows", price: p.windows, icon: "/windows.png" },
+      { id: "windows", name: "Servidor Windows", eur: p.windows, price: "", icon: "/windows.png" },
       { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
       { id: "debian", name: "Debian", price: "Incluído", icon: "/debian-svgrepo-com.svg" },
       { id: "almalinux", name: "AlmaLinux", price: "Incluído", icon: "/almalinux.png" },
@@ -435,11 +391,9 @@ const getImages = (planId: string) => {
       { id: "openclaw", name: "OpenClaw Server", price: "Incluído", icon: "/openclaw.png" },
     ],
     panels: [
-      { id: "cpanel", name: "cPanel", price: p.cpanel, icon: "/cpanel.png" },
-      { id: "plesk-win", name: "Plesk + Windows", price: p.pleskWin, icon: "/plesk.png" },
-      { id: "plesk-linux", name: "Plesk + Linux", price: p.pleskLinux, icon: "/plesk.png" },
-      { id: "webmin", name: "Webmin", price: "Incluído", icon: "/webmin.png" },
-      { id: "webmin-lamp", name: "Webmin + LAMP", price: "Incluído", icon: "/lamp.png" },
+      { id: "cpanel", name: "cPanel", eur: p.cpanel, price: "", icon: "/cpanel.png" },
+      { id: "plesk-win", name: "Plesk + Windows", eur: p.pleskWin, price: "", icon: "/plesk.png" },
+      { id: "plesk-linux", name: "Plesk + Linux", eur: p.pleskLinux, price: "", icon: "/plesk.png" },
     ],
     blockchain: [
       { id: "ipfs", name: "IPFS Node", price: "Incluído", icon: "/ipfs.png" },
@@ -453,12 +407,26 @@ export default function ConfigureWindowsVps() {
   const params = useParams();
   const router = useRouter();
   const planId = params.id as string;
+
+  const [currentRate, setCurrentRate] = useState(FALLBACK_EUR_RATE);
+  
   const plan = plansData[planId as keyof typeof plansData] || plansData["10"];
   const durations = plan.durations;
   const storageTypes = plan.storageTypes;
   const planLocations = (plan as any).locations || {};
-  const images = getImages(planId);
   const currentImagePrices = getPlanImagePrices(planId);
+  const dynamicImages = getImages(planId);
+
+  const formatBRL = (eur: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(eur * currentRate);
+  };
+
+  const formatBRLPerMonth = (eur: number) => {
+    return `${formatBRL(eur)} / mês`;
+  };
 
   const [quantity, setQuantity] = useState("1");
   const [duration, setDuration] = useState("1");
@@ -467,26 +435,42 @@ export default function ConfigureWindowsVps() {
   const [storageType, setStorageType] = useState(storageTypes[0].id);
   const [imageCategory, setImageCategory] = useState("popular");
   const [osImage, setOsImage] = useState("windows");
-  const [autoBackup, setAutoBackup] = useState(false);
+  const [autoBackup, setAutoBackup] = useState(true);
   const [showMoreImages, setShowMoreImages] = useState(true);
-  const [showAdditionalFeatures, setShowAdditionalFeatures] = useState(true);
+  const [showUbuntuModal, setShowUbuntuModal] = useState(false);
+  const [ubuntuVersion, setUbuntuVersion] = useState("Ubuntu 24.04");
   const [showWindowsModal, setShowWindowsModal] = useState(false);
   const [windowsVersion, setWindowsVersion] = useState("2025");
+  const [showCpanelModal, setShowCpanelModal] = useState(false);
+  const [cpanelLicence, setCpanelLicence] = useState("5");
+  const [cpanelVersion, setCpanelVersion] = useState("Ubuntu 22.04");
   const [showPleskModal, setShowPleskModal] = useState(false);
-  const [showPleskWindowsModal, setShowPleskWindowsModal] = useState(false);
   const [pleskLicence, setPleskLicence] = useState("admin");
-  const [pleskWinLicence, setPleskWinLicence] = useState("admin");
   const [pleskVersion, setPleskVersion] = useState("Ubuntu 22.04");
+  const [showPleskWindowsModal, setShowPleskWindowsModal] = useState(false);
+  const [pleskWinLicence, setPleskWinLicence] = useState("admin");
   const [pleskWinVersion, setPleskWinVersion] = useState("2016");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [privateNetwork, setPrivateNetwork] = useState("enabled");
+  const [privateNetwork, setPrivateNetwork] = useState("none");
   const [ipv4Address, setIpv4Address] = useState("1ip");
   const [objectStorage, setObjectStorage] = useState("none");
   const [serverManagement, setServerManagement] = useState("unmanaged");
   const [monitoring, setMonitoring] = useState("none");
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [showSummaryDetails, setShowSummaryDetails] = useState(false);
+  const [showAdditionalFeatures, setShowAdditionalFeatures] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/currency/euro")
+      .then(res => res.json())
+      .then(data => {
+        if (data.rate) {
+          setCurrentRate(data.rate);
+        }
+      })
+      .catch(err => console.error("Error fetching rate:", err));
+  }, []);
 
   const isPasswordValid = (pwd: string) => {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+^~[\]{}|;:,.<>?])[A-Za-z\d!@#$%^&*()_+^~[\]{}|;:,.<>?]{8,}$/;
@@ -569,15 +553,15 @@ export default function ConfigureWindowsVps() {
                   )}
                   <span className="text-sm font-medium">{d.label}</span>
                   <div className="text-right">
-                    {d.oldPrice && <p className="text-[10px] text-rose-500 line-through font-medium">{d.oldPrice}/mês</p>}
-                    <p className="text-lg font-bold text-slate-800">{d.price} <span className="text-xs font-normal text-slate-400">/ mês</span></p>
+                    {d.oldEur && <p className="text-[10px] text-rose-500 line-through font-medium">{formatBRLPerMonth(d.oldEur)}</p>}
+                    <p className="text-lg font-bold text-slate-800">{formatBRL(d.eur)} <span className="text-xs font-normal text-slate-400">/ mês</span></p>
                   </div>
                 </div>
                 <div className={cn(
                   "text-center py-1.5 rounded-b-md text-[11px] font-medium transition-colors",
-                  d.setupFee === "Sem taxa de instalação" ? "bg-emerald-500/50 text-slate-700" : "text-slate-500"
+                  d.setupEur === 0 ? "bg-emerald-500/50 text-slate-700" : "text-slate-500"
                 )}>
-                  {d.setupFee}
+                  {d.setupEur === 0 ? "Sem taxa de instalação" : `Taxa de configuração de ${formatBRL(d.setupEur)}`}
                 </div>
               </div>
             ))}
@@ -633,7 +617,7 @@ export default function ConfigureWindowsVps() {
                     )}
                     <div className="flex-1 text-left">{loc.name}</div>
                     <div className="flex-1 text-center">– Latência de {loc.latency}</div>
-                    <div className="flex-1 text-right">{loc.price > 0 ? `R$ ${loc.price.toFixed(2).replace(".", ",")}/mês` : "Livre"}</div>
+                    <div className="flex-1 text-right">{loc.eur > 0 ? formatBRLPerMonth(loc.eur) : "Livre"}</div>
                   </button>
                 ))}
               </div>
@@ -661,7 +645,7 @@ export default function ConfigureWindowsVps() {
                 )}
               >
                 <span>{st.name}</span>
-                <span className={cn(st.price === "Livre" ? "text-emerald-500" : "text-slate-700")}>{st.price}</span>
+                <span className={cn(st.eur ? "text-slate-700" : "text-emerald-500")}>{st.eur ? formatBRLPerMonth(st.eur) : st.price}</span>
               </div>
             ))}
           </div>
@@ -711,7 +695,7 @@ export default function ConfigureWindowsVps() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {(images[imageCategory as keyof typeof images] || []).map((img: any) => (
+                  {(dynamicImages[imageCategory as keyof typeof dynamicImages] || []).map((img: any) => (
                     <button
                       key={img.id}
                       onClick={() => {
@@ -743,34 +727,57 @@ export default function ConfigureWindowsVps() {
         <Separator className="bg-slate-100" />
 
         {/* Data Protection Section */}
-        <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
-          <div className="p-8">
-            <div className="flex items-center gap-2 mb-8">
-              <h2 className="text-2xl font-bold text-[#0F172A]">Proteção de Dados com Backup Automático</h2>
+        <section className="space-y-6">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-slate-800">Proteção de Dados com Backup Automático</h2>
+            <Info size={18} className="text-slate-300" />
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center gap-12 bg-white rounded-2xl p-10 border border-slate-100 shadow-sm">
+            <div className="w-1/3 flex justify-center">
+              <img src="/backup-shield.png" alt="Backup Shield" className="w-48 h-auto object-contain" />
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-6 flex flex-col md:flex-row items-center gap-8">
-                <div className="relative w-48 h-48 flex-shrink-0">
-                  <Image src="/backup-shield.png" alt="Proteção de Backup" width={192} height={192} className="object-contain" />
+
+            <div className="flex-1 space-y-6">
+              <ul className="space-y-3">
+                {[
+                  "Backups automáticos diários.",
+                  "Recuperação instantânea com 1 clique.",
+                  "Mantém as últimas 10 versões de backup.",
+                  "Nenhuma configuração necessária."
+                ].map((text, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
+                    {text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-6 w-full md:w-auto">
+              <div
+                onClick={() => setAutoBackup(true)}
+                className={cn(
+                  "cursor-pointer w-full md:w-64 rounded-xl border-2 p-8 text-center transition-all relative flex flex-col justify-center gap-2",
+                  autoBackup ? "border-sky-400 bg-white shadow-md" : "border-slate-100 bg-white"
+                )}
+              >
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-100 text-orange-600 text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  Nossa Recomendação
                 </div>
-                <ul className="space-y-3">
-                  {["Backups automáticos diários.", "Recuperação instantânea.", "Mantém as últimas 10 versões.", "Nenhuma configuração necessária."].map((benefit, i) => (
-                    <li key={i} className="flex items-center gap-3 text-slate-600">
-                      <div className="w-1.5 h-1.5 rounded-full bg-slate-900" />
-                      <span className="text-[15px] font-medium">{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-base font-bold text-slate-800">Backup Automático</p>
+                <p className="text-xl font-black text-slate-900">{formatBRLPerMonth(1.50)}</p>
+                <p className="text-[10px] text-slate-500 leading-tight">Ative e esqueça.<br />Segurança de dados sem esforço.</p>
               </div>
-              <div className="lg:col-span-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button onClick={() => setAutoBackup(true)} className={cn("relative p-6 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-center min-h-[160px] bg-white", autoBackup ? "border-[#0091FF] shadow-md" : "border-slate-200 hover:border-slate-300")}>
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#F1F5F9] px-4 py-1 rounded-full border border-slate-200"><span className="text-[10px] font-bold text-[#E9711C] uppercase tracking-wider whitespace-nowrap">Recomendado</span></div>
-                  <h3 className="text-lg font-bold text-[#0F172A] mb-1">Backup Automático</h3>
-                  <div className="text-xl font-bold text-[#0F172A] mb-2">R$ {plan.backupPrice.toFixed(2).replace(".", ",")} / mês</div>
-                </button>
-                <button onClick={() => setAutoBackup(false)} className={cn("p-6 rounded-xl border-2 transition-all text-center flex items-center justify-center min-h-[160px] bg-white", !autoBackup ? "border-[#0091FF] shadow-md" : "border-slate-200 hover:border-slate-300")}>
-                    <h3 className="text-lg font-medium text-slate-600">Sem Proteção</h3>
-                </button>
+
+              <div
+                onClick={() => setAutoBackup(false)}
+                className={cn(
+                  "cursor-pointer w-full md:w-64 rounded-xl border-2 p-8 text-center transition-all flex items-center justify-center",
+                  !autoBackup ? "border-sky-400 bg-white shadow-md" : "border-slate-100 bg-white"
+                )}
+              >
+                <p className="text-base font-bold text-slate-600">Sem Proteção de Dados</p>
               </div>
             </div>
           </div>
@@ -784,70 +791,151 @@ export default function ConfigureWindowsVps() {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-bold text-[#0F172A]">Recursos Adicionais</h2>
               <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[11px] font-bold text-slate-800">
-                {showAdditionalFeatures ? <>Fechar <ChevronUp size={14} /></> : <>Ver mais <ChevronDown size={14} /></>}
+                {showAdditionalFeatures ? <>Fechar recursos adicionais <ChevronUp size={14} /></> : <>Ver mais <ChevronDown size={14} /></>}
               </button>
             </div>
 
             <AnimatePresence mode="wait">
               {showAdditionalFeatures && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-12 overflow-hidden px-1 py-1">
-                  <div className="space-y-8">
-                    <h3 className="text-lg font-bold text-[#0F172A]">Rede</h3>
-                    <div className="space-y-6 pl-4 pr-1">
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-bold text-slate-600">Rede Privada</span></div>
-                        <div className="md:col-span-9">
+
+                  {/* Networking Section */}
+                  <div className="space-y-10">
+                    <div className="flex flex-col md:flex-row md:items-center gap-6 border-b border-slate-100 pb-8">
+                      <div className="w-48 shrink-0">
+                        <h3 className="text-sm font-bold text-slate-700">Rede</h3>
+                      </div>
+                      <div className="flex-1 space-y-6">
+                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                          <div className="w-48 flex items-center gap-2">
+                            <span className="text-sm font-medium text-slate-600">Rede Privada</span>
+                            <Info size={14} className="text-slate-300" />
+                          </div>
                           <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                            <SelectContent><SelectItem value="none">Sem Rede Privada</SelectItem><SelectItem value="enabled"><div className="flex items-center justify-between w-[300px]"><span>Ativada</span><span className="font-bold">R$ 26,84 / mês</span></div></SelectItem></SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-bold text-slate-600">IPv4</span></div>
-                        <div className="md:col-span-9">
-                          <Select value={ipv4Address} onValueChange={setIpv4Address}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="1ip"><div className="flex items-center justify-between w-[300px]"><span>1 Endereço IP</span><span className="text-emerald-500">Grátis</span></div></SelectItem><SelectItem value="2ip"><div className="flex items-center justify-between w-[300px]"><span>+1 IP Adicional</span><span className="font-bold">R$ 41,02 / mês</span></div></SelectItem></SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <Separator className="bg-slate-100" />
-                  <div className="space-y-8">
-                    <h3 className="text-lg font-bold text-[#0F172A]">Complementos</h3>
-                    <div className="space-y-6 pl-4 pr-1">
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-bold text-slate-600">Object Storage</span></div>
-                        <div className="md:col-span-9">
-                          <Select value={objectStorage} onValueChange={setObjectStorage}>
-                            <SelectTrigger className="h-12 border-slate-200 text-left"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-full md:w-[480px] h-12">
+                              <SelectValue placeholder="Selecione a rede" />
+                            </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">Nenhum</SelectItem>
-                              <SelectItem value="250gb"><div className="flex justify-between w-[400px]"><span>250 GB nos EUA</span><span className="font-bold">R$ 29,18 / mês</span></div></SelectItem>
-                              <SelectItem value="500gb"><div className="flex justify-between w-[400px]"><span>500 GB nos EUA</span><span className="font-bold">R$ 58,37 / mês</span></div></SelectItem>
-                              <SelectItem value="2tb"><div className="flex justify-between w-[400px]"><span>2 TB nos EUA</span><span className="font-bold">R$ 214,71 / mês</span></div></SelectItem>
-                              <SelectItem value="5tb"><div className="flex justify-between w-[400px]"><span>5 TB nos EUA</span><span className="font-bold">R$ 536,77 / mês</span></div></SelectItem>
+                              <SelectItem value="none">Sem Rede Privada</SelectItem>
+                              <SelectItem value="enabled">
+                                <div className="flex justify-between w-[440px]">
+                                  <span>Rede Privada Ativada</span>
+                                  <span className="font-bold">{formatBRLPerMonth(2.29)}</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row md:items-center gap-4 border-t border-slate-50 pt-6">
+                          <div className="w-48 flex items-center gap-2">
+                            <span className="text-sm font-medium text-slate-600">Largura de Banda</span>
+                          </div>
+                          <div className="md:w-[480px] h-12 border border-slate-200 rounded-md px-4 flex flex-col justify-center bg-slate-50/30">
+                            <span className="text-sm font-medium text-slate-700">Tráfego Ilimitado</span>
+                            <p className="text-[10px] text-slate-400 font-medium">Política de Uso Justo</p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                          <div className="w-48 flex items-center gap-2">
+                            <span className="text-sm font-medium text-slate-600">IPv4</span>
+                            <Info size={14} className="text-slate-300" />
+                          </div>
+                          <Select value={ipv4Address} onValueChange={setIpv4Address}>
+                            <SelectTrigger className="w-full md:w-[480px] h-12">
+                              <SelectValue placeholder="Selecione o IP" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1ip">
+                                <div className="flex items-center justify-between w-[440px]">
+                                  <span>1 Endereço IP</span>
+                                  <span className="text-emerald-500 font-bold">Grátis</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="2ip">
+                                <div className="flex items-center justify-between w-[440px]">
+                                  <span>1 Endereço IP + 1 IP Adicional</span>
+                                  <span className="font-bold">{formatBRLPerMonth(plan.additionalIpEur || 3.50)}</span>
+                                </div>
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-bold text-slate-600">Gerenciamento</span></div>
-                        <div className="md:col-span-9">
-                          <Select value={serverManagement} onValueChange={setServerManagement}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="unmanaged">Não Gerenciado (Grátis)</SelectItem><SelectItem value="managed"><div className="flex justify-between w-[350px]"><span>Gerenciado</span><span className="font-bold">R$ 1.289,08 / mês</span></div></SelectItem></SelectContent>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row md:items-start gap-6">
+                      <div className="w-48 shrink-0 pt-2">
+                        <h3 className="text-sm font-bold text-slate-700">Complementos</h3>
+                      </div>
+                      <div className="flex-1 space-y-6">
+                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                          <div className="w-48 flex items-center gap-2">
+                            <span className="text-sm font-medium text-slate-600">Armazenamento de Objetos</span>
+                          </div>
+                          <Select value={objectStorage} onValueChange={setObjectStorage}>
+                            <SelectTrigger className="w-full md:w-[480px] h-12">
+                              <SelectValue placeholder="Selecione o armazenamento" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Nenhum</SelectItem>
+                              {(plan.objectStorageTiers || []).map((tier: any) => (
+                                <SelectItem key={tier.id} value={tier.id}>
+                                  <div className="flex justify-between w-[440px]">
+                                    <span>{tier.name} na União Europeia</span>
+                                    <span className="font-bold">{formatBRLPerMonth(tier.eur)}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
                           </Select>
                         </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-bold text-slate-600">Monitoramento</span></div>
-                        <div className="md:col-span-9">
+
+                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                          <div className="w-48 flex items-center gap-2">
+                            <span className="text-sm font-medium text-slate-600">Gerenciamento de Servidor</span>
+                            <Info size={14} className="text-slate-300" />
+                          </div>
+                          <Select value={serverManagement} onValueChange={setServerManagement}>
+                            <SelectTrigger className="w-full md:w-[480px] h-12">
+                              <SelectValue placeholder="Selecione o gerenciamento" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="unmanaged">
+                                <div className="flex justify-between w-[440px]">
+                                  <span>Não Gerenciado</span>
+                                  <span className="text-emerald-500 font-bold">Grátis</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="managed">
+                                <div className="flex justify-between w-[440px]">
+                                  <span>Gerenciado</span>
+                                  <span className="font-bold">{formatBRLPerMonth(109.99)}</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                          <div className="w-48 flex items-center gap-2">
+                            <span className="text-sm font-medium text-slate-600">Monitoramento</span>
+                            <Info size={14} className="text-slate-300" />
+                          </div>
                           <Select value={monitoring} onValueChange={setMonitoring}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="none">Nenhum</SelectItem><SelectItem value="full"><div className="flex justify-between w-[350px]"><span>Completo</span><span className="font-bold">R$ 134,66 / mês</span></div></SelectItem></SelectContent>
+                            <SelectTrigger className="w-full md:w-[480px] h-12">
+                              <SelectValue placeholder="Selecione o monitoramento" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Nenhum</SelectItem>
+                              <SelectItem value="full">
+                                <div className="flex justify-between w-[440px]">
+                                  <span>Monitoramento Completo</span>
+                                  <span className="font-bold">{formatBRLPerMonth(11.49)}</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
                           </Select>
                         </div>
                       </div>
@@ -863,12 +951,12 @@ export default function ConfigureWindowsVps() {
 
         {/* Login and Password Section */}
         <section className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
-          <h2 className="text-xl font-bold text-[#0F172A] mb-8">Login e senha para o seu servidor</h2>
+          <h2 className="text-xl font-bold text-[#0F172A] mb-8">Login and password for your server</h2>
           <div className="max-w-3xl space-y-8">
             {/* Username */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
               <div className="md:col-span-3">
-                <span className="text-sm font-bold text-slate-600">Usuário</span>
+                <span className="text-sm font-bold text-slate-600">Username</span>
               </div>
               <div className="md:col-span-9">
                 <span className="text-slate-900 font-medium">Administrator / root</span>
@@ -878,7 +966,7 @@ export default function ConfigureWindowsVps() {
             {/* Password */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-3 pt-3">
-                <span className="text-sm font-bold text-slate-600">Senha</span>
+                <span className="text-sm font-bold text-slate-600">Password</span>
               </div>
               <div className="md:col-span-9 space-y-2">
                 <div className="flex justify-start">
@@ -901,7 +989,7 @@ export default function ConfigureWindowsVps() {
                     }}
                     className="text-[#3B82F6] text-xs hover:underline"
                   >
-                    Gerar nova senha
+                    Generate new password
                   </button>
                 </div>
                 <div className="relative">
@@ -922,13 +1010,13 @@ export default function ConfigureWindowsVps() {
                 {passwordTouched && password.length > 0 && !isPasswordValid(password) && (
                   <div className="flex items-center gap-2 text-red-500 text-xs mt-1">
                     <AlertCircle size={14} />
-                    <span>Senha inválida (Min. 8 caracteres, maiúscula, número e símbolo)</span>
+                    <span>Invalid password (Min. 8 chars, uppercase, number and symbol)</span>
                   </div>
                 )}
                 {isPasswordValid(password) && (
                   <div className="flex items-center gap-2 text-emerald-500 text-xs mt-1">
                     <Check size={14} />
-                    <span>Senha forte e segura</span>
+                    <span>Strong and secure password</span>
                   </div>
                 )}
               </div>
@@ -936,9 +1024,273 @@ export default function ConfigureWindowsVps() {
           </div>
         </section>
       </div>
+  {/* Windows Modal */ }
+  <AnimatePresence>
+{
+  showWindowsModal && (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowWindowsModal(false)}>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-4"><img src="/windows.png" alt="Windows" className="w-10 h-10" /><h2 className="text-xl font-bold">Windows Server</h2></div>
+        <div className="space-y-4">
+          <label className="text-sm font-bold">Versão (Inclusa)</label>
+          <Select value={windowsVersion} onValueChange={setWindowsVersion}>
+            <SelectTrigger className="h-14">
+              <SelectValue>
+                <div className="flex items-center justify-between w-full pr-4 text-xs">
+                  <span>Windows Server {windowsVersion} Datacenter</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-800">
+                      {formatBRLPerMonth(windowsVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows)}
+                    </span>
+                    <span className="text-slate-400">|</span>
+                    <span className="text-slate-400">Sem taxa de instalação</span>
+                  </div>
+                </div>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2025">
+                <div className="flex items-center justify-between w-[480px] text-xs">
+                  <span>Windows Server 2025 Datacenter</span>
+                  <span className="font-bold text-slate-800">{formatBRL(currentImagePrices.windows)}</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="2022">
+                <div className="flex items-center justify-between w-[480px] text-xs">
+                  <span>Windows Server 2022 Datacenter</span>
+                  <span className="font-bold text-slate-800">{formatBRL(currentImagePrices.windows)}</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="2019">
+                <div className="flex items-center justify-between w-[480px] text-xs">
+                  <span>Windows Server 2019 Datacenter</span>
+                  <span className="font-bold text-slate-800">{formatBRL(currentImagePrices.windows)}</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="2016">
+                <div className="flex items-center justify-between w-[480px] text-xs">
+                  <span>Windows Server 2016 Datacenter</span>
+                  <span className="font-bold text-slate-800">{formatBRL(currentImagePrices.win2016)}</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowWindowsModal(false)}>Fechar</Button><Button onClick={() => setShowWindowsModal(false)} className="bg-[#00A8E8] text-white">Selecionar</Button></div>
+      </motion.div>
+    </div>
+  )}
+</AnimatePresence>
 
-      {/* Fixed Bottom Summary Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#F1F5F9] border-t border-slate-200 z-[100] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+  {/* Plesk Modal */ }
+  <AnimatePresence>
+{
+  showPleskModal && (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskModal(false)}>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className="text-xl font-bold">Plesk + Linux</h2></div>
+
+        <div className="space-y-4">
+          <label className="text-sm font-bold">Licença</label>
+          <Select value={pleskLicence} onValueChange={setPleskLicence}>
+            <SelectTrigger className="h-14">
+              <SelectValue>
+                <div className="flex items-center justify-between w-full pr-4 text-xs">
+                  <div className="flex flex-col text-left">
+                    <span className="font-bold text-[#00A8E8]">
+                      {pleskLicence === "admin" ? "Plesk Obsidian Web Admin Edition" :
+                        pleskLicence === "host" ? "Plesk Obsidian Web Host Edition" :
+                          "Plesk Obsidian Web Pro Edition"} 1 mês
+                    </span>
+                    <span className="text-emerald-500 font-bold">free</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-800">
+                      {formatBRLPerMonth(pleskLicence === "admin" ? currentImagePrices.pleskLinux :
+                        pleskLicence === "host" ? currentImagePrices.pleskHost :
+                          currentImagePrices.pleskPro)}
+                    </span>
+                    <span className="text-slate-400">|</span>
+                    <span className="text-slate-400">R$ 0,00 Taxa de instalação</span>
+                  </div>
+                </div>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="z-[120]">
+              <SelectItem value="admin">
+                <div className="flex items-center justify-between w-[480px] text-xs">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-800">Plesk Obsidian Web Admin Edition</span>
+                    <span className="text-emerald-500 font-bold">1 mês grátis</span>
+                  </div>
+                  <span className="font-black">{formatBRL(currentImagePrices.pleskLinux)}</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="host">
+                <div className="flex items-center justify-between w-[480px] text-xs">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-800">Plesk Obsidian Web Host Edition</span>
+                    <span className="text-emerald-500 font-bold">1 mês grátis</span>
+                  </div>
+                  <span className="font-black">{formatBRL(currentImagePrices.pleskHost)}</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="pro">
+                <div className="flex items-center justify-between w-[480px] text-xs">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-800">Plesk Obsidian Web Pro Edition</span>
+                    <span className="text-emerald-500 font-bold">1 mês grátis</span>
+                  </div>
+                  <span className="font-black">{formatBRL(currentImagePrices.pleskPro)}</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="space-y-3">
+            <label className="text-sm font-bold">Versão</label>
+            <Select value={pleskVersion} onValueChange={setPleskVersion}>
+              <SelectTrigger className="h-14">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="z-[120]">
+                <SelectItem value="Ubuntu 22.04">Ubuntu 22.04</SelectItem>
+                <SelectItem value="AlmaLinux 9">AlmaLinux 9</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-4">
+          <Button variant="ghost" onClick={() => setShowPleskModal(false)}>Fechar</Button>
+          <Button onClick={() => setShowPleskModal(false)} className="bg-[#00A8E8] text-white">Selecionar</Button>
+        </div>
+      </motion.div>
+    </div>
+  )}
+</AnimatePresence>
+  {/* Plesk Windows Modal */ }
+  <AnimatePresence>
+{
+  showPleskWindowsModal && (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskWindowsModal(false)}>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-4">
+          <img src="/plesk.png" alt="Plesk" className="w-8 h-8 object-contain" />
+          <h2 className="text-xl font-bold text-slate-700">Plesk + Windows</h2>
+        </div>
+
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <label className="text-sm font-bold text-slate-600">Licence</label>
+            <Select value={pleskWinLicence} onValueChange={setPleskWinLicence}>
+              <SelectTrigger className="h-16 border border-slate-200">
+                <SelectValue>
+                  <div className="flex items-center justify-between w-full pr-4 text-[13px] leading-tight">
+                    <div className="flex flex-col text-left">
+                      <span className="font-medium text-slate-700">
+                        {pleskWinLicence === "admin" ? "Plesk Obsidian Web Admin Edition" :
+                          pleskWinLicence === "host" ? "Plesk Obsidian Web Host Edition" :
+                            "Plesk Obsidian Web Pro Edition"}
+                      </span>
+                      <span className="text-emerald-500 font-bold text-[11px]">1 month free</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <span className="font-medium">
+                        {formatBRLPerMonth(pleskWinLicence === "admin" ? currentImagePrices.pleskWin :
+                          pleskWinLicence === "host" ? currentImagePrices.pleskHost :
+                            currentImagePrices.pleskPro)}
+                      </span>
+                      <span>|</span>
+                      <span>Sem taxa de instalação</span>
+                    </div>
+                  </div>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="z-[120]">
+                <SelectItem value="admin">
+                  <div className="flex items-center justify-between w-[480px] py-1">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sky-600">Plesk Obsidian Web Admin Edition</span>
+                      <span className="text-emerald-500 font-bold text-xs">1 month free</span>
+                    </div>
+                    <span className="font-black text-slate-800">{formatBRL(currentImagePrices.pleskWin)}</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="host">
+                  <div className="flex items-center justify-between w-[480px] py-1">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-700">Plesk Obsidian Web Host Edition</span>
+                      <span className="text-emerald-500 font-bold text-xs">1 month free</span>
+                    </div>
+                    <span className="font-black text-slate-800">{formatBRL(currentImagePrices.pleskHost)}</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="pro">
+                  <div className="flex items-center justify-between w-[480px] py-1">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-700">Plesk Obsidian Web Pro Edition</span>
+                      <span className="text-emerald-500 font-bold text-xs">1 month free</span>
+                    </div>
+                    <span className="font-black text-slate-800">{formatBRL(currentImagePrices.pleskPro)}</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-sm font-bold text-slate-600">Version</label>
+            <Select value={pleskWinVersion} onValueChange={setPleskWinVersion}>
+              <SelectTrigger className="h-16 border border-slate-200">
+                <SelectValue>
+                  <div className="flex items-center justify-between w-full pr-4 text-[13px]">
+                    <span className="font-medium text-slate-700">Windows Server {pleskWinVersion} Datacenter</span>
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <span className="font-medium">
+                        {formatBRLPerMonth(pleskWinVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows)}
+                      </span>
+                      <span>|</span>
+                      <span>Sem taxa de instalação</span>
+                    </div>
+                  </div>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="z-[120]">
+                <SelectItem value="2016">
+                  <div className="flex items-center justify-between w-[480px] py-1">
+                    <span className="font-bold text-sky-600">Windows Server 2016 Datacenter</span>
+                    <span className="font-black text-slate-800">{formatBRL(currentImagePrices.win2016)}</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="2019">
+                  <div className="flex items-center justify-between w-[480px] py-1">
+                    <span className="font-bold text-slate-700">Windows Server 2019 Datacenter</span>
+                    <span className="font-black text-slate-800">{formatBRL(currentImagePrices.windows)}</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="2022">
+                  <div className="flex items-center justify-between w-[480px] py-1">
+                    <span className="font-bold text-slate-700">Windows Server 2022 Datacenter</span>
+                    <span className="font-black text-slate-800">{formatBRL(currentImagePrices.windows)}</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-6 pt-4">
+          <Button variant="ghost" onClick={() => setShowPleskWindowsModal(false)} className="text-slate-400 font-bold">CANCELAR</Button>
+          <Button onClick={() => setShowPleskWindowsModal(false)} className="bg-[#00A8E8] hover:bg-[#0096d1] text-white font-bold px-8">CONFIGURAR</Button>
+        </div>
+      </motion.div>
+    </div>
+  )}
+</AnimatePresence>
+
+  {/* Fixed Bottom Summary Bar */}
+  <div className="fixed bottom-0 left-0 right-0 bg-[#F1F5F9] border-t border-slate-200 z-[100] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+
         <AnimatePresence>
           {showSummaryDetails && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-slate-200 bg-white">
@@ -950,58 +1302,61 @@ export default function ConfigureWindowsVps() {
                     const durMonths = parseInt(duration);
                     const qty = parseInt(quantity) || 1;
                     const items = [];
-                    const basePriceMonthly = parseFloat(selectedDur.price.replace("R$ ", "").replace(".", "").replace(",", "."));
-                    items.push({ label: `${plan.name} (${durMonths}m)`, price: basePriceMonthly * durMonths * qty });
                     
-                    if (selectedDur.setupFee !== "Sem taxa de instalação") {
-                      const setup = parseFloat(selectedDur.setupFee.replace("Taxa de configuração de R$ ", "").replace(",", "."));
-                      items.push({ label: `Taxa de Configuração`, price: setup * qty });
+                    const baseEur = selectedDur.eur;
+                    items.push({ label: `${plan.name} (${durMonths}m)`, price: baseEur * durMonths * qty * currentRate });
+                    
+                    if (selectedDur.setupEur > 0) {
+                      items.push({ label: `Taxa de Configuração`, price: selectedDur.setupEur * qty * currentRate });
                     }
                     
-                    const st = storageTypes.find((s: any) => s.id === storageType);
-                    if (st && st.price !== "Livre") items.push({ label: `Upgrade de Disco: ${st.name}`, price: parseFloat(st.price.replace("R$ ", "").replace(",", ".")) * durMonths * qty });
+                    const loc = (Object.values(planLocations).flat() as any[]).find((l: any) => l.id === location);
+                    if (loc && loc.eur) items.push({ label: `Localização: ${loc.name}`, price: loc.eur * durMonths * qty * currentRate });
                     
-                    const loc = Object.values(plan.locations).flat().find((l: any) => l.id === location) as any;
-                    if (loc && loc.price > 0) items.push({ label: `Localização: ${loc.name}`, price: loc.price * durMonths * qty });
-                    
-                    if (autoBackup) items.push({ label: `Backup Automático`, price: plan.backupPrice * durMonths * qty });
-                    if (objectStorage !== "none") {
-                        const prices: any = { "250gb": 29.18, "500gb": 58.37, "2tb": 214.71, "5tb": 536.77 };
-                        items.push({ label: `Object Storage: ${objectStorage.toUpperCase()}`, price: prices[objectStorage] * durMonths * qty });
-                    }
-                    if (serverManagement === "managed") items.push({ label: `Gerenciado`, price: 1289.08 * durMonths * qty });
-                    if (monitoring === "full") items.push({ label: `Monitoramento Completo`, price: 134.66 * durMonths * qty });
-                    if (privateNetwork === "enabled") items.push({ label: `Rede Privada`, price: 26.84 * durMonths * qty });
-                    if (ipv4Address === "2ip") items.push({ label: `IP Adicional`, price: 41.02 * durMonths * qty });
+                    const stype = storageTypes.find((s:any) => s.id === storageType);
+                    if (stype && stype.eur) items.push({ label: `Upgrade de Disco: ${stype.name}`, price: stype.eur * durMonths * qty * currentRate });
 
-                    // Image/OS Pricing
-                    const pPrices = getPlanImagePrices(planId);
-                    const parsePrice = (p: string) => parseFloat(p.replace("R$ ", "").replace(",", "."));
+                    if (autoBackup) items.push({ label: `Backup Automático`, price: plan.backupEur * durMonths * qty * currentRate });
+                    
+                    if (privateNetwork === "enabled") {
+                      const pnEur = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60") ? plan.privateNetworkEur : 0;
+                      if (pnEur > 0) items.push({ label: `Rede Privada`, price: pnEur * durMonths * qty * currentRate });
+                    }
+                    
+                    if (ipv4Address === "2ip") items.push({ label: `IP Adicional`, price: plan.additionalIpEur * durMonths * qty * currentRate });
+                    
+                    if (objectStorage !== "none") {
+                      const tier = plan.objectStorageTiers.find((t:any) => t.id === objectStorage);
+                      if (tier) items.push({ label: `Object Storage (${tier.name})`, price: tier.eur * durMonths * qty * currentRate });
+                    }
+                    
+                    if (serverManagement === "managed") items.push({ label: `Gerenciado`, price: 109.99 * durMonths * qty * currentRate });
+                    
+                    if (monitoring === "full") items.push({ label: `Monitoramento`, price: 11.49 * durMonths * qty * currentRate });
+
+                    // Image Pricing
                     if (osImage === "windows") {
-                      const price = windowsVersion === "2016" ? parsePrice(pPrices.win2016) : parsePrice(pPrices.windows);
-                      items.push({ label: `Windows Server ${windowsVersion}`, price: price * durMonths * qty });
+                      const eur = windowsVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows;
+                      items.push({ label: `Windows Server ${windowsVersion}`, price: eur * durMonths * qty * currentRate });
                     } else if (osImage === "cpanel") {
-                      items.push({ label: `cPanel License`, price: parsePrice(pPrices.cpanel) * durMonths * qty });
-                    } else if (osImage === "plesk-win") {
-                      const licPrice = pleskWinLicence === "admin" ? parsePrice(pPrices.pleskLinux) : 
-                                       pleskWinLicence === "host" ? parsePrice(pPrices.pleskHost) : 
-                                       parsePrice(pPrices.pleskPro);
-                      const verPrice = pleskWinVersion === "2016" ? parsePrice(pPrices.win2016) : parsePrice(pPrices.windows);
-                      items.push({ label: `Plesk + Windows (${pleskWinLicence})`, price: (licPrice + verPrice) * durMonths * qty });
+                      items.push({ label: `cPanel License`, price: currentImagePrices.cpanel * durMonths * qty * currentRate });
                     } else if (osImage === "plesk" || osImage === "plesk-linux") {
-                      const price = pleskLicence === "admin" ? parsePrice(pPrices.pleskLinux) : 
-                                       pleskLicence === "host" ? parsePrice(pPrices.pleskHost) : 
-                                       parsePrice(pPrices.pleskPro);
-                      items.push({ label: `Plesk Linux (${pleskLicence})`, price: price * durMonths * qty });
-                    } else if (osImage) {
-                      const imgLabel = osImage.charAt(0).toUpperCase() + osImage.slice(1);
-                      items.push({ label: `SO: ${imgLabel}`, price: 0 });
+                      const licEur = pleskLicence === "admin" ? currentImagePrices.pleskLinux : 
+                                     pleskLicence === "host" ? currentImagePrices.pleskHost : 
+                                     currentImagePrices.pleskPro;
+                      items.push({ label: `Plesk License (${pleskLicence})`, price: licEur * durMonths * qty * currentRate });
+                    } else if (osImage === "plesk-win") {
+                      const licEur = pleskWinLicence === "admin" ? currentImagePrices.pleskLinux : 
+                                     pleskWinLicence === "host" ? currentImagePrices.pleskHost : 
+                                     currentImagePrices.pleskPro;
+                      const verEur = pleskWinVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows;
+                      items.push({ label: `Plesk + Windows (${pleskWinLicence})`, price: (licEur + verEur) * durMonths * qty * currentRate });
                     }
 
                     return items.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center text-sm border-b border-slate-50 pb-1">
                         <span className="text-slate-500">{item.label}</span>
-                        <span className="font-bold text-slate-700">R$ {item.price.toFixed(2).replace(".", ",")}</span>
+                        <span className="font-bold text-slate-700">{formatBRL(item.price / currentRate)}</span>
                       </div>
                     ));
                   })()}
@@ -1027,323 +1382,87 @@ export default function ConfigureWindowsVps() {
               const selectedDur = durations.find((d:any) => d.id === duration) || durations[0];
               const durMonths = parseInt(duration);
               const qty = parseInt(quantity) || 1;
-              const basePriceMonthly = parseFloat(selectedDur.price.replace("R$ ", "").replace(".", "").replace(",", "."));
-              const setupFee = selectedDur.setupFee === "Sem taxa de instalação" ? 0 : parseFloat(selectedDur.setupFee.replace("Taxa de configuração de R$ ", "").replace(",", "."));
+
+              // Base Price Logic
+              const basePriceMonthlyEur = selectedDur.eur;
               
-              let additional = 0;
-              const st = storageTypes.find((s: any) => s.id === storageType);
-              if (st && st.price !== "Livre") additional += parseFloat(st.price.replace("R$ ", "").replace(",", "."));
+              // Setup Fee Logic
+              const setupFeeEur = selectedDur.setupEur || 0;
+
+              let additionalEur = 0;
+              const loc = Object.values(planLocations).flat().find((l: any) => l.id === location) as any;
               
-              const loc = Object.values(plan.locations).flat().find((l: any) => l.id === location) as any;
-              if (loc && loc.price > 0) additional += loc.price;
-              
-              if (autoBackup) additional += plan.backupPrice;
+              if (loc && loc.eur) {
+                additionalEur += loc.eur;
+              }
+
+              const stype = storageTypes.find((s:any) => s.id === storageType);
+              if (stype && stype.eur) {
+                additionalEur += stype.eur;
+              }
+
+              if (autoBackup) {
+                additionalEur += plan.backupEur;
+              }
+
+              if (privateNetwork === "enabled") {
+                const pnEur = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60") ? plan.privateNetworkEur : 0;
+                additionalEur += pnEur;
+              }
+
+              if (ipv4Address === "2ip") {
+                additionalEur += plan.additionalIpEur;
+              }
+
               if (objectStorage !== "none") {
-                  const prices: any = { "250gb": 29.18, "500gb": 58.37, "2tb": 214.71, "5tb": 536.77 };
-                  additional += prices[objectStorage];
+                const tier = plan.objectStorageTiers.find((t:any) => t.id === objectStorage);
+                if (tier) additionalEur += tier.eur;
               }
-              if (serverManagement === "managed") additional += 1289.08;
-              if (monitoring === "full") additional += 134.66;
-              
-              // Image Price Addition
-              const pPrices = getPlanImagePrices(planId);
-              const parsePrice = (p: string) => parseFloat(p.replace("R$ ", "").replace(",", "."));
+
+              if (serverManagement === "managed") {
+                additionalEur += 109.99;
+              }
+
+              if (monitoring === "full") {
+                additionalEur += 11.49;
+              }
+
+              // Image Pricing
               if (osImage === "windows") {
-                additional += windowsVersion === "2016" ? parsePrice(pPrices.win2016) : parsePrice(pPrices.windows);
+                additionalEur += windowsVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows;
               } else if (osImage === "cpanel") {
-                additional += parsePrice(pPrices.cpanel);
+                additionalEur += currentImagePrices.cpanel;
               } else if (osImage === "plesk" || osImage === "plesk-linux") {
-                additional += pleskLicence === "admin" ? parsePrice(pPrices.pleskLinux) : 
-                               pleskLicence === "host" ? parsePrice(pPrices.pleskHost) : 
-                               parsePrice(pPrices.pleskPro);
+                const licEur = pleskLicence === "admin" ? currentImagePrices.pleskLinux : 
+                                 pleskLicence === "host" ? currentImagePrices.pleskHost : 
+                                 currentImagePrices.pleskPro;
+                additionalEur += licEur;
               } else if (osImage === "plesk-win") {
-                const licPrice = pleskWinLicence === "admin" ? parsePrice(pPrices.pleskLinux) : 
-                                 pleskWinLicence === "host" ? parsePrice(pPrices.pleskHost) : 
-                                 parsePrice(pPrices.pleskPro);
-                const verPrice = pleskWinVersion === "2016" ? parsePrice(pPrices.win2016) : parsePrice(pPrices.windows);
-                additional += (licPrice + verPrice);
+                const licEur = pleskWinLicence === "admin" ? currentImagePrices.pleskLinux : 
+                                 pleskWinLicence === "host" ? currentImagePrices.pleskHost : 
+                                 currentImagePrices.pleskPro;
+                const verEur = pleskWinVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows;
+                additionalEur += (licEur + verEur);
               }
 
-              if (privateNetwork === "enabled") additional += 26.84;
-              if (ipv4Address === "2ip") additional += 41.02;
-
-              const totalMonthly = basePriceMonthly + additional;
-              const dueToday = (totalMonthly * durMonths * qty) + (setupFee * qty);
-
+              const totalMonthly = (basePriceMonthlyEur + additionalEur) * currentRate;
+              const dueToday = (totalMonthly * durMonths * qty) + (setupFeeEur * currentRate * qty);
+              
               return (
                 <div className="flex items-center gap-12">
                   <div className="flex flex-col gap-1 min-w-[220px]">
-                    <div className="flex justify-between items-center text-[11px]"><span className="text-slate-500 font-bold">Mensal</span><span className="font-black">R$ {(totalMonthly * qty).toFixed(2).replace(".", ",")}</span></div>
-                    <div className="flex justify-between items-center mt-1"><span className="font-black text-slate-800 text-[13px]">Vencido Hoje</span><span className="text-xl font-black text-slate-900">R$ {dueToday.toFixed(2).replace(".", ",")}</span></div>
+                    <div className="flex justify-between items-center text-[11px]"><span className="text-slate-500 font-bold">Mensal</span><span className="font-black text-slate-700">{formatBRL(totalMonthly * qty / currentRate)}</span></div>
+                    <div className="flex justify-between items-center mt-1"><span className="font-black text-slate-800 text-[13px]">Vencido Hoje</span><span className="text-xl font-black text-slate-900">{formatBRL(dueToday / currentRate)}</span></div>
                   </div>
-                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&password=${encodeURIComponent(password)}&storage=${storageType}&type=vps-windows`)} className={cn("font-bold h-14 px-12 rounded-full text-lg", isPasswordValid(password) ? "bg-[#00A8E8] hover:bg-[#0096d1] text-white shadow-sky-100" : "bg-slate-200 text-slate-400 cursor-not-allowed")}>Próximo</Button>
+                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&password=${encodeURIComponent(password)}&storage=${storageType}&type=vps-windows`)} className={cn("font-bold h-14 px-12 rounded-full text-lg shadow-lg", isPasswordValid(password) ? "bg-[#00A8E8] hover:bg-[#0096d1] text-white shadow-sky-100" : "bg-slate-200 text-slate-400 cursor-not-allowed")}>Próximo</Button>
                 </div>
               );
             })()}
           </div>
         </div>
       </div>
-
-      {/* Windows Modal */}
-      <AnimatePresence>
-        {showWindowsModal && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowWindowsModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/windows.png" alt="Windows" className="w-10 h-10" /><h2 className="text-xl font-bold">Windows Server</h2></div>
-              <div className="space-y-4">
-                <label className="text-sm font-bold">Versão (Inclusa)</label>
-                <Select value={windowsVersion} onValueChange={setWindowsVersion}>
-                  <SelectTrigger className="h-14">
-                    <SelectValue>
-                      <div className="flex items-center justify-between w-full pr-4 text-xs">
-                        <span>Windows Server {windowsVersion} Datacenter</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-800">
-                            {windowsVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows}
-                          </span>
-                          <span className="text-slate-400">|</span>
-                          <span className="text-slate-400">Sem taxa de instalação</span>
-                        </div>
-                      </div>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2025">
-                      <div className="flex items-center justify-between w-[480px] text-xs">
-                        <span>Windows Server 2025 Datacenter</span>
-                        <span className="font-bold text-slate-800">{currentImagePrices.windows.replace(" /mês", "")}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="2022">
-                      <div className="flex items-center justify-between w-[480px] text-xs">
-                        <span>Windows Server 2022 Datacenter</span>
-                        <span className="font-bold text-slate-800">{currentImagePrices.windows.replace(" /mês", "")}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="2019">
-                      <div className="flex items-center justify-between w-[480px] text-xs">
-                        <span>Windows Server 2019 Datacenter</span>
-                        <span className="font-bold text-slate-800">{currentImagePrices.windows.replace(" /mês", "")}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="2016">
-                      <div className="flex items-center justify-between w-[480px] text-xs">
-                        <span>Windows Server 2016 Datacenter</span>
-                        <span className="font-bold text-slate-800">{currentImagePrices.win2016.replace(" /mês", "")}</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowWindowsModal(false)}>Fechar</Button><Button onClick={() => setShowWindowsModal(false)} className="bg-[#00A8E8] text-white">Selecionar</Button></div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-      
-      {/* Plesk Modal */}
-      <AnimatePresence>
-        {showPleskModal && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className="text-xl font-bold">Plesk + Linux</h2></div>
-              
-              <div className="space-y-4">
-                <label className="text-sm font-bold">Licença</label>
-                <Select value={pleskLicence} onValueChange={setPleskLicence}>
-                  <SelectTrigger className="h-14">
-                    <SelectValue>
-                      <div className="flex items-center justify-between w-full pr-4 text-xs">
-                        <div className="flex flex-col text-left">
-                          <span className="font-bold text-[#00A8E8]">
-                            {pleskLicence === "admin" ? "Plesk Obsidian Web Admin Edition" : 
-                             pleskLicence === "host" ? "Plesk Obsidian Web Host Edition" : 
-                             "Plesk Obsidian Web Pro Edition"} 1 mês
-                          </span>
-                          <span className="text-emerald-500 font-bold">free</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-800">
-                            {pleskLicence === "admin" ? currentImagePrices.pleskLinux : 
-                             pleskLicence === "host" ? currentImagePrices.pleskHost : 
-                             currentImagePrices.pleskPro}
-                          </span>
-                          <span className="text-slate-400">|</span>
-                          <span className="text-slate-400">R$ 0,00 Taxa de instalação</span>
-                        </div>
-                      </div>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="z-[120]">
-                    <SelectItem value="admin">
-                      <div className="flex items-center justify-between w-[480px] text-xs">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-800">Plesk Obsidian Web Admin Edition</span>
-                          <span className="text-emerald-500 font-bold">1 mês grátis</span>
-                        </div>
-                        <span className="font-black">{currentImagePrices.pleskLinux.replace(" /mês", "")}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="host">
-                      <div className="flex items-center justify-between w-[480px] text-xs">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-800">Plesk Obsidian Web Host Edition</span>
-                          <span className="text-emerald-500 font-bold">1 mês grátis</span>
-                        </div>
-                        <span className="font-black">{currentImagePrices.pleskHost.replace(" /mês", "")}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="pro">
-                      <div className="flex items-center justify-between w-[480px] text-xs">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-800">Plesk Obsidian Web Pro Edition</span>
-                          <span className="text-emerald-500 font-bold">1 mês grátis</span>
-                        </div>
-                        <span className="font-black">{currentImagePrices.pleskPro.replace(" /mês", "")}</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="space-y-3">
-                  <label className="text-sm font-bold">Versão</label>
-                  <Select value={pleskVersion} onValueChange={setPleskVersion}>
-                    <SelectTrigger className="h-14">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="z-[120]">
-                      <SelectItem value="Ubuntu 22.04">Ubuntu 22.04</SelectItem>
-                      <SelectItem value="AlmaLinux 9">AlmaLinux 9</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-4">
-                <Button variant="ghost" onClick={() => setShowPleskModal(false)}>Fechar</Button>
-                <Button onClick={() => setShowPleskModal(false)} className="bg-[#00A8E8] text-white">Selecionar</Button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-      {/* Plesk Windows Modal */}
-      <AnimatePresence>
-        {showPleskWindowsModal && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskWindowsModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4">
-                <img src="/plesk.png" alt="Plesk" className="w-8 h-8 object-contain" />
-                <h2 className="text-xl font-bold text-slate-700">Plesk + Windows</h2>
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <label className="text-sm font-bold text-slate-600">Licence</label>
-                  <Select value={pleskWinLicence} onValueChange={setPleskWinLicence}>
-                    <SelectTrigger className="h-16 border border-slate-200">
-                      <SelectValue>
-                        <div className="flex items-center justify-between w-full pr-4 text-[13px] leading-tight">
-                          <div className="flex flex-col text-left">
-                            <span className="font-medium text-slate-700">
-                              {pleskWinLicence === "admin" ? "Plesk Obsidian Web Admin Edition" : 
-                               pleskWinLicence === "host" ? "Plesk Obsidian Web Host Edition" : 
-                               "Plesk Obsidian Web Pro Edition"}
-                            </span>
-                            <span className="text-emerald-500 font-bold text-[11px]">1 month free</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-slate-500">
-                            <span className="font-medium">
-                              {pleskWinLicence === "admin" ? currentImagePrices.pleskWin : 
-                               pleskWinLicence === "host" ? currentImagePrices.pleskHost : 
-                               currentImagePrices.pleskPro}
-                            </span>
-                            <span>|</span>
-                            <span>R$ 0,00 Setup fee</span>
-                          </div>
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="z-[120]">
-                      <SelectItem value="admin">
-                        <div className="flex items-center justify-between w-[480px] py-1">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-sky-600">Plesk Obsidian Web Admin Edition</span>
-                            <span className="text-emerald-500 font-bold text-xs">1 month free</span>
-                          </div>
-                          <span className="font-black text-slate-800">{currentImagePrices.pleskWin.replace(" /mês", "")}</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="host">
-                        <div className="flex items-center justify-between w-[480px] py-1">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-slate-700">Plesk Obsidian Web Host Edition</span>
-                            <span className="text-emerald-500 font-bold text-xs">1 month free</span>
-                          </div>
-                          <span className="font-black text-slate-800">{currentImagePrices.pleskHost.replace(" /mês", "")}</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="pro">
-                        <div className="flex items-center justify-between w-[480px] py-1">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-slate-700">Plesk Obsidian Web Pro Edition</span>
-                            <span className="text-emerald-500 font-bold text-xs">1 month free</span>
-                          </div>
-                          <span className="font-black text-slate-800">{currentImagePrices.pleskPro.replace(" /mês", "")}</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-sm font-bold text-slate-600">Version</label>
-                  <Select value={pleskWinVersion} onValueChange={setPleskWinVersion}>
-                    <SelectTrigger className="h-16 border border-slate-200">
-                      <SelectValue>
-                        <div className="flex items-center justify-between w-full pr-4 text-[13px]">
-                          <span className="font-medium text-slate-700">Windows Server {pleskWinVersion} Datacenter</span>
-                          <div className="flex items-center gap-2 text-slate-500">
-                            <span className="font-medium">
-                              {pleskWinVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows}
-                            </span>
-                            <span>|</span>
-                            <span>R$ 0,00 Setup fee</span>
-                          </div>
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="z-[120]">
-                      <SelectItem value="2016">
-                        <div className="flex items-center justify-between w-[480px] py-1">
-                          <span className="font-bold text-sky-600">Windows Server 2016 Datacenter</span>
-                          <span className="font-black text-slate-800">{currentImagePrices.win2016.replace(" /mês", "")}</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="2019">
-                        <div className="flex items-center justify-between w-[480px] py-1">
-                          <span className="font-bold text-slate-700">Windows Server 2019 Datacenter</span>
-                          <span className="font-black text-slate-800">{currentImagePrices.windows.replace(" /mês", "")}</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="2022">
-                        <div className="flex items-center justify-between w-[480px] py-1">
-                          <span className="font-bold text-slate-700">Windows Server 2022 Datacenter</span>
-                          <span className="font-black text-slate-800">{currentImagePrices.windows.replace(" /mês", "")}</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-6 pt-4">
-                <Button variant="ghost" onClick={() => setShowPleskWindowsModal(false)} className="text-slate-400 font-bold">CANCELAR</Button>
-                <Button onClick={() => setShowPleskWindowsModal(false)} className="bg-[#00A8E8] hover:bg-[#0096d1] text-white font-bold px-8">CONFIGURAR</Button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
+
+
