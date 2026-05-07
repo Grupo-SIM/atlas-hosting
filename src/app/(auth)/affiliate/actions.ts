@@ -77,9 +77,39 @@ export async function requestWithdrawal(
     return { error: "Chave PIX inválida" };
   }
 
+  const cpf = user.billingDocument?.replace(/\D/g, "") ?? "";
+  if (cpf.length !== 11) {
+    return {
+      error:
+        "CPF do afiliado nao encontrado. Atualize seus dados de faturamento antes de solicitar saque.",
+    };
+  }
+
   const { available } = await getAffiliateBalance(user.id);
   if (amount > available) {
     return { error: "Saldo insuficiente" };
+  }
+
+  let simpayWithdrawalId: string;
+
+  // Submit to simpay (non-blocking — withdrawal record already created)
+  try {
+    const result = await simpayApi.requestWithdrawal({
+      cpf,
+      email: user.email,
+      amount,
+      pixKey: trimmedPix,
+    });
+
+    simpayWithdrawalId = result.id;
+  } catch (err) {
+    console.error("[WITHDRAWAL] Falha ao submeter para simpay:", err);
+    return {
+      error:
+        err instanceof Error
+          ? err.message
+          : "Falha ao enviar a solicitacao para a Simpay.",
+    };
   }
 
   const withdrawalId = uuidv4();
@@ -91,24 +121,48 @@ export async function requestWithdrawal(
     amount,
     pixKey: trimmedPix,
     fee,
+    simpayWithdrawalId,
   });
 
-  // Submit to simpay (non-blocking — withdrawal record already created)
-  try {
-    const result = await simpayApi.requestWithdrawal({
-      valor: amount,
-      chavePix: trimmedPix,
-      description: `atlas-${user.id}`,
-    });
+  revalidatePath("/affiliate");
+  return { success: true };
+}
 
-    await db
-      .update(pgWithdrawalRequests)
-      .set({ simpayWithdrawalId: result.id })
-      .where(eq(pgWithdrawalRequests.id, withdrawalId));
-  } catch (err) {
-    console.error("[WITHDRAWAL] Falha ao submeter para simpay:", err);
-    // Withdrawal record exists; admin can process manually
+export async function cancelLocalWithdrawal(
+  withdrawalId: string
+): Promise<{ error?: string; success?: boolean }> {
+  const user = await getUser();
+
+  const withdrawal = await db.query.pgWithdrawalRequests.findFirst({
+    where: and(
+      eq(pgWithdrawalRequests.id, withdrawalId),
+      eq(pgWithdrawalRequests.userId, user.id)
+    ),
+  });
+
+  if (!withdrawal) {
+    return { error: "Saque nao encontrado." };
   }
+
+  if (withdrawal.status !== "pending") {
+    return { error: "Somente saques pendentes podem ser cancelados." };
+  }
+
+  if (withdrawal.simpayWithdrawalId) {
+    return {
+      error:
+        "Este saque ja foi enviado para a Simpay. Cancele ou rejeite pela Simpay.",
+    };
+  }
+
+  await db
+    .update(pgWithdrawalRequests)
+    .set({
+      status: "rejected",
+      rejectionReason: "Cancelado pelo afiliado antes de enviar para a Simpay.",
+      updatedAt: new Date(),
+    })
+    .where(eq(pgWithdrawalRequests.id, withdrawalId));
 
   revalidatePath("/affiliate");
   return { success: true };
@@ -139,9 +193,11 @@ export async function syncWithdrawalStatus(
       withdrawal.simpayWithdrawalId
     );
 
+    console.log(`[WITHDRAWAL-SYNC] Status remoto para ${withdrawalId}:`, remote);
+
     const normalizedStatus = remote.status?.toLowerCase();
 
-    if (normalizedStatus === "approved" || normalizedStatus === "completed") {
+    if (["approved", "completed", "aprovada"].includes(normalizedStatus)) {
       await db.transaction(async (tx) => {
         await tx
           .update(pgWithdrawalRequests)
@@ -166,7 +222,9 @@ export async function syncWithdrawalStatus(
           remaining -= commission.commissionAmount;
         }
       });
-    } else if (normalizedStatus === "rejected") {
+    } else if (
+      ["rejected", "recusada", "failed", "expired"].includes(normalizedStatus)
+    ) {
       await db
         .update(pgWithdrawalRequests)
         .set({

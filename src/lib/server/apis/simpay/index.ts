@@ -68,15 +68,18 @@ export interface SimpayPixCreateResponse {
 }
 
 export interface SimpayWithdrawalParams {
-  valor: number;
-  chavePix: string;
-  description?: string;
+  cpf: string;
+  email: string;
+  amount: number;
+  pixKey: string;
 }
 
 export interface SimpayWithdrawalResponse {
   id: string;
-  status: string;
+  success?: boolean;
+  status?: string;
   amount?: number;
+  netPayout?: number;
   pixKey?: string;
   rejectionReason?: string;
 }
@@ -241,11 +244,12 @@ class SimpayApi {
   async requestWithdrawal(
     params: SimpayWithdrawalParams
   ): Promise<SimpayWithdrawalResponse> {
-    const url = `${resolveSimpayBaseUrl()}/atlas/saques`;
+    const url = `${resolveSimpayBaseUrl()}/internal/atlas/finance/withdraw`;
     const token =
       process.env.ATLAS_SIMPAY_INTERNAL_TOKEN ||
+      process.env.SIMPAY_INTERNAL_TOKEN ||
       process.env.DOM_API_KEY ||
-      "";
+      "91b324f6aa36368c536b4f1f9e75f7565b385737b1aa3a4adf07b8c7d99300c9";
 
     const response = await fetch(url, {
       method: "POST",
@@ -254,7 +258,12 @@ class SimpayApi {
         Accept: "application/json",
         "x-internal-token": token,
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify({
+        cpf: params.cpf.replace(/\D/g, ""),
+        email: params.email,
+        amount: params.amount,
+        pixKey: params.pixKey,
+      }),
     });
 
     const data = await response.json();
@@ -272,11 +281,11 @@ class SimpayApi {
   async getWithdrawalStatus(
     withdrawalId: string
   ): Promise<{ id: string; status: string; rejectionReason?: string }> {
-    const url = `${resolveSimpayBaseUrl()}/atlas/saques/${withdrawalId}`;
+    const url = `${resolveSimpayBaseUrl()}/internal/atlas/finance/withdraw/${withdrawalId}`;
     const token =
       process.env.ATLAS_SIMPAY_INTERNAL_TOKEN ||
       process.env.DOM_API_KEY ||
-      "";
+      "91b324f6aa36368c536b4f1f9e75f7565b385737b1aa3a4adf07b8c7d99300c9";
 
     const response = await fetch(url, {
       headers: {
@@ -291,6 +300,37 @@ class SimpayApi {
       throw new Error(
         `Erro ao consultar status do saque (HTTP ${response.status})`
       );
+    }
+
+    return data;
+  }
+
+  async getSummary(params: { cpf?: string; email?: string }): Promise<{
+    userExists: boolean;
+    availableBalance: number;
+    pendingWithdraws: number;
+    lockedBalance: number;
+  }> {
+    const query = new URLSearchParams();
+    if (params.cpf) query.append("cpf", params.cpf);
+    if (params.email) query.append("email", params.email);
+
+    const url = `${resolveSimpayBaseUrl()}/internal/atlas/finance/summary?${query.toString()}`;
+    const token =
+      process.env.ATLAS_SIMPAY_INTERNAL_TOKEN ||
+      process.env.DOM_API_KEY ||
+      "dce6be4f-2db4-405b-9f9f-8277031b25ec";
+
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "x-internal-token": token,
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(`Erro ao consultar sumário (HTTP ${response.status})`);
     }
 
     return data;
