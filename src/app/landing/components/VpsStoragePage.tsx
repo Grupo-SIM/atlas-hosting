@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { HardDrive, ShieldCheck } from "lucide-react";
 import { Roboto } from "next/font/google";
@@ -12,9 +13,8 @@ const roboto = Roboto({
 
 type StoragePlan = {
   name: string;
-  oldPrice: string;
-  newPrice: string;
-  cents: string;
+  eurOld: number;
+  eurNew: number;
   vcpu: string;
   ram: string;
   storage: string;
@@ -25,9 +25,8 @@ type StoragePlan = {
 const storagePlans: StoragePlan[] = [
   {
     name: "Storage VPS 10 (S)",
-    oldPrice: "R$ 52,74",
-    newPrice: "R$ 42,",
-    cents: "19",
+    eurOld: 4.50,
+    eurNew: 3.60,
     vcpu: "2 núcleos de vCPU",
     ram: "4 GB de RAM",
     storage: "300 GB SSD",
@@ -35,9 +34,8 @@ const storagePlans: StoragePlan[] = [
   },
   {
     name: "Storage VPS 20 (M)",
-    oldPrice: "R$ 82,04",
-    newPrice: "R$ 65,",
-    cents: "63",
+    eurOld: 7.00,
+    eurNew: 5.60,
     vcpu: "3 núcleos de vCPU",
     ram: "8 GB de RAM",
     storage: "400 GB SSD",
@@ -46,9 +44,8 @@ const storagePlans: StoragePlan[] = [
   },
   {
     name: "Storage VPS 30 (L)",
-    oldPrice: "R$ 164,08",
-    newPrice: "R$ 131,",
-    cents: "26",
+    eurOld: 14.00,
+    eurNew: 11.20,
     vcpu: "6 núcleos de vCPU",
     ram: "18 GB de RAM",
     storage: "1 TB SSD",
@@ -56,9 +53,8 @@ const storagePlans: StoragePlan[] = [
   },
   {
     name: "Storage VPS 40 (XL)",
-    oldPrice: "R$ 293,00",
-    newPrice: "R$ 234,",
-    cents: "40",
+    eurOld: 25.00,
+    eurNew: 20.00,
     vcpu: "8 núcleos de vCPU",
     ram: "30 GB de RAM",
     storage: "1.2 TB SSD",
@@ -66,9 +62,8 @@ const storagePlans: StoragePlan[] = [
   },
   {
     name: "Storage VPS 50 (XXL)",
-    oldPrice: "R$ 433,64",
-    newPrice: "R$ 346,",
-    cents: "91",
+    eurOld: 37.00,
+    eurNew: 29.60,
     vcpu: "14 núcleos de vCPU",
     ram: "50 GB de RAM",
     storage: "1.4 TB SSD",
@@ -77,6 +72,26 @@ const storagePlans: StoragePlan[] = [
 ];
 
 export function VpsStoragePage() {
+  const [currentRate, setCurrentRate] = useState(11.72);
+
+  useEffect(() => {
+    fetch("/api/currency/euro")
+      .then(res => res.json())
+      .then(data => {
+        if (data.rate) {
+          setCurrentRate(data.rate);
+        }
+      })
+      .catch(err => console.error("Error fetching rate:", err));
+  }, []);
+
+  const formatBRL = (eur: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(eur * currentRate);
+  };
+
   return (
     <section className="relative overflow-hidden bg-slate-50 px-4 py-8 md:px-8 md:py-10">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] bg-[size:40px_40px]" />
@@ -104,7 +119,11 @@ export function VpsStoragePage() {
 
         <div className="mt-4 overflow-x-auto pb-3 scrollbar-thin md:mt-5">
           <div className="flex min-w-[1180px] gap-4 md:justify-center">
-            {storagePlans.map((plan) => (
+            {storagePlans.map((plan) => {
+              const formattedNewPrice = formatBRL(plan.eurNew).replace(/\u00A0/g, " ");
+              const [newMain, newCents] = formattedNewPrice.split(",");
+
+              return (
               <article
                 key={plan.name}
                 className={`w-[230px] shrink-0 overflow-hidden rounded-xl border bg-white shadow-sm ${plan.popular
@@ -121,10 +140,10 @@ export function VpsStoragePage() {
                   <p className={`${roboto.className} pr-[4.5rem] text-[13px] font-bold tracking-wide text-slate-900`}>
                     {plan.name}
                   </p>
-                  <p className="mt-2 text-xs font-medium text-rose-500 line-through opacity-70">{plan.oldPrice}</p>
+                  <p className="mt-2 text-xs font-medium text-rose-500 line-through opacity-70">{formatBRL(plan.eurOld)}</p>
                   <p className="mt-0.5 leading-none text-slate-900">
-                    <span className="text-4xl font-extrabold">{plan.newPrice}</span>
-                    <span className="align-top text-lg font-bold">{plan.cents}</span>
+                    <span className="text-4xl font-extrabold">{newMain},</span>
+                    <span className="align-top text-lg font-bold">{newCents}</span>
                     <span className="ml-1 text-[10px] font-medium text-slate-400">/mês</span>
                   </p>
                   <p className="mt-0.5 text-[10px] font-light leading-snug text-slate-400">por um período de 12 meses</p>
@@ -146,7 +165,7 @@ export function VpsStoragePage() {
                   <p className="border-t border-slate-100 px-3 py-2.5 font-semibold text-sky-600 text-xs uppercase tracking-wider font-extrabold">Suporte 24/7 Ativo</p>
                 </div>
               </article>
-            ))}
+            )})}
           </div>
         </div>
 
