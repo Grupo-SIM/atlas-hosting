@@ -21,6 +21,7 @@ type WindowsPlan = {
   storage: string;
   snapshots: string;
   speed: string;
+  noSetupFee?: boolean;
 };
 
 const windowsPlans = [
@@ -45,6 +46,7 @@ const windowsPlans = [
     storage: "100 GB NVMe ou SSD 200 GB",
     snapshots: "2 Instantâneos",
     speed: "Porta de 300 Mbit/s",
+    noSetupFee: true,
   },
   {
     id: "30",
@@ -56,6 +58,7 @@ const windowsPlans = [
     storage: "200 GB NVMe ou SSD 400 GB",
     snapshots: "3 Instantâneos",
     speed: "Porta de 600 Mbit/s",
+    noSetupFee: true,
   },
   {
     id: "40",
@@ -67,6 +70,7 @@ const windowsPlans = [
     storage: "250 GB NVMe ou SSD 500 GB",
     snapshots: "3 Instantâneos",
     speed: "Porta de 800 Mbit/s",
+    noSetupFee: true,
   },
   {
     id: "50",
@@ -78,6 +82,7 @@ const windowsPlans = [
     storage: "300 GB NVMe ou SSD 600 GB",
     snapshots: "3 Instantâneos",
     speed: "Porta de 1 Gbit/s",
+    noSetupFee: true,
   },
   {
     id: "60",
@@ -89,6 +94,7 @@ const windowsPlans = [
     storage: "350 GB NVMe ou SSD 700 GB",
     snapshots: "3 Instantâneos",
     speed: "Porta de 1 Gbit/s",
+    noSetupFee: true,
   },
 ];
 
@@ -145,7 +151,7 @@ export function VpsWindowsPage() {
           </p>
         </div>
 
-        <div className="mt-8 overflow-x-auto pb-3 scrollbar-thin md:mt-10">
+        <div className="mt-8 overflow-x-auto pb-3 pt-4 scrollbar-thin md:mt-10">
           <div className="flex min-w-[1640px] gap-4 md:justify-center">
             {windowsPlans.map((plan) => {
               const formattedNewPrice = formatBRL(plan.eurNew).replace(/\u00A0/g, " ");
@@ -154,9 +160,16 @@ export function VpsWindowsPage() {
               return (
               <article
                 key={plan.name}
-                className="w-[260px] shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                className="relative w-[260px] shrink-0 overflow-visible rounded-xl border border-slate-200 bg-white shadow-sm"
               >
-                <div className="p-4">
+                {plan.noSetupFee && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                    <span className={`${roboto.className} whitespace-nowrap rounded bg-[#0099e5] px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm`}>
+                      Taxa de instalação grátis
+                    </span>
+                  </div>
+                )}
+                <div className="p-4 pt-5">
                   <p className={`${roboto.className} text-base font-bold tracking-wide text-slate-900`}>{plan.name}</p>
                   <p className="mt-1 text-sm font-bold text-slate-500">Servidor Windows</p>
                   <p className="mt-2 text-xs font-medium text-rose-500 line-through opacity-70">{formatBRL(plan.eurOld)}</p>

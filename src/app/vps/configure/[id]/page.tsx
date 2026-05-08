@@ -50,8 +50,8 @@ const plansData: Record<string, any> = {
     snapshots: "1 Instantâneo",
     traffic: "Porta de 200 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 4.50, setupEur: 4.50, setupFee: "Taxa de configuração de R$ 52,74", discount: null },
-      { id: "6", label: "6 meses", eur: 4.05, setupEur: 2.25, setupFee: "Taxa de configuração de R$ 26,37", discount: "ECONOMIZE 10%", oldEur: 4.50 },
+      { id: "1", label: "1 mês", eur: 4.50, setupEur: 4.50, setupFee: null, discount: null },
+      { id: "6", label: "6 meses", eur: 4.05, setupEur: 2.25, setupFee: null, discount: "ECONOMIZE 10%", oldEur: 4.50 },
       { id: "12", label: "12 meses", eur: 3.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 4.50 },
     ],
     storageTypes: [
@@ -71,6 +71,29 @@ const plansData: Record<string, any> = {
       "500gb": 4.98,
       "750gb": 7.47,
       "1tb": 9.96
+    },
+    locations: {
+      best: [
+        { id: "eu", name: "União Europeia", latency: "146 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 1.40, recommended: true },
+      ],
+      europe: [
+        { id: "eu", name: "União Europeia", latency: "146 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "132 ms", eur: 0.95 },
+      ],
+      america: [
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 0.95 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 1.40, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "146 ms", eur: 1.15 },
+      ],
+      asia: [
+        { id: "sg", name: "Ásia (Singapura)", latency: "304 ms", eur: 2.30 },
+        { id: "jp", name: "Ásia (Japão)", latency: "232 ms", eur: 2.35 },
+        { id: "in", name: "Ásia (Índia)", latency: "286 ms", eur: 2.15 },
+      ],
+      australia: [
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "306 ms", eur: 1.95 },
+      ]
     }
   },
   "20": {
@@ -456,10 +479,10 @@ const images = {
   popular: [
     { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
     { id: "custom", name: "Imagens personalizadas", price: "Incluído", icon: "/custom-images.png" },
-    { id: "windows", name: "Servidor Windows", eur: 8.93, icon: "/windows.png" },
-    { id: "cpanel", name: "cPanel", eur: 25.88, icon: "/cpanel.png" },
+    { id: "windows", name: "Servidor Windows", eur: 7.50, icon: "/windows.png" },
+    { id: "cpanel", name: "cPanel", eur: 21.75, icon: "/cpanel.png" },
     { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
-    { id: "plesk", name: "Plesk + Linux", eur: 14.28, icon: "/plesk.png" },
+    { id: "plesk", name: "Plesk + Linux", eur: 12.00, icon: "/plesk.png" },
   ],
   os: [
     { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
@@ -479,9 +502,9 @@ const images = {
     { id: "openclaw", name: "OpenClaw Server", price: "Incluído", icon: "/openclaw.png" },
   ],
   panels: [
-    { id: "cpanel", name: "cPanel", eur: 25.88, icon: "/cpanel.png" },
-    { id: "plesk-win", name: "Plesk + Windows", eur: 14.28, icon: "/plesk.png" },
-    { id: "plesk-linux", name: "Plesk + Linux", eur: 14.28, icon: "/plesk.png" },
+    { id: "cpanel", name: "cPanel", eur: 21.75, icon: "/cpanel.png" },
+    { id: "plesk-win", name: "Plesk + Windows", eur: 18.25, icon: "/plesk.png" },
+    { id: "plesk-linux", name: "Plesk + Linux", eur: 12.00, icon: "/plesk.png" },
     { id: "webmin", name: "Webmin", price: "Incluído", icon: "/webmin.png" },
     { id: "webmin-lamp", name: "Webmin + LAMP", price: "Incluído", icon: "/lamp.png" },
   ],
@@ -498,6 +521,22 @@ export default function VpsConfigurePage() {
   const planId = params.id as string;
   
   const [currentRate, setCurrentRate] = useState(11.72);
+
+  useEffect(() => {
+    const fetchRate = async () => {
+      try {
+        const response = await fetch("/api/currency/euro");
+        const data = await response.json();
+        if (data.rate) {
+          setCurrentRate(data.rate);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar taxa do euro:", error);
+      }
+    };
+    fetchRate();
+  }, []);
+
   const plan = plansData[planId as keyof typeof plansData] || plansData["10"];
   const durations = plan.durations && plan.durations.length > 0 ? plan.durations : defaultDurations;
   const storageTypes = plan.storageTypes && plan.storageTypes.length > 0 ? plan.storageTypes : defaultStorageTypes;
@@ -570,18 +609,18 @@ export default function VpsConfigurePage() {
   function getImagePrices(planId: string, defaultImagePrices: any) {
     const base = {
       ...defaultImagePrices,
-      cpanel: 25.88,
-      pleskLinux: 14.28,
-      pleskWin: 14.28,
-      pleskPro: 22.61,
-      pleskHost: 43.44
+      cpanel: 21.75,
+      pleskLinux: 12.00,
+      pleskWin: 12.00,
+      pleskPro: 19.00,
+      pleskHost: 36.50
     };
 
     if (planId === "10") {
       return {
         ...base,
-        windows: 8.93,
-        windows_2016: 7.44
+        windows: 7.50,
+        windows_2016: 6.25
       };
     }
     
@@ -1059,13 +1098,18 @@ export default function VpsConfigurePage() {
                         </div>
                         <div className="md:col-span-9">
                           <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white text-left justify-start">
+                            <SelectTrigger className="h-12 border-slate-200 bg-white">
                               <SelectValue placeholder="Selecione a rede" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">Sem Rede Privada</SelectItem>
+                              <SelectItem value="none">
+                                <div className="flex items-center justify-between w-full">
+                                  <span className="text-left">Sem Rede Privada</span>
+                                  <span className="text-slate-400 text-xs font-medium ml-4">Grátis</span>
+                                </div>
+                              </SelectItem>
                               <SelectItem value="enabled">
-                                <div className="flex items-center justify-between w-full min-w-[300px]">
+                                <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Rede Privada Ativada</span>
                                   <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(2.29)}</span>
                                 </div>
@@ -1096,18 +1140,18 @@ export default function VpsConfigurePage() {
                         </div>
                         <div className="md:col-span-9">
                           <Select value={ipv4Address} onValueChange={setIpv4Address}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white text-left justify-start">
+                            <SelectTrigger className="h-12 border-slate-200 bg-white">
                               <SelectValue placeholder="Selecione o IP" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="1ip">
-                                <div className="flex items-center justify-between w-full min-w-[300px]">
+                                <div className="flex items-center justify-between w-full">
                                   <span className="text-left">1 Endereço IP</span>
                                   <span className="text-slate-400 text-xs font-medium ml-4">Grátis</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="2ip">
-                                <div className="flex items-center justify-between w-full min-w-[300px]">
+                                <div className="flex items-center justify-between w-full">
                                   <span className="text-left">1 Endereço IP + 1 IP Adicional</span>
                                   <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.additionalIpEur || 3.50)}</span>
                                 </div>
@@ -1132,13 +1176,18 @@ export default function VpsConfigurePage() {
                         </div>
                         <div className="md:col-span-9">
                           <Select value={objectStorage} onValueChange={setObjectStorage}>
-                            <SelectTrigger className="h-12 border-slate-200 text-left justify-start">
+                            <SelectTrigger className="h-12 border-slate-200">
                               <SelectValue placeholder={objectStorage === "none" ? "Nenhum" : objectStorage === "250gb" ? "250 GB Armazenamento" : objectStorage === "500gb" ? "500 GB Armazenamento" : objectStorage === "750gb" ? "750 GB Armazenamento" : "1 TB Armazenamento"} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">Nenhum</SelectItem>
+                              <SelectItem value="none">
+                                <div className="flex items-center justify-between w-full">
+                                  <span className="text-left">Nenhum</span>
+                                  <span className="text-slate-400 text-xs font-medium ml-4">Livre</span>
+                                </div>
+                              </SelectItem>
                               <SelectItem value="250gb">
-                                <div className="flex items-center justify-between w-full min-w-[380px]">
+                                <div className="flex items-center justify-between w-full">
                                   <span className="text-left text-[13px]">250 GB Armazenamento de Objetos nos Estados Unidos</span>
                                   <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["250gb"] || 2.49)}</span>
                                 </div>
@@ -1174,18 +1223,18 @@ export default function VpsConfigurePage() {
                         </div>
                         <div className="md:col-span-9">
                           <Select value={serverManagement} onValueChange={setServerManagement}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white text-left justify-start">
+                            <SelectTrigger className="h-12 border-slate-200 bg-white">
                               <SelectValue placeholder="Selecione o gerenciamento" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="unmanaged">
-                                <div className="flex items-center justify-between w-full min-w-[340px]">
+                                <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Não Gerenciado</span>
                                   <span className="text-slate-400 text-xs font-medium ml-4">Grátis</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="managed">
-                                <div className="flex items-center justify-between w-full min-w-[340px]">
+                                <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Gerenciado</span>
                                   <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.managedEur || 109.99)}</span>
                                 </div>
@@ -1203,13 +1252,18 @@ export default function VpsConfigurePage() {
                         </div>
                         <div className="md:col-span-9">
                           <Select value={monitoring} onValueChange={setMonitoring}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white text-left justify-start">
+                            <SelectTrigger className="h-12 border-slate-200 bg-white">
                               <SelectValue placeholder="Selecione o monitoramento" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">Nenhum</SelectItem>
+                              <SelectItem value="none">
+                                <div className="flex items-center justify-between w-full">
+                                  <span className="text-left">Nenhum</span>
+                                  <span className="text-slate-400 text-xs font-medium ml-4">Livre</span>
+                                </div>
+                              </SelectItem>
                               <SelectItem value="full">
-                                <div className="flex items-center justify-between w-full min-w-[340px]">
+                                <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Monitoramento Completo</span>
                                   <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.monitoringEur || 11.49)}</span>
                                 </div>
@@ -1375,11 +1429,11 @@ export default function VpsConfigurePage() {
                     } else if (osImage === "cpanel") {
                       let eur = imgPrices.cpanel;
                       const accounts = parseInt(cpanelLicence);
-                      if (accounts === 30) eur = 34.51;
-                      else if (accounts === 50) eur = 45.82;
-                      else if (accounts === 100) eur = 55.93;
-                      else if (accounts === 150) eur = 69.62;
-                      else if (accounts >= 200) eur = 93.42 + (Math.floor((accounts - 200) / 50) * 23.80);
+                      if (accounts === 30) eur = 29.00;
+                      else if (accounts === 50) eur = 38.50;
+                      else if (accounts === 100) eur = 47.00;
+                      else if (accounts === 150) eur = 58.50;
+                      else if (accounts >= 200) eur = 78.50 + (Math.floor((accounts - 200) / 50) * 20.00);
                       items.push({ label: `cPanel (${cpanelLicence} contas)`, price: eur * RATE * durationMonths * qty });
                     } else if (osImage === "plesk" || osImage === "plesk-linux") {
                       let eur = imgPrices.pleskLinux;
@@ -1480,11 +1534,11 @@ export default function VpsConfigurePage() {
               } else if (osImage === "cpanel") {
                 let eur = imgPrices.cpanel;
                 const accounts = parseInt(cpanelLicence);
-                if (accounts === 30) eur = 34.51;
-                else if (accounts === 50) eur = 45.82;
-                else if (accounts === 100) eur = 55.93;
-                else if (accounts === 150) eur = 69.62;
-                else if (accounts >= 200) eur = 93.42 + (Math.floor((accounts - 200) / 50) * 23.80);
+                if (accounts === 30) eur = 29.00;
+                else if (accounts === 50) eur = 38.50;
+                else if (accounts === 100) eur = 47.00;
+                else if (accounts === 150) eur = 58.50;
+                else if (accounts >= 200) eur = 78.50 + (Math.floor((accounts - 200) / 50) * 20.00);
                 additionalMonthly += eur * RATE;
               } else if (osImage === "plesk" || osImage === "plesk-linux") {
                 let eur = imgPrices.pleskLinux;
@@ -1747,39 +1801,39 @@ export default function VpsConfigurePage() {
                     <label className="text-sm font-bold text-[#1e293b]">Versão</label>
                     <Select value={windowsVersion} onValueChange={setWindowsVersion}>
                       <SelectTrigger className="h-14 border-slate-200 rounded-xl text-slate-600">
-                        <div className="flex items-center justify-between w-full pr-2">
+                        <div className="flex items-center justify-between w-full">
                           <span className="text-sm">Windows Server {windowsVersion} Datacenter</span>
                           <span className="text-xs text-slate-400 font-medium">
                             {(() => {
                               const RATE = currentRate;
                               const imgPrices = getImagePrices(planId, {});
                               const eur = windowsVersion === "2016" ? imgPrices.windows_2016 : imgPrices.windows;
-                              return formatBRL(eur * RATE);
+                              return formatBRL(eur);
                             })()} / mês | R$ 0,00 Taxa de instalação
                           </span>
                         </div>
                       </SelectTrigger>
                       <SelectContent className="z-[110]">
                         <SelectItem value="2025">
-                          <div className="flex items-center justify-between w-full min-w-[420px]">
+                          <div className="flex items-center justify-between w-full">
                             <span className={cn("flex-1 text-left", windowsVersion === "2025" ? "text-sky-500 font-medium" : "text-slate-700")}>Windows Server 2025 Datacenter</span>
                             <span className="text-slate-900 font-bold ml-4">{formatBRL(getImagePrices(planId, {}).windows)}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="2022">
-                          <div className="flex items-center justify-between w-full min-w-[420px]">
+                          <div className="flex items-center justify-between w-full">
                             <span className={cn("flex-1 text-left", windowsVersion === "2022" ? "text-sky-500 font-medium" : "text-slate-700")}>Windows Server 2022 Datacenter</span>
                             <span className="text-slate-900 font-bold ml-4">{formatBRL(getImagePrices(planId, {}).windows)}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="2019">
-                          <div className="flex items-center justify-between w-full min-w-[420px]">
+                          <div className="flex items-center justify-between w-full">
                             <span className={cn("flex-1 text-left", windowsVersion === "2019" ? "text-sky-500 font-medium" : "text-slate-700")}>Windows Server 2019 Datacenter</span>
                             <span className="text-slate-900 font-bold ml-4">{formatBRL(getImagePrices(planId, {}).windows)}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="2016">
-                          <div className="flex items-center justify-between w-full min-w-[420px]">
+                          <div className="flex items-center justify-between w-full">
                             <span className={cn("flex-1 text-left", windowsVersion === "2016" ? "text-sky-500 font-medium" : "text-slate-700")}>Windows Server 2016 Datacenter</span>
                             <span className="text-slate-900 font-bold ml-4">{formatBRL(getImagePrices(planId, {}).windows_2016)}</span>
                           </div>
@@ -1841,7 +1895,7 @@ export default function VpsConfigurePage() {
                       <label className="text-sm font-bold text-[#1e293b]">Licença</label>
                       <Select value={cpanelLicence} onValueChange={setCpanelLicence}>
                         <SelectTrigger className="h-16 border-slate-200 rounded-xl text-slate-600">
-                          <div className="flex items-center justify-between w-full pr-2">
+                          <div className="flex items-center justify-between w-full">
                             <span className="text-sm text-slate-700">cPanel/WHM ({cpanelLicence} contas)</span>
                             <span className="text-xs text-slate-400 font-medium">
                               {(() => {
@@ -1849,12 +1903,12 @@ export default function VpsConfigurePage() {
                                 const imgPrices = getImagePrices(planId, {});
                                 let eur = imgPrices.cpanel;
                                 const accounts = parseInt(cpanelLicence);
-                                if (accounts === 30) eur = 34.51;
-                                else if (accounts === 50) eur = 45.82;
-                                else if (accounts === 100) eur = 55.93;
-                                else if (accounts === 150) eur = 69.62;
-                                else if (accounts >= 200) eur = 93.42 + (Math.floor((accounts - 200) / 50) * 23.80);
-                                return formatBRL(eur * RATE);
+                                if (accounts === 30) eur = 29.00;
+                                else if (accounts === 50) eur = 38.50;
+                                else if (accounts === 100) eur = 47.00;
+                                else if (accounts === 150) eur = 58.50;
+                                else if (accounts >= 200) eur = 78.50 + (Math.floor((accounts - 200) / 50) * 20.00);
+                                return formatBRL(eur);
                               })()} / mês | R$ 0,00 Taxa de instalação
                             </span>
                           </div>
@@ -1862,19 +1916,19 @@ export default function VpsConfigurePage() {
                         <SelectContent className="z-[110] max-h-[300px]">
                           {[5, 30, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000].map(count => (
                             <SelectItem key={count} value={count.toString()}>
-                              <div className="flex items-center justify-between w-full min-w-[420px]">
+                              <div className="flex items-center justify-between w-full">
                                 <span className={cn("flex-1", cpanelLicence === count.toString() ? "text-sky-500 font-medium" : "text-slate-700")}>cPanel/WHM ({count} contas)</span>
                                 <span className="text-slate-900 font-bold ml-4">
                                   {(() => {
                                     const RATE = currentRate;
                                     const imgPrices = getImagePrices(planId, {});
                                     let eur = imgPrices.cpanel;
-                                    if (count === 30) eur = 34.51;
-                                    else if (count === 50) eur = 45.82;
-                                    else if (count === 100) eur = 55.93;
-                                    else if (count === 150) eur = 69.62;
-                                    else if (count >= 200) eur = 93.42 + (Math.floor((count - 200) / 50) * 23.80);
-                                    return formatBRL(eur * RATE);
+                                    if (count === 30) eur = 29.00;
+                                    else if (count === 50) eur = 38.50;
+                                    else if (count === 100) eur = 47.00;
+                                    else if (count === 150) eur = 58.50;
+                                    else if (count >= 200) eur = 78.50 + (Math.floor((count - 200) / 50) * 20.00);
+                                    return formatBRL(eur);
                                   })()}
                                 </span>
                               </div>
@@ -2328,7 +2382,7 @@ export default function VpsConfigurePage() {
                       <label className="text-sm font-bold text-[#1e293b]">Licença</label>
                       <Select value={pleskWinLicence} onValueChange={setPleskWinLicence}>
                         <SelectTrigger className="h-16 border-slate-200 rounded-xl text-slate-600">
-                          <div className="flex items-center justify-between w-full pr-2">
+                          <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-2 text-left">
                               <span className="text-sm text-slate-700">
                                 {pleskWinLicence === "admin" ? "Plesk Obsidian Web Admin Edition" :
@@ -2344,14 +2398,14 @@ export default function VpsConfigurePage() {
                                 let eur = imgPrices.pleskWin;
                                 if (pleskWinLicence === "pro") eur = imgPrices.pleskPro;
                                 else if (pleskWinLicence === "host") eur = imgPrices.pleskHost;
-                                return formatBRL(eur * RATE);
+                                return formatBRL(eur);
                               })()} / mês | R$ 0,00 Taxa de instalação
                             </span>
                           </div>
                         </SelectTrigger>
                         <SelectContent className="z-[110]">
                           <SelectItem value="admin">
-                            <div className="flex items-center justify-between w-full min-w-[420px] py-1 text-left">
+                            <div className="flex items-center justify-between w-full py-1 text-left">
                               <div className="flex flex-col">
                                 <span className={cn("text-sm", pleskWinLicence === "admin" ? "text-sky-500 font-medium" : "text-slate-700")}>Plesk Obsidian Web Admin Edition</span>
                                 <span className="text-[11px] text-emerald-500 font-bold">1 mês grátis</span>
@@ -2360,7 +2414,7 @@ export default function VpsConfigurePage() {
                             </div>
                           </SelectItem>
                           <SelectItem value="pro">
-                            <div className="flex items-center justify-between w-full min-w-[420px] py-1 border-t border-slate-50 text-left">
+                            <div className="flex items-center justify-between w-full py-1 border-t border-slate-50 text-left">
                               <div className="flex flex-col">
                                 <span className={cn("text-sm", pleskWinLicence === "pro" ? "text-sky-500 font-medium" : "text-slate-700")}>Plesk Obsidian Web Pro Edition</span>
                                 <span className="text-[11px] text-emerald-500 font-bold">1 mês grátis</span>
@@ -2369,7 +2423,7 @@ export default function VpsConfigurePage() {
                             </div>
                           </SelectItem>
                           <SelectItem value="host">
-                            <div className="flex items-center justify-between w-full min-w-[420px] py-1 border-t border-slate-50 text-left">
+                            <div className="flex items-center justify-between w-full py-1 border-t border-slate-50 text-left">
                               <div className="flex flex-col">
                                 <span className={cn("text-sm", pleskWinLicence === "host" ? "text-sky-500 font-medium" : "text-slate-700")}>Plesk Obsidian Web Host Edition</span>
                                 <span className="text-[11px] text-emerald-500 font-bold">1 mês grátis</span>
@@ -2386,39 +2440,39 @@ export default function VpsConfigurePage() {
                       <label className="text-sm font-bold text-[#1e293b]">Versão</label>
                       <Select value={pleskWinVersion} onValueChange={setPleskWinVersion}>
                         <SelectTrigger className="h-16 border-slate-200 rounded-xl text-slate-600">
-                          <div className="flex items-center justify-between w-full pr-2">
+                          <div className="flex items-center justify-between w-full">
                             <span className="text-sm text-slate-700">Windows Server {pleskWinVersion} Datacenter</span>
                             <span className="text-xs text-slate-400 font-medium">
                               {(() => {
                                 const RATE = currentRate;
                                 const imgPrices = getImagePrices(planId, {});
                                 const eur = pleskWinVersion === "2016" ? imgPrices.windows_2016 : imgPrices.windows;
-                                return formatBRL(eur * RATE);
+                                return formatBRL(eur);
                               })()} / mês | R$ 0,00 Taxa de instalação
                             </span>
                           </div>
                         </SelectTrigger>
                         <SelectContent className="z-[110]">
                           <SelectItem value="2025">
-                            <div className="flex items-center justify-between w-full min-w-[420px] py-1 text-left">
+                            <div className="flex items-center justify-between w-full py-1 text-left">
                               <span className={cn("text-sm", pleskWinVersion === "2025" ? "text-sky-500 font-medium" : "text-slate-700")}>Windows Server 2025 Datacenter</span>
                               <span className="text-slate-900 font-bold ml-4">{formatBRL(getImagePrices(planId, {}).windows)}</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="2022">
-                            <div className="flex items-center justify-between w-full min-w-[420px] py-1 border-t border-slate-50 text-left">
+                            <div className="flex items-center justify-between w-full py-1 border-t border-slate-50 text-left">
                               <span className={cn("text-sm", pleskWinVersion === "2022" ? "text-sky-500 font-medium" : "text-slate-700")}>Windows Server 2022 Datacenter</span>
                               <span className="text-slate-900 font-bold ml-4">{formatBRL(getImagePrices(planId, {}).windows)}</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="2019">
-                            <div className="flex items-center justify-between w-full min-w-[420px] py-1 border-t border-slate-50 text-left">
+                            <div className="flex items-center justify-between w-full py-1 border-t border-slate-50 text-left">
                               <span className={cn("text-sm", pleskWinVersion === "2019" ? "text-sky-500 font-medium" : "text-slate-700")}>Windows Server 2019 Datacenter</span>
                               <span className="text-slate-900 font-bold ml-4">{formatBRL(getImagePrices(planId, {}).windows)}</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="2016">
-                            <div className="flex items-center justify-between w-full min-w-[420px] py-1 border-t border-slate-50 text-left">
+                            <div className="flex items-center justify-between w-full py-1 border-t border-slate-50 text-left">
                               <span className={cn("text-sm", pleskWinVersion === "2016" ? "text-sky-500 font-medium" : "text-slate-700")}>Windows Server 2016 Datacenter</span>
                               <span className="text-slate-900 font-bold ml-4">{formatBRL(getImagePrices(planId, {}).windows_2016)}</span>
                             </div>
