@@ -243,6 +243,45 @@ const plansData: Record<string, any> = {
       "500gb": 4.98,
       "750gb": 7.47,
       "1tb": 9.96
+    },
+    images: {
+      popular: [
+        { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
+        { id: "custom", name: "Imagens personalizadas", price: "Incluído", icon: "/custom-images.png" },
+        { id: "windows", name: "Servidor Windows", eur: 26.00, icon: "/windows.png" },
+        { id: "cpanel", name: "cPanel", eur: 21.75, icon: "/cpanel.png" },
+        { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
+        { id: "plesk", name: "Plesk + Linux", eur: 12.00, icon: "/plesk.png" },
+      ],
+      os: [
+        { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
+        { id: "windows", name: "Servidor Windows", eur: 26.00, icon: "/windows.png" },
+        { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
+        { id: "debian", name: "Debian", price: "Incluído", icon: "/debian-svgrepo-com.svg" },
+        { id: "almalinux", name: "AlmaLinux", price: "Incluído", icon: "/almalinux.png" },
+        { id: "rockylinux", name: "Rocky Linux", price: "Incluído", icon: "/rocky.png" },
+      ],
+      panels: [
+        { id: "cpanel", name: "cPanel", eur: 21.75, icon: "/cpanel.png" },
+        { id: "plesk-win", name: "Plesk + Windows", eur: 35.10, icon: "/plesk.png" },
+        { id: "plesk-linux", name: "Plesk + Linux", eur: 12.00, icon: "/plesk.png" },
+        { id: "webmin", name: "Webmin", price: "Incluído", icon: "/webmin.png" },
+        { id: "webmin-lamp", name: "Webmin + LAMP", price: "Incluído", icon: "/lamp.png" },
+      ],
+      apps: [
+        { id: "n8n", name: "n8n Server", price: "Incluído", icon: "/n8n.png" },
+        { id: "wireguard", name: "Wireguard Server", price: "Incluído", icon: "/wireguard.png" },
+        { id: "nextcloud", name: "Nextcloud Server", price: "Incluído", icon: "/nextcloud.png" },
+        { id: "gitlab", name: "Gitlab Server", price: "Incluído", icon: "/gitlab.png" },
+        { id: "docker", name: "Docker", price: "Incluído", icon: "/docker.png" },
+        { id: "lamp", name: "LAMP", price: "Incluído", icon: "/lamp.png" },
+        { id: "openclaw", name: "OpenClaw Server", price: "Incluído", icon: "/openclaw.png" },
+      ],
+      blockchain: [
+        { id: "ipfs", name: "IPFS Node", price: "Incluído", icon: "/ipfs.png" },
+        { id: "flux", name: "Flux Node", price: "Incluído", icon: "/fluxnode.png" },
+        { id: "horizen", name: "Horizen Node", price: "Incluído", icon: "/horizen.png" },
+      ]
     }
   },
   "40": {
@@ -541,7 +580,7 @@ export default function VpsConfigurePage() {
   const durations = plan.durations && plan.durations.length > 0 ? plan.durations : defaultDurations;
   const storageTypes = plan.storageTypes && plan.storageTypes.length > 0 ? plan.storageTypes : defaultStorageTypes;
   const planLocations = (plan as any).locations || locations;
-  const dynamicImages = images;
+  const dynamicImages = plan.images || images;
 
   const formatBRL = (eur: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -635,8 +674,8 @@ export default function VpsConfigurePage() {
     if (planId === "30") {
       return {
         ...base,
-        windows: 30.94,
-        windows_2016: 27.49
+        windows: 26.00,
+        windows_2016: 21.05
       };
     }
 
