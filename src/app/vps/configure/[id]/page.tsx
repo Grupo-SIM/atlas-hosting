@@ -627,8 +627,8 @@ export default function VpsConfigurePage() {
     if (planId === "20") {
       return {
         ...base,
-        windows: 18.45,
-        windows_2016: 14.99
+        windows: 15.50,
+        windows_2016: 12.60
       };
     }
     
