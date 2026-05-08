@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
@@ -17,9 +17,9 @@ const roboto = Roboto({
 type VpsPlan = {
   id: string;
   name: string;
-  priceOld: string;
-  priceNew: string;
-  priceBackup: string;
+  eurOld: number;
+  eurNew: number;
+  eurBackup: number;
   popular?: boolean;
   vcpu: string;
   ram: string;
@@ -32,9 +32,9 @@ const plans: VpsPlan[] = [
   {
     id: "10",
     name: "Cloud VPS 10",
-    priceOld: "R$ 49,48",
-    priceNew: "R$ 39,58",
-    priceBackup: "R$ 48,68",
+    eurOld: 4.50,
+    eurNew: 3.60,
+    eurBackup: 5.10,
     vcpu: "4 núcleos",
     ram: "8 GB",
     storage: "75 GB NVMe ou SSD 150 GB",
@@ -44,9 +44,9 @@ const plans: VpsPlan[] = [
   {
     id: "20",
     name: "Cloud VPS 20",
-    priceOld: "R$ 81,06",
-    priceNew: "R$ 64,85",
-    priceBackup: "R$ 88,01",
+    eurOld: 7.00,
+    eurNew: 5.60,
+    eurBackup: 7.60,
     popular: true,
     vcpu: "6 núcleos",
     ram: "12 GB",
@@ -57,9 +57,9 @@ const plans: VpsPlan[] = [
   {
     id: "30",
     name: "Cloud VPS 30",
-    priceOld: "R$ 162,12",
-    priceNew: "R$ 129,70",
-    priceBackup: "R$ 170,23",
+    eurOld: 14.00,
+    eurNew: 11.20,
+    eurBackup: 14.70,
     vcpu: "8 núcleos",
     ram: "24 GB",
     storage: "200 GB NVMe ou SSD 400 GB",
@@ -69,9 +69,9 @@ const plans: VpsPlan[] = [
   {
     id: "40",
     name: "Cloud VPS 40",
-    priceOld: "R$ 289,50",
-    priceNew: "R$ 231,60",
-    priceBackup: "R$ 301,08",
+    eurOld: 25.00,
+    eurNew: 20.00,
+    eurBackup: 26.00,
     vcpu: "12 núcleos",
     ram: "48 GB",
     storage: "250 GB NVMe ou SSD 500 GB",
@@ -81,9 +81,9 @@ const plans: VpsPlan[] = [
   {
     id: "50",
     name: "Cloud VPS 50",
-    priceOld: "R$ 428,46",
-    priceNew: "R$ 342,77",
-    priceBackup: "R$ 429,62",
+    eurOld: 37.00,
+    eurNew: 29.60,
+    eurBackup: 37.10,
     vcpu: "16 núcleos",
     ram: "64 GB",
     storage: "300 GB NVMe ou SSD 600 GB",
@@ -93,9 +93,9 @@ const plans: VpsPlan[] = [
   {
     id: "60",
     name: "Cloud VPS 60",
-    priceOld: "R$ 567,42",
-    priceNew: "R$ 453,94",
-    priceBackup: "R$ 563,95",
+    eurOld: 49.00,
+    eurNew: 39.20,
+    eurBackup: 48.70,
     vcpu: "18 núcleos",
     ram: "96 GB",
     storage: "350 GB NVMe ou SSD 700 GB",
@@ -107,6 +107,26 @@ const plans: VpsPlan[] = [
 export function Plans() {
   const router = useRouter();
   const [backupEnabled, setBackupEnabled] = useState(false);
+  const [currentRate, setCurrentRate] = useState(11.72);
+
+  useEffect(() => {
+    fetch("/api/currency/euro")
+      .then(res => res.json())
+      .then(data => {
+        if (data.rate) {
+          setCurrentRate(data.rate);
+        }
+      })
+      .catch(err => console.error("Error fetching rate:", err));
+  }, []);
+
+  const formatBRL = (eur: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(eur * currentRate);
+  };
+
   const [emblaRef] = useEmblaCarousel({
     loop: false,
     align: 'start',
@@ -172,8 +192,11 @@ export function Plans() {
           <div className="flex-grow overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
             <div className="flex gap-4 px-2 py-2">
               {plans.map((p) => {
-                const currentPrice = backupEnabled ? p.priceBackup : p.priceNew;
-                const [priceSymbol, priceValue] = currentPrice.split(" ");
+                const currentEurPrice = backupEnabled ? p.eurBackup : p.eurNew;
+                const formattedPrice = formatBRL(currentEurPrice).replace(/\u00A0/g, " ");
+                const priceParts = formattedPrice.split(" ");
+                const priceSymbol = priceParts[0];
+                const priceValue = priceParts.slice(1).join("");
                 const [priceMain, priceCents] = priceValue.split(",");
 
                 return (
@@ -189,7 +212,7 @@ export function Plans() {
                         )}
                         <div>
                           <p className={`${roboto.className} text-2xl font-bold text-slate-900 mb-4`}>{p.name}</p>
-                          <span className="text-sm text-rose-500 line-through opacity-70 mb-1 block">{p.priceOld}</span>
+                          <span className="text-sm text-rose-500 line-through opacity-70 mb-1 block">{formatBRL(p.eurOld)}</span>
                           <div className="flex items-baseline gap-1 whitespace-nowrap">
                             <span className="text-base font-bold text-slate-900 mb-2">{priceSymbol}</span>
                             <span className="text-5xl font-extrabold text-slate-900">{priceMain},</span>

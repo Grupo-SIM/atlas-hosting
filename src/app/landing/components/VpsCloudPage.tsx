@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Check, Globe2, MessageCircle, Rocket, Star, Wallet } from "lucide-react";
 import { Roboto } from "next/font/google";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LottieMap from "./LottieMap";
 
@@ -17,9 +17,9 @@ const roboto = Roboto({
 type VpsPlan = {
   id: string;
   name: string;
-  priceOld: string;
-  priceNew: string;
-  priceBackup: string;
+  eurOld: number;
+  eurNew: number;
+  eurBackup: number;
   popular?: boolean;
   vcpu: string;
   ram: string;
@@ -32,9 +32,9 @@ const plans: VpsPlan[] = [
   {
     id: "10",
     name: "Cloud VPS 10",
-    priceOld: "R$ 49,48",
-    priceNew: "R$ 39,58",
-    priceBackup: "R$ 48,68",
+    eurOld: 4.50,
+    eurNew: 3.60,
+    eurBackup: 5.10,
     vcpu: "4 núcleos",
     ram: "8 GB",
     storage: "75 GB NVMe ou SSD 150 GB",
@@ -44,9 +44,9 @@ const plans: VpsPlan[] = [
   {
     id: "20",
     name: "Cloud VPS 20",
-    priceOld: "R$ 81,06",
-    priceNew: "R$ 64,85",
-    priceBackup: "R$ 88,01",
+    eurOld: 7.00,
+    eurNew: 5.60,
+    eurBackup: 7.60,
     popular: true,
     vcpu: "6 núcleos",
     ram: "12 GB",
@@ -57,9 +57,9 @@ const plans: VpsPlan[] = [
   {
     id: "30",
     name: "Cloud VPS 30",
-    priceOld: "R$ 162,12",
-    priceNew: "R$ 129,70",
-    priceBackup: "R$ 170,23",
+    eurOld: 14.00,
+    eurNew: 11.20,
+    eurBackup: 14.70,
     vcpu: "8 núcleos",
     ram: "24 GB",
     storage: "200 GB NVMe ou SSD 400 GB",
@@ -69,9 +69,9 @@ const plans: VpsPlan[] = [
   {
     id: "40",
     name: "Cloud VPS 40",
-    priceOld: "R$ 289,50",
-    priceNew: "R$ 231,60",
-    priceBackup: "R$ 301,08",
+    eurOld: 25.00,
+    eurNew: 20.00,
+    eurBackup: 26.00,
     vcpu: "12 núcleos",
     ram: "48 GB",
     storage: "250 GB NVMe ou SSD 500 GB",
@@ -81,9 +81,9 @@ const plans: VpsPlan[] = [
   {
     id: "50",
     name: "Cloud VPS 50",
-    priceOld: "R$ 428,46",
-    priceNew: "R$ 342,77",
-    priceBackup: "R$ 429,62",
+    eurOld: 37.00,
+    eurNew: 29.60,
+    eurBackup: 37.10,
     vcpu: "16 núcleos",
     ram: "64 GB",
     storage: "300 GB NVMe ou SSD 600 GB",
@@ -93,9 +93,9 @@ const plans: VpsPlan[] = [
   {
     id: "60",
     name: "Cloud VPS 60",
-    priceOld: "R$ 567,42",
-    priceNew: "R$ 453,94",
-    priceBackup: "R$ 563,95",
+    eurOld: 49.00,
+    eurNew: 39.20,
+    eurBackup: 48.70,
     vcpu: "18 núcleos",
     ram: "96 GB",
     storage: "350 GB NVMe ou SSD 700 GB",
@@ -113,6 +113,26 @@ const bullets = [
 export function VpsCloudPage() {
   const router = useRouter();
   const [backupEnabled, setBackupEnabled] = useState(false);
+  const [currentRate, setCurrentRate] = useState(11.72);
+
+  useEffect(() => {
+    fetch("/api/currency/euro")
+      .then(res => res.json())
+      .then(data => {
+        if (data.rate) {
+          setCurrentRate(data.rate);
+        }
+      })
+      .catch(err => console.error("Error fetching rate:", err));
+  }, []);
+
+  const formatBRL = (eur: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(eur * currentRate);
+  };
+
   const gridCols = `minmax(14.5rem, 16rem) repeat(${plans.length}, minmax(0, 1fr))`;
 
   return (
@@ -166,8 +186,11 @@ export function VpsCloudPage() {
                 </p>
               </div>
               {plans.map((p, idx) => {
-                const currentPrice = backupEnabled ? p.priceBackup : p.priceNew;
-                const [priceSymbol, priceValue] = currentPrice.split(" ");
+                const currentEurPrice = backupEnabled ? p.eurBackup : p.eurNew;
+                const formattedPrice = formatBRL(currentEurPrice).replace(/\u00A0/g, " ");
+                const priceParts = formattedPrice.split(" ");
+                const priceSymbol = priceParts[0];
+                const priceValue = priceParts.slice(1).join("");
                 const [priceMain, priceCents] = priceValue.split(",");
 
                 return (
@@ -189,7 +212,7 @@ export function VpsCloudPage() {
                     ) : null}
                     <p className={`${roboto.className} pr-[4.5rem] text-base font-bold tracking-wide text-slate-900`}>{p.name}</p>
                     <div className="mt-2 flex flex-wrap items-end gap-1.5">
-                      <span className="text-xs font-medium text-rose-500 line-through opacity-70">{p.priceOld}</span>
+                      <span className="text-xs font-medium text-rose-500 line-through opacity-70">{formatBRL(p.eurOld)}</span>
                     </div>
                     <div className="mt-0.5 flex items-baseline gap-0.5 whitespace-nowrap">
                       <span className="text-[12px] font-bold text-slate-900 mb-0.5">{priceSymbol}</span>
@@ -298,7 +321,7 @@ export function VpsCloudPage() {
                 <Wallet className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold leading-tight text-slate-900">A partir de R$ 39,58 por mês</h3>
+                <h3 className="text-lg font-bold leading-tight text-slate-900">A partir de {formatBRL(plans[0].eurNew)} por mês</h3>
                 <p className="mt-1 text-[15px] leading-relaxed text-slate-600">
                   Comece com um preço justo e escale quando estiver pronto, sem taxas ocultas.
                 </p>
@@ -309,7 +332,7 @@ export function VpsCloudPage() {
                 <Rocket className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold leading-tight text-slate-900">VPS 20: o melhor VPS por R$ 63,56/mês</h3>
+                <h3 className="text-lg font-bold leading-tight text-slate-900">VPS 20: o melhor VPS por {formatBRL(plans[1].eurNew)}/mês</h3>
                 <p className="mt-1 text-[15px] leading-relaxed text-slate-600">
                   Definimos o melhor custo-benefício para quem precisa de mais performance gastando menos.
                 </p>
