@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Cpu, HardDrive, ShieldCheck, Wallet } from "lucide-react";
 import { Roboto } from "next/font/google";
@@ -12,9 +13,8 @@ const roboto = Roboto({
 
 type VdsPlan = {
   name: string;
-  oldPrice: string;
-  newPrice: string;
-  cents: string;
+  eurOld: number;
+  eurNew: number;
   cores: string;
   cpu: string;
   ram: string;
@@ -25,9 +25,8 @@ type VdsPlan = {
 const vdsPlans: VdsPlan[] = [
   {
     name: "Cloud VDS S",
-    oldPrice: "R$ 463,68",
-    newPrice: "R$ 370,",
-    cents: "94",
+    eurOld: 34.40,
+    eurNew: 27.52,
     cores: "3 Núcleos Físicos",
     cpu: "AMD EPYC 7282 2.8 GHz",
     ram: "24 GB de RAM",
@@ -36,9 +35,8 @@ const vdsPlans: VdsPlan[] = [
   },
   {
     name: "Cloud VDS M",
-    oldPrice: "R$ 551,63",
-    newPrice: "R$ 441,",
-    cents: "30",
+    eurOld: 44.80,
+    eurNew: 35.84,
     cores: "4 Núcleos Físicos",
     cpu: "AMD EPYC 7282 2.8 GHz",
     ram: "32 GB de RAM",
@@ -47,9 +45,8 @@ const vdsPlans: VdsPlan[] = [
   },
   {
     name: "Cloud VDS L",
-    oldPrice: "R$ 831,43",
-    newPrice: "R$ 665,",
-    cents: "14",
+    eurOld: 64.00,
+    eurNew: 51.20,
     cores: "6 Núcleos Físicos",
     cpu: "AMD EPYC 7282 2.8 GHz",
     ram: "48 GB de RAM",
@@ -58,9 +55,8 @@ const vdsPlans: VdsPlan[] = [
   },
   {
     name: "Cloud VDS XL",
-    oldPrice: "R$ 1.103,25",
-    newPrice: "R$ 882,",
-    cents: "60",
+    eurOld: 82.40,
+    eurNew: 65.92,
     cores: "8 Núcleos Físicos",
     cpu: "AMD EPYC 7282 2.8 GHz",
     ram: "64 GB de RAM",
@@ -69,9 +65,8 @@ const vdsPlans: VdsPlan[] = [
   },
   {
     name: "Cloud VDS XXL",
-    oldPrice: "R$ 1.558,95",
-    newPrice: "R$ 1.247,",
-    cents: "16",
+    eurOld: 119.00,
+    eurNew: 95.20,
     cores: "12 Núcleos Físicos",
     cpu: "AMD EPYC 7282 2.8 GHz",
     ram: "96 GB de RAM",
@@ -82,6 +77,26 @@ const vdsPlans: VdsPlan[] = [
 
 export function VdsPage() {
   const router = useRouter();
+  const [currentRate, setCurrentRate] = useState(11.72);
+
+  useEffect(() => {
+    fetch("/api/currency/euro")
+      .then(res => res.json())
+      .then(data => {
+        if (data.rate) {
+          setCurrentRate(data.rate);
+        }
+      })
+      .catch(err => console.error("Error fetching rate:", err));
+  }, []);
+
+  const formatBRL = (eur: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(eur * currentRate);
+  };
+
   return (
     <section className="relative overflow-hidden bg-slate-50 px-4 py-8 md:px-8 md:py-10">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] bg-[size:40px_40px]" />
@@ -125,17 +140,21 @@ export function VdsPage() {
 
         <div className="mt-4 overflow-x-auto pb-3 scrollbar-thin md:mt-5">
           <div className="flex min-w-[1180px] gap-4 md:justify-center">
-            {vdsPlans.map((plan) => (
+            {vdsPlans.map((plan) => {
+              const formattedNewPrice = formatBRL(plan.eurNew).replace(/\u00A0/g, " ");
+              const [newMain, newCents] = formattedNewPrice.split(",");
+
+              return (
               <article
                 key={plan.name}
                 className="w-[230px] shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
               >
                 <div className="p-3.5">
                   <p className={`${roboto.className} text-[13px] font-bold tracking-wide text-slate-900`}>{plan.name}</p>
-                  <p className="mt-2 text-xs font-medium text-rose-500 line-through opacity-70">{plan.oldPrice}</p>
+                  <p className="mt-2 text-xs font-medium text-rose-500 line-through opacity-70">{formatBRL(plan.eurOld)}</p>
                   <p className="mt-0.5 leading-none text-slate-900">
-                    <span className="text-4xl font-extrabold">{plan.newPrice}</span>
-                    <span className="align-top text-lg font-bold">{plan.cents}</span>
+                    <span className="text-4xl font-extrabold">{newMain},</span>
+                    <span className="align-top text-lg font-bold">{newCents}</span>
                     <span className="ml-1 text-[10px] font-medium text-slate-400">/mês</span>
                   </p>
                   <p className="mt-0.5 text-[10px] font-light leading-snug text-slate-400">12 meses</p>
@@ -166,7 +185,7 @@ export function VdsPage() {
                   <p className="border-t border-slate-100 px-3 py-2.5 font-semibold text-sky-600 uppercase tracking-wider text-[10px] font-extrabold">Suporte 24/7 Ativo</p>
                 </div>
               </article>
-            ))}
+            )})}
           </div>
         </div>
 
