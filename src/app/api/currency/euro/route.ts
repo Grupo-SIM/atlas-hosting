@@ -12,16 +12,12 @@ export async function GET() {
       amounts: [1],
     });
 
-    // We use a profit multiplier (traditionally x2 in this project)
-    const finalRate = rate * 2;
-
     return NextResponse.json({ 
-      rate: finalRate,
-      rawRate: rate,
+      rate: rate,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error("Error fetching euro rate:", error);
-    return NextResponse.json({ rate: 11.72, error: "Failed to fetch" }, { status: 500 });
+    return NextResponse.json({ rate: 5.86, error: "Failed to fetch" }, { status: 500 });
   }
 }

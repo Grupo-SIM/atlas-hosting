@@ -2,9 +2,10 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useLayoutEffect, useEffect } from "react";
+import { useState, useLayoutEffect, useEffect, useRef } from "react";
+import { Roboto } from "next/font/google";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   Check,
@@ -26,6 +27,11 @@ import {
   AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["100", "300", "400", "500", "700", "900"],
+});
 import { Navbar } from "../../../landing/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -50,49 +56,49 @@ const plansData: Record<string, any> = {
     snapshots: "1 Instantâneo",
     traffic: "Porta de 200 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 4.50, setupEur: 4.50, setupFee: null, discount: null },
-      { id: "6", label: "6 meses", eur: 4.05, setupEur: 2.25, setupFee: null, discount: "ECONOMIZE 10%", oldEur: 4.50 },
-      { id: "12", label: "12 meses", eur: 3.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 4.50 },
+      { id: "1", label: "1 mês", eur: 9.00, setupEur: 9.00, setupFee: "Taxa de instalação de € 9,00", discount: null },
+      { id: "6", label: "6 meses", eur: 8.10, setupEur: 4.50, setupFee: "Taxa de instalação de € 4,50", discount: "ECONOMIZE 10%", oldEur: 9.00 },
+      { id: "12", label: "12 meses", eur: 7.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 9.00 },
     ],
     storageTypes: [
       { id: "ssd-150", name: "SSD de 150 GB", price: "Livre" },
-      { id: "ssd-300", name: "SSD de 300 GB", eur: 1.55 },
+      { id: "ssd-300", name: "SSD de 300 GB", eur: 3.10 },
       { id: "nvme-75", name: "NVMe de 75 GB", price: "Livre" },
-      { id: "nvme-150", name: "NVMe de 150 GB", eur: 1.85 },
+      { id: "nvme-150", name: "NVMe de 150 GB", eur: 3.70 },
     ],
-    rate: 11.72,
-    basePrice: 52.74,
-    backupEur: 1.50,
-    privateNetworkEur: 2.29,
-    additionalIpEur: 3.50,
-    managedEur: 109.99,
+    rate: 5.86,
+    basePrice: 42.19,
+    backupEur: 3.00,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7.00,
+    managedEur: 219.98,
     objectStoragePrices: {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
+      "250gb": 4.98,
+      "500gb": 9.96,
+      "750gb": 14.94,
+      "1tb": 19.92
     },
     locations: {
       best: [
         { id: "eu", name: "União Europeia", latency: "146 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 1.40, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 2.80, recommended: true },
       ],
       europe: [
         { id: "eu", name: "União Europeia", latency: "146 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "132 ms", eur: 0.95 },
+        { id: "uk", name: "Reino Unido", latency: "132 ms", eur: 1.90 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 0.95 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 1.40, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "146 ms", eur: 1.15 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 1.90 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 2.80, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "146 ms", eur: 2.30 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "304 ms", eur: 2.30 },
-        { id: "jp", name: "Ásia (Japão)", latency: "232 ms", eur: 2.35 },
-        { id: "in", name: "Ásia (Índia)", latency: "286 ms", eur: 2.15 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "304 ms", eur: 4.30 },
+        { id: "jp", name: "Ásia (Japão)", latency: "232 ms", eur: 4.70 },
+        { id: "in", name: "Ásia (Índia)", latency: "286 ms", eur: 4.30 },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "306 ms", eur: 1.95 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "306 ms", eur: 3.90 },
       ]
     }
   },
@@ -104,73 +110,73 @@ const plansData: Record<string, any> = {
     snapshots: "2 Instantâneos",
     traffic: "Porta de 300 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 7.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 6.30, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 7.00 },
-      { id: "12", label: "12 meses", eur: 5.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 7.00 },
+      { id: "1", label: "1 mês", eur: 14.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", eur: 12.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 14.00 },
+      { id: "12", label: "12 meses", eur: 11.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 14.00 },
     ],
     storageTypes: [
       { id: "ssd-200", name: "SSD de 200 GB", price: "Livre" },
-      { id: "ssd-400", name: "SSD de 400 GB", eur: 1.95 },
+      { id: "ssd-400", name: "SSD de 400 GB", eur: 3.90 },
       { id: "nvme-100", name: "NVMe de 100 GB", price: "Livre" },
-      { id: "nvme-200", name: "NVMe de 200 GB", eur: 2.55 },
+      { id: "nvme-200", name: "NVMe de 200 GB", eur: 5.10 },
     ],
     locations: {
       best: [
         { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 2.20, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 2.90, recommended: true },
       ],
       europe: [
         { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "137 ms", eur: 1.45 },
+        { id: "uk", name: "Reino Unido", latency: "137 ms", eur: 2.90 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 1.45 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 2.20, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 1.85 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 2.90 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 2.90, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 3.70 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "348 ms", eur: 3.55 },
-        { id: "jp", name: "Ásia (Japão)", latency: "275 ms", eur: 3.65 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 3.35 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "348 ms", eur: 8.90 },
+        { id: "jp", name: "Ásia (Japão)", latency: "275 ms", eur: 8.90 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 8.90 },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "351 ms", eur: 3.00 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "351 ms", eur: 8.10 },
       ]
     },
-    rate: 11.72,
-    basePrice: 81.06,
-    backupEur: 2.00,
-    privateNetworkEur: 2.29,
-    additionalIpEur: 3.50,
-    managedEur: 109.99,
-    monitoringEur: 11.49,
+    rate: 5.86,
+    basePrice: 65.63,
+    backupEur: 4.00,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7.00,
+    managedEur: 219.98,
+    monitoringEur: 22.98,
     objectStoragePrices: {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
+      "250gb": 4.98,
+      "500gb": 9.96,
+      "750gb": 14.94,
+      "1tb": 19.92
     },
     images: {
       popular: [
         { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
         { id: "custom", name: "Imagens personalizadas", price: "Incluído", icon: "/custom-images.png" },
-        { id: "windows", name: "Servidor Windows", eur: 15.50, icon: "/windows.png" },
-        { id: "cpanel", name: "cPanel", eur: 21.75, icon: "/cpanel.png" },
+        { id: "windows", name: "Servidor Windows", eur: 31.00, icon: "/windows.png" },
+        { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
         { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
-        { id: "plesk", name: "Plesk + Linux", eur: 12.00, icon: "/plesk.png" },
+        { id: "plesk", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
       ],
       os: [
         { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
-        { id: "windows", name: "Servidor Windows", eur: 15.50, icon: "/windows.png" },
+        { id: "windows", name: "Servidor Windows", eur: 31.00, icon: "/windows.png" },
         { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
         { id: "debian", name: "Debian", price: "Incluído", icon: "/debian-svgrepo-com.svg" },
         { id: "almalinux", name: "AlmaLinux", price: "Incluído", icon: "/almalinux.png" },
         { id: "rockylinux", name: "Rocky Linux", price: "Incluído", icon: "/rocky.png" },
       ],
       panels: [
-        { id: "cpanel", name: "cPanel", eur: 21.75, icon: "/cpanel.png" },
-        { id: "plesk-win", name: "Plesk + Windows", eur: 24.60, icon: "/plesk.png" },
-        { id: "plesk-linux", name: "Plesk + Linux", eur: 12.00, icon: "/plesk.png" },
+        { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
+        { id: "plesk-win", name: "Plesk + Windows", eur: 32.00, icon: "/plesk.png" },
+        { id: "plesk-linux", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
         { id: "webmin", name: "Webmin", price: "Incluído", icon: "/webmin.png" },
         { id: "webmin-lamp", name: "Webmin + LAMP", price: "Incluído", icon: "/lamp.png" },
       ],
@@ -198,73 +204,73 @@ const plansData: Record<string, any> = {
     snapshots: "3 Instantâneos",
     traffic: "Porta de 600 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 14.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 12.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 14.00 },
-      { id: "12", label: "12 meses", eur: 11.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 14.00 },
+      { id: "1", label: "1 mês", eur: 28.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", eur: 25.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 28.00 },
+      { id: "12", label: "12 meses", eur: 22.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 28.00 },
     ],
     storageTypes: [
       { id: "ssd-400", name: "SSD de 400 GB", price: "Livre" },
-      { id: "ssd-800", name: "SSD de 800 GB", eur: 3.85 },
+      { id: "ssd-800", name: "SSD de 800 GB", eur: 7.70 },
       { id: "nvme-200", name: "NVMe de 200 GB", price: "Livre" },
-      { id: "nvme-400", name: "NVMe de 400 GB", eur: 3.25 },
+      { id: "nvme-400", name: "NVMe de 400 GB", eur: 6.50 },
     ],
     locations: {
       best: [
         { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 4.40, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 5.90, recommended: true },
       ],
       europe: [
         { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "137 ms", eur: 2.95 },
+        { id: "uk", name: "Reino Unido", latency: "137 ms", eur: 5.90 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 2.95 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 4.40, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 3.65 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 5.90 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 5.90, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 7.30 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "348 ms", eur: 7.10 },
-        { id: "jp", name: "Ásia (Japão)", latency: "275 ms", eur: 7.30 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 6.70 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "348 ms", eur: 17.80 },
+        { id: "jp", name: "Ásia (Japão)", latency: "275 ms", eur: 17.80 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 17.80 },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "351 ms", eur: 6.05 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "351 ms", eur: 16.20 },
       ]
     },
-    rate: 11.72,
-    basePrice: 162.12,
-    backupEur: 3.50,
-    privateNetworkEur: 2.29,
-    additionalIpEur: 3.50,
-    managedEur: 109.99,
-    monitoringEur: 11.49,
+    rate: 5.86,
+    basePrice: 131.26,
+    backupEur: 7.00,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7.00,
+    managedEur: 219.98,
+    monitoringEur: 22.98,
     objectStoragePrices: {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
+      "250gb": 4.98,
+      "500gb": 9.96,
+      "750gb": 14.94,
+      "1tb": 19.92
     },
     images: {
       popular: [
         { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
         { id: "custom", name: "Imagens personalizadas", price: "Incluído", icon: "/custom-images.png" },
-        { id: "windows", name: "Servidor Windows", eur: 26.00, icon: "/windows.png" },
-        { id: "cpanel", name: "cPanel", eur: 21.75, icon: "/cpanel.png" },
+        { id: "windows", name: "Servidor Windows", eur: 52.00, icon: "/windows.png" },
+        { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
         { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
-        { id: "plesk", name: "Plesk + Linux", eur: 12.00, icon: "/plesk.png" },
+        { id: "plesk", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
       ],
       os: [
         { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
-        { id: "windows", name: "Servidor Windows", eur: 26.00, icon: "/windows.png" },
+        { id: "windows", name: "Servidor Windows", eur: 52.00, icon: "/windows.png" },
         { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
         { id: "debian", name: "Debian", price: "Incluído", icon: "/debian-svgrepo-com.svg" },
         { id: "almalinux", name: "AlmaLinux", price: "Incluído", icon: "/almalinux.png" },
         { id: "rockylinux", name: "Rocky Linux", price: "Incluído", icon: "/rocky.png" },
       ],
       panels: [
-        { id: "cpanel", name: "cPanel", eur: 21.75, icon: "/cpanel.png" },
-        { id: "plesk-win", name: "Plesk + Windows", eur: 35.10, icon: "/plesk.png" },
-        { id: "plesk-linux", name: "Plesk + Linux", eur: 12.00, icon: "/plesk.png" },
+        { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
+        { id: "plesk-win", name: "Plesk + Windows", eur: 32.00, icon: "/plesk.png" },
+        { id: "plesk-linux", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
         { id: "webmin", name: "Webmin", price: "Incluído", icon: "/webmin.png" },
         { id: "webmin-lamp", name: "Webmin + LAMP", price: "Incluído", icon: "/lamp.png" },
       ],
@@ -292,51 +298,90 @@ const plansData: Record<string, any> = {
     snapshots: "3 Instantâneos",
     traffic: "Porta de 800 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 25.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 22.50, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 25.00 },
-      { id: "12", label: "12 meses", eur: 20.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 25.00 },
+      { id: "1", label: "1 mês", eur: 50.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", eur: 45.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 50.00 },
+      { id: "12", label: "12 meses", eur: 40.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 50.00 },
     ],
     storageTypes: [
       { id: "ssd-500", name: "SSD de 500 GB", price: "Livre" },
-      { id: "ssd-1000", name: "SSD de 1000 GB", eur: 4.95 },
+      { id: "ssd-1000", name: "SSD de 1000 GB", eur: 9.90 },
       { id: "nvme-250", name: "NVMe de 250 GB", price: "Livre" },
-      { id: "nvme-500", name: "NVMe de 500 GB", eur: 3.85 },
+      { id: "nvme-500", name: "NVMe de 500 GB", eur: 7.70 },
     ],
     locations: {
       best: [
         { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 7.85, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 10.50, recommended: true },
       ],
       europe: [
         { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 5.25 },
+        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 10.50 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 5.25 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 7.85, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 6.55 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 10.50 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 10.50, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 13.10 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "345 ms", eur: 12.70 },
-        { id: "jp", name: "Ásia (Japão)", latency: "262 ms", eur: 13.00 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 11.90 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "345 ms", eur: 31.30 },
+        { id: "jp", name: "Ásia (Japão)", latency: "262 ms", eur: 31.30 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 31.30 },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 10.80 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 28.50 },
       ]
     },
-    rate: 11.72,
-    basePrice: 289.42,
-    backupEur: 6.00,
-    privateNetworkEur: 2.29,
-    additionalIpEur: 3.50,
-    managedEur: 109.99,
-    monitoringEur: 11.49,
+    rate: 5.86,
+    basePrice: 234.40,
+    backupEur: 12.00,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7.00,
+    managedEur: 219.98,
+    monitoringEur: 22.98,
     objectStoragePrices: {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
+      "250gb": 4.98,
+      "500gb": 9.96,
+      "750gb": 14.94,
+      "1tb": 19.92
+    },
+    images: {
+      popular: [
+        { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
+        { id: "custom", name: "Imagens personalizadas", price: "Incluído", icon: "/custom-images.png" },
+        { id: "windows", name: "Servidor Windows", eur: 98.00, icon: "/windows.png" },
+        { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
+        { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
+        { id: "plesk", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
+      ],
+      os: [
+        { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
+        { id: "windows", name: "Servidor Windows", eur: 98.00, icon: "/windows.png" },
+        { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
+        { id: "debian", name: "Debian", price: "Incluído", icon: "/debian-svgrepo-com.svg" },
+        { id: "almalinux", name: "AlmaLinux", price: "Incluído", icon: "/almalinux.png" },
+        { id: "rockylinux", name: "Rocky Linux", price: "Incluído", icon: "/rocky.png" },
+      ],
+      panels: [
+        { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
+        { id: "plesk-win", name: "Plesk + Windows", eur: 32.00, icon: "/plesk.png" },
+        { id: "plesk-linux", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
+        { id: "webmin", name: "Webmin", price: "Incluído", icon: "/webmin.png" },
+        { id: "webmin-lamp", name: "Webmin + LAMP", price: "Incluído", icon: "/lamp.png" },
+      ],
+      apps: [
+        { id: "n8n", name: "n8n Server", price: "Incluído", icon: "/n8n.png" },
+        { id: "wireguard", name: "Wireguard Server", price: "Incluído", icon: "/wireguard.png" },
+        { id: "nextcloud", name: "Nextcloud Server", price: "Incluído", icon: "/nextcloud.png" },
+        { id: "gitlab", name: "Gitlab Server", price: "Incluído", icon: "/gitlab.png" },
+        { id: "docker", name: "Docker", price: "Incluído", icon: "/docker.png" },
+        { id: "lamp", name: "LAMP", price: "Incluído", icon: "/lamp.png" },
+        { id: "openclaw", name: "OpenClaw Server", price: "Incluído", icon: "/openclaw.png" },
+      ],
+      blockchain: [
+        { id: "ipfs", name: "IPFS Node", price: "Incluído", icon: "/ipfs.png" },
+        { id: "flux", name: "Flux Node", price: "Incluído", icon: "/fluxnode.png" },
+        { id: "horizen", name: "Horizen Node", price: "Incluído", icon: "/horizen.png" },
+      ]
     }
   },
   "50": {
@@ -347,51 +392,90 @@ const plansData: Record<string, any> = {
     snapshots: "3 Instantâneos",
     traffic: "Porta de 1 Gbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 37.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 33.30, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 37.00 },
-      { id: "12", label: "12 meses", eur: 29.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 37.00 },
+      { id: "1", label: "1 mês", eur: 74.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", eur: 66.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 74.00 },
+      { id: "12", label: "12 meses", eur: 59.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 74.00 },
     ],
     storageTypes: [
       { id: "ssd-600", name: "SSD de 600 GB", price: "Livre" },
-      { id: "ssd-1200", name: "SSD de 1.2 TB", eur: 6.15 },
+      { id: "ssd-1200", name: "SSD de 1.2 TB", eur: 12.30 },
       { id: "nvme-300", name: "NVMe de 300 GB", price: "Livre" },
-      { id: "nvme-600", name: "NVMe de 600 GB", eur: 4.75 },
+      { id: "nvme-600", name: "NVMe de 600 GB", eur: 9.50 },
     ],
     locations: {
       best: [
         { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 11.60, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 27.10, recommended: true },
       ],
       europe: [
         { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 7.80 },
+        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 15.60 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 7.80 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 11.60, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 9.65 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 15.60 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 27.10, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 19.30 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "341 ms", eur: 18.80 },
-        { id: "jp", name: "Ásia (Japão)", latency: "262 ms", eur: 19.25 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 17.65 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "341 ms", eur: 41.60 },
+        { id: "jp", name: "Ásia (Japão)", latency: "262 ms", eur: 41.60 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 41.60 },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 15.95 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 37.90 },
       ]
     },
-    rate: 11.72,
-    basePrice: 428.31,
-    backupEur: 7.50,
-    privateNetworkEur: 2.29,
-    additionalIpEur: 3.50,
-    managedEur: 109.99,
-    monitoringEur: 11.49,
+    rate: 5.86,
+    basePrice: 346.91,
+    backupEur: 15.00,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7.00,
+    managedEur: 219.98,
+    monitoringEur: 22.98,
     objectStoragePrices: {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
+      "250gb": 4.98,
+      "500gb": 9.96,
+      "750gb": 14.94,
+      "1tb": 19.92
+    },
+    images: {
+      popular: [
+        { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
+        { id: "custom", name: "Imagens personalizadas", price: "Incluído", icon: "/custom-images.png" },
+        { id: "windows", name: "Servidor Windows", eur: 117.00, icon: "/windows.png" },
+        { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
+        { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
+        { id: "plesk", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
+      ],
+      os: [
+        { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
+        { id: "windows", name: "Servidor Windows", eur: 117.00, icon: "/windows.png" },
+        { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
+        { id: "debian", name: "Debian", price: "Incluído", icon: "/debian-svgrepo-com.svg" },
+        { id: "almalinux", name: "AlmaLinux", price: "Incluído", icon: "/almalinux.png" },
+        { id: "rockylinux", name: "Rocky Linux", price: "Incluído", icon: "/rocky.png" },
+      ],
+      panels: [
+        { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
+        { id: "plesk-win", name: "Plesk + Windows", eur: 32.00, icon: "/plesk.png" },
+        { id: "plesk-linux", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
+        { id: "webmin", name: "Webmin", price: "Incluído", icon: "/webmin.png" },
+        { id: "webmin-lamp", name: "Webmin + LAMP", price: "Incluído", icon: "/lamp.png" },
+      ],
+      apps: [
+        { id: "n8n", name: "n8n Server", price: "Incluído", icon: "/n8n.png" },
+        { id: "wireguard", name: "Wireguard Server", price: "Incluído", icon: "/wireguard.png" },
+        { id: "nextcloud", name: "Nextcloud Server", price: "Incluído", icon: "/nextcloud.png" },
+        { id: "gitlab", name: "Gitlab Server", price: "Incluído", icon: "/gitlab.png" },
+        { id: "docker", name: "Docker", price: "Incluído", icon: "/docker.png" },
+        { id: "lamp", name: "LAMP", price: "Incluído", icon: "/lamp.png" },
+        { id: "openclaw", name: "OpenClaw Server", price: "Incluído", icon: "/openclaw.png" },
+      ],
+      blockchain: [
+        { id: "ipfs", name: "IPFS Node", price: "Incluído", icon: "/ipfs.png" },
+        { id: "flux", name: "Flux Node", price: "Incluído", icon: "/fluxnode.png" },
+        { id: "horizen", name: "Horizen Node", price: "Incluído", icon: "/horizen.png" },
+      ]
     }
   },
   "60": {
@@ -402,58 +486,97 @@ const plansData: Record<string, any> = {
     snapshots: "3 Instantâneos",
     traffic: "Porta de 1 Gbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 49.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 44.10, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 49.00 },
-      { id: "12", label: "12 meses", eur: 39.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 49.00 },
+      { id: "1", label: "1 mês", eur: 98.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", eur: 88.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 98.00 },
+      { id: "12", label: "12 meses", eur: 78.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 98.00 },
     ],
     storageTypes: [
       { id: "ssd-700", name: "SSD de 700 GB", price: "Livre" },
-      { id: "ssd-1400", name: "SSD de 1.4 TB", eur: 6.95 },
+      { id: "ssd-1400", name: "SSD de 1.4 TB", eur: 13.90 },
       { id: "nvme-350", name: "NVMe de 350 GB", price: "Livre" },
-      { id: "nvme-700", name: "NVMe de 700 GB", eur: 5.75 },
+      { id: "nvme-700", name: "NVMe de 700 GB", eur: 11.50 },
     ],
     locations: {
       best: [
         { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 15.35, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 30.70, recommended: true },
       ],
       europe: [
         { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "138 ms", eur: 10.30 },
+        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 20.60 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", eur: 10.30 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 15.35, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 12.80 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 20.60 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 30.70, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 20.60 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "339 ms", eur: 24.90 },
-        { id: "jp", name: "Ásia (Japão)", latency: "262 ms", eur: 25.50 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 23.35 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "341 ms", eur: 47.10 },
+        { id: "jp", name: "Ásia (Japão)", latency: "262 ms", eur: 47.10 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 47.10 },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 21.15 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 42.90 },
       ]
     },
-    rate: 11.72,
-    basePrice: 567.24,
-    backupEur: 9.50,
-    privateNetworkEur: 2.29,
-    additionalIpEur: 3.50,
-    managedEur: 109.99,
-    monitoringEur: 11.49,
+    rate: 5.86,
+    basePrice: 459.42,
+    backupEur: 19.00,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7.00,
+    managedEur: 219.98,
+    monitoringEur: 22.98,
     objectStoragePrices: {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
+      "250gb": 4.98,
+      "500gb": 9.96,
+      "750gb": 14.94,
+      "1tb": 19.92
+    },
+    images: {
+      popular: [
+        { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
+        { id: "custom", name: "Imagens personalizadas", price: "Incluído", icon: "/custom-images.png" },
+        { id: "windows", name: "Servidor Windows", eur: 140.00, icon: "/windows.png" },
+        { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
+        { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
+        { id: "plesk", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
+      ],
+      os: [
+        { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
+        { id: "windows", name: "Servidor Windows", eur: 140.00, icon: "/windows.png" },
+        { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
+        { id: "debian", name: "Debian", price: "Incluído", icon: "/debian-svgrepo-com.svg" },
+        { id: "almalinux", name: "AlmaLinux", price: "Incluído", icon: "/almalinux.png" },
+        { id: "rockylinux", name: "Rocky Linux", price: "Incluído", icon: "/rocky.png" },
+      ],
+      panels: [
+        { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
+        { id: "plesk-win", name: "Plesk + Windows", eur: 32.00, icon: "/plesk.png" },
+        { id: "plesk-linux", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
+        { id: "webmin", name: "Webmin", price: "Incluído", icon: "/webmin.png" },
+        { id: "webmin-lamp", name: "Webmin + LAMP", price: "Incluído", icon: "/lamp.png" },
+      ],
+      apps: [
+        { id: "n8n", name: "n8n Server", price: "Incluído", icon: "/n8n.png" },
+        { id: "wireguard", name: "Wireguard Server", price: "Incluído", icon: "/wireguard.png" },
+        { id: "nextcloud", name: "Nextcloud Server", price: "Incluído", icon: "/nextcloud.png" },
+        { id: "gitlab", name: "Gitlab Server", price: "Incluído", icon: "/gitlab.png" },
+        { id: "docker", name: "Docker", price: "Incluído", icon: "/docker.png" },
+        { id: "lamp", name: "LAMP", price: "Incluído", icon: "/lamp.png" },
+        { id: "openclaw", name: "OpenClaw Server", price: "Incluído", icon: "/openclaw.png" },
+      ],
+      blockchain: [
+        { id: "ipfs", name: "IPFS Node", price: "Incluído", icon: "/ipfs.png" },
+        { id: "flux", name: "Flux Node", price: "Incluído", icon: "/fluxnode.png" },
+        { id: "horizen", name: "Horizen Node", price: "Incluído", icon: "/horizen.png" },
+      ]
     }
   }
 };
 
 const defaultDurations = [
   { id: "1", label: "1 mês", price: "R$ 52,74", setupFee: "Taxa de configuração de R$ 52,74", discount: null },
-  { id: "6", label: "6 meses", price: "R$ 47,47", setupFee: "Taxa de configuração de R$ 26,28", discount: "ECONOMIZE 10%", oldPrice: "R$ 52,74" },
+  { id: "6", label: "6 meses", price: "R$ 47,47", setupFee: "Taxa de configuração de R$ 26,37", discount: "ECONOMIZE 10%", oldPrice: "R$ 52,74" },
   { id: "12", label: "12 meses", price: "R$ 42,19", setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldPrice: "R$ 52,74" },
 ];
 
@@ -483,24 +606,24 @@ interface Location {
 const locations: Record<string, Location[]> = {
   europe: [
     { id: "eu", name: "União Europeia", latency: "156 ms", price: "Livre" },
-    { id: "uk", name: "Reino Unido", latency: "135 ms", price: "R$ 11,13" },
+    { id: "uk", name: "Reino Unido", latency: "135 ms", price: "R$ 22,27" },
   ],
   best: [
     { id: "eu", name: "União Europeia", latency: "156 ms", price: "Livre" },
     { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: "R$ 16,41", recommended: true },
   ],
   australia: [
-    { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", price: "R$ 22,85" },
+    { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", price: "R$ 45,71" },
   ],
   america: [
-    { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", price: "R$ 11,13" },
+    { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", price: "R$ 22,27" },
     { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", price: "R$ 16,41", recommended: true },
-    { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", price: "R$ 13,48" },
+    { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", price: "R$ 26,96" },
   ],
   asia: [
-    { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", price: "R$ 26,96" },
-    { id: "jp", name: "Ásia (Japão)", latency: "269 ms", price: "R$ 27,54" },
-    { id: "in", name: "Ásia (Índia)", latency: "N/A", price: "R$ 25,20" },
+    { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", price: "R$ 50,40" },
+    { id: "jp", name: "Ásia (Japão)", latency: "269 ms", price: "R$ 55,08" },
+    { id: "in", name: "Ásia (Índia)", latency: "N/A", price: "R$ 50,40" },
   ]
 };
 
@@ -518,14 +641,14 @@ const images = {
   popular: [
     { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
     { id: "custom", name: "Imagens personalizadas", price: "Incluído", icon: "/custom-images.png" },
-    { id: "windows", name: "Servidor Windows", eur: 7.50, icon: "/windows.png" },
-    { id: "cpanel", name: "cPanel", eur: 21.75, icon: "/cpanel.png" },
+    { id: "windows", name: "Servidor Windows", eur: 15.00, icon: "/windows.png" },
+    { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
     { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
-    { id: "plesk", name: "Plesk + Linux", eur: 12.00, icon: "/plesk.png" },
+    { id: "plesk", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
   ],
   os: [
     { id: "ubuntu", name: "Ubuntu", price: "Incluído", icon: "/image.png" },
-    { id: "windows", name: "Servidor Windows", eur: 7.50, icon: "/windows.png" },
+    { id: "windows", name: "Servidor Windows", eur: 15.00, icon: "/windows.png" },
     { id: "rhel", name: "RHEL Variants", price: "Incluído", icon: "/centos-svgrepo-com.svg" },
     { id: "debian", name: "Debian", price: "Incluído", icon: "/debian-svgrepo-com.svg" },
     { id: "almalinux", name: "AlmaLinux", price: "Incluído", icon: "/almalinux.png" },
@@ -541,9 +664,9 @@ const images = {
     { id: "openclaw", name: "OpenClaw Server", price: "Incluído", icon: "/openclaw.png" },
   ],
   panels: [
-    { id: "cpanel", name: "cPanel", eur: 21.75, icon: "/cpanel.png" },
-    { id: "plesk-win", name: "Plesk + Windows", eur: 18.25, icon: "/plesk.png" },
-    { id: "plesk-linux", name: "Plesk + Linux", eur: 12.00, icon: "/plesk.png" },
+    { id: "cpanel", name: "cPanel", eur: 43.50, icon: "/cpanel.png" },
+    { id: "plesk-win", name: "Plesk + Windows", eur: 32.00, icon: "/plesk.png" },
+    { id: "plesk-linux", name: "Plesk + Linux", eur: 24.00, icon: "/plesk.png" },
     { id: "webmin", name: "Webmin", price: "Incluído", icon: "/webmin.png" },
     { id: "webmin-lamp", name: "Webmin + LAMP", price: "Incluído", icon: "/lamp.png" },
   ],
@@ -557,9 +680,10 @@ const images = {
 export default function VpsConfigurePage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const planId = params.id as string;
   
-  const [currentRate, setCurrentRate] = useState(11.72);
+  const [currentRate, setCurrentRate] = useState(5.86);
 
   useEffect(() => {
     const fetchRate = async () => {
@@ -593,49 +717,87 @@ export default function VpsConfigurePage() {
     return `${formatBRL(eur)} / mês`;
   };
 
-  const [quantity, setQuantity] = useState("1");
-  const [duration, setDuration] = useState("1");
-  const [regionTab, setRegionTab] = useState("best");
-  const [location, setLocation] = useState("eu");
-  const [storageType, setStorageType] = useState(storageTypes[0].id);
-  const [imageCategory, setImageCategory] = useState("popular");
-  const [osImage, setOsImage] = useState("ubuntu");
-  const [autoBackup, setAutoBackup] = useState(true);
+  const sp = searchParams;
+  const [quantity, setQuantity] = useState(sp.get("qty") || "1");
+  const [duration, setDuration] = useState(sp.get("duration") || "1");
+  const [regionTab, setRegionTab] = useState(sp.get("regionTab") || "best");
+  const [location, setLocation] = useState(sp.get("location") || "eu");
+  const [storageType, setStorageType] = useState(sp.get("storage") || storageTypes[0].id);
+  const [imageCategory, setImageCategory] = useState(sp.get("imageCategory") || "popular");
+  const [osImage, setOsImage] = useState(sp.get("image") || "ubuntu");
+  const [autoBackup, setAutoBackup] = useState(sp.get("backup") !== "false");
   const [showMoreImages, setShowMoreImages] = useState(true);
   const [showAdditionalFeatures, setShowAdditionalFeatures] = useState(true);
   const [showUbuntuModal, setShowUbuntuModal] = useState(false);
-  const [ubuntuVersion, setUbuntuVersion] = useState("Ubuntu 24.04");
+  const [ubuntuVersion, setUbuntuVersion] = useState(sp.get("ubuntuVersion") || "Ubuntu 24.04");
   const [showCustomModal, setShowCustomModal] = useState(false);
-  const [customImageOption, setCustomImageOption] = useState("existing");
+  const [customImageOption, setCustomImageOption] = useState(sp.get("customImageOption") || "existing");
   const [showWindowsModal, setShowWindowsModal] = useState(false);
-  const [windowsVersion, setWindowsVersion] = useState("2025");
+  const [windowsVersion, setWindowsVersion] = useState(sp.get("windowsVersion") || "2025");
   const [showCpanelModal, setShowCpanelModal] = useState(false);
-  const [cpanelLicence, setCpanelLicence] = useState("5");
-  const [cpanelVersion, setCpanelVersion] = useState("Ubuntu 22.04");
+  const [cpanelLicence, setCpanelLicence] = useState(sp.get("cpanelLicence") || "5");
+  const [cpanelVersion, setCpanelVersion] = useState(sp.get("cpanelVersion") || "Ubuntu 22.04");
   const [showRhelModal, setShowRhelModal] = useState(false);
-  const [rhelVersion, setRhelVersion] = useState("AlmaLinux 9");
+  const [rhelVersion, setRhelVersion] = useState(sp.get("rhelVersion") || "AlmaLinux 9");
   const [showPleskModal, setShowPleskModal] = useState(false);
-  const [pleskLicence, setPleskLicence] = useState("admin");
+  const [pleskLicence, setPleskLicence] = useState(sp.get("pleskLicence") || "admin");
   const [showDebianModal, setShowDebianModal] = useState(false);
-  const [debianVersion, setDebianVersion] = useState("Debian 13");
+  const [debianVersion, setDebianVersion] = useState(sp.get("debianVersion") || "Debian 13");
   const [showDockerModal, setShowDockerModal] = useState(false);
-  const [dockerVersion, setDockerVersion] = useState("Ubuntu 22.04");
+  const [dockerVersion, setDockerVersion] = useState(sp.get("dockerVersion") || "Ubuntu 22.04");
   const [showLampModal, setShowLampModal] = useState(false);
-  const [lampVersion, setLampVersion] = useState("Ubuntu 22.04");
+  const [lampVersion, setLampVersion] = useState(sp.get("lampVersion") || "Ubuntu 22.04");
   const [showPleskWindowsModal, setShowPleskWindowsModal] = useState(false);
-  const [pleskWinLicence, setPleskWinLicence] = useState("admin");
-  const [pleskWinVersion, setPleskWinVersion] = useState("2016");
+  const [pleskWinLicence, setPleskWinLicence] = useState(sp.get("pleskWinLicence") || "admin");
+  const [pleskWinVersion, setPleskWinVersion] = useState(sp.get("pleskWinVersion") || "2016");
   const [showWebminModal, setShowWebminModal] = useState(false);
-  const [webminVersion, setWebminVersion] = useState("Ubuntu 22.04");
-  const [password, setPassword] = useState("");
+  const [webminVersion, setWebminVersion] = useState(sp.get("webminVersion") || "Ubuntu 22.04");
+  const [password, setPassword] = useState(sp.get("password") ? decodeURIComponent(sp.get("password")!) : "");
   const [showPassword, setShowPassword] = useState(false);
-  const [privateNetwork, setPrivateNetwork] = useState("none");
-  const [ipv4Address, setIpv4Address] = useState("1ip");
-  const [objectStorage, setObjectStorage] = useState("none");
-  const [serverManagement, setServerManagement] = useState("unmanaged");
-  const [monitoring, setMonitoring] = useState("none");
+  const [privateNetwork, setPrivateNetwork] = useState(sp.get("privateNetwork") || "none");
+  const [ipv4Address, setIpv4Address] = useState(sp.get("ipv4Address") || "1ip");
+  const [objectStorage, setObjectStorage] = useState(sp.get("objectStorage") || "none");
+  const [serverManagement, setServerManagement] = useState(sp.get("management") || "unmanaged");
+  const [monitoring, setMonitoring] = useState(sp.get("monitoring") || "none");
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [showSummaryDetails, setShowSummaryDetails] = useState(false);
+
+  // Sync all selections to URL in real-time
+  useEffect(() => {
+    const p = new URLSearchParams();
+    p.set("qty", quantity);
+    p.set("duration", duration);
+    p.set("regionTab", regionTab);
+    p.set("location", location);
+    p.set("storage", storageType);
+    p.set("imageCategory", imageCategory);
+    p.set("image", osImage);
+    p.set("backup", String(autoBackup));
+    p.set("ubuntuVersion", ubuntuVersion);
+    p.set("windowsVersion", windowsVersion);
+    p.set("cpanelLicence", cpanelLicence);
+    p.set("cpanelVersion", cpanelVersion);
+    p.set("rhelVersion", rhelVersion);
+    p.set("pleskLicence", pleskLicence);
+    p.set("debianVersion", debianVersion);
+    p.set("dockerVersion", dockerVersion);
+    p.set("lampVersion", lampVersion);
+    p.set("pleskWinLicence", pleskWinLicence);
+    p.set("pleskWinVersion", pleskWinVersion);
+    p.set("webminVersion", webminVersion);
+    p.set("customImageOption", customImageOption);
+    p.set("privateNetwork", privateNetwork);
+    p.set("ipv4Address", ipv4Address);
+    p.set("objectStorage", objectStorage);
+    p.set("management", serverManagement);
+    p.set("monitoring", monitoring);
+    if (password) p.set("password", encodeURIComponent(password));
+    window.history.replaceState({}, "", `/vps/configure/${planId}?${p.toString()}`);
+  }, [quantity, duration, regionTab, location, storageType, imageCategory, osImage, autoBackup,
+      ubuntuVersion, windowsVersion, cpanelLicence, cpanelVersion, rhelVersion, pleskLicence,
+      debianVersion, dockerVersion, lampVersion, pleskWinLicence, pleskWinVersion, webminVersion,
+      customImageOption, privateNetwork, ipv4Address, objectStorage, serverManagement, monitoring,
+      password, planId]);
 
   // Password validation: 8+ chars, 1 upper, 1 lower, 1 number, 1 special
   const isPasswordValid = (pwd: string) => {
@@ -648,58 +810,58 @@ export default function VpsConfigurePage() {
   function getImagePrices(planId: string, defaultImagePrices: any) {
     const base = {
       ...defaultImagePrices,
-      cpanel: 21.75,
-      pleskLinux: 12.00,
-      pleskWin: 12.00,
-      pleskPro: 19.00,
-      pleskHost: 36.50
+      cpanel: 43.50,
+      pleskLinux: 24.00,
+      pleskWin: 32.00,
+      pleskPro: 38.00,
+      pleskHost: 73.00
     };
 
     if (planId === "10") {
       return {
         ...base,
-        windows: 7.50,
-        windows_2016: 6.25
+        windows: 15.00,
+        windows_2016: 12.50
       };
     }
     
     if (planId === "20") {
       return {
         ...base,
-        windows: 15.50,
-        windows_2016: 12.60
+        windows: 31.00,
+        windows_2016: 25.20
       };
     }
     
     if (planId === "30") {
       return {
         ...base,
-        windows: 26.00,
-        windows_2016: 21.05
+        windows: 52.00,
+        windows_2016: 42.10
       };
     }
 
     if (planId === "40") {
       return {
         ...base,
-        windows: 58.31,
-        windows_2016: 54.26
+        windows: 98.00,
+        windows_2016: 85.00
       };
     }
 
     if (planId === "50") {
       return {
         ...base,
-        windows: 69.62,
-        windows_2016: 66.28
+        windows: 117.00,
+        windows_2016: 105.00
       };
     }
 
     if (planId === "60") {
       return {
         ...base,
-        windows: 79.90,
-        windows_2016: 76.50
+        windows: 140.00,
+        windows_2016: 125.00
       };
     }
     
@@ -729,9 +891,9 @@ export default function VpsConfigurePage() {
     <div className="min-h-screen bg-slate-50 text-slate-700 font-sans pb-24">
       <Navbar variant="light" />
       {/* Step Header could be here, but matching image's start */}
-      <div className="max-w-6xl mx-auto px-6 pt-32 pb-12 space-y-12">
+      <div className={`${roboto.className} max-w-6xl mx-auto px-6 pt-32 pb-12 space-y-12`}>
 
-        <h1 className="text-3xl font-bold text-slate-800">Configure seu {plan.name}</h1>
+        <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Configure seu {plan.name}</h1>
 
         {/* Plan Summary Section */}
         <div className="flex flex-wrap items-center gap-10">
@@ -1192,7 +1354,7 @@ export default function VpsConfigurePage() {
                               <SelectItem value="2ip">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">1 Endereço IP + 1 IP Adicional</span>
-                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.additionalIpEur || 3.50)}</span>
+                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.additionalIpEur || 7.00)}</span>
                                 </div>
                               </SelectItem>
                             </SelectContent>
@@ -1228,25 +1390,25 @@ export default function VpsConfigurePage() {
                               <SelectItem value="250gb">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left text-[13px]">250 GB Armazenamento de Objetos nos Estados Unidos</span>
-                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["250gb"] || 2.49)}</span>
+                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["250gb"] || 4.98)}</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="500gb">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left text-[13px]">500 GB Armazenamento de Objetos nos Estados Unidos</span>
-                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["500gb"] || 4.98)}</span>
+                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["500gb"] || 9.96)}</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="750gb">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left text-[13px]">750 GB Armazenamento de Objetos nos Estados Unidos</span>
-                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["750gb"] || 7.47)}</span>
+                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["750gb"] || 14.94)}</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="1tb">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left text-[13px]">1 TB Armazenamento de Objetos nos Estados Unidos</span>
-                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["1tb"] || 9.96)}</span>
+                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["1tb"] || 19.92)}</span>
                                 </div>
                               </SelectItem>
                             </SelectContent>
@@ -1275,7 +1437,7 @@ export default function VpsConfigurePage() {
                               <SelectItem value="managed">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Gerenciado</span>
-                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.managedEur || 109.99)}</span>
+                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.managedEur || 219.98)}</span>
                                 </div>
                               </SelectItem>
                             </SelectContent>
@@ -1304,7 +1466,7 @@ export default function VpsConfigurePage() {
                               <SelectItem value="full">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Monitoramento Completo</span>
-                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.monitoringEur || 11.49)}</span>
+                                  <span className="text-slate-900 font-bold ml-4">{formatBRLPerMonth(plan.monitoringEur || 22.98)}</span>
                                 </div>
                               </SelectItem>
                             </SelectContent>
@@ -1466,13 +1628,12 @@ export default function VpsConfigurePage() {
                       const eur = windowsVersion === "2016" ? imgPrices.windows_2016 : imgPrices.windows;
                       items.push({ label: `Windows Server ${windowsVersion}`, price: eur * RATE * durationMonths * qty });
                     } else if (osImage === "cpanel") {
-                      let eur = imgPrices.cpanel;
-                      const accounts = parseInt(cpanelLicence);
-                      if (accounts === 30) eur = 29.00;
-                      else if (accounts === 50) eur = 38.50;
-                      else if (accounts === 100) eur = 47.00;
-                      else if (accounts === 150) eur = 58.50;
-                      else if (accounts >= 200) eur = 78.50 + (Math.floor((accounts - 200) / 50) * 20.00);
+                      const cpanelPricesMap: Record<string, number> = {
+                        "5": 43.50, "30": 58.00, "50": 77.00, "100": 94.00, "150": 117.00,
+                        "200": 157.00, "250": 197.00, "300": 237.00, "500": 397.00, "1000": 797.00
+                      };
+                      const accounts = cpanelLicence;
+                      const eur = cpanelPricesMap[accounts] || 43.50;
                       items.push({ label: `cPanel (${cpanelLicence} contas)`, price: eur * RATE * durationMonths * qty });
                     } else if (osImage === "plesk" || osImage === "plesk-linux") {
                       let eur = imgPrices.pleskLinux;
@@ -1494,19 +1655,19 @@ export default function VpsConfigurePage() {
                     
                     // Add-ons
                     if (autoBackup) {
-                      items.push({ label: `Backup Automático${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.backupEur || 1.50) * RATE * durationMonths * qty });
+                      items.push({ label: `Backup Automático${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.backupEur || 3.00) * RATE * durationMonths * qty });
                     }
-                    if (privateNetwork === "enabled") items.push({ label: `Rede Privada${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.privateNetworkEur || 2.29) * RATE * durationMonths * qty });
-                    if (ipv4Address === "2ip") items.push({ label: `IP Adicional${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.additionalIpEur || 3.50) * RATE * durationMonths * qty });
+                    if (privateNetwork === "enabled") items.push({ label: `Rede Privada${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.privateNetworkEur || 4.58) * RATE * durationMonths * qty });
+                    if (ipv4Address === "2ip") items.push({ label: `IP Adicional${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.additionalIpEur || 7.00) * RATE * durationMonths * qty });
                     
                     if (objectStorage !== "none") {
-                      const prices = { "250gb": 2.49, "500gb": 4.98, "750gb": 7.47, "1tb": 9.96 };
+                      const prices = { "250gb": 4.98, "500gb": 9.96, "750gb": 14.94, "1tb": 19.92 };
                       const p = prices[objectStorage as keyof typeof prices] || 0;
                       items.push({ label: `Object Storage: ${objectStorage.toUpperCase()}${qty > 1 ? ` × ${qty}` : ""}`, price: p * RATE * durationMonths * qty });
                     }
                     
-                    if (serverManagement === "managed") items.push({ label: `Gerenciamento de Servidor${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.managedEur || 109.99) * RATE * durationMonths * qty });
-                    if (monitoring === "full") items.push({ label: `Monitoramento Completo${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.monitoringEur || 11.49) * RATE * durationMonths * qty });
+                    if (serverManagement === "managed") items.push({ label: `Gerenciamento de Servidor${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.managedEur || 219.98) * RATE * durationMonths * qty });
+                    if (monitoring === "full") items.push({ label: `Monitoramento Completo${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.monitoringEur || 22.98) * RATE * durationMonths * qty });
 
                     return items.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center text-sm border-b border-slate-50 pb-1">
@@ -1571,13 +1732,12 @@ export default function VpsConfigurePage() {
                 const eur = windowsVersion === "2016" ? imgPrices.windows_2016 : imgPrices.windows;
                 additionalMonthly += eur * RATE;
               } else if (osImage === "cpanel") {
-                let eur = imgPrices.cpanel;
-                const accounts = parseInt(cpanelLicence);
-                if (accounts === 30) eur = 29.00;
-                else if (accounts === 50) eur = 38.50;
-                else if (accounts === 100) eur = 47.00;
-                else if (accounts === 150) eur = 58.50;
-                else if (accounts >= 200) eur = 78.50 + (Math.floor((accounts - 200) / 50) * 20.00);
+                const cpanelPricesMap: Record<string, number> = {
+                  "5": 43.50, "30": 58.00, "50": 77.00, "100": 94.00, "150": 117.00,
+                  "200": 157.00, "250": 197.00, "300": 237.00, "500": 397.00, "1000": 797.00
+                };
+                const accounts = cpanelLicence;
+                const eur = cpanelPricesMap[accounts] || 43.50;
                 additionalMonthly += eur * RATE;
               } else if (osImage === "plesk" || osImage === "plesk-linux") {
                 let eur = imgPrices.pleskLinux;
@@ -1628,18 +1788,18 @@ export default function VpsConfigurePage() {
                     <div className="flex flex-col gap-1 min-w-[220px]">
                       <div className="flex justify-between items-center text-[11px]">
                         <span className="text-slate-500 font-bold flex items-center gap-1">Mensal <Info className="w-3 h-3 opacity-40" /></span>
-                        <span className="text-slate-700 font-black">{formatBRL(totalMonthly * qty / currentRate)}</span>
+                        <span className="text-slate-700 font-black whitespace-nowrap">{formatBRL(totalMonthly * qty / currentRate)}</span>
                       </div>
                       <div className="flex justify-between items-center text-[11px]">
                         <span className="text-slate-500 font-bold flex items-center gap-1">Taxa Única <Info className="w-3 h-3 opacity-40" /></span>
-                        <span className="text-slate-700 font-black">{formatBRL(setupFee * qty / currentRate)}</span>
+                        <span className="text-slate-700 font-black whitespace-nowrap">{formatBRL(setupFee * qty / currentRate)}</span>
                       </div>
                       <div className="flex justify-between items-center mt-1">
                         <div className="flex flex-col">
                           <span className="text-[13px] font-black text-slate-800">Vencido Hoje</span>
                           <span className="text-[10px] text-slate-400 font-medium -mt-1">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span>
                         </div>
-                        <span className="text-xl font-black text-slate-900">
+                        <span className="text-xl font-black text-slate-900 whitespace-nowrap">
                           {formatBRL(dueToday / currentRate)}
                         </span>
                       </div>
@@ -1959,15 +2119,13 @@ export default function VpsConfigurePage() {
                                 <span className={cn("flex-1", cpanelLicence === count.toString() ? "text-sky-500 font-medium" : "text-slate-700")}>cPanel/WHM ({count} contas)</span>
                                 <span className="text-slate-900 font-bold ml-4">
                                   {(() => {
-                                    const RATE = currentRate;
-                                    const imgPrices = getImagePrices(planId, {});
-                                    let eur = imgPrices.cpanel;
-                                    if (count === 30) eur = 29.00;
-                                    else if (count === 50) eur = 38.50;
-                                    else if (count === 100) eur = 47.00;
-                                    else if (count === 150) eur = 58.50;
-                                    else if (count >= 200) eur = 78.50 + (Math.floor((count - 200) / 50) * 20.00);
-                                    return formatBRL(eur);
+                                  const accounts = count.toString();
+                                  const cpanelPricesMap: Record<string, number> = {
+                                    "5": 43.50, "30": 58.00, "50": 77.00, "100": 94.00, "150": 117.00,
+                                    "200": 157.00, "250": 197.00, "300": 237.00, "500": 397.00, "1000": 797.00
+                                  };
+                                  let eur = cpanelPricesMap[accounts] || 43.50;
+                                  return formatBRL(eur);
                                   })()}
                                 </span>
                               </div>

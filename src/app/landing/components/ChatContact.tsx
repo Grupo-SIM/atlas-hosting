@@ -10,7 +10,8 @@ const WEBHOOK_URL = 'https://bot.jbmidia.com/webhook/6229f9db-8b7f-40ad-8a71-503
 
 const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["100", "300", "400", "500", "700", "900"],
+  variable: "--font-roboto",
 });
 
 export function ChatContact() {
@@ -83,7 +84,7 @@ export function ChatContact() {
           
           --chat--spacing: 1rem;
           --chat--border-radius: 1.5rem;
-          --chat--font-family: var(--font-roboto), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          --chat--font-family: 'Roboto', var(--font-roboto), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
           --chat--body--background: transparent;
           --chat--header--background: transparent;
@@ -117,6 +118,7 @@ export function ChatContact() {
           border: none !important;
           border-top: none !important;
           box-shadow: none !important;
+          font-family: 'Roboto', var(--font-roboto), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
         }
         #n8n-chat-embed [class*="n8n-chat-ui"]::before,
         #n8n-chat-embed [class*="n8n-chat-ui"]::after {
@@ -310,7 +312,7 @@ export function ChatContact() {
         }
       `}</style>
 
-      <section className="py-20 lg:py-32 overflow-hidden relative">
+      <section className={`${roboto.variable} py-20 lg:py-32 overflow-hidden relative`}>
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px]" />
         </div>

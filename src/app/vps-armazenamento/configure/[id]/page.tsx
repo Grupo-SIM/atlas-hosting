@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState, useLayoutEffect, useEffect } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   Check,
@@ -42,33 +42,33 @@ import { Separator } from "@/components/ui/separator";
 
 // Base rate for initial render (will be updated by API)
 // Base rate for fallback if API fails
-const FALLBACK_EUR_RATE = 11.72;
+const FALLBACK_EUR_RATE = 5.86;
 
 // Euro source values for software licensing
 const getPlanImagePrices = (planId: string, defaultPrices: any) => {
   const base = {
     ...defaultPrices,
-    cpanel: 25.88,
-    pleskLinux: 14.28,
-    pleskWin: 14.28,
-    pleskPro: 22.61,
-    pleskHost: 43.44
+    cpanel: 43.50, // 21.75 * 2
+    pleskLinux: 24.00, // 12.00 * 2
+    pleskWin: 32.00, // 16.00 * 2
+    pleskPro: 45.22,
+    pleskHost: 86.88
   };
 
   if (planId === "10") {
-    return { ...base, windows: 5.65, win2016: 4.76 };
+    return { ...base, windows: 9.50, win2016: 9.50 }; // 4.75 * 2
   }
   if (planId === "20") {
-    return { ...base, windows: 8.93, win2016: 7.44 };
+    return { ...base, windows: 15.00, win2016: 15.00 }; // 7.50 * 2
   }
   if (planId === "30") {
-    return { ...base, windows: 18.45, win2016: 14.99 };
+    return { ...base, windows: 31.00, win2016: 31.00 }; // 15.50 * 2
   }
   if (planId === "40") {
-    return { ...base, windows: 30.94, win2016: 27.49 };
+    return { ...base, windows: 52.00, win2016: 52.00 }; // 26.00 * 2
   }
   if (planId === "50") {
-    return { ...base, windows: 58.31, win2016: 54.26 };
+    return { ...base, windows: 98.00, win2016: 98.00 }; // 49.00 * 2
   }
 
   return base;
@@ -84,45 +84,45 @@ const plansData: Record<string, any> = {
     snapshots: "0 Instantâneos",
     traffic: "Porta de 200 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 5.36, setupEur: 5.36, discount: null },
-      { id: "6", label: "6 meses", eur: 4.82, setupEur: 2.68, discount: "ECONOMIZE 10%", oldEur: 5.36 },
-      { id: "12", label: "12 meses", eur: 4.28, setupEur: 0, discount: "ECONOMIZE 20%", oldEur: 5.36 },
+      { id: "1", label: "1 mês", eur: 9.00, setupEur: 9.00, setupFee: "+ Taxa de instalação única", discount: null },
+      { id: "6", label: "6 meses", eur: 8.10, setupEur: 4.50, setupFee: "+ Taxa de instalação única", discount: "ECONOMIZE 10%", oldEur: 9.00 },
+      { id: "12", label: "12 meses", eur: 7.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 9.00 },
     ],
     storageTypes: [
       { id: "ssd-300", name: "300 GB SSD", price: "Livre" },
     ],
-    backupEur: 1.50,
-    privateNetworkEur: 2.29,
-    additionalIpEur: 3.50,
+    backupEur: 3.00,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7.00,
     managedEur: 109.99,
-    monitoringEur: 11.49,
+    monitoringEur: 22.98,
     objectStoragePrices: {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
+      "250gb": 4.98,
+      "500gb": 9.96,
+      "750gb": 14.94,
+      "1tb": 19.92
     },
     locations: {
       europe: [
         { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "136 ms", eur: 0.95 },
+        { id: "uk", name: "Reino Unido", latency: "136 ms", eur: 1.90 },
       ],
       best: [
         { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "94 ms", eur: 1.40, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "94 ms", eur: 2.80, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 1.95 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 3.90 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "120 ms", eur: 0.95 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "94 ms", eur: 1.40, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 1.15 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "120 ms", eur: 1.90 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "94 ms", eur: 2.80, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 2.30 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "340 ms", eur: 2.30 },
-        { id: "jp", name: "Ásia (Japão)", latency: "270 ms", eur: 2.35 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 2.15 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "340 ms", eur: 4.30 },
+        { id: "jp", name: "Ásia (Japão)", latency: "270 ms", eur: 4.30 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 4.30 },
       ]
     }
   },
@@ -134,45 +134,45 @@ const plansData: Record<string, any> = {
     snapshots: "0 Instantâneos",
     traffic: "Porta de 300 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 8.33, setupEur: 0, discount: null },
-      { id: "6", label: "6 meses", eur: 7.50, setupEur: 0, discount: "ECONOMIZE 10%", oldEur: 8.33 },
-      { id: "12", label: "12 meses", eur: 6.66, setupEur: 0, discount: "ECONOMIZE 20%", oldEur: 8.33 },
+      { id: "1", label: "1 mês", eur: 14.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", eur: 12.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 14.00 },
+      { id: "12", label: "12 meses", eur: 11.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 14.00 },
     ],
     storageTypes: [
       { id: "ssd-400", name: "400 GB SSD", price: "Livre" },
     ],
-    backupEur: 2.00,
-    privateNetworkEur: 2.29,
-    additionalIpEur: 3.50,
+    backupEur: 4.00,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7.00,
     managedEur: 109.99,
-    monitoringEur: 11.49,
+    monitoringEur: 22.98,
     objectStoragePrices: {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
+      "250gb": 4.98,
+      "500gb": 9.96,
+      "750gb": 14.94,
+      "1tb": 19.92
     },
     locations: {
       europe: [
         { id: "eu", name: "União Europeia", latency: "175 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "136 ms", eur: 1.45 },
+        { id: "uk", name: "Reino Unido", latency: "136 ms", eur: 2.90 },
       ],
       best: [
         { id: "eu", name: "União Europeia", latency: "175 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "92 ms", eur: 2.20, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "92 ms", eur: 2.90, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 3.00 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 6.00 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "120 ms", eur: 1.45 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "92 ms", eur: 2.20, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 1.85 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "120 ms", eur: 2.90 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "92 ms", eur: 2.90, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 3.70 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", eur: 3.55 },
-        { id: "jp", name: "Ásia (Japão)", latency: "275 ms", eur: 3.65 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 3.35 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", eur: 6.00 },
+        { id: "jp", name: "Ásia (Japão)", latency: "275 ms", eur: 6.00 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 6.00 },
       ]
     }
   },
@@ -184,45 +184,45 @@ const plansData: Record<string, any> = {
     snapshots: "0 Instantâneos",
     traffic: "Porta de 600 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 16.66, setupEur: 0, discount: null },
-      { id: "6", label: "6 meses", eur: 14.99, setupEur: 0, discount: "ECONOMIZE 10%", oldEur: 16.66 },
-      { id: "12", label: "12 meses", eur: 13.33, setupEur: 0, discount: "ECONOMIZE 20%", oldEur: 16.66 },
+      { id: "1", label: "1 mês", eur: 28.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", eur: 25.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 28.00 },
+      { id: "12", label: "12 meses", eur: 22.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 28.00 },
     ],
     storageTypes: [
       { id: "ssd-1t", name: "1 TB SSD", price: "Livre" },
     ],
-    backupEur: 3.50,
-    privateNetworkEur: 2.29,
-    additionalIpEur: 3.50,
+    backupEur: 7.00,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7.00,
     managedEur: 109.99,
-    monitoringEur: 11.49,
+    monitoringEur: 22.98,
     objectStoragePrices: {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
+      "250gb": 4.98,
+      "500gb": 9.96,
+      "750gb": 14.94,
+      "1tb": 19.92
     },
     locations: {
       europe: [
         { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 2.95 },
+        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 5.90 },
       ],
       best: [
         { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 4.40, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 5.90, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "351 ms", eur: 6.05 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "351 ms", eur: 12.00 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "121 ms", eur: 2.95 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 4.40, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "150 ms", eur: 3.65 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "121 ms", eur: 5.90 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 5.90, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "150 ms", eur: 7.30 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "347 ms", eur: 7.10 },
-        { id: "jp", name: "Ásia (Japão)", latency: "264 ms", eur: 7.30 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 6.70 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "347 ms", eur: 12.00 },
+        { id: "jp", name: "Ásia (Japão)", latency: "264 ms", eur: 12.00 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 12.00 },
       ]
     }
   },
@@ -234,45 +234,45 @@ const plansData: Record<string, any> = {
     snapshots: "0 Instantâneos",
     traffic: "Porta de 800 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 29.75, setupEur: 0, discount: null },
-      { id: "6", label: "6 meses", eur: 26.78, setupEur: 0, discount: "ECONOMIZE 10%", oldEur: 29.75 },
-      { id: "12", label: "12 meses", eur: 23.80, setupEur: 0, discount: "ECONOMIZE 20%", oldEur: 29.75 },
+      { id: "1", label: "1 mês", eur: 50.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", eur: 45.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 50.00 },
+      { id: "12", label: "12 meses", eur: 40.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 50.00 },
     ],
     storageTypes: [
       { id: "ssd-12t", name: "1.2 TB SSD", price: "Livre" },
     ],
-    backupEur: 4.20,
-    privateNetworkEur: 2.29,
-    additionalIpEur: 3.50,
+    backupEur: 8.40,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7.00,
     managedEur: 109.99,
-    monitoringEur: 11.49,
+    monitoringEur: 22.98,
     objectStoragePrices: {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
+      "250gb": 4.98,
+      "500gb": 9.96,
+      "750gb": 14.94,
+      "1tb": 19.92
     },
     locations: {
       europe: [
         { id: "eu", name: "União Europeia", latency: "175 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "136 ms", eur: 5.25 },
+        { id: "uk", name: "Reino Unido", latency: "136 ms", eur: 10.50 },
       ],
       best: [
         { id: "eu", name: "União Europeia", latency: "175 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 7.85, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 10.50, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "354 ms", eur: 10.80 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "354 ms", eur: 20.00 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 5.25 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 7.85, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 6.55 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 10.50 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 10.50, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 13.10 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "346 ms", eur: 12.70 },
-        { id: "jp", name: "Ásia (Japão)", latency: "263 ms", eur: 13.00 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 11.90 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "346 ms", eur: 20.00 },
+        { id: "jp", name: "Ásia (Japão)", latency: "263 ms", eur: 20.00 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 20.00 },
       ]
     }
   },
@@ -284,45 +284,45 @@ const plansData: Record<string, any> = {
     snapshots: "0 Instantâneos",
     traffic: "Porta de 1 Gbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 44.03, setupEur: 0, discount: null },
-      { id: "6", label: "6 meses", eur: 39.63, setupEur: 0, discount: "ECONOMIZE 10%", oldEur: 44.03 },
-      { id: "12", label: "12 meses", eur: 35.22, setupEur: 0, discount: "ECONOMIZE 20%", oldEur: 44.03 },
+      { id: "1", label: "1 mês", eur: 74.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "6", label: "6 meses", eur: 66.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 74.00 },
+      { id: "12", label: "12 meses", eur: 59.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 74.00 },
     ],
     storageTypes: [
       { id: "ssd-14t", name: "1.4 TB SSD", price: "Livre" },
     ],
-    backupEur: 4.90,
-    privateNetworkEur: 2.29,
-    additionalIpEur: 3.50,
+    backupEur: 9.80,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7.00,
     managedEur: 109.99,
-    monitoringEur: 11.49,
+    monitoringEur: 22.98,
     objectStoragePrices: {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
+      "250gb": 4.98,
+      "500gb": 9.96,
+      "750gb": 14.94,
+      "1tb": 19.92
     },
     locations: {
       europe: [
         { id: "eu", name: "União Europeia", latency: "174 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 7.80 },
+        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 15.60 },
       ],
       best: [
         { id: "eu", name: "União Europeia", latency: "174 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 11.60, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 23.20, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "353 ms", eur: 15.95 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "353 ms", eur: 30.00 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 7.80 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 11.60, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 9.65 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 15.60 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 23.20, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 19.30 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "346 ms", eur: 18.80 },
-        { id: "jp", name: "Ásia (Japão)", latency: "263 ms", eur: 19.25 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 17.65 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "346 ms", eur: 30.00 },
+        { id: "jp", name: "Ásia (Japão)", latency: "263 ms", eur: 30.00 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 30.00 },
       ]
     }
   }
@@ -390,10 +390,11 @@ const images = (prices: any) => ({
 export default function ConfigureStorageVps() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const planId = params.id as string;
-  
+
   const [currentRate, setCurrentRate] = useState(FALLBACK_EUR_RATE);
-  
+
   const plan = plansData[planId as keyof typeof plansData] || plansData["10"];
   const durations = plan.durations;
   const storageTypes = plan.storageTypes;
@@ -411,49 +412,87 @@ export default function ConfigureStorageVps() {
     return `${formatBRL(eur)} / mês`;
   };
 
-  const [quantity, setQuantity] = useState("1");
-  const [duration, setDuration] = useState("1");
-  const [regionTab, setRegionTab] = useState("best");
-  const [location, setLocation] = useState("eu");
-  const [storageType, setStorageType] = useState(storageTypes[0].id);
-  const [imageCategory, setImageCategory] = useState("popular");
-  const [osImage, setOsImage] = useState("ubuntu");
-  const [autoBackup, setAutoBackup] = useState(false);
+  const sp = searchParams;
+  const [quantity, setQuantity] = useState(sp.get("qty") || "1");
+  const [duration, setDuration] = useState(sp.get("duration") || "1");
+  const [regionTab, setRegionTab] = useState(sp.get("regionTab") || "best");
+  const [location, setLocation] = useState(sp.get("location") || "eu");
+  const [storageType, setStorageType] = useState(sp.get("storage") || storageTypes[0].id);
+  const [imageCategory, setImageCategory] = useState(sp.get("imageCategory") || "popular");
+  const [osImage, setOsImage] = useState(sp.get("image") || "ubuntu");
+  const [autoBackup, setAutoBackup] = useState(sp.get("backup") === "true");
   const [showMoreImages, setShowMoreImages] = useState(true);
   const [showAdditionalFeatures, setShowAdditionalFeatures] = useState(true);
   const [showUbuntuModal, setShowUbuntuModal] = useState(false);
-  const [ubuntuVersion, setUbuntuVersion] = useState("Ubuntu 24.04");
+  const [ubuntuVersion, setUbuntuVersion] = useState(sp.get("ubuntuVersion") || "Ubuntu 24.04");
   const [showCustomModal, setShowCustomModal] = useState(false);
-  const [customImageOption, setCustomImageOption] = useState("existing");
+  const [customImageOption, setCustomImageOption] = useState(sp.get("customImageOption") || "existing");
   const [showWindowsModal, setShowWindowsModal] = useState(false);
-  const [windowsVersion, setWindowsVersion] = useState("2025");
+  const [windowsVersion, setWindowsVersion] = useState(sp.get("windowsVersion") || "2025");
   const [showCpanelModal, setShowCpanelModal] = useState(false);
-  const [cpanelLicence, setCpanelLicence] = useState("5");
-  const [cpanelVersion, setCpanelVersion] = useState("Ubuntu 22.04");
+  const [cpanelLicence, setCpanelLicence] = useState(sp.get("cpanelLicence") || "5");
+  const [cpanelVersion, setCpanelVersion] = useState(sp.get("cpanelVersion") || "Ubuntu 22.04");
   const [showRhelModal, setShowRhelModal] = useState(false);
-  const [rhelVersion, setRhelVersion] = useState("AlmaLinux 9");
+  const [rhelVersion, setRhelVersion] = useState(sp.get("rhelVersion") || "AlmaLinux 9");
   const [showPleskModal, setShowPleskModal] = useState(false);
-  const [pleskLicence, setPleskLicence] = useState("admin");
+  const [pleskLicence, setPleskLicence] = useState(sp.get("pleskLicence") || "admin");
   const [showDebianModal, setShowDebianModal] = useState(false);
-  const [debianVersion, setDebianVersion] = useState("Debian 13");
+  const [debianVersion, setDebianVersion] = useState(sp.get("debianVersion") || "Debian 13");
   const [showDockerModal, setShowDockerModal] = useState(false);
-  const [dockerVersion, setDockerVersion] = useState("Ubuntu 22.04");
+  const [dockerVersion, setDockerVersion] = useState(sp.get("dockerVersion") || "Ubuntu 22.04");
   const [showLampModal, setShowLampModal] = useState(false);
-  const [lampVersion, setLampVersion] = useState("Ubuntu 22.04");
+  const [lampVersion, setLampVersion] = useState(sp.get("lampVersion") || "Ubuntu 22.04");
   const [showPleskWindowsModal, setShowPleskWindowsModal] = useState(false);
-  const [pleskWinLicence, setPleskWinLicence] = useState("admin");
-  const [pleskWinVersion, setPleskWinVersion] = useState("2016");
+  const [pleskWinLicence, setPleskWinLicence] = useState(sp.get("pleskWinLicence") || "admin");
+  const [pleskWinVersion, setPleskWinVersion] = useState(sp.get("pleskWinVersion") || "2016");
   const [showWebminModal, setShowWebminModal] = useState(false);
-  const [webminVersion, setWebminVersion] = useState("Ubuntu 22.04");
-  const [password, setPassword] = useState("");
+  const [webminVersion, setWebminVersion] = useState(sp.get("webminVersion") || "Ubuntu 22.04");
+  const [password, setPassword] = useState(sp.get("password") ? decodeURIComponent(sp.get("password")!) : "");
   const [showPassword, setShowPassword] = useState(false);
-  const [privateNetwork, setPrivateNetwork] = useState("none");
-  const [ipv4Address, setIpv4Address] = useState("1ip");
-  const [objectStorage, setObjectStorage] = useState("none");
-  const [serverManagement, setServerManagement] = useState("unmanaged");
-  const [monitoring, setMonitoring] = useState("none");
+  const [privateNetwork, setPrivateNetwork] = useState(sp.get("privateNetwork") || "none");
+  const [ipv4Address, setIpv4Address] = useState(sp.get("ipv4Address") || "1ip");
+  const [objectStorage, setObjectStorage] = useState(sp.get("objectStorage") || "none");
+  const [serverManagement, setServerManagement] = useState(sp.get("management") || "unmanaged");
+  const [monitoring, setMonitoring] = useState(sp.get("monitoring") || "none");
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [showSummaryDetails, setShowSummaryDetails] = useState(false);
+
+  // Sync all selections to URL in real-time
+  useEffect(() => {
+    const p = new URLSearchParams();
+    p.set("qty", quantity);
+    p.set("duration", duration);
+    p.set("regionTab", regionTab);
+    p.set("location", location);
+    p.set("storage", storageType);
+    p.set("imageCategory", imageCategory);
+    p.set("image", osImage);
+    p.set("backup", String(autoBackup));
+    p.set("ubuntuVersion", ubuntuVersion);
+    p.set("windowsVersion", windowsVersion);
+    p.set("cpanelLicence", cpanelLicence);
+    p.set("cpanelVersion", cpanelVersion);
+    p.set("rhelVersion", rhelVersion);
+    p.set("pleskLicence", pleskLicence);
+    p.set("debianVersion", debianVersion);
+    p.set("dockerVersion", dockerVersion);
+    p.set("lampVersion", lampVersion);
+    p.set("pleskWinLicence", pleskWinLicence);
+    p.set("pleskWinVersion", pleskWinVersion);
+    p.set("webminVersion", webminVersion);
+    p.set("customImageOption", customImageOption);
+    p.set("privateNetwork", privateNetwork);
+    p.set("ipv4Address", ipv4Address);
+    p.set("objectStorage", objectStorage);
+    p.set("management", serverManagement);
+    p.set("monitoring", monitoring);
+    if (password) p.set("password", encodeURIComponent(password));
+    window.history.replaceState({}, "", `/vps-armazenamento/configure/${planId}?${p.toString()}`);
+  }, [quantity, duration, regionTab, location, storageType, imageCategory, osImage, autoBackup,
+      ubuntuVersion, windowsVersion, cpanelLicence, cpanelVersion, rhelVersion, pleskLicence,
+      debianVersion, dockerVersion, lampVersion, pleskWinLicence, pleskWinVersion, webminVersion,
+      customImageOption, privateNetwork, ipv4Address, objectStorage, serverManagement, monitoring,
+      password, planId]);
 
   const isPasswordValid = (pwd: string) => {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+^~[\]{}|;:,.<>?])[A-Za-z\d!@#$%^&*()_+^~[\]{}|;:,.<>?]{8,}$/;
@@ -671,7 +710,7 @@ export default function ConfigureStorageVps() {
                         else if (img.name.toLowerCase().includes("ubuntu")) setShowUbuntuModal(true);
                         else if (img.id === "custom") setShowCustomModal(true);
                         else if (img.name.toLowerCase().includes("windows")) setShowWindowsModal(true);
-                        else if (img.name.toLowerCase().includes("cpanel")) setShowCpanelModal(true);
+                        else if (img.id === "cpanel" || img.name.toLowerCase().includes("cpanel")) setShowCpanelModal(true);
                         setOsImage(img.id);
                       }}
                       className={cn(
@@ -685,7 +724,7 @@ export default function ConfigureStorageVps() {
                       <div className="flex-1 text-left">
                         <p className="text-[11px] font-bold">{img.name}</p>
                         <p className="text-[10px] text-slate-400 font-medium">
-                          {typeof img.price === "number" ? formatBRLPerMonth(img.price) : img.price}
+                          {typeof img.price === "number" ? formatBRLPerMonth(img.price) : img.eur ? formatBRLPerMonth(img.eur) : img.price}
                         </p>
                       </div>
                     </button>
@@ -860,20 +899,20 @@ export default function ConfigureStorageVps() {
                       const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
                       const nums = "0123456789";
                       const symbols = "!@#$%^&*()_+";
-                      
+
                       let pass = "";
                       pass += chars[Math.floor(Math.random() * chars.length)];
                       pass += upper[Math.floor(Math.random() * upper.length)];
                       pass += nums[Math.floor(Math.random() * nums.length)];
                       pass += symbols[Math.floor(Math.random() * symbols.length)];
-                      
+
                       const all = chars + upper + nums + symbols;
                       for (let i = 0; i < 8; i++) {
                         pass += all[Math.floor(Math.random() * all.length)];
                       }
-                      
+
                       pass = pass.split('').sort(() => 0.5 - Math.random()).join('');
-                      
+
                       setPassword(pass);
                       setPasswordTouched(true);
                     }}
@@ -883,19 +922,19 @@ export default function ConfigureStorageVps() {
                   </button>
                 </div>
                 <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setPasswordTouched(true);
-                      }}
-                      onBlur={() => setPasswordTouched(true)}
-                      className={cn(
-                        "h-12 bg-white border-slate-200 focus:border-[#3B82F6] pr-12",
-                        passwordTouched && password.length > 0 && !isPasswordValid(password) && "border-red-500 focus:border-red-500"
-                      )}
-                    />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setPasswordTouched(true);
+                    }}
+                    onBlur={() => setPasswordTouched(true)}
+                    className={cn(
+                      "h-12 bg-white border-slate-200 focus:border-[#3B82F6] pr-12",
+                      passwordTouched && password.length > 0 && !isPasswordValid(password) && "border-red-500 focus:border-red-500"
+                    )}
+                  />
                   <button
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
@@ -939,38 +978,38 @@ export default function ConfigureStorageVps() {
                 <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Detalhamento</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
                   {(() => {
-                    const selectedDur = durations.find((d:any) => d.id === duration) || durations[0];
+                    const selectedDur = durations.find((d: any) => d.id === duration) || durations[0];
                     const durMonths = parseInt(duration);
                     const qty = parseInt(quantity) || 1;
                     const items = [];
-                    
+
                     const baseEur = selectedDur.eur;
                     items.push({ label: `${plan.name} (${durMonths}m)`, price: baseEur * durMonths * qty * currentRate });
-                    
+
                     if (selectedDur.setupEur > 0) {
                       items.push({ label: `Taxa de Configuração`, price: selectedDur.setupEur * qty * currentRate });
                     }
-                    
+
                     const loc = (Object.values(planLocations).flat() as any[]).find((l: any) => l.id === location);
                     if (loc && loc.eur) items.push({ label: `Localização: ${loc.name}`, price: loc.eur * durMonths * qty * currentRate });
-                    
+
                     if (autoBackup) items.push({ label: `Backup Automático`, price: plan.backupEur * durMonths * qty * currentRate });
-                    
+
                     if (privateNetwork === "enabled") {
                       const pnEur = (planId === "20" || planId === "30" || planId === "40" || planId === "50") ? plan.privateNetworkEur : 0;
                       if (pnEur > 0) items.push({ label: `Rede Privada`, price: pnEur * durMonths * qty * currentRate });
                     }
-                    
+
                     if (ipv4Address === "2ip") items.push({ label: `IP Adicional`, price: plan.additionalIpEur * durMonths * qty * currentRate });
-                    
+
                     if (objectStorage !== "none") {
                       const osKey = objectStorage === "1000gb" ? "1tb" : objectStorage;
                       const osEur = plan.objectStoragePrices[osKey as keyof typeof plan.objectStoragePrices] || 0;
                       items.push({ label: `Object Storage (${objectStorage.toUpperCase()})`, price: osEur * durMonths * qty * currentRate });
                     }
-                    
+
                     if (serverManagement === "managed") items.push({ label: `Gerenciado`, price: plan.managedEur * durMonths * qty * currentRate });
-                    
+
                     if (monitoring === "full") items.push({ label: `Monitoramento`, price: plan.monitoringEur * durMonths * qty * currentRate });
 
                     // Image/OS Pricing
@@ -978,16 +1017,25 @@ export default function ConfigureStorageVps() {
                       const eur = windowsVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows;
                       items.push({ label: `Windows Server ${windowsVersion}`, price: eur * durMonths * qty * currentRate });
                     } else if (osImage === "cpanel") {
-                      items.push({ label: `cPanel License`, price: currentImagePrices.cpanel * durMonths * qty * currentRate });
+                      const cpanelPricesMap: Record<string, number> = {
+                        "5": 43.50, "30": 58.00, "50": 77.00, "100": 94.00, "150": 117.00,
+                        "200": 157.00, "250": 197.00, "300": 237.00
+                      };
+                      let licPrice = cpanelPricesMap[cpanelLicence];
+                      if (!licPrice) {
+                        const accounts = parseInt(cpanelLicence);
+                        licPrice = 237.00 + (Math.floor((accounts - 300) / 50) * 40.00);
+                      }
+                      items.push({ label: `cPanel License (${cpanelLicence} contas)`, price: licPrice * durMonths * qty * currentRate });
                     } else if (osImage === "plesk" || osImage === "plesk-linux") {
-                      const licEur = pleskLicence === "admin" ? currentImagePrices.pleskLinux : 
-                                     pleskLicence === "host" ? currentImagePrices.pleskHost : 
-                                     currentImagePrices.pleskPro;
+                      const licEur = pleskLicence === "admin" ? currentImagePrices.pleskLinux :
+                        pleskLicence === "host" ? currentImagePrices.pleskHost :
+                          currentImagePrices.pleskPro;
                       items.push({ label: `Plesk License (${pleskLicence})`, price: licEur * durMonths * qty * currentRate });
                     } else if (osImage === "plesk-win") {
-                      const licEur = pleskWinLicence === "admin" ? currentImagePrices.pleskLinux : 
-                                     pleskWinLicence === "host" ? currentImagePrices.pleskHost : 
-                                     currentImagePrices.pleskPro;
+                      const licEur = pleskWinLicence === "admin" ? currentImagePrices.pleskLinux :
+                        pleskWinLicence === "host" ? currentImagePrices.pleskHost :
+                          currentImagePrices.pleskPro;
                       const verEur = pleskWinVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows;
                       items.push({ label: `Plesk + Windows (${pleskWinLicence})`, price: (licEur + verEur) * durMonths * qty * currentRate });
                     }
@@ -1018,7 +1066,7 @@ export default function ConfigureStorageVps() {
           </div>
           <div className="flex items-center gap-20">
             {(() => {
-              const selectedDur = durations.find((d:any) => d.id === duration) || durations[0];
+              const selectedDur = durations.find((d: any) => d.id === duration) || durations[0];
               const durMonths = parseInt(duration);
               const qty = parseInt(quantity) || 1;
               const RATE = currentRate;
@@ -1029,7 +1077,7 @@ export default function ConfigureStorageVps() {
 
               let additionalEur = 0;
               const loc = Object.values(planLocations).flat().find((l: any) => l.id === location) as any;
-              
+
               if (loc && loc.eur) {
                 additionalEur += loc.eur || 0;
               }
@@ -1065,28 +1113,37 @@ export default function ConfigureStorageVps() {
               if (osImage === "windows") {
                 additionalEur += windowsVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows;
               } else if (osImage === "cpanel") {
-                additionalEur += currentImagePrices.cpanel;
+                const cpanelPricesMap: Record<string, number> = {
+                  "5": 43.50, "30": 58.00, "50": 77.00, "100": 94.00, "150": 117.00,
+                  "200": 157.00, "250": 197.00, "300": 237.00
+                };
+                let eur = cpanelPricesMap[cpanelLicence];
+                if (!eur) {
+                  const accounts = parseInt(cpanelLicence);
+                  eur = 237.00 + (Math.floor((accounts - 300) / 50) * 40.00);
+                }
+                additionalEur += eur;
               } else if (osImage === "plesk" || osImage === "plesk-linux") {
-                const licEur = pleskLicence === "admin" ? currentImagePrices.pleskLinux : 
-                                 pleskLicence === "host" ? currentImagePrices.pleskHost : 
-                                 currentImagePrices.pleskPro;
+                const licEur = pleskLicence === "admin" ? currentImagePrices.pleskLinux :
+                  pleskLicence === "host" ? currentImagePrices.pleskHost :
+                    currentImagePrices.pleskPro;
                 additionalEur += licEur;
               } else if (osImage === "plesk-win") {
-                const licEur = pleskWinLicence === "admin" ? currentImagePrices.pleskWin : 
-                                 pleskWinLicence === "host" ? currentImagePrices.pleskHost : 
-                                 currentImagePrices.pleskPro;
+                const licEur = pleskWinLicence === "admin" ? currentImagePrices.pleskWin :
+                  pleskWinLicence === "host" ? currentImagePrices.pleskHost :
+                    currentImagePrices.pleskPro;
                 const verEur = pleskWinVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows;
                 additionalEur += (licEur + verEur);
               }
 
               const totalMonthly = (basePriceMonthlyEur + additionalEur) * RATE;
               const dueToday = (totalMonthly * durMonths * qty) + (setupFeeEur * RATE * qty);
-              
+
               return (
                 <div className="flex items-center gap-12">
                   <div className="flex flex-col gap-1 min-w-[220px]">
-                    <div className="flex justify-between items-center text-[11px]"><span className="text-slate-500 font-bold">Mensal</span><span className="font-black text-slate-700">{formatBRL(totalMonthly * qty / RATE)}</span></div>
-                    <div className="flex justify-between items-center mt-1"><span className="font-black text-slate-800 text-[13px]">Vencido Hoje</span><span className="text-xl font-black text-slate-900">{formatBRL(dueToday / RATE)}</span></div>
+                    <div className="flex justify-between items-center text-[11px]"><span className="text-slate-500 font-bold">Mensal</span><span className="font-black text-slate-700 whitespace-nowrap">{formatBRL(totalMonthly * qty / RATE)}</span></div>
+                    <div className="flex justify-between items-center mt-1"><span className="font-black text-slate-800 text-[13px]">Vencido Hoje</span><span className="text-xl font-black text-slate-900 whitespace-nowrap">{formatBRL(dueToday / RATE)}</span></div>
                   </div>
                   <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&password=${encodeURIComponent(password)}&type=storage-vps`)} className={cn("font-bold h-14 px-12 rounded-full text-lg shadow-lg", isPasswordValid(password) ? "bg-[#00A8E8] hover:bg-[#0096d1] text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed")}>Próximo</Button>
                 </div>
@@ -1095,7 +1152,7 @@ export default function ConfigureStorageVps() {
           </div>
         </div>
       </div>
-      
+
       {/* Modals same as VPS */}
       <AnimatePresence>
         {showUbuntuModal && (
@@ -1163,17 +1220,17 @@ export default function ConfigureStorageVps() {
                         <div className="flex items-center justify-between w-full pr-4 text-[13px] leading-tight">
                           <div className="flex flex-col text-left">
                             <span className="font-medium text-slate-700">
-                              {pleskWinLicence === "admin" ? "Plesk Obsidian Web Admin Edition" : 
-                               pleskWinLicence === "host" ? "Plesk Obsidian Web Host Edition" : 
-                               "Plesk Obsidian Web Pro Edition"}
+                              {pleskWinLicence === "admin" ? "Plesk Obsidian Web Admin Edition" :
+                                pleskWinLicence === "host" ? "Plesk Obsidian Web Host Edition" :
+                                  "Plesk Obsidian Web Pro Edition"}
                             </span>
                             <span className="text-emerald-500 font-bold text-[11px]">1 month free</span>
                           </div>
                           <div className="flex items-center gap-2 text-slate-500">
                             <span className="font-medium">
-                              {pleskWinLicence === "admin" ? currentImagePrices.pleskWin : 
-                               pleskWinLicence === "host" ? currentImagePrices.pleskHost : 
-                               currentImagePrices.pleskPro}
+                              {pleskWinLicence === "admin" ? currentImagePrices.pleskWin :
+                                pleskWinLicence === "host" ? currentImagePrices.pleskHost :
+                                  currentImagePrices.pleskPro}
                             </span>
                             <span>|</span>
                             <span>R$ 0,00 Setup fee</span>
@@ -1279,17 +1336,17 @@ export default function ConfigureStorageVps() {
                         <div className="flex items-center justify-between w-full pr-4 text-[13px] leading-tight">
                           <div className="flex flex-col text-left">
                             <span className="font-medium text-slate-700">
-                              {pleskLicence === "admin" ? "Plesk Obsidian Web Admin Edition" : 
-                               pleskLicence === "host" ? "Plesk Obsidian Web Host Edition" : 
-                               "Plesk Obsidian Web Pro Edition"}
+                              {pleskLicence === "admin" ? "Plesk Obsidian Web Admin Edition" :
+                                pleskLicence === "host" ? "Plesk Obsidian Web Host Edition" :
+                                  "Plesk Obsidian Web Pro Edition"}
                             </span>
                             <span className="text-emerald-500 font-bold text-[11px]">1 month free</span>
                           </div>
                           <div className="flex items-center gap-2 text-slate-500">
                             <span className="font-medium">
-                              {pleskLicence === "admin" ? currentImagePrices.pleskLinux : 
-                               pleskLicence === "host" ? currentImagePrices.pleskHost : 
-                               currentImagePrices.pleskPro}
+                              {pleskLicence === "admin" ? currentImagePrices.pleskLinux :
+                                pleskLicence === "host" ? currentImagePrices.pleskHost :
+                                  currentImagePrices.pleskPro}
                             </span>
                             <span>|</span>
                             <span>R$ 0,00 Setup fee</span>
@@ -1333,6 +1390,78 @@ export default function ConfigureStorageVps() {
               <div className="flex items-center justify-end gap-12 pt-4">
                 <button onClick={() => setShowPleskModal(false)} className="text-sky-500 font-bold text-sm hover:underline">Skip</button>
                 <Button onClick={() => setShowPleskModal(false)} className="bg-[#00A8E8] hover:bg-[#0096d1] text-white font-bold h-14 px-12 rounded-lg text-lg">Get Started</Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {showCpanelModal && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowCpanelModal(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-4">
+                <img src="/cpanel.png" alt="cPanel" className="w-10 h-10 object-contain" />
+                <h2 className="text-xl font-bold text-slate-700">cPanel/WHM</h2>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <label className="text-sm font-bold text-slate-600">Licença (Número de Contas)</label>
+                  <Select value={cpanelLicence} onValueChange={setCpanelLicence}>
+                    <SelectTrigger className="h-16 border border-slate-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="z-[120]">
+                      {[
+                        { id: "5", name: "cPanel Admin (até 5 contas)", price: 43.50 },
+                        { id: "30", name: "cPanel Pro (até 30 contas)", price: 58.00 },
+                        { id: "50", name: "cPanel Plus (até 50 contas)", price: 77.00 },
+                        { id: "100", name: "cPanel Premier (até 100 contas)", price: 94.00 },
+                        { id: "150", name: "cPanel Premier (até 150 contas)", price: 117.00 },
+                        { id: "200", name: "cPanel Premier (até 200 contas)", price: 157.00 },
+                        { id: "250", name: "cPanel Premier (até 250 contas)", price: 197.00 },
+                        { id: "300", name: "cPanel Premier (até 300 contas)", price: 237.00 },
+                        { id: "350", name: "cPanel Premier (até 350 contas)", price: 277.00 },
+                        { id: "400", name: "cPanel Premier (até 400 contas)", price: 317.00 },
+                        { id: "450", name: "cPanel Premier (até 450 contas)", price: 357.00 },
+                        { id: "500", name: "cPanel Premier (até 500 contas)", price: 397.00 },
+                        { id: "550", name: "cPanel Premier (até 550 contas)", price: 437.00 },
+                        { id: "600", name: "cPanel Premier (até 600 contas)", price: 477.00 },
+                        { id: "650", name: "cPanel Premier (até 650 contas)", price: 517.00 },
+                        { id: "700", name: "cPanel Premier (até 700 contas)", price: 557.00 },
+                        { id: "750", name: "cPanel Premier (até 750 contas)", price: 597.00 },
+                        { id: "800", name: "cPanel Premier (até 800 contas)", price: 637.00 },
+                        { id: "850", name: "cPanel Premier (até 850 contas)", price: 677.00 },
+                        { id: "900", name: "cPanel Premier (até 900 contas)", price: 717.00 },
+                        { id: "950", name: "cPanel Premier (até 950 contas)", price: 757.00 },
+                        { id: "1000", name: "cPanel Premier (até 1000 contas)", price: 797.00 },
+                      ].map((lic) => (
+                        <SelectItem key={lic.id} value={lic.id}>
+                          <div className="flex items-center justify-between w-[480px] py-1">
+                            <span className="font-bold text-slate-700">{lic.name}</span>
+                            <span className="font-black text-slate-800">{formatBRL(lic.price)}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-sm font-bold text-slate-600">Sistema Operacional</label>
+                  <Select value={cpanelVersion} onValueChange={setCpanelVersion}>
+                    <SelectTrigger className="h-16 border border-slate-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="z-[120]">
+                      <SelectItem value="Ubuntu 22.04">Ubuntu 22.04 LTS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-6 pt-4">
+                <Button variant="ghost" onClick={() => setShowCpanelModal(false)} className="text-slate-400 font-bold">CANCELAR</Button>
+                <Button onClick={() => setShowCpanelModal(false)} className="bg-[#00A8E8] hover:bg-[#0096d1] text-white font-bold px-8">CONFIGURAR</Button>
               </div>
             </motion.div>
           </div>

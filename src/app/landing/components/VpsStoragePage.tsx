@@ -25,8 +25,8 @@ type StoragePlan = {
 const storagePlans: StoragePlan[] = [
   {
     name: "Storage VPS 10 (S)",
-    eurOld: 4.50,
-    eurNew: 3.60,
+    eurOld: 9.00,
+    eurNew: 7.20,
     vcpu: "2 núcleos de vCPU",
     ram: "4 GB de RAM",
     storage: "300 GB SSD",
@@ -34,8 +34,8 @@ const storagePlans: StoragePlan[] = [
   },
   {
     name: "Storage VPS 20 (M)",
-    eurOld: 7.00,
-    eurNew: 5.60,
+    eurOld: 14.00,
+    eurNew: 11.20,
     vcpu: "3 núcleos de vCPU",
     ram: "8 GB de RAM",
     storage: "400 GB SSD",
@@ -44,8 +44,8 @@ const storagePlans: StoragePlan[] = [
   },
   {
     name: "Storage VPS 30 (L)",
-    eurOld: 14.00,
-    eurNew: 11.20,
+    eurOld: 28.00,
+    eurNew: 22.40,
     vcpu: "6 núcleos de vCPU",
     ram: "18 GB de RAM",
     storage: "1 TB SSD",
@@ -53,8 +53,8 @@ const storagePlans: StoragePlan[] = [
   },
   {
     name: "Storage VPS 40 (XL)",
-    eurOld: 25.00,
-    eurNew: 20.00,
+    eurOld: 50.00,
+    eurNew: 40.00,
     vcpu: "8 núcleos de vCPU",
     ram: "30 GB de RAM",
     storage: "1.2 TB SSD",
@@ -62,8 +62,8 @@ const storagePlans: StoragePlan[] = [
   },
   {
     name: "Storage VPS 50 (XXL)",
-    eurOld: 37.00,
-    eurNew: 29.60,
+    eurOld: 74.00,
+    eurNew: 59.20,
     vcpu: "14 núcleos de vCPU",
     ram: "50 GB de RAM",
     storage: "1.4 TB SSD",
@@ -72,7 +72,7 @@ const storagePlans: StoragePlan[] = [
 ];
 
 export function VpsStoragePage() {
-  const [currentRate, setCurrentRate] = useState(11.72);
+  const [currentRate, setCurrentRate] = useState(5.86);
 
   useEffect(() => {
     fetch("/api/currency/euro")

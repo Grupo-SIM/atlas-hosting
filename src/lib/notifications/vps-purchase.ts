@@ -2,6 +2,21 @@ import { sendNotificationEmail } from "@/lib/email/service";
 import { notifyAdminWhatsApp } from "@/lib/notifications/whatsapp";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 
+interface PriceBreakdown {
+  eurRate: number;
+  baseBrlPerMonth: number;
+  locationBrlPerMonth: number;
+  storageBrlPerMonth: number;
+  imageBrlPerMonth: number;
+  backupBrlPerMonth: number;
+  managedBrlPerMonth: number;
+  monitoringBrlPerMonth: number;
+  privateNetworkBrlPerMonth: number;
+  additionalIpBrlPerMonth: number;
+  objectStorageBrlPerMonth: number;
+  setupBrl: number;
+}
+
 interface VpsPurchaseData {
   // User data
   userName: string;
@@ -9,6 +24,10 @@ interface VpsPurchaseData {
   userPhone?: string;
   userDocument?: string;
   userAddress?: string;
+  userNeighborhood?: string;
+  userZipCode?: string;
+  userFullName?: string;
+  paymentMethod?: "pix" | "credit_card";
   isNewAccount: boolean;
   guestPassword?: string;
   serverPassword?: string;
@@ -36,6 +55,9 @@ interface VpsPurchaseData {
   invoiceId: string;
   invoiceRef: string;
   totalAmount: number;
+
+  // Exact price breakdown from invoice creation
+  priceBreakdown?: PriceBreakdown;
 }
 
 // Readable labels for VPS configuration values
@@ -51,17 +73,6 @@ const locationLabels: Record<string, string> = {
   in: "Ásia (Índia)",
 };
 
-const locationPrices: Record<string, number> = {
-  eu: 0,
-  uk: 11.13,
-  "us-east": 16.41,
-  "us-west": 13.48,
-  "us-central": 11.13,
-  "au-sydney": 22.85,
-  sg: 26.96,
-  jp: 27.54,
-  in: 25.20,
-};
 
 const pleskLicenceNames: Record<string, string> = {
   admin: "Plesk Obsidian Web Admin Edition",
@@ -71,9 +82,17 @@ const pleskLicenceNames: Record<string, string> = {
 
 const storageLabels: Record<string, string> = {
   "ssd-150": "SSD de 150 GB",
+  "ssd-200": "SSD de 200 GB",
   "ssd-300": "SSD de 300 GB",
-  "nvme-75": "75 GB NVMe",
+  "ssd-400": "SSD de 400 GB",
+  "ssd-800": "SSD de 800 GB",
+  "ssd-1200": "SSD de 1200 GB",
+  "nvme-75": "NVMe de 75 GB",
+  "nvme-100": "NVMe de 100 GB",
   "nvme-150": "NVMe de 150 GB",
+  "nvme-200": "NVMe de 200 GB",
+  "nvme-400": "NVMe de 400 GB",
+  "nvme-600": "NVMe de 600 GB",
 };
 
 const imageLabels: Record<string, string> = {
@@ -109,12 +128,6 @@ const objectStorageLabels: Record<string, string> = {
   "1tb": "1 TB (EUA)",
 };
 
-const objectStoragePrices: Record<string, number> = {
-  "250gb": 29.18,
-  "500gb": 58.37,
-  "750gb": 87.55,
-  "1tb": 116.73,
-};
 
 function formatCurrency(value: number): string {
   return `R$ ${value.toFixed(2).replace(".", ",")}`;
@@ -125,54 +138,11 @@ function formatCurrency(value: number): string {
  * Matches landing page labels and shows prices for each selection.
  */
 function buildAdminWhatsAppMessage(data: VpsPurchaseData): string {
-  const RATE = 11.72; // EUR to BRL
   const durationMonths = data.duration;
   const qty = data.quantity || 1;
 
-  // 1. Determine Plan Base Price
-  const basePriceBrl = 4.50 * RATE; // R$ 52,74
-  let planPrice = basePriceBrl;
-  if (data.duration === 6) planPrice = 4.05 * RATE; // R$ 47,47
-  if (data.duration === 12) planPrice = 3.60 * RATE; // R$ 42,19
-
-  // 2. Setup Fee
-  let setupFee = 0;
-  if (data.duration === 1) setupFee = 4.50 * RATE;
-  if (data.duration === 6) setupFee = 26.28;
-  if (data.duration === 12) setupFee = 0;
-
-  // 3. Location Price
-  const locationPrice = locationPrices[data.location] ?? 0;
-
-  // 4. Storage Price
-  const storagePrice = data.storage === "ssd-300" ? 18.17 :
-                      data.storage === "nvme-150" ? 21.68 : 0;
-
-  // 5. Image Price
-  const imagePrices: Record<string, number> = {
-    "windows": 87.90,
-    "cpanel": 254.91,
-    "plesk-admin": 140.64,
-    "plesk-host": 427.78,
-    "plesk-pro": 222.68,
-    "plesk-win-admin": 213.90,
-    "plesk-win-host": 501.03,
-    "plesk-win-pro": 295.93,
-    "directadmin": 58.60,
-  };
-  const customStoragePrice = data.image === "custom" && data.customImageOption === "add" ? 13.95 : 0;
-  const imagePriceBrl = (imagePrices[data.image] || 0) + customStoragePrice;
-
-  // 6. Add-ons
-  const backupPrice = data.backup ? 17.58 : 0;
-  const managementPrice = data.management === "managed" ? 1289.08 : 0;
-  const monitoringPrice = data.monitoring === "full" ? 134.66 : 0;
-  const networkPrice = data.privateNetwork === "enabled" ? 26.84 : 0;
-  const additionalIpPrice = data.ipv4Address === "2ip" ? 41.02 : 0;
-  const objectStoragePrice = objectStoragePrices[data.objectStorage || ""] || 0;
-
-  const subtotalPerUnit = planPrice + locationPrice + storagePrice + imagePriceBrl + backupPrice + managementPrice + monitoringPrice + networkPrice + additionalIpPrice + objectStoragePrice;
-  const totalItems = subtotalPerUnit * durationMonths * qty;
+  const paymentLabel = data.paymentMethod === "pix" ? "💠 PIX" : data.paymentMethod === "credit_card" ? "💳 Cartão de Crédito" : "N/A";
+  const cycleLabel = durationMonths === 1 ? "Mensal (cobrado todo mês)" : durationMonths === 6 ? "Semestral (cobrado a cada 6 meses)" : durationMonths === 12 ? "Anual (cobrado a cada 12 meses)" : `${durationMonths} meses`;
 
   const lines: string[] = [
     `🚀 *NOVO PEDIDO: ATLAS HOSTING*`,
@@ -180,35 +150,42 @@ function buildAdminWhatsAppMessage(data: VpsPurchaseData): string {
     ``,
     `👤 *INFORMAÇÕES DO CLIENTE*`,
     ``,
-    `*Nome:* ${data.userName}`,
+    `*Nome:* ${data.userFullName || data.userName}`,
     `*E-mail:* ${data.userEmail}`,
     `*Telefone:* ${data.userPhone || "N/A"}`,
     `*Documento:* ${data.userDocument || "N/A"}`,
-    `*Tipo:* ${data.isNewAccount ? `🆕 Conta Nova (Senha Painel: ${data.guestPassword || "N/A"})` : "✅ Cliente Existente"}`,
+    `*Endereço:* ${data.userAddress || "N/A"}`,
+  ];
+
+  if (data.userNeighborhood) lines.push(`*Bairro:* ${data.userNeighborhood}`);
+  if (data.userZipCode) lines.push(`*CEP:* ${data.userZipCode}`);
+
+  lines.push(
+    `*Tipo de Conta:* ${data.isNewAccount ? `🆕 Conta Nova (Senha Painel: ${data.guestPassword || "N/A"})` : "✅ Cliente Existente"}`,
     `*Senha do Servidor:* \`${data.serverPassword || "N/A"}\``,
     ``,
     `━━━━━━━━━━━━━━━━━━━━`,
     ``,
     `🖥️ *CONFIGURAÇÃO DA VM*`,
     ``,
-    `*Plano:* ${data.planName} — R$ ${planPrice.toFixed(2).replace(".", ",")}/mês`,
+    `*Plano:* ${data.planName}`,
     `*Quantidade:* ${qty} unidade${qty > 1 ? "s" : ""}`,
-    `*Ciclo:* ${data.duration === 1 ? "1 mês" : `${data.duration} meses`}`,
-    `*Localização:* ${data.locationLabel || data.location}${locationPrice > 0 ? ` — R$ ${locationPrice.toFixed(2).replace(".", ",")}/mês` : " — Grátis"}`,
-    `*Armazenamento:* ${data.storageLabel || data.storage}${storagePrice > 0 ? ` — R$ ${storagePrice.toFixed(2).replace(".", ",")}/mês` : " — Grátis"}`,
-    `*Imagem/SO:* ${data.imageLabel || data.image}${imagePriceBrl > 0 ? ` — R$ ${imagePriceBrl.toFixed(2).replace(".", ",")}/mês` : " — Grátis"}`,
+    `*Ciclo de Cobrança:* ${cycleLabel}`,
+    `*Localização:* ${data.locationLabel || data.location}`,
+    `*Armazenamento:* ${data.storageLabel || data.storage}`,
+    `*Imagem/SO:* ${data.imageLabel || data.image}`,
     ``,
     `🛠️ *RECURSOS ADICIONAIS*`,
     ``,
-    `*Backup Automático:* ${data.backup ? `✅ Ativado — R$ ${backupPrice.toFixed(2).replace(".", ",")}/mês` : "❌ Não"}`,
-    `*Gerenciamento:* ${data.management === "managed" ? `🛡️ Gerenciado — R$ ${managementPrice.toFixed(2).replace(".", ",")}/mês` : "⚙️ Self-Managed — Grátis"}`,
-    `*Monitoramento:* ${data.monitoring === "full" ? `📊 Completo — R$ ${monitoringPrice.toFixed(2).replace(".", ",")}/mês` : "❌ Não"}`,
-    `*Rede Privada:* ${data.privateNetwork === "enabled" ? `🌐 Ativada — R$ ${networkPrice.toFixed(2).replace(".", ",")}/mês` : "❌ Não"}`,
-    `*IPv4:* ${data.ipv4Address === "2ip" ? `2 IPs (1 adicional) — R$ ${additionalIpPrice.toFixed(2).replace(".", ",")}/mês` : "1 IP — Grátis"}`,
-  ];
+    `*Backup Automático:* ${data.backup ? "✅ Ativado" : "❌ Não"}`,
+    `*Gerenciamento:* ${data.management === "managed" ? "🛡️ Gerenciado" : "⚙️ Self-Managed"}`,
+    `*Monitoramento:* ${data.monitoring === "full" ? "📊 Completo" : "❌ Não"}`,
+    `*Rede Privada:* ${data.privateNetwork === "enabled" ? "🌐 Ativada" : "❌ Não"}`,
+    `*IPv4:* ${data.ipv4Address === "2ip" ? "2 IPs (1 adicional)" : "1 IP"}`,
+  );
 
   if (data.objectStorage && data.objectStorage !== "none") {
-    lines.push(`*Object Storage:* ${objectStorageLabels[data.objectStorage] || data.objectStorage} — R$ ${objectStoragePrice.toFixed(2).replace(".", ",")}/mês`);
+    lines.push(`*Object Storage:* ${objectStorageLabels[data.objectStorage] || data.objectStorage}`);
   }
 
   lines.push(
@@ -217,8 +194,8 @@ function buildAdminWhatsAppMessage(data: VpsPurchaseData): string {
     ``,
     `💳 *RESUMO FINANCEIRO*`,
     ``,
-    `*Subtotal (${durationMonths} ${durationMonths === 1 ? "mês" : "meses"} × ${qty}):* R$ ${totalItems.toFixed(2).replace(".", ",")}`,
-    `*Taxa de Setup:* R$ ${(setupFee * qty).toFixed(2).replace(".", ",")}`,
+    `*Forma de Pagamento:* ${paymentLabel}`,
+    `*Período:* ${durationMonths} ${durationMonths === 1 ? "mês" : "meses"}${qty > 1 ? ` × ${qty} unidades` : ""}`,
     ``,
     `💰 *VALOR TOTAL COBRADO:*`,
     `*R$ ${data.totalAmount.toFixed(2).replace(".", ",")}*`,
@@ -301,12 +278,18 @@ export async function triggerPurchaseNotifications(
     try {
       await sendVpsPurchaseNotifications({
         userName: user.name || "Cliente",
+        userFullName: billing?.firstName && billing?.lastName
+          ? `${billing.firstName} ${billing.lastName}`.trim()
+          : user.name || "Cliente",
         userEmail: user.email,
         userPhone: billing?.phoneNumber || user.billingPhone,
         userDocument: billing?.document || user.billingDocument,
-        userAddress: billing?.address 
-          ? `${billing.address.street}, ${billing.address.city} - ${billing.address.state}` 
+        userAddress: billing?.address
+          ? `${billing.address.street}${billing.address.number ? ", " + billing.address.number : ""}, ${billing.address.city} - ${billing.address.state}`
           : user.billingStreet ? `${user.billingStreet}, ${user.billingCity} - ${user.billingState}` : undefined,
+        userNeighborhood: billing?.address?.neighborhood || user.billingNeighborhood,
+        userZipCode: billing?.address?.zipCode || user.billingZipCode,
+        paymentMethod: billing?.paymentMethod,
         isNewAccount: !!meta?.guestPassword,
         guestPassword: meta?.guestPassword,
         serverPassword: config.password,
@@ -370,19 +353,22 @@ export async function triggerPurchaseNotifications(
         invoiceId: invoice.id,
         invoiceRef: invoice.reference,
         totalAmount: invoice.amount,
+        priceBreakdown: meta.priceBreakdown,
       });
     } catch (err) {
       console.error("[PURCHASE-NOTIFY] Erro ao enviar notificações VPS:", err);
     }
   } else if (invoice.type === "subscription") {
     try {
+      const paymentLabel = billing?.paymentMethod === "pix" ? "💠 PIX" : billing?.paymentMethod === "credit_card" ? "💳 Cartão de Crédito" : "N/A";
       const msg = [
         `🛒 *NOVA ASSINATURA*`,
         ``,
         `👤 *Cliente:* ${user.name} (${user.email})`,
         `📦 *Produto:* ${invoice.description || "Plano de Hospedagem"}`,
         `💰 *Valor:* R$ ${invoice.amount.toFixed(2)}`,
-        `Fatura: ${invoice.reference}`,
+        `💳 *Pagamento:* ${paymentLabel}`,
+        `*Fatura:* ${invoice.reference}`,
       ].join("\n");
       
       await notifyAdminWhatsApp(msg);

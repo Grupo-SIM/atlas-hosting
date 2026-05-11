@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Bash(serena start-mcp-server --context claude-code)",
       "Bash(grep -l \"useContext\" c:/Users/breno/Desktop/JB/atlas-hosting/src/app/landing/components/*.tsx)",
       "Bash(npm show:*)",
       "Bash(node -e \"const v = JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); console.log\\(v.slice\\(-10\\).join\\('\\\\n'\\)\\)\")",
@@ -25,11 +26,77 @@
       "Bash(grep -n \"^export default\\\\|^function \\\\|^export function\\\\|^const.*=.*{$\\\\|^export const\" \"src/app/vds/configure/[id]/page.tsx\")",
       "Bash(grep -n \"^export default\\\\|^function \\\\|^export function\\\\|^const.*=.*{$\\\\|^export const\" \"src/app/vps-windows/configure/[id]/page.tsx\")",
       "Bash(./node_modules/.bin/tsc --noEmit)",
-      "Bash(./node_modules/.bin/tsc --noEmit --strict)"
+      "Bash(./node_modules/.bin/tsc --noEmit --strict)",
+      "mcp__serena__initial_instructions",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__find_symbol",
+      "mcp__serena__replace_content",
+      "mcp__serena__replace_symbol_body",
+      "Bash(npx --yes next build)",
+      "Bash(del \"c:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\atlas-hosting\\\\vercel.json\")"
+    ],
+    "deny": [
+      "Agent(Explore)"
     ],
     "additionalDirectories": [
       "c:\\Users\\breno\\Desktop\\JB\\atlas-hosting\\src\\app\\checkout\\[id]",
-      "C:\\Users\\breno\\Desktop\\JB\\atlas-hosting\\src\\app\\vps\\configure\\[id]"
+      "C:\\Users\\breno\\Desktop\\JB\\atlas-hosting\\src\\app\\vps\\configure\\[id]",
+      "C:\\Users\\breno\\Desktop\\JB\\back-simpay\\src\\modules\\atlas\\services",
+      "C:\\Users\\breno\\Desktop\\JB\\back-simpay\\src\\modules\\atlas\\controllers"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "serena-hooks remind --client=claude-code"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp_serena_*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "serena-hooks auto-approve --client=claude-code"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "serena-hooks activate --client=claude-code"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "serena-hooks cleanup --client=claude-code"
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "serena": {
+      "command": "serena",
+      "args": [
+        "start-mcp-server",
+        "--context",
+        "claude-code"
+      ]
+    }
   }
 }

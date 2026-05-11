@@ -28,8 +28,8 @@ const windowsPlans = [
   {
     id: "10",
     name: "Cloud VPS 10 (S)",
-    eurOld: 12.00,
-    eurNew: 11.10,
+    eurOld: 24.00,
+    eurNew: 22.20,
     vcpu: "4 núcleos de vCPU",
     ram: "8 GB de RAM",
     storage: "75 GB NVMe ou SSD 150 GB",
@@ -39,8 +39,8 @@ const windowsPlans = [
   {
     id: "20",
     name: "Cloud VPS 20 (M)",
-    eurOld: 22.50,
-    eurNew: 21.10,
+    eurOld: 45.00,
+    eurNew: 42.20,
     vcpu: "6 núcleos de vCPU",
     ram: "12 GB de RAM",
     storage: "100 GB NVMe ou SSD 200 GB",
@@ -51,8 +51,8 @@ const windowsPlans = [
   {
     id: "30",
     name: "Cloud VPS 30 (L)",
-    eurOld: 40.00,
-    eurNew: 37.20,
+    eurOld: 80.00,
+    eurNew: 74.40,
     vcpu: "8 núcleos de vCPU",
     ram: "24 GB de RAM",
     storage: "200 GB NVMe ou SSD 400 GB",
@@ -63,8 +63,8 @@ const windowsPlans = [
   {
     id: "40",
     name: "Cloud VPS 40 (XL)",
-    eurOld: 74.00,
-    eurNew: 69.00,
+    eurOld: 148.00,
+    eurNew: 138.00,
     vcpu: "12 núcleos de vCPU",
     ram: "48 GB de RAM",
     storage: "250 GB NVMe ou SSD 500 GB",
@@ -75,8 +75,8 @@ const windowsPlans = [
   {
     id: "50",
     name: "Cloud VPS 50 (XXL)",
-    eurOld: 95.50,
-    eurNew: 88.10,
+    eurOld: 191.00,
+    eurNew: 176.20,
     vcpu: "16 núcleos de vCPU",
     ram: "64 GB de RAM",
     storage: "300 GB NVMe ou SSD 600 GB",
@@ -87,8 +87,8 @@ const windowsPlans = [
   {
     id: "60",
     name: "Cloud VPS 60 (XXXL)",
-    eurOld: 119.00,
-    eurNew: 109.20,
+    eurOld: 238.00,
+    eurNew: 218.40,
     vcpu: "18 núcleos de vCPU",
     ram: "96 GB de RAM",
     storage: "350 GB NVMe ou SSD 700 GB",
@@ -99,7 +99,7 @@ const windowsPlans = [
 ];
 
 export function VpsWindowsPage() {
-  const [currentRate, setCurrentRate] = useState(11.72);
+  const [currentRate, setCurrentRate] = useState(5.86);
 
   useEffect(() => {
     fetch("/api/currency/euro")
@@ -154,8 +154,11 @@ export function VpsWindowsPage() {
         <div className="mt-8 overflow-x-auto pb-3 pt-4 scrollbar-thin md:mt-10">
           <div className="flex min-w-[1640px] gap-4 md:justify-center">
             {windowsPlans.map((plan) => {
-              const formattedNewPrice = formatBRL(plan.eurNew).replace(/\u00A0/g, " ");
-              const [newMain, newCents] = formattedNewPrice.split(",");
+              const formattedPrice = formatBRL(plan.eurNew).replace(/\u00A0/g, " ");
+              const priceParts = formattedPrice.split(" ");
+              const priceSymbol = priceParts[0];
+              const priceValue = priceParts.slice(1).join("");
+              const [priceMain, priceCents] = priceValue.split(",");
 
               return (
               <article
@@ -173,9 +176,10 @@ export function VpsWindowsPage() {
                   <p className={`${roboto.className} text-base font-bold tracking-wide text-slate-900`}>{plan.name}</p>
                   <p className="mt-1 text-sm font-bold text-slate-500">Servidor Windows</p>
                   <p className="mt-2 text-xs font-medium text-rose-500 line-through opacity-70">{formatBRL(plan.eurOld)}</p>
-                  <div className="mt-0.5 flex items-baseline gap-1 whitespace-nowrap leading-none text-slate-900">
-                    <span className="text-4xl font-extrabold">{newMain},</span>
-                    <span className="text-lg font-bold">{newCents}</span>
+                  <div className="mt-0.5 flex items-baseline gap-0.5 whitespace-nowrap leading-none text-slate-900">
+                    <span className="text-[12px] font-bold mb-0.5">{priceSymbol}</span>
+                    <span className="text-xl font-extrabold md:text-4xl">{priceMain},</span>
+                    <span className="text-xl font-bold">{priceCents}</span>
                     <span className="ml-1 text-xs font-medium text-slate-400">/mês</span>
                   </div>
                   <p className="mt-0.5 text-xs font-light leading-snug text-slate-400">por um período de 12 meses</p>

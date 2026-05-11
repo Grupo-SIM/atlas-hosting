@@ -27,6 +27,7 @@ import {
   pgSession,
   pgUser,
   pgUserCard,
+  pgVpsSubscription,
   type Invoice,
   type Plan,
   type User,
@@ -129,6 +130,7 @@ async function findOrCreateGuestUser(info: GuestInfo) {
   if (!user) throw new Error("Usuário não encontrado ou falha ao criar conta.");
 
   try {
+
     const cookieStore = await cookies();
     const refCode = cookieStore.get("referrer_code")?.value;
     if (refCode) {
@@ -1190,7 +1192,7 @@ async function fulfillCheckoutAfterPixPaid(
 
   // Notifications (WhatsApp + email) via Unified Helper
   after(async () => {
-    await triggerPurchaseNotifications(invoice, user, billing);
+    await triggerPurchaseNotifications(invoice, user, billing ? { ...billing, paymentMethod: "pix" } : billing);
   });
 
   redirect(paymentSuccessUrl(invoice.id));
@@ -1365,9 +1367,28 @@ export async function syncCheckoutPixPayment(
     return { status: "PENDING" };
   }
 
-  const remote = await simpayApi.getPaymentStatus(paymentId);
+  // Check DOM directly first (no webhook wait) then fall back to DB-based status
+  const simApi = (process.env.SIMPAY_API_URL ?? "").replace(/\/+$/, "");
+  let isCompleted = false;
 
-  if (remote.status === "COMPLETED") {
+  if (simApi) {
+    try {
+      const directRes = await fetch(`${simApi}/atlas/payments/pix-status/${paymentId}`);
+      if (directRes.ok) {
+        const directData = await directRes.json() as { status?: string };
+        if (directData.status === "COMPLETED" || directData.status === "PAID" || directData.status === "APPROVED") {
+          isCompleted = true;
+        }
+      }
+    } catch { /* fall through to DB check */ }
+  }
+
+  if (!isCompleted) {
+    const remote = await simpayApi.getPaymentStatus(paymentId);
+    if (remote.status === "COMPLETED") isCompleted = true;
+  }
+
+  if (isCompleted) {
     await db
       .update(pgInvoice)
       .set({ status: "paid" })
@@ -1376,7 +1397,7 @@ export async function syncCheckoutPixPayment(
     after(async () => {
       await triggerCommissionIfApplicable(invoice as any).catch(() => {});
       await processInvoiceAfterPayment(invoice, user, billing);
-      await triggerPurchaseNotifications(invoice, user, billing);
+      await triggerPurchaseNotifications(invoice, user, { ...billing, paymentMethod: "pix" });
     });
 
     return { status: "COMPLETED" };
@@ -1395,6 +1416,39 @@ async function fetchAtlasBuyerCcRate(): Promise<number | null> {
     return typeof json.buyerCcRate === "number" ? json.buyerCcRate : null;
   } catch {
     return null;
+  }
+}
+
+async function createVpsSubscriptionIfNeeded(
+  invoice: Invoice,
+  user: { id: string; organization: { id: string } },
+  cardToken: string
+): Promise<void> {
+  if (invoice.type !== "vps") return;
+  const meta = invoice.metadata as any;
+  const config = meta?.config || {};
+  const intervalMonths: number = parseInt(config.duration || "1", 10);
+  const planType = (config.type === "vds" ? "vds" : config.type === "storage-vps" ? "storage-vps" : config.type === "vps-windows" ? "vps-windows" : "vps");
+  const nextChargeDate = new Date();
+  nextChargeDate.setMonth(nextChargeDate.getMonth() + intervalMonths);
+
+  try {
+    await db.insert(pgVpsSubscription).values({
+      orgId: user.organization.id,
+      userId: user.id,
+      planId: meta?.vpsId || "10",
+      planType: planType as any,
+      config: { ...config, cardToken },
+      intervalMonths,
+      amountBrl: invoice.amount,
+      status: "active",
+      nextChargeDate,
+      lastInvoiceId: invoice.id,
+      failureCount: 0,
+    });
+    console.log(`[SUBSCRIPTION] ✓ Assinatura VPS criada para fatura ${invoice.id} — próxima cobrança: ${nextChargeDate.toISOString()}`);
+  } catch (err) {
+    console.error("[SUBSCRIPTION] ✗ Erro ao criar assinatura VPS:", err);
   }
 }
 
@@ -1669,7 +1723,8 @@ export async function completeCheckout(
   await triggerCommissionIfApplicable(invoice as any).catch(() => {});
   after(async () => {
     await sendWelcomePasswordEmailIfGuest(invoice, user as any);
-    await triggerPurchaseNotifications(invoice, user, values);
+    await triggerPurchaseNotifications(invoice, user, { ...values, paymentMethod: "credit_card" });
+    await createVpsSubscriptionIfNeeded(invoice as Invoice, user, cardToken);
   });
 
   redirect(paymentSuccessUrl(invoiceId));
@@ -1903,9 +1958,9 @@ export async function completeCheckoutWithSavedCard(
   await db.update(pgInvoice).set({ status: "paid" }).where(eq(pgInvoice.id, invoiceId));
   await triggerCommissionIfApplicable(invoice as any).catch(() => {});
 
-  // Trigger notifications
   after(async () => {
-    await triggerPurchaseNotifications(invoice, user, values);
+    await triggerPurchaseNotifications(invoice, user, { ...values, paymentMethod: "credit_card" });
+    await createVpsSubscriptionIfNeeded(invoice as Invoice, user, cardToken);
   });
 
   return { status: "success", message: paymentSuccessUrl(invoiceId) };
@@ -2549,6 +2604,7 @@ export async function checkDomainNameservers(
     };
   }
 }
+
 export async function createVpsInvoice(data: {
   planId: string;
   config: any;
@@ -2572,204 +2628,224 @@ export async function createVpsInvoice(data: {
   if (!user) return { status: "error", message: "Usuário não encontrado." };
 
   // Fetch real-time EUR to BRL rate
-  let RATE = 11.72; // Default/Fallback
+  let RATE = 5.86; // Default/Fallback
   try {
     const [fetchedRate] = await currencyConversion.convertMultiple({
       from: "eur",
       to: "brl",
       amounts: [1],
     });
-    // Multiplier for profit/tax (x2)
-    RATE = fetchedRate * 2;
+    RATE = fetchedRate;
   } catch (e) {
     console.error("Failed to fetch dynamic rate for invoice:", e);
     // Fallback based on plan tier if API fails
-    RATE = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") ? 11.58 : 11.72;
+    RATE = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") ? 5.79 : 5.86;
   }
 
   // Base Prices in Euro
-  const basePrices: Record<string, number> = {
-    "10": 4.50,
-    "20": 7.00,
-    "30": 14.00,
-    "40": 25.00,
-    "50": 37.00,
-    "60": 49.00,
-    "s": 34.40,
-    "m": 47.60,
-    "l": 71.80,
-    "xl": 95.30,
-    "xxl": 134.60
+  const isStorageVps = config.type === "storage-vps";
+  const basePrices: Record<string, number> = isStorageVps ? {
+    "10": 9.00, "20": 14.00, "30": 22.40, "40": 30.80, "50": 40.00
+  } : {
+    "10": 9.00,
+    "20": 14.00,
+    "30": 28.00,
+    "40": 50.00,
+    "50": 74.00,
+    "60": 98.00,
+    "s": 68.80,
+    "m": 89.60,
+    "l": 128.00,
+    "xl": 164.80,
+    "xxl": 238.00
   };
 
   const duration = parseInt(config.duration || "1", 10);
-  let monthlyEuro = basePrices[planId] || 4.50;
+  let monthlyEuro = basePrices[planId] || 9.00;
 
-  // Apply Duration Discounts (as in frontend)
+  // Apply Duration Discounts
   const isHighTier = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl");
   if (isHighTier) {
     if (duration === 6) {
-      if (planId === "20") monthlyEuro = 6.30;
-      else if (planId === "30") monthlyEuro = 12.60;
-      else if (planId === "40") monthlyEuro = 22.50;
-      else if (planId === "50") monthlyEuro = 33.30;
-      else if (planId === "60") monthlyEuro = 44.10;
-      else if (planId === "s") monthlyEuro = 32.68;
+      if (planId === "20") monthlyEuro = 12.60;
+      else if (planId === "30") monthlyEuro = 25.20;
+      else if (planId === "40") monthlyEuro = 45.00;
+      else if (planId === "50") monthlyEuro = 66.60;
+      else if (planId === "60") monthlyEuro = 88.20;
+      else if (planId === "s") monthlyEuro = 65.36;
+      else if (planId === "m") monthlyEuro = 85.12;
+      else if (planId === "l") monthlyEuro = 121.60;
+      else if (planId === "xl") monthlyEuro = 156.56;
+      else if (planId === "xxl") monthlyEuro = 226.10;
     }
     if (duration === 12) {
-      if (planId === "20") monthlyEuro = 5.60;
-      else if (planId === "30") monthlyEuro = 11.20;
-      else if (planId === "40") monthlyEuro = 20.00;
-      else if (planId === "50") monthlyEuro = 29.60;
-      else if (planId === "60") monthlyEuro = 39.20;
-      else if (planId === "s") monthlyEuro = 27.52;
+      if (planId === "20") monthlyEuro = 11.20;
+      else if (planId === "30") monthlyEuro = 22.40;
+      else if (planId === "40") monthlyEuro = 40.00;
+      else if (planId === "50") monthlyEuro = 59.20;
+      else if (planId === "60") monthlyEuro = 78.40;
+      else if (planId === "s") monthlyEuro = 55.04;
+      else if (planId === "m") monthlyEuro = 71.68;
+      else if (planId === "l") monthlyEuro = 102.40;
+      else if (planId === "xl") monthlyEuro = 131.84;
+      else if (planId === "xxl") monthlyEuro = 190.40;
     }
   } else {
-    if (duration === 6) monthlyEuro = monthlyEuro * 0.9; // 10% discount
-    if (duration === 12) monthlyEuro = monthlyEuro * 0.8; // 20% discount
+    if (duration === 6) monthlyEuro = monthlyEuro * 0.9;
+    if (duration === 12) monthlyEuro = monthlyEuro * 0.8;
   }
 
   // Setup Fees
   let setupBrl = 0;
-  if (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60") {
-    setupBrl = 0; // All plans for VPS 20/30/40/50/60 show "No Setup Fee" in image
+  if (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") {
+    setupBrl = 0;
   } else {
-    if (duration === 1) setupBrl = 4.50 * RATE; // R$ 52,74
-    if (duration === 6) setupBrl = 26.28;
+    if (duration === 1) setupBrl = 9.00 * RATE;
+    if (duration === 6) setupBrl = 4.50 * RATE;
     if (duration === 12) setupBrl = 0;
   }
 
   // Add-ons (Monthly in Euro)
   let additionalMonthlyEuro = 0;
 
-  // Location
+  // Location Prices (Doubled Atlas Prices)
   const locationPrices: Record<string, Record<string, number>> = {
-    "40": {
-      "us-east": 7.85,
-      "uk": 5.25,
-      "us-central": 5.25,
-      "us-west": 6.55,
-      "sg": 12.70,
-      "jp": 13.00,
-      "in": 11.90,
-      "au-sydney": 10.80,
-      "eu": 0,
-    },
-    "50": {
-      "us-east": 11.60,
-      "uk": 7.80,
-      "us-central": 7.80,
-      "us-west": 9.65,
-      "sg": 18.80,
-      "jp": 19.25,
-      "in": 17.65,
-      "au-sydney": 15.95,
-      "eu": 0,
-    },
-    "60": {
-      "us-east": 15.35,
-      "uk": 10.30,
-      "us-central": 10.30,
-      "us-west": 12.80,
-      "sg": 24.90,
-      "jp": 25.50,
-      "in": 23.35,
-      "au-sydney": 21.15,
-      "eu": 0,
-    },
-    "s": {
-      "us-east": 10.40,
-      "uk": 8.10,
-      "eu": 0,
-    }
+    "10": { "us-east": 2.80, "uk": 1.90, "us-central": 1.90, "us-west": 2.30, "sg": 4.30, "jp": 4.70, "in": 4.30, "au-sydney": 3.90, "eu": 0 },
+    "20": { "us-east": 2.90, "uk": 2.90, "us-central": 2.90, "us-west": 3.70, "sg": 8.90, "jp": 8.90, "in": 8.90, "au-sydney": 8.10, "eu": 0 },
+    "30": { "us-east": 5.90, "uk": 5.90, "us-central": 5.90, "us-west": 7.30, "sg": 17.80, "jp": 17.80, "in": 17.80, "au-sydney": 16.20, "eu": 0 },
+    "40": { "us-east": 10.50, "uk": 10.50, "us-central": 10.50, "us-west": 13.10, "sg": 31.30, "jp": 31.30, "in": 31.30, "au-sydney": 28.50, "eu": 0 },
+    "50": { "us-east": 27.10, "uk": 15.60, "us-central": 15.60, "us-west": 19.30, "sg": 41.60, "jp": 41.60, "in": 41.60, "au-sydney": 37.90, "eu": 0 },
+    "60": { "us-east": 30.70, "uk": 20.60, "us-central": 20.60, "us-west": 25.60, "sg": 55.00, "jp": 55.00, "in": 55.00, "au-sydney": 50.20, "eu": 0 },
+    "s": { "us-east": 8.20, "uk": 8.20, "us-central": 10.00, "us-west": 10.00, "sg": 16.60, "jp": 16.60, "in": 16.60, "au-sydney": 16.60, "eu": 0 },
+    "m": { "us-east": 16.40, "uk": 16.40, "us-central": 20.00, "us-west": 20.00, "sg": 33.20, "jp": 33.20, "in": 33.20, "au-sydney": 33.20, "eu": 0 },
+    "l": { "us-east": 32.80, "uk": 32.80, "us-central": 40.00, "us-west": 40.00, "sg": 66.40, "jp": 66.40, "in": 66.40, "au-sydney": 66.40, "eu": 0 },
+    "xl": { "us-east": 49.20, "uk": 49.20, "us-central": 60.00, "us-west": 60.00, "sg": 99.60, "jp": 99.60, "in": 99.60, "au-sydney": 99.60, "eu": 0 },
+    "xxl": { "us-east": 82.00, "uk": 82.00, "us-central": 100.00, "us-west": 100.00, "sg": 166.00, "jp": 166.00, "in": 166.00, "au-sydney": 166.00, "eu": 0 }
   };
 
   const planLocPrices = locationPrices[planId] || {};
   if (planLocPrices[config.location] !== undefined) {
     additionalMonthlyEuro += planLocPrices[config.location];
-  } else {
-    // Default / Fallback for other plans
-    if (config.location !== "eu" && config.location !== "best") {
-      additionalMonthlyEuro += 1.40;
-    }
+  } else if (config.location !== "eu" && config.location !== "best") {
+    additionalMonthlyEuro += 2.80; // Default fallback
   }
 
-  // Storage
+  // Storage and Upgrades
   if (planId === "20") {
-    if (config.storage === "ssd-400") additionalMonthlyEuro += 1.95;
-    if (config.storage === "nvme-200") additionalMonthlyEuro += 2.55;
+    if (config.storage === "ssd-400") additionalMonthlyEuro += 3.90;
+    if (config.storage === "nvme-200") additionalMonthlyEuro += 5.10;
   } else if (planId === "30") {
-    if (config.storage === "ssd-800") additionalMonthlyEuro += 3.85;
-    if (config.storage === "nvme-400") additionalMonthlyEuro += 3.25;
+    if (config.storage === "ssd-800") additionalMonthlyEuro += 7.70;
+    if (config.storage === "nvme-400") additionalMonthlyEuro += 6.50;
   } else if (planId === "50") {
-    if (config.storage === "ssd-1200") additionalMonthlyEuro += 6.15;
-    if (config.storage === "nvme-600") additionalMonthlyEuro += 4.75;
-  } else if (planId === "s") {
-    // VDS S storage logic
+    if (config.storage === "ssd-1200") additionalMonthlyEuro += 12.30;
+    if (config.storage === "nvme-600") additionalMonthlyEuro += 9.50;
+  } else if (planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") {
     const upgrades = config.storageUpgrades || {};
-    const upgradePrices: Record<string, number> = {
-      "ssd-1tb": 24.99,
-      "ssd-2tb": 39.09,
-      "ssd-4tb": 103.49
-    };
-    Object.entries(upgrades).forEach(([id, qty]) => {
-      additionalMonthlyEuro += (upgradePrices[id] || 0) * (qty as number);
-    });
+    const upgradePrices: Record<string, number> = { "ssd-1tb": 25.00, "ssd-2tb": 50.00, "ssd-4tb": 100.00 };
+    Object.entries(upgrades).forEach(([id, qty]) => { additionalMonthlyEuro += (upgradePrices[id] || 0) * (qty as number); });
   } else {
-    if (config.storage === "ssd-300") additionalMonthlyEuro += 1.55;
-    if (config.storage === "nvme-150") additionalMonthlyEuro += 1.85;
+    if (config.storage === "ssd-300") additionalMonthlyEuro += 3.10;
+    if (config.storage === "nvme-150") additionalMonthlyEuro += 3.70;
   }
 
-  // OS / Panels
+  // OS and Panels
   const tierOsPrices: Record<string, Record<string, number>> = {
-    "10": { windows: 8.93, windows_2016: 7.44, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 35.95, pleskPro: 18.70, pleskWin: 18.25 },
-    "20": { windows: 18.45, windows_2016: 14.99, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 35.95, pleskPro: 18.70, pleskWin: 18.25 },
-    "30": { windows: 30.94, windows_2016: 27.49, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 36.50, pleskPro: 19.00, pleskWin: 36.50 },
-    "40": { windows: 58.31, windows_2016: 54.26, cpanel: 21.75, pleskLinux: 12.00, pleskHost: 35.95, pleskPro: 18.70, pleskWin: 56.40 },
-    "50": { windows: 69.62, windows_2016: 66.28, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 72.80 },
-    "60": { windows: 83.30, windows_2016: 77.35, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 85.10 }
+    "10": { windows: 15.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 32.00 },
+    "20": { windows: 31.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 32.00 },
+    "30": { windows: 52.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 73.00 },
+    "40": { windows: 98.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 73.00 },
+    "50": { windows: 117.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 73.00 },
+    "60": { windows: 140.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 73.00 },
+    "s": { windows: 70.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 24.00 },
+    "m": { windows: 90.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 24.00 },
+    "l": { windows: 110.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 24.00 },
+    "xl": { windows: 130.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 24.00 },
+    "xxl": { windows: 150.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 24.00 }
   };
 
   const osPrices = tierOsPrices[planId] || tierOsPrices["10"];
-  const resolvedImageKey = (() => {
-    const img = config.image || "ubuntu";
-    if (img === "windows") return config.windowsVersion === "2016" ? "windows_2016" : "windows";
-    if (img === "cpanel") return "cpanel";
-    if (img === "plesk" || img === "plesk-linux") {
-      const lic = config.pleskLicence || "admin";
-      if (lic === "host") return "pleskHost";
-      if (lic === "pro") return "pleskPro";
-      return "pleskLinux";
-    }
-    if (img === "plesk-win") return "pleskWin";
-    return img;
-  })();
-  additionalMonthlyEuro += osPrices[resolvedImageKey] || 0;
+  let resolvedImageKey = config.image || "ubuntu";
+  if (resolvedImageKey === "plesk" || resolvedImageKey === "plesk-linux") {
+    const lic = config.pleskLicence || "admin";
+    resolvedImageKey = lic === "host" ? "pleskHost" : lic === "pro" ? "pleskPro" : "pleskLinux";
+  } else if (resolvedImageKey === "plesk-win") resolvedImageKey = "pleskWin";
 
-  // Add-ons
-  if (config.backup === "true") {
-    if (planId === "20") additionalMonthlyEuro += 2.00;
-    else if (planId === "30") additionalMonthlyEuro += 3.50;
-    else if (planId === "40") additionalMonthlyEuro += 6.00;
-    else if (planId === "50") additionalMonthlyEuro += 7.50;
-    else if (planId === "60") additionalMonthlyEuro += 9.50;
-    else additionalMonthlyEuro += 1.50;
+  let osEur = osPrices[resolvedImageKey] || 0;
+  if (config.image === "cpanel") {
+    const cpMap: Record<string, number> = { "5": 43.50, "30": 58.00, "50": 77.00, "100": 94.00, "150": 117.00, "200": 157.00, "250": 197.00, "300": 237.00, "500": 397.00, "1000": 797.00 };
+    osEur = cpMap[config.cpanelLicence] || 43.50;
   }
-  if (config.privateNetwork === "enabled") additionalMonthlyEuro += 2.29;
-  if (config.ipv4Address === "2ip") additionalMonthlyEuro += 3.50;
+  additionalMonthlyEuro += osEur;
 
-  if (config.objectStorage) {
-    const objPrices: Record<string, number> = {
-      "250gb": 2.49,
-      "500gb": 4.98,
-      "750gb": 7.47,
-      "1tb": 9.96
-    };
+  // Other Add-ons
+  if (config.backup === "true") {
+    if (planId === "20") additionalMonthlyEuro += 4.00;
+    else if (planId === "30") additionalMonthlyEuro += 6.00;
+    else if (planId === "40") additionalMonthlyEuro += 10.00;
+    else if (planId === "50") additionalMonthlyEuro += 15.00;
+    else if (planId === "60") additionalMonthlyEuro += 19.00;
+    else if (planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") additionalMonthlyEuro += 4.60;
+    else additionalMonthlyEuro += 3.00;
+  }
+  if (config.privateNetwork === "enabled") additionalMonthlyEuro += 5.78;
+  if (config.ipv4Address === "2ip") additionalMonthlyEuro += 7.00;
+
+  if (config.objectStorage && config.objectStorage !== "none") {
+    const objPrices: Record<string, number> = { "250gb": 4.98, "500gb": 9.96, "750gb": 14.94, "1tb": 19.92 };
     additionalMonthlyEuro += objPrices[config.objectStorage] || 0;
   }
 
-  if (config.management === "managed") additionalMonthlyEuro += 109.99;
-  if (config.monitoring === "full") additionalMonthlyEuro += 11.49;
+  if (config.management === "managed") additionalMonthlyEuro += 219.98;
+  if (config.monitoring === "full") additionalMonthlyEuro += 22.98;
+
+  // Per-item EUR breakdown for WhatsApp notification accuracy
+  const _pbd_location = (() => {
+    const planLocPricesLocal = locationPrices[planId] || {};
+    if (planLocPricesLocal[config.location] !== undefined) return planLocPricesLocal[config.location];
+    if (config.location && config.location !== "eu" && config.location !== "best") return 2.80;
+    return 0;
+  })();
+  const _pbd_storage = (() => {
+    if (planId === "20") { if (config.storage === "ssd-400") return 3.90; if (config.storage === "nvme-200") return 5.10; }
+    else if (planId === "30") { if (config.storage === "ssd-800") return 7.70; if (config.storage === "nvme-400") return 6.50; }
+    else if (planId === "50") { if (config.storage === "ssd-1200") return 12.30; if (config.storage === "nvme-600") return 9.50; }
+    else if (["s","m","l","xl","xxl"].includes(planId)) {
+      const upgrades = config.storageUpgrades || {};
+      const up: Record<string, number> = { "ssd-1tb": 25.00, "ssd-2tb": 50.00, "ssd-4tb": 100.00 };
+      return Object.entries(upgrades).reduce((s, [id, q]) => s + (up[id] || 0) * (q as number), 0);
+    } else { if (config.storage === "ssd-300") return 3.10; if (config.storage === "nvme-150") return 3.70; }
+    return 0;
+  })();
+  const _pbd_backup = config.backup === "true" ? (
+    planId === "20" ? 4.00 : planId === "30" ? 6.00 : planId === "40" ? 10.00 :
+    planId === "50" ? 15.00 : planId === "60" ? 19.00 :
+    ["s","m","l","xl","xxl"].includes(planId) ? 4.60 : 3.00
+  ) : 0;
+  const _pbd_network = config.privateNetwork === "enabled" ? 5.78 : 0;
+  const _pbd_ip = config.ipv4Address === "2ip" ? 7.00 : 0;
+  const _pbd_objectStorage = (() => {
+    if (!config.objectStorage || config.objectStorage === "none") return 0;
+    const op: Record<string, number> = { "250gb": 4.98, "500gb": 9.96, "750gb": 14.94, "1tb": 19.92 };
+    return op[config.objectStorage] || 0;
+  })();
+  const _pbd_managed = config.management === "managed" ? 219.98 : 0;
+  const _pbd_monitoring = config.monitoring === "full" ? 22.98 : 0;
+
+  const priceBreakdown = {
+    eurRate: RATE,
+    baseBrlPerMonth: monthlyEuro * RATE,
+    locationBrlPerMonth: _pbd_location * RATE,
+    storageBrlPerMonth: _pbd_storage * RATE,
+    imageBrlPerMonth: osEur * RATE,
+    backupBrlPerMonth: _pbd_backup * RATE,
+    managedBrlPerMonth: _pbd_managed * RATE,
+    monitoringBrlPerMonth: _pbd_monitoring * RATE,
+    privateNetworkBrlPerMonth: _pbd_network * RATE,
+    additionalIpBrlPerMonth: _pbd_ip * RATE,
+    objectStorageBrlPerMonth: _pbd_objectStorage * RATE,
+    setupBrl,
+  };
 
   const totalMonthlyBrl = (monthlyEuro + additionalMonthlyEuro) * RATE;
   const qty = parseInt(config.qty || "1", 10);
@@ -2805,6 +2881,7 @@ export async function createVpsInvoice(data: {
           config,
           guestCheckout: isGuestCheckout || undefined,
           guestPassword: guestPassword || undefined,
+          priceBreakdown,
         },
       })
       .returning();

@@ -25,8 +25,8 @@ type VdsPlan = {
 const vdsPlans: VdsPlan[] = [
   {
     name: "Cloud VDS S",
-    eurOld: 34.40,
-    eurNew: 27.52,
+    eurOld: 68.80,
+    eurNew: 55.04,
     cores: "3 Núcleos Físicos",
     cpu: "AMD EPYC 7282 2.8 GHz",
     ram: "24 GB de RAM",
@@ -35,8 +35,8 @@ const vdsPlans: VdsPlan[] = [
   },
   {
     name: "Cloud VDS M",
-    eurOld: 44.80,
-    eurNew: 35.84,
+    eurOld: 89.60,
+    eurNew: 71.68,
     cores: "4 Núcleos Físicos",
     cpu: "AMD EPYC 7282 2.8 GHz",
     ram: "32 GB de RAM",
@@ -45,8 +45,8 @@ const vdsPlans: VdsPlan[] = [
   },
   {
     name: "Cloud VDS L",
-    eurOld: 64.00,
-    eurNew: 51.20,
+    eurOld: 128.00,
+    eurNew: 102.40,
     cores: "6 Núcleos Físicos",
     cpu: "AMD EPYC 7282 2.8 GHz",
     ram: "48 GB de RAM",
@@ -55,8 +55,8 @@ const vdsPlans: VdsPlan[] = [
   },
   {
     name: "Cloud VDS XL",
-    eurOld: 82.40,
-    eurNew: 65.92,
+    eurOld: 164.80,
+    eurNew: 131.84,
     cores: "8 Núcleos Físicos",
     cpu: "AMD EPYC 7282 2.8 GHz",
     ram: "64 GB de RAM",
@@ -65,8 +65,8 @@ const vdsPlans: VdsPlan[] = [
   },
   {
     name: "Cloud VDS XXL",
-    eurOld: 119.00,
-    eurNew: 95.20,
+    eurOld: 238.00,
+    eurNew: 190.40,
     cores: "12 Núcleos Físicos",
     cpu: "AMD EPYC 7282 2.8 GHz",
     ram: "96 GB de RAM",
@@ -77,7 +77,7 @@ const vdsPlans: VdsPlan[] = [
 
 export function VdsPage() {
   const router = useRouter();
-  const [currentRate, setCurrentRate] = useState(11.72);
+  const [currentRate, setCurrentRate] = useState(5.86);
 
   useEffect(() => {
     fetch("/api/currency/euro")
@@ -141,8 +141,11 @@ export function VdsPage() {
         <div className="mt-4 overflow-x-auto pb-3 scrollbar-thin md:mt-5">
           <div className="flex min-w-[1180px] gap-4 md:justify-center">
             {vdsPlans.map((plan) => {
-              const formattedNewPrice = formatBRL(plan.eurNew).replace(/\u00A0/g, " ");
-              const [newMain, newCents] = formattedNewPrice.split(",");
+              const formattedPrice = formatBRL(plan.eurNew).replace(/\u00A0/g, " ");
+              const priceParts = formattedPrice.split(" ");
+              const priceSymbol = priceParts[0];
+              const priceValue = priceParts.slice(1).join("");
+              const [priceMain, priceCents] = priceValue.split(",");
 
               return (
               <article
@@ -152,11 +155,12 @@ export function VdsPage() {
                 <div className="p-3.5">
                   <p className={`${roboto.className} text-[13px] font-bold tracking-wide text-slate-900`}>{plan.name}</p>
                   <p className="mt-2 text-xs font-medium text-rose-500 line-through opacity-70">{formatBRL(plan.eurOld)}</p>
-                  <p className="mt-0.5 leading-none text-slate-900">
-                    <span className="text-4xl font-extrabold">{newMain},</span>
-                    <span className="align-top text-lg font-bold">{newCents}</span>
+                  <div className="mt-0.5 flex items-baseline gap-0.5 whitespace-nowrap leading-none text-slate-900">
+                    <span className="text-[12px] font-bold mb-0.5">{priceSymbol}</span>
+                    <span className="text-xl font-extrabold md:text-4xl">{priceMain},</span>
+                    <span className="text-xl font-bold">{priceCents}</span>
                     <span className="ml-1 text-[10px] font-medium text-slate-400">/mês</span>
-                  </p>
+                  </div>
                   <p className="mt-0.5 text-[10px] font-light leading-snug text-slate-400">12 meses</p>
                   <button
                     onClick={() => {

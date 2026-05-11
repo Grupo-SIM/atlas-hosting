@@ -14,3 +14,4 @@ export * from "./tables/tokens";
 export * from "./tables/vps";
 export * from "./tables/voucher";
 export * from "./tables/affiliate";
+export * from "./tables/vps-subscription";

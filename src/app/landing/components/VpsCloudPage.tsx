@@ -32,9 +32,9 @@ const plans: VpsPlan[] = [
   {
     id: "10",
     name: "Cloud VPS 10",
-    eurOld: 4.50,
-    eurNew: 3.60,
-    eurBackup: 5.10,
+    eurOld: 9.00,
+    eurNew: 7.20,
+    eurBackup: 10.20,
     vcpu: "4 núcleos",
     ram: "8 GB",
     storage: "75 GB NVMe ou SSD 150 GB",
@@ -44,9 +44,9 @@ const plans: VpsPlan[] = [
   {
     id: "20",
     name: "Cloud VPS 20",
-    eurOld: 7.00,
-    eurNew: 5.60,
-    eurBackup: 7.60,
+    eurOld: 14.00,
+    eurNew: 11.20,
+    eurBackup: 15.20,
     popular: true,
     vcpu: "6 núcleos",
     ram: "12 GB",
@@ -57,9 +57,9 @@ const plans: VpsPlan[] = [
   {
     id: "30",
     name: "Cloud VPS 30",
-    eurOld: 14.00,
-    eurNew: 11.20,
-    eurBackup: 14.70,
+    eurOld: 28.00,
+    eurNew: 22.40,
+    eurBackup: 29.40,
     vcpu: "8 núcleos",
     ram: "24 GB",
     storage: "200 GB NVMe ou SSD 400 GB",
@@ -69,9 +69,9 @@ const plans: VpsPlan[] = [
   {
     id: "40",
     name: "Cloud VPS 40",
-    eurOld: 25.00,
-    eurNew: 20.00,
-    eurBackup: 26.00,
+    eurOld: 50.00,
+    eurNew: 40.00,
+    eurBackup: 52.00,
     vcpu: "12 núcleos",
     ram: "48 GB",
     storage: "250 GB NVMe ou SSD 500 GB",
@@ -81,9 +81,9 @@ const plans: VpsPlan[] = [
   {
     id: "50",
     name: "Cloud VPS 50",
-    eurOld: 37.00,
-    eurNew: 29.60,
-    eurBackup: 37.10,
+    eurOld: 74.00,
+    eurNew: 59.20,
+    eurBackup: 74.20,
     vcpu: "16 núcleos",
     ram: "64 GB",
     storage: "300 GB NVMe ou SSD 600 GB",
@@ -93,9 +93,9 @@ const plans: VpsPlan[] = [
   {
     id: "60",
     name: "Cloud VPS 60",
-    eurOld: 49.00,
-    eurNew: 39.20,
-    eurBackup: 48.70,
+    eurOld: 98.00,
+    eurNew: 78.40,
+    eurBackup: 97.40,
     vcpu: "18 núcleos",
     ram: "96 GB",
     storage: "350 GB NVMe ou SSD 700 GB",
@@ -113,7 +113,7 @@ const bullets = [
 export function VpsCloudPage() {
   const router = useRouter();
   const [backupEnabled, setBackupEnabled] = useState(false);
-  const [currentRate, setCurrentRate] = useState(11.72);
+  const [currentRate, setCurrentRate] = useState(5.86);
 
   useEffect(() => {
     fetch("/api/currency/euro")

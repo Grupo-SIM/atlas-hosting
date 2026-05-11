@@ -399,6 +399,8 @@ const ModernCheckoutForm = forwardRef<
     }
   }, [invoiceId, getValues, trigger]);
 
+  const router = useRouter();
+
   const onSubmit = useCallback(
     (values: NewCardFormInputs) => {
       if (paymentMethod === "new") {
@@ -412,8 +414,8 @@ const ModernCheckoutForm = forwardRef<
 
             if (result.status === "success") {
               toast.success(result.message);
-              // Save billing info for future use
               void saveUserBillingInfo(values);
+              router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
             } else {
               toast.error(result.message);
             }
@@ -441,6 +443,7 @@ const ModernCheckoutForm = forwardRef<
 
             if (result.status === "success") {
               toast.success(result.message);
+              router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
             } else {
               toast.error(result.message);
             }
@@ -450,10 +453,8 @@ const ModernCheckoutForm = forwardRef<
         });
       }
     },
-    [paymentMethod, savedCards, invoiceId]
+    [paymentMethod, savedCards, invoiceId, router]
   );
-
-  const router = useRouter();
 
   const handleCheckPayment = useCallback(async () => {
     setIsVerifyingPayment(true);

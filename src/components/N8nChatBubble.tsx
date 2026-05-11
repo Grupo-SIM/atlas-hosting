@@ -91,6 +91,12 @@ export function N8nChatBubble() {
 
           --chat--toggle--background: #ffffff;
           --chat--toggle--color: #01FC8D;
+          --chat--font-family: var(--font-roboto), sans-serif;
+        }
+
+        #n8n-chat-bubble *,
+        #n8n-chat-bubble [class*="n8n-chat-ui"] {
+          font-family: var(--font-roboto), sans-serif !important;
         }
 
         /* Forçando a cor do botão flutuante (Toggle) - Verde com Branco */
