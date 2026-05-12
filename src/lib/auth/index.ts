@@ -79,6 +79,8 @@ export async function getUser(): Promise<User> {
 
     user.organization = organization;
 
+    if (user.suspendedAt) redirect("/suspended");
+
     return user as User;
   }
 
