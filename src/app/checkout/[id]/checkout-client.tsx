@@ -378,6 +378,7 @@ export default function CheckoutClient({
             </div>
           </div>
         </div>
+      </div>
       <Footer />
     </div>
   );

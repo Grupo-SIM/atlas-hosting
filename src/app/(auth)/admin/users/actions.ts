@@ -82,3 +82,16 @@ export async function reactivateUserAction(id: string): Promise<void> {
 
   revalidatePath("/admin/users");
 }
+
+export async function promoteToAdminAction(id: string): Promise<void> {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) redirect("/home");
+  if (admin.id === id) return;
+
+  await db
+    .update(pgUser)
+    .set({ isAdmin: true, updatedAt: new Date() })
+    .where(eq(pgUser.id, id));
+
+  revalidatePath("/admin/users");
+}

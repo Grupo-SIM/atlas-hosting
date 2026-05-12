@@ -13,7 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { suspendUserAction, reactivateUserAction } from "./actions";
+import { suspendUserAction, reactivateUserAction, promoteToAdminAction } from "./actions";
 
 interface Props {
   id: string;
@@ -28,8 +28,24 @@ export function UserActionsCell({ id, suspendedAt, isAdmin }: Props) {
     return <span className="text-muted-foreground text-sm">Admin</span>;
   }
 
-  if (suspendedAt === null) {
+  if (suspendedAt !== null) {
     return (
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="default"
+          size="sm"
+          disabled={pending}
+          onClick={() => startTransition(() => reactivateUserAction(id))}
+        >
+          Reativar
+        </Button>
+        <PromoteButton id={id} pending={pending} startTransition={startTransition} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-end gap-2">
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button variant="outline" size="sm" disabled={pending}>
@@ -54,17 +70,44 @@ export function UserActionsCell({ id, suspendedAt, isAdmin }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    );
-  }
+      <PromoteButton id={id} pending={pending} startTransition={startTransition} />
+    </div>
+  );
+}
 
+function PromoteButton({
+  id,
+  pending,
+  startTransition,
+}: {
+  id: string;
+  pending: boolean;
+  startTransition: (fn: () => void) => void;
+}) {
   return (
-    <Button
-      variant="default"
-      size="sm"
-      disabled={pending}
-      onClick={() => startTransition(() => reactivateUserAction(id))}
-    >
-      Reativar
-    </Button>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="secondary" size="sm" disabled={pending}>
+          Tornar Admin
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Promover a Admin?</AlertDialogTitle>
+          <AlertDialogDescription>
+            O usuário terá acesso total ao painel administrativo. Esta ação não
+            pode ser desfeita por aqui.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => startTransition(() => promoteToAdminAction(id))}
+          >
+            Confirmar promoção
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
