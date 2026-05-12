@@ -1,22 +1,11 @@
 import { getAllUsersWithBalanceAction } from "./actions";
-import { UserActionsCell } from "./UserActionsCell";
+import { UsersTable } from "./UsersTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { toBrl } from "@/lib/utils";
 import { Metadata } from "next";
-import { Users, ShieldCheck, CheckCircle, XCircle } from "lucide-react";
+import { Users, ShieldCheck, CheckCircle, XCircle, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Usuários — Admin" };
@@ -27,8 +16,9 @@ export default async function AdminUsersPage() {
 
   const users = await getAllUsersWithBalanceAction();
 
-  const active    = users.filter((u) => u.suspendedAt === null).length;
-  const suspended = users.filter((u) => u.suspendedAt !== null).length;
+  const active       = users.filter((u) => u.suspendedAt === null).length;
+  const suspended    = users.filter((u) => u.suspendedAt !== null).length;
+  const totalEarned  = users.reduce((acc, u) => acc + u.totalEarnedBrl, 0);
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
@@ -47,7 +37,7 @@ export default async function AdminUsersPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total</CardTitle>
@@ -75,6 +65,15 @@ export default async function AdminUsersPage() {
             <div className="text-2xl font-bold text-red-600">{suspended}</div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Ganho</CardTitle>
+            <TrendingUp className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{toBrl(totalEarned)}</div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -85,56 +84,7 @@ export default async function AdminUsersPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Usuário</TableHead>
-                <TableHead>Saldo</TableHead>
-                <TableHead>Criado em</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-semibold">{u.name}</span>
-                      <span className="text-xs text-muted-foreground">{u.email}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm font-medium">
-                    {toBrl(u.balanceCents / 100)}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {format(u.createdAt, "dd/MM/yyyy", { locale: ptBR })}
-                  </TableCell>
-                  <TableCell>
-                    {u.suspendedAt === null ? (
-                      <Badge variant="default">Ativo</Badge>
-                    ) : (
-                      <Badge variant="destructive">Suspenso</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <UserActionsCell
-                      id={u.id}
-                      suspendedAt={u.suspendedAt}
-                      isAdmin={u.isAdmin}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {users.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                    Nenhum usuário encontrado.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <UsersTable users={users} />
         </CardContent>
       </Card>
     </div>
