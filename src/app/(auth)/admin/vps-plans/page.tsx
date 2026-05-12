@@ -1,4 +1,5 @@
-import { getVpsPlanSubscriptionsAction, VpsPlanRow } from "./actions";
+import { getVpsPlanSubscriptionsAction } from "./actions";
+import { SubscriptionActionsCell } from "./SubscriptionActionsCell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,71 +10,44 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  ShieldCheck,
-  Server,
-  CheckCircle,
-  AlertTriangle,
-  XCircle,
-} from "lucide-react";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toBrl } from "@/lib/utils";
 import { Metadata } from "next";
+import {
+  Server,
+  ShieldCheck,
+  CheckCircle,
+  PauseCircle,
+  XCircle,
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Planos VPS — Admin" };
 
-export const metadata: Metadata = {
-  title: "Planos VPS - Admin",
+const PLAN_TYPE_LABEL: Record<string, string> = {
+  vps: "VPS",
+  vds: "VDS",
+  "storage-vps": "Storage",
+  "vps-windows": "Windows",
 };
 
-function getSubscriptionStatus(expiry: Date): "active" | "expiring" | "expired" {
-  const daysLeft = Math.ceil(
-    (expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-  );
-  if (daysLeft < 0) return "expired";
-  if (daysLeft <= 30) return "expiring";
-  return "active";
+function periodLabel(months: number) {
+  if (months === 1) return "1 mês";
+  return `${months} meses`;
 }
 
-function StatusBadge({ expiry }: { expiry: Date }) {
-  const status = getSubscriptionStatus(expiry);
-  if (status === "active") {
-    return (
-      <Badge
-        variant="outline"
-        className="bg-green-500/10 text-green-600 border-none gap-1"
-      >
-        <CheckCircle className="h-3 w-3" /> Ativa
-      </Badge>
-    );
-  }
-  if (status === "expiring") {
-    return (
-      <Badge
-        variant="outline"
-        className="bg-yellow-500/10 text-yellow-600 border-none gap-1"
-      >
-        <AlertTriangle className="h-3 w-3" /> Vencendo
-      </Badge>
-    );
-  }
-  return (
-    <Badge
-      variant="outline"
-      className="bg-red-500/10 text-red-600 border-none gap-1"
-    >
-      <XCircle className="h-3 w-3" /> Vencida
-    </Badge>
-  );
-}
-
-function periodLabel(duration: string): string {
-  if (duration === "6") return "6 meses";
-  if (duration === "12") return "12 meses";
-  return "Mensal";
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+    active:    { label: "Ativa",      variant: "default" },
+    paused:    { label: "Pausada",    variant: "secondary" },
+    cancelled: { label: "Cancelada",  variant: "outline" },
+    failed:    { label: "Falhou",     variant: "destructive" },
+  };
+  const { label, variant } = map[status] ?? { label: status, variant: "outline" };
+  return <Badge variant={variant}>{label}</Badge>;
 }
 
 export default async function AdminVpsPlansPage() {
@@ -82,15 +56,9 @@ export default async function AdminVpsPlansPage() {
 
   const plans = await getVpsPlanSubscriptionsAction();
 
-  const active = plans.filter(
-    (p) => getSubscriptionStatus(p.subscriptionExpiry) === "active"
-  ).length;
-  const expiring = plans.filter(
-    (p) => getSubscriptionStatus(p.subscriptionExpiry) === "expiring"
-  ).length;
-  const expired = plans.filter(
-    (p) => getSubscriptionStatus(p.subscriptionExpiry) === "expired"
-  ).length;
+  const active   = plans.filter((p) => p.status === "active").length;
+  const paused   = plans.filter((p) => p.status === "paused").length;
+  const inactive = plans.filter((p) => p.status === "cancelled" || p.status === "failed").length;
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
@@ -98,7 +66,7 @@ export default async function AdminVpsPlansPage() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Planos VPS</h2>
           <p className="text-muted-foreground">
-            Assinaturas de VPS pagas e seus vencimentos.
+            Gerencie assinaturas VPS dos clientes.
           </p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
@@ -130,22 +98,20 @@ export default async function AdminVpsPlansPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Vencendo em 30 dias
-            </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            <CardTitle className="text-sm font-medium">Pausadas</CardTitle>
+            <PauseCircle className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{expiring}</div>
+            <div className="text-2xl font-bold text-yellow-600">{paused}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vencidas</CardTitle>
+            <CardTitle className="text-sm font-medium">Inativas</CardTitle>
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{expired}</div>
+            <div className="text-2xl font-bold text-red-600">{inactive}</div>
           </CardContent>
         </Card>
       </div>
@@ -162,12 +128,12 @@ export default async function AdminVpsPlansPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Cliente</TableHead>
-                <TableHead>Descrição</TableHead>
+                <TableHead>Tipo</TableHead>
                 <TableHead>Período</TableHead>
-                <TableHead>Início</TableHead>
-                <TableHead>Vencimento</TableHead>
+                <TableHead>Próx. cobrança</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -175,45 +141,38 @@ export default async function AdminVpsPlansPage() {
                 <TableRow key={plan.id}>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-semibold">{plan.userName}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {plan.userEmail}
-                      </span>
+                      <span className="font-semibold">{plan.userName ?? "—"}</span>
+                      <span className="text-xs text-muted-foreground">{plan.userEmail}</span>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                    {plan.description ?? "—"}
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">
-                      {periodLabel(plan.duration)}
+                      {PLAN_TYPE_LABEL[plan.planType] ?? plan.planType}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {periodLabel(plan.intervalMonths)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">
-                    {format(plan.subscriptionStart, "dd/MM/yyyy", {
-                      locale: ptBR,
-                    })}
+                    {format(plan.nextChargeDate, "dd/MM/yyyy", { locale: ptBR })}
                   </TableCell>
                   <TableCell className="text-sm font-medium">
-                    {format(plan.subscriptionExpiry, "dd/MM/yyyy", {
-                      locale: ptBR,
-                    })}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {toBrl(plan.amount)}
+                    {toBrl(plan.amountBrl)}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge expiry={plan.subscriptionExpiry} />
+                    <StatusBadge status={plan.status} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <SubscriptionActionsCell id={plan.id} status={plan.status} />
                   </TableCell>
                 </TableRow>
               ))}
               {plans.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="text-center py-10 text-muted-foreground"
-                  >
-                    Nenhuma assinatura VPS paga encontrada.
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                    Nenhuma assinatura registrada.
                   </TableCell>
                 </TableRow>
               )}
