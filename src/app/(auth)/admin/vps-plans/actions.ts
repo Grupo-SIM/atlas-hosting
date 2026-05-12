@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { pgVpsSubscription } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { pgVpsSubscription, pgInvoice } from "@/lib/db/schema";
+import { eq, desc, and, notInArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
@@ -92,4 +92,66 @@ export async function reactivateVpsSubscriptionAction(id: string): Promise<void>
     .where(eq(pgVpsSubscription.id, id));
 
   revalidatePath("/admin/vps-plans");
+}
+
+export async function backfillVpsSubscriptionsAction(): Promise<{ created: number; skipped: number }> {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) redirect("/home");
+
+  // IDs de faturas que já têm subscription vinculada
+  const existingSubs = await db.query.pgVpsSubscription.findMany({
+    columns: { lastInvoiceId: true },
+  });
+  const linkedInvoiceIds = existingSubs
+    .map((s) => s.lastInvoiceId)
+    .filter((id): id is string => id !== null);
+
+  // Faturas VPS pagas sem subscription correspondente
+  const whereClause =
+    linkedInvoiceIds.length > 0
+      ? and(eq(pgInvoice.type, "vps"), eq(pgInvoice.status, "paid"), notInArray(pgInvoice.id, linkedInvoiceIds))
+      : and(eq(pgInvoice.type, "vps"), eq(pgInvoice.status, "paid"));
+
+  const invoices = await db.query.pgInvoice.findMany({
+    where: whereClause,
+    orderBy: [desc(pgInvoice.createdAt)],
+  });
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const inv of invoices) {
+    const meta = inv.metadata as any;
+    const config = meta?.config || {};
+    const intervalMonths = parseInt(config.duration || "1", 10);
+    const planType =
+      config.type === "vds" ? "vds"
+      : config.type === "storage-vps" ? "storage-vps"
+      : config.type === "vps-windows" ? "vps-windows"
+      : "vps";
+
+    const nextChargeDate = addMonths(new Date(inv.createdAt), intervalMonths);
+
+    try {
+      await db.insert(pgVpsSubscription).values({
+        orgId: inv.orgId,
+        userId: inv.userId,
+        planId: meta?.vpsId || "10",
+        planType: planType as any,
+        config,
+        intervalMonths,
+        amountBrl: inv.amount,
+        status: "active",
+        nextChargeDate,
+        lastInvoiceId: inv.id,
+        failureCount: 0,
+      });
+      created++;
+    } catch {
+      skipped++;
+    }
+  }
+
+  revalidatePath("/admin/vps-plans");
+  return { created, skipped };
 }

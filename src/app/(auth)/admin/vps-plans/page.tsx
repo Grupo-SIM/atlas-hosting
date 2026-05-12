@@ -1,4 +1,5 @@
 import { getVpsPlanSubscriptionsAction } from "./actions";
+import { BackfillButton } from "./BackfillButton";
 import { SubscriptionActionsCell } from "./SubscriptionActionsCell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -69,11 +70,14 @@ export default async function AdminVpsPlansPage() {
             Gerencie assinaturas VPS dos clientes.
           </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
-          <ShieldCheck className="h-5 w-5 text-primary" />
-          <span className="text-sm font-bold text-primary">
-            Acesso Restrito: Admin
-          </span>
+        <div className="flex items-center gap-3">
+          <BackfillButton />
+          <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <span className="text-sm font-bold text-primary">
+              Acesso Restrito: Admin
+            </span>
+          </div>
         </div>
       </div>
 
