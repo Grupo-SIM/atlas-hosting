@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { pgUser, pgInvoice } from "@/lib/db/schema";
-import { eq, desc, and, sum } from "drizzle-orm";
+import { pgUser, pgAffiliateCommission } from "@/lib/db/schema";
+import { eq, desc, sum } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
@@ -22,20 +22,22 @@ export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
   const admin = await getUser();
   if (!admin || !admin.isAdmin) redirect("/home");
 
-  const [users, invoiceTotals] = await Promise.all([
+  const [users, commissionTotals] = await Promise.all([
     db.query.pgUser.findMany({
       with: { organization: { with: { wallet: true } } },
       orderBy: [desc(pgUser.createdAt)],
     }),
     db
-      .select({ userId: pgInvoice.userId, total: sum(pgInvoice.amount) })
-      .from(pgInvoice)
-      .where(and(eq(pgInvoice.status, "paid")))
-      .groupBy(pgInvoice.userId),
+      .select({
+        affiliateUserId: pgAffiliateCommission.affiliateUserId,
+        total: sum(pgAffiliateCommission.commissionAmount),
+      })
+      .from(pgAffiliateCommission)
+      .groupBy(pgAffiliateCommission.affiliateUserId),
   ]);
 
   const totalsMap = new Map(
-    invoiceTotals.map((r) => [r.userId, Number(r.total ?? 0)])
+    commissionTotals.map((r) => [r.affiliateUserId, Number(r.total ?? 0)])
   );
 
   return users.map((u) => ({
