@@ -11,18 +11,18 @@ export function SearchButton() {
     <Button 
       type="submit" 
       disabled={pending} 
-      className="sm:w-auto w-full gap-2 relative overflow-hidden group"
+      className="w-full h-14 bg-sky-500 hover:bg-sky-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-sky-500/20 gap-2 relative overflow-hidden group transition-all hover:scale-105 active:scale-95"
     >
       {pending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Loader2 className="h-5 w-5 animate-spin" />
       ) : (
-        <Search className="h-4 w-4 group-hover:scale-110 transition-transform" />
+        <Search className="h-5 w-5 group-hover:scale-110 transition-transform" />
       )}
-      {pending ? "Buscando..." : "Buscar domínios"}
+      {pending ? "..." : "Buscar"}
       
       {/* Efeito de brilho ao carregar */}
       {pending && (
-        <div className="absolute inset-0 bg-white/10 animate-pulse" />
+        <div className="absolute inset-0 bg-white/20 animate-pulse" />
       )}
     </Button>
   );

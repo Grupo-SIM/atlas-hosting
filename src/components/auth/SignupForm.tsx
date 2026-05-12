@@ -118,70 +118,73 @@ export default function SignupForm({
 
   return (
     <>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="userType">Tipo de Conta</Label>
+      <form onSubmit={onSubmit} className="space-y-6">
+        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
+          <Label htmlFor="userType" className="text-white font-medium ml-1">Tipo de Conta</Label>
           <Select 
             onValueChange={(val: "PF" | "PJ") => handleUserTypeChange(val)} 
             defaultValue="PF"
           >
-            <SelectTrigger id="userType" className="w-full">
+            <SelectTrigger id="userType" className="w-full h-11 bg-white/80 border-none text-slate-900 rounded-md focus:ring-sky-500/50 font-medium">
               <SelectValue placeholder="Selecione o tipo" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border-none text-slate-900">
               <SelectItem value="PF">Pessoa Física (CPF)</SelectItem>
               <SelectItem value="PJ">Pessoa Jurídica (CNPJ)</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="document">
+        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
+          <Label htmlFor="document" className="text-white font-medium ml-1">
             {userType === "PF" ? "CPF" : "CNPJ"}
           </Label>
           <Input
             id="document"
             type="text"
             placeholder={userType === "PF" ? "000.000.000-00" : "00.000.000/0000-00"}
+            className="h-11 bg-white/80 border-none text-slate-900 placeholder:text-slate-500 rounded-md focus-visible:ring-sky-500/50 focus-visible:bg-white transition-all font-medium"
             {...register("document")}
             onChange={handleDocumentChange}
           />
           {errors.document && (
-            <p className="text-xs text-red-400">{errors.document.message}</p>
+            <p className="text-[10px] text-red-400 ml-1 leading-none">{errors.document.message}</p>
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">E-mail</Label>
+        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
+          <Label htmlFor="email" className="text-white font-medium ml-1">E-mail</Label>
           <Input
             type="email"
             placeholder="Digite seu e-mail"
             autoComplete="email"
+            className="h-11 bg-white/80 border-none text-slate-900 placeholder:text-slate-500 rounded-md focus-visible:ring-sky-500/50 focus-visible:bg-white transition-all font-medium"
             {...register("email")}
           />
           {errors.email && (
-            <p className="text-xs text-red-400">{errors.email.message}</p>
+            <p className="text-[10px] text-red-400 ml-1 leading-none">{errors.email.message}</p>
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Senha</Label>
+        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
+          <Label htmlFor="password" className="text-white font-medium ml-1">Senha</Label>
           <Input
             type="password"
             placeholder="Digite sua senha"
             autoComplete="new-password"
+            className="h-11 bg-white/80 border-none text-slate-900 placeholder:text-slate-500 rounded-md focus-visible:ring-sky-500/50 focus-visible:bg-white transition-all font-medium"
             {...register("password")}
           />
           {errors.password && (
-            <p className="text-xs text-red-400">{errors.password.message}</p>
+            <p className="text-[10px] text-red-400 ml-1 leading-none">{errors.password.message}</p>
           )}
         </div>
 
-        {formError && <p className="text-xs text-red-400">{formError}</p>}
+        {formError && <p className="text-xs text-red-400 ml-1">{formError}</p>}
 
         <Button
           type="submit"
-          className="w-full h-12 text-base bg-gradient-to-r from-[#01FC8D] to-[#01e67d] text-[#0a0e27] font-bold hover:brightness-110"
+          className="w-full max-w-[448px] h-[48px] text-sm font-bold bg-[#1A73FF] hover:bg-[#1A73FF]/90 text-white rounded-[6px] transition-all shadow-lg opacity-50 uppercase tracking-wider"
           disabled={!isValid || isValidating || isLoading}
         >
           {isLoading ? (

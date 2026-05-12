@@ -13,6 +13,7 @@ const config: Config = {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "landing-gradient": "linear-gradient(180deg, #000B12 0%, #00000B 100%)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -22,6 +23,8 @@ const config: Config = {
       colors: {
         background: "rgb(var(--background))",
         foreground: "hsl(var(--foreground))",
+        "atlas-dark-1": "#000B12",
+        "atlas-dark-2": "#00000B",
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",

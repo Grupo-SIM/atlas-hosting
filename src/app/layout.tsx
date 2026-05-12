@@ -34,7 +34,7 @@ export default async function RootLayout({
       <body className={`${roboto.className} ${roboto.variable} antialiased`} suppressHydrationWarning={true}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
           enableSystem={false}
           disableTransitionOnChange={true}
         >

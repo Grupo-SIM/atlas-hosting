@@ -175,45 +175,128 @@ function PersonalDataForm() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-      <Navbar variant="light" />
-      <main className="max-w-5xl mx-auto px-6 pt-32 pb-24">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 md:p-12">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-            <h1 className="text-3xl font-bold text-slate-800">Dados Pessoais</h1>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50">
-                <Lock className="w-4 h-4 text-slate-400" />
+    <div className="min-h-screen bg-[#000B12] font-sans relative overflow-hidden">
+      <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
+      <Navbar variant="dark" />
+      <main className="max-w-5xl mx-auto px-6 pt-32 pb-24 relative z-10">
+        <div className="bg-white/5 backdrop-blur-md rounded-[2.5rem] shadow-2xl border border-white/10 p-8 md:p-14">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-14">
+            <div>
+              <h1 className="text-4xl font-black text-white uppercase tracking-tight mb-2">Dados Pessoais</h1>
+              <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Preencha suas informações para continuar</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-white/10 bg-white/5 shadow-xl">
+                <Lock className="w-4 h-4 text-sky-400" />
                 <div className="flex flex-col leading-none">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Privacidade</span>
-                  <span className="text-[11px] font-medium text-slate-700">Protegida</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Privacidade</span>
+                  <span className="text-[11px] font-bold text-white uppercase">Protegida</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50">
-                <ShieldCheck className="w-4 h-4 text-slate-400" />
+              <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-white/10 bg-white/5 shadow-xl">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 <div className="flex flex-col leading-none">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Checkout</span>
-                  <span className="text-[11px] font-medium text-slate-700">Seguro</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Checkout</span>
+                  <span className="text-[11px] font-bold text-white uppercase">Seguro</span>
                 </div>
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">Razão Social / Nome Fantasia <span className="text-red-500">*</span></Label><Input id="businessName" value={formData.businessName} onChange={handleInputChange} placeholder="Nome da sua empresa" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="space-y-2"><div className="flex items-center gap-1"><Label className="text-sm font-semibold text-slate-600">CPF / CNPJ <span className="text-red-500">*</span></Label><div className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-bold">?</div></div><Input id="vatNumber" value={formData.vatNumber} onChange={handleInputChange} placeholder="Digite seu CPF ou CNPJ" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="grid grid-cols-12 gap-3"><div className="col-span-3 space-y-2"><Label className="text-sm font-semibold text-slate-600">Saudação</Label><Select value={formData.salutation} onValueChange={(v) => handleSelectChange("salutation", v)}><SelectTrigger className="h-12 border-slate-200 bg-white rounded-lg"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Mr">Sr.</SelectItem><SelectItem value="Ms">Sra.</SelectItem><SelectItem value="Mrs">Srta.</SelectItem><SelectItem value="Dr">Dr.</SelectItem></SelectContent></Select></div><div className="col-span-9 space-y-2"><Label className="text-sm font-semibold text-slate-600">Nome <span className="text-red-500">*</span></Label><Input id="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Seu primeiro nome" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">Sobrenome <span className="text-red-500">*</span></Label><Input id="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Seu sobrenome" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="md:col-span-2 space-y-2"><Label className="text-sm font-semibold text-slate-600">Endereço <span className="text-red-500">*</span></Label><Input id="address" value={formData.address} onChange={handleInputChange} placeholder="Digite seu endereço completo" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500 w-full" /></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">Cidade <span className="text-red-500">*</span></Label><Input id="city" value={formData.city} onChange={handleInputChange} placeholder="Sua cidade" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">CEP <span className="text-red-500">*</span></Label><Input id="postcode" value={formData.postcode} onChange={handleInputChange} placeholder="00000-000" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">País <span className="text-red-500">*</span></Label><Select value={formData.country} onValueChange={(v) => handleSelectChange("country", v)}><SelectTrigger className="h-12 border-slate-200 bg-white rounded-lg"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Brazil">Brasil</SelectItem><SelectItem value="Portugal">Portugal</SelectItem><SelectItem value="USA">EUA</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">Estado <span className="text-red-500">*</span></Label><Input id="state" value={formData.state} onChange={handleInputChange} placeholder="Digite seu estado" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="md:col-span-2 space-y-2"><div className="flex items-center gap-1"><Label className="text-sm font-semibold text-slate-600">Telefone <span className="text-red-500">*</span></Label><div className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-bold">?</div></div><Input id="telephone" value={formData.telephone} onChange={handleInputChange} placeholder="(00) 00000-0000" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">E-mail <span className="text-red-500">*</span></Label><Input id="email" value={formData.email} onChange={handleInputChange} placeholder="seu@email.com" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">Confirmar E-mail <span className="text-red-500">*</span></Label><Input id="confirmEmail" value={formData.confirmEmail} onChange={handleInputChange} placeholder="Repita seu e-mail" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+            <div className="space-y-3">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">Razão Social / Nome Fantasia <span className="text-rose-500">*</span></Label>
+              <Input id="businessName" value={formData.businessName} onChange={handleInputChange} placeholder="Nome da sua empresa" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 ml-1">
+                <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">CPF / CNPJ <span className="text-rose-500">*</span></Label>
+                <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-black">?</div>
+              </div>
+              <Input id="vatNumber" value={formData.vatNumber} onChange={handleInputChange} placeholder="000.000.000-00" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
+            </div>
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-4 space-y-3">
+                <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">Saudação</Label>
+                <Select value={formData.salutation} onValueChange={(v) => handleSelectChange("salutation", v)}>
+                  <SelectTrigger className="h-14 border-white/10 bg-white/5 rounded-2xl text-white focus:ring-sky-500/50 transition-all outline-none">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white rounded-2xl">
+                    <SelectItem value="Mr" className="focus:bg-white/5 focus:text-white cursor-pointer">Sr.</SelectItem>
+                    <SelectItem value="Ms" className="focus:bg-white/5 focus:text-white cursor-pointer">Sra.</SelectItem>
+                    <SelectItem value="Mrs" className="focus:bg-white/5 focus:text-white cursor-pointer">Srta.</SelectItem>
+                    <SelectItem value="Dr" className="focus:bg-white/5 focus:text-white cursor-pointer">Dr.</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-8 space-y-3">
+                <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">Nome <span className="text-rose-500">*</span></Label>
+                <Input id="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Seu primeiro nome" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">Sobrenome <span className="text-rose-500">*</span></Label>
+              <Input id="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Seu sobrenome" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
+            </div>
+            <div className="md:col-span-2 space-y-3">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">Endereço <span className="text-rose-500">*</span></Label>
+              <Input id="address" value={formData.address} onChange={handleInputChange} placeholder="Digite seu endereço completo" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none w-full" />
+            </div>
+            <div className="space-y-3">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">Cidade <span className="text-rose-500">*</span></Label>
+              <Input id="city" value={formData.city} onChange={handleInputChange} placeholder="Sua cidade" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
+            </div>
+            <div className="space-y-3">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">CEP <span className="text-rose-500">*</span></Label>
+              <Input id="postcode" value={formData.postcode} onChange={handleInputChange} placeholder="00000-000" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
+            </div>
+            <div className="space-y-3">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">País <span className="text-rose-500">*</span></Label>
+              <Select value={formData.country} onValueChange={(v) => handleSelectChange("country", v)}>
+                <SelectTrigger className="h-14 border-white/10 bg-white/5 rounded-2xl text-white focus:ring-sky-500/50 transition-all outline-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#000B12] border-white/10 text-white rounded-2xl">
+                  <SelectItem value="Brazil" className="focus:bg-white/5 focus:text-white cursor-pointer">Brasil</SelectItem>
+                  <SelectItem value="Portugal" className="focus:bg-white/5 focus:text-white cursor-pointer">Portugal</SelectItem>
+                  <SelectItem value="USA" className="focus:bg-white/5 focus:text-white cursor-pointer">EUA</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-3">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">Estado <span className="text-rose-500">*</span></Label>
+              <Input id="state" value={formData.state} onChange={handleInputChange} placeholder="Digite seu estado" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
+            </div>
+            <div className="md:col-span-2 space-y-3">
+              <div className="flex items-center gap-2 ml-1">
+                <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Telefone <span className="text-rose-500">*</span></Label>
+                <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-black">?</div>
+              </div>
+              <Input id="telephone" value={formData.telephone} onChange={handleInputChange} placeholder="(00) 00000-0000" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
+            </div>
+            <div className="space-y-3">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">E-mail <span className="text-rose-500">*</span></Label>
+              <Input id="email" value={formData.email} onChange={handleInputChange} placeholder="seu@email.com" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
+            </div>
+            <div className="space-y-3">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">Confirmar E-mail <span className="text-rose-500">*</span></Label>
+              <Input id="confirmEmail" value={formData.confirmEmail} onChange={handleInputChange} placeholder="Repita seu e-mail" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
+            </div>
           </div>
-          <div className="flex justify-end mt-12"><Button disabled={isPending || !isFormValid} onClick={handleNext} className="bg-[#0070BA] hover:bg-[#005ea6] text-white font-bold h-12 px-12 rounded-full text-base disabled:opacity-50">{isPending ? "Processando..." : "Próximo"}</Button></div>
-          <div className="mt-12 pt-8 border-t border-slate-100 text-center"><p className="text-[11px] text-slate-400 leading-relaxed max-w-3xl mx-auto">Sua privacidade é importante para nós. Processamos seus dados pessoais com a finalidade de criar uma conta de usuário e realizar seu pedido de acordo com nosso <Link href="/privacy" className="text-sky-500 hover:underline">aviso de privacidade</Link>. Tomamos as mais altas precauções para garantir que seus dados estejam seguros e protegidos. Nunca venderemos seus dados a terceiros.</p></div>
+          <div className="flex justify-end mt-16">
+            <Button 
+              disabled={isPending || !isFormValid} 
+              onClick={handleNext} 
+              className="bg-sky-500 hover:bg-sky-600 text-white font-black h-16 px-16 rounded-[2rem] text-base shadow-xl shadow-sky-500/20 disabled:opacity-50 uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
+            >
+              {isPending ? "Processando..." : "Próximo"}
+            </Button>
+          </div>
+          <div className="mt-16 pt-10 border-t border-white/5 text-center">
+            <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest leading-relaxed max-w-3xl mx-auto opacity-80">
+              Sua privacidade é importante para nós. Processamos seus dados pessoais com a finalidade de criar uma conta de usuário e realizar seu pedido de acordo com nosso <Link href="/privacy" className="text-sky-400 hover:underline">aviso de privacidade</Link>. Tomamos as mais altas precauções para garantir que seus dados estejam seguros e protegidos. Nunca venderemos seus dados a terceiros.
+            </p>
+          </div>
         </div>
       </main>
     </div>
@@ -222,7 +305,14 @@ function PersonalDataForm() {
 
 export default function PersonalDataPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-12 h-12 rounded-full border-4 border-sky-200 border-t-sky-500 animate-spin" /><p className="text-slate-400 font-medium">Carregando checkout...</p></div></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#000B12] flex items-center justify-center font-sans">
+        <div className="animate-pulse flex flex-col items-center gap-6">
+          <div className="w-16 h-16 rounded-full border-4 border-sky-500/20 border-t-sky-500 animate-spin shadow-[0_0_15px_rgba(14,165,233,0.3)]" />
+          <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Carregando checkout...</p>
+        </div>
+      </div>
+    }>
       <PersonalDataForm />
     </Suspense>
   );

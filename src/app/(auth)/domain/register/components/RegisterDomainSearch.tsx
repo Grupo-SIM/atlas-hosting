@@ -19,32 +19,34 @@ export default function RegisterDomainSearch({ domain }: DomainPageParams) {
   };
 
   return (
-    <Form action="/domain" className="flex flex-col gap-4 w-full">
+    <Form action="/domain" className="flex flex-col gap-4 w-full max-w-2xl mx-auto">
       <input type="hidden" name="tab" value="register" />
       
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 group">
           <Input
             ref={inputRef}
-            type="text" // Usamos text para remover o X nativo do navegador
+            type="text"
             name="domain"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Digite o nome do domínio..."
-            className="w-full bg-background/50 backdrop-blur-sm border-primary/10 focus-visible:ring-primary/30 h-11 pr-10"
+            className="w-full h-14 bg-white/5 backdrop-blur-md border-white/10 rounded-2xl px-6 text-white placeholder:text-slate-600 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all outline-none pr-12 group-hover:bg-white/10"
           />
           {inputValue && (
             <button
               type="button"
               onClick={handleClear}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive hover:text-destructive/80 transition-colors cursor-pointer p-1"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors cursor-pointer p-1"
               title="Limpar busca"
             >
-              <X className="h-4 w-4 stroke-[3px]" />
+              <X className="h-5 w-5 stroke-[2.5px]" />
             </button>
           )}
         </div>
-        <SearchButton />
+        <div className="sm:w-32">
+          <SearchButton />
+        </div>
       </div>
     </Form>
   );

@@ -75,96 +75,60 @@ export function Testimonials() {
   }, [itemsPerView]);
 
   return (
-    <section id="testimonials" className="py-24 relative overflow-hidden bg-slate-50 w-full">
-      {/* Background Animation Layers */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
-        {/* Letter Glitch Layer */}
-        <div className="absolute inset-0 opacity-[0.05]">
-          <LetterGlitch
-            glitchSpeed={50}
-            centerVignette={true}
-            outerVignette={false}
-            smooth={true}
-          />
-        </div>
+    <section id="testimonials" className="py-24 relative overflow-hidden bg-transparent w-full">
+      <div className="container mx-auto max-w-[1440px] px-4 relative z-10">
+        <div className="bg-[#00111a] rounded-[3rem] px-8 py-20 md:px-16 md:py-24 shadow-[0_30px_100px_rgba(0,0,0,0.4)] relative overflow-hidden">
+          
+          {/* Top Header */}
+          <div className="text-center mb-16 flex flex-col items-center relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-sky-400 mb-6"
+            >
+              ● DEPOIMENTOS
+            </motion.div>
 
-        {/* Overlay Gradients to blend properly with the site theme */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_20%,#f8fafc_95%)]" />
-        <div className="absolute inset-0 bg-slate-50/20" />
-      </div>
+            <motion.h2
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-3xl md:text-[3rem] font-black mb-6 text-white tracking-tight"
+            >
+              Feedback & Avaliações
+            </motion.h2>
 
-      <div className="container mx-auto max-w-[1240px] relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="flex items-center gap-1.5 justify-center"
+            >
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-[18px] h-[18px] text-[#FFB800] fill-[#FFB800]" />
+              ))}
+            </motion.div>
+          </div>
 
-        {/* Top Header */}
-        <div className="text-center mb-16 px-4 flex flex-col items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex flex-row items-center gap-3 mb-6 bg-white py-1.5 px-3 rounded border border-slate-200 shadow-sm"
-          >
-            <div className="w-1 h-4 bg-emerald-500"></div>
-            <span className="text-xs font-semibold tracking-wider text-emerald-600 uppercase">
-              DEPOIMENTOS
-            </span>
-          </motion.div>
-
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-3xl md:text-[2.5rem] font-bold mb-4 text-slate-900 tracking-tight"
-          >
-            Feedback & Avaliações
-          </motion.h2>
-
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex items-center gap-1.5 justify-center mb-4"
-          >
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-[18px] h-[18px] text-emerald-500 fill-emerald-500" />
-            ))}
-          </motion.div>
-        </div>
-
-        {/* Testimonials Carousel (Custom implemented Elementor 'bubble' skin css) */}
-        <div className="px-4 overflow-hidden pt-4 pb-12 w-full">
-          <div
-            className="flex transition-transform duration-700 ease-in-out gap-6"
-            style={{
-              // Shift correctly maintaining item percentage and gap adjustments based on screen
-              transform: `translateX(calc(-${currentIndex * (100 / itemsPerView)}% - ${currentIndex * (24 / itemsPerView)}px))`
-            }}
-          >
-            {testimonials.map((testimonial, index) => (
-              <div
-                key={index}
-                className="flex-shrink-0 w-[100%] md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] flex flex-col"
-              >
+          {/* Testimonials Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+            {testimonials.slice(0, 3).map((testimonial, index) => (
+              <div key={index} className="flex flex-col">
                 {/* Bubble */}
-                <div className="relative bg-white border border-slate-200 rounded-[6px] p-8 mb-6 h-full flex items-center shadow-sm hover:shadow-md transition-shadow">
-                  <p className="text-slate-600 text-[15px] font-normal leading-relaxed">
+                <div className="relative bg-white rounded-2xl p-8 mb-8 shadow-xl">
+                  <p className="text-[#0f172a] text-[15px] font-medium leading-relaxed">
                     {testimonial.text}
                   </p>
-
-                  {/* The Elementor 'bubble' arrow pointing down */}
-                  <div
-                    className="absolute -bottom-[10px] left-10 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white border-r-[10px] border-r-transparent z-10"
-                  />
-                  <div
-                    className="absolute -bottom-[11px] left-10 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-slate-200 border-r-[10px] border-r-transparent z-0"
-                  />
+                  {/* Bubble Tail */}
+                  <div className="absolute -bottom-3 left-10 w-6 h-6 bg-white rotate-45" />
                 </div>
 
                 {/* Author Info */}
-                <div className="flex items-center gap-4 px-2">
-                  <div className="w-12 h-12 rounded-[4px] overflow-hidden shrink-0 border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-4 px-4">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border-2 border-white/10 shadow-lg">
                     <img
                       src={testimonial.image}
                       alt={testimonial.name}
@@ -173,10 +137,10 @@ export function Testimonials() {
                     />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-semibold text-slate-900 text-[14px]">
+                    <span className="font-bold text-white text-[15px]">
                       {testimonial.name}
                     </span>
-                    <span className="text-[11px] text-slate-500 font-medium">
+                    <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
                       {testimonial.role}
                     </span>
                   </div>

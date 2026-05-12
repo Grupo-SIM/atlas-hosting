@@ -20,17 +20,25 @@ export function Hero() {
 
   return (
     <section
-      className="relative w-full h-auto min-h-[500px] md:h-screen md:min-h-[600px] overflow-hidden bg-white"
+      className="relative w-full h-auto min-h-[500px] md:h-screen md:min-h-[600px] overflow-hidden bg-transparent"
     >
       <div
-        className="absolute inset-0 pointer-events-none bg-[radial-gradient(74%_46%_at_50%_56%,rgba(16,185,129,0.08)_0%,rgba(16,185,129,0.03)_36%,rgba(16,185,129,0)_74%)]"
+        className="absolute inset-0 pointer-events-none bg-[radial-gradient(74%_46%_at_50%_56%,rgba(0,163,255,0.08)_0%,rgba(0,163,255,0.03)_36%,rgba(0,163,255,0)_74%)]"
       />
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[min(1000px,88vw)] h-14 pointer-events-none bg-[linear-gradient(180deg,rgba(16,185,129,0.08)_0%,rgba(16,185,129,0.03)_38%,rgba(16,185,129,0)_100%)] blur-[10px]"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[min(1000px,88vw)] h-14 pointer-events-none bg-[linear-gradient(180deg,rgba(0,163,255,0.08)_0%,rgba(0,163,255,0.03)_38%,rgba(0,163,255,0)_100%)] blur-[10px]"
       />
 
-      <div className="relative z-10 flex flex-col items-center pt-40 pb-20 md:pb-12 px-4 md:pt-[min(20vh,12rem)] md:px-[clamp(1.25rem,3vw,1.75rem)] w-full">
-        <div className="flex flex-col items-center w-full max-w-[2400px] gap-4 md:gap-[0.8rem]">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <img
+          src="/Camada_landing.svg"
+          alt=""
+          className="w-full h-full object-cover opacity-100"
+        />
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center pt-24 pb-20 md:pb-12 px-4 md:pt-[min(10vh,6rem)] md:px-[clamp(1.25rem,3vw,1.75rem)] w-full">
+        <div className="flex flex-col items-center w-full max-w-[2400px] gap-8 md:gap-12">
 
           {/* Barra de busca - Responsive Width */}
           <div className="w-full max-w-2xl px-2 md:px-0">
@@ -47,7 +55,7 @@ export function Hero() {
                 className={`${roboto.className} w-full bg-transparent border-none outline-none text-slate-700 text-[14px] md:text-[15px] h-10 placeholder:text-slate-400`}
               />
               <button
-                className={`${roboto.className} bg-emerald-500 text-white border-none rounded-lg px-6 py-2.5 text-[13px] md:text-[14px] font-bold uppercase tracking-wider hover:bg-emerald-600 transition-all shrink-0 cursor-pointer shadow-lg shadow-emerald-500/20`}
+                className={`${roboto.className} bg-[#00A3FF] text-white border-none rounded-lg px-6 py-2.5 text-[13px] md:text-[14px] font-bold uppercase tracking-wider hover:bg-[#0091E6] transition-all shrink-0 cursor-pointer shadow-lg shadow-sky-500/20`}
                 onClick={handleSearch}
               >
                 Buscar
@@ -56,7 +64,7 @@ export function Hero() {
           </div>
 
           {/* Video Container - Optimized for mobile aspect ratio */}
-          <div className="relative w-full aspect-[4/5] md:aspect-video md:max-h-[68vh] rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100">
+          <div className="relative w-full aspect-[4/5] md:aspect-video md:max-h-[68vh] rounded-[3rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100">
             <video
               autoPlay
               muted

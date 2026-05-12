@@ -106,4 +106,7 @@ export type VpsInvoiceOptions = {
   pixTransactionId?: string;
   pixCheckout?: PixCheckoutSnapshot;
   isRenewal?: boolean;
+  guestCheckout?: boolean;
+  guestPassword?: string;
+  priceBreakdown?: Record<string, number>;
 };

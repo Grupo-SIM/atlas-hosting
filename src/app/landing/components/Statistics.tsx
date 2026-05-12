@@ -35,11 +35,11 @@ const stats = [
 
 export function Statistics() {
   return (
-    <section className="bg-slate-50 relative w-full pt-24 overflow-hidden">
+    <section className="bg-transparent relative w-full pt-24 overflow-hidden">
       {/* World Map Background animation */}
       <div className="absolute inset-0 z-[1] pointer-events-none flex justify-center items-start pt-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(70%_55%_at_50%_22%,rgba(16,185,129,0.05)_0%,rgba(16,185,129,0.02)_36%,rgba(248,250,252,0)_78%)] z-[2]" />
-        <div className="w-[150%] max-w-[1700px] opacity-[0.08] scale-[1.25] translate-y-[-10%]">
+        <div className="absolute inset-0 bg-[radial-gradient(70%_55%_at_50%_22%,rgba(0,163,255,0.05)_0%,rgba(0,163,255,0.02)_36%,rgba(0,11,18,0)_78%)] z-[2]" />
+        <div className="w-[150%] max-w-[1700px] opacity-[0.55] scale-[1.25] translate-y-[-10%]">
           <LottieMap />
         </div>
       </div>
@@ -47,28 +47,30 @@ export function Statistics() {
       <div className="container mx-auto max-w-7xl relative z-10 px-4">
         {/* Texto Principal */}
         <div className="text-center mb-12 pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
-          <span className="inline-flex items-center rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-600 mb-4">
+          <span className="inline-flex items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-400 mb-4">
             Resultados Reais
           </span>
-          <h2 className={`${roboto.className} text-[2.2rem] md:text-[3.1rem] font-bold text-slate-900 mb-5 leading-[1.05] tracking-tight`}>
+          <h2 className={`${roboto.className} text-[2.2rem] md:text-[3.1rem] font-bold text-white mb-5 leading-[1.05] tracking-tight`}>
             Performance Garantida,<br className="hidden md:block" />
             preço justo, retorno real
           </h2>
-          <p className="text-sm md:text-base text-slate-500 max-w-2xl mx-auto mb-8 font-medium delay-100">
+          <p className="text-sm md:text-base text-slate-400 max-w-2xl mx-auto mb-8 font-medium delay-100">
             Você trabalha muito, seu negócio merece um lugar que valorize isso!
           </p>
         </div>
 
         {/* Cards de Estatísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 w-full max-w-6xl mx-auto gap-3 md:gap-4 justify-center mb-24">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 w-full max-w-6xl mx-auto gap-4 md:gap-6 justify-center mb-24">
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="relative flex flex-col items-center justify-center text-center px-5 py-10 bg-white border border-slate-200 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.03)] backdrop-blur-sm overflow-hidden"
+              className="relative flex flex-col items-center justify-center text-center px-5 py-12 bg-[#0a1622] border border-white/5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden group transition-all hover:translate-y-[-4px]"
             >
-              <div className="absolute inset-x-0 bottom-0 h-[3px] bg-gradient-to-r from-emerald-500/0 via-emerald-500 to-emerald-500/0" />
-              <div className="mb-2">
-                <span className={`${roboto.className} text-[38px] md:text-[46px] font-bold text-emerald-500 flex items-baseline justify-center`}>
+              {/* Persistent Bottom Bar */}
+              <div className="absolute inset-x-0 bottom-0 h-[4px] bg-[#00A3FF] shadow-[0_0_15px_rgba(0,163,255,0.5)]" />
+              
+              <div className="mb-3">
+                <span className={`${roboto.className} text-[42px] md:text-[52px] font-bold text-white flex items-baseline justify-center tracking-tight`}>
                   <CountUp
                     from={0}
                     to={stat.value}
@@ -81,7 +83,7 @@ export function Statistics() {
                   <span>{stat.suffix}</span>
                 </span>
               </div>
-              <p className="text-slate-500 text-[11px] md:text-[12px] tracking-[0.08em] font-semibold uppercase opacity-85">
+              <p className="text-white/60 text-[10px] md:text-[11px] tracking-[0.15em] font-bold uppercase">
                 {stat.label}
               </p>
             </div>

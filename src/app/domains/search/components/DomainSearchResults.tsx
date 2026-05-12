@@ -239,7 +239,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
         {/* Card 1 — correspondência com a busca */}
         <article className="flex flex-col rounded-2xl border border-white/12 bg-[#0d1225] p-6 shadow-[0_16px_48px_rgba(0,0,0,0.35)] md:p-8">
           <span
-            className={`${roboto.className} mb-4 inline-flex w-fit rounded-full border border-[#01FC8D]/35 bg-[#01FC8D]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#01FC8D]`}
+            className={`${roboto.className} mb-4 inline-flex w-fit rounded-full border border-sky-500/35 bg-sky-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-sky-400`}
           >
             Correspondência exata
           </span>
@@ -251,7 +251,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
               >
                 {mainResult.domain}
               </h2>
-              <p className="mt-2 text-sm text-white/60">
+              <p className="mt-2 text-sm text-white/60 font-medium">
                 {mainResult.available
                   ? "Disponível para registro na Atlas."
                   : (mainResult.unavailableReason ?? "Indisponível no momento.")}
@@ -283,7 +283,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
               <ul className="mt-6 flex flex-col gap-2.5">
                 {INCLUDED_FEATURES.map((t) => (
                   <li key={t} className="flex items-start gap-2.5 text-sm text-white/80">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#01FC8D]" strokeWidth={2.5} />
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-sky-400" strokeWidth={2.5} />
                     {t}
                   </li>
                 ))}
@@ -291,7 +291,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
 
               <Button
                 type="button"
-                className={`${roboto.className} mt-8 h-12 w-full rounded-xl bg-[#01FC8D] text-sm font-bold uppercase tracking-wide text-black shadow-[0_8px_24px_rgba(1,252,141,0.25)] hover:bg-[#01e67d]`}
+                className={`${roboto.className} mt-8 h-12 w-full rounded-xl bg-sky-500 text-sm font-bold uppercase tracking-wide text-white shadow-[0_8px_24px_rgba(14,165,233,0.25)] hover:bg-sky-400 transition-all active:scale-[0.98]`}
                 onClick={() => openAuthModal(pathAfterAuthSingle(mainResult.domain))}
               >
                 Registrar agora
@@ -330,9 +330,9 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                     <span className={`${roboto.className} font-semibold text-white`}>
                       {s.domain}
                     </span>
-                    <span className="shrink-0 text-sm text-[#01FC8D]">
+                    <span className="shrink-0 text-sm text-sky-400 font-bold">
                       {formatPrice(s.priceBRL)}
-                      <span className="text-white/40">/ano</span>
+                      <span className="text-white/40 font-normal">/ano</span>
                     </span>
                   </li>
                 ))}
@@ -342,7 +342,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                 {formatPrice(bundleTotal)}
                 <span className="text-base font-medium text-white/45"> / primeiro ano</span>
               </p>
-              <p className="mt-1 text-xs text-white/45">
+              <p className="mt-1 text-xs text-white/45 leading-relaxed">
                 Compre estes domínios em uma única fatura e um único pagamento (disponível só neste
                 pacote sugerido).
               </p>
@@ -350,7 +350,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                 <Button
                   type="button"
                   variant="outline"
-                  className={`${roboto.className} mt-8 h-12 w-full rounded-xl border-2 border-[#01FC8D]/50 bg-transparent text-sm font-bold uppercase tracking-wide text-[#01FC8D] hover:bg-[#01FC8D]/10 hover:text-[#01FC8D]`}
+                  className={`${roboto.className} mt-8 h-12 w-full rounded-xl border-2 border-sky-500/50 bg-transparent text-sm font-bold uppercase tracking-wide text-sky-400 hover:bg-sky-500/10 hover:text-sky-400 transition-all`}
                   onClick={() =>
                     openAuthModal(pathAfterAuthBundle(bundleItems.map((b) => b.domain)))
                   }
@@ -361,7 +361,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                 <Button
                   type="button"
                   variant="outline"
-                  className={`${roboto.className} mt-8 h-12 w-full rounded-xl border-2 border-[#01FC8D]/50 bg-transparent text-sm font-bold uppercase tracking-wide text-[#01FC8D] hover:bg-[#01FC8D]/10 hover:text-[#01FC8D]`}
+                  className={`${roboto.className} mt-8 h-12 w-full rounded-xl border-2 border-sky-500/50 bg-transparent text-sm font-bold uppercase tracking-wide text-sky-400 hover:bg-sky-500/10 hover:text-sky-400 transition-all`}
                   onClick={() => openAuthModal(pathAfterAuthSingle(bundleItems[0]!.domain))}
                 >
                   Registrar esta extensão
@@ -385,11 +385,11 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
       {/* Mais opções */}
       <section id="mais-opcoes" className="scroll-mt-28">
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <h3 className={`${roboto.className} text-xl font-bold text-slate-900 md:text-2xl`}>
+          <h3 className={`${roboto.className} text-xl font-black text-white md:text-2xl uppercase`}>
             Mais opções
           </h3>
           {pagination ? (
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-slate-400 font-medium">
               {allResults.filter(r => r.available).length} disponíveis nesta busca
               {pagination.total > 0 ? ` · ${pagination.total} no total` : ""}
             </span>
@@ -402,10 +402,10 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
               key={f.id}
               type="button"
               onClick={() => setFilterId(f.id)}
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+              className={`rounded-full border px-4 py-2 text-sm font-bold uppercase tracking-wide transition-all ${
                 filterId === f.id
-                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900"
+                  ? "border-sky-500 bg-sky-500/10 text-sky-400"
+                  : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white"
               }`}
             >
               {f.label}
@@ -422,14 +422,14 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
               >
                 <div className="min-w-0 flex items-start gap-3">
                   {s.available ? (
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#01FC8D]" />
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-sky-400" />
                   ) : (
                     <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-white/20" />
                   )}
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`${roboto.className} text-lg font-semibold text-white md:text-xl ${!s.available ? 'opacity-50' : ''}`}
+                        className={`${roboto.className} text-lg font-bold text-white md:text-xl ${!s.available ? 'opacity-50' : ''}`}
                       >
                         {s.domain}
                       </span>
@@ -439,7 +439,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                             Premium
                           </span>
                         ) : (
-                          <span className="rounded-full bg-[#01FC8D]/12 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#01FC8D]">
+                          <span className="rounded-full bg-sky-500/12 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-400 border border-sky-500/20">
                             Disponível
                           </span>
                         )
@@ -473,7 +473,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
                       <Button
                         type="button"
                         variant="outline"
-                        className={`${roboto.className} h-10 min-w-[7.5rem] shrink-0 rounded-xl border-white/25 bg-transparent text-xs font-bold uppercase tracking-wide text-white hover:border-[#01FC8D]/50 hover:bg-[#01FC8D]/5 hover:text-[#01FC8D]`}
+                        className={`${roboto.className} h-10 min-w-[7.5rem] shrink-0 rounded-xl border-white/25 bg-transparent text-xs font-bold uppercase tracking-wide text-white hover:border-sky-500/50 hover:bg-sky-500/5 hover:text-sky-400 transition-all`}
                         onClick={() => openAuthModal(pathAfterAuthSingle(s.domain))}
                       >
                         Registrar
@@ -507,16 +507,16 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
               onClick={handleLoadMore}
               disabled={isLoadingMore}
               variant="outline"
-              className="gap-2 rounded-xl border-slate-200 bg-white px-8 py-6 text-slate-700 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 shadow-sm"
+              className="gap-2 rounded-xl border-white/10 bg-white/5 px-8 py-6 text-white hover:border-sky-500 hover:bg-sky-500/10 hover:text-sky-400 shadow-xl backdrop-blur-md transition-all font-bold uppercase tracking-wide text-xs"
             >
               {isLoadingMore ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
+                  <Loader2 className="h-4 w-4 animate-spin text-sky-400" />
                   Carregando…
                 </>
               ) : (
                 <>
-                  <ChevronDown className="h-4 w-4 text-emerald-600" />
+                  <ChevronDown className="h-4 w-4 text-sky-400" />
                   Carregar mais
                 </>
               )}
@@ -539,7 +539,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
           <div className="flex flex-col gap-3 pt-2">
             <Button
               type="button"
-              className={`${roboto.className} h-11 w-full bg-[#01FC8D] font-bold uppercase tracking-wide text-black hover:bg-[#01e67d]`}
+              className={`${roboto.className} h-11 w-full bg-sky-500 font-bold uppercase tracking-wide text-white hover:bg-sky-400 transition-all`}
               onClick={goToLogin}
             >
               Sim — entrar com minha conta

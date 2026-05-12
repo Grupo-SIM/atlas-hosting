@@ -120,33 +120,33 @@ export function VpsWindowsPage() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-slate-50 px-4 py-8 md:px-8 md:py-10">
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] bg-[size:40px_40px]" />
+    <section className="relative overflow-hidden bg-transparent px-4 py-8 md:px-8 md:py-10">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px]" />
 
       <div className="relative z-10 mx-auto w-full max-w-[min(92vw,1700px)] mt-[2rem]">
         <div className="flex flex-col justify-start pb-4 md:pb-6">
           <div className="mx-auto max-w-5xl text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
-              <MonitorCog className="h-4 w-4 text-emerald-500" />
-              <span className={`${roboto.className} text-xs font-bold uppercase tracking-wider text-emerald-600`}>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 shadow-xl backdrop-blur-md">
+              <MonitorCog className="h-4 w-4 text-sky-500" />
+              <span className={`${roboto.className} text-xs font-bold uppercase tracking-wider text-sky-400`}>
                 VPS Windows
               </span>
             </div>
 
-            <h1 className={`${roboto.className} mx-auto max-w-5xl text-4xl font-bold leading-tight text-slate-900 md:text-6xl`}>
-              Servidor VPS Windows - Acessível, rápido e flexível
+            <h1 className={`${roboto.className} mx-auto max-w-5xl text-4xl font-black leading-tight text-white md:text-6xl uppercase tracking-tight`}>
+              Servidor VPS <span className="text-sky-500">Windows</span> - Acessível, rápido e flexível
             </h1>
 
-            <p className="mx-auto mt-5 max-w-4xl text-base leading-relaxed text-slate-600 md:text-lg">
+            <p className="mx-auto mt-5 max-w-4xl text-base leading-relaxed text-slate-300 md:text-lg">
               Hospedagem VPS Windows escalável, projetada para todos — de iniciantes a profissionais de tecnologia.
               Desfrute de configuração rápida, desempenho consistente e soluções seguras.
             </p>
           </div>
         </div>
 
-        <div className="mx-auto mt-4 w-full max-w-5xl rounded-2xl border border-slate-200 bg-white px-6 py-8 text-center shadow-sm md:mt-5">
-          <h3 className={`${roboto.className} text-2xl font-bold text-slate-900 md:text-[2rem]`}>Windows Server Incluso</h3>
-          <p className="mt-2 text-lg text-slate-600">
+        <div className="mx-auto mt-4 w-full max-w-5xl rounded-2xl border border-white/10 bg-white/5 px-6 py-8 text-center shadow-2xl backdrop-blur-md md:mt-5">
+          <h3 className={`${roboto.className} text-2xl font-black text-white md:text-[2rem] uppercase`}>Windows Server <span className="text-sky-500">Incluso</span></h3>
+          <p className="mt-2 text-lg text-slate-300">
             VPS com ambiente Windows pronto para aplicações, RDP e workloads corporativos.
           </p>
         </div>
@@ -163,7 +163,7 @@ export function VpsWindowsPage() {
               return (
               <article
                 key={plan.name}
-                className="relative w-[260px] shrink-0 overflow-visible rounded-xl border border-slate-200 bg-white shadow-sm"
+                className="relative w-[260px] shrink-0 overflow-visible rounded-xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-md"
               >
                 {plan.noSetupFee && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
@@ -173,10 +173,10 @@ export function VpsWindowsPage() {
                   </div>
                 )}
                 <div className="p-4 pt-5">
-                  <p className={`${roboto.className} text-base font-bold tracking-wide text-slate-900`}>{plan.name}</p>
-                  <p className="mt-1 text-sm font-bold text-slate-500">Servidor Windows</p>
+                  <p className={`${roboto.className} text-base font-bold tracking-wide text-white`}>{plan.name}</p>
+                  <p className="mt-1 text-sm font-bold text-slate-400">Servidor Windows</p>
                   <p className="mt-2 text-xs font-medium text-rose-500 line-through opacity-70">{formatBRL(plan.eurOld)}</p>
-                  <div className="mt-0.5 flex items-baseline gap-0.5 whitespace-nowrap leading-none text-slate-900">
+                  <div className="mt-0.5 flex items-baseline gap-0.5 whitespace-nowrap leading-none text-white">
                     <span className="text-[12px] font-bold mb-0.5">{priceSymbol}</span>
                     <span className="text-xl font-extrabold md:text-4xl">{priceMain},</span>
                     <span className="text-xl font-bold">{priceCents}</span>
@@ -185,51 +185,51 @@ export function VpsWindowsPage() {
                   <p className="mt-0.5 text-xs font-light leading-snug text-slate-400">por um período de 12 meses</p>
                   <Link
                     href={`/vps-windows/configure/${plan.id}`}
-                    className={`${roboto.className} mt-3 block w-full rounded-md border border-slate-200 bg-transparent py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-600 transition-colors hover:bg-slate-50`}
+                    className={`${roboto.className} mt-3 block w-full rounded-md border border-white/10 bg-white/5 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-300 transition-all hover:bg-white/10 hover:text-white`}
                   >
                     Começar agora →
                   </Link>
                 </div>
 
-                <div className="space-y-0 border-t border-slate-100 text-lg font-bold text-slate-700">
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold first:border-t-0">
+                <div className="space-y-0 border-t border-white/10 text-lg font-bold text-white">
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold first:border-t-0">
                     <span className="inline-flex items-start gap-2">
-                      <Check className="mt-[1px] h-3.5 w-3.5 text-emerald-500" />
+                      <Check className="mt-[1px] h-3.5 w-3.5 text-sky-500" />
                       <span className="text-sm">{plan.vcpu}</span>
                     </span>
                   </p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold">
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold">
                     <span className="inline-flex items-start gap-2">
-                      <Check className="mt-[1px] h-3.5 w-3.5 text-emerald-500" />
+                      <Check className="mt-[1px] h-3.5 w-3.5 text-sky-500" />
                       <span className="text-sm">{plan.ram}</span>
                     </span>
                   </p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold">
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold">
                     <span className="inline-flex items-start gap-2">
-                      <Check className="mt-[1px] h-3.5 w-3.5 text-emerald-500" />
+                      <Check className="mt-[1px] h-3.5 w-3.5 text-sky-500" />
                       <span className="text-sm">{plan.storage}</span>
                     </span>
                   </p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold">
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold">
                     <span className="inline-flex items-start gap-2">
-                      <Check className="mt-[1px] h-3.5 w-3.5 text-emerald-500" />
+                      <Check className="mt-[1px] h-3.5 w-3.5 text-sky-500" />
                       <span className="text-sm">{plan.snapshots}</span>
                     </span>
                   </p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold">
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold">
                     <span className="inline-flex items-start gap-2">
-                      <Check className="mt-[1px] h-3.5 w-3.5 text-emerald-500" />
+                      <Check className="mt-[1px] h-3.5 w-3.5 text-sky-500" />
                       <span className="text-sm">{plan.speed}</span>
                     </span>
                   </p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold">
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold">
                     <span className="inline-flex items-start gap-2">
-                      <Check className="mt-[1px] h-3.5 w-3.5 text-emerald-500" />
+                      <Check className="mt-[1px] h-3.5 w-3.5 text-sky-500" />
                       <span className="text-sm">Tráfego ilimitado*</span>
                     </span>
                   </p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold text-emerald-600 text-xs uppercase tracking-wider">100% de cashback</p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold text-sky-600 text-xs uppercase tracking-wider">Suporte 24/7 Ativo</p>
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold text-sky-400 text-xs uppercase tracking-wider">100% de cashback</p>
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold text-sky-500 text-xs uppercase tracking-wider">Suporte 24/7 Ativo</p>
                 </div>
               </article>
             )})}
@@ -237,18 +237,18 @@ export function VpsWindowsPage() {
         </div>
 
         <div className="mx-auto mt-16 max-w-5xl text-center">
-          <h3 className={`${roboto.className} text-3xl font-semibold tracking-tight text-slate-900 md:text-[2.2rem]`}>
-            9 regiões, 11 localidades, disponibilidade global.
+          <h3 className={`${roboto.className} text-3xl font-black tracking-tight text-white md:text-[2.2rem] uppercase`}>
+            9 regiões, 11 localidades, <span className="text-sky-500">disponibilidade global</span>.
           </h3>
-          <p className="mx-auto mt-4 max-w-3xl text-lg text-slate-600">
+          <p className="mx-auto mt-4 max-w-3xl text-lg text-slate-300">
             Dos EUA ao Reino Unido, da Europa à Ásia e Austrália, escolha a localização ideal para baixa latência em todo o mundo.
           </p>
         </div>
 
-        <div className="mx-auto mt-10 max-w-5xl rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
-          <div className="relative overflow-hidden rounded-2xl bg-slate-50 p-6 md:p-10 border border-slate-100">
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:36px_36px]" />
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-70">
+        <div className="mx-auto mt-10 max-w-5xl rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8 shadow-2xl backdrop-blur-md">
+          <div className="relative overflow-hidden rounded-2xl bg-[#000B12]/50 p-6 md:p-10 border border-white/5">
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:36px_36px]" />
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-40 mix-blend-screen">
               <LottieMap />
             </div>
             <div className="relative min-h-[300px] md:min-h-[360px]" />

@@ -519,14 +519,15 @@ export default function ConfigureStorageVps() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-700 font-sans pb-24">
-      <Navbar variant="light" />
+    <div className="min-h-screen bg-[#000B12] text-white font-sans pb-24 relative overflow-hidden">
+      <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
+      <Navbar variant="dark" />
       <div className="max-w-6xl mx-auto px-6 pt-32 pb-12 space-y-12">
 
-        <h1 className="text-3xl font-bold text-slate-800">Configure seu {plan.name}</h1>
+        <h1 className="text-3xl font-black text-white uppercase tracking-tight">Configure seu {plan.name}</h1>
 
         <div className="flex flex-wrap items-center gap-10">
-          <div className="flex-1 border-2 border-sky-400 rounded-lg p-8 grid grid-cols-4 gap-4 relative bg-white">
+          <div className="flex-1 border-2 border-sky-500/50 rounded-xl p-8 grid grid-cols-4 gap-4 relative bg-white/5 backdrop-blur-md shadow-2xl">
             <div className="space-y-1">
               <p className="text-[10px] font-bold text-slate-400 uppercase">CPU</p>
               <p className="text-[11px] font-medium leading-tight">{plan.vcpu}</p>
@@ -543,29 +544,29 @@ export default function ConfigureStorageVps() {
               <p className="text-[10px] font-bold text-slate-400 uppercase">TRÁFEGO</p>
               <p className="text-[11px] font-medium leading-tight">{plan.traffic}</p>
             </div>
-            <Link href="/vps-armazenamento" className="absolute bottom-4 right-4 text-[10px] text-sky-500 hover:underline">Mudar</Link>
+            <Link href="/vps-armazenamento" className="absolute bottom-4 right-4 text-[10px] font-bold text-sky-400 hover:underline uppercase tracking-wider">Mudar</Link>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-[11px] font-medium text-slate-500">Quantidade de servidores</span>
+            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wide">Quantidade de servidores</span>
             <Select value={quantity} onValueChange={setQuantity}>
-              <SelectTrigger className="w-16 h-10 border border-slate-200">
+              <SelectTrigger className="w-16 h-10 border border-white/10 bg-white/5 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 25 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={n.toString()}>{n}</SelectItem>)}
+              <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                {Array.from({ length: 25 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={n.toString()} className="focus:bg-white/10 focus:text-white">{n}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        <Separator className="bg-slate-100" />
+        <Separator className="bg-white/10" />
 
         {/* Duration Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-slate-700">Selecione o ciclo de faturamento</h2>
-            <Info size={16} className="text-slate-300" />
+            <h2 className="text-base font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
+            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -574,8 +575,8 @@ export default function ConfigureStorageVps() {
                 <div
                   onClick={() => setDuration(d.id)}
                   className={cn(
-                    "cursor-pointer rounded-lg border p-8 flex items-center justify-between transition-all bg-white relative h-24",
-                    duration === d.id ? "border-sky-400 border-2 shadow-sm" : "border-slate-100 bg-slate-50/30"
+                    "cursor-pointer rounded-xl border p-8 flex items-center justify-between transition-all relative h-24 shadow-xl backdrop-blur-md",
+                    duration === d.id ? "border-sky-500 bg-white/10" : "border-white/10 bg-white/5"
                   )}
                 >
                   {d.discount && (
@@ -585,13 +586,13 @@ export default function ConfigureStorageVps() {
                   )}
                   <span className="text-sm font-medium">{d.label}</span>
                   <div className="text-right">
-                    {d.oldEur && <p className="text-[10px] text-rose-500 line-through font-medium">{formatBRLPerMonth(d.oldEur)}</p>}
-                    <p className="text-lg font-bold text-slate-800">{formatBRL(d.eur)} <span className="text-xs font-normal text-slate-400">/ mês</span></p>
+                    {d.oldEur && <p className="text-[10px] text-rose-500 line-through font-medium opacity-70">{formatBRLPerMonth(d.oldEur)}</p>}
+                    <p className="text-lg font-black text-white">{formatBRL(d.eur)} <span className="text-xs font-normal text-slate-400">/ mês</span></p>
                   </div>
                 </div>
                 <div className={cn(
-                  "text-center py-1.5 rounded-b-md text-[11px] font-medium transition-colors",
-                  d.setupFee === "Sem taxa de instalação" ? "bg-emerald-500/50 text-slate-700" : "text-slate-500"
+                  "text-center py-1.5 rounded-b-md text-[11px] font-bold transition-colors uppercase tracking-wider",
+                  d.setupFee === "Sem taxa de instalação" ? "bg-emerald-500/20 text-emerald-400" : "text-slate-400"
                 )}>
                   {d.setupFee}
                 </div>
@@ -600,13 +601,13 @@ export default function ConfigureStorageVps() {
           </div>
         </section>
 
-        <Separator className="bg-slate-100" />
+        <Separator className="bg-white/10" />
 
         {/* Region Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-slate-700">Região</h2>
-            <Info size={16} className="text-slate-300" />
+            <h2 className="text-sm font-black text-white uppercase tracking-widest">Região</h2>
+            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="flex flex-nowrap items-start gap-8">
@@ -615,14 +616,14 @@ export default function ConfigureStorageVps() {
             </div>
 
             <div className="flex-1 space-y-4">
-              <div className="flex border-b border-slate-100">
+              <div className="flex border-b border-white/10">
                 {regions.map(r => (
                   <button
                     key={r.id}
                     onClick={() => setRegionTab(r.id)}
                     className={cn(
-                      "px-8 py-3 text-xs font-medium relative transition-colors",
-                      regionTab === r.id ? "text-sky-500" : "text-slate-400 hover:text-slate-600"
+                      "px-8 py-3 text-[11px] font-bold uppercase tracking-wider relative transition-colors",
+                      regionTab === r.id ? "text-sky-400" : "text-slate-500 hover:text-white"
                     )}
                   >
                     {r.label}
@@ -637,19 +638,19 @@ export default function ConfigureStorageVps() {
                     key={loc.id}
                     onClick={() => setLocation(loc.id)}
                     className={cn(
-                      "w-full border-2 p-4 flex items-center justify-between text-xs font-medium bg-white relative transition-all",
-                      location === loc.id ? "border-sky-400" : "border-slate-100",
+                      "w-full border p-4 flex items-center justify-between text-xs font-bold bg-white/5 backdrop-blur-md relative transition-all rounded-lg",
+                      location === loc.id ? "border-sky-500 bg-white/10" : "border-white/10",
                       loc.recommended && "mt-6"
                     )}
                   >
                     {loc.recommended && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[9px] font-bold px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap">
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[9px] font-black px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
                         Recomendado - Melhor latência para sua região
                       </div>
                     )}
-                    <div className="flex-1 text-left">{loc.name}</div>
-                    <div className="flex-1 text-center">– Latência de {loc.latency}</div>
-                    <div className="flex-1 text-right font-bold text-slate-900">{loc.price === "Livre" ? "Free" : formatBRLPerMonth(loc.eur)}</div>
+                    <div className="flex-1 text-left text-white">{loc.name}</div>
+                    <div className="flex-1 text-center text-slate-400 font-medium">– Latência de {loc.latency}</div>
+                    <div className="flex-1 text-right text-white font-black">{loc.price === "Livre" ? "Grátis" : formatBRLPerMonth(loc.eur)}</div>
                   </button>
                 ))}
               </div>
@@ -657,15 +658,15 @@ export default function ConfigureStorageVps() {
           </div>
         </section>
 
-        <Separator className="bg-slate-100" />
+        <Separator className="bg-white/10" />
 
         {/* Image Section */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-slate-700">Imagem</h2>
+            <h2 className="text-sm font-black text-white uppercase tracking-widest">Imagem</h2>
             <button
               onClick={() => setShowMoreImages(!showMoreImages)}
-              className="flex items-center gap-1 text-[11px] font-bold text-slate-800"
+              className="flex items-center gap-1 text-[11px] font-black text-white uppercase tracking-wider"
             >
               {showMoreImages ? (
                 <>Fechar imagens <ChevronUp size={14} /></>
@@ -714,16 +715,16 @@ export default function ConfigureStorageVps() {
                         setOsImage(img.id);
                       }}
                       className={cn(
-                        "cursor-pointer rounded-lg border-2 p-4 flex items-center gap-3 transition-all bg-white",
-                        osImage === img.id ? "border-sky-400 shadow-sm" : "border-slate-100"
+                        "cursor-pointer rounded-lg border p-4 flex items-center gap-3 transition-all bg-white/5 backdrop-blur-md",
+                        osImage === img.id ? "border-sky-500 bg-white/10" : "border-white/10"
                       )}
                     >
-                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center overflow-hidden">
-                        {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className="text-slate-300" />}
+                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center overflow-hidden">
+                        {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className="text-slate-500" />}
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-[11px] font-bold">{img.name}</p>
-                        <p className="text-[10px] text-slate-400 font-medium">
+                        <p className="text-[11px] font-bold text-white">{img.name}</p>
+                        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
                           {typeof img.price === "number" ? formatBRLPerMonth(img.price) : img.eur ? formatBRLPerMonth(img.eur) : img.price}
                         </p>
                       </div>
@@ -735,52 +736,54 @@ export default function ConfigureStorageVps() {
           </AnimatePresence>
         </section>
 
-        <Separator className="bg-slate-100" />
+        <Separator className="bg-white/10" />
 
         {/* Data Protection Section */}
         {planId !== "50" && (
           <>
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+            <section className="bg-white/5 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 overflow-hidden mb-8">
               <div className="p-8">
                 <div className="flex items-center gap-2 mb-8">
-                  <h2 className="text-2xl font-bold text-[#0F172A]">Proteção de Dados com Backup Automático</h2>
+                  <h2 className="text-2xl font-black text-white uppercase tracking-tight">Proteção de Dados com Backup Automático</h2>
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                  <div className="lg:col-span-6 flex flex-col md:flex-row items-center gap-8">
-                    <div className="relative w-48 h-48 flex-shrink-0">
-                      <Image src="/backup-shield.png" alt="Proteção de Backup" width={192} height={192} className="object-contain" />
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                  <div className="lg:col-span-5 flex flex-col md:flex-row items-center gap-4">
+                    <div className="relative w-64 h-64 flex-shrink-0">
+                      <Image src="/securtiryu-Photoroom.png" alt="Proteção de Backup" width={256} height={256} className="object-contain" />
                     </div>
-                    <ul className="space-y-3">
-                      {["Backups automáticos diários.", "Recuperação instantânea.", "Mantém as últimas 10 versões.", "Nenhuma configuração necessária."].map((benefit, i) => (
-                        <li key={i} className="flex items-center gap-3 text-slate-600">
-                          <div className="w-1.5 h-1.5 rounded-full bg-slate-900" />
-                          <span className="text-[15px] font-medium">{benefit}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="flex-1">
+                      <ul className="space-y-4">
+                        {["Backups automáticos diários.", "Recuperação instantânea.", "Mantém as últimas 10 versões.", "Nenhuma configuração necessária."].map((benefit, i) => (
+                          <li key={i} className="flex items-center gap-3 text-slate-200">
+                            <div className="w-1.5 h-1.5 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(0,163,255,0.5)] flex-shrink-0" />
+                            <span className="text-[13px] font-bold uppercase tracking-tight leading-snug">{benefit}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                  <div className="lg:col-span-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button onClick={() => setAutoBackup(true)} className={cn("relative p-6 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-center min-h-[160px] bg-white", autoBackup ? "border-[#0091FF] shadow-md" : "border-slate-200 hover:border-slate-300")}>
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#F1F5F9] px-4 py-1 rounded-full border border-slate-200"><span className="text-[10px] font-bold text-[#E9711C] uppercase tracking-wider whitespace-nowrap">Recomendado</span></div>
-                      <h3 className="text-lg font-bold text-[#0F172A] mb-1">Backup Automático</h3>
-                      <div className="text-xl font-bold text-[#0F172A] mb-2">{formatBRLPerMonth(plan.backupEur)}</div>
+                  <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <button onClick={() => setAutoBackup(true)} className={cn("relative p-6 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-center min-h-[160px] bg-white/5 backdrop-blur-md", autoBackup ? "border-sky-500 shadow-lg shadow-sky-500/20" : "border-white/10 hover:border-white/20")}>
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#000B12] px-4 py-1 rounded-full border border-sky-500/30"><span className="text-[10px] font-black text-sky-400 uppercase tracking-widest whitespace-nowrap">Recomendado</span></div>
+                      <h3 className="text-lg font-black text-white mb-1 uppercase tracking-tight">Backup Automático</h3>
+                      <div className="text-xl font-black text-white mb-2">{formatBRLPerMonth(plan.backupEur)}</div>
                     </button>
-                    <button onClick={() => setAutoBackup(false)} className={cn("p-6 rounded-xl border-2 transition-all text-center flex items-center justify-center min-h-[160px] bg-white", !autoBackup ? "border-[#0091FF] shadow-md" : "border-slate-200 hover:border-slate-300")}><h3 className="text-lg font-medium text-slate-600">Sem Proteção</h3></button>
+                    <button onClick={() => setAutoBackup(false)} className={cn("p-6 rounded-xl border-2 transition-all text-center flex items-center justify-center min-h-[160px] bg-white/5 backdrop-blur-md", !autoBackup ? "border-sky-500 shadow-lg" : "border-white/10 hover:border-white/20")}><h3 className="text-lg font-bold text-slate-500 uppercase tracking-tight">Sem Proteção</h3></button>
                   </div>
                 </div>
               </div>
             </section>
 
-            <Separator className="bg-slate-100" />
+            <Separator className="bg-white/10" />
           </>
         )}
 
         {/* Additional Features Section */}
-        <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+        <section className="bg-white/5 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 overflow-hidden mb-8">
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-[#0F172A]">Recursos Adicionais</h2>
-              <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[11px] font-bold text-slate-800">
+              <h2 className="text-2xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
+              <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[11px] font-black text-white uppercase tracking-wider">
                 {showAdditionalFeatures ? <>Fechar <ChevronUp size={14} /></> : <>Ver mais <ChevronDown size={14} /></>}
               </button>
             </div>
@@ -789,13 +792,13 @@ export default function ConfigureStorageVps() {
               {showAdditionalFeatures && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-12 overflow-hidden px-1 py-1">
                   <div className="space-y-8">
-                    <h3 className="text-lg font-bold text-[#0F172A]">Rede</h3>
+                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Rede</h3>
                     <div className="space-y-6 pl-4 pr-1">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-bold text-slate-600">Rede Privada</span></div>
+                        <div className="md:col-span-3"><span className="text-sm font-black text-slate-400 uppercase tracking-tight">Rede Privada</span></div>
                         <div className="md:col-span-9">
                           <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">Sem Rede Privada</SelectItem>
                               <SelectItem value="enabled">
@@ -811,25 +814,25 @@ export default function ConfigureStorageVps() {
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-bold text-slate-600">IPv4</span></div>
+                        <div className="md:col-span-3"><span className="text-sm font-black text-slate-400 uppercase tracking-tight">IPv4</span></div>
                         <div className="md:col-span-9">
                           <Select value={ipv4Address} onValueChange={setIpv4Address}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="1ip"><div className="flex items-center justify-between w-[300px]"><span>1 Endereço IP</span><span className="text-emerald-500">Grátis</span></div></SelectItem><SelectItem value="2ip"><div className="flex items-center justify-between w-[300px]"><span>+1 IP Adicional</span><span className="font-bold">{formatBRLPerMonth(plan.additionalIpEur)}</span></div></SelectItem></SelectContent>
+                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue /></SelectTrigger>
+                            <SelectContent className="bg-[#000B12] border-white/10 text-white"><SelectItem value="1ip"><div className="flex items-center justify-between w-[300px]"><span>1 Endereço IP</span><span className="text-emerald-500">Grátis</span></div></SelectItem><SelectItem value="2ip"><div className="flex items-center justify-between w-[300px]"><span>+1 IP Adicional</span><span className="font-black text-white">{formatBRLPerMonth(plan.additionalIpEur)}</span></div></SelectItem></SelectContent>
                           </Select>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <Separator className="bg-slate-100" />
+                  <Separator className="bg-white/10" />
                   <div className="space-y-8">
-                    <h3 className="text-lg font-bold text-[#0F172A]">Add-Ons</h3>
+                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Add-Ons</h3>
                     <div className="space-y-6 pl-4 pr-1">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-bold text-slate-600">Object Storage</span></div>
+                        <div className="md:col-span-3"><span className="text-sm font-black text-slate-400 uppercase tracking-tight">Object Storage</span></div>
                         <div className="md:col-span-9">
                           <Select value={objectStorage} onValueChange={setObjectStorage}>
-                            <SelectTrigger className="h-12 border-slate-200 text-left"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white text-left"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">Nenhum</SelectItem>
                               <SelectItem value="250gb"><div className="flex justify-between w-[400px]"><span>250 GB nos EUA</span><span className="font-bold">{formatBRLPerMonth(plan.objectStoragePrices["250gb"])}</span></div></SelectItem>
@@ -842,25 +845,25 @@ export default function ConfigureStorageVps() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-sm font-bold text-slate-600">Server Management</span>
+                          <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Server Management</span>
                           <Info size={14} className="text-slate-400 cursor-help" />
                         </div>
                         <div className="md:col-span-9">
                           <Select value={serverManagement} onValueChange={setServerManagement}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="unmanaged">Não Gerenciado (Grátis)</SelectItem><SelectItem value="managed"><div className="flex justify-between w-[350px]"><span>Gerenciado</span><span className="font-bold">{formatBRLPerMonth(plan.managedEur)}</span></div></SelectItem></SelectContent>
+                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue /></SelectTrigger>
+                            <SelectContent className="bg-[#000B12] border-white/10 text-white"><SelectItem value="unmanaged">Não Gerenciado (Grátis)</SelectItem><SelectItem value="managed"><div className="flex justify-between w-[350px]"><span>Gerenciado</span><span className="font-bold text-white">{formatBRLPerMonth(plan.managedEur)}</span></div></SelectItem></SelectContent>
                           </Select>
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-sm font-bold text-slate-600">Monitoring</span>
+                          <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Monitoring</span>
                           <Info size={14} className="text-slate-400 cursor-help" />
                         </div>
                         <div className="md:col-span-9">
                           <Select value={monitoring} onValueChange={setMonitoring}>
-                            <SelectTrigger className="h-12 border-slate-200 bg-white"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="none">Nenhum</SelectItem><SelectItem value="full"><div className="flex justify-between w-[350px]"><span>Completo</span><span className="font-bold">{formatBRLPerMonth(plan.monitoringEur)}</span></div></SelectItem></SelectContent>
+                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue /></SelectTrigger>
+                            <SelectContent className="bg-[#000B12] border-white/10 text-white"><SelectItem value="none">Nenhum</SelectItem><SelectItem value="full"><div className="flex justify-between w-[350px]"><span>Completo</span><span className="font-bold text-white">{formatBRLPerMonth(plan.monitoringEur)}</span></div></SelectItem></SelectContent>
                           </Select>
                         </div>
                       </div>
@@ -872,24 +875,24 @@ export default function ConfigureStorageVps() {
           </div>
         </section>
 
-        <Separator className="bg-slate-100" />
-        <section className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
-          <h2 className="text-xl font-bold text-[#0F172A] mb-8">Login e senha para o seu servidor</h2>
+        <Separator className="bg-white/10" />
+        <section className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 shadow-2xl">
+          <h2 className="text-xl font-black text-white uppercase tracking-tight mb-8">Login e senha para o seu servidor</h2>
           <div className="max-w-3xl space-y-8">
             {/* Username */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
               <div className="md:col-span-3">
-                <span className="text-sm font-bold text-slate-600">Usuário</span>
+                <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">Usuário</span>
               </div>
               <div className="md:col-span-9">
-                <span className="text-slate-900 font-medium">root</span>
+                <span className="text-white font-black">root</span>
               </div>
             </div>
 
             {/* Password */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-3 pt-3">
-                <span className="text-sm font-bold text-slate-600">Senha</span>
+                <span className="text-sm font-bold text-slate-400 uppercase tracking-tight">Senha</span>
               </div>
               <div className="md:col-span-9 space-y-2">
                 <div className="flex justify-start">
@@ -931,8 +934,8 @@ export default function ConfigureStorageVps() {
                     }}
                     onBlur={() => setPasswordTouched(true)}
                     className={cn(
-                      "h-12 bg-white border-slate-200 focus:border-[#3B82F6] pr-12",
-                      passwordTouched && password.length > 0 && !isPasswordValid(password) && "border-red-500 focus:border-red-500"
+                      "h-12 bg-white/5 border-white/10 focus:border-sky-500 pr-12 text-white",
+                      passwordTouched && password.length > 0 && !isPasswordValid(password) && "border-rose-500 focus:border-rose-500"
                     )}
                   />
                   <button
@@ -959,10 +962,10 @@ export default function ConfigureStorageVps() {
 
             {/* Info List */}
             <div className="md:ml-[25%] pt-4">
-              <ul className="list-disc space-y-2 text-slate-500 text-[13px] ml-4">
+              <ul className="list-disc space-y-2 text-slate-400 text-[13px] ml-4 font-medium leading-relaxed">
                 <li>Você pode adicionar chaves SSH mais tarde no Painel de Controle.</li>
                 <li>Sua senha não será enviada por e-mail.</li>
-                <li>Mantenha-a segura para acesso ao Windows. Se perdê-la, será necessária uma reinstalação.</li>
+                <li>Mantenha-a segura para acesso ao servidor. Se perdê-la, será necessária uma reinstalação.</li>
               </ul>
             </div>
           </div>
@@ -970,12 +973,12 @@ export default function ConfigureStorageVps() {
       </div>
 
       {/* Fixed Bottom Summary Bar - UI IDENTICAL TO VPS */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#F1F5F9] border-t border-slate-200 z-[100] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#000B12]/90 border-t border-white/10 z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl">
         <AnimatePresence>
           {showSummaryDetails && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-slate-200 bg-white">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-white/10 bg-white/5 backdrop-blur-md">
               <div className="max-w-6xl mx-auto px-10 py-6">
-                <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Detalhamento</h3>
+                <h3 className="text-sm font-black text-white mb-4 uppercase tracking-widest">Detalhamento</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
                   {(() => {
                     const selectedDur = durations.find((d: any) => d.id === duration) || durations[0];
@@ -1041,9 +1044,9 @@ export default function ConfigureStorageVps() {
                     }
 
                     return items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-sm border-b border-slate-50 pb-1">
-                        <span className="text-slate-500">{item.label}</span>
-                        <span className="font-bold text-slate-700">{formatBRL(item.price / currentRate)}</span>
+                      <div key={idx} className="flex justify-between items-center text-sm border-b border-white/5 pb-1">
+                        <span className="text-slate-400 font-medium">{item.label}</span>
+                        <span className="font-black text-white">{formatBRL(item.price / currentRate)}</span>
                       </div>
                     ));
                   })()}
@@ -1054,12 +1057,12 @@ export default function ConfigureStorageVps() {
         </AnimatePresence>
         <div className="max-w-6xl mx-auto px-10 h-24 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100"><ShieldCheck className="w-6 h-6 text-slate-400" /></div>
+            <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center shadow-lg border border-white/10"><ShieldCheck className="w-6 h-6 text-sky-400" /></div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-slate-700 text-base">Resumo</h3>
-                <button onClick={() => setShowSummaryDetails(!showSummaryDetails)} className="p-1 hover:bg-slate-200 rounded-full transition-colors">
-                  {showSummaryDetails ? <ChevronDown className="w-5 h-5 text-sky-500" /> : <ChevronUp className="w-5 h-5 text-sky-500" />}
+                <h3 className="font-black text-white text-base uppercase tracking-widest">Resumo</h3>
+                <button onClick={() => setShowSummaryDetails(!showSummaryDetails)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                  {showSummaryDetails ? <ChevronDown className="w-5 h-5 text-sky-400 shadow-sky-400/20" /> : <ChevronUp className="w-5 h-5 text-sky-400 shadow-sky-400/20" />}
                 </button>
               </div>
             </div>
@@ -1142,10 +1145,10 @@ export default function ConfigureStorageVps() {
               return (
                 <div className="flex items-center gap-12">
                   <div className="flex flex-col gap-1 min-w-[220px]">
-                    <div className="flex justify-between items-center text-[11px]"><span className="text-slate-500 font-bold">Mensal</span><span className="font-black text-slate-700 whitespace-nowrap">{formatBRL(totalMonthly * qty / RATE)}</span></div>
-                    <div className="flex justify-between items-center mt-1"><span className="font-black text-slate-800 text-[13px]">Vencido Hoje</span><span className="text-xl font-black text-slate-900 whitespace-nowrap">{formatBRL(dueToday / RATE)}</span></div>
+                    <div className="flex justify-between items-center text-[11px] uppercase tracking-widest"><span className="text-slate-400 font-bold">Mensal</span><span className="font-black text-white whitespace-nowrap">{formatBRL(totalMonthly * qty / RATE)}</span></div>
+                    <div className="flex justify-between items-center mt-1"><span className="font-black text-white text-[13px] uppercase tracking-tighter">Vencido Hoje</span><span className="text-xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(dueToday / RATE)}</span></div>
                   </div>
-                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&password=${encodeURIComponent(password)}&type=storage-vps`)} className={cn("font-bold h-14 px-12 rounded-full text-lg shadow-lg", isPasswordValid(password) ? "bg-[#00A8E8] hover:bg-[#0096d1] text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed")}>Próximo</Button>
+                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&password=${encodeURIComponent(password)}&type=storage-vps`)} className={cn("font-black h-14 px-12 rounded-lg text-lg shadow-xl uppercase tracking-widest transition-all", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed")}>Próximo</Button>
                 </div>
               );
             })()}
@@ -1156,27 +1159,27 @@ export default function ConfigureStorageVps() {
       {/* Modals same as VPS */}
       <AnimatePresence>
         {showUbuntuModal && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowUbuntuModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/image.png" alt="Ubuntu" className="w-10 h-10" /><h2 className="text-xl font-bold">Ubuntu</h2></div>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowUbuntuModal(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-4"><img src="/image.png" alt="Ubuntu" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Ubuntu</h2></div>
               <div className="space-y-4">
-                <label className="text-sm font-bold">Versão</label>
+                <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Versão</label>
                 <Select value={ubuntuVersion} onValueChange={setUbuntuVersion}>
-                  <SelectTrigger className="h-14"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="Ubuntu 24.04">Ubuntu 24.04 LTS</SelectItem><SelectItem value="Ubuntu 22.04">Ubuntu 22.04 LTS</SelectItem></SelectContent>
+                  <SelectTrigger className="h-14 bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white"><SelectItem value="Ubuntu 24.04">Ubuntu 24.04 LTS</SelectItem><SelectItem value="Ubuntu 22.04">Ubuntu 22.04 LTS</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowUbuntuModal(false)}>Pular</Button><Button onClick={() => setShowUbuntuModal(false)} className="bg-[#00A8E8] text-white">Começar</Button></div>
+              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowUbuntuModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest">Pular</Button><Button onClick={() => setShowUbuntuModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Começar</Button></div>
             </motion.div>
           </div>
         )}
 
         {showWindowsModal && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowWindowsModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/windows.png" alt="Windows" className="w-10 h-10" /><h2 className="text-xl font-bold">Windows Server</h2></div>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowWindowsModal(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-4"><img src="/windows.png" alt="Windows" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Windows Server</h2></div>
               <div className="space-y-4">
-                <label className="text-sm font-bold text-slate-600">Selecione a Versão</label>
+                <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Selecione a Versão</label>
                 <div className="grid grid-cols-1 gap-3">
                   {[
                     { id: "2025", name: "Windows Server 2025", price: formatBRLPerMonth(currentImagePrices.windows) },
@@ -1188,82 +1191,80 @@ export default function ConfigureStorageVps() {
                       key={v.id}
                       onClick={() => setWindowsVersion(v.id)}
                       className={cn(
-                        "flex items-center justify-between p-4 rounded-xl border-2 transition-all",
-                        windowsVersion === v.id ? "border-sky-500 bg-sky-50/50" : "border-slate-100 hover:border-slate-200 bg-white"
+                        "flex items-center justify-between p-4 rounded-xl border transition-all bg-white/5 backdrop-blur-md",
+                        windowsVersion === v.id ? "border-sky-500 bg-white/10 shadow-lg shadow-sky-500/20" : "border-white/10"
                       )}
                     >
-                      <span className="font-bold text-slate-700">{v.name}</span>
-                      <span className="text-sm font-bold text-slate-900">{v.price}</span>
+                      <span className="font-black text-white">{v.name}</span>
+                      <span className="text-sm font-black text-sky-400">{v.price}</span>
                     </button>
                   ))}
                 </div>
               </div>
-              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowWindowsModal(false)}>Pular</Button><Button onClick={() => setShowWindowsModal(false)} className="bg-[#00A8E8] text-white">Configurar</Button></div>
+              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowWindowsModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest">Pular</Button><Button onClick={() => setShowWindowsModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Configurar</Button></div>
             </motion.div>
           </div>
         )}
 
         {showPleskWindowsModal && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskWindowsModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskWindowsModal(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4">
                 <img src="/plesk.png" alt="Plesk" className="w-8 h-8 object-contain" />
-                <h2 className="text-xl font-bold text-slate-700">Plesk + Windows</h2>
+                <h2 className="text-xl font-black text-white uppercase tracking-tight">Plesk + Windows</h2>
               </div>
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label className="text-sm font-bold text-slate-600">Licence</label>
+                  <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Licença</label>
                   <Select value={pleskWinLicence} onValueChange={setPleskWinLicence}>
-                    <SelectTrigger className="h-16 border border-slate-200">
+                    <SelectTrigger className="h-16 bg-white/5 border-white/10 text-white">
                       <SelectValue>
                         <div className="flex items-center justify-between w-full pr-4 text-[13px] leading-tight">
                           <div className="flex flex-col text-left">
-                            <span className="font-medium text-slate-700">
+                            <span className="font-bold text-white">
                               {pleskWinLicence === "admin" ? "Plesk Obsidian Web Admin Edition" :
                                 pleskWinLicence === "host" ? "Plesk Obsidian Web Host Edition" :
                                   "Plesk Obsidian Web Pro Edition"}
                             </span>
-                            <span className="text-emerald-500 font-bold text-[11px]">1 month free</span>
+                            <span className="text-emerald-400 font-black text-[11px] uppercase tracking-widest">1 mês grátis</span>
                           </div>
-                          <div className="flex items-center gap-2 text-slate-500">
-                            <span className="font-medium">
+                          <div className="flex items-center gap-2 text-sky-400 font-black">
+                            <span>
                               {pleskWinLicence === "admin" ? currentImagePrices.pleskWin :
                                 pleskWinLicence === "host" ? currentImagePrices.pleskHost :
                                   currentImagePrices.pleskPro}
                             </span>
-                            <span>|</span>
-                            <span>R$ 0,00 Setup fee</span>
                           </div>
                         </div>
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="z-[120]">
+                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130]">
                       <SelectItem value="admin">
                         <div className="flex items-center justify-between w-[480px] py-1">
                           <div className="flex flex-col">
-                            <span className="font-bold text-sky-600">Plesk Obsidian Web Admin Edition</span>
-                            <span className="text-emerald-500 font-bold text-xs">1 month free</span>
+                            <span className="font-black text-sky-400 uppercase tracking-tighter">Plesk Obsidian Web Admin Edition</span>
+                            <span className="text-emerald-400 font-black text-xs uppercase">1 mês grátis</span>
                           </div>
-                          <span className="font-black text-slate-800">{currentImagePrices.pleskWin.replace(" /mês", "")}</span>
+                          <span className="font-black text-white">{currentImagePrices.pleskWin.replace(" /mês", "")}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="host">
                         <div className="flex items-center justify-between w-[480px] py-1">
                           <div className="flex flex-col">
-                            <span className="font-bold text-slate-700">Plesk Obsidian Web Host Edition</span>
-                            <span className="text-emerald-500 font-bold text-xs">1 month free</span>
+                            <span className="font-black text-white uppercase tracking-tighter">Plesk Obsidian Web Host Edition</span>
+                            <span className="text-emerald-400 font-black text-xs uppercase">1 mês grátis</span>
                           </div>
-                          <span className="font-black text-slate-800">{currentImagePrices.pleskHost.replace(" /mês", "")}</span>
+                          <span className="font-black text-white">{currentImagePrices.pleskHost.replace(" /mês", "")}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="pro">
                         <div className="flex items-center justify-between w-[480px] py-1">
                           <div className="flex flex-col">
-                            <span className="font-bold text-slate-700">Plesk Obsidian Web Pro Edition</span>
-                            <span className="text-emerald-500 font-bold text-xs">1 month free</span>
+                            <span className="font-black text-white uppercase tracking-tighter">Plesk Obsidian Web Pro Edition</span>
+                            <span className="text-emerald-400 font-black text-xs uppercase">1 mês grátis</span>
                           </div>
-                          <span className="font-black text-slate-800">{currentImagePrices.pleskPro.replace(" /mês", "")}</span>
+                          <span className="font-black text-white">{currentImagePrices.pleskPro.replace(" /mês", "")}</span>
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -1271,39 +1272,32 @@ export default function ConfigureStorageVps() {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-sm font-bold text-slate-600">Version</label>
+                  <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Versão</label>
                   <Select value={pleskWinVersion} onValueChange={setPleskWinVersion}>
-                    <SelectTrigger className="h-16 border border-slate-200">
+                    <SelectTrigger className="h-16 bg-white/5 border-white/10 text-white">
                       <SelectValue>
                         <div className="flex items-center justify-between w-full pr-4 text-[13px]">
-                          <span className="font-medium text-slate-700">Windows Server {pleskWinVersion} Datacenter</span>
-                          <div className="flex items-center gap-2 text-slate-500">
-                            <span className="font-medium">
-                              {pleskWinVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows}
-                            </span>
-                            <span>|</span>
-                            <span>R$ 0,00 Setup fee</span>
-                          </div>
+                          <span className="font-bold text-white">Windows Server {pleskWinVersion} Datacenter</span>
                         </div>
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="z-[120]">
+                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130]">
                       <SelectItem value="2016">
                         <div className="flex items-center justify-between w-[480px] py-1">
-                          <span className="font-bold text-sky-600">Windows Server 2016 Datacenter</span>
-                          <span className="font-black text-slate-800">{formatBRL(currentImagePrices.win2016)}</span>
+                          <span className="font-black text-sky-400 uppercase tracking-tighter">Windows Server 2016 Datacenter</span>
+                          <span className="font-black text-white">{formatBRL(currentImagePrices.win2016)}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="2019">
                         <div className="flex items-center justify-between w-[480px] py-1">
-                          <span className="font-bold text-slate-700">Windows Server 2019 Datacenter</span>
-                          <span className="font-black text-slate-800">{formatBRL(currentImagePrices.windows)}</span>
+                          <span className="font-black text-white uppercase tracking-tighter">Windows Server 2019 Datacenter</span>
+                          <span className="font-black text-white">{formatBRL(currentImagePrices.windows)}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="2022">
                         <div className="flex items-center justify-between w-[480px] py-1">
-                          <span className="font-bold text-slate-700">Windows Server 2022 Datacenter</span>
-                          <span className="font-black text-slate-800">{formatBRL(currentImagePrices.windows)}</span>
+                          <span className="font-black text-white uppercase tracking-tighter">Windows Server 2022 Datacenter</span>
+                          <span className="font-black text-white">{formatBRL(currentImagePrices.windows)}</span>
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -1312,74 +1306,72 @@ export default function ConfigureStorageVps() {
               </div>
 
               <div className="flex justify-end gap-6 pt-4">
-                <Button variant="ghost" onClick={() => setShowPleskWindowsModal(false)} className="text-slate-400 font-bold">CANCELAR</Button>
-                <Button onClick={() => setShowPleskWindowsModal(false)} className="bg-[#00A8E8] hover:bg-[#0096d1] text-white font-bold px-8">CONFIGURAR</Button>
+                <Button variant="ghost" onClick={() => setShowPleskWindowsModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest font-black">CANCELAR</Button>
+                <Button onClick={() => setShowPleskWindowsModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">CONFIGURAR</Button>
               </div>
             </motion.div>
           </div>
         )}
 
         {showPleskModal && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskModal(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4">
                 <img src="/plesk.png" alt="Plesk" className="w-8 h-8 object-contain" />
-                <h2 className="text-xl font-bold text-slate-700">Plesk + Linux</h2>
+                <h2 className="text-xl font-black text-white uppercase tracking-tight">Plesk + Linux</h2>
               </div>
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label className="text-sm font-bold text-slate-600">Licence</label>
+                  <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Licença</label>
                   <Select value={pleskLicence} onValueChange={setPleskLicence}>
-                    <SelectTrigger className="h-16 border border-slate-200">
+                    <SelectTrigger className="h-16 bg-white/5 border-white/10 text-white">
                       <SelectValue>
                         <div className="flex items-center justify-between w-full pr-4 text-[13px] leading-tight">
                           <div className="flex flex-col text-left">
-                            <span className="font-medium text-slate-700">
+                            <span className="font-bold text-white">
                               {pleskLicence === "admin" ? "Plesk Obsidian Web Admin Edition" :
                                 pleskLicence === "host" ? "Plesk Obsidian Web Host Edition" :
                                   "Plesk Obsidian Web Pro Edition"}
                             </span>
-                            <span className="text-emerald-500 font-bold text-[11px]">1 month free</span>
+                            <span className="text-emerald-400 font-black text-[11px] uppercase tracking-widest">1 mês grátis</span>
                           </div>
-                          <div className="flex items-center gap-2 text-slate-500">
-                            <span className="font-medium">
+                          <div className="flex items-center gap-2 text-sky-400 font-black">
+                            <span>
                               {pleskLicence === "admin" ? currentImagePrices.pleskLinux :
                                 pleskLicence === "host" ? currentImagePrices.pleskHost :
                                   currentImagePrices.pleskPro}
                             </span>
-                            <span>|</span>
-                            <span>R$ 0,00 Setup fee</span>
                           </div>
                         </div>
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="z-[120]">
+                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130]">
                       <SelectItem value="admin">
                         <div className="flex items-center justify-between w-[480px] py-1">
                           <div className="flex flex-col">
-                            <span className="font-bold text-sky-600">Plesk Obsidian Web Admin Edition</span>
-                            <span className="text-emerald-500 font-bold text-xs">1 month free</span>
+                            <span className="font-black text-sky-400 uppercase tracking-tighter">Plesk Obsidian Web Admin Edition</span>
+                            <span className="text-emerald-400 font-black text-xs uppercase">1 mês grátis</span>
                           </div>
-                          <span className="font-black text-slate-800">{formatBRL(currentImagePrices.pleskLinux)}</span>
+                          <span className="font-black text-white">{formatBRL(currentImagePrices.pleskLinux)}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="host">
                         <div className="flex items-center justify-between w-[480px] py-1">
                           <div className="flex flex-col">
-                            <span className="font-bold text-slate-700">Plesk Obsidian Web Host Edition</span>
-                            <span className="text-emerald-500 font-bold text-xs">1 month free</span>
+                            <span className="font-black text-white uppercase tracking-tighter">Plesk Obsidian Web Host Edition</span>
+                            <span className="text-emerald-400 font-black text-xs uppercase">1 mês grátis</span>
                           </div>
-                          <span className="font-black text-slate-800">{formatBRL(currentImagePrices.pleskHost)}</span>
+                          <span className="font-black text-white">{formatBRL(currentImagePrices.pleskHost)}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="pro">
                         <div className="flex items-center justify-between w-[480px] py-1">
                           <div className="flex flex-col">
-                            <span className="font-bold text-slate-700">Plesk Obsidian Web Pro Edition</span>
-                            <span className="text-emerald-500 font-bold text-xs">1 month free</span>
+                            <span className="font-black text-white uppercase tracking-tighter">Plesk Obsidian Web Pro Edition</span>
+                            <span className="text-emerald-400 font-black text-xs uppercase">1 mês grátis</span>
                           </div>
-                          <span className="font-black text-slate-800">{formatBRL(currentImagePrices.pleskPro)}</span>
+                          <span className="font-black text-white">{formatBRL(currentImagePrices.pleskPro)}</span>
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -1388,29 +1380,29 @@ export default function ConfigureStorageVps() {
               </div>
 
               <div className="flex items-center justify-end gap-12 pt-4">
-                <button onClick={() => setShowPleskModal(false)} className="text-sky-500 font-bold text-sm hover:underline">Skip</button>
-                <Button onClick={() => setShowPleskModal(false)} className="bg-[#00A8E8] hover:bg-[#0096d1] text-white font-bold h-14 px-12 rounded-lg text-lg">Get Started</Button>
+                <button onClick={() => setShowPleskModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest font-black text-sm">Skip</button>
+                <Button onClick={() => setShowPleskModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black h-14 px-12 rounded-lg text-lg uppercase tracking-widest">Get Started</Button>
               </div>
             </motion.div>
           </div>
         )}
 
         {showCpanelModal && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowCpanelModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowCpanelModal(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4">
                 <img src="/cpanel.png" alt="cPanel" className="w-10 h-10 object-contain" />
-                <h2 className="text-xl font-bold text-slate-700">cPanel/WHM</h2>
+                <h2 className="text-xl font-black text-white uppercase tracking-tight">cPanel/WHM</h2>
               </div>
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label className="text-sm font-bold text-slate-600">Licença (Número de Contas)</label>
+                  <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Licença (Número de Contas)</label>
                   <Select value={cpanelLicence} onValueChange={setCpanelLicence}>
-                    <SelectTrigger className="h-16 border border-slate-200">
+                    <SelectTrigger className="h-16 bg-white/5 border-white/10 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="z-[120]">
+                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130] max-h-[300px]">
                       {[
                         { id: "5", name: "cPanel Admin (até 5 contas)", price: 43.50 },
                         { id: "30", name: "cPanel Pro (até 30 contas)", price: 58.00 },
@@ -1437,8 +1429,8 @@ export default function ConfigureStorageVps() {
                       ].map((lic) => (
                         <SelectItem key={lic.id} value={lic.id}>
                           <div className="flex items-center justify-between w-[480px] py-1">
-                            <span className="font-bold text-slate-700">{lic.name}</span>
-                            <span className="font-black text-slate-800">{formatBRL(lic.price)}</span>
+                            <span className="font-black text-white uppercase tracking-tighter">{lic.name}</span>
+                            <span className="font-black text-sky-400">{formatBRL(lic.price)}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -1447,12 +1439,12 @@ export default function ConfigureStorageVps() {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-sm font-bold text-slate-600">Sistema Operacional</label>
+                  <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Sistema Operacional</label>
                   <Select value={cpanelVersion} onValueChange={setCpanelVersion}>
-                    <SelectTrigger className="h-16 border border-slate-200">
+                    <SelectTrigger className="h-16 bg-white/5 border-white/10 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="z-[120]">
+                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130]">
                       <SelectItem value="Ubuntu 22.04">Ubuntu 22.04 LTS</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1460,8 +1452,8 @@ export default function ConfigureStorageVps() {
               </div>
 
               <div className="flex justify-end gap-6 pt-4">
-                <Button variant="ghost" onClick={() => setShowCpanelModal(false)} className="text-slate-400 font-bold">CANCELAR</Button>
-                <Button onClick={() => setShowCpanelModal(false)} className="bg-[#00A8E8] hover:bg-[#0096d1] text-white font-bold px-8">CONFIGURAR</Button>
+                <Button variant="ghost" onClick={() => setShowCpanelModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest font-black">CANCELAR</Button>
+                <Button onClick={() => setShowCpanelModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">CONFIGURAR</Button>
               </div>
             </motion.div>
           </div>

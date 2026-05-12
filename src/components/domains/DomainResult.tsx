@@ -105,50 +105,66 @@ export async function DomainResult({
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Resultado da Busca: {fullDomain}</CardTitle>
-        <CardDescription>
-          {available
-            ? "Este domínio está disponível para registro!"
-            : isAlreadyOwned
-              ? "Este domínio já está registrado em sua conta."
-              : "Este domínio não está disponível para registro."}
-        </CardDescription>
+    <Card className="bg-white/5 backdrop-blur-md border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+      <CardHeader className="border-b border-white/5 pb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Resultado da Busca: {fullDomain}</CardTitle>
+            <CardDescription className="text-slate-400 font-medium">
+              {available
+                ? "Este domínio está disponível para registro!"
+                : isAlreadyOwned
+                  ? "Este domínio já está registrado em sua conta."
+                  : "Este domínio não está disponível para registro."}
+            </CardDescription>
+          </div>
+          {available ? (
+            <div className="bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
+              <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+            </div>
+          ) : (
+            <div className="bg-rose-500/10 p-2 rounded-xl border border-rose-500/20 shadow-lg shadow-rose-500/10">
+              <XCircle className="h-6 w-6 text-rose-400" />
+            </div>
+          )}
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            {available ? (
-              <CheckCircle2 className="h-8 w-8 shrink-0 text-green-500" />
-            ) : (
-              <XCircle className="h-8 w-8 shrink-0 text-red-500" />
-            )}
+      <CardContent className="pt-8">
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-6">
             <div className="flex-1">
-              <h3 className="text-lg font-semibold">{fullDomain}</h3>
+              <h3 className="text-2xl font-black text-white uppercase tracking-tighter">{fullDomain}</h3>
               {available ? (
-                <p className="text-sm text-muted-foreground">
-                  Este domínio está disponível para registro
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                  <p className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.2em]">Disponível</p>
+                </div>
               ) : isAlreadyOwned ? (
-                <p className="text-sm text-green-600 dark:text-green-400">Este domínio já pertence à sua conta.</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+                  <p className="text-[11px] font-black text-sky-400 uppercase tracking-[0.2em]">Sua conta</p>
+                </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Este domínio já está registrado.</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                  <p className="text-[11px] font-black text-rose-400 uppercase tracking-[0.2em]">Indisponível</p>
+                </div>
               )}
             </div>
           </div>
         </div>
 
         {isPremium && available ? (
-          <div className="mt-4 flex items-center gap-2 text-amber-500">
-            <AlertCircle className="h-4 w-4" />
-            <p className="text-sm">
-              Este é um domínio premium. O preço de registro é {toBrl(price!)}.
+          <div className="mb-8 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
+            <p className="text-xs font-bold text-amber-500/90 uppercase tracking-wider">
+              Domínio Premium: O preço de registro é {toBrl(price!)}.
             </p>
           </div>
         ) : null}
+
         {available ? (
-          <>
+          <div className="mt-4">
             <DomainPriceSelector 
               domain={fullDomain}
               defaultYears={selectedYears.toString()}
@@ -160,9 +176,11 @@ export async function DomainResult({
               multiYearPricesBRL={domainData.domain.multiYearPricesBRL}
               isPremium={isPremium}
             />
-          </>
+          </div>
         ) : (
-          <DomainUnavailable domainData={domainData} isAlreadyOwned={isAlreadyOwned} />
+          <div className="border-t border-white/5 pt-6 mt-6">
+            <DomainUnavailable domainData={domainData} isAlreadyOwned={isAlreadyOwned} />
+          </div>
         )}
       </CardContent>
     </Card>

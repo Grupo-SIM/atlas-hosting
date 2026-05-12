@@ -8,7 +8,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  FormEvent,
   type ReactNode,
   startTransition,
   useActionState,
@@ -130,52 +129,54 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   ]);
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-6">
       {showEmailChangeSuccess && (
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-700">
+        <Alert className="border-green-500/50 bg-green-500/10 text-green-400">
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription>
             <strong>Email alterado com sucesso!</strong> Você pode agora fazer login com o novo endereço de email.
           </AlertDescription>
         </Alert>
       )}
       
-      <div className="space-y-2">
-        <Label htmlFor="email">E-mail</Label>
+      <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
+        <Label htmlFor="email" className="text-white font-medium ml-1">E-mail</Label>
         <Input
           id="email"
           type="email"
           placeholder="Digite seu e-mail"
           autoComplete="email"
+          className="h-11 bg-white/80 border-none text-slate-900 placeholder:text-slate-500 rounded-md focus-visible:ring-sky-500/50 focus-visible:bg-white transition-all font-medium"
           {...register("email")}
         />
         {errors.email && (
-          <p className="text-xs text-red-400">{errors.email.message}</p>
+          <p className="text-[10px] text-red-400 ml-1 leading-none">{errors.email.message}</p>
         )}
       </div>
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="password">Senha</Label>
+      
+      <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
+        <div className="flex items-center justify-between w-full ml-1 pr-1">
+          <Label htmlFor="password" className="text-white font-medium">Senha</Label>
           <Link
             href="/forgot-password"
-            className="text-sm text-primary hover:underline"
+            className="text-[10px] text-slate-400 hover:text-white transition-colors"
           >
             Esqueceu a senha?
           </Link>
         </div>
-        <div className="relative">
+        <div className="relative w-full">
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
             placeholder="Digite sua senha"
             autoComplete="current-password"
-            className="pr-10"
+            className="h-11 bg-white/80 border-none text-slate-900 placeholder:text-slate-500 rounded-md pr-10 focus-visible:ring-sky-500/50 focus-visible:bg-white transition-all font-medium"
             {...register("password")}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
             tabIndex={-1}
           >
             {showPassword ? (
@@ -186,39 +187,19 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           </button>
         </div>
         {errors.password && (
-          <p className="text-xs text-red-400">{errors.password.message}</p>
+          <p className="text-[10px] text-red-400 ml-1 leading-none">{errors.password.message}</p>
         )}
       </div>
 
-      {/* <div className="flex items-center space-x-2">
-        <Checkbox id="remember" {...register("remember")} />
-        <Label htmlFor="remember" className="text-sm font-normal">
-          Lembrar por 30 dias
-        </Label>
-      </div> */}
-
-      {formError && <p className="text-xs text-red-400">{formError}</p>}
+      {formError && <p className="text-xs text-red-400 ml-1">{formError}</p>}
 
       <Button
         type="submit"
-        className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+        className="w-full max-w-[448px] h-[48px] text-sm font-bold bg-[#1A73FF] hover:bg-[#1A73FF]/90 text-white rounded-[6px] transition-all shadow-lg opacity-50 uppercase tracking-wider"
         disabled={!isValid || isValidating || isPending}
       >
         {isPending ? <CgSpinner className="animate-spin h-5 w-5" /> : "Entrar"}
       </Button>
-
-      {/*
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Ou continue com
-          </span>
-        </div>
-      </div>
-      */}
     </form>
   );
 }

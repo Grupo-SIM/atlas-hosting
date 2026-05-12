@@ -27,20 +27,20 @@ const GradientButton = React.forwardRef<HTMLButtonElement, GradientButtonProps>(
     return (
       <Comp
         className={cn(
-          "relative group overflow-hidden rounded-lg transition-all duration-300",
-          "border border-border/30",
-          "w-full md:w-auto",
+          "relative group overflow-hidden rounded-2xl transition-all duration-300",
+          "border border-white/10",
+          "w-full md:w-auto shadow-2xl shadow-sky-500/20",
           className
         )}
         ref={ref}
         {...props}
       >
         {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-blue-500 opacity-90 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-r from-sky-500 to-blue-600 opacity-90 group-hover:opacity-100 transition-opacity duration-300" />
 
         {/* Button content */}
-        <div className="relative flex items-center justify-center gap-2 px-6 py-3 font-medium text-white">
-          {icon || <CheckCircle className="w-5 h-5" />}
+        <div className="relative flex items-center justify-center gap-3 px-8 py-5 text-base font-black text-white uppercase tracking-widest">
+          {icon || <CheckCircle className="w-5 h-5 stroke-[3px]" />}
           <span>{children}</span>
 
           {/* Shine effect on hover */}

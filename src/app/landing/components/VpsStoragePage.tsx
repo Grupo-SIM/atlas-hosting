@@ -93,24 +93,24 @@ export function VpsStoragePage() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-slate-50 px-4 py-8 md:px-8 md:py-10">
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] bg-[size:40px_40px]" />
+    <section className="relative overflow-hidden bg-transparent px-4 py-8 md:px-8 md:py-10">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px]" />
 
       <div className="relative z-10 mx-auto w-full max-w-[min(92vw,1760px)] mt-[2rem]">
         <div className="flex flex-col justify-start pb-4 md:pb-6">
           <div className="mx-auto max-w-5xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
-              <HardDrive className="h-4 w-4 text-emerald-500" />
-              <span className={`${roboto.className} text-xs font-bold uppercase tracking-wider text-emerald-600`}>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 shadow-xl backdrop-blur-md">
+              <HardDrive className="h-4 w-4 text-sky-500" />
+              <span className={`${roboto.className} text-xs font-bold uppercase tracking-wider text-sky-400`}>
                 Nova linha de VPS de armazenamento
               </span>
             </div>
 
-            <h1 className={`${roboto.className} max-w-4xl text-4xl font-bold leading-tight text-slate-900 md:text-6xl`}>
-              Melhor VPS com armazenamento SSD pelo menor preço
+            <h1 className={`${roboto.className} max-w-4xl text-4xl font-black leading-tight text-white md:text-6xl uppercase tracking-tight`}>
+              Melhor VPS com <span className="text-sky-500">armazenamento SSD</span> pelo menor preço
             </h1>
 
-            <p className="mt-5 max-w-3xl text-base leading-relaxed text-slate-600 md:text-lg">
+            <p className="mt-5 max-w-3xl text-base leading-relaxed text-slate-300 md:text-lg">
               Obtenha muito espaço de armazenamento com o melhor custo-benefício do mercado. Nosso VPS para
               armazenamento pode ser usado para qualquer aplicação ou projeto.
             </p>
@@ -126,9 +126,9 @@ export function VpsStoragePage() {
               return (
               <article
                 key={plan.name}
-                className={`w-[230px] shrink-0 overflow-hidden rounded-xl border bg-white shadow-sm ${plan.popular
-                    ? "border-emerald-500/60 ring-1 ring-emerald-500/10"
-                    : "border-slate-200"
+                className={`w-[230px] shrink-0 overflow-hidden rounded-xl border shadow-2xl backdrop-blur-md ${plan.popular
+                    ? "border-sky-500/60 bg-white/10 ring-1 ring-sky-500/10"
+                    : "border-white/10 bg-white/5"
                   }`}
               >
                 <div className="relative p-3.5">
@@ -137,11 +137,11 @@ export function VpsStoragePage() {
                       Valor imbatível
                     </span>
                   ) : null}
-                  <p className={`${roboto.className} pr-[4.5rem] text-[13px] font-bold tracking-wide text-slate-900`}>
+                  <p className={`${roboto.className} pr-[4.5rem] text-[13px] font-bold tracking-wide text-white`}>
                     {plan.name}
                   </p>
                   <p className="mt-2 text-xs font-medium text-rose-500 line-through opacity-70">{formatBRL(plan.eurOld)}</p>
-                  <p className="mt-0.5 leading-none text-slate-900">
+                  <p className="mt-0.5 leading-none text-white">
                     <span className="text-4xl font-extrabold">{newMain},</span>
                     <span className="align-top text-lg font-bold">{newCents}</span>
                     <span className="ml-1 text-[10px] font-medium text-slate-400">/mês</span>
@@ -149,20 +149,20 @@ export function VpsStoragePage() {
                   <p className="mt-0.5 text-[10px] font-light leading-snug text-slate-400">por um período de 12 meses</p>
                   <Link
                     href={`/vps-armazenamento/configure/${plan.name.match(/\d+/)?.[0] || "10"}`}
-                    className={`${roboto.className} mt-3 block w-full rounded-md border border-slate-200 bg-transparent py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-600 transition-colors hover:bg-slate-50`}
+                    className={`${roboto.className} mt-3 block w-full rounded-md border border-white/10 bg-white/5 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-300 transition-all hover:bg-white/10 hover:text-white`}
                   >
                     Começar agora →
                   </Link>
                 </div>
 
-                <div className="space-y-0 border-t border-slate-100 text-[11px] text-slate-600 md:text-xs">
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold first:border-t-0">{plan.vcpu}</p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold">{plan.ram}</p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold">{plan.storage}</p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold">{plan.speed}</p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold">Tráfego ilimitado*</p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold text-emerald-600">100% de cashback</p>
-                  <p className="border-t border-slate-100 px-3 py-2.5 font-semibold text-sky-600 text-xs uppercase tracking-wider font-extrabold">Suporte 24/7 Ativo</p>
+                <div className="space-y-0 border-t border-white/10 text-[11px] text-slate-300 md:text-xs">
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold first:border-t-0 text-white">{plan.vcpu}</p>
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold text-white">{plan.ram}</p>
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold text-white">{plan.storage}</p>
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold text-white">{plan.speed}</p>
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold text-white">Tráfego ilimitado*</p>
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold text-sky-400 uppercase tracking-wider text-[10px] font-extrabold">100% de cashback</p>
+                  <p className="border-t border-white/5 px-3 py-2.5 font-bold text-sky-500 uppercase tracking-wider text-[10px] font-extrabold">Suporte 24/7 Ativo</p>
                 </div>
               </article>
             )})}
@@ -170,18 +170,18 @@ export function VpsStoragePage() {
         </div>
 
         <div className="mx-auto mt-16 max-w-5xl text-center">
-          <h3 className={`${roboto.className} text-3xl font-semibold tracking-tight text-slate-900 md:text-[2.2rem]`}>
-            9 regiões, 11 localidades, disponibilidade global.
+          <h3 className={`${roboto.className} text-3xl font-black tracking-tight text-white md:text-[2.2rem] uppercase`}>
+            9 regiões, 11 localidades, <span className="text-sky-500">disponibilidade global</span>.
           </h3>
-          <p className="mx-auto mt-4 max-w-3xl text-lg text-slate-600">
+          <p className="mx-auto mt-4 max-w-3xl text-lg text-slate-300">
             Dos EUA ao Reino Unido, da Europa à Ásia e Austrália, escolha a localização ideal para baixa latência em todo o mundo.
           </p>
         </div>
 
-        <div className="mx-auto mt-10 max-w-5xl rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
-          <div className="relative overflow-hidden rounded-2xl bg-slate-50 p-6 md:p-10 border border-slate-100">
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:36px_36px]" />
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-70">
+        <div className="mx-auto mt-10 max-w-5xl rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8 shadow-2xl backdrop-blur-md">
+          <div className="relative overflow-hidden rounded-2xl bg-[#000B12]/50 p-6 md:p-10 border border-white/5">
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:36px_36px]" />
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-40 mix-blend-screen">
               <LottieMap />
             </div>
             <div className="relative min-h-[300px] md:min-h-[360px]" />

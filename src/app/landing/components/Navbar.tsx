@@ -55,7 +55,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
         {/* Logo - Centered on mobile, Left on desktop */}
         <div className="flex-1 flex md:flex-none items-center justify-center md:justify-start">
           <Link href="/" className="flex items-center shrink-0 min-w-0">
-            <div className={`relative w-[150px] md:w-[180px] h-[38px] md:h-[45px] transition-all ${isLight ? "filter brightness-0" : ""}`}>
+            <div className={`relative w-[150px] md:w-[180px] h-[38px] md:h-[45px] transition-all ${isLight ? "filter brightness-0" : "filter brightness-0 invert"}`}>
               <Image
                 src="/atlas-logo.png"
                 alt="Atlashost Logo"
@@ -78,10 +78,10 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
           >
             <Link
               href="/vps"
-              className={`${roboto.className} flex items-center gap-1.5 ${isLight ? "text-slate-700 hover:text-emerald-500" : "text-white/90 hover:text-[#01FC8D]"} transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}
+              className={`${roboto.className} flex items-center gap-1.5 ${isLight ? "text-slate-700 hover:text-sky-500" : "text-white/90 hover:text-sky-400"} transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}
             >
               VPS
-              <ChevronDown className={`w-4 h-4 ${isLight ? "text-slate-400" : "text-white/40"} group-hover:text-emerald-500 transition-transform duration-300 group-hover:rotate-180`} strokeWidth={2.5} />
+              <ChevronDown className={`w-4 h-4 ${isLight ? "text-slate-400" : "text-white/40"} group-hover:text-sky-400 transition-transform duration-300 group-hover:rotate-180`} strokeWidth={2.5} />
             </Link>
 
             <AnimatePresence>
@@ -93,17 +93,17 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
                   transition={{ duration: 0.2, ease: "easeOut" }}
                   className={`absolute top-full left-0 mt-1 min-w-[280px] ${isLight ? "bg-white border-slate-200 shadow-xl" : "bg-[#11172f] border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]"} border rounded-[6px] overflow-hidden`}
                 >
-                  <Link href="/vps" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50" : "text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D]"} transition-all uppercase`}>VPS em nuvem</Link>
-                  <Link href="/vds" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] border-white/5"} transition-all uppercase border-t`}>Cloud VDS</Link>
-                  <Link href="/vps-armazenamento" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] border-white/5"} transition-all uppercase border-t`}>VPS de armazenamento</Link>
-                  <Link href="/vps-windows" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#0a0e27] hover:bg-[#01FC8D] border-white/5"} transition-all uppercase border-t`}>VPS Windows</Link>
+                  <Link href="/vps" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50" : "text-white/80 hover:text-[#0a0e27] hover:bg-sky-400"} transition-all uppercase`}>VPS em nuvem</Link>
+                  <Link href="/vds" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#0a0e27] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>Cloud VDS</Link>
+                  <Link href="/vps-armazenamento" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#0a0e27] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>VPS de armazenamento</Link>
+                  <Link href="/vps-windows" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#0a0e27] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>VPS Windows</Link>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
           {navLinks.map((link) => (
-            <Link key={link.name} href={link.href} className={`${roboto.className} ${isLight ? "text-slate-700 hover:text-emerald-500" : "text-white/90 hover:text-[#01FC8D]"} transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}>
+            <Link key={link.name} href={link.href} className={`${roboto.className} ${isLight ? "text-slate-700 hover:text-sky-500" : "text-white/90 hover:text-sky-400"} transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}>
               {link.name}
             </Link>
           ))}
@@ -113,13 +113,13 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
         <div className="flex-1 md:flex-none flex items-center justify-end gap-3">
           <div className="hidden md:flex items-center gap-3">
             <Button
-              className={`${roboto.className} bg-transparent border ${isLight ? "border-slate-300 text-slate-700 hover:bg-slate-50" : "border-white/30 text-white hover:border-white/50 hover:bg-white/10"} font-bold px-5 py-2 h-auto text-[13px] rounded-full transition-all duration-300 tracking-wide uppercase`}
+              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-6 py-2 h-auto text-[13px] rounded-full transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
               asChild
             >
               <Link href="/signup">Cadastre-se</Link>
             </Button>
             <Button
-              className={`${roboto.className} ${isLight ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-[0_8px_26px_rgba(16,185,129,0.2)]" : "bg-white text-[#0b112a] hover:bg-white/90 shadow-[0_8px_26px_rgba(255,255,255,0.2)]"} font-extrabold px-6 py-2 h-auto text-[13px] rounded-full transition-all duration-300 tracking-wide uppercase`}
+              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-8 py-2 h-auto text-[13px] rounded-full transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
               asChild
             >
               <Link href="/login">Login</Link>
@@ -160,28 +160,28 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
                 <Link
                   href="/vps"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-emerald-500 transition-colors uppercase tracking-wider`}
+                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-sky-400 transition-colors uppercase tracking-wider`}
                 >
                   VPS em Nuvem
                 </Link>
                 <Link
                   href="/vds"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-emerald-500 transition-colors uppercase tracking-wider`}
+                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-sky-400 transition-colors uppercase tracking-wider`}
                 >
                   Cloud VDS
                 </Link>
                 <Link
                   href="/vps-armazenamento"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-emerald-500 transition-colors uppercase tracking-wider`}
+                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-sky-400 transition-colors uppercase tracking-wider`}
                 >
                   Armazenamento
                 </Link>
                 <Link
                   href="/vps-windows"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-emerald-500 transition-colors uppercase tracking-wider`}
+                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-sky-400 transition-colors uppercase tracking-wider`}
                 >
                   Windows
                 </Link>
@@ -195,7 +195,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
                     key={link.name}
                     href={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${roboto.className} text-xl font-bold ${isLight ? "text-slate-400" : "text-white/60"} hover:text-emerald-500 transition-colors uppercase tracking-widest`}
+                    className={`${roboto.className} text-xl font-bold ${isLight ? "text-slate-400" : "text-white/60"} hover:text-sky-400 transition-colors uppercase tracking-widest`}
                   >
                     {link.name}
                   </Link>
@@ -206,14 +206,14 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
             {/* Mobile Auth Buttons - Centered */}
             <div className="mt-12 flex flex-col gap-4 w-full max-w-xs">
               <Button
-                className={`${roboto.className} w-full bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-6 h-auto text-lg rounded-xl transition-all shadow-[0_8px_26px_rgba(16,185,129,0.2)] tracking-wide uppercase`}
+                className={`${roboto.className} w-full bg-[#00A3FF] hover:bg-[#0091E6] text-white font-extrabold py-6 h-auto text-lg rounded-xl transition-all shadow-[0_8px_26px_rgba(0,163,255,0.2)] tracking-wide uppercase`}
                 asChild
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Link href="/login">Começar Agora</Link>
               </Button>
               <Button
-                className={`${roboto.className} w-full bg-transparent border-2 ${isLight ? "border-slate-200 text-slate-700" : "border-white/20 text-white"} hover:border-emerald-500 transition-all py-6 h-auto text-lg rounded-xl tracking-wide uppercase`}
+                className={`${roboto.className} w-full bg-transparent border-2 ${isLight ? "border-slate-200 text-slate-700" : "border-white/20 text-white"} hover:border-sky-400 transition-all py-6 h-auto text-lg rounded-xl tracking-wide uppercase`}
                 asChild
                 onClick={() => setIsMobileMenuOpen(false)}
               >

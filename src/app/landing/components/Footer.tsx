@@ -5,26 +5,27 @@ import { FaThreads, FaTiktok, FaXTwitter, FaFacebook, FaVideo } from "react-icon
 
 export function Footer() {
   return (
-    <footer className="bg-slate-100 pt-24 pb-12 w-full overflow-hidden">
+    <footer className="bg-transparent pt-24 pb-12 w-full overflow-hidden">
       <div className="w-full px-4 md:px-8">
 
-        {/* Main Rounded Footer Card */}
-        <div className="bg-white rounded-[24px] px-8 py-16 md:px-12 md:py-20 mb-8 border border-slate-200 shadow-xl shadow-slate-200/20">
+        {/* Main Footer Container - Background and border removed as requested */}
+        <div className="px-4 py-16 md:py-24 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-8">
 
             {/* Column 1: Logo, Text, Socials */}
             <div className="flex flex-col items-center lg:items-center text-center">
-              <Link href="/" className="mb-6 block">
-                <Image
-                  src="/atlas-logo.png"
-                  alt="Atlas Hosting"
-                  width={250}
-                  height={63}
-                  className="h-14 w-auto object-contain filter brightness-0"
-                  unoptimized
-                />
+              <Link href="/" className="mb-8 block">
+                <div className="relative w-[180px] h-[45px] mx-auto lg:mx-0 filter brightness-0 invert">
+                  <Image
+                    src="/atlas-logo.png"
+                    alt="Atlashost Logo"
+                    fill
+                    className="object-contain"
+                    unoptimized
+                  />
+                </div>
               </Link>
-              <p className="text-slate-500 text-[13px] leading-relaxed mb-8 max-w-[220px]">
+              <p className="text-slate-400 text-[13px] leading-relaxed mb-8 max-w-[220px]">
                 Feito pra quem quer mais do que só <br />
                 "estar no ar"
               </p>
@@ -46,7 +47,7 @@ export function Footer() {
                       href={social.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-[34px] h-[34px] rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center text-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors duration-300"
+                      className="w-[34px] h-[34px] rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-sky-400 hover:bg-sky-500 hover:text-white transition-colors duration-300"
                     >
                       <Icon className="w-4 h-4" strokeWidth={2} />
                     </Link>
@@ -56,12 +57,8 @@ export function Footer() {
             </div>
 
             {/* Column 2: Menu */}
-            <div className="flex flex-col">
-              <div className="relative py-2.5 px-4 bg-slate-50 w-fit min-w-[160px] rounded-r border border-slate-200 border-l-0 mb-6 group">
-                <div className="absolute inset-0 opacity-[0.04] bg-[repeating-linear-gradient(-45deg,#000_0,#000_1px,transparent_1px,transparent_6px)] pointer-events-none" />
-                <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500" />
-                <h4 className="relative z-10 font-bold text-slate-900 text-[15px]">Menu</h4>
-              </div>
+            <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+              <h4 className="font-bold text-[#1394BE] text-[15px] uppercase tracking-wider mb-6">Menu</h4>
 
               <ul className="space-y-3.5 pl-1">
                 {[
@@ -74,8 +71,8 @@ export function Footer() {
                   { label: "FAQ", href: "#faq" },
                 ].map((link, idx) => (
                   <li key={idx} className="flex items-center gap-2.5 group">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 fill-emerald-500/10" />
-                    <Link href={link.href} className="text-[13.5px] text-slate-500 group-hover:text-emerald-600 transition-colors">
+                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0 fill-sky-500/10" />
+                    <Link href={link.href} className="text-[13.5px] text-slate-400 group-hover:text-sky-400 transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -84,12 +81,8 @@ export function Footer() {
             </div>
 
             {/* Column 3: Serviços & Blogs */}
-            <div className="flex flex-col">
-              <div className="relative py-2.5 px-4 bg-slate-50 w-fit min-w-[200px] rounded-r border border-slate-200 border-l-0 mb-6 group">
-                <div className="absolute inset-0 opacity-[0.04] bg-[repeating-linear-gradient(-45deg,#000_0,#000_1px,transparent_1px,transparent_6px)] pointer-events-none" />
-                <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500" />
-                <h4 className="relative z-10 font-bold text-slate-900 text-[15px]">Serviços</h4>
-              </div>
+            <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+              <h4 className="font-bold text-[#1394BE] text-[15px] uppercase tracking-wider mb-6">Serviços</h4>
 
               <ul className="space-y-3.5 pl-1 mb-10">
                 {[
@@ -97,19 +90,15 @@ export function Footer() {
                   { label: "Compra de domínios", href: "#planos" },
                 ].map((link, idx) => (
                   <li key={idx} className="flex items-center gap-2.5 group">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 fill-emerald-500/10" />
-                    <Link href={link.href} className="text-[13.5px] text-slate-500 group-hover:text-emerald-600 transition-colors">
+                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0 fill-sky-500/10" />
+                    <Link href={link.href} className="text-[13.5px] text-slate-400 group-hover:text-sky-400 transition-colors">
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
 
-              <div className="relative py-2.5 px-4 bg-slate-50 w-fit min-w-[200px] rounded-r border border-slate-200 border-l-0 mb-6 group">
-                <div className="absolute inset-0 opacity-[0.04] bg-[repeating-linear-gradient(-45deg,#000_0,#000_1px,transparent_1px,transparent_6px)] pointer-events-none" />
-                <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500" />
-                <h4 className="relative z-10 font-bold text-slate-900 text-[15px]">Blogs Recomendados</h4>
-              </div>
+              <h4 className="font-bold text-[#1394BE] text-[15px] uppercase tracking-wider mb-6">Blogs Recomendados</h4>
 
               <ul className="space-y-3.5 pl-1">
                 {[
@@ -120,8 +109,8 @@ export function Footer() {
                   { label: "Zyrion Brazil", href: "https://zyrionbrazil.com/" },
                 ].map((link, idx) => (
                   <li key={idx} className="flex items-center gap-2.5 group">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 fill-emerald-500/10" />
-                    <Link href={link.href} target="_blank" rel="noopener noreferrer" className="text-[13.5px] text-slate-500 group-hover:text-emerald-600 transition-colors">
+                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0 fill-sky-500/10" />
+                    <Link href={link.href} target="_blank" rel="noopener noreferrer" className="text-[13.5px] text-slate-400 group-hover:text-sky-400 transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -134,15 +123,15 @@ export function Footer() {
 
         {/* Bottom Bar Container */}
         <div className="flex flex-col md:flex-row justify-between items-center px-4 pt-4 text-center md:text-left">
-          <p className="text-slate-400 text-[12px] mb-4 md:mb-0">
+          <p className="text-slate-500 text-[12px] mb-4 md:mb-0">
             Copyright © 2026 JB Mídia, Todos os direitos reservados.
           </p>
           <div className="flex items-center gap-3 text-[12px] font-semibold">
-            <Link href="/termos-de-uso" className="text-emerald-600 hover:text-emerald-700 transition-colors">
+            <Link href="/termos-de-uso" className="text-sky-500 hover:text-sky-400 transition-colors">
               Termos de Uso
             </Link>
-            <span className="text-slate-200">•</span>
-            <Link href="/politica-de-privacidade" className="text-emerald-600 hover:text-emerald-700 transition-colors">
+            <span className="text-white/10">•</span>
+            <Link href="/politica-de-privacidade" className="text-sky-500 hover:text-sky-400 transition-colors">
               Política de Privacidade
             </Link>
           </div>

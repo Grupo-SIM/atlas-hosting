@@ -13,9 +13,11 @@ export const metadata: Metadata = {
 export default function CloudVdsPage() {
   return (
     <SmoothScroll>
-      <div className="min-h-screen w-full overflow-x-hidden bg-slate-50">
-        <Navbar variant="light" />
-        <main className="w-full pt-24">
+      <div className="min-h-screen w-full overflow-x-hidden bg-atlas-dark-1 selection:bg-sky-500/30">
+        <Navbar />
+        {/* Background Gradient */}
+        <div className="fixed inset-0 z-0 bg-landing-gradient opacity-40 pointer-events-none" />
+        <main className="relative z-10 w-full pt-24">
           <VdsPage />
         </main>
         <Footer />

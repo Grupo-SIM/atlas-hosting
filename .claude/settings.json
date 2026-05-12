@@ -33,7 +33,8 @@
       "mcp__serena__replace_content",
       "mcp__serena__replace_symbol_body",
       "Bash(npx --yes next build)",
-      "Bash(del \"c:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\atlas-hosting\\\\vercel.json\")"
+      "Bash(del \"c:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\atlas-hosting\\\\vercel.json\")",
+      "Bash(./node_modules/.bin/tsc --noEmit --skipLibCheck)"
     ],
     "deny": [
       "Agent(Explore)"

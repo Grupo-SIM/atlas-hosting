@@ -177,45 +177,140 @@ function PersonalDataForm() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-      <Navbar variant="light" />
-      <main className="max-w-5xl mx-auto px-6 pt-32 pb-24">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 md:p-12">
+    <div className="min-h-screen bg-[#000B12] text-white font-sans pb-24 relative overflow-hidden">
+      <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
+      <Navbar variant="dark" />
+      
+      <main className="max-w-5xl mx-auto px-6 pt-32 pb-24 relative z-10">
+        <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 p-8 md:p-12">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-            <h1 className="text-3xl font-bold text-slate-800">Dados Pessoais</h1>
+            <h1 className="text-3xl font-black text-white uppercase tracking-tight">Dados Pessoais</h1>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50">
-                <Lock className="w-4 h-4 text-slate-400" />
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-xl">
+                <Lock className="w-4 h-4 text-sky-400" />
                 <div className="flex flex-col leading-none">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Privacidade</span>
-                  <span className="text-[11px] font-medium text-slate-700">Protegida</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Privacidade</span>
+                  <span className="text-[11px] font-bold text-white uppercase tracking-tight">Protegida</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50">
-                <ShieldCheck className="w-4 h-4 text-slate-400" />
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-xl">
+                <ShieldCheck className="w-4 h-4 text-sky-400" />
                 <div className="flex flex-col leading-none">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Checkout</span>
-                  <span className="text-[11px] font-medium text-slate-700">Seguro</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Checkout</span>
+                  <span className="text-[11px] font-bold text-white uppercase tracking-tight">Seguro</span>
                 </div>
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">Razão Social / Nome Fantasia <span className="text-red-500">*</span></Label><Input id="businessName" value={formData.businessName} onChange={handleInputChange} placeholder="Nome da sua empresa" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="space-y-2"><div className="flex items-center gap-1"><Label className="text-sm font-semibold text-slate-600">CPF / CNPJ <span className="text-red-500">*</span></Label><div className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-bold">?</div></div><Input id="vatNumber" value={formData.vatNumber} onChange={handleInputChange} placeholder="Digite seu CPF ou CNPJ" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="grid grid-cols-12 gap-3"><div className="col-span-3 space-y-2"><Label className="text-sm font-semibold text-slate-600">Saudação</Label><Select value={formData.salutation} onValueChange={(v) => handleSelectChange("salutation", v)}><SelectTrigger className="h-12 border-slate-200 bg-white rounded-lg"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Mr">Sr.</SelectItem><SelectItem value="Ms">Sra.</SelectItem><SelectItem value="Mrs">Srta.</SelectItem><SelectItem value="Dr">Dr.</SelectItem></SelectContent></Select></div><div className="col-span-9 space-y-2"><Label className="text-sm font-semibold text-slate-600">Nome <span className="text-red-500">*</span></Label><Input id="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Seu primeiro nome" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">Sobrenome <span className="text-red-500">*</span></Label><Input id="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Seu sobrenome" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="md:col-span-2 space-y-2"><Label className="text-sm font-semibold text-slate-600">Endereço <span className="text-red-500">*</span></Label><Input id="address" value={formData.address} onChange={handleInputChange} placeholder="Digite seu endereço completo" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500 w-full" /></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">Cidade <span className="text-red-500">*</span></Label><Input id="city" value={formData.city} onChange={handleInputChange} placeholder="Sua cidade" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">CEP <span className="text-red-500">*</span></Label><Input id="postcode" value={formData.postcode} onChange={handleInputChange} placeholder="00000-000" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">País <span className="text-red-500">*</span></Label><Select value={formData.country} onValueChange={(v) => handleSelectChange("country", v)}><SelectTrigger className="h-12 border-slate-200 bg-white rounded-lg"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Brazil">Brasil</SelectItem><SelectItem value="Portugal">Portugal</SelectItem><SelectItem value="USA">EUA</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">Estado <span className="text-red-500">*</span></Label><Input id="state" value={formData.state} onChange={handleInputChange} placeholder="Digite seu estado" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="md:col-span-2 space-y-2"><div className="flex items-center gap-1"><Label className="text-sm font-semibold text-slate-600">Telefone <span className="text-red-500">*</span></Label><div className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-bold">?</div></div><Input id="telephone" value={formData.telephone} onChange={handleInputChange} placeholder="(00) 00000-0000" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">E-mail <span className="text-red-500">*</span></Label><Input id="email" value={formData.email} onChange={handleInputChange} placeholder="seu@email.com" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold text-slate-600">Confirmar E-mail <span className="text-red-500">*</span></Label><Input id="confirmEmail" value={formData.confirmEmail} onChange={handleInputChange} placeholder="Repita seu e-mail" className="h-12 border-slate-200 bg-white rounded-lg focus:ring-sky-500" /></div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
+            <div className="space-y-2">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Razão Social / Nome Fantasia <span className="text-sky-500">*</span></Label>
+              <Input id="businessName" value={formData.businessName} onChange={handleInputChange} placeholder="Nome da sua empresa" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-1">
+                <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">CPF / CNPJ <span className="text-sky-500">*</span></Label>
+                <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-bold">?</div>
+              </div>
+              <Input id="vatNumber" value={formData.vatNumber} onChange={handleInputChange} placeholder="Digite seu CPF ou CNPJ" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
+            </div>
+
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-4 space-y-2">
+                <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Saudação</Label>
+                <Select value={formData.salutation} onValueChange={(v) => handleSelectChange("salutation", v)}>
+                  <SelectTrigger className="h-12 border-white/10 bg-white/5 rounded-xl text-white focus:ring-sky-500">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                    <SelectItem value="Mr" className="focus:bg-white/10 focus:text-white">Sr.</SelectItem>
+                    <SelectItem value="Ms" className="focus:bg-white/10 focus:text-white">Sra.</SelectItem>
+                    <SelectItem value="Mrs" className="focus:bg-white/10 focus:text-white">Srta.</SelectItem>
+                    <SelectItem value="Dr" className="focus:bg-white/10 focus:text-white">Dr.</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-8 space-y-2">
+                <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Nome <span className="text-sky-500">*</span></Label>
+                <Input id="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Seu primeiro nome" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Sobrenome <span className="text-sky-500">*</span></Label>
+              <Input id="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Seu sobrenome" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
+            </div>
+
+            <div className="md:col-span-2 space-y-2">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Endereço <span className="text-sky-500">*</span></Label>
+              <Input id="address" value={formData.address} onChange={handleInputChange} placeholder="Digite seu endereço completo" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 w-full text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Cidade <span className="text-sky-500">*</span></Label>
+              <Input id="city" value={formData.city} onChange={handleInputChange} placeholder="Sua cidade" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">CEP <span className="text-sky-500">*</span></Label>
+              <Input id="postcode" value={formData.postcode} onChange={handleInputChange} placeholder="00000-000" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">País <span className="text-sky-500">*</span></Label>
+              <Select value={formData.country} onValueChange={(v) => handleSelectChange("country", v)}>
+                <SelectTrigger className="h-12 border-white/10 bg-white/5 rounded-xl text-white focus:ring-sky-500">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                  <SelectItem value="Brazil" className="focus:bg-white/10 focus:text-white">Brasil</SelectItem>
+                  <SelectItem value="Portugal" className="focus:bg-white/10 focus:text-white">Portugal</SelectItem>
+                  <SelectItem value="USA" className="focus:bg-white/10 focus:text-white">EUA</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Estado <span className="text-sky-500">*</span></Label>
+              <Input id="state" value={formData.state} onChange={handleInputChange} placeholder="Digite seu estado" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
+            </div>
+
+            <div className="md:col-span-2 space-y-2">
+              <div className="flex items-center gap-1">
+                <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Telefone <span className="text-sky-500">*</span></Label>
+                <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-bold">?</div>
+              </div>
+              <Input id="telephone" value={formData.telephone} onChange={handleInputChange} placeholder="(00) 00000-0000" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">E-mail <span className="text-sky-500">*</span></Label>
+              <Input id="email" value={formData.email} onChange={handleInputChange} placeholder="seu@email.com" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Confirmar E-mail <span className="text-sky-500">*</span></Label>
+              <Input id="confirmEmail" value={formData.confirmEmail} onChange={handleInputChange} placeholder="Repita seu e-mail" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
+            </div>
           </div>
-          <div className="flex justify-end mt-12"><Button disabled={isPending || !isFormValid} onClick={handleNext} className="bg-[#0070BA] hover:bg-[#005ea6] text-white font-bold h-12 px-12 rounded-full text-base disabled:opacity-50">{isPending ? "Processando..." : "Próximo"}</Button></div>
-          <div className="mt-12 pt-8 border-t border-slate-100 text-center"><p className="text-[11px] text-slate-400 leading-relaxed max-w-3xl mx-auto">Sua privacidade é importante para nós. Processamos seus dados pessoais com a finalidade de criar uma conta de usuário e realizar seu pedido de acordo com nosso <Link href="/privacy" className="text-sky-500 hover:underline">aviso de privacidade</Link>. Tomamos as mais altas precauções para garantir que seus dados estejam seguros e protegidos. Nunca venderemos seus dados a terceiros.</p></div>
+
+          <div className="flex justify-end mt-12">
+            <Button 
+              disabled={isPending || !isFormValid} 
+              onClick={handleNext} 
+              className="bg-sky-500 hover:bg-sky-600 text-white font-black h-14 px-16 rounded-2xl text-base uppercase tracking-widest transition-all shadow-lg shadow-sky-500/20 disabled:opacity-30"
+            >
+              {isPending ? "Processando..." : "Próximo Passo"}
+            </Button>
+          </div>
+
+          <div className="mt-12 pt-8 border-t border-white/10 text-center">
+            <p className="text-[11px] text-slate-500 leading-relaxed max-w-3xl mx-auto font-medium">
+              Sua privacidade é importante para nós. Processamos seus dados pessoais com a finalidade de criar uma conta de usuário e realizar seu pedido de acordo com nosso <Link href="/privacy" className="text-sky-400 hover:underline">aviso de privacidade</Link>. Tomamos as mais altas precauções para garantir que seus dados estejam seguros e protegidos. Nunca venderemos seus dados a terceiros.
+            </p>
+          </div>
         </div>
       </main>
     </div>
@@ -224,7 +319,15 @@ function PersonalDataForm() {
 
 export default function PersonalDataPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-12 h-12 rounded-full border-4 border-sky-200 border-t-sky-500 animate-spin" /><p className="text-slate-400 font-medium">Carregando checkout...</p></div></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#000B12] flex items-center justify-center font-sans relative overflow-hidden">
+        <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
+        <div className="animate-pulse flex flex-col items-center gap-6 relative z-10">
+          <div className="w-16 h-16 rounded-full border-4 border-white/10 border-t-sky-500 animate-spin shadow-2xl shadow-sky-500/20" />
+          <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Preparando Ambiente...</p>
+        </div>
+      </div>
+    }>
       <PersonalDataForm />
     </Suspense>
   );
