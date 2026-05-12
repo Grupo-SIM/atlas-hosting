@@ -48,6 +48,7 @@ export function Statistics() {
         {/* Texto Principal */}
         <div className="text-center mb-12 pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
           <span className="inline-flex items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-400 mb-4">
+            <span className="w-2 h-2 rounded-full bg-sky-500 mr-2" />
             Resultados Reais
           </span>
           <h2 className={`${roboto.className} text-[2.2rem] md:text-[3.1rem] font-bold text-white mb-5 leading-[1.05] tracking-tight`}>

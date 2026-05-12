@@ -159,7 +159,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           <Label htmlFor="password" className="text-white font-medium">Senha</Label>
           <Link
             href="/forgot-password"
-            className="text-[10px] text-slate-400 hover:text-white transition-colors"
+            className="text-xs text-white hover:text-sky-300 transition-colors font-medium"
           >
             Esqueceu a senha?
           </Link>
@@ -195,7 +195,11 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
 
       <Button
         type="submit"
-        className="w-full max-w-[448px] h-[48px] text-sm font-bold bg-[#1A73FF] hover:bg-[#1A73FF]/90 text-white rounded-[6px] transition-all shadow-lg opacity-50 uppercase tracking-wider"
+        className={`w-full max-w-[448px] h-[48px] text-sm font-bold rounded-[6px] transition-all shadow-lg uppercase tracking-wider ${
+          isValid && !isValidating && !isPending
+            ? "bg-white text-slate-900 hover:bg-white/90"
+            : "bg-[#1A73FF] text-white opacity-50"
+        }`}
         disabled={!isValid || isValidating || isPending}
       >
         {isPending ? <CgSpinner className="animate-spin h-5 w-5" /> : "Entrar"}

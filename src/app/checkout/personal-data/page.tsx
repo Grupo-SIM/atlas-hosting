@@ -14,6 +14,7 @@ import {
 import { ShieldCheck, Lock } from "lucide-react";
 import Link from "next/link";
 import { Navbar } from "@/app/landing/components/Navbar";
+import { Footer } from "@/app/landing/components/Footer";
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { createVpsInvoice } from "@/app/actions";
@@ -299,6 +300,7 @@ function PersonalDataForm() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

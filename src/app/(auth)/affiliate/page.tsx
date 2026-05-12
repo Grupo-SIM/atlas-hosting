@@ -35,7 +35,8 @@ export default async function AffiliatePage() {
 
   const referredUsers = await db.query.pgUser.findMany({
     where: eq(pgUser.referrerId, user.id),
-    columns: { id: true },
+    columns: { id: true, email: true, createdAt: true },
+    orderBy: (t, { desc }) => [desc(t.createdAt)],
   });
 
   const rawCommissions = await db.query.pgAffiliateCommission.findMany({
@@ -81,7 +82,7 @@ export default async function AffiliatePage() {
         availableBalance={available}
         pendingWithdrawals={pendingWithdrawals}
         totalEarnedAllTime={totalEarnedAllTime}
-        totalReferrals={referredUsers.length}
+        referrals={referredUsers}
         commissions={commissions}
         withdrawals={withdrawals}
         minWithdrawal={minWithdrawal}

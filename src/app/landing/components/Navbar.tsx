@@ -113,13 +113,13 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
         <div className="flex-1 md:flex-none flex items-center justify-end gap-3">
           <div className="hidden md:flex items-center gap-3">
             <Button
-              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-6 py-2 h-auto text-[13px] rounded-full transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
+              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-6 py-2 h-auto text-[13px] rounded-[12px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
               asChild
             >
               <Link href="/signup">Cadastre-se</Link>
             </Button>
             <Button
-              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-8 py-2 h-auto text-[13px] rounded-full transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
+              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-8 py-2 h-auto text-[13px] rounded-[12px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
               asChild
             >
               <Link href="/login">Login</Link>
@@ -206,14 +206,14 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
             {/* Mobile Auth Buttons - Centered */}
             <div className="mt-12 flex flex-col gap-4 w-full max-w-xs">
               <Button
-                className={`${roboto.className} w-full bg-[#00A3FF] hover:bg-[#0091E6] text-white font-extrabold py-6 h-auto text-lg rounded-xl transition-all shadow-[0_8px_26px_rgba(0,163,255,0.2)] tracking-wide uppercase`}
+                className={`${roboto.className} w-full bg-[#00A3FF] hover:bg-[#0091E6] text-white font-extrabold py-6 h-auto text-lg rounded-[12px] transition-all shadow-[0_8px_26px_rgba(0,163,255,0.2)] tracking-wide uppercase`}
                 asChild
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Link href="/login">Começar Agora</Link>
               </Button>
               <Button
-                className={`${roboto.className} w-full bg-transparent border-2 ${isLight ? "border-slate-200 text-slate-700" : "border-white/20 text-white"} hover:border-sky-400 transition-all py-6 h-auto text-lg rounded-xl tracking-wide uppercase`}
+                className={`${roboto.className} w-full bg-transparent border-2 ${isLight ? "border-slate-200 text-slate-700" : "border-white/20 text-white"} hover:border-sky-400 transition-all py-6 h-auto text-lg rounded-[12px] tracking-wide uppercase`}
                 asChild
                 onClick={() => setIsMobileMenuOpen(false)}
               >

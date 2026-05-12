@@ -13,7 +13,7 @@ const config: Config = {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "landing-gradient": "linear-gradient(180deg, #000B12 0%, #00000B 100%)",
+        "landing-gradient": "linear-gradient(180deg, #081B29 0%, #000B12 100%)",
       },
       borderRadius: {
         lg: "var(--radius)",

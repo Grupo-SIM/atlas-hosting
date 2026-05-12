@@ -99,7 +99,7 @@ export function Hero() {
 
                 <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
                   <button
-                    className={`${roboto.className} bg-white text-slate-900 border-none rounded-lg px-10 py-4 text-[14px] md:text-[15px] font-bold tracking-wider uppercase shadow-xl hover:bg-slate-50 transition-colors w-full sm:w-auto cursor-pointer`}
+                    className={`${roboto.className} bg-transparent border-2 border-white text-white rounded-[12px] px-10 py-4 text-[14px] md:text-[15px] font-bold tracking-wider uppercase hover:bg-white/10 transition-colors w-full sm:w-auto cursor-pointer`}
                   >
                     Começar agora
                   </button>

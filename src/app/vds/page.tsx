@@ -16,7 +16,9 @@ export default function CloudVdsPage() {
       <div className="min-h-screen w-full overflow-x-hidden bg-atlas-dark-1 selection:bg-sky-500/30">
         <Navbar />
         {/* Background Gradient */}
-        <div className="fixed inset-0 z-0 bg-landing-gradient opacity-40 pointer-events-none" />
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <div className="absolute inset-0 bg-landing-gradient" />
+        </div>
         <main className="relative z-10 w-full pt-24">
           <VdsPage />
         </main>

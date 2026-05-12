@@ -223,7 +223,7 @@ export function ChatContact() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="text-slate-400 text-lg mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium"
+                className="text-white text-lg mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium"
               >
                 Tire suas dúvidas sobre planos, domínios e cashback em tempo real com o assistente inteligente Atlas.
               </motion.p>
@@ -233,7 +233,7 @@ export function ChatContact() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 }}
-                className="flex flex-col items-center lg:items-start gap-4 text-sm font-medium text-slate-400"
+                className="flex flex-col items-center lg:items-start gap-4 text-sm font-bold text-white uppercase tracking-wide"
               >
                 {['Resposta em segundos', 'Disponível 24/7', 'Sem espera em filas'].map((item) => (
                   <span key={item} className="flex items-center gap-3 w-fit">

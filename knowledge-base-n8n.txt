@@ -1,0 +1,262 @@
+BASE DE CONHECIMENTO COMPLETA - ATLAS HOSTING
+Atualizada em: 2026-05-11
+
+IMPORTANTE SOBRE PREÇOS:
+Os valores apresentados são aproximados e podem variar. O valor exato será exibido no momento da contratação.
+
+================================================================================
+1. VISÃO GERAL DA EMPRESA
+================================================================================
+A Atlas Hosting é uma provedora de infraestrutura em nuvem de alta performance, focada em entregar servidores VPS e VDS rápidos e estáveis com suporte humano especializado 24/7.
+
+================================================================================
+2. LOCALIZAÇÃO DOS SERVIDORES (DATA CENTERS)
+================================================================================
+9 regiões, 11 localidades, disponibilidade global:
+
+- Américas: Brasil, Estados Unidos (Leste, Central e Oeste)
+- Europa: Reino Unido e União Europeia (EU)
+- Ásia: Índia, Singapura e Japão
+- Oceania: Austrália (Sydney)
+
+================================================================================
+3. O SISTEMA DE 100% CASHBACK (VALE BÔNUS)
+================================================================================
+- Como funciona: Todo valor pago em mensalidades de qualquer plano Atlas é convertido em 100% de cashback.
+- Onde utilizar: O cashback é disponibilizado no aplicativo de recompensas da Dom Pagamentos chamado VALE BÔNUS.
+- Resgate: O cliente utiliza o saldo para trocar por produtos, descontos e benefícios exclusivamente dentro do ecossistema do app Vale Bônus.
+
+================================================================================
+4. REGISTRO DE DOMÍNIOS
+================================================================================
+- Extensões suportadas: .com, .net, .org, .online, .site, .tech e outras extensões internacionais.
+- Restrição: NÃO realizamos o registro de domínios .com.br.
+- Benefícios inclusos: DNS Premium Gerenciado + SSL Grátis.
+
+================================================================================
+5. PAINEL DE CONTROLE E SUPORTE
+================================================================================
+- O cliente acompanha domínios, faturas e status da VM pelo painel.
+- Por segurança, o cliente NÃO consegue reiniciar, desligar ou reinstalar a VM pelo painel.
+- Qualquer ação técnica deve ser solicitada ao suporte 24/7 via WhatsApp: +55 (83) 9884-9027.
+
+================================================================================
+6. PLANOS CLOUD VPS (LINUX)
+================================================================================
+Todos incluem: Tráfego ilimitado, Proteção DDoS, 100% de Cashback e Suporte 24/7.
+Período de 12 meses.
+
+VPS 10:
+  - Preço: ~R$42,19/mês
+  - CPU: 4 núcleos de vCPU
+  - RAM: 8 GB
+  - Armazenamento: 75 GB NVMe ou 150 GB SSD
+  - Rede: Porta de 200 Mbit/s
+  - Snapshots: 1
+  - Backup automático opcional: +~R$17,58/mês
+
+VPS 20 ★ MAIS VENDIDO:
+  - Preço: ~R$65,63/mês
+  - CPU: 6 núcleos de vCPU
+  - RAM: 12 GB
+  - Armazenamento: 100 GB NVMe ou 200 GB SSD
+  - Rede: Porta de 300 Mbit/s
+  - Snapshots: 2
+  - Backup automático opcional: +~R$23,44/mês
+
+VPS 30:
+  - Preço: ~R$131,26/mês
+  - CPU: 8 núcleos de vCPU
+  - RAM: 24 GB
+  - Armazenamento: 200 GB NVMe ou 400 GB SSD
+  - Rede: Porta de 600 Mbit/s
+  - Snapshots: 3
+  - Backup automático opcional: +~R$41,02/mês
+
+VPS 40:
+  - Preço: ~R$234,40/mês
+  - CPU: 12 núcleos de vCPU
+  - RAM: 48 GB
+  - Armazenamento: 250 GB NVMe ou 500 GB SSD
+  - Rede: Porta de 800 Mbit/s
+  - Snapshots: 3
+
+VPS 50:
+  - Preço: ~R$346,91/mês
+  - CPU: 16 núcleos de vCPU
+  - RAM: 64 GB
+  - Armazenamento: 300 GB NVMe ou 600 GB SSD
+  - Rede: Porta de 1 Gbit/s
+  - Snapshots: 3
+
+VPS 60:
+  - Preço: ~R$459,42/mês
+  - CPU: 18 núcleos de vCPU
+  - RAM: 96 GB
+  - Armazenamento: 350 GB NVMe ou 700 GB SSD
+  - Rede: Porta de 1 Gbit/s
+  - Snapshots: 3
+
+================================================================================
+7. PLANOS CLOUD VDS - SERVIDORES VIRTUAIS DEDICADOS (AMD EPYC)
+================================================================================
+Todos incluem: Núcleos físicos dedicados, RAM 100% dedicada, NVMe empresarial,
+Tráfego ilimitado, Firewall Grátis, 100% de Cashback e Suporte 24/7.
+Processador: AMD EPYC 7282 2.8 GHz.
+
+VDS S:
+  - Preço: ~R$322,53/mês
+  - Núcleos Físicos: 3
+  - RAM: 24 GB (dedicada)
+  - Armazenamento: 180 GB NVMe
+  - Rede: Porta de 250 Mbit/s
+
+VDS M:
+  - Preço: ~R$420,04/mês
+  - Núcleos Físicos: 4
+  - RAM: 32 GB (dedicada)
+  - Armazenamento: 240 GB NVMe
+  - Rede: Porta de 500 Mbit/s
+
+VDS L:
+  - Preço: ~R$600,06/mês
+  - Núcleos Físicos: 6
+  - RAM: 48 GB (dedicada)
+  - Armazenamento: 360 GB NVMe
+  - Rede: Porta de 750 Mbit/s
+
+VDS XL:
+  - Preço: ~R$772,58/mês
+  - Núcleos Físicos: 8
+  - RAM: 64 GB (dedicada)
+  - Armazenamento: 480 GB NVMe
+  - Rede: Porta de 1 Gbit/s
+
+VDS XXL:
+  - Preço: ~R$1.115,74/mês
+  - Núcleos Físicos: 12
+  - RAM: 96 GB (dedicada)
+  - Armazenamento: 720 GB NVMe
+  - Rede: Porta de 1 Gbit/s
+
+================================================================================
+8. PLANOS STORAGE VPS (FOCO EM ARMAZENAMENTO)
+================================================================================
+Ideais para backup, arquivos e aplicações que demandam muito espaço em disco.
+Todos incluem: Tráfego ilimitado, 100% de Cashback e Suporte 24/7.
+
+Storage VPS 10 (S):
+  - Preço: ~R$42,19/mês
+  - CPU: 2 núcleos de vCPU
+  - RAM: 4 GB
+  - Armazenamento: 300 GB SSD
+  - Rede: Porta de 200 Mbit/s
+
+Storage VPS 20 (M) ★ VALOR IMBATÍVEL:
+  - Preço: ~R$65,63/mês
+  - CPU: 3 núcleos de vCPU
+  - RAM: 8 GB
+  - Armazenamento: 400 GB SSD
+  - Rede: Porta de 300 Mbit/s
+
+Storage VPS 30 (L):
+  - Preço: ~R$131,26/mês
+  - CPU: 6 núcleos de vCPU
+  - RAM: 18 GB
+  - Armazenamento: 1 TB SSD
+  - Rede: Porta de 600 Mbit/s
+
+Storage VPS 40 (XL):
+  - Preço: ~R$234,40/mês
+  - CPU: 8 núcleos de vCPU
+  - RAM: 30 GB
+  - Armazenamento: 1,2 TB SSD
+  - Rede: Porta de 800 Mbit/s
+
+Storage VPS 50 (XXL):
+  - Preço: ~R$346,91/mês
+  - CPU: 14 núcleos de vCPU
+  - RAM: 50 GB
+  - Armazenamento: 1,4 TB SSD
+  - Rede: Porta de 1 Gbit/s
+
+================================================================================
+9. PLANOS VPS WINDOWS
+================================================================================
+Licença Windows Server inclusa. Pronto para RDP e workloads corporativos.
+Todos incluem: Tráfego ilimitado, 100% de Cashback e Suporte 24/7.
+Período de 12 meses.
+
+Cloud VPS 10 Windows (S):
+  - Preço: ~R$130,09/mês
+  - CPU: 4 núcleos de vCPU
+  - RAM: 8 GB
+  - Armazenamento: 75 GB NVMe ou 150 GB SSD
+  - Snapshots: 1
+  - Rede: Porta de 200 Mbit/s
+
+Cloud VPS 20 Windows (M):
+  - Preço: ~R$247,29/mês
+  - CPU: 6 núcleos de vCPU
+  - RAM: 12 GB
+  - Armazenamento: 100 GB NVMe ou 200 GB SSD
+  - Snapshots: 2
+  - Rede: Porta de 300 Mbit/s
+  - Taxa de instalação: GRÁTIS
+
+Cloud VPS 30 Windows (L):
+  - Preço: ~R$435,98/mês
+  - CPU: 8 núcleos de vCPU
+  - RAM: 24 GB
+  - Armazenamento: 200 GB NVMe ou 400 GB SSD
+  - Snapshots: 3
+  - Rede: Porta de 600 Mbit/s
+  - Taxa de instalação: GRÁTIS
+
+Cloud VPS 40 Windows (XL):
+  - Preço: ~R$808,68/mês
+  - CPU: 12 núcleos de vCPU
+  - RAM: 48 GB
+  - Armazenamento: 250 GB NVMe ou 500 GB SSD
+  - Snapshots: 3
+  - Rede: Porta de 800 Mbit/s
+  - Taxa de instalação: GRÁTIS
+
+Cloud VPS 50 Windows (XXL):
+  - Preço: ~R$1.032,53/mês
+  - CPU: 16 núcleos de vCPU
+  - RAM: 64 GB
+  - Armazenamento: 300 GB NVMe ou 600 GB SSD
+  - Snapshots: 3
+  - Rede: Porta de 1 Gbit/s
+  - Taxa de instalação: GRÁTIS
+
+Cloud VPS 60 Windows (XXXL):
+  - Preço: ~R$1.279,82/mês
+  - CPU: 18 núcleos de vCPU
+  - RAM: 96 GB
+  - Armazenamento: 350 GB NVMe ou 700 GB SSD
+  - Snapshots: 3
+  - Rede: Porta de 1 Gbit/s
+  - Taxa de instalação: GRÁTIS
+
+================================================================================
+10. DIFERENCIAIS TÉCNICOS
+================================================================================
+- Proteção DDoS sempre ativa em todos os planos
+- Tráfego ilimitado (entrada ilimitada) até 1 Gbit/s
+- Armazenamento NVMe de nível empresarial
+- Firewall grátis incluso (VDS)
+- Snapshots para backup rápido
+- Disponibilidade global: 9 regiões, 11 localidades
+
+================================================================================
+11. DIRETRIZES DO CHATBOT
+================================================================================
+- Se o usuário perguntar algo que não esteja neste texto, responda:
+  "Infelizmente não tenho essa informação específica aqui, mas nosso suporte humano pode te ajudar agora mesmo no WhatsApp: +55 (83) 9884-9027"
+
+- Responda sempre em Português (Brasil).
+- Seja técnico, mas direto ao ponto.
+- Ao citar preços, sempre informe que são aproximados e podem variar.
+- Indique o VPS 20 como a melhor opção custo-benefício quando o cliente não souber qual escolher.

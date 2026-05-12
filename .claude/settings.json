@@ -34,7 +34,20 @@
       "mcp__serena__replace_symbol_body",
       "Bash(npx --yes next build)",
       "Bash(del \"c:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\atlas-hosting\\\\vercel.json\")",
-      "Bash(./node_modules/.bin/tsc --noEmit --skipLibCheck)"
+      "Bash(./node_modules/.bin/tsc --noEmit --skipLibCheck)",
+      "mcp__serena__check_onboarding_performed",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(cat drizzle.config.ts)",
+      "Bash(cat drizzle.config.js)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts, null, 2\\)\\)\")",
+      "Bash(Test-Path \"c:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\atlas-hosting\\\\src\\\\components\\\\ui\\\\alert-dialog.tsx\")",
+      "PowerShell($dir = \"c:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\atlas-hosting\\\\src\\\\app\\\\\\(auth\\)\\\\admin\\\\vps-plans\"; if \\(!\\(Test-Path $dir\\)\\) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }; Write-Output \"Directory ready: $dir\")",
+      "mcp__serena__find_referencing_symbols",
+      "mcp__serena__insert_after_symbol",
+      "PowerShell(cd \"c:/Users/breno/Desktop/JB/atlas-hosting\" && npx tsc --noEmit 2>&1 | Out-String | Select-String -Pattern \"vps-plan\" -AllMatches | ForEach-Object { $_.Line })",
+      "PowerShell(cd \"c:/Users/breno/Desktop/JB/atlas-hosting\" && npx tsc --noEmit 2>&1 | Where-Object { $_ -match \"vps-plans|BackfillButton|backfill\" })",
+      "PowerShell(Set-Location \"c:/Users/breno/Desktop/JB/atlas-hosting\"; $out = \\(npx tsc --noEmit 2>&1\\); $out | Where-Object { $_ -match \"vps-plan|BackfillButton|backfill\" })"
     ],
     "deny": [
       "Agent(Explore)"

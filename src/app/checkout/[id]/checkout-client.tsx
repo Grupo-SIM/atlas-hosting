@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Footer } from "@/app/landing/components/Footer";
 import type { Invoice } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
 import type { CheckoutRates } from "./page";
@@ -377,7 +378,7 @@ export default function CheckoutClient({
             </div>
           </div>
         </div>
-      </div>
+      <Footer />
     </div>
   );
 }

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { SimpayCalendar } from "./simpay-calendar";
 import {
   Table,
   TableBody,
@@ -46,6 +48,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 
 export interface CommissionRow {
@@ -67,12 +76,18 @@ export interface WithdrawalRow {
   createdAt: Date | null;
 }
 
+export interface ReferralRow {
+  id: string;
+  email: string | null;
+  createdAt: Date;
+}
+
 interface AffiliateTabsProps {
   affiliateLink: string;
   availableBalance: number;
   pendingWithdrawals: number;
   totalEarnedAllTime: number;
-  totalReferrals: number;
+  referrals: ReferralRow[];
   commissions: CommissionRow[];
   withdrawals: WithdrawalRow[];
   minWithdrawal: number;
@@ -87,7 +102,7 @@ function statusBadge(status: string) {
       className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 backdrop-blur-md shadow-sm shadow-emerald-500/5",
     },
     withdrawn: {
-      label: "Sacado",
+      label: "Saque efetuado",
       icon: ArrowUpRight,
       className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 backdrop-blur-md shadow-sm shadow-blue-500/5",
     },
@@ -130,12 +145,55 @@ function statusBadge(status: string) {
   );
 }
 
+const ITEMS_PER_PAGE = 10;
+
+function LocalPagination({ 
+  currentPage, 
+  totalItems, 
+  onPageChange 
+}: { 
+  currentPage: number; 
+  totalItems: number; 
+  onPageChange: (page: number) => void;
+}) {
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+      <p className="text-xs text-muted-foreground font-medium">
+        Mostrando {Math.min(totalItems, (currentPage - 1) * ITEMS_PER_PAGE + 1)} a {Math.min(totalItems, currentPage * ITEMS_PER_PAGE)} de {totalItems}
+      </p>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="h-8 text-xs font-bold"
+        >
+          Anterior
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="h-8 text-xs font-bold"
+        >
+          Próximo
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function AffiliateTabs({
   affiliateLink,
   availableBalance,
   pendingWithdrawals,
   totalEarnedAllTime,
-  totalReferrals,
+  referrals,
   commissions,
   withdrawals,
   minWithdrawal,
@@ -148,6 +206,104 @@ export function AffiliateTabs({
 
   const [cancelling, setCancelling] = useState<string | null>(null);
   const router = useRouter();
+
+  // Filters
+  const [salesStatus, setSalesStatus] = useState<string>("all");
+  const [withdrawalStatus, setWithdrawalStatus] = useState<string>("all");
+  const [salesStartDate, setSalesStartDate] = useState<Date | null>(null);
+  const [salesEndDate, setSalesEndDate] = useState<Date | null>(null);
+  const [withdrawalStartDate, setWithdrawalStartDate] = useState<Date | null>(null);
+  const [withdrawalEndDate, setWithdrawalEndDate] = useState<Date | null>(null);
+  const [referralStartDate, setReferralStartDate] = useState<Date | null>(null);
+  const [referralEndDate, setReferralEndDate] = useState<Date | null>(null);
+
+  // Pagination states
+  const [referralsPage, setReferralsPage] = useState(1);
+  const [salesPage, setSalesPage] = useState(1);
+  const [withdrawalsPage, setWithdrawalsPage] = useState(1);
+
+  // Reset pagination on filter change
+  useEffect(() => { setReferralsPage(1); }, [referrals.length, referralStartDate, referralEndDate]);
+  useEffect(() => { setSalesPage(1); }, [salesStatus, salesStartDate, salesEndDate]);
+  useEffect(() => { setWithdrawalsPage(1); }, [withdrawalStatus, withdrawalStartDate, withdrawalEndDate]);
+
+  const filteredCommissions = commissions.filter((c) => {
+    const statusMatch = salesStatus === "all" || c.status === salesStatus;
+    const date = new Date(c.createdAt);
+    
+    let startMatch = true;
+    if (salesStartDate) {
+      const start = new Date(salesStartDate);
+      start.setHours(0, 0, 0, 0);
+      startMatch = date >= start;
+    }
+
+    let endMatch = true;
+    if (salesEndDate) {
+      const end = new Date(salesEndDate);
+      end.setHours(23, 59, 59, 999);
+      endMatch = date <= end;
+    }
+
+    return statusMatch && startMatch && endMatch;
+  });
+
+  const filteredWithdrawals = withdrawals.filter((w) => {
+    const statusMatch = withdrawalStatus === "all" || w.status === withdrawalStatus;
+    if (!w.createdAt) return statusMatch;
+    
+    const date = new Date(w.createdAt);
+    
+    let startMatch = true;
+    if (withdrawalStartDate) {
+      const start = new Date(withdrawalStartDate);
+      start.setHours(0, 0, 0, 0);
+      startMatch = date >= start;
+    }
+
+    let endMatch = true;
+    if (withdrawalEndDate) {
+      const end = new Date(withdrawalEndDate);
+      end.setHours(23, 59, 59, 999);
+      endMatch = date <= end;
+    }
+
+    return statusMatch && startMatch && endMatch;
+  });
+
+  const filteredReferrals = referrals.filter((r) => {
+    const date = new Date(r.createdAt);
+    
+    let startMatch = true;
+    if (referralStartDate) {
+      const start = new Date(referralStartDate);
+      start.setHours(0, 0, 0, 0);
+      startMatch = date >= start;
+    }
+
+    let endMatch = true;
+    if (referralEndDate) {
+      const end = new Date(referralEndDate);
+      end.setHours(23, 59, 59, 999);
+      endMatch = date <= end;
+    }
+
+    return startMatch && endMatch;
+  });
+
+  // Paged data
+  const pagedReferrals = filteredReferrals.slice(
+    (referralsPage - 1) * ITEMS_PER_PAGE,
+    referralsPage * ITEMS_PER_PAGE
+  );
+  const pagedCommissions = filteredCommissions.slice(
+    (salesPage - 1) * ITEMS_PER_PAGE,
+    salesPage * ITEMS_PER_PAGE
+  );
+  const pagedWithdrawals = filteredWithdrawals.slice(
+    (withdrawalsPage - 1) * ITEMS_PER_PAGE,
+    withdrawalsPage * ITEMS_PER_PAGE
+  );
 
   async function handleSync(withdrawalId: string) {
     setSyncing(withdrawalId);
@@ -165,7 +321,6 @@ export function AffiliateTabs({
 
   const tabs = [
     { id: "overview" as const, label: "Visão Geral" },
-    { id: "sales" as const, label: "Vendas" },
     { id: "withdrawals" as const, label: "Saques" },
   ];
 
@@ -180,7 +335,7 @@ export function AffiliateTabs({
       />
 
       <Dialog open={!!rejectionReasonModal} onOpenChange={(open) => !open && setRejectionReasonModal(null)}>
-        <DialogContent className="sm:max-w-[425px] border-rose-100">
+        <DialogContent className="sm:max-w-[425px] border-rose-500/30 dark:bg-[#020817] bg-white shadow-2xl dark:shadow-rose-500/10 shadow-rose-200/20">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-rose-600">
               <XCircle className="h-5 w-5" />
@@ -191,9 +346,9 @@ export function AffiliateTabs({
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-500/70 mb-3">
               Motivo da Rejeição
             </p>
-            <div className="p-4 rounded-xl bg-rose-50/50 border border-rose-100/50 backdrop-blur-sm">
-              <p className="text-sm leading-relaxed text-rose-900/80 dark:text-rose-100 font-medium italic">
-                "{rejectionReasonModal}"
+            <div className="p-5 rounded-2xl dark:bg-rose-500/5 bg-rose-50/50 border border-rose-500/20 backdrop-blur-md shadow-inner">
+              <p className="text-[15px] leading-relaxed dark:text-white text-rose-950 font-medium">
+                {rejectionReasonModal}
               </p>
             </div>
           </div>
@@ -249,7 +404,7 @@ export function AffiliateTabs({
                 <CardTitle className="text-sm font-medium">Indicações</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{totalReferrals}</div>
+                <div className="text-2xl font-bold">{referrals.length}</div>
               </CardContent>
             </Card>
             <Card>
@@ -281,64 +436,189 @@ export function AffiliateTabs({
               )}
             </CardContent>
           </Card>
+
+          {/* Referred Users List */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Usuários Indicados</CardTitle>
+                <CardDescription>
+                  Pessoas que se cadastraram através do seu link
+                </CardDescription>
+              </div>
+              <div className="w-[240px]">
+                <SimpayCalendar 
+                  label="Período"
+                  start={referralStartDate}
+                  end={referralEndDate}
+                  onChange={(start, end) => {
+                    setReferralStartDate(start);
+                    setReferralEndDate(end);
+                  }}
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {filteredReferrals.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-10 text-center">
+                  {referralStartDate || referralEndDate ? "Nenhuma indicação encontrada neste período." : "Nenhuma indicação registrada ainda."}
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data de Cadastro</TableHead>
+                      <TableHead>Email</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pagedReferrals.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell>
+                          {format(new Date(r.createdAt), "dd/MM/yyyy HH:mm", {
+                            locale: ptBR,
+                          })}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {r.email ? (
+                            <span>
+                              {r.email.split('@')[0].slice(0, 3)}***@{r.email.split('@')[1]}
+                            </span>
+                          ) : "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+              <LocalPagination 
+                currentPage={referralsPage} 
+                totalItems={filteredReferrals.length} 
+                onPageChange={setReferralsPage} 
+              />
+            </CardContent>
+          </Card>
+
+          {/* Sales History integrated into Overview */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Histórico de Vendas</CardTitle>
+                <CardDescription>
+                  Compras recentes realizadas através do seu link de afiliado
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="w-[240px]">
+                  <SimpayCalendar 
+                    label="Período"
+                    start={salesStartDate}
+                    end={salesEndDate}
+                    onChange={(start, end) => {
+                      setSalesStartDate(start);
+                      setSalesEndDate(end);
+                    }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Status</span>
+                  <Select value={salesStatus} onValueChange={setSalesStatus}>
+                    <SelectTrigger className="w-[140px] h-10 text-sm bg-transparent border-slate-200 dark:border-slate-800 font-bold">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="approved">Aprovado</SelectItem>
+
+                      <SelectItem value="withdrawn">Saque efetuado</SelectItem>
+                      <SelectItem value="rejected">Rejeitado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {filteredCommissions.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-10 text-center">
+                  {salesStatus === "all" ? "Nenhuma venda registrada ainda." : "Nenhuma venda encontrada com este status."}
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Valor da compra</TableHead>
+                      <TableHead>Sua comissão</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pagedCommissions.map((c) => (
+                      <TableRow key={c.id}>
+                        <TableCell>
+                          {format(new Date(c.createdAt), "dd/MM/yyyy", {
+                            locale: ptBR,
+                          })}
+                        </TableCell>
+                        <TableCell>{toBrl(c.grossAmount)}</TableCell>
+                        <TableCell className="text-green-600 font-medium">
+                          {toBrl(c.commissionAmount)}
+                        </TableCell>
+                        <TableCell>{statusBadge(c.status)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+              <LocalPagination 
+                currentPage={salesPage} 
+                totalItems={filteredCommissions.length} 
+                onPageChange={setSalesPage} 
+              />
+            </CardContent>
+          </Card>
         </div>
       )}
 
-      {/* Sales */}
-      {tab === "sales" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Histórico de Vendas</CardTitle>
-            <CardDescription>
-              Compras realizadas através do seu link de afiliado
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {commissions.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                Nenhuma venda registrada ainda.
-              </p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Valor da compra</TableHead>
-                    <TableHead>Sua comissão</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {commissions.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell>
-                        {format(new Date(c.createdAt), "dd/MM/yyyy", {
-                          locale: ptBR,
-                        })}
-                      </TableCell>
-                      <TableCell>{toBrl(c.grossAmount)}</TableCell>
-                      <TableCell className="text-green-600 font-medium">
-                        {toBrl(c.commissionAmount)}
-                      </TableCell>
-                      <TableCell>{statusBadge(c.status)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Withdrawals */}
       {tab === "withdrawals" && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div className="space-y-1">
               <CardTitle>Histórico de Saques</CardTitle>
               <CardDescription>
                 Mínimo {toBrl(minWithdrawal)} · Taxa {toBrl(fee)}
               </CardDescription>
+              <div className="flex flex-wrap items-center gap-4 pt-4">
+                <div className="w-[240px]">
+                  <SimpayCalendar 
+                    label="Período"
+                    start={withdrawalStartDate}
+                    end={withdrawalEndDate}
+                    onChange={(start, end) => {
+                      setWithdrawalStartDate(start);
+                      setWithdrawalEndDate(end);
+                    }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Status</span>
+                  <Select value={withdrawalStatus} onValueChange={setWithdrawalStatus}>
+                    <SelectTrigger className="w-[140px] h-10 text-sm bg-transparent border-slate-200 dark:border-slate-800 font-bold">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="approved">Aprovado</SelectItem>
+                      <SelectItem value="rejected">Rejeitado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
             <Button
               onClick={() => setModalOpen(true)}
@@ -348,9 +628,9 @@ export function AffiliateTabs({
             </Button>
           </CardHeader>
           <CardContent>
-            {withdrawals.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                Nenhum saque realizado ainda.
+            {filteredWithdrawals.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-10 text-center">
+                {withdrawalStatus === "all" ? "Nenhum saque realizado ainda." : "Nenhum saque encontrado com este status."}
               </p>
             ) : (
               <Table>
@@ -365,7 +645,7 @@ export function AffiliateTabs({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {withdrawals.map((w) => {
+                  {pagedWithdrawals.map((w) => {
                     const feeAmt = w.fee ?? fee;
                     const net = w.amount - feeAmt;
                     return (
@@ -432,6 +712,11 @@ export function AffiliateTabs({
                 </TableBody>
               </Table>
             )}
+            <LocalPagination 
+              currentPage={withdrawalsPage} 
+              totalItems={filteredWithdrawals.length} 
+              onPageChange={setWithdrawalsPage} 
+            />
           </CardContent>
         </Card>
       )}

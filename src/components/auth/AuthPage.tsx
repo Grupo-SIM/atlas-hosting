@@ -115,7 +115,7 @@ export default function AuthPage({
             </div>
 
             <div className="mt-10 text-center">
-              <p className="text-slate-500 text-sm">
+              <p className="text-white text-sm font-medium">
                 {switchTitle}{" "}
                 <Link
                   href={switchHref}

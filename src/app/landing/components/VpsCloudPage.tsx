@@ -138,22 +138,22 @@ export function VpsCloudPage() {
   return (
     <div className="w-full min-w-0 bg-transparent">
       <section className="relative bg-transparent px-4 py-8 md:px-8 md:py-10">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff15_1px,transparent_1px),linear-gradient(to_bottom,#ffffff15_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
         <div className="relative z-10 mx-auto w-full max-w-[min(92vw,1760px)] px-0 mt-[2rem]">
           <div className="flex flex-col justify-start pb-4 md:pb-6">
-            <div className="mx-auto max-w-3xl text-center">
-              <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded border border-white/10 bg-white/5 px-3 py-1.5 shadow-xl backdrop-blur-md">
-                <span className="h-3 w-1 rounded-sm bg-sky-500" />
-                <span className={`${roboto.className} text-[11px] font-bold uppercase tracking-widest text-sky-400`}>
+            <div className="mx-auto max-w-3xl text-left w-full">
+              <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded border border-white/20 bg-white/5 px-3 py-1.5 shadow-xl backdrop-blur-md">
+                <span className={`${roboto.className} text-[11px] font-bold uppercase tracking-widest text-sky-400 flex items-center gap-2`}>
+                  <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse shadow-[0_0_8px_rgba(14,165,233,0.5)]" />
                   VPS em nuvem
                 </span>
               </div>
               <h1
-                className={`${roboto.className} text-center text-3xl font-black leading-tight tracking-tight text-white md:text-[2.35rem] uppercase`}
+                className={`${roboto.className} text-left text-3xl font-black leading-tight tracking-tight text-white md:text-[3rem] uppercase`}
               >
-                O melhor VPS em nuvem em termos de <span className="text-sky-500">custo-benefício</span> do mundo.
+                O melhor VPS em nuvem em termos de <br /><span className="text-sky-500">custo-benefício</span> do mundo.
               </h1>
-              <ul className="mx-auto mt-6 max-w-xl space-y-3 text-left text-sm text-slate-400">
+              <ul className="mx-auto mt-6 max-w-xl space-y-3 text-left text-base text-slate-400">
                 {bullets.map((t) => (
                   <li key={t} className="flex items-start gap-2.5">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-sky-500" strokeWidth={2.5} />
@@ -161,7 +161,7 @@ export function VpsCloudPage() {
                   </li>
                 ))}
               </ul>
-              <div className="mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-3 text-sm text-slate-400">
+              <div className="mr-auto mt-8 flex max-w-2xl flex-wrap items-center justify-start gap-3 text-base text-slate-400">
                 <span className="text-white font-medium">Nossos clientes dizem</span>
                 <span className="font-semibold text-white">Excelente</span>
                 <span className="flex text-sky-500">
@@ -180,9 +180,9 @@ export function VpsCloudPage() {
               style={{ gridTemplateColumns: gridCols }}
             >
               {/* corner */}
-              <div className="md:sticky md:left-0 md:z-20 rounded-tl-xl border border-white/10 border-b-0 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
-                <p className={`${roboto.className} text-sm font-bold uppercase tracking-wide text-white`}>
-                  Especificações da embalagem
+              <div className="md:sticky md:left-0 md:z-20 rounded-tl-xl border border-white/20 border-b-0 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
+                <p className={`${roboto.className} text-base font-bold uppercase tracking-wide text-white`}>
+                  Especificações da máquina
                 </p>
               </div>
               {plans.map((p, idx) => {
@@ -196,30 +196,29 @@ export function VpsCloudPage() {
                 return (
                   <div
                     key={p.id}
-                    className={`relative overflow-hidden rounded-t-xl border border-b-0 p-3.5 shadow-2xl backdrop-blur-md ${p.popular
-                        ? "border-sky-500/60 bg-white/10 ring-1 ring-sky-500/20"
-                        : "border-white/10 bg-white/5"
-                      } ${idx === plans.length - 1 ? "rounded-tr-xl" : ""}`}
+                    className={`relative overflow-hidden rounded-t-xl border-l border-r border-t border-b border-white/10 p-3.5 shadow-2xl backdrop-blur-md ${
+                      p.popular ? "border-sky-500 bg-[#01101A]" : "border-white/20 bg-[#01101A]"
+                    } ${idx === plans.length - 1 ? "rounded-tr-xl" : ""}`}
                   >
                     {p.popular ? (
                       <div className="absolute top-2.5 right-2.5">
                         <span
-                          className={`${roboto.className} rounded-full bg-sky-500 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-white`}
+                          className={`${roboto.className} rounded-full bg-sky-500 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white`}
                         >
                           Mais vendido
                         </span>
                       </div>
                     ) : null}
-                    <p className={`${roboto.className} pr-[4.5rem] text-base font-bold tracking-wide text-white`}>{p.name}</p>
+                    <p className={`${roboto.className} pr-[4.5rem] text-lg font-bold tracking-wide text-white`}>{p.name}</p>
                     <div className="mt-2 flex flex-wrap items-end gap-1.5">
                       <span className="text-xs font-medium text-rose-500 line-through opacity-70">{formatBRL(p.eurOld)}</span>
                     </div>
                     <div className="mt-0.5 flex items-baseline gap-0.5 whitespace-nowrap">
                       <span className="text-[12px] font-bold text-white mb-0.5">{priceSymbol}</span>
-                      <span className="text-xl font-extrabold leading-none tracking-tight text-white md:text-4xl">
+                      <span className="text-2xl font-extrabold leading-none tracking-tight text-white md:text-5xl">
                         {priceMain},
                       </span>
-                      <span className="text-xl font-bold text-white">{priceCents}</span>
+                      <span className="text-xl font-bold text-white md:text-2xl">{priceCents}</span>
                       <span className="text-xs font-medium text-slate-400 ml-1">/mês</span>
                     </div>
                     <p className="mt-0.5 text-[10px] font-light leading-snug text-slate-400">12 meses</p>
@@ -239,18 +238,19 @@ export function VpsCloudPage() {
               })}
 
               {/* toggle row */}
-              <div className="md:sticky md:left-0 md:z-20 flex flex-col justify-center gap-1.5 border border-white/10 border-t-0 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
-                <span className="text-xs font-bold text-white uppercase tracking-wide">VPS com backup automático</span>
+              <div className="md:sticky md:left-0 md:z-20 flex flex-col justify-center gap-1.5 border border-white/20 border-t-0 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
+                <span className="text-sm font-bold text-white uppercase tracking-wide">VPS com backup automático</span>
                 <div className="flex items-center gap-2">
-                  <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} />
-                  <span className="text-[11px] text-slate-400">{backupEnabled ? "Ativado" : "Desativado"}</span>
+                  <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} className="data-[state=unchecked]:bg-white/10 border-white/10 data-[state=checked]:bg-sky-500" />
+                  <span className="text-[11px] text-white font-bold">{backupEnabled ? "Ativado" : "Desativado"}</span>
                 </div>
               </div>
               {plans.map((p) => (
                 <div
                   key={`b-${p.id}`}
-                  className={`flex items-center justify-center border border-t-0 px-2 py-2.5 text-center text-[11px] text-slate-400 ${p.popular ? "border-sky-500/60 bg-white/10 ring-1 ring-sky-500/10" : "border-white/10 bg-white/5"
-                    }`}
+                  className={`flex items-center justify-center border-l border-r border-t-0 border-b border-white/10 px-2 py-2.5 text-center text-[11px] text-slate-400 ${
+                    p.popular ? "border-sky-500 bg-[#01101A]" : "border-white/20 bg-[#01101A]"
+                  }`}
                 >
                   {backupEnabled ? <Check className="h-4 w-4 text-sky-500" strokeWidth={2.8} /> : null}
                 </div>
@@ -269,10 +269,10 @@ export function VpsCloudPage() {
               ].map((row) => (
                 <Fragment key={row.key}>
                   <div
-                    className={`md:sticky md:left-0 md:z-20 flex flex-col justify-center border border-white/10 border-t-0 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md ${row.key === "traffic" ? "rounded-b-xl border-b" : ""
+                    className={`md:sticky md:left-0 md:z-20 flex flex-col justify-center border border-white/20 border-t-0 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md ${row.key === "traffic" ? "rounded-b-xl border-b" : ""
                       }`}
                   >
-                    <span className="text-base font-bold leading-tight text-white">{row.label}</span>
+                    <span className="text-lg font-bold leading-tight text-white">{row.label}</span>
                     {"sub" in row && row.sub ? (
                       <span className="mt-0.5 text-[9px] leading-tight text-slate-500">{row.sub}</span>
                     ) : null}
@@ -280,9 +280,9 @@ export function VpsCloudPage() {
                   {plans.map((p, colIdx) => (
                     <div
                       key={`${row.key}-${p.id}`}
-                      className={`flex items-center border border-white/10 border-t-0 px-2 py-2.5 text-center text-lg font-bold leading-snug text-white ${p.popular ? "border-sky-500/60 bg-white/10 ring-1 ring-sky-500/10" : "border-white/10 bg-white/5"
-                        } ${row.key === "traffic" ? "rounded-b-xl border-b" : ""} ${row.key === "traffic" ? "border-b" : ""
-                        }`}
+                      className={`flex items-center px-2 py-2.5 text-center text-xl font-bold leading-snug text-white border-l border-r border-t-0 border-b border-white/10 ${
+                        p.popular ? "border-sky-500 bg-[#01101A]" : "border-white/20 bg-[#01101A]"
+                      } ${row.key === "traffic" ? "rounded-b-xl border-b-white/20" : ""}`}
                     >
                       <span className="w-full">{p[row.key]}</span>
                     </div>
@@ -307,10 +307,10 @@ export function VpsCloudPage() {
       <section className="bg-transparent px-4 py-14 md:px-8 md:py-20">
         <div className="mx-auto w-full max-w-[min(92vw,1280px)]">
           <div className="mx-auto max-w-4xl text-center">
-            <h2 className={`${roboto.className} text-3xl font-black tracking-tight text-white md:text-[2.35rem] uppercase`}>
+            <h2 className={`${roboto.className} text-4xl font-black tracking-tight text-white md:text-[2.8rem] uppercase`}>
               Construído pensando nas suas <span className="text-sky-500">necessidades</span>.
             </h2>
-            <p className="mx-auto mt-4 max-w-3xl text-lg text-slate-400">
+            <p className="mx-auto mt-4 max-w-3xl text-xl text-slate-400">
               Projetamos todos os nossos planos de VPS para oferecer o valor e o desempenho que seus projetos exigem.
             </p>
           </div>
@@ -321,8 +321,8 @@ export function VpsCloudPage() {
                 <Wallet className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold leading-tight text-white">A partir de {formatBRL(plans[0].eurNew)} por mês</h3>
-                <p className="mt-1 text-[15px] leading-relaxed text-slate-400">
+                <h3 className="text-xl font-bold leading-tight text-white">A partir de {formatBRL(plans[0].eurNew)} por mês</h3>
+                <p className="mt-1 text-base leading-relaxed text-slate-400">
                   Comece com um preço justo e escale quando estiver pronto, sem taxas ocultas.
                 </p>
               </div>
@@ -332,8 +332,8 @@ export function VpsCloudPage() {
                 <Rocket className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold leading-tight text-white">VPS 20: o melhor VPS por {formatBRL(plans[1].eurNew)}/mês</h3>
-                <p className="mt-1 text-[15px] leading-relaxed text-slate-400">
+                <h3 className="text-xl font-bold leading-tight text-white">VPS 20: o melhor VPS por {formatBRL(plans[1].eurNew)}/mês</h3>
+                <p className="mt-1 text-base leading-relaxed text-slate-400">
                   Definimos o melhor custo-benefício para quem precisa de mais performance gastando menos.
                 </p>
               </div>
@@ -343,8 +343,8 @@ export function VpsCloudPage() {
                 <MessageCircle className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold leading-tight text-white">Desenvolvido com base no seu feedback</h3>
-                <p className="mt-1 text-[15px] leading-relaxed text-slate-400">
+                <h3 className="text-xl font-bold leading-tight text-white">Desenvolvido com base no seu feedback</h3>
+                <p className="mt-1 text-base leading-relaxed text-slate-400">
                   Você pediu melhor desempenho, maior confiabilidade e suporte ágil. Nós entregamos os três.
                 </p>
               </div>
@@ -354,31 +354,34 @@ export function VpsCloudPage() {
                 <Globe2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold leading-tight text-white">Valor incomparável em todos os planos</h3>
-                <p className="mt-1 text-[15px] leading-relaxed text-slate-400">
+                <h3 className="text-xl font-bold leading-tight text-white">Valor incomparável em todos os planos</h3>
+                <p className="mt-1 text-base leading-relaxed text-slate-400">
                   Obtenha mais poder de processamento, memória e armazenamento pelo seu dinheiro.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="mx-auto mt-16 max-w-5xl text-center">
-            <h3 className={`${roboto.className} text-3xl font-black tracking-tight text-white md:text-[2.2rem] uppercase`}>
-              9 regiões, 11 localidades, <span className="text-sky-500">disponibilidade global</span>.
+          {/* Text Content */}
+          <div className="mx-auto mt-24 max-w-5xl text-center">
+            <h3 className={`${roboto.className} text-4xl font-black tracking-tight text-white md:text-[3.5rem] uppercase leading-[1.05]`}>
+              9 regiões, 11 localidades,<br />
+              <span className="text-sky-500">disponibilidade global</span>.
             </h3>
-            <p className="mx-auto mt-4 max-w-3xl text-lg text-slate-300">
+            <p className="mx-auto mt-8 max-w-3xl text-xl text-slate-300 font-medium leading-relaxed">
               Dos EUA ao Reino Unido, da Europa à Ásia e Austrália, escolha a localização ideal para baixa latência em todo o mundo.
             </p>
           </div>
 
-          <div className="mx-auto mt-10 max-w-5xl rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8 shadow-2xl backdrop-blur-md">
-            <div className="relative overflow-hidden rounded-2xl bg-[#000B12]/50 p-6 md:p-10 border border-white/5">
-              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:36px_36px]" />
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-40 mix-blend-screen">
+          {/* Map Section - Alone, like in home route */}
+          <div className="relative mt-0 py-24 overflow-hidden">
+            <div className="absolute inset-0 z-10 pointer-events-none flex justify-center items-center opacity-40">
+              <div className="w-[150%] max-w-[1600px] scale-[1.3]">
                 <LottieMap />
               </div>
-              <div className="relative min-h-[300px] md:min-h-[360px]" />
             </div>
+            {/* Spacer to give height */}
+            <div className="relative min-h-[400px] md:min-h-[500px]" />
           </div>
         </div>
       </section>

@@ -171,8 +171,8 @@ export function Plans() {
                 <div className="flex flex-col gap-3">
                   <span className="text-sm font-black text-white uppercase tracking-tighter">Backup automático</span>
                   <div className="flex items-center gap-3">
-                    <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} className="data-[state=checked]:bg-sky-500" />
-                    <span className="text-xs font-bold text-slate-500">{backupEnabled ? "Ativado" : "Desativado"}</span>
+                    <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} className="data-[state=unchecked]:bg-white/10 border-white/10 data-[state=checked]:bg-sky-500" />
+                    <span className="text-xs font-bold text-white">{backupEnabled ? "Ativado" : "Desativado"}</span>
                   </div>
                 </div>
               </div>
@@ -180,7 +180,7 @@ export function Plans() {
               <div className="flex-grow bg-white/5">
                 {rowSpecs.map((row, i) => (
                   <div key={row.key} className={`px-8 h-[72px] flex flex-col justify-center border-t border-white/10 ${i === rowSpecs.length - 1 ? 'border-b-0' : ''}`}>
-                    <span className="text-[12px] font-black text-slate-500 uppercase tracking-widest leading-none">{row.label}</span>
+                    <span className="text-[12px] font-black text-white uppercase tracking-widest leading-none">{row.label}</span>
                   </div>
                 ))}
               </div>
@@ -200,7 +200,7 @@ export function Plans() {
 
                 return (
                   <div key={p.id} className="flex-[0_0_100%] sm:flex-[0_0_45%] lg:flex-[0_0_31%] 2xl:flex-[0_0_24%] min-w-0">
-                    <div className={`bg-white/5 border rounded-2xl h-full flex flex-col transition-all duration-300 shadow-2xl backdrop-blur-md ${p.popular ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-white/10 hover:border-white/20'}`}>
+                    <div className={`bg-[#01101A] border rounded-2xl h-full flex flex-col transition-all duration-300 shadow-2xl backdrop-blur-md ${p.popular ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-white/10 hover:border-white/20'}`}>
 
                       {/* Plan Header */}
                       <div className="p-8 h-[280px] flex flex-col justify-between border-b border-white/10 relative">
@@ -231,7 +231,7 @@ export function Plans() {
                       </div>
 
                       {/* Plan Specs Values */}
-                      <div className="flex-grow bg-white/5">
+                      <div className="flex-grow bg-[#01101A]">
                         {rowSpecs.map((row) => (
                           <div key={`${p.id}-${row.key}`} className="h-[72px] flex items-center justify-center border-t border-white/10 px-6 text-center">
                             <span className="text-base font-black text-white uppercase tracking-tighter">{p[row.key]}</span>

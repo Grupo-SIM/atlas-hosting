@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Roboto } from "next/font/google";
 import { Navbar } from "@/app/landing/components/Navbar";
+import { Footer } from "@/app/landing/components/Footer";
 import DomainSearchResults from "./components/DomainSearchResults";
 import SearchForm from "./components/SearchForm";
 import LoadingState from "./components/LoadingState";
@@ -27,7 +28,7 @@ export default async function DomainSearchPage({
       <Navbar />
       
       {/* Background Gradient */}
-      <div className="fixed inset-0 z-0 bg-landing-gradient opacity-40 pointer-events-none" />
+      <div className="fixed inset-0 z-0 bg-landing-gradient opacity-100 pointer-events-none" />
 
       <main className="relative z-10 w-full pt-20 md:pt-32">
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 md:px-8 md:pb-24 md:pt-10">
@@ -65,6 +66,7 @@ export default async function DomainSearchPage({
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

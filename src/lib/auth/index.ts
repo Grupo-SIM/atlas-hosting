@@ -93,6 +93,8 @@ export async function getUser(): Promise<User> {
     throw await redirectToLogin();
   }
 
+  if ((user as any).suspendedAt) redirect("/suspended");
+
   return user as User;
 }
 
