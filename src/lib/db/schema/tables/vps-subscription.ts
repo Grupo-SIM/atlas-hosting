@@ -19,6 +19,7 @@ export const pgVpsSubscription = pgTable("vps_subscriptions", {
   failureCount: integer("failure_count").notNull().default(0),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  pausedAt: timestamp("paused_at", { mode: "date" }),
 });
 
 export const vpsSubscriptionRelations = relations(pgVpsSubscription, ({ one }) => ({
