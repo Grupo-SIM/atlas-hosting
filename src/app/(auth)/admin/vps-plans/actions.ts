@@ -6,7 +6,7 @@ import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
-import { addMilliseconds } from "date-fns";
+import { addMilliseconds, addMonths } from "date-fns";
 
 export type VpsPlanRow = {
   id: string;
@@ -24,6 +24,9 @@ export type VpsPlanRow = {
 };
 
 export async function getVpsPlanSubscriptionsAction(): Promise<VpsPlanRow[]> {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) redirect("/home");
+
   const subs = await db.query.pgVpsSubscription.findMany({
     with: {
       user: {
@@ -69,10 +72,13 @@ export async function reactivateVpsSubscriptionAction(id: string): Promise<void>
     where: eq(pgVpsSubscription.id, id),
   });
 
-  if (!sub || !sub.pausedAt) return;
+  if (!sub || !sub.pausedAt || !sub.nextChargeDate) return;
 
   const remaining = sub.nextChargeDate.getTime() - sub.pausedAt.getTime();
-  const newNextChargeDate = addMilliseconds(new Date(), remaining);
+  const newNextChargeDate =
+    remaining > 0
+      ? addMilliseconds(new Date(), remaining)
+      : addMonths(new Date(), sub.intervalMonths);
 
   await db
     .update(pgVpsSubscription)
