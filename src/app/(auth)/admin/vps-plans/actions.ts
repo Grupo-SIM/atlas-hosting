@@ -1,51 +1,89 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { pgInvoice, VpsInvoiceOptions } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { addMonths } from "date-fns";
+import { pgVpsSubscription } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { getUser } from "@/lib/auth";
+import { addMilliseconds } from "date-fns";
 
 export type VpsPlanRow = {
   id: string;
   userId: string;
   userName: string | null;
   userEmail: string;
-  amount: number;
-  currency: string;
-  description: string | null;
-  duration: string;
-  subscriptionStart: Date;
-  subscriptionExpiry: Date;
+  planId: string;
+  planType: "vps" | "vds" | "storage-vps" | "vps-windows";
+  intervalMonths: number;
+  amountBrl: number;
+  status: "active" | "cancelled" | "failed" | "paused";
+  nextChargeDate: Date;
+  pausedAt: Date | null;
+  createdAt: Date;
 };
 
 export async function getVpsPlanSubscriptionsAction(): Promise<VpsPlanRow[]> {
-  const invoices = await db.query.pgInvoice.findMany({
-    where: and(eq(pgInvoice.type, "vps"), eq(pgInvoice.status, "paid")),
+  const subs = await db.query.pgVpsSubscription.findMany({
     with: {
       user: {
         columns: { id: true, name: true, email: true },
       },
     },
-    orderBy: [desc(pgInvoice.createdAt)],
+    orderBy: [desc(pgVpsSubscription.createdAt)],
   });
 
-  return invoices.map((inv) => {
-    const meta = inv.metadata as VpsInvoiceOptions;
-    const duration = meta?.config?.duration ?? "1";
-    const start = new Date(inv.createdAt);
-    const expiry = addMonths(start, parseInt(duration, 10));
+  return subs.map((s) => ({
+    id: s.id,
+    userId: s.userId,
+    userName: (s.user as any)?.name ?? null,
+    userEmail: (s.user as any)?.email ?? "",
+    planId: s.planId,
+    planType: s.planType as VpsPlanRow["planType"],
+    intervalMonths: s.intervalMonths,
+    amountBrl: s.amountBrl,
+    status: s.status as VpsPlanRow["status"],
+    nextChargeDate: s.nextChargeDate,
+    pausedAt: s.pausedAt ?? null,
+    createdAt: s.createdAt,
+  }));
+}
 
-    return {
-      id: inv.id,
-      userId: inv.userId,
-      userName: inv.user?.name ?? null,
-      userEmail: inv.user?.email ?? "",
-      amount: inv.amount,
-      currency: inv.currency,
-      description: inv.description ?? null,
-      duration,
-      subscriptionStart: start,
-      subscriptionExpiry: expiry,
-    };
+export async function suspendVpsSubscriptionAction(id: string): Promise<void> {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) redirect("/home");
+
+  await db
+    .update(pgVpsSubscription)
+    .set({ status: "paused", pausedAt: new Date(), updatedAt: new Date() })
+    .where(eq(pgVpsSubscription.id, id));
+
+  revalidatePath("/admin/vps-plans");
+}
+
+export async function reactivateVpsSubscriptionAction(id: string): Promise<void> {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) redirect("/home");
+
+  const sub = await db.query.pgVpsSubscription.findFirst({
+    where: eq(pgVpsSubscription.id, id),
   });
+
+  if (!sub || !sub.pausedAt) return;
+
+  const remaining = sub.nextChargeDate.getTime() - sub.pausedAt.getTime();
+  const newNextChargeDate = addMilliseconds(new Date(), remaining);
+
+  await db
+    .update(pgVpsSubscription)
+    .set({
+      status: "active",
+      pausedAt: null,
+      nextChargeDate: newNextChargeDate,
+      failureCount: 0,
+      updatedAt: new Date(),
+    })
+    .where(eq(pgVpsSubscription.id, id));
+
+  revalidatePath("/admin/vps-plans");
 }
