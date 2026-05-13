@@ -47,7 +47,7 @@ export function Statistics() {
       <div className="container mx-auto max-w-7xl relative z-10 px-4">
         {/* Texto Principal */}
         <div className="text-center mb-12 pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
-          <span className="inline-flex items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-400 mb-4">
+          <span className="inline-flex items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-3 py-1 text-[14px] font-semibold uppercase tracking-[0.12em] text-sky-400 mb-4">
             <span className="w-2 h-2 rounded-full bg-sky-500 mr-2" />
             Resultados Reais
           </span>
@@ -55,7 +55,7 @@ export function Statistics() {
             Performance Garantida,<br className="hidden md:block" />
             preço justo, retorno real
           </h2>
-          <p className="text-sm md:text-base text-slate-400 max-w-2xl mx-auto mb-8 font-medium delay-100">
+          <p className="text-base md:text-lg text-slate-400 max-w-2xl mx-auto mb-8 font-medium delay-100">
             Você trabalha muito, seu negócio merece um lugar que valorize isso!
           </p>
         </div>
@@ -84,7 +84,7 @@ export function Statistics() {
                   <span>{stat.suffix}</span>
                 </span>
               </div>
-              <p className="text-white/60 text-[10px] md:text-[11px] tracking-[0.15em] font-bold uppercase">
+              <p className="text-white/60 text-[13px] md:text-[14px] tracking-[0.15em] font-bold uppercase">
                 {stat.label}
               </p>
             </div>

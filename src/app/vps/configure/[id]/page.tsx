@@ -894,11 +894,11 @@ export default function VpsConfigurePage() {
       {/* Step Header could be here, but matching image's start */}
       <div className={`${roboto.className} max-w-6xl mx-auto px-6 pt-32 pb-12 space-y-12`}>
 
-        <Link href="/#planos" className="group mb-6 flex items-center gap-2 text-sm font-bold text-sky-400 transition-all hover:text-sky-300">
+        <Link href="/#planos" className="group mb-6 flex items-center gap-2 text-lg font-bold text-sky-400 transition-all hover:text-sky-300">
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Voltar para os planos
         </Link>
-        <h1 className="text-4xl font-black text-white tracking-tight uppercase drop-shadow-sm">Configure seu {plan.name}</h1>
+        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight uppercase drop-shadow-sm">Configure seu {plan.name}</h1>
 
         {/* Plan Summary Section */}
         <div className="flex flex-wrap items-center gap-10">
@@ -913,44 +913,44 @@ export default function VpsConfigurePage() {
                 { label: "Tráfego", value: plan.traffic },
               ].map((spec) => (
                 <div key={spec.label} className="flex items-start justify-between gap-3">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex-shrink-0">{spec.label}</span>
-                  <span className="text-[11px] font-medium text-white text-right leading-tight">{spec.value}</span>
+                  <span className="text-[14px] font-bold text-slate-400 uppercase tracking-wide flex-shrink-0">{spec.label}</span>
+                  <span className="text-[15px] font-medium text-white text-right leading-tight">{spec.value}</span>
                 </div>
               ))}
             </div>
             {/* Desktop: 5-col grid */}
             <div className="hidden md:grid md:grid-cols-5 gap-4">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">CPU</p>
-                <p className="text-[11px] font-medium leading-tight">{plan.vcpu}</p>
+                <p className="text-[14px] font-bold text-slate-400 uppercase">CPU</p>
+                <p className="text-[15px] font-medium leading-tight">{plan.vcpu}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">RAM</p>
-                <p className="text-[11px] font-medium leading-tight">{plan.ram}</p>
+                <p className="text-[14px] font-bold text-slate-400 uppercase">RAM</p>
+                <p className="text-[15px] font-medium leading-tight">{plan.ram}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
-                <p className="text-[11px] font-medium leading-tight">{plan.storage}</p>
+                <p className="text-[14px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
+                <p className="text-[15px] font-medium leading-tight">{plan.storage}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">SNAPSHOT</p>
-                <p className="text-[11px] font-medium leading-tight">{plan.snapshots}</p>
+                <p className="text-[14px] font-bold text-slate-400 uppercase">SNAPSHOT</p>
+                <p className="text-[15px] font-medium leading-tight">{plan.snapshots}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">TRÁFEGO</p>
-                <p className="text-[11px] font-medium leading-tight">{plan.traffic}</p>
+                <p className="text-[14px] font-bold text-slate-400 uppercase">TRÁFEGO</p>
+                <p className="text-[15px] font-medium leading-tight">{plan.traffic}</p>
               </div>
             </div>
             <button 
               onClick={() => router.push('/#planos')}
-              className="absolute bottom-4 right-4 text-[10px] text-sky-400 hover:underline font-bold uppercase tracking-wider"
+              className="absolute bottom-4 right-4 text-[14px] text-sky-400 hover:underline font-bold uppercase tracking-wider"
             >
               Mudar
             </button>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wide">Quantidade de servidores</span>
+            <span className="text-[15px] font-bold text-slate-300 uppercase tracking-wide">Quantidade de servidores</span>
             <Select value={quantity} onValueChange={setQuantity}>
               <SelectTrigger className="w-16 h-10 border border-white/10 bg-white/5 text-white">
                 <SelectValue />
@@ -967,7 +967,7 @@ export default function VpsConfigurePage() {
         {/* Duration Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -981,18 +981,18 @@ export default function VpsConfigurePage() {
                   )}
                 >
                   {d.discount && (
-                    <div className="absolute -top-3 left-6 bg-[#000B12] text-sky-400 text-[9px] font-black px-2 py-0.5 border border-sky-500/30 rounded shadow-lg shadow-sky-500/10">
+                    <div className="absolute -top-3 left-6 bg-[#000B12] text-sky-400 text-[13px] font-black px-2 py-0.5 border border-sky-500/30 rounded shadow-lg shadow-sky-500/10">
                       {d.discount}
                     </div>
                   )}
-                  <span className="text-sm font-medium">{d.label}</span>
+                  <span className="text-lg font-medium">{d.label}</span>
                   <div className="text-right">
-                    {d.oldEur && <p className="text-[10px] text-rose-500 line-through font-medium opacity-70">{formatBRLPerMonth(d.oldEur)}</p>}
-                    <p className="text-lg font-black text-white">{formatBRL(d.eur)} <span className="text-xs font-normal text-slate-400">/ mês</span></p>
+                    {d.oldEur && <p className="text-[14px] text-rose-500 line-through font-medium opacity-70">{formatBRLPerMonth(d.oldEur)}</p>}
+                    <p className="text-2xl font-black text-white">{formatBRL(d.eur)} <span className="text-base font-normal text-slate-400">/ mês</span></p>
                   </div>
                 </div>
                 <div className={cn(
-                  "text-center py-1.5 rounded-b-md text-[11px] font-bold transition-colors uppercase tracking-wider",
+                  "text-center py-1.5 rounded-b-md text-[15px] font-bold transition-colors uppercase tracking-wider",
                   d.setupEur === 0 ? "bg-emerald-500/20 text-emerald-400" : "text-slate-400"
                 )}>
                   {d.setupEur === 0 ? "Sem taxa de instalação" : `Taxa de configuração de ${formatBRL(d.setupEur)}`}
@@ -1007,7 +1007,7 @@ export default function VpsConfigurePage() {
         {/* Region Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-white uppercase tracking-tight">Região</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight">Região</h2>
           </div>
 
           <div className="flex flex-col md:flex-row items-start gap-8">
@@ -1022,7 +1022,7 @@ export default function VpsConfigurePage() {
                     key={r.id}
                     onClick={() => setRegionTab(r.id)}
                     className={cn(
-                      "px-4 md:px-8 py-3 text-[11px] font-bold uppercase tracking-wider relative transition-colors whitespace-nowrap",
+                      "px-4 md:px-8 py-3 text-[15px] font-bold uppercase tracking-wider relative transition-colors whitespace-nowrap",
                       regionTab === r.id ? "text-sky-400" : "text-slate-500 hover:text-white"
                     )}
                   >
@@ -1038,19 +1038,19 @@ export default function VpsConfigurePage() {
                     key={loc.id}
                     onClick={() => setLocation(loc.id)}
                     className={cn(
-                      "w-full border p-4 flex items-center justify-between text-xs font-bold bg-white/5 backdrop-blur-md relative transition-all rounded-lg",
+                      "w-full border p-4 flex items-center justify-between text-lg font-bold bg-white/5 backdrop-blur-md relative transition-all rounded-lg",
                       location === loc.id ? "border-sky-500 bg-white/10" : "border-white/10",
                       loc.recommended && "mt-6"
                     )}
                   >
                     {loc.recommended && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[9px] font-black px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[15px] font-black px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
                         Recomendado - Melhor latência para sua região
                       </div>
                     )}
-                    <div className="flex-1 text-left text-white text-xs md:text-sm">{loc.name}</div>
+                    <div className="flex-1 text-left text-white text-base md:text-lg">{loc.name}</div>
                     <div className="hidden md:block flex-1 text-center text-slate-400 font-medium">– Latência de {loc.latency}</div>
-                    <div className="flex-shrink-0 text-right text-white font-black text-xs md:text-sm">{loc.eur > 0 ? formatBRLPerMonth(loc.eur) : "Livre"}</div>
+                    <div className="flex-shrink-0 text-right text-white font-black text-base md:text-lg">{loc.eur > 0 ? formatBRLPerMonth(loc.eur) : "Livre"}</div>
                   </button>
                 ))}
               </div>
@@ -1063,7 +1063,7 @@ export default function VpsConfigurePage() {
         {/* Storage Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-white uppercase tracking-tight">Tipo de armazenamento</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight">Tipo de armazenamento</h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1072,7 +1072,7 @@ export default function VpsConfigurePage() {
                 key={st.id}
                 onClick={() => setStorageType(st.id)}
                 className={cn(
-                  "cursor-pointer rounded-lg border p-4 flex items-center justify-between text-[11px] font-bold transition-all bg-white/5 backdrop-blur-md",
+                  "cursor-pointer rounded-lg border p-4 flex items-center justify-between text-[15px] font-bold transition-all bg-white/5 backdrop-blur-md",
                   storageType === st.id ? "border-sky-500 bg-white/10" : "border-white/10"
                 )}
               >
@@ -1088,10 +1088,10 @@ export default function VpsConfigurePage() {
         {/* Image Section */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-black text-white uppercase tracking-tight">Imagem</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight">Imagem</h2>
             <button
               onClick={() => setShowMoreImages(!showMoreImages)}
-              className="flex items-center gap-1 text-[11px] font-black text-white uppercase tracking-wider"
+              className="flex items-center gap-1 text-[13px] font-black text-white uppercase tracking-wider"
             >
               {showMoreImages ? (
                 <>Fechar imagens <ChevronUp size={14} /></>
@@ -1116,7 +1116,7 @@ export default function VpsConfigurePage() {
                       key={cat.id}
                       onClick={() => setImageCategory(cat.id)}
                       className={cn(
-                        "px-4 md:px-8 py-3 text-[11px] font-black uppercase tracking-wider relative transition-colors whitespace-nowrap",
+                        "px-4 md:px-8 py-3 text-[15px] font-black uppercase tracking-wider relative transition-colors whitespace-nowrap",
                         imageCategory === cat.id ? "text-sky-400" : "text-slate-500 hover:text-white"
                       )}
                     >
@@ -1165,8 +1165,8 @@ export default function VpsConfigurePage() {
                         {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className="text-slate-500" />}
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-[11px] font-bold text-white">{img.name}</p>
-                        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                        <p className="text-[15px] font-bold text-white">{img.name}</p>
+                        <p className="text-[14px] text-slate-400 font-medium uppercase tracking-wide">
                           {typeof img.price === "number" ? formatBRLPerMonth(img.price) : img.eur ? formatBRLPerMonth(img.eur) : img.price}
                         </p>
                       </div>
@@ -1194,8 +1194,8 @@ export default function VpsConfigurePage() {
                       {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className="text-slate-500" />}
                     </div>
                     <div className="flex-1 text-left">
-                      <p className="text-[11px] font-bold">{img.name}</p>
-                      <p className="text-[10px] text-slate-400 font-medium">{img.eur ? formatBRLPerMonth(img.eur) : img.price}</p>
+                      <p className="text-[15px] font-bold">{img.name}</p>
+                      <p className="text-[14px] text-slate-400 font-medium">{img.eur ? formatBRLPerMonth(img.eur) : img.price}</p>
                     </div>
                   </button>
                 ))}
@@ -1209,7 +1209,7 @@ export default function VpsConfigurePage() {
         {/* Data Protection Section */}
         <section className="mb-8">
           <div className="flex items-center gap-2 mb-6">
-            <h2 className="text-base font-black text-white uppercase tracking-tight">Proteção de Dados</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight">Proteção de Dados</h2>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center bg-white/5 rounded-2xl p-10 border border-white/10 shadow-2xl backdrop-blur-md">
@@ -1226,7 +1226,7 @@ export default function VpsConfigurePage() {
                     "Mantém as últimas 10 versões de backup.",
                     "Nenhuma configuração necessária."
                   ].map((text, i) => (
-                    <li key={i} className="flex items-center gap-3 text-[13px] font-bold text-slate-200 uppercase tracking-tight leading-snug">
+                    <li key={i} className="flex items-center gap-3 text-base font-bold text-slate-200 uppercase tracking-tight leading-snug">
                       <div className="w-1.5 h-1.5 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(0,163,255,0.5)] flex-shrink-0" />
                       {text}
                     </li>
@@ -1248,12 +1248,12 @@ export default function VpsConfigurePage() {
                   )}
                 >
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#000B12] px-4 py-1 rounded-full border border-sky-500/30 shadow-lg">
-                    <span className="text-[10px] font-black text-sky-400 uppercase tracking-widest whitespace-nowrap">Nossa Recomendação</span>
+                    <span className="text-[14px] font-black text-sky-400 uppercase tracking-widest whitespace-nowrap">Nossa Recomendação</span>
                   </div>
                   <div className="mt-2">
-                    <h3 className="text-lg font-black text-white mb-1 uppercase tracking-tight">Backup Automático</h3>
-                    <div className="text-xl font-black text-white mb-2">{formatBRLPerMonth(plan.backupEur)}</div>
-                    <p className="text-xs text-slate-400 leading-tight font-medium">
+                    <h3 className="text-3xl font-black text-white mb-1 uppercase tracking-tight">Backup Automático</h3>
+                    <div className="text-3xl font-black text-white mb-2">{formatBRLPerMonth(plan.backupEur)}</div>
+                    <p className="text-base text-slate-400 leading-tight font-medium">
                       Configure e esqueça.<br />Segurança de dados sem esforço.
                     </p>
                   </div>
@@ -1269,7 +1269,7 @@ export default function VpsConfigurePage() {
                       : "border-white/10 bg-white/5 hover:border-white/20"
                   )}
                 >
-                  <h3 className="text-lg font-black text-slate-400 uppercase tracking-tight">Sem Proteção</h3>
+                  <h3 className="text-2xl font-black text-slate-400 uppercase tracking-tight">Sem Proteção</h3>
                 </button>
               </div>
             </div>
@@ -1281,10 +1281,10 @@ export default function VpsConfigurePage() {
         <section className="bg-white/5 rounded-2xl shadow-2xl border border-white/10 overflow-hidden mb-8 backdrop-blur-md">
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
+                <h2 className="text-5xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
               <button
                 onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)}
-                className="flex items-center gap-1 text-[11px] font-black text-white uppercase tracking-wider"
+                className="flex items-center gap-1 text-[13px] font-black text-white uppercase tracking-wider"
               >
                 {showAdditionalFeatures ? (
                   <>Fechar recursos adicionais <ChevronUp size={14} /></>
@@ -1304,11 +1304,13 @@ export default function VpsConfigurePage() {
                 >
                   {/* Networking Sub-section */}
                   <div className="space-y-8">
-                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Rede</h3>
+                    <h3 className="text-2xl font-black text-white uppercase tracking-tight">Rede</h3>
                     <div className="space-y-6 pl-4 pr-1">
                       {/* Private Networking */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                          <span className="text-sm font-bold text-slate-300">Rede Privada</span>
+                        <div className="md:col-span-3">
+                          <span className="text-lg font-bold text-slate-300">Rede Privada</span>
+                        </div>
                         <div className="md:col-span-9">
                           <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white">
@@ -1318,7 +1320,7 @@ export default function VpsConfigurePage() {
                               <SelectItem value="none" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Sem Rede Privada</span>
-                                  <span className="text-slate-400 text-xs font-medium ml-4">Grátis</span>
+                                  <span className="text-lg text-slate-400 font-medium ml-4">Grátis</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="enabled" className="focus:bg-white/10 focus:text-white">
@@ -1334,11 +1336,13 @@ export default function VpsConfigurePage() {
 
                       {/* Bandwidth */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                          <span className="text-sm font-bold text-slate-300">Largura de Banda</span>
+                        <div className="md:col-span-3">
+                          <span className="text-lg font-bold text-slate-300">Largura de Banda</span>
+                        </div>
                         <div className="md:col-span-9">
                           <div className="h-12 border border-white/10 rounded-md px-4 flex flex-col justify-center bg-white/5">
-                            <span className="text-sm font-bold text-white">Tráfego Ilimitado</span>
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-medium">Política de Uso Justo</span>
+                            <span className="text-lg font-bold text-white">Tráfego Ilimitado</span>
+                            <span className="text-[14px] text-slate-500 uppercase tracking-wider font-medium">Política de Uso Justo</span>
                           </div>
                         </div>
                       </div>
@@ -1346,7 +1350,7 @@ export default function VpsConfigurePage() {
                       {/* IPv4 */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3">
-                          <span className="text-sm font-bold text-slate-300">IPv4</span>
+                          <span className="text-lg font-bold text-slate-300">IPv4</span>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={ipv4Address} onValueChange={setIpv4Address}>
@@ -1357,7 +1361,7 @@ export default function VpsConfigurePage() {
                               <SelectItem value="1ip" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">1 Endereço IP</span>
-                                  <span className="text-slate-400 text-xs font-medium ml-4">Grátis</span>
+                                  <span className="text-lg text-slate-400 font-medium ml-4">Grátis</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="2ip" className="focus:bg-white/10 focus:text-white">
@@ -1377,12 +1381,12 @@ export default function VpsConfigurePage() {
 
                   {/* Add-Ons Sub-section */}
                   <div className="space-y-8">
-                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Complementos</h3>
+                    <h3 className="text-2xl font-black text-white uppercase tracking-tight">Complementos</h3>
                     <div className="space-y-6 pl-4 pr-1">
                       {/* Object Storage */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3">
-                          <span className="text-sm font-bold text-slate-300">Armazenamento de Objetos</span>
+                          <span className="text-lg font-bold text-slate-300">Armazenamento de Objetos</span>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={objectStorage} onValueChange={setObjectStorage}>
@@ -1393,30 +1397,30 @@ export default function VpsConfigurePage() {
                               <SelectItem value="none" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Nenhum</span>
-                                  <span className="text-slate-400 text-xs font-medium ml-4">Livre</span>
+                                  <span className="text-lg text-slate-400 font-medium ml-4">Livre</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="250gb" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
-                                  <span className="text-left text-[13px]">250 GB Armazenamento de Objetos nos Estados Unidos</span>
+                                  <span className="text-left text-lg">250 GB Armazenamento de Objetos nos Estados Unidos</span>
                                   <span className="text-white font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["250gb"] || 4.98)}</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="500gb" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
-                                  <span className="text-left text-[13px]">500 GB Armazenamento de Objetos nos Estados Unidos</span>
+                                  <span className="text-left text-lg">500 GB Armazenamento de Objetos nos Estados Unidos</span>
                                   <span className="text-white font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["500gb"] || 9.96)}</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="750gb" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
-                                  <span className="text-left text-[13px]">750 GB Armazenamento de Objetos nos Estados Unidos</span>
+                                  <span className="text-left text-lg">750 GB Armazenamento de Objetos nos Estados Unidos</span>
                                   <span className="text-white font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["750gb"] || 14.94)}</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="1tb" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
-                                  <span className="text-left text-[13px]">1 TB Armazenamento de Objetos nos Estados Unidos</span>
+                                  <span className="text-left text-lg">1 TB Armazenamento de Objetos nos Estados Unidos</span>
                                   <span className="text-white font-bold ml-4">{formatBRLPerMonth(plan.objectStoragePrices?.["1tb"] || 19.92)}</span>
                                 </div>
                               </SelectItem>
@@ -1427,7 +1431,9 @@ export default function VpsConfigurePage() {
 
                       {/* Server Management */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                          <span className="text-sm font-bold text-slate-300">Gerenciamento de Servidor</span>
+                        <div className="md:col-span-3">
+                          <span className="text-lg font-bold text-slate-300">Gerenciamento de Servidor</span>
+                        </div>
                         <div className="md:col-span-9">
                           <Select value={serverManagement} onValueChange={setServerManagement}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white">
@@ -1437,12 +1443,12 @@ export default function VpsConfigurePage() {
                               <SelectItem value="unmanaged" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Não Gerenciado</span>
-                                  <span className="text-slate-400 text-xs font-medium ml-4">Grátis</span>
+                                  <span className="text-lg text-slate-400 font-medium ml-4">Grátis</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="managed" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
-                                  <span className="text-left">Gerenciado</span>
+                                  <span className="text-lg">Gerenciado</span>
                                   <span className="text-white font-bold ml-4">{formatBRLPerMonth(plan.managedEur || 219.98)}</span>
                                 </div>
                               </SelectItem>
@@ -1453,7 +1459,9 @@ export default function VpsConfigurePage() {
 
                       {/* Monitoring */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                          <span className="text-sm font-bold text-slate-300">Monitoramento</span>
+                        <div className="md:col-span-3">
+                          <span className="text-lg font-bold text-slate-300">Monitoramento</span>
+                        </div>
                         <div className="md:col-span-9">
                           <Select value={monitoring} onValueChange={setMonitoring}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white">
@@ -1463,12 +1471,12 @@ export default function VpsConfigurePage() {
                               <SelectItem value="none" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Nenhum</span>
-                                  <span className="text-slate-400 text-xs font-medium ml-4">Livre</span>
+                                  <span className="text-lg text-slate-400 font-medium ml-4">Livre</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="full" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
-                                  <span className="text-left">Monitoramento Completo</span>
+                                  <span className="text-lg">Monitoramento Completo</span>
                                   <span className="text-white font-bold ml-4">{formatBRLPerMonth(plan.monitoringEur || 22.98)}</span>
                                 </div>
                               </SelectItem>
@@ -1486,23 +1494,23 @@ export default function VpsConfigurePage() {
 
         <Separator className="bg-white/10" />
         <section className="bg-white/5 rounded-2xl p-8 border border-white/10 shadow-2xl backdrop-blur-md">
-          <h2 className="text-xl font-black text-white uppercase tracking-tight mb-8">Login e senha para o seu servidor</h2>
+          <h2 className="text-4xl font-black text-white uppercase tracking-tight mb-8">Login e senha para o seu servidor</h2>
 
           <div className="max-w-3xl space-y-8">
             {/* Username */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
               <div className="md:col-span-3">
-                <span className="text-sm font-bold text-slate-300">Usuário</span>
+                <span className="text-lg font-bold text-slate-300">Usuário</span>
               </div>
               <div className="md:col-span-9">
-                <span className="text-white font-medium">root</span>
+                <span className="text-white font-medium text-lg">root</span>
               </div>
             </div>
 
             {/* Password */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-3 pt-3">
-                <span className="text-sm font-black text-white uppercase tracking-widest">Senha</span>
+                <span className="text-xl font-black text-white uppercase tracking-widest">Senha</span>
               </div>
               <div className="md:col-span-9 space-y-2">
                 <div className="flex justify-start">
@@ -1530,7 +1538,7 @@ export default function VpsConfigurePage() {
                       setPassword(pass);
                       setPasswordTouched(true);
                     }}
-                    className="text-sky-400 text-xs hover:underline font-bold uppercase tracking-wider"
+                    className="text-sky-400 text-lg hover:underline font-bold uppercase tracking-wider"
                   >
                     Gerar nova senha
                   </button>
@@ -1557,13 +1565,13 @@ export default function VpsConfigurePage() {
                   </button>
                 </div>
                 {passwordTouched && password.length > 0 && !isPasswordValid(password) && (
-                  <div className="flex items-center gap-2 text-rose-500 text-xs mt-1 font-bold">
+                  <div className="flex items-center gap-2 text-lg font-bold text-rose-500 mt-1">
                     <AlertCircle size={14} />
                     <span>Por favor, insira uma senha válida (Mín. 8 caracteres, maiúscula, número e símbolo)</span>
                   </div>
                 )}
                 {isPasswordValid(password) && (
-                  <div className="flex items-center gap-2 text-emerald-400 text-xs mt-1 font-bold">
+                  <div className="flex items-center gap-2 text-lg font-bold text-emerald-400 mt-1">
                     <Check size={14} />
                     <span>Senha válida e segura</span>
                   </div>
@@ -1573,7 +1581,7 @@ export default function VpsConfigurePage() {
 
             {/* Info List */}
             <div className="md:ml-[25%] pt-4">
-              <ul className="list-disc space-y-2 text-slate-400 text-[11px] ml-4 font-medium uppercase tracking-wider">
+              <ul className="list-disc space-y-2 text-slate-400 text-[15px] ml-4 font-medium uppercase tracking-wider">
                 <li>Você pode adicionar chaves SSH mais tarde no Painel de Controle.</li>
                 <li>Sua senha não será enviada por e-mail.</li>
                 <li>Mantenha-a segura para acesso ao Windows. Se perdê-la, será necessária uma reinstalação.</li>
@@ -1596,7 +1604,7 @@ export default function VpsConfigurePage() {
               className="overflow-hidden border-b border-white/10 bg-white/5 backdrop-blur-md"
             >
               <div className="max-w-6xl mx-auto px-10 py-6">
-                <h3 className="text-sm font-black text-white mb-4 uppercase tracking-widest">Detalhamento do Pedido</h3>
+                <h3 className="text-lg font-black text-white mb-4 uppercase tracking-widest">Detalhamento do Pedido</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
                   {(() => {
                     const selectedDuration = durations.find((d: any) => d.id === duration) || durations[0];
@@ -1673,7 +1681,7 @@ export default function VpsConfigurePage() {
                     if (monitoring === "full") items.push({ label: `Monitoramento Completo${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.monitoringEur || 22.98) * RATE * durationMonths * qty });
 
                     return items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-sm border-b border-white/5 pb-1">
+                      <div key={idx} className="flex justify-between items-center text-xl border-b border-white/5 pb-1">
                         <span className="text-slate-400">{item.label}</span>
                         <span className="font-bold text-white">{formatBRL(item.price / RATE)}</span>
                       </div>
@@ -1685,14 +1693,14 @@ export default function VpsConfigurePage() {
           )}
         </AnimatePresence>
 
-        <div className="max-w-6xl mx-auto px-3 md:px-10 h-auto md:h-24 flex items-center justify-between py-2 md:py-0 gap-2">
+        <div className="max-w-7xl mx-auto px-3 md:px-10 h-auto md:h-24 flex items-center justify-between py-2 md:py-0 gap-4">
           <div className="flex items-center gap-2 md:gap-6">
             <div className="hidden md:flex w-14 h-14 bg-white/5 rounded-full items-center justify-center shadow-lg border border-white/10">
               <ShieldCheck className="w-6 h-6 text-sky-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-white text-xs md:text-base leading-tight uppercase tracking-widest">Resumo</h3>
+                <h3 className="font-black text-white text-lg md:text-2xl leading-tight uppercase tracking-widest">Resumo</h3>
                 <button
                   onClick={() => setShowSummaryDetails(!showSummaryDetails)}
                   className="p-1 hover:bg-white/10 rounded-full transition-colors"
@@ -1707,7 +1715,7 @@ export default function VpsConfigurePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-20">
+          <div className="flex items-center gap-4 md:gap-8 lg:gap-16">
             {/* Middle: Savings */}
             {(() => {
               const selectedDuration = durations.find((d: any) => d.id === duration) || durations[0];
@@ -1777,31 +1785,31 @@ export default function VpsConfigurePage() {
 
               return (
                 <>
-                  <div className="hidden md:block flex-1 text-center min-w-[200px]">
+                  <div className="hidden md:block flex-1 text-center min-w-[150px]">
                     {totalSavings > 0 && (
-                      <p className="text-emerald-500 font-bold text-sm">
+                      <p className="text-emerald-500 font-bold text-xl">
                         Você economiza {formatBRL(totalSavings / currentRate)}.
                       </p>
                     )}
                   </div>
 
                   {/* Right: Total & Button */}
-                  <div className="flex items-center gap-4 md:gap-12">
-                    <div className="flex flex-col gap-0.5 md:gap-1 min-w-0 md:min-w-[220px]">
-                      <div className="hidden md:flex justify-between items-center text-[11px]">
+                  <div className="flex items-center gap-4 md:gap-6 lg:gap-10">
+                    <div className="flex flex-col gap-0.5 md:gap-1 min-w-0 md:min-w-[200px]">
+                      <div className="hidden md:flex justify-between items-center text-[17px]">
                         <span className="text-slate-400 font-bold flex items-center gap-1 uppercase tracking-widest">Mensal </span>
                         <span className="text-white font-black whitespace-nowrap">{formatBRL(totalMonthly * qty / currentRate)}</span>
                       </div>
-                      <div className="hidden md:flex justify-between items-center text-[11px]">
+                      <div className="hidden md:flex justify-between items-center text-[15px]">
                         <span className="text-slate-400 font-bold flex items-center gap-1 uppercase tracking-widest">Taxa Única </span>
                         <span className="text-white font-black whitespace-nowrap">{formatBRL(setupFee * qty / currentRate)}</span>
                       </div>
                       <div className="flex justify-between items-center md:mt-1">
                         <div className="flex flex-col">
-                          <span className="text-xs md:text-[13px] font-black text-white uppercase tracking-tight">Vencido Hoje</span>
-                          <span className="hidden md:block text-[10px] text-slate-400 font-medium -mt-1">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span>
+                          <span className="text-base md:text-[17px] font-black text-white uppercase tracking-tight">Vencido Hoje</span>
+                          <span className="hidden md:block text-[14px] text-slate-400 font-medium -mt-1">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span>
                         </div>
-                        <span className="text-sm md:text-xl font-black text-white whitespace-nowrap ml-2">
+                        <span className="text-lg md:text-3xl font-black text-white whitespace-nowrap ml-2">
                           {formatBRL(dueToday / currentRate)}
                         </span>
                       </div>
@@ -1815,7 +1823,7 @@ export default function VpsConfigurePage() {
                         }
                       }}
                       className={cn(
-                        "font-black h-10 md:h-14 px-5 md:px-12 rounded-xl text-sm md:text-lg shadow-lg transition-all min-w-0 md:min-w-[180px] uppercase tracking-widest",
+                        "font-black h-10 md:h-14 px-5 md:px-12 rounded-xl text-lg md:text-2xl shadow-lg transition-all min-w-0 md:min-w-[180px] uppercase tracking-widest",
                         isPasswordValid(password)
                           ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20"
                           : "bg-white/5 text-slate-500 cursor-not-allowed shadow-none"

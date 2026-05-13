@@ -91,7 +91,7 @@ export function ChatContact() {
           --chat--header--color: #0f172a;
           --chat--header--border-bottom: 1px solid #f1f5f9;
 
-          --chat--message--font-size: 0.9rem;
+          --chat--message--font-size: 1rem;
           --chat--message--bot--background: #f1f5f9;
           --chat--message--bot--color: #0f172a;
           --chat--message--bot--border: none;
@@ -144,7 +144,7 @@ export function ChatContact() {
           border: none !important;
           color: #0f172a !important;
           padding: 0 !important;
-          font-size: 0.9rem !important;
+          font-size: 1rem !important;
           height: 24px !important;
           line-height: 24px !important;
           resize: none !important;
@@ -202,7 +202,7 @@ export function ChatContact() {
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="inline-flex items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-sky-400 mb-8"
+                className="inline-flex items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-4 py-1.5 text-[14px] font-bold uppercase tracking-[0.12em] text-sky-400 mb-8"
               >
                 ● SUPORTE ONLINE AGORA
               </motion.div>
@@ -223,7 +223,7 @@ export function ChatContact() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="text-white text-lg mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium"
+                className="text-white text-xl mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium"
               >
                 Tire suas dúvidas sobre planos, domínios e cashback em tempo real com o assistente inteligente Atlas.
               </motion.p>
@@ -233,7 +233,7 @@ export function ChatContact() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 }}
-                className="flex flex-col items-center lg:items-start gap-4 text-sm font-bold text-white uppercase tracking-wide"
+                className="flex flex-col items-center lg:items-start gap-4 text-base font-bold text-white uppercase tracking-wide"
               >
                 {['Resposta em segundos', 'Disponível 24/7', 'Sem espera em filas'].map((item) => (
                   <span key={item} className="flex items-center gap-3 w-fit">

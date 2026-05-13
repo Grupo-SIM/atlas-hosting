@@ -151,10 +151,10 @@ export function Plans() {
 
       <div className="relative z-10 mx-auto w-full max-w-[1760px]">
         <div className="mb-16 text-center">
-          <h2 className={`${roboto.className} text-3xl font-bold tracking-tight text-white md:text-5xl`}>
+          <h2 className={`${roboto.className} text-4xl font-bold tracking-tight text-white md:text-6xl`}>
             Potência dedicada para tirar seus projetos do papel.
           </h2>
-          <p className="mt-4 text-base text-slate-400 md:text-lg max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-slate-400 md:text-xl max-w-2xl mx-auto">
             Escolha o plano VPS ideal e escale com performance, estabilidade e suporte 24/7.
           </p>
         </div>
@@ -165,14 +165,12 @@ export function Plans() {
           <div className="w-full xl:w-[280px] shrink-0">
             <div className="bg-white/5 border border-white/10 rounded-2xl h-full flex flex-col shadow-2xl transition-all backdrop-blur-md">
               <div className="p-8 h-[280px] flex flex-col justify-between border-b border-white/10 items-center text-center">
-                <p className={`${roboto.className} text-[18px] font-black uppercase tracking-[0.2em] text-sky-400`}>
-                  ESPECIFICAÇÕES
-                </p>
+                <p className={`${roboto.className} text-[20px] font-black uppercase tracking-[0.2em] text-sky-400`}>ESPECIFICAÇÕES</p>
                 <div className="flex flex-col gap-4 items-center">
-                  <span className="text-xl font-black text-white uppercase tracking-tighter">Backup automático</span>
+                  <span className="text-2xl font-black text-white uppercase tracking-tighter">Backup automático</span>
                   <div className="flex items-center gap-3">
                     <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} className="data-[state=unchecked]:bg-white/10 border-white/10 data-[state=checked]:bg-sky-500" />
-                    <span className="text-base font-bold text-white">{backupEnabled ? "Ativado" : "Desativado"}</span>
+                    <span className="text-lg font-bold text-white">{backupEnabled ? "Ativado" : "Desativado"}</span>
                   </div>
                 </div>
               </div>
@@ -180,7 +178,7 @@ export function Plans() {
               <div className="flex-grow bg-white/5">
                 {rowSpecs.map((row, i) => (
                   <div key={row.key} className={`px-8 h-[72px] flex flex-col justify-center items-center text-center border-t border-white/10 ${i === rowSpecs.length - 1 ? 'border-b-0' : ''}`}>
-                    <span className="text-[16px] font-black text-white uppercase tracking-widest leading-none">{row.label}</span>
+                    <span className="text-[18px] font-black text-white uppercase tracking-widest leading-none">{row.label}</span>
                   </div>
                 ))}
               </div>
@@ -206,24 +204,24 @@ export function Plans() {
                       <div className="p-8 h-[280px] flex flex-col justify-between border-b border-white/10 relative">
                         {p.popular && (
                           <div className="absolute top-6 right-6">
-                            <span className="rounded-full bg-sky-500 px-3 py-1 text-[9px] font-extrabold uppercase tracking-widest text-white shadow-lg">MAIS VENDIDO</span>
+                            <span className="rounded-full bg-sky-500 px-3 py-1 text-[12px] font-extrabold uppercase tracking-widest text-white shadow-lg">MAIS VENDIDO</span>
                           </div>
                         )}
                         <div>
-                          <p className={`${roboto.className} text-2xl font-black text-white mb-4 uppercase tracking-tighter`}>{p.name}</p>
-                          <span className="text-sm text-rose-500 line-through mb-1 block opacity-70">{formatBRL(p.eurOld)}</span>
+                          <p className={`${roboto.className} text-3xl font-black text-white mb-4 uppercase tracking-tighter`}>{p.name}</p>
+                          <span className="text-base text-rose-500 line-through mb-1 block opacity-70">{formatBRL(p.eurOld)}</span>
                           <div className="flex items-baseline gap-1 whitespace-nowrap text-white">
-                            <span className="text-base font-bold mb-2">{priceSymbol}</span>
-                            <span className="text-5xl font-black">{priceMain},</span>
-                            <span className="text-2xl font-black">{priceCents}</span>
-                            <span className="text-sm font-medium opacity-40 ml-1.5">/mês</span>
+                            <span className="text-lg font-bold mb-2">{priceSymbol}</span>
+                            <span className="text-6xl font-black">{priceMain},</span>
+                            <span className="text-3xl font-black">{priceCents}</span>
+                            <span className="text-base font-medium opacity-40 ml-1.5">/mês</span>
                           </div>
-                          <p className="mt-1 text-xs text-slate-500 uppercase tracking-wider">12 meses</p>
+                          <p className="mt-1 text-sm text-slate-500 uppercase tracking-wider">12 meses</p>
                         </div>
 
                         <button
                           onClick={() => router.push(`/vps/configure/${p.id}`)}
-                          className={`${roboto.className} block w-full rounded-xl py-3 text-center text-[11px] font-black uppercase tracking-[0.15em] transition-all ${p.popular ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20 hover:bg-sky-400' : 'border-2 border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
+                          className={`${roboto.className} block w-full rounded-xl py-3 text-center text-[14px] font-black uppercase tracking-[0.15em] transition-all ${p.popular ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20 hover:bg-sky-400' : 'border-2 border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
                             }`}
                         >
                           Começar agora →
@@ -234,7 +232,7 @@ export function Plans() {
                       <div className="flex-grow bg-[#00050A]">
                         {rowSpecs.map((row) => (
                           <div key={`${p.id}-${row.key}`} className="h-[72px] flex items-center justify-center border-t border-white/10 px-6 text-center">
-                            <span className="text-base font-black text-white uppercase tracking-tighter">{p[row.key]}</span>
+                            <span className="text-lg font-black text-white uppercase tracking-tighter">{p[row.key]}</span>
                           </div>
                         ))}
                       </div>
@@ -242,11 +240,11 @@ export function Plans() {
                       <div className="p-6 border-t border-white/10 flex flex-col items-center gap-3">
                         <div className="flex items-center justify-center gap-2 text-sky-400">
                           <Check className="h-4 w-4" strokeWidth={4} />
-                          <span className="text-[13px] font-black uppercase tracking-widest">100% de cashback</span>
+                          <span className="text-[15px] font-black uppercase tracking-widest">100% de cashback</span>
                         </div>
                         <div className="flex items-center justify-center gap-2 text-sky-500">
                           <Check className="h-4 w-4" strokeWidth={4} />
-                          <span className="text-[13px] font-black uppercase tracking-widest">Suporte 24/7 Ativo</span>
+                          <span className="text-[15px] font-black uppercase tracking-widest">Suporte 24/7 Ativo</span>
                         </div>
                       </div>
 
@@ -259,7 +257,7 @@ export function Plans() {
         </div>
 
         <div className="mt-16 text-right">
-          <p className="text-sm text-white">
+          <p className="text-base text-white">
             Quer ainda mais potência? <Link href="/vds" className="font-bold text-sky-400 hover:underline underline-offset-4 decoration-sky-500/30 transition-colors">Escolha um VDS</Link>.
           </p>
         </div>

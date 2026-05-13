@@ -25,7 +25,7 @@ export function Footer() {
                   />
                 </div>
               </Link>
-              <p className="text-white text-[13px] leading-relaxed mb-8 max-w-[220px]">
+              <p className="text-white text-[15px] leading-relaxed mb-8 max-w-[250px]">
                 Feito pra quem quer mais do que só <br />
                 "estar no ar"
               </p>
@@ -58,7 +58,7 @@ export function Footer() {
 
             {/* Column 2: Menu */}
             <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-              <h4 className="font-bold text-[#00A3FF] text-[15px] uppercase tracking-wider mb-6">Menu</h4>
+              <h4 className="font-bold text-[#00A3FF] text-[18px] uppercase tracking-wider mb-6">Menu</h4>
 
               <ul className="space-y-3.5 pl-1">
                 {[
@@ -71,7 +71,7 @@ export function Footer() {
                 ].map((link, idx) => (
                   <li key={idx} className="flex items-center gap-2.5 group">
                     <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0 fill-sky-500/10" />
-                    <Link href={link.href} className="text-[13.5px] text-white group-hover:text-sky-400 transition-colors">
+                    <Link href={link.href} className="text-[16px] text-white group-hover:text-sky-400 transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -81,7 +81,7 @@ export function Footer() {
 
             {/* Column 3: Blogs Recomendados */}
             <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-              <h4 className="font-bold text-[#00A3FF] text-[15px] uppercase tracking-wider mb-6">Blogs Recomendados</h4>
+              <h4 className="font-bold text-[#00A3FF] text-[18px] uppercase tracking-wider mb-6">Blogs Recomendados</h4>
 
               <ul className="space-y-3.5 pl-1">
                 {[
@@ -93,7 +93,7 @@ export function Footer() {
                 ].map((link, idx) => (
                   <li key={idx} className="flex items-center gap-2.5 group">
                     <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0 fill-sky-500/10" />
-                    <Link href={link.href} target="_blank" rel="noopener noreferrer" className="text-[13.5px] text-white group-hover:text-sky-400 transition-colors">
+                    <Link href={link.href} target="_blank" rel="noopener noreferrer" className="text-[16px] text-white group-hover:text-sky-400 transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -106,7 +106,7 @@ export function Footer() {
 
         {/* Bottom Bar Container */}
         <div className="flex flex-col md:flex-row justify-between items-center px-4 pt-4 text-center md:text-left">
-          <p className="text-white/60 text-[12px] mb-4 md:mb-0">
+          <p className="text-white/60 text-[15px] mb-4 md:mb-0">
             Copyright © 2026 JB Mídia, Todos os direitos reservados.
           </p>
         </div>

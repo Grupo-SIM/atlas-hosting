@@ -524,35 +524,35 @@ export default function ConfigureStorageVps() {
       <Navbar variant="dark" />
       <div className="max-w-6xl mx-auto px-6 pt-32 pb-12 space-y-12">
 
-        <Link href="/vps-armazenamento#plans" className="group mb-6 flex items-center gap-2 text-sm font-bold text-sky-400 transition-all hover:text-sky-300">
+        <Link href="/vps-armazenamento#plans" className="group mb-6 flex items-center gap-2 text-lg font-bold text-sky-400 transition-all hover:text-sky-300">
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Voltar para VPS de Armazenamento
         </Link>
-        <h1 className="text-3xl font-black text-white uppercase tracking-tight">Configure seu {plan.name}</h1>
+        <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight">Configure seu {plan.name}</h1>
 
         <div className="flex flex-wrap items-center gap-10">
           <div className="flex-1 border-2 border-sky-500/50 rounded-xl p-8 grid grid-cols-4 gap-4 relative bg-white/5 backdrop-blur-md shadow-2xl">
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">CPU</p>
-              <p className="text-[11px] font-medium leading-tight">{plan.vcpu}</p>
+              <p className="text-[14px] font-bold text-slate-400 uppercase">CPU</p>
+              <p className="text-[15px] font-medium leading-tight">{plan.vcpu}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">RAM</p>
-              <p className="text-[11px] font-medium leading-tight">{plan.ram}</p>
+              <p className="text-[14px] font-bold text-slate-400 uppercase">RAM</p>
+              <p className="text-[15px] font-medium leading-tight">{plan.ram}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
-              <p className="text-[11px] font-medium leading-tight">{plan.storage}</p>
+              <p className="text-[14px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
+              <p className="text-[15px] font-medium leading-tight">{plan.storage}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">TRÁFEGO</p>
-              <p className="text-[11px] font-medium leading-tight">{plan.traffic}</p>
+              <p className="text-[14px] font-bold text-slate-400 uppercase">TRÁFEGO</p>
+              <p className="text-[15px] font-medium leading-tight">{plan.traffic}</p>
             </div>
-            <Link href="/vps-armazenamento#plans" className="absolute bottom-4 right-4 text-[10px] font-bold text-sky-400 hover:underline uppercase tracking-wider">Mudar</Link>
+            <Link href="/vps-armazenamento#plans" className="absolute bottom-4 right-4 text-[14px] font-bold text-sky-400 hover:underline uppercase tracking-wider">Mudar</Link>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wide">Quantidade de servidores</span>
+            <span className="text-[15px] font-bold text-slate-300 uppercase tracking-wide">Quantidade de servidores</span>
             <Select value={quantity} onValueChange={setQuantity}>
               <SelectTrigger className="w-16 h-10 border border-white/10 bg-white/5 text-white">
                 <SelectValue />
@@ -569,7 +569,7 @@ export default function ConfigureStorageVps() {
         {/* Duration Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -583,18 +583,18 @@ export default function ConfigureStorageVps() {
                   )}
                 >
                   {d.discount && (
-                    <div className="absolute -top-3 left-6 bg-slate-50 text-emerald-500 text-[9px] font-bold px-2 py-0.5 border border-slate-100">
+                    <div className="absolute -top-3 left-6 bg-slate-50 text-emerald-500 text-[13px] font-bold px-2 py-0.5 border border-slate-100">
                       {d.discount}
                     </div>
                   )}
-                  <span className="text-sm font-medium">{d.label}</span>
+                  <span className="text-lg font-medium">{d.label}</span>
                   <div className="text-right">
-                    {d.oldEur && <p className="text-[10px] text-rose-500 line-through font-medium opacity-70">{formatBRLPerMonth(d.oldEur)}</p>}
-                    <p className="text-lg font-black text-white">{formatBRL(d.eur)} <span className="text-xs font-normal text-slate-400">/ mês</span></p>
+                    {d.oldEur && <p className="text-[14px] text-rose-500 line-through font-medium opacity-70">{formatBRLPerMonth(d.oldEur)}</p>}
+                    <p className="text-2xl font-black text-white">{formatBRL(d.eur)} <span className="text-base font-normal text-slate-400">/ mês</span></p>
                   </div>
                 </div>
                 <div className={cn(
-                  "text-center py-1.5 rounded-b-md text-[11px] font-bold transition-colors uppercase tracking-wider",
+                  "text-center py-1.5 rounded-b-md text-[15px] font-bold transition-colors uppercase tracking-wider",
                   d.setupFee === "Sem taxa de instalação" ? "bg-emerald-500/20 text-emerald-400" : "text-slate-400"
                 )}>
                   {d.setupFee}
@@ -609,7 +609,7 @@ export default function ConfigureStorageVps() {
         {/* Region Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-black text-white uppercase tracking-widest">Região</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-widest">Região</h2>
           </div>
 
           <div className="flex flex-nowrap items-start gap-8">
@@ -624,7 +624,7 @@ export default function ConfigureStorageVps() {
                     key={r.id}
                     onClick={() => setRegionTab(r.id)}
                     className={cn(
-                      "px-8 py-3 text-[11px] font-bold uppercase tracking-wider relative transition-colors",
+                      "px-8 py-3 text-[15px] font-bold uppercase tracking-wider relative transition-colors",
                       regionTab === r.id ? "text-sky-400" : "text-slate-500 hover:text-white"
                     )}
                   >
@@ -640,19 +640,19 @@ export default function ConfigureStorageVps() {
                     key={loc.id}
                     onClick={() => setLocation(loc.id)}
                     className={cn(
-                      "w-full border p-4 flex items-center justify-between text-xs font-bold bg-white/5 backdrop-blur-md relative transition-all rounded-lg",
+                      "w-full border p-4 flex items-center justify-between text-base font-bold bg-white/5 backdrop-blur-md relative transition-all rounded-lg",
                       location === loc.id ? "border-sky-500 bg-white/10" : "border-white/10",
                       loc.recommended && "mt-6"
                     )}
                   >
                     {loc.recommended && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[9px] font-black px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[13px] font-black px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
                         Recomendado - Melhor latência para sua região
                       </div>
                     )}
-                    <div className="flex-1 text-left text-white">{loc.name}</div>
+                    <div className="flex-1 text-left text-white text-base md:text-lg">{loc.name}</div>
                     <div className="flex-1 text-center text-slate-400 font-medium">– Latência de {loc.latency}</div>
-                    <div className="flex-1 text-right text-white font-black">{loc.price === "Livre" ? "Grátis" : formatBRLPerMonth(loc.eur)}</div>
+                    <div className="flex-1 text-right text-white font-black text-base md:text-lg">{loc.price === "Livre" ? "Grátis" : formatBRLPerMonth(loc.eur)}</div>
                   </button>
                 ))}
               </div>
@@ -665,10 +665,10 @@ export default function ConfigureStorageVps() {
         {/* Image Section */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black text-white uppercase tracking-widest">Imagem</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-widest">Imagem</h2>
             <button
               onClick={() => setShowMoreImages(!showMoreImages)}
-              className="flex items-center gap-1 text-[11px] font-black text-white uppercase tracking-wider"
+              className="flex items-center gap-1 text-[13px] font-black text-white uppercase tracking-wider"
             >
               {showMoreImages ? (
                 <>Fechar imagens <ChevronUp size={14} /></>
@@ -693,7 +693,7 @@ export default function ConfigureStorageVps() {
                       key={cat.id}
                       onClick={() => setImageCategory(cat.id)}
                       className={cn(
-                        "px-8 py-3 text-[11px] font-bold relative transition-colors",
+                        "px-8 py-3 text-[15px] font-bold relative transition-colors",
                         imageCategory === cat.id ? "text-sky-500" : "text-slate-400 hover:text-slate-600"
                       )}
                     >
@@ -725,8 +725,8 @@ export default function ConfigureStorageVps() {
                         {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className="text-slate-500" />}
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-[11px] font-bold text-white">{img.name}</p>
-                        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                        <p className="text-[15px] font-bold text-white">{img.name}</p>
+                        <p className="text-[14px] text-slate-400 font-medium uppercase tracking-wide">
                           {typeof img.price === "number" ? formatBRLPerMonth(img.price) : img.eur ? formatBRLPerMonth(img.eur) : img.price}
                         </p>
                       </div>
@@ -746,7 +746,7 @@ export default function ConfigureStorageVps() {
             <section className="bg-white/5 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 overflow-hidden mb-8">
               <div className="p-8">
                 <div className="flex items-center gap-2 mb-8">
-                  <h2 className="text-2xl font-black text-white uppercase tracking-tight">Proteção de Dados com Backup Automático</h2>
+                  <h2 className="text-4xl font-black text-white uppercase tracking-tight">Proteção de Dados com Backup Automático</h2>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
                   <div className="lg:col-span-5 flex flex-col md:flex-row items-center gap-4">
@@ -758,7 +758,7 @@ export default function ConfigureStorageVps() {
                         {["Backups automáticos diários.", "Recuperação instantânea.", "Mantém as últimas 10 versões.", "Nenhuma configuração necessária."].map((benefit, i) => (
                           <li key={i} className="flex items-center gap-3 text-slate-200">
                             <div className="w-1.5 h-1.5 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(0,163,255,0.5)] flex-shrink-0" />
-                            <span className="text-[13px] font-bold uppercase tracking-tight leading-snug">{benefit}</span>
+                            <span className="text-base font-bold uppercase tracking-tight leading-snug">{benefit}</span>
                           </li>
                         ))}
                       </ul>
@@ -766,11 +766,11 @@ export default function ConfigureStorageVps() {
                   </div>
                   <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <button onClick={() => setAutoBackup(true)} className={cn("relative p-6 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-center min-h-[160px] bg-white/5 backdrop-blur-md", autoBackup ? "border-sky-500 shadow-lg shadow-sky-500/20" : "border-white/10 hover:border-white/20")}>
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#000B12] px-4 py-1 rounded-full border border-sky-500/30"><span className="text-[10px] font-black text-sky-400 uppercase tracking-widest whitespace-nowrap">Recomendado</span></div>
-                      <h3 className="text-lg font-black text-white mb-1 uppercase tracking-tight">Backup Automático</h3>
-                      <div className="text-xl font-black text-white mb-2">{formatBRLPerMonth(plan.backupEur)}</div>
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#000B12] px-4 py-1 rounded-full border border-sky-500/30"><span className="text-[14px] font-black text-sky-400 uppercase tracking-widest whitespace-nowrap">Recomendado</span></div>
+                      <h3 className="text-2xl font-black text-white mb-1 uppercase tracking-tight">Backup Automático</h3>
+                      <div className="text-3xl font-black text-white mb-2">{formatBRLPerMonth(plan.backupEur)}</div>
                     </button>
-                    <button onClick={() => setAutoBackup(false)} className={cn("p-6 rounded-xl border-2 transition-all text-center flex items-center justify-center min-h-[160px] bg-white/5 backdrop-blur-md", !autoBackup ? "border-sky-500 shadow-lg" : "border-white/10 hover:border-white/20")}><h3 className="text-lg font-bold text-slate-500 uppercase tracking-tight">Sem Proteção</h3></button>
+                    <button onClick={() => setAutoBackup(false)} className={cn("p-6 rounded-xl border-2 transition-all text-center flex items-center justify-center min-h-[160px] bg-white/5 backdrop-blur-md", !autoBackup ? "border-sky-500 shadow-lg" : "border-white/10 hover:border-white/20")}><h3 className="text-2xl font-bold text-slate-500 uppercase tracking-tight">Sem Proteção</h3></button>
                   </div>
                 </div>
               </div>
@@ -784,8 +784,8 @@ export default function ConfigureStorageVps() {
         <section className="bg-white/5 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 overflow-hidden mb-8">
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
-              <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[11px] font-black text-white uppercase tracking-wider">
+              <h2 className="text-4xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
+              <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[15px] font-black text-white uppercase tracking-wider">
                 {showAdditionalFeatures ? <>Fechar <ChevronUp size={14} /></> : <>Ver mais <ChevronDown size={14} /></>}
               </button>
             </div>
@@ -794,10 +794,10 @@ export default function ConfigureStorageVps() {
               {showAdditionalFeatures && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-12 overflow-hidden px-1 py-1">
                   <div className="space-y-8">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Rede</h3>
+                    <h3 className="text-lg font-black text-white uppercase tracking-widest">Rede</h3>
                     <div className="space-y-6 pl-4 pr-1">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-black text-slate-400 uppercase tracking-tight">Rede Privada</span></div>
+                        <div className="md:col-span-3"><span className="text-lg font-black text-slate-400 uppercase tracking-tight">Rede Privada</span></div>
                         <div className="md:col-span-9">
                           <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -816,7 +816,7 @@ export default function ConfigureStorageVps() {
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-black text-slate-400 uppercase tracking-tight">IPv4</span></div>
+                        <div className="md:col-span-3"><span className="text-lg font-black text-slate-400 uppercase tracking-tight">IPv4</span></div>
                         <div className="md:col-span-9">
                           <Select value={ipv4Address} onValueChange={setIpv4Address}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue /></SelectTrigger>
@@ -828,10 +828,10 @@ export default function ConfigureStorageVps() {
                   </div>
                   <Separator className="bg-white/10" />
                   <div className="space-y-8">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Add-Ons</h3>
+                    <h3 className="text-lg font-black text-white uppercase tracking-widest">Add-Ons</h3>
                     <div className="space-y-6 pl-4 pr-1">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-black text-slate-400 uppercase tracking-tight">Armazenamento de Objetos</span></div>
+                        <div className="md:col-span-3"><span className="text-lg font-black text-slate-400 uppercase tracking-tight">Armazenamento de Objetos</span></div>
                         <div className="md:col-span-9">
                           <Select value={objectStorage} onValueChange={setObjectStorage}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white text-left"><SelectValue /></SelectTrigger>
@@ -847,7 +847,7 @@ export default function ConfigureStorageVps() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Gerenciamento de Servidor</span>
+                          <span className="text-lg font-black text-slate-400 uppercase tracking-tight">Gerenciamento de Servidor</span>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={serverManagement} onValueChange={setServerManagement}>
@@ -858,7 +858,7 @@ export default function ConfigureStorageVps() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Monitoramento</span>
+                          <span className="text-lg font-black text-slate-400 uppercase tracking-tight">Monitoramento</span>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={monitoring} onValueChange={setMonitoring}>
@@ -877,22 +877,22 @@ export default function ConfigureStorageVps() {
 
         <Separator className="bg-white/10" />
         <section className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 shadow-2xl">
-          <h2 className="text-xl font-black text-white uppercase tracking-tight mb-8">Login e senha para o seu servidor</h2>
+          <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8">Login e senha para o seu servidor</h2>
           <div className="max-w-3xl space-y-8">
             {/* Username */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
               <div className="md:col-span-3">
-                <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">Usuário</span>
+                <span className="text-lg font-bold text-slate-300 uppercase tracking-wider">Usuário</span>
               </div>
               <div className="md:col-span-9">
-                <span className="text-white font-black">root</span>
+                <span className="text-white font-black text-lg">root</span>
               </div>
             </div>
 
             {/* Password */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-3 pt-3">
-                <span className="text-sm font-bold text-slate-400 uppercase tracking-tight">Senha</span>
+                <span className="text-lg font-bold text-slate-400 uppercase tracking-tight">Senha</span>
               </div>
               <div className="md:col-span-9 space-y-2">
                 <div className="flex justify-start">
@@ -919,7 +919,7 @@ export default function ConfigureStorageVps() {
                       setPassword(pass);
                       setPasswordTouched(true);
                     }}
-                    className="text-[#3B82F6] text-xs hover:underline"
+                    className="text-[#3B82F6] text-sm hover:underline font-bold"
                   >
                     Gerar nova senha
                   </button>
@@ -946,13 +946,13 @@ export default function ConfigureStorageVps() {
                   </button>
                 </div>
                 {passwordTouched && password.length > 0 && !isPasswordValid(password) && (
-                  <div className="flex items-center gap-2 text-red-500 text-xs mt-1">
+                  <div className="flex items-center gap-2 text-red-500 text-sm mt-1 font-bold">
                     <AlertCircle size={14} />
                     <span>Por favor, insira uma senha válida (Mín. 8 caracteres, maiúscula, número e símbolo)</span>
                   </div>
                 )}
                 {isPasswordValid(password) && (
-                  <div className="flex items-center gap-2 text-emerald-500 text-xs mt-1">
+                  <div className="flex items-center gap-2 text-emerald-500 text-sm mt-1 font-bold">
                     <Check size={14} />
                     <span>Senha válida e segura</span>
                   </div>
@@ -962,7 +962,7 @@ export default function ConfigureStorageVps() {
 
             {/* Info List */}
             <div className="md:ml-[25%] pt-4">
-              <ul className="list-disc space-y-2 text-slate-400 text-[13px] ml-4 font-medium leading-relaxed">
+              <ul className="list-disc space-y-2 text-slate-400 text-[15px] ml-4 font-medium leading-relaxed">
                 <li>Você pode adicionar chaves SSH mais tarde no Painel de Controle.</li>
                 <li>Sua senha não será enviada por e-mail.</li>
                 <li>Mantenha-a segura para acesso ao servidor. Se perdê-la, será necessária uma reinstalação.</li>
@@ -977,8 +977,8 @@ export default function ConfigureStorageVps() {
         <AnimatePresence>
           {showSummaryDetails && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-white/10 bg-white/5 backdrop-blur-md">
-              <div className="max-w-6xl mx-auto px-10 py-6">
-                <h3 className="text-sm font-black text-white mb-4 uppercase tracking-widest">Detalhamento</h3>
+              <div className="max-w-7xl mx-auto px-10 py-6">
+                <h3 className="text-base font-black text-white mb-4 uppercase tracking-widest">Detalhamento</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
                   {(() => {
                     const selectedDur = durations.find((d: any) => d.id === duration) || durations[0];
@@ -1044,7 +1044,7 @@ export default function ConfigureStorageVps() {
                     }
 
                     return items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-sm border-b border-white/5 pb-1">
+                      <div key={idx} className="flex justify-between items-center text-base border-b border-white/5 pb-1">
                         <span className="text-slate-400 font-medium">{item.label}</span>
                         <span className="font-black text-white">{formatBRL(item.price / currentRate)}</span>
                       </div>
@@ -1055,19 +1055,19 @@ export default function ConfigureStorageVps() {
             </motion.div>
           )}
         </AnimatePresence>
-        <div className="max-w-6xl mx-auto px-10 h-24 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-10 h-24 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center shadow-lg border border-white/10"><ShieldCheck className="w-6 h-6 text-sky-400" /></div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-white text-base uppercase tracking-widest">Resumo</h3>
+                <h3 className="font-black text-white text-lg uppercase tracking-widest">Resumo</h3>
                 <button onClick={() => setShowSummaryDetails(!showSummaryDetails)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
                   {showSummaryDetails ? <ChevronDown className="w-5 h-5 text-sky-400 shadow-sky-400/20" /> : <ChevronUp className="w-5 h-5 text-sky-400 shadow-sky-400/20" />}
                 </button>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-20">
+          <div className="flex items-center gap-4 md:gap-8 lg:gap-16">
             {(() => {
               const selectedDur = durations.find((d: any) => d.id === duration) || durations[0];
               const durMonths = parseInt(duration);
@@ -1143,12 +1143,12 @@ export default function ConfigureStorageVps() {
               const dueToday = (totalMonthly * durMonths * qty) + (setupFeeEur * RATE * qty);
 
               return (
-                <div className="flex items-center gap-12">
-                  <div className="flex flex-col gap-1 min-w-[220px]">
-                    <div className="flex justify-between items-center text-[11px] uppercase tracking-widest"><span className="text-slate-400 font-bold">Mensal</span><span className="font-black text-white whitespace-nowrap">{formatBRL(totalMonthly * qty / RATE)}</span></div>
-                    <div className="flex justify-between items-center mt-1"><span className="font-black text-white text-[13px] uppercase tracking-tighter">Vencido Hoje</span><span className="text-xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(dueToday / RATE)}</span></div>
+                <div className="flex items-center gap-4 md:gap-6 lg:gap-10">
+                  <div className="flex flex-col gap-1 min-w-[200px]">
+                    <div className="flex justify-between items-center text-[13px] uppercase tracking-widest"><span className="text-slate-400 font-bold">Mensal</span><span className="font-black text-white whitespace-nowrap">{formatBRL(totalMonthly * qty / RATE)}</span></div>
+                    <div className="flex justify-between items-center mt-1"><span className="font-black text-white text-[15px] uppercase tracking-tighter">Vencido Hoje</span><span className="text-2xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(dueToday / RATE)}</span></div>
                   </div>
-                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&password=${encodeURIComponent(password)}&type=storage-vps`)} className={cn("font-black h-14 px-12 rounded-lg text-lg shadow-xl uppercase tracking-widest transition-all", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed")}>Próximo</Button>
+                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&password=${encodeURIComponent(password)}&type=storage-vps`)} className={cn("font-black h-14 px-12 rounded-lg text-xl shadow-xl uppercase tracking-widest transition-all", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed")}>Próximo</Button>
                 </div>
               );
             })()}

@@ -14,23 +14,21 @@ export default function Countdown() {
     void clearGuestCheckoutSession(invoiceId);
 
     const interval = setInterval(() => {
-      setTimeLeft((prevTimeLeft) => {
-        const newTime = prevTimeLeft - 1;
-
-        if (newTime === 0) {
-          router.replace("/login");
-        }
-
-        return newTime;
-      });
+      setTimeLeft((prev) => prev - 1);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [invoiceId, router]);
+  }, [invoiceId]);
+
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      router.replace("/dashboard");
+    }
+  }, [timeLeft, router]);
 
   return (
     <div className="text-sm text-muted-foreground font-medium bg-muted/50 px-4 py-2 rounded-full border border-border/50">
-      Redirecionando para o login em <span className="text-primary font-bold">{timeLeft}</span> segundos...
+      Redirecionando em <span className="text-primary font-bold">{timeLeft}</span> segundos...
     </div>
   );
 }

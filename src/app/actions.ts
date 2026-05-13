@@ -1410,10 +1410,13 @@ async function fetchAtlasBuyerCcRate(): Promise<number | null> {
   const apiUrl = process.env.SIMPAY_API_URL;
   if (!apiUrl) return null;
   try {
-    const res = await fetch(`${apiUrl}/public/cc-rates/ATLAS`, { cache: "force-cache" });
+    const res = await fetch(`${apiUrl}/checkout/public/cc-rates/ATLAS`, { cache: "force-cache" });
     if (!res.ok) return null;
-    const json = await res.json() as { buyerCcRate?: number };
-    return typeof json.buyerCcRate === "number" ? json.buyerCcRate : null;
+    const json = await res.json() as { domCcRate?: number; masterCcRate?: number };
+    if (typeof json.domCcRate === "number" && typeof json.masterCcRate === "number") {
+      return json.domCcRate + json.masterCcRate;
+    }
+    return null;
   } catch {
     return null;
   }

@@ -78,7 +78,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
           >
             <Link
               href="/vps"
-              className={`${roboto.className} flex items-center gap-1.5 ${isLight ? "text-slate-700 hover:text-sky-500" : "text-white/90 hover:text-sky-400"} transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}
+              className={`${roboto.className} flex items-center gap-1.5 ${isLight ? "text-slate-700 hover:text-sky-500" : "text-white/90 hover:text-sky-400"} transition-colors text-[16px] lg:text-[17px] font-bold tracking-wide uppercase`}
             >
               VPS
               <ChevronDown className={`w-4 h-4 ${isLight ? "text-slate-400" : "text-white/40"} group-hover:text-sky-400 transition-transform duration-300 group-hover:rotate-180`} strokeWidth={2.5} />
@@ -93,17 +93,17 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
                   transition={{ duration: 0.2, ease: "easeOut" }}
                   className={`absolute top-full left-0 mt-1 min-w-[280px] ${isLight ? "bg-white border-slate-200 shadow-xl" : "bg-[#00080D] border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]"} border rounded-[6px] overflow-hidden`}
                 >
-                  <Link href="/vps" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400"} transition-all uppercase`}>VPS em nuvem</Link>
-                  <Link href="/vds" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>Cloud VDS</Link>
-                  <Link href="/vps-armazenamento" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>VPS de armazenamento</Link>
-                  <Link href="/vps-windows" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>VPS Windows</Link>
+                  <Link href="/vps" className={`${roboto.className} block px-5 py-3 text-[15px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400"} transition-all uppercase`}>VPS em nuvem</Link>
+                  <Link href="/vds" className={`${roboto.className} block px-5 py-3 text-[15px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>Cloud VDS</Link>
+                  <Link href="/vps-armazenamento" className={`${roboto.className} block px-5 py-3 text-[15px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>VPS de armazenamento</Link>
+                  <Link href="/vps-windows" className={`${roboto.className} block px-5 py-3 text-[15px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>VPS Windows</Link>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
           {navLinks.map((link) => (
-            <Link key={link.name} href={link.href} className={`${roboto.className} ${isLight ? "text-slate-700 hover:text-sky-500" : "text-white/90 hover:text-sky-400"} transition-colors text-[14px] lg:text-[15px] font-bold tracking-wide uppercase`}>
+            <Link key={link.name} href={link.href} className={`${roboto.className} ${isLight ? "text-slate-700 hover:text-sky-500" : "text-white/90 hover:text-sky-400"} transition-colors text-[16px] lg:text-[17px] font-bold tracking-wide uppercase`}>
               {link.name}
             </Link>
           ))}
@@ -113,13 +113,13 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
         <div className="flex-1 md:flex-none flex items-center justify-end gap-3">
           <div className="hidden md:flex items-center gap-3">
             <Button
-              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-6 py-2 h-auto text-[13px] rounded-[12px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
+              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-6 py-2 h-auto text-[15px] rounded-[12px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
               asChild
             >
               <Link href="/signup">Cadastre-se</Link>
             </Button>
             <Button
-              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-8 py-2 h-auto text-[13px] rounded-[12px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
+              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-8 py-2 h-auto text-[15px] rounded-[12px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
               asChild
             >
               <Link href="/login">Login</Link>
@@ -164,7 +164,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
               <div className="flex flex-col gap-10 w-full max-w-sm mx-auto">
                 {/* Main Services */}
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-400 mb-4 px-2">Nossos Serviços</p>
+                  <p className="text-[13px] font-black uppercase tracking-[0.2em] text-sky-400 mb-4 px-2">Nossos Serviços</p>
                   {[
                     { name: "VPS em Nuvem", href: "/vps", icon: Server },
                     { name: "Cloud VDS", href: "/vds", icon: Database },
@@ -195,7 +195,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
 
                 {/* Secondary Links */}
                 <div className="space-y-1">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-400 mb-4 px-2">Atlas Hosting</p>
+                  <p className="text-[13px] font-black uppercase tracking-[0.2em] text-sky-400 mb-4 px-2">Atlas Hosting</p>
                   {[
                     { name: "Nossos Planos", href: "/#planos", icon: Star },
                     { name: "Depoimentos", href: "/#testimonials", icon: MessageSquare },

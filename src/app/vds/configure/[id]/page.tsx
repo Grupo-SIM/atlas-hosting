@@ -679,48 +679,48 @@ export default function VdsConfigurePage() {
       <main className="mx-auto max-w-6xl px-6 pt-32 pb-12 space-y-12">
         {/* Header Section */}
         <div className="mb-8">
-          <Link href="/vds#plans" className="group mb-6 flex items-center gap-2 text-sm font-bold text-sky-400 transition-all hover:text-sky-300">
+          <Link href="/vds#plans" className="group mb-6 flex items-center gap-2 text-lg font-bold text-sky-400 transition-all hover:text-sky-300">
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Voltar para VDS
           </Link>
-          <h1 className="text-4xl font-black tracking-tight text-white uppercase drop-shadow-sm">Configure seu {plan.name}</h1>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white uppercase drop-shadow-sm">Configure seu {plan.name}</h1>
         </div>
 
         {/* Plan Summary Section */}
         <div className="flex flex-wrap items-center gap-10">
           <div className="flex-1 border-2 border-sky-500/50 bg-white/5 backdrop-blur-md rounded-xl p-8 grid grid-cols-4 gap-8 relative shadow-2xl">
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">CPU</p>
+              <p className="text-[14px] font-bold text-slate-400 uppercase">CPU</p>
               <div className="flex flex-col">
-                <p className="text-[11px] font-medium leading-tight text-white">{plan.vcpu}</p>
-                <p className="text-[11px] font-medium leading-tight text-slate-400">{plan.cpuModel}</p>
+                <p className="text-[15px] font-medium leading-tight text-white">{plan.vcpu}</p>
+                <p className="text-[15px] font-medium leading-tight text-slate-400">{plan.cpuModel}</p>
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">RAM</p>
-              <p className="text-[11px] font-medium leading-tight text-white">{plan.ram}</p>
+              <p className="text-[14px] font-bold text-slate-400 uppercase">RAM</p>
+              <p className="text-[15px] font-medium leading-tight text-white">{plan.ram}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
+              <p className="text-[14px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
               <div className="flex flex-col">
-                <p className="text-[11px] font-medium leading-tight text-white">{plan.storage}</p>
-                <p className="text-[11px] font-medium leading-tight text-slate-400">{plan.storageNote}</p>
+                <p className="text-[15px] font-medium leading-tight text-white">{plan.storage}</p>
+                <p className="text-[15px] font-medium leading-tight text-slate-400">{plan.storageNote}</p>
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">PORTA</p>
-              <p className="text-[11px] font-medium leading-tight text-white">{plan.port}</p>
+              <p className="text-[14px] font-bold text-slate-400 uppercase">PORTA</p>
+              <p className="text-[15px] font-medium leading-tight text-white">{plan.port}</p>
             </div>
             <button 
               onClick={() => router.push('/vds#plans')}
-              className="absolute top-1/2 -translate-y-1/2 right-8 text-[11px] font-black text-sky-400 hover:underline uppercase tracking-wider"
+              className="absolute top-1/2 -translate-y-1/2 right-8 text-[15px] font-black text-sky-400 hover:underline uppercase tracking-wider"
             >
               Mudar
             </button>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wide">Quantidade de servidores</span>
+            <span className="text-[15px] font-bold text-slate-300 uppercase tracking-wide">Quantidade de servidores</span>
             <Select value={quantity} onValueChange={setQuantity}>
               <SelectTrigger className="w-16 h-10 border border-white/10 bg-white/5 text-white">
                 <SelectValue />
@@ -737,7 +737,7 @@ export default function VdsConfigurePage() {
         {/* Duration Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -751,18 +751,18 @@ export default function VdsConfigurePage() {
                   )}
                 >
                   {d.discount && (
-                    <div className="absolute -top-3 left-6 bg-[#000B12] text-emerald-400 text-[9px] font-black px-3 py-1 border border-emerald-500/30 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-500/10">
+                    <div className="absolute -top-3 left-6 bg-[#000B12] text-emerald-400 text-[13px] font-black px-3 py-1 border border-emerald-500/30 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-500/10">
                       {d.discount}
                     </div>
                   )}
-                  <span className="text-sm font-medium">{d.label}</span>
+                  <span className="text-lg font-medium">{d.label}</span>
                   <div className="text-right">
-                    {d.oldEur && <p className="text-[10px] text-rose-500 line-through font-medium opacity-70">{formatBRLPerMonth(d.oldEur)}</p>}
-                    <p className="text-lg font-black text-white">{formatBRLPerMonth(d.eur)}</p>
+                    {d.oldEur && <p className="text-[14px] text-rose-500 line-through font-medium opacity-70">{formatBRLPerMonth(d.oldEur)}</p>}
+                    <p className="text-2xl font-black text-white">{formatBRLPerMonth(d.eur)}</p>
                   </div>
                 </div>
                 <div className={cn(
-                  "text-center py-1.5 rounded-b-md text-[11px] font-bold transition-colors uppercase tracking-wider",
+                  "text-center py-1.5 rounded-b-md text-[15px] font-bold transition-colors uppercase tracking-wider",
                   d.setupFee === "Sem taxa de instalação" ? "bg-emerald-500/20 text-emerald-400" : "text-slate-400"
                 )}>
                   {d.setupFee}
@@ -777,7 +777,7 @@ export default function VdsConfigurePage() {
         {/* Region Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-white uppercase tracking-tight">Região</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight">Região</h2>
           </div>
 
           <div className="flex flex-nowrap items-start gap-8">
@@ -792,7 +792,7 @@ export default function VdsConfigurePage() {
                     key={r.id}
                     onClick={() => setRegionTab(r.id)}
                     className={cn(
-                      "px-8 py-3 text-[11px] font-bold uppercase tracking-wider relative transition-colors",
+                      "px-8 py-3 text-[15px] font-bold uppercase tracking-wider relative transition-colors",
                       regionTab === r.id ? "text-sky-400" : "text-slate-500 hover:text-white"
                     )}
                   >
@@ -808,19 +808,19 @@ export default function VdsConfigurePage() {
                     key={loc.id}
                     onClick={() => setLocation(loc.id)}
                     className={cn(
-                      "w-full border p-4 flex items-center justify-between text-xs font-bold bg-white/5 backdrop-blur-md relative transition-all rounded-lg",
+                      "w-full border p-4 flex items-center justify-between text-base font-bold bg-white/5 backdrop-blur-md relative transition-all rounded-lg",
                       location === loc.id ? "border-sky-500 bg-white/10" : "border-white/10",
                       loc.recommended && "mt-6"
                     )}
                   >
                     {loc.recommended && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[9px] font-black px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[12px] font-black px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
                         Recomendado - Melhor latência para sua região
                       </div>
                     )}
-                    <div className="flex-1 text-left text-white">{loc.name}</div>
+                    <div className="flex-1 text-left text-white text-base md:text-lg">{loc.name}</div>
                     <div className="flex-1 text-center text-slate-400 font-medium">{loc.latency && `– Latência de ${loc.latency}`}</div>
-                    <div className="flex-1 text-right text-white font-black">{loc.eur ? formatBRLPerMonth(loc.eur) : "Grátis"}</div>
+                    <div className="flex-1 text-right text-white font-black text-base md:text-lg">{loc.eur ? formatBRLPerMonth(loc.eur) : "Grátis"}</div>
                   </button>
                 ))}
                 {(!plan.locations[regionTab] || plan.locations[regionTab].length === 0) && (
@@ -838,15 +838,15 @@ export default function VdsConfigurePage() {
         {/* Storage Section - 2x2 Layout with VPS Styling */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-white uppercase tracking-tight">Armazenamento</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight">Armazenamento</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Fixed Base Box */}
             <div className="flex items-center justify-between rounded-xl border border-sky-500/50 bg-white/10 p-5 shadow-xl relative overflow-hidden backdrop-blur-md">
               <div className="flex flex-col">
-                <span className="text-[13px] font-black text-white">{plan.storage} (Incluído)</span>
-                <span className="text-[10px] text-sky-400 font-bold uppercase tracking-wider">Livre — Sempre Ativo</span>
+                <span className="text-[15px] font-black text-white">{plan.storage} (Incluído)</span>
+                <span className="text-[13px] text-sky-400 font-bold uppercase tracking-wider">Livre — Sempre Ativo</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex h-5 w-5 items-center justify-center rounded border border-sky-400 bg-sky-400 text-white shadow-lg shadow-sky-400/20">
@@ -880,9 +880,9 @@ export default function VdsConfigurePage() {
                         )}>
                           {qty > 0 && <Check className="h-2.5 w-2.5" strokeWidth={4} />}
                         </div>
-                        <span className="text-[13px] font-bold text-white">{upgrade.name}</span>
+                        <span className="text-[15px] font-bold text-white">{upgrade.name}</span>
                       </div>
-                      <span className="text-[10px] text-sky-400 font-bold mt-1 ml-6">{formatBRLPerMonth(upgrade.eur)}</span>
+                      <span className="text-[13px] text-sky-400 font-bold mt-1 ml-6">{formatBRLPerMonth(upgrade.eur)}</span>
                     </div>
 
                   <div onClick={(e) => e.stopPropagation()}>
@@ -891,7 +891,7 @@ export default function VdsConfigurePage() {
                       onValueChange={(v) => handleStorageQtyChange(upgrade.id, parseInt(v))}
                       disabled={disabled}
                     >
-                      <SelectTrigger className="h-9 w-16 border-white/10 bg-white/5 text-white text-[12px] font-bold px-3">
+                      <SelectTrigger className="h-9 w-16 border-white/10 bg-white/5 text-white text-[14px] font-bold px-3">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#000B12] border-white/10 text-white z-[110]">
@@ -912,7 +912,7 @@ export default function VdsConfigurePage() {
         {/* Image Section - Exact VPS Structure */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black text-white uppercase tracking-widest">Imagem</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-widest">Imagem</h2>
             <button
               onClick={() => setShowMoreImages(!showMoreImages)}
               className="flex items-center gap-1 text-[11px] font-black text-white uppercase tracking-wider"
@@ -940,7 +940,7 @@ export default function VdsConfigurePage() {
                       key={cat.id}
                       onClick={() => setImageCategory(cat.id)}
                       className={cn(
-                        "px-8 py-3 text-[11px] font-black uppercase tracking-widest relative transition-colors",
+                        "px-8 py-3 text-[14px] font-black uppercase tracking-widest relative transition-colors",
                         imageCategory === cat.id ? "text-sky-400" : "text-slate-500 hover:text-white"
                       )}
                     >
@@ -989,8 +989,8 @@ export default function VdsConfigurePage() {
                         {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className="text-slate-400" />}
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-[11px] font-black text-white uppercase tracking-tight">{img.name}</p>
-                        <p className="text-[10px] text-sky-400 font-black">
+                        <p className="text-[14px] font-black text-white uppercase tracking-tight">{img.name}</p>
+                        <p className="text-[13px] text-sky-400 font-black">
                           {typeof img.price === "number" ? formatBRLPerMonth(img.price) : img.eur ? formatBRLPerMonth(img.eur) : img.price}
                         </p>
                       </div>
@@ -1018,8 +1018,8 @@ export default function VdsConfigurePage() {
                       {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className="text-slate-400" />}
                     </div>
                     <div className="flex-1 text-left">
-                      <p className="text-[11px] font-black text-white uppercase tracking-tight">{img.name}</p>
-                      <p className="text-[10px] text-sky-400 font-black uppercase">
+                      <p className="text-[14px] font-black text-white uppercase tracking-tight">{img.name}</p>
+                      <p className="text-[13px] text-sky-400 font-black uppercase">
                         {(img as any).eur ? formatBRLPerMonth((img as any).eur) : "Incluído"}
                       </p>
                     </div>
@@ -1037,9 +1037,9 @@ export default function VdsConfigurePage() {
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
-                <h2 className="text-2xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
+                <h2 className="text-3xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
               </div>
-              <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[11px] font-black text-white uppercase tracking-widest hover:text-sky-400 transition-colors">
+              <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[14px] font-black text-white uppercase tracking-widest hover:text-sky-400 transition-colors">
                 {showAdditionalFeatures ? <><ChevronUp size={14} /> Fechar</> : <><ChevronDown size={14} /> Mostrar</>}
               </button>
             </div>
@@ -1049,11 +1049,11 @@ export default function VdsConfigurePage() {
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-12 overflow-hidden px-1 py-1">
                   {/* Networking */}
                   <div className="space-y-8">
-                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Rede</h3>
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight">Rede</h3>
                     <div className="space-y-6 pl-4">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-sm font-black text-white uppercase tracking-tight">Rede Privada</span>
+                          <span className="text-base font-black text-white uppercase tracking-tight">Rede Privada</span>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
@@ -1075,18 +1075,18 @@ export default function VdsConfigurePage() {
                       {/* Bandwidth (Fixed) */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-sm font-black text-white uppercase tracking-tight">Largura de Banda</span>
+                          <span className="text-base font-black text-white uppercase tracking-tight">Largura de Banda</span>
                         </div>
                         <div className="md:col-span-9">
                           <div className="h-12 border border-white/10 rounded-xl px-4 flex flex-col justify-center bg-white/5">
-                            <span className="text-sm font-black text-white uppercase tracking-tight">Tráfego Ilimitado</span>
-                            <span className="text-[10px] text-sky-400 font-bold uppercase tracking-wider">Política de Uso Justo</span>
+                            <span className="text-base font-black text-white uppercase tracking-tight">Tráfego Ilimitado</span>
+                            <span className="text-[13px] text-sky-400 font-bold uppercase tracking-wider">Política de Uso Justo</span>
                           </div>
                         </div>
                       </div>
                       {/* IPv4 */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-sm font-black text-white uppercase tracking-tight">IPv4</span></div>
+                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-base font-black text-white uppercase tracking-tight">IPv4</span></div>
                         <div className="md:col-span-9">
                           <Select value={ipv4Address} onValueChange={setIpv4Address}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white text-left justify-start"><SelectValue /></SelectTrigger>
@@ -1096,7 +1096,7 @@ export default function VdsConfigurePage() {
                                 <SelectItem key={n} value={`${n + 1}ip`} className="focus:bg-white/10 focus:text-white">
                                   <div className="flex items-center justify-between w-full">
                                     <span>1 Endereço IP + {n} IP{n > 1 ? "s" : ""} Adicional{n > 1 ? "ais" : ""}</span>
-                                    <span className="text-sky-400 font-black ml-4 text-[11px]">{formatBRLPerMonth(plan.additionalIpEur * n)}</span>
+                                    <span className="text-sky-400 font-black ml-4 text-[13px]">{formatBRLPerMonth(plan.additionalIpEur * n)}</span>
                                   </div>
                                 </SelectItem>
                               ))}
@@ -1111,12 +1111,12 @@ export default function VdsConfigurePage() {
 
                   {/* Add-Ons */}
                   <div className="space-y-8">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Complementos</h3>
+                    <h3 className="text-base font-black text-white uppercase tracking-widest">Complementos</h3>
                     <div className="space-y-6 pl-4">
                       {/* Backup Space */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-sm font-black text-white uppercase tracking-tight">Espaço de Backup</span>
+                          <span className="text-base font-black text-white uppercase tracking-tight">Espaço de Backup</span>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={backupSpace} onValueChange={setBackupSpace}>
@@ -1133,7 +1133,7 @@ export default function VdsConfigurePage() {
                       </div>
                       {/* Object Storage */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-sm font-black text-white uppercase tracking-tight">Armazenamento de Objetos</span></div>
+                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-base font-black text-white uppercase tracking-tight">Armazenamento de Objetos</span></div>
                         <div className="md:col-span-9">
                           <Select value={objectStorage} onValueChange={setObjectStorage}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue placeholder="Nenhum" /></SelectTrigger>
@@ -1149,7 +1149,7 @@ export default function VdsConfigurePage() {
                       </div>
                       {/* Management */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-sm font-black text-white uppercase tracking-tight">Gerenciamento</span></div>
+                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-base font-black text-white uppercase tracking-tight">Gerenciamento</span></div>
                         <div className="md:col-span-9">
                           <Select value={serverManagement} onValueChange={setServerManagement}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue /></SelectTrigger>
@@ -1162,7 +1162,7 @@ export default function VdsConfigurePage() {
                       </div>
                       {/* Monitoring */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-sm font-black text-white uppercase tracking-tight">Monitoramento</span></div>
+                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-base font-black text-white uppercase tracking-tight">Monitoramento</span></div>
                         <div className="md:col-span-9">
                           <Select value={monitoring} onValueChange={setMonitoring}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue placeholder="Nenhum" /></SelectTrigger>
@@ -1190,27 +1190,27 @@ export default function VdsConfigurePage() {
 
         {/* Auth Section */}
         <section className="bg-gradient-to-br from-white/5 to-transparent backdrop-blur-[2px] rounded-2xl p-8 border border-white/10 shadow-2xl transition-all hover:border-white/20 group">
-          <h2 className="text-sm font-black text-white uppercase tracking-widest mb-8">Login e senha para o seu servidor</h2>
+          <h2 className="text-base font-black text-white uppercase tracking-widest mb-8">Login e senha para o seu servidor</h2>
           <div className="max-w-3xl space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-              <div className="md:col-span-3"><span className="text-sm font-black text-slate-400 uppercase tracking-tight">Usuário</span></div>
-              <div className="md:col-span-9"><span className="text-white font-black uppercase tracking-tight">root</span></div>
+              <div className="md:col-span-3"><span className="text-base font-black text-slate-400 uppercase tracking-tight">Usuário</span></div>
+              <div className="md:col-span-9"><span className="text-white font-black uppercase tracking-tight text-lg">root</span></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              <div className="md:col-span-3 pt-3"><span className="text-sm font-black text-slate-400 uppercase tracking-tight">Senha</span></div>
+              <div className="md:col-span-3 pt-3"><span className="text-base font-black text-slate-400 uppercase tracking-tight">Senha</span></div>
               <div className="md:col-span-9 space-y-2">
                 <div className="flex justify-start">
                   <button onClick={() => {
                     const pass = Math.random().toString(36).slice(-10) + "A1!";
                     setPassword(pass); setPasswordTouched(true);
-                  }} className="text-[#3B82F6] text-xs hover:underline">Gerar nova senha</button>
+                  }} className="text-[#3B82F6] text-sm hover:underline font-bold">Gerar nova senha</button>
                 </div>
                 <div className="relative">
                   <Input type={showPassword ? "text" : "password"} value={password} onChange={(e) => { setPassword(e.target.value); setPasswordTouched(true); }} className={cn("h-12 bg-white/5 border-white/5 text-white focus:border-sky-500 pr-12 rounded-xl", passwordTouched && password.length > 0 && !isPasswordValid(password) && "border-red-500")} />
                   <button onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
                 </div>
-                {passwordTouched && password.length > 0 && !isPasswordValid(password) && <p className="text-red-500 text-xs flex items-center gap-1"><AlertCircle size={14} /> Senha inválida (Mín. 8 caracteres, maiúscula, número e símbolo)</p>}
-                {isPasswordValid(password) && <p className="text-emerald-500 text-xs flex items-center gap-1"><Check size={14} /> Senha forte e segura</p>}
+                {passwordTouched && password.length > 0 && !isPasswordValid(password) && <p className="text-red-500 text-sm font-bold flex items-center gap-1"><AlertCircle size={14} /> Senha inválida (Mín. 8 caracteres, maiúscula, número e símbolo)</p>}
+                {isPasswordValid(password) && <p className="text-emerald-500 text-sm font-bold flex items-center gap-1"><Check size={14} /> Senha forte e segura</p>}
               </div>
             </div>
           </div>
@@ -1222,11 +1222,11 @@ export default function VdsConfigurePage() {
         <AnimatePresence>
           {showSummaryDetails && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-white/10 bg-white/5 backdrop-blur-md">
-              <div className="max-w-6xl mx-auto px-10 py-6">
-                <h3 className="text-sm font-black text-white mb-4 uppercase tracking-widest">Detalhamento do Pedido</h3>
+              <div className="max-w-7xl mx-auto px-10 py-6">
+                <h3 className="text-base font-black text-white mb-4 uppercase tracking-widest">Detalhamento do Pedido</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
                   {(calculateItems() as any[]).map((item: any, idx: number) => (
-                    <div key={idx} className="flex justify-between items-center text-sm border-b border-white/5 pb-1">
+                    <div key={idx} className="flex justify-between items-center text-lg border-b border-white/5 pb-1">
                       <span className="text-slate-400 font-medium">{item.label}</span>
                       <span className="font-black text-white">{formatBRL(item.price / currentRate)}</span>
                     </div>
@@ -1237,18 +1237,18 @@ export default function VdsConfigurePage() {
           )}
         </AnimatePresence>
 
-        <div className="max-w-6xl mx-auto px-10 h-24 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-10 h-24 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center shadow-lg border border-white/10"><ShieldCheck className="w-6 h-6 text-sky-400" /></div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-white text-base uppercase tracking-widest leading-tight">Resumo do Pedido</h3>
+                <h3 className="font-black text-white text-xl uppercase tracking-widest leading-tight">Resumo do Pedido</h3>
                 <button onClick={() => setShowSummaryDetails(!showSummaryDetails)} className="p-1 hover:bg-white/10 rounded-full transition-colors">{showSummaryDetails ? <ChevronDown size={20} className="text-sky-400" /> : <ChevronUp size={20} className="text-sky-400" />}</button>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-20">
+          <div className="flex items-center gap-4 md:gap-8 lg:gap-16">
             {(() => {
               const totalBrl = calculateTotal();
               const durationMonths = parseInt(duration);
@@ -1261,14 +1261,14 @@ export default function VdsConfigurePage() {
 
               return (
                 <>
-                  <div className="flex-1 text-center min-w-[200px]">{totalSavings > 0 && <p className="text-emerald-500 font-bold text-sm">Você economiza {formatBRL(totalSavings / currentRate)}.</p>}</div>
-                  <div className="flex items-center gap-12">
-                    <div className="flex flex-col gap-1 min-w-[220px]">
-                      <div className="flex justify-between items-center text-[11px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[10px]">MENSAL </span><span className="text-white font-black whitespace-nowrap">{formatBRLPerMonth(totalBrl / durationMonths / currentRate)}</span></div>
-                      <div className="flex justify-between items-center text-[11px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[10px]">TAXA ÚNICA </span><span className="text-white font-black whitespace-nowrap">{formatBRL(0)}</span></div>
+                  <div className="flex-1 text-center min-w-[150px]">{totalSavings > 0 && <p className="text-emerald-500 font-bold text-lg">Você economiza {formatBRL(totalSavings / currentRate)}.</p>}</div>
+                  <div className="flex items-center gap-4 md:gap-6 lg:gap-10">
+                    <div className="flex flex-col gap-1 min-w-[200px]">
+                      <div className="flex justify-between items-center text-[15px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[15px]">MENSAL </span><span className="text-white font-black whitespace-nowrap">{formatBRLPerMonth(totalBrl / durationMonths / currentRate)}</span></div>
+                      <div className="flex justify-between items-center text-[15px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[15px]">TAXA ÚNICA </span><span className="text-white font-black whitespace-nowrap">{formatBRL(0)}</span></div>
                       <div className="flex justify-between items-center mt-1">
-                        <div className="flex flex-col"><span className="text-[13px] font-black text-white uppercase tracking-tighter">Vencido Hoje</span><span className="text-[10px] text-slate-500 font-black -mt-1 uppercase tracking-widest">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span></div>
-                        <span className="text-xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(totalBrl / currentRate)}</span>
+                        <div className="flex flex-col"><span className="text-[17px] font-black text-white uppercase tracking-tighter">Vencido Hoje</span><span className="text-[14px] text-slate-500 font-black -mt-1 uppercase tracking-widest">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span></div>
+                        <span className="text-3xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(totalBrl / currentRate)}</span>
                       </div>
                     </div>
                     <Button disabled={!isPasswordValid(password)} onClick={() => {
@@ -1276,7 +1276,7 @@ export default function VdsConfigurePage() {
                         const storageUpgradesJson = encodeURIComponent(JSON.stringify(storageUpgrades));
                         router.push(`/checkout/personal-data?planId=${id}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&monitoring=${monitoring}&privateNetwork=${privateNetwork}&ipv4Address=${ipv4Address}&objectStorage=${objectStorage}&password=${encodeURIComponent(password)}&type=vds&storageUpgrades=${storageUpgradesJson}`);
                       }
-                    }} className={cn("font-black h-14 px-12 rounded-lg text-lg shadow-xl uppercase tracking-widest transition-all min-w-[180px]", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed shadow-none")}>Próximo</Button>
+                    }} className={cn("font-black h-14 px-12 rounded-lg text-xl shadow-xl uppercase tracking-widest transition-all min-w-[180px]", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed shadow-none")}>Próximo</Button>
                   </div>
                 </>
               );
@@ -1290,10 +1290,10 @@ export default function VdsConfigurePage() {
         {showUbuntuModal && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4" onClick={() => setShowUbuntuModal(false)}>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] overflow-hidden shadow-2xl p-10 space-y-8 border border-white/10" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/image.png" alt="Ubuntu" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Ubuntu</h2></div>
-              <p className="text-slate-400 text-[15px] font-medium leading-relaxed">Ubuntu é um sistema operacional livre e de código aberto baseado em Linux.</p>
+              <div className="flex items-center gap-4"><img src="/image.png" alt="Ubuntu" className="w-10 h-10" /><h2 className="text-2xl font-black text-white uppercase tracking-tight">Ubuntu</h2></div>
+              <p className="text-slate-400 text-[17px] font-medium leading-relaxed">Ubuntu é um sistema operacional livre e de código aberto baseado em Linux.</p>
               <div className="space-y-4">
-                <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Versão</label>
+                <label className="text-base font-bold text-slate-300 uppercase tracking-widest">Versão</label>
                 <Select value={ubuntuVersion} onValueChange={setUbuntuVersion}>
                   <SelectTrigger className="h-14 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-[#000B12] border-white/10 text-white"><SelectItem value="Ubuntu 24.04">Ubuntu 24.04</SelectItem><SelectItem value="Ubuntu 22.04">Ubuntu 22.04</SelectItem></SelectContent>
@@ -1306,14 +1306,14 @@ export default function VdsConfigurePage() {
         {showCpanelModal && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4" onClick={() => setShowCpanelModal(false)}>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] overflow-hidden shadow-2xl p-10 space-y-8 border border-white/10" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/cpanel.png" alt="cPanel" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">cPanel</h2></div>
+              <div className="flex items-center gap-4"><img src="/cpanel.png" alt="cPanel" className="w-10 h-10" /><h2 className="text-2xl font-black text-white uppercase tracking-tight">cPanel</h2></div>
               <div className="space-y-4">
-                <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Licença</label>
+                <label className="text-base font-bold text-slate-300 uppercase tracking-widest">Licença</label>
                 <Select value={cpanelLicence} onValueChange={setCpanelLicence}>
                   <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-xl text-white">
                     <div className="flex items-center justify-between w-full pr-2">
-                      <span className="text-sm">cPanel/WHM ({cpanelLicence} contas)</span>
-                      <span className="text-xs text-sky-400 font-black">
+                      <span className="text-base">cPanel/WHM ({cpanelLicence} contas)</span>
+                      <span className="text-sm text-sky-400 font-black">
                         {(() => {
                           let eur = currentImagePrices.cpanel;
                           const accounts = parseInt(cpanelLicence);
@@ -1361,16 +1361,16 @@ export default function VdsConfigurePage() {
         {showPleskModal && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4" onClick={() => setShowPleskModal(false)}>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] overflow-hidden shadow-2xl p-10 space-y-8 border border-white/10" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Plesk</h2></div>
+              <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className="text-2xl font-black text-white uppercase tracking-tight">Plesk</h2></div>
               <div className="space-y-4">
-                <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Edição</label>
+                <label className="text-base font-bold text-slate-300 uppercase tracking-widest">Edição</label>
                 <Select value={pleskLicence} onValueChange={setPleskLicence}>
                   <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-xl text-white">
                     <div className="flex items-center justify-between w-full pr-2">
-                      <span className="text-sm">
+                      <span className="text-base">
                         {pleskLicence === "admin" ? "Web Admin Edition" : pleskLicence === "pro" ? "Web Pro Edition" : "Web Host Edition"}
                       </span>
-                      <span className="text-xs text-sky-400 font-black">
+                      <span className="text-sm text-sky-400 font-black">
                         {(() => {
                           let eur = currentImagePrices.pleskLinux;
                           if (pleskLicence === "pro") eur = currentImagePrices.pleskPro;
