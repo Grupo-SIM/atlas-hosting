@@ -41,10 +41,60 @@ export function N8nChatBubble() {
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    const handleClickOutside = (e: MouseEvent) => {
+      const bubble = document.getElementById('n8n-chat-bubble');
+      if (!bubble) return;
+      const chatWindow = bubble.querySelector('[class*="n8n-chat-ui-window"]') as HTMLElement | null;
+      if (!chatWindow) return;
+      const isOpen = chatWindow.offsetParent !== null || getComputedStyle(chatWindow).display !== 'none';
+      if (!isOpen) return;
+      if (!bubble.contains(e.target as Node)) {
+        const toggle = bubble.querySelector('[class*="n8n-chat-ui-toggle"]') as HTMLButtonElement | null;
+        toggle?.click();
+      }
+    };
+
+    const repositionOnMobile = () => {
+      const isMobile = window.innerWidth <= 1024;
+      const elements = [
+        document.getElementById('n8n-chat-bubble'),
+        ...Array.from(document.querySelectorAll('[class*="n8n-chat-ui-toggle"]')),
+        ...Array.from(document.querySelectorAll('[class*="n8n-chat-ui-window"]')),
+        ...Array.from(document.querySelectorAll('div[class*="n8n-chat-ui"]')),
+        ...Array.from(document.querySelectorAll('button[class*="n8n-chat-ui"]'))
+      ];
+
+      elements.forEach(el => {
+        if (el instanceof HTMLElement) {
+          if (isMobile) {
+            el.style.setProperty('right', '20px', 'important');
+            el.style.setProperty('left', 'auto', 'important');
+            el.style.setProperty('bottom', '110px', 'important');
+          } else {
+            el.style.removeProperty('right');
+            el.style.removeProperty('left');
+            el.style.removeProperty('bottom');
+          }
+        }
+      });
+    };
+
+    const observer = new MutationObserver(() => {
+      repositionOnMobile();
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener('resize', repositionOnMobile);
+    
+    // Initial call after a short delay to allow widget injection
+    const timer = setTimeout(repositionOnMobile, 500);
 
     return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', repositionOnMobile);
+      clearTimeout(timer);
       document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -304,6 +354,17 @@ export function N8nChatBubble() {
           border-radius: 10px;
         }
 
+        @media (max-width: 1024px) {
+          #n8n-chat-bubble,
+          [class*="n8n-chat-ui-toggle"],
+          [class*="n8n-chat-ui-window"],
+          div[class*="n8n-chat-ui"],
+          button[class*="n8n-chat-ui"] {
+            right: 20px !important;
+            left: auto !important;
+            bottom: 110px !important;
+          }
+        }
 
       `}</style>
       <div id="n8n-chat-bubble" />

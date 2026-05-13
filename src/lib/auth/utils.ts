@@ -206,7 +206,6 @@ export async function createUser(
       // Envia apenas o email de verificação em background
       sendEmailVerificationEmail(
         newUser[0].email,
-        newUser[0].name,
         verificationToken.token,
         verificationToken.code ?? ""
       ).catch(err => console.error("Background verification email error:", err));

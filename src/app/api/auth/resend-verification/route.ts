@@ -42,7 +42,6 @@ export async function POST(request: NextRequest) {
     // Send verification email
     await sendEmailVerificationEmail(
       user.email,
-      user.name,
       verificationToken.token,
       verificationToken.code ?? ""
     );

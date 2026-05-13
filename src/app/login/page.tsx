@@ -26,8 +26,8 @@ export default function LoginPage({
 
   return (
     <AuthPage
-      title="Bem-vindo de volta"
-      subtitle="Faça login para acessar sua conta de hospedagem"
+      title="Bem-vindo"
+      subtitle="Faça login para acessar sua conta"
       switchHref={signupSwitchHref}
       switchTitle="Não possui uma conta?"
       switchText="Criar uma conta"

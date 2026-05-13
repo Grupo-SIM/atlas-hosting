@@ -679,8 +679,8 @@ export default function VdsConfigurePage() {
       <main className="mx-auto max-w-6xl px-6 pt-32 pb-12 space-y-12">
         {/* Header Section */}
         <div className="mb-8">
-          <Link href="/vds" className="mb-6 flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900">
-            <ArrowLeft className="h-4 w-4" />
+          <Link href="/vds#plans" className="group mb-6 flex items-center gap-2 text-sm font-bold text-sky-400 transition-all hover:text-sky-300">
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Voltar para VDS
           </Link>
           <h1 className="text-4xl font-black tracking-tight text-white uppercase drop-shadow-sm">Configure seu {plan.name}</h1>
@@ -711,7 +711,12 @@ export default function VdsConfigurePage() {
               <p className="text-[10px] font-bold text-slate-400 uppercase">PORTA</p>
               <p className="text-[11px] font-medium leading-tight text-white">{plan.port}</p>
             </div>
-            <button className="absolute top-1/2 -translate-y-1/2 right-8 text-[11px] font-black text-sky-400 hover:underline uppercase tracking-wider">Mudar</button>
+            <button 
+              onClick={() => router.push('/vds#plans')}
+              className="absolute top-1/2 -translate-y-1/2 right-8 text-[11px] font-black text-sky-400 hover:underline uppercase tracking-wider"
+            >
+              Mudar
+            </button>
           </div>
 
           <div className="flex items-center gap-4">
@@ -733,7 +738,6 @@ export default function VdsConfigurePage() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
-            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -774,7 +778,6 @@ export default function VdsConfigurePage() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-black text-white uppercase tracking-tight">Região</h2>
-            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="flex flex-nowrap items-start gap-8">
@@ -836,7 +839,6 @@ export default function VdsConfigurePage() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-black text-white uppercase tracking-tight">Armazenamento</h2>
-            <Info size={16} className="text-slate-400" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1036,7 +1038,6 @@ export default function VdsConfigurePage() {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
-                <div className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-slate-500 text-xs cursor-help">?</div>
               </div>
               <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[11px] font-black text-white uppercase tracking-widest hover:text-sky-400 transition-colors">
                 {showAdditionalFeatures ? <><ChevronUp size={14} /> Fechar</> : <><ChevronDown size={14} /> Mostrar</>}
@@ -1053,7 +1054,6 @@ export default function VdsConfigurePage() {
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
                           <span className="text-sm font-black text-white uppercase tracking-tight">Rede Privada</span>
-                          <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-slate-500 text-[10px] cursor-help">?</div>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
@@ -1117,7 +1117,6 @@ export default function VdsConfigurePage() {
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
                           <span className="text-sm font-black text-white uppercase tracking-tight">Espaço de Backup</span>
-                          <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-slate-500 text-[10px] cursor-help">?</div>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={backupSpace} onValueChange={setBackupSpace}>
@@ -1210,8 +1209,8 @@ export default function VdsConfigurePage() {
                   <Input type={showPassword ? "text" : "password"} value={password} onChange={(e) => { setPassword(e.target.value); setPasswordTouched(true); }} className={cn("h-12 bg-white/5 border-white/5 text-white focus:border-sky-500 pr-12 rounded-xl", passwordTouched && password.length > 0 && !isPasswordValid(password) && "border-red-500")} />
                   <button onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
                 </div>
-                {passwordTouched && password.length > 0 && !isPasswordValid(password) && <p className="text-red-500 text-xs flex items-center gap-1"><AlertCircle size={14} /> Min. 8 caracteres, maiúscula, número e símbolo</p>}
-                {isPasswordValid(password) && <p className="text-emerald-500 text-xs flex items-center gap-1"><Check size={14} /> Senha segura</p>}
+                {passwordTouched && password.length > 0 && !isPasswordValid(password) && <p className="text-red-500 text-xs flex items-center gap-1"><AlertCircle size={14} /> Senha inválida (Mín. 8 caracteres, maiúscula, número e símbolo)</p>}
+                {isPasswordValid(password) && <p className="text-emerald-500 text-xs flex items-center gap-1"><Check size={14} /> Senha forte e segura</p>}
               </div>
             </div>
           </div>
@@ -1265,8 +1264,8 @@ export default function VdsConfigurePage() {
                   <div className="flex-1 text-center min-w-[200px]">{totalSavings > 0 && <p className="text-emerald-500 font-bold text-sm">Você economiza {formatBRL(totalSavings / currentRate)}.</p>}</div>
                   <div className="flex items-center gap-12">
                     <div className="flex flex-col gap-1 min-w-[220px]">
-                      <div className="flex justify-between items-center text-[11px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[10px]">MENSAL <Info className="w-3 h-3 opacity-40" /></span><span className="text-white font-black whitespace-nowrap">{formatBRLPerMonth(totalBrl / durationMonths / currentRate)}</span></div>
-                      <div className="flex justify-between items-center text-[11px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[10px]">TAXA ÚNICA <Info className="w-3 h-3 opacity-40" /></span><span className="text-white font-black whitespace-nowrap">{formatBRL(0)}</span></div>
+                      <div className="flex justify-between items-center text-[11px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[10px]">MENSAL </span><span className="text-white font-black whitespace-nowrap">{formatBRLPerMonth(totalBrl / durationMonths / currentRate)}</span></div>
+                      <div className="flex justify-between items-center text-[11px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[10px]">TAXA ÚNICA </span><span className="text-white font-black whitespace-nowrap">{formatBRL(0)}</span></div>
                       <div className="flex justify-between items-center mt-1">
                         <div className="flex flex-col"><span className="text-[13px] font-black text-white uppercase tracking-tighter">Vencido Hoje</span><span className="text-[10px] text-slate-500 font-black -mt-1 uppercase tracking-widest">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span></div>
                         <span className="text-xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(totalBrl / currentRate)}</span>

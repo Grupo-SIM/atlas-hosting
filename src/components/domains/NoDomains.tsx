@@ -10,7 +10,10 @@ export default function NoDomains() {
       <p className="text-muted-foreground mb-4">
         Você ainda não registrou nenhum domínio.
       </p>
-      <Button asChild={true}>
+      <Button 
+        className="bg-gradient-to-r from-sky-500 to-sky-600 text-white font-bold hover:brightness-110 border-0"
+        asChild={true}
+      >
         <Link href="/domain?tab=register">
           <Globe className="mr-2 h-4 w-4" /> Registrar Novo Domínio
         </Link>

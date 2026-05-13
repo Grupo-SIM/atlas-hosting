@@ -184,11 +184,7 @@ export default function SignupForm({
 
         <Button
           type="submit"
-          className={`w-full max-w-[448px] h-[48px] text-sm font-bold rounded-[6px] transition-all shadow-lg uppercase tracking-wider ${
-            isValid && !isValidating && !isLoading
-              ? "bg-white text-slate-900 hover:bg-white/90"
-              : "bg-[#1A73FF] text-white opacity-50"
-          }`}
+          className="w-full max-w-[448px] h-[48px] text-sm font-bold text-white rounded-[6px] transition-all shadow-lg uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
           disabled={!isValid || isValidating || isLoading}
         >
           {isLoading ? (

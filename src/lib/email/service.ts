@@ -125,7 +125,6 @@ export async function sendPasswordResetEmail(
  */
 export async function sendEmailVerificationEmail(
   email: string,
-  firstName: string,
   verificationToken: string,
   verificationCode: string
 ): Promise<void> {
@@ -134,11 +133,11 @@ export async function sendEmailVerificationEmail(
 
   const html = await render(
     AtlasNotificationEmail({
-      firstName,
+      firstName: email,
       organizationName: "Atlas Hosting",
       title: "Verificar seu endereço de email",
       message:
-        "Para completar o cadastro da sua conta, você precisa verificar seu endereço de email. Use o código abaixo na página de verificação:",
+        "Para completar o seu cadastro, você precisa verificar seu endereço de email. Use o código abaixo na página de verificação:",
       verificationCode,
       severity: "info",
       actionUrl: verificationLink,

@@ -24,11 +24,14 @@ export default async function DomainSearchPage({
   const query = resolvedParams.q || "";
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-atlas-dark-1 selection:bg-sky-500/30">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#00050A] selection:bg-sky-500/30">
       <Navbar />
       
-      {/* Background Gradient */}
-      <div className="fixed inset-0 z-0 bg-landing-gradient opacity-100 pointer-events-none" />
+      {/* Background Grid Pattern from VDS */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[#00050A]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px]" />
+      </div>
 
       <main className="relative z-10 w-full pt-20 md:pt-32">
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 md:px-8 md:pb-24 md:pt-10">

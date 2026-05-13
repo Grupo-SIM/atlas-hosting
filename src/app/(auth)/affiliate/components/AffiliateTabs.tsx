@@ -135,7 +135,7 @@ function statusBadge(status: string) {
     <Badge 
       variant="outline" 
       className={cn(
-        "gap-1.5 px-3 py-1 font-bold text-[10px] uppercase tracking-wider rounded-full transition-all duration-300 hover:bg-opacity-20", 
+        "gap-1.5 px-3 py-1 font-bold text-[10px] uppercase tracking-wider rounded-full transition-all duration-300 pointer-events-none", 
         config.className
       )}
     >
@@ -199,7 +199,7 @@ export function AffiliateTabs({
   minWithdrawal,
   fee,
 }: AffiliateTabsProps) {
-  const [tab, setTab] = useState<"overview" | "sales" | "withdrawals">("overview");
+  const [tab, setTab] = useState<"overview" | "referrals" | "sales" | "withdrawals">("overview");
   const [modalOpen, setModalOpen] = useState(false);
   const [rejectionReasonModal, setRejectionReasonModal] = useState<string | null>(null);
   const [syncing, setSyncing] = useState<string | null>(null);
@@ -216,6 +216,7 @@ export function AffiliateTabs({
   const [withdrawalEndDate, setWithdrawalEndDate] = useState<Date | null>(null);
   const [referralStartDate, setReferralStartDate] = useState<Date | null>(null);
   const [referralEndDate, setReferralEndDate] = useState<Date | null>(null);
+  const [referralSearch, setReferralSearch] = useState("");
 
   // Pagination states
   const [referralsPage, setReferralsPage] = useState(1);
@@ -223,7 +224,7 @@ export function AffiliateTabs({
   const [withdrawalsPage, setWithdrawalsPage] = useState(1);
 
   // Reset pagination on filter change
-  useEffect(() => { setReferralsPage(1); }, [referrals.length, referralStartDate, referralEndDate]);
+  useEffect(() => { setReferralsPage(1); }, [referrals.length, referralStartDate, referralEndDate, referralSearch]);
   useEffect(() => { setSalesPage(1); }, [salesStatus, salesStartDate, salesEndDate]);
   useEffect(() => { setWithdrawalsPage(1); }, [withdrawalStatus, withdrawalStartDate, withdrawalEndDate]);
 
@@ -288,7 +289,14 @@ export function AffiliateTabs({
       endMatch = date <= end;
     }
 
-    return startMatch && endMatch;
+    let emailMatch = true;
+    if (referralSearch && r.email) {
+      emailMatch = r.email.toLowerCase().includes(referralSearch.toLowerCase());
+    } else if (referralSearch && !r.email) {
+      emailMatch = false;
+    }
+
+    return startMatch && endMatch && emailMatch;
   });
 
   // Paged data
@@ -321,6 +329,8 @@ export function AffiliateTabs({
 
   const tabs = [
     { id: "overview" as const, label: "Visão Geral" },
+    { id: "referrals" as const, label: "Indicações" },
+    { id: "sales" as const, label: "Vendas" },
     { id: "withdrawals" as const, label: "Saques" },
   ];
 
@@ -436,8 +446,12 @@ export function AffiliateTabs({
               )}
             </CardContent>
           </Card>
+        </div>
+      )}
 
-          {/* Referred Users List */}
+      {/* Referred Users Tab */}
+      {tab === "referrals" && (
+        <div className="space-y-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <div>
@@ -446,16 +460,27 @@ export function AffiliateTabs({
                   Pessoas que se cadastraram através do seu link
                 </CardDescription>
               </div>
-              <div className="w-[240px]">
-                <SimpayCalendar 
-                  label="Período"
-                  start={referralStartDate}
-                  end={referralEndDate}
-                  onChange={(start, end) => {
-                    setReferralStartDate(start);
-                    setReferralEndDate(end);
-                  }}
-                />
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">E-mail</span>
+                  <Input
+                    placeholder="Pesquisar por email..."
+                    value={referralSearch}
+                    onChange={(e) => setReferralSearch(e.target.value)}
+                    className="w-[200px] h-10 text-sm bg-transparent border-slate-200 dark:border-slate-800 font-medium"
+                  />
+                </div>
+                <div className="w-[200px]">
+                  <SimpayCalendar 
+                    label="Período"
+                    start={referralStartDate}
+                    end={referralEndDate}
+                    onChange={(start, end) => {
+                      setReferralStartDate(start);
+                      setReferralEndDate(end);
+                    }}
+                  />
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -498,8 +523,12 @@ export function AffiliateTabs({
               />
             </CardContent>
           </Card>
+        </div>
+      )}
 
-          {/* Sales History integrated into Overview */}
+      {/* Sales Tab */}
+      {tab === "sales" && (
+        <div className="space-y-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <div>

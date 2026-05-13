@@ -12,24 +12,24 @@ const roboto = Roboto({
 
 const stats = [
   {
-    value: 4,
-    suffix: "K+",
-    label: "Sites desenvolvidos",
+    value: 190,
+    suffix: "",
+    label: "países alcançados",
   },
   {
-    value: 2,
+    value: 225,
     suffix: "K+",
-    label: "Clientes satisfeitos",
+    label: "Clientes ao redor do mundo",
   },
   {
-    value: 12,
+    value: 22,
     suffix: "+",
     label: "Anos de Experiência no mercado",
   },
   {
-    value: 4.9,
-    suffix: "/5",
-    label: "Avaliação média",
+    value: 450,
+    suffix: "K+",
+    label: "Servidores rodando",
   },
 ];
 
@@ -65,7 +65,7 @@ export function Statistics() {
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="relative flex flex-col items-center justify-center text-center px-5 py-12 bg-[#0a1622] border border-white/5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden group transition-all hover:translate-y-[-4px]"
+              className="relative flex flex-col items-center justify-center text-center px-5 py-12 bg-[#00050A] border border-white/5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden group transition-all hover:translate-y-[-4px]"
             >
               {/* Persistent Bottom Bar */}
               <div className="absolute inset-x-0 bottom-0 h-[4px] bg-[#00A3FF] shadow-[0_0_15px_rgba(0,163,255,0.5)]" />

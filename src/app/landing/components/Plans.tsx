@@ -164,23 +164,23 @@ export function Plans() {
           {/* Card de Especificações Fixo */}
           <div className="w-full xl:w-[280px] shrink-0">
             <div className="bg-white/5 border border-white/10 rounded-2xl h-full flex flex-col shadow-2xl transition-all backdrop-blur-md">
-              <div className="p-8 h-[280px] flex flex-col justify-between border-b border-white/10">
-                <p className={`${roboto.className} text-[13px] font-black uppercase tracking-[0.2em] text-sky-400`}>
+              <div className="p-8 h-[280px] flex flex-col justify-between border-b border-white/10 items-center text-center">
+                <p className={`${roboto.className} text-[18px] font-black uppercase tracking-[0.2em] text-sky-400`}>
                   ESPECIFICAÇÕES
                 </p>
-                <div className="flex flex-col gap-3">
-                  <span className="text-sm font-black text-white uppercase tracking-tighter">Backup automático</span>
+                <div className="flex flex-col gap-4 items-center">
+                  <span className="text-xl font-black text-white uppercase tracking-tighter">Backup automático</span>
                   <div className="flex items-center gap-3">
                     <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} className="data-[state=unchecked]:bg-white/10 border-white/10 data-[state=checked]:bg-sky-500" />
-                    <span className="text-xs font-bold text-white">{backupEnabled ? "Ativado" : "Desativado"}</span>
+                    <span className="text-base font-bold text-white">{backupEnabled ? "Ativado" : "Desativado"}</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex-grow bg-white/5">
                 {rowSpecs.map((row, i) => (
-                  <div key={row.key} className={`px-8 h-[72px] flex flex-col justify-center border-t border-white/10 ${i === rowSpecs.length - 1 ? 'border-b-0' : ''}`}>
-                    <span className="text-[12px] font-black text-white uppercase tracking-widest leading-none">{row.label}</span>
+                  <div key={row.key} className={`px-8 h-[72px] flex flex-col justify-center items-center text-center border-t border-white/10 ${i === rowSpecs.length - 1 ? 'border-b-0' : ''}`}>
+                    <span className="text-[16px] font-black text-white uppercase tracking-widest leading-none">{row.label}</span>
                   </div>
                 ))}
               </div>
@@ -200,7 +200,7 @@ export function Plans() {
 
                 return (
                   <div key={p.id} className="flex-[0_0_100%] sm:flex-[0_0_45%] lg:flex-[0_0_31%] 2xl:flex-[0_0_24%] min-w-0">
-                    <div className={`bg-[#01101A] border rounded-2xl h-full flex flex-col transition-all duration-300 shadow-2xl backdrop-blur-md ${p.popular ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-white/10 hover:border-white/20'}`}>
+                    <div className={`bg-[#00050A] border rounded-2xl h-full flex flex-col transition-all duration-300 shadow-2xl backdrop-blur-md ${p.popular ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-white/10 hover:border-white/20'}`}>
 
                       {/* Plan Header */}
                       <div className="p-8 h-[280px] flex flex-col justify-between border-b border-white/10 relative">
@@ -231,7 +231,7 @@ export function Plans() {
                       </div>
 
                       {/* Plan Specs Values */}
-                      <div className="flex-grow bg-[#01101A]">
+                      <div className="flex-grow bg-[#00050A]">
                         {rowSpecs.map((row) => (
                           <div key={`${p.id}-${row.key}`} className="h-[72px] flex items-center justify-center border-t border-white/10 px-6 text-center">
                             <span className="text-base font-black text-white uppercase tracking-tighter">{p[row.key]}</span>
@@ -239,14 +239,14 @@ export function Plans() {
                         ))}
                       </div>
 
-                      <div className="p-6 border-t border-white/10 flex flex-col gap-2">
-                        <div className="flex items-center gap-2 text-sky-400">
-                          <Check className="h-3 w-3" strokeWidth={4} />
-                          <span className="text-[10px] font-black uppercase tracking-widest">100% de cashback</span>
+                      <div className="p-6 border-t border-white/10 flex flex-col items-center gap-3">
+                        <div className="flex items-center justify-center gap-2 text-sky-400">
+                          <Check className="h-4 w-4" strokeWidth={4} />
+                          <span className="text-[13px] font-black uppercase tracking-widest">100% de cashback</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sky-500">
-                          <Check className="h-3 w-3" strokeWidth={4} />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Suporte 24/7 Ativo</span>
+                        <div className="flex items-center justify-center gap-2 text-sky-500">
+                          <Check className="h-4 w-4" strokeWidth={4} />
+                          <span className="text-[13px] font-black uppercase tracking-widest">Suporte 24/7 Ativo</span>
                         </div>
                       </div>
 
@@ -259,7 +259,7 @@ export function Plans() {
         </div>
 
         <div className="mt-16 text-right">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-white">
             Quer ainda mais potência? <Link href="/vds" className="font-bold text-sky-400 hover:underline underline-offset-4 decoration-sky-500/30 transition-colors">Escolha um VDS</Link>.
           </p>
         </div>

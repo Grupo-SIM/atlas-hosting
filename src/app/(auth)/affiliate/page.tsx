@@ -67,7 +67,7 @@ export default async function AffiliatePage() {
   }));
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 pb-20 space-y-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
           Programa de Afiliados

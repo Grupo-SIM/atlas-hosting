@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X, Server, Database, HardDrive, Monitor, UserPlus, LogIn, Star, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 const roboto = { className: "[font-family:var(--font-roboto)]" };
@@ -48,7 +48,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
     >
       <nav
         className={`mx-auto h-16 transition-all duration-500 flex items-center justify-between ${isScrolled
-          ? `w-[min(1180px,calc(100%-2rem))] px-6 rounded-full border ${isLight ? "border-slate-200 bg-slate-50/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)]" : "border-white/15 bg-[#0a1026]/80 shadow-[0_20px_50px_rgba(0,0,0,0.45)]"} backdrop-blur-xl`
+          ? `w-[min(1180px,calc(100%-2rem))] px-6 rounded-full border ${isLight ? "border-slate-200 bg-slate-50/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)]" : "border-white/15 bg-[#00050A]/80 shadow-[0_20px_50px_rgba(0,0,0,0.45)]"} backdrop-blur-xl`
           : `w-full max-w-[1280px] px-6 md:px-8 rounded-none border border-transparent bg-transparent`
           }`}
       >
@@ -91,12 +91,12 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className={`absolute top-full left-0 mt-1 min-w-[280px] ${isLight ? "bg-white border-slate-200 shadow-xl" : "bg-[#11172f] border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]"} border rounded-[6px] overflow-hidden`}
+                  className={`absolute top-full left-0 mt-1 min-w-[280px] ${isLight ? "bg-white border-slate-200 shadow-xl" : "bg-[#00080D] border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]"} border rounded-[6px] overflow-hidden`}
                 >
-                  <Link href="/vps" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50" : "text-white/80 hover:text-[#0a0e27] hover:bg-sky-400"} transition-all uppercase`}>VPS em nuvem</Link>
-                  <Link href="/vds" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#0a0e27] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>Cloud VDS</Link>
-                  <Link href="/vps-armazenamento" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#0a0e27] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>VPS de armazenamento</Link>
-                  <Link href="/vps-windows" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#0a0e27] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>VPS Windows</Link>
+                  <Link href="/vps" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400"} transition-all uppercase`}>VPS em nuvem</Link>
+                  <Link href="/vds" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>Cloud VDS</Link>
+                  <Link href="/vps-armazenamento" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>VPS de armazenamento</Link>
+                  <Link href="/vps-windows" className={`${roboto.className} block px-5 py-3 text-[13px] font-bold ${isLight ? "text-slate-600 hover:bg-slate-50 border-slate-100" : "text-white/80 hover:text-[#00050A] hover:bg-sky-400 border-white/5"} transition-all uppercase border-t`}>VPS Windows</Link>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -140,85 +140,123 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className={`fixed inset-0 z-[600] ${isLight ? "bg-slate-50" : "bg-[#0a0e27]/98"} backdrop-blur-xl flex flex-col items-center justify-center p-6 md:hidden`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className={`fixed inset-0 z-[600] ${isLight ? "bg-slate-50/95" : "bg-[#00050A]/98"} backdrop-blur-2xl flex flex-col md:hidden`}
           >
-            {/* Close button inside the menu for better usability */}
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={`absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full border ${isLight ? "border-slate-200 bg-slate-50 text-slate-700" : "border-white/10 bg-white/5 text-white"} hover:opacity-80 transition-all`}
-            >
-              <X className="w-6 h-6" />
-            </button>
-
-            {/* Mobile Nav Links - Centered */}
-            <div className="flex flex-col items-center gap-8 w-full max-w-xs">
-              <div className="flex flex-col items-center gap-4 w-full">
-                <Link
-                  href="/vps"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-sky-400 transition-colors uppercase tracking-wider`}
-                >
-                  VPS em Nuvem
-                </Link>
-                <Link
-                  href="/vds"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-sky-400 transition-colors uppercase tracking-wider`}
-                >
-                  Cloud VDS
-                </Link>
-                <Link
-                  href="/vps-armazenamento"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-sky-400 transition-colors uppercase tracking-wider`}
-                >
-                  Armazenamento
-                </Link>
-                <Link
-                  href="/vps-windows"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${roboto.className} text-3xl font-bold ${isLight ? "text-slate-800" : "text-white"} hover:text-sky-400 transition-colors uppercase tracking-wider`}
-                >
-                  Windows
-                </Link>
-              </div>
-
-              <div className={`w-12 h-px ${isLight ? "bg-slate-200" : "bg-white/20"}`} />
-
-              <div className="flex flex-col items-center gap-5">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${roboto.className} text-xl font-bold ${isLight ? "text-slate-400" : "text-white/60"} hover:text-sky-400 transition-colors uppercase tracking-widest`}
-                  >
-                    {link.name}
-                  </Link>
-                ))}
-              </div>
+            {/* Background Decor */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+              <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-sky-500/20 blur-[120px] rounded-full" />
+              <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/20 blur-[120px] rounded-full" />
             </div>
 
-            {/* Mobile Auth Buttons - Centered */}
-            <div className="mt-12 flex flex-col gap-4 w-full max-w-xs">
-              <Button
-                className={`${roboto.className} w-full bg-[#00A3FF] hover:bg-[#0091E6] text-white font-extrabold py-6 h-auto text-lg rounded-[12px] transition-all shadow-[0_8px_26px_rgba(0,163,255,0.2)] tracking-wide uppercase`}
-                asChild
+            <div className="relative z-10 flex flex-col h-full overflow-y-auto pt-24 pb-12 px-6">
+              {/* Close button */}
+              <button
                 onClick={() => setIsMobileMenuOpen(false)}
+                className={`absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full border ${isLight ? "border-slate-200 bg-white shadow-sm" : "border-white/10 bg-white/5"} text-white transition-transform active:scale-90`}
               >
-                <Link href="/login">Começar Agora</Link>
-              </Button>
-              <Button
-                className={`${roboto.className} w-full bg-transparent border-2 ${isLight ? "border-slate-200 text-slate-700" : "border-white/20 text-white"} hover:border-sky-400 transition-all py-6 h-auto text-lg rounded-[12px] tracking-wide uppercase`}
-                asChild
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Link href="/signup">Criar Conta</Link>
-              </Button>
+                <X className={`w-6 h-6 ${isLight ? "text-slate-800" : "text-white"}`} />
+              </button>
+
+              <div className="flex flex-col gap-10 w-full max-w-sm mx-auto">
+                {/* Main Services */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-400 mb-4 px-2">Nossos Serviços</p>
+                  {[
+                    { name: "VPS em Nuvem", href: "/vps", icon: Server },
+                    { name: "Cloud VDS", href: "/vds", icon: Database },
+                    { name: "Armazenamento", href: "/vps-armazenamento", icon: HardDrive },
+                    { name: "Windows VPS", href: "/vps-windows", icon: Monitor },
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.name}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`group flex items-center gap-4 p-4 rounded-2xl transition-all ${isLight ? "hover:bg-white shadow-sm border border-transparent hover:border-slate-100" : "hover:bg-white/5 border border-transparent hover:border-white/5"}`}
+                      >
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isLight ? "bg-slate-100 text-slate-700" : "bg-white/5 text-white group-hover:bg-sky-500/20 group-hover:text-sky-400"}`}>
+                          <item.icon className="w-5 h-5" />
+                        </div>
+                        <span className={`${roboto.className} text-[18px] font-bold ${isLight ? "text-slate-800" : "text-white"} transition-colors`}>
+                          {item.name}
+                        </span>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Secondary Links */}
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-400 mb-4 px-2">Atlas Hosting</p>
+                  {[
+                    { name: "Nossos Planos", href: "/#planos", icon: Star },
+                    { name: "Depoimentos", href: "/#testimonials", icon: MessageSquare },
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.name}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 + i * 0.05 }}
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-4 p-3 rounded-xl transition-all ${isLight ? "hover:bg-white" : "hover:bg-white/5"} text-muted-foreground hover:text-sky-400`}
+                      >
+                        <item.icon className="w-4 h-4 opacity-50" />
+                        <span className={`${roboto.className} text-[15px] font-bold uppercase tracking-widest`}>
+                          {item.name}
+                        </span>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Auth Buttons */}
+                <div className="flex flex-col gap-4 mt-4">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <Button
+                      className={`${roboto.className} w-full bg-[#00A3FF] hover:bg-[#0091E6] text-white font-extrabold py-7 h-auto text-lg rounded-[16px] transition-all shadow-[0_12px_30px_rgba(0,163,255,0.25)] tracking-wide uppercase group`}
+                      asChild
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <Link href="/signup" className="flex items-center justify-center gap-3">
+                        <UserPlus className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                        Começar Agora
+                      </Link>
+                    </Button>
+                  </motion.div>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <Button
+                      className={`${roboto.className} w-full bg-transparent border-2 ${isLight ? "border-slate-200 text-slate-700" : "border-white/10 text-white"} hover:border-sky-400 transition-all py-7 h-auto text-lg rounded-[16px] tracking-wide uppercase`}
+                      asChild
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <Link href="/signup" className="flex items-center justify-center gap-3">
+                        <UserPlus className="w-5 h-5 opacity-40" />
+                        Criar Conta
+                      </Link>
+                    </Button>
+                  </motion.div>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}

@@ -20,9 +20,11 @@ import { LazySection } from "./landing/components/LazySection";
 export default function Home() {
   return (
     <SmoothScroll>
-      <div className="min-h-screen bg-landing-gradient overflow-x-hidden w-full">
+      <div className="min-h-screen bg-[#00050A] overflow-x-hidden w-full">
         <Navbar variant="dark" />
-        <Hero />
+        <div className="relative w-full bg-[#00050A]">
+          <Hero />
+        </div>
         <LazySection offset="100px">
           <Statistics />
         </LazySection>
@@ -31,7 +33,7 @@ export default function Home() {
           <Plans />
         </LazySection>
         {/* <Partners /> */}
-        <div className="relative w-full bg-atlas-dark-2 overflow-hidden">
+        <div className="relative w-full bg-[#00050A] overflow-hidden">
           {/* Background SVG for the whole block */}
           <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
             <img

@@ -31,7 +31,7 @@ export default function RegisterDomainSearch({ domain }: DomainPageParams) {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Digite o nome do domínio..."
-            className="w-full h-14 bg-white/5 backdrop-blur-md border-white/10 rounded-2xl px-6 text-white placeholder:text-slate-600 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all outline-none pr-12 group-hover:bg-white/10"
+            className="w-full h-14 bg-white/5 dark:bg-white/5 backdrop-blur-md border-zinc-200 dark:border-white/10 rounded-2xl px-6 text-slate-950 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all outline-none pr-12 group-hover:bg-white/10"
           />
           {inputValue && (
             <button

@@ -524,6 +524,10 @@ export default function ConfigureStorageVps() {
       <Navbar variant="dark" />
       <div className="max-w-6xl mx-auto px-6 pt-32 pb-12 space-y-12">
 
+        <Link href="/vps-armazenamento#plans" className="group mb-6 flex items-center gap-2 text-sm font-bold text-sky-400 transition-all hover:text-sky-300">
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          Voltar para VPS de Armazenamento
+        </Link>
         <h1 className="text-3xl font-black text-white uppercase tracking-tight">Configure seu {plan.name}</h1>
 
         <div className="flex flex-wrap items-center gap-10">
@@ -544,7 +548,7 @@ export default function ConfigureStorageVps() {
               <p className="text-[10px] font-bold text-slate-400 uppercase">TRÁFEGO</p>
               <p className="text-[11px] font-medium leading-tight">{plan.traffic}</p>
             </div>
-            <Link href="/vps-armazenamento" className="absolute bottom-4 right-4 text-[10px] font-bold text-sky-400 hover:underline uppercase tracking-wider">Mudar</Link>
+            <Link href="/vps-armazenamento#plans" className="absolute bottom-4 right-4 text-[10px] font-bold text-sky-400 hover:underline uppercase tracking-wider">Mudar</Link>
           </div>
 
           <div className="flex items-center gap-4">
@@ -566,7 +570,6 @@ export default function ConfigureStorageVps() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
-            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -607,7 +610,6 @@ export default function ConfigureStorageVps() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-black text-white uppercase tracking-widest">Região</h2>
-            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="flex flex-nowrap items-start gap-8">
@@ -749,7 +751,7 @@ export default function ConfigureStorageVps() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
                   <div className="lg:col-span-5 flex flex-col md:flex-row items-center gap-4">
                     <div className="relative w-64 h-64 flex-shrink-0">
-                      <Image src="/securtiryu-Photoroom.png" alt="Proteção de Backup" width={256} height={256} className="object-contain" />
+                      <Image src="/4870961_54433-nobg.svg" alt="Proteção de Backup" width={256} height={256} className="object-contain" />
                     </div>
                     <div className="flex-1">
                       <ul className="space-y-4">
@@ -829,7 +831,7 @@ export default function ConfigureStorageVps() {
                     <h3 className="text-sm font-black text-white uppercase tracking-widest">Add-Ons</h3>
                     <div className="space-y-6 pl-4 pr-1">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3"><span className="text-sm font-black text-slate-400 uppercase tracking-tight">Object Storage</span></div>
+                        <div className="md:col-span-3"><span className="text-sm font-black text-slate-400 uppercase tracking-tight">Armazenamento de Objetos</span></div>
                         <div className="md:col-span-9">
                           <Select value={objectStorage} onValueChange={setObjectStorage}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white text-left"><SelectValue /></SelectTrigger>
@@ -845,8 +847,7 @@ export default function ConfigureStorageVps() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Server Management</span>
-                          <Info size={14} className="text-slate-400 cursor-help" />
+                          <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Gerenciamento de Servidor</span>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={serverManagement} onValueChange={setServerManagement}>
@@ -857,8 +858,7 @@ export default function ConfigureStorageVps() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Monitoring</span>
-                          <Info size={14} className="text-slate-400 cursor-help" />
+                          <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Monitoramento</span>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={monitoring} onValueChange={setMonitoring}>
@@ -1008,7 +1008,7 @@ export default function ConfigureStorageVps() {
                     if (objectStorage !== "none") {
                       const osKey = objectStorage === "1000gb" ? "1tb" : objectStorage;
                       const osEur = plan.objectStoragePrices[osKey as keyof typeof plan.objectStoragePrices] || 0;
-                      items.push({ label: `Object Storage (${objectStorage.toUpperCase()})`, price: osEur * durMonths * qty * currentRate });
+                      items.push({ label: `Armazenamento de Objetos (${objectStorage.toUpperCase()})`, price: osEur * durMonths * qty * currentRate });
                     }
 
                     if (serverManagement === "managed") items.push({ label: `Gerenciado`, price: plan.managedEur * durMonths * qty * currentRate });
@@ -1029,12 +1029,12 @@ export default function ConfigureStorageVps() {
                         const accounts = parseInt(cpanelLicence);
                         licPrice = 237.00 + (Math.floor((accounts - 300) / 50) * 40.00);
                       }
-                      items.push({ label: `cPanel License (${cpanelLicence} contas)`, price: licPrice * durMonths * qty * currentRate });
+                      items.push({ label: `Licença cPanel (${cpanelLicence} contas)`, price: licPrice * durMonths * qty * currentRate });
                     } else if (osImage === "plesk" || osImage === "plesk-linux") {
                       const licEur = pleskLicence === "admin" ? currentImagePrices.pleskLinux :
                         pleskLicence === "host" ? currentImagePrices.pleskHost :
                           currentImagePrices.pleskPro;
-                      items.push({ label: `Plesk License (${pleskLicence})`, price: licEur * durMonths * qty * currentRate });
+                      items.push({ label: `Licença Plesk (${pleskLicence})`, price: licEur * durMonths * qty * currentRate });
                     } else if (osImage === "plesk-win") {
                       const licEur = pleskWinLicence === "admin" ? currentImagePrices.pleskLinux :
                         pleskWinLicence === "host" ? currentImagePrices.pleskHost :
@@ -1380,8 +1380,8 @@ export default function ConfigureStorageVps() {
               </div>
 
               <div className="flex items-center justify-end gap-12 pt-4">
-                <button onClick={() => setShowPleskModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest font-black text-sm">Skip</button>
-                <Button onClick={() => setShowPleskModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black h-14 px-12 rounded-lg text-lg uppercase tracking-widest">Get Started</Button>
+                <button onClick={() => setShowPleskModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest font-black text-sm">Pular</button>
+                <Button onClick={() => setShowPleskModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black h-14 px-12 rounded-lg text-lg uppercase tracking-widest">Começar</Button>
               </div>
             </motion.div>
           </div>

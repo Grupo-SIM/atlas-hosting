@@ -145,17 +145,17 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
         <PopoverContent 
           side="bottom" 
           sideOffset={8}
-          className="w-[340px] p-4 bg-white dark:bg-zinc-950 rounded-2xl border-zinc-200 dark:border-white/10 shadow-2xl z-[100]" 
+          className="w-[340px] p-4 bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-2xl z-[100]" 
           align="start"
         >
           <div className="h-8 mb-3 flex justify-center items-center">
             {selectedDays > 0 ? (
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary animate-in fade-in zoom-in-95 duration-200">
+              <span className="rounded-full bg-sky-500/10 px-3 py-1 text-xs font-bold text-sky-400 animate-in fade-in zoom-in-95 duration-200">
                 {selectedDays} {selectedDays === 1 ? "dia selecionado" : "dias selecionados"}
               </span>
             ) : null}
           </div>
-
+ 
           <div className="mb-3 flex items-center justify-between">
             <button
               type="button"
@@ -175,10 +175,10 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
-
+ 
           <div className="grid grid-cols-7 gap-1" onMouseLeave={() => setHoverDate(null)}>
             {weekDays.map((day, i) => (
-              <div key={`${day}-${i}`} className="py-1 text-center text-[10px] font-black uppercase text-zinc-400">
+              <div key={`${day}-${i}`} className="py-1 text-center text-[10px] font-black uppercase text-zinc-500">
                 {day}
               </div>
             ))}
@@ -191,18 +191,18 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
                 visualRange.start && visualRange.end
                   ? date.getTime() >= startOfDay(visualRange.start).getTime() && date.getTime() <= startOfDay(visualRange.end).getTime()
                   : false;
-
+ 
               const mutedClass = currentMonth 
                 ? "text-zinc-700 dark:text-zinc-100" 
-                : "text-zinc-300 dark:text-zinc-600";
-              const rangeClass = inRange && !isStart && !isEnd ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100" : "";
+                : "text-zinc-400 dark:text-zinc-500";
+              const rangeClass = inRange && !isStart && !isEnd ? "bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400" : "";
               const todayClass = isToday && !isStart && !isEnd && !inRange
-                ? "border-2 border-primary text-primary"
+                ? "border-2 border-sky-500 text-sky-500"
                 : "";
               const edgeClass = isStart || isEnd
-                ? "bg-primary text-white dark:text-white rounded-full shadow-md"
-                : "rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-none";
-
+                ? "bg-sky-500 text-white dark:text-white rounded-full shadow-md"
+                : "rounded-full hover:bg-sky-500/10 dark:hover:bg-sky-500/20 hover:text-sky-600 dark:hover:text-sky-400 transition-none";
+ 
               return (
                 <button
                   type="button"
@@ -226,8 +226,8 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
               );
             })}
           </div>
-
-          <div className="mt-4 flex items-center justify-end gap-2 border-t border-zinc-100 pt-3 dark:border-white/10">
+ 
+          <div className="mt-4 flex items-center justify-end gap-2 border-t border-zinc-100 dark:border-white/10 pt-3">
             <button
               onClick={() => {
                 setDraftStart(null);
@@ -248,7 +248,7 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
                 }
                 setOpen(false);
               }}
-              className="bg-primary text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
+              className="bg-sky-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
             >
               Aplicar
             </button>

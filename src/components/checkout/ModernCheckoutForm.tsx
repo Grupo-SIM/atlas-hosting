@@ -986,10 +986,10 @@ const ModernCheckoutForm = forwardRef<
             <Button
               onClick={handleContinueToPayment}
               disabled={!canProceedToPayment}
-              className="min-w-44 h-14 bg-sky-500 hover:bg-sky-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-sky-500/20 transition-all hover:scale-105 active:scale-95"
+              className="min-w-44 h-12 bg-white text-slate-950 text-base font-bold hover:bg-white/90 border-0 shadow-lg transition-all hover:scale-[1.02] active:scale-95"
             >
               Continuar
-              <Check className="ml-2 h-5 w-5" strokeWidth={3} />
+              <Check className="ml-2 h-4 w-4" strokeWidth={3} />
             </Button>
           </div>
         </>
@@ -1147,7 +1147,7 @@ const ModernCheckoutForm = forwardRef<
                     (paymentMethod === "pix" && !canProceedToPayment) ||
                     (paymentMethod !== "pix" && !canCompleteCheckout())
                   }
-                  className="min-w-56 h-16 bg-sky-500 hover:bg-sky-600 text-white font-black uppercase tracking-widest rounded-[2rem] shadow-xl shadow-sky-500/20 transition-all hover:scale-105 active:scale-95"
+                  className="min-w-56 h-12 bg-white text-slate-950 text-base font-bold hover:bg-white/90 border-0 shadow-lg transition-all hover:scale-[1.02] active:scale-95"
                 >
                   {isPixLoading
                     ? "Gerando PIX..."
@@ -1529,7 +1529,7 @@ function BillingInformationSection({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label
                 htmlFor={`${id}-address.neighborhood`}
@@ -1678,7 +1678,7 @@ function NewCardFormSection({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="space-y-2 col-span-2">
             <Label htmlFor="cardNumber" className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
               Número do Cartão

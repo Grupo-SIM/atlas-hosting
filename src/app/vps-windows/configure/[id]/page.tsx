@@ -520,6 +520,10 @@ export default function ConfigureWindowsVps() {
       <Navbar variant="dark" />
       <div className="max-w-6xl mx-auto px-6 pt-32 pb-12 space-y-12">
 
+        <Link href="/vps-windows#plans" className="group mb-6 flex items-center gap-2 text-sm font-bold text-sky-400 transition-all hover:text-sky-300">
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          Voltar para VPS Windows
+        </Link>
         <h1 className="text-4xl font-black text-white uppercase tracking-tight drop-shadow-sm">Configure seu {plan.name}</h1>
 
         {/* Plan Summary Section */}
@@ -545,7 +549,7 @@ export default function ConfigureWindowsVps() {
               <p className="text-[10px] font-bold text-slate-400 uppercase">PORTA</p>
               <p className="text-[11px] font-medium leading-tight">{plan.port}</p>
             </div>
-            <Link href="/vps-windows" className="absolute bottom-4 right-4 text-[10px] font-bold text-sky-400 hover:underline uppercase tracking-wider">Mudar</Link>
+            <Link href="/vps-windows#plans" className="absolute bottom-4 right-4 text-[10px] font-bold text-sky-400 hover:underline uppercase tracking-wider">Mudar</Link>
           </div>
 
           <div className="flex items-center gap-4">
@@ -567,7 +571,6 @@ export default function ConfigureWindowsVps() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-black text-white uppercase tracking-widest">Selecione o ciclo de faturamento</h2>
-            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -608,7 +611,6 @@ export default function ConfigureWindowsVps() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-black text-white uppercase tracking-widest">Região</h2>
-            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="flex flex-nowrap items-start gap-8">
@@ -665,7 +667,6 @@ export default function ConfigureWindowsVps() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-black text-white uppercase tracking-widest">Tipo de armazenamento</h2>
-            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -767,13 +768,12 @@ export default function ConfigureWindowsVps() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-black text-white uppercase tracking-widest">Proteção de Dados com Backup Automático</h2>
-            <Info size={18} className="text-slate-500" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center bg-white/5 rounded-2xl p-10 border border-white/10 shadow-2xl backdrop-blur-md">
             <div className="lg:col-span-5 flex flex-col md:flex-row items-center gap-4">
               <div className="relative w-64 h-64 flex-shrink-0">
-                <img src="/securtiryu-Photoroom.png" alt="Backup Shield" className="w-64 h-auto object-contain" />
+                <img src="/4870961_54433-nobg.svg" alt="Backup Shield" className="w-64 h-auto object-contain" />
               </div>
 
               <div className="flex-1">
@@ -847,7 +847,6 @@ export default function ConfigureWindowsVps() {
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                           <div className="w-48 flex items-center gap-2">
                             <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Rede Privada</span>
-                            <Info size={14} className="text-slate-400" />
                           </div>
                           <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
                             <SelectTrigger className="w-full md:w-[480px] h-12 border-white/10 bg-white/5 text-white">
@@ -878,7 +877,6 @@ export default function ConfigureWindowsVps() {
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                           <div className="w-48 flex items-center gap-2">
                             <span className="text-sm font-black text-slate-400 uppercase tracking-tight">IPv4</span>
-                            <Info size={14} className="text-slate-400" />
                           </div>
                           <Select value={ipv4Address} onValueChange={setIpv4Address}>
                             <SelectTrigger className="w-full md:w-[480px] h-12 border-white/10 bg-white/5 text-white">
@@ -910,7 +908,7 @@ export default function ConfigureWindowsVps() {
                       <div className="flex-1 space-y-6">
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                           <div className="w-48 flex items-center gap-2">
-                            <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Object Storage</span>
+                            <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Armazenamento de Objetos</span>
                           </div>
                           <Select value={objectStorage} onValueChange={setObjectStorage}>
                             <SelectTrigger className="w-full md:w-[480px] h-12 border-white/10 bg-white/5 text-white">
@@ -932,8 +930,7 @@ export default function ConfigureWindowsVps() {
 
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                           <div className="w-48 flex items-center gap-2">
-                            <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Management</span>
-                            <Info size={14} className="text-slate-400" />
+                            <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Gerenciamento</span>
                           </div>
                           <Select value={serverManagement} onValueChange={setServerManagement}>
                             <SelectTrigger className="w-full md:w-[480px] h-12 border-white/10 bg-white/5 text-white">
@@ -958,8 +955,7 @@ export default function ConfigureWindowsVps() {
 
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                           <div className="w-48 flex items-center gap-2">
-                            <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Monitoring</span>
-                            <Info size={14} className="text-slate-400" />
+                            <span className="text-sm font-black text-slate-400 uppercase tracking-tight">Monitoramento</span>
                           </div>
                           <Select value={monitoring} onValueChange={setMonitoring}>
                             <SelectTrigger className="w-full md:w-[480px] h-12 border-white/10 bg-white/5 text-white">
@@ -989,22 +985,22 @@ export default function ConfigureWindowsVps() {
 
         {/* Login and Password Section */}
         <section className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 shadow-2xl">
-          <h2 className="text-sm font-black text-white uppercase tracking-widest mb-8">Login and password for your server</h2>
+          <h2 className="text-sm font-black text-white uppercase tracking-widest mb-8">Login e senha para seu servidor</h2>
           <div className="max-w-3xl space-y-8">
             {/* Username */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
               <div className="md:col-span-3">
-                <span className="text-sm font-black text-slate-400 uppercase tracking-widest">Username</span>
+                <span className="text-sm font-black text-slate-400 uppercase tracking-widest">Usuário</span>
               </div>
               <div className="md:col-span-9">
-                <span className="text-white font-black uppercase tracking-widest">Administrator / root</span>
+                <span className="text-white font-black uppercase tracking-widest">Administrador / root</span>
               </div>
             </div>
 
             {/* Password */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-3 pt-3">
-                <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Password</span>
+                <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Senha</span>
               </div>
               <div className="md:col-span-9 space-y-2">
                 <div className="flex justify-start">
@@ -1027,7 +1023,7 @@ export default function ConfigureWindowsVps() {
                     }}
                     className="text-[#3B82F6] text-xs hover:underline"
                   >
-                    Generate new password
+                    Gerar nova senha
                   </button>
                 </div>
                 <div className="relative">
@@ -1048,13 +1044,13 @@ export default function ConfigureWindowsVps() {
                 {passwordTouched && password.length > 0 && !isPasswordValid(password) && (
                   <div className="flex items-center gap-2 text-red-500 text-xs mt-1">
                     <AlertCircle size={14} />
-                    <span>Invalid password (Min. 8 chars, uppercase, number and symbol)</span>
+                    <span>Senha inválida (Mín. 8 caracteres, maiúscula, número e símbolo)</span>
                   </div>
                 )}
                 {isPasswordValid(password) && (
                   <div className="flex items-center gap-2 text-emerald-500 text-xs mt-1">
                     <Check size={14} />
-                    <span>Strong and secure password</span>
+                    <span>Senha forte e segura</span>
                   </div>
                 )}
               </div>
@@ -1088,25 +1084,25 @@ export default function ConfigureWindowsVps() {
                     </SelectTrigger>
                     <SelectContent className="bg-[#000B12] border-white/10 text-white">
                       <SelectItem value="2025" className="focus:bg-white/10 focus:text-white">
-                        <div className="flex items-center justify-between w-[480px] text-xs">
+                        <div className="flex items-center justify-between w-full md:w-[480px] text-xs flex-1 gap-4">
                           <span>Windows Server 2025 Datacenter</span>
-                          <span className="font-black text-white">{formatBRL(currentImagePrices.windows)}</span>
+                          <span className="font-black text-sky-400 ml-auto">{formatBRL(currentImagePrices.windows)}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="2022" className="focus:bg-white/10 focus:text-white">
-                        <div className="flex items-center justify-between w-[480px] text-xs">
+                        <div className="flex items-center justify-between w-full md:w-[480px] text-xs">
                           <span>Windows Server 2022 Datacenter</span>
                           <span className="font-black text-white">{formatBRL(currentImagePrices.windows)}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="2019" className="focus:bg-white/10 focus:text-white">
-                        <div className="flex items-center justify-between w-[480px] text-xs">
+                        <div className="flex items-center justify-between w-full md:w-[480px] text-xs">
                           <span>Windows Server 2019 Datacenter</span>
                           <span className="font-black text-white">{formatBRL(currentImagePrices.windows)}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="2016" className="focus:bg-white/10 focus:text-white">
-                        <div className="flex items-center justify-between w-[480px] text-xs">
+                        <div className="flex items-center justify-between w-full md:w-[480px] text-xs">
                           <span>Windows Server 2016 Datacenter</span>
                           <span className="font-black text-white">{formatBRL(currentImagePrices.win2016)}</span>
                         </div>
@@ -1153,16 +1149,16 @@ export default function ConfigureWindowsVps() {
                     </SelectTrigger>
                     <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120]">
                       <SelectItem value="admin" className="focus:bg-white/10 focus:text-white">
-                        <div className="flex items-center justify-between w-[480px] py-1">
+                        <div className="flex items-center justify-between w-full md:w-[480px] py-1 flex-1 gap-4">
                           <div className="flex flex-col">
                             <span className="font-black text-white uppercase tracking-tighter">Plesk Obsidian Web Admin Edition</span>
                             <span className="text-emerald-500 font-black text-xs uppercase">1 mês grátis</span>
                           </div>
-                          <span className="font-black text-white">{formatBRL(currentImagePrices.pleskLinux)}</span>
+                          <span className="font-black text-sky-400 ml-auto">{formatBRL(currentImagePrices.pleskLinux)}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="host" className="focus:bg-white/10 focus:text-white">
-                        <div className="flex items-center justify-between w-[480px] py-1">
+                        <div className="flex items-center justify-between w-full md:w-[480px] py-1">
                           <div className="flex flex-col">
                             <span className="font-black text-white uppercase tracking-tighter">Plesk Obsidian Web Host Edition</span>
                             <span className="text-emerald-500 font-black text-xs uppercase">1 mês grátis</span>
@@ -1171,7 +1167,7 @@ export default function ConfigureWindowsVps() {
                         </div>
                       </SelectItem>
                       <SelectItem value="pro" className="focus:bg-white/10 focus:text-white">
-                        <div className="flex items-center justify-between w-[480px] py-1">
+                        <div className="flex items-center justify-between w-full md:w-[480px] py-1">
                           <div className="flex flex-col">
                             <span className="font-black text-white uppercase tracking-tighter">Plesk Obsidian Web Pro Edition</span>
                             <span className="text-emerald-500 font-black text-xs uppercase">1 mês grátis</span>
@@ -1241,16 +1237,16 @@ export default function ConfigureWindowsVps() {
                       </SelectTrigger>
                       <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120]">
                         <SelectItem value="admin" className="focus:bg-white/10 focus:text-white">
-                          <div className="flex items-center justify-between w-[480px] py-1">
+                          <div className="flex items-center justify-between w-full md:w-[480px] py-1 flex-1 gap-4">
                             <div className="flex flex-col">
                               <span className="font-bold text-sky-400">Plesk Obsidian Web Admin Edition</span>
                               <span className="text-emerald-400 font-bold text-[10px] uppercase">1 mês grátis</span>
                             </div>
-                            <span className="font-black text-white">{formatBRL(currentImagePrices.pleskWin)}</span>
+                            <span className="font-black text-sky-400 ml-auto">{formatBRL(currentImagePrices.pleskWin)}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="host" className="focus:bg-white/10 focus:text-white">
-                          <div className="flex items-center justify-between w-[480px] py-1">
+                          <div className="flex items-center justify-between w-full md:w-[480px] py-1">
                             <div className="flex flex-col">
                               <span className="font-bold text-white">Plesk Obsidian Web Host Edition</span>
                               <span className="text-emerald-400 font-bold text-[10px] uppercase">1 mês grátis</span>
@@ -1259,7 +1255,7 @@ export default function ConfigureWindowsVps() {
                           </div>
                         </SelectItem>
                         <SelectItem value="pro" className="focus:bg-white/10 focus:text-white">
-                          <div className="flex items-center justify-between w-[480px] py-1">
+                          <div className="flex items-center justify-between w-full md:w-[480px] py-1">
                             <div className="flex flex-col">
                               <span className="font-bold text-white">Plesk Obsidian Web Pro Edition</span>
                               <span className="text-emerald-400 font-bold text-[10px] uppercase">1 mês grátis</span>
@@ -1288,19 +1284,19 @@ export default function ConfigureWindowsVps() {
                       </SelectTrigger>
                       <SelectContent className="z-[120]">
                         <SelectItem value="2016" className="focus:bg-white/10 focus:text-white">
-                          <div className="flex items-center justify-between w-[480px] py-1">
-                            <span className="font-bold text-sky-600">Windows Server 2016 Datacenter</span>
-                            <span className="font-black text-white">{formatBRL(currentImagePrices.win2016)}</span>
+                          <div className="flex items-center justify-between w-full md:w-[480px] py-1 flex-1 gap-4">
+                            <span className="font-bold text-white">Windows Server 2016 Datacenter</span>
+                            <span className="font-black text-sky-400 ml-auto">{formatBRL(currentImagePrices.win2016)}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="2019" className="focus:bg-white/10 focus:text-white">
-                          <div className="flex items-center justify-between w-[480px] py-1">
+                          <div className="flex items-center justify-between w-full md:w-[480px] py-1">
                             <span className="font-bold text-white">Windows Server 2019 Datacenter</span>
                             <span className="font-black text-white">{formatBRL(currentImagePrices.windows)}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="2022" className="focus:bg-white/10 focus:text-white">
-                          <div className="flex items-center justify-between w-[480px] py-1">
+                          <div className="flex items-center justify-between w-full md:w-[480px] py-1">
                             <span className="font-bold text-white">Windows Server 2022 Datacenter</span>
                             <span className="font-black text-white">{formatBRL(currentImagePrices.windows)}</span>
                           </div>

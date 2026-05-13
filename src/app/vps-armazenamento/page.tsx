@@ -13,10 +13,10 @@ export const metadata: Metadata = {
 export default function VpsStorageRoutePage() {
   return (
     <SmoothScroll>
-      <div className="min-h-screen w-full overflow-x-hidden bg-atlas-dark-1 selection:bg-sky-500/30">
+      <div className="min-h-screen w-full overflow-x-hidden bg-[#00050A] selection:bg-sky-500/30">
         <Navbar />
-        {/* Background Gradient */}
-        <div className="fixed inset-0 z-0 bg-landing-gradient opacity-100 pointer-events-none" />
+        {/* Background Gradient - Removed for darker look as requested */}
+        <div className="fixed inset-0 z-0 bg-[#00050A] opacity-100 pointer-events-none" />
         <main className="relative z-10 w-full pt-24">
           <VpsStoragePage />
         </main>

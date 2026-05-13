@@ -166,7 +166,7 @@ export default async function MyDomainsPage({
         </div>
         <div className="flex gap-3">
           <Button 
-            className="bg-gradient-to-r from-[#01FC8D] to-[#01e67d] text-[#0a0e27] font-bold hover:brightness-110 border-0" 
+            className="bg-white text-slate-950 font-bold hover:bg-white/90 border-0 shadow-lg" 
             asChild={true}
           >
             <Link href="/domain?tab=register">

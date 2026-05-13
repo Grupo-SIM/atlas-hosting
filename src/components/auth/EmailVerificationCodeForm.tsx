@@ -175,7 +175,7 @@ export default function EmailVerificationCodeForm({ email: initialEmail, redirec
         {errors.code && (
           <p className="text-xs text-red-400 text-center">{errors.code.message}</p>
         )}
-        <p className="text-xs text-muted-foreground text-center">
+        <p className="text-xs text-white text-center">
           Digite o código de 5 dígitos que você recebeu por email
         </p>
       </div>
@@ -187,7 +187,7 @@ export default function EmailVerificationCodeForm({ email: initialEmail, redirec
       <div className="pt-4 pb-6">
         <Button
           type="submit"
-          className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+          className="w-full h-12 text-base text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
           disabled={!isValid || isLoading}
         >
           {isLoading ? (

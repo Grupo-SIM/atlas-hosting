@@ -39,6 +39,23 @@ export default async function CheckoutPage({
     notFound();
   }
 
+  if (invoice.status === "expired" || invoice.status === "paid") {
+    return (
+      <div className="min-h-screen bg-[#000B12] flex items-center justify-center">
+        <div className="text-center space-y-4 px-6">
+          <p className="text-2xl font-black text-white">
+            {invoice.status === "paid" ? "Fatura já paga" : "Fatura expirada"}
+          </p>
+          <p className="text-slate-400">
+            {invoice.status === "paid"
+              ? "Esta fatura já foi paga."
+              : "Esta fatura expirou. Crie uma nova para continuar."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   let reference = invoice.reference;
 
   if (invoice.type === "subscription") {

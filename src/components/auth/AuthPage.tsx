@@ -41,14 +41,14 @@ export default function AuthPage({
         <div className="flex-1 p-8 md:p-16 lg:p-20 flex flex-col justify-center">
           <div className="flex flex-col gap-[16px] max-w-[571px]">
             {/* Branding */}
-            <div className="flex items-center gap-[7.5px] h-[40px]">
+            <Link href="/" className="flex items-center gap-[7.5px] h-[40px] hover:opacity-80 transition-opacity">
               <div className="relative w-[35.5px] h-[32px]">
                 <Image src="/logo-branca.svg" alt="Atlas Logo" fill className="object-contain" />
               </div>
               <span className={`${roboto.className} text-[36px] font-bold text-white tracking-tight`}>
                 Atlas Hosting
               </span>
-            </div>
+            </Link>
 
             {/* Headline */}
             <h1 className={`${roboto.className} text-[48px] leading-[48px] font-bold text-white mt-4`}>
@@ -100,9 +100,9 @@ export default function AuthPage({
           <div className="w-full max-w-sm mx-auto">
             {/* Form Logo (Blue Filter) */}
             <div className="flex justify-center mb-8">
-              <div className="relative w-12 h-12" style={{ filter: 'invert(52%) sepia(98%) saturate(1476%) hue-rotate(159deg) brightness(98%) contrast(101%)' }}>
+              <Link href="/" className="relative w-12 h-12 block hover:opacity-80 transition-opacity" style={{ filter: 'invert(52%) sepia(98%) saturate(1476%) hue-rotate(159deg) brightness(98%) contrast(101%)' }}>
                 <Image src="/logo-branca.svg" alt="Atlas Logo" fill className="object-contain" />
-              </div>
+              </Link>
             </div>
 
             <div className="text-left mb-10">

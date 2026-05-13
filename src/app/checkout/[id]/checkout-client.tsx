@@ -58,6 +58,27 @@ export default function CheckoutClient({
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    let canExpire = false;
+    const timer = setTimeout(() => { canExpire = true; }, 2000);
+
+    const expireInvoice = () => {
+      if (!canExpire) return;
+      fetch(`/api/invoices/${invoice.id}/expire`, {
+        method: "POST",
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    window.addEventListener("beforeunload", expireInvoice);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("beforeunload", expireInvoice);
+      expireInvoice();
+    };
+  }, [invoice.id]);
+
   const [sidebarAction, setSidebarAction] = useState<CheckoutSidebarActionState>({
     label: "Finalizar Transação",
     disabled: false,
@@ -145,7 +166,7 @@ export default function CheckoutClient({
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 order-2 lg:order-1">
               <ModernCheckoutForm
                 ref={checkoutFormRef}
                 invoiceId={invoice.id}
@@ -156,7 +177,7 @@ export default function CheckoutClient({
               />
             </div>
 
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 order-1 lg:order-2">
               <div className="sticky top-4 z-10 space-y-6 lg:top-6">
                 <Card className="shadow-2xl border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-md overflow-hidden">
                   <CardContent className="pt-6">

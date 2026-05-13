@@ -68,7 +68,7 @@ export default function InvoiceCard({
   return (
     <div>
       <Card className={cn(
-        "w-full transition-all duration-200 border border-border/50 shadow-sm hover:shadow-md bg-card/50 backdrop-blur-sm group",
+        "w-full transition-all duration-200 border border-border/50 shadow-sm bg-card/50 backdrop-blur-sm group",
         isExpanded && "ring-1 ring-primary/20 bg-card shadow-md border-primary/20"
       )}>
         {/* Collapsed Summary View */}
@@ -80,8 +80,7 @@ export default function InvoiceCard({
             <div className="flex items-center gap-4">
               <div className={cn(
                 "p-3 rounded-xl transition-colors",
-                invoice.status === "paid" ? "bg-green-500/10 text-green-500" : "bg-primary/10 text-primary",
-                "group-hover:bg-primary group-hover:text-primary-foreground"
+                invoice.status === "paid" ? "bg-green-500/10 text-green-500" : "bg-primary/10 text-primary"
               )}>
                 <FileText className="h-6 w-6" />
               </div>
@@ -101,7 +100,7 @@ export default function InvoiceCard({
                 <Badge 
                   variant="outline" 
                   className={cn(
-                    "capitalize px-3 py-1 font-bold",
+                    "capitalize px-3 py-1 font-bold pointer-events-none",
                     invoice.type === "domain" 
                       ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" 
                       : invoice.type === "vps"
@@ -113,7 +112,7 @@ export default function InvoiceCard({
                 </Badge>
                 <Badge
                   className={cn(
-                    "px-3 py-1 shadow-sm font-bold border",
+                    "px-3 py-1 shadow-sm font-bold border pointer-events-none",
                     getStatusStyles(invoice.status)
                   )}
                 >
@@ -154,7 +153,7 @@ export default function InvoiceCard({
             <div className="flex justify-end">
               <Badge
                 variant={getStatusVariant(invoice.status)}
-                className="text-sm"
+                className="text-sm pointer-events-none"
               >
                 {statusLabel[invoice.status] || "Status desconhecido"}
               </Badge>
@@ -265,6 +264,7 @@ const statusLabel = {
   overdue: "Vencida",
   failed: "Pagamento recusado",
   processing: "Em processamento",
+  expired: "Expirada",
 };
 
 const getStatusVariant = (
@@ -286,6 +286,8 @@ const getStatusVariant = (
       return "destructive";
     case "processing":
       return "secondary";
+    case "expired":
+      return "destructive";
     default:
       return "outline";
   }
@@ -302,6 +304,8 @@ const getStatusStyles = (status: string) => {
       return "bg-red-500/10 text-red-500 border-red-500/20";
     case "processing":
       return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+    case "expired":
+      return "bg-red-500/10 text-red-500 border-red-500/20";
     default:
       return "bg-muted text-muted-foreground";
   }

@@ -130,7 +130,7 @@ const SelectItem = React.forwardRef<
     </span>
 
     <SelectPrimitive.ItemText>
-      <span className="block w-full">{children}</span>
+      <span className="flex-1">{children}</span>
     </SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
 ));

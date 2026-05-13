@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Search, Shield } from "lucide-react";
 import { Roboto } from 'next/font/google';
 
@@ -51,7 +52,7 @@ export function Hero() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSearch();
                 }}
-                placeholder="Domínio que você quer conquistar..."
+                placeholder="Encontre um domínio"
                 className={`${roboto.className} w-full bg-transparent border-none outline-none text-slate-700 text-[14px] md:text-[15px] h-10 placeholder:text-slate-400`}
               />
               <button
@@ -98,11 +99,12 @@ export function Hero() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
-                  <button
-                    className={`${roboto.className} bg-transparent border-2 border-white text-white rounded-[12px] px-10 py-4 text-[14px] md:text-[15px] font-bold tracking-wider uppercase hover:bg-white/10 transition-colors w-full sm:w-auto cursor-pointer`}
+                  <Link
+                    href="/signup"
+                    className={`${roboto.className} bg-transparent border-2 border-white text-white rounded-[12px] px-12 py-4 text-[14px] md:text-[15px] font-bold tracking-wider uppercase hover:bg-white/10 transition-colors w-fit sm:w-auto cursor-pointer`}
                   >
                     Começar agora
-                  </button>
+                  </Link>
 
                   <div className="flex items-center gap-2 text-[12px] md:text-[13px] text-white/70">
                     <Shield className="w-4 h-4 text-emerald-400" />

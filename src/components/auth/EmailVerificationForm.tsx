@@ -199,7 +199,7 @@ export default function EmailVerificationForm({ token }: EmailVerificationFormPr
 
       <Button
         type="submit"
-        className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+        className="w-full h-12 text-base text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
         disabled={!isValid || isLoading}
       >
         {isLoading ? (

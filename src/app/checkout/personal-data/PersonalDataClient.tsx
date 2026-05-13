@@ -180,7 +180,7 @@ function PersonalDataForm() {
     <div className="min-h-screen bg-[#000B12] text-white font-sans pb-24 relative overflow-hidden">
       <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
       <Navbar variant="dark" />
-      
+
       <main className="max-w-5xl mx-auto px-6 pt-32 pb-24 relative z-10">
         <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 p-8 md:p-12">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
@@ -208,11 +208,10 @@ function PersonalDataForm() {
               <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Razão Social / Nome Fantasia <span className="text-sky-500">*</span></Label>
               <Input id="businessName" value={formData.businessName} onChange={handleInputChange} placeholder="Nome da sua empresa" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center gap-1">
                 <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">CPF / CNPJ <span className="text-sky-500">*</span></Label>
-                <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-bold">?</div>
               </div>
               <Input id="vatNumber" value={formData.vatNumber} onChange={handleInputChange} placeholder="Digite seu CPF ou CNPJ" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
             </div>
@@ -280,7 +279,6 @@ function PersonalDataForm() {
             <div className="md:col-span-2 space-y-2">
               <div className="flex items-center gap-1">
                 <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Telefone <span className="text-sky-500">*</span></Label>
-                <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-bold">?</div>
               </div>
               <Input id="telephone" value={formData.telephone} onChange={handleInputChange} placeholder="(00) 00000-0000" className="h-12 border-white/10 bg-white/5 rounded-xl focus:ring-sky-500 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all" />
             </div>
@@ -297,9 +295,9 @@ function PersonalDataForm() {
           </div>
 
           <div className="flex justify-end mt-12">
-            <Button 
-              disabled={isPending || !isFormValid} 
-              onClick={handleNext} 
+            <Button
+              disabled={isPending || !isFormValid}
+              onClick={handleNext}
               className="bg-sky-500 hover:bg-sky-600 text-white font-black h-14 px-16 rounded-2xl text-base uppercase tracking-widest transition-all shadow-lg shadow-sky-500/20 disabled:opacity-30"
             >
               {isPending ? "Processando..." : "Próximo Passo"}
@@ -308,7 +306,7 @@ function PersonalDataForm() {
 
           <div className="mt-12 pt-8 border-t border-white/10 text-center">
             <p className="text-[11px] text-slate-500 leading-relaxed max-w-3xl mx-auto font-medium">
-              Sua privacidade é importante para nós. Processamos seus dados pessoais com a finalidade de criar uma conta de usuário e realizar seu pedido de acordo com nosso <Link href="/privacy" className="text-sky-400 hover:underline">aviso de privacidade</Link>. Tomamos as mais altas precauções para garantir que seus dados estejam seguros e protegidos. Nunca venderemos seus dados a terceiros.
+              Sua privacidade é importante para nós. Processamos seus dados pessoais com a finalidade de criar uma conta de usuário e realizar seu pedido. Tomamos as mais altas precauções para garantir que seus dados estejam seguros e protegidos. Nunca venderemos seus dados a terceiros.
             </p>
           </div>
         </div>

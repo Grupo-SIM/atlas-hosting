@@ -28,7 +28,7 @@ export const pgInvoice = pgTable("invoices", {
   reference: text("reference").notNull(),
   type: text("type", { enum: ["subscription", "domain", "vps"] }).notNull(),
   status: text("status", {
-    enum: ["pending", "paid", "failed", "processing"],
+    enum: ["pending", "paid", "failed", "processing", "expired"],
   }).notNull(),
   metadata: json("metadata")
     .$type<DomainRegisterInvoiceOptions | VpsInvoiceOptions>()

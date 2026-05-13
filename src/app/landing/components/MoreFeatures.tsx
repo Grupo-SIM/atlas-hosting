@@ -41,7 +41,7 @@ const rightFeatures = [
 
 export function MoreFeatures() {
   return (
-    <section id="beneficios" className="py-24 px-4 relative overflow-hidden bg-slate-50">
+    <section id="beneficios" className="py-24 px-4 relative overflow-hidden bg-[#00050A]">
       <div className="container mx-auto max-w-[1100px]">
         {/* Badge e Título */}
         <div className="text-center mb-16 flex flex-col items-center">
@@ -50,10 +50,10 @@ export function MoreFeatures() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="inline-flex flex-row items-center gap-3 mb-6 bg-white py-1.5 px-3 rounded border border-slate-200 shadow-sm"
+            className="inline-flex flex-row items-center gap-3 mb-6 bg-white/5 py-1.5 px-3 rounded border border-white/10 shadow-sm"
           >
-            <div className="w-1 h-4 bg-emerald-500"></div>
-            <span className="text-xs font-semibold tracking-wider text-emerald-600 uppercase">
+            <div className="w-1 h-4 bg-sky-500"></div>
+            <span className="text-xs font-semibold tracking-wider text-sky-400 uppercase">
               ACHOU QUE ERA SÓ ISSO?
             </span>
           </motion.div>
@@ -62,7 +62,7 @@ export function MoreFeatures() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-3xl md:text-4xl lg:text-[2.6rem] font-medium text-slate-900 mb-6 leading-[1.15] max-w-2xl mx-auto"
+            className="text-3xl md:text-4xl lg:text-[2.6rem] font-bold text-white mb-6 leading-[1.15] max-w-2xl mx-auto uppercase"
           >
             A cada mês, sua hospedagem fica mais completa, moderna e eficiente
           </motion.h2>
@@ -82,17 +82,17 @@ export function MoreFeatures() {
                   whileInView={{ opacity: 1, x: 0, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ duration: 0.5, delay: feature.delay }}
-                  className="relative rounded-[16px] p-[1px] bg-slate-200 shadow-sm flex-1 flex flex-col"
+                  className="relative rounded-[24px] p-[1px] bg-white/5 shadow-sm flex-1 flex flex-col"
                 >
-                  <div className="h-full w-full rounded-[15px] bg-white flex flex-col items-center text-center p-8 relative overflow-hidden flex-1 border border-slate-100">
-                    <div className="absolute -top-12 -left-12 w-32 h-32 bg-emerald-500 opacity-[0.05] blur-[40px] rounded-full pointer-events-none" />
-                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-emerald-500 flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20 shrink-0">
+                  <div className="h-full w-full rounded-[23px] bg-[#00050A] flex flex-col items-center text-center p-8 relative overflow-hidden flex-1 border border-white/10 backdrop-blur-md">
+                    <div className="absolute -top-12 -left-12 w-32 h-32 bg-sky-500 opacity-[0.05] blur-[40px] rounded-full pointer-events-none" />
+                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-sky-500 flex items-center justify-center mb-6 shadow-lg shadow-sky-500/20 shrink-0">
                       <Icon className="h-6 w-6 md:h-7 md:w-7 text-white" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-lg font-medium mb-3 text-slate-900">
+                    <h3 className="text-lg font-bold mb-3 text-white uppercase">
                       {feature.title}
                     </h3>
-                    <p className="text-[13px] md:text-[14px] leading-relaxed text-slate-500 font-light px-2">
+                    <p className="text-[13px] md:text-[14px] leading-relaxed text-slate-400 font-medium px-2">
                       {feature.description}
                     </p>
                   </div>
@@ -107,16 +107,16 @@ export function MoreFeatures() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="relative rounded-[16px] p-[1px] bg-slate-200 shadow-sm flex flex-col lg:col-span-1 md:col-span-full h-full"
+            className="relative rounded-[24px] p-[1px] bg-white/5 shadow-sm flex flex-col lg:col-span-1 md:col-span-full h-full"
           >
-            <div className="h-full w-full rounded-[15px] bg-white flex flex-col items-center pt-10 px-6 relative overflow-hidden flex-1 border border-slate-100">
-              <div className="absolute -top-12 -left-12 w-32 h-32 bg-emerald-500 opacity-[0.05] blur-[40px] rounded-full pointer-events-none" />
+            <div className="h-full w-full rounded-[23px] bg-[#00050A] flex flex-col items-center pt-10 px-6 relative overflow-hidden flex-1 border border-white/10 backdrop-blur-md">
+              <div className="absolute -top-12 -left-12 w-32 h-32 bg-sky-500 opacity-[0.05] blur-[40px] rounded-full pointer-events-none" />
               
               <div className="text-center mb-8 relative z-10 shrink-0">
-                <h3 className="text-lg md:text-xl font-medium mb-4 text-slate-900">
+                <h3 className="text-lg md:text-xl font-bold mb-4 text-white uppercase">
                   CDN global incluso
                 </h3>
-                <p className="text-[13px] md:text-[14px] leading-relaxed text-slate-500 font-light max-w-xs mx-auto">
+                <p className="text-[13px] md:text-[14px] leading-relaxed text-slate-400 font-medium max-w-xs mx-auto">
                   Seu site carrega rápido em qualquer lugar do mundo, com distribuição inteligente de conteúdo.
                 </p>
               </div>
@@ -125,7 +125,7 @@ export function MoreFeatures() {
                 <img 
                   src="/landing/features/phone.webp" 
                   alt="CDN Global Console App" 
-                  className="w-[75%] lg:w-[90%] max-w-[280px] object-cover object-top translate-y-2 lg:translate-y-4"
+                  className="w-[75%] lg:w-[90%] max-w-[280px] object-cover object-top translate-y-2 lg:translate-y-4 filter brightness-90 grayscale-[20%]"
                 />
               </div>
             </div>
@@ -142,17 +142,17 @@ export function MoreFeatures() {
                   whileInView={{ opacity: 1, x: 0, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ duration: 0.5, delay: feature.delay }}
-                  className="relative rounded-[16px] p-[1px] bg-slate-200 shadow-sm flex-1 flex flex-col"
+                  className="relative rounded-[24px] p-[1px] bg-white/5 shadow-sm flex-1 flex flex-col"
                 >
-                  <div className="h-full w-full rounded-[15px] bg-white flex flex-col items-center text-center p-8 relative overflow-hidden flex-1 border border-slate-100">
-                    <div className="absolute -top-12 -left-12 w-32 h-32 bg-emerald-500 opacity-[0.05] blur-[40px] rounded-full pointer-events-none" />
-                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-emerald-500 flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20 shrink-0">
+                  <div className="h-full w-full rounded-[23px] bg-[#00050A] flex flex-col items-center text-center p-8 relative overflow-hidden flex-1 border border-white/10 backdrop-blur-md">
+                    <div className="absolute -top-12 -left-12 w-32 h-32 bg-sky-500 opacity-[0.05] blur-[40px] rounded-full pointer-events-none" />
+                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-sky-500 flex items-center justify-center mb-6 shadow-lg shadow-sky-500/20 shrink-0">
                       <Icon className="h-6 w-6 md:h-7 md:w-7 text-white" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-lg font-medium mb-3 text-slate-900">
+                    <h3 className="text-lg font-bold mb-3 text-white uppercase">
                       {feature.title}
                     </h3>
-                    <p className="text-[13px] md:text-[14px] leading-relaxed text-slate-500 font-light px-2">
+                    <p className="text-[13px] md:text-[14px] leading-relaxed text-slate-400 font-medium px-2">
                       {feature.description}
                     </p>
                   </div>
@@ -166,4 +166,3 @@ export function MoreFeatures() {
     </section>
   );
 }
-

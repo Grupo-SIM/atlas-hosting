@@ -894,32 +894,59 @@ export default function VpsConfigurePage() {
       {/* Step Header could be here, but matching image's start */}
       <div className={`${roboto.className} max-w-6xl mx-auto px-6 pt-32 pb-12 space-y-12`}>
 
+        <Link href="/#planos" className="group mb-6 flex items-center gap-2 text-sm font-bold text-sky-400 transition-all hover:text-sky-300">
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          Voltar para os planos
+        </Link>
         <h1 className="text-4xl font-black text-white tracking-tight uppercase drop-shadow-sm">Configure seu {plan.name}</h1>
 
         {/* Plan Summary Section */}
         <div className="flex flex-wrap items-center gap-10">
-          <div className="flex-1 border-2 border-sky-500/50 rounded-xl p-8 grid grid-cols-5 gap-4 relative bg-white/5 backdrop-blur-md shadow-2xl">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">CPU</p>
-              <p className="text-[11px] font-medium leading-tight">{plan.vcpu}</p>
+          <div className="flex-1 border-2 border-sky-500/50 rounded-xl p-4 md:p-8 relative bg-white/5 backdrop-blur-md shadow-2xl">
+            {/* Mobile: compact label→value list */}
+            <div className="md:hidden space-y-2 pb-6">
+              {[
+                { label: "CPU", value: plan.vcpu },
+                { label: "RAM", value: plan.ram },
+                { label: "Disco", value: plan.storage },
+                { label: "Snapshot", value: plan.snapshots },
+                { label: "Tráfego", value: plan.traffic },
+              ].map((spec) => (
+                <div key={spec.label} className="flex items-start justify-between gap-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex-shrink-0">{spec.label}</span>
+                  <span className="text-[11px] font-medium text-white text-right leading-tight">{spec.value}</span>
+                </div>
+              ))}
             </div>
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">RAM</p>
-              <p className="text-[11px] font-medium leading-tight">{plan.ram}</p>
+            {/* Desktop: 5-col grid */}
+            <div className="hidden md:grid md:grid-cols-5 gap-4">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase">CPU</p>
+                <p className="text-[11px] font-medium leading-tight">{plan.vcpu}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase">RAM</p>
+                <p className="text-[11px] font-medium leading-tight">{plan.ram}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
+                <p className="text-[11px] font-medium leading-tight">{plan.storage}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase">SNAPSHOT</p>
+                <p className="text-[11px] font-medium leading-tight">{plan.snapshots}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase">TRÁFEGO</p>
+                <p className="text-[11px] font-medium leading-tight">{plan.traffic}</p>
+              </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
-              <p className="text-[11px] font-medium leading-tight">{plan.storage}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">SNAPSHOT</p>
-              <p className="text-[11px] font-medium leading-tight">{plan.snapshots}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">TRÁFEGO</p>
-              <p className="text-[11px] font-medium leading-tight">{plan.traffic}</p>
-            </div>
-            <button className="absolute bottom-4 right-4 text-[10px] text-sky-400 hover:underline font-bold uppercase tracking-wider">Mudar</button>
+            <button 
+              onClick={() => router.push('/#planos')}
+              className="absolute bottom-4 right-4 text-[10px] text-sky-400 hover:underline font-bold uppercase tracking-wider"
+            >
+              Mudar
+            </button>
           </div>
 
           <div className="flex items-center gap-4">
@@ -928,7 +955,7 @@ export default function VpsConfigurePage() {
               <SelectTrigger className="w-16 h-10 border border-white/10 bg-white/5 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#000B12] border-white/10 text-white">
+              <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                 {Array.from({ length: 25 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={n.toString()} className="focus:bg-white/10 focus:text-white">{n}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -941,7 +968,6 @@ export default function VpsConfigurePage() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
-            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -982,22 +1008,21 @@ export default function VpsConfigurePage() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-black text-white uppercase tracking-tight">Região</h2>
-            <Info size={16} className="text-slate-500" />
           </div>
 
-          <div className="flex flex-nowrap items-start gap-8">
-            <div className="w-1/3">
+          <div className="flex flex-col md:flex-row items-start gap-8">
+            <div className="hidden md:block w-1/3">
               <img src="/1098128_7510-removebg-preview.png" alt="Map" className="w-full h-auto opacity-80" />
             </div>
 
-            <div className="flex-1 space-y-4">
-              <div className="flex border-b border-white/10">
+            <div className="flex-1 space-y-4 w-full">
+              <div className="flex overflow-x-auto scrollbar-thin border-b border-white/10">
                 {regions.map(r => (
                   <button
                     key={r.id}
                     onClick={() => setRegionTab(r.id)}
                     className={cn(
-                      "px-8 py-3 text-[11px] font-bold uppercase tracking-wider relative transition-colors",
+                      "px-4 md:px-8 py-3 text-[11px] font-bold uppercase tracking-wider relative transition-colors whitespace-nowrap",
                       regionTab === r.id ? "text-sky-400" : "text-slate-500 hover:text-white"
                     )}
                   >
@@ -1023,9 +1048,9 @@ export default function VpsConfigurePage() {
                         Recomendado - Melhor latência para sua região
                       </div>
                     )}
-                    <div className="flex-1 text-left text-white">{loc.name}</div>
-                    <div className="flex-1 text-center text-slate-400 font-medium">– Latência de {loc.latency}</div>
-                    <div className="flex-1 text-right text-white font-black">{loc.eur > 0 ? formatBRLPerMonth(loc.eur) : "Livre"}</div>
+                    <div className="flex-1 text-left text-white text-xs md:text-sm">{loc.name}</div>
+                    <div className="hidden md:block flex-1 text-center text-slate-400 font-medium">– Latência de {loc.latency}</div>
+                    <div className="flex-shrink-0 text-right text-white font-black text-xs md:text-sm">{loc.eur > 0 ? formatBRLPerMonth(loc.eur) : "Livre"}</div>
                   </button>
                 ))}
               </div>
@@ -1039,7 +1064,6 @@ export default function VpsConfigurePage() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-black text-white uppercase tracking-tight">Tipo de armazenamento</h2>
-            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1086,13 +1110,13 @@ export default function VpsConfigurePage() {
                 exit={{ opacity: 0, height: 0 }}
                 className="space-y-8 overflow-hidden"
               >
-                <div className="flex justify-center border-b border-white/10">
+                <div className="flex overflow-x-auto scrollbar-thin justify-start md:justify-center border-b border-white/10">
                   {imageCategories.map(cat => (
                     <button
                       key={cat.id}
                       onClick={() => setImageCategory(cat.id)}
                       className={cn(
-                        "px-8 py-3 text-[11px] font-black uppercase tracking-wider relative transition-colors",
+                        "px-4 md:px-8 py-3 text-[11px] font-black uppercase tracking-wider relative transition-colors whitespace-nowrap",
                         imageCategory === cat.id ? "text-sky-400" : "text-slate-500 hover:text-white"
                       )}
                     >
@@ -1186,13 +1210,12 @@ export default function VpsConfigurePage() {
         <section className="mb-8">
           <div className="flex items-center gap-2 mb-6">
             <h2 className="text-base font-black text-white uppercase tracking-tight">Proteção de Dados</h2>
-            <Info size={16} className="text-slate-500" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center bg-white/5 rounded-2xl p-10 border border-white/10 shadow-2xl backdrop-blur-md">
             <div className="lg:col-span-5 flex flex-col md:flex-row items-center gap-4">
               <div className="relative w-64 h-64 flex-shrink-0">
-                <img src="/securtiryu-Photoroom.png" alt="Backup Shield" className="w-64 h-auto object-contain" />
+                <img src="/4870961_54433-nobg.svg" alt="Backup Shield" className="w-64 h-auto object-contain" />
               </div>
 
               <div className="flex-1">
@@ -1258,10 +1281,7 @@ export default function VpsConfigurePage() {
         <section className="bg-white/5 rounded-2xl shadow-2xl border border-white/10 overflow-hidden mb-8 backdrop-blur-md">
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-2">
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
-                <div className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-slate-500 text-xs cursor-help">?</div>
-              </div>
               <button
                 onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)}
                 className="flex items-center gap-1 text-[11px] font-black text-white uppercase tracking-wider"
@@ -1288,16 +1308,13 @@ export default function VpsConfigurePage() {
                     <div className="space-y-6 pl-4 pr-1">
                       {/* Private Networking */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2">
                           <span className="text-sm font-bold text-slate-300">Rede Privada</span>
-                          <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-slate-500 text-[10px] cursor-help">?</div>
-                        </div>
                         <div className="md:col-span-9">
                           <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white">
                               <SelectValue placeholder="Selecione a rede" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                            <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                               <SelectItem value="none" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Sem Rede Privada</span>
@@ -1317,10 +1334,7 @@ export default function VpsConfigurePage() {
 
                       {/* Bandwidth */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2">
                           <span className="text-sm font-bold text-slate-300">Largura de Banda</span>
-                          <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-slate-500 text-[10px] cursor-help">?</div>
-                        </div>
                         <div className="md:col-span-9">
                           <div className="h-12 border border-white/10 rounded-md px-4 flex flex-col justify-center bg-white/5">
                             <span className="text-sm font-bold text-white">Tráfego Ilimitado</span>
@@ -1339,7 +1353,7 @@ export default function VpsConfigurePage() {
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white">
                               <SelectValue placeholder="Selecione o IP" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                            <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                               <SelectItem value="1ip" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">1 Endereço IP</span>
@@ -1375,7 +1389,7 @@ export default function VpsConfigurePage() {
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white">
                               <SelectValue placeholder={objectStorage === "none" ? "Nenhum" : objectStorage === "250gb" ? "250 GB Armazenamento" : objectStorage === "500gb" ? "500 GB Armazenamento" : objectStorage === "750gb" ? "750 GB Armazenamento" : "1 TB Armazenamento"} />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                            <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                               <SelectItem value="none" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Nenhum</span>
@@ -1413,16 +1427,13 @@ export default function VpsConfigurePage() {
 
                       {/* Server Management */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2">
                           <span className="text-sm font-bold text-slate-300">Gerenciamento de Servidor</span>
-                          <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-slate-500 text-[10px] cursor-help">?</div>
-                        </div>
                         <div className="md:col-span-9">
                           <Select value={serverManagement} onValueChange={setServerManagement}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white">
                               <SelectValue placeholder="Selecione o gerenciamento" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                            <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                               <SelectItem value="unmanaged" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Não Gerenciado</span>
@@ -1442,16 +1453,13 @@ export default function VpsConfigurePage() {
 
                       {/* Monitoring */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2">
                           <span className="text-sm font-bold text-slate-300">Monitoramento</span>
-                          <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-slate-500 text-[10px] cursor-help">?</div>
-                        </div>
                         <div className="md:col-span-9">
                           <Select value={monitoring} onValueChange={setMonitoring}>
                             <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white">
                               <SelectValue placeholder="Selecione o monitoramento" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                            <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                               <SelectItem value="none" className="focus:bg-white/10 focus:text-white">
                                 <div className="flex items-center justify-between w-full">
                                   <span className="text-left">Nenhum</span>
@@ -1677,29 +1685,29 @@ export default function VpsConfigurePage() {
           )}
         </AnimatePresence>
 
-        <div className="max-w-6xl mx-auto px-10 h-24 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center shadow-lg border border-white/10">
+        <div className="max-w-6xl mx-auto px-3 md:px-10 h-auto md:h-24 flex items-center justify-between py-2 md:py-0 gap-2">
+          <div className="flex items-center gap-2 md:gap-6">
+            <div className="hidden md:flex w-14 h-14 bg-white/5 rounded-full items-center justify-center shadow-lg border border-white/10">
               <ShieldCheck className="w-6 h-6 text-sky-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-white text-base leading-tight uppercase tracking-widest">Resumo do Pedido</h3>
-                <button 
+                <h3 className="font-black text-white text-xs md:text-base leading-tight uppercase tracking-widest">Resumo</h3>
+                <button
                   onClick={() => setShowSummaryDetails(!showSummaryDetails)}
                   className="p-1 hover:bg-white/10 rounded-full transition-colors"
                 >
                   {showSummaryDetails ? (
-                    <ChevronDown className="w-5 h-5 text-sky-400" />
+                    <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-sky-400" />
                   ) : (
-                    <ChevronUp className="w-5 h-5 text-sky-400" />
+                    <ChevronUp className="w-4 h-4 md:w-5 md:h-5 text-sky-400" />
                   )}
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-20">
+          <div className="flex items-center gap-4 md:gap-20">
             {/* Middle: Savings */}
             {(() => {
               const selectedDuration = durations.find((d: any) => d.id === duration) || durations[0];
@@ -1769,7 +1777,7 @@ export default function VpsConfigurePage() {
 
               return (
                 <>
-                  <div className="flex-1 text-center min-w-[200px]">
+                  <div className="hidden md:block flex-1 text-center min-w-[200px]">
                     {totalSavings > 0 && (
                       <p className="text-emerald-500 font-bold text-sm">
                         Você economiza {formatBRL(totalSavings / currentRate)}.
@@ -1778,28 +1786,28 @@ export default function VpsConfigurePage() {
                   </div>
 
                   {/* Right: Total & Button */}
-                  <div className="flex items-center gap-12">
-                    <div className="flex flex-col gap-1 min-w-[220px]">
-                      <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-slate-400 font-bold flex items-center gap-1 uppercase tracking-widest">Mensal <Info className="w-3 h-3 opacity-40" /></span>
+                  <div className="flex items-center gap-4 md:gap-12">
+                    <div className="flex flex-col gap-0.5 md:gap-1 min-w-0 md:min-w-[220px]">
+                      <div className="hidden md:flex justify-between items-center text-[11px]">
+                        <span className="text-slate-400 font-bold flex items-center gap-1 uppercase tracking-widest">Mensal </span>
                         <span className="text-white font-black whitespace-nowrap">{formatBRL(totalMonthly * qty / currentRate)}</span>
                       </div>
-                      <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-slate-400 font-bold flex items-center gap-1 uppercase tracking-widest">Taxa Única <Info className="w-3 h-3 opacity-40" /></span>
+                      <div className="hidden md:flex justify-between items-center text-[11px]">
+                        <span className="text-slate-400 font-bold flex items-center gap-1 uppercase tracking-widest">Taxa Única </span>
                         <span className="text-white font-black whitespace-nowrap">{formatBRL(setupFee * qty / currentRate)}</span>
                       </div>
-                      <div className="flex justify-between items-center mt-1">
+                      <div className="flex justify-between items-center md:mt-1">
                         <div className="flex flex-col">
-                          <span className="text-[13px] font-black text-white uppercase tracking-tight">Vencido Hoje</span>
-                          <span className="text-[10px] text-slate-400 font-medium -mt-1">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span>
+                          <span className="text-xs md:text-[13px] font-black text-white uppercase tracking-tight">Vencido Hoje</span>
+                          <span className="hidden md:block text-[10px] text-slate-400 font-medium -mt-1">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span>
                         </div>
-                        <span className="text-xl font-black text-white whitespace-nowrap">
+                        <span className="text-sm md:text-xl font-black text-white whitespace-nowrap ml-2">
                           {formatBRL(dueToday / currentRate)}
                         </span>
                       </div>
                     </div>
 
-                    <Button 
+                    <Button
                       disabled={!isPasswordValid(password)}
                       onClick={() => {
                         if (isPasswordValid(password)) {
@@ -1807,9 +1815,9 @@ export default function VpsConfigurePage() {
                         }
                       }}
                       className={cn(
-                        "font-black h-14 px-12 rounded-xl text-lg shadow-lg transition-all min-w-[180px] uppercase tracking-widest",
-                        isPasswordValid(password) 
-                          ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" 
+                        "font-black h-10 md:h-14 px-5 md:px-12 rounded-xl text-sm md:text-lg shadow-lg transition-all min-w-0 md:min-w-[180px] uppercase tracking-widest",
+                        isPasswordValid(password)
+                          ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20"
                           : "bg-white/5 text-slate-500 cursor-not-allowed shadow-none"
                       )}
                     >
@@ -1827,14 +1835,14 @@ export default function VpsConfigurePage() {
       <AnimatePresence>
         {showUbuntuModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowUbuntuModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-5 md:p-10 space-y-6 md:space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4"><img src="/image.png" alt="Ubuntu" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Ubuntu</h2></div>
               <p className="text-slate-400 leading-relaxed text-[15px]">Ubuntu é um sistema operacional livre e de código aberto baseado em Linux. Conhecido por sua facilidade de uso, estabilidade e forte apoio da comunidade.</p>
               <div className="space-y-4">
                 <label className="text-sm font-black text-slate-400 uppercase tracking-widest">Versão</label>
                 <Select value={ubuntuVersion} onValueChange={setUbuntuVersion}>
                   <SelectTrigger className="h-14 bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                     <SelectItem value="Ubuntu 24.04" className="focus:bg-white/10 focus:text-white">Ubuntu 24.04 LTS</SelectItem>
                     <SelectItem value="Ubuntu 22.04" className="focus:bg-white/10 focus:text-white">Ubuntu 22.04 LTS</SelectItem>
                   </SelectContent>
@@ -1853,13 +1861,13 @@ export default function VpsConfigurePage() {
       <AnimatePresence>
         {showCustomModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowCustomModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-5 md:p-10 space-y-6 md:space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4"><img src="/custom-images.png" alt="Custom" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Imagens Personalizadas</h2></div>
               <div className="space-y-4">
                 <label className="text-sm font-black text-slate-400 uppercase tracking-widest">Opção</label>
                 <Select value={customImageOption} onValueChange={setCustomImageOption}>
                   <SelectTrigger className="h-14 bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                     <SelectItem value="existing" className="focus:bg-white/10 focus:text-white">Usar armazenamento existente</SelectItem>
                     <SelectItem value="add" className="focus:bg-white/10 focus:text-white">Adicionar armazenamento (25 GB) - <span className="text-sky-400 font-black">R$ 13,95</span></SelectItem>
                   </SelectContent>
@@ -1878,7 +1886,7 @@ export default function VpsConfigurePage() {
       <AnimatePresence>
         {showWindowsModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowWindowsModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-5 md:p-10 space-y-6 md:space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4"><img src="/windows.png" alt="Windows" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Windows Server</h2></div>
               <div className="space-y-4">
                 <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Versão</label>
@@ -1895,12 +1903,12 @@ export default function VpsConfigurePage() {
                       </span>
                     </div>
                   </SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130]">
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130] max-w-[calc(100vw-2rem)]">
                     {["2025", "2022", "2019", "2016"].map(v => (
                       <SelectItem key={v} value={v} className="focus:bg-white/10 focus:text-white">
-                        <div className="flex items-center justify-between w-[480px] py-1">
+                        <div className="flex items-center justify-between w-full md:w-[480px] py-1 flex-1 gap-4">
                           <span className="font-black text-white uppercase tracking-tighter">Server {v} Datacenter</span>
-                          <span className="font-black text-white">{formatBRL(v === "2016" ? getImagePrices(planId, {}).windows_2016 : getImagePrices(planId, {}).windows)}</span>
+                          <span className="font-black text-sky-400 ml-auto">{formatBRL(v === "2016" ? getImagePrices(planId, {}).windows_2016 : getImagePrices(planId, {}).windows)}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -1920,7 +1928,7 @@ export default function VpsConfigurePage() {
       <AnimatePresence>
         {showCpanelModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowCpanelModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-5 md:p-10 space-y-6 md:space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4"><img src="/cpanel.png" alt="cPanel" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">cPanel/WHM</h2></div>
               <div className="space-y-6">
                 <div className="space-y-4">
@@ -1944,12 +1952,12 @@ export default function VpsConfigurePage() {
                         </span>
                       </div>
                     </SelectTrigger>
-                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130] max-h-[300px]">
+                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130] max-h-[300px] max-w-[calc(100vw-2rem)]">
                       {[5, 30, 50, 100, 150, 200, 250, 300, 500, 1000].map(count => (
                         <SelectItem key={count} value={count.toString()} className="focus:bg-white/10 focus:text-white">
-                          <div className="flex items-center justify-between w-[480px] py-1">
+                          <div className="flex items-center justify-between w-full md:w-[480px] py-1 flex-1 gap-4">
                             <span className="font-black text-white uppercase tracking-tighter">{count} contas</span>
-                            <span className="font-black text-white">
+                            <span className="font-black text-sky-400 ml-auto">
                               {(() => {
                                 const cpanelPricesMap: Record<string, number> = { "5": 43.50, "30": 58.00, "50": 77.00, "100": 94.00, "150": 117.00, "200": 157.00, "250": 197.00, "300": 237.00, "500": 397.00, "1000": 797.00 };
                                 return formatBRL(cpanelPricesMap[count.toString()] || 43.50);
@@ -1965,7 +1973,7 @@ export default function VpsConfigurePage() {
                   <label className="text-sm font-black text-slate-400 uppercase tracking-widest">Sistema Operacional</label>
                   <Select value={cpanelVersion} onValueChange={setCpanelVersion}>
                     <SelectTrigger className="h-14 bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                    <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                       <SelectItem value="Ubuntu 22.04" className="focus:bg-white/10 focus:text-white">Ubuntu 22.04</SelectItem>
                       <SelectItem value="AlmaLinux 9" className="focus:bg-white/10 focus:text-white">AlmaLinux 9</SelectItem>
                     </SelectContent>
@@ -1985,13 +1993,13 @@ export default function VpsConfigurePage() {
       <AnimatePresence>
         {showRhelModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowRhelModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-5 md:p-10 space-y-6 md:space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4"><img src="/centos-svgrepo-com.svg" alt="RHEL" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">RHEL Variants</h2></div>
               <div className="space-y-4">
                 <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Distribuição</label>
                 <Select value={rhelVersion} onValueChange={setRhelVersion}>
                   <SelectTrigger className="h-14 bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                     <SelectItem value="AlmaLinux 9" className="focus:bg-white/10 focus:text-white">AlmaLinux 9</SelectItem>
                     <SelectItem value="Rocky Linux 9" className="focus:bg-white/10 focus:text-white">Rocky Linux 9</SelectItem>
                   </SelectContent>
@@ -2010,7 +2018,7 @@ export default function VpsConfigurePage() {
       <AnimatePresence>
         {showPleskModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-5 md:p-10 space-y-6 md:space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Plesk + Linux</h2></div>
               <div className="space-y-4">
                 <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Licença</label>
@@ -2026,12 +2034,12 @@ export default function VpsConfigurePage() {
                       </span>
                     </div>
                   </SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130]">
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130] max-w-[calc(100vw-2rem)]">
                     {["admin", "pro", "host"].map(l => (
                       <SelectItem key={l} value={l} className="focus:bg-white/10 focus:text-white">
-                        <div className="flex items-center justify-between w-[480px] py-1">
+                        <div className="flex items-center justify-between w-full md:w-[480px] py-1 flex-1 gap-4">
                           <div className="flex flex-col"><span className="font-black text-white uppercase tracking-tighter">Web {l.charAt(0).toUpperCase() + l.slice(1)} Edition</span><span className="text-emerald-400 font-black text-xs uppercase">1 mês grátis</span></div>
-                          <span className="font-black text-white">{l === "admin" ? "R$ 140,64" : l === "host" ? "R$ 427,78" : "R$ 222,68"}</span>
+                          <span className="font-black text-sky-400 ml-auto">{l === "admin" ? "R$ 140,64" : l === "host" ? "R$ 427,78" : "R$ 222,68"}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -2051,13 +2059,13 @@ export default function VpsConfigurePage() {
       <AnimatePresence>
         {showDebianModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowDebianModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-5 md:p-10 space-y-6 md:space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4"><img src="/debian-svgrepo-com.svg" alt="Debian" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Debian</h2></div>
               <div className="space-y-4">
                 <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Versão</label>
                 <Select value={debianVersion} onValueChange={setDebianVersion}>
                   <SelectTrigger className="h-14 bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                     <SelectItem value="Debian 13" className="focus:bg-white/10 focus:text-white">Debian 13</SelectItem>
                     <SelectItem value="Debian 12" className="focus:bg-white/10 focus:text-white">Debian 12</SelectItem>
                   </SelectContent>
@@ -2076,13 +2084,13 @@ export default function VpsConfigurePage() {
       <AnimatePresence>
         {showDockerModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowDockerModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-5 md:p-10 space-y-6 md:space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4"><img src="/docker.png" alt="Docker" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Docker</h2></div>
               <div className="space-y-4">
                 <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Versão</label>
                 <Select value={dockerVersion} onValueChange={setDockerVersion}>
                   <SelectTrigger className="h-14 bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                     <SelectItem value="Ubuntu 22.04" className="focus:bg-white/10 focus:text-white">Ubuntu 22.04</SelectItem>
                     <SelectItem value="Debian 12" className="focus:bg-white/10 focus:text-white">Debian 12</SelectItem>
                   </SelectContent>
@@ -2101,7 +2109,7 @@ export default function VpsConfigurePage() {
       <AnimatePresence>
         {showLampModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowLampModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-5 md:p-10 space-y-6 md:space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4"><img src="/lamp.png" alt="LAMP" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">LAMP Stack</h2></div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
                 <h3 className="font-bold text-sky-400 text-[15px] uppercase tracking-wider">Linux, Apache, MySQL e PHP</h3>
@@ -2111,7 +2119,7 @@ export default function VpsConfigurePage() {
                 <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Versão</label>
                 <Select value={lampVersion} onValueChange={setLampVersion}>
                   <SelectTrigger className="h-14 bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                     <SelectItem value="Ubuntu 22.04" className="focus:bg-white/10 focus:text-white">Ubuntu 22.04</SelectItem>
                     <SelectItem value="Debian 12" className="focus:bg-white/10 focus:text-white">Debian 12</SelectItem>
                     <SelectItem value="AlmaLinux 9" className="focus:bg-white/10 focus:text-white">AlmaLinux 9</SelectItem>
@@ -2131,7 +2139,7 @@ export default function VpsConfigurePage() {
       <AnimatePresence>
         {showPleskWindowsModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskWindowsModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-5 md:p-10 space-y-6 md:space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Plesk + Windows</h2></div>
               <div className="space-y-6">
                 <div className="space-y-4">
@@ -2143,12 +2151,12 @@ export default function VpsConfigurePage() {
                         <span className="text-xs text-sky-400 font-black">{formatBRL(pleskWinLicence === "admin" ? getImagePrices(planId, {}).pleskWin : (pleskWinLicence === "pro" ? getImagePrices(planId, {}).pleskPro : getImagePrices(planId, {}).pleskHost))} / mês</span>
                       </div>
                     </SelectTrigger>
-                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130]">
+                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130] max-w-[calc(100vw-2rem)]">
                       {["admin", "pro", "host"].map(l => (
                         <SelectItem key={l} value={l} className="focus:bg-white/10 focus:text-white">
-                          <div className="flex items-center justify-between w-[480px] py-1">
+                         <div className="flex items-center justify-between w-full md:w-[480px] py-1 flex-1 gap-4">
                             <div className="flex flex-col"><span className="font-black text-white uppercase tracking-tighter">Web {l.charAt(0).toUpperCase() + l.slice(1)} Edition</span><span className="text-emerald-400 font-black text-xs uppercase">1 mês grátis</span></div>
-                            <span className="font-black text-white">{formatBRL(l === "admin" ? getImagePrices(planId, {}).pleskWin : (l === "pro" ? getImagePrices(planId, {}).pleskPro : getImagePrices(planId, {}).pleskHost))}</span>
+                            <span className="font-black text-sky-400 ml-auto">{formatBRL(l === "admin" ? getImagePrices(planId, {}).pleskWin : (l === "pro" ? getImagePrices(planId, {}).pleskPro : getImagePrices(planId, {}).pleskHost))}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -2159,12 +2167,12 @@ export default function VpsConfigurePage() {
                   <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Versão Windows</label>
                   <Select value={pleskWinVersion} onValueChange={setPleskWinVersion}>
                     <SelectTrigger className="h-16 bg-white/5 border-white/10 text-white"><div className="flex items-center justify-between w-full pr-2"><span className="text-sm">Server {pleskWinVersion} Datacenter</span><span className="text-xs text-sky-400 font-black">{formatBRL(pleskWinVersion === "2016" ? getImagePrices(planId, {}).windows_2016 : getImagePrices(planId, {}).windows)} / mês</span></div></SelectTrigger>
-                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130]">
+                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[130] max-w-[calc(100vw-2rem)]">
                       {["2025", "2022", "2019", "2016"].map(v => (
                         <SelectItem key={v} value={v} className="focus:bg-white/10 focus:text-white">
-                          <div className="flex items-center justify-between w-[480px] py-1">
+                          <div className="flex items-center justify-between w-full md:w-[480px] py-1 flex-1 gap-4">
                             <span className="font-black text-white uppercase tracking-tighter">Server {v} Datacenter</span>
-                            <span className="font-black text-white">{formatBRL(v === "2016" ? getImagePrices(planId, {}).windows_2016 : getImagePrices(planId, {}).windows)}</span>
+                            <span className="font-black text-sky-400 ml-auto">{formatBRL(v === "2016" ? getImagePrices(planId, {}).windows_2016 : getImagePrices(planId, {}).windows)}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -2185,13 +2193,13 @@ export default function VpsConfigurePage() {
       <AnimatePresence>
         {showWebminModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowWebminModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-5 md:p-10 space-y-6 md:space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-4"><img src="/webmin.png" alt="Webmin" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Webmin</h2></div>
               <div className="space-y-4">
                 <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Versão</label>
                 <Select value={webminVersion} onValueChange={setWebminVersion}>
                   <SelectTrigger className="h-14 bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                  <SelectContent className="bg-[#000B12] border-white/10 text-white max-w-[calc(100vw-2rem)]">
                     <SelectItem value="Ubuntu 22.04" className="focus:bg-white/10 focus:text-white">Ubuntu 22.04</SelectItem>
                     <SelectItem value="AlmaLinux 9" className="focus:bg-white/10 focus:text-white">AlmaLinux 9</SelectItem>
                   </SelectContent>

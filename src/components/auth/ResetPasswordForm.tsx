@@ -147,7 +147,7 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
       <Button
         type="submit"
-        className="w-full h-12 text-base bg-gradient-to-r from-[#01FC8D] to-[#01e67d] text-[#0a0e27] font-bold hover:brightness-110"
+        className="w-full h-12 text-base bg-gradient-to-r from-sky-500 to-sky-600 text-white font-bold hover:brightness-110"
         disabled={!isValid || isLoading}
       >
         {isLoading ? (

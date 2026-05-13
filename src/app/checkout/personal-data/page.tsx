@@ -211,7 +211,7 @@ function PersonalDataForm() {
             <div className="space-y-3">
               <div className="flex items-center gap-2 ml-1">
                 <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">CPF / CNPJ <span className="text-rose-500">*</span></Label>
-                <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-black">?</div>
+
               </div>
               <Input id="vatNumber" value={formData.vatNumber} onChange={handleInputChange} placeholder="000.000.000-00" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
             </div>
@@ -271,7 +271,7 @@ function PersonalDataForm() {
             <div className="md:col-span-2 space-y-3">
               <div className="flex items-center gap-2 ml-1">
                 <Label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Telefone <span className="text-rose-500">*</span></Label>
-                <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-slate-500 cursor-help font-black">?</div>
+
               </div>
               <Input id="telephone" value={formData.telephone} onChange={handleInputChange} placeholder="(00) 00000-0000" className="h-14 border-white/10 bg-white/5 rounded-2xl focus:ring-sky-500/50 text-white placeholder:text-slate-600 focus:border-sky-500/50 transition-all outline-none" />
             </div>
@@ -295,7 +295,7 @@ function PersonalDataForm() {
           </div>
           <div className="mt-16 pt-10 border-t border-white/5 text-center">
             <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest leading-relaxed max-w-3xl mx-auto opacity-80">
-              Sua privacidade é importante para nós. Processamos seus dados pessoais com a finalidade de criar uma conta de usuário e realizar seu pedido de acordo com nosso <Link href="/privacy" className="text-sky-400 hover:underline">aviso de privacidade</Link>. Tomamos as mais altas precauções para garantir que seus dados estejam seguros e protegidos. Nunca venderemos seus dados a terceiros.
+              Sua privacidade é importante para nós. Processamos seus dados pessoais com a finalidade de criar uma conta de usuário e realizar seu pedido. Tomamos as mais altas precauções para garantir que seus dados estejam seguros e protegidos. Nunca venderemos seus dados a terceiros.
             </p>
           </div>
         </div>

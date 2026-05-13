@@ -28,6 +28,8 @@ interface AtlasNotificationEmailProps {
   additionalInfo?: string;
   publicSiteUrl?: string;
   verificationCode?: string;
+  hideGreeting?: boolean;
+  hideIntro?: boolean;
 }
 
 const baseUrlLocal = 'https://atlashosting.com.br';
@@ -76,6 +78,8 @@ export const AtlasNotificationEmail = ({
   additionalInfo,
   publicSiteUrl = baseUrlLocal,
   verificationCode,
+  hideGreeting = false,
+  hideIntro = false,
 }: AtlasNotificationEmailProps) => {
   const config = severityConfig[severity];
   const previewText = `${config.icon} ${title}`;
@@ -111,13 +115,17 @@ export const AtlasNotificationEmail = ({
               </Heading>
             </Section>
 
-            <Text style={paragraph}>
-              Olá {firstName},
-            </Text>
+            {!hideGreeting && (
+              <Text style={paragraph}>
+                Olá {firstName},
+              </Text>
+            )}
             
-            <Text style={paragraph}>
-              Estamos entrando em contato para informar sobre uma atualização importante na sua conta Atlas Hosting para <strong>{organizationName}</strong>.
-            </Text>
+            {!hideIntro && (
+              <Text style={paragraph}>
+                Estamos entrando em contato para informar sobre uma atualização importante na sua conta Atlas Hosting para <strong>{organizationName}</strong>.
+              </Text>
+            )}
             
             <div 
               style={paragraph} 
