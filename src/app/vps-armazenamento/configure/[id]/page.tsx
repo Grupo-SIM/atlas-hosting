@@ -646,7 +646,7 @@ export default function ConfigureStorageVps() {
                     )}
                   >
                     {loc.recommended && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[13px] font-black px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[10px] md:text-[13px] font-black px-2 md:px-4 py-0.5 md:py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
                         Recomendado - Melhor latência para sua região
                       </div>
                     )}
@@ -766,7 +766,7 @@ export default function ConfigureStorageVps() {
                   </div>
                   <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <button onClick={() => setAutoBackup(true)} className={cn("relative p-6 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-center min-h-[160px] bg-white/5 backdrop-blur-md", autoBackup ? "border-sky-500 shadow-lg shadow-sky-500/20" : "border-white/10 hover:border-white/20")}>
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#000B12] px-4 py-1 rounded-full border border-sky-500/30"><span className="text-[14px] font-black text-sky-400 uppercase tracking-widest whitespace-nowrap">Recomendado</span></div>
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#000B12] px-2 md:px-4 py-0.5 md:py-1 rounded-full border border-sky-500/30"><span className="text-[10px] md:text-[14px] font-black text-sky-400 uppercase tracking-widest whitespace-nowrap">Recomendado</span></div>
                       <h3 className="text-2xl font-black text-white mb-1 uppercase tracking-tight">Backup Automático</h3>
                       <div className="text-3xl font-black text-white mb-2">{formatBRLPerMonth(plan.backupEur)}</div>
                     </button>
@@ -784,7 +784,7 @@ export default function ConfigureStorageVps() {
         <section className="bg-white/5 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 overflow-hidden mb-8">
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-4xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
+              <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
               <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[15px] font-black text-white uppercase tracking-wider">
                 {showAdditionalFeatures ? <>Fechar <ChevronUp size={14} /></> : <>Ver mais <ChevronDown size={14} /></>}
               </button>
@@ -877,7 +877,7 @@ export default function ConfigureStorageVps() {
 
         <Separator className="bg-white/10" />
         <section className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 shadow-2xl">
-          <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8">Login e senha para o seu servidor</h2>
+          <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight mb-8">Login e senha para o seu servidor</h2>
           <div className="max-w-3xl space-y-8">
             {/* Username */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
@@ -973,7 +973,7 @@ export default function ConfigureStorageVps() {
       </div>
 
       {/* Fixed Bottom Summary Bar - UI IDENTICAL TO VPS */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#000B12]/90 border-t border-white/10 z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#000B12]/90 border-t border-white/10 z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl pr-16 md:pr-0">
         <AnimatePresence>
           {showSummaryDetails && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-white/10 bg-white/5 backdrop-blur-md">
@@ -1055,12 +1055,12 @@ export default function ConfigureStorageVps() {
             </motion.div>
           )}
         </AnimatePresence>
-        <div className="max-w-7xl mx-auto px-10 h-24 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-2 md:px-10 h-auto md:h-24 flex items-center justify-between py-2 md:py-0">
           <div className="flex items-center gap-6">
             <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center shadow-lg border border-white/10"><ShieldCheck className="w-6 h-6 text-sky-400" /></div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-white text-lg uppercase tracking-widest">Resumo</h3>
+                <h3 className="font-black text-white text-sm md:text-lg uppercase tracking-widest">Resumo</h3>
                 <button onClick={() => setShowSummaryDetails(!showSummaryDetails)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
                   {showSummaryDetails ? <ChevronDown className="w-5 h-5 text-sky-400 shadow-sky-400/20" /> : <ChevronUp className="w-5 h-5 text-sky-400 shadow-sky-400/20" />}
                 </button>
@@ -1144,11 +1144,11 @@ export default function ConfigureStorageVps() {
 
               return (
                 <div className="flex items-center gap-4 md:gap-6 lg:gap-10">
-                  <div className="flex flex-col gap-1 min-w-[200px]">
-                    <div className="flex justify-between items-center text-[13px] uppercase tracking-widest"><span className="text-slate-400 font-bold">Mensal</span><span className="font-black text-white whitespace-nowrap">{formatBRL(totalMonthly * qty / RATE)}</span></div>
-                    <div className="flex justify-between items-center mt-1"><span className="font-black text-white text-[15px] uppercase tracking-tighter">Vencido Hoje</span><span className="text-2xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(dueToday / RATE)}</span></div>
+                  <div className="flex flex-col gap-0.5 md:gap-1 min-w-0 md:min-w-[200px]">
+                    <div className="hidden md:flex justify-between items-center text-[13px] uppercase tracking-widest"><span className="text-slate-400 font-bold">Mensal</span><span className="font-black text-white whitespace-nowrap">{formatBRL(totalMonthly * qty / RATE)}</span></div>
+                    <div className="flex justify-between items-center md:mt-1"><span className="font-black text-white text-[10px] md:text-[15px] uppercase tracking-tighter">Vencido Hoje</span><span className="text-sm md:text-2xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(dueToday / RATE)}</span></div>
                   </div>
-                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&password=${encodeURIComponent(password)}&type=storage-vps`)} className={cn("font-black h-14 px-12 rounded-lg text-xl shadow-xl uppercase tracking-widest transition-all", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed")}>Próximo</Button>
+                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&password=${encodeURIComponent(password)}&type=storage-vps`)} className={cn("font-black h-9 md:h-14 px-3 md:px-12 rounded-lg text-sm md:text-xl shadow-xl uppercase tracking-widest transition-all", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed")}>Próximo</Button>
                 </div>
               );
             })()}

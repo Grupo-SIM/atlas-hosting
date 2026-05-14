@@ -814,7 +814,7 @@ export default function VdsConfigurePage() {
                     )}
                   >
                     {loc.recommended && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[12px] font-black px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[10px] md:text-[12px] font-black px-2 md:px-4 py-0.5 md:py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
                         Recomendado - Melhor latência para sua região
                       </div>
                     )}
@@ -1037,7 +1037,7 @@ export default function VdsConfigurePage() {
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
-                <h2 className="text-3xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
+                <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
               </div>
               <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[14px] font-black text-white uppercase tracking-widest hover:text-sky-400 transition-colors">
                 {showAdditionalFeatures ? <><ChevronUp size={14} /> Fechar</> : <><ChevronDown size={14} /> Mostrar</>}
@@ -1218,7 +1218,7 @@ export default function VdsConfigurePage() {
       </main>
 
       {/* Fixed Bottom Summary Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#000B12]/90 border-t border-white/10 z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#000B12]/90 border-t border-white/10 z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl pr-16 md:pr-0">
         <AnimatePresence>
           {showSummaryDetails && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-white/10 bg-white/5 backdrop-blur-md">
@@ -1237,12 +1237,12 @@ export default function VdsConfigurePage() {
           )}
         </AnimatePresence>
 
-        <div className="max-w-7xl mx-auto px-10 h-24 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-2 md:px-10 h-auto md:h-24 flex items-center justify-between py-2 md:py-0">
           <div className="flex items-center gap-6">
             <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center shadow-lg border border-white/10"><ShieldCheck className="w-6 h-6 text-sky-400" /></div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-white text-xl uppercase tracking-widest leading-tight">Resumo do Pedido</h3>
+                <h3 className="font-black text-white text-sm md:text-xl uppercase tracking-widest leading-tight">Resumo</h3>
                 <button onClick={() => setShowSummaryDetails(!showSummaryDetails)} className="p-1 hover:bg-white/10 rounded-full transition-colors">{showSummaryDetails ? <ChevronDown size={20} className="text-sky-400" /> : <ChevronUp size={20} className="text-sky-400" />}</button>
               </div>
             </div>
@@ -1261,14 +1261,14 @@ export default function VdsConfigurePage() {
 
               return (
                 <>
-                  <div className="flex-1 text-center min-w-[150px]">{totalSavings > 0 && <p className="text-emerald-500 font-bold text-lg">Você economiza {formatBRL(totalSavings / currentRate)}.</p>}</div>
+                  <div className="hidden md:block flex-1 text-center min-w-[150px]">{totalSavings > 0 && <p className="text-emerald-500 font-bold text-lg">Você economiza {formatBRL(totalSavings / currentRate)}.</p>}</div>
                   <div className="flex items-center gap-4 md:gap-6 lg:gap-10">
-                    <div className="flex flex-col gap-1 min-w-[200px]">
-                      <div className="flex justify-between items-center text-[15px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[15px]">MENSAL </span><span className="text-white font-black whitespace-nowrap">{formatBRLPerMonth(totalBrl / durationMonths / currentRate)}</span></div>
-                      <div className="flex justify-between items-center text-[15px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[15px]">TAXA ÚNICA </span><span className="text-white font-black whitespace-nowrap">{formatBRL(0)}</span></div>
-                      <div className="flex justify-between items-center mt-1">
-                        <div className="flex flex-col"><span className="text-[17px] font-black text-white uppercase tracking-tighter">Vencido Hoje</span><span className="text-[14px] text-slate-500 font-black -mt-1 uppercase tracking-widest">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span></div>
-                        <span className="text-3xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(totalBrl / currentRate)}</span>
+                    <div className="flex flex-col gap-0.5 md:gap-1 min-w-0 md:min-w-[200px]">
+                      <div className="hidden md:flex justify-between items-center text-[15px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[15px]">MENSAL </span><span className="text-white font-black whitespace-nowrap">{formatBRLPerMonth(totalBrl / durationMonths / currentRate)}</span></div>
+                      <div className="hidden md:flex justify-between items-center text-[15px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[15px]">TAXA ÚNICA </span><span className="text-white font-black whitespace-nowrap">{formatBRL(0)}</span></div>
+                      <div className="flex justify-between items-center md:mt-1">
+                        <div className="flex flex-col"><span className="text-[10px] md:text-[17px] font-black text-white uppercase tracking-tighter">Vencido Hoje</span><span className="hidden md:block text-[14px] text-slate-500 font-black -mt-1 uppercase tracking-widest">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span></div>
+                        <span className="text-sm md:text-3xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] ml-1 md:ml-0">{formatBRL(totalBrl / currentRate)}</span>
                       </div>
                     </div>
                     <Button disabled={!isPasswordValid(password)} onClick={() => {
@@ -1276,7 +1276,7 @@ export default function VdsConfigurePage() {
                         const storageUpgradesJson = encodeURIComponent(JSON.stringify(storageUpgrades));
                         router.push(`/checkout/personal-data?planId=${id}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&monitoring=${monitoring}&privateNetwork=${privateNetwork}&ipv4Address=${ipv4Address}&objectStorage=${objectStorage}&password=${encodeURIComponent(password)}&type=vds&storageUpgrades=${storageUpgradesJson}`);
                       }
-                    }} className={cn("font-black h-14 px-12 rounded-lg text-xl shadow-xl uppercase tracking-widest transition-all min-w-[180px]", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed shadow-none")}>Próximo</Button>
+                    }} className={cn("font-black h-9 md:h-14 px-3 md:px-12 rounded-lg text-sm md:text-xl shadow-xl uppercase tracking-widest transition-all min-w-0 md:min-w-[180px]", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed shadow-none")}>Próximo</Button>
                   </div>
                 </>
               );

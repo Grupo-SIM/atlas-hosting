@@ -76,23 +76,23 @@ export function DomainPriceSelector({
       <div className="flex items-center justify-between gap-4 px-4 pr-10 mb-6">
         <div className="flex-1" />
         <div className="grid grid-flow-col grid-cols-[auto_auto_auto] grid-rows-[auto_1fr] gap-x-3 gap-y-1">
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-slate-500 dark:text-muted-foreground">
             {selectedYears === 1 ? "Primeiro ano" : `${selectedYears} anos`}
           </div>
-          <h2 className="m-0 text-2xl font-semibold">
+          <h2 className="m-0 text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
             {toBrl(currentPrice)}
           </h2>
-          <Separator orientation="vertical" className="row-span-2 my-auto h-3/4" />
-          <div className="text-right text-xs text-muted-foreground">Renovação</div>
-          <span className="flex items-center text-muted-foreground">
+          <Separator orientation="vertical" className="row-span-2 my-auto h-3/4 bg-slate-200 dark:bg-white/10" />
+          <div className="text-right text-xs text-slate-500 dark:text-muted-foreground">Renovação</div>
+          <span className="flex items-center text-slate-600 dark:text-muted-foreground font-medium">
             {toBrl(renewBRL)}
           </span>
         </div>
       </div>
 
-      <Separator className="mb-4 w-full" />
-      <div className="grid grid-cols-[1fr_1fr_auto] grid-rows-[auto_1fr] gap-4 px-4 pb-4">
-        <h2 className="col-span-3 text-xl font-medium">Opções de registro</h2>
+      <Separator className="mb-6 w-full bg-slate-100 dark:bg-white/5" />
+      <div className="grid grid-cols-[1fr_1fr_auto] grid-rows-[auto_1fr] gap-x-6 gap-y-4 px-4 pb-4">
+        <h2 className="col-span-3 text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Opções de registro</h2>
         
         <Select 
           name="years" 

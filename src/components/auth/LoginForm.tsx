@@ -139,7 +139,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
         </Alert>
       )}
       
-      <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
+      <div className="flex flex-col items-start gap-1 w-full max-w-[448px] min-h-[72px] h-auto">
         <Label htmlFor="email" className="text-white font-medium ml-1">E-mail</Label>
         <Input
           id="email"
@@ -150,11 +150,11 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           {...register("email")}
         />
         {errors.email && (
-          <p className="text-[10px] text-red-400 ml-1 leading-none">{errors.email.message}</p>
+          <p className="text-xs font-medium text-red-400 ml-1 mt-1">{errors.email.message}</p>
         )}
       </div>
       
-      <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
+      <div className="flex flex-col items-start gap-1 w-full max-w-[448px] min-h-[72px] h-auto">
         <div className="flex items-center justify-between w-full ml-1 pr-1">
           <Label htmlFor="password" className="text-white font-medium">Senha</Label>
           <Link
@@ -187,7 +187,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           </button>
         </div>
         {errors.password && (
-          <p className="text-[10px] text-red-400 ml-1 leading-none">{errors.password.message}</p>
+          <p className="text-xs font-medium text-red-400 ml-1 mt-1">{errors.password.message}</p>
         )}
       </div>
 

@@ -170,6 +170,7 @@ export default function CheckoutClient({
               <ModernCheckoutForm
                 ref={checkoutFormRef}
                 invoiceId={invoice.id}
+                invoiceType={invoice.type}
                 hasExistingUser={userHasDomId}
                 initialStep={initialStep}
                 onSidebarActionStateChange={onSidebarActionStateChange}

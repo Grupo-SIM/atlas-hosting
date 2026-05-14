@@ -1044,7 +1044,7 @@ export default function VpsConfigurePage() {
                     )}
                   >
                     {loc.recommended && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[15px] font-black px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[10px] md:text-[15px] font-black px-2 md:px-4 py-0.5 md:py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
                         Recomendado - Melhor latência para sua região
                       </div>
                     )}
@@ -1247,8 +1247,8 @@ export default function VpsConfigurePage() {
                       : "border-white/10 bg-white/5 hover:border-white/20"
                   )}
                 >
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#000B12] px-4 py-1 rounded-full border border-sky-500/30 shadow-lg">
-                    <span className="text-[14px] font-black text-sky-400 uppercase tracking-widest whitespace-nowrap">Nossa Recomendação</span>
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#000B12] px-2 md:px-4 py-0.5 md:py-1 rounded-full border border-sky-500/30 shadow-lg">
+                    <span className="text-[10px] md:text-[14px] font-black text-sky-400 uppercase tracking-widest whitespace-nowrap">Nossa Recomendação</span>
                   </div>
                   <div className="mt-2">
                     <h3 className="text-3xl font-black text-white mb-1 uppercase tracking-tight">Backup Automático</h3>
@@ -1281,15 +1281,15 @@ export default function VpsConfigurePage() {
         <section className="bg-white/5 rounded-2xl shadow-2xl border border-white/10 overflow-hidden mb-8 backdrop-blur-md">
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
-                <h2 className="text-5xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
+                <h2 className="text-lg md:text-5xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
               <button
                 onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)}
                 className="flex items-center gap-1 text-[13px] font-black text-white uppercase tracking-wider"
               >
                 {showAdditionalFeatures ? (
-                  <>Fechar recursos adicionais <ChevronUp size={14} /></>
+                  <><ChevronUp size={14} /></>
                 ) : (
-                  <>Mostrar mais recursos <ChevronDown size={14} /></>
+                  <><ChevronDown size={14} /></>
                 )}
               </button>
             </div>
@@ -1304,7 +1304,7 @@ export default function VpsConfigurePage() {
                 >
                   {/* Networking Sub-section */}
                   <div className="space-y-8">
-                    <h3 className="text-2xl font-black text-white uppercase tracking-tight">Rede</h3>
+                    <h3 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight">Rede</h3>
                     <div className="space-y-6 pl-4 pr-1">
                       {/* Private Networking */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
@@ -1381,7 +1381,7 @@ export default function VpsConfigurePage() {
 
                   {/* Add-Ons Sub-section */}
                   <div className="space-y-8">
-                    <h3 className="text-2xl font-black text-white uppercase tracking-tight">Complementos</h3>
+                    <h3 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight">Complementos</h3>
                     <div className="space-y-6 pl-4 pr-1">
                       {/* Object Storage */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
@@ -1494,7 +1494,7 @@ export default function VpsConfigurePage() {
 
         <Separator className="bg-white/10" />
         <section className="bg-white/5 rounded-2xl p-8 border border-white/10 shadow-2xl backdrop-blur-md">
-          <h2 className="text-4xl font-black text-white uppercase tracking-tight mb-8">Login e senha para o seu servidor</h2>
+          <h2 className="text-lg md:text-4xl font-black text-white uppercase tracking-tight mb-8">Login e senha para o seu servidor</h2>
 
           <div className="max-w-3xl space-y-8">
             {/* Username */}
@@ -1594,7 +1594,7 @@ export default function VpsConfigurePage() {
       </div>
 
       {/* Fixed Bottom Summary Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#000B12]/90 border-t border-white/10 z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#000B12]/90 border-t border-white/10 z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl pr-16 md:pr-0">
         <AnimatePresence>
           {showSummaryDetails && (
             <motion.div
@@ -1693,14 +1693,14 @@ export default function VpsConfigurePage() {
           )}
         </AnimatePresence>
 
-        <div className="max-w-7xl mx-auto px-3 md:px-10 h-auto md:h-24 flex items-center justify-between py-2 md:py-0 gap-4">
+        <div className="max-w-7xl mx-auto px-2 md:px-10 h-auto md:h-24 flex items-center justify-between py-2 md:py-0 gap-2 md:gap-4">
           <div className="flex items-center gap-2 md:gap-6">
             <div className="hidden md:flex w-14 h-14 bg-white/5 rounded-full items-center justify-center shadow-lg border border-white/10">
               <ShieldCheck className="w-6 h-6 text-sky-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-white text-lg md:text-2xl leading-tight uppercase tracking-widest">Resumo</h3>
+                <h3 className="font-black text-white text-sm md:text-2xl leading-tight uppercase tracking-widest">Resumo</h3>
                 <button
                   onClick={() => setShowSummaryDetails(!showSummaryDetails)}
                   className="p-1 hover:bg-white/10 rounded-full transition-colors"
@@ -1806,10 +1806,10 @@ export default function VpsConfigurePage() {
                       </div>
                       <div className="flex justify-between items-center md:mt-1">
                         <div className="flex flex-col">
-                          <span className="text-base md:text-[17px] font-black text-white uppercase tracking-tight">Vencido Hoje</span>
+                          <span className="text-[10px] md:text-[17px] font-black text-white uppercase tracking-tight">Vencido Hoje</span>
                           <span className="hidden md:block text-[14px] text-slate-400 font-medium -mt-1">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span>
                         </div>
-                        <span className="text-lg md:text-3xl font-black text-white whitespace-nowrap ml-2">
+                        <span className="text-sm md:text-3xl font-black text-white whitespace-nowrap ml-1 md:ml-2">
                           {formatBRL(dueToday / currentRate)}
                         </span>
                       </div>
@@ -1823,7 +1823,7 @@ export default function VpsConfigurePage() {
                         }
                       }}
                       className={cn(
-                        "font-black h-10 md:h-14 px-5 md:px-12 rounded-xl text-lg md:text-2xl shadow-lg transition-all min-w-0 md:min-w-[180px] uppercase tracking-widest",
+                        "font-black h-9 md:h-14 px-3 md:px-12 rounded-xl text-sm md:text-2xl shadow-lg transition-all min-w-0 md:min-w-[180px] uppercase tracking-widest",
                         isPasswordValid(password)
                           ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20"
                           : "bg-white/5 text-slate-500 cursor-not-allowed shadow-none"

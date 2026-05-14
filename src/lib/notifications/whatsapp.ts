@@ -11,7 +11,10 @@
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL || "";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || "";
 const EVOLUTION_INSTANCE = process.env.EVOLUTION_INSTANCE || "atlas";
-const VPS_ADMIN_PHONE = process.env.VPS_ADMIN_WHATSAPP || "5583987690902";
+const VPS_ADMIN_PHONES = (process.env.VPS_ADMIN_WHATSAPP || "5583987690902")
+  .split(",")
+  .map((p) => p.trim())
+  .filter(Boolean);
 
 export async function sendWhatsAppMessage(
   phone: string,
@@ -55,5 +58,6 @@ export async function sendWhatsAppMessage(
 }
 
 export async function notifyAdminWhatsApp(message: string): Promise<boolean> {
-  return sendWhatsAppMessage(VPS_ADMIN_PHONE, message);
+  const results = await Promise.all(VPS_ADMIN_PHONES.map((phone) => sendWhatsAppMessage(phone, message)));
+  return results.some(Boolean);
 }

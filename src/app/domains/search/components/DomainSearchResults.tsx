@@ -547,7 +547,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
             <Button
               type="button"
               variant="outline"
-              className={`${roboto.className} h-11 w-full border-white/25 bg-transparent font-bold uppercase tracking-wide text-white hover:bg-white/10`}
+              className={`${roboto.className} h-11 w-full border-white/25 bg-transparent font-bold uppercase tracking-wide text-white hover:border-sky-500/50 hover:bg-sky-500/10 hover:text-sky-400 transition-all`}
               onClick={goToSignup}
             >
               Não — criar conta nova
@@ -555,7 +555,7 @@ export default function DomainSearchResults({ query }: DomainSearchResultsProps)
             <Button
               type="button"
               variant="ghost"
-              className="text-white/55 hover:bg-white/5 hover:text-white"
+              className="text-white/55 hover:bg-white/5 hover:text-sky-400 transition-colors"
               onClick={() => onAuthModalOpenChange(false)}
             >
               Voltar

@@ -88,6 +88,7 @@ export type CheckoutSidebarActionState = {
 
 interface ModernCheckoutFormProps {
   invoiceId: string;
+  invoiceType?: string;
   hasExistingUser?: boolean;
   initialStep?: CheckoutStep;
   /** Atualiza texto/estado do botão principal da coluna lateral (checkout-client). */
@@ -176,7 +177,8 @@ interface OpenCepResponse {
 const ModernCheckoutForm = forwardRef<
   ModernCheckoutFormHandle,
   ModernCheckoutFormProps
->(({ invoiceId, hasExistingUser = false, initialStep, onSidebarActionStateChange, onPaymentMethodChange }, ref) => {
+>(({ invoiceId, invoiceType, hasExistingUser = false, initialStep, onSidebarActionStateChange, onPaymentMethodChange }, ref) => {
+  const allowPix = invoiceType === "domain";
   const id = useId();
   const sidebarActionCbRef = useRef(onSidebarActionStateChange);
   sidebarActionCbRef.current = onSidebarActionStateChange;
@@ -822,24 +824,26 @@ const ModernCheckoutForm = forwardRef<
               onValueChange={setPaymentMethod}
               className="grid gap-3"
             >
-              <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
-                <RadioGroupItem
-                  value="pix"
-                  className="sr-only"
-                />
-                <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 shadow-lg shadow-emerald-500/20">
-                  <QrCode
-                    size={20}
-                    className="text-emerald-400"
+              {allowPix && (
+                <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                  <RadioGroupItem
+                    value="pix"
+                    className="sr-only"
                   />
-                </div>
-                <div>
-                  <span className="font-black text-white uppercase tracking-tight text-sm">PIX</span>
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    QR Code no app do banco
+                  <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 shadow-lg shadow-emerald-500/20">
+                    <QrCode
+                      size={20}
+                      className="text-emerald-400"
+                    />
                   </div>
-                </div>
-              </Label>
+                  <div>
+                    <span className="font-black text-white uppercase tracking-tight text-sm">PIX</span>
+                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                      QR Code no app do banco
+                    </div>
+                  </div>
+                </Label>
+              )}
 
               {(isLoadingCards || savedCards.length > 0) && <Separator className="bg-white/10" />}
 
@@ -1041,24 +1045,26 @@ const ModernCheckoutForm = forwardRef<
                 onValueChange={setPaymentMethod}
                 className="grid gap-3"
               >
-                <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
-                  <RadioGroupItem
-                    value="pix"
-                    className="sr-only"
-                  />
-                  <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 shadow-lg shadow-emerald-500/20">
-                    <QrCode
-                      size={20}
-                      className="text-emerald-400"
+                {allowPix && (
+                  <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                    <RadioGroupItem
+                      value="pix"
+                      className="sr-only"
                     />
-                  </div>
-                  <div>
-                    <span className="font-black text-white uppercase tracking-tight text-sm">PIX</span>
-                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                      QR Code no app do banco
+                    <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 shadow-lg shadow-emerald-500/20">
+                      <QrCode
+                        size={20}
+                        className="text-emerald-400"
+                      />
                     </div>
-                  </div>
-                </Label>
+                    <div>
+                      <span className="font-black text-white uppercase tracking-tight text-sm">PIX</span>
+                      <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                        QR Code no app do banco
+                      </div>
+                    </div>
+                  </Label>
+                )}
 
                 {(isLoadingCards || savedCards.length > 0) && <Separator className="bg-white/10" />}
 

@@ -647,7 +647,7 @@ export default function ConfigureWindowsVps() {
                     )}
                   >
                     {loc.recommended && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[11px] font-black px-4 py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white text-[10px] md:text-[11px] font-black px-2 md:px-4 py-0.5 md:py-1 rounded-md shadow-lg shadow-sky-500/20 z-10 whitespace-nowrap uppercase tracking-widest">
                         Recomendado - Melhor latência para sua região
                       </div>
                     )}
@@ -801,7 +801,7 @@ export default function ConfigureWindowsVps() {
                   autoBackup ? "border-sky-500 bg-white/10 shadow-lg shadow-sky-500/20" : "border-white/10"
                 )}
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#000B12] text-sky-400 text-[12px] font-black px-4 py-1 rounded-full border border-sky-500/30 uppercase tracking-widest whitespace-nowrap">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#000B12] text-sky-400 text-[10px] md:text-[12px] font-black px-2 md:px-4 py-0.5 md:py-1 rounded-full border border-sky-500/30 uppercase tracking-widest whitespace-nowrap">
                   Nossa Recomendação
                 </div>
                 <p className="text-lg font-black text-white uppercase tracking-tight">Backup Automático</p>
@@ -830,7 +830,7 @@ export default function ConfigureWindowsVps() {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-base font-black text-white uppercase tracking-widest">Recursos Adicionais</h2>
               <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[14px] font-black text-white uppercase tracking-wider">
-                {showAdditionalFeatures ? <>Fechar recursos adicionais <ChevronUp size={14} /></> : <>Ver mais <ChevronDown size={14} /></>}
+                {showAdditionalFeatures ? <><ChevronUp size={14} /></> : <><ChevronDown size={14} /></>}
               </button>
             </div>
 
@@ -1371,7 +1371,7 @@ export default function ConfigureWindowsVps() {
       </AnimatePresence>
 
       {/* Fixed Bottom Summary Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#000B12]/90 border-t border-white/10 z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#000B12]/90 border-t border-white/10 z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl pr-16 md:pr-0">
 
         <AnimatePresence>
           {showSummaryDetails && (
@@ -1447,12 +1447,12 @@ export default function ConfigureWindowsVps() {
             </motion.div>
           )}
         </AnimatePresence>
-        <div className="max-w-7xl mx-auto px-10 h-24 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-2 md:px-10 h-auto md:h-24 flex items-center justify-between py-2 md:py-0">
           <div className="flex items-center gap-6">
             <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center shadow-lg border border-white/10"><ShieldCheck className="w-6 h-6 text-sky-400" /></div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-white text-lg uppercase tracking-widest leading-tight">Resumo do Pedido</h3>
+                <h3 className="font-black text-white text-sm md:text-lg uppercase tracking-widest leading-tight">Resumo</h3>
                 <button onClick={() => setShowSummaryDetails(!showSummaryDetails)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
                   {showSummaryDetails ? <ChevronDown className="w-5 h-5 text-sky-400" /> : <ChevronUp className="w-5 h-5 text-sky-400" />}
                 </button>
@@ -1532,11 +1532,11 @@ export default function ConfigureWindowsVps() {
 
               return (
                 <div className="flex items-center gap-4 md:gap-6 lg:gap-10">
-                  <div className="flex flex-col gap-1 min-w-[200px]">
-                    <div className="flex justify-between items-center text-[13px] uppercase tracking-widest"><span className="text-slate-400 font-bold">Mensal</span><span className="font-black text-white whitespace-nowrap">{formatBRL(totalMonthly * qty / currentRate)}</span></div>
-                    <div className="flex justify-between items-center mt-1"><span className="font-black text-white text-[15px] uppercase tracking-tighter">Vencido Hoje</span><span className="text-2xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(dueToday / currentRate)}</span></div>
+                  <div className="flex flex-col gap-0.5 md:gap-1 min-w-0 md:min-w-[200px]">
+                    <div className="hidden md:flex justify-between items-center text-[13px] uppercase tracking-widest"><span className="text-slate-400 font-bold">Mensal</span><span className="font-black text-white whitespace-nowrap">{formatBRL(totalMonthly * qty / currentRate)}</span></div>
+                    <div className="flex justify-between items-center md:mt-1"><span className="font-black text-white text-[10px] md:text-[15px] uppercase tracking-tighter">Vencido Hoje</span><span className="text-sm md:text-2xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(dueToday / currentRate)}</span></div>
                   </div>
-                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&password=${encodeURIComponent(password)}&storage=${storageType}&type=vps-windows`)} className={cn("font-black h-14 px-12 rounded-lg text-xl shadow-xl uppercase tracking-widest transition-all", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed")}>Próximo</Button>
+                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&password=${encodeURIComponent(password)}&storage=${storageType}&type=vps-windows`)} className={cn("font-black h-9 md:h-14 px-3 md:px-12 rounded-lg text-sm md:text-xl shadow-xl uppercase tracking-widest transition-all", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed")}>Próximo</Button>
                 </div>
               );
             })()}

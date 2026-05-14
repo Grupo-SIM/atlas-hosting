@@ -135,7 +135,7 @@ export default function SignupForm({
           </Select>
         </div>
 
-        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
+        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] min-h-[72px] h-auto">
           <Label htmlFor="document" className="text-white font-medium ml-1">
             {userType === "PF" ? "CPF" : "CNPJ"}
           </Label>
@@ -148,11 +148,11 @@ export default function SignupForm({
             onChange={handleDocumentChange}
           />
           {errors.document && (
-            <p className="text-[10px] text-red-400 ml-1 leading-none">{errors.document.message}</p>
+            <p className="text-xs font-medium text-red-400 ml-1 mt-1">{errors.document.message}</p>
           )}
         </div>
 
-        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
+        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] min-h-[72px] h-auto">
           <Label htmlFor="email" className="text-white font-medium ml-1">E-mail</Label>
           <Input
             type="email"
@@ -162,11 +162,11 @@ export default function SignupForm({
             {...register("email")}
           />
           {errors.email && (
-            <p className="text-[10px] text-red-400 ml-1 leading-none">{errors.email.message}</p>
+            <p className="text-xs font-medium text-red-400 ml-1 mt-1">{errors.email.message}</p>
           )}
         </div>
 
-        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
+        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] min-h-[72px] h-auto">
           <Label htmlFor="password" className="text-white font-medium ml-1">Senha</Label>
           <Input
             type="password"
@@ -176,7 +176,7 @@ export default function SignupForm({
             {...register("password")}
           />
           {errors.password && (
-            <p className="text-[10px] text-red-400 ml-1 leading-none">{errors.password.message}</p>
+            <p className="text-xs font-medium text-red-400 ml-1 mt-1">{errors.password.message}</p>
           )}
         </div>
 

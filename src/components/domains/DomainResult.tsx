@@ -105,12 +105,12 @@ export async function DomainResult({
   );
 
   return (
-    <Card className="bg-white/5 backdrop-blur-md border-white/10 rounded-3xl shadow-2xl overflow-hidden">
-      <CardHeader className="border-b border-white/5 pb-6">
+    <Card className="bg-white dark:bg-white/5 backdrop-blur-md border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+      <CardHeader className="border-b border-slate-100 dark:border-white/5 pb-6">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Resultado da Busca: {fullDomain}</CardTitle>
-            <CardDescription className="text-slate-400 font-medium">
+            <CardTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Resultado da Busca: {fullDomain}</CardTitle>
+            <CardDescription className="text-slate-500 dark:text-slate-400 font-medium">
               {available
                 ? "Este domínio está disponível para registro!"
                 : isAlreadyOwned
@@ -133,7 +133,7 @@ export async function DomainResult({
         <div className="flex items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-6">
             <div className="flex-1">
-              <h3 className="text-2xl font-black text-white uppercase tracking-tighter">{fullDomain}</h3>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{fullDomain}</h3>
               {available ? (
                 <div className="flex items-center gap-2 mt-1">
                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
