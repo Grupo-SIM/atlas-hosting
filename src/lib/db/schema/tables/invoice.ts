@@ -86,6 +86,8 @@ export type DomainRegisterInvoiceOptions = Pick<
   guestPassword?: string;
   guestCheckout?: boolean;
   isRenewal?: boolean;
+  /** Base cost in BRL paid to Namecheap before markup and fixed fee */
+  namecheapCostBrl?: number;
 };
 
 export type DomainRenewInvoiceOptions = {
