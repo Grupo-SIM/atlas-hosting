@@ -673,19 +673,21 @@ export async function createDomainInvoice(data: (DomainPageParams & { guestInfo?
     const fee = await getDomainProfitFee();
 
     let priceInBrl = 0;
+    let namecheapCostBrl = 0;
 
     // Se for premium, usamos o preço premium retornado no check
     if (namecheapResult.IsPremiumName && (namecheapResult.PremiumRegistrationPrice ?? 0) > 0) {
       const basePriceUSD = namecheapResult.PremiumRegistrationPrice ?? 0;
       console.log(`[INVOICE] Usando PREÇO PREMIUM: $${basePriceUSD}`);
-      priceInBrl = await currencyConversion.convert({
+      const baseUsdAsBrl = await currencyConversion.convert({
         from: "usd",
         to: "brl",
         amount: basePriceUSD,
       });
       const targetYears = parseInt(yearStr, 10);
       const fixedFee = Number(process.env.DOMAIN_FIXED_FEE) || 4;
-      priceInBrl = (priceInBrl * fee) + (fixedFee * targetYears);
+      namecheapCostBrl = baseUsdAsBrl * targetYears;
+      priceInBrl = (baseUsdAsBrl * fee) + (fixedFee * targetYears);
     } else {
       const tld = domain.split(".").pop() as string;
       console.log(`[NAMECHEAP] Buscando preços para TLD: .${tld}`);
@@ -741,14 +743,15 @@ export async function createDomainInvoice(data: (DomainPageParams & { guestInfo?
         totalUSD = p1USD + (renewUSD * (targetYears - 1));
       }
 
-      priceInBrl = await currencyConversion.convert({
+      const baseUsdAsBrl = await currencyConversion.convert({
         from: "usd",
         to: "brl",
         amount: totalUSD,
       });
       const envFixedFee = process.env.DOMAIN_FIXED_FEE;
       const fixedFee = envFixedFee !== undefined ? Number(envFixedFee) : 4;
-      priceInBrl = (priceInBrl * fee) + (fixedFee * targetYears);
+      namecheapCostBrl = baseUsdAsBrl;
+      priceInBrl = (baseUsdAsBrl * fee) + (fixedFee * targetYears);
     }
 
     if (whoisguard === "on") {
@@ -770,6 +773,7 @@ export async function createDomainInvoice(data: (DomainPageParams & { guestInfo?
           whoisguard,
           guestCheckout: isGuestCheckout || undefined,
           guestPassword: guestPassword || undefined,
+          namecheapCostBrl: namecheapCostBrl > 0 ? namecheapCostBrl : undefined,
         },
       })
       .returning();
