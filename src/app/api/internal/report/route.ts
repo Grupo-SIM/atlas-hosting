@@ -12,7 +12,7 @@ function authError() {
 
 export async function GET(request: Request) {
   const token = request.headers.get("x-internal-token");
-  const expected = process.env.SIMPAY_INTERNAL_TOKEN;
+  const expected = process.env.API_MACHINE_INTERNAL_TOKEN ?? process.env.INTERNAL_SERVICE_TOKEN;
   if (!expected || token !== expected) return authError();
 
   const { searchParams } = new URL(request.url);
