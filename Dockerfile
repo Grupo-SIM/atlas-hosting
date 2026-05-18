@@ -21,7 +21,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Executa o build otimizado (usa o modo standalone configurado no next.config.js)
-RUN bun --bun run build
+RUN bun run build
 
 # Estágio 3: Runner de produção (Imagem final leve e estável)
 FROM node:20-slim AS runner

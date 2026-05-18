@@ -11,6 +11,11 @@ import {
   createGuestUser,
   generateSessionToken,
 } from "@/lib/auth/utils";
+
+export async function checkIsLoggedIn(): Promise<boolean> {
+  const user = await getOptionalUser();
+  return !!user;
+}
 import pleskApi from "@/lib/server/apis/plesk";
 import { ClientRequestTypeEnum } from "@/plesk";
 import { cookies, headers } from "next/headers";

@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   const startDate = startDateStr ? new Date(startDateStr) : new Date(0);
   const endDate = endDateStr ? new Date(endDateStr + "T23:59:59.999Z") : new Date();
 
-  // Domain invoices paid in period (filter by dueDate as proxy for creation date)
+  // Domain invoices paid in period (filter by createdAt = purchase date)
   const domainInvoices = await db
     .select({ amount: pgInvoice.amount, metadata: pgInvoice.metadata })
     .from(pgInvoice)
@@ -30,8 +30,8 @@ export async function GET(request: Request) {
       and(
         eq(pgInvoice.type, "domain"),
         eq(pgInvoice.status, "paid"),
-        gte(pgInvoice.dueDate, startDate),
-        lte(pgInvoice.dueDate, endDate),
+        gte(pgInvoice.createdAt, startDate),
+        lte(pgInvoice.createdAt, endDate),
       ),
     );
 
@@ -49,8 +49,8 @@ export async function GET(request: Request) {
       and(
         eq(pgInvoice.type, "vps"),
         eq(pgInvoice.status, "paid"),
-        gte(pgInvoice.dueDate, startDate),
-        lte(pgInvoice.dueDate, endDate),
+        gte(pgInvoice.createdAt, startDate),
+        lte(pgInvoice.createdAt, endDate),
       ),
     );
 

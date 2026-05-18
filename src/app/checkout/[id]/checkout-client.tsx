@@ -1,6 +1,6 @@
 "use client";
 
-import { Navbar } from "@/app/landing/components/Navbar";
+
 import ModernCheckoutForm, {
   type CheckoutSidebarActionState,
   type ModernCheckoutFormHandle,
@@ -152,7 +152,6 @@ export default function CheckoutClient({
 
   return (
     <div className="relative z-0 w-full min-h-screen overflow-x-hidden bg-[#000B12] pb-12 pt-32">
-      <Navbar variant="dark" />
       <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
       <div className="container mx-auto px-6 py-4 md:py-6 relative z-10">
         <div className="max-w-6xl mx-auto">

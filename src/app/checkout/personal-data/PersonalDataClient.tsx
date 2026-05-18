@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { ShieldCheck, Lock } from "lucide-react";
 import Link from "next/link";
-import { Navbar } from "@/app/landing/components/Navbar";
+
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { createVpsInvoice } from "@/app/actions";
@@ -179,7 +179,7 @@ function PersonalDataForm() {
   return (
     <div className="min-h-screen bg-[#000B12] text-white font-sans pb-24 relative overflow-hidden">
       <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
-      <Navbar variant="dark" />
+
 
       <main className="max-w-5xl mx-auto px-6 pt-32 pb-24 relative z-10">
         <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 p-8 md:p-12">
