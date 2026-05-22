@@ -944,13 +944,6 @@ const ModernCheckoutForm = forwardRef<
           {paymentMethod === "new" && <NewCardFormSection {...methods} />}
         </AnimatePresence>
 
-        {paymentMethod && paymentMethod !== "pix" && installmentRates && installmentRates.length > 0 && (
-          <InstallmentSelector
-            rates={installmentRates}
-            selected={selectedInstallments}
-            onChange={onInstallmentsChange ?? (() => {})}
-          />
-        )}
       </div>
     );
   }
@@ -1150,14 +1143,6 @@ const ModernCheckoutForm = forwardRef<
 
           {/* New Card Form - Only show if "new" is selected */}
           {paymentMethod === "new" && <NewCardFormSection {...methods} />}
-
-          {paymentMethod && paymentMethod !== "pix" && installmentRates && installmentRates.length > 0 && (
-            <InstallmentSelector
-              rates={installmentRates}
-              selected={selectedInstallments}
-              onChange={onInstallmentsChange ?? (() => {})}
-            />
-          )}
 
               {/* Navigation Buttons */}
               <div className="flex justify-between">

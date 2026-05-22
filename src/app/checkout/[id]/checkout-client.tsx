@@ -243,6 +243,25 @@ export default function CheckoutClient({
                         </p>
                       </div>
 
+                      {isCreditCard && rates?.installments && rates.installments.length > 0 && (
+                        <div className="flex items-center justify-between gap-4 border-t border-white/5 pt-3">
+                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                            Parcelas
+                          </span>
+                          <select
+                            value={selectedInstallments}
+                            onChange={(e) => setSelectedInstallments(Number(e.target.value))}
+                            className="h-8 rounded-lg border border-white/10 bg-white/5 px-2 text-xs font-bold text-white focus:border-sky-500/50 focus:outline-none cursor-pointer"
+                          >
+                            {rates.installments.map((r) => (
+                              <option key={r.n} value={r.n} className="bg-slate-900 text-white">
+                                {r.n === 1 ? "1x — sem juros" : `${r.n}x`}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
                       {invoice.type === "domain" && (
                         <>
                           {whoisGuard && (

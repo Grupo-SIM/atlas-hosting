@@ -85,6 +85,7 @@ export default function CheckoutForm({ invoiceId }: { invoiceId: string }) {
             },
             invoiceId,
             cardToken: "",
+            installments: 1,
           });
         });
       } catch {
