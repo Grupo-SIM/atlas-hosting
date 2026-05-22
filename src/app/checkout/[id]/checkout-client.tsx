@@ -244,7 +244,7 @@ export default function CheckoutClient({
                         </p>
                       </div>
 
-                      {isCreditCard && rates?.installments && rates.installments.length > 0 && (
+                      {isCreditCard && invoice.type === "domain" && rates?.installments && rates.installments.length > 0 && (
                         <div className="flex items-center justify-between gap-4 border-t border-white/5 pt-3">
                           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
                             Parcelas
