@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Footer } from "@/app/landing/components/Footer";
 import type { Invoice } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
@@ -248,17 +249,25 @@ export default function CheckoutClient({
                           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
                             Parcelas
                           </span>
-                          <select
-                            value={selectedInstallments}
-                            onChange={(e) => setSelectedInstallments(Number(e.target.value))}
-                            className="h-8 rounded-lg border border-white/10 bg-white/5 px-2 text-xs font-bold text-white focus:border-sky-500/50 focus:outline-none cursor-pointer"
+                          <Select
+                            value={String(selectedInstallments)}
+                            onValueChange={(v) => setSelectedInstallments(Number(v))}
                           >
-                            {rates.installments.map((r) => (
-                              <option key={r.n} value={r.n} className="bg-slate-900 text-white">
-                                {r.n === 1 ? "1x — sem juros" : `${r.n}x`}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="h-8 w-36 cursor-pointer border-white/10 bg-white/5 text-xs font-bold text-white focus:ring-sky-500/50 [&>svg]:text-slate-400">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="border-white/10 bg-slate-900">
+                              {rates.installments.map((r) => (
+                                <SelectItem
+                                  key={r.n}
+                                  value={String(r.n)}
+                                  className="cursor-pointer text-xs font-bold text-white focus:bg-white/10 focus:text-white"
+                                >
+                                  {r.n === 1 ? "1x — sem juros" : `${r.n}x`}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       )}
 
