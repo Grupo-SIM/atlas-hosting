@@ -86,9 +86,11 @@ export default function CheckoutClient({
 
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const isCreditCard = selectedMethod !== "pix";
+  const [selectedInstallments, setSelectedInstallments] = useState(1);
 
   const onPaymentMethodChange = useCallback((method: string | null) => {
     setSelectedMethod(method);
+    setSelectedInstallments(1);
   }, []);
 
   const [voucherCode, setVoucherCode] = useState("");
@@ -147,7 +149,10 @@ export default function CheckoutClient({
 
   const whoisGuard = (invoice.metadata as any)?.whoisguard === "on";
   const displayBase = appliedVoucher ? appliedVoucher.finalAmount : base;
-  const buyerFee = isCreditCard && rates ? Math.round(displayBase * (rates.domCcRate + rates.masterCcRate) * 100) / 100 : null;
+  const installmentRate = rates?.installments?.find((i) => i.n === selectedInstallments);
+  const buyerFee = isCreditCard && installmentRate && installmentRate.buyerRate > 0
+    ? Math.round((displayBase * installmentRate.buyerRate + installmentRate.fixedFee) * 100) / 100
+    : null;
   const displayTotal = buyerFee !== null ? Math.round((displayBase + buyerFee) * 100) / 100 : displayBase;
 
   return (
@@ -174,6 +179,9 @@ export default function CheckoutClient({
                 initialStep={initialStep}
                 onSidebarActionStateChange={onSidebarActionStateChange}
                 onPaymentMethodChange={onPaymentMethodChange}
+                selectedInstallments={selectedInstallments}
+                onInstallmentsChange={setSelectedInstallments}
+                installmentRates={rates?.installments}
               />
             </div>
 
@@ -357,9 +365,16 @@ export default function CheckoutClient({
                       <span className="text-xl font-black text-white uppercase tracking-tight">
                         Total
                       </span>
-                      <span className="text-2xl font-black text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-                        {toBrl(displayTotal)}
-                      </span>
+                      <div className="text-right">
+                        <span className="text-2xl font-black text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]">
+                          {toBrl(displayTotal)}
+                        </span>
+                        {isCreditCard && selectedInstallments > 1 && (
+                          <p className="text-[10px] font-bold text-slate-400 mt-0.5">
+                            {selectedInstallments}x de {toBrl(Math.round(displayTotal / selectedInstallments * 100) / 100)}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     <div className="pt-6 space-y-3">

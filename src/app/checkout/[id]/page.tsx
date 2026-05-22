@@ -11,10 +11,19 @@ export const metadata: Metadata = {
   description: "Pagamento de fatura",
 };
 
+export type InstallmentRate = {
+  n: number;
+  domRate: number;
+  masterRate: number;
+  buyerRate: number;
+  fixedFee: number;
+};
+
 export type CheckoutRates = {
   domCcRate: number;
   masterCcRate: number;
   buyerCcRate: number;
+  installments: InstallmentRate[];
   vendorCcPercent: number;
   vendorCcFixed: number;
   vendorPixPercent: number;

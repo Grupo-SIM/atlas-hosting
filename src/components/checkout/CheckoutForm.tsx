@@ -437,6 +437,7 @@ const schema = z.object({
       .min(1, "CEP é obrigatório")
       .refine((v) => v.replace(/\D/g, "").length === 8, "CEP inválido"),
   }),
+  installments: z.number().int().min(1).max(12).optional().default(1),
 });
 
 export type CheckoutFormInputs = z.infer<typeof schema>;

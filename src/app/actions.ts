@@ -1415,16 +1415,17 @@ export async function syncCheckoutPixPayment(
   return { status: "PENDING" };
 }
 
-async function fetchAtlasBuyerCcRate(): Promise<number | null> {
+async function fetchAtlasBuyerRates(n: number): Promise<{ rate: number; fixedFee: number } | null> {
   const apiUrl = process.env.SIMPAY_API_URL;
   if (!apiUrl) return null;
   try {
     const res = await fetch(`${apiUrl}/checkout/public/cc-rates/ATLAS`, { cache: "force-cache" });
     if (!res.ok) return null;
-    const json = await res.json() as { domCcRate?: number; masterCcRate?: number };
-    if (typeof json.domCcRate === "number" && typeof json.masterCcRate === "number") {
-      return json.domCcRate + json.masterCcRate;
-    }
+    const json = await res.json() as { masterCcRate?: number; installments?: Array<{ n: number; buyerRate: number; fixedFee: number }> };
+    const inst = json.installments?.find((i) => i.n === n);
+    if (inst) return { rate: inst.buyerRate, fixedFee: inst.fixedFee };
+    // fallback: 1x → masterCcRate (0% for ATLAS), 0 fixedFee
+    if (typeof json.masterCcRate === "number") return { rate: json.masterCcRate, fixedFee: 0 };
     return null;
   } catch {
     return null;
@@ -1498,8 +1499,9 @@ export async function completeCheckout(
     };
   }
 
-  const buyerCcRate = await fetchAtlasBuyerCcRate();
-  if (buyerCcRate === null) {
+  const selectedInstallments = values.installments ?? 1;
+  const buyerRates = await fetchAtlasBuyerRates(selectedInstallments);
+  if (buyerRates === null) {
     return { status: "error", message: "Não foi possível obter as taxas de pagamento. Tente novamente." };
   }
 
@@ -1625,8 +1627,8 @@ export async function completeCheckout(
     console.log(`[DOM] Usando cardToken já fornecido: ${cardToken}`);
   }
 
-  const chargeAmount = Math.round(invoice.amount * (1 + buyerCcRate) * 100) / 100;
-  console.log(`[CHECKOUT] Valor base: R$ ${invoice.amount.toFixed(2)} | Taxa DOM (${(buyerCcRate * 100).toFixed(2)}%): R$ ${(chargeAmount - invoice.amount).toFixed(2)} | Total: R$ ${chargeAmount.toFixed(2)}`);
+  const chargeAmount = Math.round((invoice.amount * (1 + buyerRates.rate) + buyerRates.fixedFee) * 100) / 100;
+  console.log(`[CHECKOUT] Valor base: R$ ${invoice.amount.toFixed(2)} | Parcelas: ${selectedInstallments}x | Taxa comprador (${(buyerRates.rate * 100).toFixed(2)}% + R$${buyerRates.fixedFee}): R$ ${(chargeAmount - invoice.amount).toFixed(2)} | Total: R$ ${chargeAmount.toFixed(2)}`);
 
   if (invoice.type === "domain") {
     console.log(`\n[SIMPAY] ── PAGAMENTO ÚNICO (DOMÍNIO) ──`);
@@ -1643,7 +1645,7 @@ export async function completeCheckout(
         token: cardToken,
         bin: cardToken.substring(0, 6),
         brand: "unknown",
-        installments: 1,
+        installments: selectedInstallments,
       });
       console.log(`[SIMPAY] ✓ Pagamento registrado na Simpay:`, {
         transactionId: simpayResult.transactionId,
@@ -1718,7 +1720,7 @@ export async function completeCheckout(
       token: cardToken,
       bin: cardToken.substring(0, 6),
       brand: "unknown",
-      installments: 1,
+      installments: selectedInstallments,
     });
     console.log(`[SIMPAY] ✓ Assinatura registrada na Simpay:`, {
       transactionId: result.transactionId,
@@ -1786,8 +1788,9 @@ export async function completeCheckoutWithSavedCard(
     return { status: "error", message: "Token do cartão é obrigatório." };
   }
 
-  const savedCardBuyerCcRate = await fetchAtlasBuyerCcRate();
-  if (savedCardBuyerCcRate === null) {
+  const savedInstallments = (values as any).installments ?? 1;
+  const savedCardBuyerRates = await fetchAtlasBuyerRates(savedInstallments);
+  if (savedCardBuyerRates === null) {
     return { status: "error", message: "Não foi possível obter as taxas de pagamento. Tente novamente." };
   }
 
@@ -1862,8 +1865,8 @@ export async function completeCheckoutWithSavedCard(
     console.log(`[DOM] Cliente DOM já existe: ${user.organization.domId}`);
   }
 
-  const savedChargeAmount = Math.round(invoice.amount * (1 + savedCardBuyerCcRate) * 100) / 100;
-  console.log(`[CHECKOUT-SAVED] Valor base: R$ ${invoice.amount.toFixed(2)} | Taxa DOM (${(savedCardBuyerCcRate * 100).toFixed(2)}%): R$ ${(savedChargeAmount - invoice.amount).toFixed(2)} | Total: R$ ${savedChargeAmount.toFixed(2)}`);
+  const savedChargeAmount = Math.round((invoice.amount * (1 + savedCardBuyerRates.rate) + savedCardBuyerRates.fixedFee) * 100) / 100;
+  console.log(`[CHECKOUT-SAVED] Valor base: R$ ${invoice.amount.toFixed(2)} | Parcelas: ${savedInstallments}x | Taxa comprador (${(savedCardBuyerRates.rate * 100).toFixed(2)}% + R$${savedCardBuyerRates.fixedFee}): R$ ${(savedChargeAmount - invoice.amount).toFixed(2)} | Total: R$ ${savedChargeAmount.toFixed(2)}`);
 
   if (invoice.type === "domain") {
     console.log(`\n[SIMPAY] ── PAGAMENTO ÚNICO (DOMÍNIO / CARTÃO SALVO) ──`);
@@ -1880,7 +1883,7 @@ export async function completeCheckoutWithSavedCard(
         token: cardToken,
         bin: card.last4 || cardToken.substring(0, 6),
         brand: card.brand || "unknown",
-        installments: 1,
+        installments: savedInstallments,
       });
       console.log(`[SIMPAY] ✓ Pagamento registrado na Simpay:`, {
         transactionId: domResult.transactionId,
@@ -1954,7 +1957,7 @@ export async function completeCheckoutWithSavedCard(
       token: cardToken,
       bin: card.last4 || cardToken.substring(0, 6),
       brand: card.brand || "unknown",
-      installments: 1,
+      installments: savedInstallments,
     });
     console.log(`[SIMPAY] ✓ Assinatura registrada na Simpay (cartão salvo):`, {
       transactionId: result.transactionId,

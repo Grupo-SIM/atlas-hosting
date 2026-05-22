@@ -86,6 +86,14 @@ export type CheckoutSidebarActionState = {
   hidden?: boolean;
 };
 
+interface InstallmentRate {
+  n: number;
+  domRate: number;
+  masterRate: number;
+  buyerRate: number;
+  fixedFee: number;
+}
+
 interface ModernCheckoutFormProps {
   invoiceId: string;
   invoiceType?: string;
@@ -95,6 +103,9 @@ interface ModernCheckoutFormProps {
   onSidebarActionStateChange?: (state: CheckoutSidebarActionState) => void;
   /** Notifica o sidebar quando o método de pagamento muda ("pix", "new", ou ID do cartão salvo). */
   onPaymentMethodChange?: (method: string | null) => void;
+  selectedInstallments?: number;
+  onInstallmentsChange?: (n: number) => void;
+  installmentRates?: InstallmentRate[];
 }
 
 export interface ModernCheckoutFormHandle {
@@ -177,7 +188,7 @@ interface OpenCepResponse {
 const ModernCheckoutForm = forwardRef<
   ModernCheckoutFormHandle,
   ModernCheckoutFormProps
->(({ invoiceId, invoiceType, hasExistingUser = false, initialStep, onSidebarActionStateChange, onPaymentMethodChange }, ref) => {
+>(({ invoiceId, invoiceType, hasExistingUser = false, initialStep, onSidebarActionStateChange, onPaymentMethodChange, selectedInstallments = 1, onInstallmentsChange, installmentRates }, ref) => {
   const allowPix = invoiceType === "domain";
   const id = useId();
   const sidebarActionCbRef = useRef(onSidebarActionStateChange);
@@ -418,6 +429,7 @@ const ModernCheckoutForm = forwardRef<
             const result = await completeCheckout(null, {
               ...values,
               invoiceId,
+              installments: selectedInstallments,
             });
 
             if (result.status === "success") {
@@ -447,6 +459,7 @@ const ModernCheckoutForm = forwardRef<
               ...values,
               cardToken: selectedCard.cardToken,
               invoiceId,
+              installments: selectedInstallments,
             });
 
             if (result.status === "success") {
@@ -513,6 +526,7 @@ const ModernCheckoutForm = forwardRef<
             cardExpiration,
             cardCvv,
             invoiceId,
+            installments: selectedInstallments,
           });
 
           if (result.status === "success") {
@@ -550,6 +564,7 @@ const ModernCheckoutForm = forwardRef<
           },
           invoiceId,
           card: selectedCard,
+          installments: selectedInstallments,
         });
 
         if (result.status === "success") {
@@ -928,6 +943,14 @@ const ModernCheckoutForm = forwardRef<
         <AnimatePresence>
           {paymentMethod === "new" && <NewCardFormSection {...methods} />}
         </AnimatePresence>
+
+        {paymentMethod && paymentMethod !== "pix" && installmentRates && installmentRates.length > 0 && (
+          <InstallmentSelector
+            rates={installmentRates}
+            selected={selectedInstallments}
+            onChange={onInstallmentsChange ?? (() => {})}
+          />
+        )}
       </div>
     );
   }
@@ -1128,6 +1151,14 @@ const ModernCheckoutForm = forwardRef<
           {/* New Card Form - Only show if "new" is selected */}
           {paymentMethod === "new" && <NewCardFormSection {...methods} />}
 
+          {paymentMethod && paymentMethod !== "pix" && installmentRates && installmentRates.length > 0 && (
+            <InstallmentSelector
+              rates={installmentRates}
+              selected={selectedInstallments}
+              onChange={onInstallmentsChange ?? (() => {})}
+            />
+          )}
+
               {/* Navigation Buttons */}
               <div className="flex justify-between">
                 <Button
@@ -1169,6 +1200,60 @@ const ModernCheckoutForm = forwardRef<
     </div>
   );
 });
+
+function InstallmentSelector({
+  rates,
+  selected,
+  onChange,
+}: {
+  rates: InstallmentRate[];
+  selected: number;
+  onChange: (n: number) => void;
+}) {
+  const toBrlLocal = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  return (
+    <Card className="border border-white/10 bg-white/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-black text-white uppercase tracking-tight">
+          Parcelas
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {rates.map((r) => {
+            const isSelected = selected === r.n;
+            const label =
+              r.buyerRate === 0
+                ? `${r.n}x sem juros`
+                : `${r.n}x +${(r.buyerRate * 100).toFixed(2)}% + R$${r.fixedFee}`;
+            return (
+              <button
+                key={r.n}
+                type="button"
+                onClick={() => onChange(r.n)}
+                className={`rounded-xl border px-3 py-2 text-left text-xs transition-all ${
+                  isSelected
+                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
+                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white"
+                }`}
+              >
+                <span className="font-black">{r.n}x</span>
+                <br />
+                {r.buyerRate === 0 ? (
+                  <span className="text-emerald-400">sem juros</span>
+                ) : (
+                  <span>{(r.buyerRate * 100).toFixed(2)}% + {toBrlLocal(r.fixedFee)}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function PixQrCodeCard({
   pixSession,
