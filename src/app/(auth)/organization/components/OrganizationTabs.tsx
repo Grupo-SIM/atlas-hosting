@@ -45,7 +45,7 @@ export function OrganizationTabs({
 
   return (
     <Tabs defaultValue="overview" className="space-y-6">
-      <TabsList>
+      <TabsList className="flex-wrap h-auto">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="members">Members</TabsTrigger>
         <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>

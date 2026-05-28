@@ -1,4 +1,5 @@
 import { ModeToggle } from "@/components/ModeToggle";
+import { MobileSidebarSheet } from "./MobileSidebarSheet";
 import { LogoutButton } from "./LogoutButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -33,36 +34,21 @@ import { FaUserAlt } from "react-icons/fa";
 export default async function Topbar({
   children,
   className,
+  isAdmin,
   ...props
-}: PropsWithChildren<HTMLAttributes<HTMLHeadElement>>) {
+}: PropsWithChildren<HTMLAttributes<HTMLHeadElement> & { isAdmin?: boolean }>) {
   const user = await getUser();
 
   return (
     <header
       className={clsx(
-        "display-none min-h-16 bg-card md:flex items-center justify-between px-6 sticky top-0 z-40 border-b border-border",
+        "flex min-h-16 bg-card items-center justify-between px-4 md:px-6 sticky top-0 z-40 border-b border-border",
         className
       )}
       {...props}
     >
-      {/* <div>
-        <button className="all:unset" type="submit">
-          {sidebarOpen ? (
-            <CgClose
-              className={clsx(
-                "text-lg md:text-xl font-semibold block md:hidden"
-              )}
-            />
-          ) : (
-            <Menu
-              className={clsx(
-                "text-lg md:text-xl font-semibold block md:hidden"
-              )}
-            />
-          )}
-        </button>
-      </div> */}
-      <div className="flex items-center justify-end w-full space-x-4">
+      <MobileSidebarSheet isAdmin={isAdmin ?? false} />
+      <div className="flex items-center justify-end flex-1 gap-3">
         {children}
         <ModeToggle />
         <DropdownMenu>

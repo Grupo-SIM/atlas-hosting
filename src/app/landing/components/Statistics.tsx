@@ -35,7 +35,7 @@ const stats = [
 
 export function Statistics() {
   return (
-    <section className="bg-transparent relative w-full pt-24 overflow-hidden">
+    <section className="bg-transparent relative w-full pt-8 md:pt-24 overflow-hidden">
       {/* World Map Background animation */}
       <div className="absolute inset-0 z-[1] pointer-events-none flex justify-center items-start pt-0 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(70%_55%_at_50%_22%,rgba(0,163,255,0.05)_0%,rgba(0,163,255,0.02)_36%,rgba(0,11,18,0)_78%)] z-[2]" />

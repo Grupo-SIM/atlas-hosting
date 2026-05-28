@@ -892,19 +892,19 @@ export default function VpsConfigurePage() {
       <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
       <Navbar variant="dark" />
       {/* Step Header could be here, but matching image's start */}
-      <div className={`${roboto.className} max-w-6xl mx-auto px-6 pt-32 pb-12 space-y-12`}>
+      <div className={`${roboto.className} max-w-6xl mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-12 space-y-8 md:space-y-12`}>
 
         <Link href="/#planos" className="group mb-6 flex items-center gap-2 text-lg font-bold text-sky-400 transition-all hover:text-sky-300">
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Voltar para os planos
         </Link>
-        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight uppercase drop-shadow-sm">Configure seu {plan.name}</h1>
+        <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase drop-shadow-sm">Configure seu {plan.name}</h1>
 
         {/* Plan Summary Section */}
-        <div className="flex flex-wrap items-center gap-10">
+        <div className="flex flex-col xl:flex-row xl:items-center gap-4 xl:gap-10">
           <div className="flex-1 border-2 border-sky-500/50 rounded-xl p-4 md:p-8 relative bg-white/5 backdrop-blur-md shadow-2xl">
             {/* Mobile: compact label→value list */}
-            <div className="md:hidden space-y-2 pb-6">
+            <div className="xl:hidden space-y-2 pb-6">
               {[
                 { label: "CPU", value: plan.vcpu },
                 { label: "RAM", value: plan.ram },
@@ -919,7 +919,7 @@ export default function VpsConfigurePage() {
               ))}
             </div>
             {/* Desktop: 5-col grid */}
-            <div className="hidden md:grid md:grid-cols-5 gap-4">
+            <div className="hidden xl:grid xl:grid-cols-5 gap-4">
               <div className="space-y-1">
                 <p className="text-[14px] font-bold text-slate-400 uppercase">CPU</p>
                 <p className="text-[15px] font-medium leading-tight">{plan.vcpu}</p>
@@ -970,7 +970,7 @@ export default function VpsConfigurePage() {
             <h2 className="text-xl font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {durations.map((d: any) => (
               <div key={d.id} className="space-y-3">
                 <div
@@ -1066,7 +1066,7 @@ export default function VpsConfigurePage() {
             <h2 className="text-xl font-black text-white uppercase tracking-tight">Tipo de armazenamento</h2>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {storageTypes.map((st: any) => (
               <div
                 key={st.id}
@@ -1126,7 +1126,7 @@ export default function VpsConfigurePage() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                   {(dynamicImages[imageCategory as keyof typeof dynamicImages] || []).map((img: any) => (
                     <button
                       key={img.id}
@@ -1212,10 +1212,10 @@ export default function VpsConfigurePage() {
             <h2 className="text-xl font-black text-white uppercase tracking-tight">Proteção de Dados</h2>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center bg-white/5 rounded-2xl p-10 border border-white/10 shadow-2xl backdrop-blur-md">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center bg-white/5 rounded-2xl p-6 md:p-10 border border-white/10 shadow-2xl backdrop-blur-md">
             <div className="lg:col-span-5 flex flex-col md:flex-row items-center gap-4">
-              <div className="relative w-64 h-64 flex-shrink-0">
-                <img src="/4870961_54433-nobg.svg" alt="Backup Shield" className="w-64 h-auto object-contain" />
+              <div className="relative w-28 h-28 md:w-40 md:h-40 flex-shrink-0">
+                <img src="/4870961_54433-nobg.svg" alt="Backup Shield" className="w-full h-auto object-contain" />
               </div>
 
               <div className="flex-1">
@@ -1241,7 +1241,7 @@ export default function VpsConfigurePage() {
                 <button
                   onClick={() => setAutoBackup(true)}
                   className={cn(
-                    "relative p-6 rounded-xl border transition-all text-center flex flex-col items-center justify-center min-h-[160px]",
+                    "relative p-4 rounded-xl border transition-all text-center flex flex-col items-center justify-center min-h-[130px]",
                     autoBackup
                       ? "border-sky-500 bg-white/10 shadow-lg shadow-sky-500/10"
                       : "border-white/10 bg-white/5 hover:border-white/20"
@@ -1251,9 +1251,9 @@ export default function VpsConfigurePage() {
                     <span className="text-[10px] md:text-[14px] font-black text-sky-400 uppercase tracking-widest whitespace-nowrap">Nossa Recomendação</span>
                   </div>
                   <div className="mt-2">
-                    <h3 className="text-3xl font-black text-white mb-1 uppercase tracking-tight">Backup Automático</h3>
-                    <div className="text-3xl font-black text-white mb-2">{formatBRLPerMonth(plan.backupEur)}</div>
-                    <p className="text-base text-slate-400 leading-tight font-medium">
+                    <h3 className="text-xl md:text-2xl font-black text-white mb-1 uppercase tracking-tight">Backup Automático</h3>
+                    <div className="text-xl md:text-2xl font-black text-white mb-2">{formatBRLPerMonth(plan.backupEur)}</div>
+                    <p className="text-sm text-slate-400 leading-tight font-medium">
                       Configure e esqueça.<br />Segurança de dados sem esforço.
                     </p>
                   </div>
@@ -1263,13 +1263,13 @@ export default function VpsConfigurePage() {
                 <button
                   onClick={() => setAutoBackup(false)}
                   className={cn(
-                    "p-6 rounded-xl border transition-all text-center flex items-center justify-center min-h-[160px]",
+                    "p-4 rounded-xl border transition-all text-center flex items-center justify-center min-h-[130px]",
                     !autoBackup
                       ? "border-sky-500 bg-white/10 shadow-lg"
                       : "border-white/10 bg-white/5 hover:border-white/20"
                   )}
                 >
-                  <h3 className="text-2xl font-black text-slate-400 uppercase tracking-tight">Sem Proteção</h3>
+                  <h3 className="text-xl font-black text-slate-400 uppercase tracking-tight">Sem Proteção</h3>
                 </button>
               </div>
             </div>
@@ -1281,7 +1281,7 @@ export default function VpsConfigurePage() {
         <section className="bg-white/5 rounded-2xl shadow-2xl border border-white/10 overflow-hidden mb-8 backdrop-blur-md">
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
-                <h2 className="text-lg md:text-5xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
+                <h2 className="text-base md:text-xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
               <button
                 onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)}
                 className="flex items-center gap-1 text-[13px] font-black text-white uppercase tracking-wider"
@@ -1494,7 +1494,7 @@ export default function VpsConfigurePage() {
 
         <Separator className="bg-white/10" />
         <section className="bg-white/5 rounded-2xl p-8 border border-white/10 shadow-2xl backdrop-blur-md">
-          <h2 className="text-lg md:text-4xl font-black text-white uppercase tracking-tight mb-8">Login e senha para o seu servidor</h2>
+          <h2 className="text-base md:text-xl font-black text-white uppercase tracking-tight mb-8">Login e senha para o seu servidor</h2>
 
           <div className="max-w-3xl space-y-8">
             {/* Username */}
@@ -1715,7 +1715,7 @@ export default function VpsConfigurePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-8 lg:gap-16">
+          <div className="flex items-center gap-2 md:gap-4 lg:gap-8">
             {/* Middle: Savings */}
             {(() => {
               const selectedDuration = durations.find((d: any) => d.id === duration) || durations[0];
@@ -1785,31 +1785,31 @@ export default function VpsConfigurePage() {
 
               return (
                 <>
-                  <div className="hidden md:block flex-1 text-center min-w-[150px]">
+                  <div className="hidden md:block flex-1 text-center min-w-[120px]">
                     {totalSavings > 0 && (
-                      <p className="text-emerald-500 font-bold text-xl">
+                      <p className="text-emerald-500 font-bold text-sm">
                         Você economiza {formatBRL(totalSavings / currentRate)}.
                       </p>
                     )}
                   </div>
 
                   {/* Right: Total & Button */}
-                  <div className="flex items-center gap-4 md:gap-6 lg:gap-10">
-                    <div className="flex flex-col gap-0.5 md:gap-1 min-w-0 md:min-w-[200px]">
-                      <div className="hidden md:flex justify-between items-center text-[17px]">
-                        <span className="text-slate-400 font-bold flex items-center gap-1 uppercase tracking-widest">Mensal </span>
+                  <div className="flex items-center gap-3 md:gap-5">
+                    <div className="flex flex-col gap-0.5 min-w-0 md:min-w-[180px]">
+                      <div className="hidden md:flex justify-between items-center text-[13px] gap-3">
+                        <span className="text-slate-400 font-bold uppercase tracking-widest">Mensal</span>
                         <span className="text-white font-black whitespace-nowrap">{formatBRL(totalMonthly * qty / currentRate)}</span>
                       </div>
-                      <div className="hidden md:flex justify-between items-center text-[15px]">
-                        <span className="text-slate-400 font-bold flex items-center gap-1 uppercase tracking-widest">Taxa Única </span>
+                      <div className="hidden md:flex justify-between items-center text-[12px] gap-3">
+                        <span className="text-slate-400 font-bold uppercase tracking-widest">Taxa Única</span>
                         <span className="text-white font-black whitespace-nowrap">{formatBRL(setupFee * qty / currentRate)}</span>
                       </div>
-                      <div className="flex justify-between items-center md:mt-1">
+                      <div className="flex justify-between items-center gap-2">
                         <div className="flex flex-col">
-                          <span className="text-[10px] md:text-[17px] font-black text-white uppercase tracking-tight">Vencido Hoje</span>
-                          <span className="hidden md:block text-[14px] text-slate-400 font-medium -mt-1">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span>
+                          <span className="text-[10px] md:text-[13px] font-black text-white uppercase tracking-tight">Vencido Hoje</span>
+                          <span className="hidden md:block text-[11px] text-slate-400 font-medium -mt-0.5">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span>
                         </div>
-                        <span className="text-sm md:text-3xl font-black text-white whitespace-nowrap ml-1 md:ml-2">
+                        <span className="text-sm md:text-lg font-black text-white whitespace-nowrap">
                           {formatBRL(dueToday / currentRate)}
                         </span>
                       </div>

@@ -98,8 +98,8 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
     <div className="space-y-6">
       {/* Current Plan Overview */}
       <Card>
-        <CardHeader className="grid gap-2 grid-cols-2 grid-rows-[auto]">
-          <div className="grid grid-rows-2 grid-cols-1">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="space-y-1">
             <CardTitle className="flex items-center gap-2 mb-3">
               <Package className="h-5 w-5" />
               Plano Atual

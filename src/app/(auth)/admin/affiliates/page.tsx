@@ -77,6 +77,7 @@ export default async function AdminAffiliatesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -125,6 +126,7 @@ export default async function AdminAffiliatesPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

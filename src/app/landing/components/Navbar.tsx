@@ -55,7 +55,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
         {/* Logo - Centered on mobile, Left on desktop */}
         <div className="flex-1 flex md:flex-none items-center justify-center md:justify-start">
           <Link href="/" className="flex items-center shrink-0 min-w-0">
-            <div className={`relative w-[150px] md:w-[180px] h-[38px] md:h-[45px] transition-all ${isLight ? "filter brightness-0" : "filter brightness-0 invert"}`}>
+            <div className={`relative w-[130px] md:w-[145px] lg:w-[180px] h-[33px] md:h-[37px] lg:h-[45px] transition-all ${isLight ? "filter brightness-0" : "filter brightness-0 invert"}`}>
               <Image
                 src="/atlas-logo.png"
                 alt="Atlashost Logo"
@@ -69,7 +69,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
         </div>
 
         {/* Nav Links - Centered (Desktop only) */}
-        <div className="hidden md:flex flex-1 items-center justify-center gap-6 lg:gap-10 min-w-0">
+        <div className="hidden md:flex flex-1 items-center justify-center gap-4 lg:gap-8 min-w-0">
           {/* VPS dropdown */}
           <div
             className="relative group py-2"
@@ -78,7 +78,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
           >
             <Link
               href="/vps"
-              className={`${roboto.className} flex items-center gap-1.5 ${isLight ? "text-slate-700 hover:text-sky-500" : "text-white/90 hover:text-sky-400"} transition-colors text-[16px] lg:text-[17px] font-bold tracking-wide uppercase`}
+              className={`${roboto.className} flex items-center gap-1.5 ${isLight ? "text-slate-700 hover:text-sky-500" : "text-white/90 hover:text-sky-400"} transition-colors text-[13px] lg:text-[16px] font-bold tracking-wide uppercase`}
             >
               VPS
               <ChevronDown className={`w-4 h-4 ${isLight ? "text-slate-400" : "text-white/40"} group-hover:text-sky-400 transition-transform duration-300 group-hover:rotate-180`} strokeWidth={2.5} />
@@ -103,7 +103,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
           </div>
 
           {navLinks.map((link) => (
-            <Link key={link.name} href={link.href} className={`${roboto.className} ${isLight ? "text-slate-700 hover:text-sky-500" : "text-white/90 hover:text-sky-400"} transition-colors text-[16px] lg:text-[17px] font-bold tracking-wide uppercase`}>
+            <Link key={link.name} href={link.href} className={`${roboto.className} ${isLight ? "text-slate-700 hover:text-sky-500" : "text-white/90 hover:text-sky-400"} transition-colors text-[13px] lg:text-[16px] font-bold tracking-wide uppercase`}>
               {link.name}
             </Link>
           ))}
@@ -111,15 +111,15 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
 
         {/* Auth Buttons (Desktop) + Hamburger (Mobile) */}
         <div className="flex-1 md:flex-none flex items-center justify-end gap-3">
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
             <Button
-              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-6 py-2 h-auto text-[15px] rounded-[12px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
+              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-3 lg:px-6 py-1.5 lg:py-2 h-auto text-[12px] lg:text-[15px] rounded-[10px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
               asChild
             >
               <Link href="/signup">Cadastre-se</Link>
             </Button>
             <Button
-              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-8 py-2 h-auto text-[15px] rounded-[12px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
+              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-4 lg:px-8 py-1.5 lg:py-2 h-auto text-[12px] lg:text-[15px] rounded-[10px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
               asChild
             >
               <Link href="/login">Login</Link>

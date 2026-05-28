@@ -152,7 +152,7 @@ export function VpsStoragePage() {
           </div>
 
           {/* Mobile plan cards */}
-          <div className="md:hidden mt-4 space-y-4 pb-4">
+          <div className="xl:hidden mt-4 space-y-4 pb-4">
             {storagePlans.map((p) => {
               const formattedPrice = formatBRL(p.eurNew).replace(/ /g, " ");
               const priceParts = formattedPrice.split(" ");
@@ -198,13 +198,13 @@ export function VpsStoragePage() {
           </div>
 
           {/* Desktop table */}
-          <div className="hidden md:block mt-5 w-full overflow-x-auto overflow-y-visible pt-1 pb-4 scrollbar-thin">
+          <div className="hidden xl:block mt-5 w-full overflow-x-auto overflow-y-visible pt-1 pb-4 scrollbar-thin">
             <div
-              className="grid w-full min-w-[1500px] gap-x-3 gap-y-0 md:min-w-full"
+              className="grid w-full min-w-[1500px] gap-x-3 gap-y-0 xl:min-w-full"
               style={{ gridTemplateColumns: gridCols }}
             >
               {/* corner */}
-              <div className="md:sticky md:left-0 md:z-20 rounded-tl-xl border-l border-r border-t border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
+              <div className="xl:sticky xl:left-0 xl:z-20 rounded-tl-xl border-l border-r border-t border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
                 <p className={`${roboto.className} text-base font-bold uppercase tracking-wide text-white`}>
                   Especificações da máquina
                 </p>
@@ -270,7 +270,7 @@ export function VpsStoragePage() {
               ].map((row) => (
                 <Fragment key={row.key}>
                   <div
-                    className={`md:sticky md:left-0 md:z-20 flex flex-col justify-center border-l border-r border-t-0 border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md ${row.key === "speed" ? "rounded-bl-xl border-b" : ""
+                    className={`xl:sticky xl:left-0 xl:z-20 flex flex-col justify-center border-l border-r border-t-0 border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md ${row.key === "speed" ? "rounded-bl-xl border-b" : ""
                       }`}
                   >
                     <span className="text-lg font-bold leading-tight text-white">{row.label}</span>

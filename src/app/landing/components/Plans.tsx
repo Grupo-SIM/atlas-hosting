@@ -159,10 +159,19 @@ export function Plans() {
           </p>
         </div>
 
+        {/* Mobile backup toggle - only on smaller screens */}
+        <div className="xl:hidden flex items-center gap-3 mb-4 border border-white/10 bg-white/5 rounded-2xl px-5 py-4 backdrop-blur-md">
+          <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} className="data-[state=unchecked]:bg-white/10 border-white/10 data-[state=checked]:bg-sky-500" />
+          <div>
+            <span className="text-sm font-black text-white uppercase tracking-widest">Backup automático</span>
+            <p className="text-xs text-slate-400 mt-0.5">{backupEnabled ? "Ativado" : "Desativado"}</p>
+          </div>
+        </div>
+
         <div className="flex flex-col xl:flex-row items-stretch justify-start gap-4">
 
-          {/* Card de Especificações Fixo */}
-          <div className="w-full xl:w-[280px] shrink-0">
+          {/* Card de Especificações Fixo - only visible on xl+ */}
+          <div className="hidden xl:block xl:w-[280px] shrink-0">
             <div className="bg-white/5 border border-white/10 rounded-2xl h-full flex flex-col shadow-2xl transition-all backdrop-blur-md">
               <div className="p-8 h-[280px] flex flex-col justify-between border-b border-white/10 items-center text-center">
                 <p className={`${roboto.className} text-[20px] font-black uppercase tracking-[0.2em] text-sky-400`}>ESPECIFICAÇÕES</p>
@@ -231,7 +240,8 @@ export function Plans() {
                       {/* Plan Specs Values */}
                       <div className="flex-grow bg-[#00050A]">
                         {rowSpecs.map((row) => (
-                          <div key={`${p.id}-${row.key}`} className="h-[72px] flex items-center justify-center border-t border-white/10 px-6 text-center">
+                          <div key={`${p.id}-${row.key}`} className="min-h-[72px] flex flex-col xl:flex-row items-center justify-center xl:justify-center border-t border-white/10 px-6 py-3 xl:py-0 text-center gap-1 xl:gap-0">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest xl:hidden">{row.label}</span>
                             <span className="text-lg font-black text-white uppercase tracking-tighter">{p[row.key]}</span>
                           </div>
                         ))}

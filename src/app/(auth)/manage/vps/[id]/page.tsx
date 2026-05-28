@@ -25,7 +25,7 @@ export default async function VpsDetailPage({ params }: { params: Promise<{ id: 
   const latest = metrics[0] || { cpuUsage: 0, ramUsage: 0, diskUsage: 0, uptime: "Desconhecido" };
 
   return (
-    <div className="flex-1 space-y-6 p-8 pt-6">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-4 md:pt-6">
       <div className="flex items-center gap-4">
         <Link href="/manage/vps">
           <Button variant="ghost" size="icon">

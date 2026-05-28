@@ -29,40 +29,40 @@ export function DomainSuggestionsClient({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {domains.map((domain) => (
           <div
             key={domain.domain}
-            className="flex items-center justify-between gap-4 p-4 border rounded-lg"
+            className="flex items-start justify-between gap-3 p-3 border rounded-lg"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-start gap-3 min-w-0">
               {domain.available ? (
-                <CheckCircle2 className="h-6 w-6 text-green-500 flex-shrink-0" />
+                <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
               ) : (
-                <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />
+                <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
               )}
-              <div>
-                <h3 className="font-semibold">{domain.domain}</h3>
+              <div className="min-w-0">
+                <h3 className="font-semibold text-sm truncate">{domain.domain}</h3>
                 {domain.available ? (
-                  <div className="flex flex-col gap-1 my-1">
-                    <p className="text-sm text-muted-foreground">
-                      Preço de registro: {toBrl(domain.priceBRL)}
+                  <div className="flex flex-col gap-0.5 mt-1">
+                    <p className="text-xs text-muted-foreground">
+                      Registro: {toBrl(domain.priceBRL)}
                       {domain.isPremium && " (Premium)"}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      Preço de renovação: {toBrl(domain.renewBRL)}
+                    <p className="text-xs text-muted-foreground">
+                      Renovação: {toBrl(domain.renewBRL)}
                       {domain.isPremium && " (Premium)"}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Domínio não disponível
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Não disponível
                   </p>
                 )}
               </div>
             </div>
             {domain.available && (
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="shrink-0 text-xs h-7 px-2">
                 <Link href={`/domain?domain=${domain.domain}`}>
                   Registrar
                 </Link>

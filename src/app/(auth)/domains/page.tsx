@@ -335,7 +335,7 @@ export default async function MyDomainsPage({
         <CardContent
           className={cn({ "max-w-2xl mx-auto": processedDomains.length === 0 })}
         >
-          <div className="border rounded-lg overflow-visible">
+          <div className="border rounded-lg overflow-x-auto">
             {processedDomains.length === 0 ? (
               <NoDomains />
             ) : (

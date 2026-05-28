@@ -676,44 +676,61 @@ export default function VdsConfigurePage() {
       <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
       <Navbar variant="dark" />
 
-      <main className="mx-auto max-w-6xl px-6 pt-32 pb-12 space-y-12">
+      <main className="mx-auto max-w-6xl px-4 md:px-6 pt-24 md:pt-32 pb-12 space-y-8 md:space-y-12">
         {/* Header Section */}
         <div className="mb-8">
           <Link href="/vds#plans" className="group mb-6 flex items-center gap-2 text-lg font-bold text-sky-400 transition-all hover:text-sky-300">
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Voltar para VDS
           </Link>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white uppercase drop-shadow-sm">Configure seu {plan.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white uppercase drop-shadow-sm">Configure seu {plan.name}</h1>
         </div>
 
         {/* Plan Summary Section */}
-        <div className="flex flex-wrap items-center gap-10">
-          <div className="flex-1 border-2 border-sky-500/50 bg-white/5 backdrop-blur-md rounded-xl p-8 grid grid-cols-4 gap-8 relative shadow-2xl">
-            <div className="space-y-1">
-              <p className="text-[14px] font-bold text-slate-400 uppercase">CPU</p>
-              <div className="flex flex-col">
-                <p className="text-[15px] font-medium leading-tight text-white">{plan.vcpu}</p>
-                <p className="text-[15px] font-medium leading-tight text-slate-400">{plan.cpuModel}</p>
+        <div className="flex flex-col xl:flex-row xl:items-center gap-4 xl:gap-10">
+          <div className="flex-1 border-2 border-sky-500/50 bg-white/5 backdrop-blur-md rounded-xl p-4 md:p-8 relative shadow-2xl">
+            {/* Mobile: label→value list */}
+            <div className="xl:hidden space-y-2 pb-6">
+              {[
+                { label: "CPU", value: `${plan.vcpu}${plan.cpuModel ? ` — ${plan.cpuModel}` : ""}` },
+                { label: "RAM", value: plan.ram },
+                { label: "Armazenamento", value: `${plan.storage}${plan.storageNote ? ` — ${plan.storageNote}` : ""}` },
+                { label: "Porta", value: plan.port },
+              ].map((spec) => (
+                <div key={spec.label} className="flex items-start justify-between gap-3">
+                  <span className="text-[14px] font-bold text-slate-400 uppercase tracking-wide flex-shrink-0">{spec.label}</span>
+                  <span className="text-[15px] font-medium text-white text-right leading-tight">{spec.value}</span>
+                </div>
+              ))}
+            </div>
+            {/* Desktop: 4-col grid */}
+            <div className="hidden xl:grid xl:grid-cols-4 gap-8">
+              <div className="space-y-1">
+                <p className="text-[14px] font-bold text-slate-400 uppercase">CPU</p>
+                <div className="flex flex-col">
+                  <p className="text-[15px] font-medium leading-tight text-white">{plan.vcpu}</p>
+                  <p className="text-[15px] font-medium leading-tight text-slate-400">{plan.cpuModel}</p>
+                </div>
               </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[14px] font-bold text-slate-400 uppercase">RAM</p>
-              <p className="text-[15px] font-medium leading-tight text-white">{plan.ram}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[14px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
-              <div className="flex flex-col">
-                <p className="text-[15px] font-medium leading-tight text-white">{plan.storage}</p>
-                <p className="text-[15px] font-medium leading-tight text-slate-400">{plan.storageNote}</p>
+              <div className="space-y-1">
+                <p className="text-[14px] font-bold text-slate-400 uppercase">RAM</p>
+                <p className="text-[15px] font-medium leading-tight text-white">{plan.ram}</p>
               </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[14px] font-bold text-slate-400 uppercase">PORTA</p>
-              <p className="text-[15px] font-medium leading-tight text-white">{plan.port}</p>
+              <div className="space-y-1">
+                <p className="text-[14px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
+                <div className="flex flex-col">
+                  <p className="text-[15px] font-medium leading-tight text-white">{plan.storage}</p>
+                  <p className="text-[15px] font-medium leading-tight text-slate-400">{plan.storageNote}</p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[14px] font-bold text-slate-400 uppercase">PORTA</p>
+                <p className="text-[15px] font-medium leading-tight text-white">{plan.port}</p>
+              </div>
             </div>
             <button 
               onClick={() => router.push('/vds#plans')}
-              className="absolute top-1/2 -translate-y-1/2 right-8 text-[15px] font-black text-sky-400 hover:underline uppercase tracking-wider"
+              className="absolute bottom-4 right-4 text-[14px] font-black text-sky-400 hover:underline uppercase tracking-wider"
             >
               Mudar
             </button>
@@ -740,7 +757,7 @@ export default function VdsConfigurePage() {
             <h2 className="text-xl font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {plan.durations.map((d: any) => (
               <div key={d.id} className="space-y-3">
                 <div
@@ -950,7 +967,7 @@ export default function VdsConfigurePage() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                   {(dynamicImages[imageCategory as keyof typeof dynamicImages] || []).map((img: any) => (
                     <button
                       key={img.id}

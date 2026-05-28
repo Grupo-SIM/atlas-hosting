@@ -16,8 +16,9 @@ import { Footer } from "@/app/landing/components/Footer";
 import type { Invoice } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
 import type { CheckoutRates } from "./page";
-import { CreditCard, Loader2, ShieldCheck, Ticket, X } from "lucide-react";
+import { ArrowLeft, CreditCard, Loader2, ShieldCheck, Ticket, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
 import { applyVoucher, consumeVoucher } from "@/app/(auth)/vouchers/actions";
 
@@ -41,6 +42,7 @@ export default function CheckoutClient({
   reference,
   initialStep,
 }: CheckoutClientProps) {
+  const router = useRouter();
   const base = invoice.amount;
   const checkoutFormRef = useRef<ModernCheckoutFormHandle>(null);
   const userHasDomId = !!user?.organization?.domId;
@@ -157,10 +159,20 @@ export default function CheckoutClient({
   const displayTotal = buyerFee !== null ? Math.round((displayBase + buyerFee) * 100) / 100 : displayBase;
 
   return (
-    <div className="relative z-0 w-full min-h-screen overflow-x-hidden bg-[#000B12] pb-12 pt-32">
+    <div className="relative z-0 w-full min-h-screen overflow-x-hidden bg-[#000B12] pb-12 pt-8">
       <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
       <div className="container mx-auto px-6 py-4 md:py-6 relative z-10">
         <div className="max-w-6xl mx-auto">
+          <div className="mb-6">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-sm font-bold text-sky-400 hover:text-sky-300 transition-colors group"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              Voltar
+            </button>
+          </div>
+
           <div className="text-center mb-12">
             <h1 className="text-4xl font-black tracking-tight text-white uppercase drop-shadow-sm">
               Finalizar Compra

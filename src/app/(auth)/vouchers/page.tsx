@@ -74,6 +74,7 @@ export default async function UserVouchersPage() {
               </p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -151,6 +152,7 @@ export default async function UserVouchersPage() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

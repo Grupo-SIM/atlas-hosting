@@ -61,7 +61,7 @@ export function DomainCart({ cartItems, removeFromCart }: DomainCartProps) {
 
   return (
     <div className="space-y-6">
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

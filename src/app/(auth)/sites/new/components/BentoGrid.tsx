@@ -56,7 +56,7 @@ const BentoGridComponent = ({
 
   return (
     <div>
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
         <Input
           placeholder="Pesquise por um template..."
           value={search}
@@ -69,7 +69,7 @@ const BentoGridComponent = ({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-[200px] justify-between"
+              className="w-full sm:w-[200px] justify-between"
             >
               {value ? tags.find((tag) => tag === value) : "Filtre por tag..."}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

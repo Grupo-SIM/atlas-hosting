@@ -68,6 +68,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         </Select>
       </div>
 
+      <div className="overflow-x-auto rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -118,6 +119,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
           )}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
 }

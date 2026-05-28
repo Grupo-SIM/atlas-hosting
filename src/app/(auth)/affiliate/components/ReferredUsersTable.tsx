@@ -120,7 +120,7 @@ export function ReferredUsersTable({ users }: { users: ReferredUser[] }) {
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg">
+      <div className="border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

@@ -17,7 +17,7 @@ export default function DomainSearchForm({ searchQuery }: { searchQuery: string 
   }, [doSearch, searchQuery]);
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-3">
+    <form onSubmit={onSubmit} className="flex flex-row gap-2">
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
@@ -28,10 +28,10 @@ export default function DomainSearchForm({ searchQuery }: { searchQuery: string 
           defaultValue={searchQuery}
         />
       </div>
-      <Button type="submit" className="w-34">
+      <Button type="submit" size="icon" className="shrink-0" aria-label="Buscar">
         {isPending ? 
           <CgSpinner className="w-4 h-4 animate-spin" />
-          : "Buscar domínio"
+          : <Search className="w-4 h-4" />
         }
       </Button>
     </form>

@@ -157,13 +157,61 @@ export function VdsPage() {
             </div>
           </div>
 
-          <div className="mt-4 w-full overflow-x-auto overflow-y-visible pt-1 pb-4 scrollbar-thin md:mt-5">
+          {/* Mobile plan cards */}
+          <div className="xl:hidden mt-4 space-y-4 pb-4">
+            {vdsPlans.map((p) => {
+              const formattedPrice = formatBRL(p.eurNew).replace(/ /g, " ");
+              const priceParts = formattedPrice.split(" ");
+              const priceSymbol = priceParts[0];
+              const priceValue = priceParts.slice(1).join("");
+              const [priceMain, priceCents] = priceValue.split(",");
+              return (
+                <div key={`m-${p.id}`} className={`relative rounded-xl border p-5 bg-[#01101A] backdrop-blur-md ${p.popular ? "border-sky-500" : "border-white/10"}`}>
+                  {p.popular && (
+                    <div className="absolute top-2.5 right-2.5">
+                      <span className={`${roboto.className} rounded-full bg-sky-500 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white`}>Mais vendido</span>
+                    </div>
+                  )}
+                  <p className={`${roboto.className} pr-[4.5rem] text-xl font-bold tracking-wide text-white`}>{p.name}</p>
+                  <span className="text-sm font-medium text-rose-500 line-through opacity-70">{formatBRL(p.eurOld)}</span>
+                  <div className="mt-4 flex items-baseline gap-0.5 whitespace-nowrap">
+                    <span className="text-sm font-bold text-sky-400 mb-0.5">{priceSymbol}</span>
+                    <span className="text-3xl font-extrabold leading-none tracking-tight text-sky-400">{priceMain},</span>
+                    <span className="text-xl font-bold text-sky-400">{priceCents}</span>
+                    <span className="text-sm font-medium text-slate-400 ml-1">/mês</span>
+                  </div>
+                  <p className="text-xs font-light text-slate-400">12 meses</p>
+                  <button onClick={() => router.push(`/vds/configure/${p.id}`)} className={`${roboto.className} mt-3 block w-full rounded-md py-3 text-center text-[13px] font-bold uppercase tracking-wide transition-all ${p.popular ? "bg-sky-500 text-white shadow-lg shadow-sky-500/20 hover:bg-sky-400" : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"}`}>
+                    Começar agora →
+                  </button>
+                  <p className="mt-2 text-sm font-semibold text-sky-400 uppercase tracking-wide text-center">100% de cashback</p>
+                  <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
+                    {[
+                      { label: "Núcleos Físicos", value: p.cores },
+                      { label: "Processador", value: p.cpu },
+                      { label: "RAM", value: p.ram },
+                      { label: "Armazenamento", value: p.storage },
+                      { label: "Largura de Banda", value: p.speed },
+                    ].map((spec) => (
+                      <div key={spec.label} className="flex justify-between text-sm">
+                        <span className="text-slate-400 font-medium">{spec.label}</span>
+                        <span className="text-white font-bold text-right ml-2">{spec.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden xl:block mt-4 w-full overflow-x-auto overflow-y-visible pt-1 pb-4 scrollbar-thin xl:mt-5">
             <div
-              className="grid w-full min-w-[1500px] gap-x-3 gap-y-0 md:min-w-full"
+              className="grid w-full min-w-[1500px] gap-x-3 gap-y-0 xl:min-w-full"
               style={{ gridTemplateColumns: gridCols }}
             >
               {/* corner */}
-               <div className="md:sticky md:left-0 md:z-20 rounded-tl-xl border-l border-r border-t border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
+               <div className="xl:sticky xl:left-0 xl:z-20 rounded-tl-xl border-l border-r border-t border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
                 <p className={`${roboto.className} text-base font-bold uppercase tracking-wide text-white`}>
                   Especificações da máquina
                 </p>
@@ -227,7 +275,7 @@ export function VdsPage() {
               ].map((row) => (
                 <Fragment key={row.key}>
                   <div
-                    className={`md:sticky md:left-0 md:z-20 flex flex-col justify-center border-l border-r border-t-0 border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md ${row.key === "speed" ? "rounded-bl-xl border-b" : ""
+                    className={`xl:sticky xl:left-0 xl:z-20 flex flex-col justify-center border-l border-r border-t-0 border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md ${row.key === "speed" ? "rounded-bl-xl border-b" : ""
                       }`}
                   >
                     <span className="text-lg font-bold leading-tight text-white">{row.label}</span>

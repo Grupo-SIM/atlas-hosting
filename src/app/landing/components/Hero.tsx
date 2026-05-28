@@ -21,7 +21,7 @@ export function Hero() {
 
   return (
     <section
-      className="relative w-full h-auto min-h-[500px] md:h-screen md:min-h-[600px] overflow-hidden bg-transparent"
+      className="relative w-full h-auto min-h-[500px] overflow-hidden bg-transparent"
     >
       <div
         className="absolute inset-0 pointer-events-none bg-[radial-gradient(74%_46%_at_50%_56%,rgba(0,163,255,0.08)_0%,rgba(0,163,255,0.03)_36%,rgba(0,163,255,0)_74%)]"
@@ -38,7 +38,7 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center pt-24 pb-20 md:pb-12 px-4 md:pt-[min(10vh,6rem)] md:px-[clamp(1.25rem,3vw,1.75rem)] w-full">
+      <div className="relative z-10 flex flex-col items-center pt-24 pb-8 md:pb-12 px-4 md:pt-[min(10vh,6rem)] md:px-[clamp(1.25rem,3vw,1.75rem)] w-full">
         <div className="flex flex-col items-center w-full max-w-[2400px] gap-8 md:gap-12">
 
           {/* Barra de busca - Responsive Width */}

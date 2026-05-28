@@ -56,14 +56,15 @@ export default function VpsMetricsCharts({ data }: VpsMetricsChartsProps) {
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Gráfico de CPU */}
       <Card className="col-span-1">
         <CardHeader>
           <CardTitle className="text-sm font-medium">Uso de CPU (%)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[200px] w-full">
+          <div className="overflow-x-auto">
+          <div className="h-[200px] min-w-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -88,6 +89,7 @@ export default function VpsMetricsCharts({ data }: VpsMetricsChartsProps) {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -97,7 +99,8 @@ export default function VpsMetricsCharts({ data }: VpsMetricsChartsProps) {
           <CardTitle className="text-sm font-medium">Uso de Memória RAM (%)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[200px] w-full">
+          <div className="overflow-x-auto">
+          <div className="h-[200px] min-w-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -122,16 +125,18 @@ export default function VpsMetricsCharts({ data }: VpsMetricsChartsProps) {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* Gráfico de Disco */}
-      <Card className="col-span-2">
+      <Card className="col-span-1 md:col-span-2">
         <CardHeader>
           <CardTitle className="text-sm font-medium">Histórico de Uso de Disco (%)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[200px] w-full">
+          <div className="overflow-x-auto">
+          <div className="h-[200px] min-w-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
@@ -148,6 +153,7 @@ export default function VpsMetricsCharts({ data }: VpsMetricsChartsProps) {
                 />
               </LineChart>
             </ResponsiveContainer>
+          </div>
           </div>
         </CardContent>
       </Card>

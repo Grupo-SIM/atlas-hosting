@@ -453,24 +453,24 @@ export function AffiliateTabs({
       {tab === "referrals" && (
         <div className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <CardTitle>Usuários Indicados</CardTitle>
                 <CardDescription>
                   Pessoas que se cadastraram através do seu link
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-end gap-3">
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">E-mail</span>
                   <Input
                     placeholder="Pesquisar por email..."
                     value={referralSearch}
                     onChange={(e) => setReferralSearch(e.target.value)}
-                    className="w-[200px] h-10 text-sm bg-transparent border-slate-200 dark:border-slate-800 font-medium"
+                    className="w-full md:w-[200px] h-10 text-sm bg-transparent border-slate-200 dark:border-slate-800 font-medium"
                   />
                 </div>
-                <div className="w-[200px]">
+                <div className="w-full md:w-[200px]">
                   <SimpayCalendar 
                     label="Período"
                     start={referralStartDate}
@@ -489,6 +489,7 @@ export function AffiliateTabs({
                   {referralStartDate || referralEndDate ? "Nenhuma indicação encontrada neste período." : "Nenhuma indicação registrada ainda."}
                 </p>
               ) : (
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -515,6 +516,7 @@ export function AffiliateTabs({
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               )}
               <LocalPagination 
                 currentPage={referralsPage} 
@@ -530,15 +532,15 @@ export function AffiliateTabs({
       {tab === "sales" && (
         <div className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <CardTitle>Histórico de Vendas</CardTitle>
                 <CardDescription>
                   Compras recentes realizadas através do seu link de afiliado
                 </CardDescription>
               </div>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="w-[240px]">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="w-full sm:w-[240px]">
                   <SimpayCalendar 
                     label="Período"
                     start={salesStartDate}
@@ -559,7 +561,6 @@ export function AffiliateTabs({
                       <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="pending">Pendente</SelectItem>
                       <SelectItem value="approved">Aprovado</SelectItem>
-
                       <SelectItem value="withdrawn">Saque efetuado</SelectItem>
                       <SelectItem value="rejected">Rejeitado</SelectItem>
                     </SelectContent>
@@ -573,6 +574,7 @@ export function AffiliateTabs({
                   {salesStatus === "all" ? "Nenhuma venda registrada ainda." : "Nenhuma venda encontrada com este status."}
                 </p>
               ) : (
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -599,6 +601,7 @@ export function AffiliateTabs({
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               )}
               <LocalPagination 
                 currentPage={salesPage} 
@@ -615,14 +618,24 @@ export function AffiliateTabs({
       {/* Withdrawals */}
       {tab === "withdrawals" && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <div className="space-y-1">
-              <CardTitle>Histórico de Saques</CardTitle>
-              <CardDescription>
-                Mínimo {toBrl(minWithdrawal)} · Taxa {toBrl(fee)}
-              </CardDescription>
-              <div className="flex flex-wrap items-center gap-4 pt-4">
-                <div className="w-[240px]">
+          <CardHeader className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div className="space-y-1">
+                <CardTitle>Histórico de Saques</CardTitle>
+                <CardDescription>
+                  Mínimo {toBrl(minWithdrawal)} · Taxa {toBrl(fee)}
+                </CardDescription>
+              </div>
+              <Button
+                onClick={() => setModalOpen(true)}
+                disabled={availableBalance < minWithdrawal}
+                className="w-full md:w-auto shrink-0"
+              >
+                Solicitar Saque
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-end gap-3">
+                <div className="w-full sm:w-[240px]">
                   <SimpayCalendar 
                     label="Período"
                     start={withdrawalStartDate}
@@ -648,13 +661,6 @@ export function AffiliateTabs({
                   </Select>
                 </div>
               </div>
-            </div>
-            <Button
-              onClick={() => setModalOpen(true)}
-              disabled={availableBalance < minWithdrawal}
-            >
-              Solicitar Saque
-            </Button>
           </CardHeader>
           <CardContent>
             {filteredWithdrawals.length === 0 ? (
@@ -662,6 +668,7 @@ export function AffiliateTabs({
                 {withdrawalStatus === "all" ? "Nenhum saque realizado ainda." : "Nenhum saque encontrado com este status."}
               </p>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -740,6 +747,7 @@ export function AffiliateTabs({
                   })}
                 </TableBody>
               </Table>
+              </div>
             )}
             <LocalPagination 
               currentPage={withdrawalsPage} 

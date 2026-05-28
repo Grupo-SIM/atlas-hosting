@@ -11,14 +11,14 @@ export function SearchButton() {
     <Button 
       type="submit" 
       disabled={pending} 
-      className="w-full h-14 bg-white text-slate-950 text-base font-bold hover:bg-white/90 border-0 shadow-lg gap-2 relative overflow-hidden group transition-all hover:scale-[1.02] active:scale-95"
+      className="h-11 px-4 bg-white text-slate-950 text-sm font-bold hover:bg-white/90 border-0 shadow-lg gap-1.5 relative overflow-hidden group transition-all hover:scale-[1.02] active:scale-95 shrink-0"
     >
       {pending ? (
-        <Loader2 className="h-5 w-5 animate-spin" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <Search className="h-5 w-5 group-hover:scale-110 transition-transform" />
+        <Search className="h-4 w-4 group-hover:scale-110 transition-transform" />
       )}
-      {pending ? "..." : "Buscar"}
+      <span className="hidden sm:inline">{pending ? "..." : "Buscar"}</span>
       
       {/* Efeito de brilho ao carregar */}
       {pending && (

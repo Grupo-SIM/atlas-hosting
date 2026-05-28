@@ -152,6 +152,7 @@ export function PaginatedTldTable({ allTldData }: PaginatedTldTableProps) {
         />
       </CardHeader>
       <CardContent>
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -191,6 +192,7 @@ export function PaginatedTldTable({ allTldData }: PaginatedTldTableProps) {
             )}
           </TableBody>
         </Table>
+        </div>
 
         {totalTldPages > 1 && (
           <Pagination>

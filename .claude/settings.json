@@ -47,7 +47,9 @@
       "mcp__serena__insert_after_symbol",
       "PowerShell(cd \"c:/Users/breno/Desktop/JB/atlas-hosting\" && npx tsc --noEmit 2>&1 | Out-String | Select-String -Pattern \"vps-plan\" -AllMatches | ForEach-Object { $_.Line })",
       "PowerShell(cd \"c:/Users/breno/Desktop/JB/atlas-hosting\" && npx tsc --noEmit 2>&1 | Where-Object { $_ -match \"vps-plans|BackfillButton|backfill\" })",
-      "PowerShell(Set-Location \"c:/Users/breno/Desktop/JB/atlas-hosting\"; $out = \\(npx tsc --noEmit 2>&1\\); $out | Where-Object { $_ -match \"vps-plan|BackfillButton|backfill\" })"
+      "PowerShell(Set-Location \"c:/Users/breno/Desktop/JB/atlas-hosting\"; $out = \\(npx tsc --noEmit 2>&1\\); $out | Where-Object { $_ -match \"vps-plan|BackfillButton|backfill\" })",
+      "Bash(npx next *)",
+      "Bash(Get-Content \"C:\\\\Users\\\\breno\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-breno-Desktop-JB-atlas-hosting\\\\42ec9824-9990-4788-b395-46eea53bbed0\\\\tasks\\\\b3aprnahk.output\" -Tail 20)"
     ],
     "deny": [
       "Agent(Explore)"

@@ -179,7 +179,7 @@ export function VpsCloudPage() {
           </div>
 
           {/* Mobile plan cards */}
-          <div className="md:hidden mt-4 space-y-4 pb-4">
+          <div className="xl:hidden mt-4 space-y-4 pb-4">
             <div className="flex items-center gap-3 border border-white/20 bg-white/5 rounded-xl px-4 py-3 backdrop-blur-md">
               <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} className="data-[state=unchecked]:bg-white/10 border-white/10 data-[state=checked]:bg-sky-500" />
               <div>
@@ -234,13 +234,13 @@ export function VpsCloudPage() {
           </div>
 
           {/* Desktop table */}
-          <div className="hidden md:block mt-5 w-full overflow-x-auto overflow-y-visible pt-1 pb-4 scrollbar-thin">
+          <div className="hidden xl:block mt-5 w-full overflow-x-auto overflow-y-visible pt-1 pb-4 scrollbar-thin">
             <div
-              className="grid w-full min-w-[1700px] gap-x-3 gap-y-0 md:min-w-full"
+              className="grid w-full min-w-[1700px] gap-x-3 gap-y-0 xl:min-w-full"
               style={{ gridTemplateColumns: gridCols }}
             >
               {/* corner */}
-               <div className="md:sticky md:left-0 md:z-20 rounded-tl-xl border-l border-r border-t border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
+               <div className="xl:sticky xl:left-0 xl:z-20 rounded-tl-xl border-l border-r border-t border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
                 <p className={`${roboto.className} text-base font-bold uppercase tracking-wide text-white`}>
                   Especificações da máquina
                 </p>
@@ -297,7 +297,7 @@ export function VpsCloudPage() {
               })}
 
               {/* toggle row */}
-              <div className="md:sticky md:left-0 md:z-20 flex flex-col justify-center gap-1.5 border-l border-r border-t-0 border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
+              <div className="xl:sticky xl:left-0 xl:z-20 flex flex-col justify-center gap-1.5 border-l border-r border-t-0 border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md">
                 <span className="text-sm font-bold text-white uppercase tracking-wide">VPS com backup automático</span>
                 <div className="flex items-center gap-2">
                   <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} className="data-[state=unchecked]:bg-white/10 border-white/10 data-[state=checked]:bg-sky-500" />
@@ -327,7 +327,7 @@ export function VpsCloudPage() {
               ].map((row) => (
                 <Fragment key={row.key}>
                   <div
-                    className={`md:sticky md:left-0 md:z-20 flex flex-col justify-center border-l border-r border-t-0 border-b border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md ${row.key === "traffic" ? "rounded-bl-xl border-b" : "border-b-0"
+                    className={`xl:sticky xl:left-0 xl:z-20 flex flex-col justify-center border-l border-r border-t-0 border-b border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md ${row.key === "traffic" ? "rounded-bl-xl border-b" : "border-b-0"
                       }`}
                   >
                     <span className="text-lg font-bold leading-tight text-white">{row.label}</span>

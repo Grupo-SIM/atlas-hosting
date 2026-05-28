@@ -85,6 +85,7 @@ export default async function AffiliateDetailsPage({ params }: PageProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -142,6 +143,7 @@ export default async function AffiliateDetailsPage({ params }: PageProps) {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -77,64 +77,62 @@ export default function InvoiceCard({
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 min-w-0">
               <div className={cn(
-                "p-3 rounded-xl transition-colors",
+                "p-2.5 rounded-xl transition-colors flex-shrink-0",
                 invoice.status === "paid" ? "bg-green-500/10 text-green-500" : "bg-primary/10 text-primary"
               )}>
-                <FileText className="h-6 w-6" />
+                <FileText className="h-5 w-5" />
               </div>
-              <div>
-                <CardTitle className="text-lg font-bold tracking-tight">
+              <div className="min-w-0">
+                <CardTitle className="text-base font-bold tracking-tight truncate">
                   Fatura #{invoice.id.slice(0, 8).toUpperCase()}
                 </CardTitle>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
-                  <CalendarDays className="h-3.5 w-3.5" />
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                  <CalendarDays className="h-3 w-3 flex-shrink-0" />
                   {format(invoice.createdAt, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </div>
+                {/* Badges — visible on all screens */}
+                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "capitalize px-2 py-0.5 text-[10px] font-bold pointer-events-none",
+                      invoice.type === "domain" 
+                        ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" 
+                        : invoice.type === "vps"
+                          ? "bg-blue-600/10 text-blue-500 border-blue-500/20"
+                          : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                    )}
+                  >
+                    {invoice.type === "domain" ? "Domínio" : invoice.type === "vps" ? "VPS" : "Plano"}
+                  </Badge>
+                  <Badge
+                    className={cn(
+                      "px-2 py-0.5 text-[10px] shadow-sm font-bold border pointer-events-none",
+                      getStatusStyles(invoice.status)
+                    )}
+                  >
+                    {statusLabel[invoice.status] || "Status desconhecido"}
+                  </Badge>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
-              <div className="hidden sm:flex items-center gap-2">
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    "capitalize px-3 py-1 font-bold pointer-events-none",
-                    invoice.type === "domain" 
-                      ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" 
-                      : invoice.type === "vps"
-                        ? "bg-blue-600/10 text-blue-500 border-blue-500/20"
-                        : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
-                  )}
-                >
-                  {invoice.type === "domain" ? "Domínio" : invoice.type === "vps" ? "VPS" : "Plano"}
-                </Badge>
-                <Badge
-                  className={cn(
-                    "px-3 py-1 shadow-sm font-bold border pointer-events-none",
-                    getStatusStyles(invoice.status)
-                  )}
-                >
-                  {statusLabel[invoice.status] || "Status desconhecido"}
-                </Badge>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="text-right">
+                <div className="text-base font-black text-primary tracking-tighter whitespace-nowrap">
+                  {toBrl(invoice.amount)}
+                </div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
+                  Valor total
+                </div>
               </div>
-
-              <div className="text-right flex items-center gap-4">
-                <div>
-                  <div className="text-xl font-black text-primary tracking-tighter">
-                    {toBrl(invoice.amount)}
-                  </div>
-                  <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
-                    Valor total
-                  </div>
-                </div>
-                <div className={cn(
-                  "p-1 rounded-full bg-muted transition-transform duration-300",
-                  isExpanded && "rotate-180 bg-primary/10 text-primary"
-                )}>
-                  <ChevronDown className="h-4 w-4" />
-                </div>
+              <div className={cn(
+                "p-1 rounded-full bg-muted transition-transform duration-300 flex-shrink-0",
+                isExpanded && "rotate-180 bg-primary/10 text-primary"
+              )}>
+                <ChevronDown className="h-4 w-4" />
               </div>
             </div>
           </div>

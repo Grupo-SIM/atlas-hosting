@@ -311,9 +311,9 @@ export async function PleskEmailClient({
   }
 
   return (
-    <div className="h-[calc(100vh-200px)] flex gap-6">
+    <div className="h-[calc(100vh-64px)] flex flex-col md:flex-row gap-4 md:gap-6 overflow-hidden">
       {/* Sidebar */}
-      <div className="w-64 flex-shrink-0">
+      <div className="hidden md:block w-64 flex-shrink-0">
         <PleskEmailSidebar
           folders={emailFoldersForSidebar}
           selectedFolder={selectedFolder}
@@ -327,9 +327,9 @@ export async function PleskEmailClient({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex gap-6 min-w-0">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-6 min-w-0 overflow-hidden">
         {/* Email List */}
-        <div className="w-96 flex-shrink-0">
+        <div className="w-full lg:w-96 lg:flex-shrink-0">
           <PleskEmailList
             emails={emails} // Assumes emails are already filtered for selectedFolder
             selectedEmail={selectedEmailData}

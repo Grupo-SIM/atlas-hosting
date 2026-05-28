@@ -21,7 +21,7 @@ export default async function VpsDashboardPage({
 
   if (servers.length === 0) {
     return (
-      <div className="flex-1 space-y-6 p-8 pt-6">
+      <div className="flex-1 space-y-6 p-4 md:p-8 pt-4 md:pt-6">
         <h2 className="text-3xl font-bold tracking-tight">Hospedagem VPS</h2>
         <Card className="flex flex-col items-center justify-center p-12 text-center">
           <div className="rounded-full bg-muted p-4 mb-4">

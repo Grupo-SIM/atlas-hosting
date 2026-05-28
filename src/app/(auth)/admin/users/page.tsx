@@ -22,8 +22,8 @@ export default async function AdminUsersPage() {
   const totalBalance = users.reduce((acc, u) => acc + u.balanceCents / 100, 0);
 
   return (
-    <div className="flex-1 space-y-6 p-8 pt-6">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-4 md:pt-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Usuários</h2>
           <p className="text-muted-foreground">

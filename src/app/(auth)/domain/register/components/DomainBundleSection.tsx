@@ -43,6 +43,7 @@ export async function DomainBundleSection({ domains }: { domains: string[] }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -83,6 +84,7 @@ export async function DomainBundleSection({ domains }: { domains: string[] }) {
             ))}
           </TableBody>
         </Table>
+        </div>
 
         <div className="flex flex-col justify-between gap-2 border-t pt-4 sm:flex-row sm:items-center">
           <span className="text-sm text-muted-foreground">Total estimado (soma 1º ano)</span>

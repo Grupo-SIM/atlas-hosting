@@ -40,8 +40,8 @@ export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
         ease: "easeInOut",
       }}
       className={cn(
-        "bg-card whitespace-nowrap h-screen z-10 border-r border-border shrink-0",
-        "relative flex flex-col overflow-hidden"
+        "hidden md:flex md:flex-col bg-card whitespace-nowrap h-screen z-10 border-r border-border shrink-0",
+        "relative overflow-hidden"
       )}
     >
       <motion.div
