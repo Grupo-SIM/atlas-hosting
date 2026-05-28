@@ -14,7 +14,7 @@ export function N8nChatBubble() {
       target: '#n8n-chat-bubble',
       initialMessages: [
         'Olá! 👋',
-        'Sou o Atlas, assistente da Atlas Hosting. Como posso te ajudar?',
+        'Sou o Atlas, como posso te ajudar?',
       ],
       i18n: {
         en: {

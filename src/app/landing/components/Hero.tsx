@@ -38,7 +38,7 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center pt-24 pb-8 md:pb-12 px-4 md:pt-[min(10vh,6rem)] md:px-[clamp(1.25rem,3vw,1.75rem)] w-full">
+      <div className="relative z-10 flex flex-col items-center pt-28 md:pt-32 lg:pt-36 pb-8 md:pb-12 px-4 md:px-[clamp(1.25rem,3vw,1.75rem)] w-full">
         <div className="flex flex-col items-center w-full max-w-[2400px] gap-8 md:gap-12">
 
           {/* Barra de busca - Responsive Width */}
