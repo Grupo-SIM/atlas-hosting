@@ -176,7 +176,7 @@ export default function SupportPage() {
             <Phone className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">+55 83 9884-9027</div>
+            <div className="text-lg font-bold">+55 68 9207-8221</div>
           </CardContent>
         </Card>
       </div>
@@ -397,7 +397,7 @@ export default function SupportPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 mb-4">
-                  <p className="font-medium">+55 83 9884-9027</p>
+                  <p className="font-medium">+55 68 9207-8221</p>
                   <p className="text-sm text-muted-foreground">
                     Segunda a Sexta: 8h às 18h
                     <br />

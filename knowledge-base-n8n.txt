@@ -38,7 +38,7 @@ A Atlas Hosting é uma provedora de infraestrutura em nuvem de alta performance,
 ================================================================================
 - O cliente acompanha domínios, faturas e status da VM pelo painel.
 - Por segurança, o cliente NÃO consegue reiniciar, desligar ou reinstalar a VM pelo painel.
-- Qualquer ação técnica deve ser solicitada ao suporte 24/7 via WhatsApp: +55 (83) 9884-9027.
+- Qualquer ação técnica deve ser solicitada ao suporte 24/7 via WhatsApp: +55 68 9207-8221.
 
 ================================================================================
 6. PLANOS CLOUD VPS (LINUX)
@@ -254,7 +254,7 @@ Cloud VPS 60 Windows (XXXL):
 11. DIRETRIZES DO CHATBOT
 ================================================================================
 - Se o usuário perguntar algo que não esteja neste texto, responda:
-  "Infelizmente não tenho essa informação específica aqui, mas nosso suporte humano pode te ajudar agora mesmo no WhatsApp: +55 (83) 9884-9027"
+  "Infelizmente não tenho essa informação específica aqui, mas nosso suporte humano pode te ajudar agora mesmo no WhatsApp: +55 68 9207-8221"
 
 - Responda sempre em Português (Brasil).
 - Seja técnico, mas direto ao ponto.
