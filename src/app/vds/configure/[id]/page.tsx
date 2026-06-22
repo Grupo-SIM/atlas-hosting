@@ -535,7 +535,7 @@ export default function VdsConfigurePage() {
   };
 
   const isPasswordValid = (pwd: string) => {
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+^~[\]{}|;:,.<>?])[A-Za-z\d!@#$%^&*()_+^~[\]{}|;:,.<>?]{8,}$/;
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
     return regex.test(pwd);
   };
 
@@ -1218,7 +1218,16 @@ export default function VdsConfigurePage() {
               <div className="md:col-span-9 space-y-2">
                 <div className="flex justify-start">
                   <button onClick={() => {
-                    const pass = Math.random().toString(36).slice(-10) + "A1!";
+                    const chars = "abcdefghijklmnopqrstuvwxyz";
+                    const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                    const nums = "0123456789";
+                    let pass = "";
+                    pass += chars[Math.floor(Math.random() * chars.length)];
+                    pass += upper[Math.floor(Math.random() * upper.length)];
+                    pass += nums[Math.floor(Math.random() * nums.length)];
+                    const all = chars + upper + nums;
+                    for (let i = 0; i < 9; i++) pass += all[Math.floor(Math.random() * all.length)];
+                    pass = pass.split('').sort(() => 0.5 - Math.random()).join('');
                     setPassword(pass); setPasswordTouched(true);
                   }} className="text-[#3B82F6] text-sm hover:underline font-bold">Gerar nova senha</button>
                 </div>

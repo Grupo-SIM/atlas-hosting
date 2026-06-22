@@ -506,7 +506,7 @@ export default function ConfigureWindowsVps() {
       serverManagement, monitoring, password, planId]);
 
   const isPasswordValid = (pwd: string) => {
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+^~[\]{}|;:,.<>?])[A-Za-z\d!@#$%^&*()_+^~[\]{}|;:,.<>?]{8,}$/;
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
     return regex.test(pwd);
   };
 
@@ -1009,14 +1009,12 @@ export default function ConfigureWindowsVps() {
                       const chars = "abcdefghijklmnopqrstuvwxyz";
                       const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
                       const nums = "0123456789";
-                      const symbols = "!@#$%^&*()_+";
                       let pass = "";
                       pass += chars[Math.floor(Math.random() * chars.length)];
                       pass += upper[Math.floor(Math.random() * upper.length)];
                       pass += nums[Math.floor(Math.random() * nums.length)];
-                      pass += symbols[Math.floor(Math.random() * symbols.length)];
-                      const all = chars + upper + nums + symbols;
-                      for (let i = 0; i < 8; i++) pass += all[Math.floor(Math.random() * all.length)];
+                      const all = chars + upper + nums;
+                      for (let i = 0; i < 9; i++) pass += all[Math.floor(Math.random() * all.length)];
                       pass = pass.split('').sort(() => 0.5 - Math.random()).join('');
                       setPassword(pass);
                       setPasswordTouched(true);

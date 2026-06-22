@@ -799,9 +799,9 @@ export default function VpsConfigurePage() {
       customImageOption, privateNetwork, ipv4Address, objectStorage, serverManagement, monitoring,
       password, planId]);
 
-  // Password validation: 8+ chars, 1 upper, 1 lower, 1 number, 1 special
+  // Password validation: 8+ chars, 1 upper, 1 lower, 1 number
   const isPasswordValid = (pwd: string) => {
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+^~[\]{}|;:,.<>?])[A-Za-z\d!@#$%^&*()_+^~[\]{}|;:,.<>?]{8,}$/;
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
     return regex.test(pwd);
   };
 
@@ -1519,19 +1519,17 @@ export default function VpsConfigurePage() {
                       const chars = "abcdefghijklmnopqrstuvwxyz";
                       const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
                       const nums = "0123456789";
-                      const symbols = "!@#$%^&*()_+";
-                      
+
                       let pass = "";
                       pass += chars[Math.floor(Math.random() * chars.length)];
                       pass += upper[Math.floor(Math.random() * upper.length)];
                       pass += nums[Math.floor(Math.random() * nums.length)];
-                      pass += symbols[Math.floor(Math.random() * symbols.length)];
-                      
-                      const all = chars + upper + nums + symbols;
-                      for (let i = 0; i < 8; i++) {
+
+                      const all = chars + upper + nums;
+                      for (let i = 0; i < 9; i++) {
                         pass += all[Math.floor(Math.random() * all.length)];
                       }
-                      
+
                       // Shuffle
                       pass = pass.split('').sort(() => 0.5 - Math.random()).join('');
                       
