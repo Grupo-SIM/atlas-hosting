@@ -28,7 +28,10 @@ FROM node:20-slim AS runner
 WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
-ENV HOST=0.0.0.0
+# Next.js standalone server.js binds to process.env.HOSTNAME.
+# Docker auto-sets HOSTNAME to the container ID, so it must be forced to 0.0.0.0
+# or Traefik cannot reach the container (Bad Gateway).
+ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 ENV NEXT_TELEMETRY_DISABLED=1
 

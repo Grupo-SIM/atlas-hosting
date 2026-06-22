@@ -7,7 +7,14 @@
       "Bash(ping:*)",
       "Bash(bun run build:*)",
       "Bash(docker builder prune:*)",
-      "Bash(docker build:*)"
+      "Bash(docker build:*)",
+      "Bash(base64 -w0 public/atlas-logo.png)",
+      "Bash(tee /tmp/tsc.out)",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"3001 api/docs -> %{http_code}\\\\n\" http://localhost:3001/api/docs)",
+      "Bash(curl -s -o /dev/null -w \"3001 root -> %{http_code}\\\\n\" http://localhost:3001/)",
+      "PowerShell($env:PORT=\"3001\"; Set-Location \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\back-simpay\"; npm run start:dev)",
+      "Bash(curl -s -o /dev/null -w \"api/docs -> %{http_code}\\\\n\" http://localhost:3001/api/docs)"
     ]
   }
 }
