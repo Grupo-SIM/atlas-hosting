@@ -97,6 +97,8 @@ interface InstallmentRate {
 interface ModernCheckoutFormProps {
   invoiceId: string;
   invoiceType?: string;
+  /** VPS/VDS no plano anual (12m) — habilita PIX como método de pagamento. */
+  isAnnualVps?: boolean;
   hasExistingUser?: boolean;
   initialStep?: CheckoutStep;
   /** Atualiza texto/estado do botão principal da coluna lateral (checkout-client). */
@@ -188,8 +190,8 @@ interface OpenCepResponse {
 const ModernCheckoutForm = forwardRef<
   ModernCheckoutFormHandle,
   ModernCheckoutFormProps
->(({ invoiceId, invoiceType, hasExistingUser = false, initialStep, onSidebarActionStateChange, onPaymentMethodChange, selectedInstallments = 1, onInstallmentsChange, installmentRates }, ref) => {
-  const allowPix = invoiceType === "domain";
+>(({ invoiceId, invoiceType, isAnnualVps = false, hasExistingUser = false, initialStep, onSidebarActionStateChange, onPaymentMethodChange, selectedInstallments = 1, onInstallmentsChange, installmentRates }, ref) => {
+  const allowPix = invoiceType === "domain" || isAnnualVps;
   const id = useId();
   const sidebarActionCbRef = useRef(onSidebarActionStateChange);
   sidebarActionCbRef.current = onSidebarActionStateChange;

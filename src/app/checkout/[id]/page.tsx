@@ -81,12 +81,16 @@ export default async function CheckoutPage({
 
   const initialStep = resolvedSearch.initialStep === "payment" ? "payment" : "billing";
 
+  const vpsDuration = Number((invoice.metadata as any)?.config?.duration ?? 0);
+  const isAnnualVps = invoice.type === "vps" && vpsDuration === 12;
+
   return (
     <CheckoutClient
       invoice={invoice as Invoice}
       user={user ? { id: user.id, organization: user.organization } : null}
       reference={reference}
       initialStep={initialStep}
+      isAnnualVps={isAnnualVps}
     />
   );
 }

@@ -13,6 +13,7 @@ export const pgVpsSubscription = pgTable("vps_subscriptions", {
   config: json("config").notNull(),
   intervalMonths: integer("interval_months").notNull(),
   amountBrl: doublePrecision("amount_brl").notNull(),
+  paymentMethod: text("payment_method", { enum: ["credit_card", "pix"] }).notNull().default("credit_card"),
   status: text("status", { enum: ["active", "cancelled", "failed", "paused"] }).notNull().default("active"),
   nextChargeDate: timestamp("next_charge_date", { mode: "date" }).notNull(),
   lastInvoiceId: uuid("last_invoice_id").references(() => pgInvoice.id),

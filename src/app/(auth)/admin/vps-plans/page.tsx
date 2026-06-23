@@ -23,6 +23,9 @@ import {
   CheckCircle,
   PauseCircle,
   XCircle,
+  Clock,
+  CreditCard,
+  QrCode,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -35,9 +38,32 @@ const PLAN_TYPE_LABEL: Record<string, string> = {
   "vps-windows": "Windows",
 };
 
+const FIFTEEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000;
+
 function periodLabel(months: number) {
   if (months === 1) return "1 mês";
   return `${months} meses`;
+}
+
+function daysUntil(date: Date) {
+  return Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+}
+
+function PaymentBadge({ method }: { method: "credit_card" | "pix" }) {
+  if (method === "pix") {
+    return (
+      <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30">
+        <QrCode className="h-3 w-3" />
+        PIX
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="gap-1">
+      <CreditCard className="h-3 w-3" />
+      Cartão
+    </Badge>
+  );
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -60,6 +86,9 @@ export default async function AdminVpsPlansPage() {
   const active   = plans.filter((p) => p.status === "active").length;
   const paused   = plans.filter((p) => p.status === "paused").length;
   const inactive = plans.filter((p) => p.status === "cancelled" || p.status === "failed").length;
+  const expiring = plans.filter(
+    (p) => p.status === "active" && p.nextChargeDate.getTime() <= Date.now() + FIFTEEN_DAYS_MS
+  ).length;
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-4 md:pt-6">
@@ -81,7 +110,7 @@ export default async function AdminVpsPlansPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total</CardTitle>
@@ -118,6 +147,15 @@ export default async function AdminVpsPlansPage() {
             <div className="text-2xl font-bold text-red-600">{inactive}</div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">A vencer (15d)</CardTitle>
+            <Clock className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600">{expiring}</div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -135,6 +173,7 @@ export default async function AdminVpsPlansPage() {
                 <TableHead>Cliente</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Período</TableHead>
+                <TableHead>Pagamento</TableHead>
                 <TableHead>Próx. cobrança</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Status</TableHead>
@@ -142,8 +181,13 @@ export default async function AdminVpsPlansPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {plans.map((plan) => (
-                <TableRow key={plan.id}>
+              {plans.map((plan) => {
+                const isExpiring =
+                  plan.status === "active" &&
+                  plan.nextChargeDate.getTime() <= Date.now() + FIFTEEN_DAYS_MS;
+                const remainingDays = daysUntil(plan.nextChargeDate);
+                return (
+                <TableRow key={plan.id} className={isExpiring ? "bg-amber-500/10 hover:bg-amber-500/15" : undefined}>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-semibold">{plan.userName ?? "—"}</span>
@@ -160,8 +204,19 @@ export default async function AdminVpsPlansPage() {
                       {periodLabel(plan.intervalMonths)}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    <PaymentBadge method={plan.paymentMethod} />
+                  </TableCell>
                   <TableCell className="text-sm">
-                    {format(plan.nextChargeDate, "dd/MM/yyyy", { locale: ptBR })}
+                    <div className="flex flex-col gap-1">
+                      <span>{format(plan.nextChargeDate, "dd/MM/yyyy", { locale: ptBR })}</span>
+                      {isExpiring && (
+                        <Badge variant="outline" className="w-fit gap-1 text-amber-600 border-amber-500/40">
+                          <Clock className="h-3 w-3" />
+                          {remainingDays <= 0 ? "Vencida" : `Vence em ${remainingDays} ${remainingDays === 1 ? "dia" : "dias"}`}
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-sm font-medium">
                     {toBrl(plan.amountBrl)}
@@ -170,13 +225,19 @@ export default async function AdminVpsPlansPage() {
                     <StatusBadge status={plan.status} />
                   </TableCell>
                   <TableCell className="text-right">
-                    <SubscriptionActionsCell id={plan.id} status={plan.status} />
+                    <SubscriptionActionsCell
+                      id={plan.id}
+                      status={plan.status}
+                      paymentMethod={plan.paymentMethod}
+                      nextChargeDate={plan.nextChargeDate}
+                    />
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
               {plans.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                     Nenhuma assinatura registrada.
                   </TableCell>
                 </TableRow>

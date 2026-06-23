@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   Mail,
+  Package,
   Server,
   Settings,
   Shield,
@@ -15,6 +16,7 @@ import {
 export const navigation = [
   { name: "Painel", href: "/home", icon: LayoutDashboard },
   { name: "Hospedagem", href: "/manage/vps", icon: Server },
+  { name: "Minhas Assinaturas", href: "/minhas-assinaturas", icon: Package },
   { name: "Domínios", href: "/domains", icon: Globe },
   { name: "Faturas", href: "/billing", icon: FileText },
   { name: "Afiliados", href: "/affiliate", icon: Users },

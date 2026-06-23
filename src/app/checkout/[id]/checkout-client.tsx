@@ -34,6 +34,7 @@ interface CheckoutClientProps {
   user: User | null;
   reference: string;
   initialStep?: "billing" | "payment";
+  isAnnualVps?: boolean;
 }
 
 export default function CheckoutClient({
@@ -41,6 +42,7 @@ export default function CheckoutClient({
   user,
   reference,
   initialStep,
+  isAnnualVps,
 }: CheckoutClientProps) {
   const router = useRouter();
   const base = invoice.amount;
@@ -188,6 +190,7 @@ export default function CheckoutClient({
                 ref={checkoutFormRef}
                 invoiceId={invoice.id}
                 invoiceType={invoice.type}
+                isAnnualVps={isAnnualVps}
                 hasExistingUser={userHasDomId}
                 initialStep={initialStep}
                 onSidebarActionStateChange={onSidebarActionStateChange}

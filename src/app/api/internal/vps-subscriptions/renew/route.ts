@@ -77,12 +77,14 @@ export async function POST(req: Request) {
       const config = sub.config as any;
       const cardToken: string = config?.cardToken;
 
-      if (!cardToken) {
+      // PIX é pagamento único, sem cobrança recorrente: pausa no vencimento
+      // para o cliente/admin renovar manualmente. Não cobra, não marca como falha.
+      if (sub.paymentMethod === "pix" || !cardToken) {
         await db
           .update(pgVpsSubscription)
-          .set({ status: "failed", updatedAt: new Date() })
+          .set({ status: "paused", pausedAt: new Date(), updatedAt: new Date() })
           .where(eq(pgVpsSubscription.id, sub.id));
-        results.push({ id: sub.id, status: "failed", error: "cardToken ausente" });
+        results.push({ id: sub.id, status: "paused" });
         continue;
       }
 

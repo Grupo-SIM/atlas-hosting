@@ -1338,6 +1338,7 @@ export async function markPixPaymentComplete(invoiceId: string): Promise<void> {
     if (billing) {
       await processInvoiceAfterPayment(invoice, user, billing);
     }
+    await handleVpsPixPaid(invoice as Invoice, user);
     await triggerPurchaseNotifications(invoice, user, billing ?? undefined);
   });
 }
@@ -1406,6 +1407,7 @@ export async function syncCheckoutPixPayment(
     after(async () => {
       await triggerCommissionIfApplicable(invoice as any).catch(() => {});
       await processInvoiceAfterPayment(invoice, user, billing);
+      await handleVpsPixPaid(invoice as Invoice, user);
       await triggerPurchaseNotifications(invoice, user, { ...billing, paymentMethod: "pix" });
     });
 
@@ -1435,15 +1437,19 @@ async function fetchAtlasBuyerRates(n: number): Promise<{ rate: number; fixedFee
 async function createVpsSubscriptionIfNeeded(
   invoice: Invoice,
   user: { id: string; organization: { id: string } },
-  cardToken: string
+  opts: { paymentMethod: "credit_card" | "pix"; cardToken?: string }
 ): Promise<void> {
   if (invoice.type !== "vps") return;
   const meta = invoice.metadata as any;
   const config = meta?.config || {};
   const intervalMonths: number = parseInt(config.duration || "1", 10);
+  // PIX é pagamento único e só é vendido no plano anual; ignora outros ciclos.
+  if (opts.paymentMethod === "pix" && intervalMonths !== 12) return;
   const planType = (config.type === "vds" ? "vds" : config.type === "storage-vps" ? "storage-vps" : config.type === "vps-windows" ? "vps-windows" : "vps");
   const nextChargeDate = new Date();
   nextChargeDate.setMonth(nextChargeDate.getMonth() + intervalMonths);
+
+  const finalConfig = opts.cardToken ? { ...config, cardToken: opts.cardToken } : config;
 
   try {
     await db.insert(pgVpsSubscription).values({
@@ -1451,18 +1457,62 @@ async function createVpsSubscriptionIfNeeded(
       userId: user.id,
       planId: meta?.vpsId || "10",
       planType: planType as any,
-      config: { ...config, cardToken },
+      config: finalConfig,
       intervalMonths,
       amountBrl: invoice.amount,
+      paymentMethod: opts.paymentMethod,
       status: "active",
       nextChargeDate,
       lastInvoiceId: invoice.id,
       failureCount: 0,
     });
-    console.log(`[SUBSCRIPTION] ✓ Assinatura VPS criada para fatura ${invoice.id} — próxima cobrança: ${nextChargeDate.toISOString()}`);
+    console.log(`[SUBSCRIPTION] ✓ Assinatura VPS criada para fatura ${invoice.id} (${opts.paymentMethod}) — próxima cobrança: ${nextChargeDate.toISOString()}`);
   } catch (err) {
     console.error("[SUBSCRIPTION] ✗ Erro ao criar assinatura VPS:", err);
   }
+}
+
+/**
+ * Conclui o pagamento PIX de uma fatura VPS: renova a assinatura existente
+ * (faturas isRenewal) ou cria uma nova assinatura PIX (compra anual).
+ */
+async function handleVpsPixPaid(
+  invoice: Invoice,
+  user: { id: string; organization: { id: string } }
+): Promise<void> {
+  if (invoice.type !== "vps") return;
+  const meta = invoice.metadata as any;
+
+  if (meta?.isRenewal && meta?.subscriptionId) {
+    try {
+      const sub = await db.query.pgVpsSubscription.findFirst({
+        where: eq(pgVpsSubscription.id, meta.subscriptionId),
+      });
+      if (!sub) return;
+      const base = sub.nextChargeDate && sub.nextChargeDate.getTime() > Date.now()
+        ? new Date(sub.nextChargeDate)
+        : new Date();
+      const nextChargeDate = new Date(base);
+      nextChargeDate.setMonth(nextChargeDate.getMonth() + sub.intervalMonths);
+      await db
+        .update(pgVpsSubscription)
+        .set({
+          status: "active",
+          pausedAt: null,
+          nextChargeDate,
+          lastInvoiceId: invoice.id,
+          failureCount: 0,
+          updatedAt: new Date(),
+        })
+        .where(eq(pgVpsSubscription.id, sub.id));
+      console.log(`[SUBSCRIPTION] ✓ Renovação PIX da assinatura ${sub.id} — próxima cobrança: ${nextChargeDate.toISOString()}`);
+    } catch (err) {
+      console.error("[SUBSCRIPTION] ✗ Erro ao renovar assinatura VPS (PIX):", err);
+    }
+    return;
+  }
+
+  await createVpsSubscriptionIfNeeded(invoice, user, { paymentMethod: "pix" });
 }
 
 export async function completeCheckout(
@@ -1738,7 +1788,7 @@ export async function completeCheckout(
   after(async () => {
     await sendWelcomePasswordEmailIfGuest(invoice, user as any);
     await triggerPurchaseNotifications(invoice, user, { ...values, paymentMethod: "credit_card" });
-    await createVpsSubscriptionIfNeeded(invoice as Invoice, user, cardToken);
+    await createVpsSubscriptionIfNeeded(invoice as Invoice, user, { paymentMethod: "credit_card", cardToken });
   });
 
   redirect(paymentSuccessUrl(invoiceId));
@@ -1975,7 +2025,7 @@ export async function completeCheckoutWithSavedCard(
 
   after(async () => {
     await triggerPurchaseNotifications(invoice, user, { ...values, paymentMethod: "credit_card" });
-    await createVpsSubscriptionIfNeeded(invoice as Invoice, user, cardToken);
+    await createVpsSubscriptionIfNeeded(invoice as Invoice, user, { paymentMethod: "credit_card", cardToken });
   });
 
   return { status: "success", message: paymentSuccessUrl(invoiceId) };
@@ -2911,5 +2961,70 @@ export async function createVpsInvoice(data: {
   } catch (error) {
     console.error("Error creating VPS invoice:", error);
     return { status: "error", message: "Erro ao processar o pedido." };
+  }
+}
+
+
+export async function createVpsRenewalInvoice(subscriptionId: string): Promise<
+  | { status: "success"; redirectUrl: string }
+  | { status: "error"; message: string }
+> {
+  const user = await getUser();
+  if (!user) return { status: "error", message: "Usuário não autenticado." };
+
+  const sub = await db.query.pgVpsSubscription.findFirst({
+    where: eq(pgVpsSubscription.id, subscriptionId),
+  });
+  if (!sub) return { status: "error", message: "Assinatura não encontrada." };
+
+  const isOwner = sub.userId === user.id;
+  if (!isOwner && !user.isAdmin) {
+    return { status: "error", message: "Sem permissão para renovar esta assinatura." };
+  }
+
+  if (sub.paymentMethod !== "pix") {
+    return { status: "error", message: "Renovação manual disponível apenas para assinaturas PIX." };
+  }
+
+  // Elegível quando a vencer (≤15 dias) ou já pausada/vencida.
+  const fifteenDaysMs = 15 * 24 * 60 * 60 * 1000;
+  const dueSoon = sub.nextChargeDate.getTime() <= Date.now() + fifteenDaysMs;
+  const isPaused = sub.status === "paused";
+  if (!dueSoon && !isPaused) {
+    return { status: "error", message: "Renovação ainda não disponível para esta assinatura." };
+  }
+
+  try {
+    const config = sub.config as any;
+    const [newInvoice] = await db
+      .insert(pgInvoice)
+      .values({
+        orgId: sub.orgId,
+        userId: sub.userId,
+        type: "vps",
+        reference: `VPS-REN-${sub.planId}-${Date.now()}`,
+        amount: sub.amountBrl,
+        status: "pending",
+        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        currency: "BRL",
+        description: `Renovação VPS ${sub.planId} — ${sub.intervalMonths} ${sub.intervalMonths === 1 ? "mês" : "meses"}`,
+        metadata: {
+          vpsId: sub.planId,
+          config,
+          isRenewal: true,
+          subscriptionId: sub.id,
+        } as any,
+      })
+      .returning();
+
+    if (!newInvoice) throw new Error("Falha ao criar fatura de renovação.");
+
+    return {
+      status: "success",
+      redirectUrl: `/checkout/${newInvoice.id}?initialStep=payment`,
+    };
+  } catch (error) {
+    console.error("Error creating VPS renewal invoice:", error);
+    return { status: "error", message: "Erro ao gerar a renovação." };
   }
 }

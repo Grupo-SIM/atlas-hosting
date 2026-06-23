@@ -17,6 +17,7 @@ export type VpsPlanRow = {
   planType: "vps" | "vds" | "storage-vps" | "vps-windows";
   intervalMonths: number;
   amountBrl: number;
+  paymentMethod: "credit_card" | "pix";
   status: "active" | "cancelled" | "failed" | "paused";
   nextChargeDate: Date;
   pausedAt: Date | null;
@@ -45,6 +46,7 @@ export async function getVpsPlanSubscriptionsAction(): Promise<VpsPlanRow[]> {
     planType: s.planType as VpsPlanRow["planType"],
     intervalMonths: s.intervalMonths,
     amountBrl: s.amountBrl,
+    paymentMethod: (s.paymentMethod ?? ((s.config as any)?.cardToken ? "credit_card" : "pix")) as VpsPlanRow["paymentMethod"],
     status: s.status as VpsPlanRow["status"],
     nextChargeDate: s.nextChargeDate,
     pausedAt: s.pausedAt ?? null,
