@@ -14,7 +14,9 @@
       "Bash(curl -s -o /dev/null -w \"3001 api/docs -> %{http_code}\\\\n\" http://localhost:3001/api/docs)",
       "Bash(curl -s -o /dev/null -w \"3001 root -> %{http_code}\\\\n\" http://localhost:3001/)",
       "PowerShell($env:PORT=\"3001\"; Set-Location \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\back-simpay\"; npm run start:dev)",
-      "Bash(curl -s -o /dev/null -w \"api/docs -> %{http_code}\\\\n\" http://localhost:3001/api/docs)"
+      "Bash(curl -s -o /dev/null -w \"api/docs -> %{http_code}\\\\n\" http://localhost:3001/api/docs)",
+      "Bash(grep -vE 'node_modules|\\\\.\\(png|jpg|svg|ico\\)$')",
+      "Bash(cd \"C:/Users/breno/Desktop/JB/atlas-hosting\" && npx tsc --noEmit 2>&1 | tee /tmp/tsc.out | grep -cE \"error TS\"; echo \"---sample---\"; grep -E \"error TS\" /tmp/tsc.out | head -20)"
     ]
   }
 }
