@@ -88,22 +88,21 @@ export function Hero() {
                 <h1
                   className={`${roboto.className} text-[2rem] sm:text-[2.5rem] md:text-[3.8rem] font-bold leading-[1.1] text-white mb-4 md:mb-6 drop-shadow-2xl`}
                 >
-                  Seu sucesso online<br />começa agora
+                  Receba R$250,00 de volta!
                 </h1>
 
                 <p
                   className={`${roboto.className} text-[14px] sm:text-[16px] md:text-[1.05rem] text-white/90 mb-8 md:mb-10 leading-relaxed max-w-[440px] mx-auto md:mx-0`}
                 >
-                  Do domínio ao servidor de alta performance —
-                  coloque seu projeto no ar em minutos, com suporte 24/7.
+                  A única hospedagem do Brasil com 100% de Cashback
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
                   <Link
-                    href="/signup"
+                    href="#plans"
                     className={`${roboto.className} bg-transparent border-2 border-white text-white rounded-[12px] px-12 py-4 text-[14px] md:text-[15px] font-bold tracking-wider uppercase hover:bg-white/10 transition-colors w-fit sm:w-auto cursor-pointer`}
                   >
-                    Começar agora
+                    Resgatar minha oferta
                   </Link>
 
                   <div className="flex items-center gap-2 text-[12px] md:text-[13px] text-white/70">
