@@ -40,6 +40,9 @@ export default function EmailVerificationCodeForm({ email: initialEmail, redirec
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(60);
+  const [isResending, setIsResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
   const router = useRouter();
   const codeValue = watch("code") || "";
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -48,6 +51,45 @@ export default function EmailVerificationCodeForm({ email: initialEmail, redirec
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
+
+  // Habilita reenviar código depois de 1 minuto
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  const handleResend = async () => {
+    if (!initialEmail || resendCooldown > 0 || isResending) return;
+
+    setIsResending(true);
+    setResendMessage(null);
+
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: initialEmail.toLowerCase() }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setResendMessage(result.message || "Código reenviado.");
+        setResendCooldown(60);
+      } else {
+        setResendMessage(result.error || "Erro ao reenviar código.");
+      }
+    } catch (error) {
+      setResendMessage("Erro ao reenviar código.");
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   if (!initialEmail) {
     return (
@@ -154,7 +196,7 @@ export default function EmailVerificationCodeForm({ email: initialEmail, redirec
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="code">Código de verificação</Label>
+        <Label htmlFor="code" className="text-white">Código de verificação</Label>
         <div className="flex gap-2 justify-center">
           {[0, 1, 2, 3, 4].map((index) => (
             <input
@@ -178,6 +220,26 @@ export default function EmailVerificationCodeForm({ email: initialEmail, redirec
         <p className="text-xs text-white text-center">
           Digite o código de 5 dígitos que você recebeu por email
         </p>
+      </div>
+
+      <div className="text-center">
+        {resendCooldown > 0 ? (
+          <p className="text-xs text-gray-400">
+            Reenviar código em {resendCooldown}s
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={isResending}
+            className="text-xs text-blue-400 hover:text-blue-300 underline disabled:opacity-50"
+          >
+            {isResending ? "Reenviando..." : "Reenviar código"}
+          </button>
+        )}
+        {resendMessage && (
+          <p className="text-xs text-gray-300 mt-1">{resendMessage}</p>
+        )}
       </div>
 
       {message && !isSuccess && (

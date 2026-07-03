@@ -23,15 +23,6 @@ interface AtlasPasswordResetEmailProps {
   publicSiteUrl?: string;
 }
 
-function logoSrc(publicSiteUrl?: string): string {
-  const base = publicSiteUrl?.replace(/\/$/, "").trim();
-  // Se tivermos um base que não seja localhost, usamos ele. Caso contrário, forçamos o domínio de produção para a logo.
-  if (base && !base.includes("localhost")) {
-    return `${base}/atlas-logo.png`;
-  }
-  return "https://atlashosting.com.br/atlas-logo.png";
-}
-
 export const AtlasPasswordResetEmail = ({
   firstName = "cliente",
   email = "usuario@exemplo.com",
@@ -47,7 +38,7 @@ export const AtlasPasswordResetEmail = ({
       <Container style={container}>
         <Section style={box}>
           <Img
-            src={logoSrc(publicSiteUrl)}
+            src="cid:atlaslogo"
             width="120"
             height="40"
             alt="Atlas Hosting"

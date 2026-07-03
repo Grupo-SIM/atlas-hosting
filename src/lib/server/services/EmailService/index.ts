@@ -33,8 +33,17 @@ export default class EmailService {
       to: message.to,
       subject: message.subject,
       html: message.body,
+      attachments: message.attachments,
     });
   }
+}
+
+export interface EmailAttachment {
+  filename: string;
+  path: string;
+  cid: string;
+  contentType?: string;
+  contentDisposition?: "inline" | "attachment";
 }
 
 export interface EmailMessage {
@@ -42,4 +51,5 @@ export interface EmailMessage {
   to: string;
   subject: string;
   body: string;
+  attachments?: EmailAttachment[];
 }

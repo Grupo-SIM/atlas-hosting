@@ -16,6 +16,9 @@ WORKDIR /usr/src/app
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 COPY . .
 
+# Marca o instante deste build (invalida com COPY . . acima, então muda a cada build real)
+RUN date -u +"%Y-%m-%dT%H:%M:%SZ" > BUILD_TIME
+
 # Variáveis de ambiente de build
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -40,6 +43,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=builder /usr/src/app/public ./public
 COPY --from=builder /usr/src/app/.next/standalone ./
 COPY --from=builder /usr/src/app/.next/static ./.next/static
+COPY --from=builder /usr/src/app/BUILD_TIME ./BUILD_TIME
 
 EXPOSE 3000
 

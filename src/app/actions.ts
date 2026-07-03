@@ -10,6 +10,7 @@ import {
   createUser,
   createGuestUser,
   generateSessionToken,
+  resignupUnverifiedUser,
 } from "@/lib/auth/utils";
 
 export async function checkIsLoggedIn(): Promise<boolean> {
@@ -332,16 +333,30 @@ export async function signup(
   }
 
   try {
-    const user = await createUser(
-      fullName,
-      email,
-      password,
-      safeOrgName,
-      referrerId
-    );
+    const existingUser = await db.query.pgUser.findFirst({
+      where: eq(pgUser.email, email.toLowerCase()),
+    });
+
+    if (existingUser && existingUser.emailVerified) {
+      return {
+        status: "error",
+        message: "Erro ao criar conta. O email pode já estar em uso.",
+      };
+    }
+
+    // Se o usuário existe mas nunca verificou o email, reaproveita o registro
+    // (mesma wallet/organization) em vez de bloquear ou duplicar dados.
+    const user = existingUser
+      ? await resignupUnverifiedUser(
+          existingUser.id,
+          fullName,
+          email,
+          password,
+          safeOrgName
+        )
+      : await createUser(fullName, email, password, safeOrgName, referrerId);
 
     if (!user) {
-      // Assuming createUser returns null if user already exists or on other errors
       return {
         status: "error",
         message: "Erro ao criar conta. O email pode já estar em uso.",
@@ -349,7 +364,7 @@ export async function signup(
     }
 
     // Don't auto-login, let user verify email first
-    if (referrerId) {
+    if (referrerId && !existingUser) {
       try {
         const userLogger = new AppLogger({ id: referrerId });
         userLogger.log({

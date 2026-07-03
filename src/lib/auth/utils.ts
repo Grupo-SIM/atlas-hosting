@@ -223,6 +223,67 @@ export async function createUser(
   }
 }
 
+/**
+ * Reaproveita um usuário existente que nunca verificou o email, permitindo
+ * tentar cadastrar de novo (nova senha/nome) sem criar wallet/organization
+ * duplicados e sem apagar o registro original.
+ */
+export async function resignupUnverifiedUser(
+  existingUserId: string,
+  name: string,
+  email: string,
+  passwordPlain: string,
+  organizationName: string
+) {
+  try {
+    const hashedPassword = await hash(passwordPlain);
+
+    const updatedUser = await db
+      .update(pgUser)
+      .set({
+        name,
+        password: hashedPassword,
+        updatedAt: new Date(),
+      })
+      .where(eq(pgUser.id, existingUserId))
+      .returning({
+        id: pgUser.id,
+        name: pgUser.name,
+        email: pgUser.email,
+        organizationId: pgUser.organizationId,
+        createdAt: pgUser.createdAt,
+        updatedAt: pgUser.updatedAt,
+        deletedAt: pgUser.deletedAt,
+      });
+
+    const user = updatedUser[0];
+
+    if (user.organizationId) {
+      await db
+        .update(pgOrganization)
+        .set({ name: organizationName, updatedAt: new Date() })
+        .where(eq(pgOrganization.id, user.organizationId));
+    }
+
+    try {
+      const verificationToken = await createEmailVerificationToken(user.id, user.email);
+
+      sendEmailVerificationEmail(
+        user.email,
+        verificationToken.token,
+        verificationToken.code ?? ""
+      ).catch(err => console.error("Background verification email error:", err));
+    } catch (error) {
+      console.error("Failed to send verification email:", error);
+    }
+
+    return user;
+  } catch (error) {
+    console.error("Error re-signing up unverified user:", error);
+    return null;
+  }
+}
+
 export async function createUserForOrganization(
   name: string,
   email: string,

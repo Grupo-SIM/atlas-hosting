@@ -1,6 +1,14 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
 
+  try {
+    const { readFileSync } = await import("node:fs");
+    const buildTime = readFileSync("BUILD_TIME", "utf8").trim();
+    console.log(`[BOOT] Atlas Hosting iniciado — build: ${buildTime}`);
+  } catch {
+    console.log("[BOOT] Atlas Hosting iniciado — build: desconhecido (dev local?)");
+  }
+
   const runRenewal = async () => {
     const port = process.env.PORT || "3000";
     try {

@@ -7,6 +7,11 @@ import {
 } from "@/emails";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { getEmailService, getSmtpRedactedMeta } from "../consts/singletons";
+import path from "node:path";
+
+/** Cid usado no `<Img src="cid:atlaslogo" />` dos templates — evita logo quebrada
+ * quando o cliente de email (ex. Gmail) bloqueia carregamento de imagem externa. */
+const LOGO_CID = "atlaslogo";
 
 // Email configuration - you'll need to configure this with your email provider
 interface EmailConfig {
@@ -49,12 +54,25 @@ async function sendEmail(data: EmailData): Promise<void> {
     return;
   }
 
+  const usesLogoCid = data.html.includes(`cid:${LOGO_CID}`);
+
   try {
     await emailService.sendEmail({
       from: "noreply@atlashosting.com.br",
       to: data.to,
       subject: data.subject,
       body: data.html,
+      attachments: usesLogoCid
+        ? [
+            {
+              filename: "atlas-logo.png",
+              path: path.join(process.cwd(), "public", "atlas-logo.png"),
+              cid: LOGO_CID,
+              contentType: "image/png",
+              contentDisposition: "inline",
+            },
+          ]
+        : undefined,
     });
   } catch (error) {
     console.error(`Failed to send email to ${data.to}:`, error);

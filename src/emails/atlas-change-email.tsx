@@ -46,7 +46,7 @@ export const AtlasChangeEmail = ({
         <Container style={container}>
           <Section style={header}>
             <Img
-              src={`${publicSiteUrl}/atlas-logo.png`}
+              src="cid:atlaslogo"
               width="120"
               height="40"
               alt="Atlas Hosting"

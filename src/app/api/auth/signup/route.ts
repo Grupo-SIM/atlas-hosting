@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createUser } from "@/lib/auth/utils";
+import { createUser, resignupUnverifiedUser } from "@/lib/auth/utils";
 import { AppLogger } from "@/lib/server/logs";
 import { errorHandler } from "@/lib/error-handler";
 import { db } from "@/lib/db";
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       where: eq(pgUser.email, email.toLowerCase()),
     });
 
-    if (existingUser) {
+    if (existingUser && existingUser.emailVerified) {
       return NextResponse.json(
         {
           status: "error",
@@ -52,14 +52,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Criar usuário
-    const user = await createUser(
-      fullName,
-      email,
-      password,
-      organizationName,
-      referrerId
-    );
+    // Se o usuário existe mas nunca verificou o email, reaproveita o registro
+    // (mesma wallet/organization) em vez de bloquear ou duplicar dados.
+    const user = existingUser
+      ? await resignupUnverifiedUser(
+          existingUser.id,
+          fullName,
+          email,
+          password,
+          organizationName
+        )
+      : await createUser(fullName, email, password, organizationName, referrerId);
 
     if (!user) {
       return NextResponse.json(
@@ -71,8 +74,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Log para afiliado se houver referrerId
-    if (referrerId) {
+    // Log para afiliado se houver referrerId (apenas em cadastros novos)
+    if (referrerId && !existingUser) {
       const userLogger = new AppLogger({ id: referrerId });
       userLogger.log({
         type: "account",
