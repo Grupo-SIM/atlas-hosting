@@ -15,6 +15,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { AppLogger } from "../server/logs";
 import { validateSession } from "./utils";
+import { IMPERSONATE_COOKIE } from "./impersonation";
 
 export type SessionValidationResult =
   | { session: Session; user: User }
@@ -37,65 +38,90 @@ async function redirectToLogin(): Promise<Error> {
   }
 }
 
-export async function getUser(): Promise<User> {
-  "use server";
+const USER_WITH = {
+  organization: {
+    with: {
+      members: true,
+      plan: true,
+      wallet: {
+        with: {
+          cards: true,
+        },
+      },
+      owner: true,
+      domains: true,
+    },
+  },
+  domainAccess: true,
+  referrer: true,
+  referredUsers: true,
+  settings: true,
+  sessions: true,
+} as const;
 
+/** Carrega um usuário completo (com relações) por id. Usado por impersonação. */
+export async function loadFullUserById(userId: string): Promise<User | null> {
+  const user = await db.query.pgUser.findFirst({
+    where: eq(pgUser.id, userId),
+    with: USER_WITH,
+  });
+  return (user as User) ?? null;
+}
+
+/** Resolve o principal autenticado (admin/cliente real), sem aplicar impersonação. */
+async function resolvePrincipal(): Promise<User | null> {
   const session = await auth();
 
   if (session?.user?.id) {
-    const user = await db.query.pgUser.findFirst({
-      where: eq(pgUser.id, session.user.id),
-      with: {
-        organization: {
-          with: {
-            members: true,
-            plan: true,
-            wallet: {
-              with: {
-                cards: true,
-              },
-            },
-            owner: true,
-            domains: true,
-          },
-        },
-        domainAccess: true,
-        referrer: true,
-        referredUsers: true,
-        settings: true,
-        sessions: true,
-      },
-    });
-
-    if (!user) {
-      throw await redirectToLogin();
-    }
-
-    const { organization } = user;
-
-    if (!organization) {
-      redirect("/newuser");
-    }
-
-    user.organization = organization;
-
-    if (user.suspendedAt) redirect("/suspended");
-
-    return user as User;
+    return await loadFullUserById(session.user.id);
   }
 
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("session_token")?.value;
-
   const { user } = await validateSession(sessionToken);
 
-  if (!user) {
+  return (user as User) ?? null;
+}
+
+/**
+ * Usuário real da sessão, IGNORANDO impersonação. Use em guards de admin
+ * (ex.: iniciar/parar impersonação) para saber quem é o admin de verdade.
+ */
+export async function getRealUser(): Promise<User> {
+  "use server";
+  const principal = await resolvePrincipal();
+  if (!principal) throw await redirectToLogin();
+  return principal;
+}
+
+export async function getUser(): Promise<User> {
+  "use server";
+
+  const principal = await resolvePrincipal();
+
+  if (!principal) {
     throw await redirectToLogin();
   }
 
-  if ((user as any).suspendedAt) redirect("/suspended");
+  // Impersonação: admin acessando a conta de um cliente ("Acessar como cliente").
+  // Só ativa se o principal REAL for admin — o cookie sozinho não concede nada.
+  const cookieStore = await cookies();
+  const targetId = cookieStore.get(IMPERSONATE_COOKIE)?.value;
+  if (targetId && principal.isAdmin && targetId !== principal.id) {
+    const target = await loadFullUserById(targetId);
+    if (target?.organization) {
+      target.impersonatedBy = principal.id;
+      return target;
+    }
+  }
 
-  return user as User;
+  if (!principal.organization) {
+    redirect("/newuser");
+  }
+
+  if ((principal as any).suspendedAt) redirect("/suspended");
+
+  return principal;
 }
 
 export async function checkIsAuthenticated(): Promise<boolean> {

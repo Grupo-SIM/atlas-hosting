@@ -1,4 +1,5 @@
 import DomainSelector from "@/components/domains/DomainSelector";
+import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 import Sidebar from "@/components/layouts/components/Sidebar";
 import Topbar from "@/components/layouts/components/Topbar";
 import { getUser } from "@/lib/auth";
@@ -31,6 +32,7 @@ export default async function AuthLayout({
     <div className="max-h-screen min-h-screen flex bg-background overflow-hidden">
       <Sidebar isAdmin={user.isAdmin || false} />
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        <ImpersonationBanner />
         <Topbar isAdmin={user.isAdmin || false}>
           <UserSiteSelect />
         </Topbar>

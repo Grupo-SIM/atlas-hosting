@@ -104,6 +104,12 @@ export interface User extends Omit<RawUser, "organization"> {
   referredUsers: RawUser[];
   sessions: Session[];
   settings: UserSettings;
+  /**
+   * Preenchido apenas quando um admin está acessando esta conta via
+   * impersonação ("Acessar como cliente"). Contém o id do admin real.
+   * Ausente em sessões normais.
+   */
+  impersonatedBy?: string;
 }
 
 export type UserInsert = typeof pgUser.$inferInsert;
