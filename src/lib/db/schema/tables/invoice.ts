@@ -88,6 +88,22 @@ export type DomainRegisterInvoiceOptions = Pick<
   isRenewal?: boolean;
   /** Base cost in BRL paid to Namecheap before markup and fixed fee */
   namecheapCostBrl?: number;
+  /** Resultado da última tentativa de registro na Namecheap (persistido para auditoria/reprocesso) */
+  domainRegistration?: DomainRegistrationOutcome;
+};
+
+export type DomainRegistrationOutcome = {
+  status: "success" | "partial" | "failed";
+  /** Domínios que a organização passou a possuir (registrados agora ou já existentes) */
+  registered: string[];
+  /** Domínios que falharam nesta tentativa */
+  failed: string[];
+  /** Domínios que já estavam registrados/vinculados (sem nova cobrança) */
+  skipped: string[];
+  /** Mensagem de erro por domínio que falhou */
+  errors: Record<string, string>;
+  /** ISO timestamp da tentativa */
+  at: string;
 };
 
 export type DomainRenewInvoiceOptions = {

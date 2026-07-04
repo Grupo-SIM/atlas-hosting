@@ -30,7 +30,9 @@
       "Bash(curl -s \"https://dns.google/resolve?name=236.55.194.186.in-addr.arpa&type=PTR\")",
       "Bash(curl -s \"https://dns.google/resolve?name=jbmidia.com&type=NS\")",
       "Bash(node -e ' *)",
-      "Bash(bun run *)"
+      "Bash(bun run *)",
+      "PowerShell(npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String \"registerFromPaidInvoice|reprocessDomainInvoice|reprocess/route|tables/invoice\" | Select-Object -First 40; \"=== total errors ===\"; \\(npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String \"error TS\"\\).Count)",
+      "PowerShell(& \".\\\\node_modules\\\\.bin\\\\tsc.exe\" --noEmit -p tsconfig.json 2>&1 | Select-String \"error TS\" | ForEach-Object { \\($_ -split \"\\\\\\(\"\\)[0] } | Sort-Object -Unique)"
     ]
   }
 }
