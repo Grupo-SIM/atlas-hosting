@@ -157,9 +157,9 @@ export async function POST(req: Request) {
         })
         .where(eq(pgVpsSubscription.id, sub.id));
 
-      // Notify admin via WhatsApp
+      // Notify (renewal: skip WhatsApp, keep email/etc.)
       after(async () => {
-        await triggerPurchaseNotifications(newInvoice, user, { paymentMethod: "credit_card" });
+        await triggerPurchaseNotifications(newInvoice, user, { paymentMethod: "credit_card" }, { isRenewal: true });
       });
 
       results.push({ id: sub.id, status: "charged" });

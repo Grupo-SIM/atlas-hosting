@@ -269,8 +269,10 @@ Nossa equipe de suporte entrará em contato em breve para finalizar a configura�
 export async function triggerPurchaseNotifications(
   invoice: any,
   user: any,
-  billing?: any
+  billing?: any,
+  opts?: { isRenewal?: boolean }
 ): Promise<void> {
+  const isRenewal = !!opts?.isRenewal;
   const meta = invoice.metadata as any;
   const config = meta?.config || {};
 
@@ -354,11 +356,12 @@ export async function triggerPurchaseNotifications(
         invoiceRef: invoice.reference,
         totalAmount: invoice.amount,
         priceBreakdown: meta.priceBreakdown,
-      });
+      }, isRenewal);
     } catch (err) {
       console.error("[PURCHASE-NOTIFY] Erro ao enviar notificações VPS:", err);
     }
   } else if (invoice.type === "subscription") {
+    if (isRenewal) return;
     try {
       const paymentLabel = billing?.paymentMethod === "pix" ? "💠 PIX" : billing?.paymentMethod === "credit_card" ? "💳 Cartão de Crédito" : "N/A";
       const msg = [
@@ -370,7 +373,7 @@ export async function triggerPurchaseNotifications(
         `💳 *Pagamento:* ${paymentLabel}`,
         `*Fatura:* ${invoice.reference}`,
       ].join("\n");
-      
+
       await notifyAdminWhatsApp(msg);
     } catch (err) {
       console.error("[PURCHASE-NOTIFY] Erro ao enviar notificação de assinatura:", err);
@@ -381,15 +384,17 @@ export async function triggerPurchaseNotifications(
 /**
  * Send all notifications after a VPS purchase.
  */
-export async function sendVpsPurchaseNotifications(data: VpsPurchaseData): Promise<void> {
+export async function sendVpsPurchaseNotifications(data: VpsPurchaseData, isRenewal = false): Promise<void> {
   const baseUrl = getServerPublicBaseUrl();
 
-  // 1) WhatsApp to admin via Evolution API
-  try {
-    const whatsappMsg = buildAdminWhatsAppMessage(data);
-    await notifyAdminWhatsApp(whatsappMsg);
-  } catch (err) {
-    console.error("[VPS-NOTIFY] Erro ao enviar WhatsApp para admin:", err);
+  // 1) WhatsApp to admin via Evolution API — only for new orders, not renewals
+  if (!isRenewal) {
+    try {
+      const whatsappMsg = buildAdminWhatsAppMessage(data);
+      await notifyAdminWhatsApp(whatsappMsg);
+    } catch (err) {
+      console.error("[VPS-NOTIFY] Erro ao enviar WhatsApp para admin:", err);
+    }
   }
 
   // 2) Email to customer
