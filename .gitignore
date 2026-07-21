@@ -51,3 +51,4 @@ src/wp-cli-generator/commands/
 public/globe.webm
 public/*.mp4
 public/*.mov
+!public/vecteezy_powerful-server-room-in-modern-data-center-cloud-computing_7999282.mp4
