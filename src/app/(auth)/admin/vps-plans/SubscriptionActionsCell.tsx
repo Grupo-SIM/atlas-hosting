@@ -15,7 +15,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { suspendVpsSubscriptionAction, reactivateVpsSubscriptionAction } from "./actions";
+import {
+  suspendVpsSubscriptionAction,
+  reactivateVpsSubscriptionAction,
+  cancelVpsSubscriptionAction,
+} from "./actions";
 import { createVpsRenewalInvoice } from "@/app/actions";
 
 interface Props {
@@ -46,16 +50,16 @@ export function SubscriptionActionsCell({ id, status, paymentMethod, nextChargeD
     });
   };
 
+  let primaryAction: React.ReactNode = null;
+
   if (canRenewPix) {
-    return (
+    primaryAction = (
       <Button variant="default" size="sm" disabled={pending} onClick={handleRenew}>
         Renovar (PIX)
       </Button>
     );
-  }
-
-  if (status === "active") {
-    return (
+  } else if (status === "active") {
+    primaryAction = (
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button variant="outline" size="sm" disabled={pending}>
@@ -71,7 +75,7 @@ export function SubscriptionActionsCell({ id, status, paymentMethod, nextChargeD
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
                 startTransition(() => suspendVpsSubscriptionAction(id))
@@ -83,10 +87,8 @@ export function SubscriptionActionsCell({ id, status, paymentMethod, nextChargeD
         </AlertDialogContent>
       </AlertDialog>
     );
-  }
-
-  if (status === "paused") {
-    return (
+  } else if (status === "paused") {
+    primaryAction = (
       <Button
         variant="default"
         size="sm"
@@ -100,5 +102,45 @@ export function SubscriptionActionsCell({ id, status, paymentMethod, nextChargeD
     );
   }
 
-  return <span className="text-muted-foreground text-sm">—</span>;
+  const cancelAction = status !== "cancelled" && (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" size="sm" disabled={pending}>
+          Cancelar
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancelar assinatura definitivamente?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta ação não pode ser desfeita. O cliente não será cobrado
+            novamente por esta assinatura. Para retomar o serviço, será
+            necessário fazer uma nova contratação.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Voltar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() =>
+              startTransition(() => cancelVpsSubscriptionAction(id))
+            }
+          >
+            Confirmar cancelamento
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  if (!primaryAction && !cancelAction) {
+    return <span className="text-muted-foreground text-sm">—</span>;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {primaryAction}
+      {cancelAction}
+    </div>
+  );
 }

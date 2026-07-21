@@ -33,7 +33,10 @@
       "Bash(bun run *)",
       "PowerShell(npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String \"registerFromPaidInvoice|reprocessDomainInvoice|reprocess/route|tables/invoice\" | Select-Object -First 40; \"=== total errors ===\"; \\(npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String \"error TS\"\\).Count)",
       "PowerShell(& \".\\\\node_modules\\\\.bin\\\\tsc.exe\" --noEmit -p tsconfig.json 2>&1 | Select-String \"error TS\" | ForEach-Object { \\($_ -split \"\\\\\\(\"\\)[0] } | Sort-Object -Unique)",
-      "Bash(./node_modules/.bin/tsc --noEmit -p .)"
+      "Bash(./node_modules/.bin/tsc --noEmit -p .)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(./node_modules/.bin/tsc --noEmit -p tsconfig.json)",
+      "Bash(npx drizzle-kit *)"
     ]
   }
 }

@@ -96,6 +96,18 @@ export async function reactivateVpsSubscriptionAction(id: string): Promise<void>
   revalidatePath("/admin/vps-plans");
 }
 
+export async function cancelVpsSubscriptionAction(id: string): Promise<void> {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) redirect("/home");
+
+  await db
+    .update(pgVpsSubscription)
+    .set({ status: "cancelled", cancelledAt: new Date(), updatedAt: new Date() })
+    .where(eq(pgVpsSubscription.id, id));
+
+  revalidatePath("/admin/vps-plans");
+}
+
 export async function backfillVpsSubscriptionsAction(): Promise<{ created: number; skipped: number }> {
   const admin = await getUser();
   if (!admin || !admin.isAdmin) redirect("/home");

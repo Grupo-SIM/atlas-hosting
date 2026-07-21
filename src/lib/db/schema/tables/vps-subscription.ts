@@ -21,6 +21,7 @@ export const pgVpsSubscription = pgTable("vps_subscriptions", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   pausedAt: timestamp("paused_at", { mode: "date" }),
+  cancelledAt: timestamp("cancelled_at", { mode: "date" }),
 });
 
 export const vpsSubscriptionRelations = relations(pgVpsSubscription, ({ one }) => ({
