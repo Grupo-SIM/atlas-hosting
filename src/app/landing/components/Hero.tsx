@@ -88,7 +88,7 @@ export function Hero() {
                 <h1
                   className={`${roboto.className} text-[2rem] sm:text-[2.5rem] md:text-[3.8rem] font-bold leading-[1.1] text-white mb-4 md:mb-6 drop-shadow-2xl`}
                 >
-                  Receba R$250,00 de volta!
+                  Receba até R$250,00 de volta!
                 </h1>
 
                 <p
