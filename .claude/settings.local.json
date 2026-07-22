@@ -36,7 +36,28 @@
       "Bash(./node_modules/.bin/tsc --noEmit -p .)",
       "Bash(echo \"EXIT:$?\")",
       "Bash(./node_modules/.bin/tsc --noEmit -p tsconfig.json)",
-      "Bash(npx drizzle-kit *)"
+      "Bash(npx drizzle-kit *)",
+      "Bash(bunx biome *)",
+      "Bash(git stash *)",
+      "Read(//c/Users/breno/Desktop/JB/simintpay/**)",
+      "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/src/**)",
+      "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/**)",
+      "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/src/modules/atlas/controllers/**)",
+      "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/src/modules/atlas/**)",
+      "Bash(grep -n \"credit-card\\\\|status\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\\\\modules\\\\atlas\\\\controllers\\\\atlas-payment.controller.ts\" | head -30)",
+      "Bash(grep -n \"createPaymentCreditCard\" -A 5 \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\\\\modules\\\\atlas\\\\services\\\\atlas-payment.service.ts\" | head -20; wc -l \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\\\\modules\\\\atlas\\\\services\\\\atlas-payment.service.ts\")",
+      "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/src/modules/atlas/services/**)",
+      "Bash(grep -rn \"DomPagamentosResponse\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\" --include=*.ts -l | head -5; grep -rn \"interface DomPagamentosResponse\" -A 20 \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\" --include=*.ts | head -30)",
+      "Bash(grep -rn -i \"approved\\\\|not_authorized\\\\|refused\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\\\\modules\\\\renovada\\\\services\\\\payment-new.service.ts\" | head -20; echo ---; grep -rln -i \"webhook\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\" --include=*.ts | head -10)",
+      "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/src/modules/renovada/services/**)",
+      "Bash(grep -rln \"CHARGE-APPROVED\\\\|CHARGE_APPROVED\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\" --include=*.ts | head; echo ---; grep -rn \"TransactionStatus.COMPLETED\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\" --include=*.ts -l | head -8)",
+      "Bash(grep -rln \"process-webhook\\\\|ProcessWebhook\\\\|webhook.*use-case\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\\\\application\\\\use-cases\" | head; ls \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\\\\application\\\\use-cases\" | head -30)",
+      "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/src/application/use-cases/**)",
+      "Bash(grep -n -i \"status\\\\|approved\\\\|event\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\\\\application\\\\use-cases\\\\webhook\\\\process-webhook.use-case.ts\" | head -40)",
+      "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/src/application/use-cases/webhook/**)",
+      "Bash(grep -n \"payment.status\\\\|payment\\\\.status\\\\|status:\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\\\\modules\\\\renovada\\\\services\\\\payment-new.service.ts\" | head -25)",
+      "Bash(grep -rn -i \"refused\\\\|not_authorized\\\\|antifraud\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\" --include=*.ts | head -15; echo ---; ls \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\" | head -30)",
+      "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/src/application/use-cases/admin/**)"
     ]
   }
 }

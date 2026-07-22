@@ -109,6 +109,41 @@ function resolveSimpayStore(override?: string): string {
   );
 }
 
+/**
+ * Erro lançado quando a Simpay/DOM NÃO aprova o pagamento (recusa da operadora,
+ * antifraude, etc.). A mensagem é segura para exibir ao cliente final.
+ */
+export class SimpayPaymentDeclinedError extends Error {
+  public readonly gatewayStatus: string;
+
+  constructor(gatewayStatus: string, message?: string) {
+    super(
+      message ||
+        "O pagamento não foi aprovado pela operadora do cartão. Nenhuma cobrança foi efetuada. Verifique os dados do cartão ou tente outro método de pagamento."
+    );
+    this.name = "SimpayPaymentDeclinedError";
+    this.gatewayStatus = gatewayStatus;
+  }
+}
+
+/** Status retornados pela Simpay/DOM que representam pagamento efetivamente aprovado. */
+const APPROVED_PAYMENT_STATUSES = new Set([
+  "COMPLETED",
+  "PAID",
+  "APPROVED",
+  "CONFIRMED",
+  "AUTHORIZED",
+  "CAPTURED",
+  "SUCCEEDED",
+  "SUCCESS",
+  "CHARGE-APPROVED",
+]);
+
+export function isApprovedPaymentStatus(status: unknown): boolean {
+  if (typeof status !== "string") return false;
+  return APPROVED_PAYMENT_STATUSES.has(status.trim().toUpperCase());
+}
+
 function formatSimpayErrorMessage(data: unknown): string | undefined {
   if (!data || typeof data !== "object") return undefined;
   const m = (data as { message?: unknown }).message;
@@ -160,6 +195,47 @@ class SimpayApi {
         formatSimpayErrorMessage(data) ||
           `Erro ao processar pagamento via Simpay (HTTP ${response.status})`
       );
+    }
+
+    // HTTP 200 NÃO significa pagamento aprovado: a DOM pode recusar a cobrança
+    // (NOT_AUTHORIZED, REJECTED_ANTIFRAUD, PENDING...) e a Simpay repassa isso
+    // no campo `status`. Só liberamos o produto com status de aprovação explícito.
+    if (!isApprovedPaymentStatus(data?.status)) {
+      const gatewayStatus = String(data?.status ?? "UNKNOWN");
+      const paymentId = data?.paymentId ?? data?.id;
+
+      // Confirmação secundária: consulta o status antes de recusar, com algumas
+      // tentativas — cobre o caso "pending" em que a confirmação da DOM chega
+      // via webhook alguns segundos depois da criação.
+      if (paymentId) {
+        for (let attempt = 1; attempt <= 4; attempt++) {
+          try {
+            const remote = await this.getPaymentStatus(String(paymentId));
+            if (isApprovedPaymentStatus(remote?.status)) {
+              console.log(
+                `[SIMPAY] ✓ Pagamento confirmado via consulta de status (${remote.status}) após criação retornar "${gatewayStatus}" (tentativa ${attempt}).`
+              );
+              return data as SimpayPaymentResponse;
+            }
+            // Status terminal de falha: não adianta insistir.
+            if (["FAILED", "EXPIRED", "CHARGEBACK", "NOT_FOUND"].includes(String(remote?.status ?? "").toUpperCase())) {
+              break;
+            }
+          } catch (statusErr) {
+            console.error(
+              `[SIMPAY] ✗ Falha ao confirmar status do pagamento ${paymentId} (tentativa ${attempt}):`,
+              statusErr
+            );
+          }
+          if (attempt < 4) await new Promise((r) => setTimeout(r, 2000));
+        }
+      }
+
+      console.error(
+        `[SIMPAY] ✗ Pagamento NÃO aprovado (status="${gatewayStatus}"). Resposta completa:`,
+        data
+      );
+      throw new SimpayPaymentDeclinedError(gatewayStatus);
     }
 
     console.log(`[SIMPAY] ✓ Pagamento criado com sucesso:`, {

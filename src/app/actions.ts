@@ -44,7 +44,7 @@ import {
 } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
-import simpayApi from "@/lib/server/apis/simpay";
+import simpayApi, { SimpayPaymentDeclinedError } from "@/lib/server/apis/simpay";
 import namecheapApi, { getDomainPricing } from "@/lib/server/apis/namecheap";
 import axios from "axios";
 import { eq, sql, and } from "drizzle-orm";
@@ -1313,17 +1313,48 @@ export async function initiateCheckoutPix(
     console.error("[CHECKOUT-PIX] initiate:", err);
     return {
       status: "error",
-      message: err instanceof Error ? err.message : "Erro ao gerar PIX.",
+      message: "Não foi possível gerar o PIX no momento. Tente novamente em instantes.",
     };
   }
 }
 
 /**
- * Chamado pelo cliente quando SSE confirma o pagamento.
- * Marca a fatura como paga e agenda o processamento em background.
- * Não chama a API Simpay (o cliente já confirmou via SSE).
+ * Consulta a Simpay para saber se o pagamento PIX foi realmente concluído.
+ * Fonte da verdade do gateway — nunca confiar apenas no cliente/SSE.
  */
-export async function markPixPaymentComplete(invoiceId: string): Promise<void> {
+async function verifySimpayPixCompleted(paymentId: string): Promise<boolean> {
+  const simApi = (process.env.SIMPAY_API_URL ?? "").replace(/\/+$/, "");
+
+  if (simApi) {
+    try {
+      const directRes = await fetch(`${simApi}/atlas/payments/pix-status/${paymentId}`);
+      if (directRes.ok) {
+        const directData = await directRes.json() as { status?: string };
+        if (directData.status === "COMPLETED" || directData.status === "PAID" || directData.status === "APPROVED") {
+          return true;
+        }
+      }
+    } catch { /* fall through to getPaymentStatus */ }
+  }
+
+  try {
+    const remote = await simpayApi.getPaymentStatus(paymentId);
+    if (remote.status === "COMPLETED") return true;
+  } catch (err) {
+    console.error(`[CHECKOUT-PIX] Falha ao verificar status do pagamento ${paymentId}:`, err);
+  }
+
+  return false;
+}
+
+/**
+ * Chamado pelo cliente quando SSE confirma o pagamento.
+ * VERIFICA o status na Simpay (o evento SSE vem do navegador e não é confiável
+ * como prova de pagamento) e só então marca a fatura como paga.
+ */
+export async function markPixPaymentComplete(
+  invoiceId: string
+): Promise<{ confirmed: boolean }> {
   let user = await getUser();
 
   const invoice = await db.query.pgInvoice.findFirst({
@@ -1331,22 +1362,35 @@ export async function markPixPaymentComplete(invoiceId: string): Promise<void> {
     with: { user: { with: { organization: true } } },
   });
 
-  if (!invoice) return;
+  if (!invoice) return { confirmed: false };
 
   // Fallback to invoice user if no session (guest checkout for existing user)
   if (!user) {
     user = invoice.user as any;
   }
 
-  if (!user || invoice.orgId !== user.organization.id) return;
-  if (invoice.status === "paid") return;
+  if (!user || invoice.orgId !== user.organization.id) return { confirmed: false };
+  if (invoice.status === "paid") return { confirmed: true };
+
+  const meta = invoice.metadata as DomainRegisterInvoiceOptions;
+  const paymentId = meta.simpayPaymentId;
+
+  if (!paymentId) {
+    console.warn(`[CHECKOUT-PIX] Fatura ${invoiceId} sem simpayPaymentId — pagamento não confirmado.`);
+    return { confirmed: false };
+  }
+
+  const completed = await verifySimpayPixCompleted(paymentId);
+  if (!completed) {
+    console.warn(`[CHECKOUT-PIX] SSE indicou pagamento da fatura ${invoiceId}, mas a Simpay NÃO confirmou. Fatura permanece pendente.`);
+    return { confirmed: false };
+  }
 
   await db
     .update(pgInvoice)
     .set({ status: "paid" })
     .where(eq(pgInvoice.id, invoice.id));
 
-  const meta = invoice.metadata as DomainRegisterInvoiceOptions;
   const billing = meta.pixCheckout;
   after(async () => {
     await triggerCommissionIfApplicable(invoice as any).catch(() => {});
@@ -1356,6 +1400,8 @@ export async function markPixPaymentComplete(invoiceId: string): Promise<void> {
     await handleVpsPixPaid(invoice as Invoice, user);
     await triggerPurchaseNotifications(invoice, user, billing ?? undefined);
   });
+
+  return { confirmed: true };
 }
 
 /** Polling do status PIX (Simpay). Quando COMPLETED, marca como pago e processa em background. */
@@ -1393,25 +1439,7 @@ export async function syncCheckoutPixPayment(
   }
 
   // Check DOM directly first (no webhook wait) then fall back to DB-based status
-  const simApi = (process.env.SIMPAY_API_URL ?? "").replace(/\/+$/, "");
-  let isCompleted = false;
-
-  if (simApi) {
-    try {
-      const directRes = await fetch(`${simApi}/atlas/payments/pix-status/${paymentId}`);
-      if (directRes.ok) {
-        const directData = await directRes.json() as { status?: string };
-        if (directData.status === "COMPLETED" || directData.status === "PAID" || directData.status === "APPROVED") {
-          isCompleted = true;
-        }
-      }
-    } catch { /* fall through to DB check */ }
-  }
-
-  if (!isCompleted) {
-    const remote = await simpayApi.getPaymentStatus(paymentId);
-    if (remote.status === "COMPLETED") isCompleted = true;
-  }
+  const isCompleted = await verifySimpayPixCompleted(paymentId);
 
   if (isCompleted) {
     await db
@@ -1430,6 +1458,27 @@ export async function syncCheckoutPixPayment(
   }
 
   return { status: "PENDING" };
+}
+
+/**
+ * Mensagem de erro segura para o cliente final: expõe o motivo amigável quando a
+ * operadora recusa o pagamento, sem vazar detalhes internos (URLs, envs, stack).
+ */
+function friendlyCardPaymentError(err: unknown, fallback: string): string {
+  if (err instanceof SimpayPaymentDeclinedError) return err.message;
+  return fallback;
+}
+
+/** Devolve a fatura para "pending" após falha de pagamento, permitindo nova tentativa. */
+async function revertInvoiceToPending(invoiceId: string): Promise<void> {
+  try {
+    await db
+      .update(pgInvoice)
+      .set({ status: "pending" })
+      .where(eq(pgInvoice.id, invoiceId));
+  } catch (e) {
+    console.error(`[CHECKOUT] Falha ao reverter fatura ${invoiceId} para pendente:`, e);
+  }
 }
 
 async function fetchAtlasBuyerRates(n: number): Promise<{ rate: number; fixedFee: number } | null> {
@@ -1719,7 +1768,11 @@ export async function completeCheckout(
       });
     } catch (err) {
       console.error(`[SIMPAY] ✗ ERRO ao registrar pagamento na Simpay:`, err);
-      return { status: "error", message: "Erro ao processar pagamento do domínio." };
+      await revertInvoiceToPending(invoiceId);
+      return {
+        status: "error",
+        message: friendlyCardPaymentError(err, "Não foi possível processar o pagamento do domínio. Nenhuma cobrança foi confirmada. Tente novamente em instantes."),
+      };
     }
 
     const domainMeta = invoice.metadata as DomainRegisterInvoiceOptions;
@@ -1794,7 +1847,11 @@ export async function completeCheckout(
     });
   } catch (err) {
     console.error(`[SIMPAY] ✗ ERRO ao registrar assinatura na Simpay:`, err);
-    return { status: "error", message: "Erro ao criar pagamento recorrente." };
+    await revertInvoiceToPending(invoiceId);
+    return {
+      status: "error",
+      message: friendlyCardPaymentError(err, "Não foi possível concluir o pagamento. Nenhuma cobrança foi confirmada. Verifique os dados do cartão e tente novamente."),
+    };
   }
 
   console.log(`[CHECKOUT] ✓ Checkout concluído. Redirecionando para /payment/success.`);
@@ -1957,7 +2014,11 @@ export async function completeCheckoutWithSavedCard(
       });
     } catch (err) {
       console.error(`[SIMPAY] ✗ ERRO ao registrar pagamento na Simpay:`, err);
-      return { status: "error", message: "Erro ao processar pagamento do domínio." };
+      await revertInvoiceToPending(invoiceId);
+      return {
+        status: "error",
+        message: friendlyCardPaymentError(err, "Não foi possível processar o pagamento do domínio. Nenhuma cobrança foi confirmada. Tente novamente em instantes."),
+      };
     }
 
     const domainMetaSaved = invoice.metadata as DomainRegisterInvoiceOptions;
@@ -2031,7 +2092,11 @@ export async function completeCheckoutWithSavedCard(
     });
   } catch (err) {
     console.error(`[SIMPAY] ✗ ERRO ao registrar assinatura na Simpay (cartão salvo):`, err);
-    return { status: "error", message: "Erro ao processar pagamento com cartão salvo." };
+    await revertInvoiceToPending(invoiceId);
+    return {
+      status: "error",
+      message: friendlyCardPaymentError(err, "Não foi possível concluir o pagamento com o cartão salvo. Nenhuma cobrança foi confirmada. Tente outro cartão ou método de pagamento."),
+    };
   }
 
   console.log(`[CHECKOUT-SAVED] ✓ Checkout concluído com cartão salvo.`);

@@ -21,6 +21,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input, inputClasses } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -29,6 +37,7 @@ import { isValidCNPJ, isValidCPF } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import {
+  AlertCircle,
   ArrowLeft,
   Check,
   CreditCard,
@@ -211,6 +220,8 @@ const ModernCheckoutForm = forwardRef<
     transactionId: string;
   } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
+  /** Mensagem amigável exibida em modal quando o pagamento falha ou é recusado. */
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const pixCopiedResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(initialStep || "billing");
   const [savedBillingInfo, setSavedBillingInfo] = useState<any>(null);
@@ -411,10 +422,10 @@ const ModernCheckoutForm = forwardRef<
           address: v.address,
         });
       } else {
-        toast.error(res.message);
+        setPaymentError(res.message);
       }
     } catch {
-      toast.error("Erro ao gerar PIX.");
+      setPaymentError("Não foi possível gerar o PIX no momento. Tente novamente em instantes.");
     } finally {
       setIsPixLoading(false);
     }
@@ -439,10 +450,10 @@ const ModernCheckoutForm = forwardRef<
               void saveUserBillingInfo(values);
               router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
             } else {
-              toast.error(result.message);
+              setPaymentError(result.message);
             }
           } catch (error) {
-            toast.error("Erro ao processar pagamento");
+            setPaymentError("Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes.");
           }
         });
       } else {
@@ -468,10 +479,10 @@ const ModernCheckoutForm = forwardRef<
               toast.success(result.message);
               router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
             } else {
-              toast.error(result.message);
+              setPaymentError(result.message);
             }
           } catch (error) {
-            toast.error("Erro ao processar pagamento");
+            setPaymentError("Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes.");
           }
         });
       }
@@ -534,10 +545,10 @@ const ModernCheckoutForm = forwardRef<
           if (result.status === "success") {
             router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
           } else {
-            toast.error(result.message);
+            setPaymentError(result.message);
           }
         } catch (error) {
-          toast.error("Erro ao processar pagamento");
+          setPaymentError("Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes.");
         }
       });
       return;
@@ -572,10 +583,10 @@ const ModernCheckoutForm = forwardRef<
         if (result.status === "success") {
           toast.success(result.message);
         } else {
-          toast.error(result.message);
+          setPaymentError(result.message);
         }
       } catch (error) {
-        toast.error("Erro ao processar pagamento");
+        setPaymentError("Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes.");
       }
     });
   }, [paymentMethod, savedCards, invoiceId, getValues, router]);
@@ -770,11 +781,14 @@ const ModernCheckoutForm = forwardRef<
     const simApi = (process.env.NEXT_PUBLIC_SIMPAY_API_URL ?? "https://simpay-back.simintermediacoes.com").replace(/\/+$/, "");
     let done = false;
 
-    // Chamado quando SSE confirma o pagamento (sem nova chamada à API Simpay)
+    // Chamado quando SSE indica pagamento. O servidor re-verifica na Simpay
+    // e só marca como pago se o gateway confirmar de fato.
     const handleSseConfirmed = async () => {
       if (done) return;
+      const { confirmed } = await markPixPaymentComplete(invoiceId);
+      // Não confirmado pelo gateway: mantém o polling de fallback ativo.
+      if (!confirmed || done) return;
       done = true;
-      await markPixPaymentComplete(invoiceId);
       setIsPaymentConfirmed(true);
       router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
     };
@@ -817,10 +831,44 @@ const ModernCheckoutForm = forwardRef<
     };
   }, [pixSession, isPixLoading, invoiceId, router]);
 
+  // Modal amigável de falha de pagamento (sem detalhes técnicos/sensíveis).
+  const paymentErrorModal = (
+    <Dialog
+      open={!!paymentError}
+      onOpenChange={(open) => {
+        if (!open) setPaymentError(null);
+      }}
+    >
+      <DialogContent className="border-white/10 bg-slate-950 text-white sm:max-w-md">
+        <DialogHeader>
+          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-red-500/10">
+            <AlertCircle className="text-red-400" size={24} strokeWidth={2} />
+          </div>
+          <DialogTitle className="text-center">
+            Pagamento não concluído
+          </DialogTitle>
+          <DialogDescription className="text-center text-slate-400">
+            {paymentError}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="sm:justify-center">
+          <Button
+            type="button"
+            onClick={() => setPaymentError(null)}
+            className="w-full sm:w-auto"
+          >
+            Entendi, tentar novamente
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   // Render simplified version for existing users with domId
   if (hasExistingUser) {
     return (
       <div className="space-y-6">
+        {paymentErrorModal}
         <Card className="bg-white/5 backdrop-blur-md border-white/10 rounded-3xl shadow-2xl overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-4">
@@ -952,6 +1000,7 @@ const ModernCheckoutForm = forwardRef<
 
   return (
     <div className="space-y-4">
+      {paymentErrorModal}
       {/* Billing Information Step */}
       {currentStep === "billing" && (
         <>
