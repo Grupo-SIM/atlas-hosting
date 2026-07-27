@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   doublePrecision,
   pgTable,
   text,
@@ -17,6 +18,11 @@ export const pgSystemConfig = pgTable("system_config", {
     .notNull()
     .default(100.0),
   withdrawalFee: doublePrecision("withdrawal_fee").notNull().default(2.0),
+  // Off by default: PIX só é aceito no plano de 24 meses. Quando ligado, o admin
+  // libera PIX pra qualquer duração (1/12/24 meses) de VPS/VDS/Storage VPS.
+  pixAllowAllDurations: boolean("pix_allow_all_durations")
+    .notNull()
+    .default(false),
 });
 
 export const pgWithdrawalRequests = pgTable("withdraw_requests", {

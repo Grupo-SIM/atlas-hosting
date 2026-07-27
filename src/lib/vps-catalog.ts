@@ -90,3 +90,27 @@ export function getCloudVpsWindowsOldMonthlyEuro(planId: string) {
 
   return Math.round((oldMonthly + windowsEur * 2) * 100) / 100;
 }
+
+// Storage upgrade tier per plan — Atlas-doubled monthly price (confirmed against real
+// Contabo data). Single source of truth for both the configurator UI and server-side
+// invoice pricing.
+export const CLOUD_VPS_STORAGE_UPGRADE_EUR: Record<CloudVpsPlanId, { label: string; eur: number }> = {
+  "4": { label: "200 GB SSD", eur: 3.00 },
+  "6": { label: "400 GB SSD", eur: 6.00 },
+  "8": { label: "600 GB SSD", eur: 9.00 },
+  "12": { label: "800 GB SSD", eur: 12.00 },
+  "16": { label: "1 TB SSD", eur: 15.00 },
+  "18": { label: "1.2 TB SSD", eur: 18.00 },
+};
+
+// Datacenter/region surcharge per plan (location id -> Atlas-doubled monthly price).
+// "eu" is always free and omitted. Confirmed against real Contabo data per tier.
+// Single source of truth for both the configurator UI and server-side invoice pricing.
+export const CLOUD_VPS_LOCATION_EUR: Record<CloudVpsPlanId, Record<string, number>> = {
+  "4": { "uk": 2.10, "us-central": 2.10, "us-east": 3.10, "us-west": 2.60, "sg": 5.00, "jp": 5.10, "in": 4.80, "au-sydney": 4.30 },
+  "6": { "uk": 3.20, "us-central": 3.20, "us-east": 4.80, "us-west": 4.00, "sg": 7.90, "jp": 8.00, "in": 7.40, "au-sydney": 6.60 },
+  "8": { "uk": 6.50, "us-central": 6.50, "us-east": 9.50, "us-west": 8.00, "sg": 15.70, "jp": 16.00, "in": 14.80, "au-sydney": 13.20 },
+  "12": { "uk": 11.60, "us-central": 11.60, "us-east": 17.10, "us-west": 14.30, "sg": 28.10, "jp": 28.60, "in": 26.40, "au-sydney": 23.70 },
+  "16": { "uk": 17.10, "us-central": 17.10, "us-east": 25.20, "us-west": 21.20, "sg": 41.50, "jp": 42.30, "in": 39.10, "au-sydney": 35.00 },
+  "18": { "uk": 22.60, "us-central": 22.60, "us-east": 33.40, "us-west": 28.00, "sg": 55.00, "jp": 56.10, "in": 51.70, "au-sydney": 46.40 },
+};

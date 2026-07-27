@@ -72,6 +72,10 @@ function PersonalDataForm() {
     password: searchParams.get("password"),
     storageUpgrades: searchParams.get("storageUpgrades") ? JSON.parse(searchParams.get("storageUpgrades")!) : undefined,
     type: searchParams.get("type") || "vps",
+    // Admin-generated payment link (arbitrary period + admin-typed price) — see /pay/[linkId]
+    customLinkAmountBrl: searchParams.get("customLinkAmountBrl") || undefined,
+    customLinkAllowPix: searchParams.get("customLinkAllowPix") || undefined,
+    paymentLinkId: searchParams.get("paymentLinkId") || undefined,
   };
 
   const maskCpfCnpj = (value: string) => {

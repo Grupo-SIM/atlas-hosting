@@ -1,8 +1,10 @@
-import { getVpsPlanSubscriptionsAction } from "./actions";
+import { getVpsPlanSubscriptionsAction, getPixAllowAllDurationsAction } from "./actions";
 import { BackfillButton } from "./BackfillButton";
 import { SubscriptionActionsCell } from "./SubscriptionActionsCell";
+import { PixSettingsCard } from "./PixSettingsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -17,6 +19,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toBrl } from "@/lib/utils";
 import { Metadata } from "next";
+import Link from "next/link";
 import {
   Server,
   ShieldCheck,
@@ -26,6 +29,7 @@ import {
   Clock,
   CreditCard,
   QrCode,
+  Link2,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -82,6 +86,7 @@ export default async function AdminVpsPlansPage() {
   if (!admin || !admin.isAdmin) redirect("/home");
 
   const plans = await getVpsPlanSubscriptionsAction();
+  const pixAllowAllDurations = await getPixAllowAllDurationsAction();
 
   const active   = plans.filter((p) => p.status === "active").length;
   const paused   = plans.filter((p) => p.status === "paused").length;
@@ -100,6 +105,12 @@ export default async function AdminVpsPlansPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" asChild>
+            <Link href="/admin/vps-plans/payment-links" className="gap-2">
+              <Link2 className="h-4 w-4" />
+              Links de Pagamento
+            </Link>
+          </Button>
           <BackfillButton />
           <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
             <ShieldCheck className="h-5 w-5 text-primary" />
@@ -157,6 +168,8 @@ export default async function AdminVpsPlansPage() {
           </CardContent>
         </Card>
       </div>
+
+      <PixSettingsCard initialEnabled={pixAllowAllDurations} />
 
       <Card>
         <CardHeader>

@@ -31,9 +31,11 @@ import {
   pgOrganizationDomains,
   pgPlan,
   pgSession,
+  pgSystemConfig,
   pgUser,
   pgUserCard,
   pgVpsSubscription,
+  pgVpsPaymentLink,
   type Invoice,
   type Plan,
   type User,
@@ -69,7 +71,14 @@ import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { triggerPurchaseNotifications } from "@/lib/notifications/vps-purchase";
 import { recordAttribution } from "@/lib/affiliate/attribution";
 import { triggerCommissionIfApplicable } from "@/lib/affiliate/commission";
-import { getCloudVpsMonthlyEuro, isCloudVpsPlanId } from "@/lib/vps-catalog";
+import {
+  getCloudVpsMonthlyEuro,
+  isCloudVpsPlanId,
+  WINDOWS_SERVER_EUR,
+  CLOUD_VPS_STORAGE_UPGRADE_EUR,
+  CLOUD_VPS_LOCATION_EUR,
+} from "@/lib/vps-catalog";
+import { getVdsMonthlyEuro } from "@/lib/vds-catalog";
 
 
 export type GuestInfo = {
@@ -1270,6 +1279,13 @@ export async function initiateCheckoutPix(
     return { status: "error", message: "Esta fatura já foi paga." };
   }
 
+  if (invoice.type === "vps") {
+    const meta = invoice.metadata as any;
+    if (!(await isPixEligibleForVpsConfig(meta?.config || {}))) {
+      return { status: "error", message: "PIX não disponível para esta cobrança." };
+    }
+  }
+
   const docDigits = billing.document.replace(/\D/g, "");
 
   try {
@@ -1499,6 +1515,29 @@ async function fetchAtlasBuyerRates(n: number): Promise<{ rate: number; fixedFee
   }
 }
 
+/**
+ * PIX é liberado por padrão apenas no plano de 24 meses. O admin pode liberar
+ * PIX para todas as durações (1/12/24 meses) em /admin/vps-plans.
+ */
+async function isPixEligibleForVpsDuration(intervalMonths: number): Promise<boolean> {
+  if (intervalMonths === 24) return true;
+  const systemConfig = await db.query.pgSystemConfig.findFirst();
+  return systemConfig?.pixAllowAllDurations ?? false;
+}
+
+/**
+ * Admin-generated payment links set their own PIX rule at creation time
+ * (config.customLinkAllowPix), overriding the duration-based rule entirely.
+ */
+export async function isPixEligibleForVpsConfig(config: any): Promise<boolean> {
+  const override = config?.customLinkAllowPix;
+  if (typeof override === "boolean") return override;
+  if (typeof override === "string" && (override === "true" || override === "false")) return override === "true";
+
+  const intervalMonths = parseInt(config?.duration || "1", 10);
+  return isPixEligibleForVpsDuration(intervalMonths);
+}
+
 async function createVpsSubscriptionIfNeeded(
   invoice: Invoice,
   user: { id: string; organization: { id: string } },
@@ -1508,8 +1547,7 @@ async function createVpsSubscriptionIfNeeded(
   const meta = invoice.metadata as any;
   const config = meta?.config || {};
   const intervalMonths: number = parseInt(config.duration || "1", 10);
-  // PIX é pagamento único e só é vendido no plano anual; ignora outros ciclos.
-  if (opts.paymentMethod === "pix" && intervalMonths !== 12) return;
+  if (opts.paymentMethod === "pix" && !(await isPixEligibleForVpsConfig(config))) return;
   const planType = (config.type === "vds" ? "vds" : config.type === "storage-vps" ? "storage-vps" : config.type === "vps-windows" ? "vps-windows" : "vps");
   const nextChargeDate = new Date();
   nextChargeDate.setMonth(nextChargeDate.getMonth() + intervalMonths);
@@ -2773,6 +2811,60 @@ export async function createVpsInvoice(data: {
 
   if (!user) return { status: "error", message: "Usuário não encontrado." };
 
+  // Admin-generated custom payment link (arbitrary period, admin-typed price) — bypasses
+  // the whole catalog pricing engine below entirely, the admin already decided the amount.
+  const customLinkAmountBrl = typeof config.customLinkAmountBrl === "number"
+    ? config.customLinkAmountBrl
+    : typeof config.customLinkAmountBrl === "string" && config.customLinkAmountBrl !== ""
+      ? Number(config.customLinkAmountBrl)
+      : undefined;
+  if (customLinkAmountBrl !== undefined && Number.isFinite(customLinkAmountBrl) && customLinkAmountBrl > 0) {
+    const customDuration = parseInt(config.duration || "1", 10);
+    const customQty = parseInt(config.qty || "1", 10);
+    const customFinalAmountBrl = customLinkAmountBrl * customQty;
+    try {
+      const description = `Hospedagem ${planId} (${customDuration} ${customDuration === 1 ? "mês" : "meses"}) — cobrança personalizada`;
+      const [newInvoice] = await db
+        .insert(pgInvoice)
+        .values({
+          orgId: user.organization.id,
+          userId: user.id,
+          type: "vps",
+          reference: `VPS-LINK-${planId}-${Date.now()}`,
+          amount: customFinalAmountBrl,
+          status: "pending",
+          dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+          currency: "BRL",
+          description,
+          metadata: {
+            vpsId: planId,
+            config,
+            guestCheckout: isGuestCheckout || undefined,
+            guestPassword: guestPassword || undefined,
+          },
+        })
+        .returning();
+
+      if (!newInvoice) throw new Error("Erro ao criar fatura.");
+
+      if (typeof config.paymentLinkId === "string" && config.paymentLinkId) {
+        await db
+          .update(pgVpsPaymentLink)
+          .set({ status: "used", usedAt: new Date(), resultingInvoiceId: newInvoice.id })
+          .where(eq(pgVpsPaymentLink.id, config.paymentLinkId));
+      }
+
+      return {
+        status: "success",
+        invoiceId: newInvoice.id,
+        redirectUrl: `/checkout/${newInvoice.id}?initialStep=payment`,
+      };
+    } catch (error) {
+      console.error("Error creating custom-link VPS invoice:", error);
+      return { status: "error", message: "Erro ao processar o pedido." };
+    }
+  }
+
   // Fetch real-time EUR to BRL rate
   let RATE = 5.86; // Default/Fallback
   try {
@@ -2788,26 +2880,30 @@ export async function createVpsInvoice(data: {
     RATE = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") ? 5.79 : 5.86;
   }
 
-  // Base Prices in Euro
+  // Four independent product lines share this function, each with its own pricing
+  // scheme: Cloud VPS Core / VDS / Storage VPS (all 1/12/24 months, catalog-driven)
+  // and legacy plain "vps" ids 10-60 (still 1/6/12 months, hardcoded below).
   const isStorageVps = config.type === "storage-vps";
-  const basePrices: Record<string, number> = isStorageVps ? {
-    "10": 9.00, "20": 14.00, "30": 22.40, "40": 30.80, "50": 40.00
-  } : {
-    "10": 9.00,
-    "20": 14.00,
-    "30": 28.00,
-    "40": 50.00,
-    "50": 74.00,
-    "60": 98.00,
-    "s": 68.80,
-    "m": 89.60,
-    "l": 128.00,
-    "xl": 164.80,
-    "xxl": 238.00
+  const isVdsPlan = !isStorageVps && ["s", "m", "l", "xl", "xxl"].includes(planId);
+  const isContaboCloudPlan = !isStorageVps && !isVdsPlan && isCloudVpsPlanId(planId);
+  const isLegacyVpsPlan = !isStorageVps && !isVdsPlan && !isContaboCloudPlan;
+
+  const legacyBasePrices: Record<string, number> = {
+    "10": 9.00, "20": 14.00, "30": 28.00, "40": 50.00, "50": 74.00, "60": 98.00,
   };
 
-  const isContaboCloudPlan = !isStorageVps && isCloudVpsPlanId(planId);
+  // Storage VPS 1/12/24-month prices (Atlas double) — mirrors
+  // src/app/vps-armazenamento/configure/[id]/page.tsx's plansData durations.
+  const STORAGE_VPS_MONTHLY_EUR: Record<string, Record<number, number>> = {
+    "10": { 1: 11.00, 12: 9.36, 24: 8.80 },
+    "20": { 1: 15.00, 12: 12.76, 24: 12.00 },
+    "30": { 1: 28.00, 12: 23.80, 24: 22.40 },
+    "40": { 1: 50.00, 12: 42.50, 24: 40.00 },
+    "50": { 1: 74.00, 12: 62.90, 24: 59.20 },
+  };
+
   const requestedContaboDuration = config.duration === "1" ? 1 : config.duration === "12" ? 12 : 24;
+
   const contaboMonthlyEuro = isContaboCloudPlan
     ? getCloudVpsMonthlyEuro(planId, config.backup === "true", requestedContaboDuration)
     : undefined;
@@ -2815,46 +2911,50 @@ export async function createVpsInvoice(data: {
     throw new Error(`Catálogo Contabo sem preço para o plano ${planId}`);
   }
 
-  const duration = isContaboCloudPlan ? requestedContaboDuration : parseInt(config.duration || "1", 10);
-  let monthlyEuro = contaboMonthlyEuro ?? basePrices[planId] ?? 9.00;
-
-  // Apply Duration Discounts
-  const isHighTier = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl");
-  if (!isContaboCloudPlan && isHighTier) {
-    if (duration === 6) {
-      if (planId === "20") monthlyEuro = 12.60;
-      else if (planId === "30") monthlyEuro = 25.20;
-      else if (planId === "40") monthlyEuro = 45.00;
-      else if (planId === "50") monthlyEuro = 66.60;
-      else if (planId === "60") monthlyEuro = 88.20;
-      else if (planId === "s") monthlyEuro = 65.36;
-      else if (planId === "m") monthlyEuro = 85.12;
-      else if (planId === "l") monthlyEuro = 121.60;
-      else if (planId === "xl") monthlyEuro = 156.56;
-      else if (planId === "xxl") monthlyEuro = 226.10;
-    }
-    if (duration === 12) {
-      if (planId === "20") monthlyEuro = 11.20;
-      else if (planId === "30") monthlyEuro = 22.40;
-      else if (planId === "40") monthlyEuro = 40.00;
-      else if (planId === "50") monthlyEuro = 59.20;
-      else if (planId === "60") monthlyEuro = 78.40;
-      else if (planId === "s") monthlyEuro = 55.04;
-      else if (planId === "m") monthlyEuro = 71.68;
-      else if (planId === "l") monthlyEuro = 102.40;
-      else if (planId === "xl") monthlyEuro = 131.84;
-      else if (planId === "xxl") monthlyEuro = 190.40;
-    }
-  } else if (!isContaboCloudPlan) {
-    if (duration === 6) monthlyEuro = monthlyEuro * 0.9;
-    if (duration === 12) monthlyEuro = monthlyEuro * 0.8;
+  const vdsMonthlyEuro = isVdsPlan
+    ? getVdsMonthlyEuro(planId, config.backup === "true", requestedContaboDuration)
+    : undefined;
+  if (isVdsPlan && vdsMonthlyEuro === undefined) {
+    throw new Error(`Catálogo VDS sem preço para o plano ${planId}`);
   }
 
-  // Setup Fees
+  const storageVpsMonthlyEuro = isStorageVps
+    ? STORAGE_VPS_MONTHLY_EUR[planId]?.[requestedContaboDuration]
+    : undefined;
+  if (isStorageVps && storageVpsMonthlyEuro === undefined) {
+    throw new Error(`Catálogo Storage VPS sem preço para o plano ${planId}`);
+  }
+
+  const duration = isLegacyVpsPlan ? parseInt(config.duration || "1", 10) : requestedContaboDuration;
+  let monthlyEuro = contaboMonthlyEuro ?? vdsMonthlyEuro ?? storageVpsMonthlyEuro ?? legacyBasePrices[planId] ?? 9.00;
+
+  // Legacy plain "vps" duration discounts (ids 20/30/40/50/60, still 1/6/12 months).
+  if (isLegacyVpsPlan) {
+    const isHighTier = planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60";
+    if (isHighTier) {
+      if (duration === 6) {
+        if (planId === "20") monthlyEuro = 12.60;
+        else if (planId === "30") monthlyEuro = 25.20;
+        else if (planId === "40") monthlyEuro = 45.00;
+        else if (planId === "50") monthlyEuro = 66.60;
+        else if (planId === "60") monthlyEuro = 88.20;
+      }
+      if (duration === 12) {
+        if (planId === "20") monthlyEuro = 11.20;
+        else if (planId === "30") monthlyEuro = 22.40;
+        else if (planId === "40") monthlyEuro = 40.00;
+        else if (planId === "50") monthlyEuro = 59.20;
+        else if (planId === "60") monthlyEuro = 78.40;
+      }
+    } else {
+      if (duration === 6) monthlyEuro = monthlyEuro * 0.9;
+      if (duration === 12) monthlyEuro = monthlyEuro * 0.8;
+    }
+  }
+
+  // Setup Fees — only the legacy plain "vps" tier "10" ever charges one.
   let setupBrl = 0;
-  if (isContaboCloudPlan || planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") {
-    setupBrl = 0;
-  } else {
+  if (isLegacyVpsPlan && planId === "10") {
     if (duration === 1) setupBrl = 9.00 * RATE;
     if (duration === 6) setupBrl = 4.50 * RATE;
     if (duration === 12) setupBrl = 0;
@@ -2878,15 +2978,20 @@ export async function createVpsInvoice(data: {
     "xxl": { "us-east": 82.00, "uk": 82.00, "us-central": 100.00, "us-west": 100.00, "sg": 166.00, "jp": 166.00, "in": 166.00, "au-sydney": 166.00, "eu": 0 }
   };
 
-  const planLocPrices = locationPrices[planId] || {};
+  const planLocPrices = isContaboCloudPlan ? (CLOUD_VPS_LOCATION_EUR[planId as keyof typeof CLOUD_VPS_LOCATION_EUR] || {}) : (locationPrices[planId] || {});
   if (planLocPrices[config.location] !== undefined) {
     additionalMonthlyEuro += planLocPrices[config.location];
-  } else if (config.location !== "eu" && config.location !== "best") {
+  } else if (!isContaboCloudPlan && config.location !== "eu" && config.location !== "best") {
     additionalMonthlyEuro += 2.80; // Default fallback
   }
 
   // Storage and Upgrades
-  if (planId === "20") {
+  if (isContaboCloudPlan) {
+    if (config.storage === `${planId}-storage-upgrade`) {
+      const upgrade = CLOUD_VPS_STORAGE_UPGRADE_EUR[planId as keyof typeof CLOUD_VPS_STORAGE_UPGRADE_EUR];
+      if (upgrade) additionalMonthlyEuro += upgrade.eur;
+    }
+  } else if (planId === "20") {
     if (config.storage === "ssd-400") additionalMonthlyEuro += 3.90;
     if (config.storage === "nvme-200") additionalMonthlyEuro += 5.10;
   } else if (planId === "30") {
@@ -2897,7 +3002,7 @@ export async function createVpsInvoice(data: {
     if (config.storage === "nvme-600") additionalMonthlyEuro += 9.50;
   } else if (planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") {
     const upgrades = config.storageUpgrades || {};
-    const upgradePrices: Record<string, number> = { "ssd-1tb": 25.00, "ssd-2tb": 50.00, "ssd-4tb": 100.00 };
+    const upgradePrices: Record<string, number> = { "ssd-1tb": 49.98, "ssd-2tb": 78.18, "ssd-4tb": 206.98 };
     Object.entries(upgrades).forEach(([id, qty]) => { additionalMonthlyEuro += (upgradePrices[id] || 0) * (qty as number); });
   } else {
     if (config.storage === "ssd-300") additionalMonthlyEuro += 3.10;
@@ -2913,13 +3018,15 @@ export async function createVpsInvoice(data: {
     "50": { windows: 117.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 73.00 },
     "60": { windows: 140.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 73.00 },
     "s": { windows: 70.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 24.00 },
-    "m": { windows: 90.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 24.00 },
+    "m": { windows: 100.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 24.00 },
     "l": { windows: 110.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 24.00 },
     "xl": { windows: 130.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 24.00 },
     "xxl": { windows: 150.00, cpanel: 43.50, pleskLinux: 24.00, pleskHost: 73.00, pleskPro: 38.00, pleskWin: 24.00 }
   };
 
-  const osPrices = tierOsPrices[planId] || tierOsPrices["10"];
+  const osPrices = isContaboCloudPlan
+    ? { ...tierOsPrices["10"], windows: (WINDOWS_SERVER_EUR[planId as keyof typeof WINDOWS_SERVER_EUR] ?? 8) * 2 }
+    : (tierOsPrices[planId] || tierOsPrices["10"]);
   let resolvedImageKey = config.image || "ubuntu";
   if (resolvedImageKey === "plesk" || resolvedImageKey === "plesk-linux") {
     const lic = config.pleskLicence || "admin";
@@ -2934,13 +3041,17 @@ export async function createVpsInvoice(data: {
   additionalMonthlyEuro += osEur;
 
   // Other Add-ons
-  if (!isContaboCloudPlan && config.backup === "true") {
+  // Cloud VPS Core and VDS backup is already baked into monthlyEuro above (via
+  // getCloudVpsMonthlyEuro/getVdsMonthlyEuro's backupEnabled param) — don't add it twice.
+  if (isStorageVps && config.backup === "true") {
+    const storageBackupEur: Record<string, number> = { "10": 3.00, "20": 4.00, "30": 7.00, "40": 8.40, "50": 9.80 };
+    additionalMonthlyEuro += storageBackupEur[planId] || 0;
+  } else if (isLegacyVpsPlan && config.backup === "true") {
     if (planId === "20") additionalMonthlyEuro += 4.00;
     else if (planId === "30") additionalMonthlyEuro += 6.00;
     else if (planId === "40") additionalMonthlyEuro += 10.00;
     else if (planId === "50") additionalMonthlyEuro += 15.00;
     else if (planId === "60") additionalMonthlyEuro += 19.00;
-    else if (planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") additionalMonthlyEuro += 4.60;
     else additionalMonthlyEuro += 3.00;
   }
   if (config.privateNetwork === "enabled") additionalMonthlyEuro += 4.58;
@@ -2956,27 +3067,37 @@ export async function createVpsInvoice(data: {
 
   // Per-item EUR breakdown for WhatsApp notification accuracy
   const _pbd_location = (() => {
+    if (isContaboCloudPlan) {
+      const local = CLOUD_VPS_LOCATION_EUR[planId as keyof typeof CLOUD_VPS_LOCATION_EUR] || {};
+      return local[config.location] ?? 0;
+    }
     const planLocPricesLocal = locationPrices[planId] || {};
     if (planLocPricesLocal[config.location] !== undefined) return planLocPricesLocal[config.location];
     if (config.location && config.location !== "eu" && config.location !== "best") return 2.80;
     return 0;
   })();
   const _pbd_storage = (() => {
+    if (isContaboCloudPlan) {
+      if (config.storage !== `${planId}-storage-upgrade`) return 0;
+      const upgrade = CLOUD_VPS_STORAGE_UPGRADE_EUR[planId as keyof typeof CLOUD_VPS_STORAGE_UPGRADE_EUR];
+      return upgrade?.eur ?? 0;
+    }
     if (planId === "20") { if (config.storage === "ssd-400") return 3.90; if (config.storage === "nvme-200") return 5.10; }
     else if (planId === "30") { if (config.storage === "ssd-800") return 7.70; if (config.storage === "nvme-400") return 6.50; }
     else if (planId === "50") { if (config.storage === "ssd-1200") return 12.30; if (config.storage === "nvme-600") return 9.50; }
     else if (["s","m","l","xl","xxl"].includes(planId)) {
       const upgrades = config.storageUpgrades || {};
-      const up: Record<string, number> = { "ssd-1tb": 25.00, "ssd-2tb": 50.00, "ssd-4tb": 100.00 };
+      const up: Record<string, number> = { "ssd-1tb": 49.98, "ssd-2tb": 78.18, "ssd-4tb": 206.98 };
       return Object.entries(upgrades).reduce((s, [id, q]) => s + (up[id] || 0) * (q as number), 0);
     } else { if (config.storage === "ssd-300") return 3.10; if (config.storage === "nvme-150") return 3.70; }
     return 0;
   })();
-  const _pbd_backup = !isContaboCloudPlan && config.backup === "true" ? (
-    planId === "20" ? 4.00 : planId === "30" ? 6.00 : planId === "40" ? 10.00 :
-    planId === "50" ? 15.00 : planId === "60" ? 19.00 :
-    ["s","m","l","xl","xxl"].includes(planId) ? 4.60 : 3.00
-  ) : 0;
+  const _pbd_backup = isStorageVps && config.backup === "true"
+    ? ({ "10": 3.00, "20": 4.00, "30": 7.00, "40": 8.40, "50": 9.80 } as Record<string, number>)[planId] || 0
+    : isLegacyVpsPlan && config.backup === "true"
+      ? (planId === "20" ? 4.00 : planId === "30" ? 6.00 : planId === "40" ? 10.00 :
+        planId === "50" ? 15.00 : planId === "60" ? 19.00 : 3.00)
+      : 0;
   const _pbd_network = config.privateNetwork === "enabled" ? 4.58 : 0;
   const _pbd_ip = config.ipv4Address === "2ip" ? 7.00 : 0;
   const _pbd_objectStorage = (() => {

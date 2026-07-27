@@ -106,7 +106,8 @@ interface InstallmentRate {
 interface ModernCheckoutFormProps {
   invoiceId: string;
   invoiceType?: string;
-  /** VPS/VDS no plano anual (12m) — habilita PIX como método de pagamento. */
+  /** Fatura VPS/VDS elegível pra PIX (24 meses por padrão, ou liberado pelo admin —
+   * ver isPixEligibleForVpsConfig em actions.ts). Nome mantido por compatibilidade. */
   isAnnualVps?: boolean;
   hasExistingUser?: boolean;
   initialStep?: CheckoutStep;

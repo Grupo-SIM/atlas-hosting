@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import {
   CLOUD_VPS_PLANS,
+  CLOUD_VPS_LOCATION_EUR,
+  CLOUD_VPS_STORAGE_UPGRADE_EUR,
   getCloudVpsMonthlyEuro,
   getCloudVpsWindowsMonthlyEuro,
   getCloudVpsWindowsOldMonthlyEuro,
@@ -48,6 +50,18 @@ describe("Cloud VPS 24-month catalogue", () => {
     expect(getCloudVpsWindowsMonthlyEuro("6", 24)).toBe(46);
     expect(getCloudVpsWindowsOldMonthlyEuro("18")).toBe(252);
     expect(getCloudVpsWindowsMonthlyEuro("18", 24)).toBe(232.4);
+  });
+
+  test("has a storage-upgrade tier and full region coverage for every plan", () => {
+    for (const plan of CLOUD_VPS_PLANS) {
+      expect(CLOUD_VPS_STORAGE_UPGRADE_EUR[plan.id]).toBeDefined();
+      const regions = CLOUD_VPS_LOCATION_EUR[plan.id];
+      expect(Object.keys(regions).sort()).toEqual(
+        ["au-sydney", "in", "jp", "sg", "uk", "us-central", "us-east", "us-west"].sort()
+      );
+    }
+    expect(CLOUD_VPS_LOCATION_EUR["4"]["us-east"]).toBe(3.10);
+    expect(CLOUD_VPS_STORAGE_UPGRADE_EUR["18"].eur).toBe(18.00);
   });
 
   test("preserves each card's Contabo resource comparison", () => {

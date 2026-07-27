@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { pgVpsSubscription, pgInvoice } from "@/lib/db/schema";
+import { pgVpsSubscription, pgInvoice, pgSystemConfig } from "@/lib/db/schema";
 import { eq, desc, and, notInArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -104,6 +104,24 @@ export async function cancelVpsSubscriptionAction(id: string): Promise<void> {
     .update(pgVpsSubscription)
     .set({ status: "cancelled", cancelledAt: new Date(), updatedAt: new Date() })
     .where(eq(pgVpsSubscription.id, id));
+
+  revalidatePath("/admin/vps-plans");
+}
+
+export async function getPixAllowAllDurationsAction(): Promise<boolean> {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) redirect("/home");
+
+  const config = await db.query.pgSystemConfig.findFirst();
+  return config?.pixAllowAllDurations ?? false;
+}
+
+export async function setPixAllowAllDurationsAction(enabled: boolean): Promise<void> {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) redirect("/home");
+
+  // system_config is a singleton table (always exactly one row, no primary key).
+  await db.update(pgSystemConfig).set({ pixAllowAllDurations: enabled });
 
   revalidatePath("/admin/vps-plans");
 }
