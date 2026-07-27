@@ -57,7 +57,16 @@
       "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/src/application/use-cases/webhook/**)",
       "Bash(grep -n \"payment.status\\\\|payment\\\\.status\\\\|status:\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\\\\modules\\\\renovada\\\\services\\\\payment-new.service.ts\" | head -25)",
       "Bash(grep -rn -i \"refused\\\\|not_authorized\\\\|antifraud\" \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\\\\src\" --include=*.ts | head -15; echo ---; ls \"C:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\simintpay\\\\back-simpay\" | head -30)",
-      "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/src/application/use-cases/admin/**)"
+      "Read(//c/Users/breno/Desktop/JB/simintpay/back-simpay/src/application/use-cases/admin/**)",
+      "Bash(curl -s -m 15 -w \"\\\\nHTTP %{http_code}\\\\n\" \"https://simpay-back.simintermediacoes.com/checkout/public/cc-rates/ATLAS\")",
+      "Bash(curl -s -m 15 -o /dev/null -w \"status HTTP %{http_code}\\\\n\" \"https://simpay-back.simintermediacoes.com/atlas/payments/status/teste-inexistente\")",
+      "Bash(curl -s -m 15 \"https://simpay-back.simintermediacoes.com/atlas/payments/status/teste-inexistente\")",
+      "Bash(curl -s -m 20 -o /dev/null -w \"atlashosting.com.br HTTP %{http_code} em %{time_total}s\\\\n\" \"https://atlashosting.com.br\")",
+      "Bash(curl -s -m 20 -o /dev/null -w \"checkout HTTP %{http_code}\\\\n\" \"https://atlashosting.com.br/checkout/teste\")",
+      "WebFetch(domain:api.contabo.com)",
+      "WebSearch",
+      "Bash(tail -n 60 /tmp/dev.log 2>&1)",
+      "Bash(echo \"EXIT_CODE=$?\")"
     ]
   }
 }

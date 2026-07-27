@@ -69,6 +69,7 @@ import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { triggerPurchaseNotifications } from "@/lib/notifications/vps-purchase";
 import { recordAttribution } from "@/lib/affiliate/attribution";
 import { triggerCommissionIfApplicable } from "@/lib/affiliate/commission";
+import { getCloudVpsMonthlyEuro, isCloudVpsPlanId } from "@/lib/vps-catalog";
 
 
 export type GuestInfo = {
@@ -2805,12 +2806,21 @@ export async function createVpsInvoice(data: {
     "xxl": 238.00
   };
 
-  const duration = parseInt(config.duration || "1", 10);
-  let monthlyEuro = basePrices[planId] || 9.00;
+  const isContaboCloudPlan = !isStorageVps && isCloudVpsPlanId(planId);
+  const requestedContaboDuration = config.duration === "1" ? 1 : config.duration === "12" ? 12 : 24;
+  const contaboMonthlyEuro = isContaboCloudPlan
+    ? getCloudVpsMonthlyEuro(planId, config.backup === "true", requestedContaboDuration)
+    : undefined;
+  if (isContaboCloudPlan && contaboMonthlyEuro === undefined) {
+    throw new Error(`Catálogo Contabo sem preço para o plano ${planId}`);
+  }
+
+  const duration = isContaboCloudPlan ? requestedContaboDuration : parseInt(config.duration || "1", 10);
+  let monthlyEuro = contaboMonthlyEuro ?? basePrices[planId] ?? 9.00;
 
   // Apply Duration Discounts
   const isHighTier = (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl");
-  if (isHighTier) {
+  if (!isContaboCloudPlan && isHighTier) {
     if (duration === 6) {
       if (planId === "20") monthlyEuro = 12.60;
       else if (planId === "30") monthlyEuro = 25.20;
@@ -2835,14 +2845,14 @@ export async function createVpsInvoice(data: {
       else if (planId === "xl") monthlyEuro = 131.84;
       else if (planId === "xxl") monthlyEuro = 190.40;
     }
-  } else {
+  } else if (!isContaboCloudPlan) {
     if (duration === 6) monthlyEuro = monthlyEuro * 0.9;
     if (duration === 12) monthlyEuro = monthlyEuro * 0.8;
   }
 
   // Setup Fees
   let setupBrl = 0;
-  if (planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") {
+  if (isContaboCloudPlan || planId === "20" || planId === "30" || planId === "40" || planId === "50" || planId === "60" || planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") {
     setupBrl = 0;
   } else {
     if (duration === 1) setupBrl = 9.00 * RATE;
@@ -2924,7 +2934,7 @@ export async function createVpsInvoice(data: {
   additionalMonthlyEuro += osEur;
 
   // Other Add-ons
-  if (config.backup === "true") {
+  if (!isContaboCloudPlan && config.backup === "true") {
     if (planId === "20") additionalMonthlyEuro += 4.00;
     else if (planId === "30") additionalMonthlyEuro += 6.00;
     else if (planId === "40") additionalMonthlyEuro += 10.00;
@@ -2933,7 +2943,7 @@ export async function createVpsInvoice(data: {
     else if (planId === "s" || planId === "m" || planId === "l" || planId === "xl" || planId === "xxl") additionalMonthlyEuro += 4.60;
     else additionalMonthlyEuro += 3.00;
   }
-  if (config.privateNetwork === "enabled") additionalMonthlyEuro += 5.78;
+  if (config.privateNetwork === "enabled") additionalMonthlyEuro += 4.58;
   if (config.ipv4Address === "2ip") additionalMonthlyEuro += 7.00;
 
   if (config.objectStorage && config.objectStorage !== "none") {
@@ -2962,12 +2972,12 @@ export async function createVpsInvoice(data: {
     } else { if (config.storage === "ssd-300") return 3.10; if (config.storage === "nvme-150") return 3.70; }
     return 0;
   })();
-  const _pbd_backup = config.backup === "true" ? (
+  const _pbd_backup = !isContaboCloudPlan && config.backup === "true" ? (
     planId === "20" ? 4.00 : planId === "30" ? 6.00 : planId === "40" ? 10.00 :
     planId === "50" ? 15.00 : planId === "60" ? 19.00 :
     ["s","m","l","xl","xxl"].includes(planId) ? 4.60 : 3.00
   ) : 0;
-  const _pbd_network = config.privateNetwork === "enabled" ? 5.78 : 0;
+  const _pbd_network = config.privateNetwork === "enabled" ? 4.58 : 0;
   const _pbd_ip = config.ipv4Address === "2ip" ? 7.00 : 0;
   const _pbd_objectStorage = (() => {
     if (!config.objectStorage || config.objectStorage === "none") return 0;

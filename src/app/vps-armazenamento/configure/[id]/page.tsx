@@ -39,6 +39,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { DISPLAY_CURRENCY_CHANGE_EVENT, readDisplayCurrency, type DisplayCurrency } from "@/lib/display-currency";
+import { convertVpsPriceFromEuro } from "@/lib/vps-price-display";
 
 // Base rate for initial render (will be updated by API)
 // Base rate for fallback if API fails
@@ -84,9 +86,9 @@ const plansData: Record<string, any> = {
     snapshots: "0 Instantâneos",
     traffic: "Porta de 200 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 9.00, setupEur: 9.00, setupFee: "+ Taxa de instalação única", discount: null },
-      { id: "6", label: "6 meses", eur: 8.10, setupEur: 4.50, setupFee: "+ Taxa de instalação única", discount: "ECONOMIZE 10%", oldEur: 9.00 },
-      { id: "12", label: "12 meses", eur: 7.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 9.00 },
+      { id: "1", label: "1 mês", eur: 11.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "12", label: "12 meses", eur: 9.36, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 15%", oldEur: 11.00 },
+      { id: "24", label: "24 meses", eur: 8.80, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 11.00 },
     ],
     storageTypes: [
       { id: "ssd-300", name: "300 GB SSD", price: "Livre" },
@@ -104,25 +106,25 @@ const plansData: Record<string, any> = {
     },
     locations: {
       europe: [
-        { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "136 ms", eur: 1.90 },
+        { id: "eu", name: "União Europeia", latency: "185 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "156 ms", eur: 2.10 },
       ],
       best: [
-        { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "94 ms", eur: 2.80, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "185 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 3.10, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 3.90 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "310 ms", eur: 4.30 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "120 ms", eur: 1.90 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "94 ms", eur: 2.80, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 2.30 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 2.10 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 3.10, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "146 ms", eur: 2.60 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "340 ms", eur: 4.30 },
-        { id: "jp", name: "Ásia (Japão)", latency: "270 ms", eur: 4.30 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 4.30 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", eur: 5.00 },
+        { id: "jp", name: "Ásia (Japão)", latency: "320 ms", eur: 5.10 },
+        { id: "in", name: "Ásia (Índia)", latency: "286 ms", eur: 4.80 },
       ]
     }
   },
@@ -134,9 +136,9 @@ const plansData: Record<string, any> = {
     snapshots: "0 Instantâneos",
     traffic: "Porta de 300 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 14.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 12.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 14.00 },
-      { id: "12", label: "12 meses", eur: 11.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 14.00 },
+      { id: "1", label: "1 mês", eur: 15.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "12", label: "12 meses", eur: 12.76, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 15%", oldEur: 15.00 },
+      { id: "24", label: "24 meses", eur: 12.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 15.00 },
     ],
     storageTypes: [
       { id: "ssd-400", name: "400 GB SSD", price: "Livre" },
@@ -154,25 +156,25 @@ const plansData: Record<string, any> = {
     },
     locations: {
       europe: [
-        { id: "eu", name: "União Europeia", latency: "175 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "136 ms", eur: 2.90 },
+        { id: "eu", name: "União Europeia", latency: "185 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "156 ms", eur: 3.20 },
       ],
       best: [
-        { id: "eu", name: "União Europeia", latency: "175 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "92 ms", eur: 2.90, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "185 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 4.80, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 6.00 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "310 ms", eur: 6.60 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "120 ms", eur: 2.90 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "92 ms", eur: 2.90, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 3.70 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 3.20 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 4.80, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "146 ms", eur: 4.00 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "338 ms", eur: 6.00 },
-        { id: "jp", name: "Ásia (Japão)", latency: "275 ms", eur: 6.00 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 6.00 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "332 ms", eur: 7.90 },
+        { id: "jp", name: "Ásia (Japão)", latency: "322 ms", eur: 8.00 },
+        { id: "in", name: "Ásia (Índia)", latency: "286 ms", eur: 7.40 },
       ]
     }
   },
@@ -185,8 +187,8 @@ const plansData: Record<string, any> = {
     traffic: "Porta de 600 Mbit/s",
     durations: [
       { id: "1", label: "1 mês", eur: 28.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 25.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 28.00 },
-      { id: "12", label: "12 meses", eur: 22.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 28.00 },
+      { id: "12", label: "12 meses", eur: 23.80, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 15%", oldEur: 28.00 },
+      { id: "24", label: "24 meses", eur: 22.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 28.00 },
     ],
     storageTypes: [
       { id: "ssd-1t", name: "1 TB SSD", price: "Livre" },
@@ -204,25 +206,25 @@ const plansData: Record<string, any> = {
     },
     locations: {
       europe: [
-        { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 5.90 },
+        { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "156 ms", eur: 6.50 },
       ],
       best: [
-        { id: "eu", name: "União Europeia", latency: "177 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 5.90, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 9.50, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "351 ms", eur: 12.00 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "310 ms", eur: 13.20 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "121 ms", eur: 5.90 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 5.90, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "150 ms", eur: 7.30 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 6.50 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 9.50, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "146 ms", eur: 8.00 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "347 ms", eur: 12.00 },
-        { id: "jp", name: "Ásia (Japão)", latency: "264 ms", eur: 12.00 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 12.00 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "332 ms", eur: 15.70 },
+        { id: "jp", name: "Ásia (Japão)", latency: "296 ms", eur: 16.00 },
+        { id: "in", name: "Ásia (Índia)", latency: "286 ms", eur: 14.80 },
       ]
     }
   },
@@ -235,8 +237,8 @@ const plansData: Record<string, any> = {
     traffic: "Porta de 800 Mbit/s",
     durations: [
       { id: "1", label: "1 mês", eur: 50.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 45.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 50.00 },
-      { id: "12", label: "12 meses", eur: 40.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 50.00 },
+      { id: "12", label: "12 meses", eur: 42.50, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 15%", oldEur: 50.00 },
+      { id: "24", label: "24 meses", eur: 40.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 50.00 },
     ],
     storageTypes: [
       { id: "ssd-12t", name: "1.2 TB SSD", price: "Livre" },
@@ -255,24 +257,24 @@ const plansData: Record<string, any> = {
     locations: {
       europe: [
         { id: "eu", name: "União Europeia", latency: "175 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "136 ms", eur: 10.50 },
+        { id: "uk", name: "Reino Unido", latency: "136 ms", eur: 11.60 },
       ],
       best: [
         { id: "eu", name: "União Europeia", latency: "175 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 10.50, recommended: true },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 17.10, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "354 ms", eur: 20.00 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "354 ms", eur: 23.70 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 10.50 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 10.50, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 13.10 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 11.60 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "87 ms", eur: 17.10, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 14.30 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "346 ms", eur: 20.00 },
-        { id: "jp", name: "Ásia (Japão)", latency: "263 ms", eur: 20.00 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 20.00 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "346 ms", eur: 28.10 },
+        { id: "jp", name: "Ásia (Japão)", latency: "263 ms", eur: 28.60 },
+        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 26.40 },
       ]
     }
   },
@@ -285,8 +287,8 @@ const plansData: Record<string, any> = {
     traffic: "Porta de 1 Gbit/s",
     durations: [
       { id: "1", label: "1 mês", eur: 74.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 66.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 10%", oldEur: 74.00 },
-      { id: "12", label: "12 meses", eur: 59.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 74.00 },
+      { id: "12", label: "12 meses", eur: 62.90, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 15%", oldEur: 74.00 },
+      { id: "24", label: "24 meses", eur: 59.20, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 74.00 },
     ],
     storageTypes: [
       { id: "ssd-14t", name: "1.4 TB SSD", price: "Livre" },
@@ -304,25 +306,25 @@ const plansData: Record<string, any> = {
     },
     locations: {
       europe: [
-        { id: "eu", name: "União Europeia", latency: "174 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "135 ms", eur: 15.60 },
+        { id: "eu", name: "União Europeia", latency: "189 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "156 ms", eur: 17.10 },
       ],
       best: [
-        { id: "eu", name: "União Europeia", latency: "174 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 23.20, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "189 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 25.20, recommended: true },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "353 ms", eur: 30.00 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "310 ms", eur: 35.00 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 15.60 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 23.20, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 19.30 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 17.10 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 25.20, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "146 ms", eur: 21.20 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "346 ms", eur: 30.00 },
-        { id: "jp", name: "Ásia (Japão)", latency: "263 ms", eur: 30.00 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 30.00 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "325 ms", eur: 41.50 },
+        { id: "jp", name: "Ásia (Japão)", latency: "266 ms", eur: 41.50 },
+        { id: "in", name: "Ásia (Índia)", latency: "287 ms", eur: 39.10 },
       ]
     }
   }
@@ -394,6 +396,15 @@ export default function ConfigureStorageVps() {
   const planId = params.id as string;
 
   const [currentRate, setCurrentRate] = useState(FALLBACK_EUR_RATE);
+  const [usdRate, setUsdRate] = useState(1.08);
+  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("BRL");
+
+  useEffect(() => {
+    const syncCurrency = () => setDisplayCurrency(readDisplayCurrency());
+    syncCurrency();
+    window.addEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
+    return () => window.removeEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
+  }, []);
 
   const plan = plansData[planId as keyof typeof plansData] || plansData["10"];
   const durations = plan.durations;
@@ -402,10 +413,14 @@ export default function ConfigureStorageVps() {
   const currentImagePrices = getPlanImagePrices(planId, { windows: 0, win2016: 0, cpanel: 0, pleskLinux: 0, pleskHost: 0, pleskPro: 0, pleskWin: 0 });
 
   const formatBRL = (eur: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    const amount = convertVpsPriceFromEuro(eur, displayCurrency, {
+      eurToBrl: currentRate,
+      eurToUsd: usdRate,
+    });
+    return new Intl.NumberFormat(displayCurrency === "BRL" ? "pt-BR" : "en-US", {
       style: "currency",
-      currency: "BRL",
-    }).format(eur * currentRate);
+      currency: displayCurrency,
+    }).format(amount);
   };
 
   const formatBRLPerMonth = (eur: number) => {
@@ -505,6 +520,9 @@ export default function ConfigureStorageVps() {
       .then(data => {
         if (data.rate) {
           setCurrentRate(data.rate);
+        }
+        if (data.usdRate) {
+          setUsdRate(data.usdRate);
         }
       })
       .catch(err => console.error("Error fetching rate:", err));

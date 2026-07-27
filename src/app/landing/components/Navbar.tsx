@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Menu, X, Server, Database, HardDrive, Monitor, UserPlus, LogIn, Star, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { readDisplayCurrency, saveDisplayCurrency, type DisplayCurrency } from "@/lib/display-currency";
+import { CurrencySelector } from "./CurrencySelector";
 
 const roboto = { className: "[font-family:var(--font-roboto)]" };
 
@@ -13,6 +15,16 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
   const [isVpsOpen, setIsVpsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("BRL");
+
+  useEffect(() => {
+    setDisplayCurrency(readDisplayCurrency());
+  }, []);
+
+  const changeDisplayCurrency = (currency: DisplayCurrency) => {
+    setDisplayCurrency(currency);
+    saveDisplayCurrency(currency);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -112,6 +124,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
         {/* Auth Buttons (Desktop) + Hamburger (Mobile) */}
         <div className="flex-1 md:flex-none flex items-center justify-end gap-3">
           <div className="hidden md:flex items-center gap-2">
+            <CurrencySelector value={displayCurrency} onChange={changeDisplayCurrency} isLight={isLight} />
             <Button
               className={`${roboto.className} bg-transparent border border-white text-white font-bold px-3 lg:px-6 py-1.5 lg:py-2 h-auto text-[12px] lg:text-[15px] rounded-[10px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
               asChild
@@ -191,6 +204,12 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
                       </Link>
                     </motion.div>
                   ))}
+                </div>
+
+                {/* Currency */}
+                <div className="space-y-2">
+                  <p className="text-[13px] font-black uppercase tracking-[0.2em] text-sky-400 mb-4 px-2">Moeda</p>
+                  <CurrencySelector value={displayCurrency} onChange={changeDisplayCurrency} isLight={isLight} variant="inline" />
                 </div>
 
                 {/* Secondary Links */}

@@ -45,6 +45,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import {
+  getCloudVpsMonthlyEuro,
+  getCloudVpsOldMonthlyEuro,
+  getCloudVpsPlan,
+} from "@/lib/vps-catalog";
+import { DISPLAY_CURRENCY_CHANGE_EVENT, readDisplayCurrency, type DisplayCurrency } from "@/lib/display-currency";
+import { convertVpsPriceFromEuro } from "@/lib/vps-price-display";
 
 // Mock data for plans
 const plansData: Record<string, any> = {
@@ -677,6 +684,227 @@ const images = {
   ]
 };
 
+// Contabo Cloud VPS Core catalog: Windows Server price (Contabo's listed price x2;
+// Contabo charges the same price for every Windows Server version).
+const catalogWindowsEur: Record<string, number> = {
+  "4": 16.00,
+  "6": 34.00,
+  "8": 56.00,
+  "12": 106.00,
+  "16": 126.00,
+  "18": 154.00,
+};
+
+// Contabo Cloud VPS Core catalog storage-upgrade tier (Contabo's listed price x2).
+const catalogStorageUpgrade: Record<string, { label: string; eur: number }> = {
+  "4": { label: "200 GB SSD", eur: 3.00 },
+  "6": { label: "400 GB SSD", eur: 6.00 },
+  "8": { label: "600 GB SSD", eur: 9.00 },
+  "12": { label: "800 GB SSD", eur: 12.00 },
+  "16": { label: "1 TB SSD", eur: 15.00 },
+  "18": { label: "1.2 TB SSD", eur: 18.00 },
+};
+
+// Contabo Cloud VPS Core catalog datacenter/region surcharge (Contabo's listed price x2).
+// Scales per plan tier (confirmed: surcharges differ across all six plans) — one entry per plan id.
+// All six tiers (4/6/8/12/16/18) confirmed from real Contabo data.
+const catalogLocations4 = {
+  best: [
+    { id: "eu", name: "União Europeia", latency: "252 ms", price: "Livre" },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "93 ms", eur: 3.10, recommended: true },
+  ],
+  europe: [
+    { id: "eu", name: "União Europeia", latency: "252 ms", price: "Livre" },
+    { id: "uk", name: "Reino Unido", latency: "164 ms", eur: 2.10 },
+  ],
+  america: [
+    { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 2.10 },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "93 ms", eur: 3.10, recommended: true },
+    { id: "us-west", name: "Estados Unidos (Oeste)", latency: "162 ms", eur: 2.60 },
+  ],
+  asia: [
+    { id: "sg", name: "Ásia (Singapura)", latency: "309 ms", eur: 5.00 },
+    { id: "jp", name: "Ásia (Japão)", latency: "248 ms", eur: 5.10 },
+    { id: "in", name: "Ásia (Índia)", latency: "283 ms", eur: 4.80 },
+  ],
+  australia: [
+    { id: "au-sydney", name: "Austrália (Sydney)", latency: "313 ms", eur: 4.30 },
+  ],
+};
+
+const catalogLocations6 = {
+  best: [
+    { id: "eu", name: "União Europeia", latency: "188 ms", price: "Livre" },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "90 ms", eur: 4.80, recommended: true },
+  ],
+  europe: [
+    { id: "eu", name: "União Europeia", latency: "188 ms", price: "Livre" },
+    { id: "uk", name: "Reino Unido", latency: "163 ms", eur: 3.20 },
+  ],
+  america: [
+    { id: "us-central", name: "Estados Unidos (Central)", latency: "120 ms", eur: 3.20 },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "90 ms", eur: 4.80, recommended: true },
+    { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 4.00 },
+  ],
+  asia: [
+    { id: "sg", name: "Ásia (Singapura)", latency: "320 ms", eur: 7.90 },
+    { id: "jp", name: "Ásia (Japão)", latency: "224 ms", eur: 8.00 },
+    { id: "in", name: "Ásia (Índia)", latency: "282 ms", eur: 7.40 },
+  ],
+  australia: [
+    { id: "au-sydney", name: "Austrália (Sydney)", latency: "313 ms", eur: 6.60 },
+  ],
+};
+
+const catalogLocations8 = {
+  best: [
+    { id: "eu", name: "União Europeia", latency: "187 ms", price: "Livre" },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 9.50, recommended: true },
+  ],
+  europe: [
+    { id: "eu", name: "União Europeia", latency: "187 ms", price: "Livre" },
+    { id: "uk", name: "Reino Unido", latency: "161 ms", eur: 6.50 },
+  ],
+  america: [
+    { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 6.50 },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 9.50, recommended: true },
+    { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 8.00 },
+  ],
+  asia: [
+    { id: "sg", name: "Ásia (Singapura)", latency: "319 ms", eur: 15.70 },
+    { id: "jp", name: "Ásia (Japão)", latency: "224 ms", eur: 16.00 },
+    { id: "in", name: "Ásia (Índia)", latency: "281 ms", eur: 14.80 },
+  ],
+  australia: [
+    { id: "au-sydney", name: "Austrália (Sydney)", latency: "311 ms", eur: 13.20 },
+  ],
+};
+
+const catalogLocations12 = {
+  best: [
+    { id: "eu", name: "União Europeia", latency: "187 ms", price: "Livre" },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 17.10, recommended: true },
+  ],
+  europe: [
+    { id: "eu", name: "União Europeia", latency: "187 ms", price: "Livre" },
+    { id: "uk", name: "Reino Unido", latency: "159 ms", eur: 11.60 },
+  ],
+  america: [
+    { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", eur: 11.60 },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 17.10, recommended: true },
+    { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 14.30 },
+  ],
+  asia: [
+    { id: "sg", name: "Ásia (Singapura)", latency: "319 ms", eur: 28.10 },
+    { id: "jp", name: "Ásia (Japão)", latency: "223 ms", eur: 28.60 },
+    { id: "in", name: "Ásia (Índia)", latency: "281 ms", eur: 26.40 },
+  ],
+  australia: [
+    { id: "au-sydney", name: "Austrália (Sydney)", latency: "311 ms", eur: 23.70 },
+  ],
+};
+
+const catalogLocations16 = {
+  best: [
+    { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 25.20, recommended: true },
+  ],
+  europe: [
+    { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+    { id: "uk", name: "Reino Unido", latency: "159 ms", eur: 17.10 },
+  ],
+  america: [
+    { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 17.10 },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 25.20, recommended: true },
+    { id: "us-west", name: "Estados Unidos (Oeste)", latency: "146 ms", eur: 21.20 },
+  ],
+  asia: [
+    { id: "sg", name: "Ásia (Singapura)", latency: "319 ms", eur: 41.50 },
+    { id: "jp", name: "Ásia (Japão)", latency: "223 ms", eur: 42.30 },
+    { id: "in", name: "Ásia (Índia)", latency: "282 ms", eur: 39.10 },
+  ],
+  australia: [
+    { id: "au-sydney", name: "Austrália (Sydney)", latency: "310 ms", eur: 35.00 },
+  ],
+};
+
+const catalogLocations18 = {
+  best: [
+    { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "90 ms", eur: 33.40, recommended: true },
+  ],
+  europe: [
+    { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+    { id: "uk", name: "Reino Unido", latency: "158 ms", eur: 22.60 },
+  ],
+  america: [
+    { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 22.60 },
+    { id: "us-east", name: "Estados Unidos (Leste)", latency: "90 ms", eur: 33.40, recommended: true },
+    { id: "us-west", name: "Estados Unidos (Oeste)", latency: "146 ms", eur: 28.00 },
+  ],
+  asia: [
+    { id: "sg", name: "Ásia (Singapura)", latency: "316 ms", eur: 55.00 },
+    { id: "jp", name: "Ásia (Japão)", latency: "223 ms", eur: 56.10 },
+    { id: "in", name: "Ásia (Índia)", latency: "281 ms", eur: 51.70 },
+  ],
+  australia: [
+    { id: "au-sydney", name: "Austrália (Sydney)", latency: "310 ms", eur: 46.40 },
+  ],
+};
+
+const catalogLocationsByPlan: Record<string, typeof catalogLocations4> = {
+  "4": catalogLocations4,
+  "6": catalogLocations6,
+  "8": catalogLocations8,
+  "12": catalogLocations12,
+  "16": catalogLocations16,
+  "18": catalogLocations18,
+};
+
+function getContaboCloudPlanImages(planId: string) {
+  const windowsEur = catalogWindowsEur[planId];
+  if (windowsEur === undefined) return undefined;
+  const overrideWindows = (list: any[]) =>
+    list.map((img) => (img.id === "windows" ? { ...img, eur: windowsEur } : img));
+  return {
+    ...images,
+    popular: overrideWindows(images.popular),
+    os: overrideWindows(images.os),
+  };
+}
+
+function getContaboCloudPlanConfig(planId: string) {
+  const cloudPlan = getCloudVpsPlan(planId);
+  if (!cloudPlan) return null;
+
+  const monthlyEuro = getCloudVpsMonthlyEuro(planId, false, 24)!;
+  const storageUpgrade = catalogStorageUpgrade[planId];
+  return {
+    name: cloudPlan.name,
+    vcpu: cloudPlan.vcpu,
+    ram: cloudPlan.ram,
+    storage: cloudPlan.storage,
+    snapshots: cloudPlan.snapshots,
+    traffic: `${cloudPlan.port} · ${cloudPlan.traffic}`,
+    durations: [
+      { id: "1", label: "1 mês", eur: getCloudVpsMonthlyEuro(planId, false, 1)!, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "12", label: "12 meses", eur: getCloudVpsMonthlyEuro(planId, false, 12)!, oldEur: getCloudVpsOldMonthlyEuro(planId, false), setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 15%" },
+      { id: "24", label: "24 meses", eur: monthlyEuro, oldEur: getCloudVpsOldMonthlyEuro(planId, false), setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%" },
+    ],
+    storageTypes: storageUpgrade ? [
+      { id: `${planId}-storage-base`, name: cloudPlan.storage, price: "Livre" },
+      { id: `${planId}-storage-upgrade`, name: storageUpgrade.label, eur: storageUpgrade.eur },
+    ] : undefined,
+    locations: catalogLocationsByPlan[planId],
+    images: getContaboCloudPlanImages(planId),
+    basePrice: monthlyEuro,
+    backupEur: getCloudVpsMonthlyEuro(planId, true, 24)! - monthlyEuro,
+    privateNetworkEur: 4.58,
+    additionalIpEur: 7,
+    managedEur: 219.98,
+    monitoringEur: 22.98,
+  };
+}
 export default function VpsConfigurePage() {
   const params = useParams();
   const router = useRouter();
@@ -684,6 +912,8 @@ export default function VpsConfigurePage() {
   const planId = params.id as string;
   
   const [currentRate, setCurrentRate] = useState(5.86);
+  const [usdRate, setUsdRate] = useState(1.08);
+  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("BRL");
 
   useEffect(() => {
     const fetchRate = async () => {
@@ -693,6 +923,9 @@ export default function VpsConfigurePage() {
         if (data.rate) {
           setCurrentRate(data.rate);
         }
+        if (data.usdRate) {
+          setUsdRate(data.usdRate);
+        }
       } catch (error) {
         console.error("Erro ao buscar taxa do euro:", error);
       }
@@ -700,17 +933,29 @@ export default function VpsConfigurePage() {
     fetchRate();
   }, []);
 
-  const plan = plansData[planId as keyof typeof plansData] || plansData["10"];
+  useEffect(() => {
+    const syncCurrency = () => setDisplayCurrency(readDisplayCurrency());
+    syncCurrency();
+    window.addEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
+    return () => window.removeEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
+  }, []);
+
+  const contaboPlan = getContaboCloudPlanConfig(planId);
+  const plan = contaboPlan || plansData[planId as keyof typeof plansData] || plansData["10"];
   const durations = plan.durations && plan.durations.length > 0 ? plan.durations : defaultDurations;
   const storageTypes = plan.storageTypes && plan.storageTypes.length > 0 ? plan.storageTypes : defaultStorageTypes;
   const planLocations = (plan as any).locations || locations;
   const dynamicImages = plan.images || images;
 
   const formatBRL = (eur: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    const amount = convertVpsPriceFromEuro(eur, displayCurrency, {
+      eurToBrl: currentRate,
+      eurToUsd: usdRate,
+    });
+    return new Intl.NumberFormat(displayCurrency === "BRL" ? "pt-BR" : "en-US", {
       style: "currency",
-      currency: "BRL",
-    }).format(eur * currentRate);
+      currency: displayCurrency,
+    }).format(amount);
   };
 
   const formatBRLPerMonth = (eur: number) => {
@@ -719,13 +964,13 @@ export default function VpsConfigurePage() {
 
   const sp = searchParams;
   const [quantity, setQuantity] = useState(sp.get("qty") || "1");
-  const [duration, setDuration] = useState(sp.get("duration") || "1");
+  const [duration, setDuration] = useState(sp.get("duration") || (contaboPlan ? "24" : "1"));
   const [regionTab, setRegionTab] = useState(sp.get("regionTab") || "best");
   const [location, setLocation] = useState(sp.get("location") || "eu");
   const [storageType, setStorageType] = useState(sp.get("storage") || storageTypes[0].id);
   const [imageCategory, setImageCategory] = useState(sp.get("imageCategory") || "popular");
   const [osImage, setOsImage] = useState(sp.get("image") || "ubuntu");
-  const [autoBackup, setAutoBackup] = useState(sp.get("backup") !== "false");
+  const [autoBackup, setAutoBackup] = useState(sp.has("backup") ? sp.get("backup") === "true" : !contaboPlan);
   const [showMoreImages, setShowMoreImages] = useState(true);
   const [showAdditionalFeatures, setShowAdditionalFeatures] = useState(true);
   const [showUbuntuModal, setShowUbuntuModal] = useState(false);
@@ -864,20 +1109,20 @@ export default function VpsConfigurePage() {
         windows_2016: 125.00
       };
     }
-    
+
+    // Contabo Cloud VPS Core catalog (ids "4"/"6"/"8"/"12"/"16"/"18"): Contabo now
+    // charges the same price for every Windows Server version, so windows_2016
+    // mirrors windows. Values are Contabo's listed price x2.
+    if (catalogWindowsEur[planId] !== undefined) {
+      return {
+        ...base,
+        windows: catalogWindowsEur[planId],
+        windows_2016: catalogWindowsEur[planId],
+      };
+    }
+
     return base;
   }
-
-  useEffect(() => {
-    fetch("/api/currency/euro")
-      .then(res => res.json())
-      .then(data => {
-        if (data.rate) {
-          setCurrentRate(data.rate);
-        }
-      })
-      .catch(err => console.error("Error fetching rate:", err));
-  }, []);
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
@@ -1429,8 +1674,8 @@ export default function VpsConfigurePage() {
                         </div>
                       </div>
 
-                      {/* Server Management */}
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                      {/* Server Management — Contabo discontinued this add-on, commented out (not deleted) per request */}
+                      {/* <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3">
                           <span className="text-lg font-bold text-slate-300">Gerenciamento de Servidor</span>
                         </div>
@@ -1455,7 +1700,7 @@ export default function VpsConfigurePage() {
                             </SelectContent>
                           </Select>
                         </div>
-                      </div>
+                      </div> */}
 
                       {/* Monitoring */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
@@ -1675,7 +1920,8 @@ export default function VpsConfigurePage() {
                       items.push({ label: `Object Storage: ${objectStorage.toUpperCase()}${qty > 1 ? ` × ${qty}` : ""}`, price: p * RATE * durationMonths * qty });
                     }
                     
-                    if (serverManagement === "managed") items.push({ label: `Gerenciamento de Servidor${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.managedEur || 219.98) * RATE * durationMonths * qty });
+                    // Server Management discontinued by Contabo — commented out (not deleted) per request
+                    // if (serverManagement === "managed") items.push({ label: `Gerenciamento de Servidor${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.managedEur || 219.98) * RATE * durationMonths * qty });
                     if (monitoring === "full") items.push({ label: `Monitoramento Completo${qty > 1 ? ` × ${qty}` : ""}`, price: (plan.monitoringEur || 22.98) * RATE * durationMonths * qty });
 
                     return items.map((item, idx) => (
@@ -1773,7 +2019,8 @@ export default function VpsConfigurePage() {
                   const prices: any = plan.objectStoragePrices || { "250gb": 2.49, "500gb": 4.98, "750gb": 7.47, "1tb": 9.96 };
                   additionalMonthly += (prices[objectStorage] || 0) * RATE;
               }
-              if (serverManagement === "managed") additionalMonthly += (plan.managedEur || 109.99) * RATE;
+              // Server Management discontinued by Contabo — commented out (not deleted) per request
+              // if (serverManagement === "managed") additionalMonthly += (plan.managedEur || 109.99) * RATE;
               if (monitoring === "full") additionalMonthly += (plan.monitoringEur || 11.49) * RATE;
 
               const totalBaseMonthly = (monthlyBase + additionalMonthly);

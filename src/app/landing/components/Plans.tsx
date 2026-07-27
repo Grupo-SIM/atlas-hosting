@@ -8,6 +8,13 @@ import { Roboto } from "next/font/google";
 import { Switch } from "@/components/ui/switch";
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
+import { convertVpsPriceFromEuro, type VpsDisplayCurrency } from "@/lib/vps-price-display";
+import { DISPLAY_CURRENCY_CHANGE_EVENT, readDisplayCurrency } from "@/lib/display-currency";
+import {
+  CLOUD_VPS_PLANS,
+  getCloudVpsMonthlyEuro,
+  getCloudVpsOldMonthlyEuro,
+} from "@/lib/vps-catalog";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -25,106 +32,68 @@ type VpsPlan = {
   ram: string;
   storage: string;
   snapshots: string;
+  port: string;
   traffic: string;
 };
 
-const plans: VpsPlan[] = [
-  {
-    id: "10",
-    name: "Cloud VPS 10",
-    eurOld: 9.00,
-    eurNew: 7.20,
-    eurBackup: 10.20,
-    vcpu: "4 núcleos",
-    ram: "8 GB",
-    storage: "75 GB NVMe ou SSD 150 GB",
-    snapshots: "1",
-    traffic: "Porta de 200 Mbit/s",
-  },
-  {
-    id: "20",
-    name: "Cloud VPS 20",
-    eurOld: 14.00,
-    eurNew: 11.20,
-    eurBackup: 15.20,
-    popular: true,
-    vcpu: "6 núcleos",
-    ram: "12 GB",
-    storage: "100 GB NVMe ou SSD 200 GB",
-    snapshots: "2",
-    traffic: "Porta de 300 Mbit/s",
-  },
-  {
-    id: "30",
-    name: "Cloud VPS 30",
-    eurOld: 28.00,
-    eurNew: 22.40,
-    eurBackup: 28.40,
-    vcpu: "8 núcleos",
-    ram: "24 GB",
-    storage: "200 GB NVMe ou SSD 400 GB",
-    snapshots: "3",
-    traffic: "Porta de 600 Mbit/s",
-  },
-  {
-    id: "40",
-    name: "Cloud VPS 40",
-    eurOld: 50.00,
-    eurNew: 40.00,
-    eurBackup: 50.00,
-    vcpu: "12 núcleos",
-    ram: "48 GB",
-    storage: "250 GB NVMe ou SSD 500 GB",
-    snapshots: "3",
-    traffic: "Porta de 800 Mbit/s",
-  },
-  {
-    id: "50",
-    name: "Cloud VPS 50",
-    eurOld: 74.00,
-    eurNew: 59.20,
-    eurBackup: 74.20,
-    vcpu: "16 núcleos",
-    ram: "64 GB",
-    storage: "300 GB NVMe ou SSD 600 GB",
-    snapshots: "3",
-    traffic: "Porta de 1 Gbit/s",
-  },
-  {
-    id: "60",
-    name: "Cloud VPS 60",
-    eurOld: 98.00,
-    eurNew: 78.40,
-    eurBackup: 97.40,
-    vcpu: "18 núcleos",
-    ram: "96 GB",
-    storage: "350 GB NVMe ou SSD 700 GB",
-    snapshots: "3",
-    traffic: "Porta de 1 Gbit/s",
-  },
-];
+const plans: VpsPlan[] = CLOUD_VPS_PLANS.map((plan) => ({
+  id: plan.id,
+  name: plan.name,
+  eurOld: getCloudVpsOldMonthlyEuro(plan.id, false)!,
+  eurNew: getCloudVpsMonthlyEuro(plan.id, false, 24)!,
+  eurBackup: getCloudVpsMonthlyEuro(plan.id, true, 24)!,
+  popular: plan.id === "6",
+  vcpu: plan.vcpu,
+  ram: plan.ram,
+  storage: plan.storage,
+  snapshots: plan.snapshots,
+  port: plan.port,
+  traffic: plan.traffic,
+}));
 
 export function Plans() {
   const router = useRouter();
   const [backupEnabled, setBackupEnabled] = useState(false);
-  const [currentRate, setCurrentRate] = useState(5.86);
+  const [displayCurrency, setDisplayCurrency] = useState<VpsDisplayCurrency>("BRL");
+  const [currencyRates, setCurrencyRates] = useState({ eurToBrl: 5.86, eurToUsd: 1.08 });
 
   useEffect(() => {
     fetch("/api/currency/euro")
       .then(res => res.json())
       .then(data => {
-        if (data.rate) {
-          setCurrentRate(data.rate);
+        if (data.rate || data.usdRate) {
+          setCurrencyRates((rates) => ({
+            eurToBrl: data.rate || rates.eurToBrl,
+            eurToUsd: data.usdRate || rates.eurToUsd,
+          }));
         }
       })
       .catch(err => console.error("Error fetching rate:", err));
   }, []);
 
+  useEffect(() => {
+    const syncCurrency = () => setDisplayCurrency(readDisplayCurrency());
+    syncCurrency();
+    window.addEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
+    return () => window.removeEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
+  }, []);
+
   const formatBRL = (eur: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    const amount = convertVpsPriceFromEuro(eur, displayCurrency, currencyRates);
+    return new Intl.NumberFormat(displayCurrency === "BRL" ? "pt-BR" : "en-US", {
       style: "currency",
-      currency: "BRL",
-    }).format(eur * currentRate);
+      currency: displayCurrency,
+    }).format(amount);
+  };
+
+  const getPriceParts = (eur: number) => {
+    const amount = convertVpsPriceFromEuro(eur, displayCurrency, currencyRates);
+    const [whole, cents] = amount.toFixed(2).split(".");
+    const locale = displayCurrency === "BRL" ? "pt-BR" : "en-US";
+    const priceMain = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Number(whole));
+    const priceSymbol = displayCurrency === "BRL" ? "R$" : displayCurrency === "EUR" ? "€" : "US$";
+
+    return { priceSymbol, priceMain, priceCents: cents };
   };
 
   const [emblaRef] = useEmblaCarousel({
@@ -136,12 +105,9 @@ export function Plans() {
   const rowSpecs = [
     { label: "Núcleos de vCPU", key: "vcpu" as const },
     { label: "RAM (GB)", key: "ram" as const },
-    {
-      label: "NVMe (GB) / SSD (GB)",
-      sub: "+ Espaço de armazenamento extra",
-      key: "storage" as const,
-    },
+    { label: "Armazenamento", key: "storage" as const },
     { label: "Instantâneos", key: "snapshots" as const },
+    { label: "Velocidade da Porta", key: "port" as const },
     { label: "Tráfego (entrada ilimitada)", key: "traffic" as const },
   ];
 
@@ -199,11 +165,7 @@ export function Plans() {
             <div className="flex gap-4 px-2 py-2">
               {plans.map((p) => {
                 const currentEurPrice = backupEnabled ? p.eurBackup : p.eurNew;
-                const formattedPrice = formatBRL(currentEurPrice).replace(/\u00A0/g, " ");
-                const priceParts = formattedPrice.split(" ");
-                const priceSymbol = priceParts[0];
-                const priceValue = priceParts.slice(1).join("");
-                const [priceMain, priceCents] = priceValue.split(",");
+                const { priceSymbol, priceMain, priceCents } = getPriceParts(currentEurPrice);
 
                 return (
                   <div key={p.id} className="flex-[0_0_100%] sm:flex-[0_0_45%] lg:flex-[0_0_31%] 2xl:flex-[0_0_24%] min-w-0">
@@ -225,11 +187,11 @@ export function Plans() {
                             <span className="text-3xl font-black">{priceCents}</span>
                             <span className="text-base font-medium opacity-40 ml-1.5">/mês</span>
                           </div>
-                          <p className="mt-1 text-sm text-slate-500 uppercase tracking-wider">12 meses</p>
+                          <p className="mt-1 text-sm text-slate-500 uppercase tracking-wider">24 meses</p>
                         </div>
 
                         <button
-                          onClick={() => router.push(`/vps/configure/${p.id}`)}
+                          onClick={() => router.push(`/vps/configure/${p.id}?duration=24&backup=${backupEnabled}`)}
                           className={`${roboto.className} block w-full rounded-xl py-3 text-center text-[14px] font-black uppercase tracking-[0.15em] transition-all ${p.popular ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20 hover:bg-sky-400' : 'border-2 border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
                             }`}
                         >

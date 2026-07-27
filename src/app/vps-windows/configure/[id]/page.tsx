@@ -39,6 +39,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { DISPLAY_CURRENCY_CHANGE_EVENT, readDisplayCurrency, type DisplayCurrency } from "@/lib/display-currency";
+import { convertVpsPriceFromEuro } from "@/lib/vps-price-display";
+import { isCloudVpsPlanId } from "@/lib/vps-catalog";
 
 // Base rate for fallback if API fails
 const FALLBACK_EUR_RATE = 5.86;
@@ -409,7 +412,23 @@ export default function ConfigureWindowsVps() {
   const searchParams = useSearchParams();
   const planId = params.id as string;
 
+  // Contabo doesn't have a separate "Windows VPS" configurator — Windows Server is just an
+  // OS choice inside the regular Cloud VPS configurator. For the current catalog ids
+  // (4/6/8/12/16/18), reuse that configurator with Windows pre-selected instead of
+  // duplicating its region/storage/pricing data here. Legacy ids (10/20/30/40) keep the
+  // standalone page below.
+  useEffect(() => {
+    if (isCloudVpsPlanId(planId)) {
+      const qs = new URLSearchParams(searchParams.toString());
+      qs.set("image", "windows");
+      if (!qs.get("duration")) qs.set("duration", "24");
+      router.replace(`/vps/configure/${planId}?${qs.toString()}`);
+    }
+  }, [planId, router, searchParams]);
+
   const [currentRate, setCurrentRate] = useState(FALLBACK_EUR_RATE);
+  const [usdRate, setUsdRate] = useState(1.08);
+  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("BRL");
 
   const plan = plansData[planId as keyof typeof plansData] || plansData["10"];
   const durations = plan.durations;
@@ -419,10 +438,14 @@ export default function ConfigureWindowsVps() {
   const dynamicImages = getImages(planId);
 
   const formatBRL = (eur: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    const amount = convertVpsPriceFromEuro(eur, displayCurrency, {
+      eurToBrl: currentRate,
+      eurToUsd: usdRate,
+    });
+    return new Intl.NumberFormat(displayCurrency === "BRL" ? "pt-BR" : "en-US", {
       style: "currency",
-      currency: "BRL",
-    }).format(eur * currentRate);
+      currency: displayCurrency,
+    }).format(amount);
   };
 
   const formatBRLPerMonth = (eur: number) => {
@@ -470,8 +493,18 @@ export default function ConfigureWindowsVps() {
         if (data.rate) {
           setCurrentRate(data.rate);
         }
+        if (data.usdRate) {
+          setUsdRate(data.usdRate);
+        }
       })
       .catch(err => console.error("Error fetching rate:", err));
+  }, []);
+
+  useEffect(() => {
+    const syncCurrency = () => setDisplayCurrency(readDisplayCurrency());
+    syncCurrency();
+    window.addEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
+    return () => window.removeEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
   }, []);
 
   // Sync all selections to URL in real-time
@@ -513,6 +546,10 @@ export default function ConfigureWindowsVps() {
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  if (isCloudVpsPlanId(planId)) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[#000B12] text-white font-sans pb-24 relative overflow-hidden">

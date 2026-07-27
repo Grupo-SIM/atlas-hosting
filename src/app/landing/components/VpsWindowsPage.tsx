@@ -6,6 +6,13 @@ import { Roboto } from "next/font/google";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import LottieMap from "./LottieMap";
+import { convertVpsPriceFromEuro, type VpsDisplayCurrency } from "@/lib/vps-price-display";
+import { DISPLAY_CURRENCY_CHANGE_EVENT, readDisplayCurrency } from "@/lib/display-currency";
+import {
+  CLOUD_VPS_PLANS,
+  getCloudVpsWindowsMonthlyEuro,
+  getCloudVpsWindowsOldMonthlyEuro,
+} from "@/lib/vps-catalog";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -21,62 +28,24 @@ type WindowsPlan = {
   ram: string;
   storage: string;
   snapshots: string;
-  speed: string;
-  noSetupFee?: boolean;
+  port: string;
+  traffic: string;
   popular?: boolean;
 };
 
-const windowsPlans: WindowsPlan[] = [
-  {
-    id: "10",
-    name: "Windows VPS 10",
-    eurOld: 32.00,
-    eurNew: 25.60,
-    vcpu: "4 núcleos de vCPU",
-    ram: "8 GB de RAM",
-    storage: "75 GB NVMe ou SSD 150 GB",
-    snapshots: "1 Instantâneo",
-    speed: "Porta de 200 Mbit/s",
-    noSetupFee: true,
-  },
-  {
-    id: "20",
-    name: "Windows VPS 20",
-    eurOld: 58.00,
-    eurNew: 46.40,
-    vcpu: "6 núcleos de vCPU",
-    ram: "16 GB de RAM",
-    storage: "100 GB NVMe ou SSD 200 GB",
-    snapshots: "2 Instantâneos",
-    speed: "Porta de 400 Mbit/s",
-    noSetupFee: true,
-    popular: true,
-  },
-  {
-    id: "30",
-    name: "Windows VPS 30",
-    eurOld: 112.00,
-    eurNew: 89.60,
-    vcpu: "10 núcleos de vCPU",
-    ram: "32 GB de RAM",
-    storage: "200 GB NVMe ou SSD 400 GB",
-    snapshots: "3 Instantâneos",
-    speed: "Porta de 600 Mbit/s",
-    noSetupFee: true,
-  },
-  {
-    id: "40",
-    name: "Windows VPS 40",
-    eurOld: 238.00,
-    eurNew: 218.40,
-    vcpu: "18 núcleos de vCPU",
-    ram: "96 GB de RAM",
-    storage: "350 GB NVMe ou SSD 700 GB",
-    snapshots: "3 Instantâneos",
-    speed: "Porta de 1 Gbit/s",
-    noSetupFee: true,
-  },
-];
+const windowsPlans: WindowsPlan[] = CLOUD_VPS_PLANS.map((plan) => ({
+  id: plan.id,
+  name: `${plan.name} Windows`,
+  eurOld: getCloudVpsWindowsOldMonthlyEuro(plan.id)!,
+  eurNew: getCloudVpsWindowsMonthlyEuro(plan.id, 24)!,
+  popular: plan.id === "6",
+  vcpu: plan.vcpu,
+  ram: plan.ram,
+  storage: plan.storage,
+  snapshots: plan.snapshots,
+  port: plan.port,
+  traffic: plan.traffic,
+}));
 
 const bullets = [
   "Ambiente Windows nativo e otimizado",
@@ -86,24 +55,46 @@ const bullets = [
 
 export function VpsWindowsPage() {
   const router = useRouter();
-  const [currentRate, setCurrentRate] = useState(5.86);
+  const [displayCurrency, setDisplayCurrency] = useState<VpsDisplayCurrency>("BRL");
+  const [currencyRates, setCurrencyRates] = useState({ eurToBrl: 5.86, eurToUsd: 1.08 });
 
   useEffect(() => {
     fetch("/api/currency/euro")
       .then(res => res.json())
       .then(data => {
-        if (data.rate) {
-          setCurrentRate(data.rate);
+        if (data.rate || data.usdRate) {
+          setCurrencyRates((rates) => ({
+            eurToBrl: data.rate || rates.eurToBrl,
+            eurToUsd: data.usdRate || rates.eurToUsd,
+          }));
         }
       })
       .catch(err => console.error("Error fetching rate:", err));
   }, []);
 
+  useEffect(() => {
+    const syncCurrency = () => setDisplayCurrency(readDisplayCurrency());
+    syncCurrency();
+    window.addEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
+    return () => window.removeEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
+  }, []);
+
   const formatBRL = (eur: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    const amount = convertVpsPriceFromEuro(eur, displayCurrency, currencyRates);
+    return new Intl.NumberFormat(displayCurrency === "BRL" ? "pt-BR" : "en-US", {
       style: "currency",
-      currency: "BRL",
-    }).format(eur * currentRate);
+      currency: displayCurrency,
+    }).format(amount);
+  };
+
+  const getPriceParts = (eur: number) => {
+    const amount = convertVpsPriceFromEuro(eur, displayCurrency, currencyRates);
+    const [whole, cents] = amount.toFixed(2).split(".");
+    const locale = displayCurrency === "BRL" ? "pt-BR" : "en-US";
+    const priceMain = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Number(whole));
+    const priceSymbol = displayCurrency === "BRL" ? "R$" : displayCurrency === "EUR" ? "€" : "US$";
+
+    return { priceSymbol, priceMain, priceCents: cents };
   };
 
   const gridCols = `minmax(14.5rem, 16rem) repeat(${windowsPlans.length}, minmax(0, 1fr))`;
@@ -154,11 +145,7 @@ export function VpsWindowsPage() {
           {/* Mobile plan cards */}
           <div className="xl:hidden mt-4 space-y-4 pb-4">
             {windowsPlans.map((p) => {
-              const formattedPrice = formatBRL(p.eurNew).replace(/ /g, " ");
-              const priceParts = formattedPrice.split(" ");
-              const priceSymbol = priceParts[0];
-              const priceValue = priceParts.slice(1).join("");
-              const [priceMain, priceCents] = priceValue.split(",");
+              const { priceSymbol, priceMain, priceCents } = getPriceParts(p.eurNew);
               return (
                 <div key={`m-${p.id}`} className={`relative rounded-xl border p-5 bg-[#01101A] backdrop-blur-md ${p.popular ? "border-sky-500" : "border-white/10"}`}>
                   {p.popular && (
@@ -174,8 +161,8 @@ export function VpsWindowsPage() {
                     <span className="text-xl font-bold text-sky-400">{priceCents}</span>
                     <span className="text-sm font-medium text-slate-400 ml-1">/mês</span>
                   </div>
-                  <p className="text-xs font-light text-slate-400">12 meses</p>
-                  <button onClick={() => router.push(`/vps-windows/configure/${p.id}`)} className={`${roboto.className} mt-3 block w-full rounded-md py-3 text-center text-[13px] font-bold uppercase tracking-wide transition-all ${p.popular ? "bg-sky-500 text-white shadow-lg shadow-sky-500/20 hover:bg-sky-400" : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"}`}>
+                  <p className="text-xs font-light text-slate-400">24 meses</p>
+                  <button onClick={() => router.push(`/vps-windows/configure/${p.id}?duration=24`)} className={`${roboto.className} mt-3 block w-full rounded-md py-3 text-center text-[13px] font-bold uppercase tracking-wide transition-all ${p.popular ? "bg-sky-500 text-white shadow-lg shadow-sky-500/20 hover:bg-sky-400" : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"}`}>
                     Começar agora →
                   </button>
                   <p className="mt-2 text-sm font-semibold text-sky-400 uppercase tracking-wide text-center">100% de cashback</p>
@@ -185,7 +172,8 @@ export function VpsWindowsPage() {
                       { label: "RAM", value: p.ram },
                       { label: "Armazenamento", value: p.storage },
                       { label: "Instantâneos", value: p.snapshots },
-                      { label: "Velocidade", value: p.speed },
+                      { label: "Velocidade da Porta", value: p.port },
+                      { label: "Tráfego", value: p.traffic },
                     ].map((spec) => (
                       <div key={spec.label} className="flex justify-between text-sm">
                         <span className="text-slate-400 font-medium">{spec.label}</span>
@@ -211,11 +199,7 @@ export function VpsWindowsPage() {
                 </p>
               </div>
               {windowsPlans.map((p, idx) => {
-                const formattedPrice = formatBRL(p.eurNew).replace(/\u00A0/g, " ");
-                const priceParts = formattedPrice.split(" ");
-                const priceSymbol = priceParts[0];
-                const priceValue = priceParts.slice(1).join("");
-                const [priceMain, priceCents] = priceValue.split(",");
+                const { priceSymbol, priceMain, priceCents } = getPriceParts(p.eurNew);
 
                 return (
                   <div
@@ -244,9 +228,9 @@ export function VpsWindowsPage() {
                       <span className="text-2xl font-bold text-sky-400 md:text-2xl">{priceCents}</span>
                       <span className="text-sm font-medium text-slate-400 ml-1">/mês</span>
                     </div>
-                    <p className="mt-0.5 text-sm font-light leading-snug text-slate-400">12 meses</p>
+                    <p className="mt-0.5 text-sm font-light leading-snug text-slate-400">24 meses</p>
                     <button
-                      onClick={() => router.push(`/vps-windows/configure/${p.id}`)}
+                      onClick={() => router.push(`/vps-windows/configure/${p.id}?duration=24`)}
                       className={`${roboto.className} mt-3 block w-full rounded-md py-3 text-center text-[13px] font-bold uppercase tracking-wide transition-all ${p.popular
                         ? "bg-sky-500 text-white shadow-lg shadow-sky-500/20 hover:bg-sky-400"
                         : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
@@ -263,16 +247,14 @@ export function VpsWindowsPage() {
               {[
                 { label: "Núcleos de vCPU", key: "vcpu" as const },
                 { label: "RAM (GB)", key: "ram" as const },
-                {
-                  label: "NVMe (GB) / SSD (GB)",
-                  key: "storage" as const,
-                },
+                { label: "Armazenamento", key: "storage" as const },
                 { label: "Instantâneos", key: "snapshots" as const },
-                { label: "Tráfego (entrada ilimitada)", key: "speed" as const },
+                { label: "Velocidade da Porta", key: "port" as const },
+                { label: "Tráfego (entrada ilimitada)", key: "traffic" as const },
               ].map((row) => (
                 <Fragment key={row.key}>
                   <div
-                    className={`xl:sticky xl:left-0 xl:z-20 flex flex-col justify-center border-l border-r border-t-0 border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md ${row.key === "speed" ? "rounded-bl-xl border-b" : ""
+                    className={`xl:sticky xl:left-0 xl:z-20 flex flex-col justify-center border-l border-r border-t-0 border-b-0 border-white/10 bg-[#000B12] p-3 text-left shadow-xl backdrop-blur-md ${row.key === "traffic" ? "rounded-bl-xl border-b" : ""
                       }`}
                   >
                     <span className="text-lg font-bold leading-tight text-white">{row.label}</span>
@@ -281,7 +263,7 @@ export function VpsWindowsPage() {
                     <div
                       key={`${row.key}-${p.id}`}
                       className={`flex items-center px-2 py-5 text-center text-xl font-bold leading-snug text-white border-l border-r border-t-0 border-b border-white/10 ${p.popular ? "border-sky-500 bg-[#01101A]" : "border-white/10 bg-[#01101A]"
-                        } ${row.key === "speed" ? "rounded-b-xl border-b-white/20" : ""}`}
+                        } ${row.key === "traffic" ? "rounded-b-xl border-b-white/20" : ""}`}
                     >
                       <span className="w-full">{p[row.key]}</span>
                     </div>

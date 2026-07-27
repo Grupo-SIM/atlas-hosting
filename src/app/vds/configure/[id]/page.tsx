@@ -39,6 +39,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { DISPLAY_CURRENCY_CHANGE_EVENT, readDisplayCurrency, type DisplayCurrency } from "@/lib/display-currency";
+import { convertVpsPriceFromEuro } from "@/lib/vps-price-display";
 
 // Base rate for fallback if API fails
 const FALLBACK_EUR_RATE = 5.86;
@@ -57,7 +59,7 @@ const getImagePrices = (id: string) => {
     return { ...base, windows: 70.00, windows_setup: 0 }; // 35.00 * 2
   }
   if (id === "m") {
-    return { ...base, windows: 90.00, windows_setup: 0 };
+    return { ...base, windows: 100.00, windows_setup: 0 };
   }
   if (id === "l") {
     return { ...base, windows: 110.00, windows_setup: 0 };
@@ -76,43 +78,43 @@ const getImagePrices = (id: string) => {
 const plansData: Record<string, any> = {
   "s": {
     name: "Cloud VDS S",
-    vcpu: "3 Núcleos Físicos",
+    vcpu: "6 Núcleos Virtuais",
     cpuModel: "AMD EPYC 7282 2.8 GHz",
     ram: "24 GB RAM",
     storage: "180 GB NVMe",
     storageNote: "Mais armazenamento disponível",
     port: "Porta de 250 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 68.80, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 65.36, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 5%", oldEur: 68.80 },
-      { id: "12", label: "12 meses", eur: 55.04, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 68.80 },
+      { id: "1", label: "1 mês", eur: 78.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "12", label: "12 meses", eur: 66.30, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 15%", oldEur: 78.00 },
+      { id: "24", label: "24 meses", eur: 62.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 78.00 },
     ],
     storageUpgrades: [
-      { id: "ssd-1tb", name: "1 TB SSD", eur: 25.00 },
-      { id: "ssd-2tb", name: "2 TB SSD", eur: 50.00 },
-      { id: "ssd-4tb", name: "4 TB SSD", eur: 100.00 },
+      { id: "ssd-1tb", name: "1 TB SSD", eur: 49.98 },
+      { id: "ssd-2tb", name: "2 TB SSD", eur: 78.18 },
+      { id: "ssd-4tb", name: "4 TB SSD", eur: 206.98 },
     ],
     locations: {
       best: [
-        { id: "eu", name: "União Europeia", latency: "149 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "91 ms", eur: 8.20, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "90 ms", eur: 26.60, recommended: true },
       ],
       europe: [
-        { id: "eu", name: "União Europeia", latency: "149 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "132 ms", eur: 8.20 },
+        { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "156 ms", eur: 18.00 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "120 ms", eur: 10.00 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "91 ms", eur: 8.20, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 10.00 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "121 ms", eur: 18.00 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "90 ms", eur: 26.60, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 22.30 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "346 ms", eur: 16.60 },
-        { id: "jp", name: "Ásia (Japão)", latency: "271 ms", eur: 16.60 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 16.60 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "305 ms", eur: 43.80 },
+        { id: "jp", name: "Ásia (Japão)", latency: "238 ms", eur: 44.60 },
+        { id: "in", name: "Ásia (Índia)", latency: "286 ms", eur: 41.20 },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "351 ms", eur: 16.60 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "312 ms", eur: 36.90 },
       ],
     },
     backupEur: 4.60,
@@ -129,43 +131,43 @@ const plansData: Record<string, any> = {
   },
   "m": {
     name: "Cloud VDS M",
-    vcpu: "4 Núcleos Físicos",
+    vcpu: "8 Núcleos Virtuais",
     cpuModel: "AMD EPYC 7282 2.8 GHz",
     ram: "32 GB RAM",
     storage: "240 GB NVMe",
     storageNote: "Mais armazenamento disponível",
     port: "Porta de 500 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 89.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 85.12, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 5%", oldEur: 89.60 },
-      { id: "12", label: "12 meses", eur: 71.68, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 89.60 },
+      { id: "1", label: "1 mês", eur: 98.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "12", label: "12 meses", eur: 83.30, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 15%", oldEur: 98.00 },
+      { id: "24", label: "24 meses", eur: 78.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 98.00 },
     ],
     storageUpgrades: [
-      { id: "ssd-1tb", name: "1 TB SSD", eur: 25.00 },
-      { id: "ssd-2tb", name: "2 TB SSD", eur: 50.00 },
-      { id: "ssd-4tb", name: "4 TB SSD", eur: 100.00 },
+      { id: "ssd-1tb", name: "1 TB SSD", eur: 49.98 },
+      { id: "ssd-2tb", name: "2 TB SSD", eur: 78.18 },
+      { id: "ssd-4tb", name: "4 TB SSD", eur: 206.98 },
     ],
     locations: {
       best: [
-        { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "90 ms", eur: 16.40, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 33.40, recommended: true },
       ],
       europe: [
-        { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "131 ms", eur: 16.40 },
+        { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "157 ms", eur: 22.60 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 20.00 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "90 ms", eur: 16.40, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 20.00 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 22.60 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 33.40, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 28.00 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "345 ms", eur: 33.20 },
-        { id: "jp", name: "Ásia (Japão)", latency: "270 ms", eur: 33.20 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 33.20 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "304 ms", eur: 55.00 },
+        { id: "jp", name: "Ásia (Japão)", latency: "239 ms", eur: 56.10 },
+        { id: "in", name: "Ásia (Índia)", latency: "363 ms", eur: 51.70 },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 33.20 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "310 ms", eur: 46.40 },
       ],
     },
     backupEur: 4.60,
@@ -182,43 +184,43 @@ const plansData: Record<string, any> = {
   },
   "l": {
     name: "Cloud VDS L",
-    vcpu: "6 Núcleos Físicos",
+    vcpu: "12 Núcleos Virtuais",
     cpuModel: "AMD EPYC 7282 2.8 GHz",
     ram: "48 GB RAM",
     storage: "360 GB NVMe",
     storageNote: "Mais armazenamento disponível",
     port: "Porta de 750 Mbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 128.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 121.60, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 5%", oldEur: 128.00 },
-      { id: "12", label: "12 meses", eur: 102.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 128.00 },
+      { id: "1", label: "1 mês", eur: 138.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "12", label: "12 meses", eur: 117.30, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 15%", oldEur: 138.00 },
+      { id: "24", label: "24 meses", eur: 110.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 138.00 },
     ],
     storageUpgrades: [
-      { id: "ssd-1tb", name: "1 TB SSD", eur: 25.00 },
-      { id: "ssd-2tb", name: "2 TB SSD", eur: 50.00 },
-      { id: "ssd-4tb", name: "4 TB SSD", eur: 100.00 },
+      { id: "ssd-1tb", name: "1 TB SSD", eur: 49.98 },
+      { id: "ssd-2tb", name: "2 TB SSD", eur: 78.18 },
+      { id: "ssd-4tb", name: "4 TB SSD", eur: 206.98 },
     ],
     locations: {
       best: [
-        { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 32.80, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 47.10, recommended: true },
       ],
       europe: [
-        { id: "eu", name: "União Europeia", latency: "148 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "138 ms", eur: 32.80 },
+        { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "156 ms", eur: 31.90 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 40.00 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 32.80, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "150 ms", eur: 40.00 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 31.90 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 47.10, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 39.50 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "347 ms", eur: 66.40 },
-        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", eur: 66.40 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 66.40 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "333 ms", eur: 77.40 },
+        { id: "jp", name: "Ásia (Japão)", latency: "318 ms", eur: 78.90 },
+        { id: "in", name: "Ásia (Índia)", latency: "287 ms", eur: 72.90 },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 66.40 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "310 ms", eur: 65.30 },
       ],
     },
     backupEur: 4.60,
@@ -235,43 +237,43 @@ const plansData: Record<string, any> = {
   },
   "xl": {
     name: "Cloud VDS XL",
-    vcpu: "8 Núcleos Físicos",
+    vcpu: "16 Núcleos Virtuais",
     cpuModel: "AMD EPYC 7282 2.8 GHz",
     ram: "64 GB RAM",
     storage: "480 GB NVMe",
     storageNote: "Mais armazenamento disponível",
     port: "Porta de 1 Gbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 164.80, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 156.56, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 5%", oldEur: 164.80 },
-      { id: "12", label: "12 meses", eur: 131.84, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 164.80 },
+      { id: "1", label: "1 mês", eur: 188.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "12", label: "12 meses", eur: 159.80, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 15%", oldEur: 188.00 },
+      { id: "24", label: "24 meses", eur: 150.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 188.00 },
     ],
     storageUpgrades: [
-      { id: "ssd-1tb", name: "1 TB SSD", eur: 25.00 },
-      { id: "ssd-2tb", name: "2 TB SSD", eur: 50.00 },
-      { id: "ssd-4tb", name: "4 TB SSD", eur: 100.00 },
+      { id: "ssd-1tb", name: "1 TB SSD", eur: 49.98 },
+      { id: "ssd-2tb", name: "2 TB SSD", eur: 78.18 },
+      { id: "ssd-4tb", name: "4 TB SSD", eur: 206.98 },
     ],
     locations: {
       best: [
-        { id: "eu", name: "União Europeia", latency: "147 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 49.20, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 64.00, recommended: true },
       ],
       europe: [
-        { id: "eu", name: "União Europeia", latency: "147 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "138 ms", eur: 49.20 },
+        { id: "eu", name: "União Europeia", latency: "186 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "156 ms", eur: 42.00 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 60.00 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 49.20, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "149 ms", eur: 60.00 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "119 ms", eur: 42.00 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 64.00, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 52.00 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "347 ms", eur: 99.60 },
-        { id: "jp", name: "Ásia (Japão)", latency: "269 ms", eur: 99.60 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 99.60 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "335 ms", eur: 104.00 },
+        { id: "jp", name: "Ásia (Japão)", latency: "319 ms", eur: 106.00 },
+        { id: "in", name: "Ásia (Índia)", latency: "286 ms", eur: 98.00 },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "350 ms", eur: 99.60 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "310 ms", eur: 88.00 },
       ],
     },
     backupEur: 4.60,
@@ -288,43 +290,45 @@ const plansData: Record<string, any> = {
   },
   "xxl": {
     name: "Cloud VDS XXL",
-    vcpu: "12 Núcleos Físicos",
+    vcpu: "24 Núcleos Virtuais",
     cpuModel: "AMD EPYC 7282 2.8 GHz",
     ram: "96 GB RAM",
     storage: "720 GB NVMe",
     storageNote: "Mais armazenamento disponível",
     port: "Porta de 1 Gbit/s",
     durations: [
-      { id: "1", label: "1 mês", eur: 238.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
-      { id: "6", label: "6 meses", eur: 226.10, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 5%", oldEur: 238.00 },
-      { id: "12", label: "12 meses", eur: 190.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 238.00 },
+      { id: "1", label: "1 mês", eur: 278.00, setupEur: 0, setupFee: "Sem taxa de instalação", discount: null },
+      { id: "12", label: "12 meses", eur: 236.30, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 15%", oldEur: 278.00 },
+      { id: "24", label: "24 meses", eur: 222.40, setupEur: 0, setupFee: "Sem taxa de instalação", discount: "ECONOMIZE 20%", oldEur: 278.00 },
     ],
+    // Storage upgrade prices not screenshotted for XXL specifically — carried over from
+    // S/M/L/XL, which were all confirmed identical (flat across the VDS line).
     storageUpgrades: [
-      { id: "ssd-1tb", name: "1 TB SSD", eur: 25.00 },
-      { id: "ssd-2tb", name: "2 TB SSD", eur: 50.00 },
-      { id: "ssd-4tb", name: "4 TB SSD", eur: 100.00 },
+      { id: "ssd-1tb", name: "1 TB SSD", eur: 49.98 },
+      { id: "ssd-2tb", name: "2 TB SSD", eur: 78.18 },
+      { id: "ssd-4tb", name: "4 TB SSD", eur: 206.98 },
     ],
     locations: {
       best: [
-        { id: "eu", name: "União Europeia", latency: "146 ms", price: "Livre" },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 82.00, recommended: true },
+        { id: "eu", name: "União Europeia", latency: "185 ms", price: "Livre" },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 94.00, recommended: true },
       ],
       europe: [
-        { id: "eu", name: "União Europeia", latency: "146 ms", price: "Livre" },
-        { id: "uk", name: "Reino Unido", latency: "139 ms", eur: 82.00 },
+        { id: "eu", name: "União Europeia", latency: "185 ms", price: "Livre" },
+        { id: "uk", name: "Reino Unido", latency: "156 ms", eur: 64.00 },
       ],
       america: [
-        { id: "us-central", name: "Estados Unidos (Central)", latency: "117 ms", eur: 100.00 },
-        { id: "us-east", name: "Estados Unidos (Leste)", latency: "88 ms", eur: 82.00, recommended: true },
-        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "148 ms", eur: 100.00 },
+        { id: "us-central", name: "Estados Unidos (Central)", latency: "118 ms", eur: 64.00 },
+        { id: "us-east", name: "Estados Unidos (Leste)", latency: "89 ms", eur: 94.00, recommended: true },
+        { id: "us-west", name: "Estados Unidos (Oeste)", latency: "147 ms", eur: 78.00 },
       ],
       asia: [
-        { id: "sg", name: "Ásia (Singapura)", latency: "348 ms", eur: 166.00 },
-        { id: "jp", name: "Ásia (Japão)", latency: "268 ms", eur: 166.00 },
-        { id: "in", name: "Ásia (Índia)", latency: "N/A", eur: 166.00 },
+        { id: "sg", name: "Ásia (Singapura)", latency: "337 ms", eur: 156.00 },
+        { id: "jp", name: "Ásia (Japão)", latency: "320 ms", eur: 158.00 },
+        { id: "in", name: "Ásia (Índia)", latency: "286 ms", eur: 146.00 },
       ],
       australia: [
-        { id: "au-sydney", name: "Austrália (Sydney)", latency: "349 ms", eur: 166.00 },
+        { id: "au-sydney", name: "Austrália (Sydney)", latency: "310 ms", eur: 130.00 },
       ],
     },
     backupEur: 4.60,
@@ -407,6 +411,8 @@ export default function VdsConfigurePage() {
   const id = params?.id as string;
 
   const [currentRate, setCurrentRate] = useState(FALLBACK_EUR_RATE);
+  const [usdRate, setUsdRate] = useState(1.08);
+  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("BRL");
   const [dynamicImages, setDynamicImages] = useState(images);
 
   const plan = plansData[id as keyof typeof plansData] || plansData["s"];
@@ -415,10 +421,14 @@ export default function VdsConfigurePage() {
   const currentImagePrices = getImagePrices(id);
 
   const formatBRL = (eur: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    const amount = convertVpsPriceFromEuro(eur, displayCurrency, {
+      eurToBrl: currentRate,
+      eurToUsd: usdRate,
+    });
+    return new Intl.NumberFormat(displayCurrency === "BRL" ? "pt-BR" : "en-US", {
       style: "currency",
-      currency: "BRL",
-    }).format(eur * currentRate);
+      currency: displayCurrency,
+    }).format(amount);
   };
 
   const formatBRLPerMonth = (eur: number) => {
@@ -546,8 +556,18 @@ export default function VdsConfigurePage() {
         if (data.rate) {
           setCurrentRate(data.rate);
         }
+        if (data.usdRate) {
+          setUsdRate(data.usdRate);
+        }
       })
       .catch(err => console.error("Error fetching rate:", err));
+  }, []);
+
+  useEffect(() => {
+    const syncCurrency = () => setDisplayCurrency(readDisplayCurrency());
+    syncCurrency();
+    window.addEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
+    return () => window.removeEventListener(DISPLAY_CURRENCY_CHANGE_EVENT, syncCurrency);
   }, []);
 
   useLayoutEffect(() => {
@@ -648,14 +668,15 @@ export default function VdsConfigurePage() {
         items.push({ label: `Espaço de Backup FTP: ${backupSpace.toUpperCase()}${qty > 1 ? ` × ${qty}` : ""}`, price: p * currentRate * durationMonths * qty });
       }
 
-      if (objectStorage !== "none") {
-        const p = (plan.objectStoragePrices[objectStorage] || 0);
-        items.push({ label: `Object Storage: ${objectStorage.toUpperCase()}${qty > 1 ? ` × ${qty}` : ""}`, price: p * currentRate * durationMonths * qty });
-      }
+      // Object Storage and Server Management discontinued by Contabo — commented out (not deleted) per request
+      // if (objectStorage !== "none") {
+      //   const p = (plan.objectStoragePrices[objectStorage] || 0);
+      //   items.push({ label: `Object Storage: ${objectStorage.toUpperCase()}${qty > 1 ? ` × ${qty}` : ""}`, price: p * currentRate * durationMonths * qty });
+      // }
 
-      if (serverManagement === "managed") {
-        items.push({ label: `Gerenciamento de Servidor${qty > 1 ? ` × ${qty}` : ""}`, price: plan.managedEur * currentRate * durationMonths * qty });
-      }
+      // if (serverManagement === "managed") {
+      //   items.push({ label: `Gerenciamento de Servidor${qty > 1 ? ` × ${qty}` : ""}`, price: plan.managedEur * currentRate * durationMonths * qty });
+      // }
 
       if (monitoring === "full") {
         items.push({ label: `Monitoramento Completo${qty > 1 ? ` × ${qty}` : ""}`, price: plan.monitoringEur * currentRate * durationMonths * qty });
@@ -1148,8 +1169,8 @@ export default function VdsConfigurePage() {
                           </Select>
                         </div>
                       </div>
-                      {/* Object Storage */}
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                      {/* Object Storage — Contabo discontinued this add-on, commented out (not deleted) per request */}
+                      {/* <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2"><span className="text-base font-black text-white uppercase tracking-tight">Armazenamento de Objetos</span></div>
                         <div className="md:col-span-9">
                           <Select value={objectStorage} onValueChange={setObjectStorage}>
@@ -1163,9 +1184,9 @@ export default function VdsConfigurePage() {
                             </SelectContent>
                           </Select>
                         </div>
-                      </div>
-                      {/* Management */}
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                      </div> */}
+                      {/* Management — Contabo discontinued this add-on, commented out (not deleted) per request */}
+                      {/* <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2"><span className="text-base font-black text-white uppercase tracking-tight">Gerenciamento</span></div>
                         <div className="md:col-span-9">
                           <Select value={serverManagement} onValueChange={setServerManagement}>
@@ -1176,7 +1197,7 @@ export default function VdsConfigurePage() {
                             </SelectContent>
                           </Select>
                         </div>
-                      </div>
+                      </div> */}
                       {/* Monitoring */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2"><span className="text-base font-black text-white uppercase tracking-tight">Monitoramento</span></div>
