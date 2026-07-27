@@ -71,7 +71,7 @@ services:
       - SMTP_FROM_EMAIL=noreply@jbmidia.com
       - SMTP_HOST=177.154.190.249
       - SMTP_PASSWORD=
-      - SMTP_PASSWORD_BASE64=ajBNJHM1ZTU1
+      - SMTP_PASSWORD_BASE64=MG01Szg2YURxSHg0
       - SMTP_PORT=465
       - SMTP_SECURE=true
       - SMTP_USER=noreply@jbmidia.com
@@ -87,26 +87,15 @@ services:
       - AFFILIATE_WITHDRAWAL_FEE=2
       - ATLAS_SIMPAY_INTERNAL_TOKEN=91b324f6aa36368c536b4f1f9e75f7565b385737b1aa3a4adf07b8c7d99300c9
       - CRON_SECRET=EUt18pjzZD6z
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => { process.exit(r.statusCode >= 200 && r.statusCode < 400 ? 0 : 1) }).on('error', () => process.exit(1))"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
+      - INTERNAL_SERVICE_TOKEN=91b324f6aa36368c536b4f1f9e75f7565b385737b1aa3a4adf07b8c7d99300c9
     deploy:
       replicas: 1
-      update_config:
-        parallelism: 1
-        order: start-first
-        failure_action: rollback
-        monitor: 30s
       placement:
         constraints:
           - node.role == manager
       restart_policy:
         condition: on-failure
         delay: 5s
-        max_attempts: 3
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.atlas-hosting.entrypoints=websecure"
@@ -124,6 +113,18 @@ services:
       - sh
       - -c
       - "while true; do wget -O- --post-data='' --header='Authorization: Bearer EUt18pjzZD6z' https://atlashosting.com.br/api/internal/vps-subscriptions/renew; sleep 86400; done"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  expiry-notifications-cron:
+    image: alpine:latest
+    networks:
+      - externa
+    command:
+      - sh
+      - -c
+      - "while true; do wget -O- --post-data='' --header='Authorization: Bearer EUt18pjzZD6z' https://atlashosting.com.br/api/internal/expiry-notifications; sleep 86400; done"
     deploy:
       replicas: 1
       restart_policy:

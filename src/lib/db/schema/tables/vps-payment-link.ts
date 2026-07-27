@@ -13,6 +13,7 @@ export const pgVpsPaymentLink = pgTable("vps_payment_links", {
   intervalMonths: integer("interval_months").notNull(),
   amountBrl: doublePrecision("amount_brl").notNull(),
   allowPix: boolean("allow_pix").notNull().default(false),
+  allowBoleto: boolean("allow_boleto").notNull().default(false),
   /** Se preenchido, só essa conta pode pagar o link. Se nulo, é genérico (qualquer um/guest). */
   linkedOrgId: uuid("linked_org_id").references(() => pgOrganization.id),
   linkedUserId: uuid("linked_user_id").references(() => pgUser.id),

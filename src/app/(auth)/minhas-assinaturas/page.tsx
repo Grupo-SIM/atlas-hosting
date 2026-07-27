@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toBrl } from "@/lib/utils";
 import { Metadata } from "next";
-import { Server, Clock, CreditCard, QrCode } from "lucide-react";
+import { Server, Clock, CreditCard, QrCode, Barcode } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Minhas Assinaturas — Atlas Hosting" };
@@ -50,12 +50,20 @@ function StatusBadge({ status }: { status: string }) {
   return <Badge variant={variant}>{label}</Badge>;
 }
 
-function PaymentBadge({ method }: { method: "credit_card" | "pix" }) {
+function PaymentBadge({ method }: { method: "credit_card" | "pix" | "boleto" }) {
   if (method === "pix") {
     return (
       <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30">
         <QrCode className="h-3 w-3" />
         PIX
+      </Badge>
+    );
+  }
+  if (method === "boleto") {
+    return (
+      <Badge variant="outline" className="gap-1 text-amber-600 border-amber-500/30">
+        <Barcode className="h-3 w-3" />
+        Boleto
       </Badge>
     );
   }
@@ -80,7 +88,7 @@ export default async function MyVpsSubscriptionsPage() {
     planType: s.planType as keyof typeof PLAN_TYPE_LABEL,
     intervalMonths: s.intervalMonths,
     amountBrl: s.amountBrl,
-    paymentMethod: (s.paymentMethod ?? ((s.config as any)?.cardToken ? "credit_card" : "pix")) as "credit_card" | "pix",
+    paymentMethod: (s.paymentMethod ?? ((s.config as any)?.cardToken ? "credit_card" : "pix")) as "credit_card" | "pix" | "boleto",
     status: s.status as "active" | "cancelled" | "failed" | "paused",
     nextChargeDate: s.nextChargeDate,
   }));

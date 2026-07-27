@@ -1,7 +1,7 @@
-import { getVpsPlanSubscriptionsAction, getPixAllowAllDurationsAction } from "./actions";
+import { getVpsPlanSubscriptionsAction, getPixAllowAllDurationsAction, getBoletoEnabledAction } from "./actions";
 import { BackfillButton } from "./BackfillButton";
 import { SubscriptionActionsCell } from "./SubscriptionActionsCell";
-import { PixSettingsCard } from "./PixSettingsCard";
+import { PaymentSettingsCard } from "./PaymentSettingsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import {
   CreditCard,
   QrCode,
   Link2,
+  Barcode,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -53,12 +54,20 @@ function daysUntil(date: Date) {
   return Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
 }
 
-function PaymentBadge({ method }: { method: "credit_card" | "pix" }) {
+function PaymentBadge({ method }: { method: "credit_card" | "pix" | "boleto" }) {
   if (method === "pix") {
     return (
       <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30">
         <QrCode className="h-3 w-3" />
         PIX
+      </Badge>
+    );
+  }
+  if (method === "boleto") {
+    return (
+      <Badge variant="outline" className="gap-1 text-amber-600 border-amber-500/30">
+        <Barcode className="h-3 w-3" />
+        Boleto
       </Badge>
     );
   }
@@ -87,6 +96,7 @@ export default async function AdminVpsPlansPage() {
 
   const plans = await getVpsPlanSubscriptionsAction();
   const pixAllowAllDurations = await getPixAllowAllDurationsAction();
+  const boletoEnabled = await getBoletoEnabledAction();
 
   const active   = plans.filter((p) => p.status === "active").length;
   const paused   = plans.filter((p) => p.status === "paused").length;
@@ -169,7 +179,10 @@ export default async function AdminVpsPlansPage() {
         </Card>
       </div>
 
-      <PixSettingsCard initialEnabled={pixAllowAllDurations} />
+      <PaymentSettingsCard
+        initialPixAllowAllDurations={pixAllowAllDurations}
+        initialBoletoEnabled={boletoEnabled}
+      />
 
       <Card>
         <CardHeader>

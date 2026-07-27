@@ -45,6 +45,7 @@ export function PaymentLinkForm({
   const [customerId, setCustomerId] = useState("none");
   const [customerOpen, setCustomerOpen] = useState(false);
   const [allowPix, setAllowPix] = useState(false);
+  const [allowBoleto, setAllowBoleto] = useState(false);
 
   const selectedPlan = plans.find((p) => `${p.productType}:${p.planId}` === planKey);
   const selectedCustomer = customers.find((c) => c.id === customerId);
@@ -200,6 +201,15 @@ export function PaymentLinkForm({
         <div>
           <Label htmlFor="allowPix" className="cursor-pointer">Permitir PIX</Label>
           <p className="text-xs text-muted-foreground">Desligado = só cartão de crédito.</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Switch id="allowBoleto" checked={allowBoleto} onCheckedChange={setAllowBoleto} />
+        <input type="hidden" name="allowBoleto" value={allowBoleto ? "on" : ""} />
+        <div>
+          <Label htmlFor="allowBoleto" className="cursor-pointer">Permitir Boleto</Label>
+          <p className="text-xs text-muted-foreground">Desligado = boleto indisponível neste link.</p>
         </div>
       </div>
 

@@ -10,6 +10,8 @@ import {
   type CreateRecurrentPaymentParams,
   type CreateSubscriptionParams,
   type PayloadWebhook,
+  type CreateBoletoTransactionParams,
+  type DomTransaction,
 } from "./types";
 
 export class DomApi {
@@ -568,6 +570,85 @@ export class DomApi {
     } catch (error) {
       console.error("Error fetching customer from DOM:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Cria um boleto via POST /transactions (API moderna de transação avulsa da DOM —
+   * distinta da API de assinaturas/recorrência usada no resto desta classe).
+   * https://dom-pagamentos.readme.io/reference/criar-uma-transacao
+   */
+  public async createBoletoTransaction({
+    codExternal,
+    value,
+    description,
+    customer,
+    boletoDueDays = 3,
+    instructions,
+    postbackUrl,
+  }: CreateBoletoTransactionParams): Promise<DomTransaction> {
+    const payload = {
+      cod_external: codExternal,
+      customer,
+      payment: {
+        total: value,
+        payment_method: "boleto" as const,
+        boleto: {
+          boleto_due_days: boletoDueDays,
+          ...(instructions ? { instructions } : {}),
+        },
+      },
+      metadata: description,
+      postbackUrl: postbackUrl ?? `${process.env.PUBLIC_URL}/webhook/dom`,
+    };
+
+    console.log(`[DOM][createBoletoTransaction] Criando boleto`, {
+      codExternal,
+      value,
+      description,
+    });
+
+    try {
+      const { data } = await this.api.post<DomTransaction>("transactions", payload);
+      console.log(`[DOM][createBoletoTransaction] Boleto criado com SUCESSO: ${data.id}`);
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(`[DOM][createBoletoTransaction] ERRO na DOM API:`, {
+          status: error.response?.status,
+          data: JSON.stringify(error.response?.data, null, 2),
+          message: error.message,
+        });
+      } else {
+        console.error(`[DOM][createBoletoTransaction] ERRO inesperado:`, error);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Consulta o status de uma transação avulsa (boleto/pix/cartão) via GET /transactions/{id}.
+   * https://dom-pagamentos.readme.io/reference/consultar-transacao
+   */
+  public async getTransaction(transactionId: string): Promise<DomTransaction> {
+    const { data } = await this.api.get<DomTransaction>(`transactions/${transactionId}`);
+    return data;
+  }
+
+  /**
+   * Verifica a assinatura JWT (HS256, segredo = API token) de um webhook de
+   * transação avulsa (CHARGE-*). O JWT decodificado só contém {id, exp} — o "id"
+   * deve bater com o id da transação no corpo do webhook, senão é inválido/adulterado.
+   * https://dom-pagamentos.readme.io/reference/webhook-verificacao-de-assinatura
+   */
+  public verifyChargeSignature(signature: string): { id: string; exp: number } | null {
+    try {
+      return jwt.verify(signature, this.tokenApi, {
+        algorithms: ["HS256"],
+      }) as { id: string; exp: number };
+    } catch (error) {
+      console.error("[DOM][verifyChargeSignature] Assinatura inválida:", error);
+      return null;
     }
   }
 

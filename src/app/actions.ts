@@ -1336,6 +1336,163 @@ export async function initiateCheckoutPix(
   }
 }
 
+export type InitiateCheckoutBoletoPayload = InitiateCheckoutPixPayload;
+
+/**
+ * Gera um boleto via DOM Pagamentos (API de transação avulsa, /transactions —
+ * distinta da Simpay usada pra cartão/PIX). Boleto não é liberado por padrão;
+ * ver isBoletoEligibleForVpsConfig.
+ */
+export async function initiateCheckoutBoleto(
+  payload: InitiateCheckoutBoletoPayload
+): Promise<
+  | { status: "error"; message: string }
+  | { status: "success"; boletoUrl: string; boletoDigitableLine: string; transactionId: string }
+> {
+  const user = await getUser();
+  const snap = buildPixCheckoutSnapshot(payload);
+  if (!snap.ok) {
+    return { status: "error", message: snap.message };
+  }
+  const billing = snap.billing;
+
+  const invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, payload.invoiceId),
+  });
+
+  if (!invoice || invoice.orgId !== user.organization.id) {
+    return { status: "error", message: "Fatura não encontrada." };
+  }
+
+  if (invoice.status === "paid") {
+    return { status: "error", message: "Esta fatura já foi paga." };
+  }
+
+  if (invoice.type === "vps") {
+    const meta = invoice.metadata as any;
+    if (!(await isBoletoEligibleForVpsConfig(meta?.config || {}))) {
+      return { status: "error", message: "Boleto não disponível para esta cobrança." };
+    }
+  } else if (!(await isBoletoEnabledGlobally())) {
+    return { status: "error", message: "Boleto não disponível no momento." };
+  }
+
+  const docDigits = billing.document.replace(/\D/g, "");
+  const zipDigits = billing.address.zipCode.replace(/\D/g, "");
+
+  try {
+    const tx = await domApi.createBoletoTransaction({
+      codExternal: invoice.id,
+      value: invoice.amount,
+      description: atlasSimpayInvoiceDescription(invoice.reference),
+      customer: {
+        name: `${billing.firstName} ${billing.lastName}`.trim(),
+        email: user.email,
+        mobile_phone: billing.phoneNumber.replace(/\D/g, ""),
+        document: docDigits,
+        document_type: docDigits.length === 11 ? "CPF" : "CNPJ",
+        address: {
+          street: billing.address.street,
+          number: billing.address.number,
+          neighborhood: billing.address.neighborhood,
+          zip_code: zipDigits,
+          city: billing.address.city,
+          state: billing.address.state,
+          uf: billing.address.state,
+        },
+      },
+    });
+
+    if (!tx.boleto_url || !tx.boleto_digitable_line) {
+      return { status: "error", message: "Boleto criado sem os dados de pagamento. Tente novamente." };
+    }
+
+    const mergedMeta: DomainRegisterInvoiceOptions = {
+      ...(invoice.metadata as DomainRegisterInvoiceOptions),
+      domTransactionId: tx.id,
+      boletoUrl: tx.boleto_url,
+      boletoDigitableLine: tx.boleto_digitable_line,
+      pixCheckout: billing, // reaproveita o mesmo snapshot de cobrança do PIX
+    } as any;
+
+    await db
+      .update(pgInvoice)
+      .set({ metadata: mergedMeta, status: "pending" })
+      .where(eq(pgInvoice.id, invoice.id));
+
+    return {
+      status: "success",
+      boletoUrl: tx.boleto_url,
+      boletoDigitableLine: tx.boleto_digitable_line,
+      transactionId: tx.id,
+    };
+  } catch (err) {
+    console.error("[CHECKOUT-BOLETO] initiate:", err);
+    return {
+      status: "error",
+      message: "Não foi possível gerar o boleto no momento. Tente novamente em instantes.",
+    };
+  }
+}
+
+/** Polling do status do boleto (DOM). Quando "paid", marca como pago e processa em background. */
+export async function syncCheckoutBoletoPayment(
+  invoiceId: string
+): Promise<{ status: "PENDING" | "COMPLETED" }> {
+  let user = await getOptionalUser();
+
+  const invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, invoiceId),
+    with: { user: { with: { organization: true } } },
+  });
+
+  if (!invoice) return { status: "PENDING" };
+
+  if (!user) {
+    user = invoice.user as any;
+  }
+
+  if (!user || invoice.orgId !== user.organization.id) {
+    return { status: "PENDING" };
+  }
+
+  if (invoice.status === "paid") {
+    return { status: "COMPLETED" };
+  }
+
+  const meta = invoice.metadata as any;
+  const transactionId = meta?.domTransactionId;
+  const billing = meta?.pixCheckout;
+
+  if (!transactionId || !billing) {
+    return { status: "PENDING" };
+  }
+
+  try {
+    const tx = await domApi.getTransaction(transactionId);
+    if (tx.status !== "paid") {
+      return { status: "PENDING" };
+    }
+  } catch (err) {
+    console.error("[CHECKOUT-BOLETO] sync:", err);
+    return { status: "PENDING" };
+  }
+
+  await db
+    .update(pgInvoice)
+    .set({ status: "paid" })
+    .where(eq(pgInvoice.id, invoice.id));
+
+  after(async () => {
+    await triggerCommissionIfApplicable(invoice as any).catch(() => {});
+    await processInvoiceAfterPayment(invoice, user, billing);
+    await handleVpsNonCardPaid(invoice as Invoice, user, "boleto");
+    await triggerPurchaseNotifications(invoice, user, { ...billing, paymentMethod: "boleto" });
+  });
+
+  return { status: "COMPLETED" };
+}
+
 /**
  * Consulta a Simpay para saber se o pagamento PIX foi realmente concluído.
  * Fonte da verdade do gateway — nunca confiar apenas no cliente/SSE.
@@ -1415,7 +1572,7 @@ export async function markPixPaymentComplete(
     if (billing) {
       await processInvoiceAfterPayment(invoice, user, billing);
     }
-    await handleVpsPixPaid(invoice as Invoice, user);
+    await handleVpsNonCardPaid(invoice as Invoice, user, "pix");
     await triggerPurchaseNotifications(invoice, user, billing ?? undefined);
   });
 
@@ -1426,7 +1583,7 @@ export async function markPixPaymentComplete(
 export async function syncCheckoutPixPayment(
   invoiceId: string
 ): Promise<{ status: "PENDING" | "COMPLETED" }> {
-  let user = await getUser();
+  let user = await getOptionalUser();
 
   const invoice = await db.query.pgInvoice.findFirst({
     where: eq(pgInvoice.id, invoiceId),
@@ -1468,7 +1625,7 @@ export async function syncCheckoutPixPayment(
     after(async () => {
       await triggerCommissionIfApplicable(invoice as any).catch(() => {});
       await processInvoiceAfterPayment(invoice, user, billing);
-      await handleVpsPixPaid(invoice as Invoice, user);
+      await handleVpsNonCardPaid(invoice as Invoice, user, "pix");
       await triggerPurchaseNotifications(invoice, user, { ...billing, paymentMethod: "pix" });
     });
 
@@ -1539,16 +1696,35 @@ export async function isPixEligibleForVpsConfig(config: any): Promise<boolean> {
   return isPixEligibleForVpsDuration(intervalMonths);
 }
 
+/** Boleto fica desligado por padrão. O admin libera globalmente em /admin/vps-plans. */
+export async function isBoletoEnabledGlobally(): Promise<boolean> {
+  const systemConfig = await db.query.pgSystemConfig.findFirst();
+  return systemConfig?.boletoEnabled ?? false;
+}
+
+/**
+ * Links de pagamento customizados podem liberar boleto individualmente
+ * (config.customLinkAllowBoleto), sobrepondo a chave global do admin.
+ */
+export async function isBoletoEligibleForVpsConfig(config: any): Promise<boolean> {
+  const override = config?.customLinkAllowBoleto;
+  if (typeof override === "boolean") return override;
+  if (typeof override === "string" && (override === "true" || override === "false")) return override === "true";
+
+  return isBoletoEnabledGlobally();
+}
+
 async function createVpsSubscriptionIfNeeded(
   invoice: Invoice,
   user: { id: string; organization: { id: string } },
-  opts: { paymentMethod: "credit_card" | "pix"; cardToken?: string }
+  opts: { paymentMethod: "credit_card" | "pix" | "boleto"; cardToken?: string }
 ): Promise<void> {
   if (invoice.type !== "vps") return;
   const meta = invoice.metadata as any;
   const config = meta?.config || {};
   const intervalMonths: number = parseInt(config.duration || "1", 10);
   if (opts.paymentMethod === "pix" && !(await isPixEligibleForVpsConfig(config))) return;
+  if (opts.paymentMethod === "boleto" && !(await isBoletoEligibleForVpsConfig(config))) return;
   const planType = (config.type === "vds" ? "vds" : config.type === "storage-vps" ? "storage-vps" : config.type === "vps-windows" ? "vps-windows" : "vps");
   const nextChargeDate = new Date();
   nextChargeDate.setMonth(nextChargeDate.getMonth() + intervalMonths);
@@ -1580,9 +1756,17 @@ async function createVpsSubscriptionIfNeeded(
  * Conclui o pagamento PIX de uma fatura VPS: renova a assinatura existente
  * (faturas isRenewal) ou cria uma nova assinatura PIX (compra anual).
  */
-async function handleVpsPixPaid(
+/**
+ * Confirma o lado "assinatura VPS" de uma fatura paga por um método sem cobrança
+ * automática recorrente (PIX ou boleto — nenhum dos dois tem token de cartão pra
+ * cobrar de novo sozinho). Se for renovação de assinatura existente, avança a
+ * data da próxima cobrança; se for compra nova, cria a assinatura (pausada, à
+ * espera de renovação manual — mesmo comportamento que já existia pro PIX).
+ */
+async function handleVpsNonCardPaid(
   invoice: Invoice,
-  user: { id: string; organization: { id: string } }
+  user: { id: string; organization: { id: string } },
+  paymentMethod: "pix" | "boleto"
 ): Promise<void> {
   if (invoice.type !== "vps") return;
   const meta = invoice.metadata as any;
@@ -1609,14 +1793,14 @@ async function handleVpsPixPaid(
           updatedAt: new Date(),
         })
         .where(eq(pgVpsSubscription.id, sub.id));
-      console.log(`[SUBSCRIPTION] ✓ Renovação PIX da assinatura ${sub.id} — próxima cobrança: ${nextChargeDate.toISOString()}`);
+      console.log(`[SUBSCRIPTION] ✓ Renovação ${paymentMethod.toUpperCase()} da assinatura ${sub.id} — próxima cobrança: ${nextChargeDate.toISOString()}`);
     } catch (err) {
-      console.error("[SUBSCRIPTION] ✗ Erro ao renovar assinatura VPS (PIX):", err);
+      console.error(`[SUBSCRIPTION] ✗ Erro ao renovar assinatura VPS (${paymentMethod}):`, err);
     }
     return;
   }
 
-  await createVpsSubscriptionIfNeeded(invoice, user, { paymentMethod: "pix" });
+  await createVpsSubscriptionIfNeeded(invoice, user, { paymentMethod });
 }
 
 export async function completeCheckout(
@@ -3184,8 +3368,8 @@ export async function createVpsRenewalInvoice(subscriptionId: string): Promise<
     return { status: "error", message: "Sem permissão para renovar esta assinatura." };
   }
 
-  if (sub.paymentMethod !== "pix") {
-    return { status: "error", message: "Renovação manual disponível apenas para assinaturas PIX." };
+  if (sub.paymentMethod !== "pix" && sub.paymentMethod !== "boleto") {
+    return { status: "error", message: "Renovação manual disponível apenas para assinaturas PIX ou boleto." };
   }
 
   // Elegível quando a vencer (≤15 dias) ou já pausada/vencida.

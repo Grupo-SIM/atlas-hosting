@@ -176,3 +176,75 @@ export interface PayloadWebhook {
     external_reference?: string;
   };
 }
+
+// --- POST /transactions (boleto/pix/credit_card one-time payment) ---
+// https://dom-pagamentos.readme.io/reference/criar-uma-transacao
+
+export interface TransactionCustomerAddress {
+  street: string;
+  number: string;
+  neighborhood: string;
+  zip_code: string;
+  city: string;
+  state: string;
+  uf: string;
+  complement?: string;
+}
+
+export interface TransactionCustomer {
+  name: string;
+  email: string;
+  mobile_phone: string;
+  document: string;
+  document_type: "CPF" | "CNPJ";
+  address: TransactionCustomerAddress;
+}
+
+export interface CreateBoletoTransactionParams {
+  /** Referência da fatura Atlas — devolvida como cod_external no webhook/consulta. */
+  codExternal: string;
+  /** Valor total em reais (ex: 49.90) — a DOM espera o campo `total` no payload de pagamento. */
+  value: number;
+  description: string;
+  customer: TransactionCustomer;
+  boletoDueDays?: number;
+  instructions?: string[];
+  postbackUrl?: string;
+}
+
+export interface DomTransaction {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  cod_external?: string;
+  amount: number;
+  status:
+    | "pending"
+    | "authorized"
+    | "captured"
+    | "paid"
+    | "failed"
+    | "not_authorized"
+    | "expired"
+    | "refunded"
+    | "cancelled_capture"
+    | "chargeback"
+    | "in_mediation"
+    | "pending_refund"
+    | "revision_paid"
+    | "dispute_pending";
+  payment_method: "credit_card" | "boleto" | "pix";
+  boleto_url?: string | null;
+  boleto_digitable_line?: string | null;
+  pix_qrcode?: unknown;
+  pix_qrcode_url?: string | null;
+  pix_content?: string | null;
+  msg?: string;
+}
+
+/** Payload de webhook para eventos de transação avulsa (CHARGE-APPROVED, CHARGE-PENDING, ...). */
+export interface ChargeWebhookPayload {
+  event: string;
+  signature: string;
+  data: DomTransaction;
+}

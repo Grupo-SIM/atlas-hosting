@@ -165,19 +165,22 @@ export default async function MyDomainsPage({
           </p>
         </div>
         <div className="flex gap-3">
-          <Button 
-            className="bg-white text-slate-950 font-bold hover:bg-white/90 border-0 shadow-lg" 
+          <Button
+            variant="outline"
+            asChild={true}
+          >
+            <Link href="/domain?tab=transfer">
+              <Globe className="mr-2 h-4 w-4" /> Trazer Domínio
+            </Link>
+          </Button>
+          <Button
+            className="bg-white text-slate-950 font-bold hover:bg-white/90 border-0 shadow-lg"
             asChild={true}
           >
             <Link href="/domain?tab=register">
               <Plus className="mr-2 h-4 w-4" /> Registrar Novo
             </Link>
           </Button>
-         {/*  <Button asChild={true}>
-            <Link href="/domain?tab=transfer">
-              <Globe className="mr-2 h-4 w-4" /> Transferir Domínio
-            </Link>
-          </Button> */}
         </div>
       </div>
 

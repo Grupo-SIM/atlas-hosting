@@ -35,6 +35,7 @@ interface CheckoutClientProps {
   reference: string;
   initialStep?: "billing" | "payment";
   isAnnualVps?: boolean;
+  allowBoleto?: boolean;
 }
 
 export default function CheckoutClient({
@@ -43,6 +44,7 @@ export default function CheckoutClient({
   reference,
   initialStep,
   isAnnualVps,
+  allowBoleto,
 }: CheckoutClientProps) {
   const router = useRouter();
   const base = invoice.amount;
@@ -90,7 +92,7 @@ export default function CheckoutClient({
   });
 
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const isCreditCard = selectedMethod !== "pix";
+  const isCreditCard = selectedMethod !== "pix" && selectedMethod !== "boleto";
   const [selectedInstallments, setSelectedInstallments] = useState(1);
 
   const onPaymentMethodChange = useCallback((method: string | null) => {
@@ -191,6 +193,7 @@ export default function CheckoutClient({
                 invoiceId={invoice.id}
                 invoiceType={invoice.type}
                 isAnnualVps={isAnnualVps}
+                allowBoleto={allowBoleto}
                 hasExistingUser={userHasDomId}
                 initialStep={initialStep}
                 onSidebarActionStateChange={onSidebarActionStateChange}

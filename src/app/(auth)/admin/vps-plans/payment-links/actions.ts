@@ -16,6 +16,7 @@ export type PaymentLinkRow = {
   intervalMonths: number;
   amountBrl: number;
   allowPix: boolean;
+  allowBoleto: boolean;
   status: "pending" | "used" | "cancelled";
   linkedUserName: string | null;
   linkedUserEmail: string | null;
@@ -41,6 +42,7 @@ export async function getVpsPaymentLinksAction(): Promise<PaymentLinkRow[]> {
     intervalMonths: l.intervalMonths,
     amountBrl: l.amountBrl,
     allowPix: l.allowPix,
+    allowBoleto: l.allowBoleto,
     status: l.status as PaymentLinkRow["status"],
     linkedUserName: (l.linkedUser as any)?.name ?? null,
     linkedUserEmail: (l.linkedUser as any)?.email ?? null,
@@ -70,6 +72,7 @@ export async function createVpsPaymentLinkAction(formData: FormData): Promise<vo
   const intervalMonths = parseInt(String(formData.get("intervalMonths") || ""), 10);
   const amountBrl = parseFloat(String(formData.get("amountBrl") || ""));
   const allowPix = formData.get("allowPix") === "on";
+  const allowBoleto = formData.get("allowBoleto") === "on";
   const linkedUserId = String(formData.get("linkedUserId") || "").trim();
 
   const plan = findSellablePlan(productType, planId);
@@ -99,6 +102,7 @@ export async function createVpsPaymentLinkAction(formData: FormData): Promise<vo
     intervalMonths,
     amountBrl,
     allowPix,
+    allowBoleto,
     linkedUserId: resolvedLinkedUserId,
     linkedOrgId,
   });

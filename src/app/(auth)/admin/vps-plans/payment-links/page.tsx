@@ -19,7 +19,7 @@ import { SELLABLE_VPS_PLANS } from "@/lib/vps-sellable-plans";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Metadata } from "next";
-import { Link2, QrCode, CreditCard } from "lucide-react";
+import { Link2, QrCode, CreditCard, Barcode } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Links de Pagamento — Admin" };
@@ -104,6 +104,11 @@ export default async function VpsPaymentLinksPage() {
                           {l.allowPix && (
                             <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30">
                               <QrCode className="h-3 w-3" /> PIX
+                            </Badge>
+                          )}
+                          {l.allowBoleto && (
+                            <Badge variant="outline" className="gap-1 text-amber-600 border-amber-500/30">
+                              <Barcode className="h-3 w-3" /> Boleto
                             </Badge>
                           )}
                         </div>

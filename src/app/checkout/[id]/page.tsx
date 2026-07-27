@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getOptionalUser } from "@/lib/auth";
-import { isPixEligibleForVpsConfig } from "@/app/actions";
+import { isPixEligibleForVpsConfig, isBoletoEligibleForVpsConfig } from "@/app/actions";
 
 export const metadata: Metadata = {
   title: "Checkout - Atlas Hosting",
@@ -82,8 +82,9 @@ export default async function CheckoutPage({
 
   const initialStep = resolvedSearch.initialStep === "payment" ? "payment" : "billing";
 
-  const isAnnualVps = invoice.type === "vps"
-    && (await isPixEligibleForVpsConfig((invoice.metadata as any)?.config || {}));
+  const invoiceConfig = (invoice.metadata as any)?.config || {};
+  const isAnnualVps = invoice.type === "vps" && (await isPixEligibleForVpsConfig(invoiceConfig));
+  const allowBoleto = await isBoletoEligibleForVpsConfig(invoice.type === "vps" ? invoiceConfig : {});
 
   return (
     <CheckoutClient
@@ -92,6 +93,7 @@ export default async function CheckoutPage({
       reference={reference}
       initialStep={initialStep}
       isAnnualVps={isAnnualVps}
+      allowBoleto={allowBoleto}
     />
   );
 }

@@ -48,6 +48,7 @@ export default async function PayLinkPage({
     paymentLinkId: link.id,
     customLinkAmountBrl: link.amountBrl,
     customLinkAllowPix: link.allowPix,
+    customLinkAllowBoleto: link.allowBoleto,
   };
 
   // Genérico — sem conta vinculada: reusa o fluxo de checkout já existente (login
@@ -61,6 +62,7 @@ export default async function PayLinkPage({
       paymentLinkId: commonConfig.paymentLinkId,
       customLinkAmountBrl: String(commonConfig.customLinkAmountBrl),
       customLinkAllowPix: String(commonConfig.customLinkAllowPix),
+      customLinkAllowBoleto: String(commonConfig.customLinkAllowBoleto),
     }).toString();
     redirect(`/checkout/personal-data?${query}`);
   }

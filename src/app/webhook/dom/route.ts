@@ -7,7 +7,9 @@ import {
   pgOrganization,
   pgUser,
 } from "@/lib/db/schema";
-import type { PayloadWebhook } from "@/lib/server/apis/dom/types";
+import type { PayloadWebhook, ChargeWebhookPayload } from "@/lib/server/apis/dom/types";
+import domApi from "@/lib/server/apis/dom";
+import { syncCheckoutBoletoPayment } from "@/app/actions";
 import { AppLogger } from "@/lib/server/logs";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -219,6 +221,45 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
   }
 }
 
+/**
+ * Boleto (e outros pagamentos avulsos via /transactions) são confirmados de forma
+ * assíncrona — dias depois do checkout, sem sessão de usuário ativa. Este webhook
+ * é a fonte de verdade nesse caso (o polling em syncCheckoutBoletoPayment cobre
+ * só enquanto o cliente está com a página de checkout aberta).
+ */
+async function onChargeApproved(payload: ChargeWebhookPayload): Promise<void> {
+  const decoded = domApi.verifyChargeSignature(payload.signature);
+  if (!decoded || decoded.id !== payload.data.id) {
+    console.error("[Webhook] CHARGE-APPROVED com assinatura inválida ou inconsistente.");
+    return;
+  }
+
+  if (payload.data.payment_method !== "boleto") {
+    // Cartão e PIX usam outros fluxos (Simpay) — só boleto passa pelo /transactions da DOM hoje.
+    return;
+  }
+
+  const invoiceId = payload.data.cod_external;
+  if (!invoiceId) {
+    console.error("[Webhook] CHARGE-APPROVED sem cod_external.");
+    return;
+  }
+
+  const invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, invoiceId),
+  });
+
+  if (!invoice) {
+    console.error("[Webhook] Fatura não encontrada para CHARGE-APPROVED:", invoiceId);
+    return;
+  }
+
+  if (invoice.status === "paid") return;
+
+  const result = await syncCheckoutBoletoPayment(invoice.id);
+  console.log(`[Webhook] CHARGE-APPROVED processado pra fatura ${invoice.id}: ${result.status}`);
+}
+
 export async function POST(request: Request) {
   console.log("Handling DOM Webhook");
 
@@ -270,11 +311,8 @@ export async function POST(request: Request) {
         details = payload.data;
         break;
       case "CHARGE-APPROVED":
-        // await onInvoicePaid(payload.data);
-        actionTaken = "Processamento de pagamento de fatura iniciado.";
-        details = payload.data;
-        actionTaken = "Evento CHARGE-APPROVED recebido e processado.";
-        console.log("[Webhook] Evento CHARGE-APPROVED processado.");
+        await onChargeApproved(payload as unknown as ChargeWebhookPayload);
+        actionTaken = "Evento CHARGE-APPROVED processado.";
         details = payload.data;
         break;
       default:

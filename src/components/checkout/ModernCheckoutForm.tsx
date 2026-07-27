@@ -7,6 +7,8 @@ import {
   initiateCheckoutPix,
   markPixPaymentComplete,
   syncCheckoutPixPayment,
+  initiateCheckoutBoleto,
+  syncCheckoutBoletoPayment,
 } from "@/app/actions";
 import {
   getUserBillingInfo,
@@ -39,7 +41,9 @@ import { isValidPhoneNumber } from "libphonenumber-js";
 import {
   AlertCircle,
   ArrowLeft,
+  Barcode,
   Check,
+  Clock,
   CreditCard,
   Loader2,
   Plus,
@@ -109,6 +113,8 @@ interface ModernCheckoutFormProps {
   /** Fatura VPS/VDS elegível pra PIX (24 meses por padrão, ou liberado pelo admin —
    * ver isPixEligibleForVpsConfig em actions.ts). Nome mantido por compatibilidade. */
   isAnnualVps?: boolean;
+  /** Boleto liberado pra esta fatura — ver isBoletoEligibleForVpsConfig em actions.ts. */
+  allowBoleto?: boolean;
   hasExistingUser?: boolean;
   initialStep?: CheckoutStep;
   /** Atualiza texto/estado do botão principal da coluna lateral (checkout-client). */
@@ -200,7 +206,7 @@ interface OpenCepResponse {
 const ModernCheckoutForm = forwardRef<
   ModernCheckoutFormHandle,
   ModernCheckoutFormProps
->(({ invoiceId, invoiceType, isAnnualVps = false, hasExistingUser = false, initialStep, onSidebarActionStateChange, onPaymentMethodChange, selectedInstallments = 1, onInstallmentsChange, installmentRates }, ref) => {
+>(({ invoiceId, invoiceType, isAnnualVps = false, allowBoleto = false, hasExistingUser = false, initialStep, onSidebarActionStateChange, onPaymentMethodChange, selectedInstallments = 1, onInstallmentsChange, installmentRates }, ref) => {
   const allowPix = invoiceType === "domain" || isAnnualVps;
   const id = useId();
   const sidebarActionCbRef = useRef(onSidebarActionStateChange);
@@ -221,9 +227,17 @@ const ModernCheckoutForm = forwardRef<
     transactionId: string;
   } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
+  const [isBoletoLoading, setIsBoletoLoading] = useState(false);
+  const [boletoSession, setBoletoSession] = useState<{
+    boletoUrl: string;
+    boletoDigitableLine: string;
+    transactionId: string;
+  } | null>(null);
+  const [boletoCopied, setBoletoCopied] = useState(false);
   /** Mensagem amigável exibida em modal quando o pagamento falha ou é recusado. */
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const pixCopiedResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const boletoCopiedResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(initialStep || "billing");
   const [savedBillingInfo, setSavedBillingInfo] = useState<any>(null);
 
@@ -347,6 +361,9 @@ const ModernCheckoutForm = forwardRef<
     if (paymentMethod !== "pix") {
       setPixSession(null);
     }
+    if (paymentMethod !== "boleto") {
+      setBoletoSession(null);
+    }
   }, [paymentMethod]);
 
 
@@ -379,6 +396,36 @@ const ModernCheckoutForm = forwardRef<
       })
       .catch(() => toast.error("Não foi possível copiar."));
   }, [pixSession]);
+
+  useEffect(() => {
+    setBoletoCopied(false);
+    if (boletoCopiedResetRef.current) {
+      clearTimeout(boletoCopiedResetRef.current);
+      boletoCopiedResetRef.current = null;
+    }
+  }, [boletoSession?.boletoDigitableLine]);
+
+  useEffect(
+    () => () => {
+      if (boletoCopiedResetRef.current) clearTimeout(boletoCopiedResetRef.current);
+    },
+    []
+  );
+
+  const copyBoletoToClipboard = useCallback(() => {
+    if (!boletoSession) return;
+    void navigator.clipboard
+      .writeText(boletoSession.boletoDigitableLine)
+      .then(() => {
+        if (boletoCopiedResetRef.current) clearTimeout(boletoCopiedResetRef.current);
+        setBoletoCopied(true);
+        boletoCopiedResetRef.current = setTimeout(() => {
+          setBoletoCopied(false);
+          boletoCopiedResetRef.current = null;
+        }, 2200);
+      })
+      .catch(() => toast.error("Não foi possível copiar."));
+  }, [boletoSession]);
 
   const handleInitiatePix = useCallback(async () => {
     const ok = await trigger([
@@ -429,6 +476,56 @@ const ModernCheckoutForm = forwardRef<
       setPaymentError("Não foi possível gerar o PIX no momento. Tente novamente em instantes.");
     } finally {
       setIsPixLoading(false);
+    }
+  }, [invoiceId, getValues, trigger]);
+
+  const handleInitiateBoleto = useCallback(async () => {
+    const ok = await trigger([
+      "firstName",
+      "lastName",
+      "document",
+      "phoneNumber",
+      "address.street",
+      "address.number",
+      "address.neighborhood",
+      "address.city",
+      "address.state",
+      "address.zipCode",
+    ]);
+    if (!ok) {
+      toast.error("Preencha os dados de cobrança corretamente.");
+      return;
+    }
+    const v = getValues();
+    setIsBoletoLoading(true);
+    try {
+      const res = await initiateCheckoutBoleto({
+        invoiceId,
+        firstName: v.firstName,
+        lastName: v.lastName,
+        document: v.document,
+        phoneNumber: v.phoneNumber,
+        address: v.address,
+      });
+      if (res.status === "success") {
+        setBoletoSession({
+          boletoUrl: res.boletoUrl,
+          boletoDigitableLine: res.boletoDigitableLine,
+          transactionId: res.transactionId,
+        });
+        toast.success("Boleto gerado.");
+        void saveUserBillingInfo({
+          document: v.document,
+          phoneNumber: v.phoneNumber,
+          address: v.address,
+        });
+      } else {
+        setPaymentError(res.message);
+      }
+    } catch {
+      setPaymentError("Não foi possível gerar o boleto no momento. Tente novamente em instantes.");
+    } finally {
+      setIsBoletoLoading(false);
     }
   }, [invoiceId, getValues, trigger]);
 
@@ -494,6 +591,16 @@ const ModernCheckoutForm = forwardRef<
   const handleCheckPayment = useCallback(async () => {
     setIsVerifyingPayment(true);
     const result = await syncCheckoutPixPayment(invoiceId);
+    if (result.status === "COMPLETED") {
+      setIsPaymentConfirmed(true);
+      router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
+    }
+    // isVerifyingPayment stays true after click — polling will redirect when confirmed
+  }, [invoiceId, router]);
+
+  const handleCheckBoletoPayment = useCallback(async () => {
+    setIsVerifyingPayment(true);
+    const result = await syncCheckoutBoletoPayment(invoiceId);
     if (result.status === "COMPLETED") {
       setIsPaymentConfirmed(true);
       router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
@@ -607,14 +714,14 @@ const ModernCheckoutForm = forwardRef<
   };
 
   const isPaymentComplete = () => {
-    if (paymentMethod === "pix") {
+    if (paymentMethod === "pix" || paymentMethod === "boleto") {
       return true;
     }
     if (paymentMethod === "new") {
       const values = getValues();
       return values.cardNumber && values.cardCvv && values.cardExpiration;
     }
-    return !!paymentMethod && paymentMethod !== "new" && paymentMethod !== "pix";
+    return !!paymentMethod && paymentMethod !== "new" && paymentMethod !== "pix" && paymentMethod !== "boleto";
   };
 
   function isFirstStepValid() {
@@ -655,7 +762,7 @@ const ModernCheckoutForm = forwardRef<
   const canProceedToPayment = isFirstStepValid();
 
   const canCompleteCheckout = () => {
-    if (paymentMethod === "pix") {
+    if (paymentMethod === "pix" || paymentMethod === "boleto") {
       return canProceedToPayment;
     }
     return canProceedToPayment && isPaymentComplete();
@@ -686,6 +793,14 @@ const ModernCheckoutForm = forwardRef<
             }
             return;
           }
+          if (paymentMethod === "boleto") {
+            if (!boletoSession) {
+              void handleInitiateBoleto();
+            } else {
+              void handleCheckBoletoPayment();
+            }
+            return;
+          }
           onSimpleSubmit();
           return;
         }
@@ -703,6 +818,14 @@ const ModernCheckoutForm = forwardRef<
           }
           return;
         }
+        if (paymentMethod === "boleto") {
+          if (!boletoSession) {
+            void handleInitiateBoleto();
+          } else {
+            void handleCheckBoletoPayment();
+          }
+          return;
+        }
         handleSubmit(onSubmit)();
       },
     }),
@@ -712,11 +835,14 @@ const ModernCheckoutForm = forwardRef<
       canProceedToPayment,
       paymentMethod,
       pixSession,
+      boletoSession,
       handleSubmit,
       onSubmit,
       onSimpleSubmit,
       handleInitiatePix,
       handleCheckPayment,
+      handleInitiateBoleto,
+      handleCheckBoletoPayment,
       invoiceId,
     ]
   );
@@ -745,6 +871,19 @@ const ModernCheckoutForm = forwardRef<
         label = "Gerar PIX";
         disabled = !canProceedToPayment;
       }
+    } else if (paymentMethod === "boleto") {
+      if (isBoletoLoading) {
+        label = "Gerando Boleto...";
+        disabled = true;
+      } else if (boletoSession) {
+        // Boleto visível: oculta o botão lateral, o usuário usa "Já paguei"
+        hidden = true;
+        disabled = true;
+        label = "";
+      } else {
+        label = "Gerar Boleto";
+        disabled = !canProceedToPayment;
+      }
     } else {
       if (isPending) {
         label = "Processando...";
@@ -762,6 +901,8 @@ const ModernCheckoutForm = forwardRef<
     paymentMethod,
     pixSession,
     isPixLoading,
+    boletoSession,
+    isBoletoLoading,
     isVerifyingPayment,
     isPaymentConfirmed,
     isPending,
@@ -831,6 +972,35 @@ const ModernCheckoutForm = forwardRef<
       es?.close();
     };
   }, [pixSession, isPixLoading, invoiceId, router]);
+
+  // Detecção do pagamento do boleto: só polling (confirmação assíncrona, pode levar dias —
+  // o webhook do DOM Pagamentos é a fonte de verdade fora desta sessão de checkout).
+  useEffect(() => {
+    if (!boletoSession || isBoletoLoading) return;
+
+    let done = false;
+    const intervalId = setInterval(async () => {
+      if (done) { clearInterval(intervalId); return; }
+      const result = await syncCheckoutBoletoPayment(invoiceId);
+      if (!done && result.status === "COMPLETED") {
+        done = true;
+        clearInterval(intervalId);
+        setIsPaymentConfirmed(true);
+        router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
+      }
+    }, 5000);
+
+    const stopAt = setTimeout(() => {
+      done = true;
+      clearInterval(intervalId);
+    }, 15 * 60 * 1000);
+
+    return () => {
+      done = true;
+      clearInterval(intervalId);
+      clearTimeout(stopAt);
+    };
+  }, [boletoSession, isBoletoLoading, invoiceId, router]);
 
   // Modal amigável de falha de pagamento (sem detalhes técnicos/sensíveis).
   const paymentErrorModal = (
@@ -911,6 +1081,27 @@ const ModernCheckoutForm = forwardRef<
                 </Label>
               )}
 
+              {allowBoleto && (
+                <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                  <RadioGroupItem
+                    value="boleto"
+                    className="sr-only"
+                  />
+                  <div className="flex size-10 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 shadow-lg shadow-amber-500/20">
+                    <Barcode
+                      size={20}
+                      className="text-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <span className="font-black text-white uppercase tracking-tight text-sm">Boleto</span>
+                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                      Vencimento em 3 dias úteis
+                    </div>
+                  </div>
+                </Label>
+              )}
+
               {(isLoadingCards || savedCards.length > 0) && <Separator className="bg-white/10" />}
 
               {isLoadingCards ? (
@@ -970,10 +1161,10 @@ const ModernCheckoutForm = forwardRef<
 
         {paymentMethod === "pix" && (
           pixSession ? (
-            <PixQrCodeCard 
-              pixSession={pixSession} 
-              pixCopied={pixCopied} 
-              copyPixToClipboard={copyPixToClipboard} 
+            <PixQrCodeCard
+              pixSession={pixSession}
+              pixCopied={pixCopied}
+              copyPixToClipboard={copyPixToClipboard}
               onBack={() => setPixSession(null)}
               onCheckPayment={() => void handleCheckPayment()}
               isPixLoading={isPixLoading}
@@ -981,11 +1172,34 @@ const ModernCheckoutForm = forwardRef<
               isPaymentConfirmed={isPaymentConfirmed}
             />
           ) : (
-            <BillingInformationSection 
-              methods={methods} 
-              id={id} 
-              savedInfo={savedBillingInfo} 
-              onAutoFill={handleAutoFill} 
+            <BillingInformationSection
+              methods={methods}
+              id={id}
+              savedInfo={savedBillingInfo}
+              onAutoFill={handleAutoFill}
+              hasExistingUser={hasExistingUser}
+            />
+          )
+        )}
+
+        {paymentMethod === "boleto" && (
+          boletoSession ? (
+            <BoletoCard
+              boletoSession={boletoSession}
+              boletoCopied={boletoCopied}
+              copyBoletoToClipboard={copyBoletoToClipboard}
+              onBack={() => setBoletoSession(null)}
+              onCheckPayment={() => void handleCheckBoletoPayment()}
+              isBoletoLoading={isBoletoLoading}
+              isVerifyingPayment={isVerifyingPayment}
+              isPaymentConfirmed={isPaymentConfirmed}
+            />
+          ) : (
+            <BillingInformationSection
+              methods={methods}
+              id={id}
+              savedInfo={savedBillingInfo}
+              onAutoFill={handleAutoFill}
               hasExistingUser={hasExistingUser}
             />
           )
@@ -1006,22 +1220,33 @@ const ModernCheckoutForm = forwardRef<
       {currentStep === "billing" && (
         <>
           {paymentMethod === "pix" && pixSession ? (
-            <PixQrCodeCard 
-              pixSession={pixSession} 
-              pixCopied={pixCopied} 
-              copyPixToClipboard={copyPixToClipboard} 
+            <PixQrCodeCard
+              pixSession={pixSession}
+              pixCopied={pixCopied}
+              copyPixToClipboard={copyPixToClipboard}
               onBack={() => setPixSession(null)}
               onCheckPayment={() => void handleCheckPayment()}
               isPixLoading={isPixLoading}
               isVerifyingPayment={isVerifyingPayment}
               isPaymentConfirmed={isPaymentConfirmed}
             />
+          ) : paymentMethod === "boleto" && boletoSession ? (
+            <BoletoCard
+              boletoSession={boletoSession}
+              boletoCopied={boletoCopied}
+              copyBoletoToClipboard={copyBoletoToClipboard}
+              onBack={() => setBoletoSession(null)}
+              onCheckPayment={() => void handleCheckBoletoPayment()}
+              isBoletoLoading={isBoletoLoading}
+              isVerifyingPayment={isVerifyingPayment}
+              isPaymentConfirmed={isPaymentConfirmed}
+            />
           ) : (
-            <BillingInformationSection 
-              methods={methods} 
-              id={id} 
-              savedInfo={savedBillingInfo} 
-              onAutoFill={handleAutoFill} 
+            <BillingInformationSection
+              methods={methods}
+              id={id}
+              savedInfo={savedBillingInfo}
+              onAutoFill={handleAutoFill}
               hasExistingUser={hasExistingUser}
             />
           )}
@@ -1072,13 +1297,24 @@ const ModernCheckoutForm = forwardRef<
         <>
           {/* Billing Summary Card or PIX QR Code */}
           {paymentMethod === "pix" && pixSession ? (
-            <PixQrCodeCard 
-              pixSession={pixSession} 
-              pixCopied={pixCopied} 
-              copyPixToClipboard={copyPixToClipboard} 
+            <PixQrCodeCard
+              pixSession={pixSession}
+              pixCopied={pixCopied}
+              copyPixToClipboard={copyPixToClipboard}
               onBack={() => setPixSession(null)}
               onCheckPayment={() => void handleCheckPayment()}
               isPixLoading={isPixLoading}
+              isVerifyingPayment={isVerifyingPayment}
+              isPaymentConfirmed={isPaymentConfirmed}
+            />
+          ) : paymentMethod === "boleto" && boletoSession ? (
+            <BoletoCard
+              boletoSession={boletoSession}
+              boletoCopied={boletoCopied}
+              copyBoletoToClipboard={copyBoletoToClipboard}
+              onBack={() => setBoletoSession(null)}
+              onCheckPayment={() => void handleCheckBoletoPayment()}
+              isBoletoLoading={isBoletoLoading}
               isVerifyingPayment={isVerifyingPayment}
               isPaymentConfirmed={isPaymentConfirmed}
             />
@@ -1129,6 +1365,27 @@ const ModernCheckoutForm = forwardRef<
                       <span className="font-black text-white uppercase tracking-tight text-sm">PIX</span>
                       <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                         QR Code no app do banco
+                      </div>
+                    </div>
+                  </Label>
+                )}
+
+                {allowBoleto && (
+                  <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                    <RadioGroupItem
+                      value="boleto"
+                      className="sr-only"
+                    />
+                    <div className="flex size-10 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 shadow-lg shadow-amber-500/20">
+                      <Barcode
+                        size={20}
+                        className="text-amber-400"
+                      />
+                    </div>
+                    <div>
+                      <span className="font-black text-white uppercase tracking-tight text-sm">Boleto</span>
+                      <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                        Vencimento em 3 dias úteis
                       </div>
                     </div>
                   </Label>
@@ -1211,25 +1468,33 @@ const ModernCheckoutForm = forwardRef<
                   onClick={() => {
                     if (paymentMethod === "pix") {
                       void handleInitiatePix();
+                    } else if (paymentMethod === "boleto") {
+                      void handleInitiateBoleto();
                     } else {
                       handleSubmit(onSubmit)();
                     }
                   }}
                   disabled={
                     isPixLoading ||
+                    isBoletoLoading ||
                     isPending ||
                     (paymentMethod === "pix" && !canProceedToPayment) ||
-                    (paymentMethod !== "pix" && !canCompleteCheckout())
+                    (paymentMethod === "boleto" && !canProceedToPayment) ||
+                    (paymentMethod !== "pix" && paymentMethod !== "boleto" && !canCompleteCheckout())
                   }
                   className="min-w-56 h-12 bg-white text-slate-950 text-base font-bold hover:bg-white/90 border-0 shadow-lg transition-all hover:scale-[1.02] active:scale-95"
                 >
                   {isPixLoading
                     ? "Gerando PIX..."
-                    : paymentMethod === "pix"
-                      ? "Gerar PIX"
-                      : isPending
-                        ? "Processando..."
-                        : "Finalizar Transação"}
+                    : isBoletoLoading
+                      ? "Gerando Boleto..."
+                      : paymentMethod === "pix"
+                        ? "Gerar PIX"
+                        : paymentMethod === "boleto"
+                          ? "Gerar Boleto"
+                          : isPending
+                            ? "Processando..."
+                            : "Finalizar Transação"}
                 </Button>
               </div>
         </>
@@ -1401,6 +1666,167 @@ function PixQrCodeCard({
             className="w-full h-14 bg-sky-500 hover:bg-sky-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-sky-500/20"
             onClick={onCheckPayment}
             disabled={isPixLoading || isVerifyingPayment || isPaymentConfirmed}
+          >
+            {isPaymentConfirmed ? (
+              <>
+                <Check className="mr-2 h-5 w-5" strokeWidth={3} />
+                Pagamento confirmado!
+              </>
+            ) : isVerifyingPayment ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Verificando...
+              </>
+            ) : (
+              "Já paguei"
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function BoletoCard({
+  boletoSession,
+  boletoCopied,
+  copyBoletoToClipboard,
+  onBack,
+  onCheckPayment,
+  isBoletoLoading,
+  isVerifyingPayment,
+  isPaymentConfirmed,
+}: {
+  boletoSession: { boletoUrl: string; boletoDigitableLine: string; transactionId: string };
+  boletoCopied: boolean;
+  copyBoletoToClipboard: () => void;
+  onBack: () => void;
+  onCheckPayment: () => void;
+  isBoletoLoading: boolean;
+  isVerifyingPayment: boolean;
+  isPaymentConfirmed: boolean;
+}) {
+  const [showInfoModal, setShowInfoModal] = useState(false);
+
+  const handleCheckPaymentClick = () => {
+    setShowInfoModal(true);
+    onCheckPayment();
+  };
+
+  return (
+    <Card className="bg-white/5 backdrop-blur-md border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+      <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
+        <DialogContent className="border-white/10 bg-slate-950 text-white sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-amber-500/10">
+              <Clock className="text-amber-400" size={24} strokeWidth={2} />
+            </div>
+            <DialogTitle className="text-center">Pagamento em processamento</DialogTitle>
+            <DialogDescription className="text-center text-slate-400 space-y-2">
+              <span className="block">
+                Recebemos seu clique de confirmação. Boletos não são compensados na hora —
+                o banco pode levar até 2 dias úteis pra processar o pagamento.
+              </span>
+              <span className="block">
+                Assim que a compensação for confirmada, sua compra é liberada automaticamente
+                e você recebe um e-mail. Não precisa ficar com esta página aberta.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <Button type="button" onClick={() => setShowInfoModal(false)} className="w-full sm:w-auto">
+              Entendi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
+              <Barcode
+                className="text-amber-400"
+                size={18}
+                strokeWidth={2.5}
+              />
+            </div>
+            <div>
+              <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Pague com Boleto</CardTitle>
+              <CardDescription className="text-slate-400 font-medium">
+                Pague no app do banco ou lotérica com a linha digitável
+              </CardDescription>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="text-slate-500 hover:text-white transition-colors"
+          >
+            <ArrowLeft size={16} className="mr-2" />
+            Voltar
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-3">
+          <Button
+            type="button"
+            variant="outline"
+            className={clsx(
+              "w-full h-12 text-base font-medium overflow-hidden transition-all duration-300",
+              boletoCopied
+                ? "border-emerald-500/45 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
+                : "hover:border-emerald-500/30 hover:bg-emerald-500 hover:text-white"
+            )}
+            onClick={copyBoletoToClipboard}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={boletoCopied ? "copied" : "copy"}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="inline-flex items-center justify-center gap-2"
+              >
+                {boletoCopied ? (
+                  <>
+                    <Check className="size-5 shrink-0" strokeWidth={3} />
+                    Linha Digitável Copiada!
+                  </>
+                ) : (
+                  <>
+                    <Barcode className="size-5 shrink-0" />
+                    Copiar linha digitável
+                  </>
+                )}
+              </motion.span>
+            </AnimatePresence>
+          </Button>
+
+          <Button
+            asChild
+            type="button"
+            variant="outline"
+            className="w-full h-12 text-base font-medium hover:border-emerald-500/30 hover:bg-emerald-500 hover:text-white"
+          >
+            <a href={boletoSession.boletoUrl} target="_blank" rel="noopener noreferrer">
+              Visualizar / imprimir boleto (PDF)
+            </a>
+          </Button>
+
+          <p className="text-center text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">
+            Após o pagamento, a compensação pode levar até 2 dias úteis. A
+            confirmação é automática assim que o banco processar.
+          </p>
+        </div>
+
+        <div className="pt-2">
+          <Button
+            className="w-full h-14 bg-sky-500 hover:bg-sky-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-sky-500/20"
+            onClick={handleCheckPaymentClick}
+            disabled={isBoletoLoading || isVerifyingPayment || isPaymentConfirmed}
           >
             {isPaymentConfirmed ? (
               <>

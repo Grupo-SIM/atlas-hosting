@@ -17,7 +17,7 @@ export type VpsPlanRow = {
   planType: "vps" | "vds" | "storage-vps" | "vps-windows";
   intervalMonths: number;
   amountBrl: number;
-  paymentMethod: "credit_card" | "pix";
+  paymentMethod: "credit_card" | "pix" | "boleto";
   status: "active" | "cancelled" | "failed" | "paused";
   nextChargeDate: Date;
   pausedAt: Date | null;
@@ -122,6 +122,23 @@ export async function setPixAllowAllDurationsAction(enabled: boolean): Promise<v
 
   // system_config is a singleton table (always exactly one row, no primary key).
   await db.update(pgSystemConfig).set({ pixAllowAllDurations: enabled });
+
+  revalidatePath("/admin/vps-plans");
+}
+
+export async function getBoletoEnabledAction(): Promise<boolean> {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) redirect("/home");
+
+  const config = await db.query.pgSystemConfig.findFirst();
+  return config?.boletoEnabled ?? false;
+}
+
+export async function setBoletoEnabledAction(enabled: boolean): Promise<void> {
+  const admin = await getUser();
+  if (!admin || !admin.isAdmin) redirect("/home");
+
+  await db.update(pgSystemConfig).set({ boletoEnabled: enabled });
 
   revalidatePath("/admin/vps-plans");
 }

@@ -4,13 +4,13 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { QrCode } from "lucide-react";
+import { QrCode, Barcode } from "lucide-react";
 import { createVpsRenewalInvoice } from "@/app/actions";
 
 interface Props {
   id: string;
   status: "active" | "cancelled" | "failed" | "paused";
-  paymentMethod: "credit_card" | "pix";
+  paymentMethod: "credit_card" | "pix" | "boleto";
   nextChargeDate: Date;
 }
 
@@ -22,7 +22,8 @@ export function RenewCell({ id, status, paymentMethod, nextChargeDate }: Props) 
 
   const dueSoon = new Date(nextChargeDate).getTime() <= Date.now() + FIFTEEN_DAYS_MS;
   const canRenew =
-    paymentMethod === "pix" && (status === "paused" || (status === "active" && dueSoon));
+    (paymentMethod === "pix" || paymentMethod === "boleto") &&
+    (status === "paused" || (status === "active" && dueSoon));
 
   if (!canRenew) {
     return <span className="text-muted-foreground text-sm">—</span>;
@@ -41,8 +42,8 @@ export function RenewCell({ id, status, paymentMethod, nextChargeDate }: Props) 
 
   return (
     <Button size="sm" disabled={pending} onClick={handleRenew} className="gap-1">
-      <QrCode className="h-3.5 w-3.5" />
-      Renovar com PIX
+      {paymentMethod === "boleto" ? <Barcode className="h-3.5 w-3.5" /> : <QrCode className="h-3.5 w-3.5" />}
+      Renovar com {paymentMethod === "boleto" ? "Boleto" : "PIX"}
     </Button>
   );
 }

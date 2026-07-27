@@ -77,6 +77,7 @@ function PersonalDataForm() {
     // Admin-generated payment link (arbitrary period + admin-typed price) — see /pay/[linkId]
     customLinkAmountBrl: searchParams.get("customLinkAmountBrl") || undefined,
     customLinkAllowPix: searchParams.get("customLinkAllowPix") || undefined,
+    customLinkAllowBoleto: searchParams.get("customLinkAllowBoleto") || undefined,
     paymentLinkId: searchParams.get("paymentLinkId") || undefined,
   };
 

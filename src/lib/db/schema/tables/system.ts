@@ -23,6 +23,9 @@ export const pgSystemConfig = pgTable("system_config", {
   pixAllowAllDurations: boolean("pix_allow_all_durations")
     .notNull()
     .default(false),
+  // Off by default: boleto não é oferecido como forma de pagamento. Quando ligado
+  // pelo admin, boleto fica disponível pra qualquer compra de VPS/VDS/Storage VPS.
+  boletoEnabled: boolean("boleto_enabled").notNull().default(false),
 });
 
 export const pgWithdrawalRequests = pgTable("withdraw_requests", {

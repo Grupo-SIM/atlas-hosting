@@ -10,14 +10,21 @@ export default function NoDomains() {
       <p className="text-muted-foreground mb-4">
         Você ainda não registrou nenhum domínio.
       </p>
-      <Button 
-        className="bg-gradient-to-r from-sky-500 to-sky-600 text-white font-bold hover:brightness-110 border-0"
-        asChild={true}
-      >
-        <Link href="/domain?tab=register">
-          <Globe className="mr-2 h-4 w-4" /> Registrar Novo Domínio
-        </Link>
-      </Button>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Button
+          className="bg-gradient-to-r from-sky-500 to-sky-600 text-white font-bold hover:brightness-110 border-0"
+          asChild={true}
+        >
+          <Link href="/domain?tab=register">
+            <Globe className="mr-2 h-4 w-4" /> Registrar Novo Domínio
+          </Link>
+        </Button>
+        <Button variant="outline" asChild={true}>
+          <Link href="/domain?tab=transfer">
+            <Globe className="mr-2 h-4 w-4" /> Trazer Domínio
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }
