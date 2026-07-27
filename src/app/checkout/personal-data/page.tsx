@@ -18,13 +18,16 @@ import { Footer } from "@/app/landing/components/Footer";
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { createVpsInvoice } from "@/app/actions";
+import { getOptionalUser } from "@/lib/auth";
 import { toast } from "sonner";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 
 function PersonalDataForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  // null = ainda checando sessão; true = logado (pula o form); false = visitante (mostra o form)
+  const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
 
   const [formData, setFormData] = useState({
     businessName: "",
@@ -71,7 +74,47 @@ function PersonalDataForm() {
     password: searchParams.get("password"),
     storageUpgrades: searchParams.get("storageUpgrades") ? JSON.parse(searchParams.get("storageUpgrades")!) : undefined,
     type: searchParams.get("type") || "vps",
+    // Admin-generated payment link (arbitrary period + admin-typed price) — see /pay/[linkId]
+    customLinkAmountBrl: searchParams.get("customLinkAmountBrl") || undefined,
+    customLinkAllowPix: searchParams.get("customLinkAllowPix") || undefined,
+    paymentLinkId: searchParams.get("paymentLinkId") || undefined,
   };
+
+  // Cliente já logado não precisa preencher dados pessoais de novo — cria a
+  // fatura direto com a conta atual e pula pro checkout.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const user = await getOptionalUser().catch(() => null);
+      if (cancelled) return;
+      if (!user) {
+        setIsAuthed(false);
+        return;
+      }
+      setIsAuthed(true);
+      try {
+        const result = await createVpsInvoice({ planId, config: vpsConfig });
+        if (cancelled) return;
+        if (result.status === "success") {
+          // replace (não push): visita automática, não deve virar um passo no
+          // histórico — senão "Voltar" no checkout cai aqui de novo e cria outra fatura.
+          router.replace(result.redirectUrl as string);
+        } else {
+          toast.error(result.message);
+          setIsAuthed(false);
+        }
+      } catch {
+        if (!cancelled) {
+          toast.error("Erro ao processar o pedido.");
+          setIsAuthed(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const maskCpfCnpj = (value: string) => {
     const raw = value.replace(/\D/g, "");
@@ -174,6 +217,19 @@ function PersonalDataForm() {
       setIsPending(false);
     }
   };
+
+  if (isAuthed === null || isAuthed === true) {
+    return (
+      <div className="min-h-screen bg-[#000B12] flex items-center justify-center font-sans">
+        <div className="animate-pulse flex flex-col items-center gap-6">
+          <div className="w-16 h-16 rounded-full border-4 border-sky-500/20 border-t-sky-500 animate-spin shadow-[0_0_15px_rgba(14,165,233,0.3)]" />
+          <p className="text-slate-400 font-black uppercase tracking-widest text-sm">
+            {isAuthed ? "Confirmando pedido..." : "Carregando checkout..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#000B12] font-sans relative overflow-hidden">

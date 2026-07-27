@@ -79,6 +79,7 @@ import {
   CLOUD_VPS_LOCATION_EUR,
 } from "@/lib/vps-catalog";
 import { getVdsMonthlyEuro } from "@/lib/vds-catalog";
+import { getStorageVpsMonthlyEuro } from "@/lib/storage-vps-catalog";
 
 
 export type GuestInfo = {
@@ -2892,16 +2893,6 @@ export async function createVpsInvoice(data: {
     "10": 9.00, "20": 14.00, "30": 28.00, "40": 50.00, "50": 74.00, "60": 98.00,
   };
 
-  // Storage VPS 1/12/24-month prices (Atlas double) — mirrors
-  // src/app/vps-armazenamento/configure/[id]/page.tsx's plansData durations.
-  const STORAGE_VPS_MONTHLY_EUR: Record<string, Record<number, number>> = {
-    "10": { 1: 11.00, 12: 9.36, 24: 8.80 },
-    "20": { 1: 15.00, 12: 12.76, 24: 12.00 },
-    "30": { 1: 28.00, 12: 23.80, 24: 22.40 },
-    "40": { 1: 50.00, 12: 42.50, 24: 40.00 },
-    "50": { 1: 74.00, 12: 62.90, 24: 59.20 },
-  };
-
   const requestedContaboDuration = config.duration === "1" ? 1 : config.duration === "12" ? 12 : 24;
 
   const contaboMonthlyEuro = isContaboCloudPlan
@@ -2919,7 +2910,7 @@ export async function createVpsInvoice(data: {
   }
 
   const storageVpsMonthlyEuro = isStorageVps
-    ? STORAGE_VPS_MONTHLY_EUR[planId]?.[requestedContaboDuration]
+    ? getStorageVpsMonthlyEuro(planId, requestedContaboDuration as 1 | 12 | 24)
     : undefined;
   if (isStorageVps && storageVpsMonthlyEuro === undefined) {
     throw new Error(`Catálogo Storage VPS sem preço para o plano ${planId}`);

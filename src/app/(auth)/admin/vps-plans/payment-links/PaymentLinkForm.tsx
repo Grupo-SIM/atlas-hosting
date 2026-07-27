@@ -24,6 +24,7 @@ import type { SellablePlan } from "@/lib/vps-sellable-plans";
 
 const PRODUCT_TYPE_LABEL: Record<string, string> = {
   vps: "Cloud VPS",
+  "vps-windows": "VPS Windows",
   vds: "VDS",
   "storage-vps": "Storage VPS",
 };

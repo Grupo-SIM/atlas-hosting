@@ -8,6 +8,7 @@ import { ChevronDown, Menu, X, Server, Database, HardDrive, Monitor, UserPlus, L
 import { motion, AnimatePresence } from "motion/react";
 import { readDisplayCurrency, saveDisplayCurrency, type DisplayCurrency } from "@/lib/display-currency";
 import { CurrencySelector } from "./CurrencySelector";
+import { getOptionalUser } from "@/lib/auth";
 
 const roboto = { className: "[font-family:var(--font-roboto)]" };
 
@@ -16,9 +17,22 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("BRL");
+  const [isAuthed, setIsAuthed] = useState(false);
 
   useEffect(() => {
     setDisplayCurrency(readDisplayCurrency());
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    getOptionalUser()
+      .then((user) => {
+        if (!cancelled) setIsAuthed(!!user);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const changeDisplayCurrency = (currency: DisplayCurrency) => {
@@ -125,18 +139,29 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
         <div className="flex-1 md:flex-none flex items-center justify-end gap-3">
           <div className="hidden md:flex items-center gap-2">
             <CurrencySelector value={displayCurrency} onChange={changeDisplayCurrency} isLight={isLight} />
-            <Button
-              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-3 lg:px-6 py-1.5 lg:py-2 h-auto text-[12px] lg:text-[15px] rounded-[10px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
-              asChild
-            >
-              <Link href="/signup">Cadastre-se</Link>
-            </Button>
-            <Button
-              className={`${roboto.className} bg-transparent border border-white text-white font-bold px-4 lg:px-8 py-1.5 lg:py-2 h-auto text-[12px] lg:text-[15px] rounded-[10px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
-              asChild
-            >
-              <Link href="/login">Login</Link>
-            </Button>
+            {isAuthed ? (
+              <Button
+                className={`${roboto.className} bg-transparent border border-white text-white font-bold px-4 lg:px-8 py-1.5 lg:py-2 h-auto text-[12px] lg:text-[15px] rounded-[10px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
+                asChild
+              >
+                <Link href="/home">Voltar para Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button
+                  className={`${roboto.className} bg-transparent border border-white text-white font-bold px-3 lg:px-6 py-1.5 lg:py-2 h-auto text-[12px] lg:text-[15px] rounded-[10px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
+                  asChild
+                >
+                  <Link href="/signup">Cadastre-se</Link>
+                </Button>
+                <Button
+                  className={`${roboto.className} bg-transparent border border-white text-white font-bold px-4 lg:px-8 py-1.5 lg:py-2 h-auto text-[12px] lg:text-[15px] rounded-[10px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
+                  asChild
+                >
+                  <Link href="/login">Login</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Hamburger Button */}
@@ -241,39 +266,60 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
 
                 {/* Auth Buttons */}
                 <div className="flex flex-col gap-4 mt-4">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    <Button
-                      className={`${roboto.className} w-full bg-[#00A3FF] hover:bg-[#0091E6] text-white font-extrabold py-7 h-auto text-lg rounded-[16px] transition-all shadow-[0_12px_30px_rgba(0,163,255,0.25)] tracking-wide uppercase group`}
-                      asChild
-                      onClick={() => setIsMobileMenuOpen(false)}
+                  {isAuthed ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
                     >
-                      <Link href="/signup" className="flex items-center justify-center gap-3">
-                        <UserPlus className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                        Começar Agora
-                      </Link>
-                    </Button>
-                  </motion.div>
-                  
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <Button
-                      className={`${roboto.className} w-full bg-transparent border-2 ${isLight ? "border-slate-200 text-slate-700" : "border-white/10 text-white"} hover:border-sky-400 transition-all py-7 h-auto text-lg rounded-[16px] tracking-wide uppercase`}
-                      asChild
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <Link href="/signup" className="flex items-center justify-center gap-3">
-                        <UserPlus className="w-5 h-5 opacity-40" />
-                        Criar Conta
-                      </Link>
-                    </Button>
-                  </motion.div>
+                      <Button
+                        className={`${roboto.className} w-full bg-[#00A3FF] hover:bg-[#0091E6] text-white font-extrabold py-7 h-auto text-lg rounded-[16px] transition-all shadow-[0_12px_30px_rgba(0,163,255,0.25)] tracking-wide uppercase group`}
+                        asChild
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Link href="/home" className="flex items-center justify-center gap-3">
+                          <UserPlus className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                          Voltar para Dashboard
+                        </Link>
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    <>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                      >
+                        <Button
+                          className={`${roboto.className} w-full bg-[#00A3FF] hover:bg-[#0091E6] text-white font-extrabold py-7 h-auto text-lg rounded-[16px] transition-all shadow-[0_12px_30px_rgba(0,163,255,0.25)] tracking-wide uppercase group`}
+                          asChild
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <Link href="/signup" className="flex items-center justify-center gap-3">
+                            <UserPlus className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                            Começar Agora
+                          </Link>
+                        </Button>
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                      >
+                        <Button
+                          className={`${roboto.className} w-full bg-transparent border-2 ${isLight ? "border-slate-200 text-slate-700" : "border-white/10 text-white"} hover:border-sky-400 transition-all py-7 h-auto text-lg rounded-[16px] tracking-wide uppercase`}
+                          asChild
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <Link href="/signup" className="flex items-center justify-center gap-3">
+                            <UserPlus className="w-5 h-5 opacity-40" />
+                            Criar Conta
+                          </Link>
+                        </Button>
+                      </motion.div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

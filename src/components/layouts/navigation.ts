@@ -9,6 +9,7 @@ import {
   Server,
   Settings,
   Shield,
+  ShoppingCart,
   Ticket,
   Users,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import {
 export const navigation = [
   { name: "Painel", href: "/home", icon: LayoutDashboard },
   { name: "Hospedagem", href: "/manage/vps", icon: Server },
+  { name: "Contratar Servidor", href: "/vps-plans", icon: ShoppingCart },
   { name: "Minhas Assinaturas", href: "/minhas-assinaturas", icon: Package },
   { name: "Domínios", href: "/domains", icon: Globe },
   { name: "Faturas", href: "/billing", icon: FileText },

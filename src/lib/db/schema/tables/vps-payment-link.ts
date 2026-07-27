@@ -7,7 +7,7 @@ import { pgInvoice } from "./invoice";
 export const pgVpsPaymentLink = pgTable("vps_payment_links", {
   id: uuid("id").primaryKey().defaultRandom(),
   createdByAdminId: uuid("created_by_admin_id").notNull().references(() => pgUser.id),
-  productType: text("product_type", { enum: ["vps", "vds", "storage-vps"] }).notNull(),
+  productType: text("product_type", { enum: ["vps", "vds", "storage-vps", "vps-windows"] }).notNull(),
   planId: text("plan_id").notNull(),
   planName: text("plan_name").notNull(),
   intervalMonths: integer("interval_months").notNull(),
