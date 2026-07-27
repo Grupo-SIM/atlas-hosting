@@ -11,12 +11,16 @@ import {
 import type { PayloadWebhook, ChargeWebhookPayload } from "@/lib/server/apis/dom/types";
 import domApi from "@/lib/server/apis/dom";
 import {
+  processPaymentDeclined,
+  type PaymentDeclinedRepository,
+} from "@/lib/server/dom/payment-declined";
+import {
   processSignatureCancellation,
   type SignatureCancellationRepository,
 } from "@/lib/server/dom/signature-cancellation";
 import { syncCheckoutBoletoPayment } from "@/app/actions";
 import { AppLogger } from "@/lib/server/logs";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { sendVpsPurchaseNotifications } from "@/lib/notifications/vps-purchase";
 
@@ -75,6 +79,78 @@ async function onSignatureCancelled(
   console.log("[Webhook] SIGNATURE-CANCELLED:", result);
 }
 
+async function onPaymentDeclined(
+  externalReference: string | undefined,
+): Promise<void> {
+  const paymentDeclinedRepository: PaymentDeclinedRepository = {
+    findInvoice: (id) =>
+      db.query.pgInvoice.findFirst({
+        where: eq(pgInvoice.id, id),
+      }),
+    async failInvoice(invoiceId) {
+      const failedInvoices = await db
+        .update(pgInvoice)
+        .set({ status: "failed", updatedAt: new Date() })
+        .where(
+          and(
+            eq(pgInvoice.id, invoiceId),
+            inArray(pgInvoice.status, ["pending", "processing"]),
+          ),
+        )
+        .returning({ id: pgInvoice.id });
+
+      return failedInvoices.length > 0;
+    },
+    async clearOrganizationPlan(orgId, planId) {
+      const updatedOrganizations = await db
+        .update(pgOrganization)
+        .set({ planId: null, updatedAt: new Date() })
+        .where(
+          and(
+            eq(pgOrganization.id, orgId),
+            eq(pgOrganization.planId, planId),
+          ),
+        )
+        .returning({ id: pgOrganization.id });
+
+      return updatedOrganizations.length > 0;
+    },
+    async failVpsSubscriptions(invoiceId) {
+      const failedSubscriptions = await db
+        .update(pgVpsSubscription)
+        .set({
+          status: "failed",
+          failureCount: sql`${pgVpsSubscription.failureCount} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(pgVpsSubscription.lastInvoiceId, invoiceId),
+            eq(pgVpsSubscription.status, "active"),
+          ),
+        )
+        .returning({ id: pgVpsSubscription.id });
+
+      return failedSubscriptions.length;
+    },
+  };
+
+  const result = await processPaymentDeclined(
+    externalReference,
+    paymentDeclinedRepository,
+  );
+  console.log("[Webhook] Pagamento recusado:", result);
+}
+
+async function onChargeDeclined(payload: ChargeWebhookPayload): Promise<void> {
+  const decoded = domApi.verifyChargeSignature(payload.signature);
+  if (!decoded || decoded.id !== payload.data.id) {
+    console.error("[Webhook] Cobrança recusada com assinatura inválida ou inconsistente.");
+    return;
+  }
+
+  await onPaymentDeclined(payload.data.cod_external);
+}
 async function onInvoiceCreated(data: PayloadWebhook["data"]): Promise<void> {
   console.log("[Webhook Action] onInvoiceCreated called with data:", data);
 
@@ -353,7 +429,17 @@ export async function POST(request: Request) {
         actionTaken = "Processamento de pagamento de fatura iniciado.";
         details = payload.data;
         break;
-      case "CHARGE-APPROVED":
+      case "SIGNATURE-INVOICE-FAILED":
+        await onPaymentDeclined(payload.data.external_reference);
+        actionTaken = "Processamento imediato de fatura recusada iniciado.";
+        details = payload.data;
+        break;
+      case "CHARGE-NOT_AUTHORIZED":
+      case "CHARGE-REJECTED_ANTIFRAUD":
+        await onChargeDeclined(payload as unknown as ChargeWebhookPayload);
+        actionTaken = "Processamento imediato de cobrança recusada iniciado.";
+        details = payload.data;
+        break;      case "CHARGE-APPROVED":
         await onChargeApproved(payload as unknown as ChargeWebhookPayload);
         actionTaken = "Evento CHARGE-APPROVED processado.";
         details = payload.data;
