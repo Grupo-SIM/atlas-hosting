@@ -6,9 +6,14 @@ import {
   pgInvoice,
   pgOrganization,
   pgUser,
+  pgVpsSubscription,
 } from "@/lib/db/schema";
 import type { PayloadWebhook, ChargeWebhookPayload } from "@/lib/server/apis/dom/types";
 import domApi from "@/lib/server/apis/dom";
+import {
+  processSignatureCancellation,
+  type SignatureCancellationRepository,
+} from "@/lib/server/dom/signature-cancellation";
 import { syncCheckoutBoletoPayment } from "@/app/actions";
 import { AppLogger } from "@/lib/server/logs";
 import { and, eq } from "drizzle-orm";
@@ -24,12 +29,50 @@ async function onSignatureCancelled(
   data: PayloadWebhook["data"]
 ): Promise<void> {
   console.log("[Webhook Action] onSignatureCancelled called with data:", data);
-  const invoiceId = data.external_reference;
+  const cancellationRepository: SignatureCancellationRepository = {
+    findInvoice: (id) =>
+      db.query.pgInvoice.findFirst({
+        where: eq(pgInvoice.id, id),
+      }),
+    async clearOrganizationPlan(orgId, planId) {
+      const updatedOrganizations = await db
+        .update(pgOrganization)
+        .set({ planId: null, updatedAt: new Date() })
+        .where(
+          and(
+            eq(pgOrganization.id, orgId),
+            eq(pgOrganization.planId, planId),
+          ),
+        )
+        .returning({ id: pgOrganization.id });
 
-  if (!invoiceId) {
-    console.error("Invoice ID not found in the payload.");
-    return;
-  }
+      return updatedOrganizations.length > 0;
+    },
+    async cancelVpsSubscriptions(invoiceId, cancelledAt) {
+      const cancelledSubscriptions = await db
+        .update(pgVpsSubscription)
+        .set({
+          status: "cancelled",
+          cancelledAt,
+          updatedAt: cancelledAt,
+        })
+        .where(
+          and(
+            eq(pgVpsSubscription.lastInvoiceId, invoiceId),
+            eq(pgVpsSubscription.status, "active"),
+          ),
+        )
+        .returning({ id: pgVpsSubscription.id });
+
+      return cancelledSubscriptions.length;
+    },
+  };
+
+  const result = await processSignatureCancellation(
+    data.external_reference,
+    cancellationRepository,
+  );
+  console.log("[Webhook] SIGNATURE-CANCELLED:", result);
 }
 
 async function onInvoiceCreated(data: PayloadWebhook["data"]): Promise<void> {
