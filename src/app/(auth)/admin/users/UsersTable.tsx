@@ -30,6 +30,7 @@ function toBrl(value: number) {
 export function UsersTable({ users }: { users: UserRow[] }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
+  const [subscriptionFilter, setSubscriptionFilter] = useState<"all" | "subscriber" | "none">("all");
 
   const filtered = useMemo(() => {
     return users.filter((u) => {
@@ -43,9 +44,14 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         (statusFilter === "active" && u.suspendedAt === null) ||
         (statusFilter === "suspended" && u.suspendedAt !== null);
 
-      return matchesSearch && matchesStatus;
+      const matchesSubscription =
+        subscriptionFilter === "all" ||
+        (subscriptionFilter === "subscriber" && u.hasActiveSubscription) ||
+        (subscriptionFilter === "none" && !u.hasActiveSubscription);
+
+      return matchesSearch && matchesStatus && matchesSubscription;
     });
-  }, [users, search, statusFilter]);
+  }, [users, search, statusFilter, subscriptionFilter]);
 
   return (
     <div className="space-y-4">
@@ -66,6 +72,16 @@ export function UsersTable({ users }: { users: UserRow[] }) {
             <SelectItem value="suspended">Suspensos</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={subscriptionFilter} onValueChange={(v) => setSubscriptionFilter(v as any)}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Assinatura" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos (assinatura)</SelectItem>
+            <SelectItem value="subscriber">Com assinatura</SelectItem>
+            <SelectItem value="none">Sem assinatura</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="overflow-x-auto rounded-md border">
@@ -77,6 +93,8 @@ export function UsersTable({ users }: { users: UserRow[] }) {
             <TableHead>Saldo Disponível</TableHead>
             <TableHead>Criado em</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Assinatura</TableHead>
+            <TableHead>Cobrança</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -105,6 +123,30 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                   <Badge variant="destructive">Suspenso</Badge>
                 )}
               </TableCell>
+              <TableCell>
+                {u.hasActiveSubscription ? (
+                  <Badge className="bg-sky-500/15 text-sky-600 border-sky-500/30 hover:bg-sky-500/15">
+                    Cliente
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-slate-500 border-slate-500/30">
+                    Sem assinatura
+                  </Badge>
+                )}
+              </TableCell>
+              <TableCell>
+                {u.subscriptionPaymentMethod === null ? (
+                  <span className="text-xs text-muted-foreground">—</span>
+                ) : u.subscriptionPaymentMethod === "credit_card" ? (
+                  <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/15">
+                    Automático
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-amber-600 border-amber-500/30">
+                    Manual ({u.subscriptionPaymentMethod === "pix" ? "PIX" : "Boleto"})
+                  </Badge>
+                )}
+              </TableCell>
               <TableCell className="text-right">
                 <UserActionsCell id={u.id} suspendedAt={u.suspendedAt} isAdmin={u.isAdmin} />
               </TableCell>
@@ -112,7 +154,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
           ))}
           {filtered.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+              <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                 Nenhum usuário encontrado.
               </TableCell>
             </TableRow>

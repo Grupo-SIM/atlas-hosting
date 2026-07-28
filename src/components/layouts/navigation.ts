@@ -15,12 +15,13 @@ import {
 } from "lucide-react";
 
 export const navigation = [
+  { name: "Dashboard", href: "/admin", icon: LayoutDashboard, isAdmin: true },
   { name: "Painel", href: "/home", icon: LayoutDashboard },
-  { name: "Hospedagem", href: "/manage/vps", icon: Server },
+  { name: "Hospedagem", href: "/manage/vps", icon: Server, showForAdmin: true },
   { name: "Contratar Servidor", href: "/vps-plans", icon: ShoppingCart },
   { name: "Minhas Assinaturas", href: "/minhas-assinaturas", icon: Package },
-  { name: "Domínios", href: "/domains", icon: Globe },
-  { name: "Faturas", href: "/billing", icon: FileText },
+  { name: "Domínios", href: "/domains", icon: Globe, showForAdmin: true },
+  { name: "Faturas", href: "/billing", icon: FileText, showForAdmin: true },
   { name: "Afiliados", href: "/affiliate", icon: Users },
   { name: "Vouchers", href: "/vouchers", icon: Ticket },
   { name: "Administração", href: "/admin/vps", icon: Shield, isAdmin: true },

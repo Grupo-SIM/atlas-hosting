@@ -79,6 +79,22 @@ function PaymentBadge({ method }: { method: "credit_card" | "pix" | "boleto" }) 
   );
 }
 
+/** Cartão cobra sozinho no vencimento (automático); PIX/boleto exigem o cliente pagar de novo manualmente. */
+function ChargeModeBadge({ method }: { method: "credit_card" | "pix" | "boleto" }) {
+  if (method === "credit_card") {
+    return (
+      <Badge className="gap-1 bg-sky-500/15 text-sky-600 border-sky-500/30 hover:bg-sky-500/15">
+        Automático
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="gap-1 text-slate-500 border-slate-500/30">
+      Manual
+    </Badge>
+  );
+}
+
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
     active:    { label: "Ativa",      variant: "default" },
@@ -200,6 +216,7 @@ export default async function AdminVpsPlansPage() {
                 <TableHead>Tipo</TableHead>
                 <TableHead>Período</TableHead>
                 <TableHead>Pagamento</TableHead>
+                <TableHead>Cobrança</TableHead>
                 <TableHead>Próx. cobrança</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Status</TableHead>
@@ -233,6 +250,9 @@ export default async function AdminVpsPlansPage() {
                   <TableCell>
                     <PaymentBadge method={plan.paymentMethod} />
                   </TableCell>
+                  <TableCell>
+                    <ChargeModeBadge method={plan.paymentMethod} />
+                  </TableCell>
                   <TableCell className="text-sm">
                     <div className="flex flex-col gap-1">
                       <span>{format(plan.nextChargeDate, "dd/MM/yyyy", { locale: ptBR })}</span>
@@ -263,7 +283,7 @@ export default async function AdminVpsPlansPage() {
               })}
               {plans.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                     Nenhuma assinatura registrada.
                   </TableCell>
                 </TableRow>

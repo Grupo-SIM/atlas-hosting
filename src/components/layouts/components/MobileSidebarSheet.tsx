@@ -18,8 +18,10 @@ export function MobileSidebarSheet({ isAdmin }: { isAdmin: boolean }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  const filteredNavigation = navigation.filter(
-    (item) => !(item as any).isAdmin || isAdmin
+  const filteredNavigation = navigation.filter((item) =>
+    isAdmin
+      ? (item as any).isAdmin || (item as any).showForAdmin
+      : !(item as any).isAdmin
   );
 
   return (

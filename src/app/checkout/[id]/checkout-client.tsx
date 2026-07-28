@@ -22,6 +22,9 @@ import { useRouter } from "next/navigation";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
 import { applyVoucher, consumeVoucher } from "@/app/(auth)/vouchers/actions";
 
+/** Taxa extra cobrada em cima do valor da fatura quando o pagamento é via boleto — ver BOLETO_FEE em actions.ts. Configurável via env NEXT_PUBLIC_BOLETO_FEE. */
+const BOLETO_FEE = Number(process.env.NEXT_PUBLIC_BOLETO_FEE ?? 7);
+
 interface User {
   id: string;
   organization?: {
@@ -160,7 +163,12 @@ export default function CheckoutClient({
   const buyerFee = isCreditCard && installmentRate && installmentRate.buyerRate > 0
     ? Math.round((displayBase * installmentRate.buyerRate + installmentRate.fixedFee) * 100) / 100
     : null;
-  const displayTotal = buyerFee !== null ? Math.round((displayBase + buyerFee) * 100) / 100 : displayBase;
+  const boletoFee = selectedMethod === "boleto" ? BOLETO_FEE : null;
+  const displayTotal = boletoFee !== null
+    ? Math.round((displayBase + boletoFee) * 100) / 100
+    : buyerFee !== null
+      ? Math.round((displayBase + buyerFee) * 100) / 100
+      : displayBase;
 
   return (
     <div className="relative z-0 w-full min-h-screen overflow-x-hidden bg-[#000B12] pb-12 pt-8">
@@ -390,6 +398,17 @@ export default function CheckoutClient({
                         </span>
                         <span className="font-black text-orange-400">
                           +{toBrl(buyerFee)}
+                        </span>
+                      </div>
+                    )}
+
+                    {boletoFee !== null && (
+                      <div className="flex items-center justify-between gap-2 border-t border-white/5 py-4">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                          Taxa de Boleto
+                        </span>
+                        <span className="font-black text-orange-400">
+                          +{toBrl(boletoFee)}
                         </span>
                       </div>
                     )}

@@ -6,7 +6,13 @@ import { UserStats } from "./components/UserStats";
 import { db } from "@/lib/db";
 import { pgPlan, type Plan } from "@/lib/db/schema";
 
-export default async function AdminPage() {
+interface AdminPageProps {
+  searchParams: Promise<{ page?: string; search?: string; clientId?: string }>;
+}
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
+  const resolvedSearchParams = await searchParams;
+
   // Fetch initial plans data on the server
   const initialPlans: Plan[] = await db
     .select()
@@ -33,7 +39,7 @@ export default async function AdminPage() {
       </section>
 
       <section className="space-y-6">
-        <InvoiceStats />
+        <InvoiceStats searchParams={resolvedSearchParams} />
       </section>
 
       <section className="space-y-6">

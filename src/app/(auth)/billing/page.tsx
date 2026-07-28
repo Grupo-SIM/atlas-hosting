@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { getUser } from "@/lib/auth";
+import { getUser, getRealUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { pgInvoice } from "@/lib/db/schema";
+import { pgInvoice, pgUser } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { groupBy } from "lodash";
 import { FileText } from "lucide-react";
@@ -13,12 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Suspense } from "react";
 import { BillingListSkeleton } from "./loading";
 import { BillingFilters } from "./_/filters";
+import { InvoiceClientFilter } from "@/app/(auth)/admin/components/InvoiceClientFilter";
 
 import { format } from "date-fns";
 
 export default async function BillingPage({
   searchParams: _searchParams,
-}: { searchParams: Promise<{ id?: string; status?: string; type?: string; date?: string; from?: string; to?: string; page?: string }> }) {
+}: { searchParams: Promise<{ id?: string; status?: string; type?: string; date?: string; from?: string; to?: string; page?: string; clientId?: string }> }) {
   const searchParams = await _searchParams;
   const statusFilter = searchParams.status || "all";
   const typeFilter = searchParams.type || "all";
@@ -28,7 +29,33 @@ export default async function BillingPage({
   const currentPage = Number(searchParams.page) || 1;
   const pageSize = 10;
 
-  const { organizationId } = await getUser();
+  const user = await getUser();
+  const realUser = await getRealUser();
+  // Admin de verdade (não impersonando) pode escolher ver faturas de outro cliente
+  // direto por aqui, sem precisar entrar em "Acessar como cliente".
+  const canFilterByClient = realUser.isAdmin && !user.impersonatedBy;
+
+  let organizationId = user.organizationId;
+  let viewingClient: { name: string; email: string } | null = null;
+
+  if (canFilterByClient && searchParams.clientId) {
+    const target = await db.query.pgUser.findFirst({
+      where: eq(pgUser.id, searchParams.clientId),
+      columns: { name: true, email: true, organizationId: true },
+    });
+    if (target?.organizationId) {
+      organizationId = target.organizationId;
+      viewingClient = { name: target.name, email: target.email };
+    }
+  }
+
+  const clients = canFilterByClient
+    ? await db
+        .selectDistinct({ id: pgUser.id, name: pgUser.name, email: pgUser.email })
+        .from(pgInvoice)
+        .innerJoin(pgUser, eq(pgInvoice.userId, pgUser.id))
+        .orderBy(pgUser.name)
+    : [];
 
   if (!organizationId) {
     return (
@@ -106,9 +133,14 @@ export default async function BillingPage({
     <div className="container mx-auto py-8 px-4 md:px-6 max-w-6xl space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">Minhas Faturas</h1>
-          <p className="text-muted-foreground">Gerencie seus pagamentos e histórico financeiro.</p>
+          <h1 className="text-3xl font-black tracking-tight">
+            {viewingClient ? `Faturas de ${viewingClient.name}` : "Minhas Faturas"}
+          </h1>
+          <p className="text-muted-foreground">
+            {viewingClient ? viewingClient.email : "Gerencie seus pagamentos e histórico financeiro."}
+          </p>
         </div>
+        {canFilterByClient && <InvoiceClientFilter clients={clients} />}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -151,7 +183,9 @@ export default async function BillingPage({
                 <h3 className="text-xl font-semibold mb-2">Nenhuma fatura encontrada</h3>
                 <p className="text-muted-foreground">Tente ajustar seus filtros.</p>
                 <Button variant="link" asChild className="mt-4">
-                  <Link href="/billing">Limpar filtros</Link>
+                  <Link href={searchParams.clientId ? `/billing?clientId=${searchParams.clientId}` : "/billing"}>
+                    Limpar filtros
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
@@ -172,12 +206,12 @@ export default async function BillingPage({
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" asChild disabled={currentPage <= 1}>
-                      <Link href={`/billing?status=${statusFilter}&type=${typeFilter}&date=${dateFilter}&page=${currentPage - 1}`} scroll={false}>
+                      <Link href={`/billing?status=${statusFilter}&type=${typeFilter}&date=${dateFilter}&page=${currentPage - 1}${searchParams.clientId ? `&clientId=${searchParams.clientId}` : ""}`} scroll={false}>
                         Anterior
                       </Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild disabled={currentPage >= totalPages}>
-                      <Link href={`/billing?status=${statusFilter}&type=${typeFilter}&date=${dateFilter}&page=${currentPage + 1}`} scroll={false}>
+                      <Link href={`/billing?status=${statusFilter}&type=${typeFilter}&date=${dateFilter}&page=${currentPage + 1}${searchParams.clientId ? `&clientId=${searchParams.clientId}` : ""}`} scroll={false}>
                         Próximo
                       </Link>
                     </Button>

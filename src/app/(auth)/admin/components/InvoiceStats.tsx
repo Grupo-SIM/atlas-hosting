@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
-import { pgInvoice } from "@/lib/db/schema";
-import { sql } from "drizzle-orm";
+import { pgInvoice, pgUser } from "@/lib/db/schema";
+import { sql, eq } from "drizzle-orm";
 import {
   Card,
   CardContent,
@@ -10,11 +10,16 @@ import {
 } from "@/components/ui/card";
 import { InvoiceChart } from "./InvoiceChart";
 import { InvoiceList } from "./InvoiceList";
+import { InvoiceClientFilter } from "./InvoiceClientFilter";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
-export async function InvoiceStats() {
-  const [statusStats, typeStats, averageAmount, totalInvoices] =
+interface InvoiceStatsProps {
+  searchParams?: { page?: string; search?: string; clientId?: string };
+}
+
+export async function InvoiceStats({ searchParams }: InvoiceStatsProps) {
+  const [statusStats, typeStats, averageAmount, totalInvoices, clients] =
     await Promise.all([
       db
         .select({
@@ -41,7 +46,17 @@ export async function InvoiceStats() {
           count: sql<number>`count(*)`,
         })
         .from(pgInvoice),
+      // Só clientes que já têm ao menos uma fatura — é o universo relevante pro dropdown de filtro.
+      db
+        .selectDistinct({ id: pgUser.id, name: pgUser.name, email: pgUser.email })
+        .from(pgInvoice)
+        .innerJoin(pgUser, eq(pgInvoice.userId, pgUser.id))
+        .orderBy(pgUser.name),
     ]);
+
+  const selectedClient = searchParams?.clientId
+    ? clients.find((c) => c.id === searchParams.clientId) ?? null
+    : null;
 
   const totalCount = totalInvoices[0].count;
   const totalAmount = statusStats.reduce(
@@ -123,8 +138,9 @@ export async function InvoiceStats() {
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Buscar faturas..." className="pl-8" />
               </div>
+              <InvoiceClientFilter clients={clients} />
             </div>
-            <InvoiceList />
+            <InvoiceList searchParams={searchParams} selectedClient={selectedClient} />
           </div>
         </div>
       </CardContent>

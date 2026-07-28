@@ -138,7 +138,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
         {/* Auth Buttons (Desktop) + Hamburger (Mobile) */}
         <div className="flex-1 md:flex-none flex items-center justify-end gap-3">
           <div className="hidden md:flex items-center gap-2">
-            <CurrencySelector value={displayCurrency} onChange={changeDisplayCurrency} isLight={isLight} />
+            {/* Currency dropdown disabled — BRL default only. <CurrencySelector value={displayCurrency} onChange={changeDisplayCurrency} isLight={isLight} /> */}
             {isAuthed ? (
               <Button
                 className={`${roboto.className} bg-transparent border border-white text-white font-bold px-4 lg:px-8 py-1.5 lg:py-2 h-auto text-[12px] lg:text-[15px] rounded-[10px] transition-all duration-300 tracking-widest uppercase hover:bg-white/10`}
@@ -231,11 +231,12 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
                   ))}
                 </div>
 
-                {/* Currency */}
+                {/* Currency dropdown disabled — BRL default only.
                 <div className="space-y-2">
                   <p className="text-[13px] font-black uppercase tracking-[0.2em] text-sky-400 mb-4 px-2">Moeda</p>
                   <CurrencySelector value={displayCurrency} onChange={changeDisplayCurrency} isLight={isLight} variant="inline" />
                 </div>
+                */}
 
                 {/* Secondary Links */}
                 <div className="space-y-1">

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { toBrl } from "@/lib/utils";
 import { Metadata } from "next";
-import { Users, ShieldCheck, CheckCircle, XCircle, TrendingUp } from "lucide-react";
+import { Users, ShieldCheck, CheckCircle, XCircle, TrendingUp, Server } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Usuários — Admin" };
@@ -18,6 +18,7 @@ export default async function AdminUsersPage() {
 
   const active       = users.filter((u) => u.suspendedAt === null).length;
   const suspended    = users.filter((u) => u.suspendedAt !== null).length;
+  const subscribers  = users.filter((u) => u.hasActiveSubscription).length;
   const totalEarned  = users.reduce((acc, u) => acc + u.totalEarnedBrl, 0);
   const totalBalance = users.reduce((acc, u) => acc + u.balanceCents / 100, 0);
 
@@ -38,7 +39,7 @@ export default async function AdminUsersPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total</CardTitle>
@@ -64,6 +65,15 @@ export default async function AdminUsersPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{suspended}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Clientes (com assinatura)</CardTitle>
+            <Server className="h-4 w-4 text-sky-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-sky-600">{subscribers}</div>
           </CardContent>
         </Card>
         <Card>

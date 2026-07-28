@@ -1338,6 +1338,9 @@ export async function initiateCheckoutPix(
 
 export type InitiateCheckoutBoletoPayload = InitiateCheckoutPixPayload;
 
+/** Taxa extra cobrada em cima do valor da fatura quando o pagamento é via boleto. Configurável via env BOLETO_FEE. */
+const BOLETO_FEE = Number(process.env.BOLETO_FEE ?? 7);
+
 /**
  * Gera um boleto via DOM Pagamentos (API de transação avulsa, /transactions —
  * distinta da Simpay usada pra cartão/PIX). Boleto não é liberado por padrão;
@@ -1383,7 +1386,7 @@ export async function initiateCheckoutBoleto(
   try {
     const tx = await domApi.createBoletoTransaction({
       codExternal: invoice.id,
-      value: invoice.amount,
+      value: invoice.amount + BOLETO_FEE,
       description: atlasSimpayInvoiceDescription(invoice.reference),
       customer: {
         name: `${billing.firstName} ${billing.lastName}`.trim(),

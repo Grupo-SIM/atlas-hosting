@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { pgInvoice, pgUser, pgOrganization } from "@/lib/db/schema";
-import { desc, sql } from "drizzle-orm";
+import { desc, sql, and } from "drizzle-orm";
 import {
   Table,
   TableBody,
@@ -22,12 +22,23 @@ import { Badge } from "@/components/ui/badge";
 const ITEMS_PER_PAGE = 10;
 
 interface InvoiceListProps {
-  searchParams?: { page?: string; search?: string };
+  searchParams?: { page?: string; search?: string; clientId?: string };
+  /** Cliente selecionado no dropdown de filtro, pra exibir o nome no cabeçalho da lista. */
+  selectedClient?: { name: string; email: string } | null;
 }
 
-export async function InvoiceList({ searchParams }: InvoiceListProps) {
+export async function InvoiceList({ searchParams, selectedClient }: InvoiceListProps) {
   const page = Number(searchParams?.page) || 1;
   const search = searchParams?.search || "";
+  const clientId = searchParams?.clientId || "";
+
+  const conditions = [
+    clientId ? sql`${pgInvoice.userId} = ${clientId}` : undefined,
+    search
+      ? sql`(${pgUser.name} ILIKE ${`%${search}%`} OR ${pgUser.email} ILIKE ${`%${search}%`})`
+      : undefined,
+  ].filter((c): c is NonNullable<typeof c> => c !== undefined);
+  const whereClause = conditions.length ? and(...conditions) : undefined;
 
   const [invoices, totalInvoices] = await Promise.all([
     db
@@ -44,11 +55,7 @@ export async function InvoiceList({ searchParams }: InvoiceListProps) {
       })
       .from(pgInvoice)
       .leftJoin(pgUser, sql`${pgInvoice.userId} = ${pgUser.id}`)
-      .where(
-        search
-          ? sql`${pgUser.name} ILIKE ${`%${search}%`} OR ${pgUser.email} ILIKE ${`%${search}%`}`
-          : undefined
-      )
+      .where(whereClause)
       .orderBy(desc(pgInvoice.createdAt))
       .limit(ITEMS_PER_PAGE)
       .offset((page - 1) * ITEMS_PER_PAGE),
@@ -58,11 +65,7 @@ export async function InvoiceList({ searchParams }: InvoiceListProps) {
       })
       .from(pgInvoice)
       .leftJoin(pgUser, sql`${pgInvoice.userId} = ${pgUser.id}`)
-      .where(
-        search
-          ? sql`${pgUser.name} ILIKE ${`%${search}%`} OR ${pgUser.email} ILIKE ${`%${search}%`}`
-          : undefined
-      ),
+      .where(whereClause),
   ]);
 
   const totalPages = Math.ceil(totalInvoices[0].count / ITEMS_PER_PAGE);
@@ -95,8 +98,18 @@ export async function InvoiceList({ searchParams }: InvoiceListProps) {
     return typeMap[type] || type;
   };
 
+  const pageQuery = (p: number) =>
+    `?page=${p}${search ? `&search=${search}` : ""}${clientId ? `&clientId=${clientId}` : ""}`;
+
   return (
     <div className="space-y-4">
+      {selectedClient && (
+        <p className="text-sm text-muted-foreground">
+          Mostrando faturas de <span className="font-medium text-foreground">{selectedClient.name}</span>{" "}
+          ({selectedClient.email})
+        </p>
+      )}
+
       <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
@@ -109,6 +122,13 @@ export async function InvoiceList({ searchParams }: InvoiceListProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {invoices.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  Nenhuma fatura encontrada.
+                </TableCell>
+              </TableRow>
+            )}
             {invoices.map((invoice) => (
               <TableRow key={invoice.id}>
                 <TableCell>
@@ -138,7 +158,7 @@ export async function InvoiceList({ searchParams }: InvoiceListProps) {
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                href={`?page=${page - 1}${search ? `&search=${search}` : ""}`}
+                href={pageQuery(page - 1)}
                 aria-disabled={page <= 1}
                 className={page <= 1 ? "pointer-events-none opacity-50" : ""}
               />
@@ -147,7 +167,7 @@ export async function InvoiceList({ searchParams }: InvoiceListProps) {
               (pageNum) => (
                 <PaginationItem key={pageNum}>
                   <PaginationLink
-                    href={`?page=${pageNum}${search ? `&search=${search}` : ""}`}
+                    href={pageQuery(pageNum)}
                     isActive={pageNum === page}
                   >
                     {pageNum}
@@ -157,7 +177,7 @@ export async function InvoiceList({ searchParams }: InvoiceListProps) {
             )}
             <PaginationItem>
               <PaginationNext
-                href={`?page=${page + 1}${search ? `&search=${search}` : ""}`}
+                href={pageQuery(page + 1)}
                 aria-disabled={page >= totalPages}
                 className={
                   page >= totalPages ? "pointer-events-none opacity-50" : ""
