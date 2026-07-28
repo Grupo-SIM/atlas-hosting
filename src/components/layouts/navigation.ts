@@ -15,8 +15,7 @@ import {
 } from "lucide-react";
 
 export const navigation = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard, isAdmin: true },
-  { name: "Painel", href: "/home", icon: LayoutDashboard },
+  { name: "Painel", href: "/home", icon: LayoutDashboard, showForAdmin: true },
   { name: "Hospedagem", href: "/manage/vps", icon: Server, showForAdmin: true },
   { name: "Contratar Servidor", href: "/vps-plans", icon: ShoppingCart },
   { name: "Minhas Assinaturas", href: "/minhas-assinaturas", icon: Package },

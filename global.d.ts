@@ -1,4 +1,10 @@
 /** biome-ignore-all lint/correctness/noUnusedVariables: types in *.d.ts are automatically picked up without exporting. */
+declare module "*.svg" {
+  import type { FC, SVGProps } from "react";
+  const ReactComponent: FC<SVGProps<SVGSVGElement>>;
+  export default ReactComponent;
+}
+
 declare module "*" {
   const content: string;
   export default content;
