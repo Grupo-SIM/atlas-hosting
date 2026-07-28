@@ -1,8 +1,8 @@
 "use client";
 
-import { Dialog } from "@/components/ui/dialog";
 import type { DialogProps } from "@radix-ui/react-dialog";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Dialog } from "@/components/ui/dialog";
 
 export default function InviteMemberDialogWrapper({
   onOpenChange: _,

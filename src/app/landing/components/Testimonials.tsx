@@ -1,39 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "motion/react";
 import { Star } from "lucide-react";
-import LetterGlitch from "./LetterGlitch";
+import { motion } from "motion/react";
+import { useEffect, useState } from "react";
 
 const testimonials = [
   {
+    image: "/landing/testimonials/julia.jpg",
     name: "Júlia Alba",
     role: "Empreendedora Digital",
-    image: "/landing/testimonials/julia.jpg",
     text: "Sempre achei difícil entender termos técnicos, mas o suporte do Atlas é diferente. Gente real, explicação simples. Me senti segura desde o primeiro contato.",
   },
   {
+    image: "/landing/testimonials/fernando.jpg",
     name: "Fernando Collins",
     role: "Criador de Conteúdo",
-    image: "/landing/testimonials/fernando.jpg",
     text: "O cashback mensal foi um diferencial que eu nunca vi em outras hospedagens. Já recuperei parte do valor e continuo com performance altíssima no meu site.",
   },
   {
+    image: "/landing/testimonials/fabricio.jpg",
     name: "Fabricio dos Santos",
     role: "Gestor de Projetos Web",
-    image: "/landing/testimonials/fabricio.jpg",
     text: "Estou há 2 anos com o Atlas. Nunca precisei abrir chamado por instabilidade. Me surpreendeu.",
   },
   {
+    image: "/landing/testimonials/luiz.jpg",
     name: "Luiz Vieira",
     role: "Desenvolvedor WordPress",
-    image: "/landing/testimonials/luiz.jpg",
     text: "Além do Elementor Pro incluso, ainda recebo sugestões de otimização com frequência. O Atlas vai além da hospedagem, é parceiro de crescimento.",
   },
   {
+    image: "/landing/testimonials/rafael.jpg",
     name: "Rafael Carrilho",
     role: "Especialista em Tráfego Pago",
-    image: "/landing/testimonials/rafael.jpg",
     text: "Achei que era só mais uma hospedagem, mas o Atlas entrega mesmo. Meu site ficou mais rápido, seguro e ainda economizo com ferramentas que antes eu pagava por fora.",
   },
 ];
@@ -64,7 +63,7 @@ export function Testimonials() {
   // Auto-scroll logic for a basic horizontal slider effect
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => {
+      setCurrentIndex(prev => {
         // Limit max index so we don't translate into blank space
         const maxIndex = testimonials.length - itemsPerView;
         if (prev >= maxIndex) return 0;
@@ -75,72 +74,77 @@ export function Testimonials() {
   }, [itemsPerView]);
 
   return (
-    <section id="testimonials" className="py-24 relative overflow-hidden bg-transparent w-full">
-      <div className="container mx-auto max-w-[1440px] px-4 relative z-10">
-        <div className="bg-[#00111a] rounded-[3rem] px-8 py-20 md:px-16 md:py-24 shadow-[0_30px_100px_rgba(0,0,0,0.4)] relative overflow-hidden">
-          
+    <section
+      className="relative w-full overflow-hidden bg-transparent py-24"
+      id="testimonials"
+    >
+      <div className="container relative z-10 mx-auto max-w-[1440px] px-4">
+        <div className="relative overflow-hidden rounded-[3rem] bg-[#00111a] px-8 py-20 shadow-[0_30px_100px_rgba(0,0,0,0.4)] md:px-16 md:py-24">
           {/* Top Header */}
-          <div className="text-center mb-16 flex flex-col items-center relative z-10">
+          <div className="relative z-10 mb-16 flex flex-col items-center text-center">
             <motion.div
+              className="mb-6 inline-flex items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-4 py-1.5 font-bold text-[11px] text-sky-400 uppercase tracking-[0.12em]"
               initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="inline-flex items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-sky-400 mb-6"
+              whileInView={{ opacity: 1, y: 0 }}
             >
               ● DEPOIMENTOS
             </motion.div>
 
             <motion.h2
+              className="mb-6 font-black text-3xl text-white tracking-tight md:text-[3rem]"
               initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-3xl md:text-[3rem] font-black mb-6 text-white tracking-tight"
+              whileInView={{ opacity: 1, y: 0 }}
             >
               Feedback & Avaliações
             </motion.h2>
 
             <motion.div
+              className="flex items-center justify-center gap-1.5"
               initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex items-center gap-1.5 justify-center"
+              whileInView={{ opacity: 1, y: 0 }}
             >
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-[18px] h-[18px] text-[#FFB800] fill-[#FFB800]" />
+                <Star
+                  className="h-[18px] w-[18px] fill-[#FFB800] text-[#FFB800]"
+                  key={i}
+                />
               ))}
             </motion.div>
           </div>
 
           {/* Testimonials Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+          <div className="relative z-10 grid grid-cols-1 gap-8 md:grid-cols-3">
             {testimonials.slice(0, 3).map((testimonial, index) => (
-              <div key={index} className="flex flex-col">
+              <div className="flex flex-col" key={index}>
                 {/* Bubble */}
-                <div className="relative bg-white rounded-2xl p-8 mb-8 shadow-xl">
-                  <p className="text-[#0f172a] text-[15px] font-medium leading-relaxed">
+                <div className="relative mb-8 rounded-2xl bg-white p-8 shadow-xl">
+                  <p className="font-medium text-[#0f172a] text-[15px] leading-relaxed">
                     {testimonial.text}
                   </p>
                   {/* Bubble Tail */}
-                  <div className="absolute -bottom-3 left-10 w-6 h-6 bg-white rotate-45" />
+                  <div className="absolute -bottom-3 left-10 h-6 w-6 rotate-45 bg-white" />
                 </div>
 
                 {/* Author Info */}
                 <div className="flex items-center gap-4 px-4">
-                  <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border-2 border-white/10 shadow-lg">
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 border-white/10 shadow-lg">
                     <img
-                      src={testimonial.image}
                       alt={testimonial.name}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                       loading="lazy"
+                      src={testimonial.image}
                     />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-bold text-white text-[15px]">
+                    <span className="font-bold text-[15px] text-white">
                       {testimonial.name}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                    <span className="font-bold text-[11px] text-slate-400 uppercase tracking-wider">
                       {testimonial.role}
                     </span>
                   </div>

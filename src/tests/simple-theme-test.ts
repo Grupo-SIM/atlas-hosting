@@ -7,7 +7,7 @@ console.log("🎨 Simple WordPress Themes Test\n");
 async function simpleThemeTest() {
   try {
     const result = await pleskApi.wordpress.callWp(
-      `-wp-cli -instance-id 226 -- theme list --format=json`
+      "-wp-cli -instance-id 226 -- theme list --format=json"
     );
 
     console.log("Theme List Response:");

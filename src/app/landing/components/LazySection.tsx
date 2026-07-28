@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface LazySectionProps {
   children: React.ReactNode;
@@ -8,7 +9,11 @@ interface LazySectionProps {
   className?: string;
 }
 
-export function LazySection({ children, offset = "200px", className = "" }: LazySectionProps) {
+export function LazySection({
+  children,
+  offset = "200px",
+  className = "",
+}: LazySectionProps) {
   const [isIntersecting, setIntersecting] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 
@@ -33,7 +38,7 @@ export function LazySection({ children, offset = "200px", className = "" }: Lazy
   }, [offset]);
 
   return (
-    <div ref={sectionRef} className={className}>
+    <div className={className} ref={sectionRef}>
       {isIntersecting ? children : <div className="min-h-[200px] w-full" />}
     </div>
   );

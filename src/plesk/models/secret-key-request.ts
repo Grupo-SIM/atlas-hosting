@@ -35,7 +35,7 @@ export interface SecretKeyRequest {
    * @memberof SecretKeyRequest
    * @example ["93.184.216.34","2606:2800:220:1:248:1893:25c8:1946"]
    */
-  ips?: Array<string>;
+  ips?: string[];
 
   /**
    * The login name of an existing customer or a reseller that will have this secret key. The customer's or reseller's account should be active. If this node is not specified, the administrator's login will be used.

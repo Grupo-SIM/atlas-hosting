@@ -1,18 +1,26 @@
 "use client";
 
+import {
+  AlertTriangle,
+  Bell,
+  Database,
+  Globe,
+  Palette,
+  Save,
+  Shield,
+} from "lucide-react";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -20,32 +28,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
-  Bell,
-  Shield,
-  Globe,
-  Palette,
-  Database,
-  Save,
-  AlertTriangle,
-} from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState({
-    email: true,
-    push: true,
-    sms: false,
     billing: true,
-    security: true,
+    email: true,
     maintenance: false,
+    push: true,
+    security: true,
+    sms: false,
   });
 
   const [generalSettings, setGeneralSettings] = useState({
-    timezone: "America/Sao_Paulo",
-    language: "pt-BR",
     dateFormat: "DD/MM/YYYY",
+    language: "pt-BR",
     theme: "system",
+    timezone: "America/Sao_Paulo",
   });
 
   const [backupSettings, setBackupSettings] = useState({
@@ -55,18 +55,18 @@ export default function SettingsPage() {
   });
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+        <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
           Configurações
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="mt-1 text-muted-foreground">
           Gerencie suas preferências e configurações da conta
         </p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="flex flex-wrap h-auto w-full gap-1">
+      <Tabs className="space-y-6" defaultValue="general">
+        <TabsList className="flex h-auto w-full flex-wrap gap-1">
           <TabsTrigger value="general">Geral</TabsTrigger>
           <TabsTrigger value="notifications">Notificações</TabsTrigger>
           <TabsTrigger value="security">Segurança</TabsTrigger>
@@ -74,7 +74,7 @@ export default function SettingsPage() {
           <TabsTrigger value="api">API</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="space-y-6">
+        <TabsContent className="space-y-6" value="general">
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
               <CardHeader>
@@ -90,13 +90,13 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="timezone">Fuso Horário</Label>
                   <Select
-                    value={generalSettings.timezone}
-                    onValueChange={(value) =>
+                    onValueChange={value =>
                       setGeneralSettings({
                         ...generalSettings,
                         timezone: value,
                       })
                     }
+                    value={generalSettings.timezone}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -121,13 +121,13 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="language">Idioma</Label>
                   <Select
-                    value={generalSettings.language}
-                    onValueChange={(value) =>
+                    onValueChange={value =>
                       setGeneralSettings({
                         ...generalSettings,
                         language: value,
                       })
                     }
+                    value={generalSettings.language}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -143,13 +143,13 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="dateFormat">Formato de Data</Label>
                   <Select
-                    value={generalSettings.dateFormat}
-                    onValueChange={(value) =>
+                    onValueChange={value =>
                       setGeneralSettings({
                         ...generalSettings,
                         dateFormat: value,
                       })
                     }
+                    value={generalSettings.dateFormat}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -178,10 +178,10 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="theme">Tema</Label>
                   <Select
-                    value={generalSettings.theme}
-                    onValueChange={(value) =>
+                    onValueChange={value =>
                       setGeneralSettings({ ...generalSettings, theme: value })
                     }
+                    value={generalSettings.theme}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -197,17 +197,17 @@ export default function SettingsPage() {
                 <div className="space-y-3">
                   <Label>Modo de Visualização</Label>
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="border rounded-lg p-3 cursor-pointer hover:border-primary">
-                      <div className="h-20 bg-muted rounded mb-2" />
-                      <p className="text-xs text-center">Compacto</p>
+                    <div className="cursor-pointer rounded-lg border p-3 hover:border-primary">
+                      <div className="mb-2 h-20 rounded bg-muted" />
+                      <p className="text-center text-xs">Compacto</p>
                     </div>
-                    <div className="border-2 border-primary rounded-lg p-3 cursor-pointer">
-                      <div className="h-20 bg-muted rounded mb-2" />
-                      <p className="text-xs text-center">Padrão</p>
+                    <div className="cursor-pointer rounded-lg border-2 border-primary p-3">
+                      <div className="mb-2 h-20 rounded bg-muted" />
+                      <p className="text-center text-xs">Padrão</p>
                     </div>
-                    <div className="border rounded-lg p-3 cursor-pointer hover:border-primary">
-                      <div className="h-20 bg-muted rounded mb-2" />
-                      <p className="text-xs text-center">Amplo</p>
+                    <div className="cursor-pointer rounded-lg border p-3 hover:border-primary">
+                      <div className="mb-2 h-20 rounded bg-muted" />
+                      <p className="text-center text-xs">Amplo</p>
                     </div>
                   </div>
                 </div>
@@ -223,7 +223,7 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-6">
+        <TabsContent className="space-y-6" value="notifications">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -238,13 +238,13 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Notificações por E-mail</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Receba atualizações importantes por e-mail
                   </p>
                 </div>
                 <Switch
                   checked={notifications.email}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     setNotifications({ ...notifications, email: checked })
                   }
                 />
@@ -253,13 +253,13 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Notificações Push</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Receba notificações em tempo real no navegador
                   </p>
                 </div>
                 <Switch
                   checked={notifications.push}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     setNotifications({ ...notifications, push: checked })
                   }
                 />
@@ -268,13 +268,13 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Notificações SMS</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Receba alertas críticos por SMS
                   </p>
                 </div>
                 <Switch
                   checked={notifications.sms}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     setNotifications({ ...notifications, sms: checked })
                   }
                 />
@@ -287,14 +287,14 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-medium">Faturamento</span>
-                    <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-sm">Faturamento</span>
+                    <p className="text-muted-foreground text-xs">
                       Lembretes de vencimento e confirmações de pagamento
                     </p>
                   </div>
                   <Switch
                     checked={notifications.billing}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={checked =>
                       setNotifications({ ...notifications, billing: checked })
                     }
                   />
@@ -302,14 +302,14 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-medium">Segurança</span>
-                    <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-sm">Segurança</span>
+                    <p className="text-muted-foreground text-xs">
                       Alertas de login e atividades suspeitas
                     </p>
                   </div>
                   <Switch
                     checked={notifications.security}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={checked =>
                       setNotifications({ ...notifications, security: checked })
                     }
                   />
@@ -317,14 +317,14 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-medium">Manutenção</span>
-                    <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-sm">Manutenção</span>
+                    <p className="text-muted-foreground text-xs">
                       Notificações sobre manutenções programadas
                     </p>
                   </div>
                   <Switch
                     checked={notifications.maintenance}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={checked =>
                       setNotifications({
                         ...notifications,
                         maintenance: checked,
@@ -337,7 +337,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="security" className="space-y-6">
+        <TabsContent className="space-y-6" value="security">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -354,13 +354,13 @@ export default function SettingsPage() {
                   <h4 className="font-medium">
                     Autenticação de Dois Fatores (2FA)
                   </h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Adicione uma camada extra de segurança
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">Desabilitado</Badge>
-                  <Button variant="outline" size="sm">
+                  <Button size="sm" variant="outline">
                     Configurar
                   </Button>
                 </div>
@@ -369,11 +369,11 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Sessões Ativas</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Visualizar e gerenciar dispositivos conectados
                   </p>
                 </div>
-                <Button variant="outline" size="sm">
+                <Button size="sm" variant="outline">
                   Gerenciar
                 </Button>
               </div>
@@ -381,23 +381,23 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Chaves API</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Gerencie suas chaves de API
                   </p>
                 </div>
-                <Button variant="outline" size="sm">
+                <Button size="sm" variant="outline">
                   Ver Chaves
                 </Button>
               </div>
 
-              <div className="border rounded-lg p-4 bg-yellow-50 dark:bg-yellow-900/20">
+              <div className="rounded-lg border bg-yellow-50 p-4 dark:bg-yellow-900/20">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <AlertTriangle className="mt-0.5 h-5 w-5 text-yellow-600" />
                   <div>
                     <h4 className="font-medium text-yellow-800 dark:text-yellow-200">
                       Recomendação de Segurança
                     </h4>
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                    <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
                       Habilite a autenticação de dois fatores para maior
                       segurança da sua conta.
                     </p>
@@ -408,7 +408,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="backup" className="space-y-6">
+        <TabsContent className="space-y-6" value="backup">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -423,13 +423,13 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Backup Automático</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Faça backup automático dos seus dados
                   </p>
                 </div>
                 <Switch
                   checked={backupSettings.autoBackup}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     setBackupSettings({
                       ...backupSettings,
                       autoBackup: checked,
@@ -443,13 +443,13 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Label htmlFor="frequency">Frequência do Backup</Label>
                     <Select
-                      value={backupSettings.backupFrequency}
-                      onValueChange={(value) =>
+                      onValueChange={value =>
                         setBackupSettings({
                           ...backupSettings,
                           backupFrequency: value,
                         })
                       }
+                      value={backupSettings.backupFrequency}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -468,14 +468,14 @@ export default function SettingsPage() {
                     </Label>
                     <Input
                       id="retention"
-                      type="number"
-                      value={backupSettings.retentionDays}
-                      onChange={(e) =>
+                      onChange={e =>
                         setBackupSettings({
                           ...backupSettings,
                           retentionDays: e.target.value,
                         })
                       }
+                      type="number"
+                      value={backupSettings.retentionDays}
                     />
                   </div>
                 </>
@@ -484,7 +484,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Backup Manual</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Faça um backup manual dos seus dados agora
                   </p>
                 </div>
@@ -494,7 +494,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="api" className="space-y-6">
+        <TabsContent className="space-y-6" value="api">
           <Card>
             <CardHeader>
               <CardTitle>Configurações da API</CardTitle>
@@ -506,7 +506,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Chaves de API</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Gerencie acesso programático à sua conta
                   </p>
                 </div>
@@ -516,19 +516,19 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label htmlFor="webhook">URL do Webhook</Label>
                 <Input id="webhook" placeholder="https://example.com/webhook" />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Receba notificações de eventos em tempo real
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="apiDocs">Documentação</Label>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-muted-foreground text-sm">
                   <p>
                     Consulte nossa documentação da API para integrar com seus
                     sistemas.
                   </p>
-                  <Button variant="link" className="p-0 h-auto text-sm">
+                  <Button className="h-auto p-0 text-sm" variant="link">
                     Ver Documentação →
                   </Button>
                 </div>

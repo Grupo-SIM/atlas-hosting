@@ -1,8 +1,7 @@
-import type { DomainRegisterInvoiceOptions } from "@/lib/db/schema/tables/invoice";
 import type { Metadata } from "next";
 
 // Types remain the same
-export type DomainPriceInfo = {
+export interface DomainPriceInfo {
   tld: string;
   price?: number;
   renew?: number;
@@ -10,14 +9,14 @@ export type DomainPriceInfo = {
   minRegisterYears?: number;
   maxRegisterYears?: number;
   description?: string;
-};
+}
 
 export const metadata: Metadata = {
-  title: "Registrar Domínio | Sua Plataforma",
   description: "Pesquise, registre e gerencie nomes de domínio.",
+  title: "Registrar Domínio | Sua Plataforma",
 };
 
-export type DomainPriceInfoFromDb = {
+export interface DomainPriceInfoFromDb {
   tld: string;
   priceUSD?: number | null; // Registration price in USD from DB
   renewUSD?: number | null; // Renewal price in USD from DB
@@ -25,9 +24,9 @@ export type DomainPriceInfoFromDb = {
   minRegisterYears?: number | null;
   maxRegisterYears?: number | null;
   // description might come from a separate getTldList call if needed
-};
+}
 
-export type DomainWithAvailability = {
+export interface DomainWithAvailability {
   domain: string;
   available: boolean;
   priceBRL: number; // Final BRL price (premium or standard)
@@ -35,7 +34,7 @@ export type DomainWithAvailability = {
   transferBRL: number; // Final BRL price
   isPremium: boolean;
   multiYearPricesBRL?: Record<number, number>;
-};
+}
 
 export type DomainData = {
   available: boolean;

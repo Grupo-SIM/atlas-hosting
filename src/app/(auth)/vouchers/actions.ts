@@ -1,10 +1,9 @@
 "use server";
 
+import { eq } from "drizzle-orm";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { pgVoucher, pgInvoice } from "@/lib/db/schema";
-import { eq, and, or, isNull } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { pgInvoice, pgVoucher } from "@/lib/db/schema";
 
 export type ApplyVoucherResult =
   | {
@@ -29,7 +28,7 @@ export async function applyVoucher(
   const code = voucherCode.trim().toUpperCase();
 
   if (!code) {
-    return { status: "error", message: "Código do voucher é obrigatório." };
+    return { message: "Código do voucher é obrigatório.", status: "error" };
   }
 
   // Buscar o voucher
@@ -38,29 +37,33 @@ export async function applyVoucher(
   });
 
   if (!voucher) {
-    return { status: "error", message: "Voucher não encontrado." };
+    return { message: "Voucher não encontrado.", status: "error" };
   }
 
   // Verificar se está ativo
   if (!voucher.active) {
-    return { status: "error", message: "Este voucher está desativado." };
+    return { message: "Este voucher está desativado.", status: "error" };
   }
 
   // Verificar se expirou
-  if (voucher.expiresAt && new Date(voucher.expiresAt).toISOString().slice(0, 10) < new Date().toISOString().slice(0, 10)) {
-    return { status: "error", message: "Este voucher expirou." };
+  if (
+    voucher.expiresAt &&
+    new Date(voucher.expiresAt).toISOString().slice(0, 10) <
+      new Date().toISOString().slice(0, 10)
+  ) {
+    return { message: "Este voucher expirou.", status: "error" };
   }
 
   // Verificar se já atingiu o limite de uso
   if (voucher.currentUses >= voucher.maxUses) {
-    return { status: "error", message: "Este voucher já foi utilizado." };
+    return { message: "Este voucher já foi utilizado.", status: "error" };
   }
 
   // Verificar se é vinculado a outro usuário
   if (voucher.userId && voucher.userId !== user.id) {
     return {
-      status: "error",
       message: "Este voucher não está disponível para sua conta.",
+      status: "error",
     };
   }
 
@@ -70,11 +73,11 @@ export async function applyVoucher(
   });
 
   if (!invoice || invoice.orgId !== user.organization.id) {
-    return { status: "error", message: "Fatura não encontrada." };
+    return { message: "Fatura não encontrada.", status: "error" };
   }
 
   if (invoice.status === "paid") {
-    return { status: "error", message: "Esta fatura já foi paga." };
+    return { message: "Esta fatura já foi paga.", status: "error" };
   }
 
   // Calcular o desconto
@@ -98,11 +101,11 @@ export async function applyVoucher(
       : `${voucher.discountValue}%`;
 
   return {
-    status: "success",
     discount,
     finalAmount: Math.round(finalAmount * 100) / 100,
-    voucherId: voucher.id,
     message: `Voucher ${code} aplicado! Desconto de ${discountLabel}.`,
+    status: "success",
+    voucherId: voucher.id,
   };
 }
 
@@ -118,7 +121,7 @@ export async function consumeVoucher(
     where: eq(pgVoucher.id, voucherId),
   });
 
-  if (!voucher || !voucher.active || voucher.currentUses >= voucher.maxUses) {
+  if (!voucher?.active || voucher.currentUses >= voucher.maxUses) {
     return { ok: false };
   }
 

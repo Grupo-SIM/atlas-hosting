@@ -42,10 +42,10 @@ abstract class WpCliCommand {
   ): string {
     let command = `--wp-cli -instance-id ${this.instanceId} -- ${base}`;
 
-    const flatArgs = args.flat().filter((arg) => arg !== undefined);
+    const flatArgs = args.flat().filter(arg => arg !== undefined);
     if (flatArgs.length > 0) {
       command += ` ${flatArgs
-        .map((arg) => {
+        .map(arg => {
           const val = String(arg);
           return val.includes(" ") ? `"${val}"` : val;
         })
@@ -57,7 +57,7 @@ abstract class WpCliCommand {
         continue;
       }
 
-      const flag = `--${key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
+      const flag = `--${key.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}`;
 
       if (value === true) {
         command += ` ${flag}`;

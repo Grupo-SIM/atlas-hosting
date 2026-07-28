@@ -1,13 +1,13 @@
 import type { DeSECClient } from "./DeSECClient";
 import type {
-  Token,
   CreateTokenPayload,
-  ModifyTokenPayload,
-  ReplaceTokenPayload,
-  TokenPolicy,
   CreateTokenPolicyPayload,
+  ModifyTokenPayload,
   ModifyTokenPolicyPayload,
+  ReplaceTokenPayload,
   ReplaceTokenPolicyPayload,
+  Token,
+  TokenPolicy,
 } from "./types";
 
 /**

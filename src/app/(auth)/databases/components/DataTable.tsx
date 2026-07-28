@@ -1,38 +1,38 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import {
-  useReactTable,
+  type ColumnDef,
+  flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  type ColumnDef,
-  type SortingState,
+  getSortedRowModel,
   type RowSelectionState,
-  flexRender,
+  type SortingState,
+  useReactTable,
 } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  AlertCircle,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Key,
+  Loader2,
+  RefreshCw,
+  Save,
+  Search,
+  SortAsc,
+  SortDesc,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -41,39 +41,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import {
-  MoreHorizontal,
-  Edit3,
-  Trash2,
-  Plus,
-  Save,
-  X,
-  RefreshCw,
-  Search,
-  ArrowUpDown,
-  SortAsc,
-  SortDesc,
-  Key,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Loader2,
-  AlertCircle,
-} from "lucide-react";
-import {
-  getDbTableDataAction,
-  updateTableRowAction,
-  insertTableRowAction,
-  deleteTableRowAction,
   bulkDeleteRowsAction,
+  getDbTableDataAction,
   type TableColumn,
-  type TableRowData,
   type TableDataResult,
+  type TableRowData,
+  updateTableRowAction,
 } from "../actions";
-import { cn } from "@/lib/utils";
 
 interface DataTableProps {
   instanceId: number;
@@ -123,10 +109,10 @@ export function DataTable({
     (row: TableRowData, index: number): string => {
       if (columns.length === 0) return `row-${index}`;
 
-      const primaryKeyColumns = columns.filter((col) => col.isPrimaryKey);
+      const primaryKeyColumns = columns.filter(col => col.isPrimaryKey);
       if (primaryKeyColumns.length > 0) {
         const pkValues = primaryKeyColumns
-          .map((col) => String(row[col.name] ?? ""))
+          .map(col => String(row[col.name] ?? ""))
           .join("-");
         return pkValues ? `pk-${pkValues}` : `row-${index}`;
       }
@@ -161,8 +147,8 @@ export function DataTable({
         err instanceof Error ? err.message : "Erro desconhecido";
       setError(errorMessage);
       toast({
-        title: "Erro ao carregar dados",
         description: errorMessage,
+        title: "Erro ao carregar dados",
         variant: "destructive",
       });
     } finally {
@@ -196,8 +182,8 @@ export function DataTable({
   const startEditing = useCallback(
     (rowId: string, columnName: string, currentValue: unknown) => {
       setEditingCell({
-        rowId,
         columnName,
+        rowId,
         value: String(currentValue ?? ""),
       });
     },
@@ -205,7 +191,7 @@ export function DataTable({
   );
 
   const updateCellValue = useCallback((value: string) => {
-    setEditingCell((prev) => (prev ? { ...prev, value } : null));
+    setEditingCell(prev => (prev ? { ...prev, value } : null));
   }, []);
 
   const cancelEditing = useCallback(() => {
@@ -228,7 +214,7 @@ export function DataTable({
     };
 
     try {
-      const primaryKeyColumns = columns.filter((col) => col.isPrimaryKey);
+      const primaryKeyColumns = columns.filter(col => col.isPrimaryKey);
       await updateTableRowAction(
         instanceId,
         tableName,
@@ -238,24 +224,24 @@ export function DataTable({
       );
 
       // Update local data
-      setData((prev) =>
+      setData(prev =>
         prev.map((row, index) => (index === rowIndex ? newRowData : row))
       );
-      setOriginalData((prev) =>
+      setOriginalData(prev =>
         prev.map((row, index) => (index === rowIndex ? newRowData : row))
       );
 
       setEditingCell(null);
       toast({
-        title: "Célula atualizada",
         description: "Os dados foram salvos com sucesso.",
+        title: "Célula atualizada",
       });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erro desconhecido";
       toast({
-        title: "Erro ao salvar",
         description: errorMessage,
+        title: "Erro ao salvar",
         variant: "destructive",
       });
     }
@@ -273,7 +259,7 @@ export function DataTable({
   const deleteSelectedRows = useCallback(async () => {
     const selectedRowIds = Object.keys(rowSelection);
     const selectedRows = selectedRowIds
-      .map((rowId) => {
+      .map(rowId => {
         const index = data.findIndex((_, i) => getRowId(data[i], i) === rowId);
         return index !== -1 ? originalData[index] : null;
       })
@@ -283,7 +269,7 @@ export function DataTable({
 
     try {
       setIsDeleting(true);
-      const primaryKeyColumns = columns.filter((col) => col.isPrimaryKey);
+      const primaryKeyColumns = columns.filter(col => col.isPrimaryKey);
       await bulkDeleteRowsAction(
         instanceId,
         tableName,
@@ -293,15 +279,15 @@ export function DataTable({
       await fetchTableData(); // Refresh data
       setDeleteDialogOpen(false);
       toast({
-        title: "Linhas excluídas",
         description: `${selectedRows.length} linha(s) foram excluídas com sucesso.`,
+        title: "Linhas excluídas",
       });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erro desconhecido";
       toast({
-        title: "Erro ao excluir",
         description: errorMessage,
+        title: "Erro ao excluir",
         variant: "destructive",
       });
     } finally {
@@ -324,59 +310,30 @@ export function DataTable({
 
     const cols: ColumnDef<TableRowData>[] = [
       {
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
-            aria-label="Selecionar todas"
-          />
-        ),
         cell: ({ row }) => (
           <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
             aria-label="Selecionar linha"
+            checked={row.getIsSelected()}
+            onCheckedChange={value => row.toggleSelected(!!value)}
           />
         ),
-        enableSorting: false,
         enableHiding: false,
+        enableSorting: false,
+        header: ({ table }) => (
+          <Checkbox
+            aria-label="Selecionar todas"
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
+          />
+        ),
+        id: "select",
         size: 40,
       },
     ];
 
-    columns.forEach((col) => {
+    columns.forEach(col => {
       cols.push({
         accessorKey: col.name,
-        header: ({ column }) => (
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 p-1"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              <span className="font-medium">{col.name}</span>
-              {col.isPrimaryKey && (
-                <Key className="h-3 w-3 text-yellow-500 ml-1" />
-              )}
-              <Badge variant="secondary" className="text-xs ml-1">
-                {col.type}
-              </Badge>
-              {column.getIsSorted() === "asc" ? (
-                <SortAsc className="h-4 w-4 ml-1" />
-              ) : column.getIsSorted() === "desc" ? (
-                <SortDesc className="h-4 w-4 ml-1" />
-              ) : (
-                <ArrowUpDown className="h-4 w-4 ml-1" />
-              )}
-            </Button>
-          </div>
-        ),
         cell: ({ row, column }) => {
           const value = row.getValue(column.id);
           const rowId = getRowId(row.original, row.index);
@@ -390,28 +347,28 @@ export function DataTable({
               {isEditing ? (
                 <div className="flex items-center space-x-1">
                   <Input
-                    value={editingCell.value}
-                    onChange={(e) => updateCellValue(e.target.value)}
-                    onKeyDown={(e) => {
+                    autoFocus
+                    className="h-8 text-sm"
+                    onChange={e => updateCellValue(e.target.value)}
+                    onKeyDown={e => {
                       if (e.key === "Enter") {
                         saveCell();
                       } else if (e.key === "Escape") {
                         cancelEditing();
                       }
                     }}
-                    autoFocus
-                    className="h-8 text-sm"
+                    value={editingCell.value}
                   />
-                  <Button size="sm" variant="ghost" onClick={saveCell}>
+                  <Button onClick={saveCell} size="sm" variant="ghost">
                     <Save className="h-3 w-3" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={cancelEditing}>
+                  <Button onClick={cancelEditing} size="sm" variant="ghost">
                     <X className="h-3 w-3" />
                   </Button>
                 </div>
               ) : (
                 <div
-                  className="cursor-pointer hover:bg-muted/50 p-1 rounded min-h-[32px] flex items-center"
+                  className="flex min-h-[32px] cursor-pointer items-center rounded p-1 hover:bg-muted/50"
                   onClick={() => startEditing(rowId, columnName, value)}
                   title="Clique para editar"
                 >
@@ -423,6 +380,33 @@ export function DataTable({
             </div>
           );
         },
+        header: ({ column }) => (
+          <div className="flex items-center space-x-2">
+            <Button
+              className="h-8 p-1"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+              size="sm"
+              variant="ghost"
+            >
+              <span className="font-medium">{col.name}</span>
+              {col.isPrimaryKey && (
+                <Key className="ml-1 h-3 w-3 text-yellow-500" />
+              )}
+              <Badge className="ml-1 text-xs" variant="secondary">
+                {col.type}
+              </Badge>
+              {column.getIsSorted() === "asc" ? (
+                <SortAsc className="ml-1 h-4 w-4" />
+              ) : column.getIsSorted() === "desc" ? (
+                <SortDesc className="ml-1 h-4 w-4" />
+              ) : (
+                <ArrowUpDown className="ml-1 h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        ),
       });
     });
 
@@ -439,37 +423,37 @@ export function DataTable({
 
   // Table instance
   const table = useReactTable({
-    data,
     columns: tableColumns,
+    data,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getRowId: (row, index) => getRowId(row, index),
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
-    state: {
-      rowSelection,
-      sorting,
-      globalFilter,
-      pagination: {
-        pageIndex: currentPage,
-        pageSize,
-      },
-    },
+    getSortedRowModel: getSortedRowModel(),
     initialState: {
       pagination: {
         pageIndex: currentPage,
         pageSize,
       },
     },
+    onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    state: {
+      globalFilter,
+      pagination: {
+        pageIndex: currentPage,
+        pageSize,
+      },
+      rowSelection,
+      sorting,
+    },
   });
 
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -478,14 +462,14 @@ export function DataTable({
   // Error state
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+      <div className="flex h-64 flex-col items-center justify-center space-y-4">
         <AlertCircle className="h-12 w-12 text-destructive" />
         <div className="text-center">
-          <p className="text-lg font-medium">Erro ao carregar dados</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <p className="font-medium text-lg">Erro ao carregar dados</p>
+          <p className="text-muted-foreground text-sm">{error}</p>
         </div>
         <Button onClick={fetchTableData} variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
+          <RefreshCw className="mr-2 h-4 w-4" />
           Tentar novamente
         </Button>
       </div>
@@ -495,32 +479,32 @@ export function DataTable({
   const selectedCount = Object.keys(rowSelection).length;
 
   return (
-    <div className="flex flex-col h-full space-y-4 p-4">
+    <div className="flex h-full flex-col space-y-4 p-4">
       {/* Toolbar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
             <Input
-              placeholder="Buscar em todas as colunas..."
-              value={globalFilter}
-              onChange={(e) => {
+              className="w-[300px] pl-9"
+              onChange={e => {
                 setGlobalFilter(e.target.value);
                 updateURL({
-                  search: e.target.value || undefined,
                   page: undefined,
+                  search: e.target.value || undefined,
                 });
               }}
-              className="pl-9 w-[300px]"
+              placeholder="Buscar em todas as colunas..."
+              value={globalFilter}
             />
           </div>
           {selectedCount > 0 && (
             <Button
-              variant="destructive"
-              size="sm"
               onClick={() => setDeleteDialogOpen(true)}
+              size="sm"
+              variant="destructive"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="mr-2 h-4 w-4" />
               Excluir {selectedCount} selecionada(s)
             </Button>
           )}
@@ -530,7 +514,7 @@ export function DataTable({
             {table.getFilteredRowModel().rows.length} linha(s)
           </Badge>
           <Button onClick={fetchTableData} size="sm" variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Atualizar
           </Button>
         </div>
@@ -541,10 +525,10 @@ export function DataTable({
         <ScrollArea className="h-full">
           <Table>
             <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
+              {table.getHeaderGroups().map(headerGroup => (
                 <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="whitespace-nowrap">
+                  {headerGroup.headers.map(header => (
+                    <TableHead className="whitespace-nowrap" key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -558,14 +542,14 @@ export function DataTable({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
+                table.getRowModel().rows.map(row => (
                   <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
                     className="hover:bg-muted/50"
+                    data-state={row.getIsSelected() && "selected"}
+                    key={row.id}
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="whitespace-nowrap">
+                    {row.getVisibleCells().map(cell => (
+                      <TableCell className="whitespace-nowrap" key={cell.id}>
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
@@ -577,8 +561,8 @@ export function DataTable({
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length + 1}
                     className="h-24 text-center"
+                    colSpan={columns.length + 1}
                   >
                     Nenhum resultado encontrado.
                   </TableCell>
@@ -593,7 +577,7 @@ export function DataTable({
       {/* Pagination */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Mostrando{" "}
             {table.getState().pagination.pageIndex *
               table.getState().pagination.pageSize +
@@ -607,7 +591,7 @@ export function DataTable({
             de {table.getFilteredRowModel().rows.length} resultado(s)
           </p>
           {table.getPageCount() > 1 && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Página {table.getState().pagination.pageIndex + 1} de{" "}
               {table.getPageCount()}
             </p>
@@ -615,50 +599,50 @@ export function DataTable({
         </div>
         <div className="flex items-center space-x-2">
           <Button
-            variant="outline"
-            size="sm"
+            disabled={!table.getCanPreviousPage()}
             onClick={() => {
               table.setPageIndex(0);
               updateURL({ page: "1" });
             }}
-            disabled={!table.getCanPreviousPage()}
+            size="sm"
+            variant="outline"
           >
             <ChevronsLeft className="h-4 w-4" />
           </Button>
           <Button
-            variant="outline"
-            size="sm"
+            disabled={!table.getCanPreviousPage()}
             onClick={() => {
               table.previousPage();
               updateURL({
                 page: String(table.getState().pagination.pageIndex),
               });
             }}
-            disabled={!table.getCanPreviousPage()}
+            size="sm"
+            variant="outline"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
-            variant="outline"
-            size="sm"
+            disabled={!table.getCanNextPage()}
             onClick={() => {
               table.nextPage();
               updateURL({
                 page: String(table.getState().pagination.pageIndex + 2),
               });
             }}
-            disabled={!table.getCanNextPage()}
+            size="sm"
+            variant="outline"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button
-            variant="outline"
-            size="sm"
+            disabled={!table.getCanNextPage()}
             onClick={() => {
               table.setPageIndex(table.getPageCount() - 1);
               updateURL({ page: String(table.getPageCount()) });
             }}
-            disabled={!table.getCanNextPage()}
+            size="sm"
+            variant="outline"
           >
             <ChevronsRight className="h-4 w-4" />
           </Button>
@@ -666,7 +650,7 @@ export function DataTable({
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <Dialog onOpenChange={setDeleteDialogOpen} open={deleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
@@ -677,20 +661,20 @@ export function DataTable({
           </DialogHeader>
           <DialogFooter>
             <Button
-              variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
+              variant="outline"
             >
               Cancelar
             </Button>
             <Button
-              variant="destructive"
-              onClick={deleteSelectedRows}
               disabled={isDeleting}
+              onClick={deleteSelectedRows}
+              variant="destructive"
             >
               {isDeleting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="mr-2 h-4 w-4" />
               )}
               Excluir
             </Button>

@@ -1,11 +1,23 @@
 "use client";
 
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle,
+  Loader2,
+  Mail,
+} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Mail, Loader2, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ChangeEmailVerificationForm() {
@@ -16,7 +28,7 @@ export default function ChangeEmailVerificationForm() {
   const [verificationState, setVerificationState] = useState<{
     type: "loading" | "success" | "error";
     message: string;
-  }>({ type: "loading", message: "Verificando token..." });
+  }>({ message: "Verificando token...", type: "loading" });
 
   const token = searchParams.get("token");
   const email = searchParams.get("email");
@@ -24,8 +36,8 @@ export default function ChangeEmailVerificationForm() {
   useEffect(() => {
     if (!token || !email) {
       setVerificationState({
-        type: "error",
         message: "Token ou email inválido. Verifique o link enviado por email.",
+        type: "error",
       });
       return;
     }
@@ -36,26 +48,29 @@ export default function ChangeEmailVerificationForm() {
 
   const validateToken = async () => {
     if (!token || !email) return;
-    
+
     try {
-      const response = await fetch(`/api/auth/verify-change-email?token=${token}&email=${encodeURIComponent(email)}`);
+      const response = await fetch(
+        `/api/auth/verify-change-email?token=${token}&email=${encodeURIComponent(email)}`
+      );
       const result = await response.json();
 
       if (response.ok && result.valid) {
         setVerificationState({
+          message:
+            "Token válido! Clique no botão abaixo para confirmar a alteração do email.",
           type: "success",
-          message: "Token válido! Clique no botão abaixo para confirmar a alteração do email.",
         });
       } else {
         setVerificationState({
-          type: "error",
           message: result.error || "Token inválido ou expirado.",
+          type: "error",
         });
       }
     } catch (error) {
       setVerificationState({
-        type: "error",
         message: "Erro ao validar token. Tente novamente.",
+        type: "error",
       });
     }
   };
@@ -67,58 +82,59 @@ export default function ChangeEmailVerificationForm() {
 
     try {
       const response = await fetch("/api/auth/verify-change-email", {
-        method: "POST",
+        body: JSON.stringify({ email, token }),
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token, email }),
+        method: "POST",
       });
 
       const result = await response.json();
 
       if (response.ok) {
         setVerificationState({
+          message:
+            "Email alterado com sucesso! Você pode agora fazer login com o novo email.",
           type: "success",
-          message: "Email alterado com sucesso! Você pode agora fazer login com o novo email.",
         });
-        
+
         // Show success toast
         toast({
-          title: "Email alterado com sucesso",
           description: `Seu email foi alterado para ${email}. Você pode agora fazer login com o novo endereço.`,
           duration: 5000,
+          title: "Email alterado com sucesso",
         });
-        
+
         // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push("/login?message=email-changed");
         }, 3000);
       } else {
         setVerificationState({
-          type: "error",
           message: result.error || "Erro ao alterar email.",
+          type: "error",
         });
-        
+
         // Show error toast
         toast({
-          title: "Erro ao alterar email",
           description: result.error || "Erro ao alterar email.",
-          variant: "destructive",
           duration: 5000,
+          title: "Erro ao alterar email",
+          variant: "destructive",
         });
       }
     } catch (error) {
       setVerificationState({
-        type: "error",
         message: "Erro de conexão. Tente novamente.",
+        type: "error",
       });
-      
+
       // Show error toast
       toast({
-        title: "Erro de conexão",
         description: "Não foi possível conectar ao servidor. Tente novamente.",
-        variant: "destructive",
         duration: 5000,
+        title: "Erro de conexão",
+        variant: "destructive",
       });
     } finally {
       setIsVerifying(false);
@@ -126,7 +142,7 @@ export default function ChangeEmailVerificationForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -134,7 +150,9 @@ export default function ChangeEmailVerificationForm() {
             Confirmar Alteração de Email
           </CardTitle>
           <CardDescription>
-            {email ? `Confirmando alteração para: ${email}` : "Verificando dados..."}
+            {email
+              ? `Confirmando alteração para: ${email}`
+              : "Verificando dados..."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -160,18 +178,19 @@ export default function ChangeEmailVerificationForm() {
 
               {verificationState.message.includes("Token válido") && (
                 <div className="space-y-4">
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-800">
-                      <strong>Confirme a alteração:</strong> Seu email será alterado para{" "}
-                      <span className="font-semibold">{email}</span>. 
-                      Esta ação não pode ser desfeita.
+                  <div className="rounded-lg bg-blue-50 p-4">
+                    <p className="text-blue-800 text-sm">
+                      <strong>Confirme a alteração:</strong> Seu email será
+                      alterado para{" "}
+                      <span className="font-semibold">{email}</span>. Esta ação
+                      não pode ser desfeita.
                     </p>
                   </div>
-                  
+
                   <Button
-                    onClick={handleVerifyEmail}
                     className="w-full"
                     disabled={isVerifying}
+                    onClick={handleVerifyEmail}
                   >
                     {isVerifying ? (
                       <>
@@ -189,16 +208,16 @@ export default function ChangeEmailVerificationForm() {
               )}
 
               {verificationState.message.includes("sucesso") && (
-                <div className="text-center space-y-4">
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-green-800">
+                <div className="space-y-4 text-center">
+                  <div className="rounded-lg bg-green-50 p-4">
+                    <p className="text-green-800 text-sm">
                       Redirecionando para a página de login...
                     </p>
                   </div>
-                  
+
                   <Button
-                    onClick={() => router.push("/login")}
                     className="w-full"
+                    onClick={() => router.push("/login")}
                   >
                     <ArrowRight className="mr-2 h-4 w-4" />
                     Ir para login
@@ -209,11 +228,11 @@ export default function ChangeEmailVerificationForm() {
           )}
 
           {verificationState.type === "error" && (
-            <div className="text-center space-y-4">
+            <div className="space-y-4 text-center">
               <Button
+                className="w-full"
                 onClick={() => router.push("/login")}
                 variant="outline"
-                className="w-full"
               >
                 <ArrowRight className="mr-2 h-4 w-4" />
                 Voltar ao login

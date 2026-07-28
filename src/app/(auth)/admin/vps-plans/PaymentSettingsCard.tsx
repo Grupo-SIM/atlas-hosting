@@ -1,11 +1,14 @@
 "use client";
 
+import { Barcode, QrCode } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { QrCode, Barcode } from "lucide-react";
-import { setPixAllowAllDurationsAction, setBoletoEnabledAction } from "./actions";
+import {
+  setBoletoEnabledAction,
+  setPixAllowAllDurationsAction,
+} from "./actions";
 
 export function PaymentSettingsCard({
   initialPixAllowAllDurations,
@@ -56,37 +59,49 @@ export function PaymentSettingsCard({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium">Configurações de Pagamento</CardTitle>
+        <CardTitle className="font-medium text-sm">
+          Configurações de Pagamento
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-start gap-2">
-            <QrCode className="h-4 w-4 text-emerald-600 mt-0.5" />
+            <QrCode className="mt-0.5 h-4 w-4 text-emerald-600" />
             <div>
-              <p className="text-sm font-medium">Liberar PIX para todas as durações</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="font-medium text-sm">
+                Liberar PIX para todas as durações
+              </p>
+              <p className="text-muted-foreground text-xs">
                 {pixEnabled
                   ? "PIX disponível em 1, 12 e 24 meses."
                   : "PIX disponível apenas no plano de 24 meses (padrão)."}
               </p>
             </div>
           </div>
-          <Switch checked={pixEnabled} onCheckedChange={handlePixChange} disabled={isPixPending} />
+          <Switch
+            checked={pixEnabled}
+            disabled={isPixPending}
+            onCheckedChange={handlePixChange}
+          />
         </div>
 
-        <div className="flex items-center justify-between gap-4 pt-4 border-t">
+        <div className="flex items-center justify-between gap-4 border-t pt-4">
           <div className="flex items-start gap-2">
-            <Barcode className="h-4 w-4 text-amber-600 mt-0.5" />
+            <Barcode className="mt-0.5 h-4 w-4 text-amber-600" />
             <div>
-              <p className="text-sm font-medium">Liberar Boleto</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="font-medium text-sm">Liberar Boleto</p>
+              <p className="text-muted-foreground text-xs">
                 {boletoEnabled
                   ? "Boleto disponível pra qualquer pessoa que tentar comprar."
                   : "Boleto desativado (padrão) — só cartão e PIX (se liberado)."}
               </p>
             </div>
           </div>
-          <Switch checked={boletoEnabled} onCheckedChange={handleBoletoChange} disabled={isBoletoPending} />
+          <Switch
+            checked={boletoEnabled}
+            disabled={isBoletoPending}
+            onCheckedChange={handleBoletoChange}
+          />
         </div>
       </CardContent>
     </Card>

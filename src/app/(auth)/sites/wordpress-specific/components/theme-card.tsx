@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  Eye,
+  MoreHorizontal,
+  Palette,
+  RefreshCw,
+  Settings,
+} from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,13 +24,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  MoreHorizontal,
-  Palette,
-  RefreshCw,
-  Settings,
-  Eye,
-} from "lucide-react";
 import type { WordPressThemeInfo } from "../types";
 
 interface ThemeCardProps {
@@ -44,7 +44,7 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
       );
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
       console.error(
         `Error performing ${action} on theme ${theme.name}:`,
@@ -56,18 +56,18 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="transition-shadow hover:shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
+            <div className="rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 p-2 dark:from-purple-900/20 dark:to-pink-900/20">
               <Palette className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
               <CardTitle className="text-base leading-tight">
                 {theme.title || theme.name}
               </CardTitle>
-              <CardDescription className="text-sm text-muted-foreground">
+              <CardDescription className="text-muted-foreground text-sm">
                 {siteName}
               </CardDescription>
             </div>
@@ -76,9 +76,9 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="ghost"
                 className="h-8 w-8 p-0"
                 disabled={isLoading}
+                variant="ghost"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -86,8 +86,8 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
             <DropdownMenuContent align="end">
               {theme.status === "inactive" ? (
                 <DropdownMenuItem
-                  onClick={() => handleAction("activate")}
                   disabled={isLoading}
+                  onClick={() => handleAction("activate")}
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   Ativar Tema
@@ -102,8 +102,8 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
               {theme.update === "available" && theme.update_version && (
                 <>
                   <DropdownMenuItem
-                    onClick={() => handleAction("update")}
                     disabled={isLoading}
+                    onClick={() => handleAction("update")}
                   >
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Atualizar
@@ -113,8 +113,8 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
               )}
 
               <DropdownMenuItem
-                onClick={() => handleAction("customize")}
                 disabled={isLoading}
+                onClick={() => handleAction("customize")}
               >
                 <Settings className="mr-2 h-4 w-4" />
                 Personalizar
@@ -136,14 +136,14 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
 
             <div className="flex items-center space-x-2">
               <Badge
-                variant={theme.status === "active" ? "default" : "secondary"}
                 className="text-xs"
+                variant={theme.status === "active" ? "default" : "secondary"}
               >
                 {theme.status === "active" ? "Ativo" : "Inativo"}
               </Badge>
 
               {theme.update === "available" && theme.update_version && (
-                <Badge variant="destructive" className="text-xs">
+                <Badge className="text-xs" variant="destructive">
                   Atualização para v{theme.update_version}
                 </Badge>
               )}
@@ -152,7 +152,7 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
 
           {/* Theme Description */}
           {theme.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="line-clamp-2 text-muted-foreground text-sm">
               {theme.description}
             </p>
           )}
@@ -161,11 +161,11 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
           <div className="flex gap-2 pt-2">
             {theme.update === "available" && theme.update_version && (
               <Button
+                className="flex-1"
+                disabled={isLoading}
+                onClick={() => handleAction("update")}
                 size="sm"
                 variant="outline"
-                onClick={() => handleAction("update")}
-                disabled={isLoading}
-                className="flex-1"
               >
                 <RefreshCw className="mr-2 h-3 w-3" />
                 Atualizar para v{theme.update_version}
@@ -174,10 +174,10 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
 
             {theme.status === "inactive" && (
               <Button
-                size="sm"
-                onClick={() => handleAction("activate")}
-                disabled={isLoading}
                 className="flex-1"
+                disabled={isLoading}
+                onClick={() => handleAction("activate")}
+                size="sm"
               >
                 <Eye className="mr-2 h-3 w-3" />
                 Ativar
@@ -185,11 +185,11 @@ export function ThemeCard({ theme, siteId, siteName }: ThemeCardProps) {
             )}
 
             <Button
+              className={theme.status === "active" ? "flex-1" : ""}
+              disabled={isLoading}
+              onClick={() => handleAction("customize")}
               size="sm"
               variant="outline"
-              onClick={() => handleAction("customize")}
-              disabled={isLoading}
-              className={theme.status === "active" ? "flex-1" : ""}
             >
               <Settings className="mr-2 h-3 w-3" />
               {theme.status === "active" ? "Personalizar" : "Configurar"}

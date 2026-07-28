@@ -1,10 +1,10 @@
+import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { createEmailVerificationToken } from "@/lib/auth/tokens";
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { createEmailVerificationToken } from "@/lib/auth/tokens";
 import { sendEmailVerificationEmail } from "@/lib/email/service";
 import { errorHandler } from "@/lib/error-handler";
 
@@ -25,7 +25,8 @@ export async function POST(request: NextRequest) {
     // Return success even if user doesn't exist to prevent enumeration
     if (!user) {
       return NextResponse.json({
-        message: "Se o email existe em nosso sistema, você receberá um link de verificação.",
+        message:
+          "Se o email existe em nosso sistema, você receberá um link de verificação.",
       });
     }
 
@@ -37,7 +38,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Create verification token
-    const verificationToken = await createEmailVerificationToken(user.id, user.email);
+    const verificationToken = await createEmailVerificationToken(
+      user.id,
+      user.email
+    );
 
     // Send verification email
     await sendEmailVerificationEmail(

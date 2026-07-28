@@ -1,6 +1,9 @@
+import clsx from "clsx";
+import { User as UserIcon } from "lucide-react";
+import Link from "next/link";
+import { type HTMLAttributes, type PropsWithChildren, Suspense } from "react";
+import { FaUserAlt } from "react-icons/fa";
 import { ModeToggle } from "@/components/ModeToggle";
-import { MobileSidebarSheet } from "./MobileSidebarSheet";
-import { LogoutButton } from "./LogoutButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,26 +13,12 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUser } from "@/lib/auth";
-import clsx from "clsx";
-import {
-  CreditCard,
-  Key,
-  Menu,
-  Settings,
-  User as UserIcon,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
-import { Suspense, type HTMLAttributes, type PropsWithChildren } from "react";
-import { CgClose } from "react-icons/cg";
-import { FaUserAlt } from "react-icons/fa";
+import { LogoutButton } from "./LogoutButton";
+import { MobileSidebarSheet } from "./MobileSidebarSheet";
 
 export default async function Topbar({
   children,
@@ -42,34 +31,34 @@ export default async function Topbar({
   return (
     <header
       className={clsx(
-        "flex min-h-16 bg-card items-center justify-between px-4 md:px-6 sticky top-0 z-40 border-b border-border",
+        "sticky top-0 z-40 flex min-h-16 items-center justify-between border-border border-b bg-card px-4 md:px-6",
         className
       )}
       {...props}
     >
       <MobileSidebarSheet isAdmin={isAdmin ?? false} />
-      <div className="flex items-center justify-end flex-1 gap-3">
+      <div className="flex flex-1 items-center justify-end gap-3">
         {children}
         <ModeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild={true}>
             <Button
-              variant="ghost"
               className="relative h-8 w-8 rounded-full bg-muted-foreground/10"
+              variant="ghost"
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user.image || undefined} />
                 <AvatarFallback>
-                  <FaUserAlt className="h-4 w-4 color-white absolute top-1/2 left-1/2 -translate-1/2" />
+                  <FaUserAlt className="color-white -translate-1/2 absolute top-1/2 left-1/2 h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            sideOffset={20}
-            className="w-56"
             align="end"
+            className="w-56"
             forceMount={true}
+            sideOffset={20}
           >
             <Suspense fallback={<UserDataDropdownItemSkeleton />}>
               <UserDataDropdownItem />
@@ -101,7 +90,7 @@ async function OrganizationName() {
   const user = await getUser();
 
   return (
-    <div className="text-sm border-l-1 border-muted-foreground/20 pl-4 border-solid hidden md:block">
+    <div className="hidden border-muted-foreground/20 border-l-1 border-solid pl-4 text-sm md:block">
       {user.organization.name}
     </div>
   );
@@ -114,8 +103,8 @@ async function UserDataDropdownItem() {
     user && (
       <DropdownMenuLabel className="font-normal">
         <div className="flex flex-col space-y-1">
-          <p className="text-sm font-medium leading-none">{user.name}</p>
-          <p className="text-xs leading-none text-muted-foreground">
+          <p className="font-medium text-sm leading-none">{user.name}</p>
+          <p className="text-muted-foreground text-xs leading-none">
             {user.email}
           </p>
         </div>
@@ -128,8 +117,8 @@ async function UserDataDropdownItemSkeleton() {
   return (
     <DropdownMenuLabel className="font-normal">
       <div className="flex flex-col space-y-1">
-        <Skeleton className="text-sm h-[1em] w-26" />
-        <Skeleton className="text-xs h-[1em] w-22" />
+        <Skeleton className="h-[1em] w-26 text-sm" />
+        <Skeleton className="h-[1em] w-22 text-xs" />
       </div>
     </DropdownMenuLabel>
   );

@@ -1,6 +1,20 @@
 "use client";
 
+import {
+  AlertCircle,
+  CheckCircle,
+  Globe,
+  Loader2,
+  Mail,
+  Plus,
+  Server,
+  Settings,
+} from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,7 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,21 +33,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Mail,
-  Server,
-  Settings,
-  Plus,
-  Shield,
-  Globe,
-  AlertCircle,
-  CheckCircle,
-  Loader2,
-} from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { toast } from "sonner";
 
 interface Domain {
   id: string;
@@ -57,16 +56,16 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
   const [selectedTab, setSelectedTab] = useState("plesk");
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
+    confirmPassword: "",
+    displayName: "",
     domain: "",
     emailAddress: "",
     password: "",
-    confirmPassword: "",
-    displayName: "",
     quota: "1024",
   });
 
-  const pleskDomains = domains.filter((domain) => domain.pleskId);
-  const regularDomains = domains.filter((domain) => !domain.pleskId);
+  const pleskDomains = domains.filter(domain => domain.pleskId);
+  const regularDomains = domains.filter(domain => !domain.pleskId);
 
   const handleCreatePleskAccount = async () => {
     if (!formData.domain || !formData.emailAddress || !formData.password) {
@@ -82,15 +81,15 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
     setIsCreating(true);
     try {
       const response = await fetch("/api/email/plesk/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          displayName: formData.displayName,
           domainId: formData.domain,
           emailAddress: formData.emailAddress,
           password: formData.password,
-          displayName: formData.displayName,
-          quota: Number.parseInt(formData.quota),
+          quota: Number.parseInt(formData.quota, 10),
         }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
       });
 
       if (response.ok) {
@@ -138,55 +137,55 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+        <Tabs onValueChange={setSelectedTab} value={selectedTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="plesk" className="flex items-center gap-2">
+            <TabsTrigger className="flex items-center gap-2" value="plesk">
               <Server className="h-4 w-4" />
               Plesk Mail
             </TabsTrigger>
-            <TabsTrigger value="zoho" className="flex items-center gap-2">
+            <TabsTrigger className="flex items-center gap-2" value="zoho">
               <Mail className="h-4 w-4" />
               Zoho Mail
             </TabsTrigger>
-            <TabsTrigger value="custom" className="flex items-center gap-2">
+            <TabsTrigger className="flex items-center gap-2" value="custom">
               <Settings className="h-4 w-4" />
               Personalizado
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="plesk" className="space-y-6 mt-6">
+          <TabsContent className="mt-6 space-y-6" value="plesk">
             {pleskDomains.length === 0 ? (
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   Você precisa ter pelo menos um domínio configurado no Plesk
                   para criar contas de e-mail.
-                  <Button variant="link" className="p-0 h-auto ml-1">
+                  <Button className="ml-1 h-auto p-0" variant="link">
                     Adicione um domínio
                   </Button>
                 </AlertDescription>
               </Alert>
             ) : (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="domain">Domínio</Label>
                     <Select
-                      value={formData.domain}
-                      onValueChange={(value) =>
+                      onValueChange={value =>
                         setFormData({ ...formData, domain: value })
                       }
+                      value={formData.domain}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um domínio" />
                       </SelectTrigger>
                       <SelectContent>
-                        {pleskDomains.map((domain) => (
+                        {pleskDomains.map(domain => (
                           <SelectItem key={domain.id} value={domain.id}>
                             <div className="flex items-center gap-2">
                               <Globe className="h-4 w-4" />
                               {domain.name}
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge className="text-xs" variant="secondary">
                                 Plesk
                               </Badge>
                             </div>
@@ -200,37 +199,37 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
                     <Label htmlFor="emailAddress">Endereço de E-mail</Label>
                     <div className="flex">
                       <Input
+                        className="rounded-r-none"
                         id="emailAddress"
-                        value={formData.emailAddress}
-                        onChange={(e) =>
+                        onChange={e =>
                           setFormData({
                             ...formData,
                             emailAddress: e.target.value,
                           })
                         }
                         placeholder="usuario"
-                        className="rounded-r-none"
+                        value={formData.emailAddress}
                       />
-                      <div className="flex items-center px-3 border border-l-0 rounded-r-md bg-muted text-muted-foreground text-sm">
+                      <div className="flex items-center rounded-r-md border border-l-0 bg-muted px-3 text-muted-foreground text-sm">
                         @
-                        {pleskDomains.find((d) => d.id === formData.domain)
+                        {pleskDomains.find(d => d.id === formData.domain)
                           ?.name || "dominio.com"}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="password">Senha</Label>
                     <Input
                       id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFormData({ ...formData, password: e.target.value })
                       }
                       placeholder="Digite uma senha forte"
+                      type="password"
+                      value={formData.password}
                     />
                   </div>
 
@@ -238,42 +237,42 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
                     <Label htmlFor="confirmPassword">Confirmar Senha</Label>
                     <Input
                       id="confirmPassword"
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFormData({
                           ...formData,
                           confirmPassword: e.target.value,
                         })
                       }
                       placeholder="Confirme a senha"
+                      type="password"
+                      value={formData.confirmPassword}
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="displayName">Nome de Exibição</Label>
                     <Input
                       id="displayName"
-                      value={formData.displayName}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFormData({
                           ...formData,
                           displayName: e.target.value,
                         })
                       }
                       placeholder={user.name}
+                      value={formData.displayName}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="quota">Cota de Armazenamento (MB)</Label>
                     <Select
-                      value={formData.quota}
-                      onValueChange={(value) =>
+                      onValueChange={value =>
                         setFormData({ ...formData, quota: value })
                       }
+                      value={formData.quota}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -289,7 +288,7 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-4">
                   <CheckCircle className="h-5 w-5 text-green-600" />
                   <div className="text-sm">
                     <p className="font-medium">Recursos inclusos</p>
@@ -301,14 +300,14 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
                 </div>
 
                 <Button
-                  onClick={handleCreatePleskAccount}
+                  className="w-full"
                   disabled={
                     isCreating ||
                     !formData.domain ||
                     !formData.emailAddress ||
                     !formData.password
                   }
-                  className="w-full"
+                  onClick={handleCreatePleskAccount}
                 >
                   {isCreating ? (
                     <>
@@ -326,13 +325,13 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
             )}
           </TabsContent>
 
-          <TabsContent value="zoho" className="space-y-6 mt-6">
-            <div className="text-center space-y-4">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+          <TabsContent className="mt-6 space-y-6" value="zoho">
+            <div className="space-y-4 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <Mail className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">
+                <h3 className="font-semibold text-lg">
                   Zoho Mail Professional
                 </h3>
                 <p className="text-muted-foreground">
@@ -342,25 +341,25 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
             </div>
 
             <div className="grid gap-3">
-              <div className="flex items-center gap-3 p-3 border rounded-lg">
+              <div className="flex items-center gap-3 rounded-lg border p-3">
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 <span className="text-sm">
                   25 GB de armazenamento por usuário
                 </span>
               </div>
-              <div className="flex items-center gap-3 p-3 border rounded-lg">
+              <div className="flex items-center gap-3 rounded-lg border p-3">
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 <span className="text-sm">
                   Interface web moderna e aplicativos móveis
                 </span>
               </div>
-              <div className="flex items-center gap-3 p-3 border rounded-lg">
+              <div className="flex items-center gap-3 rounded-lg border p-3">
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 <span className="text-sm">
                   Calendário, contatos e tarefas integrados
                 </span>
               </div>
-              <div className="flex items-center gap-3 p-3 border rounded-lg">
+              <div className="flex items-center gap-3 rounded-lg border p-3">
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 <span className="text-sm">
                   Proteção avançada contra spam e vírus
@@ -368,13 +367,13 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
               </div>
             </div>
 
-            <Button onClick={handleConnectZoho} className="w-full" size="lg">
+            <Button className="w-full" onClick={handleConnectZoho} size="lg">
               <Mail className="mr-2 h-4 w-4" />
               Conectar com Zoho Mail
             </Button>
           </TabsContent>
 
-          <TabsContent value="custom" className="space-y-6 mt-6">
+          <TabsContent className="mt-6 space-y-6" value="custom">
             <Alert>
               <Settings className="h-4 w-4" />
               <AlertDescription>
@@ -388,12 +387,12 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
                 <Label htmlFor="customEmail">Endereço de E-mail</Label>
                 <Input
                   id="customEmail"
-                  type="email"
                   placeholder="usuario@seudominio.com"
+                  type="email"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="imapHost">Servidor IMAP</Label>
                   <Input id="imapHost" placeholder="imap.seudominio.com" />
@@ -404,7 +403,7 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="smtpHost">Servidor SMTP</Label>
                   <Input id="smtpHost" placeholder="smtp.seudominio.com" />
@@ -419,14 +418,14 @@ export function EmailAccountSetup({ domains, user }: EmailAccountSetupProps) {
                 <Label htmlFor="emailPassword">Senha</Label>
                 <Input
                   id="emailPassword"
-                  type="password"
                   placeholder="Senha da conta de e-mail"
+                  type="password"
                 />
               </div>
 
               <div className="flex items-center space-x-2">
                 <Checkbox id="useSSL" />
-                <Label htmlFor="useSSL" className="text-sm">
+                <Label className="text-sm" htmlFor="useSSL">
                   Usar SSL/TLS (recomendado)
                 </Label>
               </div>

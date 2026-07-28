@@ -22,10 +22,10 @@
   --border: 229, 231, 235 !important;
   --input: 229, 231, 235 !important;
   --ring: 59, 65, 81 !important;
+  color: hsl(var(--foreground)) !important;
   color-scheme: light !important;
   /* Forçar tema light no container */
   background-color: rgb(var(--background)) !important;
-  color: hsl(var(--foreground)) !important;
 }
 
 /* Prevenir que estilos globais do body afetem o Swagger */
@@ -33,8 +33,8 @@
   /* Resetar variáveis CSS que podem ser herdadas */
   --background: 255, 255, 255 !important;
   --foreground: 59, 65, 81 !important;
-  background-color: transparent !important;
   color: inherit !important;
+  background-color: transparent !important;
 }
 
 /* Garantir que mesmo com tema dark, o Swagger use variáveis light */
@@ -59,9 +59,9 @@ html.dark .swagger-isolated .swagger-ui {
   --border: 229, 231, 235 !important;
   --input: 229, 231, 235 !important;
   --ring: 59, 65, 81 !important;
+  color: rgb(59, 65, 81) !important;
   color-scheme: light !important;
   background-color: rgb(255, 255, 255) !important;
-  color: rgb(59, 65, 81) !important;
 }
 
 /* Prevenir que elementos do Swagger herdem estilos do tema */
@@ -80,4 +80,3 @@ html.dark .swagger-isolated .swagger-ui {
   background-color: inherit;
   border-color: inherit;
 }
-

@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { RedirectType, redirect } from "next/navigation";
 import InviteMemberDialogWrapper from "@/app/(auth)/organization/components/InviteMemberDialogWrapper";
 import type { OrganizationPageParams } from "@/app/(auth)/organization/types";
 import { Button } from "@/components/ui/button";
@@ -16,10 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Link from "next/link";
-import { RedirectType, redirect } from "next/navigation";
-import MemberPasswordInput from "./MemberPasswordInput";
 import { createUserForOrganization } from "@/lib/auth/utils";
+import MemberPasswordInput from "./MemberPasswordInput";
 
 interface InviteMemberDialogProps {
   open: boolean;
@@ -65,7 +65,7 @@ export function InviteMemberDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form action={addMemberToOrg} className="space-y-4 mt-4">
+        <form action={addMemberToOrg} className="mt-4 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="fullName">Nome Completo</Label>
             <Input
@@ -79,15 +79,15 @@ export function InviteMemberDialog({
             <Label htmlFor="email">Endereço de email</Label>
             <Input
               id="email"
-              type="email"
               name="email"
               placeholder="nome@example.com"
               required
+              type="email"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">Função</Label>
-            <Select required name="role" defaultValue="member">
+            <Select defaultValue="member" name="role" required>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um cargo" />
               </SelectTrigger>
@@ -101,13 +101,13 @@ export function InviteMemberDialog({
           <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
             <MemberPasswordInput />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Uma senha segura será gerada. Compartilhe-a com o novo membro.
             </p>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" asChild>
+            <Button asChild variant="outline">
               <Link
                 href={{ pathname: "/organization", query: { action: "none" } }}
               >

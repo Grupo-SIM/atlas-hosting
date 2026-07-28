@@ -1,6 +1,6 @@
 export type TemplateApiResponse = [
   { result: { data: { json: TemplateData[] } } },
-  { result: { data: { json: string[] } } }
+  { result: { data: { json: string[] } } },
 ];
 
 export interface TemplateData {

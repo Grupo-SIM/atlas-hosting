@@ -1,9 +1,9 @@
 "use server";
 
-import { db } from "@/lib/db";
-import { pgVoucher } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { db } from "@/lib/db";
+import { pgVoucher } from "@/lib/db/schema";
 
 export async function toggleVoucher(id: string, currentActive: boolean) {
   await db

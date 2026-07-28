@@ -13,21 +13,21 @@ import { pgUser } from "./user";
 export const pgAccount = pgTable(
   "account",
   {
-    userId: uuid("userId")
-      .notNull()
-      .references(() => pgUser.id, { onDelete: "cascade" }),
-    type: text("type").$type<AdapterAccountType>().notNull(),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    id_token: text("id_token"),
     provider: text("provider").notNull(),
     providerAccountId: text("providerAccountId").notNull(),
     refresh_token: text("refresh_token"),
-    access_token: text("access_token"),
-    expires_at: integer("expires_at"),
-    token_type: text("token_type"),
     scope: text("scope"),
-    id_token: text("id_token"),
     session_state: text("session_state"),
+    token_type: text("token_type"),
+    type: text("type").$type<AdapterAccountType>().notNull(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => pgUser.id, { onDelete: "cascade" }),
   },
-  (account) => [
+  account => [
     {
       compoundKey: primaryKey({
         columns: [account.provider, account.providerAccountId],
@@ -37,21 +37,21 @@ export const pgAccount = pgTable(
 );
 
 export const pgAuthJsSession = pgTable("authjs_session", {
+  expires: timestamp("expires", { mode: "date" }).notNull(),
   sessionToken: text("sessionToken").primaryKey(),
   userId: uuid("userId")
     .notNull()
     .references(() => pgUser.id, { onDelete: "cascade" }),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
 });
 
 export const pgVerificationTokens = pgTable(
   "verificationToken",
   {
+    expires: timestamp("expires", { mode: "date" }).notNull(),
     identifier: text("identifier").notNull(),
     token: text("token").notNull(),
-    expires: timestamp("expires", { mode: "date" }).notNull(),
   },
-  (verificationToken) => [
+  verificationToken => [
     {
       compositePk: primaryKey({
         columns: [verificationToken.identifier, verificationToken.token],
@@ -63,18 +63,18 @@ export const pgVerificationTokens = pgTable(
 export const pgAuthenticators = pgTable(
   "authenticator",
   {
+    counter: integer("counter").notNull(),
+    credentialBackedUp: boolean("credentialBackedUp").notNull(),
+    credentialDeviceType: text("credentialDeviceType").notNull(),
     credentialID: text("credentialID").notNull().unique(),
+    credentialPublicKey: text("credentialPublicKey").notNull(),
+    providerAccountId: text("providerAccountId").notNull(),
+    transports: text("transports"),
     userId: uuid("userId")
       .notNull()
       .references(() => pgUser.id, { onDelete: "cascade" }),
-    providerAccountId: text("providerAccountId").notNull(),
-    credentialPublicKey: text("credentialPublicKey").notNull(),
-    counter: integer("counter").notNull(),
-    credentialDeviceType: text("credentialDeviceType").notNull(),
-    credentialBackedUp: boolean("credentialBackedUp").notNull(),
-    transports: text("transports"),
   },
-  (authenticator) => [
+  authenticator => [
     {
       compositePK: primaryKey({
         columns: [authenticator.userId, authenticator.credentialID],

@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 function scrollToSectionById(id: string) {
   const element = document.getElementById(id);
   if (!element) return false;
   const header = document.getElementById("site-header");
   const headerOffset = header ? header.getBoundingClientRect().height + 8 : 96;
-  const offsetPosition = element.getBoundingClientRect().top + window.scrollY - headerOffset;
+  const offsetPosition =
+    element.getBoundingClientRect().top + window.scrollY - headerOffset;
   window.scrollTo({
-    top: offsetPosition,
     behavior: "smooth",
+    top: offsetPosition,
   });
   return true;
 }

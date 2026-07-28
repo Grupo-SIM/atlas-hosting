@@ -1,9 +1,9 @@
 "use client";
 
+import { Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Trash2, Loader2 } from "lucide-react";
-import { deleteVpsAction } from "@/app/vps-actions";
 import { toast } from "sonner";
+import { deleteVpsAction } from "@/app/vps-actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +22,10 @@ interface AdminDeleteVpsButtonProps {
   vpsName: string;
 }
 
-export default function AdminDeleteVpsButton({ vpsId, vpsName }: AdminDeleteVpsButtonProps) {
+export default function AdminDeleteVpsButton({
+  vpsId,
+  vpsName,
+}: AdminDeleteVpsButtonProps) {
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
@@ -33,7 +36,7 @@ export default function AdminDeleteVpsButton({ vpsId, vpsName }: AdminDeleteVpsB
         toast.success(`Servidor "${vpsName}" desvinculado com sucesso.`);
       }
     } catch (error: any) {
-      toast.error("Erro ao desvincular: " + error.message);
+      toast.error(`Erro ao desvincular: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -42,7 +45,11 @@ export default function AdminDeleteVpsButton({ vpsId, vpsName }: AdminDeleteVpsB
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive transition-colors">
+        <Button
+          className="text-muted-foreground transition-colors hover:text-destructive"
+          size="icon"
+          variant="ghost"
+        >
           <Trash2 className="h-4 w-4" />
         </Button>
       </AlertDialogTrigger>
@@ -50,23 +57,22 @@ export default function AdminDeleteVpsButton({ vpsId, vpsName }: AdminDeleteVpsB
         <AlertDialogHeader>
           <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
           <AlertDialogDescription>
-            Isso irá desvincular o servidor <strong>{vpsName}</strong> da conta do cliente. 
-            Ele perderá acesso total às métricas e monitoramento deste nó imediatamente.
+            Isso irá desvincular o servidor <strong>{vpsName}</strong> da conta
+            do cliente. Ele perderá acesso total às métricas e monitoramento
+            deste nó imediatamente.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={(e) => {
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={loading}
+            onClick={e => {
               e.preventDefault();
               handleDelete();
             }}
-            disabled={loading}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : null}
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Desvincular Agora
           </AlertDialogAction>
         </AlertDialogFooter>

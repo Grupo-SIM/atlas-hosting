@@ -11,19 +11,19 @@ import {
 import { pgUser } from "./user";
 
 export const pgVoucher = pgTable("vouchers", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  active: boolean("active").notNull().default(true),
   code: text("code").notNull().unique(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  currentUses: integer("current_uses").notNull().default(0),
   discountType: text("discount_type", {
     enum: ["fixed", "percentage"],
   }).notNull(),
   discountValue: doublePrecision("discount_value").notNull(),
+  expiresAt: timestamp("expires_at", { mode: "date" }),
+  id: uuid("id").primaryKey().defaultRandom(),
+  maxUses: integer("max_uses").notNull().default(1),
   /** Se vinculado a um usuário específico, apenas ele pode usar */
   userId: uuid("user_id").references(() => pgUser.id),
-  maxUses: integer("max_uses").notNull().default(1),
-  currentUses: integer("current_uses").notNull().default(0),
-  active: boolean("active").notNull().default(true),
-  expiresAt: timestamp("expires_at", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 export const voucherRelations = relations(pgVoucher, ({ one }) => ({

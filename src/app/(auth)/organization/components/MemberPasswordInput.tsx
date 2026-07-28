@@ -1,9 +1,9 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, Copy, Check } from "lucide-react";
+import { Check, Copy, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { generateRandomPassword } from "@/lib/utils";
 
 export default function MemberPasswordInput() {
@@ -25,27 +25,27 @@ export default function MemberPasswordInput() {
   return (
     <div className="flex gap-2">
       <Input
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        name="password"
-        id="password"
         className="font-mono"
+        id="password"
+        name="password"
+        onChange={e => setPassword(e.target.value)}
+        value={password}
       />
       <Button
+        onClick={handleGenerateNewPassword}
+        size="icon"
+        title="Gerar nova senha"
         type="button"
         variant="outline"
-        size="icon"
-        onClick={handleGenerateNewPassword}
-        title="Gerar nova senha"
       >
         <RefreshCw className="h-4 w-4" />
       </Button>
       <Button
+        onClick={handleCopyPassword}
+        size="icon"
+        title={passwordCopied ? "Senha copiada!" : "Copiar senha"}
         type="button"
         variant="outline"
-        size="icon"
-        onClick={handleCopyPassword}
-        title={passwordCopied ? "Senha copiada!" : "Copiar senha"}
       >
         {passwordCopied ? (
           <Check className="h-4 w-4" />

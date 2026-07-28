@@ -1,6 +1,6 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { type NextRequest, NextResponse } from "next/server";
-import { readFile } from "fs/promises";
-import path from "path";
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,20 +26,20 @@ export async function GET(request: NextRequest) {
 
       return new NextResponse(fileBuffer, {
         headers: {
-          "Content-Type": "application/zip",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
           "Content-Disposition":
             'attachment; filename="atlashosting-migrator.zip"',
-          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Content-Type": "application/zip",
         },
       });
     } catch (fileError) {
       // If the built plugin doesn't exist, return a helpful message
       return NextResponse.json(
         {
-          message:
-            "Plugin ainda não foi compilado. Execute o build.sh no projeto do plugin primeiro.",
           buildInstructions:
             "cd ../wp-plugin-atlashosting/wp-plugin-atlashosting && ./build.sh",
+          message:
+            "Plugin ainda não foi compilado. Execute o build.sh no projeto do plugin primeiro.",
         },
         { status: 404 }
       );

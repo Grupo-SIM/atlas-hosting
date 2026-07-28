@@ -17,24 +17,15 @@
  */
 
 import globalAxios, {
-  type AxiosResponse,
   type AxiosInstance,
   type AxiosRequestConfig,
+  type AxiosResponse,
 } from "axios";
-import type { Configuration } from "../configuration";
 // Some imports not used depending on template conditions
 // @ts-ignore
-import {
-  BASE_PATH,
-  COLLECTION_FORMATS,
-  type RequestArgs,
-  BaseAPI,
-  RequiredError,
-} from "../base";
-import type { DnsRecord } from "../models";
-import type { DnsRecordRequest } from "../models";
-import { ErrorResponse } from "../models";
-import type { StatusResponse } from "../models";
+import { BASE_PATH, BaseAPI, type RequestArgs, RequiredError } from "../base";
+import type { Configuration } from "../configuration";
+import type { DnsRecord, DnsRecordRequest, StatusResponse } from "../models";
 
 /**
  * DNSApi - axios parameter creator
@@ -59,7 +50,7 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter domain was null or undefined when calling dnsRecordsGet."
       );
     }
-    const localVarPath = `/dns/records`;
+    const localVarPath = "/dns/records";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -75,7 +66,7 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -86,14 +77,14 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
     if (domain !== undefined) {
-      localVarQueryParameter["domain"] = domain;
+      localVarQueryParameter.domain = domain;
     }
 
     const query = new URLSearchParams(localVarUrlObj.search);
@@ -104,8 +95,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -113,9 +105,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -136,7 +128,7 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter id was null or undefined when calling dnsRecordsIdDelete."
       );
     }
-    const localVarPath = `/dns/records/{id}`.replace(
+    const localVarPath = "/dns/records/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -155,7 +147,7 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -166,9 +158,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -180,8 +172,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -189,9 +182,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -212,7 +205,7 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter id was null or undefined when calling dnsRecordsIdGet."
       );
     }
-    const localVarPath = `/dns/records/{id}`.replace(
+    const localVarPath = "/dns/records/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -231,7 +224,7 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -242,9 +235,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -256,8 +249,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -265,9 +259,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -297,7 +291,7 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter id was null or undefined when calling dnsRecordsIdPut."
       );
     }
-    const localVarPath = `/dns/records/{id}`.replace(
+    const localVarPath = "/dns/records/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -316,7 +310,7 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -327,9 +321,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -343,8 +337,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -358,9 +353,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -390,7 +385,7 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter domain was null or undefined when calling dnsRecordsPost."
       );
     }
-    const localVarPath = `/dns/records`;
+    const localVarPath = "/dns/records";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -406,7 +401,7 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -417,14 +412,14 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
     if (domain !== undefined) {
-      localVarQueryParameter["domain"] = domain;
+      localVarQueryParameter.domain = domain;
     }
 
     localVarHeaderParameter["Content-Type"] = "application/json";
@@ -437,8 +432,9 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -452,13 +448,12 @@ export const DNSApiAxiosParamCreator = (configuration?: Configuration) => ({
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
 });
-
 
 /**
  * DNSApi - functional programming interface
@@ -479,7 +474,7 @@ export const DNSApiFp = (configuration?: Configuration) => ({
     (
       axios?: AxiosInstance,
       basePath?: string
-    ) => Promise<AxiosResponse<Array<DnsRecord>>>
+    ) => Promise<AxiosResponse<DnsRecord[]>>
   > {
     const localVarAxiosArgs = await DNSApiAxiosParamCreator(
       configuration
@@ -621,7 +616,6 @@ export const DNSApiFp = (configuration?: Configuration) => ({
   },
 });
 
-
 /**
  * DNSApi - factory interface
  * @export
@@ -641,10 +635,10 @@ export const DNSApiFactory = (
   async dnsRecordsGet(
     domain: string,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<DnsRecord>>> {
+  ): Promise<AxiosResponse<DnsRecord[]>> {
     return DNSApiFp(configuration)
       .dnsRecordsGet(domain, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -659,7 +653,7 @@ export const DNSApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return DNSApiFp(configuration)
       .dnsRecordsIdDelete(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -674,7 +668,7 @@ export const DNSApiFactory = (
   ): Promise<AxiosResponse<DnsRecord>> {
     return DNSApiFp(configuration)
       .dnsRecordsIdGet(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -691,7 +685,7 @@ export const DNSApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return DNSApiFp(configuration)
       .dnsRecordsIdPut(body, id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -708,10 +702,9 @@ export const DNSApiFactory = (
   ): Promise<AxiosResponse<DnsRecord>> {
     return DNSApiFp(configuration)
       .dnsRecordsPost(body, domain, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
 });
-
 
 /**
  * DNSApi - object-oriented interface
@@ -731,10 +724,10 @@ export class DNSApi extends BaseAPI {
   public async dnsRecordsGet(
     domain: string,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<DnsRecord>>> {
+  ): Promise<AxiosResponse<DnsRecord[]>> {
     return DNSApiFp(this.configuration)
       .dnsRecordsGet(domain, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -750,7 +743,7 @@ export class DNSApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return DNSApiFp(this.configuration)
       .dnsRecordsIdDelete(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -766,7 +759,7 @@ export class DNSApi extends BaseAPI {
   ): Promise<AxiosResponse<DnsRecord>> {
     return DNSApiFp(this.configuration)
       .dnsRecordsIdGet(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -784,7 +777,7 @@ export class DNSApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return DNSApiFp(this.configuration)
       .dnsRecordsIdPut(body, id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -802,6 +795,6 @@ export class DNSApi extends BaseAPI {
   ): Promise<AxiosResponse<DnsRecord>> {
     return DNSApiFp(this.configuration)
       .dnsRecordsPost(body, domain, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
 }

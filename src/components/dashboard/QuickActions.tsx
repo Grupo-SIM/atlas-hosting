@@ -1,5 +1,3 @@
-import { getUser } from "@/lib/auth";
-import { cn } from "@/lib/utils";
 import type { Variants } from "framer-motion";
 import {
   ArrowRight,
@@ -18,6 +16,8 @@ import {
 import Link from "next/link";
 import { Suspense } from "react";
 import { FaTasks } from "react-icons/fa";
+import { getUser } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "../ui/skeleton";
 import {
   Tooltip,
@@ -32,85 +32,85 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.08,
       delayChildren: 0.1,
+      staggerChildren: 0.08,
     },
   },
 };
 
 const itemVariants: Variants = {
-  hidden: { y: 30, opacity: 0, scale: 0.95 },
+  hidden: { opacity: 0, scale: 0.95, y: 30 },
   visible: {
-    y: 0,
     opacity: 1,
     scale: 1,
     transition: {
-      type: "spring",
-      stiffness: 400,
       damping: 25,
+      stiffness: 400,
+      type: "spring",
     },
+    y: 0,
   },
 };
 
 export function QuickActions() {
   return (
     <MotionDiv
-      className="space-y-8"
-      variants={containerVariants}
-      initial="hidden"
       animate="visible"
+      className="space-y-8"
+      initial="hidden"
+      variants={containerVariants}
     >
       {/* Domains Section */}
       <MotionDiv variants={itemVariants}>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
-            <Globe className="w-4 h-4 text-white" />
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
+            <Globe className="h-4 w-4 text-white" />
           </div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+          <h2 className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text font-bold text-2xl text-transparent">
             Domínios
           </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <QuickActionCard
-            Icon={Globe}
-            title="Meus Domínios"
-            subtitle="Gerencie seus domínios registrados"
-            href="/domains"
             gradient="from-blue-500 to-indigo-500"
+            href="/domains"
+            Icon={Globe}
             pattern="grid"
+            subtitle="Gerencie seus domínios registrados"
+            title="Meus Domínios"
           />
 
           <QuickActionCard
-            Icon={HousePlus}
-            title="Novo Domínio"
-            subtitle="Registre um novo domínio"
-            href="/domain?tab=register"
             gradient="from-green-500 to-emerald-500"
+            href="/domain?tab=register"
+            Icon={HousePlus}
             pattern="dots"
+            subtitle="Registre um novo domínio"
+            title="Novo Domínio"
           />
 
           <QuickActionCard
-            Icon={Transfer}
-            title="Zona DNS"
-            subtitle="Gerencie suas configurações DNS"
-            href="/dns"
             gradient="from-orange-500 to-amber-500"
+            href="/dns"
+            Icon={Transfer}
             pattern="waves"
+            subtitle="Gerencie suas configurações DNS"
+            title="Zona DNS"
           />
         </div>
       </MotionDiv>
 
       {/* Billing Section */}
       <MotionDiv variants={itemVariants}>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg">
-            <CreditCard className="w-4 h-4 text-white" />
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg">
+            <CreditCard className="h-4 w-4 text-white" />
           </div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+          <h2 className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text font-bold text-2xl text-transparent">
             Faturas
           </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* <QuickActionCard
             Icon={CreditCard}
             title="Assinaturas"
@@ -121,16 +121,15 @@ export function QuickActions() {
           /> */}
 
           <QuickActionCard
-            Icon={History}
-            title="Histórico de Pagamentos"
-            subtitle="Visualize seu histórico de transações"
-            href="/billing"
             gradient="from-blue-500 to-cyan-500"
+            href="/billing"
+            Icon={History}
             pattern="dots"
+            subtitle="Visualize seu histórico de transações"
+            title="Histórico de Pagamentos"
           />
         </div>
       </MotionDiv>
-
     </MotionDiv>
   );
 }
@@ -138,40 +137,38 @@ export function QuickActions() {
 export function SitesQuickActions() {
   return (
     <MotionDiv
-      className="space-y-8"
-      variants={containerVariants}
-      initial="hidden"
       animate="visible"
+      className="space-y-8"
+      initial="hidden"
+      variants={containerVariants}
     >
       {/* Sites Section */}
       <MotionDiv variants={itemVariants}>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
-            <Sparkles className="w-4 h-4 text-white" />
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+            <Sparkles className="h-4 w-4 text-white" />
           </div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+          <h2 className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text font-bold text-2xl text-transparent">
             Sites
           </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div>
                   <QuickActionCard
-                    Icon={FaTasks}
-                    title="Planos de Hospedagem"
-                    subtitle="Escolha o plano ideal para seu projeto"
-                    href="/plans"
+                    disabled={true}
                     gradient="from-blue-500 to-cyan-500"
+                    href="/plans"
+                    Icon={FaTasks}
                     pattern="dots"
-                    disabled={true}
+                    subtitle="Escolha o plano ideal para seu projeto"
+                    title="Planos de Hospedagem"
                   />
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="font-medium">
-                Em breve
-              </TooltipContent>
+              <TooltipContent className="font-medium">Em breve</TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
@@ -180,19 +177,17 @@ export function SitesQuickActions() {
               <TooltipTrigger asChild>
                 <div>
                   <QuickActionCard
-                    Icon={Building2}
-                    title="Organização"
-                    subtitle="Administre as configurações de sua organização"
-                    href="/organization"
+                    disabled={true}
                     gradient="from-purple-500 to-pink-500"
+                    href="/organization"
+                    Icon={Building2}
                     pattern="grid"
-                    disabled={true}
+                    subtitle="Administre as configurações de sua organização"
+                    title="Organização"
                   />
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="font-medium">
-                Em breve
-              </TooltipContent>
+              <TooltipContent className="font-medium">Em breve</TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
@@ -201,19 +196,17 @@ export function SitesQuickActions() {
               <TooltipTrigger asChild>
                 <div>
                   <QuickActionCard
-                    Icon={BookPlus}
-                    title="Nova Instalação WordPress"
-                    subtitle="Crie novas instalações a partir de seus domínios"
-                    href="/sites/new"
+                    disabled={true}
                     gradient="from-emerald-500 to-teal-500"
+                    href="/sites/new"
+                    Icon={BookPlus}
                     pattern="waves"
-                    disabled={true}
+                    subtitle="Crie novas instalações a partir de seus domínios"
+                    title="Nova Instalação WordPress"
                   />
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="font-medium">
-                Em breve
-              </TooltipContent>
+              <TooltipContent className="font-medium">Em breve</TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
@@ -222,19 +215,17 @@ export function SitesQuickActions() {
               <TooltipTrigger asChild>
                 <div>
                   <QuickActionCard
-                    Icon={Mail}
-                    title="Meu Email"
-                    subtitle="Acesse suas caixas de email"
-                    href="/email"
+                    disabled={true}
                     gradient="from-orange-500 to-red-500"
+                    href="/email"
+                    Icon={Mail}
                     pattern="dots"
-                    disabled={true}
+                    subtitle="Acesse suas caixas de email"
+                    title="Meu Email"
                   />
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="font-medium">
-                Em breve
-              </TooltipContent>
+              <TooltipContent className="font-medium">Em breve</TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
@@ -243,19 +234,17 @@ export function SitesQuickActions() {
               <TooltipTrigger asChild>
                 <div>
                   <QuickActionCard
-                    Icon={LucideBookMarked}
-                    title="Meus Sites"
-                    subtitle="Gerencie seus sites WordPress"
-                    href="/wordpress"
-                    gradient="from-indigo-500 to-blue-500"
-                    pattern="grid"
                     disabled={true}
+                    gradient="from-indigo-500 to-blue-500"
+                    href="/wordpress"
+                    Icon={LucideBookMarked}
+                    pattern="grid"
+                    subtitle="Gerencie seus sites WordPress"
+                    title="Meus Sites"
                   />
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="font-medium">
-                Em breve
-              </TooltipContent>
+              <TooltipContent className="font-medium">Em breve</TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
@@ -290,12 +279,12 @@ function QuickActionCard({
   target,
 }: QuickActionCardProps) {
   return (
-    <MotionDiv variants={itemVariants} className="group">
+    <MotionDiv className="group" variants={itemVariants}>
       {disabled ? (
         <div
           className={cn(
             "relative block h-full overflow-hidden rounded-2xl border border-border/40 transition-all duration-300",
-            "opacity-50 cursor-not-allowed"
+            "cursor-not-allowed opacity-50"
           )}
         >
           {/* Background Pattern */}
@@ -317,45 +306,45 @@ function QuickActionCard({
           />
 
           {/* Content */}
-          <div className="relative p-6 h-full flex flex-col">
+          <div className="relative flex h-full flex-col p-6">
             {/* Icon */}
             <div
               className={cn(
-                "flex items-center justify-center w-12 h-12 rounded-xl mb-4 transition-all duration-300",
+                "mb-4 flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-300",
                 "bg-gradient-to-br shadow-lg",
                 gradient
               )}
             >
-              <Icon className="w-6 h-6 text-white" />
+              <Icon className="h-6 w-6 text-white" />
             </div>
 
             {/* Text Content */}
             <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-2 text-foreground transition-colors duration-200">
+              <h3 className="mb-2 font-semibold text-foreground text-lg transition-colors duration-200">
                 {title}
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 {subtitle}
               </p>
             </div>
 
             {/* Arrow Icon */}
-            <div className="flex justify-end mt-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted/50 transition-all duration-200">
-                <ArrowRight className="w-4 h-4 text-muted-foreground transition-all duration-200" />
+            <div className="mt-4 flex justify-end">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50 transition-all duration-200">
+                <ArrowRight className="h-4 w-4 text-muted-foreground transition-all duration-200" />
               </div>
             </div>
           </div>
         </div>
       ) : (
         <Link
-          prefetch
-          href={href}
-          target={target}
           className={cn(
             "relative block h-full overflow-hidden rounded-2xl border border-border/40 transition-all duration-300",
-            "hover:border-border/60 hover:shadow-xl hover:-translate-y-1"
+            "hover:-translate-y-1 hover:border-border/60 hover:shadow-xl"
           )}
+          href={href}
+          prefetch
+          target={target}
         >
           {/* Background Pattern */}
           <div
@@ -370,45 +359,45 @@ function QuickActionCard({
           {/* Gradient Background */}
           <div
             className={cn(
-              "absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity duration-300",
+              "absolute inset-0 bg-gradient-to-br opacity-5 transition-opacity duration-300 group-hover:opacity-10",
               gradient
             )}
           />
 
           {/* Content */}
-          <div className="relative p-6 h-full flex flex-col">
+          <div className="relative flex h-full flex-col p-6">
             {/* Icon */}
             <div
               className={cn(
-                "flex items-center justify-center w-12 h-12 rounded-xl mb-4 transition-all duration-300",
-                "bg-gradient-to-br shadow-lg group-hover:shadow-xl group-hover:scale-110",
+                "mb-4 flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-300",
+                "bg-gradient-to-br shadow-lg group-hover:scale-110 group-hover:shadow-xl",
                 gradient
               )}
             >
-              <Icon className="w-6 h-6 text-white" />
+              <Icon className="h-6 w-6 text-white" />
             </div>
 
             {/* Text Content */}
             <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-2 text-foreground group-hover:text-primary transition-colors duration-200">
+              <h3 className="mb-2 font-semibold text-foreground text-lg transition-colors duration-200 group-hover:text-primary">
                 {title}
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 {subtitle}
               </p>
             </div>
 
             {/* Arrow Icon */}
-            <div className="flex justify-end mt-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted/50 group-hover:bg-primary/10 transition-all duration-200">
-                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200" />
+            <div className="mt-4 flex justify-end">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50 transition-all duration-200 group-hover:bg-primary/10">
+                <ArrowRight className="h-4 w-4 text-muted-foreground transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
               </div>
             </div>
 
             {/* Hover Glow Effect */}
             <div
               className={cn(
-                "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none",
+                "pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-20",
                 "bg-gradient-to-br",
                 gradient
               )}
@@ -433,24 +422,19 @@ async function AdminPanelCard() {
         <TooltipTrigger asChild>
           <div>
             <QuickActionCard
-              Icon={ArrowRightLeft}
-              title="Transferir Instalação WordPress"
-              subtitle="Transferir uma instalação existente para o Atlas Hosting"
               disabled={true}
-              target="_blank"
-              href="#"
               gradient="from-red-500 to-rose-500"
+              href="#"
+              Icon={ArrowRightLeft}
               pattern="waves"
+              subtitle="Transferir uma instalação existente para o Atlas Hosting"
+              target="_blank"
+              title="Transferir Instalação WordPress"
             />
           </div>
         </TooltipTrigger>
-        <TooltipContent
-          align="center"
-          className="p-4 max-w-xs font-medium"
-        >
-          <p className="text-sm">
-            Em breve
-          </p>
+        <TooltipContent align="center" className="max-w-xs p-4 font-medium">
+          <p className="text-sm">Em breve</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

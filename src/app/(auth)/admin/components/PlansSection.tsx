@@ -1,5 +1,7 @@
 "use client";
 
+import { Edit, PlusCircle, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +12,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -18,16 +27,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Plan } from "@/lib/db/schema";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { PlanForm } from "./PlanForm";
-import { PlusCircle, Edit, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+
 // import { deletePlan as deletePlanAction } from "@/app/actions"; // TODO: Uncomment when deletePlanAction is implemented in actions.ts
 
 interface PlansSectionProps {
@@ -87,7 +88,7 @@ export default function PlansSection({ initialPlans }: PlansSectionProps) {
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between w-full">
+          <div className="flex w-full items-center justify-between">
             <CardTitle>Planos de Assinatura</CardTitle>
             <Button onClick={handleOpenNewPlanModal}>
               <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Plano
@@ -121,10 +122,10 @@ export default function PlansSection({ initialPlans }: PlansSectionProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {initialPlans.map((plan) => (
+                {initialPlans.map(plan => (
                   <TableRow key={plan.id}>
                     <TableCell className="font-medium">{plan.name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground truncate max-w-xs hidden md:table-cell">
+                    <TableCell className="hidden max-w-xs truncate text-muted-foreground text-sm md:table-cell">
                       {plan.description}
                     </TableCell>
                     <TableCell>
@@ -145,22 +146,22 @@ export default function PlansSection({ initialPlans }: PlansSectionProps) {
                     <TableCell className="hidden md:table-cell">
                       {plan.featured ? "Sim" : "Não"}
                     </TableCell>
-                    <TableCell className="text-right space-x-1">
+                    <TableCell className="space-x-1 text-right">
                       <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleOpenEditPlanModal(plan)}
-                        className="h-8 w-8"
                         aria-label="Editar Plano"
+                        className="h-8 w-8"
+                        onClick={() => handleOpenEditPlanModal(plan)}
+                        size="icon"
+                        variant="outline"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => handleDeletePlan(plan.id)}
-                        className="h-8 w-8"
                         aria-label="Excluir Plano"
+                        className="h-8 w-8"
+                        onClick={() => handleDeletePlan(plan.id)}
+                        size="icon"
+                        variant="destructive"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -171,7 +172,7 @@ export default function PlansSection({ initialPlans }: PlansSectionProps) {
             </Table>
           </div>
           {initialPlans.length === 0 && (
-            <p className="text-center text-muted-foreground py-6">
+            <p className="py-6 text-center text-muted-foreground">
               Nenhum plano encontrado. Clique em &quot;Adicionar Plano&quot;
               para começar.
             </p>
@@ -180,7 +181,7 @@ export default function PlansSection({ initialPlans }: PlansSectionProps) {
       </Card>
 
       {/* Create Plan Modal */}
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+      <Dialog onOpenChange={setIsCreateModalOpen} open={isCreateModalOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Adicionar Novo Plano</DialogTitle>
@@ -191,15 +192,15 @@ export default function PlansSection({ initialPlans }: PlansSectionProps) {
           {isCreateModalOpen && (
             <PlanForm
               key={planFormKey} // Ensures form resets when re-opened
-              onSuccess={handleFormSuccess}
               onCancel={handleModalClose}
+              onSuccess={handleFormSuccess}
             />
           )}
         </DialogContent>
       </Dialog>
 
       {/* Edit Plan Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      <Dialog onOpenChange={setIsEditModalOpen} open={isEditModalOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Editar Plano</DialogTitle>
@@ -210,9 +211,9 @@ export default function PlansSection({ initialPlans }: PlansSectionProps) {
           {isEditModalOpen && editingPlan && (
             <PlanForm
               key={planFormKey} // Ensures form resets with plan data
-              plan={editingPlan}
-              onSuccess={handleFormSuccess}
               onCancel={handleModalClose}
+              onSuccess={handleFormSuccess}
+              plan={editingPlan}
             />
           )}
         </DialogContent>

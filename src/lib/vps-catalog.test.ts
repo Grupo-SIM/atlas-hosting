@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
-  CLOUD_VPS_PLANS,
   CLOUD_VPS_LOCATION_EUR,
+  CLOUD_VPS_PLANS,
   CLOUD_VPS_STORAGE_UPGRADE_EUR,
   getCloudVpsMonthlyEuro,
   getCloudVpsWindowsMonthlyEuro,
@@ -11,7 +11,7 @@ import {
 
 describe("Cloud VPS 24-month catalogue", () => {
   test("contains the six plans shown in the Contabo reference", () => {
-    expect(CLOUD_VPS_PLANS.map((plan) => plan.id)).toEqual([
+    expect(CLOUD_VPS_PLANS.map(plan => plan.id)).toEqual([
       "4",
       "6",
       "8",
@@ -57,22 +57,31 @@ describe("Cloud VPS 24-month catalogue", () => {
       expect(CLOUD_VPS_STORAGE_UPGRADE_EUR[plan.id]).toBeDefined();
       const regions = CLOUD_VPS_LOCATION_EUR[plan.id];
       expect(Object.keys(regions).sort()).toEqual(
-        ["au-sydney", "in", "jp", "sg", "uk", "us-central", "us-east", "us-west"].sort()
+        [
+          "au-sydney",
+          "in",
+          "jp",
+          "sg",
+          "uk",
+          "us-central",
+          "us-east",
+          "us-west",
+        ].sort()
       );
     }
-    expect(CLOUD_VPS_LOCATION_EUR["4"]["us-east"]).toBe(3.10);
-    expect(CLOUD_VPS_STORAGE_UPGRADE_EUR["18"].eur).toBe(18.00);
+    expect(CLOUD_VPS_LOCATION_EUR["4"]["us-east"]).toBe(3.1);
+    expect(CLOUD_VPS_STORAGE_UPGRADE_EUR["18"].eur).toBe(18.0);
   });
 
   test("preserves each card's Contabo resource comparison", () => {
     expect(CLOUD_VPS_PLANS[0]).toMatchObject({
       name: "Cloud VPS 4",
-      vcpu: "4 vCPU Cores",
-      ram: "8 GB RAM",
-      storage: "100 GB SSD",
-      snapshots: "1 Snapshot",
       port: "200 Mbit/s Port",
+      ram: "8 GB RAM",
+      snapshots: "1 Snapshot",
+      storage: "100 GB SSD",
       traffic: "Unlimited Traffic*",
+      vcpu: "4 vCPU Cores",
     });
   });
 });

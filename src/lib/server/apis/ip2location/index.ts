@@ -1,7 +1,7 @@
-import { db } from "@/lib/db";
-import { ipLocationCache } from "@/lib/db/schema";
 import axios from "axios";
 import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { ipLocationCache } from "@/lib/db/schema";
 
 export class Ip2Location {
   private readonly apiKey = process.env.IP2LOCATION_API_KEY;
@@ -26,18 +26,18 @@ export class Ip2Location {
 
   private parseRawIpInfo(raw: RawIpInfo): IpInfo {
     return {
-      ip: raw.ip,
+      as: raw.as,
+      asn: raw.asn,
+      cityName: raw.city_name,
       countryCode: raw.country_code,
       countryName: raw.country_name,
-      regionName: raw.region_name,
-      cityName: raw.city_name,
+      ip: raw.ip,
+      isProxy: raw.is_proxy,
       latitude: raw.latitude,
       longitude: raw.longitude,
-      zipCode: raw.zip_code,
+      regionName: raw.region_name,
       timeZone: raw.time_zone,
-      asn: raw.asn,
-      as: raw.as,
-      isProxy: raw.is_proxy,
+      zipCode: raw.zip_code,
     };
   }
 
@@ -46,11 +46,11 @@ export class Ip2Location {
       .insert(ipLocationCache)
       .values(ipInfo)
       .onConflictDoUpdate({
-        target: ipLocationCache.ip,
         set: {
           ...ipInfo,
           updatedAt: new Date(),
         },
+        target: ipLocationCache.ip,
       });
   }
 

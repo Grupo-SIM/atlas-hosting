@@ -1,13 +1,12 @@
+import { access, mkdir, rmdir } from "node:fs/promises";
+import path from "node:path";
+import { Readable } from "node:stream";
 import acme from "acme-client";
 import { Client as FtpClient } from "basic-ftp";
 import { lookupTxt } from "dns-query";
-import { access, rmdir, unlink } from "node:fs/promises";
-import path from "node:path";
-import { Readable } from "node:stream";
 import namecheapApi from "../namecheap";
 import type { DnsHostRecord, DnsRecordType } from "../namecheap/types";
 import { getSubscription } from "../plesk-xml/client";
-import { mkdir } from "node:fs/promises";
 
 export class CertificatesApi {
   private readonly letsEncryptDirectoryUrl =
@@ -29,13 +28,13 @@ export class CertificatesApi {
         Hosts.filter(
           ({ Type, Address }) => Type !== "TXT" || Address === "_acme-challenge"
         )
-          .map((host) => ({
+          .map(host => ({
+            Address: host.Address,
             HostName: host.Name,
             RecordType: host.Type as DnsRecordType,
-            Address: host.Address,
           }))
           .filter(
-            (predicate) =>
+            predicate =>
               predicate.HostName !== "_acme-challenge" ||
               predicate.RecordType !== "TXT"
           )
@@ -45,15 +44,15 @@ export class CertificatesApi {
       console.log("Initializing ACME client...");
       const accountKey = await acme.crypto.createPrivateKey();
       const client = new acme.Client({
+        accountKey,
         directoryUrl: this.letsEncryptDirectoryUrl,
-        accountKey: accountKey,
       });
 
       console.log("Creating/retrieving Let's Encrypt account...");
 
       await client.createAccount({
-        termsOfServiceAgreed: true,
         contact: [`mailto:${this.certEmail}`],
+        termsOfServiceAgreed: true,
       });
 
       console.log("Account created/retrieved successfully.");
@@ -80,7 +79,7 @@ export class CertificatesApi {
 
       for (const authz of authorizations) {
         const dnsChallenge = authz.challenges.find(
-          (challenge) => challenge.type === "dns-01"
+          challenge => challenge.type === "dns-01"
         );
 
         if (!dnsChallenge) {
@@ -99,9 +98,9 @@ export class CertificatesApi {
 
         const newDnsRecords: DnsHostRecord[] = [
           {
+            Address: keyAuthorization,
             HostName: "_acme-challenge",
             RecordType: "TXT",
-            Address: keyAuthorization,
           },
         ];
 
@@ -112,9 +111,9 @@ export class CertificatesApi {
         // --- 3a. Create DNS TXT Record ---
         // This part is highly dependent on your DNS provider's API
         const result = await namecheapApi.setHosts({
+          Records: recordsToSet,
           SLD: sld,
           TLD: tld,
-          Records: recordsToSet,
         });
 
         console.log({ result });
@@ -171,8 +170,8 @@ export class CertificatesApi {
       // --- 4. Finalize Order & Get Certificate ---
       console.log("All challenges satisfied. Finalizing order...");
       const [key, csr] = await acme.crypto.createCsr({
-        commonName: domainName,
         altNames: [`*.${domainName}`], // if wildcard
+        commonName: domainName,
       }); // Create a new private key and CSR for the certificate itself
 
       const result = await client.finalizeOrder(order, csr);
@@ -195,11 +194,11 @@ export class CertificatesApi {
       const caCertificates = pemCertificates.slice(1).join("\n");
 
       return {
-        certificate: certificate,
-        privateKey: key.toString(),
-        csr: csr.toString(),
         ca: caCertificates.trim(),
+        certificate,
+        csr: csr.toString(),
         keyAuthorization,
+        privateKey: key.toString(),
       };
       // TODO: Save the certificate and private key to files securely.
       // e.g., fs.writeFileSync('certificate.pem', certificate);
@@ -224,7 +223,7 @@ export class CertificatesApi {
           endpoints: ["1.1.1.1", "8.8.8.8"],
         });
 
-        const result = entries.map((entry) => entry.data);
+        const result = entries.map(entry => entry.data);
 
         done = result.includes(keyAuthorization);
 
@@ -253,14 +252,14 @@ export class CertificatesApi {
       console.log("Initializing ACME client...");
       const accountKey = await acme.crypto.createPrivateKey();
       const client = new acme.Client({
+        accountKey,
         directoryUrl: this.letsEncryptDirectoryUrl,
-        accountKey: accountKey,
       });
 
       console.log("Creating/retrieving Let's Encrypt account...");
       await client.createAccount({
-        termsOfServiceAgreed: true,
         contact: [`mailto:${this.certEmail}`],
+        termsOfServiceAgreed: true,
       });
 
       console.log("Account created/retrieved successfully.");
@@ -297,7 +296,7 @@ export class CertificatesApi {
 
         // Find HTTP-01 challenge
         const httpChallenge = authz.challenges.find(
-          (challenge) => challenge.type === "http-01"
+          challenge => challenge.type === "http-01"
         );
 
         if (!httpChallenge) {
@@ -313,9 +312,9 @@ export class CertificatesApi {
 
         // Store challenge file info
         challengeFiles.push({
-          token,
-          keyAuthorization,
           domain,
+          keyAuthorization,
+          token,
         });
 
         console.log(`Challenge token for ${domain}: ${token}`);
@@ -349,8 +348,8 @@ export class CertificatesApi {
       // --- 6. Finalize Order & Get Certificate ---
       console.log("All challenges satisfied. Finalizing order...");
       const [key, csr] = await acme.crypto.createCsr({
-        commonName: domainName,
         altNames: [`www.${domainName}`],
+        commonName: domainName,
       });
 
       await client.finalizeOrder(order, csr);
@@ -369,10 +368,10 @@ export class CertificatesApi {
       const caCertificates = pemCertificates.slice(1).join("\n");
 
       return {
-        certificate: certificate,
-        privateKey: key.toString(),
-        csr: csr.toString(),
         ca: caCertificates.trim(),
+        certificate,
+        csr: csr.toString(),
+        privateKey: key.toString(),
       };
     } catch (error) {
       console.error(
@@ -432,8 +431,8 @@ export class CertificatesApi {
 
     await ftpClient.access({
       host: process.env.SERVER_IP as string,
-      user: ftp_login as string,
       password: ftp_password as string,
+      user: ftp_login as string,
     });
 
     const challengeDir = path.join("/httpdocs", this.challengeDirectory);
@@ -487,10 +486,10 @@ export class CertificatesApi {
         );
 
         const response = await fetch(challengeUrl, {
-          method: "GET",
           headers: {
             "User-Agent": "ACME-Client/1.0",
           },
+          method: "GET",
         });
 
         if (!response.ok) {
@@ -520,7 +519,7 @@ export class CertificatesApi {
         }
 
         // Wait before retrying
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
     }
   }
@@ -552,8 +551,8 @@ export class CertificatesApi {
 
       await ftpClient.access({
         host: process.env.SERVER_IP as string,
-        user: ftp_login as string,
         password: ftp_password as string,
+        user: ftp_login as string,
       });
 
       const challengeFile = path.join(

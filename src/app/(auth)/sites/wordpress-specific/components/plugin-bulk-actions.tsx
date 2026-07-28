@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowUpCircle, RefreshCw, Package, Loader2 } from "lucide-react";
+import { ArrowUpCircle, Loader2, Package, RefreshCw } from "lucide-react";
 import { useState, useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { updatePlugin } from "../actions";
 import type { WordPressSiteInfo } from "../types";
@@ -18,11 +18,11 @@ export function PluginBulkActions({ sites }: PluginBulkActionsProps) {
 
   // Get all plugins that have updates available across all sites
   const pluginsWithUpdates = sites.flatMap(
-    (site) =>
-      site.updatesAvailable?.plugins?.map((plugin) => ({
+    site =>
+      site.updatesAvailable?.plugins?.map(plugin => ({
+        instanceId: site.instanceId,
         plugin,
         siteId: site.id,
-        instanceId: site.instanceId,
         siteUrl: site.url,
       })) || []
   );
@@ -30,8 +30,8 @@ export function PluginBulkActions({ sites }: PluginBulkActionsProps) {
   const handleUpdateAll = () => {
     if (pluginsWithUpdates.length === 0) {
       toast({
-        title: "Nenhuma atualização",
         description: "Não há plugins com atualizações disponíveis",
+        title: "Nenhuma atualização",
       });
       return;
     }
@@ -56,15 +56,15 @@ export function PluginBulkActions({ sites }: PluginBulkActionsProps) {
 
       if (successCount > 0) {
         toast({
-          title: "Atualizações concluídas",
           description: `${successCount} plugin(s) atualizado(s) com sucesso${errorCount > 0 ? `, ${errorCount} falharam` : ""}`,
+          title: "Atualizações concluídas",
         });
       }
 
       if (errorCount > 0 && successCount === 0) {
         toast({
-          title: "Erro nas atualizações",
           description: `Falha ao atualizar ${errorCount} plugin(s)`,
+          title: "Erro nas atualizações",
           variant: "destructive",
         });
       }
@@ -82,15 +82,15 @@ export function PluginBulkActions({ sites }: PluginBulkActionsProps) {
   return (
     <div className="flex flex-wrap gap-2">
       <Button
-        variant="outline"
-        size="sm"
-        onClick={handleUpdateAll}
-        disabled={isPending || pluginsWithUpdates.length === 0}
         className={
           pluginsWithUpdates.length > 0
             ? "border-orange-200 text-orange-600 hover:bg-orange-50"
             : ""
         }
+        disabled={isPending || pluginsWithUpdates.length === 0}
+        onClick={handleUpdateAll}
+        size="sm"
+        variant="outline"
       >
         {isUpdatingAll ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -102,10 +102,10 @@ export function PluginBulkActions({ sites }: PluginBulkActionsProps) {
       </Button>
 
       <Button
-        variant="outline"
-        size="sm"
-        onClick={handleRefresh}
         disabled={isPending}
+        onClick={handleRefresh}
+        size="sm"
+        variant="outline"
       >
         {isPending ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -115,11 +115,11 @@ export function PluginBulkActions({ sites }: PluginBulkActionsProps) {
         Verificar Updates
       </Button>
 
-      <div className="flex items-center gap-2 ml-auto">
+      <div className="ml-auto flex items-center gap-2">
         {pluginsWithUpdates.length > 0 && (
           <Badge
+            className="border-orange-200 text-orange-600"
             variant="outline"
-            className="text-orange-600 border-orange-200"
           >
             <Package className="mr-1 h-3 w-3" />
             {pluginsWithUpdates.length} update

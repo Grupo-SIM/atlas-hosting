@@ -1,7 +1,15 @@
-'use client';
+"use client";
 
-import { ElementType, useEffect, useRef, useState, createElement, useMemo, useCallback } from 'react';
-import { gsap } from 'gsap';
+import { gsap } from "gsap";
+import {
+  createElement,
+  type ElementType,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 interface TextTypeProps {
   className?: string;
@@ -26,17 +34,17 @@ interface TextTypeProps {
 
 const TextType = ({
   text,
-  as: Component = 'div',
+  as: Component = "div",
   typingSpeed = 50,
   initialDelay = 0,
   pauseDuration = 2000,
   deletingSpeed = 30,
   loop = true,
-  className = '',
+  className = "",
   showCursor = true,
   hideCursorWhileTyping = false,
-  cursorCharacter = '|',
-  cursorClassName = '',
+  cursorCharacter = "|",
+  cursorClassName = "",
   cursorBlinkDuration = 0.5,
   textColors = [],
   variableSpeed,
@@ -45,7 +53,7 @@ const TextType = ({
   reverseMode = false,
   ...props
 }: TextTypeProps & React.HTMLAttributes<HTMLElement>) => {
-  const [displayedText, setDisplayedText] = useState('');
+  const [displayedText, setDisplayedText] = useState("");
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
@@ -53,7 +61,10 @@ const TextType = ({
   const cursorRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLElement>(null);
 
-  const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
+  const textArray = useMemo(
+    () => (Array.isArray(text) ? text : [text]),
+    [text]
+  );
 
   const getRandomSpeed = useCallback(() => {
     if (!variableSpeed) return typingSpeed;
@@ -88,11 +99,11 @@ const TextType = ({
     if (showCursor && cursorRef.current) {
       gsap.set(cursorRef.current, { opacity: 1 });
       gsap.to(cursorRef.current, {
-        opacity: 0,
         duration: cursorBlinkDuration,
+        ease: "power2.inOut",
+        opacity: 0,
         repeat: -1,
         yoyo: true,
-        ease: 'power2.inOut'
       });
     }
   }, [showCursor, cursorBlinkDuration]);
@@ -103,11 +114,13 @@ const TextType = ({
     let timeout: NodeJS.Timeout;
 
     const currentText = textArray[currentTextIndex];
-    const processedText = reverseMode ? currentText.split('').reverse().join('') : currentText;
+    const processedText = reverseMode
+      ? currentText.split("").reverse().join("")
+      : currentText;
 
     const executeTypingAnimation = () => {
       if (isDeleting) {
-        if (displayedText === '') {
+        if (displayedText === "") {
           setIsDeleting(false);
           if (currentTextIndex === textArray.length - 1 && !loop) {
             return;
@@ -142,7 +155,7 @@ const TextType = ({
       }
     };
 
-    if (currentCharIndex === 0 && !isDeleting && displayedText === '') {
+    if (currentCharIndex === 0 && !isDeleting && displayedText === "") {
       timeout = setTimeout(executeTypingAnimation, initialDelay);
     } else {
       executeTypingAnimation();
@@ -163,26 +176,30 @@ const TextType = ({
     isVisible,
     reverseMode,
     variableSpeed,
-    onSentenceComplete
+    onSentenceComplete,
   ]);
 
   const shouldHideCursor =
-    hideCursorWhileTyping && (currentCharIndex < textArray[currentTextIndex].length || isDeleting);
+    hideCursorWhileTyping &&
+    (currentCharIndex < textArray[currentTextIndex].length || isDeleting);
 
   return createElement(
     Component,
     {
-      ref: containerRef,
       className: `inline-block whitespace-pre-wrap tracking-tight ${className}`,
-      ...props
+      ref: containerRef,
+      ...props,
     },
-    <span className="inline" style={{ color: getCurrentTextColor() || 'inherit' }}>
+    <span
+      className="inline"
+      style={{ color: getCurrentTextColor() || "inherit" }}
+    >
       {displayedText}
     </span>,
     showCursor && (
       <span
+        className={`ml-1 inline-block opacity-100 ${shouldHideCursor ? "hidden" : ""} ${cursorClassName}`}
         ref={cursorRef}
-        className={`ml-1 inline-block opacity-100 ${shouldHideCursor ? 'hidden' : ''} ${cursorClassName}`}
       >
         {cursorCharacter}
       </span>

@@ -1,13 +1,13 @@
-import { getUser } from "@/lib/auth";
-import { getUserWordPressSites } from "@/lib/server/utils";
-import WpCliApi from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
-import DbStatusChecklist from "./components/DbStatusChecklist";
-import { DatabaseEditor } from "./components/DatabaseEditor";
-import { Suspense, memo } from "react";
 import { AlertTriangle, Database } from "lucide-react";
 import Link from "next/link";
+import { memo, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getUser } from "@/lib/auth";
+import WpCliApi from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
+import { getUserWordPressSites } from "@/lib/server/utils";
+import { DatabaseEditor } from "./components/DatabaseEditor";
+import DbStatusChecklist from "./components/DbStatusChecklist";
 
 interface WpDomainWithCli {
   id: number;
@@ -29,10 +29,10 @@ interface ErrorCardProps {
 }
 
 const WordPressNotFoundCard = memo<ErrorCardProps>(({ selectedDomainName }) => (
-  <Card className="mt-8 shadow-lg border border-amber-500/50 bg-amber-50/50 backdrop-blur-lg">
+  <Card className="mt-8 border border-amber-500/50 bg-amber-50/50 shadow-lg backdrop-blur-lg">
     <CardHeader>
       <CardTitle className="flex items-center text-amber-700">
-        <AlertTriangle className="h-6 w-6 mr-2" />
+        <AlertTriangle className="mr-2 h-6 w-6" />
         Instalação do WordPress Não Encontrada
       </CardTitle>
     </CardHeader>
@@ -44,8 +44,8 @@ const WordPressNotFoundCard = memo<ErrorCardProps>(({ selectedDomainName }) => (
       </p>
       <Button
         asChild
-        variant="default"
         className="bg-amber-500 hover:bg-amber-600"
+        variant="default"
       >
         <Link href="/sites/new">Instalar WordPress</Link>
       </Button>
@@ -74,10 +74,10 @@ DatabaseEditorSection.displayName = "DatabaseEditorSection";
 
 // Memoized Domain Selection Card
 const DomainSelectionCard = memo(() => (
-  <Card className="mt-8 shadow-lg border border-blue-500/50 bg-blue-50/50 backdrop-blur-lg">
+  <Card className="mt-8 border border-blue-500/50 bg-blue-50/50 shadow-lg backdrop-blur-lg">
     <CardHeader>
       <CardTitle className="flex items-center text-blue-700">
-        <Database className="h-6 w-6 mr-2" />
+        <Database className="mr-2 h-6 w-6" />
         Selecionar um Domínio
       </CardTitle>
     </CardHeader>
@@ -96,15 +96,15 @@ async function fetchDomainStatuses(
   wpDomains: WpDomainWithCli[]
 ): Promise<DomainStatus[]> {
   return Promise.all(
-    wpDomains.map(async (wpDomain) => {
+    wpDomains.map(async wpDomain => {
       try {
         const checkResult = await wpDomain.wpCli.db.check();
         const isSuccess = /success/i.test(checkResult);
         return {
           domain: wpDomain.domain,
-          status: isSuccess ? "OK" : "Error",
           error: isSuccess ? null : checkResult,
           loading: false,
+          status: isSuccess ? "OK" : "Error",
         };
       } catch (err: unknown) {
         let errorMessage = "Falha ao verificar status do banco de dados.";
@@ -113,9 +113,9 @@ async function fetchDomainStatuses(
         }
         return {
           domain: wpDomain.domain,
-          status: "Error",
           error: errorMessage,
           loading: false,
+          status: "Error",
         };
       }
     })
@@ -133,7 +133,7 @@ export default async function DatabasesPage({
   }
 
   const wpDomainsRaw = await getUserWordPressSites(user);
-  const wpDomains: WpDomainWithCli[] = wpDomainsRaw.map((domain) => ({
+  const wpDomains: WpDomainWithCli[] = wpDomainsRaw.map(domain => ({
     ...domain,
     wpCli: new WpCliApi(domain.instanceId),
   }));
@@ -151,13 +151,13 @@ export default async function DatabasesPage({
   ) as Record<string, string | undefined>;
 
   const selectedDomainName = user.selectedDomain;
-  const currentDomainHasWordPress = wpDomains.some((d) =>
+  const currentDomainHasWordPress = wpDomains.some(d =>
     [
       `https://${selectedDomainName}`,
       `https://www.${selectedDomainName}`,
     ].includes(d.domain)
   );
-  const selectedWpDomain = wpDomains.find((d) =>
+  const selectedWpDomain = wpDomains.find(d =>
     [
       `https://${selectedDomainName}`,
       `https://www.${selectedDomainName}`,
@@ -166,7 +166,7 @@ export default async function DatabasesPage({
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-      <h1 className="text-3xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+      <h1 className="mb-8 bg-gradient-to-r from-primary to-secondary bg-clip-text font-bold text-3xl text-transparent">
         Gerenciamento de Banco de Dados
       </h1>
 
@@ -181,9 +181,9 @@ export default async function DatabasesPage({
 
       {selectedDomainName && currentDomainHasWordPress && selectedWpDomain && (
         <DatabaseEditorSection
-          selectedDomainName={selectedDomainName}
           instanceId={selectedWpDomain.instanceId}
           searchParams={normalizedSearchParams}
+          selectedDomainName={selectedDomainName}
         />
       )}
 

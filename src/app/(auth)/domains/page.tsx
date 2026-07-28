@@ -1,3 +1,15 @@
+import { format, isBefore } from "date-fns"; // Added parseISO, format
+import { ptBR } from "date-fns/locale"; // For pt-BR date formatting
+import {
+  AlertTriangle,
+  Calendar,
+  CheckCircle,
+  Globe,
+  Plus,
+  RefreshCw,
+} from "lucide-react";
+import Link from "next/link";
+import NoDomains from "@/components/domains/NoDomains";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,7 +19,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DomainActionsMenu } from "./components/DomainActionsMenu";
 import {
   Table,
   TableBody,
@@ -16,36 +27,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  ExternalLink,
-  Globe,
-  Lock,
-  Mail,
-  MoreHorizontal,
-  RefreshCw,
-  Server,
-  Shield,
-  Calendar,
-  Plus,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-} from "lucide-react";
-import Link from "next/link";
 // import { db } from "@/lib/db"; // Keep if plansTable is still used from DB
 // import { plansTable, Plan } from "@/lib/db/schema"; // Keep if used
 import { getUser } from "@/lib/auth";
-import { format, isBefore, startOfTomorrow } from "date-fns"; // Added parseISO, format
-import { ptBR } from "date-fns/locale"; // For pt-BR date formatting
-import { redirect } from "next/navigation";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
-import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
-import { cookies } from "next/headers";
-import { db } from "@/lib/db";
-import { pgOrganizationDomains } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import NoDomains from "@/components/domains/NoDomains";
 import { cn } from "@/lib/utils";
+import { DomainActionsMenu } from "./components/DomainActionsMenu";
 
 // Define a type for the processed domain to be used in the table
 interface ProcessedDomain {
@@ -62,62 +49,65 @@ interface ProcessedDomain {
 
 export default async function MyDomainsPage({
   searchParams,
-}: { searchParams: Promise<{ q?: string }> }) {
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const q = await searchParams;
   const user = await getUser();
 
   let processedDomains: ProcessedDomain[] = [];
   let domainStats = {
-    total: 0,
     active: 0,
     expired: 0,
     expiringThisMonth: 0,
+    total: 0,
   };
 
   try {
-    const dbDomains = user.organization.domains.filter(
-      (domain) => domain.active
-    );
+    const dbDomains = user.organization.domains.filter(domain => domain.active);
 
     const domainsRaw = await Promise.all(
-      dbDomains.map(async (domain) => {
+      dbDomains.map(async domain => {
         try {
           const d = await namecheapApi.getInfo({
             DomainName: domain.domain,
           });
 
           return {
-            id: d.DomainName,
-            name: d.DomainName,
-            registrationDate: d.CreatedDate
-              ? format(d.CreatedDate, "dd/MM/yyyy", { locale: ptBR })
-              : "N/A",
+            autoRenew: d.AutoRenew,
             expiryDate: d.ExpireDate
               ? format(d.ExpireDate, "dd/MM/yyyy", { locale: ptBR })
               : "Nunca",
-            status: isBefore(d.ExpireDate, new Date()) ? "expired" : "active",
-            autoRenew: d.AutoRenew,
-            isLocked: d.IsLocked,
-            usesOurDNS: d.DnsDetails?.IsUsingOurDNS ?? false,
             features: [
               d.DnsDetails?.IsUsingOurDNS && "DNS Management",
               d.Whoisguard?.Enabled && "Domain Privacy",
               d.AutoRenew && "Auto-Renew",
             ].filter(Boolean) as string[],
+            id: d.DomainName,
+            isLocked: d.IsLocked,
+            name: d.DomainName,
+            registrationDate: d.CreatedDate
+              ? format(d.CreatedDate, "dd/MM/yyyy", { locale: ptBR })
+              : "N/A",
+            status: isBefore(d.ExpireDate, new Date()) ? "expired" : "active",
+            usesOurDNS: d.DnsDetails?.IsUsingOurDNS ?? false,
           } as ProcessedDomain;
         } catch (error) {
-          console.error(`Failed to fetch Namecheap info for ${domain.domain}:`, error);
+          console.error(
+            `Failed to fetch Namecheap info for ${domain.domain}:`,
+            error
+          );
           // Retorna fallback para que o erro num domínio não quebre a página inteira
           return {
+            autoRenew: false,
+            expiryDate: "Indisponível",
+            features: ["Falha na Sincronização"],
             id: domain.domain,
+            isLocked: false,
             name: domain.domain,
             registrationDate: "Indisponível",
-            expiryDate: "Indisponível",
             status: "unknown",
-            autoRenew: false,
-            isLocked: false,
             usesOurDNS: false,
-            features: ["Falha na Sincronização"],
           } as ProcessedDomain;
         }
       })
@@ -129,10 +119,9 @@ export default async function MyDomainsPage({
 
     // Calculate stats
     domainStats = {
-      total: domains.length,
-      active: domains.filter((d) => d.status === "active").length,
-      expired: domains.filter((d) => d.status === "expired").length,
-      expiringThisMonth: domains.filter((d) => {
+      active: domains.filter(d => d.status === "active").length,
+      expired: domains.filter(d => d.status === "expired").length,
+      expiringThisMonth: domains.filter(d => {
         if (d.expiryDate === "Nunca") return false;
         try {
           const [day, month, year] = d.expiryDate.split("/");
@@ -148,6 +137,7 @@ export default async function MyDomainsPage({
           return false;
         }
       }).length,
+      total: domains.length,
     };
   } catch (error) {
     console.error("Error fetching domain info:", error);
@@ -155,27 +145,24 @@ export default async function MyDomainsPage({
 
   return (
     <div className="space-y-6 p-6 pb-16">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
             Meus Domínios
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="mt-1 text-muted-foreground">
             Gerencie seus domínios registrados e configurações de DNS
           </p>
         </div>
         <div className="flex gap-3">
-          <Button
-            variant="outline"
-            asChild={true}
-          >
+          <Button asChild={true} variant="outline">
             <Link href="/domain?tab=transfer">
               <Globe className="mr-2 h-4 w-4" /> Trazer Domínio
             </Link>
           </Button>
           <Button
-            className="bg-white text-slate-950 font-bold hover:bg-white/90 border-0 shadow-lg"
             asChild={true}
+            className="border-0 bg-white font-bold text-slate-950 shadow-lg hover:bg-white/90"
           >
             <Link href="/domain?tab=register">
               <Plus className="mr-2 h-4 w-4" /> Registrar Novo
@@ -186,13 +173,13 @@ export default async function MyDomainsPage({
 
       {/* Domain Statistics Cards */}
       {processedDomains.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold">{domainStats.total}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="font-bold text-2xl">{domainStats.total}</p>
+                  <p className="text-muted-foreground text-sm">
                     Total de Domínios
                   </p>
                 </div>
@@ -205,10 +192,10 @@ export default async function MyDomainsPage({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="font-bold text-2xl text-green-600">
                     {domainStats.active}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Domínios Ativos
                   </p>
                 </div>
@@ -221,10 +208,10 @@ export default async function MyDomainsPage({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-orange-600">
+                  <p className="font-bold text-2xl text-orange-600">
                     {domainStats.expiringThisMonth}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Expiram em 30 dias
                   </p>
                 </div>
@@ -237,10 +224,10 @@ export default async function MyDomainsPage({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-red-600">
+                  <p className="font-bold text-2xl text-red-600">
                     {domainStats.expired}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Domínios Expirados
                   </p>
                 </div>
@@ -336,9 +323,9 @@ export default async function MyDomainsPage({
           </CardDescription>
         </CardHeader>
         <CardContent
-          className={cn({ "max-w-2xl mx-auto": processedDomains.length === 0 })}
+          className={cn({ "mx-auto max-w-2xl": processedDomains.length === 0 })}
         >
-          <div className="border rounded-lg overflow-x-auto">
+          <div className="overflow-x-auto rounded-lg border">
             {processedDomains.length === 0 ? (
               <NoDomains />
             ) : (
@@ -348,13 +335,13 @@ export default async function MyDomainsPage({
                     <TableHead className="font-semibold">
                       Nome do Domínio
                     </TableHead>
-                    <TableHead className="hidden md:table-cell text-center font-semibold">
+                    <TableHead className="hidden text-center font-semibold md:table-cell">
                       Data de Registro
                     </TableHead>
                     <TableHead className="text-center font-semibold">
                       Data de Expiração
                     </TableHead>
-                    <TableHead className="hidden lg:table-cell font-semibold">
+                    <TableHead className="hidden font-semibold lg:table-cell">
                       Renovação
                     </TableHead>
                     <TableHead className="text-right font-semibold">
@@ -363,39 +350,39 @@ export default async function MyDomainsPage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {processedDomains.map((domain) => (
+                  {processedDomains.map(domain => (
                     <TableRow
+                      className="transition-colors hover:bg-muted/50"
                       key={domain.id}
-                      className="hover:bg-muted/50 transition-colors"
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="flex items-center">
                             <Badge
-                              variant="outline"
                               className={cn(
-                                "h-2 w-2 p-0 rounded-full mr-3",
+                                "mr-3 h-2 w-2 rounded-full p-0",
                                 domain.status === "active"
-                                  ? "bg-green-500 border-green-500"
+                                  ? "border-green-500 bg-green-500"
                                   : domain.status === "expired"
-                                    ? "bg-red-500 border-red-500"
-                                    : "bg-gray-500 border-gray-500"
+                                    ? "border-red-500 bg-red-500"
+                                    : "border-gray-500 bg-gray-500"
                               )}
+                              variant="outline"
                             />
                             <div>
                               <p className="font-medium">{domain.name}</p>
-                              <div className="flex gap-1 mt-1">
-                                {domain.features.slice(0, 2).map((feature) => (
+                              <div className="mt-1 flex gap-1">
+                                {domain.features.slice(0, 2).map(feature => (
                                   <Badge
+                                    className="text-xs"
                                     key={feature}
                                     variant="secondary"
-                                    className="text-xs"
                                   >
                                     {feature}
                                   </Badge>
                                 ))}
                                 {domain.features.length > 2 && (
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge className="text-xs" variant="outline">
                                     +{domain.features.length - 2}
                                   </Badge>
                                 )}
@@ -404,7 +391,7 @@ export default async function MyDomainsPage({
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-center">
+                      <TableCell className="hidden text-center md:table-cell">
                         <div className="flex flex-col">
                           <span className="font-medium">
                             {domain.registrationDate}
@@ -417,7 +404,7 @@ export default async function MyDomainsPage({
                             {domain.expiryDate}
                           </span>
                           {domain.status === "expired" && (
-                            <Badge variant="destructive" className="text-xs">
+                            <Badge className="text-xs" variant="destructive">
                               Expirado
                             </Badge>
                           )}
@@ -427,27 +414,27 @@ export default async function MyDomainsPage({
                         <div className="flex flex-wrap gap-1">
                           {domain.autoRenew ? (
                             <Badge
+                              className="border-[#01FC8D]/30 bg-[#01FC8D]/10 text-[#00b363] dark:text-[#01FC8D]"
                               variant="outline"
-                              className="bg-[#01FC8D]/10 text-[#00b363] dark:text-[#01FC8D] border-[#01FC8D]/30"
                             >
-                              <RefreshCw className="h-3 w-3 mr-1" />
+                              <RefreshCw className="mr-1 h-3 w-3" />
                               Automática
                             </Badge>
                           ) : (
                             <Badge
+                              className="border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
                               variant="outline"
-                              className="bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
                             >
                               Manual
                             </Badge>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right w-12">
-                        <DomainActionsMenu 
-                          key={`actions-${domain.id}`} 
-                          domainId={domain.id} 
-                          domainName={domain.name} 
+                      <TableCell className="w-12 text-right">
+                        <DomainActionsMenu
+                          domainId={domain.id}
+                          domainName={domain.name}
+                          key={`actions-${domain.id}`}
                         />
                       </TableCell>
                     </TableRow>

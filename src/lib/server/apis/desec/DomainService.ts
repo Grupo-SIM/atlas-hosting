@@ -1,7 +1,7 @@
 // src/services/DomainService.ts
 
 import type { DeSECClient } from "./DeSECClient";
-import type { Domain, CreateDomainPayload } from "./types";
+import type { CreateDomainPayload, Domain } from "./types";
 
 /**
  * Service for managing deSEC DNS domains.

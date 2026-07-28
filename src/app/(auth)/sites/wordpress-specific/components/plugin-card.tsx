@@ -1,14 +1,14 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ArrowUpCircle,
+  CheckCircle,
+  Loader2,
+  MoreHorizontal,
+  Settings,
+  XCircle,
+} from "lucide-react";
+import { useState, useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,17 +20,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { toast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  ArrowUpCircle,
-  CheckCircle,
-  XCircle,
-  MoreHorizontal,
-  Settings,
-  Loader2,
-} from "lucide-react";
-import { useState, useTransition } from "react";
-import { updatePlugin, togglePlugin } from "../actions";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "@/hooks/use-toast";
+import { togglePlugin, updatePlugin } from "../actions";
 import type { WordPressPluginInfo } from "../types";
 
 interface PluginCardProps {
@@ -51,20 +51,20 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
         const result = await updatePlugin(instanceId, plugin.name);
         if (result.success) {
           toast({
-            title: "Plugin atualizado",
             description: result.message,
+            title: "Plugin atualizado",
           });
         } else {
           toast({
-            title: "Erro ao atualizar",
             description: result.message,
+            title: "Erro ao atualizar",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro",
           description: "Falha ao atualizar o plugin",
+          title: "Erro",
           variant: "destructive",
         });
       } finally {
@@ -80,20 +80,20 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
         const result = await togglePlugin(instanceId, plugin.name, activate);
         if (result.success) {
           toast({
-            title: activate ? "Plugin ativado" : "Plugin desativado",
             description: result.message,
+            title: activate ? "Plugin ativado" : "Plugin desativado",
           });
         } else {
           toast({
-            title: "Erro",
             description: result.message,
+            title: "Erro",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro",
           description: `Falha ao ${activate ? "ativar" : "desativar"} o plugin`,
+          title: "Erro",
           variant: "destructive",
         });
       } finally {
@@ -105,20 +105,20 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
   return (
     <Card className="relative">
       <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-2">
+        <div className="mb-2 flex items-start justify-between">
           <div className="flex-1">
-            <h5 className="font-medium text-sm mb-1">{plugin.name}</h5>
-            <p className="text-xs text-muted-foreground mb-2">
+            <h5 className="mb-1 font-medium text-sm">{plugin.name}</h5>
+            <p className="mb-2 text-muted-foreground text-xs">
               {plugin.description || "Sem descrição"}
             </p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="ghost"
-                size="sm"
                 className="h-6 w-6 p-0"
                 disabled={isPending}
+                size="sm"
+                variant="ghost"
               >
                 {isPending ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -129,8 +129,8 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onClick={() => handleToggle(plugin.status !== "active")}
                 disabled={isToggling}
+                onClick={() => handleToggle(plugin.status !== "active")}
               >
                 {plugin.status === "active" ? (
                   <>
@@ -146,7 +146,7 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
               </DropdownMenuItem>
 
               {plugin.updateAvailable && (
-                <DropdownMenuItem onClick={handleUpdate} disabled={isUpdating}>
+                <DropdownMenuItem disabled={isUpdating} onClick={handleUpdate}>
                   <ArrowUpCircle className="mr-2 h-4 w-4" />
                   {isUpdating ? "Atualizando..." : "Atualizar"}
                 </DropdownMenuItem>
@@ -160,8 +160,8 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem
-                    onSelect={(e) => e.preventDefault()}
                     className="text-red-600 focus:text-red-600"
+                    onSelect={e => e.preventDefault()}
                   >
                     <XCircle className="mr-2 h-4 w-4" />
                     Remover
@@ -191,12 +191,12 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Badge
-              variant={plugin.status === "active" ? "default" : "secondary"}
               className={
                 plugin.status === "active"
                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                   : ""
               }
+              variant={plugin.status === "active" ? "default" : "secondary"}
             >
               {plugin.status === "active" ? (
                 <CheckCircle className="mr-1 h-3 w-3" />
@@ -207,15 +207,15 @@ export function PluginCard({ plugin, instanceId, siteUrl }: PluginCardProps) {
             </Badge>
             {plugin.updateAvailable && (
               <Badge
+                className="border-orange-200 text-orange-600"
                 variant="outline"
-                className="text-orange-600 border-orange-200"
               >
                 <ArrowUpCircle className="mr-1 h-3 w-3" />
                 Update
               </Badge>
             )}
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             v{plugin.version}
           </span>
         </div>

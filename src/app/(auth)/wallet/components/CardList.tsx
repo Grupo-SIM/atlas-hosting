@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { CreditCard, Loader2, Star, StarOff, Trash2 } from "lucide-react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,10 +13,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { CreditCard, Star, StarOff, Trash2, Loader2 } from "lucide-react";
-import { useState } from "react";
-import { deleteCard, setDefaultCard } from "../actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { deleteCard, setDefaultCard } from "../actions";
 
 export interface UserCard {
   id: string;
@@ -45,20 +45,20 @@ export function CardList({ cards }: CardListProps) {
 
       if (result.status === "success") {
         toast({
-          title: "Sucesso",
           description: result.message,
+          title: "Sucesso",
         });
       } else {
         toast({
-          title: "Erro",
           description: result.message,
+          title: "Erro",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Erro",
         description: "Erro inesperado ao definir cartão padrão",
+        title: "Erro",
         variant: "destructive",
       });
     } finally {
@@ -73,20 +73,20 @@ export function CardList({ cards }: CardListProps) {
 
       if (result.status === "success") {
         toast({
-          title: "Sucesso",
           description: result.message,
+          title: "Sucesso",
         });
       } else {
         toast({
-          title: "Erro",
           description: result.message,
+          title: "Erro",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Erro",
         description: "Erro inesperado ao remover cartão",
+        title: "Erro",
         variant: "destructive",
       });
     } finally {
@@ -100,8 +100,8 @@ export function CardList({ cards }: CardListProps) {
 
   if (cards.length === 0) {
     return (
-      <div className="text-center py-8">
-        <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+      <div className="py-8 text-center">
+        <CreditCard className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">
           Nenhum cartão cadastrado. Adicione um cartão para começar.
         </p>
@@ -111,13 +111,13 @@ export function CardList({ cards }: CardListProps) {
 
   return (
     <div className="space-y-4">
-      {cards.map((card) => (
+      {cards.map(card => (
         <div
+          className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent/50"
           key={card.id}
-          className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
         >
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
               {getCardIcon(card.brand)}
             </div>
             <div>
@@ -127,14 +127,14 @@ export function CardList({ cards }: CardListProps) {
                 </p>
                 {card.isDefault && (
                   <Badge
-                    variant="outline"
                     className="bg-primary/10 text-primary"
+                    variant="outline"
                   >
                     Padrão
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {card.holderName} • Expira em {card.expiryMonth}/
                 {card.expiryYear}
               </p>
@@ -143,12 +143,12 @@ export function CardList({ cards }: CardListProps) {
 
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
-              size="icon"
               className={card.isDefault ? "text-primary" : ""}
-              onClick={() => handleSetDefault(card.id)}
               disabled={card.isDefault || loadingCardId === card.id}
+              onClick={() => handleSetDefault(card.id)}
+              size="icon"
               title={card.isDefault ? "Cartão padrão" : "Definir como padrão"}
+              variant="ghost"
             >
               {loadingCardId === card.id ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -162,10 +162,10 @@ export function CardList({ cards }: CardListProps) {
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                  className="text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/20"
                   disabled={deletingCardId === card.id}
+                  size="icon"
+                  variant="ghost"
                 >
                   {deletingCardId === card.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -185,8 +185,8 @@ export function CardList({ cards }: CardListProps) {
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={() => handleDelete(card.id)}
                     className="bg-red-600 hover:bg-red-700"
+                    onClick={() => handleDelete(card.id)}
                   >
                     Remover
                   </AlertDialogAction>

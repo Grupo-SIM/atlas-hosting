@@ -1,10 +1,23 @@
 "use client";
 
-import { useState, useRef, startTransition } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle,
+  FileArchive,
+  Globe,
+  Loader2,
+  Upload,
+} from "lucide-react";
+import { useRef, useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -12,22 +25,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import {
-  Upload,
-  FileArchive,
-  Globe,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  ArrowRight,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import type { OrganizationDomain } from "@/lib/db/schema";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface WordPressTransferFormProps {
   activeDomains: OrganizationDomain[];
@@ -58,8 +58,8 @@ export function WordPressTransferForm({
 
   const [formData, setFormData] = useState<TransferFormData>({
     domain: selectedDomain?.domain || "",
-    useSelectedDomain: true,
     file: null,
+    useSelectedDomain: true,
   });
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
@@ -91,9 +91,9 @@ export function WordPressTransferForm({
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFormData((prev) => ({ ...prev, file }));
+      setFormData(prev => ({ ...prev, file }));
       if (formErrors.file) {
-        setFormErrors((prev) => ({ ...prev, file: undefined }));
+        setFormErrors(prev => ({ ...prev, file: undefined }));
       }
     }
   };
@@ -142,8 +142,8 @@ export function WordPressTransferForm({
 
       // Upload and process the WordPress site
       const response = await fetch("/api/wordpress/transfer", {
-        method: "POST",
         body: uploadData,
+        method: "POST",
       });
 
       if (!response.ok) {
@@ -158,13 +158,13 @@ export function WordPressTransferForm({
       setStatusMessage("Transferência concluída com sucesso!");
       setTransferStatus("success");
       setTransferResult({
-        siteUrl: result.siteUrl,
         adminUrl: result.adminUrl,
+        siteUrl: result.siteUrl,
       });
 
       toast({
-        title: "Transferência Concluída",
         description: `Seu site WordPress foi transferido com sucesso para ${targetDomain}`,
+        title: "Transferência Concluída",
       });
     } catch (error) {
       clearInterval(progressInterval);
@@ -176,9 +176,9 @@ export function WordPressTransferForm({
       );
 
       toast({
-        title: "Erro na Transferência",
         description:
           "Houve um problema ao transferir seu site WordPress. Tente novamente.",
+        title: "Erro na Transferência",
         variant: "destructive",
       });
     }
@@ -187,8 +187,8 @@ export function WordPressTransferForm({
   const resetForm = () => {
     setFormData({
       domain: selectedDomain?.domain || "",
-      useSelectedDomain: true,
       file: null,
+      useSelectedDomain: true,
     });
     setFormErrors({});
     setTransferStatus("idle");
@@ -215,15 +215,15 @@ export function WordPressTransferForm({
         <AnimatePresence mode="wait">
           {transferStatus === "idle" && (
             <motion.div
-              key="form"
-              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
               className="space-y-6"
+              exit={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: 20 }}
+              key="form"
             >
               {/* Domain Selection */}
               <div className="space-y-4">
-                <Label className="text-base font-medium">
+                <Label className="font-medium text-base">
                   Domínio de Destino
                 </Label>
 
@@ -231,29 +231,29 @@ export function WordPressTransferForm({
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <input
-                        type="radio"
+                        checked={formData.useSelectedDomain}
+                        className="h-4 w-4 text-primary focus:ring-primary"
                         id="useSelected"
                         name="domainChoice"
-                        checked={formData.useSelectedDomain}
                         onChange={() =>
-                          setFormData((prev) => ({
+                          setFormData(prev => ({
                             ...prev,
-                            useSelectedDomain: true,
                             domain: selectedDomain.domain,
+                            useSelectedDomain: true,
                           }))
                         }
-                        className="w-4 h-4 text-primary focus:ring-primary"
+                        type="radio"
                       />
                       <Label
+                        className="flex cursor-pointer items-center gap-2"
                         htmlFor="useSelected"
-                        className="flex items-center gap-2 cursor-pointer"
                       >
                         <Globe className="h-4 w-4" />
                         Usar domínio selecionado:{" "}
                         <strong>{selectedDomain.domain}</strong>
                         <Badge
-                          variant="default"
                           className="bg-green-500/10 text-green-700"
+                          variant="default"
                         >
                           Atual
                         </Badge>
@@ -262,20 +262,20 @@ export function WordPressTransferForm({
 
                     <div className="flex items-center space-x-2">
                       <input
-                        type="radio"
+                        checked={!formData.useSelectedDomain}
+                        className="h-4 w-4 text-primary focus:ring-primary"
                         id="useOther"
                         name="domainChoice"
-                        checked={!formData.useSelectedDomain}
                         onChange={() =>
-                          setFormData((prev) => ({
+                          setFormData(prev => ({
                             ...prev,
-                            useSelectedDomain: false,
                             domain: "",
+                            useSelectedDomain: false,
                           }))
                         }
-                        className="w-4 h-4 text-primary focus:ring-primary"
+                        type="radio"
                       />
-                      <Label htmlFor="useOther" className="cursor-pointer">
+                      <Label className="cursor-pointer" htmlFor="useOther">
                         Escolher outro domínio
                       </Label>
                     </div>
@@ -285,10 +285,10 @@ export function WordPressTransferForm({
                 {(!formData.useSelectedDomain || !selectedDomain) && (
                   <div className="space-y-2">
                     <Select
-                      value={formData.domain}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, domain: value }))
+                      onValueChange={value =>
+                        setFormData(prev => ({ ...prev, domain: value }))
                       }
+                      value={formData.domain}
                     >
                       <SelectTrigger
                         className={cn(
@@ -300,18 +300,18 @@ export function WordPressTransferForm({
                       </SelectTrigger>
                       <SelectContent>
                         {activeDomains.length === 0 ? (
-                          <div className="p-4 text-center text-sm text-muted-foreground">
-                            <AlertCircle className="h-4 w-4 mx-auto mb-2" />
+                          <div className="p-4 text-center text-muted-foreground text-sm">
+                            <AlertCircle className="mx-auto mb-2 h-4 w-4" />
                             Nenhum domínio ativo encontrado
                           </div>
                         ) : (
-                          activeDomains.map((domain) => (
+                          activeDomains.map(domain => (
                             <SelectItem key={domain.id} value={domain.domain}>
-                              <div className="flex items-center justify-between w-full">
+                              <div className="flex w-full items-center justify-between">
                                 <span>{domain.domain}</span>
                                 <Badge
-                                  variant="default"
                                   className="bg-green-500/10 text-green-700"
+                                  variant="default"
                                 >
                                   Ativo
                                 </Badge>
@@ -322,7 +322,7 @@ export function WordPressTransferForm({
                       </SelectContent>
                     </Select>
                     {formErrors.domain && (
-                      <p className="text-sm text-destructive">
+                      <p className="text-destructive text-sm">
                         {formErrors.domain}
                       </p>
                     )}
@@ -332,13 +332,13 @@ export function WordPressTransferForm({
 
               {/* File Upload */}
               <div className="space-y-4">
-                <Label className="text-base font-medium">
+                <Label className="font-medium text-base">
                   Arquivo de Exportação
                 </Label>
 
                 <div
                   className={cn(
-                    "border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer",
+                    "cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors",
                     formData.file
                       ? "border-green-300 bg-green-50/50 dark:bg-green-950/20"
                       : "border-border hover:border-primary/50",
@@ -347,36 +347,36 @@ export function WordPressTransferForm({
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Input
+                    accept=".zip"
+                    className="hidden"
+                    onChange={handleFileSelect}
                     ref={fileInputRef}
                     type="file"
-                    accept=".zip"
-                    onChange={handleFileSelect}
-                    className="hidden"
                   />
 
                   {formData.file ? (
                     <div className="space-y-2">
-                      <CheckCircle className="h-8 w-8 text-green-600 mx-auto" />
+                      <CheckCircle className="mx-auto h-8 w-8 text-green-600" />
                       <div>
                         <p className="font-medium text-green-700">
                           Arquivo selecionado
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           {formData.file.name}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           {(formData.file.size / 1024 / 1024).toFixed(2)} MB
                         </p>
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <FileArchive className="h-8 w-8 text-muted-foreground mx-auto" />
+                      <FileArchive className="mx-auto h-8 w-8 text-muted-foreground" />
                       <div>
                         <p className="font-medium">
                           Clique para selecionar arquivo ZIP
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           Arquivo gerado pelo plugin AtlasHosting Migrator
                         </p>
                       </div>
@@ -385,22 +385,22 @@ export function WordPressTransferForm({
                 </div>
 
                 {formErrors.file && (
-                  <p className="text-sm text-destructive">{formErrors.file}</p>
+                  <p className="text-destructive text-sm">{formErrors.file}</p>
                 )}
               </div>
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4">
                 <Button
-                  onClick={handleTransfer}
                   className="flex-1"
-                  size="lg"
                   disabled={isProcessing}
+                  onClick={handleTransfer}
+                  size="lg"
                 >
                   {isProcessing ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <ArrowRight className="h-4 w-4 mr-2" />
+                    <ArrowRight className="mr-2 h-4 w-4" />
                   )}
                   Iniciar Transferência
                 </Button>
@@ -410,21 +410,21 @@ export function WordPressTransferForm({
 
           {isProcessing && (
             <motion.div
-              key="processing"
-              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
               className="space-y-6 text-center"
+              exit={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: 20 }}
+              key="processing"
             >
               <div className="space-y-4">
-                <Loader2 className="h-12 w-12 text-primary mx-auto animate-spin" />
+                <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
                 <div>
-                  <h3 className="text-lg font-semibold">Transferindo Site</h3>
+                  <h3 className="font-semibold text-lg">Transferindo Site</h3>
                   <p className="text-muted-foreground">{statusMessage}</p>
                 </div>
                 <div className="space-y-2">
-                  <Progress value={progress} className="w-full" />
-                  <p className="text-sm text-muted-foreground">
+                  <Progress className="w-full" value={progress} />
+                  <p className="text-muted-foreground text-sm">
                     {Math.round(progress)}% concluído
                   </p>
                 </div>
@@ -434,11 +434,11 @@ export function WordPressTransferForm({
 
           {transferStatus === "success" && transferResult && (
             <motion.div
-              key="success"
-              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
               className="space-y-6"
+              exit={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: 20 }}
+              key="success"
             >
               <Alert className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
                 <CheckCircle className="h-4 w-4 text-green-600" />
@@ -451,14 +451,14 @@ export function WordPressTransferForm({
                 </AlertDescription>
               </Alert>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" asChild>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Button asChild variant="outline">
                   <a
                     href={transferResult.siteUrl}
-                    target="_blank"
                     rel="noopener noreferrer"
+                    target="_blank"
                   >
-                    <Globe className="h-4 w-4 mr-2" />
+                    <Globe className="mr-2 h-4 w-4" />
                     Ver Site
                   </a>
                 </Button>
@@ -466,16 +466,16 @@ export function WordPressTransferForm({
                 <Button asChild>
                   <a
                     href={transferResult.adminUrl}
-                    target="_blank"
                     rel="noopener noreferrer"
+                    target="_blank"
                   >
-                    <ArrowRight className="h-4 w-4 mr-2" />
+                    <ArrowRight className="mr-2 h-4 w-4" />
                     Painel Admin
                   </a>
                 </Button>
               </div>
 
-              <Button variant="ghost" onClick={resetForm} className="w-full">
+              <Button className="w-full" onClick={resetForm} variant="ghost">
                 Transferir Outro Site
               </Button>
             </motion.div>
@@ -483,11 +483,11 @@ export function WordPressTransferForm({
 
           {transferStatus === "error" && (
             <motion.div
-              key="error"
-              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
               className="space-y-6"
+              exit={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: 20 }}
+              key="error"
             >
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -497,9 +497,9 @@ export function WordPressTransferForm({
 
               <div className="flex gap-3">
                 <Button
-                  variant="outline"
-                  onClick={resetForm}
                   className="flex-1"
+                  onClick={resetForm}
+                  variant="outline"
                 >
                   Tentar Novamente
                 </Button>

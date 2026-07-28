@@ -1,13 +1,17 @@
 "use server";
 
-import { db } from "@/lib/db";
-import { pgUser, pgAffiliateCommission, pgVpsSubscription } from "@/lib/db/schema";
-import { eq, desc, sum, inArray } from "drizzle-orm";
+import { desc, eq, inArray, sum } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
+import { db } from "@/lib/db";
+import {
+  pgAffiliateCommission,
+  pgUser,
+  pgVpsSubscription,
+} from "@/lib/db/schema";
 
-export type UserRow = {
+export interface UserRow {
   id: string;
   name: string;
   email: string;
@@ -19,16 +23,16 @@ export type UserRow = {
   hasActiveSubscription: boolean;
   /** Método de cobrança da assinatura mais recente (cartão = automático; pix/boleto = manual). Null se não assina. */
   subscriptionPaymentMethod: "credit_card" | "pix" | "boleto" | null;
-};
+}
 
 export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
   const admin = await getUser();
-  if (!admin || !admin.isAdmin) redirect("/home");
+  if (!admin?.isAdmin) redirect("/home");
 
   const [users, commissionTotals, activeSubscriptions] = await Promise.all([
     db.query.pgUser.findMany({
-      with: { organization: { with: { wallet: true } } },
       orderBy: [desc(pgUser.createdAt)],
+      with: { organization: { with: { wallet: true } } },
     }),
     db
       .select({
@@ -39,9 +43,9 @@ export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
       .groupBy(pgAffiliateCommission.affiliateUserId),
     db
       .select({
-        userId: pgVpsSubscription.userId,
-        paymentMethod: pgVpsSubscription.paymentMethod,
         createdAt: pgVpsSubscription.createdAt,
+        paymentMethod: pgVpsSubscription.paymentMethod,
+        userId: pgVpsSubscription.userId,
       })
       .from(pgVpsSubscription)
       .where(inArray(pgVpsSubscription.status, ["active", "paused"]))
@@ -49,36 +53,37 @@ export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
   ]);
 
   const totalsMap = new Map(
-    commissionTotals.map((r) => [r.affiliateUserId, Number(r.total ?? 0)])
+    commissionTotals.map(r => [r.affiliateUserId, Number(r.total ?? 0)])
   );
   // Ordenado por createdAt desc: a primeira ocorrência por usuário é a assinatura mais recente.
   const paymentMethodMap = new Map<string, "credit_card" | "pix" | "boleto">();
   for (const s of activeSubscriptions) {
-    if (!paymentMethodMap.has(s.userId)) paymentMethodMap.set(s.userId, s.paymentMethod);
+    if (!paymentMethodMap.has(s.userId))
+      paymentMethodMap.set(s.userId, s.paymentMethod);
   }
 
-  return users.map((u) => ({
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    isAdmin: u.isAdmin ?? false,
+  return users.map(u => ({
     balanceCents: (u.organization as any)?.wallet?.balance ?? 0,
-    totalEarnedBrl: totalsMap.get(u.id) ?? 0,
-    suspendedAt: u.suspendedAt ?? null,
     createdAt: u.createdAt,
+    email: u.email,
     hasActiveSubscription: paymentMethodMap.has(u.id),
+    id: u.id,
+    isAdmin: u.isAdmin ?? false,
+    name: u.name,
     subscriptionPaymentMethod: paymentMethodMap.get(u.id) ?? null,
+    suspendedAt: u.suspendedAt ?? null,
+    totalEarnedBrl: totalsMap.get(u.id) ?? 0,
   }));
 }
 
 export async function suspendUserAction(id: string): Promise<void> {
   const admin = await getUser();
-  if (!admin || !admin.isAdmin) redirect("/home");
+  if (!admin?.isAdmin) redirect("/home");
   if (admin.id === id) return;
 
   const target = await db.query.pgUser.findFirst({
-    where: eq(pgUser.id, id),
     columns: { isAdmin: true },
+    where: eq(pgUser.id, id),
   });
   if (target?.isAdmin) return;
 
@@ -92,7 +97,7 @@ export async function suspendUserAction(id: string): Promise<void> {
 
 export async function reactivateUserAction(id: string): Promise<void> {
   const admin = await getUser();
-  if (!admin || !admin.isAdmin) redirect("/home");
+  if (!admin?.isAdmin) redirect("/home");
 
   await db
     .update(pgUser)
@@ -104,7 +109,7 @@ export async function reactivateUserAction(id: string): Promise<void> {
 
 export async function promoteToAdminAction(id: string): Promise<void> {
   const admin = await getUser();
-  if (!admin || !admin.isAdmin) redirect("/home");
+  if (!admin?.isAdmin) redirect("/home");
   if (admin.id === id) return;
 
   await db

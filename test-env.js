@@ -1,6 +1,5 @@
-
-const axios = require('axios');
-const https = require('https');
+const axios = require("axios");
+const https = require("node:https");
 
 const apiUrl = process.env.PLESK_API_URL;
 const rootUser = process.env.PLESK_ROOT_USER;
@@ -17,11 +16,11 @@ async function testBasicAuth() {
   console.log("\nTesting Basic Auth...");
   try {
     const response = await axios.get(`${apiUrl}/server`, {
-      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
       auth: {
-        username: rootUser,
         password: rootPassword,
+        username: rootUser,
       },
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
     });
     console.log("Basic Auth Success:", response.status);
     return true;

@@ -1,3 +1,4 @@
+import { isNotNull, sql } from "drizzle-orm";
 import {
   Card,
   CardContent,
@@ -7,7 +8,6 @@ import {
 } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { pgOrganization, pgUser } from "@/lib/db/schema";
-import { isNotNull, sql } from "drizzle-orm";
 import { UserChart } from "./UserChart";
 
 export async function UserStats() {
@@ -32,8 +32,8 @@ export async function UserStats() {
         .where(sql`${pgUser.createdAt} >= date_trunc('month', current_date)`),
       db
         .select({
-          month: sql<string>`to_char(${pgUser.createdAt}, 'YYYY-MM')`,
           count: sql<number>`count(*)`,
+          month: sql<string>`to_char(${pgUser.createdAt}, 'YYYY-MM')`,
         })
         .from(pgUser)
         .groupBy(sql`to_char(${pgUser.createdAt}, 'YYYY-MM')`)
@@ -51,35 +51,35 @@ export async function UserStats() {
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="font-medium text-sm">
                   Total de Usuários
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{totalUsers[0].count}</div>
+                <div className="font-bold text-2xl">{totalUsers[0].count}</div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="font-medium text-sm">
                   Usuários Ativos
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{activeUsers[0].count}</div>
+                <div className="font-bold text-2xl">{activeUsers[0].count}</div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="font-medium text-sm">
                   Novos este Mês
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="font-bold text-2xl">
                   {newUsersThisMonth[0].count}
                 </div>
               </CardContent>

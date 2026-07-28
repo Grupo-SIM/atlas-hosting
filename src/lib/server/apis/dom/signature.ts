@@ -1,6 +1,5 @@
-import * as fs from "fs";
-import * as crypto from "crypto";
-import axios from "axios";
+import * as crypto from "node:crypto";
+import * as fs from "node:fs";
 import type { WithDrawFundsParams } from "./types";
 
 /**

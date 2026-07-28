@@ -1,21 +1,20 @@
 "use server";
 
+import { eq } from "drizzle-orm";
+import { cookies, headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import {
   pgUser,
-  userSettings,
-  type UserSettings,
   type Session,
   type User,
+  type UserSettings,
+  userSettings,
 } from "@/lib/db/schema";
-
-import { eq } from "drizzle-orm";
-import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
 import type { AppLogger } from "../server/logs";
-import { validateSession } from "./utils";
 import { IMPERSONATE_COOKIE } from "./impersonation";
+import { validateSession } from "./utils";
 
 export type SessionValidationResult =
   | { session: Session; user: User }
@@ -39,24 +38,24 @@ async function redirectToLogin(): Promise<Error> {
 }
 
 const USER_WITH = {
+  domainAccess: true,
   organization: {
     with: {
+      domains: true,
       members: true,
+      owner: true,
       plan: true,
       wallet: {
         with: {
           cards: true,
         },
       },
-      owner: true,
-      domains: true,
     },
   },
-  domainAccess: true,
-  referrer: true,
   referredUsers: true,
-  settings: true,
+  referrer: true,
   sessions: true,
+  settings: true,
 } as const;
 
 /** Carrega um usuário completo (com relações) por id. Usado por impersonação. */
@@ -129,7 +128,7 @@ export async function checkIsAuthenticated(): Promise<boolean> {
   try {
     const session = await auth();
     if (session?.user?.id) return true;
-    
+
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get("session_token")?.value;
     const { user } = await validateSession(sessionToken);
@@ -147,23 +146,23 @@ export async function getOptionalUser(): Promise<User | null> {
       const user = await db.query.pgUser.findFirst({
         where: eq(pgUser.id, session.user.id),
         with: {
+          domainAccess: true,
           organization: {
             with: {
+              domains: true,
               members: true,
+              owner: true,
               plan: true,
               wallet: { with: { cards: true } },
-              owner: true,
-              domains: true,
             },
           },
-          domainAccess: true,
-          referrer: true,
           referredUsers: true,
-          settings: true,
+          referrer: true,
           sessions: true,
+          settings: true,
         },
       });
-      if (user && user.organization) {
+      if (user?.organization) {
         return user as User;
       }
     }

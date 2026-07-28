@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Copy, Check } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function VoucherCopyButton({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
@@ -14,15 +14,15 @@ export default function VoucherCopyButton({ code }: { code: string }) {
   };
 
   return (
-    <Button variant="outline" size="sm" onClick={handleCopy}>
+    <Button onClick={handleCopy} size="sm" variant="outline">
       {copied ? (
         <>
-          <Check className="h-4 w-4 mr-1 text-green-500" />
+          <Check className="mr-1 h-4 w-4 text-green-500" />
           Copiado!
         </>
       ) : (
         <>
-          <Copy className="h-4 w-4 mr-1" />
+          <Copy className="mr-1 h-4 w-4" />
           Copiar
         </>
       )}

@@ -1,19 +1,19 @@
+import { and, eq } from "drizzle-orm";
 import { adminNamecheapDetails } from "@/components/domains/DomainResult";
 import { db } from "@/lib/db";
 import {
+  type DomainRegisterInvoiceOptions,
+  type Invoice,
   pgInvoice,
   pgOrganizationDomains,
   pgUser,
-  type DomainRegisterInvoiceOptions,
-  type Invoice,
   type RawUser,
 } from "@/lib/db/schema";
 import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
-import { and, eq } from "drizzle-orm";
 import {
   domainNamesFromInvoice,
-  registerDomainsFromPaidInvoice,
   type RegisterResult,
+  registerDomainsFromPaidInvoice,
 } from "./registerFromPaidInvoice";
 
 export type ReprocessResult = {
@@ -37,24 +37,25 @@ function contactFromInvoice(
 
   if (billing) {
     return {
-      FirstName: billing.firstName.trim(),
-      LastName: billing.lastName.trim(),
       Address1: `${billing.address.street}, ${billing.address.number}`,
       City: billing.address.city,
-      StateProvince: billing.address.state,
-      PostalCode: billing.address.zipCode.replace(/\D/g, ""),
       Country: "BR",
-      Phone: `+55.${billing.phoneNumber.replace(/\D/g, "")}`,
       EmailAddress: user?.email || adminNamecheapDetails.EmailAddress,
+      FirstName: billing.firstName.trim(),
+      LastName: billing.lastName.trim(),
+      Phone: `+55.${billing.phoneNumber.replace(/\D/g, "")}`,
+      PostalCode: billing.address.zipCode.replace(/\D/g, ""),
+      StateProvince: billing.address.state,
     };
   }
 
   const parts = (user?.name ?? "").trim().split(/\s+/).filter(Boolean);
   return {
     ...(adminNamecheapDetails as NamecheapContactDetails),
-    FirstName: parts[0] || adminNamecheapDetails.FirstName,
-    LastName: parts.slice(1).join(" ") || parts[0] || adminNamecheapDetails.LastName,
     EmailAddress: user?.email || adminNamecheapDetails.EmailAddress,
+    FirstName: parts[0] || adminNamecheapDetails.FirstName,
+    LastName:
+      parts.slice(1).join(" ") || parts[0] || adminNamecheapDetails.LastName,
   };
 }
 
@@ -68,7 +69,11 @@ export async function reprocessDomainInvoice(
 
   if (!invoice) return { invoiceId, ok: false, reason: "invoice_not_found" };
   if (invoice.type !== "domain") {
-    return { invoiceId, ok: false, reason: `not_a_domain_invoice_(${invoice.type})` };
+    return {
+      invoiceId,
+      ok: false,
+      reason: `not_a_domain_invoice_(${invoice.type})`,
+    };
   }
 
   const meta = invoice.metadata as Record<string, unknown>;
@@ -100,9 +105,9 @@ export async function reprocessDomainInvoice(
   }
 
   return {
+    domains,
     invoiceId,
     ok: result.failed.length === 0,
-    domains,
     ...result,
   };
 }
@@ -132,12 +137,12 @@ export async function reprocessUnfulfilledDomainInvoices(): Promise<{
     const links = await db.query.pgOrganizationDomains.findMany({
       where: eq(pgOrganizationDomains.organizationId, invoice.orgId),
     });
-    const linked = new Set(links.map((l) => l.domain.trim().toLowerCase()));
-    const missing = names.filter((n) => !linked.has(n));
+    const linked = new Set(links.map(l => l.domain.trim().toLowerCase()));
+    const missing = names.filter(n => !linked.has(n));
     if (missing.length === 0) continue;
 
     reprocessed.push(await reprocessDomainInvoice(invoice.id));
   }
 
-  return { scanned: invoices.length, reprocessed };
+  return { reprocessed, scanned: invoices.length };
 }

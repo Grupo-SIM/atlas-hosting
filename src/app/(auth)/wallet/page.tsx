@@ -1,3 +1,13 @@
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { eq } from "drizzle-orm";
+import {
+  ArrowDownLeft,
+  ArrowUpCircle,
+  ArrowUpRight,
+  History,
+  Plus,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,16 +29,6 @@ import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgInvoice } from "@/lib/db/schema";
 import { formatDate, toBrl } from "@/lib/utils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { eq } from "drizzle-orm";
-import {
-  ArrowDownLeft,
-  ArrowUpCircle,
-  ArrowUpRight,
-  History,
-  Plus,
-} from "lucide-react";
 
 const quickAddAmounts = [50, 100, 250, 500];
 
@@ -36,15 +36,15 @@ export default async function WalletPage() {
   const user = await getUser();
 
   const invoices = await db.query.pgInvoice.findMany({
-    where: eq(pgInvoice.orgId, user.organization.id),
     orderBy: (pgInvoice, { desc }) => [pgInvoice.createdAt],
+    where: eq(pgInvoice.orgId, user.organization.id),
   });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-6 p-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
             Minha carteira
           </h1>
           <p className="text-muted-foreground">
@@ -67,41 +67,39 @@ export default async function WalletPage() {
           <CardContent className="space-y-6">
             <div>
               <div className="flex items-baseline">
-                <span className="text-4xl font-bold">
+                <span className="font-bold text-4xl">
                   {toBrl(user.organization.wallet?.balance ?? 0)}
                 </span>
                 <Badge
-                  variant="outline"
                   className="ml-3 bg-green-500/10 text-green-500"
+                  variant="outline"
                 >
                   <ArrowUpCircle className="mr-1 h-3 w-3" />
                   +$300 this month
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="mt-2 text-muted-foreground text-sm">
                 Última transação:{" "}
                 {format(invoices[0]?.createdAt, "PPP", { locale: ptBR })}
               </p>
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium">Transações recentes</h3>
+              <h3 className="font-medium text-sm">Transações recentes</h3>
               <div className="space-y-3">
-                {invoices.map((transaction) => (
+                {invoices.map(transaction => (
                   <div
+                    className="flex items-center justify-between rounded-lg border bg-card/50 p-3"
                     key={transaction.id}
-                    className="flex items-center justify-between p-3 border rounded-lg bg-card/50"
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className={`
-                          h-8 w-8 rounded-full flex items-center justify-center
-                          ${
-                            // transaction.type === "deposit"
-                            false
-                              ? "bg-green-500/10 text-green-500"
-                              : "bg-amber-500/10 text-amber-500"
-                          }
+                        className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                          // transaction.type === "deposit"
+                          false
+                            ? "bg-green-500/10 text-green-500"
+                            : "bg-amber-500/10 text-amber-500"
+                        }
                         `}
                       >
                         {false ? (
@@ -112,7 +110,7 @@ export default async function WalletPage() {
                       </div>
                       <div>
                         <p className="font-medium">{transaction.description}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           {formatDate(transaction.createdAt)}
                         </p>
                       </div>
@@ -126,7 +124,7 @@ export default async function WalletPage() {
                   </div>
                 ))}
               </div>
-              <Button variant="outline" className="w-full">
+              <Button className="w-full" variant="outline">
                 <History className="mr-2 h-4 w-4" />
                 Ver todas as transações
               </Button>

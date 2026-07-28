@@ -1,10 +1,33 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { ArrowUpRight, CheckCircle2, Clock, Info, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { SimpayCalendar } from "./simpay-calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -13,49 +36,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { WithdrawalModal } from "./WithdrawalModal";
-import AffiliateLinkDisplay from "./AffiliateLinkDisplay";
-import { toBrl } from "@/lib/utils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { cancelLocalWithdrawal, syncWithdrawalStatus } from "../actions";
-import { 
-  CheckCircle2, 
-  Clock, 
-  XCircle, 
-  Info, 
-  ArrowUpRight,
-  AlertCircle
-} from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
+import { cn, toBrl } from "@/lib/utils";
+import { cancelLocalWithdrawal, syncWithdrawalStatus } from "../actions";
+import AffiliateLinkDisplay from "./AffiliateLinkDisplay";
+import { SimpayCalendar } from "./simpay-calendar";
+import { WithdrawalModal } from "./WithdrawalModal";
 
 export interface CommissionRow {
   id: string;
@@ -95,51 +86,60 @@ interface AffiliateTabsProps {
 }
 
 function statusBadge(status: string) {
-  const configs: Record<string, { label: string; icon: any; className: string }> = {
-    available: {
-      label: "Disponível",
+  const configs: Record<
+    string,
+    { label: string; icon: any; className: string }
+  > = {
+    approved: {
+      className:
+        "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 backdrop-blur-md shadow-sm shadow-emerald-500/5",
       icon: CheckCircle2,
-      className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 backdrop-blur-md shadow-sm shadow-emerald-500/5",
+      label: "Aprovado",
     },
-    withdrawn: {
-      label: "Saque efetuado",
-      icon: ArrowUpRight,
-      className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 backdrop-blur-md shadow-sm shadow-blue-500/5",
+    available: {
+      className:
+        "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 backdrop-blur-md shadow-sm shadow-emerald-500/5",
+      icon: CheckCircle2,
+      label: "Disponível",
     },
     pending: {
-      label: "Pendente",
+      className:
+        "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 backdrop-blur-md shadow-sm shadow-amber-500/5",
       icon: Clock,
-      className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 backdrop-blur-md shadow-sm shadow-amber-500/5",
-    },
-    approved: {
-      label: "Aprovado",
-      icon: CheckCircle2,
-      className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 backdrop-blur-md shadow-sm shadow-emerald-500/5",
+      label: "Pendente",
     },
     rejected: {
-      label: "Rejeitado",
+      className:
+        "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 backdrop-blur-md shadow-sm shadow-rose-500/5",
       icon: XCircle,
-      className: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 backdrop-blur-md shadow-sm shadow-rose-500/5",
+      label: "Rejeitado",
+    },
+    withdrawn: {
+      className:
+        "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 backdrop-blur-md shadow-sm shadow-blue-500/5",
+      icon: ArrowUpRight,
+      label: "Saque efetuado",
     },
   };
 
   const config = configs[status] || {
-    label: status,
+    className:
+      "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20 backdrop-blur-md",
     icon: Info,
-    className: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20 backdrop-blur-md",
+    label: status,
   };
 
   const Icon = config.icon;
 
   return (
-    <Badge 
-      variant="outline" 
+    <Badge
       className={cn(
-        "gap-1.5 px-3 py-1 font-bold text-[10px] uppercase tracking-wider rounded-full transition-all duration-300 pointer-events-none", 
+        "pointer-events-none gap-1.5 rounded-full px-3 py-1 font-bold text-[10px] uppercase tracking-wider transition-all duration-300",
         config.className
       )}
+      variant="outline"
     >
-      <Icon className="w-3.5 h-3.5 stroke-[2.5]" />
+      <Icon className="h-3.5 w-3.5 stroke-[2.5]" />
       {config.label}
     </Badge>
   );
@@ -147,39 +147,40 @@ function statusBadge(status: string) {
 
 const ITEMS_PER_PAGE = 10;
 
-function LocalPagination({ 
-  currentPage, 
-  totalItems, 
-  onPageChange 
-}: { 
-  currentPage: number; 
-  totalItems: number; 
+function LocalPagination({
+  currentPage,
+  totalItems,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalItems: number;
   onPageChange: (page: number) => void;
 }) {
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
-      <p className="text-xs text-muted-foreground font-medium">
-        Mostrando {Math.min(totalItems, (currentPage - 1) * ITEMS_PER_PAGE + 1)} a {Math.min(totalItems, currentPage * ITEMS_PER_PAGE)} de {totalItems}
+    <div className="flex items-center justify-between border-slate-100 border-t pt-4 dark:border-slate-800">
+      <p className="font-medium text-muted-foreground text-xs">
+        Mostrando {Math.min(totalItems, (currentPage - 1) * ITEMS_PER_PAGE + 1)}{" "}
+        a {Math.min(totalItems, currentPage * ITEMS_PER_PAGE)} de {totalItems}
       </p>
       <div className="flex gap-2">
         <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
+          className="h-8 font-bold text-xs"
           disabled={currentPage === 1}
-          className="h-8 text-xs font-bold"
+          onClick={() => onPageChange(currentPage - 1)}
+          size="sm"
+          variant="outline"
         >
           Anterior
         </Button>
         <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
+          className="h-8 font-bold text-xs"
           disabled={currentPage === totalPages}
-          className="h-8 text-xs font-bold"
+          onClick={() => onPageChange(currentPage + 1)}
+          size="sm"
+          variant="outline"
         >
           Próximo
         </Button>
@@ -199,9 +200,13 @@ export function AffiliateTabs({
   minWithdrawal,
   fee,
 }: AffiliateTabsProps) {
-  const [tab, setTab] = useState<"overview" | "referrals" | "sales" | "withdrawals">("overview");
+  const [tab, setTab] = useState<
+    "overview" | "referrals" | "sales" | "withdrawals"
+  >("overview");
   const [modalOpen, setModalOpen] = useState(false);
-  const [rejectionReasonModal, setRejectionReasonModal] = useState<string | null>(null);
+  const [rejectionReasonModal, setRejectionReasonModal] = useState<
+    string | null
+  >(null);
   const [syncing, setSyncing] = useState<string | null>(null);
 
   const [cancelling, setCancelling] = useState<string | null>(null);
@@ -212,7 +217,9 @@ export function AffiliateTabs({
   const [withdrawalStatus, setWithdrawalStatus] = useState<string>("all");
   const [salesStartDate, setSalesStartDate] = useState<Date | null>(null);
   const [salesEndDate, setSalesEndDate] = useState<Date | null>(null);
-  const [withdrawalStartDate, setWithdrawalStartDate] = useState<Date | null>(null);
+  const [withdrawalStartDate, setWithdrawalStartDate] = useState<Date | null>(
+    null
+  );
   const [withdrawalEndDate, setWithdrawalEndDate] = useState<Date | null>(null);
   const [referralStartDate, setReferralStartDate] = useState<Date | null>(null);
   const [referralEndDate, setReferralEndDate] = useState<Date | null>(null);
@@ -224,14 +231,20 @@ export function AffiliateTabs({
   const [withdrawalsPage, setWithdrawalsPage] = useState(1);
 
   // Reset pagination on filter change
-  useEffect(() => { setReferralsPage(1); }, [referrals.length, referralStartDate, referralEndDate, referralSearch]);
-  useEffect(() => { setSalesPage(1); }, [salesStatus, salesStartDate, salesEndDate]);
-  useEffect(() => { setWithdrawalsPage(1); }, [withdrawalStatus, withdrawalStartDate, withdrawalEndDate]);
+  useEffect(() => {
+    setReferralsPage(1);
+  }, [referrals.length, referralStartDate, referralEndDate, referralSearch]);
+  useEffect(() => {
+    setSalesPage(1);
+  }, [salesStatus, salesStartDate, salesEndDate]);
+  useEffect(() => {
+    setWithdrawalsPage(1);
+  }, [withdrawalStatus, withdrawalStartDate, withdrawalEndDate]);
 
-  const filteredCommissions = commissions.filter((c) => {
+  const filteredCommissions = commissions.filter(c => {
     const statusMatch = salesStatus === "all" || c.status === salesStatus;
     const date = new Date(c.createdAt);
-    
+
     let startMatch = true;
     if (salesStartDate) {
       const start = new Date(salesStartDate);
@@ -249,12 +262,13 @@ export function AffiliateTabs({
     return statusMatch && startMatch && endMatch;
   });
 
-  const filteredWithdrawals = withdrawals.filter((w) => {
-    const statusMatch = withdrawalStatus === "all" || w.status === withdrawalStatus;
+  const filteredWithdrawals = withdrawals.filter(w => {
+    const statusMatch =
+      withdrawalStatus === "all" || w.status === withdrawalStatus;
     if (!w.createdAt) return statusMatch;
-    
+
     const date = new Date(w.createdAt);
-    
+
     let startMatch = true;
     if (withdrawalStartDate) {
       const start = new Date(withdrawalStartDate);
@@ -272,9 +286,9 @@ export function AffiliateTabs({
     return statusMatch && startMatch && endMatch;
   });
 
-  const filteredReferrals = referrals.filter((r) => {
+  const filteredReferrals = referrals.filter(r => {
     const date = new Date(r.createdAt);
-    
+
     let startMatch = true;
     if (referralStartDate) {
       const start = new Date(referralStartDate);
@@ -337,15 +351,18 @@ export function AffiliateTabs({
   return (
     <TooltipProvider>
       <WithdrawalModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
         availableBalance={availableBalance}
-        minWithdrawal={minWithdrawal}
         fee={fee}
+        minWithdrawal={minWithdrawal}
+        onClose={() => setModalOpen(false)}
+        open={modalOpen}
       />
 
-      <Dialog open={!!rejectionReasonModal} onOpenChange={(open) => !open && setRejectionReasonModal(null)}>
-        <DialogContent className="sm:max-w-[425px] border-rose-500/30 dark:bg-[#020817] bg-white shadow-2xl dark:shadow-rose-500/10 shadow-rose-200/20">
+      <Dialog
+        onOpenChange={open => !open && setRejectionReasonModal(null)}
+        open={!!rejectionReasonModal}
+      >
+        <DialogContent className="border-rose-500/30 bg-white shadow-2xl shadow-rose-200/20 sm:max-w-[425px] dark:bg-[#020817] dark:shadow-rose-500/10">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-rose-600">
               <XCircle className="h-5 w-5" />
@@ -353,11 +370,11 @@ export function AffiliateTabs({
             </DialogTitle>
           </DialogHeader>
           <div className="py-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-500/70 mb-3">
+            <p className="mb-3 font-bold text-[10px] text-rose-500/70 uppercase tracking-[0.2em]">
               Motivo da Rejeição
             </p>
-            <div className="p-5 rounded-2xl dark:bg-rose-500/5 bg-rose-50/50 border border-rose-500/20 backdrop-blur-md shadow-inner">
-              <p className="text-[15px] leading-relaxed dark:text-white text-rose-950 font-medium">
+            <div className="rounded-2xl border border-rose-500/20 bg-rose-50/50 p-5 shadow-inner backdrop-blur-md dark:bg-rose-500/5">
+              <p className="font-medium text-[15px] text-rose-950 leading-relaxed dark:text-white">
                 {rejectionReasonModal}
               </p>
             </div>
@@ -366,16 +383,16 @@ export function AffiliateTabs({
       </Dialog>
 
       {/* Tab nav */}
-      <div className="flex gap-1 border-b pb-0 mb-4">
-        {tabs.map((t) => (
+      <div className="mb-4 flex gap-1 border-b pb-0">
+        {tabs.map(t => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-4 py-2 text-sm font-medium rounded-t border-b-2 transition-colors ${
+            className={`rounded-t border-b-2 px-4 py-2 font-medium text-sm transition-colors ${
               tab === t.id
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
+            key={t.id}
+            onClick={() => setTab(t.id)}
           >
             {t.label}
           </button>
@@ -388,14 +405,16 @@ export function AffiliateTabs({
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Saldo Disponível</CardTitle>
+                <CardTitle className="font-medium text-sm">
+                  Saldo Disponível
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="font-bold text-2xl text-green-600">
                   {toBrl(availableBalance)}
                 </div>
                 {pendingWithdrawals > 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="mt-1 text-muted-foreground text-xs">
                     {toBrl(pendingWithdrawals)} em processamento
                   </p>
                 )}
@@ -403,26 +422,32 @@ export function AffiliateTabs({
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Ganho</CardTitle>
+                <CardTitle className="font-medium text-sm">
+                  Total Ganho
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{toBrl(totalEarnedAllTime)}</div>
+                <div className="font-bold text-2xl">
+                  {toBrl(totalEarnedAllTime)}
+                </div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Indicações</CardTitle>
+                <CardTitle className="font-medium text-sm">
+                  Indicações
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{referrals.length}</div>
+                <div className="font-bold text-2xl">{referrals.length}</div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Comissões</CardTitle>
+                <CardTitle className="font-medium text-sm">Comissões</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{commissions.length}</div>
+                <div className="font-bold text-2xl">{commissions.length}</div>
               </CardContent>
             </Card>
           </div>
@@ -438,8 +463,8 @@ export function AffiliateTabs({
               <AffiliateLinkDisplay affiliateLink={affiliateLink} />
               {availableBalance >= minWithdrawal && (
                 <Button
-                  onClick={() => setModalOpen(true)}
                   className="w-full sm:w-auto"
+                  onClick={() => setModalOpen(true)}
                 >
                   Solicitar Saque
                 </Button>
@@ -453,7 +478,7 @@ export function AffiliateTabs({
       {tab === "referrals" && (
         <div className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle>Usuários Indicados</CardTitle>
                 <CardDescription>
@@ -462,66 +487,73 @@ export function AffiliateTabs({
               </div>
               <div className="flex flex-wrap items-end gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">E-mail</span>
+                  <span className="ml-1 font-black text-[10px] text-zinc-400 uppercase tracking-widest">
+                    E-mail
+                  </span>
                   <Input
+                    className="h-10 w-full border-slate-200 bg-transparent font-medium text-sm md:w-[200px] dark:border-slate-800"
+                    onChange={e => setReferralSearch(e.target.value)}
                     placeholder="Pesquisar por email..."
                     value={referralSearch}
-                    onChange={(e) => setReferralSearch(e.target.value)}
-                    className="w-full md:w-[200px] h-10 text-sm bg-transparent border-slate-200 dark:border-slate-800 font-medium"
                   />
                 </div>
                 <div className="w-full md:w-[200px]">
-                  <SimpayCalendar 
-                    label="Período"
-                    start={referralStartDate}
+                  <SimpayCalendar
                     end={referralEndDate}
+                    label="Período"
                     onChange={(start, end) => {
                       setReferralStartDate(start);
                       setReferralEndDate(end);
                     }}
+                    start={referralStartDate}
                   />
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               {filteredReferrals.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-10 text-center">
-                  {referralStartDate || referralEndDate ? "Nenhuma indicação encontrada neste período." : "Nenhuma indicação registrada ainda."}
+                <p className="py-10 text-center text-muted-foreground text-sm">
+                  {referralStartDate || referralEndDate
+                    ? "Nenhuma indicação encontrada neste período."
+                    : "Nenhuma indicação registrada ainda."}
                 </p>
               ) : (
                 <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data de Cadastro</TableHead>
-                      <TableHead>Email</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pagedReferrals.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell>
-                          {format(new Date(r.createdAt), "dd/MM/yyyy HH:mm", {
-                            locale: ptBR,
-                          })}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {r.email ? (
-                            <span>
-                              {r.email.split('@')[0].slice(0, 3)}***@{r.email.split('@')[1]}
-                            </span>
-                          ) : "—"}
-                        </TableCell>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data de Cadastro</TableHead>
+                        <TableHead>Email</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {pagedReferrals.map(r => (
+                        <TableRow key={r.id}>
+                          <TableCell>
+                            {format(new Date(r.createdAt), "dd/MM/yyyy HH:mm", {
+                              locale: ptBR,
+                            })}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {r.email ? (
+                              <span>
+                                {r.email.split("@")[0].slice(0, 3)}***@
+                                {r.email.split("@")[1]}
+                              </span>
+                            ) : (
+                              "—"
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
-              <LocalPagination 
-                currentPage={referralsPage} 
-                totalItems={filteredReferrals.length} 
-                onPageChange={setReferralsPage} 
+              <LocalPagination
+                currentPage={referralsPage}
+                onPageChange={setReferralsPage}
+                totalItems={filteredReferrals.length}
               />
             </CardContent>
           </Card>
@@ -532,7 +564,7 @@ export function AffiliateTabs({
       {tab === "sales" && (
         <div className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle>Histórico de Vendas</CardTitle>
                 <CardDescription>
@@ -541,20 +573,22 @@ export function AffiliateTabs({
               </div>
               <div className="flex flex-wrap items-end gap-3">
                 <div className="w-full sm:w-[240px]">
-                  <SimpayCalendar 
-                    label="Período"
-                    start={salesStartDate}
+                  <SimpayCalendar
                     end={salesEndDate}
+                    label="Período"
                     onChange={(start, end) => {
                       setSalesStartDate(start);
                       setSalesEndDate(end);
                     }}
+                    start={salesStartDate}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Status</span>
-                  <Select value={salesStatus} onValueChange={setSalesStatus}>
-                    <SelectTrigger className="w-[140px] h-10 text-sm bg-transparent border-slate-200 dark:border-slate-800 font-bold">
+                  <span className="ml-1 font-black text-[10px] text-zinc-400 uppercase tracking-widest">
+                    Status
+                  </span>
+                  <Select onValueChange={setSalesStatus} value={salesStatus}>
+                    <SelectTrigger className="h-10 w-[140px] border-slate-200 bg-transparent font-bold text-sm dark:border-slate-800">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -570,56 +604,56 @@ export function AffiliateTabs({
             </CardHeader>
             <CardContent>
               {filteredCommissions.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-10 text-center">
-                  {salesStatus === "all" ? "Nenhuma venda registrada ainda." : "Nenhuma venda encontrada com este status."}
+                <p className="py-10 text-center text-muted-foreground text-sm">
+                  {salesStatus === "all"
+                    ? "Nenhuma venda registrada ainda."
+                    : "Nenhuma venda encontrada com este status."}
                 </p>
               ) : (
                 <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Valor da compra</TableHead>
-                      <TableHead>Sua comissão</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pagedCommissions.map((c) => (
-                      <TableRow key={c.id}>
-                        <TableCell>
-                          {format(new Date(c.createdAt), "dd/MM/yyyy", {
-                            locale: ptBR,
-                          })}
-                        </TableCell>
-                        <TableCell>{toBrl(c.grossAmount)}</TableCell>
-                        <TableCell className="text-green-600 font-medium">
-                          {toBrl(c.commissionAmount)}
-                        </TableCell>
-                        <TableCell>{statusBadge(c.status)}</TableCell>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Valor da compra</TableHead>
+                        <TableHead>Sua comissão</TableHead>
+                        <TableHead>Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {pagedCommissions.map(c => (
+                        <TableRow key={c.id}>
+                          <TableCell>
+                            {format(new Date(c.createdAt), "dd/MM/yyyy", {
+                              locale: ptBR,
+                            })}
+                          </TableCell>
+                          <TableCell>{toBrl(c.grossAmount)}</TableCell>
+                          <TableCell className="font-medium text-green-600">
+                            {toBrl(c.commissionAmount)}
+                          </TableCell>
+                          <TableCell>{statusBadge(c.status)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
-              <LocalPagination 
-                currentPage={salesPage} 
-                totalItems={filteredCommissions.length} 
-                onPageChange={setSalesPage} 
+              <LocalPagination
+                currentPage={salesPage}
+                onPageChange={setSalesPage}
+                totalItems={filteredCommissions.length}
               />
             </CardContent>
           </Card>
         </div>
       )}
 
-
-
       {/* Withdrawals */}
       {tab === "withdrawals" && (
         <Card>
           <CardHeader className="flex flex-col gap-4">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
                 <CardTitle>Histórico de Saques</CardTitle>
                 <CardDescription>
@@ -627,132 +661,146 @@ export function AffiliateTabs({
                 </CardDescription>
               </div>
               <Button
-                onClick={() => setModalOpen(true)}
+                className="w-full shrink-0 md:w-auto"
                 disabled={availableBalance < minWithdrawal}
-                className="w-full md:w-auto shrink-0"
+                onClick={() => setModalOpen(true)}
               >
                 Solicitar Saque
               </Button>
             </div>
             <div className="flex flex-wrap items-end gap-3">
-                <div className="w-full sm:w-[240px]">
-                  <SimpayCalendar 
-                    label="Período"
-                    start={withdrawalStartDate}
-                    end={withdrawalEndDate}
-                    onChange={(start, end) => {
-                      setWithdrawalStartDate(start);
-                      setWithdrawalEndDate(end);
-                    }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Status</span>
-                  <Select value={withdrawalStatus} onValueChange={setWithdrawalStatus}>
-                    <SelectTrigger className="w-[140px] h-10 text-sm bg-transparent border-slate-200 dark:border-slate-800 font-bold">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="pending">Pendente</SelectItem>
-                      <SelectItem value="approved">Aprovado</SelectItem>
-                      <SelectItem value="rejected">Rejeitado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="w-full sm:w-[240px]">
+                <SimpayCalendar
+                  end={withdrawalEndDate}
+                  label="Período"
+                  onChange={(start, end) => {
+                    setWithdrawalStartDate(start);
+                    setWithdrawalEndDate(end);
+                  }}
+                  start={withdrawalStartDate}
+                />
               </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="ml-1 font-black text-[10px] text-zinc-400 uppercase tracking-widest">
+                  Status
+                </span>
+                <Select
+                  onValueChange={setWithdrawalStatus}
+                  value={withdrawalStatus}
+                >
+                  <SelectTrigger className="h-10 w-[140px] border-slate-200 bg-transparent font-bold text-sm dark:border-slate-800">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                    <SelectItem value="approved">Aprovado</SelectItem>
+                    <SelectItem value="rejected">Rejeitado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {filteredWithdrawals.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-10 text-center">
-                {withdrawalStatus === "all" ? "Nenhum saque realizado ainda." : "Nenhum saque encontrado com este status."}
+              <p className="py-10 text-center text-muted-foreground text-sm">
+                {withdrawalStatus === "all"
+                  ? "Nenhum saque realizado ainda."
+                  : "Nenhum saque encontrado com este status."}
               </p>
             ) : (
               <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Bruto</TableHead>
-                    <TableHead>Taxa</TableHead>
-                    <TableHead>Líquido</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pagedWithdrawals.map((w) => {
-                    const feeAmt = w.fee ?? fee;
-                    const net = w.amount - feeAmt;
-                    return (
-                      <TableRow key={w.id}>
-                        <TableCell>
-                          {w.createdAt
-                            ? format(new Date(w.createdAt), "dd/MM/yyyy", {
-                                locale: ptBR,
-                              })
-                            : "—"}
-                        </TableCell>
-                        <TableCell>{toBrl(w.amount)}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          - {toBrl(feeAmt)}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {toBrl(net)}
-                        </TableCell>
-                        <TableCell>
-                          {statusBadge(w.status)}
-                          {w.status === "rejected" && w.rejectionReason && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Bruto</TableHead>
+                      <TableHead>Taxa</TableHead>
+                      <TableHead>Líquido</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pagedWithdrawals.map(w => {
+                      const feeAmt = w.fee ?? fee;
+                      const net = w.amount - feeAmt;
+                      return (
+                        <TableRow key={w.id}>
+                          <TableCell>
+                            {w.createdAt
+                              ? format(new Date(w.createdAt), "dd/MM/yyyy", {
+                                  locale: ptBR,
+                                })
+                              : "—"}
+                          </TableCell>
+                          <TableCell>{toBrl(w.amount)}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            - {toBrl(feeAmt)}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {toBrl(net)}
+                          </TableCell>
+                          <TableCell>
+                            {statusBadge(w.status)}
+                            {w.status === "rejected" && w.rejectionReason && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    className="ml-2 h-8 w-8 text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                                    onClick={() =>
+                                      setRejectionReasonModal(w.rejectionReason)
+                                    }
+                                    size="icon"
+                                    variant="ghost"
+                                  >
+                                    <Info className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Clique para mais informações</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {w.status === "pending" && w.simpayWithdrawalId && (
+                              <Button
+                                disabled={syncing === w.id}
+                                onClick={() => handleSync(w.id)}
+                                size="sm"
+                                variant="ghost"
+                              >
+                                {syncing === w.id
+                                  ? "Verificando..."
+                                  : "Atualizar"}
+                              </Button>
+                            )}
+                            {w.status === "pending" &&
+                              !w.simpayWithdrawalId && (
                                 <Button
+                                  disabled={cancelling === w.id}
+                                  onClick={() => handleCancel(w.id)}
+                                  size="sm"
                                   variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 ml-2 text-rose-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                                  onClick={() => setRejectionReasonModal(w.rejectionReason)}
                                 >
-                                  <Info className="h-4 w-4" />
+                                  {cancelling === w.id
+                                    ? "Cancelando..."
+                                    : "Cancelar"}
                                 </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Clique para mais informações</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {w.status === "pending" && w.simpayWithdrawalId && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleSync(w.id)}
-                              disabled={syncing === w.id}
-                            >
-                              {syncing === w.id ? "Verificando..." : "Atualizar"}
-                            </Button>
-                          )}
-                          {w.status === "pending" && !w.simpayWithdrawalId && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleCancel(w.id)}
-                              disabled={cancelling === w.id}
-                            >
-                              {cancelling === w.id ? "Cancelando..." : "Cancelar"}
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                              )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             )}
-            <LocalPagination 
-              currentPage={withdrawalsPage} 
-              totalItems={filteredWithdrawals.length} 
-              onPageChange={setWithdrawalsPage} 
+            <LocalPagination
+              currentPage={withdrawalsPage}
+              onPageChange={setWithdrawalsPage}
+              totalItems={filteredWithdrawals.length}
             />
           </CardContent>
         </Card>

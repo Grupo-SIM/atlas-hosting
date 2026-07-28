@@ -1,6 +1,22 @@
 "use client";
 
+import {
+  ArrowRight,
+  Check,
+  Clock,
+  Cpu,
+  Crown,
+  Database,
+  Gauge,
+  Headphones,
+  Shield,
+  Star,
+  Users,
+  Zap,
+} from "lucide-react";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,32 +24,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Crown,
-  Zap,
-  Shield,
-  Database,
-  Cpu,
-  Users,
-  Clock,
-  Check,
-  Star,
-  ArrowRight,
-  Gauge,
-  Headphones,
-} from "lucide-react";
 
 export default function PremiumHostingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>("enterprise");
 
   const premiumPlans = [
     {
-      id: "enterprise",
-      name: "Enterprise",
-      price: 99.99,
-      originalPrice: 149.99,
       description: "Máxima performance para sites de alto tráfego",
       features: [
         "Websites Ilimitados",
@@ -49,20 +45,20 @@ export default function PremiumHostingPage() {
         "Gerente de Conta Dedicado",
         "Monitoramento Avançado",
       ],
+      id: "enterprise",
+      name: "Enterprise",
+      originalPrice: 149.99,
+      price: 99.99,
+      recommended: true,
       resources: {
+        bandwidth: "Ilimitada",
         cpu: "8 vCPU Dedicada",
         ram: "16 GB DDR4",
         storage: "500 GB NVMe",
-        bandwidth: "Ilimitada",
         uptime: "99.99%",
       },
-      recommended: true,
     },
     {
-      id: "dedicated",
-      name: "Servidor Dedicado",
-      price: 199.99,
-      originalPrice: 299.99,
       description: "Servidor físico exclusivo para máximo controle",
       features: [
         "Servidor Físico Exclusivo",
@@ -78,20 +74,20 @@ export default function PremiumHostingPage() {
         "Suporte White Glove 24/7",
         "Setup e Migração Gratuita",
       ],
+      id: "dedicated",
+      name: "Servidor Dedicado",
+      originalPrice: 299.99,
+      price: 199.99,
+      recommended: false,
       resources: {
+        bandwidth: "10 Gbps",
         cpu: "16 vCPU Intel Xeon",
         ram: "32 GB ECC",
         storage: "1 TB NVMe",
-        bandwidth: "10 Gbps",
         uptime: "99.99%",
       },
-      recommended: false,
     },
     {
-      id: "cloud",
-      name: "Cloud Premium",
-      price: 79.99,
-      originalPrice: 119.99,
       description: "Escalabilidade automática e alta disponibilidade",
       features: [
         "Auto-scaling Dinâmico",
@@ -107,103 +103,107 @@ export default function PremiumHostingPage() {
         "Suporte Expert 24/7",
         "API de Gerenciamento",
       ],
+      id: "cloud",
+      name: "Cloud Premium",
+      originalPrice: 119.99,
+      price: 79.99,
+      recommended: false,
       resources: {
+        bandwidth: "Ilimitada",
         cpu: "6 vCPU (Auto-scale)",
         ram: "12 GB DDR4",
         storage: "200 GB NVMe",
-        bandwidth: "Ilimitada",
         uptime: "99.99%",
       },
-      recommended: false,
     },
   ];
 
   const premiumFeatures = [
     {
-      icon: Crown,
-      title: "Performance Extrema",
       description:
         "Servidores de última geração com SSD NVMe e otimização avançada",
+      icon: Crown,
+      title: "Performance Extrema",
     },
     {
+      description: "Proteção DDoS, firewall avançado e monitoramento 24/7",
       icon: Shield,
       title: "Segurança Enterprise",
-      description: "Proteção DDoS, firewall avançado e monitoramento 24/7",
     },
     {
+      description: "Garantia de disponibilidade com SLA premium",
       icon: Gauge,
       title: "Uptime 99.99%",
-      description: "Garantia de disponibilidade com SLA premium",
     },
     {
+      description: "Suporte prioritário com gerente de conta dedicado",
       icon: Headphones,
       title: "Suporte White Glove",
-      description: "Suporte prioritário com gerente de conta dedicado",
     },
   ];
 
   const comparisons = [
-    { feature: "Performance", basic: "Padrão", premium: "10x mais rápido" },
-    { feature: "Suporte", basic: "Básico", premium: "Prioritário 24/7" },
-    { feature: "Backup", basic: "Semanal", premium: "Diário + Versionamento" },
-    { feature: "SSL", basic: "Let's Encrypt", premium: "Premium Wildcard" },
-    { feature: "CDN", basic: "Básico", premium: "Global Premium" },
-    { feature: "Uptime", basic: "99.9%", premium: "99.99%" },
+    { basic: "Padrão", feature: "Performance", premium: "10x mais rápido" },
+    { basic: "Básico", feature: "Suporte", premium: "Prioritário 24/7" },
+    { basic: "Semanal", feature: "Backup", premium: "Diário + Versionamento" },
+    { basic: "Let's Encrypt", feature: "SSL", premium: "Premium Wildcard" },
+    { basic: "Básico", feature: "CDN", premium: "Global Premium" },
+    { basic: "99.9%", feature: "Uptime", premium: "99.99%" },
   ];
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
       currency: "BRL",
+      style: "currency",
     }).format(price);
   };
 
   return (
-    <div className="p-6 space-y-8">
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center gap-2 mb-4">
+    <div className="space-y-8 p-6">
+      <div className="space-y-4 text-center">
+        <div className="mb-4 flex items-center justify-center gap-2">
           <Crown className="h-8 w-8 text-yellow-500" />
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+          <h1 className="font-bold text-3xl tracking-tight md:text-4xl">
             Hospedagem Premium
           </h1>
         </div>
-        <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+        <p className="mx-auto max-w-3xl text-lg text-muted-foreground">
           Performance extrema, segurança enterprise e suporte dedicado para
           sites que precisam do máximo em hospedagem.
         </p>
         <div className="flex items-center justify-center gap-2">
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-            <Star className="w-3 h-3 mr-1" />
+          <Badge className="bg-yellow-100 text-yellow-800" variant="secondary">
+            <Star className="mr-1 h-3 w-3" />
             Oferta Limitada - 33% OFF
           </Badge>
         </div>
       </div>
 
       {/* Premium Plans */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        {premiumPlans.map((plan) => (
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 lg:grid-cols-3">
+        {premiumPlans.map(plan => (
           <Card
-            key={plan.id}
             className={`relative ${
               plan.recommended
-                ? "border-yellow-400 shadow-xl scale-105 bg-gradient-to-b from-yellow-50 to-white"
+                ? "scale-105 border-yellow-400 bg-gradient-to-b from-yellow-50 to-white shadow-xl"
                 : ""
             } ${
               selectedPlan === plan.id ? "ring-2 ring-primary" : ""
-            } transition-all duration-200 hover:shadow-lg cursor-pointer`}
+            } cursor-pointer transition-all duration-200 hover:shadow-lg`}
+            key={plan.id}
             onClick={() => setSelectedPlan(plan.id)}
           >
             {plan.recommended && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 transform">
                 <Badge className="bg-yellow-500 text-yellow-900">
-                  <Crown className="w-3 h-3 mr-1" />
+                  <Crown className="mr-1 h-3 w-3" />
                   Mais Popular
                 </Badge>
               </div>
             )}
 
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-xl flex items-center justify-center gap-2">
+            <CardHeader className="pb-2 text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-xl">
                 {plan.id === "enterprise" && (
                   <Crown className="h-5 w-5 text-yellow-500" />
                 )}
@@ -217,13 +217,13 @@ export default function PremiumHostingPage() {
               </CardTitle>
               <CardDescription>{plan.description}</CardDescription>
               <div className="mt-4">
-                <div className="text-3xl font-bold">
+                <div className="font-bold text-3xl">
                   {formatPrice(plan.price)}
                 </div>
-                <div className="text-sm text-muted-foreground line-through">
+                <div className="text-muted-foreground text-sm line-through">
                   De {formatPrice(plan.originalPrice)}
                 </div>
-                <div className="text-sm text-green-600 font-medium">
+                <div className="font-medium text-green-600 text-sm">
                   Economize {formatPrice(plan.originalPrice - plan.price)}/mês
                 </div>
               </div>
@@ -231,8 +231,8 @@ export default function PremiumHostingPage() {
 
             <CardContent className="space-y-4">
               {/* Resources */}
-              <div className="bg-muted/50 p-3 rounded-lg">
-                <h4 className="font-medium mb-2 flex items-center gap-2">
+              <div className="rounded-lg bg-muted/50 p-3">
+                <h4 className="mb-2 flex items-center gap-2 font-medium">
                   <Cpu className="h-4 w-4" />
                   Recursos Dedicados
                 </h4>
@@ -248,22 +248,22 @@ export default function PremiumHostingPage() {
               {/* Features */}
               <div className="space-y-2">
                 {plan.features.slice(0, 8).map((feature, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <div className="flex items-center space-x-2" key={index}>
+                    <Check className="h-4 w-4 flex-shrink-0 text-green-500" />
                     <span className="text-sm">{feature}</span>
                   </div>
                 ))}
                 {plan.features.length > 8 && (
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     +{plan.features.length - 8} recursos adicionais
                   </div>
                 )}
               </div>
 
               <Button
-                className="w-full mt-6"
-                variant={selectedPlan === plan.id ? "default" : "outline"}
+                className="mt-6 w-full"
                 size="lg"
+                variant={selectedPlan === plan.id ? "default" : "outline"}
               >
                 {selectedPlan === plan.id ? "Selecionado" : "Escolher Plano"}
                 {selectedPlan !== plan.id && (
@@ -276,23 +276,23 @@ export default function PremiumHostingPage() {
       </div>
 
       {/* Premium Features */}
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold mb-4">Vantagens Premium</h2>
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 text-center">
+          <h2 className="mb-4 font-bold text-2xl">Vantagens Premium</h2>
           <p className="text-muted-foreground">
             O que faz nossos planos premium serem únicos
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {premiumFeatures.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} className="text-center">
+              <Card className="text-center" key={index}>
                 <CardContent className="pt-6">
-                  <Icon className="h-10 w-10 mx-auto text-primary mb-4" />
-                  <h3 className="font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <Icon className="mx-auto mb-4 h-10 w-10 text-primary" />
+                  <h3 className="mb-2 font-semibold">{feature.title}</h3>
+                  <p className="text-muted-foreground text-sm">
                     {feature.description}
                   </p>
                 </CardContent>
@@ -303,7 +303,7 @@ export default function PremiumHostingPage() {
       </div>
 
       {/* Comparison Table */}
-      <div className="max-w-4xl mx-auto">
+      <div className="mx-auto max-w-4xl">
         <Card>
           <CardHeader className="text-center">
             <CardTitle>Premium vs Hospedagem Básica</CardTitle>
@@ -315,14 +315,14 @@ export default function PremiumHostingPage() {
             <div className="space-y-4">
               {comparisons.map((comparison, index) => (
                 <div
+                  className="grid grid-cols-3 items-center gap-4 border-b py-2 last:border-b-0"
                   key={index}
-                  className="grid grid-cols-3 gap-4 items-center py-2 border-b last:border-b-0"
                 >
                   <div className="font-medium">{comparison.feature}</div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-muted-foreground text-sm">
                     {comparison.basic}
                   </div>
-                  <div className="text-sm font-medium text-green-600 flex items-center gap-1">
+                  <div className="flex items-center gap-1 font-medium text-green-600 text-sm">
                     <Check className="h-4 w-4" />
                     {comparison.premium}
                   </div>
@@ -334,24 +334,24 @@ export default function PremiumHostingPage() {
       </div>
 
       {/* Migration Support */}
-      <div className="max-w-4xl mx-auto">
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+      <div className="mx-auto max-w-4xl">
+        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
           <CardContent className="pt-6">
-            <div className="text-center space-y-4">
+            <div className="space-y-4 text-center">
               <div className="flex justify-center">
-                <div className="bg-blue-100 p-3 rounded-full">
+                <div className="rounded-full bg-blue-100 p-3">
                   <Users className="h-8 w-8 text-blue-600" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold">
+              <h3 className="font-semibold text-xl">
                 Migração Gratuita e Suporte Especializado
               </h3>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
+              <p className="mx-auto max-w-2xl text-muted-foreground">
                 Nossa equipe especializada cuida de toda a migração do seu site
                 sem custo adicional. Garantimos zero downtime e acompanhamento
                 completo durante todo o processo.
               </p>
-              <div className="flex gap-4 justify-center">
+              <div className="flex justify-center gap-4">
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4 text-green-500" />
                   Migração em 24h
@@ -372,35 +372,34 @@ export default function PremiumHostingPage() {
 
       {/* CTA Section */}
       {selectedPlan && (
-        <div className="max-w-2xl mx-auto text-center space-y-4 p-6 border rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
-          <Crown className="h-8 w-8 mx-auto text-yellow-600" />
-          <h3 className="text-xl font-semibold">
-            Plano {premiumPlans.find((p) => p.id === selectedPlan)?.name}{" "}
+        <div className="mx-auto max-w-2xl space-y-4 rounded-lg border border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 p-6 text-center">
+          <Crown className="mx-auto h-8 w-8 text-yellow-600" />
+          <h3 className="font-semibold text-xl">
+            Plano {premiumPlans.find(p => p.id === selectedPlan)?.name}{" "}
             Selecionado
           </h3>
           <p className="text-muted-foreground">
             Aproveite nossa oferta limitada de 33% de desconto
           </p>
-          <div className="text-2xl font-bold text-green-600">
+          <div className="font-bold text-2xl text-green-600">
             Economize{" "}
             {formatPrice(
-              (premiumPlans.find((p) => p.id === selectedPlan)?.originalPrice ||
-                0) -
-                (premiumPlans.find((p) => p.id === selectedPlan)?.price || 0)
+              (premiumPlans.find(p => p.id === selectedPlan)?.originalPrice ||
+                0) - (premiumPlans.find(p => p.id === selectedPlan)?.price || 0)
             )}{" "}
             por mês!
           </div>
-          <div className="flex gap-4 justify-center">
+          <div className="flex justify-center gap-4">
             <Button variant="outline">Falar com Especialista</Button>
             <Button
-              size="lg"
               className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+              size="lg"
             >
               Contratar Agora
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             ⏰ Oferta válida por tempo limitado • 🔒 Compra 100% segura • 💰
             Garantia de 30 dias
           </div>
@@ -408,8 +407,8 @@ export default function PremiumHostingPage() {
       )}
 
       {/* Guarantee */}
-      <div className="text-center py-8">
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+      <div className="py-8 text-center">
+        <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
           <Shield className="h-4 w-4" />
           Garantia de reembolso de 30 dias • SLA de 99.99% de uptime
         </div>

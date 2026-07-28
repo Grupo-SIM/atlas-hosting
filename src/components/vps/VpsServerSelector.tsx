@@ -15,12 +15,12 @@ interface Server {
   ip: string;
 }
 
-export default function VpsServerSelector({ 
-  servers, 
-  currentId 
-}: { 
-  servers: Server[], 
-  currentId: string 
+export default function VpsServerSelector({
+  servers,
+  currentId,
+}: {
+  servers: Server[];
+  currentId: string;
 }) {
   const router = useRouter();
 
@@ -32,11 +32,11 @@ export default function VpsServerSelector({
   return (
     <div className="w-[280px]">
       <Select defaultValue={currentId} onValueChange={handleValueChange}>
-        <SelectTrigger className="w-full bg-background border-slate-200 dark:border-slate-800">
+        <SelectTrigger className="w-full border-slate-200 bg-background dark:border-slate-800">
           <SelectValue placeholder="Selecione um servidor" />
         </SelectTrigger>
         <SelectContent>
-          {servers.map((s) => (
+          {servers.map(s => (
             <SelectItem key={s.id} value={s.id}>
               {s.name} ({s.ip})
             </SelectItem>

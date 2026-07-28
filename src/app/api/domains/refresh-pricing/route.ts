@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { namecheapApi } from "@/lib/server/apis/namecheap";
+import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { pgDomainPricingCache } from "@/lib/db/schema";
+import { namecheapApi } from "@/lib/server/apis/namecheap";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,31 +13,32 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Forcing domain pricing cache refresh...");
-    
+
     // Use the new public method to force refresh
     await namecheapApi.refreshDomainPricingCache();
-    
+
     // Check if cache was populated
     const cachedCount = await db.query.pgDomainPricingCache.findMany({
       limit: 10,
     });
-    
+
     return NextResponse.json({
-      success: true,
-      message: "Domain pricing cache refresh completed.",
-      cachePopulated: cachedCount.length > 0,
       cachedTlds: cachedCount.map(p => p.tld),
-      note: cachedCount.length === 0 
-        ? "Cache refresh completed but no data found. This may indicate an API issue."
-        : `Cache successfully populated with ${cachedCount.length}+ TLDs.`,
+      cachePopulated: cachedCount.length > 0,
+      message: "Domain pricing cache refresh completed.",
+      note:
+        cachedCount.length === 0
+          ? "Cache refresh completed but no data found. This may indicate an API issue."
+          : `Cache successfully populated with ${cachedCount.length}+ TLDs.`,
+      success: true,
     });
   } catch (error) {
     console.error("Error refreshing domain pricing cache:", error);
-    
+
     return NextResponse.json(
       {
-        error: "Failed to refresh pricing cache",
         details: error instanceof Error ? error.message : "Unknown error",
+        error: "Failed to refresh pricing cache",
       },
       { status: 500 }
     );
@@ -49,4 +49,3 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return POST(request);
 }
-

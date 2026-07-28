@@ -1,5 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { toast } from "sonner";
 import { createTestPaymentInvoice } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,9 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { toast } from "sonner";
 
 export default function TestPaymentClient() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function TestPaymentClient() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Disponível em <code className="text-xs">NODE_ENV=development</code>{" "}
             ou com{" "}
             <code className="text-xs">ALLOW_TEST_PAYMENT_INVOICE=true</code> no

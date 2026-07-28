@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { CheckCircle, Trash2, XCircle } from "lucide-react";
-import { toggleVoucher, deleteVoucher } from "./voucher-actions";
+import { useTransition } from "react";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,9 +14,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useTransition } from "react";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { TableCell } from "@/components/ui/table";
+import { deleteVoucher, toggleVoucher } from "./voucher-actions";
 
 interface VoucherActionsProps {
   voucherId: string;
@@ -59,23 +59,23 @@ export default function VoucherActions({
     <>
       <TableCell className="text-center">
         <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleToggle}
+          className="w-full hover:bg-muted"
           disabled={isPending}
-          className="hover:bg-muted w-full"
+          onClick={handleToggle}
+          size="sm"
+          variant="ghost"
         >
           {active ? (
             <div className="flex items-center gap-2 text-red-500">
               <XCircle className="h-4 w-4" />
-              <span className="text-[10px] font-bold uppercase tracking-tighter">
+              <span className="font-bold text-[10px] uppercase tracking-tighter">
                 Desativar
               </span>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-green-500">
               <CheckCircle className="h-4 w-4" />
-              <span className="text-[10px] font-bold uppercase tracking-tighter">
+              <span className="font-bold text-[10px] uppercase tracking-tighter">
                 Ativar
               </span>
             </div>
@@ -87,13 +87,13 @@ export default function VoucherActions({
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
-              variant="ghost"
-              size="sm"
+              className="w-full gap-2 text-red-500 hover:bg-red-500/10"
               disabled={isPending}
-              className="hover:bg-red-500/10 text-red-500 gap-2 w-full"
+              size="sm"
+              variant="ghost"
             >
               <Trash2 className="h-4 w-4" />
-              <span className="text-[10px] font-bold uppercase tracking-tighter">
+              <span className="font-bold text-[10px] uppercase tracking-tighter">
                 Excluir
               </span>
             </Button>
@@ -103,15 +103,17 @@ export default function VoucherActions({
               <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
               <AlertDialogDescription>
                 Esta ação não pode ser desfeita. O voucher{" "}
-                <span className="font-bold text-foreground text-emerald-500">{code}</span> será
-                permanentemente excluído do sistema.
+                <span className="font-bold text-emerald-500 text-foreground">
+                  {code}
+                </span>{" "}
+                será permanentemente excluído do sistema.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
+                className="bg-red-600 text-white hover:bg-red-700"
                 onClick={handleDelete}
-                className="bg-red-600 hover:bg-red-700 text-white"
               >
                 Excluir Voucher
               </AlertDialogAction>

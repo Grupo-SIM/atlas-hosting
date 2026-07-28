@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getUser } from "@/lib/auth";
 import {
   activateTheme,
-  updateTheme,
   deleteTheme,
   installTheme,
+  updateTheme,
 } from "@/app/(auth)/sites/wordpress-specific/actions";
+import { getUser } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     if (!action || !instanceId) {
       return NextResponse.json(
         { error: "Missing required parameters" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         if (!themeName) {
           return NextResponse.json(
             { error: "Theme name is required for activation" },
-            { status: 400 },
+            { status: 400 }
           );
         }
         result = await activateTheme(instanceId, themeName);
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         if (!themeName) {
           return NextResponse.json(
             { error: "Theme name is required for update" },
-            { status: 400 },
+            { status: 400 }
           );
         }
         result = await updateTheme(instanceId, themeName);
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         if (!themeName) {
           return NextResponse.json(
             { error: "Theme name is required for deletion" },
-            { status: 400 },
+            { status: 400 }
           );
         }
         result = await deleteTheme(instanceId, themeName);
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         if (!themeSlug) {
           return NextResponse.json(
             { error: "Theme slug is required for installation" },
-            { status: 400 },
+            { status: 400 }
           );
         }
         result = await installTheme(instanceId, themeSlug);
@@ -72,23 +72,22 @@ export async function POST(req: NextRequest) {
 
     if (result.success) {
       return NextResponse.json({
-        success: true,
         message: result.message,
+        success: true,
       });
-    } else {
-      return NextResponse.json(
-        {
-          success: false,
-          error: result.message,
-        },
-        { status: 500 },
-      );
     }
+    return NextResponse.json(
+      {
+        error: result.message,
+        success: false,
+      },
+      { status: 500 }
+    );
   } catch (error) {
     console.error("Theme API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

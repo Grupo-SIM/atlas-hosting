@@ -1,3 +1,10 @@
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { desc, eq } from "drizzle-orm";
+import { CheckCircle, Plus, Ticket } from "lucide-react";
+import type { Metadata } from "next";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -15,15 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { db } from "@/lib/db";
-import { pgVoucher, pgUser } from "@/lib/db/schema";
-import { desc, eq } from "drizzle-orm";
-import { Plus, Ticket, CheckCircle } from "lucide-react";
+import { pgVoucher } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
-import { Metadata } from "next";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import CreateVoucherForm from "./CreateVoucherForm";
 import VoucherActions from "./VoucherActions";
 
@@ -34,14 +34,23 @@ export const metadata: Metadata = {
 async function createVoucher(formData: FormData) {
   "use server";
 
-  const code = (formData.get("code") as string)?.replace(/\s/g, "").toUpperCase();
+  const code = (formData.get("code") as string)
+    ?.replace(/\s/g, "")
+    .toUpperCase();
   const discountType = formData.get("discountType") as "fixed" | "percentage";
-  const discountValue = parseFloat(formData.get("discountValue") as string);
+  const discountValue = Number.parseFloat(
+    formData.get("discountValue") as string
+  );
   const userId = (formData.get("userId") as string) || null;
-  const maxUses = parseInt(formData.get("maxUses") as string) || 1;
+  const maxUses = Number.parseInt(formData.get("maxUses") as string, 10) || 1;
   const expiresAtStr = formData.get("expiresAt") as string;
 
-  if (!code || !discountType || isNaN(discountValue) || discountValue <= 0) {
+  if (
+    !code ||
+    !discountType ||
+    Number.isNaN(discountValue) ||
+    discountValue <= 0
+  ) {
     return;
   }
 
@@ -58,9 +67,15 @@ async function createVoucher(formData: FormData) {
     code,
     discountType,
     discountValue,
-    userId: userId && userId !== "none" ? userId : null,
+    expiresAt: expiresAtStr
+      ? (() => {
+          const d = new Date(expiresAtStr);
+          d.setHours(23, 59, 59, 999);
+          return d;
+        })()
+      : null,
     maxUses,
-    expiresAt: expiresAtStr ? (() => { const d = new Date(expiresAtStr); d.setHours(23, 59, 59, 999); return d; })() : null,
+    userId: userId && userId !== "none" ? userId : null,
   });
 
   revalidatePath("/admin/vouchers");
@@ -69,26 +84,26 @@ async function createVoucher(formData: FormData) {
 
 export default async function AdminVouchersPage() {
   const vouchers = await db.query.pgVoucher.findMany({
+    orderBy: [desc(pgVoucher.createdAt)],
     with: {
       user: true,
     },
-    orderBy: [desc(pgVoucher.createdAt)],
   });
 
   const users = await db.query.pgUser.findMany({
     columns: {
+      email: true,
       id: true,
       name: true,
-      email: true,
     },
   });
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Vouchers</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="font-bold text-3xl tracking-tight">Vouchers</h1>
+          <p className="mt-1 text-muted-foreground">
             Crie e gerencie vouchers de desconto
           </p>
         </div>
@@ -97,36 +112,36 @@ export default async function AdminVouchersPage() {
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="font-medium text-sm">
               Total de Vouchers
             </CardTitle>
-            < Ticket className="h-4 w-4 text-muted-foreground" />
+            <Ticket className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{vouchers.length}</div>
+            <div className="font-bold text-2xl">{vouchers.length}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ativos</CardTitle>
+            <CardTitle className="font-medium text-sm">Ativos</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {vouchers.filter((v) => v.active).length}
+            <div className="font-bold text-2xl">
+              {vouchers.filter(v => v.active).length}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Utilizados</CardTitle>
+            <CardTitle className="font-medium text-sm">Utilizados</CardTitle>
             <Ticket className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {vouchers.filter((v) => v.currentUses >= v.maxUses).length}
+            <div className="font-bold text-2xl">
+              {vouchers.filter(v => v.currentUses >= v.maxUses).length}
             </div>
           </CardContent>
         </Card>
@@ -144,7 +159,7 @@ export default async function AdminVouchersPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CreateVoucherForm users={users} createAction={createVoucher} />
+          <CreateVoucherForm createAction={createVoucher} users={users} />
         </CardContent>
       </Card>
 
@@ -158,112 +173,116 @@ export default async function AdminVouchersPage() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Desconto</TableHead>
-                <TableHead>Vinculado a</TableHead>
-                <TableHead>Usos</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Criado em</TableHead>
-                <TableHead className="text-center">Ativar/Desativar</TableHead>
-                <TableHead className="text-center">Excluir</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {vouchers.map((voucher) => {
-                const isExpired =
-                  voucher.expiresAt && new Date(voucher.expiresAt).toISOString().slice(0, 10) < new Date().toISOString().slice(0, 10);
-                const isUsedUp = voucher.currentUses >= voucher.maxUses;
-
-                return (
-                  <TableRow key={voucher.id}>
-                    <TableCell>
-                      <code className="bg-muted px-2 py-1 rounded text-sm font-mono font-bold text-emerald-500">
-                        {voucher.code}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      {voucher.discountType === "fixed"
-                        ? toBrl(voucher.discountValue)
-                        : `${voucher.discountValue}%`}
-                    </TableCell>
-                    <TableCell>
-                      {voucher.user ? (
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">
-                            {voucher.user.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {voucher.user.email}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">
-                          Todos
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {voucher.currentUses}/{voucher.maxUses}
-                    </TableCell>
-                    <TableCell>
-                      {!voucher.active ? (
-                        <Badge
-                          variant="outline"
-                          className="bg-gray-500/10 text-gray-500 border-none"
-                        >
-                          Desativado
-                        </Badge>
-                      ) : isExpired ? (
-                        <Badge
-                          variant="outline"
-                          className="bg-red-500/10 text-red-500 border-none"
-                        >
-                          Expirado
-                        </Badge>
-                      ) : isUsedUp ? (
-                        <Badge
-                          variant="outline"
-                          className="bg-yellow-500/10 text-yellow-500 border-none"
-                        >
-                          Esgotado
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="bg-green-500/10 text-green-500 border-none"
-                        >
-                          Ativo
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(voucher.createdAt), "dd/MM/yyyy", {
-                        locale: ptBR,
-                      })}
-                    </TableCell>
-                    <VoucherActions 
-                      voucherId={voucher.id} 
-                      active={voucher.active} 
-                      code={voucher.code} 
-                    />
-                  </TableRow>
-                );
-              })}
-              {vouchers.length === 0 && (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="text-center py-10 text-muted-foreground"
-                  >
-                    Nenhum voucher criado ainda
-                  </TableCell>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Desconto</TableHead>
+                  <TableHead>Vinculado a</TableHead>
+                  <TableHead>Usos</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Criado em</TableHead>
+                  <TableHead className="text-center">
+                    Ativar/Desativar
+                  </TableHead>
+                  <TableHead className="text-center">Excluir</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {vouchers.map(voucher => {
+                  const isExpired =
+                    voucher.expiresAt &&
+                    new Date(voucher.expiresAt).toISOString().slice(0, 10) <
+                      new Date().toISOString().slice(0, 10);
+                  const isUsedUp = voucher.currentUses >= voucher.maxUses;
+
+                  return (
+                    <TableRow key={voucher.id}>
+                      <TableCell>
+                        <code className="rounded bg-muted px-2 py-1 font-bold font-mono text-emerald-500 text-sm">
+                          {voucher.code}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        {voucher.discountType === "fixed"
+                          ? toBrl(voucher.discountValue)
+                          : `${voucher.discountValue}%`}
+                      </TableCell>
+                      <TableCell>
+                        {voucher.user ? (
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm">
+                              {voucher.user.name}
+                            </span>
+                            <span className="text-muted-foreground text-xs">
+                              {voucher.user.email}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            Todos
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {voucher.currentUses}/{voucher.maxUses}
+                      </TableCell>
+                      <TableCell>
+                        {!voucher.active ? (
+                          <Badge
+                            className="border-none bg-gray-500/10 text-gray-500"
+                            variant="outline"
+                          >
+                            Desativado
+                          </Badge>
+                        ) : isExpired ? (
+                          <Badge
+                            className="border-none bg-red-500/10 text-red-500"
+                            variant="outline"
+                          >
+                            Expirado
+                          </Badge>
+                        ) : isUsedUp ? (
+                          <Badge
+                            className="border-none bg-yellow-500/10 text-yellow-500"
+                            variant="outline"
+                          >
+                            Esgotado
+                          </Badge>
+                        ) : (
+                          <Badge
+                            className="border-none bg-green-500/10 text-green-500"
+                            variant="outline"
+                          >
+                            Ativo
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(voucher.createdAt), "dd/MM/yyyy", {
+                          locale: ptBR,
+                        })}
+                      </TableCell>
+                      <VoucherActions
+                        active={voucher.active}
+                        code={voucher.code}
+                        voucherId={voucher.id}
+                      />
+                    </TableRow>
+                  );
+                })}
+                {vouchers.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      className="py-10 text-center text-muted-foreground"
+                      colSpan={8}
+                    >
+                      Nenhum voucher criado ainda
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>

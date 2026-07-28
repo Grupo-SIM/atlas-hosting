@@ -1,3 +1,6 @@
+import { HardDrive, Mail, RefreshCw, Server, Shield } from "lucide-react";
+import Form from "next/form";
+import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,19 +10,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
+import pleskApi from "@/lib/server/apis/plesk";
+import { activateMailForSite } from "@/lib/server/apis/plesk-xml/client";
 import { getUserCurrentDomain } from "@/lib/server/utils";
-import { HardDrive, Mail, RefreshCw, Server, Shield } from "lucide-react";
-import Form from "next/form";
-import { ErrorBoundary } from "../databases/components/ErrorBoundary";
 import { getPleskMailAccounts, reloadEmailAccounts } from "./actions";
 import { CreateEmailAccountDialog } from "./components/CreateEmailAccountDialog";
 import {
   PleskEmailClient,
   type PleskEmailSearchParams,
 } from "./components/PleskEmailClient";
-import { Suspense } from "react";
-import pleskApi from "@/lib/server/apis/plesk";
-import { activateMailForSite } from "@/lib/server/apis/plesk-xml/client";
 
 export default async function EmailPage({
   searchParams,
@@ -33,13 +32,13 @@ export default async function EmailPage({
 
   if (!selectedDomain) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
               E-mail Profissional
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="mt-1 text-muted-foreground">
               Acesse e gerencie suas contas de e-mail com integração Plesk
             </p>
           </div>
@@ -57,7 +56,7 @@ export default async function EmailPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Use o seletor de domínio no topo da página para escolher um
               domínio configurado para hospedagem.
             </p>
@@ -84,13 +83,13 @@ export default async function EmailPage({
 
   if (!site || !selectedDomain.active) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
               E-mail Profissional
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="mt-1 text-muted-foreground">
               Acesse e gerencie suas contas de e-mail com integração Plesk
             </p>
           </div>
@@ -107,12 +106,12 @@ export default async function EmailPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="mb-4 text-muted-foreground text-sm">
               Verifique se o domínio <strong>{selectedDomain.domain}</strong>{" "}
               está ativo e configurado para hospedagem no Plesk.
             </p>
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button onClick={() => window.location.reload()} variant="outline">
+              <RefreshCw className="mr-2 h-4 w-4" />
               Tentar Novamente
             </Button>
           </CardContent>
@@ -133,13 +132,13 @@ export default async function EmailPage({
 
   if (hasError) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
               E-mail Profissional
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="mt-1 text-muted-foreground">
               Acesse e gerencie suas contas de e-mail com integração Plesk
             </p>
           </div>
@@ -157,13 +156,13 @@ export default async function EmailPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="mb-4 text-muted-foreground text-sm">
               O domínio <strong>{selectedDomain.domain}</strong> pode não estar
               configurado para hospedagem no Plesk ou pode haver um problema de
               conectividade.
             </p>
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button onClick={() => window.location.reload()} variant="outline">
+              <RefreshCw className="mr-2 h-4 w-4" />
               Tentar Novamente
             </Button>
           </CardContent>
@@ -173,13 +172,13 @@ export default async function EmailPage({
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
             E-mail Profissional
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="mt-1 text-muted-foreground">
             Acesse e gerencie suas contas de e-mail com integração Plesk
           </p>
         </div>
@@ -189,9 +188,9 @@ export default async function EmailPage({
         <div className="space-y-6">
           {/* Info Cards */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
+            <Card className="border-2 border-primary/20 border-dashed transition-colors hover:border-primary/40">
               <CardHeader className="text-center">
-                <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                   <Server className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle>Configuração Rápida</CardTitle>
@@ -208,13 +207,13 @@ export default async function EmailPage({
                     />
                   </Form>
                   <form action={reloadEmailAccounts}>
-                    <Button type="submit" variant="outline" className="w-full">
-                      <RefreshCw className="h-4 w-4 mr-2" />
+                    <Button className="w-full" type="submit" variant="outline">
+                      <RefreshCw className="mr-2 h-4 w-4" />
                       Recarregar Contas
                     </Button>
                   </form>
                 </div>
-                <p className="text-xs text-muted-foreground text-center mt-3">
+                <p className="mt-3 text-center text-muted-foreground text-xs">
                   Crie uma nova conta ou recarregue se já criou uma
                 </p>
               </CardContent>
@@ -222,7 +221,7 @@ export default async function EmailPage({
 
             <Card>
               <CardHeader className="text-center">
-                <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center mb-4">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/20">
                   <Shield className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <CardTitle>Segurança Avançada</CardTitle>
@@ -234,7 +233,7 @@ export default async function EmailPage({
 
             <Card>
               <CardHeader className="text-center">
-                <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mb-4">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/20">
                   <HardDrive className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <CardTitle>IMAP & SMTP Real</CardTitle>
@@ -258,30 +257,30 @@ export default async function EmailPage({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                <div className="flex items-center gap-3 rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
+                  <div className="h-2 w-2 rounded-full bg-green-500" />
                   <div>
                     <p className="font-medium text-green-700 dark:text-green-300">
                       Plesk XML API
                     </p>
-                    <p className="text-sm text-green-600 dark:text-green-400">
+                    <p className="text-green-600 text-sm dark:text-green-400">
                       Gerenciamento de contas ativo
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                <div className="flex items-center gap-3 rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
+                  <div className="h-2 w-2 rounded-full bg-green-500" />
                   <div>
                     <p className="font-medium text-green-700 dark:text-green-300">
                       IMAP/SMTP
                     </p>
-                    <p className="text-sm text-green-600 dark:text-green-400">
+                    <p className="text-green-600 text-sm dark:text-green-400">
                       Acesso real aos e-mails
                     </p>
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 ✨ <strong>Nova funcionalidade:</strong> Agora com acesso real
                 aos e-mails! Não há mais dados simulados - você verá seus
                 e-mails reais assim que criar uma conta.
@@ -292,10 +291,10 @@ export default async function EmailPage({
       ) : (
         <Suspense>
           <PleskEmailClient
-            user={user}
             domains={domains}
             initialMailAccounts={mailAccounts}
             searchParams={searchParams}
+            user={user}
           />
         </Suspense>
       )}

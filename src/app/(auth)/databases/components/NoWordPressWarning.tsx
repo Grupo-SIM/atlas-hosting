@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertTriangle } from "lucide-react";
 
 interface NoWordPressWarningProps {
   domainName?: string; // Optional: pass the specific domain if known
@@ -19,15 +19,15 @@ export default function NoWordPressWarning({
   domainName,
 }: NoWordPressWarningProps) {
   return (
-    <Card className="w-full max-w-lg mx-auto shadow-xl border-2 border-amber-500/50 bg-amber-50/10 backdrop-blur-md">
+    <Card className="mx-auto w-full max-w-lg border-2 border-amber-500/50 bg-amber-50/10 shadow-xl backdrop-blur-md">
       <CardHeader className="text-center">
-        <div className="mx-auto bg-amber-100 dark:bg-amber-900 p-3 rounded-full w-fit mb-3">
+        <div className="mx-auto mb-3 w-fit rounded-full bg-amber-100 p-3 dark:bg-amber-900">
           <AlertTriangle className="h-10 w-10 text-amber-500" />
         </div>
-        <CardTitle className="text-2xl font-bold text-amber-700 dark:text-amber-400">
+        <CardTitle className="font-bold text-2xl text-amber-700 dark:text-amber-400">
           Nenhuma Instalação do WordPress Encontrada
         </CardTitle>
-        <CardDescription className="text-amber-600 dark:text-amber-300 text-base">
+        <CardDescription className="text-amber-600 text-base dark:text-amber-300">
           {domainName
             ? `O domínio "${domainName}" não possui uma instalação do WordPress. `
             : "Seu domínio selecionado não possui uma instalação do WordPress. "}
@@ -41,7 +41,7 @@ export default function NoWordPressWarning({
         </p>
         <Button
           asChild
-          className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:-translate-y-0.5"
+          className="transform rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:from-amber-600 hover:to-orange-700 hover:shadow-lg"
         >
           <Link href="/sites/new">Instalar WordPress</Link>
         </Button>

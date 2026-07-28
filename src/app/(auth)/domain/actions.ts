@@ -1,11 +1,11 @@
 "use server";
 
+import { inArray } from "drizzle-orm";
 import type { DomainWithAvailability } from "@/app/(auth)/domain/types";
 import { db } from "@/lib/db";
-import { pgDomainPricingCache, pgSystemConfig } from "@/lib/db/schema";
+import { pgDomainPricingCache } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
-import { namecheapApi, getDomainPricing } from "@/lib/server/apis/namecheap";
-import { inArray } from "drizzle-orm";
+import { getDomainPricing, namecheapApi } from "@/lib/server/apis/namecheap";
 
 const extendedTlds: `.${string}`[] = [
   ".club",
@@ -30,7 +30,7 @@ const extendedTlds: `.${string}`[] = [
 export async function loadMoreDomainSuggestions(
   domainName: string
 ): Promise<DomainWithAvailability[]> {
-  const domainsToCheck = extendedTlds.map((tld) => `${domainName}${tld}`);
+  const domainsToCheck = extendedTlds.map(tld => `${domainName}${tld}`);
 
   try {
     const checkResult = await namecheapApi.check({
@@ -39,9 +39,9 @@ export async function loadMoreDomainSuggestions(
 
     if (!checkResult?.Results || checkResult.Results.length === 0) return [];
 
-    const tldKeys = extendedTlds.map((t) => t.substring(1));
+    const tldKeys = extendedTlds.map(t => t.substring(1));
 
-    let pricings: Array<{
+    const pricings: Array<{
       tld: string;
       price: number | null;
       renew: number | null;
@@ -51,21 +51,21 @@ export async function loadMoreDomainSuggestions(
       where: inArray(pgDomainPricingCache.tld, tldKeys),
     });
 
-    const missingTlds = tldKeys.filter((t) => !pricings.some((p) => p.tld === t));
+    const missingTlds = tldKeys.filter(t => !pricings.some(p => p.tld === t));
     if (missingTlds.length > 0) {
       const settled = await Promise.allSettled(
-        missingTlds.map(async (tld) => {
+        missingTlds.map(async tld => {
           const product = await getDomainPricing(tld);
           const p = product?.Prices.find(
             (x: any) => x.Duration === 1 && x.DurationType === "YEAR"
           );
           const raw = p?.YourPrice ?? p?.Price ?? 0;
           return {
-            tld,
+            currency: p?.Currency?.toUpperCase() ?? "USD",
             price: raw,
             renew: raw * 1.1,
+            tld,
             transfer: raw * 0.8,
-            currency: p?.Currency?.toUpperCase() ?? "USD",
           };
         })
       );
@@ -76,26 +76,32 @@ export async function loadMoreDomainSuggestions(
       }
     }
 
-    const pricingRecord = Object.fromEntries(pricings.map((p) => [p.tld, p]));
+    const pricingRecord = Object.fromEntries(pricings.map(p => [p.tld, p]));
 
     const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
     let fee = 1;
     if (feeEnabled) {
       try {
-        const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
-        const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
-        const envFeeNormalized = envFee !== undefined ? (envFee > 0 && envFee < 1 ? envFee * 100 : envFee) : undefined;
+        const envFeeValue =
+          process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
+        const envFee = envFeeValue ? Number.parseFloat(envFeeValue) : undefined;
+        const envFeeNormalized =
+          envFee !== undefined
+            ? envFee > 0 && envFee < 1
+              ? envFee * 100
+              : envFee
+            : undefined;
 
         const config = await db.query.pgSystemConfig.findFirst();
         const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 30;
         fee = 1 + finalFeePercent / 100;
       } catch {
-        fee = 1.20;
+        fee = 1.2;
       }
     }
 
     return await Promise.all(
-      checkResult.Results.map(async (domainDetail) => {
+      checkResult.Results.map(async domainDetail => {
         const fullDomainName = domainDetail.Domain;
         const parts = fullDomainName.split(".");
         let tldForLookup = "";
@@ -112,7 +118,10 @@ export async function loadMoreDomainSuggestions(
           }
           tldForLookup =
             bestMatch ||
-            parts.slice(parts.length > 2 ? -2 : -1).join(".").toLowerCase();
+            parts
+              .slice(parts.length > 2 ? -2 : -1)
+              .join(".")
+              .toLowerCase();
         }
 
         const pricing = pricingRecord[tldForLookup];
@@ -120,7 +129,11 @@ export async function loadMoreDomainSuggestions(
         const toPrice = async (amount: number) =>
           alreadyBrl
             ? amount
-            : await currencyConversion.convert({ from: "usd", to: "brl", amount });
+            : await currencyConversion.convert({
+                amount,
+                from: "usd",
+                to: "brl",
+              });
 
         const envFixedFee = process.env.DOMAIN_FIXED_FEE;
         const fixedFee = envFixedFee !== undefined ? Number(envFixedFee) : 4;
@@ -129,10 +142,19 @@ export async function loadMoreDomainSuggestions(
         let renewBRL = 0;
         let transferBRL = 0;
 
-        if (domainDetail.IsPremiumName && (domainDetail.PremiumRegistrationPrice ?? 0) > 0) {
-          priceBRL = (await toPrice(domainDetail.PremiumRegistrationPrice ?? 0)) * fee + fixedFee;
-          renewBRL = (await toPrice(domainDetail.PremiumRenewalPrice ?? 0)) * fee + fixedFee;
-          transferBRL = (await toPrice(domainDetail.PremiumTransferPrice ?? 0)) * fee + fixedFee;
+        if (
+          domainDetail.IsPremiumName &&
+          (domainDetail.PremiumRegistrationPrice ?? 0) > 0
+        ) {
+          priceBRL =
+            (await toPrice(domainDetail.PremiumRegistrationPrice ?? 0)) * fee +
+            fixedFee;
+          renewBRL =
+            (await toPrice(domainDetail.PremiumRenewalPrice ?? 0)) * fee +
+            fixedFee;
+          transferBRL =
+            (await toPrice(domainDetail.PremiumTransferPrice ?? 0)) * fee +
+            fixedFee;
         } else if (pricing?.price) {
           priceBRL = (await toPrice(pricing.price ?? 0)) * fee + fixedFee;
           renewBRL = (await toPrice(pricing.renew ?? 0)) * fee + fixedFee;
@@ -140,12 +162,15 @@ export async function loadMoreDomainSuggestions(
         }
 
         return {
+          available:
+            (domainDetail.Available ||
+              (domainDetail.IsPremiumName && priceBRL > 0)) &&
+            priceBRL > 0,
           domain: fullDomainName,
-          available: (domainDetail.Available || (domainDetail.IsPremiumName && priceBRL > 0)) && priceBRL > 0,
+          isPremium: domainDetail.IsPremiumName,
           priceBRL,
           renewBRL,
           transferBRL,
-          isPremium: domainDetail.IsPremiumName,
         };
       })
     );

@@ -1,34 +1,27 @@
 "use client";
 
+import axios from "axios";
+import {
+  AlertTriangle,
+  Camera,
+  CreditCard,
+  Edit,
+  Eye,
+  EyeOff,
+  FileText,
+  Key,
+  Mail,
+  MapPin,
+  Phone,
+  Save,
+  Shield,
+  Trash2,
+  User as UserIcon,
+  X,
+} from "lucide-react";
 import { useState, useTransition } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input, inputClasses } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { IMaskInput } from "react-imask";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { saveUserBillingInfo } from "@/app/(auth)/billing/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,40 +34,35 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  User as UserIcon,
-  Mail,
-  Calendar,
-  Shield,
-  Bell,
-  Globe,
-  Eye,
-  EyeOff,
-  Save,
-  Edit,
-  X,
-  Camera,
-  Key,
-  Trash2,
-  AlertTriangle,
-  CreditCard,
-  MapPin,
-  Phone,
-  FileText,
-} from "lucide-react";
-import type { User, UserSettings } from "@/lib/db/schema/tables/user";
-import { formatDate } from "@/lib/utils";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input, inputClasses } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { ChangeEmailSection } from "@/components/auth/ChangeEmailSection";
-import { saveUserBillingInfo } from "@/app/(auth)/billing/actions";
-import axios from "axios";
+import type { User } from "@/lib/db/schema/tables/user";
+import { formatDate } from "@/lib/utils";
 import {
-  updateUserProfileAction,
   changePasswordAction,
-  sendEmailVerificationAction,
   deleteUserAccountAction,
-  updateUserProfileImageAction,
   type ProfileUpdateMessage,
+  sendEmailVerificationAction,
+  updateUserProfileAction,
+  updateUserProfileImageAction,
 } from "../actions";
 
 interface UserSectionProps {
@@ -94,16 +82,16 @@ export function UserSection({ user }: UserSectionProps) {
   // Billing state
   const [isEditingBilling, setIsEditingBilling] = useState(false);
   const [billingInfo, setBillingInfo] = useState({
-    document: user.billingDocument || "",
-    phoneNumber: user.billingPhone || "",
     address: {
-      street: user.billingStreet || "",
-      number: user.billingNumber || "",
-      neighborhood: user.billingNeighborhood || "",
       city: user.billingCity || "",
+      neighborhood: user.billingNeighborhood || "",
+      number: user.billingNumber || "",
       state: user.billingState || "",
+      street: user.billingStreet || "",
       zipCode: user.billingZipCode || "",
     },
+    document: user.billingDocument || "",
+    phoneNumber: user.billingPhone || "",
   });
 
   // Password form state
@@ -124,8 +112,8 @@ export function UserSection({ user }: UserSectionProps) {
 
         if (result.success) {
           toast({
-            title: "Sucesso",
             description: result.message,
+            title: "Sucesso",
           });
           setIsEditingProfile(false);
 
@@ -133,7 +121,7 @@ export function UserSection({ user }: UserSectionProps) {
             result.message
           ) as ProfileUpdateMessage;
 
-          setPreferences((prev) => {
+          setPreferences(prev => {
             if (
               updateMessage.settings &&
               updateMessage.settings?.emailNotifications !==
@@ -149,15 +137,15 @@ export function UserSection({ user }: UserSectionProps) {
           });
         } else {
           toast({
-            title: "Erro",
             description: result.message,
+            title: "Erro",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro",
           description: "Erro inesperado ao salvar perfil.",
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -169,8 +157,8 @@ export function UserSection({ user }: UserSectionProps) {
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Erro",
         description: "As senhas não coincidem.",
+        title: "Erro",
         variant: "destructive",
       });
       return;
@@ -178,8 +166,8 @@ export function UserSection({ user }: UserSectionProps) {
 
     if (newPassword.length < 8) {
       toast({
-        title: "Erro",
         description: "A nova senha deve ter pelo menos 8 caracteres.",
+        title: "Erro",
         variant: "destructive",
       });
       return;
@@ -191,8 +179,8 @@ export function UserSection({ user }: UserSectionProps) {
 
         if (result.success) {
           toast({
-            title: "Sucesso",
             description: result.message,
+            title: "Sucesso",
           });
           setIsChangePasswordOpen(false);
           setCurrentPassword("");
@@ -200,15 +188,15 @@ export function UserSection({ user }: UserSectionProps) {
           setConfirmPassword("");
         } else {
           toast({
-            title: "Erro",
             description: result.message,
+            title: "Erro",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro",
           description: "Erro inesperado ao alterar senha.",
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -221,14 +209,14 @@ export function UserSection({ user }: UserSectionProps) {
         const result = await sendEmailVerificationAction();
 
         toast({
-          title: result.success ? "Sucesso" : "Erro",
           description: result.message,
+          title: result.success ? "Sucesso" : "Erro",
           variant: result.success ? "default" : "destructive",
         });
       } catch (error) {
         toast({
-          title: "Erro",
           description: "Erro inesperado ao enviar verificação.",
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -242,21 +230,21 @@ export function UserSection({ user }: UserSectionProps) {
 
         if (result.status === "success") {
           toast({
-            title: "Sucesso",
             description: result.message,
+            title: "Sucesso",
           });
           setIsEditingBilling(false);
         } else {
           toast({
-            title: "Erro",
             description: result.message,
+            title: "Erro",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro",
           description: "Erro ao salvar informações de cobrança.",
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -270,22 +258,22 @@ export function UserSection({ user }: UserSectionProps) {
 
         if (result.success) {
           toast({
-            title: "Conta Excluída",
             description: result.message,
+            title: "Conta Excluída",
           });
           // Redirect to login page or home
           window.location.href = "/login";
         } else {
           toast({
-            title: "Erro",
             description: result.message,
+            title: "Erro",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro",
           description: "Erro inesperado ao excluir conta.",
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -299,8 +287,8 @@ export function UserSection({ user }: UserSectionProps) {
     // Validar tamanho (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
-        title: "Erro",
         description: "A imagem deve ter no máximo 5MB.",
+        title: "Erro",
         variant: "destructive",
       });
       return;
@@ -314,20 +302,20 @@ export function UserSection({ user }: UserSectionProps) {
       const result = await updateUserProfileImageAction(formData);
       if (result.success) {
         toast({
-          title: "Sucesso",
           description: result.message,
+          title: "Sucesso",
         });
       } else {
         toast({
-          title: "Erro",
           description: result.message,
+          title: "Erro",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Erro",
         description: "Erro ao fazer upload da imagem.",
+        title: "Erro",
         variant: "destructive",
       });
     } finally {
@@ -350,33 +338,33 @@ export function UserSection({ user }: UserSectionProps) {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-6">
-            <div className="relative group">
-              <label className="cursor-pointer block relative">
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*" 
-                  onChange={handleFileChange}
+            <div className="group relative">
+              <label className="relative block cursor-pointer">
+                <input
+                  accept="image/*"
+                  className="hidden"
                   disabled={isUploading}
+                  onChange={handleFileChange}
+                  type="file"
                 />
                 <Avatar className="h-20 w-20 transition-opacity group-hover:opacity-80">
                   <AvatarImage src={user.image || undefined} />
                   <AvatarFallback className="text-lg">
                     {user.name
                       .split(" ")
-                      .map((n) => n[0])
+                      .map(n => n[0])
                       .join("")
                       .toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 {isUploading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-full">
+                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-background/50">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   </div>
                 )}
-                
-                <div className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-background border flex items-center justify-center shadow-sm group-hover:bg-accent transition-colors">
+
+                <div className="absolute -right-2 -bottom-2 flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm transition-colors group-hover:bg-accent">
                   <Camera className="h-4 w-4" />
                 </div>
               </label>
@@ -384,7 +372,7 @@ export function UserSection({ user }: UserSectionProps) {
             <div className="flex-1">
               <h3 className="font-semibold text-lg">{user.name}</h3>
               <p className="text-muted-foreground">{user.email}</p>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="mt-2 flex items-center gap-2">
                 <Badge variant="outline">
                   {user.organizationRole === "admin"
                     ? "Administrador"
@@ -394,10 +382,10 @@ export function UserSection({ user }: UserSectionProps) {
                 </Badge>
                 {user.emailVerified && (
                   <Badge
-                    variant="secondary"
                     className="bg-green-500/10 text-green-700"
+                    variant="secondary"
                   >
-                    <Mail className="w-3 h-3 mr-1" />
+                    <Mail className="mr-1 h-3 w-3" />
                     E-mail Verificado
                   </Badge>
                 )}
@@ -406,22 +394,22 @@ export function UserSection({ user }: UserSectionProps) {
           </div>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="displayName">Nome Completo</Label>
                 <div className="flex items-center gap-2">
                   <Input
-                    id="displayName"
-                    value={isEditingProfile ? userName : user.name}
-                    onChange={(e) => setUserName(e.target.value)}
-                    readOnly={!isEditingProfile}
                     className="flex-1"
+                    id="displayName"
+                    onChange={e => setUserName(e.target.value)}
+                    readOnly={!isEditingProfile}
+                    value={isEditingProfile ? userName : user.name}
                   />
                   {!isEditingProfile && (
                     <Button
+                      onClick={() => setIsEditingProfile(true)}
                       size="sm"
                       variant="outline"
-                      onClick={() => setIsEditingProfile(true)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -433,24 +421,24 @@ export function UserSection({ user }: UserSectionProps) {
                 <Label htmlFor="emailAddress">E-mail</Label>
                 <div className="flex items-center gap-2">
                   <Input
+                    className="flex-1"
                     id="emailAddress"
+                    readOnly
                     type="email"
                     value={user.email}
-                    readOnly
-                    className="flex-1"
                   />
                   {!user.emailVerified && (
                     <Button
+                      disabled={isPending}
+                      onClick={handleEmailVerification}
                       size="sm"
                       variant="outline"
-                      onClick={handleEmailVerification}
-                      disabled={isPending}
                     >
                       {isPending ? "Enviando..." : "Verificar"}
                     </Button>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Para alterar seu email, use a seção "Alterar Email" abaixo.
                 </p>
               </div>
@@ -458,32 +446,32 @@ export function UserSection({ user }: UserSectionProps) {
 
             {isEditingProfile && (
               <div className="flex gap-2">
-                <Button onClick={handleSaveProfile} disabled={isPending}>
-                  <Save className="h-4 w-4 mr-2" />
+                <Button disabled={isPending} onClick={handleSaveProfile}>
+                  <Save className="mr-2 h-4 w-4" />
                   {isPending ? "Salvando..." : "Salvar Alterações"}
                 </Button>
                 <Button
-                  variant="outline"
+                  disabled={isPending}
                   onClick={() => {
                     setUserName(user.name);
                     setIsEditingProfile(false);
                   }}
-                  disabled={isPending}
+                  variant="outline"
                 >
-                  <X className="h-4 w-4 mr-2" />
+                  <X className="mr-2 h-4 w-4" />
                   Cancelar
                 </Button>
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Membro desde</Label>
-                <Input value={formatDate(user.createdAt)} readOnly />
+                <Input readOnly value={formatDate(user.createdAt)} />
               </div>
               <div className="space-y-2">
                 <Label>ID do Usuário</Label>
-                <Input value={user.id} readOnly className="font-mono text-sm" />
+                <Input className="font-mono text-sm" readOnly value={user.id} />
               </div>
             </div>
           </div>
@@ -505,84 +493,90 @@ export function UserSection({ user }: UserSectionProps) {
             </div>
             {!isEditingBilling && (
               <Button
+                onClick={() => setIsEditingBilling(true)}
                 size="sm"
                 variant="outline"
-                onClick={() => setIsEditingBilling(true)}
               >
-                <Edit className="h-4 w-4 mr-2" />
+                <Edit className="mr-2 h-4 w-4" />
                 Editar
               </Button>
             )}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-muted-foreground font-medium">
+                <Label className="flex items-center gap-2 font-medium text-muted-foreground">
                   <FileText className="h-4 w-4" />
                   CPF ou CNPJ
                 </Label>
                 <IMaskInput
+                  className={inputClasses}
                   mask={[
                     { mask: "000.000.000-00" },
                     { mask: "00.000.000/0000-00" },
                   ]}
-                  value={billingInfo.document}
-                  onAccept={(value) => setBillingInfo({ ...billingInfo, document: value })}
-                  readOnly={!isEditingBilling}
+                  onAccept={value =>
+                    setBillingInfo({ ...billingInfo, document: value })
+                  }
                   placeholder="000.000.000-00"
-                  className={inputClasses}
+                  readOnly={!isEditingBilling}
+                  value={billingInfo.document}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-muted-foreground font-medium">
+                <Label className="flex items-center gap-2 font-medium text-muted-foreground">
                   <Phone className="h-4 w-4" />
                   Telefone de Contato
                 </Label>
                 <IMaskInput
-                  mask="(00) 00000-0000"
-                  value={billingInfo.phoneNumber}
-                  onAccept={(value) => setBillingInfo({ ...billingInfo, phoneNumber: value })}
-                  readOnly={!isEditingBilling}
-                  placeholder="(00) 00000-0000"
                   className={inputClasses}
+                  mask="(00) 00000-0000"
+                  onAccept={value =>
+                    setBillingInfo({ ...billingInfo, phoneNumber: value })
+                  }
+                  placeholder="(00) 00000-0000"
+                  readOnly={!isEditingBilling}
+                  value={billingInfo.phoneNumber}
                 />
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-muted-foreground font-medium">
+                <Label className="flex items-center gap-2 font-medium text-muted-foreground">
                   <MapPin className="h-4 w-4" />
                   CEP
                 </Label>
                 <IMaskInput
+                  className={inputClasses}
                   mask="00000-000"
-                  unmask={true}
-                  value={billingInfo.address.zipCode}
-                  onAccept={(value) => {
+                  onAccept={value => {
                     const digits = value.replace(/\D/g, "");
-                    setBillingInfo((prev) => ({ 
-                      ...prev, 
-                      address: { ...prev.address, zipCode: digits } 
+                    setBillingInfo(prev => ({
+                      ...prev,
+                      address: { ...prev.address, zipCode: digits },
                     }));
 
                     if (digits && digits.length === 8) {
                       (async () => {
                         try {
-                          const { data } = await axios.get(`https://opencep.com/v1/${digits}.json`);
+                          const { data } = await axios.get(
+                            `https://opencep.com/v1/${digits}.json`
+                          );
                           if (data && !data.error) {
-                            setBillingInfo((prev) => ({
+                            setBillingInfo(prev => ({
                               ...prev,
                               address: {
                                 ...prev.address,
-                                street: data.logradouro || prev.address.street,
-                                neighborhood: data.bairro || prev.address.neighborhood,
                                 city: data.localidade || prev.address.city,
+                                neighborhood:
+                                  data.bairro || prev.address.neighborhood,
                                 state: data.uf || prev.address.state,
-                                zipCode: digits
-                              }
+                                street: data.logradouro || prev.address.street,
+                                zipCode: digits,
+                              },
                             }));
                           }
                         } catch (error) {
@@ -591,83 +585,114 @@ export function UserSection({ user }: UserSectionProps) {
                       })();
                     }
                   }}
-                  readOnly={!isEditingBilling}
                   placeholder="00000-000"
-                  className={inputClasses}
+                  readOnly={!isEditingBilling}
+                  unmask={true}
+                  value={billingInfo.address.zipCode}
                 />
               </div>
             </div>
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-border/50">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2 space-y-2">
-                <Label className="text-muted-foreground font-medium">Rua</Label>
+          <div className="space-y-4 border-border/50 border-t pt-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="space-y-2 md:col-span-2">
+                <Label className="font-medium text-muted-foreground">Rua</Label>
                 <Input
-                  value={billingInfo.address.street}
-                  onChange={(e) => setBillingInfo({ 
-                    ...billingInfo, 
-                    address: { ...billingInfo.address, street: e.target.value } 
-                  })}
-                  readOnly={!isEditingBilling}
-                  placeholder="Nome da rua"
                   className="bg-muted/30"
+                  onChange={e =>
+                    setBillingInfo({
+                      ...billingInfo,
+                      address: {
+                        ...billingInfo.address,
+                        street: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="Nome da rua"
+                  readOnly={!isEditingBilling}
+                  value={billingInfo.address.street}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-muted-foreground font-medium">Número</Label>
+                <Label className="font-medium text-muted-foreground">
+                  Número
+                </Label>
                 <Input
-                  value={billingInfo.address.number}
-                  onChange={(e) => setBillingInfo({ 
-                    ...billingInfo, 
-                    address: { ...billingInfo.address, number: e.target.value } 
-                  })}
-                  readOnly={!isEditingBilling}
-                  placeholder="123"
                   className="bg-muted/30"
+                  onChange={e =>
+                    setBillingInfo({
+                      ...billingInfo,
+                      address: {
+                        ...billingInfo.address,
+                        number: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="123"
+                  readOnly={!isEditingBilling}
+                  value={billingInfo.address.number}
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label className="text-muted-foreground font-medium">Bairro</Label>
+                <Label className="font-medium text-muted-foreground">
+                  Bairro
+                </Label>
                 <Input
-                  value={billingInfo.address.neighborhood}
-                  onChange={(e) => setBillingInfo({ 
-                    ...billingInfo, 
-                    address: { ...billingInfo.address, neighborhood: e.target.value } 
-                  })}
-                  readOnly={!isEditingBilling}
+                  className="bg-muted/30"
+                  onChange={e =>
+                    setBillingInfo({
+                      ...billingInfo,
+                      address: {
+                        ...billingInfo.address,
+                        neighborhood: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Nome do bairro"
-                  className="bg-muted/30"
+                  readOnly={!isEditingBilling}
+                  value={billingInfo.address.neighborhood}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-muted-foreground font-medium">Cidade</Label>
+                <Label className="font-medium text-muted-foreground">
+                  Cidade
+                </Label>
                 <Input
-                  value={billingInfo.address.city}
-                  onChange={(e) => setBillingInfo({ 
-                    ...billingInfo, 
-                    address: { ...billingInfo.address, city: e.target.value } 
-                  })}
-                  readOnly={!isEditingBilling}
+                  className="bg-muted/30"
+                  onChange={e =>
+                    setBillingInfo({
+                      ...billingInfo,
+                      address: { ...billingInfo.address, city: e.target.value },
+                    })
+                  }
                   placeholder="Nome da cidade"
-                  className="bg-muted/30"
+                  readOnly={!isEditingBilling}
+                  value={billingInfo.address.city}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-muted-foreground font-medium">Estado</Label>
+                <Label className="font-medium text-muted-foreground">
+                  Estado
+                </Label>
                 <Input
-                  value={billingInfo.address.state}
-                  onChange={(e) => setBillingInfo({ 
-                    ...billingInfo, 
-                    address: { ...billingInfo.address, state: e.target.value } 
-                  })}
-                  readOnly={!isEditingBilling}
-                  placeholder="SP"
-                  maxLength={2}
                   className="bg-muted/30"
+                  maxLength={2}
+                  onChange={e =>
+                    setBillingInfo({
+                      ...billingInfo,
+                      address: {
+                        ...billingInfo.address,
+                        state: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="SP"
+                  readOnly={!isEditingBilling}
+                  value={billingInfo.address.state}
                 />
               </div>
             </div>
@@ -675,30 +700,30 @@ export function UserSection({ user }: UserSectionProps) {
 
           {isEditingBilling && (
             <div className="flex gap-2 pt-4">
-              <Button onClick={handleSaveBilling} disabled={isPending}>
-                <Save className="h-4 w-4 mr-2" />
+              <Button disabled={isPending} onClick={handleSaveBilling}>
+                <Save className="mr-2 h-4 w-4" />
                 {isPending ? "Salvando..." : "Salvar Dados de Cobrança"}
               </Button>
               <Button
-                variant="outline"
+                disabled={isPending}
                 onClick={() => {
                   setBillingInfo({
-                    document: user.billingDocument || "",
-                    phoneNumber: user.billingPhone || "",
                     address: {
-                      street: user.billingStreet || "",
-                      number: user.billingNumber || "",
-                      neighborhood: user.billingNeighborhood || "",
                       city: user.billingCity || "",
+                      neighborhood: user.billingNeighborhood || "",
+                      number: user.billingNumber || "",
                       state: user.billingState || "",
+                      street: user.billingStreet || "",
                       zipCode: user.billingZipCode || "",
                     },
+                    document: user.billingDocument || "",
+                    phoneNumber: user.billingPhone || "",
                   });
                   setIsEditingBilling(false);
                 }}
-                disabled={isPending}
+                variant="outline"
               >
-                <X className="h-4 w-4 mr-2" />
+                <X className="mr-2 h-4 w-4" />
                 Cancelar
               </Button>
             </div>
@@ -707,7 +732,7 @@ export function UserSection({ user }: UserSectionProps) {
       </Card>
 
       {/* Change Email Section */}
-    {/*   <ChangeEmailSection user={user} /> */}
+      {/*   <ChangeEmailSection user={user} /> */}
 
       {/* Security Settings */}
       <Card>
@@ -721,20 +746,20 @@ export function UserSection({ user }: UserSectionProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
+          <div className="flex items-center justify-between rounded-lg border bg-card/50 p-4">
             <div>
               <h4 className="font-medium">Alterar Senha</h4>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Atualize a senha usada para acessar sua conta
               </p>
             </div>
             <Dialog
-              open={isChangePasswordOpen}
               onOpenChange={setIsChangePasswordOpen}
+              open={isChangePasswordOpen}
             >
               <DialogTrigger asChild>
                 <Button variant="outline">
-                  <Key className="h-4 w-4 mr-2" />
+                  <Key className="mr-2 h-4 w-4" />
                   Alterar
                 </Button>
               </DialogTrigger>
@@ -745,25 +770,25 @@ export function UserSection({ user }: UserSectionProps) {
                     Digite sua senha atual e escolha uma nova senha segura
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleChangePassword} className="space-y-4">
+                <form className="space-y-4" onSubmit={handleChangePassword}>
                   <div className="space-y-2">
                     <Label htmlFor="currentPassword">Senha Atual</Label>
                     <div className="relative">
                       <Input
                         id="currentPassword"
+                        onChange={e => setCurrentPassword(e.target.value)}
+                        required
                         type={showCurrentPassword ? "text" : "password"}
                         value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        required
                       />
                       <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3"
+                        className="absolute top-0 right-0 h-full px-3"
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
                         }
+                        size="sm"
+                        type="button"
+                        variant="ghost"
                       >
                         {showCurrentPassword ? (
                           <EyeOff className="h-4 w-4" />
@@ -778,17 +803,17 @@ export function UserSection({ user }: UserSectionProps) {
                     <div className="relative">
                       <Input
                         id="newPassword"
+                        onChange={e => setNewPassword(e.target.value)}
+                        required
                         type={showNewPassword ? "text" : "password"}
                         value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        required
                       />
                       <Button
+                        className="absolute top-0 right-0 h-full px-3"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        size="sm"
                         type="button"
                         variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
                       >
                         {showNewPassword ? (
                           <EyeOff className="h-4 w-4" />
@@ -805,19 +830,19 @@ export function UserSection({ user }: UserSectionProps) {
                     <div className="relative">
                       <Input
                         id="confirmPassword"
+                        onChange={e => setConfirmPassword(e.target.value)}
+                        required
                         type={showConfirmPassword ? "text" : "password"}
                         value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
                       />
                       <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3"
+                        className="absolute top-0 right-0 h-full px-3"
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
                         }
+                        size="sm"
+                        type="button"
+                        variant="ghost"
                       >
                         {showConfirmPassword ? (
                           <EyeOff className="h-4 w-4" />
@@ -827,11 +852,7 @@ export function UserSection({ user }: UserSectionProps) {
                       </Button>
                     </div>
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isPending}
-                  >
+                  <Button className="w-full" disabled={isPending} type="submit">
                     {isPending ? "Alterando..." : "Alterar Senha"}
                   </Button>
                 </form>
@@ -842,7 +863,7 @@ export function UserSection({ user }: UserSectionProps) {
       </Card>
 
       {/* Notification Preferences */}
-{/*       <Card>
+      {/*       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
@@ -912,17 +933,17 @@ export function UserSection({ user }: UserSectionProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg border border-destructive bg-destructive/5">
+            <div className="flex items-center justify-between rounded-lg border border-destructive bg-destructive/5 p-4">
               <div>
                 <h4 className="font-medium">Excluir Conta</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Excluir permanentemente sua conta e todos os dados associados
                 </p>
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive">
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="mr-2 h-4 w-4" />
                     Excluir Conta
                   </Button>
                 </AlertDialogTrigger>
@@ -941,8 +962,8 @@ export function UserSection({ user }: UserSectionProps) {
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                     <AlertDialogAction
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      onClick={handleDeleteAccount}
                       disabled={isPending}
+                      onClick={handleDeleteAccount}
                     >
                       {isPending ? "Excluindo..." : "Sim, excluir minha conta"}
                     </AlertDialogAction>

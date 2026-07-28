@@ -1,10 +1,10 @@
 "use client";
 
+import { RefreshCw, Shield } from "lucide-react";
 import { useState, useTransition } from "react";
+import { generateSslForDomain, revalidateCurrentPath } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { generateSslForDomain, revalidateCurrentPath } from "@/app/actions";
-import { RefreshCw, Shield } from "lucide-react";
 
 interface SslFixButtonProps {
   domainName: string;
@@ -28,7 +28,7 @@ export function SslFixButton({ domainName, serviceStatus }: SslFixButtonProps) {
 
       // Simulate progress over 30 seconds
       const interval = setInterval(() => {
-        setProgress((prev) => {
+        setProgress(prev => {
           if (prev >= 100) {
             clearInterval(interval);
             return 100;
@@ -38,7 +38,7 @@ export function SslFixButton({ domainName, serviceStatus }: SslFixButtonProps) {
       }, 1000);
 
       // Wait for 30 seconds
-      await new Promise((resolve) => setTimeout(resolve, 30000));
+      await new Promise(resolve => setTimeout(resolve, 30000));
 
       clearInterval(interval);
       setProgress(100);
@@ -69,27 +69,22 @@ export function SslFixButton({ domainName, serviceStatus }: SslFixButtonProps) {
             </span>
             <span className="font-mono">{Math.round(progress)}%</span>
           </div>
-          <Progress value={progress} className="h-2" />
-          <p className="text-xs text-muted-foreground">
+          <Progress className="h-2" value={progress} />
+          <p className="text-muted-foreground text-xs">
             Aguarde enquanto configuramos seu certificado SSL. Isso pode levar
             até 30 segundos.
           </p>
         </div>
       ) : (
         <Button
-          onClick={handleFixSsl}
+          className={`w-full font-medium text-xs transition-all duration-200 ${
+            serviceStatus === "error"
+              ? "border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-red-700"
+              : "border-amber-600 bg-amber-600 text-white hover:border-amber-700 hover:bg-amber-700"
+          }disabled:opacity-50 shadow-sm hover:shadow-md disabled:cursor-not-allowed`}
           disabled={isPending}
+          onClick={handleFixSsl}
           size="sm"
-          className={`
-            w-full text-xs font-medium transition-all duration-200
-            ${
-              serviceStatus === "error"
-                ? "bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700"
-                : "bg-amber-600 hover:bg-amber-700 text-white border-amber-600 hover:border-amber-700"
-            }
-            disabled:opacity-50 disabled:cursor-not-allowed
-            shadow-sm hover:shadow-md
-          `}
         >
           <div className="flex items-center space-x-2">
             {isPending ? (

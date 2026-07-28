@@ -46,7 +46,7 @@ export class CurrencyConversionApi {
   >({ from, to, amounts }: ConvertMultipleParams<T, U>): Promise<number[]> {
     const data = await this.getConversionRate(to);
     const converstionRate = data[from];
-    return amounts.map((amount) => amount / converstionRate);
+    return amounts.map(amount => amount / converstionRate);
   }
 
   public async updateCache(currency: string): Promise<void> {
@@ -82,10 +82,10 @@ export interface ConvertMultipleParams<
   amounts: number[];
 }
 
-export type CurrencyConversionCacheEntry = {
+export interface CurrencyConversionCacheEntry {
   data: Record<string, number>;
   timestamp: number;
-};
+}
 
 export type CurrencyConversionCache = Record<
   string,

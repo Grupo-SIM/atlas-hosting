@@ -1,4 +1,4 @@
-export { ImapEmailClient, createImapClient } from "./imap-client";
-export { SmtpEmailClient, createSmtpClient } from "./smtp-client";
-export type { EmailMessage, EmailFolder, ImapConfig } from "./imap-client";
-export type { SmtpConfig, EmailToSend } from "./smtp-client";
+export type { EmailFolder, EmailMessage, ImapConfig } from "./imap-client";
+export { createImapClient, ImapEmailClient } from "./imap-client";
+export type { EmailToSend, SmtpConfig } from "./smtp-client";
+export { createSmtpClient, SmtpEmailClient } from "./smtp-client";

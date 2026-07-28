@@ -1,10 +1,10 @@
+import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { createPasswordResetToken } from "@/lib/auth/tokens";
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { createPasswordResetToken, generateVerificationCode } from "@/lib/auth/tokens";
 import { sendPasswordResetEmail } from "@/lib/email/service";
 import { errorHandler } from "@/lib/error-handler";
 
@@ -25,7 +25,8 @@ export async function POST(request: NextRequest) {
     // Always return success to prevent email enumeration
     if (!user) {
       return NextResponse.json({
-        message: "Se o email existe em nosso sistema, você receberá um link de redefinição de senha.",
+        message:
+          "Se o email existe em nosso sistema, você receberá um link de redefinição de senha.",
       });
     }
 
@@ -33,14 +34,11 @@ export async function POST(request: NextRequest) {
     const resetToken = await createPasswordResetToken(user.id);
 
     // Send password reset email
-    await sendPasswordResetEmail(
-      user.email,
-      user.name,
-      resetToken.token
-    );
+    await sendPasswordResetEmail(user.email, user.name, resetToken.token);
 
     return NextResponse.json({
-      message: "Se o email existe em nosso sistema, você receberá um link de redefinição de senha.",
+      message:
+        "Se o email existe em nosso sistema, você receberá um link de redefinição de senha.",
     });
   } catch (error) {
     return errorHandler(error);

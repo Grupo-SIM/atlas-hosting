@@ -47,9 +47,9 @@ export async function DomainSuggestions({
       </CardHeader>
       <CardContent>
         <DomainSuggestionsClient
-          key={`${domainName}-${domainData.extraDomains.length}`} // Força reset quando mudar
-          initialDomains={domainData.extraDomains}
           domainName={domainName}
+          initialDomains={domainData.extraDomains}
+          key={`${domainName}-${domainData.extraDomains.length}`} // Força reset quando mudar
         />
       </CardContent>
     </Card>

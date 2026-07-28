@@ -1,14 +1,14 @@
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
-  pgInvoice,
-  pgOrganizationDomains,
   type DomainRegisterInvoiceOptions,
   type DomainRegistrationOutcome,
   type Invoice,
+  pgInvoice,
+  pgOrganizationDomains,
 } from "@/lib/db/schema";
 import namecheapApi from "@/lib/server/apis/namecheap";
 import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
-import { and, eq } from "drizzle-orm";
 
 const DEFAULT_NS = [
   "dns1.registrar-servers.com",
@@ -21,15 +21,15 @@ export function domainNamesFromInvoice(
 ): string[] {
   const meta = invoice.metadata as DomainRegisterInvoiceOptions;
   if (meta.bundleDomains && meta.bundleDomains.length >= 2) {
-    return [...new Set(meta.bundleDomains.map((d) => d.trim().toLowerCase()))].filter(
-      Boolean
-    );
+    return [
+      ...new Set(meta.bundleDomains.map(d => d.trim().toLowerCase())),
+    ].filter(Boolean);
   }
   const one = invoice.reference?.trim().toLowerCase();
   return one ? [one] : [];
 }
 
-export type RegisterResult = {
+export interface RegisterResult {
   /** Domínios que a organização passou a possuir (registrados agora ou já existentes). */
   registered: string[];
   /** Domínios que falharam nesta tentativa. */
@@ -38,7 +38,7 @@ export type RegisterResult = {
   skipped: string[];
   /** Mensagem de erro real do registrador, por domínio que falhou. */
   errors: Record<string, string>;
-};
+}
 
 /** Já existe vínculo domínio→organização no nosso banco? (idempotência principal) */
 async function isLinkedInDb(orgId: string, domain: string): Promise<boolean> {
@@ -54,9 +54,9 @@ async function isLinkedInDb(orgId: string, domain: string): Promise<boolean> {
 async function linkDomain(orgId: string, domain: string): Promise<void> {
   if (await isLinkedInDb(orgId, domain)) return;
   await db.insert(pgOrganizationDomains).values({
-    organizationId: orgId,
-    domain,
     active: true,
+    domain,
+    organizationId: orgId,
   });
 }
 
@@ -83,12 +83,12 @@ async function persistOutcome(
         ? "partial"
         : "failed";
   const outcome: DomainRegistrationOutcome = {
-    status,
-    registered: result.registered,
-    failed: result.failed,
-    skipped: result.skipped,
-    errors: result.errors,
     at: new Date().toISOString(),
+    errors: result.errors,
+    failed: result.failed,
+    registered: result.registered,
+    skipped: result.skipped,
+    status,
   };
   try {
     const mergedMeta = {
@@ -117,22 +117,24 @@ export async function registerDomainsFromPaidInvoice(
   contact: NamecheapContactDetails
 ): Promise<RegisterResult> {
   const meta = invoice.metadata as DomainRegisterInvoiceOptions;
-  const years = Math.max(1, parseInt(String(meta?.years ?? "1"), 10));
+  const years = Math.max(1, Number.parseInt(String(meta?.years ?? "1"), 10));
   const whoisguard = meta?.whoisguard === "on";
   const names = domainNamesFromInvoice(invoice);
 
   const result: RegisterResult = {
-    registered: [],
-    failed: [],
-    skipped: [],
     errors: {},
+    failed: [],
+    registered: [],
+    skipped: [],
   };
 
   for (const DomainName of names) {
     try {
       // 1) Idempotência: já vinculado no banco → nada a fazer, sem cobrança.
       if (await isLinkedInDb(invoice.orgId, DomainName)) {
-        console.log(`[REGISTER] ${DomainName} já vinculado à org ${invoice.orgId}; pulando.`);
+        console.log(
+          `[REGISTER] ${DomainName} já vinculado à org ${invoice.orgId}; pulando.`
+        );
         result.registered.push(DomainName);
         result.skipped.push(DomainName);
         continue;
@@ -150,17 +152,19 @@ export async function registerDomainsFromPaidInvoice(
       }
 
       // 3) Registro efetivo.
-      console.log(`[REGISTER] → createDomain ${DomainName} (${years}a, wg=${whoisguard})`);
+      console.log(
+        `[REGISTER] → createDomain ${DomainName} (${years}a, wg=${whoisguard})`
+      );
       const domainResult = await namecheapApi.createDomain({
-        DomainName,
-        Years: years,
-        Registrant: contact,
-        Admin: contact,
-        Tech: contact,
-        AuxBilling: contact,
         AddFreeWhoisguard: whoisguard ? "yes" : "no",
-        WGEnabled: whoisguard ? "yes" : "no",
+        Admin: contact,
+        AuxBilling: contact,
+        DomainName,
         Nameservers: [...DEFAULT_NS],
+        Registrant: contact,
+        Tech: contact,
+        WGEnabled: whoisguard ? "yes" : "no",
+        Years: years,
       });
 
       if (domainResult.Registered) {

@@ -3,10 +3,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function BillingListSkeleton() {
   return (
-    <div className="space-y-4 mt-8 animate-pulse">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Card key={i} className="border-none shadow-sm bg-card/50">
-          <CardContent className="p-6 flex items-center justify-between">
+    <div className="mt-8 animate-pulse space-y-4">
+      {[1, 2, 3, 4, 5].map(i => (
+        <Card className="border-none bg-card/50 shadow-sm" key={i}>
+          <CardContent className="flex items-center justify-between p-6">
             <div className="flex items-center gap-4">
               <Skeleton className="h-12 w-12 rounded-xl" />
               <div className="space-y-2">
@@ -15,13 +15,13 @@ export function BillingListSkeleton() {
               </div>
             </div>
             <div className="flex items-center gap-6">
-              <div className="hidden sm:flex gap-2">
+              <div className="hidden gap-2 sm:flex">
                 <Skeleton className="h-6 w-20 rounded-full" />
                 <Skeleton className="h-6 w-20 rounded-full" />
               </div>
-              <div className="text-right space-y-2">
-                <Skeleton className="h-7 w-24 ml-auto" />
-                <Skeleton className="h-3 w-16 ml-auto" />
+              <div className="space-y-2 text-right">
+                <Skeleton className="ml-auto h-7 w-24" />
+                <Skeleton className="ml-auto h-3 w-16" />
               </div>
               <Skeleton className="h-6 w-6 rounded-full" />
             </div>
@@ -34,7 +34,7 @@ export function BillingListSkeleton() {
 
 export default function BillingLoading() {
   return (
-    <div className="container mx-auto py-8 px-4 md:px-6 max-w-6xl space-y-8 animate-pulse">
+    <div className="container mx-auto max-w-6xl animate-pulse space-y-8 px-4 py-8 md:px-6">
       {/* Header Skeleton */}
       <div className="space-y-2">
         <Skeleton className="h-10 w-48" />
@@ -42,10 +42,10 @@ export default function BillingLoading() {
       </div>
 
       {/* Stats Cards Skeleton */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map(i => (
           <Card key={i}>
-            <CardContent className="p-6 space-y-2">
+            <CardContent className="space-y-2 p-6">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-8 w-32" />
             </CardContent>
@@ -55,8 +55,8 @@ export default function BillingLoading() {
 
       {/* Filters Skeleton */}
       <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-          <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
+          <div className="flex flex-wrap items-center gap-4">
             <Skeleton className="h-10 w-[400px] rounded-lg" />
             <Skeleton className="h-10 w-[300px] rounded-lg" />
           </div>

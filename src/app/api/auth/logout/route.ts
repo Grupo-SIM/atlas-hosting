@@ -1,14 +1,13 @@
-import { auth, signOut } from "@/auth";
-import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { auth, signOut } from "@/auth";
+import { validateSession } from "@/lib/auth/utils";
 import { db } from "@/lib/db";
 import { pgSession } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { validateSession } from "@/lib/auth/utils";
 
 export async function POST() {
   try {
-
     const session = await auth();
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get("session_token")?.value;
@@ -24,8 +23,8 @@ export async function POST() {
     if (!isNextAuthAuthenticated && !isCustomSessionAuthenticated) {
       return NextResponse.json(
         {
-          status: "error",
           message: "Usuário não autenticado",
+          status: "error",
         },
         { status: 401 }
       );
@@ -57,11 +56,10 @@ export async function POST() {
 
     return NextResponse.json(
       {
-        status: "success",
         message: "Logout realizado com sucesso",
+        status: "success",
       },
       {
-        status: 200,
         headers: {
           "Set-Cookie": [
             "authjs.session-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
@@ -69,17 +67,17 @@ export async function POST() {
             "session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
           ].join(", "),
         },
+        status: 200,
       }
     );
   } catch (error) {
     console.error("Erro ao fazer logout:", error);
     return NextResponse.json(
       {
-        status: "error",
         message: "Erro ao fazer logout. Tente novamente.",
+        status: "error",
       },
       { status: 500 }
     );
   }
 }
-

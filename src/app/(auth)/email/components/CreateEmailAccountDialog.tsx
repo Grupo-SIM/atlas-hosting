@@ -1,5 +1,8 @@
 "use client";
 
+import { HardDrive, Loader2, Lock, Mail, Plus, User } from "lucide-react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,10 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, Mail, Lock, User, HardDrive, Loader2 } from "lucide-react";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
 import { createPleskMailAccount } from "../actions";
 
 interface CreateEmailAccountDialogProps {
@@ -34,11 +33,11 @@ export function CreateEmailAccountDialog({
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState({
-    username: "",
-    password: "",
     confirmPassword: "",
     displayName: "",
+    password: "",
     quota: "100", // 1GB default
+    username: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -74,11 +73,11 @@ export function CreateEmailAccountDialog({
         );
         setOpen(false);
         setFormData({
-          username: "",
-          password: "",
           confirmPassword: "",
           displayName: "",
+          password: "",
           quota: "1000",
+          username: "",
         });
       } catch (error) {
         console.error("Error creating email account:", error);
@@ -94,15 +93,15 @@ export function CreateEmailAccountDialog({
     for (let i = 0; i < 12; i++) {
       password += charset.charAt(Math.floor(Math.random() * charset.length));
     }
-    setFormData((prev) => ({ ...prev, password, confirmPassword: password }));
+    setFormData(prev => ({ ...prev, confirmPassword: password, password }));
     toast.info("Senha segura gerada automaticamente");
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button className="w-full">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="mr-2 h-4 w-4" />
           Criar Nova Conta
         </Button>
       </DialogTrigger>
@@ -118,33 +117,33 @@ export function CreateEmailAccountDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           {/* Username */}
           <div className="space-y-2">
-            <Label htmlFor="username" className="flex items-center gap-2">
+            <Label className="flex items-center gap-2" htmlFor="username">
               <User className="h-4 w-4" />
               Nome de Usuário
             </Label>
             <div className="flex">
               <Input
+                className="rounded-r-none"
+                disabled={isPending}
                 id="username"
-                placeholder="usuario"
-                value={formData.username}
-                onChange={(e) =>
-                  setFormData((prev) => ({
+                onChange={e =>
+                  setFormData(prev => ({
                     ...prev,
                     username: e.target.value.toLowerCase(),
                   }))
                 }
-                className="rounded-r-none"
-                disabled={isPending}
+                placeholder="usuario"
                 required
+                value={formData.username}
               />
-              <div className="flex items-center px-3 bg-muted border border-l-0 rounded-r-md text-sm text-muted-foreground">
+              <div className="flex items-center rounded-r-md border border-l-0 bg-muted px-3 text-muted-foreground text-sm">
                 @{domainName}
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Digite apenas o nome de usuário (sem @{domainName})
             </p>
           </div>
@@ -153,47 +152,47 @@ export function CreateEmailAccountDialog({
           <div className="space-y-2">
             <Label htmlFor="displayName">Nome de Exibição (Opcional)</Label>
             <Input
+              disabled={isPending}
               id="displayName"
-              placeholder="João Silva"
-              value={formData.displayName}
-              onChange={(e) =>
-                setFormData((prev) => ({
+              onChange={e =>
+                setFormData(prev => ({
                   ...prev,
                   displayName: e.target.value,
                 }))
               }
-              disabled={isPending}
+              placeholder="João Silva"
+              value={formData.displayName}
             />
           </div>
 
           {/* Password */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="flex items-center gap-2">
+              <Label className="flex items-center gap-2" htmlFor="password">
                 <Lock className="h-4 w-4" />
                 Senha
               </Label>
               <Button
+                disabled={isPending}
+                onClick={generateSecurePassword}
+                size="sm"
                 type="button"
                 variant="outline"
-                size="sm"
-                onClick={generateSecurePassword}
-                disabled={isPending}
               >
                 Gerar Senha
               </Button>
             </div>
             <Input
-              id="password"
-              type="password"
-              placeholder="Digite uma senha segura"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, password: e.target.value }))
-              }
               disabled={isPending}
-              required
+              id="password"
               minLength={8}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, password: e.target.value }))
+              }
+              placeholder="Digite uma senha segura"
+              required
+              type="password"
+              value={formData.password}
             />
           </div>
 
@@ -201,34 +200,34 @@ export function CreateEmailAccountDialog({
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirmar Senha</Label>
             <Input
+              disabled={isPending}
               id="confirmPassword"
-              type="password"
-              placeholder="Digite a senha novamente"
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                setFormData((prev) => ({
+              minLength={8}
+              onChange={e =>
+                setFormData(prev => ({
                   ...prev,
                   confirmPassword: e.target.value,
                 }))
               }
-              disabled={isPending}
+              placeholder="Digite a senha novamente"
               required
-              minLength={8}
+              type="password"
+              value={formData.confirmPassword}
             />
           </div>
 
           {/* Quota */}
           <div className="space-y-2">
-            <Label htmlFor="quota" className="flex items-center gap-2">
+            <Label className="flex items-center gap-2" htmlFor="quota">
               <HardDrive className="h-4 w-4" />
               Cota de Armazenamento
             </Label>
             <Select
-              value={formData.quota}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, quota: value }))
-              }
               disabled={isPending}
+              onValueChange={value =>
+                setFormData(prev => ({ ...prev, quota: value }))
+              }
+              value={formData.quota}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -244,9 +243,9 @@ export function CreateEmailAccountDialog({
           </div>
 
           {/* Password Requirements */}
-          <div className="p-3 bg-muted rounded-lg">
-            <p className="text-sm font-medium mb-2">Requisitos da Senha:</p>
-            <ul className="text-xs text-muted-foreground space-y-1">
+          <div className="rounded-lg bg-muted p-3">
+            <p className="mb-2 font-medium text-sm">Requisitos da Senha:</p>
+            <ul className="space-y-1 text-muted-foreground text-xs">
               <li
                 className={
                   formData.password.length >= 8 ? "text-green-600" : ""
@@ -281,23 +280,23 @@ export function CreateEmailAccountDialog({
           {/* Actions */}
           <div className="flex gap-3 pt-4">
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
               className="flex-1"
               disabled={isPending}
+              onClick={() => setOpen(false)}
+              type="button"
+              variant="outline"
             >
               Cancelar
             </Button>
-            <Button type="submit" className="flex-1" disabled={isPending}>
+            <Button className="flex-1" disabled={isPending} type="submit">
               {isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Criando...
                 </>
               ) : (
                 <>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Criar Conta
                 </>
               )}

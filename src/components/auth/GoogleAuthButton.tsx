@@ -1,14 +1,14 @@
-import { signInWithGoogle } from "@/app/actions";
 import { FaGoogle } from "react-icons/fa6";
+import { signInWithGoogle } from "@/app/actions";
 import { Button } from "../ui/button";
 
 export default function GoogleAuthButton() {
   return (
-    <form action={signInWithGoogle} className="w-full h-full">
+    <form action={signInWithGoogle} className="h-full w-full">
       <Button
-        variant="outline"
+        className="flex h-full w-full items-center justify-center gap-2"
         type="submit"
-        className="flex items-center justify-center gap-2 w-full h-full"
+        variant="outline"
       >
         <FaGoogle className="h-4 w-4" />
         Google

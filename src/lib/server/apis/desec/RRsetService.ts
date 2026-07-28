@@ -2,11 +2,11 @@
 
 import type { DeSECClient } from "./DeSECClient";
 import type {
-  RRset,
+  BulkRRsetPayload,
   CreateRRsetPayload,
   ModifyRRsetPayload,
   ReplaceRRsetPayload,
-  BulkRRsetPayload,
+  RRset,
 } from "./types";
 
 /**

@@ -1,13 +1,11 @@
+import { and, eq } from "drizzle-orm";
+import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { type Organization, pgInvoice } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
-import Link from "next/link";
 import { OrganizationSection } from "./components/OrganizationSection";
-import { SubscriptionSection } from "./components/SubscriptionSection";
 import { UserSection } from "./components/UserSection";
-import { WalletSection } from "./components/WalletSection";
 
 export default async function SettingsPage({
   searchParams,
@@ -21,39 +19,39 @@ export default async function SettingsPage({
 
   // Fetch recent invoices for wallet information
   const invoices = await db.query.pgInvoice.findMany({
+    limit: 5,
+    orderBy: (pgInvoice, { desc }) => [pgInvoice.createdAt],
     where: and(
       eq(pgInvoice.orgId, (user.organization as Organization).id),
       eq(pgInvoice.status, "paid")
     ),
-    orderBy: (pgInvoice, { desc }) => [pgInvoice.createdAt],
-    limit: 5,
   });
 
   const currentTab = params.tab ?? "user";
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+        <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
           Configurações
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="mt-1 text-muted-foreground">
           Gerencie suas informações pessoais, organização e configurações da
           conta
         </p>
       </div>
 
-      <Tabs value={params.tab ?? "user"} className="space-y-6">
+      <Tabs className="space-y-6" value={params.tab ?? "user"}>
         <TabsList className="grid w-full grid-cols-2">
-          <Link href="/settings?tab=user" className="block w-full">
-            <TabsTrigger value="user" className="pointer-events-none w-full">
+          <Link className="block w-full" href="/settings?tab=user">
+            <TabsTrigger className="pointer-events-none w-full" value="user">
               Perfil
             </TabsTrigger>
           </Link>
-          <Link href="/settings?tab=organization" className="block w-full">
+          <Link className="block w-full" href="/settings?tab=organization">
             <TabsTrigger
-              value="organization"
               className="pointer-events-none w-full"
+              value="organization"
             >
               Organização
             </TabsTrigger>
@@ -61,13 +59,13 @@ export default async function SettingsPage({
         </TabsList>
 
         {currentTab === "user" && (
-          <TabsContent value="user" className="space-y-6">
+          <TabsContent className="space-y-6" value="user">
             <UserSection user={user} />
           </TabsContent>
         )}
 
         {currentTab === "organization" && (
-          <TabsContent value="organization" className="space-y-6">
+          <TabsContent className="space-y-6" value="organization">
             <OrganizationSection user={user} />
           </TabsContent>
         )}

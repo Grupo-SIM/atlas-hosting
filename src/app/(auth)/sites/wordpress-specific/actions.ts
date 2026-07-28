@@ -1,17 +1,16 @@
 "use server";
 
-import { getUser } from "@/lib/auth";
-import { getUserWordPressSites } from "@/lib/server/utils";
-import pleskApi from "@/lib/server/apis/plesk";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type {
-  WordPressPluginInfo,
-  WordPressUserInfo,
-  WordPressThemeInfo,
-  WordPressSiteInfo,
-} from "./types";
+import { getUser } from "@/lib/auth";
+import pleskApi from "@/lib/server/apis/plesk";
 import WpCliApi from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
+import { getUserWordPressSites } from "@/lib/server/utils";
+import type {
+  WordPressSiteInfo,
+  WordPressThemeInfo,
+  WordPressUserInfo,
+} from "./types";
 
 export async function getWordPressSitesForSelectedDomain(): Promise<
   WordPressSiteInfo[]
@@ -24,7 +23,7 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
     // Filter by selected domain if set
     let filteredInstances = wpInstances;
     if (user.selectedDomain) {
-      filteredInstances = wpInstances.filter((instance) => {
+      filteredInstances = wpInstances.filter(instance => {
         try {
           const instanceHostname = new URL(instance.domain).hostname;
           return (
@@ -43,8 +42,8 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
         try {
           const wpCli = new WpCliApi(instance.id);
           const plugins = await wpCli.plugin.list({
-            format: "json",
             fields: pluginFields.join(","),
+            format: "json",
           });
 
           // Get themes for this instance
@@ -57,7 +56,7 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
             const rawThemes = JSON.parse(
               themesResponse.stdout
             ) as WordPressThemeInfo[];
-            themes = rawThemes.map((theme) => ({
+            themes = rawThemes.map(theme => ({
               ...theme,
               updateAvailable: theme.update === "available",
             }));
@@ -68,7 +67,7 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
             `--wp-cli -instance-id ${instance.instanceId} -- user list --format=json`
           );
 
-          let users: Array<WordPressUserInfo> = [];
+          let users: WordPressUserInfo[] = [];
           if (usersResponse.stdout) {
             users = JSON.parse(usersResponse.stdout);
           }
@@ -90,35 +89,35 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
           }
 
           const pluginsWithUpdates = plugins.filter(
-            (p) => p.version < (p.updateVersion ?? 0)
+            p => p.version < (p.updateVersion ?? 0)
           );
           const themesWithUpdates = themes.filter(
-            (t) => t.update === "available"
+            t => t.update === "available"
           );
 
           return {
-            id: instance.id,
-            instanceId: instance.instanceId,
-            name: instance.name,
-            domain: instance.domain,
-            path: instance.path,
-            status: instance.status,
-            version: "6.4.2", // We could get this from WP CLI if needed
-            loginUrl: `${instance.domain}/wp-admin`,
-            url: instance.domain, // Use domain as URL
             createdAt: new Date().toISOString(), // Placeholder - could get from instance data
-            plugins,
-            themes,
-            users,
+            domain: instance.domain,
             hasUpdates:
               hasUpdates ||
-              plugins.some((p) => p.version < (p.updateVersion ?? 0)) ||
-              themes.some((t) => t.update === "available"),
+              plugins.some(p => p.version < (p.updateVersion ?? 0)) ||
+              themes.some(t => t.update === "available"),
+            id: instance.id,
+            instanceId: instance.instanceId,
+            loginUrl: `${instance.domain}/wp-admin`,
+            name: instance.name,
+            path: instance.path,
+            plugins,
+            status: instance.status,
+            themes,
             updatesAvailable: {
               core: hasUpdates,
               plugins: pluginsWithUpdates,
               themes: themesWithUpdates,
             },
+            url: instance.domain, // Use domain as URL
+            users,
+            version: "6.4.2", // We could get this from WP CLI if needed
           };
         } catch (error) {
           console.error(
@@ -126,23 +125,23 @@ export async function getWordPressSitesForSelectedDomain(): Promise<
             error
           );
           return {
+            createdAt: new Date().toISOString(), // Placeholder
+            domain: instance.domain,
+            hasUpdates: false,
             id: instance.id,
             instanceId: instance.instanceId,
-            name: instance.name,
-            domain: instance.domain,
-            path: instance.path,
-            status: instance.status,
-            version: "Unknown",
             loginUrl: `${instance.domain}/wp-admin`,
-            url: instance.domain, // Use domain as URL
-            createdAt: new Date().toISOString(), // Placeholder
+            name: instance.name,
+            path: instance.path,
             plugins: [],
-            users: [],
-            hasUpdates: false,
+            status: instance.status,
             updatesAvailable: {
               core: false,
               plugins: [],
             },
+            url: instance.domain, // Use domain as URL
+            users: [],
+            version: "Unknown",
           };
         }
       })
@@ -167,10 +166,10 @@ export async function updateWordPressCore(instanceId: number) {
     );
 
     revalidatePath("/wordpress");
-    return { success: true, message: "WordPress core updated successfully" };
+    return { message: "WordPress core updated successfully", success: true };
   } catch (error) {
     console.error("Error updating WordPress core:", error);
-    return { success: false, message: "Failed to update WordPress core" };
+    return { message: "Failed to update WordPress core", success: false };
   }
 }
 
@@ -182,12 +181,12 @@ export async function updatePlugin(instanceId: number, pluginName: string) {
 
     revalidatePath("/wordpress");
     return {
-      success: true,
       message: `Plugin ${pluginName} updated successfully`,
+      success: true,
     };
   } catch (error) {
     console.error(`Error updating plugin ${pluginName}:`, error);
-    return { success: false, message: `Failed to update plugin ${pluginName}` };
+    return { message: `Failed to update plugin ${pluginName}`, success: false };
   }
 }
 
@@ -209,8 +208,8 @@ export async function togglePlugin(
 
     revalidatePath("/wordpress");
     return {
-      success: true,
       message: `Plugin ${pluginName} ${activate ? "activated" : "deactivated"} successfully`,
+      success: true,
     };
   } catch (error) {
     console.error(
@@ -218,8 +217,8 @@ export async function togglePlugin(
       error
     );
     return {
-      success: false,
       message: `Failed to ${activate ? "activate" : "deactivate"} plugin ${pluginName}`,
+      success: false,
     };
   }
 }
@@ -237,10 +236,10 @@ export async function createWordPressBackup(instanceId: number) {
     );
 
     revalidatePath("/wordpress");
-    return { success: true, message: "Backup created successfully" };
+    return { message: "Backup created successfully", success: true };
   } catch (error) {
     console.error("Error creating backup:", error);
-    return { success: false, message: "Failed to create backup" };
+    return { message: "Failed to create backup", success: false };
   }
 }
 
@@ -262,10 +261,10 @@ export async function createWordPressUser(
     );
 
     revalidatePath("/wordpress");
-    return { success: true, message: `User ${username} created successfully` };
+    return { message: `User ${username} created successfully`, success: true };
   } catch (error) {
     console.error("Error creating WordPress user:", error);
-    return { success: false, message: "Failed to create user" };
+    return { message: "Failed to create user", success: false };
   }
 }
 
@@ -277,10 +276,10 @@ export async function activateTheme(instanceId: number, themeName: string) {
     );
 
     revalidatePath("/wordpress");
-    return { success: true, message: "Tema ativado com sucesso" };
+    return { message: "Tema ativado com sucesso", success: true };
   } catch (error) {
     console.error("Error activating theme:", error);
-    return { success: false, message: "Erro ao ativar tema" };
+    return { message: "Erro ao ativar tema", success: false };
   }
 }
 
@@ -291,10 +290,10 @@ export async function updateTheme(instanceId: number, themeName: string) {
     );
 
     revalidatePath("/wordpress");
-    return { success: true, message: "Tema atualizado com sucesso" };
+    return { message: "Tema atualizado com sucesso", success: true };
   } catch (error) {
     console.error("Error updating theme:", error);
-    return { success: false, message: "Erro ao atualizar tema" };
+    return { message: "Erro ao atualizar tema", success: false };
   }
 }
 
@@ -305,10 +304,10 @@ export async function deleteTheme(instanceId: number, themeName: string) {
     );
 
     revalidatePath("/wordpress");
-    return { success: true, message: "Tema removido com sucesso" };
+    return { message: "Tema removido com sucesso", success: true };
   } catch (error) {
     console.error("Error deleting theme:", error);
-    return { success: false, message: "Erro ao remover tema" };
+    return { message: "Erro ao remover tema", success: false };
   }
 }
 
@@ -319,15 +318,15 @@ export async function installTheme(instanceId: number, themeSlug: string) {
     );
 
     revalidatePath("/wordpress");
-    return { success: true, message: "Tema instalado com sucesso" };
+    return { message: "Tema instalado com sucesso", success: true };
   } catch (error) {
     console.error("Error installing theme:", error);
-    return { success: false, message: "Erro ao instalar tema" };
+    return { message: "Erro ao instalar tema", success: false };
   }
 }
 
 // Helper functions for parsing wp-cli table output
-function parseTableOutput(output: string): Array<Record<string, string>> {
+function parseTableOutput(output: string): Record<string, string>[] {
   if (!output?.trim()) return [];
 
   const lines = output.trim().split("\n");
@@ -337,10 +336,10 @@ function parseTableOutput(output: string): Array<Record<string, string>> {
   const headerLine = lines[0];
   const headers = headerLine
     .split("\t")
-    .map((h) => h.trim())
+    .map(h => h.trim())
     .filter(Boolean);
 
-  const results: Array<Record<string, string>> = [];
+  const results: Record<string, string>[] = [];
 
   // Parse each data line
   for (let i = 1; i < lines.length; i++) {
@@ -350,7 +349,7 @@ function parseTableOutput(output: string): Array<Record<string, string>> {
     console.log({ line });
 
     // Split by multiple spaces to separate columns
-    const values = line.split("\t").map((v) => v.trim());
+    const values = line.split("\t").map(v => v.trim());
 
     console.log({ values });
 
@@ -370,11 +369,11 @@ function parseUserList(
 ): Array<{ id: number; username: string; email: string; role: string }> {
   const rows = parseTableOutput(output);
 
-  return rows.map((row) => ({
-    id: Number.parseInt(row.ID || row.id || "0", 10),
-    username: row.user_login || row.username || row.Username || "",
+  return rows.map(row => ({
     email: row.user_email || row.email || row.Email || "",
+    id: Number.parseInt(row.ID || row.id || "0", 10),
     role: row.roles || row.role || row.Role || "subscriber",
+    username: row.user_login || row.username || row.Username || "",
   }));
 }
 

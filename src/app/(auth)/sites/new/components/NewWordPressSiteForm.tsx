@@ -1,10 +1,29 @@
 "use client";
 
-import { useState, useCallback, useRef, startTransition } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle,
+  Globe,
+  Loader2,
+  Package,
+  Settings,
+  Terminal,
+  WholeWord,
+} from "lucide-react";
+import Link from "next/link";
+import { startTransition, useCallback, useRef, useState } from "react";
+import { changeSelectedDomain } from "@/app/actions";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -12,36 +31,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  ArrowRight,
-  Check,
-  Loader2,
-  WholeWord,
-  Globe,
-  Settings,
-  Package,
-  Terminal,
-  CheckCircle,
-  Circle,
-  ArrowLeft,
-  Shield,
-  Zap,
-  Eye,
-  AlertCircle,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import type {
-  DomainListItem,
-  DomainsGetInfoCleanedResponse,
-} from "@/lib/server/apis/namecheap/types";
-import Link from "next/link";
-import { changeSelectedDomain } from "@/app/actions";
+import { useToast } from "@/hooks/use-toast";
+import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
+import { cn } from "@/lib/utils";
 
 interface FormData {
   domain: string;
@@ -82,12 +75,12 @@ export function NewWordPressSiteForm({
   const [formErrors, setFormErrors] = useState<FormErrors>({});
 
   const [formData, setFormData] = useState<FormData>({
-    domain: "",
-    siteName: "",
-    adminUsername: "admin",
-    adminPassword: "",
     adminEmail: userEmail || "",
+    adminPassword: "",
+    adminUsername: "admin",
+    domain: "",
     selectedPlugins: [],
+    siteName: "",
   });
 
   const eventSource = useRef<EventSource | null>(null);
@@ -132,10 +125,10 @@ export function NewWordPressSiteForm({
   };
 
   const handlePluginToggle = (pluginId: string) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       selectedPlugins: prev.selectedPlugins.includes(pluginId)
-        ? prev.selectedPlugins.filter((id) => id !== pluginId)
+        ? prev.selectedPlugins.filter(id => id !== pluginId)
         : [...prev.selectedPlugins, pluginId],
     }));
   };
@@ -143,8 +136,8 @@ export function NewWordPressSiteForm({
   const handleInstall = useCallback(() => {
     if (!formData.domain) {
       toast({
-        title: "Erro",
         description: "Por favor, selecione um domínio.",
+        title: "Erro",
         variant: "destructive",
       });
       return;
@@ -158,9 +151,9 @@ export function NewWordPressSiteForm({
       )
     ) {
       toast({
-        title: "Erro",
         description:
           "Por favor, preencha todos os campos de configuração do site.",
+        title: "Erro",
         variant: "destructive",
       });
       return;
@@ -175,12 +168,12 @@ export function NewWordPressSiteForm({
     }
 
     const searchParams = new URLSearchParams({
-      domain: formData.domain,
-      admin_username: formData.adminUsername,
-      admin_password: formData.adminPassword,
-      site_name: formData.siteName,
       admin_email: formData.adminEmail,
+      admin_password: formData.adminPassword,
+      admin_username: formData.adminUsername,
+      domain: formData.domain,
       plugins: formData.selectedPlugins.join(","),
+      site_name: formData.siteName,
     });
 
     const apiUrl = `/api/wp-install-w?${searchParams.toString()}`;
@@ -192,19 +185,19 @@ export function NewWordPressSiteForm({
       setInstallationProgress(5);
     };
 
-    eventSource.current.onmessage = (event) => {
+    eventSource.current.onmessage = event => {
       const rawData = event.data as string;
       try {
         const parsedData = JSON.parse(rawData);
         const { type, message, error, details } = parsedData;
 
         setInstallationMessage(message || "Processando...");
-        setInstallationProgress((prev) => Math.min(95, prev + 10));
+        setInstallationProgress(prev => Math.min(95, prev + 10));
 
         if (type === "ERROR") {
           toast({
-            title: message || "Erro na Instalação",
             description: error || details || "Ocorreu um erro.",
+            title: message || "Erro na Instalação",
             variant: "destructive",
           });
           setIsInstalling(false);
@@ -212,9 +205,9 @@ export function NewWordPressSiteForm({
         } else if (type === "SUCCESS") {
           setInstallationProgress(100);
           toast({
-            title: "Instalação Concluída!",
             description:
               message || "Seu site WordPress foi instalado com sucesso.",
+            title: "Instalação Concluída!",
             variant: "default",
           });
           setTimeout(() => {
@@ -225,15 +218,15 @@ export function NewWordPressSiteForm({
         }
       } catch (_e) {
         setInstallationMessage(rawData || "Atualizando status...");
-        setInstallationProgress((prev) => Math.min(95, prev + 10));
+        setInstallationProgress(prev => Math.min(95, prev + 10));
       }
     };
 
-    eventSource.current.onerror = (_err) => {
+    eventSource.current.onerror = _err => {
       toast({
-        title: "Erro de Conexão",
         description:
           "Não foi possível conectar ao servidor para atualizações em tempo real.",
+        title: "Erro de Conexão",
         variant: "destructive",
       });
       setIsInstalling(false);
@@ -280,33 +273,33 @@ export function NewWordPressSiteForm({
   // Current Step Header (replaces old step indicator position)
   const renderCurrentStepHeader = () => (
     <motion.div
-      layout
-      className="text-center mb-8"
-      key={currentStep}
-      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      className="mb-8 text-center"
       exit={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: 20 }}
+      key={currentStep}
+      layout
       transition={{ duration: 0.4 }}
     >
-      <div className="flex items-center justify-center gap-4 mb-4">
+      <div className="mb-4 flex items-center justify-center gap-4">
         <motion.div
-          className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl flex items-center justify-center"
           animate={{
             scale: [1, 1.05, 1],
           }}
+          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10"
           transition={{
             duration: 2,
-            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
+            repeat: Number.POSITIVE_INFINITY,
           }}
         >
           <StepIcon step={currentStep} />
         </motion.div>
       </div>
-      <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+      <h1 className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text font-bold text-3xl text-transparent tracking-tight">
         {stepTitles[currentStep - 1]}
       </h1>
-      <p className="text-muted-foreground mt-2 text-lg">
+      <p className="mt-2 text-lg text-muted-foreground">
         {currentStep === 1 && "Selecione onde você quer instalar o WordPress"}
         {currentStep === 2 &&
           "Defina as informações básicas para sua instalação WordPress"}
@@ -318,40 +311,40 @@ export function NewWordPressSiteForm({
 
   // Step Progress Indicator (moves to where step content was)
   const renderStepIndicator = () => (
-    <motion.div layout className="mb-8">
+    <motion.div className="mb-8" layout>
       {/* Step Progress Bar */}
       <div className="relative mb-8">
-        <div className="absolute top-6 left-0 w-full h-0.5 bg-gradient-to-r from-muted via-muted to-muted">
+        <div className="absolute top-6 left-0 h-0.5 w-full bg-gradient-to-r from-muted via-muted to-muted">
           <motion.div
-            className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full"
-            initial={{ width: "0%" }}
             animate={{
               width: `${((currentStep - 1) / 2) * 100}%`,
             }}
+            className="h-full rounded-full bg-gradient-to-r from-primary via-primary/80 to-primary"
+            initial={{ width: "0%" }}
             transition={{ duration: 0.6, ease: "easeInOut" }}
           />
         </div>
 
-        <div className="flex items-center justify-between relative">
-          {[1, 2, 3].map((step) => (
+        <div className="relative flex items-center justify-between">
+          {[1, 2, 3].map(step => (
             <motion.div
-              key={step}
-              className="flex flex-col items-center z-10"
-              initial={false}
               animate={{
                 scale: step === currentStep ? 1.05 : 1,
               }}
+              className="z-10 flex flex-col items-center"
+              initial={false}
+              key={step}
               transition={{ duration: 0.3 }}
             >
               {/* Step Circle */}
               <motion.div
                 className={cn(
-                  "relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 border-2 backdrop-blur-sm",
+                  "relative flex h-12 w-12 items-center justify-center rounded-full border-2 backdrop-blur-sm transition-all duration-500",
                   step === currentStep
-                    ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/30 ring-4 ring-primary/20"
+                    ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-4 ring-primary/20"
                     : step < currentStep
-                      ? "bg-primary text-primary-foreground border-primary shadow-md"
-                      : "bg-background/80 text-muted-foreground border-muted-foreground/30 shadow-sm"
+                      ? "border-primary bg-primary text-primary-foreground shadow-md"
+                      : "border-muted-foreground/30 bg-background/80 text-muted-foreground shadow-sm"
                 )}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
@@ -359,26 +352,26 @@ export function NewWordPressSiteForm({
                 <AnimatePresence mode="sync" propagate>
                   {step < currentStep ? (
                     <motion.div
-                      layout
+                      animate={{ rotate: 0, scale: 1 }}
+                      exit={{ rotate: 90, scale: 0 }}
+                      initial={{ rotate: -90, scale: 0 }}
                       key="check"
-                      initial={{ scale: 0, rotate: -90 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      exit={{ scale: 0, rotate: 90 }}
+                      layout
                       transition={{
                         duration: 0.3,
-                        type: "spring",
                         stiffness: 300,
+                        type: "spring",
                       }}
                     >
                       <CheckCircle className="h-6 w-6" />
                     </motion.div>
                   ) : (
                     <motion.div
-                      layout
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0 }}
+                      initial={{ opacity: 0, scale: 0 }}
                       key="icon"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0, opacity: 0 }}
+                      layout
                       transition={{ duration: 0.2 }}
                     >
                       <StepIconSmall step={step} />
@@ -389,16 +382,16 @@ export function NewWordPressSiteForm({
                 {/* Pulse effect for current step */}
                 {step === currentStep && (
                   <motion.div
-                    layout
-                    className="absolute inset-0 rounded-full border-2 border-primary"
                     animate={{
-                      scale: [1, 1.2, 1],
                       opacity: [0.5, 0, 0.5],
+                      scale: [1, 1.2, 1],
                     }}
+                    className="absolute inset-0 rounded-full border-2 border-primary"
+                    layout
                     transition={{
                       duration: 2,
-                      repeat: Number.POSITIVE_INFINITY,
                       ease: "easeInOut",
+                      repeat: Number.POSITIVE_INFINITY,
                     }}
                   />
                 )}
@@ -406,15 +399,15 @@ export function NewWordPressSiteForm({
 
               {/* Step Label */}
               <motion.div
-                layout
+                animate={{ opacity: 1, y: 0 }}
                 className="mt-3 text-center"
                 initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                layout
                 transition={{ delay: step * 0.1 }}
               >
                 <div
                   className={cn(
-                    "text-xs font-medium transition-colors",
+                    "font-medium text-xs transition-colors",
                     step === currentStep
                       ? "text-primary"
                       : step < currentStep
@@ -426,9 +419,9 @@ export function NewWordPressSiteForm({
                 </div>
                 <div
                   className={cn(
-                    "text-xs mt-1 max-w-20 transition-colors",
+                    "mt-1 max-w-20 text-xs transition-colors",
                     step === currentStep
-                      ? "text-foreground font-medium"
+                      ? "font-medium text-foreground"
                       : step < currentStep
                         ? "text-muted-foreground"
                         : "text-muted-foreground/70"
@@ -449,49 +442,49 @@ export function NewWordPressSiteForm({
       case 1:
         return (
           <motion.div
-            key="step-1"
-            initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="space-y-8"
+            exit={{ opacity: 0, x: -50 }}
+            initial={{ opacity: 0, x: 50 }}
+            key="step-1"
+            transition={{ duration: 0.4, ease: "easeOut" }}
           >
             <Card className="border-0 shadow-lg">
               <CardContent className="p-8">
                 <div className="space-y-6">
                   <div>
                     <Label
+                      className="font-medium text-base"
                       htmlFor="domainName"
-                      className="text-base font-medium"
                     >
                       Nome do Domínio
                     </Label>
                     <Select
-                      value={formData.domain}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, domain: value }))
-                      }
                       disabled={isInstalling}
+                      onValueChange={value =>
+                        setFormData(prev => ({ ...prev, domain: value }))
+                      }
+                      value={formData.domain}
                     >
                       <SelectTrigger
+                        className="mt-2 h-14 text-base"
                         id="domainName"
-                        className="h-14 text-base mt-2"
                       >
                         <SelectValue placeholder="Selecione um domínio" />
                       </SelectTrigger>
                       <SelectContent>
-                        {domains.map((domain) => (
+                        {domains.map(domain => (
                           <SelectItem
+                            className="py-3"
+                            disabled={domain.inPlesk || isInstalling}
                             key={domain.ID}
                             value={domain.DomainName}
-                            disabled={domain.inPlesk || isInstalling}
-                            className="py-3"
                           >
                             <div className="flex items-center gap-3">
                               <Globe className="h-4 w-4 text-muted-foreground" />
                               <span>{domain.DomainName}</span>
                               {domain.inPlesk && (
-                                <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
+                                <span className="rounded-full bg-amber-100 px-2 py-1 text-amber-800 text-xs">
                                   WordPress já instalado
                                 </span>
                               )}
@@ -507,10 +500,10 @@ export function NewWordPressSiteForm({
 
             <div className="flex justify-end pt-4">
               <Button
-                size="lg"
-                onClick={() => setCurrentStep(2)}
+                className="h-12 min-w-[140px] text-base"
                 disabled={!formData.domain || isInstalling}
-                className="min-w-[140px] h-12 text-base"
+                onClick={() => setCurrentStep(2)}
+                size="lg"
               >
                 Continuar
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -522,50 +515,50 @@ export function NewWordPressSiteForm({
       case 2:
         return (
           <motion.div
-            key="step-2"
-            initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="space-y-8"
+            exit={{ opacity: 0, x: -50 }}
+            initial={{ opacity: 0, x: 50 }}
+            key="step-2"
+            transition={{ duration: 0.4, ease: "easeOut" }}
           >
             <Card className="border-0 shadow-lg">
-              <CardContent className="p-8 space-y-6">
+              <CardContent className="space-y-6 p-8">
                 <div className="space-y-2">
-                  <Label htmlFor="siteName" className="text-base font-medium">
+                  <Label className="font-medium text-base" htmlFor="siteName">
                     Nome do Site
                   </Label>
                   <Input
-                    id="siteName"
                     className={cn(
-                      "h-12 mt-2 transition-all duration-200",
+                      "mt-2 h-12 transition-all duration-200",
                       formErrors.siteName
                         ? "border-destructive focus:border-destructive"
                         : formData.siteName
                           ? "border-emerald-500 focus:border-emerald-500"
                           : ""
                     )}
-                    value={formData.siteName}
-                    onChange={(e) => {
-                      setFormData((prev) => ({
+                    disabled={isInstalling}
+                    id="siteName"
+                    onChange={e => {
+                      setFormData(prev => ({
                         ...prev,
                         siteName: e.target.value,
                       }));
                       if (formErrors.siteName) {
-                        setFormErrors((prev) => ({
+                        setFormErrors(prev => ({
                           ...prev,
                           siteName: undefined,
                         }));
                       }
                     }}
                     placeholder="Meu Site Incrível"
-                    disabled={isInstalling}
+                    value={formData.siteName}
                   />
                   {formErrors.siteName && (
                     <motion.p
-                      initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-destructive flex items-center gap-1"
+                      className="flex items-center gap-1 text-destructive text-sm"
+                      initial={{ opacity: 0, y: -10 }}
                     >
                       <AlertCircle className="h-3 w-3" />
                       {formErrors.siteName}
@@ -576,15 +569,14 @@ export function NewWordPressSiteForm({
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label
+                      className="font-medium text-base"
                       htmlFor="adminUsername"
-                      className="text-base font-medium"
                     >
                       Usuário Admin
                     </Label>
                     <Input
-                      id="adminUsername"
                       className={cn(
-                        "h-12 mt-2 transition-all duration-200",
+                        "mt-2 h-12 transition-all duration-200",
                         formErrors.adminUsername
                           ? "border-destructive focus:border-destructive"
                           : formData.adminUsername &&
@@ -592,27 +584,28 @@ export function NewWordPressSiteForm({
                             ? "border-emerald-500 focus:border-emerald-500"
                             : ""
                       )}
-                      value={formData.adminUsername}
-                      onChange={(e) => {
-                        setFormData((prev) => ({
+                      disabled={isInstalling}
+                      id="adminUsername"
+                      onChange={e => {
+                        setFormData(prev => ({
                           ...prev,
                           adminUsername: e.target.value,
                         }));
                         if (formErrors.adminUsername) {
-                          setFormErrors((prev) => ({
+                          setFormErrors(prev => ({
                             ...prev,
                             adminUsername: undefined,
                           }));
                         }
                       }}
                       placeholder="admin"
-                      disabled={isInstalling}
+                      value={formData.adminUsername}
                     />
                     {formErrors.adminUsername && (
                       <motion.p
-                        initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-sm text-destructive flex items-center gap-1"
+                        className="flex items-center gap-1 text-destructive text-sm"
+                        initial={{ opacity: 0, y: -10 }}
                       >
                         <AlertCircle className="h-3 w-3" />
                         {formErrors.adminUsername}
@@ -621,16 +614,15 @@ export function NewWordPressSiteForm({
                   </div>
                   <div className="space-y-2">
                     <Label
+                      className="font-medium text-base"
                       htmlFor="adminPassword"
-                      className="text-base font-medium"
                     >
                       Senha do Admin
                     </Label>
                     <div className="relative">
                       <Input
-                        id="adminPassword"
                         className={cn(
-                          "h-12 mt-2 transition-all duration-200",
+                          "mt-2 h-12 transition-all duration-200",
                           formErrors.adminPassword
                             ? "border-destructive focus:border-destructive"
                             : formData.adminPassword &&
@@ -638,32 +630,33 @@ export function NewWordPressSiteForm({
                               ? "border-emerald-500 focus:border-emerald-500"
                               : ""
                         )}
-                        type="password"
-                        value={formData.adminPassword}
-                        onChange={(e) => {
-                          setFormData((prev) => ({
+                        disabled={isInstalling}
+                        id="adminPassword"
+                        onChange={e => {
+                          setFormData(prev => ({
                             ...prev,
                             adminPassword: e.target.value,
                           }));
                           if (formErrors.adminPassword) {
-                            setFormErrors((prev) => ({
+                            setFormErrors(prev => ({
                               ...prev,
                               adminPassword: undefined,
                             }));
                           }
                         }}
                         placeholder="Senha forte"
-                        disabled={isInstalling}
+                        type="password"
+                        value={formData.adminPassword}
                       />
                       {formData.adminPassword && (
                         <motion.div
-                          initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
+                          className="absolute top-1/2 right-3 -translate-y-1/2"
+                          initial={{ opacity: 0, scale: 0.9 }}
                         >
                           <div
                             className={cn(
-                              "w-2 h-2 rounded-full",
+                              "h-2 w-2 rounded-full",
                               getPasswordStrength(formData.adminPassword) >= 75
                                 ? "bg-emerald-500"
                                 : getPasswordStrength(formData.adminPassword) >=
@@ -677,14 +670,13 @@ export function NewWordPressSiteForm({
                     </div>
                     {formData.adminPassword && (
                       <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
+                        animate={{ height: "auto", opacity: 1 }}
                         className="space-y-1"
+                        initial={{ height: 0, opacity: 0 }}
                       >
                         <div className="flex gap-1">
-                          {[25, 50, 75, 100].map((threshold) => (
+                          {[25, 50, 75, 100].map(threshold => (
                             <div
-                              key={threshold}
                               className={cn(
                                 "h-1 flex-1 rounded-full transition-colors duration-300",
                                 getPasswordStrength(formData.adminPassword) >=
@@ -696,10 +688,11 @@ export function NewWordPressSiteForm({
                                       : "bg-emerald-500"
                                   : "bg-muted"
                               )}
+                              key={threshold}
                             />
                           ))}
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           Força da senha:{" "}
                           {getPasswordStrength(formData.adminPassword) >= 75
                             ? "Forte"
@@ -711,9 +704,9 @@ export function NewWordPressSiteForm({
                     )}
                     {formErrors.adminPassword && (
                       <motion.p
-                        initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-sm text-destructive flex items-center gap-1"
+                        className="flex items-center gap-1 text-destructive text-sm"
+                        initial={{ opacity: 0, y: -10 }}
                       >
                         <AlertCircle className="h-3 w-3" />
                         {formErrors.adminPassword}
@@ -723,13 +716,12 @@ export function NewWordPressSiteForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="adminEmail" className="text-base font-medium">
+                  <Label className="font-medium text-base" htmlFor="adminEmail">
                     Email do Admin
                   </Label>
                   <Input
-                    id="adminEmail"
                     className={cn(
-                      "h-12 mt-2 transition-all duration-200",
+                      "mt-2 h-12 transition-all duration-200",
                       formErrors.adminEmail
                         ? "border-destructive focus:border-destructive"
                         : formData.adminEmail &&
@@ -739,28 +731,29 @@ export function NewWordPressSiteForm({
                           ? "border-emerald-500 focus:border-emerald-500"
                           : ""
                     )}
-                    type="email"
-                    value={formData.adminEmail}
-                    onChange={(e) => {
-                      setFormData((prev) => ({
+                    disabled={isInstalling}
+                    id="adminEmail"
+                    onChange={e => {
+                      setFormData(prev => ({
                         ...prev,
                         adminEmail: e.target.value,
                       }));
                       if (formErrors.adminEmail) {
-                        setFormErrors((prev) => ({
+                        setFormErrors(prev => ({
                           ...prev,
                           adminEmail: undefined,
                         }));
                       }
                     }}
                     placeholder="admin@example.com"
-                    disabled={isInstalling}
+                    type="email"
+                    value={formData.adminEmail}
                   />
                   {formErrors.adminEmail && (
                     <motion.p
-                      initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-destructive flex items-center gap-1"
+                      className="flex items-center gap-1 text-destructive text-sm"
+                      initial={{ opacity: 0, y: -10 }}
                     >
                       <AlertCircle className="h-3 w-3" />
                       {formErrors.adminEmail}
@@ -770,35 +763,34 @@ export function NewWordPressSiteForm({
 
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label className="text-base font-medium">
+                    <Label className="font-medium text-base">
                       Plugins Recomendados
                     </Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       Selecione plugins para instalar automaticamente
                     </p>
                   </div>
                   <div className="grid gap-3 pt-2">
                     {recommendedPlugins.map((plugin, index) => (
                       <motion.div
-                        key={plugin.id}
-                        initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
                         className={cn(
-                          "group relative p-4 rounded-xl border border-border/50 transition-all duration-300 cursor-pointer hover:border-primary/30 hover:shadow-md",
+                          "group relative cursor-pointer rounded-xl border border-border/50 p-4 transition-all duration-300 hover:border-primary/30 hover:shadow-md",
                           formData.selectedPlugins.includes(plugin.id)
-                            ? "bg-primary/5 border-primary/50 ring-1 ring-primary/20"
+                            ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
                             : "bg-background hover:bg-muted/30"
                         )}
+                        initial={{ opacity: 0, y: 20 }}
+                        key={plugin.id}
                         onClick={() =>
                           !isInstalling && handlePluginToggle(plugin.id)
                         }
+                        transition={{ delay: index * 0.1 }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
                         <div className="flex items-start space-x-4">
                           <motion.div
-                            className="relative mt-1"
                             animate={{
                               scale: formData.selectedPlugins.includes(
                                 plugin.id
@@ -806,39 +798,40 @@ export function NewWordPressSiteForm({
                                 ? 1.1
                                 : 1,
                             }}
+                            className="relative mt-1"
                             transition={{ duration: 0.2 }}
                           >
                             <Checkbox
-                              id={plugin.id}
                               checked={formData.selectedPlugins.includes(
                                 plugin.id
                               )}
+                              className="transition-all duration-200"
+                              disabled={isInstalling}
+                              id={plugin.id}
                               onCheckedChange={() =>
                                 handlePluginToggle(plugin.id)
                               }
-                              className="transition-all duration-200"
-                              disabled={isInstalling}
                             />
                           </motion.div>
-                          <div className="flex-1 min-w-0">
+                          <div className="min-w-0 flex-1">
                             <label
+                              className="cursor-pointer font-semibold text-sm leading-tight transition-colors group-hover:text-primary"
                               htmlFor={plugin.id}
-                              className="text-sm font-semibold leading-tight cursor-pointer group-hover:text-primary transition-colors"
                             >
                               {plugin.label}
                             </label>
-                            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                            <p className="mt-1 text-muted-foreground text-sm leading-relaxed">
                               {plugin.description}
                             </p>
                           </div>
                           {formData.selectedPlugins.includes(plugin.id) && (
                             <motion.div
-                              initial={{ scale: 0, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              exit={{ scale: 0, opacity: 0 }}
+                              animate={{ opacity: 1, scale: 1 }}
                               className="flex-shrink-0"
+                              exit={{ opacity: 0, scale: 0 }}
+                              initial={{ opacity: 0, scale: 0 }}
                             >
-                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                                 <CheckCircle className="h-4 w-4 text-primary" />
                               </div>
                             </motion.div>
@@ -847,7 +840,6 @@ export function NewWordPressSiteForm({
 
                         {/* Selection indicator overlay */}
                         <motion.div
-                          className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 to-primary/10 opacity-0 pointer-events-none"
                           animate={{
                             opacity: formData.selectedPlugins.includes(
                               plugin.id
@@ -855,6 +847,7 @@ export function NewWordPressSiteForm({
                               ? 1
                               : 0,
                           }}
+                          className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 to-primary/10 opacity-0"
                           transition={{ duration: 0.3 }}
                         />
                       </motion.div>
@@ -866,22 +859,17 @@ export function NewWordPressSiteForm({
 
             <div className="flex justify-between pt-4">
               <Button
-                variant="outline"
-                size="lg"
-                onClick={() => setCurrentStep(1)}
+                className="h-12 min-w-[120px]"
                 disabled={isInstalling}
-                className="min-w-[120px] h-12"
+                onClick={() => setCurrentStep(1)}
+                size="lg"
+                variant="outline"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar
               </Button>
               <Button
-                size="lg"
-                onClick={() => {
-                  if (validateForm()) {
-                    setCurrentStep(3);
-                  }
-                }}
+                className="h-12 min-w-[140px]"
                 disabled={
                   !(
                     formData.siteName &&
@@ -890,7 +878,12 @@ export function NewWordPressSiteForm({
                     formData.adminEmail
                   ) || isInstalling
                 }
-                className="min-w-[140px] h-12"
+                onClick={() => {
+                  if (validateForm()) {
+                    setCurrentStep(3);
+                  }
+                }}
+                size="lg"
               >
                 Continuar
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -902,54 +895,54 @@ export function NewWordPressSiteForm({
       case 3:
         return (
           <motion.div
-            key="step-3"
-            initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="space-y-8"
+            exit={{ opacity: 0, x: -50 }}
+            initial={{ opacity: 0, x: 50 }}
+            key="step-3"
+            transition={{ duration: 0.4, ease: "easeOut" }}
           >
             <Card className="border-0 shadow-lg">
               <CardContent className="p-8">
                 <div className="space-y-4">
                   {[
-                    { label: "Domínio", value: formData.domain, icon: Globe },
+                    { icon: Globe, label: "Domínio", value: formData.domain },
                     {
+                      icon: WholeWord,
                       label: "Nome do Site",
                       value: formData.siteName,
-                      icon: WholeWord,
                     },
                     {
+                      icon: Settings,
                       label: "Usuário Admin",
                       value: formData.adminUsername,
-                      icon: Settings,
                     },
                     {
+                      icon: Settings,
                       label: "Email Admin",
                       value: formData.adminEmail,
-                      icon: Settings,
                     },
                     {
+                      icon: Package,
                       label: "Plugins Selecionados",
                       value: `${formData.selectedPlugins.length} plugins`,
-                      icon: Package,
                     },
                   ].map((item, index, arr) => {
                     const IconComponent = item.icon;
                     return (
                       <div
-                        key={item.label}
                         className={`flex items-center justify-between py-4 ${
                           index < arr.length - 1
-                            ? "border-b border-border/50"
+                            ? "border-border/50 border-b"
                             : ""
                         }`}
+                        key={item.label}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
                             <IconComponent className="h-4 w-4 text-muted-foreground" />
                           </div>
-                          <span className="text-muted-foreground font-medium">
+                          <span className="font-medium text-muted-foreground">
                             {item.label}
                           </span>
                         </div>
@@ -963,20 +956,20 @@ export function NewWordPressSiteForm({
 
             <div className="flex justify-between pt-4">
               <Button
-                variant="outline"
-                size="lg"
-                onClick={() => setCurrentStep(2)}
+                className="h-12 min-w-[120px]"
                 disabled={isInstalling}
-                className="min-w-[120px] h-12"
+                onClick={() => setCurrentStep(2)}
+                size="lg"
+                variant="outline"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar
               </Button>
               <Button
-                size="lg"
-                onClick={handleInstall}
+                className="h-12 min-w-[180px]"
                 disabled={isInstalling}
-                className="min-w-[180px] h-12"
+                onClick={handleInstall}
+                size="lg"
               >
                 {isInstalling ? (
                   <>
@@ -994,16 +987,16 @@ export function NewWordPressSiteForm({
 
             {isInstalling && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-4 p-6 bg-muted/30 rounded-lg border border-border/50"
+                className="space-y-4 rounded-lg border border-border/50 bg-muted/30 p-6"
+                initial={{ opacity: 0, y: 20 }}
               >
                 <div className="flex items-center gap-3">
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
                   <span className="font-medium">Instalação em Progresso</span>
                 </div>
-                <Progress value={installationProgress} className="h-3" />
-                <p className="text-sm text-muted-foreground">
+                <Progress className="h-3" value={installationProgress} />
+                <p className="text-muted-foreground text-sm">
                   {installationMessage} ({installationProgress}%)
                 </p>
               </motion.div>
@@ -1018,7 +1011,7 @@ export function NewWordPressSiteForm({
 
   if (!Array.isArray(domains) || domains.length === 0) {
     return (
-      <div className="flex flex-col gap-4 items-end max-w-2xl mx-auto">
+      <div className="mx-auto flex max-w-2xl flex-col items-end gap-4">
         <Card>
           <Alert>
             <Terminal className="h-4 w-4" />
@@ -1027,8 +1020,8 @@ export function NewWordPressSiteForm({
               Você não possui domínios registrados em sua conta ou todos os seus
               domínios já possuem WordPress instalado. Por favor,{" "}
               <Link
-                href="/domain?tab=register"
                 className="font-medium text-primary underline underline-offset-4"
+                href="/domain?tab=register"
               >
                 registre um novo domínio
               </Link>{" "}
@@ -1050,50 +1043,50 @@ export function NewWordPressSiteForm({
 
     return (
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="max-w-2xl mx-auto border-0 shadow-xl">
+        <Card className="mx-auto max-w-2xl border-0 shadow-xl">
           <CardContent className="pt-16 pb-16">
-            <div className="text-center space-y-6">
+            <div className="space-y-6 text-center">
               <motion.div
-                initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="h-20 w-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center mx-auto shadow-lg"
+                className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg"
+                initial={{ scale: 0 }}
+                transition={{ delay: 0.2, stiffness: 200, type: "spring" }}
               >
                 <Check className="h-10 w-10" />
               </motion.div>
               <div>
-                <h2 className="text-3xl font-bold mb-2">
+                <h2 className="mb-2 font-bold text-3xl">
                   Instalação Completa!
                 </h2>
-                <p className="text-muted-foreground text-lg max-w-md mx-auto">
+                <p className="mx-auto max-w-md text-lg text-muted-foreground">
                   Seu site WordPress foi instalado com sucesso e está pronto
                   para uso.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
+              <div className="flex flex-col justify-center gap-4 pt-6 sm:flex-row">
                 <Button
-                  variant="outline"
-                  size="lg"
                   asChild={true}
                   className="h-12 min-w-[200px]"
+                  size="lg"
+                  variant="outline"
                 >
                   <a
                     href="/wordpress"
-                    target="_blank"
                     rel="noopener noreferrer"
+                    target="_blank"
                   >
                     Administrar seu novo site!
                   </a>
                 </Button>
-                <Button size="lg" asChild={true} className="h-12 min-w-[180px]">
+                <Button asChild={true} className="h-12 min-w-[180px]" size="lg">
                   <a
                     href={`https://${formData.domain}`}
-                    target="_blank"
                     rel="noopener noreferrer"
+                    target="_blank"
                   >
                     Visitar seu Site
                   </a>
@@ -1109,19 +1102,19 @@ export function NewWordPressSiteForm({
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 20 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="max-w-4xl mx-auto shadow-2xl bg-gradient-to-br from-background/80 via-background to-muted/30 backdrop-blur-xl border-border/50">
-          <CardHeader className="text-center pb-8 pt-8">
+        <Card className="mx-auto max-w-4xl border-border/50 bg-gradient-to-br from-background/80 via-background to-muted/30 shadow-2xl backdrop-blur-xl">
+          <CardHeader className="pt-8 pb-8 text-center">
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, scale: 0.8 }}
               transition={{ delay: 0.2 }}
             >
-              <CardTitle className="flex items-center justify-center gap-3 text-3xl font-bold mb-8">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <CardTitle className="mb-8 flex items-center justify-center gap-3 font-bold text-3xl">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600">
                   <WholeWord className="h-6 w-6 text-white" />
                 </div>
                 Instalação WordPress
@@ -1129,7 +1122,7 @@ export function NewWordPressSiteForm({
               {renderCurrentStepHeader()}
             </motion.div>
           </CardHeader>
-          <CardContent className="pt-6 pb-12 px-8">
+          <CardContent className="px-8 pt-6 pb-12">
             <AnimatePresence mode="popLayout">
               {renderStepIndicator()}
               {renderStep()}
@@ -1154,42 +1147,42 @@ export enum WordPressPlugins {
 
 const recommendedPlugins = [
   {
+    description: "Adicione uma loja online completa ao seu site",
     id: WordPressPlugins.WooCommerce,
     label: "WooCommerce - Plataforma de eCommerce",
-    description: "Adicione uma loja online completa ao seu site",
   },
   {
-    id: WordPressPlugins.Askimet,
-    label: "Askimet",
     description:
       "A melhor proteção contra spam para bloquear comentários de spam e spam em um formulário de contato.",
+    id: WordPressPlugins.Askimet,
+    label: "Askimet",
   },
   {
+    description: "Melhore a visibilidade do seu site nos motores de busca",
     id: WordPressPlugins.YoastSEO,
     label: "Yoast SEO - Otimização para Motores de Busca",
-    description: "Melhore a visibilidade do seu site nos motores de busca",
   },
   {
+    description: "Adicione formulários de contato profissionais facilmente",
     id: WordPressPlugins.WPForms,
     label: "WPForms Lite - Formulários de Contato",
-    description: "Adicione formulários de contato profissionais facilmente",
   },
   {
-    id: WordPressPlugins.ReallySimpleSsl,
-    label: "Really Simple SSL",
     description:
       "Melhore a segurança do seu site com Autenticação de Dois Fatores (2FA), Proteção de Login, Detecção de Vulnerabilidades e certificado SSL.",
+    id: WordPressPlugins.ReallySimpleSsl,
+    label: "Really Simple SSL",
   },
   {
-    id: WordPressPlugins.LiteSpeedCache,
-    label: "LiteSpeed Cache",
     description:
       "Aceleração imbatível e melhoria de PageSpeed: cache, otimização de imagem/CSS/JS.",
+    id: WordPressPlugins.LiteSpeedCache,
+    label: "LiteSpeed Cache",
   },
   {
-    id: WordPressPlugins.WPOptimize,
-    label: "WP Optimize",
     description:
       "Melhore o desempenho do seu site com otimização de banco de dados e cache.",
+    id: WordPressPlugins.WPOptimize,
+    label: "WP Optimize",
   },
 ];

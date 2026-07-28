@@ -3,10 +3,10 @@ import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 
 // Scrypt parameters
 const SCRYPT_PARAMS = {
-  N: 16384, // CPU/memory cost factor (2^14)
-  r: 8, // Block size
-  p: 1, // Parallelization factor
   dkLen: 32, // Derived key length in bytes
+  N: 16384, // CPU/memory cost factor (2^14)
+  p: 1, // Parallelization factor
+  r: 8, // Block size
 };
 const SALT_LENGTH = 16; // Salt length in bytes
 

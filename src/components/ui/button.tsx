@@ -1,37 +1,36 @@
-import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-
-import { cn } from "@/lib/utils";
+import * as React from "react";
 import { CgSpinner } from "react-icons/cg";
+import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-350 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed",
+  "inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md font-medium text-sm ring-offset-background transition-all duration-350 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
   {
+    defaultVariants: {
+      size: "default",
+      variant: "default",
+    },
     variants: {
+      size: {
+        default: "h-10 px-4 py-2",
+        icon: "h-10 w-10",
+        lg: "h-11 rounded-md px-8",
+        sm: "h-9 rounded-md px-3",
+      },
       variant: {
+        action:
+          "bg-emerald-100 text-emerald-900 ring-1 ring-emerald-900 hover:-translate-y-[1px] hover:shadow-emerald-200/80 hover:shadow-lg dark:bg-emerald-800/30 dark:text-emerald-400 dark:ring-emerald-400 dark:hover:shadow-emerald-500/20",
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
         outline:
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        action:
-          "bg-emerald-100 dark:bg-emerald-800/30 text-emerald-900 dark:text-emerald-400 ring-1 ring-emerald-900 dark:ring-emerald-400 hover:shadow-lg hover:-translate-y-[1px] hover:shadow-emerald-200/80 dark:hover:shadow-emerald-500/20",
       },
-      size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
     },
   }
 );
@@ -59,12 +58,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : "button";
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ className, size, variant }))}
         ref={ref}
         {...props}
       >
         {isLoading ? (
-          <CgSpinner className="animate-spin h-4 w-4 mx-auto" />
+          <CgSpinner className="mx-auto h-4 w-4 animate-spin" />
         ) : (
           children
         )}

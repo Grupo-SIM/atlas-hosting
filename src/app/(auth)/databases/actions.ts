@@ -1,21 +1,21 @@
 "use server";
 
-import WpCliApi from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
 import type {
-  DbTablesOptions,
   DbQueryOptions,
+  DbTablesOptions,
 } from "@/lib/server/apis/plesk/wp-toolkit/wp-cli"; // Assuming these types are exported
+import WpCliApi from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
 
 // Define a more specific type for table row data if possible, for now, keep it generic
 export type TableRowData = Record<string, unknown>;
-export type TableColumn = {
+export interface TableColumn {
   name: string;
   type: string;
   isPrimaryKey?: boolean;
   isNullable?: boolean;
   defaultValue?: string;
   extra?: string;
-};
+}
 
 export interface TableDataResult {
   columns: TableColumn[];
@@ -73,12 +73,12 @@ export async function getDbTableDataAction(
           const keyIndex = headers.indexOf("Key");
 
           if (fieldIndex !== -1 && typeIndex !== -1) {
-            result.columns = lines.slice(1).map((line) => {
+            result.columns = lines.slice(1).map(line => {
               const values = line.split("\t");
               return {
+                isPrimaryKey: keyIndex !== -1 && values[keyIndex] === "PRI",
                 name: values[fieldIndex],
                 type: values[typeIndex],
-                isPrimaryKey: keyIndex !== -1 && values[keyIndex] === "PRI",
               };
             });
           } else {
@@ -120,7 +120,7 @@ export async function getDbTableDataAction(
         const dataRows = lines.slice(1);
 
         if (result.columns.length > 0) {
-          parsedData = dataRows.map((line) => {
+          parsedData = dataRows.map(line => {
             const values = line.split("\t");
             const row: TableRowData = {};
             result.columns.forEach((col, index) => {
@@ -228,39 +228,35 @@ export async function updateTableRowAction(
   try {
     const wpCli = new WpCliApi(instanceId);
     const setClauses = Object.keys(newRowData)
-      .map((key) => `\`${key}\` = ${escapeSqlValue(newRowData[key])}`)
+      .map(key => `\`${key}\` = ${escapeSqlValue(newRowData[key])}`)
       .join(", ");
 
     if (!setClauses) {
-      return { success: false, message: "No data provided for update." };
+      return { message: "No data provided for update.", success: false };
     }
 
     let whereClauses = "";
     const pkColsInOldData = primaryKeyColumns.filter(
-      (col) =>
-        col.isPrimaryKey &&
-        Object.prototype.hasOwnProperty.call(oldRowData, col.name)
+      col => col.isPrimaryKey && Object.hasOwn(oldRowData, col.name)
     );
 
     if (pkColsInOldData.length > 0) {
       whereClauses = pkColsInOldData
-        .map(
-          (col) => `\`${col.name}\` = ${escapeSqlValue(oldRowData[col.name])}`
-        )
+        .map(col => `\`${col.name}\` = ${escapeSqlValue(oldRowData[col.name])}`)
         .join(" AND ");
     } else {
       console.warn(
         `No primary key columns for update, using all columns in WHERE for table: ${tableName}`
       );
       whereClauses = Object.keys(oldRowData)
-        .map((key) => `\`${key}\` = ${escapeSqlValue(oldRowData[key])}`)
+        .map(key => `\`${key}\` = ${escapeSqlValue(oldRowData[key])}`)
         .join(" AND ");
     }
 
     if (!whereClauses) {
       return {
-        success: false,
         message: "Cannot update row without a WHERE clause.",
+        success: false,
       };
     }
 
@@ -274,19 +270,19 @@ export async function updateTableRowAction(
         /Rows matched: [1-9]\d* Changed: [1-9]\d*/.test(result) ||
         /Query OK, [1-9]\d* row affected/.test(result))
     ) {
-      return { success: true, message: "Row updated successfully." };
+      return { message: "Row updated successfully.", success: true };
     }
 
     if (typeof result === "string") {
       return {
-        success: false,
         message: `Update failed or no rows affected: ${result}`,
+        success: false,
       };
     }
 
     return {
-      success: false,
       message: "Update failed: Unexpected response from server.",
+      success: false,
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -294,7 +290,7 @@ export async function updateTableRowAction(
       `Error in updateTableRowAction for table ${tableName}:`,
       error
     );
-    return { success: false, message: `Error updating row: ${message}` };
+    return { message: `Error updating row: ${message}`, success: false };
   }
 }
 
@@ -306,12 +302,12 @@ export async function insertTableRowAction(
   try {
     const wpCli = new WpCliApi(instanceId);
     const columns = Object.keys(newRowData)
-      .map((key) => `\`${key}\``)
+      .map(key => `\`${key}\``)
       .join(", ");
     const values = Object.values(newRowData).map(escapeSqlValue).join(", ");
 
     if (!columns || !values) {
-      return { success: false, message: "No data provided for insert." };
+      return { message: "No data provided for insert.", success: false };
     }
 
     const sql = `INSERT INTO \`${tableName}\` (${columns}) VALUES (${values})`;
@@ -323,16 +319,16 @@ export async function insertTableRowAction(
         /Query OK, [1-9]\d* row affected/.test(result) ||
         /1 row inserted./.test(result))
     ) {
-      return { success: true, message: "Row inserted successfully." };
+      return { message: "Row inserted successfully.", success: true };
     }
 
     if (typeof result === "string") {
-      return { success: false, message: `Insert failed: ${result}` };
+      return { message: `Insert failed: ${result}`, success: false };
     }
 
     return {
-      success: false,
       message: "Insert failed: Unexpected response from server.",
+      success: false,
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -340,7 +336,7 @@ export async function insertTableRowAction(
       `Error in insertTableRowAction for table ${tableName}:`,
       error
     );
-    return { success: false, message: `Error inserting row: ${message}` };
+    return { message: `Error inserting row: ${message}`, success: false };
   }
 }
 
@@ -354,15 +350,13 @@ export async function deleteTableRowAction(
     const wpCli = new WpCliApi(instanceId);
     let whereClauses = "";
     const pkColsInRowData = primaryKeyColumns.filter(
-      (col) =>
-        col.isPrimaryKey &&
-        Object.prototype.hasOwnProperty.call(rowDataToDelete, col.name)
+      col => col.isPrimaryKey && Object.hasOwn(rowDataToDelete, col.name)
     );
 
     if (pkColsInRowData.length > 0) {
       whereClauses = pkColsInRowData
         .map(
-          (col) =>
+          col =>
             `\`${col.name}\` = ${escapeSqlValue(rowDataToDelete[col.name])}`
         )
         .join(" AND ");
@@ -371,14 +365,14 @@ export async function deleteTableRowAction(
         `No primary key columns for delete, using all columns in WHERE for table: ${tableName}`
       );
       whereClauses = Object.keys(rowDataToDelete)
-        .map((key) => `\`${key}\` = ${escapeSqlValue(rowDataToDelete[key])}`)
+        .map(key => `\`${key}\` = ${escapeSqlValue(rowDataToDelete[key])}`)
         .join(" AND ");
     }
 
     if (!whereClauses) {
       return {
-        success: false,
         message: "Cannot delete row without a WHERE clause.",
+        success: false,
       };
     }
 
@@ -392,19 +386,19 @@ export async function deleteTableRowAction(
         /Rows affected: [1-9]\d*/.test(result) ||
         /Query OK, [1-9]\d* row affected/.test(result))
     ) {
-      return { success: true, message: "Row deleted successfully." };
+      return { message: "Row deleted successfully.", success: true };
     }
 
     if (typeof result === "string") {
       return {
-        success: false,
         message: `Delete failed or no rows affected: ${result}`,
+        success: false,
       };
     }
 
     return {
-      success: false,
       message: "Delete failed: Unexpected response from server.",
+      success: false,
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -412,7 +406,7 @@ export async function deleteTableRowAction(
       `Error in deleteTableRowAction for table ${tableName}:`,
       error
     );
-    return { success: false, message: `Error deleting row: ${message}` };
+    return { message: `Error deleting row: ${message}`, success: false };
   }
 }
 
@@ -473,7 +467,7 @@ export async function getTableSchemaAction(
         const defaultIndex = headers.indexOf("Default");
         const extraIndex = headers.indexOf("Extra");
 
-        lines.slice(1).forEach((line) => {
+        lines.slice(1).forEach(line => {
           const values = line.split("\t");
           const isPrimaryKey = keyIndex !== -1 && values[keyIndex] === "PRI";
 
@@ -482,16 +476,16 @@ export async function getTableSchemaAction(
           }
 
           columns.push({
-            name: values[fieldIndex],
-            type: values[typeIndex],
-            isPrimaryKey,
-            isNullable: nullIndex !== -1 && values[nullIndex] === "YES",
             defaultValue:
               defaultIndex !== -1
                 ? values[defaultIndex] || undefined
                 : undefined,
             extra:
               extraIndex !== -1 ? values[extraIndex] || undefined : undefined,
+            isNullable: nullIndex !== -1 && values[nullIndex] === "YES",
+            isPrimaryKey,
+            name: values[fieldIndex],
+            type: values[typeIndex],
           });
         });
       }
@@ -515,14 +509,14 @@ export async function getTableSchemaAction(
       if (typeof fkOutput === "string" && fkOutput.trim() !== "") {
         const fkLines = fkOutput.trim().split("\n");
         if (fkLines.length > 1) {
-          fkLines.slice(1).forEach((line) => {
+          fkLines.slice(1).forEach(line => {
             const values = line.split("\t");
             if (values.length >= 4) {
               foreignKeys.push({
                 columnName: values[0],
-                referencedTable: values[1],
-                referencedColumn: values[2],
                 constraintName: values[3],
+                referencedColumn: values[2],
+                referencedTable: values[1],
               });
             }
           });
@@ -544,14 +538,14 @@ export async function getTableSchemaAction(
       if (typeof indexOutput === "string" && indexOutput.trim() !== "") {
         const indexLines = indexOutput.trim().split("\n");
         if (indexLines.length > 1) {
-          indexLines.slice(1).forEach((line) => {
+          indexLines.slice(1).forEach(line => {
             const values = line.split("\t");
             if (values.length >= 13) {
               indexes.push({
-                indexName: values[2],
                 columnName: values[4],
-                isUnique: values[1] === "0",
+                indexName: values[2],
                 indexType: values[10] || "BTREE",
+                isUnique: values[1] === "0",
               });
             }
           });
@@ -562,11 +556,11 @@ export async function getTableSchemaAction(
     }
 
     return {
-      tableName,
       columns,
-      primaryKeys,
       foreignKeys,
       indexes,
+      primaryKeys,
+      tableName,
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -608,14 +602,14 @@ export async function addColumnAction(
       typeof result === "string" &&
       (result.trim() === "" || /Query OK/.test(result))
     ) {
-      return { success: true, message: "Coluna adicionada com sucesso." };
+      return { message: "Coluna adicionada com sucesso.", success: true };
     }
 
-    return { success: false, message: `Falha ao adicionar coluna: ${result}` };
+    return { message: `Falha ao adicionar coluna: ${result}`, success: false };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error in addColumnAction:", error);
-    return { success: false, message: `Erro ao adicionar coluna: ${message}` };
+    return { message: `Erro ao adicionar coluna: ${message}`, success: false };
   }
 }
 
@@ -634,14 +628,14 @@ export async function dropColumnAction(
       typeof result === "string" &&
       (result.trim() === "" || /Query OK/.test(result))
     ) {
-      return { success: true, message: "Coluna removida com sucesso." };
+      return { message: "Coluna removida com sucesso.", success: true };
     }
 
-    return { success: false, message: `Falha ao remover coluna: ${result}` };
+    return { message: `Falha ao remover coluna: ${result}`, success: false };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error in dropColumnAction:", error);
-    return { success: false, message: `Erro ao remover coluna: ${message}` };
+    return { message: `Erro ao remover coluna: ${message}`, success: false };
   }
 }
 
@@ -659,14 +653,14 @@ export async function dropTableAction(
       typeof result === "string" &&
       (result.trim() === "" || /Query OK/.test(result))
     ) {
-      return { success: true, message: "Tabela removida com sucesso." };
+      return { message: "Tabela removida com sucesso.", success: true };
     }
 
-    return { success: false, message: `Falha ao remover tabela: ${result}` };
+    return { message: `Falha ao remover tabela: ${result}`, success: false };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error in dropTableAction:", error);
-    return { success: false, message: `Erro ao remover tabela: ${message}` };
+    return { message: `Erro ao remover tabela: ${message}`, success: false };
   }
 }
 
@@ -737,11 +731,11 @@ export async function getDatabaseInfoAction(
     }
 
     return {
-      name: dbName,
-      tables,
-      size,
       charset,
       collation,
+      name: dbName,
+      size,
+      tables,
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -765,19 +759,17 @@ export async function bulkDeleteRowsAction(
 
     for (const row of rowsToDelete) {
       const pkColsInRowData = primaryKeyColumns.filter(
-        (col) =>
-          col.isPrimaryKey &&
-          Object.prototype.hasOwnProperty.call(row, col.name)
+        col => col.isPrimaryKey && Object.hasOwn(row, col.name)
       );
 
       let whereClauses = "";
       if (pkColsInRowData.length > 0) {
         whereClauses = pkColsInRowData
-          .map((col) => `\`${col.name}\` = ${escapeSqlValue(row[col.name])}`)
+          .map(col => `\`${col.name}\` = ${escapeSqlValue(row[col.name])}`)
           .join(" AND ");
       } else {
         whereClauses = Object.keys(row)
-          .map((key) => `\`${key}\` = ${escapeSqlValue(row[key])}`)
+          .map(key => `\`${key}\` = ${escapeSqlValue(row[key])}`)
           .join(" AND ");
       }
 
@@ -797,17 +789,17 @@ export async function bulkDeleteRowsAction(
     }
 
     return {
-      success: true,
-      message: `${deletedCount} linha(s) removida(s) com sucesso.`,
       deletedCount,
+      message: `${deletedCount} linha(s) removida(s) com sucesso.`,
+      success: true,
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error in bulkDeleteRowsAction:", error);
     return {
-      success: false,
-      message: `Erro ao remover linhas: ${message}`,
       deletedCount: 0,
+      message: `Erro ao remover linhas: ${message}`,
+      success: false,
     };
   }
 }
@@ -824,11 +816,11 @@ export async function exportTableDataAction(
 
     if (format === "csv") {
       // Generate CSV
-      const headers = result.columns.map((col) => col.name).join(",");
+      const headers = result.columns.map(col => col.name).join(",");
       const rows = result.rows
-        .map((row) =>
+        .map(row =>
           result.columns
-            .map((col) => {
+            .map(col => {
               const value = row[col.name];
               // Escape CSV values
               if (value === null || value === undefined) return "";
@@ -848,35 +840,34 @@ export async function exportTableDataAction(
 
       const csvData = `${headers}\n${rows}`;
       return {
-        success: true,
         data: csvData,
         message: "Dados exportados como CSV com sucesso.",
-      };
-    } else {
-      // Generate JSON
-      const jsonData = JSON.stringify(
-        {
-          table: tableName,
-          columns: result.columns,
-          rows: result.rows,
-          exportDate: new Date().toISOString(),
-        },
-        null,
-        2
-      );
-
-      return {
         success: true,
-        data: jsonData,
-        message: "Dados exportados como JSON com sucesso.",
       };
     }
+    // Generate JSON
+    const jsonData = JSON.stringify(
+      {
+        columns: result.columns,
+        exportDate: new Date().toISOString(),
+        rows: result.rows,
+        table: tableName,
+      },
+      null,
+      2
+    );
+
+    return {
+      data: jsonData,
+      message: "Dados exportados como JSON com sucesso.",
+      success: true,
+    };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error in exportTableDataAction:", error);
     return {
-      success: false,
       message: `Erro ao exportar dados: ${message}`,
+      success: false,
     };
   }
 }
@@ -897,7 +888,7 @@ export async function createTableAction(
     const wpCli = new WpCliApi(instanceId);
 
     const columnDefinitions = columns
-      .map((col) => {
+      .map(col => {
         let definition = `\`${col.name}\` ${col.type}`;
 
         if (!col.isNullable) {
@@ -923,14 +914,14 @@ export async function createTableAction(
       typeof result === "string" &&
       (result.trim() === "" || /Query OK/.test(result))
     ) {
-      return { success: true, message: "Tabela criada com sucesso." };
+      return { message: "Tabela criada com sucesso.", success: true };
     }
 
-    return { success: false, message: `Falha ao criar tabela: ${result}` };
+    return { message: `Falha ao criar tabela: ${result}`, success: false };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error in createTableAction:", error);
-    return { success: false, message: `Erro ao criar tabela: ${message}` };
+    return { message: `Erro ao criar tabela: ${message}`, success: false };
   }
 }
 
@@ -970,7 +961,7 @@ export async function getDatabaseStatsAction(instanceId: number): Promise<{
         if (typeof countResult === "string" && countResult.trim() !== "") {
           const lines = countResult.trim().split("\n");
           if (lines.length > 1) {
-            rowCount = Number.parseInt(lines[1]) || 0;
+            rowCount = Number.parseInt(lines[1], 10) || 0;
           }
         }
 
@@ -996,9 +987,9 @@ export async function getDatabaseStatsAction(instanceId: number): Promise<{
         }
 
         tableStats.push({
-          tableName: table,
           rowCount,
           sizeInMB,
+          tableName: table,
         });
 
         totalRows += rowCount;
@@ -1011,7 +1002,7 @@ export async function getDatabaseStatsAction(instanceId: number): Promise<{
     const largestTable = tableStats.reduce(
       (largest, current) =>
         current.sizeInMB > largest.sizeInMB ? current : largest,
-      tableStats[0] || { tableName: "N/A", sizeInMB: 0 }
+      tableStats[0] || { sizeInMB: 0, tableName: "N/A" }
     );
 
     // Get total database size
@@ -1040,22 +1031,22 @@ export async function getDatabaseStatsAction(instanceId: number): Promise<{
     }
 
     return {
-      success: true,
       data: {
-        totalTables: tables.length,
-        totalRows,
         databaseSize,
         largestTable: largestTable.tableName,
         tableStats: tableStats.sort((a, b) => b.sizeInMB - a.sizeInMB),
+        totalRows,
+        totalTables: tables.length,
       },
       message: "Estatísticas do banco de dados carregadas com sucesso.",
+      success: true,
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error in getDatabaseStatsAction:", error);
     return {
-      success: false,
       message: `Erro ao carregar estatísticas: ${message}`,
+      success: false,
     };
   }
 }

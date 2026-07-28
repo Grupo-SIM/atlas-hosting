@@ -1,3 +1,19 @@
+import { addMonths } from "date-fns";
+import { sum } from "lodash";
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  Calendar,
+  CheckCircle,
+  CreditCard,
+  HardDrive,
+  Mail,
+  Package,
+  Server,
+  Shield,
+} from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { UserPlanBadge } from "@/components/dashboard/WelcomeHeader";
 import {
   AlertDialog,
@@ -22,29 +38,8 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { db } from "@/lib/db";
 import type { User } from "@/lib/db/schema/tables/user";
+import { getDomainDiskUsage } from "@/lib/server/apis/plesk-xml/client";
 import { toBrl } from "@/lib/utils";
-import { addMonths } from "date-fns";
-import {
-  AlertTriangle,
-  ArrowUpRight,
-  Calendar,
-  CheckCircle,
-  CreditCard,
-  HardDrive,
-  Mail,
-  Package,
-  Server,
-  Shield,
-} from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import type { DomainResponse } from "@/plesk/models"; // Assuming this type is available from your Plesk SDK
-import {
-  getDomain,
-  getDomainDiskUsage,
-} from "@/lib/server/apis/plesk-xml/client";
-import pleskApi from "@/lib/server/apis/plesk";
-import { sum } from "lodash";
 
 interface SubscriptionSectionProps {
   user: User;
@@ -59,9 +54,9 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
   const hasActivePlan = !!plan;
 
   const lastBillingInvoice = await db.query.pgInvoice.findFirst({
+    orderBy: (pgInvoice, { desc }) => desc(pgInvoice.createdAt),
     where: (pgInvoice, { eq }) =>
       eq(pgInvoice.reference, user.organization.planId ?? ""),
-    orderBy: (pgInvoice, { desc }) => desc(pgInvoice.createdAt),
   });
 
   // Mock data for demonstration
@@ -74,9 +69,9 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
   try {
     const usages = await Promise.all(
       user.organization.domains
-        .filter((domain) => domain.active)
-        .map((domain) =>
-          getDomainDiskUsage(domain.domain).then((d) =>
+        .filter(domain => domain.active)
+        .map(domain =>
+          getDomainDiskUsage(domain.domain).then(d =>
             sum(Object.values(d ?? {}))
           )
         )
@@ -98,9 +93,9 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
     <div className="space-y-6">
       {/* Current Plan Overview */}
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <CardTitle className="flex items-center gap-2 mb-3">
+            <CardTitle className="mb-3 flex items-center gap-2">
               <Package className="h-5 w-5" />
               Plano Atual
             </CardTitle>
@@ -108,38 +103,38 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
           </div>
           {hasActivePlan && (
             <div className="text-right">
-              <div className="text-2xl font-bold">{toBrl(plan.price)}</div>
-              <div className="text-sm text-muted-foreground">por mês</div>
+              <div className="font-bold text-2xl">{toBrl(plan.price)}</div>
+              <div className="text-muted-foreground text-sm">por mês</div>
             </div>
           )}
         </CardHeader>
         <CardContent className="space-y-6">
           {hasActivePlan ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg border bg-card/50">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="flex items-center gap-3 rounded-lg border bg-card/50 p-3">
                   <Server className="h-8 w-8 text-blue-500" />
                   <div>
                     <p className="font-medium">{plan.maxSites}</p>
-                    <p className="text-sm text-muted-foreground">Sites</p>
+                    <p className="text-muted-foreground text-sm">Sites</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg border bg-card/50">
+                <div className="flex items-center gap-3 rounded-lg border bg-card/50 p-3">
                   <HardDrive className="h-8 w-8 text-green-500" />
                   <div>
                     <p className="font-medium">{plan.maxStorage} GB</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       Armazenamento
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg border bg-card/50">
+                <div className="flex items-center gap-3 rounded-lg border bg-card/50 p-3">
                   <Mail className="h-8 w-8 text-purple-500" />
                   <div>
                     <p className="font-medium">
                       {plan.email ? "Ilimitado" : "Não incluído"}
                     </p>
-                    <p className="text-sm text-muted-foreground">E-mails</p>
+                    <p className="text-muted-foreground text-sm">E-mails</p>
                   </div>
                 </div>
               </div>
@@ -147,34 +142,34 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
               <div className="flex flex-wrap gap-2">
                 {plan.ssl && (
                   <Badge
-                    variant="secondary"
                     className="bg-green-500/10 text-green-700"
+                    variant="secondary"
                   >
-                    <Shield className="w-3 h-3 mr-1" />
+                    <Shield className="mr-1 h-3 w-3" />
                     SSL Incluído
                   </Badge>
                 )}
                 {plan.backup && (
                   <Badge
-                    variant="secondary"
                     className="bg-blue-500/10 text-blue-700"
+                    variant="secondary"
                   >
-                    <HardDrive className="w-3 h-3 mr-1" />
+                    <HardDrive className="mr-1 h-3 w-3" />
                     Backup Automático
                   </Badge>
                 )}
                 {plan.cdn && (
                   <Badge
-                    variant="secondary"
                     className="bg-purple-500/10 text-purple-700"
+                    variant="secondary"
                   >
                     CDN Global
                   </Badge>
                 )}
                 {plan.supportPriority && (
                   <Badge
-                    variant="secondary"
                     className="bg-orange-500/10 text-orange-700"
+                    variant="secondary"
                   >
                     Suporte Prioritário
                   </Badge>
@@ -182,12 +177,12 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
               </div>
             </>
           ) : (
-            <div className="text-center py-8">
-              <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+            <div className="py-8 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                 <Package className="h-6 w-6 text-muted-foreground" />
               </div>
-              <h3 className="font-semibold mb-2">Nenhum plano ativo</h3>
-              <p className="text-muted-foreground mb-4">
+              <h3 className="mb-2 font-semibold">Nenhum plano ativo</h3>
+              <p className="mb-4 text-muted-foreground">
                 Assine um plano para começar a usar nossos serviços
               </p>
               <Link href="/plans">
@@ -215,45 +210,45 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2 flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">Armazenamento</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="font-medium text-sm">Armazenamento</p>
+                  <p className="text-muted-foreground text-sm">
                     {calculatedStorageUsedGB.toFixed(2)} GB de {storageLimit} GB
                     utilizados
                   </p>
                 </div>
                 <Badge
-                  variant={storagePercentage > 80 ? "destructive" : "secondary"}
                   className={
                     storagePercentage > 80
                       ? ""
                       : "bg-green-500/10 text-green-700"
                   }
+                  variant={storagePercentage > 80 ? "destructive" : "secondary"}
                 >
                   {storagePercentage.toFixed(1)}%
                 </Badge>
               </div>
-              <Progress value={storagePercentage} className="h-2" />
+              <Progress className="h-2" value={storagePercentage} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg border bg-card/50">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="rounded-lg border bg-card/50 p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Sites Ativos</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       2 de {plan.maxSites} sites
                     </p>
                   </div>
                   <Server className="h-6 w-6 text-blue-500" />
                 </div>
               </div>
-              <div className="p-4 rounded-lg border bg-card/50">
+              <div className="rounded-lg border bg-card/50 p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Contas de E-mail</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       {plan.email ? "8 contas ativas" : "Não disponível"}
                     </p>
                   </div>
@@ -278,12 +273,12 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
+            <div className="flex items-center justify-between rounded-lg border bg-card/50 p-4">
               <div className="flex items-center gap-3">
                 <Calendar className="h-5 w-5 text-blue-500" />
                 <div>
                   <p className="font-medium">Próxima cobrança</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {nextBillingDate.toLocaleDateString("pt-BR", {
                       day: "2-digit",
                       month: "long",
@@ -295,23 +290,23 @@ export async function SubscriptionSection({ user }: SubscriptionSectionProps) {
               <div className="text-right">
                 <p className="font-semibold">{toBrl(plan.price)}</p>
                 <Badge
-                  variant="outline"
                   className="bg-green-500/10 text-green-600"
+                  variant="outline"
                 >
-                  <CheckCircle className="w-3 h-3 mr-1" />
+                  <CheckCircle className="mr-1 h-3 w-3" />
                   Ativo
                 </Badge>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <Link href="/plans" className="flex-1">
+              <Link className="flex-1" href="/plans">
                 <Button className="w-full">Alterar Plano</Button>
               </Link>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="flex-1">
+                  <Button className="flex-1" variant="destructive">
                     <AlertTriangle className="mr-2 h-4 w-4" />
                     Cancelar Assinatura
                   </Button>

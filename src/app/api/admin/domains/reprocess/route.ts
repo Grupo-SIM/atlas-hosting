@@ -1,9 +1,9 @@
+import { timingSafeEqual } from "node:crypto";
+import { NextResponse } from "next/server";
 import {
   reprocessDomainInvoice,
   reprocessUnfulfilledDomainInvoices,
 } from "@/lib/server/domains/reprocessDomainInvoice";
-import { timingSafeEqual } from "crypto";
-import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -23,7 +23,10 @@ function isAuthorized(provided: string | null | undefined): boolean {
   return timingSafeEqual(a, b);
 }
 
-function extractSecret(request: Request, body: Record<string, unknown>): string | null {
+function extractSecret(
+  request: Request,
+  body: Record<string, unknown>
+): string | null {
   const header =
     request.headers.get("x-reprocess-secret") ??
     request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
@@ -58,13 +61,16 @@ export async function POST(request: Request) {
   try {
     if (body?.all === true) {
       const summary = await reprocessUnfulfilledDomainInvoices();
-      return NextResponse.json({ ok: true, mode: "all", ...summary });
+      return NextResponse.json({ mode: "all", ok: true, ...summary });
     }
 
     const invoiceId = body?.invoiceId;
     if (typeof invoiceId !== "string" || !invoiceId) {
       return NextResponse.json(
-        { error: "invoiceId_required", hint: 'envie { "invoiceId": "..." } ou { "all": true }' },
+        {
+          error: "invoiceId_required",
+          hint: 'envie { "invoiceId": "..." } ou { "all": true }',
+        },
         { status: 400 }
       );
     }
@@ -74,6 +80,9 @@ export async function POST(request: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[REPROCESS] erro:", message);
-    return NextResponse.json({ error: "internal_error", message }, { status: 500 });
+    return NextResponse.json(
+      { error: "internal_error", message },
+      { status: 500 }
+    );
   }
 }

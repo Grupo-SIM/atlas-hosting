@@ -1,26 +1,29 @@
-import CheckoutClient from "./checkout-client";
-import { db } from "@/lib/db";
-import { pgInvoice, pgPlan, type Invoice } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import {
+  isBoletoEligibleForVpsConfig,
+  isPixEligibleForVpsConfig,
+} from "@/app/actions";
 import { getOptionalUser } from "@/lib/auth";
-import { isPixEligibleForVpsConfig, isBoletoEligibleForVpsConfig } from "@/app/actions";
+import { db } from "@/lib/db";
+import { type Invoice, pgInvoice, pgPlan } from "@/lib/db/schema";
+import CheckoutClient from "./checkout-client";
 
 export const metadata: Metadata = {
-  title: "Checkout - Atlas Hosting",
   description: "Pagamento de fatura",
+  title: "Checkout - Atlas Hosting",
 };
 
-export type InstallmentRate = {
+export interface InstallmentRate {
   n: number;
   domRate: number;
   masterRate: number;
   buyerRate: number;
   fixedFee: number;
-};
+}
 
-export type CheckoutRates = {
+export interface CheckoutRates {
   domCcRate: number;
   masterCcRate: number;
   buyerCcRate: number;
@@ -28,7 +31,7 @@ export type CheckoutRates = {
   vendorCcPercent: number;
   vendorCcFixed: number;
   vendorPixPercent: number;
-};
+}
 
 export default async function CheckoutPage({
   params,
@@ -51,9 +54,9 @@ export default async function CheckoutPage({
 
   if (invoice.status === "expired" || invoice.status === "paid") {
     return (
-      <div className="min-h-screen bg-[#000B12] flex items-center justify-center">
-        <div className="text-center space-y-4 px-6">
-          <p className="text-2xl font-black text-white">
+      <div className="flex min-h-screen items-center justify-center bg-[#000B12]">
+        <div className="space-y-4 px-6 text-center">
+          <p className="font-black text-2xl text-white">
             {invoice.status === "paid" ? "Fatura já paga" : "Fatura expirada"}
           </p>
           <p className="text-slate-400">
@@ -80,20 +83,24 @@ export default async function CheckoutPage({
     reference = plan.name;
   }
 
-  const initialStep = resolvedSearch.initialStep === "payment" ? "payment" : "billing";
+  const initialStep =
+    resolvedSearch.initialStep === "payment" ? "payment" : "billing";
 
   const invoiceConfig = (invoice.metadata as any)?.config || {};
-  const isAnnualVps = invoice.type === "vps" && (await isPixEligibleForVpsConfig(invoiceConfig));
-  const allowBoleto = await isBoletoEligibleForVpsConfig(invoice.type === "vps" ? invoiceConfig : {});
+  const isAnnualVps =
+    invoice.type === "vps" && (await isPixEligibleForVpsConfig(invoiceConfig));
+  const allowBoleto = await isBoletoEligibleForVpsConfig(
+    invoice.type === "vps" ? invoiceConfig : {}
+  );
 
   return (
     <CheckoutClient
-      invoice={invoice as Invoice}
-      user={user ? { id: user.id, organization: user.organization } : null}
-      reference={reference}
-      initialStep={initialStep}
-      isAnnualVps={isAnnualVps}
       allowBoleto={allowBoleto}
+      initialStep={initialStep}
+      invoice={invoice as Invoice}
+      isAnnualVps={isAnnualVps}
+      reference={reference}
+      user={user ? { id: user.id, organization: user.organization } : null}
     />
   );
 }

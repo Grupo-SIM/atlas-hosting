@@ -1,10 +1,7 @@
 "use client";
 
-import { type ActionResponse, login } from "@/app/actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { CheckCircle, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -17,9 +14,12 @@ import {
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import * as yup from "yup";
-import { useToast } from "@/hooks/use-toast";
+import { type ActionResponse, login } from "@/app/actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 interface LoginFormProps {
   redirectTo?: string;
@@ -28,8 +28,8 @@ interface LoginFormProps {
 export default function LoginForm({ redirectTo }: LoginFormProps) {
   const { register, getValues, control, ...methods } = useForm<LoginFormInputs>(
     {
-      resolver: yupResolver(schema),
       mode: "onChange",
+      resolver: yupResolver(schema),
       reValidateMode: "onChange",
     }
   );
@@ -46,8 +46,8 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     ActionResponse,
     LoginFormInputs
   >(login, {
-    status: "idle",
     message: "",
+    status: "idle",
   });
 
   // Check for email change success message
@@ -56,9 +56,10 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     if (message === "email-changed") {
       setShowEmailChangeSuccess(true);
       toast({
-        title: "Email alterado com sucesso",
-        description: "Seu email foi alterado com sucesso. Você pode agora fazer login com o novo endereço.",
+        description:
+          "Seu email foi alterado com sucesso. Você pode agora fazer login com o novo endereço.",
         duration: 5000,
+        title: "Email alterado com sucesso",
       });
     }
   }, [searchParams, toast]);
@@ -81,11 +82,11 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   useEffect(() => {
     const resendEmail = async () => {
       await fetch("/api/auth/resend-verification", {
-        method: "POST",
+        body: JSON.stringify({ email: getValues("email") }),
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email: getValues("email") }),
+        method: "POST",
       });
     };
 
@@ -104,10 +105,10 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
             Você precisa verificar seu email antes de fazer login. Verifique sua
             caixa de entrada.{" "}
             <button
-              type="button"
-              onClick={resendEmail}
+              className="all:unset cursor-pointer font-semibold text-red-400 underline"
               disabled={isPending}
-              className="all:unset text-red-400 font-semibold underline cursor-pointer"
+              onClick={resendEmail}
+              type="button"
             >
               Clique aqui
             </button>{" "}
@@ -129,55 +130,62 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   ]);
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form className="space-y-6" onSubmit={onSubmit}>
       {showEmailChangeSuccess && (
         <Alert className="border-green-500/50 bg-green-500/10 text-green-400">
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Email alterado com sucesso!</strong> Você pode agora fazer login com o novo endereço de email.
+            <strong>Email alterado com sucesso!</strong> Você pode agora fazer
+            login com o novo endereço de email.
           </AlertDescription>
         </Alert>
       )}
-      
-      <div className="flex flex-col items-start gap-1 w-full max-w-[448px] min-h-[72px] h-auto">
-        <Label htmlFor="email" className="text-white font-medium ml-1">E-mail</Label>
+
+      <div className="flex h-auto min-h-[72px] w-full max-w-[448px] flex-col items-start gap-1">
+        <Label className="ml-1 font-medium text-white" htmlFor="email">
+          E-mail
+        </Label>
         <Input
-          id="email"
-          type="email"
-          placeholder="Digite seu e-mail"
           autoComplete="email"
-          className="h-11 bg-white/80 border-none text-slate-900 placeholder:text-slate-500 rounded-md focus-visible:ring-sky-500/50 focus-visible:bg-white transition-all font-medium"
+          className="h-11 rounded-md border-none bg-white/80 font-medium text-slate-900 transition-all placeholder:text-slate-500 focus-visible:bg-white focus-visible:ring-sky-500/50"
+          id="email"
+          placeholder="Digite seu e-mail"
+          type="email"
           {...register("email")}
         />
         {errors.email && (
-          <p className="text-xs font-medium text-red-400 ml-1 mt-1">{errors.email.message}</p>
+          <p className="mt-1 ml-1 font-medium text-red-400 text-xs">
+            {errors.email.message}
+          </p>
         )}
       </div>
-      
-      <div className="flex flex-col items-start gap-1 w-full max-w-[448px] min-h-[72px] h-auto">
-        <div className="flex items-center justify-between w-full ml-1 pr-1">
-          <Label htmlFor="password" className="text-white font-medium">Senha</Label>
+
+      <div className="flex h-auto min-h-[72px] w-full max-w-[448px] flex-col items-start gap-1">
+        <div className="ml-1 flex w-full items-center justify-between pr-1">
+          <Label className="font-medium text-white" htmlFor="password">
+            Senha
+          </Label>
           <Link
+            className="font-medium text-white text-xs transition-colors hover:text-sky-300"
             href="/forgot-password"
-            className="text-xs text-white hover:text-sky-300 transition-colors font-medium"
           >
             Esqueceu a senha?
           </Link>
         </div>
         <div className="relative w-full">
           <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            placeholder="Digite sua senha"
             autoComplete="current-password"
-            className="h-11 bg-white/80 border-none text-slate-900 placeholder:text-slate-500 rounded-md pr-10 focus-visible:ring-sky-500/50 focus-visible:bg-white transition-all font-medium"
+            className="h-11 rounded-md border-none bg-white/80 pr-10 font-medium text-slate-900 transition-all placeholder:text-slate-500 focus-visible:bg-white focus-visible:ring-sky-500/50"
+            id="password"
+            placeholder="Digite sua senha"
+            type={showPassword ? "text" : "password"}
             {...register("password")}
           />
           <button
-            type="button"
+            className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
             tabIndex={-1}
+            type="button"
           >
             {showPassword ? (
               <EyeOff className="h-4 w-4" />
@@ -187,18 +195,20 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           </button>
         </div>
         {errors.password && (
-          <p className="text-xs font-medium text-red-400 ml-1 mt-1">{errors.password.message}</p>
+          <p className="mt-1 ml-1 font-medium text-red-400 text-xs">
+            {errors.password.message}
+          </p>
         )}
       </div>
 
-      {formError && <p className="text-xs text-red-400 ml-1">{formError}</p>}
+      {formError && <p className="ml-1 text-red-400 text-xs">{formError}</p>}
 
       <Button
-        type="submit"
-        className="w-full max-w-[448px] h-[48px] text-sm font-bold text-white rounded-[6px] transition-all shadow-lg uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
+        className="h-[48px] w-full max-w-[448px] rounded-[6px] bg-gradient-to-r from-blue-600 to-indigo-600 font-bold text-sm text-white uppercase tracking-wider shadow-lg transition-all hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
         disabled={!isValid || isValidating || isPending}
+        type="submit"
       >
-        {isPending ? <CgSpinner className="animate-spin h-5 w-5" /> : "Entrar"}
+        {isPending ? <CgSpinner className="h-5 w-5 animate-spin" /> : "Entrar"}
       </Button>
     </form>
   );

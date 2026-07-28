@@ -11,17 +11,17 @@ export interface Data {
 }
 
 export interface JSON {
-  id:          string;
-  name:        string;
+  id: string;
+  name: string;
   description: string;
-  version:     string;
-  logo:        string;
-  links:       Links;
-  tags:        string[];
+  version: string;
+  logo: string;
+  links: Links;
+  tags: string[];
 }
 
 export interface Links {
-  github:  string;
+  github: string;
   website: string;
-  docs:    string;
+  docs: string;
 }

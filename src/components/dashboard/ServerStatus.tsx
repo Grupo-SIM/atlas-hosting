@@ -1,23 +1,3 @@
-import { getWordPressSitesForSelectedDomain } from "@/app/(auth)/sites/wordpress-specific/actions";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { SslFixButton } from "@/components/dashboard/ServerStatusClient";
-import { getUser } from "@/lib/auth";
-import namecheapApi from "@/lib/server/apis/namecheap";
-import pleskApi from "@/lib/server/apis/plesk";
-import WpCliApi, {
-  type WpPluginList,
-  type WpThemeList,
-} from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
-import { Suspense } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -33,7 +13,26 @@ import {
   XCircle,
   Zap,
 } from "lucide-react";
+import { Suspense } from "react";
+import { getWordPressSitesForSelectedDomain } from "@/app/(auth)/sites/wordpress-specific/actions";
+import { SslFixButton } from "@/components/dashboard/ServerStatusClient";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { User } from "@/lib/db/schema";
+import namecheapApi from "@/lib/server/apis/namecheap";
+import pleskApi from "@/lib/server/apis/plesk";
+import WpCliApi, {
+  type WpPluginList,
+  type WpThemeList,
+} from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
 
 interface Service {
   id: string;
@@ -98,7 +97,7 @@ async function WordPressServicesBlock({
   const services = await wpPromise;
   return (
     <>
-      {services.map((service) => (
+      {services.map(service => (
         <ServiceBlock key={service.id} service={service} />
       ))}
     </>
@@ -173,26 +172,22 @@ function ServiceBlock({ service }: { service: Service }) {
 
   return (
     <div
-      className={`
-        relative group rounded-xl border-2 p-4 transition-all duration-300 ease-in-out
-        hover:shadow-md hover:-translate-y-0.5 cursor-pointer
-        ${getStatusBgColor(service.status)}
+      className={`group relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md ${getStatusBgColor(service.status)}
       `}
     >
       <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-4 flex-1">
+        <div className="flex flex-1 items-start space-x-4">
           {/* Service Icon */}
           <div
-            className={`
-            p-3 rounded-xl transition-colors duration-200
-            ${service.status === "operational"
+            className={`rounded-xl p-3 transition-colors duration-200 ${
+              service.status === "operational"
                 ? "bg-emerald-100 dark:bg-emerald-500/20"
                 : service.status === "issues"
                   ? "bg-amber-100 dark:bg-amber-500/20"
                   : service.status === "error"
                     ? "bg-red-100 dark:bg-red-500/20"
                     : "bg-slate-100 dark:bg-slate-500/20"
-              }
+            }
             ${getStatusColor(service.status)}
           `}
           >
@@ -200,15 +195,15 @@ function ServiceBlock({ service }: { service: Service }) {
           </div>
 
           {/* Service Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2 mb-1">
-              <h3 className="font-semibold text-sm text-foreground">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center space-x-2">
+              <h3 className="font-semibold text-foreground text-sm">
                 {service.name}
               </h3>
               {service.metrics?.trend && getTrendIcon(service.metrics.trend)}
             </div>
 
-            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+            <p className="mb-3 text-muted-foreground text-xs leading-relaxed">
               {service.details}
             </p>
 
@@ -216,25 +211,25 @@ function ServiceBlock({ service }: { service: Service }) {
             {service.metrics && (
               <div className="space-y-2">
                 {typeof service.metrics.max === "number" &&
-                  typeof service.metrics.value === "number" ? (
+                typeof service.metrics.value === "number" ? (
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-muted-foreground">
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="font-medium text-muted-foreground text-xs">
                         {service.metrics.label}
                       </span>
-                      <span className="text-xs font-mono text-foreground">
+                      <span className="font-mono text-foreground text-xs">
                         {service.metrics.value}%
                       </span>
                     </div>
-                    <Progress value={service.metrics.value} className="h-1.5" />
+                    <Progress className="h-1.5" value={service.metrics.value} />
                   </div>
                 ) : (
                   service.metrics.value && (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-muted-foreground">
+                      <span className="font-medium text-muted-foreground text-xs">
                         {service.metrics.label}
                       </span>
-                      <Badge variant="outline" className="text-xs font-mono">
+                      <Badge className="font-mono text-xs" variant="outline">
                         {service.metrics.value}
                       </Badge>
                     </div>
@@ -254,31 +249,32 @@ function ServiceBlock({ service }: { service: Service }) {
         </div>
 
         {/* Status Badge */}
-        <div className="flex items-center ml-4">
+        <div className="ml-4 flex items-center">
           <Badge
-            variant="outline"
-            className={`
-              text-xs font-medium px-3 py-1 border-0 shadow-sm
-              ${service.status === "operational"
-                ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+            className={`border-0 px-3 py-1 font-medium text-xs shadow-sm ${
+              service.status === "operational"
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
                 : service.status === "issues"
-                  ? "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300"
+                  ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
                   : service.status === "error"
-                    ? "bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300"
-                    : "bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300"
-              }
+                    ? "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300"
+                    : "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300"
+            }
             `}
+            variant="outline"
           >
             <span className="flex items-center space-x-1.5">
               {getStatusIcon(service.status)}
-              <span className="capitalize font-medium">{getStatusName(service.status)}</span>
+              <span className="font-medium capitalize">
+                {getStatusName(service.status)}
+              </span>
             </span>
           </Badge>
         </div>
       </div>
 
       {/* Hover Effect Overlay */}
-      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 dark:from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-primary/10" />
     </div>
   );
 }
@@ -286,17 +282,17 @@ function ServiceBlock({ service }: { service: Service }) {
 // Service block skeleton
 function ServiceBlockSkeleton() {
   return (
-    <div className="rounded-xl border-2 p-4 bg-slate-50 dark:bg-slate-500/10 border-slate-200 dark:border-slate-500/20">
+    <div className="rounded-xl border-2 border-slate-200 bg-slate-50 p-4 dark:border-slate-500/20 dark:bg-slate-500/10">
       <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-4 flex-1">
-          <Skeleton className="w-14 h-14 rounded-xl" />
+        <div className="flex flex-1 items-start space-x-4">
+          <Skeleton className="h-14 w-14 rounded-xl" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-3 w-48" />
             <Skeleton className="h-3 w-24" />
           </div>
         </div>
-        <Skeleton className="w-20 h-6 rounded-full" />
+        <Skeleton className="h-6 w-20 rounded-full" />
       </div>
     </div>
   );
@@ -317,53 +313,51 @@ async function fetchHostingStatus(domainName: string): Promise<Service> {
         const hostingStatus =
           statusObj.status === "active" ? "operational" : "issues";
         return {
-          id: "hosting",
-          name: "Hospedagem Web",
-          status: hostingStatus,
           details: `Domínio Configurado - Status: ${(statusObj.status === "active" && "Ativo") ?? "Inativo"}`,
           icon: <Server className="h-5 w-5" />,
-          metrics: {
-            value: hostingStatus === "operational" ? "100" : "0",
-            max: 100,
-            label: "Tempo Online",
-            trend: hostingStatus === "operational" ? "stable" : "down",
-          },
-        };
-      } else {
-        return {
           id: "hosting",
-          name: "Hospedagem Web",
-          status: "operational",
-          details: `Domínio Plesk Ativo - ID: ${pleskDomain.id}`,
-          icon: <Server className="h-5 w-5" />,
           metrics: {
-            value: "100",
-            max: 100,
             label: "Tempo Online",
-            trend: "stable",
+            max: 100,
+            trend: hostingStatus === "operational" ? "stable" : "down",
+            value: hostingStatus === "operational" ? "100" : "0",
           },
+          name: "Hospedagem Web",
+          status: hostingStatus,
         };
       }
-    } else {
       return {
-        id: "hosting",
-        name: "Hospedagem Web",
-        status: "error",
-        details: "Domínio não encontrado no painel de hospedagem Plesk",
+        details: `Domínio Plesk Ativo - ID: ${pleskDomain.id}`,
         icon: <Server className="h-5 w-5" />,
+        id: "hosting",
+        metrics: {
+          label: "Tempo Online",
+          max: 100,
+          trend: "stable",
+          value: "100",
+        },
+        name: "Hospedagem Web",
+        status: "operational",
       };
     }
+    return {
+      details: "Domínio não encontrado no painel de hospedagem Plesk",
+      icon: <Server className="h-5 w-5" />,
+      id: "hosting",
+      name: "Hospedagem Web",
+      status: "error",
+    };
   } catch (error) {
     console.error(
       `Error fetching Plesk hosting status for ${domainName}:`,
       error
     );
     return {
+      details: "Não foi possível obter o status da hospedagem do Plesk",
+      icon: <Server className="h-5 w-5" />,
       id: "hosting",
       name: "Hospedagem Web",
       status: "error",
-      details: "Não foi possível obter o status da hospedagem do Plesk",
-      icon: <Server className="h-5 w-5" />,
     };
   }
 }
@@ -378,58 +372,55 @@ async function fetchSslStatus(domainName: string): Promise<Service> {
 
     if (sslResponse?.ok) {
       return {
-        id: "ssl",
-        name: "Certificado SSL",
-        status: "operational",
         details: "Certificado SSL válido detectado - HTTPS acessível",
-        icon: <ShieldCheck className="h-5 w-5" />,
-        fixable: false,
         domainName,
+        fixable: false,
+        icon: <ShieldCheck className="h-5 w-5" />,
+        id: "ssl",
         metrics: {
-          value: "Válido",
           label: "Status do Certificado",
           trend: "stable",
+          value: "Válido",
         },
+        name: "Certificado SSL",
+        status: "operational",
       };
-    } else {
-      const httpResponse = await fetch(`http://${domainName}`, {
-        method: "HEAD",
-        signal: AbortSignal.timeout(10000),
-      }).catch(() => null);
-
-      if (httpResponse?.ok) {
-        return {
-          id: "ssl",
-          name: "Certificado SSL",
-          status: "issues",
-          details: "Site acessível via HTTP mas SSL/HTTPS não está funcionando",
-          icon: <ShieldCheck className="h-5 w-5" />,
-          fixable: true,
-          domainName,
-        };
-      } else {
-        return {
-          id: "ssl",
-          name: "Certificado SSL",
-          status: "error",
-          details:
-            "Site não acessível - Verifique configuração DNS e hospedagem",
-          icon: <ShieldCheck className="h-5 w-5" />,
-          fixable: true,
-          domainName,
-        };
-      }
     }
-  } catch (error) {
-    console.error(`Error checking SSL status for ${domainName}:`, error);
+    const httpResponse = await fetch(`http://${domainName}`, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(10000),
+    }).catch(() => null);
+
+    if (httpResponse?.ok) {
+      return {
+        details: "Site acessível via HTTP mas SSL/HTTPS não está funcionando",
+        domainName,
+        fixable: true,
+        icon: <ShieldCheck className="h-5 w-5" />,
+        id: "ssl",
+        name: "Certificado SSL",
+        status: "issues",
+      };
+    }
     return {
+      details: "Site não acessível - Verifique configuração DNS e hospedagem",
+      domainName,
+      fixable: true,
+      icon: <ShieldCheck className="h-5 w-5" />,
       id: "ssl",
       name: "Certificado SSL",
       status: "error",
+    };
+  } catch (error) {
+    console.error(`Error checking SSL status for ${domainName}:`, error);
+    return {
       details: "Não foi possível verificar o status do certificado SSL",
-      icon: <ShieldCheck className="h-5 w-5" />,
-      fixable: true,
       domainName,
+      fixable: true,
+      icon: <ShieldCheck className="h-5 w-5" />,
+      id: "ssl",
+      name: "Certificado SSL",
+      status: "error",
     };
   }
 }
@@ -444,7 +435,7 @@ async function fetchDnsStatus(domainName: string): Promise<Service> {
       });
 
       const hasARecord = dnsResponse.Hosts?.some(
-        (record) =>
+        record =>
           record.Type === "A" &&
           (record.Name === "@" ||
             record.Name === domainName ||
@@ -455,43 +446,42 @@ async function fetchDnsStatus(domainName: string): Promise<Service> {
 
       if (hasARecord) {
         return {
-          id: "dns",
-          name: "Registros DNS",
-          status: "operational",
           details: `${recordCount} registros DNS configurados - Registro A encontrado`,
           icon: <Globe className="h-5 w-5" />,
+          id: "dns",
           metrics: {
-            value: recordCount,
             label: "Registros DNS",
             trend: "stable",
+            value: recordCount,
           },
-        };
-      } else {
-        return {
-          id: "dns",
           name: "Registros DNS",
-          status: "issues",
-          details: `${recordCount} registros DNS encontrados mas faltando registro A essencial`,
-          icon: <Globe className="h-5 w-5" />,
+          status: "operational",
         };
       }
+      return {
+        details: `${recordCount} registros DNS encontrados mas faltando registro A essencial`,
+        icon: <Globe className="h-5 w-5" />,
+        id: "dns",
+        name: "Registros DNS",
+        status: "issues",
+      };
     } catch (error) {
       console.error(`Error fetching DNS status for ${domainName}:`, error);
       return {
+        details: "Não foi possível obter registros DNS do Namecheap",
+        icon: <Globe className="h-5 w-5" />,
         id: "dns",
         name: "Registros DNS",
         status: "error",
-        details: "Não foi possível obter registros DNS do Namecheap",
-        icon: <Globe className="h-5 w-5" />,
       };
     }
   } else {
     return {
+      details: "Formato de domínio inválido para verificação DNS",
+      icon: <Globe className="h-5 w-5" />,
       id: "dns",
       name: "Registros DNS",
       status: "unknown",
-      details: "Formato de domínio inválido para verificação DNS",
-      icon: <Globe className="h-5 w-5" />,
     };
   }
 }
@@ -501,7 +491,7 @@ async function fetchWordPressStatus(domainName: string): Promise<Service[]> {
     // Get ALL WordPress instances for the domain (not just selected)
     const sites = await getWordPressSitesForSelectedDomain();
     // Get all WordPress sites that match this domain (including subdomains, paths, etc.)
-    const wpSites = sites.filter((site) => {
+    const wpSites = sites.filter(site => {
       try {
         const siteHostname = new URL(site.domain).hostname;
         return (
@@ -550,13 +540,13 @@ async function fetchWordPressStatus(domainName: string): Promise<Service[]> {
           // Check plugins for this site
           try {
             const plugins = (await wpCliWithInstance.plugin.list({
-              format: "json",
               fields: "name,status,update,version",
+              format: "json",
             })) as WpPluginList[];
 
             const sitePluginCount = plugins?.length || 0;
             const sitePluginUpdates =
-              plugins?.filter((plugin) => String(plugin.update) === "available")
+              plugins?.filter(plugin => String(plugin.update) === "available")
                 .length || 0;
 
             totalPluginCount += sitePluginCount;
@@ -571,13 +561,13 @@ async function fetchWordPressStatus(domainName: string): Promise<Service[]> {
           // Check themes for this site
           try {
             const themes = (await wpCliWithInstance.theme.list({
-              format: "json",
               fields: "name,status,update,version",
+              format: "json",
             })) as WpThemeList[];
 
             const siteThemeCount = themes?.length || 0;
             const siteThemeUpdates =
-              themes?.filter((theme) => String(theme.update) === "available")
+              themes?.filter(theme => String(theme.update) === "available")
                 .length || 0;
 
             totalThemeCount += siteThemeCount;
@@ -610,75 +600,74 @@ async function fetchWordPressStatus(domainName: string): Promise<Service[]> {
 
       return [
         {
-          id: "wp-overview",
-          name: "Visão Geral WordPress",
-          status: wpStatus,
           details: `${wpSites.length} site${wpSites.length > 1 ? "s" : ""} WordPress - ${operationalSites} operacional${operationalSites !== 1 ? "is" : ""}, ${sitesWithIssues} com problemas`,
           icon: <Monitor className="h-5 w-5" />,
+          id: "wp-overview",
           metrics: {
-            value: wpSites.length,
             label: "Sites WP",
             trend: sitesWithIssues === 0 ? "stable" : "down",
+            value: wpSites.length,
           },
+          name: "Visão Geral WordPress",
+          status: wpStatus,
         },
         {
-          id: "wp-core",
-          name: "WordPress Core",
-          status: totalCoreUpdates > 0 ? "issues" : "operational",
           details:
             totalCoreUpdates > 0
               ? `${totalCoreUpdates} site${totalCoreUpdates > 1 ? "s" : ""} precisam de atualizações do core`
               : `Todos os ${wpSites.length} sites têm a versão mais recente do WordPress`,
           icon: <Power className="h-5 w-5" />,
+          id: "wp-core",
           metrics: {
-            value:
-              totalCoreUpdates > 0 ? "Atualizações Disponíveis" : "Atualizado",
             label: "Status do Core",
             trend: totalCoreUpdates === 0 ? "stable" : "down",
+            value:
+              totalCoreUpdates > 0 ? "Atualizações Disponíveis" : "Atualizado",
           },
+          name: "WordPress Core",
+          status: totalCoreUpdates > 0 ? "issues" : "operational",
         },
         {
-          id: "wp-plugins",
-          name: "WordPress Plugins",
-          status: totalPluginUpdates > 0 ? "issues" : "operational",
           details: `${totalPluginCount} plugins totais em ${wpSites.length} site${wpSites.length > 1 ? "s" : ""}, ${totalPluginUpdates} atualizações disponíveis`,
           icon: <Layers className="h-5 w-5" />,
+          id: "wp-plugins",
           metrics: {
-            value: totalPluginCount,
             label: "Total Plugins",
             trend: totalPluginUpdates > 0 ? "down" : "stable",
+            value: totalPluginCount,
           },
+          name: "WordPress Plugins",
+          status: totalPluginUpdates > 0 ? "issues" : "operational",
         },
         {
-          id: "wp-themes",
-          name: "WordPress Themes",
-          status: totalThemeUpdates > 0 ? "issues" : "operational",
           details: `${totalThemeCount} temas totais em ${wpSites.length} site${wpSites.length > 1 ? "s" : ""}, ${totalThemeUpdates} atualizações disponíveis`,
           icon: <Monitor className="h-5 w-5" />,
+          id: "wp-themes",
           metrics: {
-            value: totalThemeCount,
             label: "Total Temas",
             trend: totalThemeUpdates > 0 ? "down" : "stable",
+            value: totalThemeCount,
           },
+          name: "WordPress Themes",
+          status: totalThemeUpdates > 0 ? "issues" : "operational",
         },
         {
-          id: "wp-health",
-          name: "Saúde WordPress",
-          status: wpStatus,
           details: `Score Geral de Saúde: ${healthScore}% - ${totalUpdates} atualizações pendentes em todos os sites`,
           icon: <Activity className="h-5 w-5" />,
+          id: "wp-health",
           metrics: {
-            value: healthScore,
-            max: 100,
             label: "Score de Saúde",
+            max: 100,
             trend:
               healthScore > 80 ? "stable" : healthScore > 50 ? "down" : "down",
+            value: healthScore,
           },
+          name: "Saúde WordPress",
+          status: wpStatus,
         },
       ];
-    } else {
-      return [];
     }
+    return [];
   } catch (error) {
     console.error(
       `Error checking WordPress health for domain ${domainName}:`,
@@ -686,11 +675,11 @@ async function fetchWordPressStatus(domainName: string): Promise<Service[]> {
     );
     return [
       {
+        details: "Não foi possível obter informações dos sites WordPress",
+        icon: <Power className="h-5 w-5" />,
         id: "wp-error",
         name: "Sites WordPress",
         status: "error",
-        details: "Não foi possível obter informações dos sites WordPress",
-        icon: <Power className="h-5 w-5" />,
       },
     ];
   }
@@ -705,33 +694,32 @@ async function fetchSiteAccessStatus(domainName: string): Promise<Service> {
 
     if (response.ok) {
       return {
-        id: "site-access",
-        name: "Acessibilidade do Site",
-        status: "operational",
         details: `Site está acessível (HTTP ${response.status})`,
         icon: <Globe className="h-5 w-5" />,
+        id: "site-access",
         metrics: {
-          value: response.status,
           label: "Status HTTP",
           trend: "stable",
+          value: response.status,
         },
-      };
-    } else {
-      return {
-        id: "site-access",
         name: "Acessibilidade do Site",
-        status: "issues",
-        details: `Site retornou HTTP ${response.status}`,
-        icon: <Globe className="h-5 w-5" />,
+        status: "operational",
       };
     }
+    return {
+      details: `Site retornou HTTP ${response.status}`,
+      icon: <Globe className="h-5 w-5" />,
+      id: "site-access",
+      name: "Acessibilidade do Site",
+      status: "issues",
+    };
   } catch (error) {
     return {
+      details: "Site não está acessível ou expirou o tempo limite",
+      icon: <Globe className="h-5 w-5" />,
       id: "site-access",
       name: "Acessibilidade do Site",
       status: "error",
-      details: "Site não está acessível ou expirou o tempo limite",
-      icon: <Globe className="h-5 w-5" />,
     };
   }
 }
@@ -749,8 +737,8 @@ async function AsyncServerStatusContent({
   const siteAccessPromise = fetchSiteAccessStatus(domainName);
 
   // Determine if we need to show WordPress services or site access
-  const wpSites = await getWordPressSitesForSelectedDomain().then((sites) =>
-    sites.filter((site) => {
+  const wpSites = await getWordPressSitesForSelectedDomain().then(sites =>
+    sites.filter(site => {
       try {
         const siteHostname = new URL(site.domain).hostname;
         return (
@@ -768,14 +756,14 @@ async function AsyncServerStatusContent({
 
   // Render the Card structure and async service blocks
   return (
-    <Card className="h-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out border-0 bg-gradient-to-br from-background to-muted/30 flex flex-col">
-      <CardHeader className="border-b border-border/40 pb-6 bg-gradient-to-r from-background to-muted/20">
+    <Card className="flex h-full flex-col border-0 bg-gradient-to-br from-background to-muted/30 shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl">
+      <CardHeader className="border-border/40 border-b bg-gradient-to-r from-background to-muted/20 pb-6">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+            <CardTitle className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text font-bold text-transparent text-xl">
               Status dos Serviços
             </CardTitle>
-            <CardDescription className="text-sm mt-1">
+            <CardDescription className="mt-1 text-sm">
               Monitoramento em tempo real para{" "}
               <span className="font-semibold text-primary">{domainName}</span>
             </CardDescription>
@@ -784,12 +772,12 @@ async function AsyncServerStatusContent({
           <div className="flex items-center space-x-3">
             <Suspense fallback={<HealthScoreSkeleton />}>
               <HealthScoreDisplay
-                hostingPromise={hostingPromise}
-                sslPromise={sslPromise}
                 dnsPromise={dnsPromise}
-                wpPromise={wpPromise}
-                siteAccessPromise={siteAccessPromise}
+                hostingPromise={hostingPromise}
                 showWordPress={showWordPress}
+                siteAccessPromise={siteAccessPromise}
+                sslPromise={sslPromise}
+                wpPromise={wpPromise}
               />
             </Suspense>
           </div>
@@ -798,17 +786,17 @@ async function AsyncServerStatusContent({
         {/* Overall Health Progress Bar - async component with suspense */}
         <Suspense fallback={<HealthProgressSkeleton />}>
           <HealthProgressBar
-            hostingPromise={hostingPromise}
-            sslPromise={sslPromise}
             dnsPromise={dnsPromise}
-            wpPromise={wpPromise}
-            siteAccessPromise={siteAccessPromise}
+            hostingPromise={hostingPromise}
             showWordPress={showWordPress}
+            siteAccessPromise={siteAccessPromise}
+            sslPromise={sslPromise}
+            wpPromise={wpPromise}
           />
         </Suspense>
       </CardHeader>
 
-      <CardContent className="pt-6 flex-1 flex flex-col">
+      <CardContent className="flex flex-1 flex-col pt-6">
         <div className="grid gap-4">
           {/* Hosting Service Block */}
           <Suspense fallback={<ServiceBlockSkeleton />}>
@@ -825,7 +813,7 @@ async function AsyncServerStatusContent({
 
           {/* DNS Service Block */}
           <Suspense fallback={<ServiceBlockSkeleton />}>
-            <DnsServiceBlock domainName={domainName} dnsPromise={dnsPromise} />
+            <DnsServiceBlock dnsPromise={dnsPromise} domainName={domainName} />
           </Suspense>
 
           {/* WordPress Services Block - only if WordPress sites exist */}
@@ -859,12 +847,12 @@ async function AsyncServerStatusContent({
           {/* Summary Footer */}
           <Suspense fallback={<ServiceSummaryFooterSkeleton />}>
             <ServiceSummaryFooter
-              hostingPromise={hostingPromise}
-              sslPromise={sslPromise}
               dnsPromise={dnsPromise}
-              wpPromise={wpPromise}
-              siteAccessPromise={siteAccessPromise}
+              hostingPromise={hostingPromise}
               showWordPress={showWordPress}
+              siteAccessPromise={siteAccessPromise}
+              sslPromise={sslPromise}
+              wpPromise={wpPromise}
             />
           </Suspense>
         </div>
@@ -878,114 +866,119 @@ const HOSTING_STATUS_ENABLED = false;
 
 const COMING_SOON_SERVICES: Service[] = [
   {
+    details: "Em breve disponível para seus domínios",
+    icon: <Server className="h-5 w-5" />,
     id: "hosting",
     name: "Hospedagem Web",
     status: "operational",
-    details: "Em breve disponível para seus domínios",
-    icon: <Server className="h-5 w-5" />,
   },
   {
+    details: "Certificados SSL automáticos gratuitos",
+    icon: <ShieldCheck className="h-5 w-5" />,
     id: "ssl",
     name: "Certificado SSL",
     status: "operational",
-    details: "Certificados SSL automáticos gratuitos",
-    icon: <ShieldCheck className="h-5 w-5" />,
   },
   {
+    details: "Gerenciamento completo de DNS",
+    icon: <Globe className="h-5 w-5" />,
     id: "dns",
     name: "Registros DNS",
     status: "operational",
-    details: "Gerenciamento completo de DNS",
-    icon: <Globe className="h-5 w-5" />,
   },
   {
+    details: "Monitoramento 24/7 de uptime",
+    icon: <Globe className="h-5 w-5" />,
     id: "site-access",
     name: "Acessibilidade do Site",
     status: "operational",
-    details: "Monitoramento 24/7 de uptime",
-    icon: <Globe className="h-5 w-5" />,
   },
 ];
 
 function ServerStatusComingSoon({ domainName }: { domainName?: string }) {
   return (
-    <div className="relative opacity-50 pointer-events-none select-none">
-    <Card className="h-full shadow-lg border-0 bg-gradient-to-br from-background to-muted/30 flex flex-col">
-      <CardHeader className="border-b border-border/40 pb-6 bg-gradient-to-r from-background to-muted/20">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-              Status dos Serviços
-            </CardTitle>
-            <CardDescription className="text-sm mt-1">
-              {domainName ? (
-                <>
-                  Monitoramento para{" "}
-                  <span className="font-semibold text-primary">{domainName}</span>
-                </>
-              ) : (
-                "Monitoramento em tempo real"
-              )}
-            </CardDescription>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="text-right">
-              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                Em Breve
-              </div>
-              <div className="text-xs text-muted-foreground">Hospedagem</div>
+    <div className="pointer-events-none relative select-none opacity-50">
+      <Card className="flex h-full flex-col border-0 bg-gradient-to-br from-background to-muted/30 shadow-lg">
+        <CardHeader className="border-border/40 border-b bg-gradient-to-r from-background to-muted/20 pb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text font-bold text-transparent text-xl">
+                Status dos Serviços
+              </CardTitle>
+              <CardDescription className="mt-1 text-sm">
+                {domainName ? (
+                  <>
+                    Monitoramento para{" "}
+                    <span className="font-semibold text-primary">
+                      {domainName}
+                    </span>
+                  </>
+                ) : (
+                  "Monitoramento em tempo real"
+                )}
+              </CardDescription>
             </div>
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center">
-              <Monitor className="h-6 w-6 text-emerald-500" />
-            </div>
-          </div>
-        </div>
-        <div className="mt-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-muted-foreground">
-              Saúde Geral do Sistema
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {COMING_SOON_SERVICES.length}/{COMING_SOON_SERVICES.length} serviços operacionais
-            </span>
-          </div>
-          <Progress value={100} className="h-2 bg-muted/50" />
-        </div>
-      </CardHeader>
-      <CardContent className="pt-6 flex-1 flex flex-col">
-        <div className="grid gap-4">
-          {COMING_SOON_SERVICES.map((service) => (
-            <ServiceBlock key={service.id} service={service} />
-          ))}
-          <div className="mt-6 pt-4 border-t border-border/40">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center space-x-1">
-                <Clock className="h-3 w-3" />
-                <span>Funcionalidade em desenvolvimento</span>
+            <div className="flex items-center space-x-3">
+              <div className="text-right">
+                <div className="font-bold text-2xl text-emerald-600 dark:text-emerald-400">
+                  Em Breve
+                </div>
+                <div className="text-muted-foreground text-xs">Hospedagem</div>
               </div>
-              <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span>{COMING_SOON_SERVICES.length} Operacionais</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5">
+                <Monitor className="h-6 w-6 text-emerald-500" />
               </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="font-medium text-muted-foreground text-xs">
+                Saúde Geral do Sistema
+              </span>
+              <span className="text-muted-foreground text-xs">
+                {COMING_SOON_SERVICES.length}/{COMING_SOON_SERVICES.length}{" "}
+                serviços operacionais
+              </span>
+            </div>
+            <Progress className="h-2 bg-muted/50" value={100} />
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-1 flex-col pt-6">
+          <div className="grid gap-4">
+            {COMING_SOON_SERVICES.map(service => (
+              <ServiceBlock key={service.id} service={service} />
+            ))}
+            <div className="mt-6 border-border/40 border-t pt-4">
+              <div className="flex items-center justify-between text-muted-foreground text-xs">
+                <div className="flex items-center space-x-1">
+                  <Clock className="h-3 w-3" />
+                  <span>Funcionalidade em desenvolvimento</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span>{COMING_SOON_SERVICES.length} Operacionais</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
 export function ServerStatus({ user }: { user: User }) {
   if (!HOSTING_STATUS_ENABLED) {
-    return <ServerStatusComingSoon domainName={user?.selectedDomain ?? undefined} />;
+    return (
+      <ServerStatusComingSoon domainName={user?.selectedDomain ?? undefined} />
+    );
   }
 
   if (!user?.selectedDomain) {
     return (
-      <Card className="h-full shadow-lg flex flex-col">
-        <CardHeader className="border-b border-border/60 pb-4">
-          <CardTitle className="text-lg font-semibold">
+      <Card className="flex h-full flex-col shadow-lg">
+        <CardHeader className="border-border/60 border-b pb-4">
+          <CardTitle className="font-semibold text-lg">
             Status dos Serviços
           </CardTitle>
           <CardDescription className="text-sm">
@@ -993,7 +986,7 @@ export function ServerStatus({ user }: { user: User }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-4">
-          <p className="text-sm text-muted-foreground py-4 text-center">
+          <p className="py-4 text-center text-muted-foreground text-sm">
             Por favor, selecione um domínio para visualizar o status dos
             serviços.
           </p>
@@ -1010,31 +1003,31 @@ export function ServerStatus({ user }: { user: User }) {
 
 function ServerStatusSkeleton() {
   return (
-    <Card className="h-full shadow-lg border-0 bg-gradient-to-br from-background to-muted/30 flex flex-col">
-      <CardHeader className="border-b border-border/40 pb-6 bg-gradient-to-r from-background to-muted/20">
+    <Card className="flex h-full flex-col border-0 bg-gradient-to-br from-background to-muted/30 shadow-lg">
+      <CardHeader className="border-border/40 border-b bg-gradient-to-r from-background to-muted/20 pb-6">
         <div className="flex items-center justify-between">
           <div>
-            <Skeleton className="h-6 w-48 mb-1" />
+            <Skeleton className="mb-1 h-6 w-48" />
             <Skeleton className="h-4 w-64" />
           </div>
           <div className="flex items-center space-x-3">
             <div className="text-right">
-              <Skeleton className="h-8 w-16 mb-1" />
+              <Skeleton className="mb-1 h-8 w-16" />
               <Skeleton className="h-3 w-20" />
             </div>
-            <Skeleton className="w-12 h-12 rounded-full" />
+            <Skeleton className="h-12 w-12 rounded-full" />
           </div>
         </div>
         <div className="mt-4">
-          <Skeleton className="h-3 w-40 mb-2" />
+          <Skeleton className="mb-2 h-3 w-40" />
           <Skeleton className="h-2 w-full" />
         </div>
       </CardHeader>
-      <CardContent className="pt-6 grid gap-4">
+      <CardContent className="grid gap-4 pt-6">
         {[...Array(5)].map((_, i) => (
           <ServiceBlockSkeleton key={i} />
         ))}
-        <Skeleton className="h-4 w-full mt-6" />
+        <Skeleton className="mt-6 h-4 w-full" />
       </CardContent>
     </Card>
   );
@@ -1081,7 +1074,7 @@ async function HealthScoreDisplay({
 
   // Calculate health score
   const operationalCount = allServices.filter(
-    (s) => s.status === "operational"
+    s => s.status === "operational"
   ).length;
   const totalServices = allServices.length;
   const healthScore =
@@ -1098,12 +1091,12 @@ async function HealthScoreDisplay({
   return (
     <>
       <div className="text-right">
-        <div className={`text-2xl font-bold ${getHealthColor(healthScore)}`}>
+        <div className={`font-bold text-2xl ${getHealthColor(healthScore)}`}>
           {healthScore}%
         </div>
-        <div className="text-xs text-muted-foreground">Score de Saúde</div>
+        <div className="text-muted-foreground text-xs">Score de Saúde</div>
       </div>
-      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5">
         <Monitor className="h-6 w-6 text-primary" />
       </div>
     </>
@@ -1115,10 +1108,10 @@ function HealthScoreSkeleton() {
   return (
     <>
       <div className="text-right">
-        <Skeleton className="h-8 w-16 mb-1" />
+        <Skeleton className="mb-1 h-8 w-16" />
         <Skeleton className="h-3 w-20" />
       </div>
-      <Skeleton className="w-12 h-12 rounded-full" />
+      <Skeleton className="h-12 w-12 rounded-full" />
     </>
   );
 }
@@ -1164,7 +1157,7 @@ async function HealthProgressBar({
 
   // Calculate health score and counts
   const operationalCount = allServices.filter(
-    (s) => s.status === "operational"
+    s => s.status === "operational"
   ).length;
   const totalServices = allServices.length;
   const healthScore =
@@ -1174,15 +1167,15 @@ async function HealthProgressBar({
 
   return (
     <div className="mt-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-muted-foreground">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="font-medium text-muted-foreground text-xs">
           Saúde Geral do Sistema
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           {operationalCount}/{totalServices} serviços operacionais
         </span>
       </div>
-      <Progress value={healthScore} className="h-2 bg-muted/50" />
+      <Progress className="h-2 bg-muted/50" value={healthScore} />
     </div>
   );
 }
@@ -1191,13 +1184,13 @@ async function HealthProgressBar({
 function HealthProgressSkeleton() {
   return (
     <div className="mt-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-muted-foreground">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="font-medium text-muted-foreground text-xs">
           Saúde Geral do Sistema
         </span>
-        <span className="text-xs text-muted-foreground">Carregando...</span>
+        <span className="text-muted-foreground text-xs">Carregando...</span>
       </div>
-      <Progress value={0} className="h-2 bg-muted/50" />
+      <Progress className="h-2 bg-muted/50" value={0} />
     </div>
   );
 }
@@ -1242,33 +1235,33 @@ async function ServiceSummaryFooter({
   ];
 
   const operationalCount = allServices.filter(
-    (s) => s.status === "operational"
+    s => s.status === "operational"
   ).length;
-  const issuesCount = allServices.filter((s) => s.status === "issues").length;
-  const errorCount = allServices.filter((s) => s.status === "error").length;
+  const issuesCount = allServices.filter(s => s.status === "issues").length;
+  const errorCount = allServices.filter(s => s.status === "error").length;
 
   return (
-    <div className="mt-6 pt-4 border-t border-border/40">
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
+    <div className="mt-6 border-border/40 border-t pt-4">
+      <div className="flex items-center justify-between text-muted-foreground text-xs">
         <div className="flex items-center space-x-1">
           <Clock className="h-3 w-3" />
           <span>Última atualização: {new Date().toLocaleTimeString()}</span>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <div className="h-2 w-2 rounded-full bg-emerald-500" />
             <span>
               {operationalCount} Operacional{operationalCount !== 1 ? "is" : ""}
             </span>
           </div>
           <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 rounded-full bg-amber-500" />
+            <div className="h-2 w-2 rounded-full bg-amber-500" />
             <span>
               {issuesCount} Problema{issuesCount !== 1 ? "s" : ""}
             </span>
           </div>
           <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 rounded-full bg-red-500" />
+            <div className="h-2 w-2 rounded-full bg-red-500" />
             <span>
               {errorCount} Erro{errorCount !== 1 ? "s" : ""}
             </span>
@@ -1282,23 +1275,23 @@ async function ServiceSummaryFooter({
 // Summary footer skeleton for loading state
 function ServiceSummaryFooterSkeleton() {
   return (
-    <div className="mt-6 pt-4 border-t border-border/40">
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
+    <div className="mt-6 border-border/40 border-t pt-4">
+      <div className="flex items-center justify-between text-muted-foreground text-xs">
         <div className="flex items-center space-x-1">
           <Clock className="h-3 w-3" />
           <span>Última atualização: {new Date().toLocaleTimeString()}</span>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <div className="h-2 w-2 rounded-full bg-emerald-500" />
             <span>Operacional</span>
           </div>
           <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 rounded-full bg-amber-500" />
+            <div className="h-2 w-2 rounded-full bg-amber-500" />
             <span>Problemas</span>
           </div>
           <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 rounded-full bg-red-500" />
+            <div className="h-2 w-2 rounded-full bg-red-500" />
             <span>Erros</span>
           </div>
         </div>

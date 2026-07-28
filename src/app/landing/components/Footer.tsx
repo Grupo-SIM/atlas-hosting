@@ -1,55 +1,74 @@
-import Link from "next/link";
-import Image from "next/image";
 import { CheckCircle2, Instagram, Youtube } from "lucide-react";
-import { FaThreads, FaTiktok, FaXTwitter, FaFacebook, FaVideo } from "react-icons/fa6";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  FaFacebook,
+  FaThreads,
+  FaTiktok,
+  FaVideo,
+  FaXTwitter,
+} from "react-icons/fa6";
 
 export function Footer() {
   return (
-    <footer className="relative z-20 bg-transparent pt-8 pb-6 w-full overflow-hidden">
+    <footer className="relative z-20 w-full overflow-hidden bg-transparent pt-8 pb-6">
       <div className="w-full px-4 md:px-8">
-
         {/* Main Footer Container */}
-        <div className="px-4 pt-4 pb-6 md:py-10 mb-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-8">
-
+        <div className="mb-2 px-4 pt-4 pb-6 md:py-10">
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             {/* Column 1: Logo, Text, Socials */}
-            <div className="flex flex-col items-center lg:items-center text-center">
-              <Link href="/" className="mb-8 block">
-                <div className="relative w-[180px] h-[45px] mx-auto lg:mx-0 filter brightness-0 invert">
+            <div className="flex flex-col items-center text-center lg:items-center">
+              <Link className="mb-8 block" href="/">
+                <div className="relative mx-auto h-[45px] w-[180px] brightness-0 invert filter lg:mx-0">
                   <Image
-                    src="/atlas-logo.png"
                     alt="Atlashost Logo"
-                    fill
                     className="object-contain"
+                    fill
+                    src="/atlas-logo.png"
                     unoptimized
                   />
                 </div>
               </Link>
-              <p className="text-white text-[15px] leading-relaxed mb-8 max-w-[250px]">
+              <p className="mb-8 max-w-[250px] text-[15px] text-white leading-relaxed">
                 Feito pra quem quer mais do que só <br />
                 "estar no ar"
               </p>
 
               <div className="flex flex-wrap justify-center gap-2.5">
                 {[
-                  { icon: Instagram, href: "https://www.instagram.com/hostingatlas/" },
-                  { icon: Youtube, href: "https://www.youtube.com/@hostingatlas" },
-                  { icon: FaXTwitter, href: "https://x.com/hostingatlasbr" },
-                  { icon: FaThreads, href: "https://www.threads.com/@hostingatlas" },
-                  { icon: FaTiktok, href: "https://www.tiktok.com/@hostingatlas" },
-                  { icon: FaVideo, href: "https://kwai.com/@atlashosting" },
-                  { icon: FaFacebook, href: "https://www.facebook.com/hostingatlasbr/" },
+                  {
+                    href: "https://www.instagram.com/hostingatlas/",
+                    icon: Instagram,
+                  },
+                  {
+                    href: "https://www.youtube.com/@hostingatlas",
+                    icon: Youtube,
+                  },
+                  { href: "https://x.com/hostingatlasbr", icon: FaXTwitter },
+                  {
+                    href: "https://www.threads.com/@hostingatlas",
+                    icon: FaThreads,
+                  },
+                  {
+                    href: "https://www.tiktok.com/@hostingatlas",
+                    icon: FaTiktok,
+                  },
+                  { href: "https://kwai.com/@atlashosting", icon: FaVideo },
+                  {
+                    href: "https://www.facebook.com/hostingatlasbr/",
+                    icon: FaFacebook,
+                  },
                 ].map((social, idx) => {
                   const Icon = social.icon;
                   return (
                     <Link
-                      key={idx}
+                      className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-white/10 bg-white/5 text-sky-400 transition-colors duration-300 hover:bg-sky-500 hover:text-white"
                       href={social.href}
-                      target="_blank"
+                      key={idx}
                       rel="noopener noreferrer"
-                      className="w-[34px] h-[34px] rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-sky-400 hover:bg-sky-500 hover:text-white transition-colors duration-300"
+                      target="_blank"
                     >
-                      <Icon className="w-4 h-4" strokeWidth={2} />
+                      <Icon className="h-4 w-4" strokeWidth={2} />
                     </Link>
                   );
                 })}
@@ -57,21 +76,26 @@ export function Footer() {
             </div>
 
             {/* Column 2: Menu */}
-            <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-              <h4 className="font-bold text-[#00A3FF] text-[18px] uppercase tracking-wider mb-6">Menu</h4>
+            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+              <h4 className="mb-6 font-bold text-[#00A3FF] text-[18px] uppercase tracking-wider">
+                Menu
+              </h4>
 
               <ul className="space-y-3.5 pl-1">
                 {[
-                  { label: "VPS em nuvem", href: "/vps" },
-                  { label: "Cloud VDS", href: "/vds" },
-                  { label: "VPS de armazenamento", href: "/vps-armazenamento" },
-                  { label: "VPS Windows", href: "/vps-windows" },
-                  { label: "Nossos Planos", href: "/#planos" },
-                  { label: "Depoimentos", href: "/#testimonials" },
+                  { href: "/vps", label: "VPS em nuvem" },
+                  { href: "/vds", label: "Cloud VDS" },
+                  { href: "/vps-armazenamento", label: "VPS de armazenamento" },
+                  { href: "/vps-windows", label: "VPS Windows" },
+                  { href: "/#planos", label: "Nossos Planos" },
+                  { href: "/#testimonials", label: "Depoimentos" },
                 ].map((link, idx) => (
-                  <li key={idx} className="flex items-center gap-2.5 group">
-                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0 fill-sky-500/10" />
-                    <Link href={link.href} className="text-[16px] text-white group-hover:text-sky-400 transition-colors">
+                  <li className="group flex items-center gap-2.5" key={idx}>
+                    <CheckCircle2 className="h-4 w-4 shrink-0 fill-sky-500/10 text-sky-500" />
+                    <Link
+                      className="text-[16px] text-white transition-colors group-hover:text-sky-400"
+                      href={link.href}
+                    >
                       {link.label}
                     </Link>
                   </li>
@@ -80,40 +104,52 @@ export function Footer() {
             </div>
 
             {/* Column 3: Blogs Recomendados */}
-            <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-              <h4 className="font-bold text-[#00A3FF] text-[18px] uppercase tracking-wider mb-6">Blogs Recomendados</h4>
+            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+              <h4 className="mb-6 font-bold text-[#00A3FF] text-[18px] uppercase tracking-wider">
+                Blogs Recomendados
+              </h4>
 
               <ul className="space-y-3.5 pl-1">
                 {[
-                  { label: "007SpyHacker", href: "https://007spyhacker.com/" },
-                  { label: "Central do Marketing", href: "https://centraldomarketing.com/" },
-                  { label: "Seguidores em Alta", href: "https://seguidoresemalta.com/" },
-                  { label: "Marketing Raiz", href: "https://marketingraiz.com/" },
-                  { label: "Zyrion Brazil", href: "https://zyrionbrazil.com/" },
+                  { href: "https://007spyhacker.com/", label: "007SpyHacker" },
+                  {
+                    href: "https://centraldomarketing.com/",
+                    label: "Central do Marketing",
+                  },
+                  {
+                    href: "https://seguidoresemalta.com/",
+                    label: "Seguidores em Alta",
+                  },
+                  {
+                    href: "https://marketingraiz.com/",
+                    label: "Marketing Raiz",
+                  },
+                  { href: "https://zyrionbrazil.com/", label: "Zyrion Brazil" },
                 ].map((link, idx) => (
-                  <li key={idx} className="flex items-center gap-2.5 group">
-                    <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0 fill-sky-500/10" />
-                    <Link href={link.href} target="_blank" rel="noopener noreferrer" className="text-[16px] text-white group-hover:text-sky-400 transition-colors">
+                  <li className="group flex items-center gap-2.5" key={idx}>
+                    <CheckCircle2 className="h-4 w-4 shrink-0 fill-sky-500/10 text-sky-500" />
+                    <Link
+                      className="text-[16px] text-white transition-colors group-hover:text-sky-400"
+                      href={link.href}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
             </div>
-
           </div>
         </div>
 
         {/* Bottom Bar Container */}
-        <div className="flex flex-col md:flex-row justify-between items-center px-4 pt-4 text-center md:text-left">
-          <p className="text-white/60 text-[15px] mb-4 md:mb-0">
+        <div className="flex flex-col items-center justify-between px-4 pt-4 text-center md:flex-row md:text-left">
+          <p className="mb-4 text-[15px] text-white/60 md:mb-0">
             Copyright © 2026 JB Mídia, Todos os direitos reservados.
           </p>
         </div>
-
       </div>
     </footer>
   );
 }
-
-

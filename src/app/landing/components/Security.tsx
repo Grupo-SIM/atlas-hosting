@@ -1,51 +1,49 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 
 export function Security() {
   return (
-    <section 
-      className="relative w-full py-32 md:py-40 flex items-center justify-center overflow-hidden" 
-    >
+    <section className="relative flex w-full items-center justify-center overflow-hidden py-32 md:py-40">
       {/* Flipped Background Image */}
-      <div 
-        className="absolute inset-0 bg-fixed bg-center bg-cover -scale-x-100" 
+      <div
+        className="absolute inset-0 -scale-x-100 bg-center bg-cover bg-fixed"
         style={{ backgroundImage: "url('/imgs/blindado.jpg')" }}
       />
-      
+
       {/* Dark Navy Overlay */}
-      <div className="absolute inset-0 bg-[#080d22]/85 md:bg-[#070b1f]/80 z-0 mix-blend-multiply" />
-      <div className="absolute inset-0 bg-[#0a0e27]/40 z-0" />
-      
-      <div className="container mx-auto max-w-[700px] relative z-10 text-center px-4">
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
-          <h2 className="text-[2.2rem] md:text-5xl font-extrabold text-white mb-6 md:mb-8 tracking-tight drop-shadow-lg leading-tight">
+      <div className="absolute inset-0 z-0 bg-[#080d22]/85 mix-blend-multiply md:bg-[#070b1f]/80" />
+      <div className="absolute inset-0 z-0 bg-[#0a0e27]/40" />
+
+      <div className="container relative z-10 mx-auto max-w-[700px] px-4 text-center">
+        <div className="fade-in slide-in-from-bottom-2 animate-in fill-mode-both duration-300">
+          <h2 className="mb-6 font-extrabold text-[2.2rem] text-white leading-tight tracking-tight drop-shadow-lg md:mb-8 md:text-5xl">
             Site blindado, dados protegidos
           </h2>
 
-          <p className="text-white/90 text-sm md:text-[15px] mb-10 leading-relaxed font-light drop-shadow-md mx-auto max-w-[500px] delay-100">
-            Firewall, criptografia, proteção contra malwares e estabilidade garantida pra você trabalhar tranquilo.
+          <p className="mx-auto mb-10 max-w-[500px] font-light text-sm text-white/90 leading-relaxed drop-shadow-md delay-100 md:text-[15px]">
+            Firewall, criptografia, proteção contra malwares e estabilidade
+            garantida pra você trabalhar tranquilo.
           </p>
         </div>
 
         <motion.div
-           initial={{ opacity: 0, y: 30 }}
-           whileInView={{ opacity: 1, y: 0 }}
-           viewport={{ once: true }}
-           transition={{ duration: 0.5, delay: 0.2 }}
+          initial={{ opacity: 0, y: 30 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          viewport={{ once: true }}
+          whileInView={{ opacity: 1, y: 0 }}
         >
-          <Link 
+          <Link
+            className="inline-flex items-center justify-center gap-2 rounded-[4px] bg-[#01FC8D] px-8 py-3.5 font-extrabold text-[11px] text-black uppercase tracking-widest shadow-[0_4px_14px_0_rgba(1,252,141,0.2)] transition-colors hover:bg-[#01FC8D]/90"
             href="#planos"
-            className="inline-flex items-center justify-center gap-2 bg-[#01FC8D] hover:bg-[#01FC8D]/90 transition-colors text-black font-extrabold uppercase text-[11px] px-8 py-3.5 rounded-[4px] tracking-widest shadow-[0_4px_14px_0_rgba(1,252,141,0.2)]"
           >
             ver planos
-            <ArrowRight className="w-[14px] h-[14px] stroke-[3]" />
+            <ArrowRight className="h-[14px] w-[14px] stroke-[3]" />
           </Link>
         </motion.div>
       </div>
     </section>
   );
 }
-

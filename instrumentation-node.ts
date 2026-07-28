@@ -4,7 +4,9 @@ export async function registerNode() {
     const buildTime = readFileSync("BUILD_TIME", "utf8").trim();
     console.log(`[BOOT] Atlas Hosting iniciado — build: ${buildTime}`);
   } catch {
-    console.log("[BOOT] Atlas Hosting iniciado — build: desconhecido (dev local?)");
+    console.log(
+      "[BOOT] Atlas Hosting iniciado — build: desconhecido (dev local?)"
+    );
   }
 
   const runRenewal = async () => {
@@ -15,7 +17,7 @@ export async function registerNode() {
         { method: "POST" }
       );
       const json = await res.json().catch(() => null);
-      console.log(`[CRON] Renovação VPS concluída:`, json);
+      console.log("[CRON] Renovação VPS concluída:", json);
     } catch (err) {
       console.error("[CRON] Erro na renovação de assinaturas VPS:", err);
     }
@@ -32,7 +34,9 @@ export async function registerNode() {
       await runRenewal();
       setInterval(runRenewal, 24 * 60 * 60 * 1000);
     }, ms);
-    console.log(`[CRON] Próxima renovação VPS agendada para: ${next.toISOString()}`);
+    console.log(
+      `[CRON] Próxima renovação VPS agendada para: ${next.toISOString()}`
+    );
   };
 
   scheduleNext();

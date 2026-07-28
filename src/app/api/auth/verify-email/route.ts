@@ -1,29 +1,28 @@
+import { eq } from "drizzle-orm";
+import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  markEmailVerificationTokenAsUsed,
+  validateEmailVerificationCode,
+  validateEmailVerificationToken,
+} from "@/lib/auth/tokens";
+import { createSession, generateSessionToken } from "@/lib/auth/utils";
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { 
-  validateEmailVerificationToken, 
-  validateEmailVerificationCode,
-  markEmailVerificationTokenAsUsed 
-} from "@/lib/auth/tokens";
-import { AppError } from "@/lib/errors";
 import { errorHandler } from "@/lib/error-handler";
-import { createSession, generateSessionToken } from "@/lib/auth/utils";
-import { cookies } from "next/headers";
+import { AppError } from "@/lib/errors";
 
-const verifyEmailSchema = z.object({
-  token: z.string().optional(),
-  code: z.string().optional(),
-  email: z.string().email().optional(),
-}).refine(
-  (data) => data.token || (data.code && data.email),
-  {
+const verifyEmailSchema = z
+  .object({
+    code: z.string().optional(),
+    email: z.string().email().optional(),
+    token: z.string().optional(),
+  })
+  .refine(data => data.token || (data.code && data.email), {
     message: "Token ou código com email são obrigatórios",
-  }
-);
+  });
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,8 +46,8 @@ export async function POST(request: NextRequest) {
     await db
       .update(pgUser)
       .set({
-        emailVerified: new Date(),
         email: verificationToken.email, // In case they're verifying a new email
+        emailVerified: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(pgUser.id, verificationToken.userId));
@@ -63,10 +62,10 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies();
     cookieStore.set("session_token", sessionToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
       path: "/",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      secure: process.env.NODE_ENV === "production",
     });
 
     return NextResponse.json({

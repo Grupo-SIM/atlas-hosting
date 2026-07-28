@@ -1,5 +1,6 @@
 "use client";
 
+import { CgSpinner } from "react-icons/cg";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +13,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { CgSpinner } from "react-icons/cg";
 
 interface BulkActionButtonsProps {
   isBulkMode: boolean;
@@ -33,15 +33,15 @@ export function BulkActionButtons({
     <div className="flex items-center gap-2">
       {isBulkMode ? (
         <>
-          <Button variant="outline" size="sm" onClick={onToggleBulkMode}>
+          <Button onClick={onToggleBulkMode} size="sm" variant="outline">
             Cancelar
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild={true}>
               <Button
-                variant="destructive"
-                size="sm"
                 disabled={selectedCount === 0 || isPending}
+                size="sm"
+                variant="destructive"
               >
                 {isPending ? (
                   <CgSpinner className="h-4 w-4 animate-spin" />
@@ -68,7 +68,7 @@ export function BulkActionButtons({
           </AlertDialog>
         </>
       ) : (
-        <Button variant="outline" size="sm" onClick={onToggleBulkMode}>
+        <Button onClick={onToggleBulkMode} size="sm" variant="outline">
           Ação em massa
         </Button>
       )}

@@ -1,5 +1,44 @@
 "use client";
 
+import {
+  type Cell,
+  type Column,
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  type Row,
+  type RowSelectionState,
+  type SortingState,
+  useReactTable,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import { isEqual } from "lodash";
+import {
+  AlertCircle,
+  ArrowUpDown,
+  Columns3,
+  DatabaseZap,
+  Edit3,
+  ExternalLink,
+  Eye,
+  Key,
+  ListTree,
+  Loader2,
+  MoreHorizontal,
+  Plus,
+  RotateCcw,
+  Save,
+  Search,
+  SortAsc,
+  SortDesc,
+  Trash2,
+  X,
+} from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { FaCircleInfo } from "react-icons/fa6";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,8 +47,34 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -25,99 +90,23 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
-import {
-  AlertCircle,
-  DatabaseZap,
-  Edit3,
-  ListTree,
-  Loader2,
-  RotateCcw,
-  Search,
-  Plus,
-  Trash2,
-  Save,
-  X,
-  CheckSquare,
-  Square,
-  Filter,
-  MoreHorizontal,
-  Key,
-  ExternalLink,
-  Download,
-  Upload,
-  Eye,
-  EyeOff,
-  ArrowUpDown,
-  SortAsc,
-  SortDesc,
-  Table as TableIcon,
-  Columns3,
-  PlusCircle,
-  UserPlus,
-} from "lucide-react";
-import { useCallback, useEffect, useState, useMemo, memo } from "react";
-import {
-  getDbTableDataAction,
-  getDbTablesAction,
-  runDbQueryAction,
-  updateTableRowAction,
-  insertTableRowAction,
-  deleteTableRowAction,
-  getTableSchemaAction,
-  bulkDeleteRowsAction,
-  addColumnAction,
-  dropColumnAction,
-} from "../actions";
 import type {
   TableColumn,
   TableDataResult,
   TableRowData,
   TableSchema,
 } from "../actions";
-import { Badge } from "@/components/ui/badge";
-import { FaCircleInfo } from "react-icons/fa6";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  type ColumnDef,
-  type SortingState,
-  type VisibilityState,
-  type RowSelectionState,
-  flexRender,
-  type Row,
-  type Column,
-  type Cell,
-} from "@tanstack/react-table";
-import { isEqual } from "lodash";
+  addColumnAction,
+  bulkDeleteRowsAction,
+  dropColumnAction,
+  getDbTableDataAction,
+  getDbTablesAction,
+  getTableSchemaAction,
+  insertTableRowAction,
+  runDbQueryAction,
+  updateTableRowAction,
+} from "../actions";
 
 // Optimized Table Cell Component
 interface TableCellContentProps {
@@ -178,25 +167,25 @@ const TableCellContent = memo<TableCellContentProps>(
       return (
         <div className="flex items-center space-x-1">
           <Input
-            value={editingCell.value}
-            onChange={handleUpdateValue}
-            className="h-8 text-xs"
             autoFocus
+            className="h-8 text-xs"
+            onChange={handleUpdateValue}
             onKeyDown={handleKeyDown}
+            value={editingCell.value}
           />
           <Button
-            size="sm"
-            variant="ghost"
             className="h-8 w-8 p-0"
             onClick={handleSave}
+            size="sm"
+            variant="ghost"
           >
             <Save className="h-3 w-3 text-green-600" />
           </Button>
           <Button
-            size="sm"
-            variant="ghost"
             className="h-8 w-8 p-0"
             onClick={handleCancel}
+            size="sm"
+            variant="ghost"
           >
             <X className="h-3 w-3 text-red-600" />
           </Button>
@@ -208,15 +197,15 @@ const TableCellContent = memo<TableCellContentProps>(
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            type="button"
-            className="cursor-pointer hover:bg-muted/50 p-1 rounded min-h-[2rem] flex items-center w-full text-left"
+            className="flex min-h-[2rem] w-full cursor-pointer items-center rounded p-1 text-left hover:bg-muted/50"
             onClick={handleStartEditing}
+            type="button"
           >
-            <span className="truncate max-w-xs">{displayValue}</span>
+            <span className="max-w-xs truncate">{displayValue}</span>
           </button>
         </TooltipTrigger>
         <TooltipContent>
-          <div className="max-w-md break-all whitespace-pre-wrap">
+          <div className="max-w-md whitespace-pre-wrap break-all">
             {displayValue}
           </div>
         </TooltipContent>
@@ -271,23 +260,23 @@ const ColumnHeader = memo<ColumnHeaderProps>(
             {colData.isPrimaryKey && (
               <Key className="h-3 w-3 text-yellow-500" />
             )}
-            <Badge variant="secondary" className="text-xs">
+            <Badge className="text-xs" variant="secondary">
               {colData.type}
             </Badge>
           </div>
           <div className="flex items-center space-x-1">
             <Button
-              variant="ghost"
-              size="sm"
               className="h-8 p-0 lg:p-1"
               onClick={handleSortToggle}
+              size="sm"
+              variant="ghost"
             >
               {sortIcon}
             </Button>
             {onColumnDrop && !colData.isPrimaryKey && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <Button className="h-8 w-8 p-0" size="sm" variant="ghost">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -295,10 +284,10 @@ const ColumnHeader = memo<ColumnHeaderProps>(
                   <DropdownMenuLabel>Ações da Coluna</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => onColumnDrop(colData.name)}
                     className="text-destructive focus:text-destructive"
+                    onClick={() => onColumnDrop(colData.name)}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="mr-2 h-4 w-4" />
                     Remover Coluna
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -307,10 +296,10 @@ const ColumnHeader = memo<ColumnHeaderProps>(
           </div>
         </div>
         <Input
+          className="h-8 text-xs"
+          onChange={handleFilterChange}
           placeholder={`Filtrar ${colData.name}...`}
           value={filter?.value ?? ""}
-          onChange={handleFilterChange}
-          className="h-8 text-xs"
         />
       </div>
     );
@@ -346,15 +335,15 @@ const TableRowItem = memo<TableRowItemProps>(
 
     return (
       <TableRow
-        data-state={row.getIsSelected() && "selected"}
         className="hover:bg-muted/50"
+        data-state={row.getIsSelected() && "selected"}
       >
         {row.getVisibleCells().map((cell: Cell<TableRowData, unknown>) => {
           const columnName = cell.column.id;
           const cellKey = generateCellKey(cell.id, columnName);
 
           return (
-            <TableCell key={cellKey} className="p-2">
+            <TableCell className="p-2" key={cellKey}>
               {flexRender(cell.column.columnDef.cell, cell.getContext())}
             </TableCell>
           );
@@ -439,10 +428,10 @@ export default function ModernDatabaseEditor({
   // New row/column form data
   const [newRowData, setNewRowData] = useState<Record<string, string>>({});
   const [newColumnForm, setNewColumnForm] = useState({
+    defaultValue: "",
+    isNullable: true,
     name: "",
     type: "VARCHAR(255)",
-    isNullable: true,
-    defaultValue: "",
   });
 
   const fetchTables = useCallback(async () => {
@@ -455,8 +444,8 @@ export default function ModernDatabaseEditor({
       const errorMessage = e instanceof Error ? e.message : String(e);
       setError(`Falha ao buscar tabelas: ${errorMessage}`);
       toast({
-        title: "Erro ao Buscar Tabelas",
         description: errorMessage,
+        title: "Erro ao Buscar Tabelas",
         variant: "destructive",
       });
       setTables([]);
@@ -503,8 +492,8 @@ export default function ModernDatabaseEditor({
           `Falha ao buscar dados da tabela ${tableName}: ${errorMessage}`
         );
         toast({
-          title: "Erro ao Buscar Dados da Tabela",
           description: errorMessage,
+          title: "Erro ao Buscar Dados da Tabela",
           variant: "destructive",
         });
       } finally {
@@ -517,8 +506,8 @@ export default function ModernDatabaseEditor({
   const handleRunQuery = useCallback(async () => {
     if (!query.trim()) {
       toast({
-        title: "Consulta Vazia",
         description: "Por favor, insira uma consulta SQL.",
+        title: "Consulta Vazia",
         variant: "default",
       });
       return;
@@ -534,8 +523,8 @@ export default function ModernDatabaseEditor({
       setError(`Falha na consulta: ${errorMessage}`);
       setQueryResult(`Erro: ${errorMessage}`);
       toast({
-        title: "Erro na Consulta",
         description: errorMessage,
+        title: "Erro na Consulta",
         variant: "destructive",
       });
     } finally {
@@ -547,14 +536,14 @@ export default function ModernDatabaseEditor({
   const startEditing = useCallback(
     (rowId: string, columnName: string, currentValue: unknown) => {
       const editingCell: EditingCell = {
-        rowId,
         columnName,
+        rowId,
         value: String(currentValue ?? ""),
       };
 
-      setEditingCells((prev) => {
+      setEditingCells(prev => {
         const filtered = prev.filter(
-          (cell) => !(cell.rowId === rowId && cell.columnName === columnName)
+          cell => !(cell.rowId === rowId && cell.columnName === columnName)
         );
         return [...filtered, editingCell];
       });
@@ -564,8 +553,8 @@ export default function ModernDatabaseEditor({
 
   const updateCellValue = useCallback(
     (rowId: string, columnName: string, value: string) => {
-      setEditingCells((prev) =>
-        prev.map((cell) =>
+      setEditingCells(prev =>
+        prev.map(cell =>
           cell.rowId === rowId && cell.columnName === columnName
             ? { ...cell, value }
             : cell
@@ -576,9 +565,9 @@ export default function ModernDatabaseEditor({
   );
 
   const cancelEditing = useCallback((rowId: string, columnName: string) => {
-    setEditingCells((prev) =>
+    setEditingCells(prev =>
       prev.filter(
-        (cell) => !(cell.rowId === rowId && cell.columnName === columnName)
+        cell => !(cell.rowId === rowId && cell.columnName === columnName)
       )
     );
   }, []);
@@ -586,7 +575,7 @@ export default function ModernDatabaseEditor({
   const saveCell = useCallback(
     async (rowId: string, columnName: string) => {
       const editingCell = editingCells.find(
-        (cell) => cell.rowId === rowId && cell.columnName === columnName
+        cell => cell.rowId === rowId && cell.columnName === columnName
       );
 
       if (!editingCell || !selectedTable) return;
@@ -597,11 +586,11 @@ export default function ModernDatabaseEditor({
           tableColumns.length > 0
             ? (() => {
                 const primaryKeyColumns = tableColumns.filter(
-                  (col) => col.isPrimaryKey
+                  col => col.isPrimaryKey
                 );
                 if (primaryKeyColumns.length > 0) {
                   const pkValues = primaryKeyColumns
-                    .map((col) => {
+                    .map(col => {
                       const value = row[col.name];
                       return value !== null && value !== undefined
                         ? String(value)
@@ -647,7 +636,7 @@ export default function ModernDatabaseEditor({
 
         if (result.success) {
           // Update local data
-          setTableData((prev) =>
+          setTableData(prev =>
             prev.map((row, index) =>
               index === rowIndex
                 ? { ...row, [columnName]: editingCell.value }
@@ -655,7 +644,7 @@ export default function ModernDatabaseEditor({
             )
           );
 
-          setOriginalData((prev) =>
+          setOriginalData(prev =>
             prev.map((row, index) =>
               index === rowIndex
                 ? { ...row, [columnName]: editingCell.value }
@@ -666,20 +655,20 @@ export default function ModernDatabaseEditor({
           cancelEditing(rowId, columnName);
 
           toast({
-            title: "Sucesso",
             description: "Célula atualizada com sucesso.",
+            title: "Sucesso",
           });
         } else {
           toast({
-            title: "Erro ao Salvar",
             description: result.message,
+            title: "Erro ao Salvar",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro ao Salvar",
           description: "Erro inesperado ao salvar a célula.",
+          title: "Erro ao Salvar",
           variant: "destructive",
         });
       }
@@ -698,8 +687,8 @@ export default function ModernDatabaseEditor({
   // Optimized column filter handler
   const handleColumnFilterChange = useCallback(
     (columnName: string, value: string) => {
-      setColumnFilters((prev) => {
-        const filtered = prev.filter((f) => f.columnName !== columnName);
+      setColumnFilters(prev => {
+        const filtered = prev.filter(f => f.columnName !== columnName);
         if (value) {
           return [...filtered, { columnName, value }];
         }
@@ -714,64 +703,64 @@ export default function ModernDatabaseEditor({
     if (!tableColumns.length) return [];
 
     const selectColumn: ColumnDef<TableRowData> = {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Selecionar todos"
-        />
-      ),
       cell: ({ row }) => (
         <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Selecionar linha"
+          checked={row.getIsSelected()}
+          onCheckedChange={value => row.toggleSelected(!!value)}
         />
       ),
-      enableSorting: false,
       enableHiding: false,
+      enableSorting: false,
+      header: ({ table }) => (
+        <Checkbox
+          aria-label="Selecionar todos"
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
+        />
+      ),
+      id: "select",
       size: 50,
     };
 
-    const dataColumns: ColumnDef<TableRowData>[] = tableColumns.map((col) => ({
+    const dataColumns: ColumnDef<TableRowData>[] = tableColumns.map(col => ({
       accessorKey: col.name,
-      header: ({ column }) => {
-        const filter = columnFilters.find((f) => f.columnName === col.name);
-        return (
-          <ColumnHeader
-            column={column}
-            colData={col}
-            filter={filter}
-            onFilterChange={handleColumnFilterChange}
-            onColumnDrop={handleColumnDrop}
-          />
-        );
-      },
       cell: ({ row, column }) => {
         const value = row.getValue(column.id);
         const rowId = row.id;
         const editingCell = editingCells.find(
-          (cell) => cell.rowId === rowId && cell.columnName === col.name
+          cell => cell.rowId === rowId && cell.columnName === col.name
         );
 
         return (
           <TableCellContent
-            key={`${rowId}-${col.name}`}
-            value={value}
-            rowId={rowId}
             columnName={col.name}
             editingCell={editingCell}
+            key={`${rowId}-${col.name}`}
+            onCancelEditing={cancelEditing}
+            onSaveCell={saveCell}
             onStartEditing={startEditing}
             onUpdateCellValue={updateCellValue}
-            onSaveCell={saveCell}
-            onCancelEditing={cancelEditing}
+            rowId={rowId}
+            value={value}
           />
         );
       },
       filterFn: (row, columnId, filterValue) => {
         const value = String(row.getValue(columnId) ?? "").toLowerCase();
         return value.includes(filterValue.toLowerCase());
+      },
+      header: ({ column }) => {
+        const filter = columnFilters.find(f => f.columnName === col.name);
+        return (
+          <ColumnHeader
+            colData={col}
+            column={column}
+            filter={filter}
+            onColumnDrop={handleColumnDrop}
+            onFilterChange={handleColumnFilterChange}
+          />
+        );
       },
     }));
 
@@ -791,8 +780,8 @@ export default function ModernDatabaseEditor({
   const filteredData = useMemo(() => {
     if (!columnFilters.length) return tableData;
 
-    return tableData.filter((row) =>
-      columnFilters.every((filter) => {
+    return tableData.filter(row =>
+      columnFilters.every(filter => {
         const value = String(row[filter.columnName] ?? "").toLowerCase();
         return value.includes(filter.value.toLowerCase());
       })
@@ -805,12 +794,12 @@ export default function ModernDatabaseEditor({
       if (!tableColumns.length) return `row-${index}`;
 
       // Find primary key columns
-      const primaryKeyColumns = tableColumns.filter((col) => col.isPrimaryKey);
+      const primaryKeyColumns = tableColumns.filter(col => col.isPrimaryKey);
 
       if (primaryKeyColumns.length > 0) {
         // Create composite key from all primary key columns
         const pkValues = primaryKeyColumns
-          .map((col) => {
+          .map(col => {
             const value = row[col.name];
             return value !== null && value !== undefined ? String(value) : "";
           })
@@ -840,26 +829,26 @@ export default function ModernDatabaseEditor({
   // Memoized table configuration
   const tableConfig = useMemo(
     () => ({
-      data: filteredData,
       columns,
-      getRowId,
-      getCoreRowModel: getCoreRowModel(),
-      getSortedRowModel: getSortedRowModel(),
-      getFilteredRowModel: getFilteredRowModel(),
-      onSortingChange: setSorting,
-      onColumnVisibilityChange: setColumnVisibility,
-      onRowSelectionChange: setRowSelection,
-      onGlobalFilterChange: setGlobalFilter,
-      globalFilterFn: "includesString" as const,
-      state: {
-        sorting,
-        columnVisibility,
-        rowSelection,
-        globalFilter,
-      },
+      data: filteredData,
+      enableMultiRowSelection: true,
       // Ensure selection is preserved across data changes
       enableRowSelection: true,
-      enableMultiRowSelection: true,
+      getCoreRowModel: getCoreRowModel(),
+      getFilteredRowModel: getFilteredRowModel(),
+      getRowId,
+      getSortedRowModel: getSortedRowModel(),
+      globalFilterFn: "includesString" as const,
+      onColumnVisibilityChange: setColumnVisibility,
+      onGlobalFilterChange: setGlobalFilter,
+      onRowSelectionChange: setRowSelection,
+      onSortingChange: setSorting,
+      state: {
+        columnVisibility,
+        globalFilter,
+        rowSelection,
+        sorting,
+      },
     }),
     [
       filteredData,
@@ -881,7 +870,7 @@ export default function ModernDatabaseEditor({
     // Get selected rows using the table instance for accurate row mapping
     const selectedRows = table
       .getSelectedRowModel()
-      .rows.map((row) => row.original);
+      .rows.map(row => row.original);
 
     try {
       const result = await bulkDeleteRowsAction(
@@ -895,20 +884,20 @@ export default function ModernDatabaseEditor({
         await fetchTableData(selectedTable);
         setRowSelection({});
         toast({
-          title: "Sucesso",
           description: result.message,
+          title: "Sucesso",
         });
       } else {
         toast({
-          title: "Erro ao Deletar",
           description: result.message,
+          title: "Erro ao Deletar",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Erro ao Deletar",
         description: "Erro inesperado ao deletar linhas.",
+        title: "Erro ao Deletar",
         variant: "destructive",
       });
     }
@@ -929,12 +918,12 @@ export default function ModernDatabaseEditor({
     const editingCellsCount = editingCells.length;
 
     return {
-      tableRowCount,
-      filteredRowCount,
       columnCount,
       editingCellsCount,
-      isLargeDataset: tableRowCount > 1000,
+      filteredRowCount,
       filteringActive: columnFilters.length > 0 || globalFilter.length > 0,
+      isLargeDataset: tableRowCount > 1000,
+      tableRowCount,
     };
   }, [
     tableData.length,
@@ -948,7 +937,7 @@ export default function ModernDatabaseEditor({
   // Memoized filtered tables
   const filteredTables = useMemo(
     () =>
-      tables.filter((table) =>
+      tables.filter(table =>
         table.toLowerCase().includes(searchTerm.toLowerCase())
       ),
     [tables, searchTerm]
@@ -958,8 +947,8 @@ export default function ModernDatabaseEditor({
   const rowCountInfo = useMemo(
     () => ({
       filtered: table.getFilteredRowModel().rows.length,
-      total: table.getCoreRowModel().rows.length,
       selected: Object.keys(rowSelection).length,
+      total: table.getCoreRowModel().rows.length,
     }),
     [table, rowSelection]
   );
@@ -967,9 +956,9 @@ export default function ModernDatabaseEditor({
   // Memoized action button props
   const actionButtonProps = useMemo(
     () => ({
+      canRefresh: !!selectedTable && !isLoadingData,
       hasSelectedRows: Object.keys(rowSelection).length > 0,
       selectedCount: Object.keys(rowSelection).length,
-      canRefresh: !!selectedTable && !isLoadingData,
     }),
     [rowSelection, selectedTable, isLoadingData]
   );
@@ -997,7 +986,7 @@ export default function ModernDatabaseEditor({
 
     if (typeof queryResult === "string") {
       return (
-        <pre className="p-4 text-sm whitespace-pre-wrap bg-muted/50 rounded-md">
+        <pre className="whitespace-pre-wrap rounded-md bg-muted/50 p-4 text-sm">
           {queryResult}
         </pre>
       );
@@ -1009,10 +998,10 @@ export default function ModernDatabaseEditor({
         <Table>
           <TableHeader>
             <TableRow>
-              {queryResult.columns.map((col) => (
-                <TableHead key={col.name} className="whitespace-nowrap">
+              {queryResult.columns.map(col => (
+                <TableHead className="whitespace-nowrap" key={col.name}>
                   {col.name}
-                  <Badge variant="secondary" className="text-xs ml-1">
+                  <Badge className="ml-1 text-xs" variant="secondary">
                     {col.type}
                   </Badge>
                 </TableHead>
@@ -1029,17 +1018,17 @@ export default function ModernDatabaseEditor({
               const rowKey = `query-result-${firstValue}-${rowIndex}`;
               return (
                 <TableRow key={rowKey}>
-                  {queryResult.columns?.map((col) => (
+                  {queryResult.columns?.map(col => (
                     <TableCell
+                      className="max-w-xs truncate whitespace-nowrap"
                       key={`${rowKey}-${col.name}`}
-                      className="whitespace-nowrap max-w-xs truncate"
                     >
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span>{String(row[col.name] ?? "")}</span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <div className="max-w-md break-all whitespace-pre-wrap">
+                          <div className="max-w-md whitespace-pre-wrap break-all">
                             {String(row[col.name] ?? "")}
                           </div>
                         </TooltipContent>
@@ -1157,20 +1146,20 @@ export default function ModernDatabaseEditor({
         setNewRowData({});
         setShowAddRowDialog(false);
         toast({
-          title: "Sucesso",
           description: "Nova linha adicionada com sucesso.",
+          title: "Sucesso",
         });
       } else {
         toast({
-          title: "Erro ao Adicionar Linha",
           description: result.message,
+          title: "Erro ao Adicionar Linha",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Erro ao Adicionar Linha",
         description: "Erro inesperado ao adicionar linha.",
+        title: "Erro ao Adicionar Linha",
         variant: "destructive",
       });
     }
@@ -1192,27 +1181,27 @@ export default function ModernDatabaseEditor({
       if (result.success) {
         await fetchTableData(selectedTable);
         setNewColumnForm({
+          defaultValue: "",
+          isNullable: true,
           name: "",
           type: "VARCHAR(255)",
-          isNullable: true,
-          defaultValue: "",
         });
         setShowAddColumnDialog(false);
         toast({
-          title: "Sucesso",
           description: "Nova coluna adicionada com sucesso.",
+          title: "Sucesso",
         });
       } else {
         toast({
-          title: "Erro ao Adicionar Coluna",
           description: result.message,
+          title: "Erro ao Adicionar Coluna",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Erro ao Adicionar Coluna",
         description: "Erro inesperado ao adicionar coluna.",
+        title: "Erro ao Adicionar Coluna",
         variant: "destructive",
       });
     }
@@ -1238,20 +1227,20 @@ export default function ModernDatabaseEditor({
         if (result.success) {
           await fetchTableData(selectedTable);
           toast({
-            title: "Sucesso",
             description: "Coluna removida com sucesso.",
+            title: "Sucesso",
           });
         } else {
           toast({
-            title: "Erro ao Remover Coluna",
             description: result.message,
+            title: "Erro ao Remover Coluna",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro ao Remover Coluna",
           description: "Erro inesperado ao remover coluna.",
+          title: "Erro ao Remover Coluna",
           variant: "destructive",
         });
       }
@@ -1261,50 +1250,50 @@ export default function ModernDatabaseEditor({
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-12rem)]">
+      <div className="flex h-[calc(100vh-12rem)] flex-col gap-6 lg:flex-row">
         {/* Left Sidebar - Tables and Query */}
-        <Card className="lg:w-1/3 xl:w-1/4 shadow-xl border-border/50 bg-card/60 backdrop-blur-md flex flex-col">
+        <Card className="flex flex-col border-border/50 bg-card/60 shadow-xl backdrop-blur-md lg:w-1/3 xl:w-1/4">
           <CardHeader>
             <CardTitle className="flex items-center text-lg">
-              <ListTree className="h-5 w-5 mr-2 text-primary" />
+              <ListTree className="mr-2 h-5 w-5 text-primary" />
               Tabelas ({domainName})
             </CardTitle>
             <Input
+              className="mt-2 bg-background/70"
+              onChange={handleSearchTermChange}
               placeholder="Buscar tabelas..."
               value={searchTerm}
-              onChange={handleSearchTermChange}
-              className="mt-2 bg-background/70"
             />
           </CardHeader>
-          <CardContent className="pr-0 flex-grow overflow-hidden">
+          <CardContent className="flex-grow overflow-hidden pr-0">
             {isLoadingTables ? (
-              <div className="flex justify-center items-center h-full">
+              <div className="flex h-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : error && tables.length === 0 ? (
-              <div className="text-destructive p-4 text-sm flex items-center">
-                <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+              <div className="flex items-center p-4 text-destructive text-sm">
+                <AlertCircle className="mr-2 h-4 w-4 flex-shrink-0" />
                 {error.replace("Falha ao buscar tabelas: ", "")}
               </div>
             ) : (
               <ScrollArea className="h-full pr-4">
                 {filteredTables.length > 0 ? (
-                  filteredTables.map((table) => (
+                  filteredTables.map(table => (
                     <Button
-                      key={table}
-                      variant={selectedTable === table ? "secondary" : "ghost"}
-                      className={`w-full justify-start mb-1 text-left h-auto py-2 ${
+                      className={`mb-1 h-auto w-full justify-start py-2 text-left ${
                         selectedTable === table
                           ? "bg-primary/20 text-primary-foreground hover:bg-primary/30"
                           : "hover:bg-muted/50"
                       }`}
+                      key={table}
                       onClick={() => handleTableSelect(table)}
+                      variant={selectedTable === table ? "secondary" : "ghost"}
                     >
                       {table}
                     </Button>
                   ))
                 ) : (
-                  <p className="text-muted-foreground text-sm p-4 text-center">
+                  <p className="p-4 text-center text-muted-foreground text-sm">
                     Nenhuma tabela encontrada
                     {searchTerm && " correspondente à sua busca"}.
                   </p>
@@ -1314,26 +1303,26 @@ export default function ModernDatabaseEditor({
           </CardContent>
 
           {/* Query Section */}
-          <div className="border-t mt-auto p-4 space-y-3">
-            <h3 className="flex items-center text-md font-semibold">
-              <Edit3 className="h-5 w-5 mr-2 text-primary" />
+          <div className="mt-auto space-y-3 border-t p-4">
+            <h3 className="flex items-center font-semibold text-md">
+              <Edit3 className="mr-2 h-5 w-5 text-primary" />
               Consulta Personalizada
             </h3>
             <textarea
-              value={query}
+              className="h-28 w-full resize-none rounded-md border bg-background/70 p-2 text-sm focus:ring-1 focus:ring-primary"
               onChange={handleQueryChange}
               placeholder="SELECT * FROM sua_tabela WHERE condicao;"
-              className="w-full h-28 p-2 border rounded-md bg-background/70 focus:ring-1 focus:ring-primary text-sm resize-none"
+              value={query}
             />
             <Button
-              onClick={handleQueryExecute}
-              disabled={isQueryLoading}
               className="w-full"
+              disabled={isQueryLoading}
+              onClick={handleQueryExecute}
             >
               {isQueryLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <DatabaseZap className="h-4 w-4 mr-2" />
+                <DatabaseZap className="mr-2 h-4 w-4" />
               )}
               Executar Consulta
             </Button>
@@ -1341,22 +1330,22 @@ export default function ModernDatabaseEditor({
         </Card>
 
         {/* Main Content - Table Editor */}
-        <Card className="lg:w-2/3 xl:w-3/4 flex-grow shadow-xl border-border/50 bg-card/60 backdrop-blur-md flex flex-col overflow-hidden">
+        <Card className="flex flex-grow flex-col overflow-hidden border-border/50 bg-card/60 shadow-xl backdrop-blur-md lg:w-2/3 xl:w-3/4">
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center text-xl">
                   {selectedTable ? (
                     <>
-                      <DatabaseZap className="h-6 w-6 mr-2 text-primary" />
+                      <DatabaseZap className="mr-2 h-6 w-6 text-primary" />
                       Editando:
-                      <span className="font-mono ml-2 px-2 py-1 bg-muted/70 rounded-md text-sm">
+                      <span className="ml-2 rounded-md bg-muted/70 px-2 py-1 font-mono text-sm">
                         {selectedTable}
                       </span>
                     </>
                   ) : queryResult ? (
                     <>
-                      <Search className="h-6 w-6 mr-2 text-primary" />
+                      <Search className="mr-2 h-6 w-6 text-primary" />
                       Resultado da Consulta
                     </>
                   ) : (
@@ -1375,51 +1364,51 @@ export default function ModernDatabaseEditor({
               {selectedTable && (
                 <div className="flex items-center space-x-2">
                   <Button
-                    variant="outline"
-                    size="sm"
                     onClick={() => setShowAddRowDialog(true)}
+                    size="sm"
+                    variant="outline"
                   >
-                    <Plus className="h-4 w-4 mr-1" />
+                    <Plus className="mr-1 h-4 w-4" />
                     Nova Linha
                   </Button>
 
                   <Button
-                    variant="outline"
-                    size="sm"
                     onClick={() => setShowAddColumnDialog(true)}
+                    size="sm"
+                    variant="outline"
                   >
-                    <Columns3 className="h-4 w-4 mr-1" />
+                    <Columns3 className="mr-1 h-4 w-4" />
                     Nova Coluna
                   </Button>
 
                   {actionButtonProps.hasSelectedRows && (
                     <Button
-                      variant="destructive"
-                      size="sm"
                       onClick={handleDeleteDialogOpen}
+                      size="sm"
+                      variant="destructive"
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
+                      <Trash2 className="mr-1 h-4 w-4" />
                       Deletar ({actionButtonProps.selectedCount})
                     </Button>
                   )}
 
                   <Button
-                    variant="outline"
-                    size="sm"
                     onClick={handleSchemaDialogOpen}
+                    size="sm"
+                    variant="outline"
                   >
-                    <Eye className="h-4 w-4 mr-1" />
+                    <Eye className="mr-1 h-4 w-4" />
                     Esquema
                   </Button>
 
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleTableRefresh}
                     disabled={!actionButtonProps.canRefresh}
+                    onClick={handleTableRefresh}
+                    size="sm"
+                    variant="outline"
                   >
                     <RotateCcw
-                      className={`h-4 w-4 mr-1 ${isLoadingData ? "animate-spin" : ""}`}
+                      className={`mr-1 h-4 w-4 ${isLoadingData ? "animate-spin" : ""}`}
                     />
                     Atualizar
                   </Button>
@@ -1430,13 +1419,13 @@ export default function ModernDatabaseEditor({
 
           <CardContent className="flex-grow overflow-auto p-0">
             {isLoadingData || isQueryLoading ? (
-              <div className="flex justify-center items-center h-full">
+              <div className="flex h-full items-center justify-center">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
               </div>
             ) : error && (selectedTable || queryResult) ? (
-              <div className="text-destructive p-6 text-center flex flex-col items-center justify-center h-full">
-                <AlertCircle className="h-10 w-10 mb-3" />
-                <p className="font-semibold text-lg mb-1">Erro</p>
+              <div className="flex h-full flex-col items-center justify-center p-6 text-center text-destructive">
+                <AlertCircle className="mb-3 h-10 w-10" />
+                <p className="mb-1 font-semibold text-lg">Erro</p>
                 <p className="text-sm">
                   {error
                     .replace(/^Erro: /i, "")
@@ -1444,7 +1433,7 @@ export default function ModernDatabaseEditor({
                 </p>
               </div>
             ) : queryResult ? (
-              <ScrollArea className="h-full p-4 border-t">
+              <ScrollArea className="h-full border-t p-4">
                 {renderQueryResult()}
                 <ScrollBar orientation="horizontal" />
                 <ScrollBar orientation="vertical" />
@@ -1452,22 +1441,22 @@ export default function ModernDatabaseEditor({
             ) : selectedTable && tableColumns.length > 0 ? (
               <div className="h-full border-t">
                 {/* Global Search */}
-                <div className="p-4 border-b bg-muted/30">
+                <div className="border-b bg-muted/30 p-4">
                   <div className="flex items-center space-x-4">
                     <div className="flex-1">
                       <Input
+                        className="max-w-sm"
+                        onChange={handleGlobalFilterChange}
                         placeholder="Busca global..."
                         value={globalFilter ?? ""}
-                        onChange={handleGlobalFilterChange}
-                        className="max-w-sm"
                       />
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-muted-foreground text-sm">
                         {rowCountInfo.filtered} de {rowCountInfo.total} linhas
                       </span>
                       {rowCountInfo.selected > 0 && (
-                        <span className="text-sm text-primary font-medium">
+                        <span className="font-medium text-primary text-sm">
                           {rowCountInfo.selected} selecionadas
                         </span>
                       )}
@@ -1479,12 +1468,12 @@ export default function ModernDatabaseEditor({
                 <ScrollArea className="h-[calc(100%-5rem)]">
                   <Table>
                     <TableHeader className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                      {table.getHeaderGroups().map((headerGroup) => (
+                      {table.getHeaderGroups().map(headerGroup => (
                         <TableRow key={headerGroup.id}>
-                          {headerGroup.headers.map((header) => (
+                          {headerGroup.headers.map(header => (
                             <TableHead
-                              key={header.id}
                               className="whitespace-nowrap p-2"
+                              key={header.id}
                             >
                               {header.isPlaceholder
                                 ? null
@@ -1501,21 +1490,21 @@ export default function ModernDatabaseEditor({
                       {table.getRowModel().rows?.length ? (
                         table
                           .getRowModel()
-                          .rows.map((row) => (
+                          .rows.map(row => (
                             <TableRowItem
+                              columns={columns}
                               key={row.id}
                               row={row}
-                              columns={columns}
                             />
                           ))
                       ) : (
                         <TableRow>
                           <TableCell
-                            colSpan={columns.length}
                             className="h-24 text-center"
+                            colSpan={columns.length}
                           >
                             <div className="flex flex-col items-center justify-center text-muted-foreground">
-                              <FaCircleInfo className="h-8 w-8 mb-2" />
+                              <FaCircleInfo className="mb-2 h-8 w-8" />
                               <p>Nenhum resultado encontrado</p>
                             </div>
                           </TableCell>
@@ -1528,9 +1517,9 @@ export default function ModernDatabaseEditor({
                 </ScrollArea>
               </div>
             ) : selectedTable ? (
-              <div className="text-muted-foreground p-6 text-center flex flex-col items-center justify-center h-full">
-                <Search className="h-10 w-10 mb-3 text-muted-foreground/60" />
-                <p className="font-semibold text-lg mb-1">
+              <div className="flex h-full flex-col items-center justify-center p-6 text-center text-muted-foreground">
+                <Search className="mb-3 h-10 w-10 text-muted-foreground/60" />
+                <p className="mb-1 font-semibold text-lg">
                   Nenhuma Coluna Encontrada
                 </p>
                 <p className="text-sm">
@@ -1539,9 +1528,9 @@ export default function ModernDatabaseEditor({
                 </p>
               </div>
             ) : (
-              <div className="text-muted-foreground p-6 text-center flex flex-col items-center justify-center h-full">
-                <DatabaseZap className="h-12 w-12 mb-4 text-muted-foreground/60" />
-                <p className="text-lg font-medium">
+              <div className="flex h-full flex-col items-center justify-center p-6 text-center text-muted-foreground">
+                <DatabaseZap className="mb-4 h-12 w-12 text-muted-foreground/60" />
+                <p className="font-medium text-lg">
                   Editor de Banco de Dados Avançado
                 </p>
                 <p className="text-sm">
@@ -1558,8 +1547,8 @@ export default function ModernDatabaseEditor({
       </div>
 
       {/* Schema Dialog */}
-      <Dialog open={showSchemaDialog} onOpenChange={setShowSchemaDialog}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <Dialog onOpenChange={setShowSchemaDialog} open={showSchemaDialog}>
+        <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Esquema da Tabela: {selectedTable}</DialogTitle>
             <DialogDescription>
@@ -1571,7 +1560,7 @@ export default function ModernDatabaseEditor({
             <div className="space-y-6">
               {/* Columns */}
               <div>
-                <h3 className="text-lg font-semibold mb-3">Colunas</h3>
+                <h3 className="mb-3 font-semibold text-lg">Colunas</h3>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -1584,7 +1573,7 @@ export default function ModernDatabaseEditor({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {tableSchema.columns.map((col) => (
+                    {tableSchema.columns.map(col => (
                       <TableRow key={col.name}>
                         <TableCell className="font-medium">
                           {col.name}
@@ -1603,8 +1592,8 @@ export default function ModernDatabaseEditor({
                         <TableCell>{col.extra || "-"}</TableCell>
                         <TableCell>
                           {col.isPrimaryKey && (
-                            <Badge variant="default" className="mr-1">
-                              <Key className="h-3 w-3 mr-1" />
+                            <Badge className="mr-1" variant="default">
+                              <Key className="mr-1 h-3 w-3" />
                               PK
                             </Badge>
                           )}
@@ -1618,7 +1607,7 @@ export default function ModernDatabaseEditor({
               {/* Foreign Keys */}
               {tableSchema.foreignKeys.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">
+                  <h3 className="mb-3 font-semibold text-lg">
                     Chaves Estrangeiras
                   </h3>
                   <Table>
@@ -1638,15 +1627,15 @@ export default function ModernDatabaseEditor({
                           </TableCell>
                           <TableCell>
                             <Button
-                              variant="link"
                               className="h-auto p-0"
                               onClick={() => {
                                 setSelectedTable(fk.referencedTable);
                                 setShowSchemaDialog(false);
                               }}
+                              variant="link"
                             >
                               {fk.referencedTable}
-                              <ExternalLink className="h-3 w-3 ml-1" />
+                              <ExternalLink className="ml-1 h-3 w-3" />
                             </Button>
                           </TableCell>
                           <TableCell>{fk.referencedColumn}</TableCell>
@@ -1661,7 +1650,7 @@ export default function ModernDatabaseEditor({
               {/* Indexes */}
               {tableSchema.indexes.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Índices</h3>
+                  <h3 className="mb-3 font-semibold text-lg">Índices</h3>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1700,7 +1689,7 @@ export default function ModernDatabaseEditor({
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <Dialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
@@ -1711,10 +1700,10 @@ export default function ModernDatabaseEditor({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={handleDeleteDialogClose}>
+            <Button onClick={handleDeleteDialogClose} variant="outline">
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
+            <Button onClick={handleDeleteConfirm} variant="destructive">
               Deletar
             </Button>
           </DialogFooter>
@@ -1722,7 +1711,7 @@ export default function ModernDatabaseEditor({
       </Dialog>
 
       {/* Add Row Dialog */}
-      <Dialog open={showAddRowDialog} onOpenChange={setShowAddRowDialog}>
+      <Dialog onOpenChange={setShowAddRowDialog} open={showAddRowDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Adicionar Nova Linha</DialogTitle>
@@ -1732,27 +1721,27 @@ export default function ModernDatabaseEditor({
           </DialogHeader>
 
           <div className="space-y-4">
-            {tableColumns.map((col) => (
-              <div key={col.name} className="space-y-2">
+            {tableColumns.map(col => (
+              <div className="space-y-2" key={col.name}>
                 <Label htmlFor={`new-row-${col.name}`}>
                   {col.name}
                   {col.isPrimaryKey && (
-                    <Key className="h-3 w-3 inline ml-1 text-yellow-500" />
+                    <Key className="ml-1 inline h-3 w-3 text-yellow-500" />
                   )}
-                  <Badge variant="outline" className="ml-2 text-xs">
+                  <Badge className="ml-2 text-xs" variant="outline">
                     {col.type}
                   </Badge>
                 </Label>
                 <Input
                   id={`new-row-${col.name}`}
-                  placeholder={col.isNullable ? "Opcional" : "Obrigatório"}
-                  value={newRowData[col.name] || ""}
-                  onChange={(e) =>
-                    setNewRowData((prev) => ({
+                  onChange={e =>
+                    setNewRowData(prev => ({
                       ...prev,
                       [col.name]: e.target.value,
                     }))
                   }
+                  placeholder={col.isNullable ? "Opcional" : "Obrigatório"}
+                  value={newRowData[col.name] || ""}
                 />
               </div>
             ))}
@@ -1760,13 +1749,13 @@ export default function ModernDatabaseEditor({
 
           <DialogFooter>
             <Button
-              variant="outline"
               onClick={() => setShowAddRowDialog(false)}
+              variant="outline"
             >
               Cancelar
             </Button>
             <Button onClick={handleAddRowSubmit}>
-              <Plus className="h-4 w-4 mr-1" />
+              <Plus className="mr-1 h-4 w-4" />
               Adicionar
             </Button>
           </DialogFooter>
@@ -1774,7 +1763,7 @@ export default function ModernDatabaseEditor({
       </Dialog>
 
       {/* Add Column Dialog */}
-      <Dialog open={showAddColumnDialog} onOpenChange={setShowAddColumnDialog}>
+      <Dialog onOpenChange={setShowAddColumnDialog} open={showAddColumnDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Adicionar Nova Coluna</DialogTitle>
@@ -1788,27 +1777,27 @@ export default function ModernDatabaseEditor({
               <Label htmlFor="column-name">Nome da Coluna</Label>
               <Input
                 id="column-name"
-                placeholder="nome_da_coluna"
-                value={newColumnForm.name}
-                onChange={(e) =>
-                  setNewColumnForm((prev) => ({
+                onChange={e =>
+                  setNewColumnForm(prev => ({
                     ...prev,
                     name: e.target.value,
                   }))
                 }
+                placeholder="nome_da_coluna"
+                value={newColumnForm.name}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="column-type">Tipo de Dados</Label>
               <Select
-                value={newColumnForm.type}
-                onValueChange={(value) =>
-                  setNewColumnForm((prev) => ({
+                onValueChange={value =>
+                  setNewColumnForm(prev => ({
                     ...prev,
                     type: value,
                   }))
                 }
+                value={newColumnForm.type}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -1830,10 +1819,10 @@ export default function ModernDatabaseEditor({
 
             <div className="flex items-center space-x-2">
               <Switch
-                id="column-nullable"
                 checked={newColumnForm.isNullable}
-                onCheckedChange={(checked) =>
-                  setNewColumnForm((prev) => ({
+                id="column-nullable"
+                onCheckedChange={checked =>
+                  setNewColumnForm(prev => ({
                     ...prev,
                     isNullable: checked,
                   }))
@@ -1846,30 +1835,30 @@ export default function ModernDatabaseEditor({
               <Label htmlFor="column-default">Valor Padrão (Opcional)</Label>
               <Input
                 id="column-default"
-                placeholder="NULL"
-                value={newColumnForm.defaultValue}
-                onChange={(e) =>
-                  setNewColumnForm((prev) => ({
+                onChange={e =>
+                  setNewColumnForm(prev => ({
                     ...prev,
                     defaultValue: e.target.value,
                   }))
                 }
+                placeholder="NULL"
+                value={newColumnForm.defaultValue}
               />
             </div>
           </div>
 
           <DialogFooter>
             <Button
-              variant="outline"
               onClick={() => setShowAddColumnDialog(false)}
+              variant="outline"
             >
               Cancelar
             </Button>
             <Button
-              onClick={handleAddColumnSubmit}
               disabled={!newColumnForm.name.trim()}
+              onClick={handleAddColumnSubmit}
             >
-              <Columns3 className="h-4 w-4 mr-1" />
+              <Columns3 className="mr-1 h-4 w-4" />
               Adicionar
             </Button>
           </DialogFooter>

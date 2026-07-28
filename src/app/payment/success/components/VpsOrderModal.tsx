@@ -1,17 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
-type VpsOrderInfo = {
+interface VpsOrderInfo {
   orderNumber: string;
   amount: number;
   currency: string;
   planType: string;
-};
+}
 
 function formatPrice(amount: number, currency: string): string {
   const fixed = amount.toFixed(2).replace(".", ",");
@@ -24,31 +21,31 @@ export default function VpsOrderModal({ order }: { order: VpsOrderInfo }) {
   const [open, setOpen] = useState(true);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-2xl bg-white text-gray-900 p-0 overflow-hidden border-0 shadow-2xl rounded-2xl gap-0">
+    <Dialog onOpenChange={setOpen} open={open}>
+      <DialogContent className="max-w-2xl gap-0 overflow-hidden rounded-2xl border-0 bg-white p-0 text-gray-900 shadow-2xl">
         <div className="p-8">
-          <div className="flex items-start justify-between gap-4 mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 leading-tight">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <h2 className="font-bold text-2xl text-gray-900 leading-tight">
               Obrigado pelo seu pedido.
             </h2>
-            <span className="shrink-0 bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-md">
+            <span className="shrink-0 rounded-md bg-emerald-600 px-4 py-2 font-semibold text-sm text-white">
               Pagamento recebido
             </span>
           </div>
 
-          <div className="flex items-center justify-between mb-6">
-            <span className="text-sm font-semibold text-gray-800">
+          <div className="mb-6 flex items-center justify-between">
+            <span className="font-semibold text-gray-800 text-sm">
               Número do pedido :{" "}
               <span className="font-bold">{order.orderNumber}</span>
             </span>
-            <span className="text-sm font-bold text-gray-800">
+            <span className="font-bold text-gray-800 text-sm">
               {formatPrice(order.amount, order.currency)}
             </span>
           </div>
 
-          <hr className="border-gray-200 mb-6" />
+          <hr className="mb-6 border-gray-200" />
 
-          <div className="space-y-4 text-sm text-gray-700 leading-relaxed">
+          <div className="space-y-4 text-gray-700 text-sm leading-relaxed">
             <p>
               Seu pagamento e pedido foram recebidos e estão sendo processados.
             </p>
@@ -57,10 +54,9 @@ export default function VpsOrderModal({ order }: { order: VpsOrderInfo }) {
 
             <p>
               <strong>VPS e VDS:</strong> 30 minutos (até 3 horas em casos
-              excepcionais){" "}
-              <strong>VDS com SSD adicional:</strong> 48 horas (em dias úteis){" "}
-              <strong>Servidor Dedicado:</strong> 48 horas (em dias úteis){" "}
-              <strong>Armazenamento de Objetos:</strong> Instantâneo
+              excepcionais) <strong>VDS com SSD adicional:</strong> 48 horas (em
+              dias úteis) <strong>Servidor Dedicado:</strong> 48 horas (em dias
+              úteis) <strong>Armazenamento de Objetos:</strong> Instantâneo
             </p>
 
             <p>

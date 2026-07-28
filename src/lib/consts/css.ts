@@ -1,7 +1,3 @@
 import clsx from "clsx";
 
-export const InputCss = clsx`
-	w-full h-12 bg-black border-gray-900 border-1 border-solid
-	rounded-lg rounded-lg p-4 text-white placeholder:text-#a7a8b6ce
-	ring-2 ring-transparent focus:ring-accent focus:ring outline-0
-`;
+export const InputCss = clsx`h-12 w-full rounded-lg rounded-lg border-1 border-gray-900 border-solid bg-black p-4 text-white outline-0 ring-2 ring-transparent placeholder:text-#a7a8b6ce focus:ring focus:ring-accent`;

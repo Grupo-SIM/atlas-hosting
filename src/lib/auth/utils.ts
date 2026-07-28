@@ -1,29 +1,25 @@
-import { db } from "@/lib/db";
-import {
-  pgOrganization,
-  pgSession,
-  pgUser,
-  pgWallet,
-  userSettings,
-  type Session,
-  type SessionInsert,
-  type User,
-} from "@/lib/db/schema";
 import { sha256 } from "@oslojs/crypto/sha2";
 import {
   encodeBase32LowerCaseNoPadding,
   encodeHexLowerCase,
 } from "@oslojs/encoding";
 import { eq } from "drizzle-orm";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { AppLogger } from "../server/logs";
-import { hash, verify } from "./scrypt";
+import { db } from "@/lib/db";
+import {
+  pgOrganization,
+  pgSession,
+  pgUser,
+  pgWallet,
+  type Session,
+  type SessionInsert,
+  userSettings,
+} from "@/lib/db/schema";
 import type { RawUser } from "@/lib/db/schema/tables/user";
-import { auth } from "@/auth";
+import { sendEmailVerificationEmail } from "../email/service";
+import { AppLogger } from "../server/logs";
 import { getUser } from ".";
+import { hash, verify } from "./scrypt";
 import { createEmailVerificationToken } from "./tokens";
-import { sendWelcomeEmail, sendEmailVerificationEmail } from "../email/service";
 
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);
@@ -41,16 +37,15 @@ export function generateAffiliateCode(): string {
   return result;
 }
 
-
 export async function createSession(
   token: string,
   userId: string
 ): Promise<Session> {
   const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
   const session: SessionInsert = {
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
     id: sessionId,
     userId,
-    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
   };
   await db.insert(pgSession).values(session);
   return session;
@@ -64,22 +59,22 @@ export async function validateSessionToken(token: string) {
     with: {
       user: {
         with: {
+          domainAccess: true,
           organization: {
             with: {
+              domains: true,
               members: true,
+              owner: true,
               plan: true,
               wallet: {
                 with: {
                   cards: true,
                 },
               },
-              owner: true,
-              domains: true,
             },
           },
-          domainAccess: true,
-          referrer: true,
           referredUsers: true,
+          referrer: true,
           sessions: true,
           settings: true,
         },
@@ -160,33 +155,33 @@ export async function createUser(
     const newUser = await db
       .insert(pgUser)
       .values({
-        name,
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        referrerId,
         affiliateCode: generateAffiliateCode(),
-        organizationRole: "admin",
+        createdAt: new Date(),
+        email: email.toLowerCase(),
+        name,
         organizationId: newOrg[0].id,
+        organizationRole: "admin",
+        password: hashedPassword,
+        referrerId,
+        updatedAt: new Date(),
       })
       .returning({
+        createdAt: pgUser.createdAt,
+        deletedAt: pgUser.deletedAt,
+        email: pgUser.email,
         id: pgUser.id,
         name: pgUser.name,
-        email: pgUser.email,
-        createdAt: pgUser.createdAt,
         updatedAt: pgUser.updatedAt,
-        deletedAt: pgUser.deletedAt,
       });
 
     // Create user settings after user creation
     await db.insert(userSettings).values({
-      userId: newUser[0].id,
-      emailNotifications: true,
-      smsNotifications: false,
-      pushNotifications: true,
       createdAt: new Date(),
+      emailNotifications: true,
+      pushNotifications: true,
+      smsNotifications: false,
       updatedAt: new Date(),
+      userId: newUser[0].id,
     });
 
     await db
@@ -208,8 +203,9 @@ export async function createUser(
         newUser[0].email,
         verificationToken.token,
         verificationToken.code ?? ""
-      ).catch(err => console.error("Background verification email error:", err));
-      
+      ).catch(err =>
+        console.error("Background verification email error:", err)
+      );
     } catch (error) {
       console.error("Failed to send verification/welcome email:", error);
       // Don't fail user creation if token creation or email sending fails
@@ -247,13 +243,13 @@ export async function resignupUnverifiedUser(
       })
       .where(eq(pgUser.id, existingUserId))
       .returning({
+        createdAt: pgUser.createdAt,
+        deletedAt: pgUser.deletedAt,
+        email: pgUser.email,
         id: pgUser.id,
         name: pgUser.name,
-        email: pgUser.email,
         organizationId: pgUser.organizationId,
-        createdAt: pgUser.createdAt,
         updatedAt: pgUser.updatedAt,
-        deletedAt: pgUser.deletedAt,
       });
 
     const user = updatedUser[0];
@@ -266,13 +262,18 @@ export async function resignupUnverifiedUser(
     }
 
     try {
-      const verificationToken = await createEmailVerificationToken(user.id, user.email);
+      const verificationToken = await createEmailVerificationToken(
+        user.id,
+        user.email
+      );
 
       sendEmailVerificationEmail(
         user.email,
         verificationToken.token,
         verificationToken.code ?? ""
-      ).catch(err => console.error("Background verification email error:", err));
+      ).catch(err =>
+        console.error("Background verification email error:", err)
+      );
     } catch (error) {
       console.error("Failed to send verification email:", error);
     }
@@ -299,39 +300,39 @@ export async function createUserForOrganization(
     const newUser = await db
       .insert(pgUser)
       .values({
-        name,
-        email: email.toLowerCase(),
-        password: hashedPassword,
         createdAt: new Date(),
-        updatedAt: new Date(),
-        organizationRole: role,
+        email: email.toLowerCase(),
+        name,
         organizationId,
+        organizationRole: role,
+        password: hashedPassword,
+        updatedAt: new Date(),
       })
       .returning({
+        createdAt: pgUser.createdAt,
+        deletedAt: pgUser.deletedAt,
+        email: pgUser.email,
         id: pgUser.id,
         name: pgUser.name,
-        email: pgUser.email,
-        createdAt: pgUser.createdAt,
         updatedAt: pgUser.updatedAt,
-        deletedAt: pgUser.deletedAt,
       });
 
     // Create user settings after user creation
     await db.insert(userSettings).values({
-      userId: newUser[0].id,
-      emailNotifications: true,
-      smsNotifications: false,
-      pushNotifications: true,
       createdAt: new Date(),
+      emailNotifications: true,
+      pushNotifications: true,
+      smsNotifications: false,
       updatedAt: new Date(),
+      userId: newUser[0].id,
     });
 
     const logger = new AppLogger(user);
     logger.log({
-      title: "Usuário criado",
       description: `Usuário ${newUser[0].name} (${newUser[0].email}) foi criado na organização ${user.organization?.name ?? "Sem Nome"}.`,
-      type: "account",
       severity: "info",
+      title: "Usuário criado",
+      type: "account",
     });
 
     return newUser[0];
@@ -378,6 +379,5 @@ export async function createGuestUser(
 ) {
   const passwordPlain = Math.random().toString(36).slice(-8); // Random 8 chars password
   const user = await createUser(name, email, passwordPlain, organizationName);
-  return { user, passwordPlain };
+  return { passwordPlain, user };
 }
-

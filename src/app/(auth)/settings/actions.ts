@@ -1,6 +1,10 @@
 "use server";
 
+import { hash, verify } from "@node-rs/argon2";
+import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { getUser } from "@/lib/auth";
+import { createUserForOrganization } from "@/lib/auth/utils"; // Assuming this utility exists
 import { db } from "@/lib/db";
 import {
   pgOrganization,
@@ -8,12 +12,6 @@ import {
   type UserSettings,
   userSettings,
 } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { hash, verify } from "@node-rs/argon2";
-import { revalidatePath } from "next/cache";
-import { createUserForOrganization } from "@/lib/auth/utils"; // Assuming this utility exists
-import type { NotificationsSettings } from "./components/UserSection";
-import { difference } from "lodash";
 
 export interface ActionResponse {
   success: boolean;
@@ -31,8 +29,8 @@ export async function updateUserProfileAction(
     const newUser = await db
       .update(pgUser)
       .set({
-        name,
         email: email.toLowerCase(),
+        name,
         updatedAt: new Date(),
       })
       .where(eq(pgUser.id, user.id))
@@ -53,26 +51,26 @@ export async function updateUserProfileAction(
         .returning();
 
       return {
-        success: true,
         message: JSON.stringify({
           email: newUser[0].email,
           settings: newSettings[0],
         }),
+        success: true,
       };
     }
 
     return {
-      success: true,
       message: JSON.stringify({
         email: newUser[0].email,
         settings: null,
       }),
+      success: true,
     };
   } catch (error) {
     console.error("Error updating user profile:", error);
     return {
-      success: false,
       message: "Erro ao atualizar perfil. Tente novamente.",
+      success: false,
     };
   }
 }
@@ -94,7 +92,7 @@ export async function addMemberToOrganizationAction(
     const password = formData.get("password") as string;
 
     if (!organizationId || !fullName || !email || !role || !password) {
-      return { success: false, message: "Todos os campos são obrigatórios." };
+      return { message: "Todos os campos são obrigatórios.", success: false };
     }
 
     // Ensure the current user is the owner of the organization they are adding to
@@ -103,8 +101,8 @@ export async function addMemberToOrganizationAction(
       user.organization?.ownerId !== user.id
     ) {
       return {
-        success: false,
         message: "Apenas o proprietário pode adicionar membros à organização.",
+        success: false,
       };
     }
 
@@ -120,19 +118,19 @@ export async function addMemberToOrganizationAction(
     revalidatePath("/settings");
 
     return {
-      success: true,
       message: "Membro adicionado com sucesso.",
+      success: true,
     };
   } catch (error) {
     console.error("Error adding member to organization:", error);
     // Check for unique constraint violation (e.g., email already exists)
     if ((error as { code?: string }).code === "23505") {
       // PostgreSQL unique violation error code
-      return { success: false, message: "Este e-mail já está em uso." };
+      return { message: "Este e-mail já está em uso.", success: false };
     }
     return {
-      success: false,
       message: "Erro ao adicionar membro. Tente novamente.",
+      success: false,
     };
   }
 }
@@ -149,15 +147,15 @@ export async function removeMemberFromOrganizationAction(
       user.organization?.ownerId !== user.id
     ) {
       return {
-        success: false,
         message: "Apenas o proprietário pode remover membros.",
+        success: false,
       };
     }
 
     if (memberId === user.id) {
       return {
-        success: false,
         message: "O proprietário não pode remover a si mesmo.",
+        success: false,
       };
     }
 
@@ -167,10 +165,10 @@ export async function removeMemberFromOrganizationAction(
     await db
       .update(pgUser)
       .set({
+        deletedAt: new Date(), // Optional: mark as deleted
         organizationId: null,
         organizationRole: undefined,
         updatedAt: new Date(),
-        deletedAt: new Date(), // Optional: mark as deleted
         // Consider if deletedAt should be set if they are fully removed from the platform
         // deletedAt: new Date(),
       })
@@ -179,14 +177,14 @@ export async function removeMemberFromOrganizationAction(
     revalidatePath("/settings");
 
     return {
-      success: true,
       message: "Membro removido com sucesso.",
+      success: true,
     };
   } catch (error) {
     console.error("Error removing member from organization:", error);
     return {
-      success: false,
       message: "Erro ao remover membro. Tente novamente.",
+      success: false,
     };
   }
 }
@@ -204,8 +202,8 @@ export async function updateMemberRoleAction(
       user.organization?.ownerId !== user.id
     ) {
       return {
-        success: false,
         message: "Apenas o proprietário pode alterar funções.",
+        success: false,
       };
     }
 
@@ -219,12 +217,12 @@ export async function updateMemberRoleAction(
 
     revalidatePath("/settings");
     return {
-      success: true,
       message: "Função do membro atualizada com sucesso.",
+      success: true,
     };
   } catch (error) {
     console.error("Error updating member role:", error);
-    return { success: false, message: "Erro ao atualizar função do membro." };
+    return { message: "Erro ao atualizar função do membro.", success: false };
   }
 }
 
@@ -237,16 +235,16 @@ export async function changePasswordAction(
 
     // Get current password hash from database
     const userData = await db.query.pgUser.findFirst({
-      where: eq(pgUser.id, user.id),
       columns: {
         password: true,
       },
+      where: eq(pgUser.id, user.id),
     });
 
     if (!userData?.password) {
       return {
-        success: false,
         message: "Usuário não encontrado.",
+        success: false,
       };
     }
 
@@ -258,8 +256,8 @@ export async function changePasswordAction(
 
     if (!isCurrentPasswordValid) {
       return {
-        success: false,
         message: "Senha atual incorreta.",
+        success: false,
       };
     }
 
@@ -278,14 +276,14 @@ export async function changePasswordAction(
     revalidatePath("/settings");
 
     return {
-      success: true,
       message: "Senha alterada com sucesso.",
+      success: true,
     };
   } catch (error) {
     console.error("Error changing password:", error);
     return {
-      success: false,
       message: "Erro ao alterar senha. Tente novamente.",
+      success: false,
     };
   }
 }
@@ -299,15 +297,15 @@ export async function updateOrganizationNameAction(
     // Check if user is owner
     if (user.organization?.ownerId !== user.id) {
       return {
-        success: false,
         message: "Apenas o proprietário pode alterar o nome da organização.",
+        success: false,
       };
     }
 
     if (!user.organizationId) {
       return {
-        success: false,
         message: "Organização não encontrada.",
+        success: false,
       };
     }
 
@@ -322,14 +320,14 @@ export async function updateOrganizationNameAction(
     revalidatePath("/settings");
 
     return {
-      success: true,
       message: "Nome da organização atualizado com sucesso.",
+      success: true,
     };
   } catch (error) {
     console.error("Error updating organization name:", error);
     return {
-      success: false,
       message: "Erro ao atualizar nome da organização. Tente novamente.",
+      success: false,
     };
   }
 }
@@ -351,14 +349,14 @@ export async function sendEmailVerificationAction(): Promise<ActionResponse> {
     revalidatePath("/settings");
 
     return {
-      success: true,
       message: "Email de verificação enviado. Verifique sua caixa de entrada.",
+      success: true,
     };
   } catch (error) {
     console.error("Error sending email verification:", error);
     return {
-      success: false,
       message: "Erro ao enviar email de verificação. Tente novamente.",
+      success: false,
     };
   }
 }
@@ -383,14 +381,14 @@ export async function deleteUserAccountAction(): Promise<ActionResponse> {
     // - Send confirmation email
 
     return {
-      success: true,
       message: "Conta excluída com sucesso.",
+      success: true,
     };
   } catch (error) {
     console.error("Error deleting user account:", error);
     return {
-      success: false,
       message: "Erro ao excluir conta. Tente novamente.",
+      success: false,
     };
   }
 }
@@ -403,12 +401,12 @@ export async function updateUserProfileImageAction(
     const file = formData.get("image") as File;
 
     if (!file || file.size === 0) {
-      return { success: false, message: "Nenhuma imagem fornecida." };
+      return { message: "Nenhuma imagem fornecida.", success: false };
     }
 
     const buffer = await file.arrayBuffer();
     const { uploadProfilePicture, getStorjUrl } = await import("@/lib/storj");
-    
+
     const key = await uploadProfilePicture(buffer, file.name);
     const imageUrl = getStorjUrl(key);
 
@@ -423,14 +421,14 @@ export async function updateUserProfileImageAction(
     revalidatePath("/settings");
 
     return {
-      success: true,
       message: "Foto de perfil atualizada com sucesso.",
+      success: true,
     };
   } catch (error) {
     console.error("Error updating user profile image:", error);
     return {
-      success: false,
       message: "Erro ao atualizar foto de perfil. Tente novamente.",
+      success: false,
     };
   }
 }

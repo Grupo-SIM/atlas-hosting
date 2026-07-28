@@ -136,7 +136,7 @@ testWordPressPlugins()
   .then(() => {
     console.log("\n✅ Test completed");
   })
-  .catch((error) => {
+  .catch(error => {
     console.error("❌ Test failed:", error);
   });
 
@@ -146,7 +146,7 @@ testWordPressPlugins()
     console.log("\n✅ Test completed!");
     process.exit(0);
   })
-  .catch((error) => {
+  .catch(error => {
     console.error("❌ Test failed:", error);
     process.exit(1);
   });

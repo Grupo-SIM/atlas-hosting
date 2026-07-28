@@ -1,5 +1,5 @@
-import { Upload } from "@aws-sdk/lib-storage";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 
@@ -16,11 +16,14 @@ const s3Client = new S3Client({
     secretAccessKey: SECRET_ACCESS_KEY || "",
   },
   endpoint: ENDPOINT,
-  region: REGION,
   forcePathStyle: true,
+  region: REGION,
 });
 
-export async function uploadProfilePicture(file: Buffer | ArrayBuffer, fileName: string) {
+export async function uploadProfilePicture(
+  file: Buffer | ArrayBuffer,
+  fileName: string
+) {
   if (!ACCESS_KEY_ID || !SECRET_ACCESS_KEY || !BUCKET || !ENDPOINT) {
     throw new Error("Configurações do Storj incompletas no .env");
   }
@@ -41,10 +44,10 @@ export async function uploadProfilePicture(file: Buffer | ArrayBuffer, fileName:
   const upload = new Upload({
     client: s3Client,
     params: {
-      Bucket: BUCKET,
-      Key: key,
       Body: processedBuffer,
+      Bucket: BUCKET,
       ContentType: "image/webp",
+      Key: key,
     },
   });
 
@@ -55,7 +58,7 @@ export async function uploadProfilePicture(file: Buffer | ArrayBuffer, fileName:
 export function getStorjUrl(key: string | null) {
   if (!key) return null;
   if (key.startsWith("http")) return key;
-  
+
   return `https://link.storjshare.io/s/${GARANT_ACCESS}/${BUCKET}/${key}?wrap=0`;
 }
 

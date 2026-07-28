@@ -1,13 +1,13 @@
+import { relations } from "drizzle-orm";
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { pgUser } from "./user";
-import { relations } from "drizzle-orm";
 
 export const pgSession = pgTable("session", {
+  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
   id: text("id").primaryKey(),
   userId: uuid("user_id")
     .notNull()
     .references(() => pgUser.id),
-  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
 });
 
 export const sessionRelations = relations(pgSession, ({ one }) => ({

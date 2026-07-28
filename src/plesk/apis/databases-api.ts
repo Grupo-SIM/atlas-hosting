@@ -17,28 +17,23 @@
  */
 
 import globalAxios, {
-  type AxiosResponse,
   type AxiosInstance,
   type AxiosRequestConfig,
+  type AxiosResponse,
 } from "axios";
-import type { Configuration } from "../configuration";
 // Some imports not used depending on template conditions
 // @ts-ignore
-import {
-  BASE_PATH,
-  COLLECTION_FORMATS,
-  type RequestArgs,
-  BaseAPI,
-  RequiredError,
-} from "../base";
-import type { Database } from "../models";
-import type { DatabaseRequest } from "../models";
-import type { DatabaseServer } from "../models";
-import type { DatabaseUser } from "../models";
-import type { DatabaseUserRequest } from "../models";
-import type { DatabaseUserUpdateRequest } from "../models";
-import { ErrorResponse } from "../models";
-import type { StatusResponse } from "../models";
+import { BASE_PATH, BaseAPI, type RequestArgs, RequiredError } from "../base";
+import type { Configuration } from "../configuration";
+import type {
+  Database,
+  DatabaseRequest,
+  DatabaseServer,
+  DatabaseUser,
+  DatabaseUserRequest,
+  DatabaseUserUpdateRequest,
+  StatusResponse,
+} from "../models";
 
 /**
  * DatabasesApi - axios parameter creator
@@ -58,7 +53,7 @@ export const DatabasesApiAxiosParamCreator = (
     domain?: string,
     options: AxiosRequestConfig = {}
   ): Promise<RequestArgs> => {
-    const localVarPath = `/databases`;
+    const localVarPath = "/databases";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -74,7 +69,7 @@ export const DatabasesApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -85,14 +80,14 @@ export const DatabasesApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
     if (domain !== undefined) {
-      localVarQueryParameter["domain"] = domain;
+      localVarQueryParameter.domain = domain;
     }
 
     const query = new URLSearchParams(localVarUrlObj.search);
@@ -103,8 +98,9 @@ export const DatabasesApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -112,9 +108,9 @@ export const DatabasesApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -135,7 +131,7 @@ export const DatabasesApiAxiosParamCreator = (
         "Required parameter id was null or undefined when calling databasesIdDelete."
       );
     }
-    const localVarPath = `/databases/{id}`.replace(
+    const localVarPath = "/databases/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -154,7 +150,7 @@ export const DatabasesApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -165,9 +161,9 @@ export const DatabasesApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -179,8 +175,9 @@ export const DatabasesApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -188,9 +185,9 @@ export const DatabasesApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -211,7 +208,7 @@ export const DatabasesApiAxiosParamCreator = (
         "Required parameter body was null or undefined when calling databasesPost."
       );
     }
-    const localVarPath = `/databases`;
+    const localVarPath = "/databases";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -227,7 +224,7 @@ export const DatabasesApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -238,9 +235,9 @@ export const DatabasesApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -254,8 +251,9 @@ export const DatabasesApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -269,9 +267,9 @@ export const DatabasesApiAxiosParamCreator = (
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -285,7 +283,7 @@ export const DatabasesApiAxiosParamCreator = (
     id?: number,
     options: AxiosRequestConfig = {}
   ): Promise<RequestArgs> => {
-    const localVarPath = `/dbservers`;
+    const localVarPath = "/dbservers";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -301,7 +299,7 @@ export const DatabasesApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -312,14 +310,14 @@ export const DatabasesApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
     if (id !== undefined) {
-      localVarQueryParameter["id"] = id;
+      localVarQueryParameter.id = id;
     }
 
     const query = new URLSearchParams(localVarUrlObj.search);
@@ -330,8 +328,9 @@ export const DatabasesApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -339,9 +338,9 @@ export const DatabasesApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -355,7 +354,7 @@ export const DatabasesApiAxiosParamCreator = (
     dbId?: number,
     options: AxiosRequestConfig = {}
   ): Promise<RequestArgs> => {
-    const localVarPath = `/dbusers`;
+    const localVarPath = "/dbusers";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -371,7 +370,7 @@ export const DatabasesApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -382,14 +381,14 @@ export const DatabasesApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
     if (dbId !== undefined) {
-      localVarQueryParameter["dbId"] = dbId;
+      localVarQueryParameter.dbId = dbId;
     }
 
     const query = new URLSearchParams(localVarUrlObj.search);
@@ -400,8 +399,9 @@ export const DatabasesApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -409,9 +409,9 @@ export const DatabasesApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -432,7 +432,7 @@ export const DatabasesApiAxiosParamCreator = (
         "Required parameter id was null or undefined when calling dbusersIdDelete."
       );
     }
-    const localVarPath = `/dbusers/{id}`.replace(
+    const localVarPath = "/dbusers/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -451,7 +451,7 @@ export const DatabasesApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -462,9 +462,9 @@ export const DatabasesApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -476,8 +476,9 @@ export const DatabasesApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -485,9 +486,9 @@ export const DatabasesApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -517,7 +518,7 @@ export const DatabasesApiAxiosParamCreator = (
         "Required parameter id was null or undefined when calling dbusersIdPut."
       );
     }
-    const localVarPath = `/dbusers/{id}`.replace(
+    const localVarPath = "/dbusers/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -536,7 +537,7 @@ export const DatabasesApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -547,9 +548,9 @@ export const DatabasesApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -563,8 +564,9 @@ export const DatabasesApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -578,9 +580,9 @@ export const DatabasesApiAxiosParamCreator = (
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -601,7 +603,7 @@ export const DatabasesApiAxiosParamCreator = (
         "Required parameter body was null or undefined when calling dbusersPost."
       );
     }
-    const localVarPath = `/dbusers`;
+    const localVarPath = "/dbusers";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -617,7 +619,7 @@ export const DatabasesApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -628,9 +630,9 @@ export const DatabasesApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -644,8 +646,9 @@ export const DatabasesApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -659,13 +662,12 @@ export const DatabasesApiAxiosParamCreator = (
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
 });
-
 
 /**
  * DatabasesApi - functional programming interface
@@ -686,7 +688,7 @@ export const DatabasesApiFp = (configuration?: Configuration) => ({
     (
       axios?: AxiosInstance,
       basePath?: string
-    ) => Promise<AxiosResponse<Array<Database>>>
+    ) => Promise<AxiosResponse<Database[]>>
   > {
     const localVarAxiosArgs = await DatabasesApiAxiosParamCreator(
       configuration
@@ -776,7 +778,7 @@ export const DatabasesApiFp = (configuration?: Configuration) => ({
     (
       axios?: AxiosInstance,
       basePath?: string
-    ) => Promise<AxiosResponse<Array<DatabaseServer>>>
+    ) => Promise<AxiosResponse<DatabaseServer[]>>
   > {
     const localVarAxiosArgs = await DatabasesApiAxiosParamCreator(
       configuration
@@ -806,7 +808,7 @@ export const DatabasesApiFp = (configuration?: Configuration) => ({
     (
       axios?: AxiosInstance,
       basePath?: string
-    ) => Promise<AxiosResponse<Array<DatabaseUser>>>
+    ) => Promise<AxiosResponse<DatabaseUser[]>>
   > {
     const localVarAxiosArgs = await DatabasesApiAxiosParamCreator(
       configuration
@@ -916,7 +918,6 @@ export const DatabasesApiFp = (configuration?: Configuration) => ({
   },
 });
 
-
 /**
  * DatabasesApi - factory interface
  * @export
@@ -936,10 +937,10 @@ export const DatabasesApiFactory = (
   async databasesGet(
     domain?: string,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<Database>>> {
+  ): Promise<AxiosResponse<Database[]>> {
     return DatabasesApiFp(configuration)
       .databasesGet(domain, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -954,7 +955,7 @@ export const DatabasesApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return DatabasesApiFp(configuration)
       .databasesIdDelete(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -969,7 +970,7 @@ export const DatabasesApiFactory = (
   ): Promise<AxiosResponse<Database>> {
     return DatabasesApiFp(configuration)
       .databasesPost(body, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -981,10 +982,10 @@ export const DatabasesApiFactory = (
   async dbserversGet(
     id?: number,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<DatabaseServer>>> {
+  ): Promise<AxiosResponse<DatabaseServer[]>> {
     return DatabasesApiFp(configuration)
       .dbserversGet(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -996,10 +997,10 @@ export const DatabasesApiFactory = (
   async dbusersGet(
     dbId?: number,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<DatabaseUser>>> {
+  ): Promise<AxiosResponse<DatabaseUser[]>> {
     return DatabasesApiFp(configuration)
       .dbusersGet(dbId, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -1014,7 +1015,7 @@ export const DatabasesApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return DatabasesApiFp(configuration)
       .dbusersIdDelete(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -1031,7 +1032,7 @@ export const DatabasesApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return DatabasesApiFp(configuration)
       .dbusersIdPut(body, id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -1046,10 +1047,9 @@ export const DatabasesApiFactory = (
   ): Promise<AxiosResponse<DatabaseUser>> {
     return DatabasesApiFp(configuration)
       .dbusersPost(body, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
 });
-
 
 /**
  * DatabasesApi - object-oriented interface
@@ -1069,10 +1069,10 @@ export class DatabasesApi extends BaseAPI {
   public async databasesGet(
     domain?: string,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<Database>>> {
+  ): Promise<AxiosResponse<Database[]>> {
     return DatabasesApiFp(this.configuration)
       .databasesGet(domain, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1088,7 +1088,7 @@ export class DatabasesApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return DatabasesApiFp(this.configuration)
       .databasesIdDelete(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1104,7 +1104,7 @@ export class DatabasesApi extends BaseAPI {
   ): Promise<AxiosResponse<Database>> {
     return DatabasesApiFp(this.configuration)
       .databasesPost(body, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1117,10 +1117,10 @@ export class DatabasesApi extends BaseAPI {
   public async dbserversGet(
     id?: number,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<DatabaseServer>>> {
+  ): Promise<AxiosResponse<DatabaseServer[]>> {
     return DatabasesApiFp(this.configuration)
       .dbserversGet(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1133,10 +1133,10 @@ export class DatabasesApi extends BaseAPI {
   public async dbusersGet(
     dbId?: number,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<DatabaseUser>>> {
+  ): Promise<AxiosResponse<DatabaseUser[]>> {
     return DatabasesApiFp(this.configuration)
       .dbusersGet(dbId, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1152,7 +1152,7 @@ export class DatabasesApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return DatabasesApiFp(this.configuration)
       .dbusersIdDelete(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1170,7 +1170,7 @@ export class DatabasesApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return DatabasesApiFp(this.configuration)
       .dbusersIdPut(body, id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1186,6 +1186,6 @@ export class DatabasesApi extends BaseAPI {
   ): Promise<AxiosResponse<DatabaseUser>> {
     return DatabasesApiFp(this.configuration)
       .dbusersPost(body, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
 }

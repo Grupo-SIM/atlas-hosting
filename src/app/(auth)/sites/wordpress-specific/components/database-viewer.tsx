@@ -1,5 +1,21 @@
+import {
+  ChevronDown,
+  ChevronRight,
+  Columns,
+  Database,
+  Edit3,
+  PlusCircle,
+  RefreshCcw,
+  Save,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -8,31 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  ChevronDown,
-  ChevronRight,
-  Database,
-  Edit3,
-  Save,
-  Search,
-  Trash2,
-  X,
-  PlusCircle,
-  Columns,
-  Filter,
-  RefreshCcw,
-} from "lucide-react";
 import type { WpCliApi } from "@/lib/server/apis/plesk/wp-toolkit/wp-cli"; // Adjust path as needed
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DatabaseViewerProps {
   wpCliDb: WpCliApi["db"];
@@ -118,7 +110,7 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
         // This is highly dependent on the actual output of wpCliDb.query
         const rows = resultString.trim().split("\n");
         const headers = rows.length > 0 ? rows[0].split("\t") : []; // Assuming tab-separated
-        const dataRows = rows.slice(1).map((row) => row.split("\t"));
+        const dataRows = rows.slice(1).map(row => row.split("\t"));
         if (headers.length > 0 && dataRows.length > 0) {
           setTableData({ headers, rows: dataRows });
         } else {
@@ -129,8 +121,8 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
 
       if (Array.isArray(parsedResult) && parsedResult.length > 0) {
         const headers = Object.keys(parsedResult[0]);
-        const rows = parsedResult.map((row) =>
-          headers.map((header) => row[header])
+        const rows = parsedResult.map(row =>
+          headers.map(header => row[header])
         );
         setTableData({ headers, rows });
       } else if (
@@ -140,7 +132,7 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
       ) {
         // Handle single object result if that's possible
         const headers = Object.keys(parsedResult);
-        const rows = [headers.map((header) => parsedResult[header])];
+        const rows = [headers.map(header => parsedResult[header])];
         setTableData({ headers, rows });
       } else {
         setTableData({ headers: [], rows: [] });
@@ -175,7 +167,7 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
   };
 
   const handleEditCell = (rowIndex: number, colIndex: number, value: any) => {
-    setEditingCell({ rowIndex, colIndex, originalValue: value });
+    setEditingCell({ colIndex, originalValue: value, rowIndex });
     setEditValue(String(value));
   };
 
@@ -258,20 +250,20 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
   // So, pagination controls might not reflect total server-side pages accurately without more info.
 
   return (
-    <Card className="shadow-2xl rounded-lg overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-gray-900 text-white">
-      <CardHeader className="border-b border-slate-700 p-6">
+    <Card className="overflow-hidden rounded-lg bg-gradient-to-br from-slate-900 via-slate-800 to-gray-900 text-white shadow-2xl">
+      <CardHeader className="border-slate-700 border-b p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Database className="h-8 w-8 text-blue-400" />
-            <CardTitle className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-300">
+            <CardTitle className="bg-gradient-to-r from-blue-400 to-teal-300 bg-clip-text font-bold text-2xl text-transparent tracking-tight">
               Visualizador de Banco de Dados
             </CardTitle>
           </div>
           <Button
-            variant="outline"
-            onClick={fetchTables}
+            className="border-slate-600 text-sm hover:bg-slate-700"
             disabled={isLoading}
-            className="text-sm border-slate-600 hover:bg-slate-700"
+            onClick={fetchTables}
+            variant="outline"
           >
             <RefreshCcw
               className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
@@ -281,10 +273,10 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
         </div>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1 space-y-4">
-            <h3 className="text-lg font-semibold text-slate-300 mb-2 flex items-center">
-              <Columns className="h-5 w-5 mr-2 text-teal-400" /> Tabelas
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+          <div className="space-y-4 md:col-span-1">
+            <h3 className="mb-2 flex items-center font-semibold text-lg text-slate-300">
+              <Columns className="mr-2 h-5 w-5 text-teal-400" /> Tabelas
             </h3>
             {isLoading && tables.length === 0 && (
               <p className="text-slate-400">Carregando tabelas...</p>
@@ -292,18 +284,18 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
             {error && tables.length === 0 && (
               <p className="text-red-400">{error}</p>
             )}
-            <div className="max-h-96 overflow-y-auto space-y-1 pr-2">
-              {tables.map((table) => (
+            <div className="max-h-96 space-y-1 overflow-y-auto pr-2">
+              {tables.map(table => (
                 <Button
+                  className={`w-full justify-start text-left ${selectedTable === table ? "bg-blue-600 text-white hover:bg-blue-500" : "text-slate-300 hover:bg-slate-700"}`}
                   key={table}
-                  variant={selectedTable === table ? "secondary" : "ghost"}
                   onClick={() => handleTableSelect(table)}
-                  className={`w-full justify-start text-left ${selectedTable === table ? "bg-blue-600 hover:bg-blue-500 text-white" : "hover:bg-slate-700 text-slate-300"}`}
+                  variant={selectedTable === table ? "secondary" : "ghost"}
                 >
                   {selectedTable === table ? (
-                    <ChevronRight className="h-4 w-4 mr-2" />
+                    <ChevronRight className="mr-2 h-4 w-4" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100" />
+                    <ChevronDown className="mr-2 h-4 w-4 opacity-0 group-hover:opacity-100" />
                   )}
                   {table}
                 </Button>
@@ -311,19 +303,19 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
             </div>
           </div>
 
-          <div className="md:col-span-3 space-y-4">
+          <div className="space-y-4 md:col-span-3">
             {selectedTable ? (
               <>
-                <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-700">
-                  <h3 className="text-xl font-semibold text-slate-200 truncate">
+                <div className="flex items-center justify-between gap-4 border-slate-700 border-b pb-4">
+                  <h3 className="truncate font-semibold text-slate-200 text-xl">
                     Visualizando:{" "}
                     <span className="text-teal-400">{selectedTable}</span>
                   </h3>
                   {/* Add actions like add row, filter, etc. here */}
                   <Button
-                    variant="outline"
+                    className="border-slate-600 text-sm hover:bg-slate-700"
                     size="sm"
-                    className="text-sm border-slate-600 hover:bg-slate-700"
+                    variant="outline"
                   >
                     <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Linha (Não
                     implementado)
@@ -331,37 +323,37 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
                 </div>
 
                 {/* Search functionality - basic */}
-                <div className="flex gap-2 mb-4">
+                <div className="mb-4 flex gap-2">
                   <Input
-                    type="search"
-                    placeholder="Buscar na tabela (funcionalidade limitada)..."
-                    value={searchTerm}
+                    className="border-slate-600 bg-slate-700 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-blue-500"
                     onChange={handleSearchChange}
-                    className="bg-slate-700 border-slate-600 placeholder-slate-500 text-white focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Buscar na tabela (funcionalidade limitada)..."
+                    type="search"
+                    value={searchTerm}
                   />
                   <Button
-                    onClick={handleSearchSubmit}
-                    disabled={isLoading || !selectedTable}
                     className="bg-blue-600 hover:bg-blue-500"
+                    disabled={isLoading || !selectedTable}
+                    onClick={handleSearchSubmit}
                   >
                     <Search className="mr-2 h-4 w-4" /> Buscar
                   </Button>
                 </div>
 
                 {isLoading && !tableData && (
-                  <p className="text-center text-slate-400 py-8">
+                  <p className="py-8 text-center text-slate-400">
                     Carregando dados da tabela...
                   </p>
                 )}
                 {error && !tableData && (
-                  <p className="text-red-400 text-center py-8">{error}</p>
+                  <p className="py-8 text-center text-red-400">{error}</p>
                 )}
 
                 {tableData && (
                   <>
                     {tableData.rows.length === 0 && !isLoading && (
-                      <div className="text-center py-10 text-slate-500">
-                        <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <div className="py-10 text-center text-slate-500">
+                        <Search className="mx-auto mb-3 h-12 w-12 opacity-50" />
                         <p className="text-lg">
                           Nenhum dado encontrado para{" "}
                           <span className="font-medium text-slate-400">
@@ -380,15 +372,15 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
                         <Table className="min-w-full">
                           <TableHeader className="bg-slate-700/50">
                             <TableRow className="hover:bg-slate-700/70">
-                              {tableData.headers.map((header) => (
+                              {tableData.headers.map(header => (
                                 <TableHead
+                                  className="whitespace-nowrap p-3 font-medium text-slate-400 text-xs uppercase tracking-wider"
                                   key={header}
-                                  className="p-3 text-xs font-medium uppercase tracking-wider text-slate-400 whitespace-nowrap"
                                 >
                                   {header}
                                 </TableHead>
                               ))}
-                              <TableHead className="p-3 text-xs font-medium uppercase tracking-wider text-slate-400 whitespace-nowrap text-right">
+                              <TableHead className="whitespace-nowrap p-3 text-right font-medium text-slate-400 text-xs uppercase tracking-wider">
                                 Ações
                               </TableHead>
                             </TableRow>
@@ -396,43 +388,43 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
                           <TableBody className="divide-y divide-slate-700">
                             {tableData.rows.map((row, rowIndex) => (
                               <TableRow
+                                className="transition-colors hover:bg-slate-700/30"
                                 key={rowIndex}
-                                className="hover:bg-slate-700/30 transition-colors"
                               >
                                 {row.map((cell, colIndex) => (
                                   <TableCell
+                                    className="whitespace-nowrap p-3 text-slate-300 text-sm"
                                     key={colIndex}
-                                    className="p-3 text-sm text-slate-300 whitespace-nowrap"
                                   >
                                     {editingCell?.rowIndex === rowIndex &&
                                     editingCell?.colIndex === colIndex ? (
                                       <div className="flex items-center gap-1">
                                         <Input
-                                          type="text"
-                                          value={editValue}
-                                          onChange={(e) =>
+                                          autoFocus
+                                          className="h-8 border-slate-500 bg-slate-600 text-sm"
+                                          onChange={e =>
                                             setEditValue(e.target.value)
                                           }
-                                          autoFocus
-                                          className="bg-slate-600 border-slate-500 h-8 text-sm"
-                                          onKeyDown={(e) =>
+                                          onKeyDown={e =>
                                             e.key === "Enter" &&
                                             handleSaveEdit()
                                           }
+                                          type="text"
+                                          value={editValue}
                                         />
                                         <Button
+                                          className="h-8 w-8 text-green-400 hover:bg-green-500/20"
+                                          onClick={handleSaveEdit}
                                           size="icon"
                                           variant="ghost"
-                                          onClick={handleSaveEdit}
-                                          className="h-8 w-8 hover:bg-green-500/20 text-green-400"
                                         >
                                           <Save className="h-4 w-4" />
                                         </Button>
                                         <Button
+                                          className="h-8 w-8 text-red-400 hover:bg-red-500/20"
+                                          onClick={() => setEditingCell(null)}
                                           size="icon"
                                           variant="ghost"
-                                          onClick={() => setEditingCell(null)}
-                                          className="h-8 w-8 hover:bg-red-500/20 text-red-400"
                                         >
                                           <X className="h-4 w-4" />
                                         </Button>
@@ -440,7 +432,6 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
                                     ) : (
                                       <span
                                         className="block max-w-xs truncate"
-                                        title={String(cell)}
                                         onClick={() =>
                                           handleEditCell(
                                             rowIndex,
@@ -448,6 +439,7 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
                                             cell
                                           )
                                         }
+                                        title={String(cell)}
                                       >
                                         {cell === null ? (
                                           <em className="text-slate-500">
@@ -460,11 +452,9 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
                                     )}
                                   </TableCell>
                                 ))}
-                                <TableCell className="p-3 text-sm text-right whitespace-nowrap">
+                                <TableCell className="whitespace-nowrap p-3 text-right text-sm">
                                   <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 hover:bg-blue-500/20 text-blue-400 mr-1"
+                                    className="mr-1 h-8 w-8 text-blue-400 hover:bg-blue-500/20"
                                     onClick={() =>
                                       handleEditCell(
                                         rowIndex,
@@ -472,16 +462,18 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
                                         tableData.rows[rowIndex][0]
                                       )
                                     }
+                                    size="icon"
                                     title="Editar Linha (inicia pela primeira célula)"
+                                    variant="ghost"
                                   >
                                     <Edit3 className="h-4 w-4" />
                                   </Button>
                                   <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 hover:bg-red-500/20 text-red-400"
+                                    className="h-8 w-8 text-red-400 hover:bg-red-500/20"
                                     onClick={() => handleDeleteRow(rowIndex)}
+                                    size="icon"
                                     title="Excluir Linha"
+                                    variant="ghost"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -495,25 +487,25 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
 
                     {/* Pagination - basic, assuming server-side handles actual slicing */}
                     {tableData.rows.length > 0 && (
-                      <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-700">
+                      <div className="mt-4 flex items-center justify-between border-slate-700 border-t pt-4">
                         <Button
-                          onClick={() => handlePageChange(currentPage - 1)}
+                          className="border-slate-600 text-sm hover:bg-slate-700"
                           disabled={currentPage === 1 || isLoading}
+                          onClick={() => handlePageChange(currentPage - 1)}
                           variant="outline"
-                          className="text-sm border-slate-600 hover:bg-slate-700"
                         >
                           Anterior
                         </Button>
-                        <span className="text-sm text-slate-400">
+                        <span className="text-slate-400 text-sm">
                           Página {currentPage}
                         </span>
                         <Button
-                          onClick={() => handlePageChange(currentPage + 1)}
+                          className="border-slate-600 text-sm hover:bg-slate-700"
                           disabled={
                             tableData.rows.length < ITEMS_PER_PAGE || isLoading
                           } // Disable if not a full page, implying end
+                          onClick={() => handlePageChange(currentPage + 1)}
                           variant="outline"
-                          className="text-sm border-slate-600 hover:bg-slate-700"
                         >
                           Próxima
                         </Button>
@@ -523,9 +515,9 @@ export function DatabaseViewer({ wpCliDb, instanceId }: DatabaseViewerProps) {
                 )}
               </>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 py-12">
-                <Database className="h-20 w-20 opacity-30 mb-6" />
-                <h3 className="text-xl font-semibold mb-2 text-slate-400">
+              <div className="flex h-full flex-col items-center justify-center py-12 text-center text-slate-500">
+                <Database className="mb-6 h-20 w-20 opacity-30" />
+                <h3 className="mb-2 font-semibold text-slate-400 text-xl">
                   Selecione uma Tabela
                 </h3>
                 <p className="max-w-sm">

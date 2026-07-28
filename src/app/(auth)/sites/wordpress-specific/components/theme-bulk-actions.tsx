@@ -1,26 +1,23 @@
 "use client";
 
+import {
+  CheckCircle,
+  Download,
+  MoreHorizontal,
+  RefreshCw,
+  Settings,
+} from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Palette,
-  Download,
-  Trash2,
-  CheckCircle,
-  XCircle,
-  RefreshCw,
-  Settings,
-  MoreHorizontal,
-} from "lucide-react";
-import type { WordPressSiteInfo } from "../types";
 import { useToast } from "@/hooks/use-toast";
+import type { WordPressSiteInfo } from "../types";
 
 interface ThemeBulkActionsProps {
   sites: WordPressSiteInfo[];
@@ -38,7 +35,7 @@ export function ThemeBulkActions({ sites }: ThemeBulkActionsProps) {
   const totalActiveThemes = sites.reduce(
     (acc, site) =>
       acc +
-      (site.themes?.filter((theme) => theme.status === "active").length || 0),
+      (site.themes?.filter(theme => theme.status === "active").length || 0),
     0
   );
 
@@ -54,33 +51,33 @@ export function ThemeBulkActions({ sites }: ThemeBulkActionsProps) {
       switch (action) {
         case "update-all":
           toast({
-            title: "Atualizando temas...",
             description: `Iniciando atualização de ${totalThemeUpdates} temas`,
+            title: "Atualizando temas...",
           });
           break;
         case "activate-defaults":
           toast({
-            title: "Ativando temas padrão...",
             description: "Ativando temas padrão em todas as instalações",
+            title: "Ativando temas padrão...",
           });
           break;
         case "backup-themes":
           toast({
-            title: "Fazendo backup...",
             description: "Criando backup de todos os temas customizados",
+            title: "Fazendo backup...",
           });
           break;
         case "scan-updates":
           toast({
-            title: "Verificando atualizações...",
             description: "Escaneando todos os temas para atualizações",
+            title: "Verificando atualizações...",
           });
           break;
       }
     } catch (error) {
       toast({
-        title: "Erro",
         description: "Falha ao executar ação em lote",
+        title: "Erro",
         variant: "destructive",
       });
     } finally {
@@ -90,10 +87,10 @@ export function ThemeBulkActions({ sites }: ThemeBulkActionsProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="text-sm text-muted-foreground">
+      <div className="text-muted-foreground text-sm">
         {totalThemes} temas • {totalActiveThemes} ativos
         {totalThemeUpdates > 0 && (
-          <span className="text-orange-600 ml-2">
+          <span className="ml-2 text-orange-600">
             • {totalThemeUpdates} atualizações
           </span>
         )}
@@ -102,9 +99,9 @@ export function ThemeBulkActions({ sites }: ThemeBulkActionsProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            variant="outline"
-            size="sm"
             disabled={isLoading || totalThemes === 0}
+            size="sm"
+            variant="outline"
           >
             {isLoading ? (
               <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -147,10 +144,10 @@ export function ThemeBulkActions({ sites }: ThemeBulkActionsProps) {
       </DropdownMenu>
 
       <Button
-        variant="outline"
-        size="sm"
-        onClick={() => handleBulkAction("scan-updates")}
         disabled={isLoading || totalThemes === 0}
+        onClick={() => handleBulkAction("scan-updates")}
+        size="sm"
+        variant="outline"
       >
         <RefreshCw
           className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`}

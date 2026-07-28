@@ -1,17 +1,24 @@
 "use client";
 
+import {
+  ChevronRight,
+  Clock,
+  Mail,
+  MessageSquare,
+  Phone,
+  Search,
+} from "lucide-react";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -20,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -29,73 +35,67 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Search,
-  MessageSquare,
-  ChevronRight,
-  Phone,
-  Mail,
-  Clock,
-} from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 const supportTopics = [
-  { id: "billing", label: "Fatura e Pagamentos", icon: "💳" },
-  { id: "wordpress", label: "Problemas com WordPress", icon: "🔧" },
-  { id: "hosting", label: "Plano de Hospedagem", icon: "🌐" },
-  { id: "dns", label: "Configuração DNS", icon: "🔍" },
-  { id: "email", label: "Configuração Email", icon: "📧" },
-  { id: "newsite", label: "Novo Site", icon: "🚀" },
-  { id: "downtime", label: "Site fora do ar", icon: "⚠️" },
-  { id: "cancel", label: "Cancelamento", icon: "❌" },
+  { icon: "💳", id: "billing", label: "Fatura e Pagamentos" },
+  { icon: "🔧", id: "wordpress", label: "Problemas com WordPress" },
+  { icon: "🌐", id: "hosting", label: "Plano de Hospedagem" },
+  { icon: "🔍", id: "dns", label: "Configuração DNS" },
+  { icon: "📧", id: "email", label: "Configuração Email" },
+  { icon: "🚀", id: "newsite", label: "Novo Site" },
+  { icon: "⚠️", id: "downtime", label: "Site fora do ar" },
+  { icon: "❌", id: "cancel", label: "Cancelamento" },
 ];
 
 const faqs = [
   {
-    question: "Como alterar a forma de pagamento?",
     answer:
       "Você pode alterar sua forma de pagamento acessando a seção Pagamentos no seu painel e adicionando um novo método de pagamento.",
+    question: "Como alterar a forma de pagamento?",
   },
   {
-    question: "Como instalar WordPress?",
     answer:
       "Acesse a seção Sites > Novo Site e selecione a opção WordPress. A instalação é automática e leva apenas alguns minutos.",
+    question: "Como instalar WordPress?",
   },
   {
-    question: "Como configurar email personalizado?",
     answer:
       "Vá para a seção E-mails e clique em 'Nova conta de e-mail'. Configure o endereço desejado e siga as instruções.",
+    question: "Como configurar email personalizado?",
   },
   {
-    question: "Como fazer backup do meu site?",
     answer:
       "No painel de controle, acesse a seção Backup e configure backups automáticos ou faça um backup manual.",
+    question: "Como fazer backup do meu site?",
   },
 ];
 
 const tickets = [
   {
-    id: "#12345",
-    subject: "Site não está carregando",
-    status: "open",
-    priority: "high",
     created: "2024-03-15",
+    id: "#12345",
     lastUpdate: "2024-03-15",
+    priority: "high",
+    status: "open",
+    subject: "Site não está carregando",
   },
   {
-    id: "#12344",
-    subject: "Dúvida sobre faturamento",
-    status: "resolved",
-    priority: "normal",
     created: "2024-03-14",
+    id: "#12344",
     lastUpdate: "2024-03-14",
+    priority: "normal",
+    status: "resolved",
+    subject: "Dúvida sobre faturamento",
   },
   {
-    id: "#12343",
-    subject: "Configuração de DNS",
-    status: "in_progress",
-    priority: "normal",
     created: "2024-03-13",
+    id: "#12343",
     lastUpdate: "2024-03-14",
+    priority: "normal",
+    status: "in_progress",
+    subject: "Configuração de DNS",
   },
 ];
 
@@ -130,13 +130,13 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-6 p-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
             Suporte
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="mt-1 text-muted-foreground">
             Obtenha ajuda e tire suas dúvidas
           </p>
         </div>
@@ -147,58 +147,62 @@ export default function SupportPage() {
       </div>
 
       {/* Support Contact Info */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Atendimento</CardTitle>
+            <CardTitle className="font-medium text-sm">Atendimento</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24/7</div>
-            <p className="text-xs text-muted-foreground">Suporte disponível</p>
+            <div className="font-bold text-2xl">24/7</div>
+            <p className="text-muted-foreground text-xs">Suporte disponível</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">E-mail</CardTitle>
+            <CardTitle className="font-medium text-sm">E-mail</CardTitle>
             <Mail className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">suporte@atlas.com</div>
-            <p className="text-xs text-muted-foreground">Resposta em até 2h</p>
+            <div className="font-bold text-lg">suporte@atlas.com</div>
+            <p className="text-muted-foreground text-xs">Resposta em até 2h</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Telefone</CardTitle>
+            <CardTitle className="font-medium text-sm">Telefone</CardTitle>
             <Phone className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">+55 68 9207-8221</div>
+            <div className="font-bold text-lg">+55 68 9207-8221</div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="help" className="space-y-6">
+      <Tabs className="space-y-6" defaultValue="help">
         <TabsList>
           <TabsTrigger value="help">Central de Ajuda</TabsTrigger>
-          <TabsTrigger value="tickets" disabled>Meus Tickets</TabsTrigger>
-          <TabsTrigger value="contact" disabled>Contato</TabsTrigger>
+          <TabsTrigger disabled value="tickets">
+            Meus Tickets
+          </TabsTrigger>
+          <TabsTrigger disabled value="contact">
+            Contato
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="help" className="space-y-6">
+        <TabsContent className="space-y-6" value="help">
           {/* Search */}
           <Card>
             <CardContent className="pt-6">
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Pesquisar na central de ajuda..."
                   className="pl-10"
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Pesquisar na central de ajuda..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </CardContent>
@@ -213,14 +217,14 @@ export default function SupportPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {supportTopics.map((topic) => (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {supportTopics.map(topic => (
                   <Card
+                    className="cursor-pointer transition-shadow hover:shadow-md"
                     key={topic.id}
-                    className="hover:shadow-md transition-shadow cursor-pointer"
                   >
                     <CardContent className="p-4 text-center">
-                      <div className="text-2xl mb-2">{topic.icon}</div>
+                      <div className="mb-2 text-2xl">{topic.icon}</div>
                       <h3 className="font-medium text-sm">{topic.label}</h3>
                     </CardContent>
                   </Card>
@@ -241,14 +245,14 @@ export default function SupportPage() {
               <div className="space-y-4">
                 {faqs.map((faq, index) => (
                   <div
+                    className="rounded-lg border p-4"
                     key={JSON.stringify(faq).concat(index.toString())}
-                    className="border rounded-lg p-4"
                   >
-                    <div className="flex items-center justify-between cursor-pointer">
+                    <div className="flex cursor-pointer items-center justify-between">
                       <h4 className="font-medium">{faq.question}</h4>
                       <ChevronRight className="h-4 w-4" />
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="mt-2 text-muted-foreground text-sm">
                       {faq.answer}
                     </p>
                   </div>
@@ -258,7 +262,7 @@ export default function SupportPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="tickets" className="space-y-6">
+        <TabsContent className="space-y-6" value="tickets">
           <Card>
             <CardHeader>
               <CardTitle>Meus Tickets de Suporte</CardTitle>
@@ -279,10 +283,10 @@ export default function SupportPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tickets.map((ticket) => (
+                  {tickets.map(ticket => (
                     <TableRow
-                      key={ticket.id}
                       className="cursor-pointer hover:bg-muted/50"
+                      key={ticket.id}
                     >
                       <TableCell className="font-medium">{ticket.id}</TableCell>
                       <TableCell>{ticket.subject}</TableCell>
@@ -298,7 +302,7 @@ export default function SupportPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="contact" className="space-y-6">
+        <TabsContent className="space-y-6" value="contact">
           <Card>
             <CardHeader>
               <CardTitle>Abrir Novo Ticket</CardTitle>
@@ -352,13 +356,13 @@ export default function SupportPage() {
                 <div className="space-y-2">
                   <Label htmlFor="description">Descrição</Label>
                   <Textarea
+                    className="min-h-[120px]"
                     id="description"
                     placeholder="Descreva detalhadamente o problema ou dúvida..."
-                    className="min-h-[120px]"
                   />
                 </div>
 
-                <Button type="submit" className="w-full">
+                <Button className="w-full" type="submit">
                   <MessageSquare className="mr-2 h-4 w-4" />
                   Enviar Ticket
                 </Button>
@@ -367,7 +371,7 @@ export default function SupportPage() {
           </Card>
 
           {/* Alternative Contact Methods */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -377,11 +381,11 @@ export default function SupportPage() {
                 <CardDescription>Fale conosco em tempo real</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="h-2 w-2 bg-green-500 rounded-full" />
-                  <span className="text-sm text-green-600">Online agora</span>
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-green-500" />
+                  <span className="text-green-600 text-sm">Online agora</span>
                 </div>
-                <Button variant="outline" className="w-full">
+                <Button className="w-full" variant="outline">
                   Iniciar Chat
                 </Button>
               </CardContent>
@@ -396,15 +400,15 @@ export default function SupportPage() {
                 <CardDescription>Ligue para nossa central</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2 mb-4">
+                <div className="mb-4 space-y-2">
                   <p className="font-medium">+55 68 9207-8221</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Segunda a Sexta: 8h às 18h
                     <br />
                     Sábado: 9h às 15h
                   </p>
                 </div>
-                <Button variant="outline" className="w-full">
+                <Button className="w-full" variant="outline">
                   <Phone className="mr-2 h-4 w-4" />
                   Ligar Agora
                 </Button>

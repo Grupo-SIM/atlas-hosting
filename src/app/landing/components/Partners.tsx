@@ -15,33 +15,33 @@ const partners = [
 
 export function Partners() {
   return (
-    <section className="py-24 px-4 bg-slate-50">
+    <section className="bg-slate-50 px-4 py-24">
       <div className="container mx-auto max-w-[1000px] text-center">
-        <motion.h3 
+        <motion.h3
+          className="mb-10 font-medium text-slate-900 text-sm tracking-wide md:text-base"
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-slate-900 text-sm md:text-base mb-10 font-medium tracking-wide"
+          viewport={{ once: true }}
+          whileInView={{ opacity: 1, y: 0 }}
         >
           Empresas que confiam no Atlas
         </motion.h3>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 justify-center items-center">
+
+        <div className="grid grid-cols-2 items-center justify-center gap-4 md:grid-cols-4 md:gap-6">
           {partners.map((logoUrl, i) => (
             <motion.div
-              key={i}
+              className="flex h-[90px] items-center justify-center rounded-md border border-slate-200 bg-white p-6 shadow-sm transition-colors hover:bg-slate-50 xl:h-[100px]"
               initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              key={i}
+              transition={{ delay: i * 0.05, duration: 0.4 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.05 }}
-              className="bg-white border border-slate-200 rounded-md flex items-center justify-center h-[90px] xl:h-[100px] p-6 shadow-sm transition-colors hover:bg-slate-50"
+              whileInView={{ opacity: 1, scale: 1 }}
             >
-              <img 
-                src={logoUrl} 
-                alt={`Partner ${i + 1}`} 
-                className="max-h-full max-w-full object-contain opacity-70 hover:opacity-100 transition-opacity filter grayscale hover:grayscale-0"
+              <img
+                alt={`Partner ${i + 1}`}
+                className="max-h-full max-w-full object-contain opacity-70 grayscale filter transition-opacity hover:opacity-100 hover:grayscale-0"
                 loading="lazy"
+                src={logoUrl}
               />
             </motion.div>
           ))}
@@ -50,4 +50,3 @@ export function Partners() {
     </section>
   );
 }
-

@@ -13,7 +13,7 @@ const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || "";
 const EVOLUTION_INSTANCE = process.env.EVOLUTION_INSTANCE || "atlas";
 const VPS_ADMIN_PHONES = (process.env.VPS_ADMIN_WHATSAPP || "5583987690902")
   .split(",")
-  .map((p) => p.trim())
+  .map(p => p.trim())
   .filter(Boolean);
 
 export async function sendWhatsAppMessage(
@@ -21,7 +21,9 @@ export async function sendWhatsAppMessage(
   message: string
 ): Promise<boolean> {
   if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
-    console.log(`[WhatsApp] ⚠️ Evolution API não configurada. Mensagem NÃO enviada.`);
+    console.log(
+      "[WhatsApp] ⚠️ Evolution API não configurada. Mensagem NÃO enviada."
+    );
     console.log(`[WhatsApp] Destinatário: ${phone}`);
     console.log(`[WhatsApp] Mensagem:\n${message}`);
     return false;
@@ -31,33 +33,39 @@ export async function sendWhatsAppMessage(
 
   try {
     const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": EVOLUTION_API_KEY,
-      },
       body: JSON.stringify({
         number: phone,
         text: message,
       }),
+      headers: {
+        apikey: EVOLUTION_API_KEY,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
     });
 
     if (res.ok) {
       const data = await res.json().catch(() => null);
-      console.log(`[WhatsApp] ✓ Mensagem enviada para ${phone}`, data?.key?.id || "");
+      console.log(
+        `[WhatsApp] ✓ Mensagem enviada para ${phone}`,
+        data?.key?.id || ""
+      );
       return true;
-    } else {
-      const errBody = await res.text().catch(() => "");
-      console.error(`[WhatsApp] ✗ Evolution API retornou ${res.status}: ${errBody}`);
-      return false;
     }
+    const errBody = await res.text().catch(() => "");
+    console.error(
+      `[WhatsApp] ✗ Evolution API retornou ${res.status}: ${errBody}`
+    );
+    return false;
   } catch (err) {
-    console.error(`[WhatsApp] ✗ Erro ao chamar Evolution API:`, err);
+    console.error("[WhatsApp] ✗ Erro ao chamar Evolution API:", err);
     return false;
   }
 }
 
 export async function notifyAdminWhatsApp(message: string): Promise<boolean> {
-  const results = await Promise.all(VPS_ADMIN_PHONES.map((phone) => sendWhatsAppMessage(phone, message)));
+  const results = await Promise.all(
+    VPS_ADMIN_PHONES.map(phone => sendWhatsAppMessage(phone, message))
+  );
   return results.some(Boolean);
 }

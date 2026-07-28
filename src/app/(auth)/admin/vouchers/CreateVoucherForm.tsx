@@ -1,20 +1,8 @@
 "use client";
 
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -23,8 +11,20 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Plus, Check, ChevronsUpDown } from "lucide-react";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface User {
@@ -44,28 +44,31 @@ export default function CreateVoucherForm({
   const [userId, setUserId] = useState("");
   const [open, setOpen] = useState(false);
 
-  const selectedUser = users.find((u) => u.id === userId);
+  const selectedUser = users.find(u => u.id === userId);
 
   return (
-    <form action={createAction} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <form
+      action={createAction}
+      className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+    >
       <div className="space-y-2">
         <Label htmlFor="code">Código do Voucher *</Label>
         <Input
-          name="code"
           id="code"
-          type="text"
-          required
-          placeholder="EX: ATLAS10"
-          onChange={(e) => {
+          name="code"
+          onChange={e => {
             e.target.value = e.target.value.replace(/\s/g, "").toUpperCase();
           }}
+          placeholder="EX: ATLAS10"
+          required
+          type="text"
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="discountType">Tipo de Desconto *</Label>
-        <input type="hidden" name="discountType" value={discountType} />
-        <Select value={discountType} onValueChange={setDiscountType}>
+        <input name="discountType" type="hidden" value={discountType} />
+        <Select onValueChange={setDiscountType} value={discountType}>
           <SelectTrigger>
             <SelectValue placeholder="Selecione o tipo" />
           </SelectTrigger>
@@ -79,65 +82,72 @@ export default function CreateVoucherForm({
       <div className="space-y-2">
         <Label htmlFor="discountValue">Valor do Desconto *</Label>
         <Input
-          name="discountValue"
           id="discountValue"
-          type="number"
-          step="0.01"
           min="0.01"
-          required
+          name="discountValue"
           placeholder={discountType === "fixed" ? "Ex: 20.00" : "Ex: 10"}
+          required
+          step="0.01"
+          type="number"
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="userId">Vincular a Usuário (opcional)</Label>
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover onOpenChange={setOpen} open={open}>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
-              role="combobox"
               aria-expanded={open}
-              className="w-full h-10 justify-between font-normal"
+              className="h-10 w-full justify-between font-normal"
+              role="combobox"
+              variant="outline"
             >
               {userId && userId !== "none" ? (
                 <span className="truncate">
                   {selectedUser?.name} ({selectedUser?.email})
                 </span>
               ) : (
-                <span className="text-muted-foreground">Nenhum (disponível para todos)</span>
+                <span className="text-muted-foreground">
+                  Nenhum (disponível para todos)
+                </span>
               )}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <PopoverContent
+            align="start"
+            className="w-[var(--radix-popover-trigger-width)] p-0"
+          >
             <Command>
               <CommandInput placeholder="Buscar usuário..." />
               <CommandList>
                 <CommandEmpty>Nenhum usuário encontrado.</CommandEmpty>
                 <CommandGroup>
                   <CommandItem
-                    value="none"
                     onSelect={() => {
                       setUserId("none");
                       setOpen(false);
                     }}
+                    value="none"
                   >
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        userId === "none" || !userId ? "opacity-100" : "opacity-0"
+                        userId === "none" || !userId
+                          ? "opacity-100"
+                          : "opacity-0"
                       )}
                     />
                     Disponível para todos
                   </CommandItem>
-                  {users.map((u) => (
+                  {users.map(u => (
                     <CommandItem
                       key={u.id}
-                      value={`${u.name} ${u.email} ${u.id}`}
                       onSelect={() => {
                         setUserId(u.id);
                         setOpen(false);
                       }}
+                      value={`${u.name} ${u.email} ${u.id}`}
                     >
                       <Check
                         className={cn(
@@ -147,7 +157,9 @@ export default function CreateVoucherForm({
                       />
                       <div className="flex flex-col">
                         <span>{u.name}</span>
-                        <span className="text-xs text-muted-foreground">{u.email}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {u.email}
+                        </span>
                       </div>
                     </CommandItem>
                   ))}
@@ -156,32 +168,28 @@ export default function CreateVoucherForm({
             </Command>
           </PopoverContent>
         </Popover>
-        <input type="hidden" name="userId" value={userId} />
+        <input name="userId" type="hidden" value={userId} />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="maxUses">Máx. de Usos</Label>
         <Input
-          name="maxUses"
-          id="maxUses"
-          type="number"
-          min="1"
           defaultValue={1}
+          id="maxUses"
+          min="1"
+          name="maxUses"
+          type="number"
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="expiresAt">Data de Expiração (opcional)</Label>
-        <Input
-          name="expiresAt"
-          id="expiresAt"
-          type="date"
-        />
+        <Input id="expiresAt" name="expiresAt" type="date" />
       </div>
 
       <div className="flex items-end md:col-span-2 lg:col-span-3">
-        <Button type="submit" className="w-full md:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
+        <Button className="w-full md:w-auto" type="submit">
+          <Plus className="mr-2 h-4 w-4" />
           Criar Voucher
         </Button>
       </div>

@@ -1,8 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import {
+  createPlan as createPlanAction,
+  updatePlan as updatePlanAction,
+} from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,17 +22,13 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { Plan } from "@/lib/db/schema";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import {
-  createPlan as createPlanAction,
-  updatePlan as updatePlanAction,
-} from "@/app/actions";
 
 const planFormSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
+  backup: z.boolean().default(false),
+  cdn: z.boolean().default(false),
   description: z.string().optional().default(""),
-  price: z.coerce.number().min(0, "Preço deve ser não-negativo"),
+  email: z.boolean().default(false),
+  featured: z.boolean().default(false),
   maxSites: z.coerce
     .number()
     .int()
@@ -34,12 +36,10 @@ const planFormSchema = z.object({
   maxStorage: z.coerce
     .number()
     .min(0, "Armazenamento (GB) deve ser não-negativo"),
+  name: z.string().min(1, "Nome é obrigatório"),
+  price: z.coerce.number().min(0, "Preço deve ser não-negativo"),
   ssl: z.boolean().default(false),
-  backup: z.boolean().default(false),
-  email: z.boolean().default(false),
-  cdn: z.boolean().default(false),
   supportPriority: z.boolean().default(false),
-  featured: z.boolean().default(false),
 });
 
 type PlanFormValues = z.infer<typeof planFormSchema>;
@@ -56,20 +56,20 @@ export function PlanForm({ plan, onSuccess, onCancel }: PlanFormProps) {
   const isEditing = !!plan;
 
   const form = useForm<PlanFormValues>({
-    resolver: zodResolver(planFormSchema),
     defaultValues: {
-      name: plan?.name || "",
+      backup: plan?.backup ?? undefined,
+      cdn: plan?.cdn ?? undefined,
       description: plan?.description || "",
-      price: plan?.price || 0,
+      email: plan?.email ?? undefined,
+      featured: plan?.featured ?? undefined,
       maxSites: plan?.maxSites || 0,
       maxStorage: plan?.maxStorage || 0,
+      name: plan?.name || "",
+      price: plan?.price || 0,
       ssl: plan?.ssl ?? undefined,
-      backup: plan?.backup ?? undefined,
-      email: plan?.email ?? undefined,
-      cdn: plan?.cdn ?? undefined,
       supportPriority: plan?.supportPriority ?? undefined,
-      featured: plan?.featured ?? undefined,
     },
+    resolver: zodResolver(planFormSchema),
   });
 
   async function onSubmit(data: PlanFormValues) {
@@ -96,8 +96,8 @@ export function PlanForm({ plan, onSuccess, onCancel }: PlanFormProps) {
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 md:space-y-6"
+        onSubmit={form.handleSubmit(onSubmit)}
       >
         <FormField
           control={form.control}
@@ -129,7 +129,7 @@ export function PlanForm({ plan, onSuccess, onCancel }: PlanFormProps) {
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <FormField
             control={form.control}
             name="price"
@@ -138,9 +138,9 @@ export function PlanForm({ plan, onSuccess, onCancel }: PlanFormProps) {
                 <FormLabel>Preço (R$)</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    step="0.01"
                     placeholder="29.90"
+                    step="0.01"
+                    type="number"
                     {...field}
                   />
                 </FormControl>
@@ -155,7 +155,7 @@ export function PlanForm({ plan, onSuccess, onCancel }: PlanFormProps) {
               <FormItem>
                 <FormLabel>Máx. Sites</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="1" {...field} />
+                  <Input placeholder="1" type="number" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -168,7 +168,7 @@ export function PlanForm({ plan, onSuccess, onCancel }: PlanFormProps) {
               <FormItem>
                 <FormLabel>Armazenamento (GB)</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.1" placeholder="10" {...field} />
+                  <Input placeholder="10" step="0.1" type="number" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -178,22 +178,22 @@ export function PlanForm({ plan, onSuccess, onCancel }: PlanFormProps) {
 
         <div className="space-y-3">
           <FormLabel>Recursos Inclusos</FormLabel>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
             {[
-              { name: "ssl", label: "SSL Gratuito" },
-              { name: "backup", label: "Backup Automático" },
-              { name: "email", label: "Contas de Email" },
-              { name: "cdn", label: "CDN Inclusa" },
-              { name: "supportPriority", label: "Suporte Prioritário" },
-              { name: "featured", label: "Plano em Destaque" },
-            ].map((item) => (
+              { label: "SSL Gratuito", name: "ssl" },
+              { label: "Backup Automático", name: "backup" },
+              { label: "Contas de Email", name: "email" },
+              { label: "CDN Inclusa", name: "cdn" },
+              { label: "Suporte Prioritário", name: "supportPriority" },
+              { label: "Plano em Destaque", name: "featured" },
+            ].map(item => (
               <FormField
-                key={item.name}
                 control={form.control}
+                key={item.name}
                 name={item.name as keyof PlanFormValues}
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <FormLabel className="text-sm font-normal">
+                    <FormLabel className="font-normal text-sm">
                       {item.label}
                     </FormLabel>
                     <FormControl>
@@ -211,14 +211,14 @@ export function PlanForm({ plan, onSuccess, onCancel }: PlanFormProps) {
 
         <div className="flex justify-end space-x-3 pt-4">
           <Button
+            disabled={isPending}
+            onClick={onCancel}
             type="button"
             variant="outline"
-            onClick={onCancel}
-            disabled={isPending}
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={isPending}>
+          <Button disabled={isPending} type="submit">
             {isPending
               ? isEditing
                 ? "Salvando..."

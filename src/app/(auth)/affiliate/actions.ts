@@ -1,15 +1,12 @@
 "use server";
 
-import { getUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import {
-  pgAffiliateCommission,
-  pgWithdrawalRequests,
-} from "@/lib/db/schema";
 import { and, eq, sum } from "drizzle-orm";
-import simpayApi from "@/lib/server/apis/simpay";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
+import { getUser } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { pgAffiliateCommission, pgWithdrawalRequests } from "@/lib/db/schema";
+import simpayApi from "@/lib/server/apis/simpay";
 
 function getMinWithdrawal() {
   return Number(process.env.AFFILIATE_MIN_WITHDRAWAL) || 100;
@@ -95,9 +92,9 @@ export async function requestWithdrawal(
   // Submit to simpay (non-blocking — withdrawal record already created)
   try {
     const result = await simpayApi.requestWithdrawal({
+      amount,
       cpf,
       email: user.email,
-      amount,
       pixKey: trimmedPix,
     });
 
@@ -115,13 +112,13 @@ export async function requestWithdrawal(
   const withdrawalId = uuidv4();
 
   await db.insert(pgWithdrawalRequests).values({
-    id: withdrawalId,
-    userId: user.id,
-    status: "pending",
     amount,
-    pixKey: trimmedPix,
     fee,
+    id: withdrawalId,
+    pixKey: trimmedPix,
     simpayWithdrawalId,
+    status: "pending",
+    userId: user.id,
   });
 
   revalidatePath("/affiliate");
@@ -158,8 +155,8 @@ export async function cancelLocalWithdrawal(
   await db
     .update(pgWithdrawalRequests)
     .set({
-      status: "rejected",
       rejectionReason: "Cancelado pelo afiliado antes de enviar para a Simpay.",
+      status: "rejected",
       updatedAt: new Date(),
     })
     .where(eq(pgWithdrawalRequests.id, withdrawalId));
@@ -180,11 +177,7 @@ export async function syncWithdrawalStatus(
     ),
   });
 
-  if (
-    !withdrawal ||
-    withdrawal.status !== "pending" ||
-    !withdrawal.simpayWithdrawalId
-  ) {
+  if (withdrawal?.status !== "pending" || !withdrawal.simpayWithdrawalId) {
     return;
   }
 
@@ -193,23 +186,26 @@ export async function syncWithdrawalStatus(
       withdrawal.simpayWithdrawalId
     );
 
-    console.log(`[WITHDRAWAL-SYNC] Status remoto para ${withdrawalId}:`, remote);
+    console.log(
+      `[WITHDRAWAL-SYNC] Status remoto para ${withdrawalId}:`,
+      remote
+    );
 
     const normalizedStatus = remote.status?.toLowerCase();
 
     if (["approved", "completed", "aprovada"].includes(normalizedStatus)) {
-      await db.transaction(async (tx) => {
+      await db.transaction(async tx => {
         await tx
           .update(pgWithdrawalRequests)
           .set({ status: "approved", updatedAt: new Date() })
           .where(eq(pgWithdrawalRequests.id, withdrawalId));
 
         const commissions = await tx.query.pgAffiliateCommission.findMany({
+          orderBy: (t, { asc }) => [asc(t.createdAt)],
           where: and(
             eq(pgAffiliateCommission.affiliateUserId, user.id),
             eq(pgAffiliateCommission.status, "available")
           ),
-          orderBy: (t, { asc }) => [asc(t.createdAt)],
         });
 
         let remaining = withdrawal.amount;
@@ -228,9 +224,8 @@ export async function syncWithdrawalStatus(
       await db
         .update(pgWithdrawalRequests)
         .set({
+          rejectionReason: remote.rejectionReason ?? "Rejeitado pela operadora",
           status: "rejected",
-          rejectionReason:
-            remote.rejectionReason ?? "Rejeitado pela operadora",
           updatedAt: new Date(),
         })
         .where(eq(pgWithdrawalRequests.id, withdrawalId));

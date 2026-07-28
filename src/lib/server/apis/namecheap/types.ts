@@ -324,7 +324,7 @@ export interface RawProductTypeContent {
 
 export interface RawUsersGetPricingCommandResponseContent {
   UserGetPricingResult?: Array<{
-    ProductType?: Array<RawProductTypeContent>;
+    ProductType?: RawProductTypeContent[];
   }>;
 }
 

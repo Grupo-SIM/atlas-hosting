@@ -45,7 +45,7 @@ type WpCliDocumentation = Record<string, WpCliCommandDef>;
 
 /** Converts kebab-case or snake_case to camelCase */
 const toCamelCase = (str: string): string => {
-  return str.replace(/([-_][a-z])/gi, ($1) => {
+  return str.replace(/([-_][a-z])/gi, $1 => {
     return $1.toUpperCase().replace("-", "").replace("_", "");
   });
 };
@@ -105,7 +105,7 @@ const generateOptionsInterface = (
     let propType = "string";
     if (opt.choices) {
       propType = opt.choices
-        .map((c) => `'${c.replace(/^['"]|['"]$/g, "")}'`)
+        .map(c => `'${c.replace(/^['"]|['"]$/g, "")}'`)
         .join(" | ");
     } else if (!opt.type) {
       propType = "boolean";
@@ -155,30 +155,35 @@ const COMMAND_CONFIG: Record<
     }
   >
 > = {
-  theme: {
-    install: { posArgs: [{ name: "themes", type: "string | string[]" }] },
-    activate: { posArgs: [{ name: "themeName", type: "string" }] },
-    delete: {
-      methodName: "deleteThemes",
-      posArgs: [{ name: "themes", type: "string | string[]" }],
+  core: {
+    install: { posArgs: [{ name: "url", type: "string" }] },
+    update: {
+      posArgs: [{ isOptional: true, name: "zipPath", type: "string" }],
     },
   },
+  db: {
+    export: {
+      posArgs: [{ isOptional: true, name: "outputFile", type: "string" }],
+    },
+    import: { posArgs: [{ name: "file", type: "string" }] },
+    query: { posArgs: [{ name: "sql", type: "string" }] },
+  },
   plugin: {
-    install: { posArgs: [{ name: "plugins", type: "string | string[]" }] },
     activate: { posArgs: [{ name: "plugins", type: "string | string[]" }] },
     deactivate: { posArgs: [{ name: "plugins", type: "string | string[]" }] },
     delete: {
       methodName: "deletePlugins",
       posArgs: [{ name: "plugins", type: "string | string[]" }],
     },
+    install: { posArgs: [{ name: "plugins", type: "string | string[]" }] },
   },
   post: {
-    update: { posArgs: [{ name: "postIds", type: "number | number[]" }] },
+    create: { posArgs: [] },
     delete: {
       methodName: "deletePosts",
       posArgs: [{ name: "postIds", type: "number | number[]" }],
     },
-    create: { posArgs: [] },
+    update: { posArgs: [{ name: "postIds", type: "number | number[]" }] },
   },
   "search-replace": {
     run: {
@@ -186,22 +191,17 @@ const COMMAND_CONFIG: Record<
       posArgs: [
         { name: "oldStr", type: "string" },
         { name: "newStr", type: "string" },
-        { name: "tables", type: "string[]", isOptional: true },
+        { isOptional: true, name: "tables", type: "string[]" },
       ],
     },
   },
-  db: {
-    query: { posArgs: [{ name: "sql", type: "string" }] },
-    export: {
-      posArgs: [{ name: "outputFile", type: "string", isOptional: true }],
+  theme: {
+    activate: { posArgs: [{ name: "themeName", type: "string" }] },
+    delete: {
+      methodName: "deleteThemes",
+      posArgs: [{ name: "themes", type: "string | string[]" }],
     },
-    import: { posArgs: [{ name: "file", type: "string" }] },
-  },
-  core: {
-    install: { posArgs: [{ name: "url", type: "string" }] },
-    update: {
-      posArgs: [{ name: "zipPath", type: "string", isOptional: true }],
-    },
+    install: { posArgs: [{ name: "themes", type: "string | string[]" }] },
   },
   user: {
     create: {
@@ -210,11 +210,11 @@ const COMMAND_CONFIG: Record<
         { name: "userEmail", type: "string" },
       ],
     },
-    update: { posArgs: [{ name: "userIds", type: "number | number[]" }] },
     delete: {
       methodName: "deleteUsers",
       posArgs: [{ name: "userIds", type: "number | number[]" }],
     },
+    update: { posArgs: [{ name: "userIds", type: "number | number[]" }] },
   },
 };
 
@@ -322,18 +322,18 @@ abstract class WpCliCommand {
       }
 
       const areAllOptionsOptional =
-        commandDef.options?.every((o) => !o.required) ?? true;
+        commandDef.options?.every(o => !o.required) ?? true;
       const posArgs =
         config.posArgs
-          ?.map((p) => `${p.name}${p.isOptional ? "?" : ""}: ${p.type}`)
+          ?.map(p => `${p.name}${p.isOptional ? "?" : ""}: ${p.type}`)
           .join(", ") || "";
       const methodArgs = `${posArgs}${posArgs ? ", " : ""}options${areAllOptionsOptional ? "?" : ""}: ${optionsInterfaceName}`;
-      const posArgNames = config.posArgs?.map((p) => p.name).join(", ") || "";
+      const posArgNames = config.posArgs?.map(p => p.name).join(", ") || "";
 
       const { examples, ...commandDef_ } = commandDef;
 
       commandClassMethods.push(`
-  ${generateJsDoc({ ...commandDef_, name: commandKey, examples: examples ?? [] })}
+  ${generateJsDoc({ ...commandDef_, examples: examples ?? [], name: commandKey })}
   async ${methodName}(${methodArgs}): Promise<string> {
     const args = [${posArgNames}];
     const command = this.buildCommand('${commandKey}', args, options);
@@ -375,13 +375,13 @@ abstract class WpCliCommand {
 
       const posArgs =
         config.posArgs?.map(
-          (p) => `${p.name}${p.isOptional ? "?" : ""}: ${p.type}`
+          p => `${p.name}${p.isOptional ? "?" : ""}: ${p.type}`
         ) || [];
-      const posArgNames = config.posArgs?.map((p) => p.name) || [];
+      const posArgNames = config.posArgs?.map(p => p.name) || [];
 
       const hasOptions = subDef.options?.length > 0;
       const areAllOptionsOptional = hasOptions
-        ? subDef.options?.every((o) => !o.required)
+        ? subDef.options?.every(o => !o.required)
         : true;
 
       const optionsArg = hasOptions
@@ -395,10 +395,10 @@ abstract class WpCliCommand {
       let methodBody = "";
 
       const hasJsonOverload = subDef.options?.some(
-        (o) => o.name === "--format" && o.choices?.includes("json")
+        o => o.name === "--format" && o.choices?.includes("json")
       );
       const hasPorcelainOverload = subDef.options?.some(
-        (o) => o.name === "--porcelain"
+        o => o.name === "--porcelain"
       );
 
       // [FIX] Correctly format arguments for buildCommand call

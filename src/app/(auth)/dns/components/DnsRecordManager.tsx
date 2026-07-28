@@ -1,18 +1,44 @@
 // src/app/(authenticated)/(dashboard)/sites/[domain]/dns/components/DnsRecordsManager.tsx
 "use client";
 
+import { Copy, HelpCircle, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
-  useState,
+  startTransition,
+  useActionState,
+  useCallback,
   useEffect,
   useMemo,
-  useCallback,
-  useActionState,
-  startTransition,
+  useState,
 } from "react";
-import { useRouter } from "next/navigation";
-
+import { CgSpinner } from "react-icons/cg";
+import { toast } from "sonner"; // Assuming you use 'sonner' for toasts
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -22,51 +48,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "sonner"; // Assuming you use 'sonner' for toasts
-
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  Search,
-  AlertCircle,
-  HelpCircle,
-  RefreshCw,
-  Copy,
-  ArrowUpDown,
-} from "lucide-react";
-import { CgSpinner } from "react-icons/cg";
 
 import type {
   DnsHostRecordItem,
@@ -74,9 +60,9 @@ import type {
 } from "@/lib/server/apis/namecheap/types";
 import {
   addDnsRecordAction,
-  updateDnsRecordAction,
-  deleteDnsRecordAction,
   type DnsActionResult,
+  deleteDnsRecordAction,
+  updateDnsRecordAction,
 } from "../actions";
 
 const recordTypes: {
@@ -85,56 +71,56 @@ const recordTypes: {
   description: string;
   needsPriority?: boolean;
 }[] = [
-  { value: "A", label: "A", description: "Aponta para um endereço IPv4" },
-  { value: "AAAA", label: "AAAA", description: "Aponta para um endereço IPv6" },
+  { description: "Aponta para um endereço IPv4", label: "A", value: "A" },
+  { description: "Aponta para um endereço IPv6", label: "AAAA", value: "AAAA" },
   {
-    value: "CNAME",
-    label: "CNAME",
     description: "Aponta para outro domínio",
+    label: "CNAME",
+    value: "CNAME",
   },
   {
-    value: "MX",
-    label: "MX",
     description: "Define servidores de e-mail para o domínio",
+    label: "MX",
     needsPriority: true,
+    value: "MX",
   },
   {
-    value: "TXT",
-    label: "TXT",
     description: "Armazena informações de texto, muitas vezes para verificação",
+    label: "TXT",
+    value: "TXT",
   },
   {
-    value: "URL",
-    label: "URL Redirect",
     description: "Redireciona para outro endereço da web (não mascarado)",
+    label: "URL Redirect",
+    value: "URL",
   },
   {
-    value: "URL301",
-    label: "URL Redirect (301)",
     description:
       "Redirecionamento permanente para outro endereço da web (não mascarado)",
+    label: "URL Redirect (301)",
+    value: "URL301",
   },
   {
-    value: "FRAME",
-    label: "FRAME",
     description: "Exibe uma página da web dentro de um frame (mascarado)",
+    label: "FRAME",
+    value: "FRAME",
   },
   {
-    value: "CAA",
-    label: "CAA",
     description: "Autorização de Autoridade de Certificação",
+    label: "CAA",
+    value: "CAA",
   },
 ];
 
 const commonTTLs = [
-  { value: "60", label: "1 minuto" },
-  { value: "300", label: "5 minutos" },
-  { value: "600", label: "10 minutos" },
-  { value: "1800", label: "30 minutos" },
-  { value: "3600", label: "1 hora" },
-  { value: "14400", label: "4 horas" },
-  { value: "43200", label: "12 horas" },
-  { value: "86400", label: "24 horas" },
+  { label: "1 minuto", value: "60" },
+  { label: "5 minutos", value: "300" },
+  { label: "10 minutos", value: "600" },
+  { label: "30 minutos", value: "1800" },
+  { label: "1 hora", value: "3600" },
+  { label: "4 horas", value: "14400" },
+  { label: "12 horas", value: "43200" },
+  { label: "24 horas", value: "86400" },
 ];
 
 interface DnsRecordsManagerProps {
@@ -209,7 +195,7 @@ export function DnsRecordsManager({
       } else {
         toast.error(state.message || "Ocorreu um erro desconhecido.", {
           description: state.errors
-            ?.map((e) => `${e.field ? `${e.field}: ` : ""}${e.message}`)
+            ?.map(e => `${e.field ? `${e.field}: ` : ""}${e.message}`)
             .join("\n"),
         });
       }
@@ -287,7 +273,7 @@ export function DnsRecordsManager({
     if (!searchQuery) return records;
     const lowerQuery = searchQuery.toLowerCase();
     return records.filter(
-      (record) =>
+      record =>
         record.Name.toLowerCase().includes(lowerQuery) ||
         record.Type.toLowerCase().includes(lowerQuery) ||
         record.Address.toLowerCase().includes(lowerQuery) ||
@@ -297,7 +283,7 @@ export function DnsRecordsManager({
   }, [records, searchQuery]);
 
   const selectedRecordTypeInfo = recordTypes.find(
-    (rt) => rt.value === selectedRecordType
+    rt => rt.value === selectedRecordType
   );
 
   const handleCopyValue = (value: string, fieldName: string) => {
@@ -312,7 +298,7 @@ export function DnsRecordsManager({
   return (
     <TooltipProvider>
       <Card>
-        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle>Gerenciar Registros DNS</CardTitle>
             <CardDescription>
@@ -323,9 +309,9 @@ export function DnsRecordsManager({
           </div>
           <div className="flex gap-2">
             <Button
-              variant="outline"
-              size="icon"
               onClick={() => setShowHelpDialog(true)}
+              size="icon"
+              variant="outline"
             >
               <HelpCircle className="h-5 w-5" />
               <span className="sr-only">Guia de Registros DNS</span>
@@ -337,31 +323,31 @@ export function DnsRecordsManager({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
             <Input
+              className="w-full pl-10 md:w-1/2 lg:w-1/3"
+              onChange={e => setSearchQuery(e.target.value)}
               placeholder="Buscar registros (ex: por nome, tipo, conteúdo)"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-full md:w-1/2 lg:w-1/3"
             />
           </div>
 
           {filteredRecords.length === 0 && (
-            <div className="text-center text-muted-foreground py-8">
+            <div className="py-8 text-center text-muted-foreground">
               Nenhum registro DNS encontrado
               {searchQuery ? " correspondente à sua pesquisa" : ""}.
             </div>
           )}
 
           {filteredRecords.length > 0 && (
-            <div className="border rounded-lg overflow-x-auto">
+            <div className="overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Nome (Host)</TableHead>
                     <TableHead>Valor</TableHead>
-                    {records.some((r) => r.Type === "MX") && (
+                    {records.some(r => r.Type === "MX") && (
                       <TableHead>Prioridade</TableHead>
                     )}
                     <TableHead>TTL</TableHead>
@@ -369,7 +355,7 @@ export function DnsRecordsManager({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRecords.map((record) => (
+                  {filteredRecords.map(record => (
                     <TableRow key={record.HostId}>
                       <TableCell>
                         <Tooltip>
@@ -377,22 +363,22 @@ export function DnsRecordsManager({
                             <Badge variant="outline">{record.Type}</Badge>
                           </TooltipTrigger>
                           <TooltipContent>
-                            {recordTypes.find((rt) => rt.value === record.Type)
+                            {recordTypes.find(rt => rt.value === record.Type)
                               ?.description || "N/A"}
                           </TooltipContent>
                         </Tooltip>
                       </TableCell>
-                      <TableCell className="font-medium break-all">
+                      <TableCell className="break-all font-medium">
                         {record.Name}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              variant="ghost"
-                              size="icon"
                               className="ml-1 h-6 w-6"
                               onClick={() =>
                                 handleCopyValue(record.Name, "Host name")
                               }
+                              size="icon"
+                              variant="ghost"
                             >
                               <Copy className="h-3 w-3" />
                             </Button>
@@ -405,12 +391,12 @@ export function DnsRecordsManager({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              variant="ghost"
-                              size="icon"
                               className="ml-1 h-6 w-6"
                               onClick={() =>
                                 handleCopyValue(record.Address, "Address/Value")
                               }
+                              size="icon"
+                              variant="ghost"
                             >
                               <Copy className="h-3 w-3" />
                             </Button>
@@ -418,7 +404,7 @@ export function DnsRecordsManager({
                           <TooltipContent>Copiar</TooltipContent>
                         </Tooltip>
                       </TableCell>
-                      {records.some((r) => r.Type === "MX") && (
+                      {records.some(r => r.Type === "MX") && (
                         <TableCell>
                           {record.Type === "MX" ? record.MXPref : "N/A"}
                         </TableCell>
@@ -427,7 +413,7 @@ export function DnsRecordsManager({
                         <Tooltip>
                           <TooltipTrigger>
                             {commonTTLs.find(
-                              (ct) => ct.value === record.TTL.toString()
+                              ct => ct.value === record.TTL.toString()
                             )?.label || `${record.TTL}s`}
                           </TooltipTrigger>
                           <TooltipContent>{record.TTL} segundos</TooltipContent>
@@ -438,10 +424,10 @@ export function DnsRecordsManager({
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                variant="ghost"
-                                size="icon"
                                 className="h-8 w-8"
                                 onClick={() => openEditModal(record)}
+                                size="icon"
+                                variant="ghost"
                               >
                                 <Pencil className="h-4 w-4" />{" "}
                                 <span className="sr-only">Editar</span>
@@ -452,10 +438,10 @@ export function DnsRecordsManager({
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                variant="ghost"
-                                size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive/90"
                                 onClick={() => openDeleteModal(record)}
+                                size="icon"
+                                variant="ghost"
                               >
                                 <Trash2 className="h-4 w-4" />{" "}
                                 <span className="sr-only">Deletar</span>
@@ -475,7 +461,7 @@ export function DnsRecordsManager({
       </Card>
 
       {/* Add/Edit Record Modal */}
-      <Dialog open={isAddEditModalOpen} onOpenChange={setIsAddEditModalOpen}>
+      <Dialog onOpenChange={setIsAddEditModalOpen} open={isAddEditModalOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
@@ -491,35 +477,35 @@ export function DnsRecordsManager({
           </DialogHeader>
           <form
             action={formMode === "add" ? addFormAction : updateFormAction}
-            onSubmit={handleAddEditSubmit}
             className="space-y-4 py-2"
+            onSubmit={handleAddEditSubmit}
           >
-            <input type="hidden" name="domainName" value={domainName} />
+            <input name="domainName" type="hidden" value={domainName} />
             {formMode === "edit" && currentEditingRecord && (
               <input
-                type="hidden"
                 name="hostId"
+                type="hidden"
                 value={currentEditingRecord.HostId}
               />
             )}
 
             <div>
               <label
+                className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
                 htmlFor="recordType"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 Tipo de Registro
               </label>
               <Select
                 name="recordType"
+                onValueChange={v => setSelectedRecordType(v as DnsRecordType)}
                 value={selectedRecordType}
-                onValueChange={(v) => setSelectedRecordType(v as DnsRecordType)}
               >
                 <SelectTrigger id="recordType">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {recordTypes.map((type) => (
+                  {recordTypes.map(type => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label} ({type.description})
                     </SelectItem>
@@ -530,19 +516,19 @@ export function DnsRecordsManager({
 
             <div>
               <label
+                className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
                 htmlFor="hostName"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 Nome (Host)
               </label>
               <Input
                 id="hostName"
                 name="hostName"
+                onChange={e => setHostName(e.target.value)}
                 placeholder="@ para raiz, www, mail, etc."
                 value={hostName}
-                onChange={(e) => setHostName(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-muted-foreground text-xs">
                 Use "@" para o domínio raiz ({domainName}). Para subdomínios,
                 apenas insira a parte do subdomínio (ex: "www", "mail").
               </p>
@@ -551,32 +537,33 @@ export function DnsRecordsManager({
             {selectedRecordTypeInfo?.needsPriority && (
               <div>
                 <label
+                  className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
                   htmlFor="mxPref"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Prioridade (MX)
                 </label>
                 <Input
                   id="mxPref"
                   name="mxPref"
-                  type="number"
+                  onChange={e => setMxPref(e.target.value)}
                   placeholder="e.g., 10"
+                  type="number"
                   value={mxPref}
-                  onChange={(e) => setMxPref(e.target.value)}
                 />
               </div>
             )}
 
             <div>
               <label
+                className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
                 htmlFor="address"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 Valor
               </label>
               <Input
                 id="address"
                 name="address"
+                onChange={e => setAddress(e.target.value)}
                 placeholder={
                   selectedRecordType === "A"
                     ? "Endereço IPv4 (ex: 192.168.1.1)"
@@ -585,23 +572,22 @@ export function DnsRecordsManager({
                       : "Conteúdo/Endereço"
                 }
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
               />
             </div>
 
             <div>
               <label
+                className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
                 htmlFor="ttl"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 TTL (Tempo De Vida)
               </label>
-              <Select name="ttl" value={ttl} onValueChange={setTtl}>
+              <Select name="ttl" onValueChange={setTtl} value={ttl}>
                 <SelectTrigger id="ttl">
                   <SelectValue placeholder="Select TTL" />
                 </SelectTrigger>
                 <SelectContent>
-                  {commonTTLs.map((t) => (
+                  {commonTTLs.map(t => (
                     <SelectItem key={t.value} value={t.value}>
                       {t.label}
                     </SelectItem>
@@ -614,8 +600,8 @@ export function DnsRecordsManager({
                 <Button variant="outline">Cancelar</Button>
               </DialogClose>
               <Button
-                type="submit"
                 disabled={formMode === "add" ? isPendingAdd : isPendingUpdate}
+                type="submit"
               >
                 {(formMode === "add" ? isPendingAdd : isPendingUpdate) ? (
                   <>
@@ -634,7 +620,7 @@ export function DnsRecordsManager({
       </Dialog>
 
       {/* Delete Confirmation Modal */}
-      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+      <Dialog onOpenChange={setIsDeleteModalOpen} open={isDeleteModalOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
@@ -649,9 +635,9 @@ export function DnsRecordsManager({
               <Button variant="outline">Cancelar</Button>
             </DialogClose>
             <Button
-              variant="destructive"
-              onClick={handleDeleteSubmit}
               disabled={isPendingDelete}
+              onClick={handleDeleteSubmit}
+              variant="destructive"
             >
               {isPendingDelete ? (
                 <>
@@ -667,7 +653,7 @@ export function DnsRecordsManager({
       </Dialog>
 
       {/* Help Dialog */}
-      <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
+      <Dialog onOpenChange={setShowHelpDialog} open={showHelpDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Guia de Registros DNS</DialogTitle>
@@ -675,16 +661,16 @@ export function DnsRecordsManager({
               Tipos comuns de registros DNS e seus usos.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-            {recordTypes.map((type) => (
+          <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4">
+            {recordTypes.map(type => (
               <div
+                className="rounded-md border bg-muted/50 p-3"
                 key={type.value}
-                className="p-3 border rounded-md bg-muted/50"
               >
                 <h4 className="font-semibold">
                   {type.label} ({type.value})
                 </h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   {type.description}
                 </p>
               </div>

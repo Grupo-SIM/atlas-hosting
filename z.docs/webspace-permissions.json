@@ -1,595 +1,595 @@
 {
-  "status": "ok",
-  "filter-id": "lucasgarrafielo.xyz",
-  "id": 367,
   "descriptor": {
-    "property": [
-      {
-        "name": "manage_sh_access",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Can allow access only to a chrooted environment",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "access_appcatalog",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Access to Application Catalog",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "access_service_users",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Ability to manage additional user accounts",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "allow_oversell",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Allow overselling",
-        "extension": {
-          "level": "reseller"
-        }
-      },
-      {
-        "name": "allow_local_backups",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Backup and restoration of subscription data using the server storage",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "allow_ftp_backups",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Backup and restoration of subscription data using remote storage",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "allow_account_local_backups",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Backup and restoration of account data using the server storage",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "allow_account_ftp_backups",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Backup and restoration of account data using remote storage",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "allow_insecure_sites",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Setup of potentially insecure web scripting options that override provider's policy",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "create_domains",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Domains management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_anonftp",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Anonymous FTP management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_crontab",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Scheduler management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_dns",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "DNS zone management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_domain_aliases",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Domain aliases management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_log",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Log rotation management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_mail_settings",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Ability to change mail settings",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_maillists",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Mailing lists management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_mail_autodiscover",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Mail autodiscover management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_performance",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Hosting performance settings management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_phosting",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Hosting settings management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_php_settings",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Common PHP settings management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_php_version",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "PHP version and handler management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_protected_dirs",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Password-protected directories management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_quota",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Hard disk quota assignment",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_spamfilter",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Spam filter management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "manage_subdomains",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Subdomains management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_subftp",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Additional FTP accounts management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_virusfilter",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Antivirus management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "manage_webstat",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Web statistics management",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "manage_website_maintenance",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Access to advanced operations: Website Copying",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "remote_access_interface",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Ability to use remote API",
-        "extension": {
-          "level": "reseller"
-        }
-      },
-      {
-        "name": "select_db_server",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Database server selection",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "remote_db_connection",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Remote access for database users",
-        "extension": {
-          "level": ["reseller", "domain"]
-        }
-      },
-      {
-        "name": "create_clients",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Customer account creation",
-        "extension": {
-          "level": "reseller"
-        }
-      },
-      {
-        "name": "change_limits",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "[[change_limits]]",
-        "extension": {
-          "level": "reseller"
-        }
-      },
-      {
-        "name": "manage_not_chroot_shell",
-        "type": "boolean",
-        "default-value": false,
-        "writable-by": ["admin", "reseller"],
-        "label": "Can allow access to any type of shell",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_git_manage_git",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Git management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_ruby_support_management",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Ruby support management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_ruby_state_management",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Ruby state management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_ruby_version_management",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Ruby version management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_nodejs_support_management",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Node.js support management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_nodejs_state_management",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Node.js state management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_nodejs_version_management",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Node.js version management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_wp_toolkit_manage_wordpress_toolkit",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Access to WP Toolkit",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_wp_toolkit_manage_security_wordpress_toolkit",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "WP Toolkit security management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_wp_toolkit_manage_cloning",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "WP Toolkit cloning management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_wp_toolkit_manage_syncing",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "WP Toolkit syncing management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_wp_toolkit_manage_autoupdates",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "WP Toolkit autoupdates management",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_wp_toolkit_manage_smart_php_update",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "WP Toolkit Smart PHP Update",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_plesk_sitejet_create_sitejet_site",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Access to Sitejet Builder",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_plesk_sitejet_access_xovi_integration",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Sitejet Builder SEO Analysis by XOVI NOW",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_plesk_sitejet_access_ecommerce_integration",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Sitejet Builder E-Commerce feature",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_laravel_manage_laravel_toolkit",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Access to Laravel Toolkit",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_imunify360_imunify_end_user_on",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Imunify enabled",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_imunify360_imunify_scanning_allowed",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Imunify: scanning allowed",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      },
-      {
-        "name": "ext_permission_imunify360_imunify_cleanup_allowed",
-        "type": "boolean",
-        "default-value": true,
-        "writable-by": ["admin", "reseller"],
-        "label": "Imunify: cleanup allowed",
-        "extension": {
-          "level": ["reseller", "domain", "mail"]
-        }
-      }
-    ],
     "bind": [
       {
+        "read-only": 0,
         "ref": "manage_php_settings",
         "relevant": {
           "name": "manage_phosting",
           "value": true
-        },
-        "read-only": 0
+        }
       },
       {
+        "read-only": 0,
         "ref": "allow_insecure_sites",
         "relevant": {
           "name": "manage_phosting",
           "value": true
-        },
-        "read-only": 0
+        }
       },
       {
+        "read-only": 0,
         "ref": "manage_performance",
         "relevant": {
           "name": "manage_phosting",
           "value": true
+        }
+      }
+    ],
+    "property": [
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
         },
-        "read-only": 0
+        "label": "Can allow access only to a chrooted environment",
+        "name": "manage_sh_access",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Access to Application Catalog",
+        "name": "access_appcatalog",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Ability to manage additional user accounts",
+        "name": "access_service_users",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": "reseller"
+        },
+        "label": "Allow overselling",
+        "name": "allow_oversell",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Backup and restoration of subscription data using the server storage",
+        "name": "allow_local_backups",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Backup and restoration of subscription data using remote storage",
+        "name": "allow_ftp_backups",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Backup and restoration of account data using the server storage",
+        "name": "allow_account_local_backups",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Backup and restoration of account data using remote storage",
+        "name": "allow_account_ftp_backups",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Setup of potentially insecure web scripting options that override provider's policy",
+        "name": "allow_insecure_sites",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Domains management",
+        "name": "create_domains",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Anonymous FTP management",
+        "name": "manage_anonftp",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Scheduler management",
+        "name": "manage_crontab",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "DNS zone management",
+        "name": "manage_dns",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Domain aliases management",
+        "name": "manage_domain_aliases",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Log rotation management",
+        "name": "manage_log",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Ability to change mail settings",
+        "name": "manage_mail_settings",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Mailing lists management",
+        "name": "manage_maillists",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Mail autodiscover management",
+        "name": "manage_mail_autodiscover",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Hosting performance settings management",
+        "name": "manage_performance",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Hosting settings management",
+        "name": "manage_phosting",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Common PHP settings management",
+        "name": "manage_php_settings",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "PHP version and handler management",
+        "name": "manage_php_version",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Password-protected directories management",
+        "name": "manage_protected_dirs",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Hard disk quota assignment",
+        "name": "manage_quota",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Spam filter management",
+        "name": "manage_spamfilter",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Subdomains management",
+        "name": "manage_subdomains",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Additional FTP accounts management",
+        "name": "manage_subftp",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Antivirus management",
+        "name": "manage_virusfilter",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Web statistics management",
+        "name": "manage_webstat",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Access to advanced operations: Website Copying",
+        "name": "manage_website_maintenance",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": "reseller"
+        },
+        "label": "Ability to use remote API",
+        "name": "remote_access_interface",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Database server selection",
+        "name": "select_db_server",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain"]
+        },
+        "label": "Remote access for database users",
+        "name": "remote_db_connection",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": "reseller"
+        },
+        "label": "Customer account creation",
+        "name": "create_clients",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": "reseller"
+        },
+        "label": "[[change_limits]]",
+        "name": "change_limits",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": false,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Can allow access to any type of shell",
+        "name": "manage_not_chroot_shell",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Git management",
+        "name": "ext_permission_git_manage_git",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Ruby support management",
+        "name": "ext_permission_ruby_support_management",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Ruby state management",
+        "name": "ext_permission_ruby_state_management",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Ruby version management",
+        "name": "ext_permission_ruby_version_management",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Node.js support management",
+        "name": "ext_permission_nodejs_support_management",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Node.js state management",
+        "name": "ext_permission_nodejs_state_management",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Node.js version management",
+        "name": "ext_permission_nodejs_version_management",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Access to WP Toolkit",
+        "name": "ext_permission_wp_toolkit_manage_wordpress_toolkit",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "WP Toolkit security management",
+        "name": "ext_permission_wp_toolkit_manage_security_wordpress_toolkit",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "WP Toolkit cloning management",
+        "name": "ext_permission_wp_toolkit_manage_cloning",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "WP Toolkit syncing management",
+        "name": "ext_permission_wp_toolkit_manage_syncing",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "WP Toolkit autoupdates management",
+        "name": "ext_permission_wp_toolkit_manage_autoupdates",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "WP Toolkit Smart PHP Update",
+        "name": "ext_permission_wp_toolkit_manage_smart_php_update",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Access to Sitejet Builder",
+        "name": "ext_permission_plesk_sitejet_create_sitejet_site",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Sitejet Builder SEO Analysis by XOVI NOW",
+        "name": "ext_permission_plesk_sitejet_access_xovi_integration",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Sitejet Builder E-Commerce feature",
+        "name": "ext_permission_plesk_sitejet_access_ecommerce_integration",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Access to Laravel Toolkit",
+        "name": "ext_permission_laravel_manage_laravel_toolkit",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Imunify enabled",
+        "name": "ext_permission_imunify360_imunify_end_user_on",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Imunify: scanning allowed",
+        "name": "ext_permission_imunify360_imunify_scanning_allowed",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
+      },
+      {
+        "default-value": true,
+        "extension": {
+          "level": ["reseller", "domain", "mail"]
+        },
+        "label": "Imunify: cleanup allowed",
+        "name": "ext_permission_imunify360_imunify_cleanup_allowed",
+        "type": "boolean",
+        "writable-by": ["admin", "reseller"]
       }
     ]
-  }
+  },
+  "filter-id": "lucasgarrafielo.xyz",
+  "id": 367,
+  "status": "ok"
 }

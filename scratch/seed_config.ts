@@ -1,4 +1,3 @@
-
 import { db } from "../src/lib/db";
 import { pgSystemConfig } from "../src/lib/db/schema";
 
@@ -8,8 +7,8 @@ async function seedConfig() {
     console.log("Seeding initial system config...");
     await db.insert(pgSystemConfig).values({
       domainFee: 5.0,
-      referrerCommission: 10.0, // 10%
       minWithdrawalAmount: 50.0,
+      referrerCommission: 10.0, // 10%
     });
     console.log("System config seeded successfully.");
   } else {

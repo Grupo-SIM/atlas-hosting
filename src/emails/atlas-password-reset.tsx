@@ -38,25 +38,25 @@ export const AtlasPasswordResetEmail = ({
       <Container style={container}>
         <Section style={box}>
           <Img
-            src="cid:atlaslogo"
-            width="120"
-            height="40"
             alt="Atlas Hosting"
+            height="40"
+            src="cid:atlaslogo"
             style={logo}
+            width="120"
           />
           <Hr style={hr} />
           <Heading style={heading}>Redefinir sua senha</Heading>
           <Text style={paragraph}>Olá, {firstName},</Text>
           <Text style={paragraph}>
-            Recebemos um pedido para redefinir a senha da sua conta Atlas Hosting
-            associada a <strong>{email}</strong>.
+            Recebemos um pedido para redefinir a senha da sua conta Atlas
+            Hosting associada a <strong>{email}</strong>.
           </Text>
           <Text style={paragraph}>
-            Clique no botão abaixo para criar uma nova senha. Este link expira em{" "}
-            {expirationTime}.
+            Clique no botão abaixo para criar uma nova senha. Este link expira
+            em {expirationTime}.
           </Text>
           <Section style={buttonContainer}>
-            <Button style={button} href={resetLink}>
+            <Button href={resetLink} style={button}>
               Redefinir senha
             </Button>
           </Section>
@@ -64,7 +64,7 @@ export const AtlasPasswordResetEmail = ({
             Se o botão não funcionar, copie e cole o link abaixo no navegador:
           </Text>
           <Text style={linkText}>
-            <Link style={anchor} href={resetLink}>
+            <Link href={resetLink} style={anchor}>
               {resetLink}
             </Link>
           </Text>
@@ -72,17 +72,17 @@ export const AtlasPasswordResetEmail = ({
           <Section style={warningBox}>
             <Text style={warningText}>
               <strong>Segurança:</strong> se você não pediu esta redefinição,
-              ignore este e-mail — sua conta permanece protegida. Se suspeitar de
-              acesso indevido, fale com o suporte o quanto antes.
+              ignore este e-mail — sua conta permanece protegida. Se suspeitar
+              de acesso indevido, fale com o suporte o quanto antes.
             </Text>
           </Section>
           <Text style={paragraph}>
-            Por segurança, o link expira em {expirationTime}. Depois
-            disso, solicite um novo e-mail de redefinição.
+            Por segurança, o link expira em {expirationTime}. Depois disso,
+            solicite um novo e-mail de redefinição.
           </Text>
           <Text style={paragraph}>
             Precisa de ajuda? Fale com o suporte em{" "}
-            <Link style={anchor} href={`mailto:${supportEmail}`}>
+            <Link href={`mailto:${supportEmail}`} style={anchor}>
               {supportEmail}
             </Link>
             .
@@ -99,12 +99,12 @@ export const AtlasPasswordResetEmail = ({
 );
 
 AtlasPasswordResetEmail.PreviewProps = {
-  firstName: "Breno",
   email: "breno@exemplo.com",
-  resetLink: "https://atlashosting.com.br/reset-password?token=abc123",
   expirationTime: "1 hora",
-  supportEmail: "contact@atlashosting.com.br",
+  firstName: "Breno",
   publicSiteUrl: "https://atlashosting.com.br",
+  resetLink: "https://atlashosting.com.br/reset-password?token=abc123",
+  supportEmail: "contact@atlashosting.com.br",
 } as AtlasPasswordResetEmailProps;
 
 export default AtlasPasswordResetEmail;
@@ -117,8 +117,8 @@ const main = {
 
 const container = {
   margin: "0 auto",
-  padding: "20px 0 48px",
   maxWidth: "580px",
+  padding: "20px 0 48px",
 };
 
 const box = {
@@ -126,8 +126,8 @@ const box = {
 };
 
 const logo = {
-  margin: "0 auto",
   display: "block",
+  margin: "0 auto",
 };
 
 const hr = {
@@ -136,52 +136,52 @@ const hr = {
 };
 
 const heading = {
+  color: "#1a1a1a",
   fontSize: "24px",
   fontWeight: "600",
-  color: "#1a1a1a",
-  textAlign: "center" as const,
   margin: "30px 0",
+  textAlign: "center" as const,
 };
 
 const paragraph = {
   color: "#525f7f",
   fontSize: "16px",
   lineHeight: "24px",
-  textAlign: "left" as const,
   margin: "0 0 20px",
+  textAlign: "left" as const,
 };
 
 const buttonContainer = {
-  textAlign: "center" as const,
   margin: "32px 0",
+  textAlign: "center" as const,
 };
 
 const button = {
   backgroundColor: "#dc2626",
+  border: "none",
   borderRadius: "6px",
   color: "#fff",
+  display: "inline-block",
   fontSize: "16px",
   fontWeight: "600",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "12px 32px",
   lineHeight: "1.5",
-  border: "none",
+  padding: "12px 32px",
+  textAlign: "center" as const,
+  textDecoration: "none",
 };
 
 const linkText = {
   color: "#525f7f",
   fontSize: "14px",
   lineHeight: "20px",
-  textAlign: "left" as const,
   margin: "0 0 20px",
+  textAlign: "left" as const,
   wordBreak: "break-all" as const,
 };
 
 const codeContainer = {
-  textAlign: "center" as const,
   margin: "20px 0",
+  textAlign: "center" as const,
 };
 
 const code = {
@@ -189,20 +189,20 @@ const code = {
   border: "1px solid #e4e4e7",
   borderRadius: "6px",
   color: "#1a1a1a",
+  display: "inline-block",
+  fontFamily: "monospace",
   fontSize: "18px",
   fontWeight: "600",
-  padding: "16px 24px",
   letterSpacing: "2px",
-  fontFamily: "monospace",
-  display: "inline-block",
+  padding: "16px 24px",
 };
 
 const warningBox = {
   backgroundColor: "#fef3c7",
   border: "1px solid #f59e0b",
   borderRadius: "6px",
-  padding: "16px",
   margin: "20px 0",
+  padding: "16px",
 };
 
 const warningText = {

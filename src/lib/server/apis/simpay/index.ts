@@ -148,7 +148,7 @@ function formatSimpayErrorMessage(data: unknown): string | undefined {
   if (!data || typeof data !== "object") return undefined;
   const m = (data as { message?: unknown }).message;
   if (typeof m === "string") return m;
-  if (Array.isArray(m) && m.every((x) => typeof x === "string")) {
+  if (Array.isArray(m) && m.every(x => typeof x === "string")) {
     return m.join(" ");
   }
   return undefined;
@@ -157,8 +157,8 @@ function formatSimpayErrorMessage(data: unknown): string | undefined {
 class SimpayApi {
   private get headers(): Record<string, string> {
     return {
-      "Content-Type": "application/json",
       Accept: "application/json",
+      "Content-Type": "application/json",
     };
   }
 
@@ -172,25 +172,28 @@ class SimpayApi {
       store: resolveSimpayStore(storeParam),
     };
 
-    console.log(`[SIMPAY] → Enviando pagamento de cartão para Simpay`, {
-      url,
-      store: body.store,
-      price: params.price,
+    console.log("[SIMPAY] → Enviando pagamento de cartão para Simpay", {
+      description: params.description,
       email: params.email,
       installments: params.installments,
-      description: params.description,
+      price: params.price,
+      store: body.store,
+      url,
     });
 
     const response = await fetch(url, {
-      method: "POST",
-      headers: this.headers,
       body: JSON.stringify(body),
+      headers: this.headers,
+      method: "POST",
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      console.error(`[SIMPAY] ✗ Erro na requisição (${response.status}):`, data);
+      console.error(
+        `[SIMPAY] ✗ Erro na requisição (${response.status}):`,
+        data
+      );
       throw new Error(
         formatSimpayErrorMessage(data) ||
           `Erro ao processar pagamento via Simpay (HTTP ${response.status})`
@@ -218,7 +221,11 @@ class SimpayApi {
               return data as SimpayPaymentResponse;
             }
             // Status terminal de falha: não adianta insistir.
-            if (["FAILED", "EXPIRED", "CHARGEBACK", "NOT_FOUND"].includes(String(remote?.status ?? "").toUpperCase())) {
+            if (
+              ["FAILED", "EXPIRED", "CHARGEBACK", "NOT_FOUND"].includes(
+                String(remote?.status ?? "").toUpperCase()
+              )
+            ) {
               break;
             }
           } catch (statusErr) {
@@ -227,7 +234,7 @@ class SimpayApi {
               statusErr
             );
           }
-          if (attempt < 4) await new Promise((r) => setTimeout(r, 2000));
+          if (attempt < 4) await new Promise(r => setTimeout(r, 2000));
         }
       }
 
@@ -238,10 +245,10 @@ class SimpayApi {
       throw new SimpayPaymentDeclinedError(gatewayStatus);
     }
 
-    console.log(`[SIMPAY] ✓ Pagamento criado com sucesso:`, {
-      transactionId: data.transactionId,
+    console.log("[SIMPAY] ✓ Pagamento criado com sucesso:", {
       paymentId: data.paymentId,
       status: data.status,
+      transactionId: data.transactionId,
     });
 
     return data as SimpayPaymentResponse;
@@ -257,20 +264,20 @@ class SimpayApi {
       store: resolveSimpayStore(storeParam),
     };
 
-    console.log(`[SIMPAY] → Criando cobrança PIX (atlas)`, {
-      url,
-      store: body.store,
-      price: params.price,
-      email: params.email,
+    console.log("[SIMPAY] → Criando cobrança PIX (atlas)", {
       description: params.description,
+      email: params.email,
+      price: params.price,
+      store: body.store,
+      url,
     });
 
     let response: Response;
     try {
       response = await fetch(url, {
-        method: "POST",
-        headers: this.headers,
         body: JSON.stringify(body),
+        headers: this.headers,
+        method: "POST",
       });
     } catch (e) {
       const msg =
@@ -300,18 +307,22 @@ class SimpayApi {
     return data as SimpayPixCreateResponse;
   }
 
-  async getPaymentStatus(paymentId: string): Promise<{ paymentId: string; status: string }> {
+  async getPaymentStatus(
+    paymentId: string
+  ): Promise<{ paymentId: string; status: string }> {
     const url = `${resolveSimpayBaseUrl()}/atlas/payments/status/${paymentId}`;
 
     const response = await fetch(url, {
-      method: "GET",
       headers: this.headers,
+      method: "GET",
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(`Erro ao consultar status do pagamento (HTTP ${response.status})`);
+      throw new Error(
+        `Erro ao consultar status do pagamento (HTTP ${response.status})`
+      );
     }
 
     return data;
@@ -328,18 +339,18 @@ class SimpayApi {
       "91b324f6aa36368c536b4f1f9e75f7565b385737b1aa3a4adf07b8c7d99300c9";
 
     const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "x-internal-token": token,
-      },
       body: JSON.stringify({
+        amount: params.amount,
         cpf: params.cpf.replace(/\D/g, ""),
         email: params.email,
-        amount: params.amount,
         pixKey: params.pixKey,
       }),
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "x-internal-token": token,
+      },
+      method: "POST",
     });
 
     const data = await response.json();

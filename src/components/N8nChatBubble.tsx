@@ -1,40 +1,43 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import '@n8n/chat/style.css';
-import { createChat } from '@n8n/chat';
+import { useEffect } from "react";
+import "@n8n/chat/style.css";
+import { createChat } from "@n8n/chat";
 
-const WEBHOOK_URL = 'https://bot.jbmidia.com/webhook/6229f9db-8b7f-40ad-8a71-503727e71c34/chat';
+const WEBHOOK_URL =
+  "https://bot.jbmidia.com/webhook/6229f9db-8b7f-40ad-8a71-503727e71c34/chat";
 
 export function N8nChatBubble() {
   useEffect(() => {
     createChat({
-      webhookUrl: WEBHOOK_URL,
-      mode: 'window',
-      target: '#n8n-chat-bubble',
-      initialMessages: [
-        'Olá! 👋',
-        'Sou o Atlas, como posso te ajudar?',
-      ],
       i18n: {
         en: {
-          title: 'Atlas IA',
-          subtitle: 'Suporte 24/7',
-          footer: '',
-          getStarted: 'Nova Conversa',
-          inputPlaceholder: 'Digite sua pergunta...',
-          closeButtonTooltip: 'Fechar',
+          closeButtonTooltip: "Fechar",
+          footer: "",
+          getStarted: "Nova Conversa",
+          inputPlaceholder: "Digite sua pergunta...",
+          subtitle: "Suporte 24/7",
+          title: "Atlas IA",
         },
       },
+      initialMessages: ["Olá! 👋", "Sou o Atlas, como posso te ajudar?"],
+      mode: "window",
+      target: "#n8n-chat-bubble",
+      webhookUrl: WEBHOOK_URL,
     });
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === 'TEXTAREA' &&
-        (target.closest('#n8n-chat-bubble') || target.closest('#n8n-chat-embed')) &&
-        e.key === 'Enter' && !e.shiftKey) {
-
+      if (
+        target.tagName === "TEXTAREA" &&
+        (target.closest("#n8n-chat-bubble") ||
+          target.closest("#n8n-chat-embed")) &&
+        e.key === "Enter" &&
+        !e.shiftKey
+      ) {
         e.preventDefault();
-        const sendButton = target.closest('form')?.querySelector('button[class*="send"]') as HTMLButtonElement | null;
+        const sendButton = target
+          .closest("form")
+          ?.querySelector('button[class*="send"]') as HTMLButtonElement | null;
         if (sendButton && !sendButton.disabled) {
           sendButton.click();
         }
@@ -42,14 +45,20 @@ export function N8nChatBubble() {
     };
 
     const handleClickOutside = (e: MouseEvent) => {
-      const bubble = document.getElementById('n8n-chat-bubble');
+      const bubble = document.getElementById("n8n-chat-bubble");
       if (!bubble) return;
-      const chatWindow = bubble.querySelector('[class*="n8n-chat-ui-window"]') as HTMLElement | null;
+      const chatWindow = bubble.querySelector(
+        '[class*="n8n-chat-ui-window"]'
+      ) as HTMLElement | null;
       if (!chatWindow) return;
-      const isOpen = chatWindow.offsetParent !== null || getComputedStyle(chatWindow).display !== 'none';
+      const isOpen =
+        chatWindow.offsetParent !== null ||
+        getComputedStyle(chatWindow).display !== "none";
       if (!isOpen) return;
       if (!bubble.contains(e.target as Node)) {
-        const toggle = bubble.querySelector('[class*="n8n-chat-ui-toggle"]') as HTMLButtonElement | null;
+        const toggle = bubble.querySelector(
+          '[class*="n8n-chat-ui-toggle"]'
+        ) as HTMLButtonElement | null;
         toggle?.click();
       }
     };
@@ -57,23 +66,29 @@ export function N8nChatBubble() {
     const repositionOnMobile = () => {
       const isMobile = window.innerWidth <= 1024;
       const elements = [
-        document.getElementById('n8n-chat-bubble'),
-        ...Array.from(document.querySelectorAll('[class*="n8n-chat-ui-toggle"]')),
-        ...Array.from(document.querySelectorAll('[class*="n8n-chat-ui-window"]')),
+        document.getElementById("n8n-chat-bubble"),
+        ...Array.from(
+          document.querySelectorAll('[class*="n8n-chat-ui-toggle"]')
+        ),
+        ...Array.from(
+          document.querySelectorAll('[class*="n8n-chat-ui-window"]')
+        ),
         ...Array.from(document.querySelectorAll('div[class*="n8n-chat-ui"]')),
-        ...Array.from(document.querySelectorAll('button[class*="n8n-chat-ui"]'))
+        ...Array.from(
+          document.querySelectorAll('button[class*="n8n-chat-ui"]')
+        ),
       ];
 
       elements.forEach(el => {
         if (el instanceof HTMLElement) {
           if (isMobile) {
-            el.style.setProperty('right', '20px', 'important');
-            el.style.setProperty('left', 'auto', 'important');
-            el.style.setProperty('bottom', '110px', 'important');
+            el.style.setProperty("right", "20px", "important");
+            el.style.setProperty("left", "auto", "important");
+            el.style.setProperty("bottom", "110px", "important");
           } else {
-            el.style.removeProperty('right');
-            el.style.removeProperty('left');
-            el.style.removeProperty('bottom');
+            el.style.removeProperty("right");
+            el.style.removeProperty("left");
+            el.style.removeProperty("bottom");
           }
         }
       });
@@ -84,17 +99,17 @@ export function N8nChatBubble() {
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
-    window.addEventListener('resize', repositionOnMobile);
-    
+    window.addEventListener("resize", repositionOnMobile);
+
     // Initial call after a short delay to allow widget injection
     const timer = setTimeout(repositionOnMobile, 500);
 
     return () => {
       observer.disconnect();
-      window.removeEventListener('resize', repositionOnMobile);
+      window.removeEventListener("resize", repositionOnMobile);
       clearTimeout(timer);
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 

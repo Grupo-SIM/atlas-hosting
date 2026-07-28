@@ -8,10 +8,10 @@ import { getRealUser, loadFullUserById } from ".";
  */
 export const IMPERSONATE_COOKIE = "atlas_impersonate";
 
-export type ImpersonationState = {
+export interface ImpersonationState {
   admin: { id: string; email: string; name: string };
   target: { id: string; email: string; name: string };
-};
+}
 
 /**
  * Retorna o estado de impersonação atual, ou null se não houver.
@@ -29,7 +29,7 @@ export async function getImpersonationState(): Promise<ImpersonationState | null
   if (!target) return null;
 
   return {
-    admin: { id: admin.id, email: admin.email, name: admin.name },
-    target: { id: target.id, email: target.email, name: target.name },
+    admin: { email: admin.email, id: admin.id, name: admin.name },
+    target: { email: target.email, id: target.id, name: target.name },
   };
 }

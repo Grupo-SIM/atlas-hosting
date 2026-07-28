@@ -1,9 +1,6 @@
-import { getUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { sortBy } from "lodash";
-import { PlanCard } from "./components/PlanCard";
-import { createPlanInvoice } from "@/app/actions";
+import { asc } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { createPlanInvoice } from "@/app/actions";
 import {
   Carousel,
   CarouselContent,
@@ -11,15 +8,16 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
-import Link from "next/link";
-import { asc } from "drizzle-orm";
+import { getUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { pgPlan } from "@/lib/db/schema";
+import { PlanCard } from "./components/PlanCard";
 
 export default async function PlansPage({
   searchParams: _searchParams,
-}: { searchParams: Promise<{ [key: string]: string }> }) {
+}: {
+  searchParams: Promise<{ [key: string]: string }>;
+}) {
   const searchParams = await _searchParams;
   const user = await getUser();
 
@@ -41,50 +39,50 @@ export default async function PlansPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/80 to-muted/20">
-      <div className="max-w-7xl mx-auto p-6 pb-16">
+      <div className="mx-auto max-w-7xl p-6 pb-16">
         {/* Header Section */}
-        <div className="text-center space-y-6 mb-12">
+        <div className="mb-12 space-y-6 text-center">
           <div className="space-y-3">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <h1 className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text font-bold text-4xl text-transparent tracking-tight md:text-5xl">
               Planos de Hospedagem
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
               Escolha o melhor plano para suas necessidades e comece a criar
               sites incríveis hoje mesmo
             </p>
           </div>
 
           {/* Trust indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-muted-foreground text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <div className="h-2 w-2 rounded-full bg-green-500" />
               99.9% Uptime
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <div className="h-2 w-2 rounded-full bg-blue-500" />
               SSL Gratuito
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-purple-500" />
+              <div className="h-2 w-2 rounded-full bg-purple-500" />
               Suporte 24/7
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-orange-500" />
+              <div className="h-2 w-2 rounded-full bg-orange-500" />
               30 dias de garantia
             </div>
           </div>
         </div>
 
         {/* Plans Carousel */}
-        <div className="relative max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
+        <div className="relative mx-auto max-w-7xl">
+          <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-2 bg-gradient-to-b from-primary via-primary/80 to-primary/50 rounded-full shadow-lg" />
+              <div className="h-10 w-2 rounded-full bg-gradient-to-b from-primary via-primary/80 to-primary/50 shadow-lg" />
               <div className="space-y-1">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                <h2 className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text font-bold text-3xl text-transparent">
                   Nossos Planos
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Escolha o plano perfeito para suas necessidades
                 </p>
               </div>
@@ -92,50 +90,50 @@ export default async function PlansPage({
           </div>
 
           <Carousel
+            className="group w-full overflow-visible"
             opts={{
               align: "start",
-              slidesToScroll: 1,
               axis: "x",
+              slidesToScroll: 1,
             }}
-            className="w-full group overflow-visible"
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 flex items-center justify-between">
               {/* Progress indicator */}
-              <div className="flex items-center gap-3 opacity-60 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-3 opacity-60 transition-opacity group-hover:opacity-100">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                  <div className="text-xs text-muted-foreground font-medium">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+                  <div className="font-medium text-muted-foreground text-xs">
                     {plans.length} planos disponíveis
                   </div>
                 </div>
-                <div className="h-1 w-16 bg-muted rounded-full">
-                  <div className="h-full w-1/3 bg-gradient-to-r from-primary to-primary/70 rounded-full animate-pulse" />
+                <div className="h-1 w-16 rounded-full bg-muted">
+                  <div className="h-full w-1/3 animate-pulse rounded-full bg-gradient-to-r from-primary to-primary/70" />
                 </div>
               </div>
 
               {/* Navigation Buttons */}
-              <div className="flex items-center gap-3 opacity-60 group-hover:opacity-100 transition-all duration-300">
-                <CarouselPrevious className="relative left-0 translate-y-0 h-11 w-11 rounded-xl border-2 border-border/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-lg backdrop-blur-sm" />
-                <CarouselNext className="relative right-0 translate-y-0 h-11 w-11 rounded-xl border-2 border-border/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-lg backdrop-blur-sm" />
+              <div className="flex items-center gap-3 opacity-60 transition-all duration-300 group-hover:opacity-100">
+                <CarouselPrevious className="relative left-0 h-11 w-11 translate-y-0 rounded-xl border-2 border-border/30 shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:border-primary/50 hover:bg-primary/5 hover:shadow-lg" />
+                <CarouselNext className="relative right-0 h-11 w-11 translate-y-0 rounded-xl border-2 border-border/30 shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:border-primary/50 hover:bg-primary/5 hover:shadow-lg" />
               </div>
             </div>
 
             <CarouselContent className="-ml-6">
               {plans.map((plan, index) => (
                 <CarouselItem
+                  className="group/item mt-2 mb-4 basis-full pl-6 sm:basis-1/2 lg:basis-1/3"
                   key={plan.id}
-                  className="pl-6 basis-full sm:basis-1/2 lg:basis-1/3 group/item mt-2 mb-4"
                 >
-                  <div className="h-full transform transition-all duration-500 group-hover/item:z-10 relative">
+                  <div className="relative h-full transform transition-all duration-500 group-hover/item:z-10">
                     <PlanCard
-                      plan={plan}
-                      user={user}
-                      searchParams={searchParams}
                       isDowngrade={Boolean(
                         userPlan &&
                           plan.id !== userPlan.id &&
                           plan.price < userPlan.price
                       )}
+                      plan={plan}
+                      searchParams={searchParams}
+                      user={user}
                     />
                   </div>
                 </CarouselItem>
@@ -143,62 +141,62 @@ export default async function PlansPage({
             </CarouselContent>
 
             {/* Enhanced Mobile Navigation */}
-            <div className="flex items-center justify-center gap-4 mt-8 sm:hidden">
-              <CarouselPrevious className="relative left-0 translate-y-0 h-9 w-9 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border-primary/20 hover:border-primary/40 transition-all duration-300" />
+            <div className="mt-8 flex items-center justify-center gap-4 sm:hidden">
+              <CarouselPrevious className="relative left-0 h-9 w-9 translate-y-0 rounded-full border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5 transition-all duration-300 hover:border-primary/40 hover:from-primary/20 hover:to-primary/10" />
               <div className="flex gap-2">
                 {plans.map((plan, index) => (
                   <div
+                    className="h-2.5 w-2.5 rounded-full bg-muted-foreground/20 transition-all duration-300 hover:scale-125 hover:bg-primary/40"
                     key={`dot-${plan.id}`}
-                    className="w-2.5 h-2.5 rounded-full bg-muted-foreground/20 transition-all duration-300 hover:bg-primary/40 hover:scale-125"
                   />
                 ))}
               </div>
-              <CarouselNext className="relative right-0 translate-y-0 h-9 w-9 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border-primary/20 hover:border-primary/40 transition-all duration-300" />
+              <CarouselNext className="relative right-0 h-9 w-9 translate-y-0 rounded-full border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5 transition-all duration-300 hover:border-primary/40 hover:from-primary/20 hover:to-primary/10" />
             </div>
           </Carousel>
         </div>
 
         {/* Additional Features Section */}
         <div className="mt-14 mb-12">
-          <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-3xl p-8 max-w-4xl mx-auto">
-            <div className="text-center space-y-6">
+          <div className="mx-auto max-w-4xl rounded-3xl border border-border/50 bg-card/30 p-8 backdrop-blur-sm">
+            <div className="space-y-6 text-center">
               <div className="space-y-3">
-                <h3 className="text-2xl font-bold tracking-tight">
+                <h3 className="font-bold text-2xl tracking-tight">
                   Por que escolher nossos planos?
                 </h3>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
+                <p className="mx-auto max-w-2xl text-muted-foreground">
                   Oferecemos a melhor infraestrutura e suporte para garantir que
                   seu projeto tenha sucesso
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                <div className="space-y-3 p-4 rounded-2xl bg-gradient-to-br from-green-50/50 to-emerald-50/30 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200/50 dark:border-green-800/50">
-                  <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mx-auto">
-                    <div className="w-6 h-6 bg-white rounded-full" />
+              <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div className="space-y-3 rounded-2xl border border-green-200/50 bg-gradient-to-br from-green-50/50 to-emerald-50/30 p-4 dark:border-green-800/50 dark:from-green-950/20 dark:to-emerald-950/20">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-green-500">
+                    <div className="h-6 w-6 rounded-full bg-white" />
                   </div>
                   <h4 className="font-semibold">99.9% Uptime</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Infraestrutura confiável com monitoramento 24/7
                   </p>
                 </div>
 
-                <div className="space-y-3 p-4 rounded-2xl bg-gradient-to-br from-blue-50/50 to-cyan-50/30 dark:from-blue-950/20 dark:to-cyan-950/20 border border-blue-200/50 dark:border-blue-800/50">
-                  <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto">
-                    <div className="w-6 h-6 bg-white rounded-full" />
+                <div className="space-y-3 rounded-2xl border border-blue-200/50 bg-gradient-to-br from-blue-50/50 to-cyan-50/30 p-4 dark:border-blue-800/50 dark:from-blue-950/20 dark:to-cyan-950/20">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500">
+                    <div className="h-6 w-6 rounded-full bg-white" />
                   </div>
                   <h4 className="font-semibold">Suporte Especializado</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Equipe técnica pronta para te ajudar quando precisar
                   </p>
                 </div>
 
-                <div className="space-y-3 p-4 rounded-2xl bg-gradient-to-br from-purple-50/50 to-violet-50/30 dark:from-purple-950/20 dark:to-violet-950/20 border border-purple-200/50 dark:border-purple-800/50">
-                  <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto">
-                    <div className="w-6 h-6 bg-white rounded-full" />
+                <div className="space-y-3 rounded-2xl border border-purple-200/50 bg-gradient-to-br from-purple-50/50 to-violet-50/30 p-4 dark:border-purple-800/50 dark:from-purple-950/20 dark:to-violet-950/20">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500">
+                    <div className="h-6 w-6 rounded-full bg-white" />
                   </div>
                   <h4 className="font-semibold">Performance Otimizada</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     CDN global e servidores de alta performance
                   </p>
                 </div>
@@ -208,25 +206,25 @@ export default async function PlansPage({
         </div>
 
         {/* Bottom CTA */}
-        <div className="text-center mt-16 space-y-4">
-          <div className="bg-card/50 backdrop-blur border rounded-2xl p-8 max-w-2xl mx-auto">
-            <h3 className="text-xl font-semibold mb-2">
+        <div className="mt-16 space-y-4 text-center">
+          <div className="mx-auto max-w-2xl rounded-2xl border bg-card/50 p-8 backdrop-blur">
+            <h3 className="mb-2 font-semibold text-xl">
               Precisa de algo personalizado?
             </h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="mb-4 text-muted-foreground">
               Nossa equipe pode criar um plano sob medida para suas necessidades
               específicas
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <button
+                className="rounded-lg border border-border px-6 py-2 transition-colors hover:bg-muted/50"
                 type="button"
-                className="px-6 py-2 border border-border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 Falar com vendas
               </button>
               <button
+                className="rounded-lg bg-primary px-6 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
                 type="button"
-                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
               >
                 Ver todos os recursos
               </button>

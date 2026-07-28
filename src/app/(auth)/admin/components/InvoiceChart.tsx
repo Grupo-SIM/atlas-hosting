@@ -1,17 +1,17 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Doughnut } from "react-chartjs-2";
 import {
-  Chart as chartJs,
-  CategoryScale,
-  LinearScale,
+  ArcElement,
   BarElement,
+  CategoryScale,
+  Chart as chartJs,
+  Legend,
+  LinearScale,
   Title,
   Tooltip,
-  Legend,
-  ArcElement,
 } from "chart.js";
+import { Doughnut } from "react-chartjs-2";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 chartJs.register(
   CategoryScale,
@@ -41,9 +41,9 @@ interface InvoiceChartProps {
 
 const getStatusText = (status: string) => {
   const statusMap: Record<string, string> = {
+    failed: "Falhou",
     paid: "Pago",
     pending: "Pendente",
-    failed: "Falhou",
     refunded: "Reembolsado",
   };
   return statusMap[status] || status;
@@ -59,11 +59,8 @@ const getTypeText = (type: string) => {
 
 export function InvoiceChart({ statusStats, typeStats }: InvoiceChartProps) {
   const statusData = {
-    labels: statusStats.map((stat) => getStatusText(stat.status)),
     datasets: [
       {
-        label: "Quantidade de Faturas",
-        data: statusStats.map((stat) => stat.count),
         backgroundColor: [
           "rgba(34, 197, 94, 0.5)", // green
           "rgba(234, 179, 8, 0.5)", // yellow
@@ -77,26 +74,29 @@ export function InvoiceChart({ statusStats, typeStats }: InvoiceChartProps) {
           "rgb(59, 130, 246)",
         ],
         borderWidth: 1,
+        data: statusStats.map(stat => stat.count),
+        label: "Quantidade de Faturas",
       },
     ],
+    labels: statusStats.map(stat => getStatusText(stat.status)),
   };
 
   const typeData = {
-    labels: typeStats.map((stat) => getTypeText(stat.type)),
     datasets: [
       {
-        data: typeStats.map((stat) => stat.count),
         backgroundColor: ["rgba(34, 197, 94, 0.5)", "rgba(59, 130, 246, 0.5)"],
         borderColor: ["rgb(34, 197, 94)", "rgb(59, 130, 246)"],
         borderWidth: 1,
+        data: typeStats.map(stat => stat.count),
       },
     ],
+    labels: typeStats.map(stat => getTypeText(stat.type)),
   };
 
   return (
     <section className="mb-8">
-      <h2 className="text-xl font-bold mb-4">Gráficos de Faturas</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <h2 className="mb-4 font-bold text-xl">Gráficos de Faturas</h2>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Status das Faturas</CardTitle>
@@ -105,13 +105,13 @@ export function InvoiceChart({ statusStats, typeStats }: InvoiceChartProps) {
             <Doughnut
               data={statusData}
               options={{
-                responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                   legend: {
                     position: "top" as const,
                   },
                 },
-                maintainAspectRatio: false,
+                responsive: true,
               }}
             />
           </CardContent>
@@ -124,13 +124,13 @@ export function InvoiceChart({ statusStats, typeStats }: InvoiceChartProps) {
             <Doughnut
               data={typeData}
               options={{
-                responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                   legend: {
                     position: "top" as const,
                   },
                 },
-                maintainAspectRatio: false,
+                responsive: true,
               }}
             />
           </CardContent>

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 // Test table parsing with real wp-cli output
-function parseTableOutput(output: string): Array<Record<string, string>> {
+function parseTableOutput(output: string): Record<string, string>[] {
   if (!output?.trim()) return [];
 
   const lines = output.trim().split("\n");
@@ -11,10 +11,10 @@ function parseTableOutput(output: string): Array<Record<string, string>> {
   const headerLine = lines[0];
   const headers = headerLine
     .split(/\s{2,}/)
-    .map((h) => h.trim())
+    .map(h => h.trim())
     .filter(Boolean);
 
-  const results: Array<Record<string, string>> = [];
+  const results: Record<string, string>[] = [];
 
   // Parse each data line
   for (let i = 1; i < lines.length; i++) {
@@ -22,7 +22,7 @@ function parseTableOutput(output: string): Array<Record<string, string>> {
     if (!line) continue;
 
     // Split by multiple spaces to separate columns
-    const values = line.split(/\s{2,}/).map((v) => v.trim());
+    const values = line.split(/\s{2,}/).map(v => v.trim());
 
     const row: Record<string, string> = {};
     headers.forEach((header, index) => {
@@ -49,10 +49,10 @@ console.log("Parsed plugins:", JSON.stringify(parsed, null, 2));
 console.log("\n📊 Analysis:");
 console.log(`Total plugins: ${parsed.length}`);
 console.log(
-  `Active plugins: ${parsed.filter((p) => p.status === "active").length}`
+  `Active plugins: ${parsed.filter(p => p.status === "active").length}`
 );
 console.log(
-  `Plugins with updates: ${parsed.filter((p) => p.update === "available").length}`
+  `Plugins with updates: ${parsed.filter(p => p.update === "available").length}`
 );
 
 // Test actual WordPress list parsing
@@ -66,7 +66,7 @@ console.log("Parsed WP instances:", JSON.stringify(wpParsed, null, 2));
 
 // Find the target domain
 const targetDomain = "lauraifelipe.xyz";
-const targetInstance = wpParsed.find((instance) =>
+const targetInstance = wpParsed.find(instance =>
   instance["Website URL"]?.includes(targetDomain)
 );
 

@@ -1,9 +1,8 @@
 // src/app/api/wp-install/route.ts
-import { getUser } from "@/lib/auth/index";
 
 import axios from "axios";
-import { getSSEPayload, sendSSE } from "./utils";
-
+import { getUser } from "@/lib/auth/index";
+import { getSSEPayload } from "./utils";
 
 export async function GET(request: Request) {
   const urlParams = new URL(request.url).searchParams;
@@ -24,12 +23,12 @@ export async function GET(request: Request) {
     // Not using SSE here as it's a preliminary a before stream starts
     return new Response(
       JSON.stringify({
-        type: "ERROR",
         message: "Parâmetros ausentes na requisição.",
+        type: "ERROR",
       }),
       {
-        status: 400,
         headers: { "Content-Type": "application/json" },
+        status: 400,
       }
     );
   }
@@ -43,10 +42,10 @@ export async function GET(request: Request) {
 
   if (!user) {
     return new Response(
-      JSON.stringify({ type: "ERROR", message: "Usuário não autenticado." }),
+      JSON.stringify({ message: "Usuário não autenticado.", type: "ERROR" }),
       {
-        status: 401,
         headers: { "Content-Type": "application/json" },
+        status: 401,
       }
     );
   }
@@ -58,15 +57,15 @@ export async function GET(request: Request) {
   try {
     const worker = new Worker(new URL("worker/index.ts", import.meta.url).href);
 
-    worker.onerror = (error) => {
+    worker.onerror = error => {
       console.error("Erro no worker:", error);
     };
 
-    worker.onmessageerror = (error) => {
+    worker.onmessageerror = error => {
       console.error("Erro de mensagem no worker:", error);
     };
 
-    worker.onmessage = (event) => {
+    worker.onmessage = event => {
       const { type, message, data } = event.data as {
         type: "INFO" | "ERROR" | "SUCCESS";
         message: string;
@@ -85,17 +84,17 @@ export async function GET(request: Request) {
     };
 
     worker.postMessage({
-      user,
-      domainName,
       adminEmail,
       adminPassword,
       adminUsername,
+      domainName,
       plugins,
       siteName,
+      user,
     });
 
-    await new Promise<void>((resolve) => {
-      worker.addEventListener("message", (event) => {
+    await new Promise<void>(resolve => {
+      worker.addEventListener("message", event => {
         const { type } = event.data as {
           type: "INFO" | "ERROR" | "SUCCESS";
           message: string;
@@ -125,9 +124,9 @@ export async function GET(request: Request) {
 
   return new Response(responseStream.readable, {
     headers: {
+      "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
       "Content-Encoding": "none",
-      "Cache-Control": "no-cache, no-transform",
       "Content-Type": "text/event-stream; charset=utf-8",
     },
   });

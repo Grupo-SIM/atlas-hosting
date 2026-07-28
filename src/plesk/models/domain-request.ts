@@ -82,7 +82,7 @@ export interface DomainRequest {
    * @memberof DomainRequest
    * @example ["93.184.216.34","2606:2800:220:1:248:1893:25c8:1946"]
    */
-  ipAddresses?: Array<string>;
+  ipAddresses?: string[];
 
   /**
    * @deprecated
@@ -91,7 +91,7 @@ export interface DomainRequest {
    * @memberof DomainRequest
    * @example ["93.184.216.34"]
    */
-  ipv4?: Array<string>;
+  ipv4?: string[];
 
   /**
    * @deprecated
@@ -100,7 +100,7 @@ export interface DomainRequest {
    * @memberof DomainRequest
    * @example ["2606:2800:220:1:248:1893:25c8:1946"]
    */
-  ipv6?: Array<string>;
+  ipv6?: string[];
 
   /**
    * @type {PlanReference}

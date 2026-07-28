@@ -24,19 +24,19 @@ export async function PlanStats() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {planStats.map((plan) => (
-            <div key={plan.id} className="space-y-2">
-              <div className="flex justify-between items-center">
+          {planStats.map(plan => (
+            <div className="space-y-2" key={plan.id}>
+              <div className="flex items-center justify-between">
                 <span className="font-medium">{plan.name}</span>
                 <span className="text-gray-600">
                   {plan.users.length} usuários
                 </span>
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 {plan.users.map((user: any) => (
                   <div
+                    className="flex items-center justify-between py-1"
                     key={user.id}
-                    className="flex justify-between items-center py-1"
                   >
                     <span>{user.name}</span>
                     <span className="text-xs">{user.email}</span>

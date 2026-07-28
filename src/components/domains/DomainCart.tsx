@@ -1,5 +1,7 @@
 "use client";
 
+import { CreditCard, Server, ShieldCheck, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -9,8 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, Server, ShieldCheck, Trash2 } from "lucide-react";
-import { useState } from "react";
 
 interface DomainCartProps {
   cartItems: string[];
@@ -61,7 +61,7 @@ export function DomainCart({ cartItems, removeFromCart }: DomainCartProps) {
 
   return (
     <div className="space-y-6">
-      <div className="border rounded-lg overflow-x-auto">
+      <div className="overflow-x-auto rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -81,10 +81,10 @@ export function DomainCart({ cartItems, removeFromCart }: DomainCartProps) {
                 </TableCell>
                 <TableCell>
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/20"
                     onClick={() => removeFromCart(domain)}
-                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                    size="icon"
+                    variant="ghost"
                   >
                     <Trash2 className="h-4 w-4" />
                     <span className="sr-only">Remove</span>
@@ -96,18 +96,18 @@ export function DomainCart({ cartItems, removeFromCart }: DomainCartProps) {
         </Table>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Included with your domains:</h3>
+          <h3 className="font-medium text-lg">Included with your domains:</h3>
 
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <ShieldCheck className="h-4 w-4" />
               </div>
               <div>
                 <p className="font-medium">Privacy Protection</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Keep your personal information hidden from the public WHOIS
                   directory
                 </p>
@@ -115,12 +115,12 @@ export function DomainCart({ cartItems, removeFromCart }: DomainCartProps) {
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Server className="h-4 w-4" />
               </div>
               <div>
                 <p className="font-medium">DNS Management</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Configure your domain settings with our easy-to-use control
                   panel
                 </p>
@@ -129,8 +129,8 @@ export function DomainCart({ cartItems, removeFromCart }: DomainCartProps) {
           </div>
         </div>
 
-        <div className="bg-card border rounded-lg p-6 space-y-4">
-          <h3 className="text-lg font-medium">Order Summary</h3>
+        <div className="space-y-4 rounded-lg border bg-card p-6">
+          <h3 className="font-medium text-lg">Order Summary</h3>
 
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -150,25 +150,25 @@ export function DomainCart({ cartItems, removeFromCart }: DomainCartProps) {
               <span className="text-green-600 dark:text-green-400">Free</span>
             </div>
 
-            <div className="pt-2 border-t flex justify-between font-semibold">
+            <div className="flex justify-between border-t pt-2 font-semibold">
               <span>Total (USD)</span>
               <span>${calculateSubtotal().toFixed(2)}</span>
             </div>
           </div>
 
           <Button
-            className="w-full mt-4"
-            size="lg"
-            onClick={handleCheckout}
+            className="mt-4 w-full"
             disabled={isCheckingOut || cartItems.length === 0}
+            onClick={handleCheckout}
+            size="lg"
           >
             {isCheckingOut ? (
               <>
                 <svg
-                  className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
+                  className="mr-3 -ml-1 h-4 w-4 animate-spin text-white"
                   fill="none"
                   viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
                   <circle
                     className="opacity-25"
@@ -180,8 +180,8 @@ export function DomainCart({ cartItems, removeFromCart }: DomainCartProps) {
                   />
                   <path
                     className="opacity-75"
-                    fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    fill="currentColor"
                   />
                 </svg>
                 Processing...
@@ -194,7 +194,7 @@ export function DomainCart({ cartItems, removeFromCart }: DomainCartProps) {
             )}
           </Button>
 
-          <p className="text-xs text-center text-muted-foreground pt-2">
+          <p className="pt-2 text-center text-muted-foreground text-xs">
             By proceeding, you agree to our Terms of Service and Privacy Policy
           </p>
         </div>

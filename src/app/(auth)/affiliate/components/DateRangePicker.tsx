@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
 import { SimpayCalendar } from "@/app/(auth)/billing/_/simpay-calendar";
 
 export function DatePickerWithRange({
@@ -13,13 +12,13 @@ export function DatePickerWithRange({
   return (
     <div className={className}>
       <SimpayCalendar
-        label=""
-        start={start}
         end={end}
+        label=""
         onChange={(newStart, newEnd) => {
           setStart(newStart);
           setEnd(newEnd);
         }}
+        start={start}
       />
     </div>
   );

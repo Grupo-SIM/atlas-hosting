@@ -1,24 +1,23 @@
 "use server";
 
-import { getUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import {
-  pgOrganizationDomains,
-  pgUserEmailAccountConfigs,
-} from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { getUser } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { pgUserEmailAccountConfigs } from "@/lib/db/schema";
+import { encrypt } from "@/lib/encryption";
+import type { EmailToSend } from "@/lib/server/apis/plesk-xml";
+import {
+  createImapClient,
+  createSmtpClient,
+} from "@/lib/server/apis/plesk-xml";
 import {
   createMailAccount,
   deleteMailAccount,
-  getMailAccounts,
   getDomain,
+  getMailAccounts,
 } from "@/lib/server/apis/plesk-xml/client";
-import type { MailName } from "@/lib/server/apis/plesk-xml/types";
-import { encrypt } from "@/lib/encryption";
 import { getUserCurrentDomain } from "@/lib/server/utils";
-import { createImapClient, createSmtpClient } from "@/lib/server/apis/plesk-xml";
-import type { EmailMessage, EmailToSend } from "@/lib/server/apis/plesk-xml";
 
 // Get user's Plesk mail accounts
 export async function getPleskMailAccounts() {
@@ -30,8 +29,8 @@ export async function getPleskMailAccounts() {
 
     if (!selectedDomain) {
       return {
-        success: false,
         error: "No domain selected. Please select a domain first.",
+        success: false,
       };
     }
 
@@ -40,20 +39,20 @@ export async function getPleskMailAccounts() {
 
     if (!pleskSite?.id) {
       return {
-        success: false,
         error: `Domain ${selectedDomain.domain} not found in Plesk or not configured for hosting.`,
+        success: false,
       };
     }
 
     // Fetch real mail accounts from Plesk
     const mailAccounts = await getMailAccounts(pleskSite.id);
 
-    return { success: true, data: mailAccounts };
+    return { data: mailAccounts, success: true };
   } catch (error) {
     console.error("Error fetching Plesk mail accounts:", error);
     return {
-      success: false,
       error: "Failed to fetch mail accounts from server",
+      success: false,
     };
   }
 }
@@ -92,14 +91,14 @@ export async function createPleskMailAccount(
 
     // Create mail account in Plesk
     const pleskResponse = await createMailAccount(pleskSite.id, {
-      name: username, // This is the local part (before @)
       mailbox: {
         enabled: true,
         // quota: quota * 1024 * 1024, // Convert MB to bytes
       },
+      name: username, // This is the local part (before @)
       password: {
-        value: password,
         type: "plain",
+        value: password,
       },
     });
 
@@ -108,29 +107,29 @@ export async function createPleskMailAccount(
     const encryptedPassword = await encrypt(password);
 
     await db.insert(pgUserEmailAccountConfigs).values({
-      id: crypto.randomUUID(),
-      userId: user.id,
       emailAddress,
       emailPassword: encryptedPassword,
+      encryptedImapPassword: encryptedPassword,
+      encryptedSmtpPassword: encryptedPassword,
+      id: crypto.randomUUID(),
 
       // IMAP settings (Plesk default)
       imapHost: `mail.${selectedDomain.domain}`,
       imapPort: 993,
-      imapUsername: emailAddress,
-      encryptedImapPassword: encryptedPassword,
       imapSecure: true,
+      imapUsername: emailAddress,
+
+      // Plesk integration
+      isPleskManaged: true,
+      pleskMailId: pleskResponse.id, // Store the Plesk mail account ID
+      pleskSiteId: pleskSite.id,
 
       // SMTP settings (Plesk default)
       smtpHost: `mail.${selectedDomain.domain}`,
       smtpPort: 465,
-      smtpUsername: emailAddress,
-      encryptedSmtpPassword: encryptedPassword,
       smtpSecure: true,
-
-      // Plesk integration
-      isPleskManaged: true,
-      pleskSiteId: pleskSite.id,
-      pleskMailId: pleskResponse.id, // Store the Plesk mail account ID
+      smtpUsername: emailAddress,
+      userId: user.id,
     });
 
     revalidatePath("/email");
@@ -159,8 +158,8 @@ export async function deletePleskMailAccount(mailAccountId: number) {
 
     if (!accountConfig) {
       return {
-        success: false,
         error: "Mail account not found or not managed by Plesk",
+        success: false,
       };
     }
 
@@ -176,7 +175,7 @@ export async function deletePleskMailAccount(mailAccountId: number) {
     return { success: true };
   } catch (error) {
     console.error("Error deleting Plesk mail account:", error);
-    return { success: false, error: "Failed to delete mail account" };
+    return { error: "Failed to delete mail account", success: false };
   }
 }
 
@@ -190,16 +189,16 @@ export async function getDomainsForEmail() {
 
     if (!selectedDomain) {
       return {
-        success: false,
         error: "No domain selected. Please select a domain first.",
+        success: false,
       };
     }
 
     // Return the selected domain as the available domain for email
-    return { success: true, data: [selectedDomain] };
+    return { data: [selectedDomain], success: true };
   } catch (error) {
     console.error("Error fetching domains for email:", error);
-    return { success: false, error: "Failed to fetch domains" };
+    return { error: "Failed to fetch domains", success: false };
   }
 }
 
@@ -215,10 +214,10 @@ export async function getEmailAccountSettings() {
       ),
     });
 
-    return { success: true, data: accounts };
+    return { data: accounts, success: true };
   } catch (error) {
     console.error("Error fetching email account settings:", error);
-    return { success: false, error: "Failed to fetch account settings" };
+    return { error: "Failed to fetch account settings", success: false };
   }
 }
 
@@ -237,7 +236,7 @@ export async function getEmailMessages(accountId: string, folder = "INBOX") {
     });
 
     if (!accountConfig) {
-      return { success: false, error: "Email account not found" };
+      return { error: "Email account not found", success: false };
     }
 
     // Create IMAP client and fetch emails
@@ -246,13 +245,13 @@ export async function getEmailMessages(accountId: string, folder = "INBOX") {
 
     try {
       const emails = await imapClient.getEmails(folder, 50);
-      return { success: true, data: emails };
+      return { data: emails, success: true };
     } finally {
       await imapClient.disconnect();
     }
   } catch (error) {
     console.error("Error fetching email messages:", error);
-    return { success: false, error: "Failed to fetch email messages" };
+    return { error: "Failed to fetch email messages", success: false };
   }
 }
 
@@ -271,7 +270,7 @@ export async function getEmailFolders(accountId: string) {
     });
 
     if (!accountConfig) {
-      return { success: false, error: "Email account not found" };
+      return { error: "Email account not found", success: false };
     }
 
     // Create IMAP client and fetch folders
@@ -280,13 +279,13 @@ export async function getEmailFolders(accountId: string) {
 
     try {
       const folders = await imapClient.getFolders();
-      return { success: true, data: folders };
+      return { data: folders, success: true };
     } finally {
       await imapClient.disconnect();
     }
   } catch (error) {
     console.error("Error fetching email folders:", error);
-    return { success: false, error: "Failed to fetch email folders" };
+    return { error: "Failed to fetch email folders", success: false };
   }
 }
 
@@ -303,7 +302,7 @@ export async function sendEmail(formData: FormData) {
     const html = formData.get("html") as string;
 
     if (!accountId || !to || !subject) {
-      return { success: false, error: "Missing required fields" };
+      return { error: "Missing required fields", success: false };
     }
 
     // Get the email account configuration
@@ -316,7 +315,7 @@ export async function sendEmail(formData: FormData) {
     });
 
     if (!accountConfig) {
-      return { success: false, error: "Email account not found" };
+      return { error: "Email account not found", success: false };
     }
 
     // Create SMTP client and send email
@@ -324,31 +323,31 @@ export async function sendEmail(formData: FormData) {
 
     try {
       const emailToSend: EmailToSend = {
+        bcc: bcc ? bcc.split(",").map(email => email.trim()) : undefined,
+        cc: cc ? cc.split(",").map(email => email.trim()) : undefined,
         from: accountConfig.emailAddress,
-        to: to.split(",").map((email) => email.trim()),
-        cc: cc ? cc.split(",").map((email) => email.trim()) : undefined,
-        bcc: bcc ? bcc.split(",").map((email) => email.trim()) : undefined,
+        html: html || undefined,
         subject,
         text: text || undefined,
-        html: html || undefined,
+        to: to.split(",").map(email => email.trim()),
       };
 
       const result = await smtpClient.sendEmail(emailToSend);
 
       return {
-        success: true,
         data: {
-          messageId: result.messageId,
           accepted: result.accepted,
+          messageId: result.messageId,
           rejected: result.rejected,
         },
+        success: true,
       };
     } finally {
       await smtpClient.disconnect();
     }
   } catch (error) {
     console.error("Error sending email:", error);
-    return { success: false, error: "Failed to send email" };
+    return { error: "Failed to send email", success: false };
   }
 }
 
@@ -371,7 +370,7 @@ export async function markEmailAsRead(
     });
 
     if (!accountConfig) {
-      return { success: false, error: "Email account not found" };
+      return { error: "Email account not found", success: false };
     }
 
     // Create IMAP client and mark as read
@@ -386,7 +385,7 @@ export async function markEmailAsRead(
     }
   } catch (error) {
     console.error("Error marking email as read:", error);
-    return { success: false, error: "Failed to mark email as read" };
+    return { error: "Failed to mark email as read", success: false };
   }
 }
 
@@ -409,7 +408,7 @@ export async function deleteEmail(
     });
 
     if (!accountConfig) {
-      return { success: false, error: "Email account not found" };
+      return { error: "Email account not found", success: false };
     }
 
     // Create IMAP client and delete email
@@ -424,7 +423,7 @@ export async function deleteEmail(
     }
   } catch (error) {
     console.error("Error deleting email:", error);
-    return { success: false, error: "Failed to delete email" };
+    return { error: "Failed to delete email", success: false };
   }
 }
 

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { AlertCircle, CheckCircle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -9,14 +11,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Log } from "@/lib/db/schema/tables/log";
+import type { User } from "@/lib/db/schema/tables/user";
 import { MemberManagement } from "./MemberManagement";
 import { OrganizationOverview } from "./OrganizationOverview";
-import type { User } from "@/lib/db/schema/tables/user";
-import type { Organization } from "@/lib/db/schema/tables/organization";
-import type { Log } from "@/lib/db/schema/tables/log";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { AlertCircle, CheckCircle } from "lucide-react";
 
 interface OrganizationTabsProps {
   user: User;
@@ -44,8 +42,8 @@ export function OrganizationTabs({
   const members = organization?.members || []; // Ensure members is an array
 
   return (
-    <Tabs defaultValue="overview" className="space-y-6">
-      <TabsList className="flex-wrap h-auto">
+    <Tabs className="space-y-6" defaultValue="overview">
+      <TabsList className="h-auto flex-wrap">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="members">Members</TabsTrigger>
         <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
@@ -58,10 +56,10 @@ export function OrganizationTabs({
 
       <TabsContent value="members">
         <MemberManagement
-          members={members}
           currentUserId={currentUserId}
-          organizationId={organizationId}
           isOwner={isOwner}
+          members={members}
+          organizationId={organizationId}
         />
       </TabsContent>
 
@@ -69,7 +67,7 @@ export function OrganizationTabs({
         <Card>
           <CardContent>
             <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                   <CardHeader>
                     <CardTitle>Admin Role</CardTitle>
@@ -78,7 +76,7 @@ export function OrganizationTabs({
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <ul className="list-disc space-y-1 pl-5 text-sm">
                       <li>Manage organization settings</li>
                       <li>Invite and remove members</li>
                       <li>Change member roles</li>
@@ -97,7 +95,7 @@ export function OrganizationTabs({
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <ul className="list-disc space-y-1 pl-5 text-sm">
                       <li>Create and manage assigned resources</li>
                       <li>Deploy code and applications</li>
                       <li>Manage development environments</li>
@@ -123,10 +121,10 @@ export function OrganizationTabs({
           <CardContent>
             {auditLogs && auditLogs.length > 0 ? (
               <div className="space-y-4">
-                {auditLogs.map((log) => (
+                {auditLogs.map(log => (
                   <div
+                    className="flex items-start gap-4 rounded-lg border p-4"
                     key={log.log.id}
-                    className="flex items-start gap-4 p-4 border rounded-lg"
                   >
                     <div className="flex-shrink-0">
                       {log.log.severity === "success" && (
@@ -145,16 +143,16 @@ export function OrganizationTabs({
                     <div className="flex-1">
                       <div className="flex justify-between">
                         <h3 className="font-medium">{log.log.title}</h3>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-muted-foreground text-sm">
                           {log.log.createdAt &&
                             format(log.log.createdAt, "PPp", { locale: ptBR })}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="mt-1 text-muted-foreground text-sm">
                         {log.log.description}
                       </p>
-                      <div className="flex items-center mt-2">
-                        <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
+                      <div className="mt-2 flex items-center">
+                        <span className="rounded-full bg-secondary px-2 py-1 text-secondary-foreground text-xs">
                           {log.user.name}
                         </span>
                       </div>

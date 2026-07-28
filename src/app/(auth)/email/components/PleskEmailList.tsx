@@ -1,26 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  Search,
-  Star,
-  Paperclip,
-  MoreHorizontal,
-  RefreshCw,
-  Filter,
-  Archive,
-  Trash2,
-  MailOpen,
-  Mail,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  Archive,
+  Filter,
+  Mail,
+  MailOpen,
+  MoreHorizontal,
+  Paperclip,
+  RefreshCw,
+  Search,
+  Star,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 interface EmailMessage {
   id: string;
@@ -55,7 +55,7 @@ export function PleskEmailList({
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
 
   const filteredEmails = emails.filter(
-    (email) =>
+    email =>
       email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
       email.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
       email.preview.toLowerCase().includes(searchQuery.toLowerCase())
@@ -81,10 +81,10 @@ export function PleskEmailList({
 
   const getFolderTitle = (folderId: string) => {
     const folderNames: Record<string, string> = {
+      archive: "Arquivo",
+      drafts: "Rascunhos",
       inbox: "Caixa de Entrada",
       sent: "Enviados",
-      drafts: "Rascunhos",
-      archive: "Arquivo",
       spam: "Spam",
       trash: "Lixeira",
     };
@@ -99,18 +99,18 @@ export function PleskEmailList({
   };
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="flex h-full flex-col">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{getFolderTitle(folder)}</CardTitle>
           <div className="flex items-center space-x-1">
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <RefreshCw className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <Filter className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </div>
@@ -118,54 +118,54 @@ export function PleskEmailList({
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
           <Input
+            className="pl-10"
+            onChange={e => setSearchQuery(e.target.value)}
             placeholder="Pesquisar e-mails..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
           />
         </div>
 
         {/* Quick Actions */}
         {selectedEmails.size > 0 && (
-          <div className="flex items-center space-x-2 p-2 bg-secondary rounded-lg">
-            <span className="text-sm text-muted-foreground">
+          <div className="flex items-center space-x-2 rounded-lg bg-secondary p-2">
+            <span className="text-muted-foreground text-sm">
               {selectedEmails.size} selecionado(s)
             </span>
-            <Separator orientation="vertical" className="h-4" />
-            <Button variant="ghost" size="sm">
+            <Separator className="h-4" orientation="vertical" />
+            <Button size="sm" variant="ghost">
               <Archive className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <Trash2 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <MailOpen className="h-4 w-4" />
             </Button>
           </div>
         )}
       </CardHeader>
 
-      <CardContent className="flex-1 p-0 overflow-hidden">
+      <CardContent className="flex-1 overflow-hidden p-0">
         <div className="h-full overflow-y-auto">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-              <RefreshCw className="h-8 w-8 text-muted-foreground animate-spin mb-4" />
-              <p className="text-lg font-medium text-muted-foreground mb-2">
+            <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+              <RefreshCw className="mb-4 h-8 w-8 animate-spin text-muted-foreground" />
+              <p className="mb-2 font-medium text-lg text-muted-foreground">
                 Carregando e-mails...
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Conectando ao servidor de e-mail
               </p>
             </div>
           ) : filteredEmails.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-              <Mail className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg font-medium text-muted-foreground mb-2">
+            <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+              <Mail className="mb-4 h-12 w-12 text-muted-foreground" />
+              <p className="mb-2 font-medium text-lg text-muted-foreground">
                 {searchQuery ? "Nenhum e-mail encontrado" : "Pasta vazia"}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {searchQuery
                   ? "Tente ajustar os termos de busca"
                   : "Não há e-mails nesta pasta"}
@@ -173,36 +173,36 @@ export function PleskEmailList({
             </div>
           ) : (
             <div className="space-y-0">
-              {filteredEmails.map((email) => (
+              {filteredEmails.map(email => (
                 <div
-                  key={email.id}
                   className={cn(
-                    "flex items-start space-x-3 p-4 border-b cursor-pointer hover:bg-secondary/50 transition-colors",
+                    "flex cursor-pointer items-start space-x-3 border-b p-4 transition-colors hover:bg-secondary/50",
                     selectedEmail?.id === email.id && "bg-secondary",
                     !email.isRead && "bg-blue-50/50 dark:bg-blue-950/20"
                   )}
+                  key={email.id}
                   onClick={() => handleEmailClick(email)}
                 >
                   {/* Selection Checkbox */}
                   <input
-                    type="checkbox"
                     checked={selectedEmails.has(email.id)}
-                    onChange={(e) => {
+                    className="mt-1 rounded border-gray-300"
+                    onChange={e => {
                       e.stopPropagation();
                       handleEmailSelection(email.id, e.target.checked);
                     }}
-                    className="mt-1 rounded border-gray-300"
+                    type="checkbox"
                   />
 
                   {/* Star */}
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-0 h-auto"
-                    onClick={(e) => {
+                    className="h-auto p-0"
+                    onClick={e => {
                       e.stopPropagation();
                       email.isStarred = !email.isStarred;
                     }}
+                    size="sm"
+                    variant="ghost"
                   >
                     <Star
                       className={cn(
@@ -215,22 +215,22 @@ export function PleskEmailList({
                   </Button>
 
                   {/* Email Content */}
-                  <div className="flex-1 min-w-0 space-y-1">
+                  <div className="min-w-0 flex-1 space-y-1">
                     {/* Header */}
                     <div className="flex items-center justify-between">
                       <p
                         className={cn(
-                          "text-sm truncate",
+                          "truncate text-sm",
                           !email.isRead ? "font-semibold" : "font-medium"
                         )}
                       >
                         {getFromDisplay(email)}
                       </p>
-                      <div className="flex items-center space-x-2 flex-shrink-0">
+                      <div className="flex flex-shrink-0 items-center space-x-2">
                         {email.hasAttachment && (
                           <Paperclip className="h-3 w-3 text-muted-foreground" />
                         )}
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-muted-foreground text-xs">
                           {formatDistanceToNow(email.date, {
                             addSuffix: true,
                             locale: ptBR,
@@ -242,7 +242,7 @@ export function PleskEmailList({
                     {/* Subject */}
                     <p
                       className={cn(
-                        "text-sm truncate",
+                        "truncate text-sm",
                         !email.isRead ? "font-semibold" : "font-normal"
                       )}
                     >
@@ -250,19 +250,19 @@ export function PleskEmailList({
                     </p>
 
                     {/* Preview */}
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="truncate text-muted-foreground text-xs">
                       {email.preview}
                     </p>
 
                     {/* Badges */}
                     <div className="flex items-center space-x-2">
                       {!email.isRead && (
-                        <Badge variant="default" className="text-xs">
+                        <Badge className="text-xs" variant="default">
                           Novo
                         </Badge>
                       )}
                       {email.folder === "spam" && (
-                        <Badge variant="destructive" className="text-xs">
+                        <Badge className="text-xs" variant="destructive">
                           Spam
                         </Badge>
                       )}

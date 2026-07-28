@@ -10,16 +10,16 @@ export default async function ImpersonationBanner() {
   if (!state) return null;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 bg-amber-500 px-4 py-2 text-sm font-medium text-amber-950">
+    <div className="flex flex-wrap items-center justify-between gap-2 bg-amber-500 px-4 py-2 font-medium text-amber-950 text-sm">
       <span>
         Você está acessando como{" "}
-        <strong>{state.target.name || state.target.email}</strong>{" "}
-        ({state.target.email}) — admin: {state.admin.email}
+        <strong>{state.target.name || state.target.email}</strong> (
+        {state.target.email}) — admin: {state.admin.email}
       </span>
       <form action={stopImpersonationAction}>
         <button
+          className="rounded-md bg-amber-950 px-3 py-1 font-semibold text-amber-50 text-xs transition-colors hover:bg-amber-900"
           type="submit"
-          className="rounded-md bg-amber-950 px-3 py-1 text-xs font-semibold text-amber-50 transition-colors hover:bg-amber-900"
         >
           Sair da conta do cliente
         </button>

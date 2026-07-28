@@ -1,19 +1,19 @@
-import { db } from "@/lib/db";
-import { pgUser } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
+import { pgUser } from "@/lib/db/schema";
 
 /**
  * Check if user's email is verified and redirect to verification page if not
  */
 export async function requireEmailVerification(userId: string): Promise<void> {
   const user = await db.query.pgUser.findFirst({
-    where: eq(pgUser.id, userId),
     columns: {
-      id: true,
       email: true,
       emailVerified: true,
+      id: true,
     },
+    where: eq(pgUser.id, userId),
   });
 
   if (!user) {
@@ -31,10 +31,10 @@ export async function requireEmailVerification(userId: string): Promise<void> {
  */
 export async function isEmailVerified(userId: string): Promise<boolean> {
   const user = await db.query.pgUser.findFirst({
-    where: eq(pgUser.id, userId),
     columns: {
       emailVerified: true,
     },
+    where: eq(pgUser.id, userId),
   });
 
   return Boolean(user?.emailVerified);

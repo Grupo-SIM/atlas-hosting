@@ -1,8 +1,8 @@
 import axios, {
+  type AxiosError,
   type AxiosInstance,
   type AxiosRequestConfig,
   type Method,
-  type AxiosError,
 } from "axios";
 import { DeSECError, DeSECRateLimitError } from "./errors";
 
@@ -27,7 +27,7 @@ export class DeSECClient {
 
     // Interceptor for error handling and rate limit retries
     this.axiosInstance.interceptors.response.use(
-      (response) => response,
+      response => response,
       async (error: AxiosError) => {
         const { config, response } = error;
 
@@ -49,13 +49,12 @@ export class DeSECClient {
               retryAfter,
               responseBody
             );
-          } else {
-            throw new DeSECError(
-              `API Error (${statusCode}): ${errorMessage}`,
-              statusCode,
-              responseBody
-            );
           }
+          throw new DeSECError(
+            `API Error (${statusCode}): ${errorMessage}`,
+            statusCode,
+            responseBody
+          );
         }
 
         // If no response, it's a network error or request setup issue
@@ -70,8 +69,7 @@ export class DeSECClient {
    */
   public setToken(token: string): void {
     this.token = token;
-    this.axiosInstance.defaults.headers.common["Authorization"] =
-      `Token ${this.token}`;
+    this.axiosInstance.defaults.headers.common.Authorization = `Token ${this.token}`;
   }
 
   /**
@@ -79,7 +77,7 @@ export class DeSECClient {
    */
   public clearToken(): void {
     this.token = null;
-    delete this.axiosInstance.defaults.headers.common["Authorization"];
+    delete this.axiosInstance.defaults.headers.common.Authorization;
   }
 
   /**
@@ -96,17 +94,13 @@ export class DeSECClient {
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    try {
-      const response = await this.axiosInstance.request<T>({
-        method,
-        url,
-        data,
-        ...config,
-      });
-      return response.data;
-    } catch (error) {
-      throw error; // Re-throw custom DeSECError or DeSECRateLimitError
-    }
+    const response = await this.axiosInstance.request<T>({
+      data,
+      method,
+      url,
+      ...config,
+    });
+    return response.data;
   }
 
   public get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
@@ -189,11 +183,11 @@ export class DeSECClient {
 
     try {
       const response = await axios.get<string>(updateUrl, {
-        params,
         auth: {
-          username: domainName,
           password: tokenSecret,
+          username: domainName,
         },
+        params,
         // Alternatively, for HTTP Token Authentication:
         // headers: {
         //   'Authorization': `Token ${tokenSecret}`

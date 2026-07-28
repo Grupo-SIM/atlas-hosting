@@ -1,827 +1,827 @@
 {
-  "status": "ok",
-  "filter-id": "lucasgarrafielo.xyz",
-  "id": 367,
   "descriptor": {
-    "property": [
-      {
-        "name": "ftp_login",
-        "type": "string",
-        "writable-by": ["admin", "client", "reseller"],
-        "label": "FTP Username",
-        "extension": {
-          "levels": "subdomain"
-        }
-      },
-      {
-        "name": "ftp_password",
-        "type": "passwordString",
-        "writable-by": ["admin", "client", "reseller"],
-        "label": "FTP Password",
-        "extension": ""
-      },
-      {
-        "name": "ftp_quota",
-        "type": "bytes",
-        "writable-by": "none",
-        "label": "Hard disk quota",
-        "extension": {
-          "levels": "subdomain"
-        }
-      },
-      {
-        "name": "shell",
-        "type": "string",
-        "enum": [
-          {
-            "value": "/bin/false",
-            "label": "Proibido"
-          },
-          {
-            "value": "/bin/sh",
-            "label": "/bin/sh"
-          },
-          {
-            "value": "/bin/bash",
-            "label": "/bin/bash"
-          },
-          {
-            "value": "/usr/bin/bash",
-            "label": "/usr/bin/bash"
-          },
-          {
-            "value": "/bin/rbash",
-            "label": "/bin/rbash"
-          },
-          {
-            "value": "/usr/bin/rbash",
-            "label": "/usr/bin/rbash"
-          },
-          {
-            "value": "/usr/bin/sh",
-            "label": "/usr/bin/sh"
-          },
-          {
-            "value": "/bin/dash",
-            "label": "/bin/dash"
-          },
-          {
-            "value": "/usr/bin/dash",
-            "label": "/usr/bin/dash"
-          },
-          {
-            "value": "/usr/bin/tmux",
-            "label": "/usr/bin/tmux"
-          },
-          {
-            "value": "/usr/bin/screen",
-            "label": "/usr/bin/screen"
-          },
-          {
-            "value": "/opt/psa/bin/chrootsh",
-            "label": "/bin/bash (chrooted)"
-          }
-        ],
-        "writable-by": "admin",
-        "label": "SSH access to the server shell under the subscription's system user",
-        "extension": ""
-      },
-      {
-        "name": "ssl",
-        "type": "boolean",
-        "writable-by": "admin",
-        "label": "SSL/TLS support",
-        "extension": {
-          "levels": "subdomain"
-        }
-      },
-      {
-        "name": "php_handler_id",
-        "type": "string",
-        "enum": [
-          {
-            "value": "cgi",
-            "label": "PHP 8.1.32 (CGI application)"
-          },
-          {
-            "value": "fastcgi",
-            "label": "PHP 8.1.32 (FastCGI application)"
-          },
-          {
-            "value": "fpm",
-            "label": "PHP 8.1.32 (FPM application)"
-          },
-          {
-            "value": "fpm-dedicated",
-            "label": "PHP 8.1.32 (Dedicated FPM application)"
-          },
-          {
-            "value": "module",
-            "label": "PHP 8.1.32 (mod_php)"
-          },
-          {
-            "value": "plesk-php70-cgi",
-            "label": "PHP 7.0.33 (CGI application)"
-          },
-          {
-            "value": "plesk-php70-fastcgi",
-            "label": "PHP 7.0.33 (FastCGI application)"
-          },
-          {
-            "value": "plesk-php70-fpm",
-            "label": "PHP 7.0.33 (FPM application)"
-          },
-          {
-            "value": "plesk-php71-cgi",
-            "label": "PHP 7.1.33 (CGI application)"
-          },
-          {
-            "value": "plesk-php71-fastcgi",
-            "label": "PHP 7.1.33 (FastCGI application)"
-          },
-          {
-            "value": "plesk-php71-fpm",
-            "label": "PHP 7.1.33 (FPM application)"
-          },
-          {
-            "value": "plesk-php72-cgi",
-            "label": "PHP 7.2.34 (CGI application)"
-          },
-          {
-            "value": "plesk-php72-fastcgi",
-            "label": "PHP 7.2.34 (FastCGI application)"
-          },
-          {
-            "value": "plesk-php72-fpm",
-            "label": "PHP 7.2.34 (FPM application)"
-          },
-          {
-            "value": "plesk-php73-cgi",
-            "label": "PHP 7.3.33 (CGI application)"
-          },
-          {
-            "value": "plesk-php73-fastcgi",
-            "label": "PHP 7.3.33 (FastCGI application)"
-          },
-          {
-            "value": "plesk-php73-fpm",
-            "label": "PHP 7.3.33 (FPM application)"
-          },
-          {
-            "value": "plesk-php73-fpm-dedicated",
-            "label": "PHP 7.3.33 (Dedicated FPM application)"
-          },
-          {
-            "value": "plesk-php74-cgi",
-            "label": "PHP 7.4.33 (CGI application)"
-          },
-          {
-            "value": "plesk-php74-fastcgi",
-            "label": "PHP 7.4.33 (FastCGI application)"
-          },
-          {
-            "value": "plesk-php74-fpm",
-            "label": "PHP 7.4.33 (FPM application)"
-          },
-          {
-            "value": "plesk-php74-fpm-dedicated",
-            "label": "PHP 7.4.33 (Dedicated FPM application)"
-          },
-          {
-            "value": "plesk-php80-cgi",
-            "label": "PHP 8.0.30 (CGI application)"
-          },
-          {
-            "value": "plesk-php80-fastcgi",
-            "label": "PHP 8.0.30 (FastCGI application)"
-          },
-          {
-            "value": "plesk-php80-fpm",
-            "label": "PHP 8.0.30 (FPM application)"
-          },
-          {
-            "value": "plesk-php80-fpm-dedicated",
-            "label": "PHP 8.0.30 (Dedicated FPM application)"
-          },
-          {
-            "value": "plesk-php81-cgi",
-            "label": "PHP 8.1.32 (CGI application)"
-          },
-          {
-            "value": "plesk-php81-fastcgi",
-            "label": "PHP 8.1.32 (FastCGI application)"
-          },
-          {
-            "value": "plesk-php81-fpm",
-            "label": "PHP 8.1.32 (FPM application)"
-          },
-          {
-            "value": "plesk-php81-fpm-dedicated",
-            "label": "PHP 8.1.32 (Dedicated FPM application)"
-          },
-          {
-            "value": "plesk-php82-cgi",
-            "label": "PHP 8.2.28 (CGI application)"
-          },
-          {
-            "value": "plesk-php82-fastcgi",
-            "label": "PHP 8.2.28 (FastCGI application)"
-          },
-          {
-            "value": "plesk-php82-fpm",
-            "label": "PHP 8.2.28 (FPM application)"
-          },
-          {
-            "value": "plesk-php82-fpm-dedicated",
-            "label": "PHP 8.2.28 (Dedicated FPM application)"
-          },
-          {
-            "value": "plesk-php83-cgi",
-            "label": "PHP 8.3.21 (CGI application)"
-          },
-          {
-            "value": "plesk-php83-fastcgi",
-            "label": "PHP 8.3.21 (FastCGI application)"
-          },
-          {
-            "value": "plesk-php83-fpm",
-            "label": "PHP 8.3.21 (FPM application)"
-          },
-          {
-            "value": "plesk-php83-fpm-dedicated",
-            "label": "PHP 8.3.21 (Dedicated FPM application)"
-          },
-          {
-            "value": "plesk-php84-cgi",
-            "label": "PHP 8.4.7 (CGI application)"
-          },
-          {
-            "value": "plesk-php84-fastcgi",
-            "label": "PHP 8.4.7 (FastCGI application)"
-          },
-          {
-            "value": "plesk-php84-fpm",
-            "label": "PHP 8.4.7 (FPM application)"
-          },
-          {
-            "value": "plesk-php84-fpm-dedicated",
-            "label": "PHP 8.4.7 (Dedicated FPM application)"
-          }
-        ],
-        "writable-by": "admin",
-        "label": "run PHP as",
-        "extension": {
-          "levels": "subdomain"
-        }
-      },
-      {
-        "name": "www_root",
-        "type": "string",
-        "writable-by": "admin",
-        "label": "WWW Root Directory",
-        "extension": {
-          "levels": "subdomain"
-        }
-      },
-      {
-        "name": "cgi_mode",
-        "type": "string",
-        "enum": [
-          {
-            "value": "webspace",
-            "label": "the root directory of subscription"
-          },
-          {
-            "value": "www-root",
-            "label": "the document root of this domain"
-          }
-        ],
-        "writable-by": "admin",
-        "label": "cgi-bin directory is located in",
-        "extension": ""
-      },
-      {
-        "name": "seo-redirect",
-        "type": "string",
-        "enum": [
-          {
-            "value": "none",
-            "label": "None"
-          },
-          {
-            "value": "non-www",
-            "label": "domain.tld"
-          },
-          {
-            "value": "www",
-            "label": "www.domain.tld"
-          }
-        ],
-        "writable-by": "admin",
-        "label": "Configure the preferred domain as",
-        "extension": ""
-      },
-      {
-        "name": "apache-mime-types",
-        "type": "string",
-        "writable-by": "admin",
-        "label": "MIME types",
-        "extension": ""
-      },
-      {
-        "name": "apache-handlers",
-        "type": "string",
-        "writable-by": "admin",
-        "label": "Apache handlers",
-        "extension": ""
-      },
-      {
-        "name": "ip-deny",
-        "type": "string",
-        "writable-by": "admin",
-        "label": "Deny access to the site for specified hosts and networks",
-        "extension": ""
-      },
-      {
-        "name": "ip-allow",
-        "type": "string",
-        "writable-by": "admin",
-        "label": "Allow access to the site for specified hosts and networks (excluding the denied ones)",
-        "extension": ""
-      },
-      {
-        "name": "apache-directory-index",
-        "type": "string",
-        "writable-by": "admin",
-        "label": "Index files",
-        "extension": ""
-      },
-      {
-        "name": "nginx-transparent-mode",
-        "type": "boolean",
-        "writable-by": "admin",
-        "label": "The mode when Apache handles both static and dynamic content, while nginx only passes HTTP requests and responses without modification.",
-        "extension": ""
-      },
-      {
-        "name": "nginx-serve-static",
-        "type": "boolean",
-        "writable-by": "admin",
-        "label": "Serve static files directly by nginx",
-        "extension": ""
-      },
-      {
-        "name": "nginx-static-extensions",
-        "type": "string",
-        "writable-by": "admin",
-        "label": "Static files extensions which must be handled by nginx",
-        "extension": ""
-      },
-      {
-        "name": "nginx-serve-php",
-        "type": "boolean",
-        "writable-by": "admin",
-        "label": "Process PHP files by nginx",
-        "extension": ""
-      },
-      {
-        "name": "unpaid_website_status",
-        "type": "string",
-        "enum": [
-          {
-            "value": "disabled",
-            "label": ""
-          },
-          {
-            "value": "suspended",
-            "label": ""
-          },
-          {
-            "value": "active",
-            "label": ""
-          }
-        ],
-        "writable-by": "admin",
-        "label": "Status of websites in suspended subscriptions",
-        "extension": ""
-      },
-      {
-        "name": "waf-rule-engine",
-        "type": "string",
-        "enum": [
-          {
-            "value": "on",
-            "label": ""
-          },
-          {
-            "value": "detection-only",
-            "label": ""
-          },
-          {
-            "value": "off",
-            "label": ""
-          }
-        ],
-        "writable-by": "admin",
-        "label": "Web application firewall mode",
-        "extension": ""
-      },
-      {
-        "name": "memory_limit",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "max_execution_time",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "max_input_time",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "post_max_size",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "upload_max_filesize", // VERY IMPORTANT FOR ELEMENTOR [maybe 256M]
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "opcache.enable",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "wincache.ocenabled",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "apc.enabled",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "xcache.cacher",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "disable_functions",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "safe_mode",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "safe_mode_include_dir",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "safe_mode_exec_dir",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "include_path",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "session.save_path",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "mail.force_extra_parameters",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "register_globals",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "open_basedir",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "error_reporting",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "display_errors",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "log_errors",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "allow_url_fopen",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "file_uploads",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "short_open_tag",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "magic_quotes_gpc",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "enableFastcgi",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "maxInstances",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "activityTimeout",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "requestTimeout",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "instanceMaxRequests", // LOOK
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "queueLength",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "rapidFailsPerMinute",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "pm.max_children",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "pm.max_requests",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "pm",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "pm.start_servers",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "pm.min_spare_servers",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "pm.max_spare_servers",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "additional-directives",
-        "type": "string",
-        "label": "",
-        "extension": ""
-      },
-      {
-        "name": "webstat",
-        "type": "string",
-        "enum": [
-          {
-            "value": "none",
-            "label": "None"
-          },
-          {
-            "value": "webalizer",
-            "label": "Webalizer"
-          },
-          {
-            "value": "awstats",
-            "label": "AWStats"
-          }
-        ],
-        "writable-by": ["admin", "domain-admin"],
-        "label": "Web statistics",
-        "extension": {
-          "service": {
-            "domain": 1,
-            "subdomain": 1
-          }
-        }
-      },
-      {
-        "name": "errdocs",
-        "type": "boolean",
-        "writable-by": "admin",
-        "label": "Custom error documents",
-        "extension": {
-          "service": {
-            "domain": 1,
-            "subdomain": 1
-          }
-        }
-      },
-      {
-        "name": "ssi",
-        "type": "boolean",
-        "writable-by": "admin",
-        "label": "SSI support",
-        "extension": {
-          "service": {
-            "domain": 1,
-            "subdomain": 1,
-            "webuser": 1
-          }
-        }
-      },
-      {
-        "name": "php",
-        "type": "boolean",
-        "writable-by": "admin",
-        "label": "PHP support",
-        "extension": {
-          "service": {
-            "domain": 1,
-            "subdomain": 1,
-            "webuser": 1
-          }
-        }
-      },
-      {
-        "name": "cgi",
-        "type": "boolean",
-        "writable-by": "admin",
-        "label": "CGI support",
-        "extension": {
-          "service": {
-            "domain": 1,
-            "subdomain": 1,
-            "webuser": 1
-          }
-        }
-      },
-      {
-        "name": "perl",
-        "type": "boolean",
-        "writable-by": "none",
-        "label": "Perl support",
-        "extension": {
-          "service": {
-            "domain": 1,
-            "subdomain": 1,
-            "webuser": 1
-          }
-        }
-      },
-      {
-        "name": "python",
-        "type": "boolean",
-        "writable-by": "none",
-        "label": "Python support",
-        "extension": {
-          "service": {
-            "domain": 1,
-            "subdomain": 1,
-            "webuser": 1
-          }
-        }
-      },
-      {
-        "name": "fastcgi",
-        "type": "boolean",
-        "writable-by": "admin",
-        "label": "FastCGI support",
-        "extension": {
-          "service": {
-            "domain": 1,
-            "subdomain": 1,
-            "webuser": 1
-          }
-        }
-      },
-      {
-        "name": "webstat_protected",
-        "type": "boolean",
-        "writable-by": "admin",
-        "label": "Protect access to web statistics with the user's FTP username and password",
-        "extension": {
-          "service": {
-            "domain": 1,
-            "subdomain": 1
-          }
-        }
-      },
-      {
-        "name": "certificate_name",
-        "type": "string",
-        "label": "",
-        "extension": {
-          "levels": ["domain", "subdomain"]
-        }
-      }
-    ],
     "bind": [
       {
+        "read-only": 1,
         "ref": "webstat_protected",
         "relevant": {
           "name": "webstat",
           "value": "none"
-        },
-        "read-only": 1
+        }
       },
       {
+        "read-only": 0,
         "ref": "php_handler_id",
         "relevant": {
           "name": "php",
           "value": true
-        },
-        "read-only": 0
+        }
       },
       {
+        "read-only": 0,
         "ref": "cgi_mode",
         "relevant": {
           "name": "cgi",
           "value": true
+        }
+      }
+    ],
+    "property": [
+      {
+        "extension": {
+          "levels": "subdomain"
         },
-        "read-only": 0
+        "label": "FTP Username",
+        "name": "ftp_login",
+        "type": "string",
+        "writable-by": ["admin", "client", "reseller"]
+      },
+      {
+        "extension": "",
+        "label": "FTP Password",
+        "name": "ftp_password",
+        "type": "passwordString",
+        "writable-by": ["admin", "client", "reseller"]
+      },
+      {
+        "extension": {
+          "levels": "subdomain"
+        },
+        "label": "Hard disk quota",
+        "name": "ftp_quota",
+        "type": "bytes",
+        "writable-by": "none"
+      },
+      {
+        "enum": [
+          {
+            "label": "Proibido",
+            "value": "/bin/false"
+          },
+          {
+            "label": "/bin/sh",
+            "value": "/bin/sh"
+          },
+          {
+            "label": "/bin/bash",
+            "value": "/bin/bash"
+          },
+          {
+            "label": "/usr/bin/bash",
+            "value": "/usr/bin/bash"
+          },
+          {
+            "label": "/bin/rbash",
+            "value": "/bin/rbash"
+          },
+          {
+            "label": "/usr/bin/rbash",
+            "value": "/usr/bin/rbash"
+          },
+          {
+            "label": "/usr/bin/sh",
+            "value": "/usr/bin/sh"
+          },
+          {
+            "label": "/bin/dash",
+            "value": "/bin/dash"
+          },
+          {
+            "label": "/usr/bin/dash",
+            "value": "/usr/bin/dash"
+          },
+          {
+            "label": "/usr/bin/tmux",
+            "value": "/usr/bin/tmux"
+          },
+          {
+            "label": "/usr/bin/screen",
+            "value": "/usr/bin/screen"
+          },
+          {
+            "label": "/bin/bash (chrooted)",
+            "value": "/opt/psa/bin/chrootsh"
+          }
+        ],
+        "extension": "",
+        "label": "SSH access to the server shell under the subscription's system user",
+        "name": "shell",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "extension": {
+          "levels": "subdomain"
+        },
+        "label": "SSL/TLS support",
+        "name": "ssl",
+        "type": "boolean",
+        "writable-by": "admin"
+      },
+      {
+        "enum": [
+          {
+            "label": "PHP 8.1.32 (CGI application)",
+            "value": "cgi"
+          },
+          {
+            "label": "PHP 8.1.32 (FastCGI application)",
+            "value": "fastcgi"
+          },
+          {
+            "label": "PHP 8.1.32 (FPM application)",
+            "value": "fpm"
+          },
+          {
+            "label": "PHP 8.1.32 (Dedicated FPM application)",
+            "value": "fpm-dedicated"
+          },
+          {
+            "label": "PHP 8.1.32 (mod_php)",
+            "value": "module"
+          },
+          {
+            "label": "PHP 7.0.33 (CGI application)",
+            "value": "plesk-php70-cgi"
+          },
+          {
+            "label": "PHP 7.0.33 (FastCGI application)",
+            "value": "plesk-php70-fastcgi"
+          },
+          {
+            "label": "PHP 7.0.33 (FPM application)",
+            "value": "plesk-php70-fpm"
+          },
+          {
+            "label": "PHP 7.1.33 (CGI application)",
+            "value": "plesk-php71-cgi"
+          },
+          {
+            "label": "PHP 7.1.33 (FastCGI application)",
+            "value": "plesk-php71-fastcgi"
+          },
+          {
+            "label": "PHP 7.1.33 (FPM application)",
+            "value": "plesk-php71-fpm"
+          },
+          {
+            "label": "PHP 7.2.34 (CGI application)",
+            "value": "plesk-php72-cgi"
+          },
+          {
+            "label": "PHP 7.2.34 (FastCGI application)",
+            "value": "plesk-php72-fastcgi"
+          },
+          {
+            "label": "PHP 7.2.34 (FPM application)",
+            "value": "plesk-php72-fpm"
+          },
+          {
+            "label": "PHP 7.3.33 (CGI application)",
+            "value": "plesk-php73-cgi"
+          },
+          {
+            "label": "PHP 7.3.33 (FastCGI application)",
+            "value": "plesk-php73-fastcgi"
+          },
+          {
+            "label": "PHP 7.3.33 (FPM application)",
+            "value": "plesk-php73-fpm"
+          },
+          {
+            "label": "PHP 7.3.33 (Dedicated FPM application)",
+            "value": "plesk-php73-fpm-dedicated"
+          },
+          {
+            "label": "PHP 7.4.33 (CGI application)",
+            "value": "plesk-php74-cgi"
+          },
+          {
+            "label": "PHP 7.4.33 (FastCGI application)",
+            "value": "plesk-php74-fastcgi"
+          },
+          {
+            "label": "PHP 7.4.33 (FPM application)",
+            "value": "plesk-php74-fpm"
+          },
+          {
+            "label": "PHP 7.4.33 (Dedicated FPM application)",
+            "value": "plesk-php74-fpm-dedicated"
+          },
+          {
+            "label": "PHP 8.0.30 (CGI application)",
+            "value": "plesk-php80-cgi"
+          },
+          {
+            "label": "PHP 8.0.30 (FastCGI application)",
+            "value": "plesk-php80-fastcgi"
+          },
+          {
+            "label": "PHP 8.0.30 (FPM application)",
+            "value": "plesk-php80-fpm"
+          },
+          {
+            "label": "PHP 8.0.30 (Dedicated FPM application)",
+            "value": "plesk-php80-fpm-dedicated"
+          },
+          {
+            "label": "PHP 8.1.32 (CGI application)",
+            "value": "plesk-php81-cgi"
+          },
+          {
+            "label": "PHP 8.1.32 (FastCGI application)",
+            "value": "plesk-php81-fastcgi"
+          },
+          {
+            "label": "PHP 8.1.32 (FPM application)",
+            "value": "plesk-php81-fpm"
+          },
+          {
+            "label": "PHP 8.1.32 (Dedicated FPM application)",
+            "value": "plesk-php81-fpm-dedicated"
+          },
+          {
+            "label": "PHP 8.2.28 (CGI application)",
+            "value": "plesk-php82-cgi"
+          },
+          {
+            "label": "PHP 8.2.28 (FastCGI application)",
+            "value": "plesk-php82-fastcgi"
+          },
+          {
+            "label": "PHP 8.2.28 (FPM application)",
+            "value": "plesk-php82-fpm"
+          },
+          {
+            "label": "PHP 8.2.28 (Dedicated FPM application)",
+            "value": "plesk-php82-fpm-dedicated"
+          },
+          {
+            "label": "PHP 8.3.21 (CGI application)",
+            "value": "plesk-php83-cgi"
+          },
+          {
+            "label": "PHP 8.3.21 (FastCGI application)",
+            "value": "plesk-php83-fastcgi"
+          },
+          {
+            "label": "PHP 8.3.21 (FPM application)",
+            "value": "plesk-php83-fpm"
+          },
+          {
+            "label": "PHP 8.3.21 (Dedicated FPM application)",
+            "value": "plesk-php83-fpm-dedicated"
+          },
+          {
+            "label": "PHP 8.4.7 (CGI application)",
+            "value": "plesk-php84-cgi"
+          },
+          {
+            "label": "PHP 8.4.7 (FastCGI application)",
+            "value": "plesk-php84-fastcgi"
+          },
+          {
+            "label": "PHP 8.4.7 (FPM application)",
+            "value": "plesk-php84-fpm"
+          },
+          {
+            "label": "PHP 8.4.7 (Dedicated FPM application)",
+            "value": "plesk-php84-fpm-dedicated"
+          }
+        ],
+        "extension": {
+          "levels": "subdomain"
+        },
+        "label": "run PHP as",
+        "name": "php_handler_id",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "extension": {
+          "levels": "subdomain"
+        },
+        "label": "WWW Root Directory",
+        "name": "www_root",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "enum": [
+          {
+            "label": "the root directory of subscription",
+            "value": "webspace"
+          },
+          {
+            "label": "the document root of this domain",
+            "value": "www-root"
+          }
+        ],
+        "extension": "",
+        "label": "cgi-bin directory is located in",
+        "name": "cgi_mode",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "enum": [
+          {
+            "label": "None",
+            "value": "none"
+          },
+          {
+            "label": "domain.tld",
+            "value": "non-www"
+          },
+          {
+            "label": "www.domain.tld",
+            "value": "www"
+          }
+        ],
+        "extension": "",
+        "label": "Configure the preferred domain as",
+        "name": "seo-redirect",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "extension": "",
+        "label": "MIME types",
+        "name": "apache-mime-types",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "extension": "",
+        "label": "Apache handlers",
+        "name": "apache-handlers",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "extension": "",
+        "label": "Deny access to the site for specified hosts and networks",
+        "name": "ip-deny",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "extension": "",
+        "label": "Allow access to the site for specified hosts and networks (excluding the denied ones)",
+        "name": "ip-allow",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "extension": "",
+        "label": "Index files",
+        "name": "apache-directory-index",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "extension": "",
+        "label": "The mode when Apache handles both static and dynamic content, while nginx only passes HTTP requests and responses without modification.",
+        "name": "nginx-transparent-mode",
+        "type": "boolean",
+        "writable-by": "admin"
+      },
+      {
+        "extension": "",
+        "label": "Serve static files directly by nginx",
+        "name": "nginx-serve-static",
+        "type": "boolean",
+        "writable-by": "admin"
+      },
+      {
+        "extension": "",
+        "label": "Static files extensions which must be handled by nginx",
+        "name": "nginx-static-extensions",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "extension": "",
+        "label": "Process PHP files by nginx",
+        "name": "nginx-serve-php",
+        "type": "boolean",
+        "writable-by": "admin"
+      },
+      {
+        "enum": [
+          {
+            "label": "",
+            "value": "disabled"
+          },
+          {
+            "label": "",
+            "value": "suspended"
+          },
+          {
+            "label": "",
+            "value": "active"
+          }
+        ],
+        "extension": "",
+        "label": "Status of websites in suspended subscriptions",
+        "name": "unpaid_website_status",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "enum": [
+          {
+            "label": "",
+            "value": "on"
+          },
+          {
+            "label": "",
+            "value": "detection-only"
+          },
+          {
+            "label": "",
+            "value": "off"
+          }
+        ],
+        "extension": "",
+        "label": "Web application firewall mode",
+        "name": "waf-rule-engine",
+        "type": "string",
+        "writable-by": "admin"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "memory_limit",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "max_execution_time",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "max_input_time",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "post_max_size",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "upload_max_filesize", // VERY IMPORTANT FOR ELEMENTOR [maybe 256M]
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "opcache.enable",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "wincache.ocenabled",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "apc.enabled",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "xcache.cacher",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "disable_functions",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "safe_mode",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "safe_mode_include_dir",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "safe_mode_exec_dir",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "include_path",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "session.save_path",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "mail.force_extra_parameters",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "register_globals",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "open_basedir",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "error_reporting",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "display_errors",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "log_errors",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "allow_url_fopen",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "file_uploads",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "short_open_tag",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "magic_quotes_gpc",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "enableFastcgi",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "maxInstances",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "activityTimeout",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "requestTimeout",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "instanceMaxRequests", // LOOK
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "queueLength",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "rapidFailsPerMinute",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "pm.max_children",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "pm.max_requests",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "pm",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "pm.start_servers",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "pm.min_spare_servers",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "pm.max_spare_servers",
+        "type": "string"
+      },
+      {
+        "extension": "",
+        "label": "",
+        "name": "additional-directives",
+        "type": "string"
+      },
+      {
+        "enum": [
+          {
+            "label": "None",
+            "value": "none"
+          },
+          {
+            "label": "Webalizer",
+            "value": "webalizer"
+          },
+          {
+            "label": "AWStats",
+            "value": "awstats"
+          }
+        ],
+        "extension": {
+          "service": {
+            "domain": 1,
+            "subdomain": 1
+          }
+        },
+        "label": "Web statistics",
+        "name": "webstat",
+        "type": "string",
+        "writable-by": ["admin", "domain-admin"]
+      },
+      {
+        "extension": {
+          "service": {
+            "domain": 1,
+            "subdomain": 1
+          }
+        },
+        "label": "Custom error documents",
+        "name": "errdocs",
+        "type": "boolean",
+        "writable-by": "admin"
+      },
+      {
+        "extension": {
+          "service": {
+            "domain": 1,
+            "subdomain": 1,
+            "webuser": 1
+          }
+        },
+        "label": "SSI support",
+        "name": "ssi",
+        "type": "boolean",
+        "writable-by": "admin"
+      },
+      {
+        "extension": {
+          "service": {
+            "domain": 1,
+            "subdomain": 1,
+            "webuser": 1
+          }
+        },
+        "label": "PHP support",
+        "name": "php",
+        "type": "boolean",
+        "writable-by": "admin"
+      },
+      {
+        "extension": {
+          "service": {
+            "domain": 1,
+            "subdomain": 1,
+            "webuser": 1
+          }
+        },
+        "label": "CGI support",
+        "name": "cgi",
+        "type": "boolean",
+        "writable-by": "admin"
+      },
+      {
+        "extension": {
+          "service": {
+            "domain": 1,
+            "subdomain": 1,
+            "webuser": 1
+          }
+        },
+        "label": "Perl support",
+        "name": "perl",
+        "type": "boolean",
+        "writable-by": "none"
+      },
+      {
+        "extension": {
+          "service": {
+            "domain": 1,
+            "subdomain": 1,
+            "webuser": 1
+          }
+        },
+        "label": "Python support",
+        "name": "python",
+        "type": "boolean",
+        "writable-by": "none"
+      },
+      {
+        "extension": {
+          "service": {
+            "domain": 1,
+            "subdomain": 1,
+            "webuser": 1
+          }
+        },
+        "label": "FastCGI support",
+        "name": "fastcgi",
+        "type": "boolean",
+        "writable-by": "admin"
+      },
+      {
+        "extension": {
+          "service": {
+            "domain": 1,
+            "subdomain": 1
+          }
+        },
+        "label": "Protect access to web statistics with the user's FTP username and password",
+        "name": "webstat_protected",
+        "type": "boolean",
+        "writable-by": "admin"
+      },
+      {
+        "extension": {
+          "levels": ["domain", "subdomain"]
+        },
+        "label": "",
+        "name": "certificate_name",
+        "type": "string"
       }
     ]
-  }
+  },
+  "filter-id": "lucasgarrafielo.xyz",
+  "id": 367,
+  "status": "ok"
 }

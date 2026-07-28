@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
+import { NextResponse } from "next/server";
 
 // https://github.com/vercel/next.js/discussions/55037#discussioncomment-12454718
 export function middleware(request: NextRequest) {
@@ -17,7 +16,7 @@ export function middleware(request: NextRequest) {
   // Set the IP and user agent headers into request to be used in the action
   requestHeaders.set("x-forwarded-for", ip);
   requestHeaders.set("user-agent", userAgent);
-  
+
   // Set the current pathname for redirect purposes
   requestHeaders.set("x-pathname", request.nextUrl.pathname);
 

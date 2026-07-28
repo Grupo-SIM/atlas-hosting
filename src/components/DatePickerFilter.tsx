@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { DateRange } from "react-day-picker";
 import { Calendar as CalendarIcon, X } from "lucide-react";
+import { useState } from "react";
+import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 export type DateRangeValue = { from: string; to: string } | null;
@@ -22,7 +26,11 @@ function toDate(iso: string) {
   return new Date(`${iso}T12:00:00`);
 }
 
-export function DatePickerFilter({ value, onChange, placeholder = "Filtrar por período" }: DatePickerFilterProps) {
+export function DatePickerFilter({
+  value,
+  onChange,
+  placeholder = "Filtrar por período",
+}: DatePickerFilterProps) {
   const [open, setOpen] = useState(false);
 
   const selected: DateRange | undefined = value
@@ -37,22 +45,26 @@ export function DatePickerFilter({ value, onChange, placeholder = "Filtrar por p
 
   return (
     <div className="flex items-center gap-1">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger asChild>
           <Button
+            className={cn(
+              "w-56 justify-start gap-2 font-normal",
+              !value && "text-muted-foreground"
+            )}
             variant="outline"
-            className={cn("w-56 justify-start gap-2 font-normal", !value && "text-muted-foreground")}
           >
             <CalendarIcon className="h-4 w-4 shrink-0" />
             {label}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent align="start" className="w-auto p-0">
           <Calendar
+            initialFocus
+            locale={ptBR}
             mode="range"
             numberOfMonths={2}
-            selected={selected}
-            onSelect={(range) => {
+            onSelect={range => {
               if (!range?.from) {
                 onChange(null);
                 return;
@@ -61,13 +73,17 @@ export function DatePickerFilter({ value, onChange, placeholder = "Filtrar por p
               const to = range.to ? format(range.to, "yyyy-MM-dd") : from;
               onChange({ from, to });
             }}
-            locale={ptBR}
-            initialFocus
+            selected={selected}
           />
         </PopoverContent>
       </Popover>
       {value && (
-        <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => onChange(null)}>
+        <Button
+          className="h-9 w-9 shrink-0"
+          onClick={() => onChange(null)}
+          size="icon"
+          variant="ghost"
+        >
           <X className="h-4 w-4" />
         </Button>
       )}

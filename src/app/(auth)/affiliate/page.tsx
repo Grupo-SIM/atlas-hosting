@@ -1,3 +1,5 @@
+import { eq, sum } from "drizzle-orm";
+import type { Metadata } from "next";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
@@ -5,15 +7,13 @@ import {
   pgUser,
   pgWithdrawalRequests,
 } from "@/lib/db/schema";
-import { desc, eq, sum } from "drizzle-orm";
-import type { Metadata } from "next";
 import { getAffiliateBalance } from "./actions";
-import { AffiliateTabs } from "./components/AffiliateTabs";
 import type { CommissionRow, WithdrawalRow } from "./components/AffiliateTabs";
+import { AffiliateTabs } from "./components/AffiliateTabs";
 
 export const metadata: Metadata = {
-  title: "Afiliado - Atlas Hosting",
   description: "Gerencie suas indicações, comissões e solicite saques",
+  title: "Afiliado - Atlas Hosting",
 };
 
 export default async function AffiliatePage() {
@@ -34,45 +34,45 @@ export default async function AffiliatePage() {
   const totalEarnedAllTime = Number(allTimeRow?.total ?? 0);
 
   const referredUsers = await db.query.pgUser.findMany({
-    where: eq(pgUser.referrerId, user.id),
-    columns: { id: true, email: true, createdAt: true },
+    columns: { createdAt: true, email: true, id: true },
     orderBy: (t, { desc }) => [desc(t.createdAt)],
+    where: eq(pgUser.referrerId, user.id),
   });
 
   const rawCommissions = await db.query.pgAffiliateCommission.findMany({
-    where: eq(pgAffiliateCommission.affiliateUserId, user.id),
     orderBy: (t, { desc }) => [desc(t.createdAt)],
+    where: eq(pgAffiliateCommission.affiliateUserId, user.id),
   });
-  const commissions: CommissionRow[] = rawCommissions.map((c) => ({
-    id: c.id,
-    grossAmount: c.grossAmount,
+  const commissions: CommissionRow[] = rawCommissions.map(c => ({
     commissionAmount: c.commissionAmount,
     commissionRate: c.commissionRate,
-    status: c.status,
     createdAt: c.createdAt,
+    grossAmount: c.grossAmount,
+    id: c.id,
+    status: c.status,
   }));
 
   const rawWithdrawals = await db.query.pgWithdrawalRequests.findMany({
-    where: eq(pgWithdrawalRequests.userId, user.id),
     orderBy: (t, { desc }) => [desc(t.createdAt)],
+    where: eq(pgWithdrawalRequests.userId, user.id),
   });
-  const withdrawals: WithdrawalRow[] = rawWithdrawals.map((w) => ({
-    id: w.id,
+  const withdrawals: WithdrawalRow[] = rawWithdrawals.map(w => ({
     amount: w.amount,
+    createdAt: w.createdAt,
     fee: w.fee,
-    status: w.status,
+    id: w.id,
     rejectionReason: w.rejectionReason ?? null,
     simpayWithdrawalId: w.simpayWithdrawalId ?? null,
-    createdAt: w.createdAt,
+    status: w.status,
   }));
 
   return (
-    <div className="p-6 pb-20 space-y-6">
+    <div className="space-y-6 p-6 pb-20">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+        <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
           Programa de Afiliados
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="mt-1 text-muted-foreground">
           Gerencie suas indicações, comissões e saques
         </p>
       </div>
@@ -80,13 +80,13 @@ export default async function AffiliatePage() {
       <AffiliateTabs
         affiliateLink={affiliateLink}
         availableBalance={available}
-        pendingWithdrawals={pendingWithdrawals}
-        totalEarnedAllTime={totalEarnedAllTime}
-        referrals={referredUsers}
         commissions={commissions}
-        withdrawals={withdrawals}
-        minWithdrawal={minWithdrawal}
         fee={fee}
+        minWithdrawal={minWithdrawal}
+        pendingWithdrawals={pendingWithdrawals}
+        referrals={referredUsers}
+        totalEarnedAllTime={totalEarnedAllTime}
+        withdrawals={withdrawals}
       />
     </div>
   );

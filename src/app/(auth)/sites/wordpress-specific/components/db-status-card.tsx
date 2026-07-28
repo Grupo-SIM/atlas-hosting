@@ -1,5 +1,5 @@
+import { AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
 interface DbStatusCardProps {
   domainName: string;
@@ -13,12 +13,12 @@ export function DbStatusCard({ domainName, status, error }: DbStatusCardProps) {
   const isError = !!error || (status !== null && status !== "OK");
 
   return (
-    <Card className="w-full shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out">
+    <Card className="w-full shadow-lg transition-shadow duration-300 ease-in-out hover:shadow-xl">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between font-semibold text-lg">
           <span>{domainName}</span>
           {isLoading && (
-            <AlertTriangle className="h-5 w-5 text-yellow-500 animate-pulse" />
+            <AlertTriangle className="h-5 w-5 animate-pulse text-yellow-500" />
           )}
           {isSuccess && <CheckCircle className="h-5 w-5 text-green-500" />}
           {isError && <XCircle className="h-5 w-5 text-red-500" />}
@@ -26,19 +26,19 @@ export function DbStatusCard({ domainName, status, error }: DbStatusCardProps) {
       </CardHeader>
       <CardContent>
         {isLoading && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Verificando status do banco de dados...
           </p>
         )}
         {isSuccess && (
-          <p className="text-sm text-green-600">Banco de dados operacional.</p>
+          <p className="text-green-600 text-sm">Banco de dados operacional.</p>
         )}
         {isError && (
           <div>
-            <p className="text-sm text-red-600">
+            <p className="text-red-600 text-sm">
               Problema no banco de dados: {status}
             </p>
-            {error && <p className="text-xs text-red-700 mt-1">{error}</p>}
+            {error && <p className="mt-1 text-red-700 text-xs">{error}</p>}
           </div>
         )}
       </CardContent>

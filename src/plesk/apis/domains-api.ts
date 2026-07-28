@@ -17,26 +17,21 @@
  */
 
 import globalAxios, {
-  type AxiosResponse,
   type AxiosInstance,
   type AxiosRequestConfig,
+  type AxiosResponse,
 } from "axios";
-import type { Configuration } from "../configuration";
 // Some imports not used depending on template conditions
 // @ts-ignore
-import {
-  BASE_PATH,
-  COLLECTION_FORMATS,
-  type RequestArgs,
-  BaseAPI,
-  RequiredError,
-} from "../base";
-import type { Client } from "../models";
-import type { CreatedResponse } from "../models";
-import type { DomainRequest } from "../models";
-import type { DomainResponse } from "../models";
-import type { DomainStatus } from "../models";
-import { ErrorResponse } from "../models";
+import { BASE_PATH, BaseAPI, type RequestArgs, RequiredError } from "../base";
+import type { Configuration } from "../configuration";
+import type {
+  Client,
+  CreatedResponse,
+  DomainRequest,
+  DomainResponse,
+  DomainStatus,
+} from "../models";
 
 /**
  * DomainsApi - axios parameter creator
@@ -54,7 +49,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     name?: string,
     options: AxiosRequestConfig = {}
   ): Promise<RequestArgs> => {
-    const localVarPath = `/domains`;
+    const localVarPath = "/domains";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -70,7 +65,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -81,14 +76,14 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
     if (name !== undefined) {
-      localVarQueryParameter["name"] = name;
+      localVarQueryParameter.name = name;
     }
 
     const query = new URLSearchParams(localVarUrlObj.search);
@@ -99,8 +94,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -108,9 +104,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -131,7 +127,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter id was null or undefined when calling domainsIdClientGet."
       );
     }
-    const localVarPath = `/domains/{id}/client`.replace(
+    const localVarPath = "/domains/{id}/client".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -150,7 +146,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -161,9 +157,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -175,8 +171,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -184,9 +181,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -207,7 +204,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter id was null or undefined when calling domainsIdDelete."
       );
     }
-    const localVarPath = `/domains/{id}`.replace(
+    const localVarPath = "/domains/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -226,7 +223,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -237,9 +234,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -251,8 +248,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -260,9 +258,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -283,7 +281,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter id was null or undefined when calling domainsIdGet."
       );
     }
-    const localVarPath = `/domains/{id}`.replace(
+    const localVarPath = "/domains/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -302,7 +300,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -313,9 +311,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -327,8 +325,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -336,9 +335,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -368,7 +367,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter id was null or undefined when calling domainsIdPut."
       );
     }
-    const localVarPath = `/domains/{id}`.replace(
+    const localVarPath = "/domains/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -387,7 +386,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -398,9 +397,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -414,8 +413,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -429,9 +429,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -452,7 +452,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter id was null or undefined when calling domainsIdStatusGet."
       );
     }
-    const localVarPath = `/domains/{id}/status`.replace(
+    const localVarPath = "/domains/{id}/status".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -471,7 +471,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -482,9 +482,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -496,8 +496,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -505,9 +506,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -537,7 +538,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter id was null or undefined when calling domainsIdStatusPut."
       );
     }
-    const localVarPath = `/domains/{id}/status`.replace(
+    const localVarPath = "/domains/{id}/status".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -556,7 +557,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -567,9 +568,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -583,8 +584,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -598,9 +600,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -621,7 +623,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter body was null or undefined when calling domainsPost."
       );
     }
-    const localVarPath = `/domains`;
+    const localVarPath = "/domains";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -637,7 +639,7 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -648,9 +650,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -664,8 +666,9 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -679,13 +682,12 @@ export const DomainsApiAxiosParamCreator = (configuration?: Configuration) => ({
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
 });
-
 
 /**
  * DomainsApi - functional programming interface
@@ -706,7 +708,7 @@ export const DomainsApiFp = (configuration?: Configuration) => ({
     (
       axios?: AxiosInstance,
       basePath?: string
-    ) => Promise<AxiosResponse<Array<DomainResponse>>>
+    ) => Promise<AxiosResponse<DomainResponse[]>>
   > {
     const localVarAxiosArgs = await DomainsApiAxiosParamCreator(
       configuration
@@ -935,7 +937,6 @@ export const DomainsApiFp = (configuration?: Configuration) => ({
   },
 });
 
-
 /**
  * DomainsApi - factory interface
  * @export
@@ -955,10 +956,10 @@ export const DomainsApiFactory = (
   async domainsGet(
     name?: string,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<DomainResponse>>> {
+  ): Promise<AxiosResponse<DomainResponse[]>> {
     return DomainsApiFp(configuration)
       .domainsGet(name, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -973,7 +974,7 @@ export const DomainsApiFactory = (
   ): Promise<AxiosResponse<Client>> {
     return DomainsApiFp(configuration)
       .domainsIdClientGet(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -988,7 +989,7 @@ export const DomainsApiFactory = (
   ): Promise<AxiosResponse<CreatedResponse>> {
     return DomainsApiFp(configuration)
       .domainsIdDelete(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -1003,7 +1004,7 @@ export const DomainsApiFactory = (
   ): Promise<AxiosResponse<DomainResponse>> {
     return DomainsApiFp(configuration)
       .domainsIdGet(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -1020,7 +1021,7 @@ export const DomainsApiFactory = (
   ): Promise<AxiosResponse<CreatedResponse>> {
     return DomainsApiFp(configuration)
       .domainsIdPut(body, id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -1035,7 +1036,7 @@ export const DomainsApiFactory = (
   ): Promise<AxiosResponse<DomainStatus>> {
     return DomainsApiFp(configuration)
       .domainsIdStatusGet(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -1052,7 +1053,7 @@ export const DomainsApiFactory = (
   ): Promise<AxiosResponse<DomainStatus>> {
     return DomainsApiFp(configuration)
       .domainsIdStatusPut(body, id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -1067,10 +1068,9 @@ export const DomainsApiFactory = (
   ): Promise<AxiosResponse<CreatedResponse>> {
     return DomainsApiFp(configuration)
       .domainsPost(body, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
 });
-
 
 /**
  * DomainsApi - object-oriented interface
@@ -1090,10 +1090,10 @@ export class DomainsApi extends BaseAPI {
   public async domainsGet(
     name?: string,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<DomainResponse>>> {
+  ): Promise<AxiosResponse<DomainResponse[]>> {
     return DomainsApiFp(this.configuration)
       .domainsGet(name, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1109,7 +1109,7 @@ export class DomainsApi extends BaseAPI {
   ): Promise<AxiosResponse<Client>> {
     return DomainsApiFp(this.configuration)
       .domainsIdClientGet(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1125,7 +1125,7 @@ export class DomainsApi extends BaseAPI {
   ): Promise<AxiosResponse<CreatedResponse>> {
     return DomainsApiFp(this.configuration)
       .domainsIdDelete(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1141,7 +1141,7 @@ export class DomainsApi extends BaseAPI {
   ): Promise<AxiosResponse<DomainResponse>> {
     return DomainsApiFp(this.configuration)
       .domainsIdGet(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1159,7 +1159,7 @@ export class DomainsApi extends BaseAPI {
   ): Promise<AxiosResponse<CreatedResponse>> {
     return DomainsApiFp(this.configuration)
       .domainsIdPut(body, id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1175,7 +1175,7 @@ export class DomainsApi extends BaseAPI {
   ): Promise<AxiosResponse<DomainStatus>> {
     return DomainsApiFp(this.configuration)
       .domainsIdStatusGet(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1193,7 +1193,7 @@ export class DomainsApi extends BaseAPI {
   ): Promise<AxiosResponse<DomainStatus>> {
     return DomainsApiFp(this.configuration)
       .domainsIdStatusPut(body, id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -1209,6 +1209,6 @@ export class DomainsApi extends BaseAPI {
   ): Promise<AxiosResponse<CreatedResponse>> {
     return DomainsApiFp(this.configuration)
       .domainsPost(body, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
 }

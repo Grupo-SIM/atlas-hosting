@@ -62,6 +62,6 @@ testPluginOutput()
   .then(() => {
     console.log("\n✅ Test completed");
   })
-  .catch((error) => {
+  .catch(error => {
     console.error("❌ Test failed:", error);
   });

@@ -8,12 +8,12 @@ import { errorHandler } from "@/lib/error-handler";
 export async function POST() {
   try {
     await cleanupExpiredTokens();
-    
-    return Response.json({ 
-      success: true, 
-      message: "Expired tokens cleaned up successfully" 
+
+    return Response.json({
+      message: "Expired tokens cleaned up successfully",
+      success: true,
     });
   } catch (error) {
-    return errorHandler(error)
+    return errorHandler(error);
   }
 }

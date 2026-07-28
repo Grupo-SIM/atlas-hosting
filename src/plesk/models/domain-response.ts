@@ -97,7 +97,7 @@ export interface DomainResponse {
    * @type {Array<DomainAlias>}
    * @memberof DomainResponse
    */
-  aliases?: Array<DomainAlias>;
+  aliases?: DomainAlias[];
 }
 
 /**

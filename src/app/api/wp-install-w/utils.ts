@@ -40,9 +40,9 @@ export function parsePleskCliResponse(
   response: CliCallResponse
 ): PleskCliOutput {
   let parsedOutput: PleskCliOutput = {
-    stderr: response.stderr || "",
     exit_code:
       response.code === 200 && !response.stderr ? 0 : response.code || -1,
+    stderr: response.stderr || "",
   };
   try {
     if (response.stdout) {
@@ -86,7 +86,7 @@ export function* sendSSE(
   message: string,
   details?: unknown
 ) {
-  const payload = { type, message, step: message, details };
+  const payload = { details, message, step: message, type };
   console.log({ payload });
   const data = JSON.stringify(payload);
   yield `data: ${data}\n\n`;
@@ -97,7 +97,7 @@ export function getSSEPayload(
   message: string,
   details?: unknown
 ) {
-  const payload = { type, message, step: message, details };
+  const payload = { details, message, step: message, type };
   const data = JSON.stringify(payload);
   return `data: ${data}\n\n`;
 }

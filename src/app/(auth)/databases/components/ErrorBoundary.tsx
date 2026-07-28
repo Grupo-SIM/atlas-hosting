@@ -1,8 +1,8 @@
 "use client";
 
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Component, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, RefreshCw } from "lucide-react";
 
 interface Props {
   children: ReactNode;
@@ -21,7 +21,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { error, hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
@@ -35,20 +35,20 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <div className="flex h-64 flex-col items-center justify-center space-y-4">
           <AlertCircle className="h-12 w-12 text-destructive" />
           <div className="text-center">
-            <h3 className="text-lg font-medium">Algo deu errado</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <h3 className="font-medium text-lg">Algo deu errado</h3>
+            <p className="mb-4 text-muted-foreground text-sm">
               {this.state.error?.message || "Erro inesperado no componente"}
             </p>
             <Button
               onClick={() =>
-                this.setState({ hasError: false, error: undefined })
+                this.setState({ error: undefined, hasError: false })
               }
               variant="outline"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="mr-2 h-4 w-4" />
               Tentar novamente
             </Button>
           </div>

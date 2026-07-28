@@ -9,19 +9,15 @@ import { cn } from "@/lib/utils";
 const MOVEMENT_DAMPING = 1400;
 
 const GLOBE_CONFIG: COBEOptions = {
-  width: 800,
-  height: 800,
-  onRender: () => {},
-  devicePixelRatio: 2,
-  phi: 0,
-  theta: 0.3,
-  dark: 0,
-  diffuse: 0.4,
-  mapSamples: 16000,
-  mapBrightness: 1.2,
   baseColor: [1, 1, 1],
-  markerColor: [251 / 255, 100 / 255, 21 / 255],
+  dark: 0,
+  devicePixelRatio: 2,
+  diffuse: 0.4,
   glowColor: [1, 1, 1],
+  height: 800,
+  mapBrightness: 1.2,
+  mapSamples: 16000,
+  markerColor: [251 / 255, 100 / 255, 21 / 255],
   markers: [
     { location: [14.5995, 120.9842], size: 0.03 },
     { location: [19.076, 72.8777], size: 0.1 },
@@ -34,6 +30,10 @@ const GLOBE_CONFIG: COBEOptions = {
     { location: [34.6937, 135.5022], size: 0.05 },
     { location: [41.0082, 28.9784], size: 0.06 },
   ],
+  onRender: () => {},
+  phi: 0,
+  theta: 0.3,
+  width: 800,
 };
 
 export function Globe({
@@ -51,8 +51,8 @@ export function Globe({
 
   const r = useMotionValue(0);
   const rs = useSpring(r, {
-    mass: 1,
     damping: 30,
+    mass: 1,
     stiffness: 100,
   });
 
@@ -83,14 +83,14 @@ export function Globe({
 
     const globe = createGlobe(canvasRef.current!, {
       ...config,
-      width: width * 2,
       height: width * 2,
-      onRender: (state) => {
+      onRender: state => {
         if (!pointerInteracting.current) phi += 0.005;
         state.phi = phi + rs.get();
         state.width = width * 2;
         state.height = width * 2;
       },
+      width: width * 2,
     });
 
     setTimeout(() => (canvasRef.current!.style.opacity = "1"), 0);
@@ -111,17 +111,15 @@ export function Globe({
         className={cn(
           "size-full opacity-0 transition-opacity duration-500 [contain:layout_paint_size]"
         )}
-        ref={canvasRef}
-        onPointerDown={(e) => {
+        onMouseMove={e => updateMovement(e.clientX)}
+        onPointerDown={e => {
           pointerInteracting.current = e.clientX;
           updatePointerInteraction(e.clientX);
         }}
-        onPointerUp={() => updatePointerInteraction(null)}
         onPointerOut={() => updatePointerInteraction(null)}
-        onMouseMove={(e) => updateMovement(e.clientX)}
-        onTouchMove={(e) =>
-          e.touches[0] && updateMovement(e.touches[0].clientX)
-        }
+        onPointerUp={() => updatePointerInteraction(null)}
+        onTouchMove={e => e.touches[0] && updateMovement(e.touches[0].clientX)}
+        ref={canvasRef}
       />
     </div>
   );

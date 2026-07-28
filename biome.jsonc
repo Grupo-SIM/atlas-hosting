@@ -1,20 +1,20 @@
 {
-	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"extends": ["@hyoretsu/configs/biome"],
-	"formatter": {
-		"enabled": true,
-		"formatWithErrors": false,
-		"indentStyle": "space",
-		"indentWidth": 2,
-		"lineEnding": "lf",
-		"lineWidth": 80,
-		"useEditorconfig": true
-	},
-	"javascript": {
-		"formatter": {
-			"bracketSameLine": false,
-			"semicolons": "always",
-			"trailingCommas": "es5"
-		}
-	}
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["@hyoretsu/configs/biome"],
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 80,
+    "useEditorconfig": true
+  },
+  "javascript": {
+    "formatter": {
+      "bracketSameLine": false,
+      "semicolons": "always",
+      "trailingCommas": "es5"
+    }
+  }
 }

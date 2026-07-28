@@ -1,10 +1,10 @@
 "use server";
 
+import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { getUser } from "@/lib/auth/index";
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema/tables/user";
-import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 
 export async function saveUserBillingInfo(data: {
   document: string;
@@ -21,30 +21,36 @@ export async function saveUserBillingInfo(data: {
   const user = await getUser();
 
   if (!user) {
-    return { status: "error", message: "Usuário não autenticado." };
+    return { message: "Usuário não autenticado.", status: "error" };
   }
 
   try {
     await db
       .update(pgUser)
       .set({
-        billingDocument: data.document.replace(/\D/g, ""),
-        billingPhone: data.phoneNumber.replace(/\D/g, ""),
-        billingStreet: data.address.street,
-        billingNumber: data.address.number,
-        billingNeighborhood: data.address.neighborhood,
         billingCity: data.address.city,
+        billingDocument: data.document.replace(/\D/g, ""),
+        billingNeighborhood: data.address.neighborhood,
+        billingNumber: data.address.number,
+        billingPhone: data.phoneNumber.replace(/\D/g, ""),
         billingState: data.address.state,
+        billingStreet: data.address.street,
         billingZipCode: data.address.zipCode.replace(/\D/g, ""),
         updatedAt: new Date(),
       })
       .where(eq(pgUser.id, user.id));
 
     revalidatePath("/billing");
-    return { status: "success", message: "Informações de cobrança salvas no perfil." };
+    return {
+      message: "Informações de cobrança salvas no perfil.",
+      status: "success",
+    };
   } catch (error) {
     console.error("Error saving billing info:", error);
-    return { status: "error", message: "Erro ao salvar informações de cobrança." };
+    return {
+      message: "Erro ao salvar informações de cobrança.",
+      status: "error",
+    };
   }
 }
 
@@ -55,21 +61,21 @@ export async function getUserBillingInfo() {
 
   try {
     const dbUser = await db.query.pgUser.findFirst({
-      where: eq(pgUser.id, user.id),
       columns: {
-        billingDocument: true,
-        billingPhone: true,
-        billingStreet: true,
-        billingNumber: true,
-        billingNeighborhood: true,
         billingCity: true,
+        billingDocument: true,
+        billingNeighborhood: true,
+        billingNumber: true,
+        billingPhone: true,
         billingState: true,
+        billingStreet: true,
         billingZipCode: true,
         name: true,
       },
+      where: eq(pgUser.id, user.id),
     });
 
-    if (!dbUser || !dbUser.billingDocument) return null;
+    if (!dbUser?.billingDocument) return null;
 
     // Split name into first and last name as a helper
     const nameParts = dbUser.name.split(" ");
@@ -77,18 +83,18 @@ export async function getUserBillingInfo() {
     const lastName = nameParts.slice(1).join(" ") || "";
 
     return {
-      firstName,
-      lastName,
-      document: dbUser.billingDocument,
-      phoneNumber: dbUser.billingPhone,
       address: {
-        street: dbUser.billingStreet,
-        number: dbUser.billingNumber,
-        neighborhood: dbUser.billingNeighborhood,
         city: dbUser.billingCity,
+        neighborhood: dbUser.billingNeighborhood,
+        number: dbUser.billingNumber,
         state: dbUser.billingState,
+        street: dbUser.billingStreet,
         zipCode: dbUser.billingZipCode,
       },
+      document: dbUser.billingDocument,
+      firstName,
+      lastName,
+      phoneNumber: dbUser.billingPhone,
     };
   } catch (error) {
     console.error("Error fetching billing info:", error);

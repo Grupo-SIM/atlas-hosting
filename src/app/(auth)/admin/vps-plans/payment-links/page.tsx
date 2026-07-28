@@ -1,9 +1,10 @@
-import { getVpsPaymentLinksAction, searchCustomersAction, createVpsPaymentLinkAction } from "./actions";
-import { PaymentLinkForm } from "./PaymentLinkForm";
-import { CancelLinkButton } from "./CancelLinkButton";
-import { CopyLinkButton } from "./CopyLinkButton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Barcode, CreditCard, Link2, QrCode } from "lucide-react";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -12,27 +13,33 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { SELLABLE_VPS_PLANS } from "@/lib/vps-sellable-plans";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Metadata } from "next";
-import { Link2, QrCode, CreditCard, Barcode } from "lucide-react";
+import {
+  createVpsPaymentLinkAction,
+  getVpsPaymentLinksAction,
+  searchCustomersAction,
+} from "./actions";
+import { CancelLinkButton } from "./CancelLinkButton";
+import { CopyLinkButton } from "./CopyLinkButton";
+import { PaymentLinkForm } from "./PaymentLinkForm";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Links de Pagamento — Admin" };
 
-const STATUS_LABEL: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+const STATUS_LABEL: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "outline" }
+> = {
+  cancelled: { label: "Cancelado", variant: "outline" },
   pending: { label: "Aguardando pagamento", variant: "secondary" },
   used: { label: "Pago", variant: "default" },
-  cancelled: { label: "Cancelado", variant: "outline" },
 };
 
 export default async function VpsPaymentLinksPage() {
   const admin = await getUser();
-  if (!admin || !admin.isAdmin) redirect("/home");
+  if (!admin?.isAdmin) redirect("/home");
 
   const [links, customers] = await Promise.all([
     getVpsPaymentLinksAction(),
@@ -42,11 +49,14 @@ export default async function VpsPaymentLinksPage() {
   const baseUrl = getServerPublicBaseUrl();
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-4 md:pt-6">
+    <div className="flex-1 space-y-6 p-4 pt-4 md:p-8 md:pt-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Links de Pagamento</h2>
+        <h2 className="font-bold text-3xl tracking-tight">
+          Links de Pagamento
+        </h2>
         <p className="text-muted-foreground">
-          Crie cobranças com período e valor customizados (ex: a cada 2 ou 3 meses) e gere um link pra o cliente pagar.
+          Crie cobranças com período e valor customizados (ex: a cada 2 ou 3
+          meses) e gere um link pra o cliente pagar.
         </p>
       </div>
 
@@ -55,7 +65,11 @@ export default async function VpsPaymentLinksPage() {
           <CardTitle>Novo Link</CardTitle>
         </CardHeader>
         <CardContent>
-          <PaymentLinkForm plans={SELLABLE_VPS_PLANS} customers={customers} createAction={createVpsPaymentLinkAction} />
+          <PaymentLinkForm
+            createAction={createVpsPaymentLinkAction}
+            customers={customers}
+            plans={SELLABLE_VPS_PLANS}
+          />
         </CardContent>
       </Card>
 
@@ -84,30 +98,49 @@ export default async function VpsPaymentLinksPage() {
               <TableBody>
                 {links.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    <TableCell
+                      className="py-8 text-center text-muted-foreground"
+                      colSpan={8}
+                    >
                       Nenhum link criado ainda.
                     </TableCell>
                   </TableRow>
                 )}
-                {links.map((l) => {
-                  const status = STATUS_LABEL[l.status] ?? { label: l.status, variant: "outline" as const };
+                {links.map(l => {
+                  const status = STATUS_LABEL[l.status] ?? {
+                    label: l.status,
+                    variant: "outline" as const,
+                  };
                   return (
                     <TableRow key={l.id}>
-                      <TableCell className="font-medium">{l.planName}</TableCell>
-                      <TableCell>{l.intervalMonths} {l.intervalMonths === 1 ? "mês" : "meses"}</TableCell>
-                      <TableCell>R$ {l.amountBrl.toFixed(2).replace(".", ",")}</TableCell>
+                      <TableCell className="font-medium">
+                        {l.planName}
+                      </TableCell>
+                      <TableCell>
+                        {l.intervalMonths}{" "}
+                        {l.intervalMonths === 1 ? "mês" : "meses"}
+                      </TableCell>
+                      <TableCell>
+                        R$ {l.amountBrl.toFixed(2).replace(".", ",")}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Badge variant="outline" className="gap-1">
+                          <Badge className="gap-1" variant="outline">
                             <CreditCard className="h-3 w-3" /> Cartão
                           </Badge>
                           {l.allowPix && (
-                            <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30">
+                            <Badge
+                              className="gap-1 border-emerald-500/30 text-emerald-600"
+                              variant="outline"
+                            >
                               <QrCode className="h-3 w-3" /> PIX
                             </Badge>
                           )}
                           {l.allowBoleto && (
-                            <Badge variant="outline" className="gap-1 text-amber-600 border-amber-500/30">
+                            <Badge
+                              className="gap-1 border-amber-500/30 text-amber-600"
+                              variant="outline"
+                            >
                               <Barcode className="h-3 w-3" /> Boleto
                             </Badge>
                           )}
@@ -117,14 +150,24 @@ export default async function VpsPaymentLinksPage() {
                         {l.linkedUserName ? (
                           <div className="flex flex-col">
                             <span>{l.linkedUserName}</span>
-                            <span className="text-xs text-muted-foreground">{l.linkedUserEmail}</span>
+                            <span className="text-muted-foreground text-xs">
+                              {l.linkedUserEmail}
+                            </span>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground">Genérico</span>
+                          <span className="text-muted-foreground">
+                            Genérico
+                          </span>
                         )}
                       </TableCell>
-                      <TableCell><Badge variant={status.variant}>{status.label}</Badge></TableCell>
-                      <TableCell>{format(l.createdAt, "dd/MM/yyyy HH:mm", { locale: ptBR })}</TableCell>
+                      <TableCell>
+                        <Badge variant={status.variant}>{status.label}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {format(l.createdAt, "dd/MM/yyyy HH:mm", {
+                          locale: ptBR,
+                        })}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           {l.status === "pending" && (

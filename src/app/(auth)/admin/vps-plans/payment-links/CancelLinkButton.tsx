@@ -1,9 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
-import { Button } from "@/components/ui/button";
 import { XCircle } from "lucide-react";
+import { useTransition } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { cancelVpsPaymentLinkAction } from "./actions";
 
 export function CancelLinkButton({ id }: { id: string }) {
@@ -11,10 +11,8 @@ export function CancelLinkButton({ id }: { id: string }) {
 
   return (
     <Button
-      variant="ghost"
-      size="sm"
+      className="gap-2 text-red-500 hover:bg-red-500/10"
       disabled={isPending}
-      className="text-red-500 hover:bg-red-500/10 gap-2"
       onClick={() => {
         startTransition(async () => {
           try {
@@ -25,6 +23,8 @@ export function CancelLinkButton({ id }: { id: string }) {
           }
         });
       }}
+      size="sm"
+      variant="ghost"
     >
       <XCircle className="h-4 w-4" />
       Cancelar

@@ -1,22 +1,27 @@
+import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { hash } from "@/lib/auth/scrypt";
+import {
+  markPasswordResetTokenAsUsed,
+  validatePasswordResetToken,
+} from "@/lib/auth/tokens";
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { validatePasswordResetToken, markPasswordResetTokenAsUsed } from "@/lib/auth/tokens";
-import { hash } from "@/lib/auth/scrypt";
-import { AppError } from "@/lib/errors";
 import { errorHandler } from "@/lib/error-handler";
+import { AppError } from "@/lib/errors";
 
-const resetPasswordSchema = z.object({
-  token: z.string().min(1, "Token é obrigatório"),
-  password: z.string().min(8, "Senha deve ter pelo menos 8 caracteres"),
-  confirmPassword: z.string().min(1, "Confirmação de senha é obrigatória"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Senhas não coincidem",
-  path: ["confirmPassword"],
-});
+const resetPasswordSchema = z
+  .object({
+    confirmPassword: z.string().min(1, "Confirmação de senha é obrigatória"),
+    password: z.string().min(8, "Senha deve ter pelo menos 8 caracteres"),
+    token: z.string().min(1, "Token é obrigatório"),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: "Senhas não coincidem",
+    path: ["confirmPassword"],
+  });
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,8 +41,8 @@ export async function POST(request: NextRequest) {
     await db
       .update(pgUser)
       .set({
-        password: hashedPassword,
         emailVerified: new Date(),
+        password: hashedPassword,
         updatedAt: new Date(),
       })
       .where(eq(pgUser.id, resetToken.userId));

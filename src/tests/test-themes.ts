@@ -57,13 +57,13 @@ async function testWordPressThemes() {
         console.log(`Found ${extendedThemes.length} themes with extended data`);
         extendedThemes.forEach((theme: any, index: number) => {
           console.log(`\nTheme ${index + 1}:`, {
+            author: theme.author,
+            description: `${theme.description?.substring(0, 100)}...`,
             name: theme.name,
-            title: theme.title,
             status: theme.status,
+            title: theme.title,
             update: theme.update,
             version: theme.version,
-            description: theme.description?.substring(0, 100) + "...",
-            author: theme.author,
           });
         });
       } catch (parseError) {
@@ -87,8 +87,8 @@ async function testWordPressThemes() {
         activeThemes.forEach((theme: any) => {
           console.log("Active Theme:", {
             name: theme.name,
-            title: theme.title,
             status: theme.status,
+            title: theme.title,
             version: theme.version,
           });
         });
@@ -116,8 +116,8 @@ async function testWordPressThemes() {
           );
           updatableThemes.forEach((theme: any) => {
             console.log("Update Available:", {
-              name: theme.name,
               current_version: theme.version,
+              name: theme.name,
               update_version: theme.update_version,
             });
           });
@@ -152,7 +152,7 @@ testWordPressThemes()
     console.log("\n✅ All theme tests completed successfully!");
     process.exit(0);
   })
-  .catch((error) => {
+  .catch(error => {
     console.error("\n❌ Theme tests failed:", error);
     process.exit(1);
   });

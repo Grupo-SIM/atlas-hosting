@@ -1,13 +1,13 @@
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { pgVpsSubscription, pgOrganizationDomains } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { namecheapApi } from "@/lib/server/apis/namecheap";
+import { pgOrganizationDomains, pgVpsSubscription } from "@/lib/db/schema";
 import { sendNotificationEmail } from "@/lib/email/service";
+import { namecheapApi } from "@/lib/server/apis/namecheap";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
-import { getCloudVpsPlan } from "@/lib/vps-catalog";
-import { getVdsPlan } from "@/lib/vds-catalog";
 import { getStorageVpsPlan } from "@/lib/storage-vps-catalog";
+import { getVdsPlan } from "@/lib/vds-catalog";
+import { getCloudVpsPlan } from "@/lib/vps-catalog";
 
 const ADMIN_NOTIFY_EMAIL = "jbmidiadigital@gmail.com";
 
@@ -19,14 +19,18 @@ function ensureAuthorized(req: Request): boolean {
   // Allow requests from localhost (internal cron)
   const forwarded = req.headers.get("x-forwarded-for") || "";
   const host = req.headers.get("host") || "";
-  const isLocal = host.startsWith("localhost") || host.startsWith("127.0.0.1") || forwarded === "";
+  const isLocal =
+    host.startsWith("localhost") ||
+    host.startsWith("127.0.0.1") ||
+    forwarded === "";
   if (isLocal) return true;
 
   const auth = req.headers.get("authorization") || "";
   const token = auth.replace("Bearer ", "").trim();
   const cronSecret = process.env.CRON_SECRET;
   const internalToken =
-    process.env.API_MACHINE_INTERNAL_TOKEN || process.env.INTERNAL_SERVICE_TOKEN;
+    process.env.API_MACHINE_INTERNAL_TOKEN ||
+    process.env.INTERNAL_SERVICE_TOKEN;
   if (cronSecret && token === cronSecret) return true;
   if (internalToken && token === internalToken) return true;
   return false;
@@ -37,21 +41,25 @@ function daysUntil(date: Date): number {
 }
 
 const PLAN_TYPE_LABEL: Record<string, string> = {
-  vps: "Cloud VPS",
-  vds: "Cloud VDS",
   "storage-vps": "Storage VPS",
+  vds: "Cloud VDS",
+  vps: "Cloud VPS",
   "vps-windows": "VPS Windows",
 };
 
 function planDisplayName(planType: string, planId: string): string {
   if (planType === "vds") return getVdsPlan(planId)?.name || planId;
-  if (planType === "storage-vps") return getStorageVpsPlan(planId)?.name || planId;
-  if (planType === "vps-windows") return `${getCloudVpsPlan(planId)?.name || planId} Windows`;
+  if (planType === "storage-vps")
+    return getStorageVpsPlan(planId)?.name || planId;
+  if (planType === "vps-windows")
+    return `${getCloudVpsPlan(planId)?.name || planId} Windows`;
   return getCloudVpsPlan(planId)?.name || planId;
 }
 
 async function notifySubscriptionExpiring(
-  sub: typeof pgVpsSubscription.$inferSelect & { user: { name: string | null; email: string } },
+  sub: typeof pgVpsSubscription.$inferSelect & {
+    user: { name: string | null; email: string };
+  },
   daysLeft: number,
   baseUrl: string
 ): Promise<void> {
@@ -154,7 +162,10 @@ export async function POST(req: Request) {
       await notifySubscriptionExpiring(sub as any, daysLeft, baseUrl);
       subscriptionsNotified++;
     } catch (err) {
-      console.error(`[EXPIRY-CRON] Falha ao notificar assinatura ${sub.id}:`, err);
+      console.error(
+        `[EXPIRY-CRON] Falha ao notificar assinatura ${sub.id}:`,
+        err
+      );
     }
   }
 
@@ -179,16 +190,25 @@ export async function POST(req: Request) {
       const daysLeft = daysUntil(expireDate);
       if (!EXPIRY_CHECKPOINTS_DAYS.includes(daysLeft)) continue;
 
-      await notifyDomainExpiring(domainRow.domain, owner, expireDate, daysLeft, baseUrl);
+      await notifyDomainExpiring(
+        domainRow.domain,
+        owner,
+        expireDate,
+        daysLeft,
+        baseUrl
+      );
       domainsNotified++;
     } catch (err) {
-      console.error(`[EXPIRY-CRON] Domínio ${domainRow.domain} ignorado (não gerenciado por nós ou erro na consulta):`, err);
+      console.error(
+        `[EXPIRY-CRON] Domínio ${domainRow.domain} ignorado (não gerenciado por nós ou erro na consulta):`,
+        err
+      );
     }
   }
 
   return NextResponse.json({
-    subscriptionsNotified,
-    domainsNotified,
     checkpoints: EXPIRY_CHECKPOINTS_DAYS,
+    domainsNotified,
+    subscriptionsNotified,
   });
 }

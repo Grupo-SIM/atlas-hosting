@@ -1,13 +1,13 @@
+import path from "node:path";
 import { render } from "@react-email/render";
 import {
-  AtlasWelcomeEmail,
-  AtlasPasswordResetEmail,
-  AtlasNotificationEmail,
   AtlasChangeEmail,
+  AtlasNotificationEmail,
+  AtlasPasswordResetEmail,
+  AtlasWelcomeEmail,
 } from "@/emails";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { getEmailService, getSmtpRedactedMeta } from "../consts/singletons";
-import path from "node:path";
 
 /** Cid usado no `<Img src="cid:atlaslogo" />` dos templates — evita logo quebrada
  * quando o cliente de email (ex. Gmail) bloqueia carregamento de imagem externa. */
@@ -58,25 +58,28 @@ async function sendEmail(data: EmailData): Promise<void> {
 
   try {
     await emailService.sendEmail({
-      from: "noreply@atlashosting.com.br",
-      to: data.to,
-      subject: data.subject,
-      body: data.html,
       attachments: usesLogoCid
         ? [
             {
+              cid: LOGO_CID,
+              contentDisposition: "inline",
+              contentType: "image/png",
               filename: "atlas-logo.png",
               path: path.join(process.cwd(), "public", "atlas-logo.png"),
-              cid: LOGO_CID,
-              contentType: "image/png",
-              contentDisposition: "inline",
             },
           ]
         : undefined,
+      body: data.html,
+      from: "noreply@atlashosting.com.br",
+      subject: data.subject,
+      to: data.to,
     });
   } catch (error) {
     console.error(`Failed to send email to ${data.to}:`, error);
-    console.error("[email] SMTP usado no envio (sem senha):", getSmtpRedactedMeta());
+    console.error(
+      "[email] SMTP usado no envio (sem senha):",
+      getSmtpRedactedMeta()
+    );
     // Do not re-throw — email failures must never block user creation or other actions
   }
 }
@@ -94,18 +97,18 @@ export async function sendWelcomeEmail(
 
   const html = await render(
     AtlasWelcomeEmail({
+      dashboardUrl,
       firstName,
       organizationName,
-      dashboardUrl,
-      supportEmail: "contact@atlashosting.com.br",
       publicSiteUrl: siteUrl,
+      supportEmail: "contact@atlashosting.com.br",
     })
   );
 
   await sendEmail({
-    to: email,
-    subject: "Bem-vindo ao Atlas Hosting!",
     html,
+    subject: "Bem-vindo ao Atlas Hosting!",
+    to: email,
   });
 }
 
@@ -122,19 +125,19 @@ export async function sendPasswordResetEmail(
 
   const html = await render(
     AtlasPasswordResetEmail({
-      firstName,
       email,
-      resetLink,
       expirationTime: "1 hora",
-      supportEmail: "contact@atlashosting.com.br",
+      firstName,
       publicSiteUrl: siteUrl,
+      resetLink,
+      supportEmail: "contact@atlashosting.com.br",
     })
   );
 
   await sendEmail({
-    to: email,
-    subject: "Redefinir senha - Atlas Hosting",
     html,
+    subject: "Redefinir senha - Atlas Hosting",
+    to: email,
   });
 }
 
@@ -151,27 +154,27 @@ export async function sendEmailVerificationEmail(
 
   const html = await render(
     AtlasNotificationEmail({
-      firstName: email,
-      organizationName: "Atlas Hosting",
-      title: "Verificar seu endereço de email",
-      message:
-        "Para completar o seu cadastro, você precisa verificar seu endereço de email. Use o código abaixo na página de verificação:",
-      verificationCode,
-      severity: "info",
-      actionUrl: verificationLink,
       actionText: "Verificar Email",
-      timestamp: new Date().toLocaleString("pt-BR"),
-      supportEmail: "contact@atlashosting.com.br",
+      actionUrl: verificationLink,
       additionalInfo:
         "Este código expira em 24 horas. Se você não solicitou esta verificação, pode ignorar este e-mail.",
+      firstName: email,
+      message:
+        "Para completar o seu cadastro, você precisa verificar seu endereço de email. Use o código abaixo na página de verificação:",
+      organizationName: "Atlas Hosting",
       publicSiteUrl: siteUrl,
+      severity: "info",
+      supportEmail: "contact@atlashosting.com.br",
+      timestamp: new Date().toLocaleString("pt-BR"),
+      title: "Verificar seu endereço de email",
+      verificationCode,
     })
   );
 
   await sendEmail({
-    to: email,
-    subject: "Verificar email - Atlas Hosting",
     html,
+    subject: "Verificar email - Atlas Hosting",
+    to: email,
   });
 }
 
@@ -191,31 +194,31 @@ export async function sendNotificationEmail(
 ): Promise<void> {
   const html = await render(
     AtlasNotificationEmail({
-      firstName,
-      organizationName,
-      title,
-      message,
-      severity,
-      actionUrl,
       actionText,
-      timestamp: new Date().toLocaleString("pt-BR"),
-      supportEmail: "contact@atlashosting.com.br",
+      actionUrl,
       additionalInfo,
+      firstName,
+      message,
+      organizationName,
       publicSiteUrl: getServerPublicBaseUrl(),
+      severity,
+      supportEmail: "contact@atlashosting.com.br",
+      timestamp: new Date().toLocaleString("pt-BR"),
+      title,
     })
   );
 
   const subjectPrefix = {
-    success: "✅ Sucesso",
-    info: "ℹ️ Informação",
-    warning: "⚠️ Aviso",
     danger: "🚨 Alerta",
+    info: "ℹ️ Informação",
+    success: "✅ Sucesso",
+    warning: "⚠️ Aviso",
   }[severity];
 
   await sendEmail({
-    to: email,
-    subject: `${subjectPrefix} - ${title}`,
     html,
+    subject: `${subjectPrefix} - ${title}`,
+    to: email,
   });
 }
 
@@ -233,19 +236,19 @@ export async function sendChangeEmailVerificationEmail(
 
   const html = await render(
     AtlasChangeEmail({
-      firstName,
       currentEmail,
-      newEmail,
-      verificationLink,
       expirationTime: "24 horas",
-      supportEmail: "contact@atlashosting.com.br",
+      firstName,
+      newEmail,
       publicSiteUrl: siteUrl,
+      supportEmail: "contact@atlashosting.com.br",
+      verificationLink,
     })
   );
 
   await sendEmail({
-    to: newEmail,
-    subject: "Confirmar alteração de email - Atlas Hosting",
     html,
+    subject: "Confirmar alteração de email - Atlas Hosting",
+    to: newEmail,
   });
 }

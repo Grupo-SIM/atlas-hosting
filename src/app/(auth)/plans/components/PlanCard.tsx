@@ -1,4 +1,9 @@
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TooltipArrow } from "@radix-ui/react-tooltip";
+import clsx from "clsx";
+import { capitalize } from "lodash";
+import { AlertTriangle, Check, Crown, Shield, XIcon, Zap } from "lucide-react";
+import Form from "next/form";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,18 +16,12 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
   TooltipPortal,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { Organization, Plan, User } from "@/lib/db/schema";
-import { cn, intersperse, toBrl } from "@/lib/utils";
-import { TooltipArrow } from "@radix-ui/react-tooltip";
-import clsx from "clsx";
-import { capitalize } from "lodash";
-import { AlertTriangle, Check, Crown, Shield, XIcon, Zap } from "lucide-react";
-import Form from "next/form";
-import Link from "next/link";
+import { intersperse, toBrl } from "@/lib/utils";
 
 export function PlanCard({
   plan,
@@ -41,13 +40,13 @@ export function PlanCard({
     isBoolean: boolean;
     unit?: string;
   }[] = [
-    { key: "maxSites", label: "Sites", isBoolean: false },
-    { key: "maxStorage", label: "Armazenamento", isBoolean: false, unit: "GB" },
-    { key: "ssl", label: "SSL Grátis", isBoolean: true },
-    { key: "backup", label: "Backup", isBoolean: true },
-    { key: "email", label: "Email", isBoolean: true },
-    { key: "cdn", label: "CDN", isBoolean: true },
-    { key: "supportPriority", label: "Suporte Prioritário", isBoolean: true },
+    { isBoolean: false, key: "maxSites", label: "Sites" },
+    { isBoolean: false, key: "maxStorage", label: "Armazenamento", unit: "GB" },
+    { isBoolean: true, key: "ssl", label: "SSL Grátis" },
+    { isBoolean: true, key: "backup", label: "Backup" },
+    { isBoolean: true, key: "email", label: "Email" },
+    { isBoolean: true, key: "cdn", label: "CDN" },
+    { isBoolean: true, key: "supportPriority", label: "Suporte Prioritário" },
   ];
 
   return (
@@ -58,19 +57,19 @@ export function PlanCard({
             className={clsx([
               "group relative transition-all duration-500",
               !isCurrentPlan && plan.featured
-                ? "border-yellow-400/50 shadow-xl bg-gradient-to-br from-yellow-50/50 via-background to-orange-50/30 dark:from-yellow-950/20 dark:via-background dark:to-orange-950/20 hover:shadow-yellow-500/20"
+                ? "border-yellow-400/50 bg-gradient-to-br from-yellow-50/50 via-background to-orange-50/30 shadow-xl hover:shadow-yellow-500/20 dark:from-yellow-950/20 dark:via-background dark:to-orange-950/20"
                 : "hover:border-primary/50 hover:shadow-primary/5",
               isCurrentPlan
-                ? "ring-2 ring-emerald-500/50 bg-emerald-50/30 dark:bg-emerald-950/20 hover:ring-emerald-500/70"
+                ? "bg-emerald-50/30 ring-2 ring-emerald-500/50 hover:ring-emerald-500/70 dark:bg-emerald-950/20"
                 : "hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/10",
-              "flex flex-col h-full backdrop-blur-sm",
+              "flex h-full flex-col backdrop-blur-sm",
             ])}
           >
             {/* Featured Badge */}
             {plan.featured && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+              <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 transform">
                 <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg">
-                  <Crown className="w-3 h-3 mr-1" />
+                  <Crown className="mr-1 h-3 w-3" />
                   Mais Popular
                 </Badge>
               </div>
@@ -80,7 +79,7 @@ export function PlanCard({
             {isCurrentPlan && (
               <div className="absolute -top-3 right-4 z-10">
                 <Badge className="bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg">
-                  <Shield className="w-3 h-3 mr-1" />
+                  <Shield className="mr-1 h-3 w-3" />
                   Seu Plano
                 </Badge>
               </div>
@@ -90,7 +89,7 @@ export function PlanCard({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <CardTitle className="text-xl font-bold">
+                    <CardTitle className="font-bold text-xl">
                       {capitalize(plan.name)}
                     </CardTitle>
                     <CardDescription className="text-sm">
@@ -99,7 +98,7 @@ export function PlanCard({
                   </div>
                   {plan.featured && (
                     <div className="text-yellow-500">
-                      <Zap className="w-6 h-6" />
+                      <Zap className="h-6 w-6" />
                     </div>
                   )}
                 </div>
@@ -107,23 +106,23 @@ export function PlanCard({
                 {/* Price Section */}
                 <div className="space-y-1">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text font-bold text-3xl text-transparent">
                       {toBrl(plan.price)}
                     </span>
                     <span className="text-muted-foreground text-sm">/mês</span>
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     Cobrado mensalmente • Cancele quando quiser
                   </div>
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="flex-1 flex flex-col space-y-6">
+            <CardContent className="flex flex-1 flex-col space-y-6">
               <div className="flex-1 space-y-4">
                 {/* Features Badge */}
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge className="text-xs" variant="secondary">
                     ✨ Recursos inclusos
                   </Badge>
                 </div>
@@ -137,17 +136,17 @@ export function PlanCard({
 
                       return (
                         <li
-                          key={key as string}
                           className={clsx(
                             "flex items-center gap-3 text-sm transition-colors",
                             hasFeature
                               ? "text-foreground"
                               : "text-muted-foreground line-through"
                           )}
+                          key={key as string}
                         >
                           <div
                             className={clsx(
-                              "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center",
+                              "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full",
                               hasFeature
                                 ? "bg-emerald-100 dark:bg-emerald-950"
                                 : "bg-red-100 dark:bg-red-950"
@@ -167,10 +166,10 @@ export function PlanCard({
                         </li>
                       );
                     }),
-                    (i) => (
+                    i => (
                       <li
+                        className="ml-2.5 h-0 border-muted border-l pl-2.5"
                         key={i}
-                        className="border-l border-muted ml-2.5 pl-2.5 h-0"
                       />
                     )
                   )}
@@ -178,46 +177,46 @@ export function PlanCard({
               </div>
 
               {/* CTA Button */}
-              <div className="pt-4 border-t space-y-3">
+              <div className="space-y-3 border-t pt-4">
                 {isCurrentPlan ? (
                   <Button
+                    className="h-12 w-full border-emerald-200 bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
                     disabled={true}
-                    className="w-full h-12 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                     variant="outline"
                   >
-                    <Shield className="w-4 h-4 mr-2" />
+                    <Shield className="mr-2 h-4 w-4" />
                     Plano Atual
                   </Button>
                 ) : isDowngrade ? (
                   <TooltipTrigger asChild>
                     <span>
                       <Button
+                        className="h-12 w-full cursor-not-allowed font-semibold opacity-50"
                         disabled={true}
-                        className="w-full h-12 font-semibold opacity-50 cursor-not-allowed"
                         variant="outline"
                       >
-                        <AlertTriangle className="w-4 h-4 mr-2" />
+                        <AlertTriangle className="mr-2 h-4 w-4" />
                         Downgrade Não Permitido
                       </Button>
                     </span>
                   </TooltipTrigger>
                 ) : (
                   <Form action="">
-                    <input type="hidden" name="planId" value={plan.id} />
-                    <input type="hidden" name="action" value="buy" />
+                    <input name="planId" type="hidden" value={plan.id} />
+                    <input name="action" type="hidden" value="buy" />
                     <Button
-                      isLoading={searchParams?.action === "buy"}
-                      type="submit"
                       className={clsx(
-                        "w-full h-12 font-semibold transition-all duration-300",
+                        "h-12 w-full font-semibold transition-all duration-300",
                         plan.featured
-                          ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl"
+                          ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg hover:from-yellow-600 hover:to-orange-600 hover:shadow-xl"
                           : "hover:shadow-lg"
                       )}
+                      isLoading={searchParams?.action === "buy"}
+                      type="submit"
                       variant={plan.featured ? "default" : "outline"}
                     >
                       {hasPlan ? "Atualizar Plano" : "Começar Agora"}
-                      {!plan.featured && <Zap className="w-4 h-4 ml-2" />}
+                      {!plan.featured && <Zap className="ml-2 h-4 w-4" />}
                     </Button>
                   </Form>
                 )}
@@ -227,14 +226,14 @@ export function PlanCard({
         </TooltipTrigger>
         {isDowngrade && (
           <TooltipPortal>
-            <TooltipContent side="bottom" sideOffset={8} className="max-w-xs">
+            <TooltipContent className="max-w-xs" side="bottom" sideOffset={8}>
               <TooltipArrow className="fill-border" />
               <span className="text-muted-foreground text-sm">
                 Para fazer downgrade do seu plano, você precisa primeiro
                 cancelar sua assinatura atual.{" "}
                 <Link
+                  className="font-medium text-foreground underline hover:no-underline"
                   href="/settings"
-                  className="font-medium underline hover:no-underline text-foreground"
                 >
                   Gerencie suas assinaturas aqui
                 </Link>
