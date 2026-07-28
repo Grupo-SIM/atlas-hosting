@@ -59,7 +59,11 @@ export function SubscriptionActionsCell({ id, status, paymentMethod, nextChargeD
         Renovar (PIX)
       </Button>
     );
-  } else if (status === "active") {
+  }
+  /* Desabilitado: essa ação só muda vps_subscriptions.status no banco — não
+   * suspende o servidor na Contabo nem tira acesso do cliente à plataforma.
+   * Ver plano de vinculação com status real da Contabo antes de reativar.
+  else if (status === "active") {
     primaryAction = (
       <AlertDialog>
         <AlertDialogTrigger asChild>
@@ -88,7 +92,8 @@ export function SubscriptionActionsCell({ id, status, paymentMethod, nextChargeD
         </AlertDialogContent>
       </AlertDialog>
     );
-  } else if (status === "paused") {
+  } */
+  if (!canRenewPix && status === "paused") {
     primaryAction = (
       <Button
         variant="default"
@@ -103,7 +108,10 @@ export function SubscriptionActionsCell({ id, status, paymentMethod, nextChargeD
     );
   }
 
-  const cancelAction = status !== "cancelled" && (
+  // Desabilitado: essa ação só muda vps_subscriptions.status no banco — não
+  // cancela o servidor na Contabo nem tira acesso do cliente à plataforma.
+  // Ver plano de vinculação com status real da Contabo antes de reativar.
+  const cancelAction = false && (
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size="sm" disabled={pending}>

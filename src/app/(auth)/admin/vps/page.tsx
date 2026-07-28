@@ -10,6 +10,16 @@ import CopyTokenButton from "@/components/vps/CopyTokenButton";
 
 export const dynamic = "force-dynamic";
 
+const HEARTBEAT_TIMEOUT_MS = 5 * 60 * 1000;
+
+function isServerLive(s: { status: string | null; lastHeartbeat: Date | null }) {
+  return (
+    s.status === "active" &&
+    !!s.lastHeartbeat &&
+    Date.now() - new Date(s.lastHeartbeat).getTime() < HEARTBEAT_TIMEOUT_MS
+  );
+}
+
 export default async function AdminVpsPage() {
   const admin = await getUser();
   
@@ -84,8 +94,8 @@ export default async function AdminVpsPage() {
                         </div>
                       </td>
                       <td className="p-4 align-middle">
-                        <Badge variant={s.status === "active" ? "action" : "secondary"}>
-                          {s.status}
+                        <Badge variant={isServerLive(s) ? "action" : "secondary"}>
+                          {isServerLive(s) ? "Ativa" : "Inativa"}
                         </Badge>
                       </td>
                       <td className="p-4 align-middle font-mono text-[10px]">

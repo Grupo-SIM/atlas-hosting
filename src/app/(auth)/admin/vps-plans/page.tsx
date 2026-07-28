@@ -1,23 +1,11 @@
 import { getVpsPlanSubscriptionsAction, getPixAllowAllDurationsAction, getBoletoEnabledAction } from "./actions";
-import { BackfillButton } from "./BackfillButton";
-import { SubscriptionActionsCell } from "./SubscriptionActionsCell";
+// import { BackfillButton } from "./BackfillButton";
+import { VpsPlansTable } from "./VpsPlansTable";
 import { PaymentSettingsCard } from "./PaymentSettingsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { toBrl } from "@/lib/utils";
 import { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -27,84 +15,13 @@ import {
   PauseCircle,
   XCircle,
   Clock,
-  CreditCard,
-  QrCode,
   Link2,
-  Barcode,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Planos VPS — Admin" };
 
-const PLAN_TYPE_LABEL: Record<string, string> = {
-  vps: "VPS",
-  vds: "VDS",
-  "storage-vps": "Storage",
-  "vps-windows": "Windows",
-};
-
 const FIFTEEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000;
-
-function periodLabel(months: number) {
-  if (months === 1) return "1 mês";
-  return `${months} meses`;
-}
-
-function daysUntil(date: Date) {
-  return Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
-}
-
-function PaymentBadge({ method }: { method: "credit_card" | "pix" | "boleto" }) {
-  if (method === "pix") {
-    return (
-      <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30">
-        <QrCode className="h-3 w-3" />
-        PIX
-      </Badge>
-    );
-  }
-  if (method === "boleto") {
-    return (
-      <Badge variant="outline" className="gap-1 text-amber-600 border-amber-500/30">
-        <Barcode className="h-3 w-3" />
-        Boleto
-      </Badge>
-    );
-  }
-  return (
-    <Badge variant="outline" className="gap-1">
-      <CreditCard className="h-3 w-3" />
-      Cartão
-    </Badge>
-  );
-}
-
-/** Cartão cobra sozinho no vencimento (automático); PIX/boleto exigem o cliente pagar de novo manualmente. */
-function ChargeModeBadge({ method }: { method: "credit_card" | "pix" | "boleto" }) {
-  if (method === "credit_card") {
-    return (
-      <Badge className="gap-1 bg-sky-500/15 text-sky-600 border-sky-500/30 hover:bg-sky-500/15">
-        Automático
-      </Badge>
-    );
-  }
-  return (
-    <Badge variant="outline" className="gap-1 text-slate-500 border-slate-500/30">
-      Manual
-    </Badge>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-    active:    { label: "Ativa",      variant: "default" },
-    paused:    { label: "Pausada",    variant: "secondary" },
-    cancelled: { label: "Cancelada",  variant: "outline" },
-    failed:    { label: "Falhou",     variant: "destructive" },
-  };
-  const { label, variant } = map[status] ?? { label: status, variant: "outline" };
-  return <Badge variant={variant}>{label}</Badge>;
-}
 
 export default async function AdminVpsPlansPage() {
   const admin = await getUser();
@@ -137,7 +54,7 @@ export default async function AdminVpsPlansPage() {
               Links de Pagamento
             </Link>
           </Button>
-          <BackfillButton />
+          {/* <BackfillButton /> */}
           <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
             <ShieldCheck className="h-5 w-5 text-primary" />
             <span className="text-sm font-bold text-primary">
@@ -208,89 +125,7 @@ export default async function AdminVpsPlansPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Período</TableHead>
-                <TableHead>Pagamento</TableHead>
-                <TableHead>Cobrança</TableHead>
-                <TableHead>Próx. cobrança</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {plans.map((plan) => {
-                const isExpiring =
-                  plan.status === "active" &&
-                  plan.nextChargeDate.getTime() <= Date.now() + FIFTEEN_DAYS_MS;
-                const remainingDays = daysUntil(plan.nextChargeDate);
-                return (
-                <TableRow key={plan.id} className={isExpiring ? "bg-amber-500/10 hover:bg-amber-500/15" : undefined}>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-semibold">{plan.userName ?? "—"}</span>
-                      <span className="text-xs text-muted-foreground">{plan.userEmail}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {PLAN_TYPE_LABEL[plan.planType] ?? plan.planType}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {periodLabel(plan.intervalMonths)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <PaymentBadge method={plan.paymentMethod} />
-                  </TableCell>
-                  <TableCell>
-                    <ChargeModeBadge method={plan.paymentMethod} />
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <div className="flex flex-col gap-1">
-                      <span>{format(plan.nextChargeDate, "dd/MM/yyyy", { locale: ptBR })}</span>
-                      {isExpiring && (
-                        <Badge variant="outline" className="w-fit gap-1 text-amber-600 border-amber-500/40">
-                          <Clock className="h-3 w-3" />
-                          {remainingDays <= 0 ? "Vencida" : `Vence em ${remainingDays} ${remainingDays === 1 ? "dia" : "dias"}`}
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm font-medium">
-                    {toBrl(plan.amountBrl)}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={plan.status} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <SubscriptionActionsCell
-                      id={plan.id}
-                      status={plan.status}
-                      paymentMethod={plan.paymentMethod}
-                      nextChargeDate={plan.nextChargeDate}
-                    />
-                  </TableCell>
-                </TableRow>
-                );
-              })}
-              {plans.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
-                    Nenhuma assinatura registrada.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          </div>
+          <VpsPlansTable plans={plans} />
         </CardContent>
       </Card>
     </div>

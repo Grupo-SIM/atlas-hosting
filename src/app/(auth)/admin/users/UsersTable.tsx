@@ -20,6 +20,12 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { HeaderTip } from "@/components/HeaderTip";
+import { DatePickerFilter, type DateRangeValue } from "@/components/DatePickerFilter";
+import { Button } from "@/components/ui/button";
+import { FileDown } from "lucide-react";
+import { exportTableToPdf } from "@/lib/exportPdf";
 import { UserActionsCell } from "./UserActionsCell";
 import type { UserRow } from "./actions";
 
@@ -31,6 +37,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
   const [subscriptionFilter, setSubscriptionFilter] = useState<"all" | "subscriber" | "none">("all");
+  const [dateFilter, setDateFilter] = useState<DateRangeValue>(null);
 
   const filtered = useMemo(() => {
     return users.filter((u) => {
@@ -49,13 +56,48 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         (subscriptionFilter === "subscriber" && u.hasActiveSubscription) ||
         (subscriptionFilter === "none" && !u.hasActiveSubscription);
 
-      return matchesSearch && matchesStatus && matchesSubscription;
+      const createdDay = format(u.createdAt, "yyyy-MM-dd");
+      const matchesDate =
+        !dateFilter || (createdDay >= dateFilter.from && createdDay <= dateFilter.to);
+
+      return matchesSearch && matchesStatus && matchesSubscription && matchesDate;
     });
-  }, [users, search, statusFilter, subscriptionFilter]);
+  }, [users, search, statusFilter, subscriptionFilter, dateFilter]);
+
+  const periodLabel = dateFilter
+    ? dateFilter.from === dateFilter.to
+      ? format(new Date(`${dateFilter.from}T12:00:00`), "dd/MM/yyyy", { locale: ptBR })
+      : `${format(new Date(`${dateFilter.from}T12:00:00`), "dd/MM/yyyy", { locale: ptBR })} a ${format(new Date(`${dateFilter.to}T12:00:00`), "dd/MM/yyyy", { locale: ptBR })}`
+    : null;
+
+  const handleExportPdf = () => {
+    exportTableToPdf({
+      title: "Usuários — Atlas Hosting",
+      subtitle: periodLabel
+        ? `Filtrado por data de criação: ${periodLabel}`
+        : `Todos os usuários — gerado em ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`,
+      columns: ["Usuário", "Email", "Total Ganho", "Saldo Disponível", "Criado em", "Status", "Assinatura", "Cobrança"],
+      rows: filtered.map((u) => [
+        u.name,
+        u.email,
+        toBrl(u.totalEarnedBrl),
+        toBrl(u.balanceCents / 100),
+        format(u.createdAt, "dd/MM/yyyy", { locale: ptBR }),
+        u.suspendedAt === null ? "Ativo" : "Suspenso",
+        u.hasActiveSubscription ? "Cliente" : "Sem assinatura",
+        u.subscriptionPaymentMethod === null
+          ? "—"
+          : u.subscriptionPaymentMethod === "credit_card"
+            ? "Automático"
+            : `Manual (${u.subscriptionPaymentMethod === "pix" ? "PIX" : "Boleto"})`,
+      ]),
+      filename: `usuarios${dateFilter ? `-${dateFilter.from}_a_${dateFilter.to}` : ""}.pdf`,
+    });
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Input
           placeholder="Buscar por nome ou email..."
           value={search}
@@ -82,19 +124,50 @@ export function UsersTable({ users }: { users: UserRow[] }) {
             <SelectItem value="none">Sem assinatura</SelectItem>
           </SelectContent>
         </Select>
+        <DatePickerFilter value={dateFilter} onChange={setDateFilter} placeholder="Período de criação" />
+        <Button variant="outline" onClick={handleExportPdf} className="ml-auto gap-2">
+          <FileDown className="h-4 w-4" />
+          Exportar PDF
+        </Button>
       </div>
 
       <div className="overflow-x-auto rounded-md border">
+      <TooltipProvider delayDuration={150}>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Usuário</TableHead>
-            <TableHead>Total Ganho</TableHead>
-            <TableHead>Saldo Disponível</TableHead>
+            <TableHead>
+              <HeaderTip
+                label="Total Ganho"
+                tip="Comissões de afiliado que esse usuário já ganhou indicando outros clientes. Não tem relação com o que ele comprou."
+              />
+            </TableHead>
+            <TableHead>
+              <HeaderTip
+                label="Saldo Disponível"
+                tip="Saldo atual da carteira de afiliado, disponível pra saque."
+              />
+            </TableHead>
             <TableHead>Criado em</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Assinatura</TableHead>
-            <TableHead>Cobrança</TableHead>
+            <TableHead>
+              <HeaderTip
+                label="Status"
+                tip="Se a conta (login) está ativa ou foi suspensa por um admin. Não indica se ele é cliente."
+              />
+            </TableHead>
+            <TableHead>
+              <HeaderTip
+                label="Assinatura"
+                tip="Se o usuário tem assinatura VPS/VDS ativa ou pausada — ou seja, se é cliente pagante."
+              />
+            </TableHead>
+            <TableHead>
+              <HeaderTip
+                label="Cobrança"
+                tip="Forma de cobrança da assinatura: Automático (cartão) ou Manual (PIX/Boleto)."
+              />
+            </TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -142,7 +215,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                     Automático
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="text-amber-600 border-amber-500/30">
+                  <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 hover:bg-amber-500/15">
                     Manual ({u.subscriptionPaymentMethod === "pix" ? "PIX" : "Boleto"})
                   </Badge>
                 )}
@@ -161,6 +234,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
           )}
         </TableBody>
       </Table>
+      </TooltipProvider>
       </div>
     </div>
   );

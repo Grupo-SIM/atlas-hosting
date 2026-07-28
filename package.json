@@ -92,6 +92,8 @@
     "input-otp": "^1.2.4",
     "ipaddr.js": "^2.2.0",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "ky": "^2.0.2",
     "libphonenumber-js": "^1.12.8",
     "lodash": "^4.17.21",
