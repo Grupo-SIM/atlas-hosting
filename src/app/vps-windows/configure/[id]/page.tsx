@@ -406,7 +406,7 @@ const getImages = (planId: string) => {
   };
 };
 
-export default function ConfigureWindowsVps() {
+export default function ConfigureWindowsVps({ embedded = false }: { embedded?: boolean } = {}) {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -552,62 +552,62 @@ export default function ConfigureWindowsVps() {
   }
 
   return (
-    <div className="min-h-screen bg-[#000B12] text-white font-sans pb-24 relative overflow-hidden">
-      <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
-      <Navbar variant="dark" />
-      <div className="max-w-6xl mx-auto px-6 pt-32 pb-12 space-y-12">
+    <div className={`${embedded ? "min-h-full" : "min-h-screen"} ${embedded ? "bg-background" : "bg-[#000B12]"} ${embedded ? "text-foreground" : "text-white"} font-sans pb-24 relative ${embedded ? "" : "overflow-hidden"}`}>
+      {!embedded && <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />}
+      {!embedded && <Navbar variant="dark" />}
+      <div className={`max-w-6xl mx-auto px-6 ${embedded ? "pt-6 md:pt-10" : "pt-32"} pb-12 space-y-12`}>
 
-        <Link href="/vps-windows#plans" className="group mb-6 flex items-center gap-2 text-base font-bold text-sky-400 transition-all hover:text-sky-300">
+        <Link href={embedded ? "/vps-plans" : "/vps-windows#plans"} className="group mb-6 flex items-center gap-2 text-base font-bold text-sky-400 transition-all hover:text-sky-300">
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Voltar para VPS Windows
         </Link>
-        <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight drop-shadow-sm">Configure seu {plan.name}</h1>
+        <h1 className={`text-4xl md:text-5xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight drop-shadow-sm`}>Configure seu {plan.name}</h1>
 
         {/* Plan Summary Section */}
         <div className="flex flex-wrap items-center gap-10">
-          <div className="flex-1 border-2 border-sky-500/50 rounded-xl p-8 grid grid-cols-5 gap-4 relative bg-white/5 backdrop-blur-md shadow-2xl">
+          <div className={`flex-1 border-2 border-sky-500/50 rounded-xl p-8 grid grid-cols-5 gap-4 relative ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md shadow-2xl`}>
             <div className="space-y-1">
-              <p className="text-[12px] font-bold text-slate-400 uppercase">CPU</p>
+              <p className={`text-[12px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase`}>CPU</p>
               <p className="text-[13px] font-medium leading-tight">{plan.vcpu}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[12px] font-bold text-slate-400 uppercase">RAM</p>
+              <p className={`text-[12px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase`}>RAM</p>
               <p className="text-[13px] font-medium leading-tight">{plan.ram}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[12px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
+              <p className={`text-[12px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase`}>ARMAZENAMENTO</p>
               <p className="text-[13px] font-medium leading-tight">{plan.storage}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[12px] font-bold text-slate-400 uppercase">SNAPSHOT</p>
+              <p className={`text-[12px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase`}>SNAPSHOT</p>
               <p className="text-[13px] font-medium leading-tight">{plan.snapshots}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[12px] font-bold text-slate-400 uppercase">PORTA</p>
+              <p className={`text-[12px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase`}>PORTA</p>
               <p className="text-[13px] font-medium leading-tight">{plan.port}</p>
             </div>
             <Link href="/vps-windows#plans" className="absolute bottom-4 right-4 text-[12px] font-bold text-sky-400 hover:underline uppercase tracking-wider">Mudar</Link>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-[13px] font-bold text-slate-300 uppercase tracking-wide">Quantidade de servidores</span>
+            <span className={`text-[13px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-wide`}>Quantidade de servidores</span>
             <Select value={quantity} onValueChange={setQuantity}>
-              <SelectTrigger className="w-16 h-10 border border-white/10 bg-white/5 text-white">
+              <SelectTrigger className={`w-16 h-10 border ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#000B12] border-white/10 text-white">
-                {Array.from({ length: 25 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={n.toString()} className="focus:bg-white/10 focus:text-white">{n}</SelectItem>)}
+              <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}>
+                {Array.from({ length: 25 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={n.toString()} className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>{n}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        <Separator className="bg-white/10" />
+        <Separator className={embedded ? "bg-border" : "bg-white/10"} />
 
         {/* Duration Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-white uppercase tracking-widest">Selecione o ciclo de faturamento</h2>
+            <h2 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}>Selecione o ciclo de faturamento</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -617,23 +617,25 @@ export default function ConfigureWindowsVps() {
                   onClick={() => setDuration(d.id)}
                   className={cn(
                     "cursor-pointer rounded-xl border p-8 flex items-center justify-between transition-all relative h-24 shadow-xl backdrop-blur-md",
-                    duration === d.id ? "border-sky-500 bg-white/10" : "border-white/10 bg-white/5"
+                    duration === d.id
+                      ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"}`
+                      : `${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"}`
                   )}
                 >
                   {d.discount && (
-                    <div className="absolute -top-3 left-6 bg-white/10 text-emerald-400 text-[11px] font-black px-3 py-1 border border-white/10 rounded-full uppercase tracking-widest">
+                    <div className={`absolute -top-3 left-6 ${embedded ? "bg-accent" : "bg-white/10"} text-emerald-400 text-[11px] font-black px-3 py-1 border ${embedded ? "border-border" : "border-white/10"} rounded-full uppercase tracking-widest`}>
                       {d.discount}
                     </div>
                   )}
                   <span className="text-base font-medium">{d.label}</span>
                   <div className="text-right">
                     {d.oldEur && <p className="text-[12px] text-rose-500 line-through font-medium opacity-70">{formatBRLPerMonth(d.oldEur)}</p>}
-                    <p className="text-xl font-black text-white">{formatBRL(d.eur)} <span className="text-sm font-normal text-slate-400">/ mês</span></p>
+                    <p className={`text-xl font-black ${embedded ? "text-foreground" : "text-white"}`}>{formatBRL(d.eur)} <span className={`text-sm font-normal ${embedded ? "text-muted-foreground" : "text-slate-400"}`}>/ mês</span></p>
                   </div>
                 </div>
                 <div className={cn(
                   "text-center py-1.5 rounded-b-md text-[13px] font-bold transition-colors uppercase tracking-wider",
-                  d.setupEur === 0 ? "bg-emerald-500/20 text-emerald-400" : "text-slate-400"
+                  d.setupEur === 0 ? "bg-emerald-500/20 text-emerald-400" : (embedded ? "text-muted-foreground" : "text-slate-400")
                 )}>
                   {d.setupEur === 0 ? "Sem taxa de instalação" : `Taxa de configuração de ${formatBRL(d.setupEur)}`}
                 </div>
@@ -642,12 +644,12 @@ export default function ConfigureWindowsVps() {
           </div>
         </section>
 
-        <Separator className="bg-white/10" />
+        <Separator className={embedded ? "bg-border" : "bg-white/10"} />
 
         {/* Region Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-white uppercase tracking-widest">Região</h2>
+            <h2 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}>Região</h2>
           </div>
 
           <div className="flex flex-nowrap items-start gap-8">
@@ -656,14 +658,14 @@ export default function ConfigureWindowsVps() {
             </div>
 
             <div className="flex-1 space-y-4">
-              <div className="flex border-b border-white/10">
+              <div className={`flex border-b ${embedded ? "border-border" : "border-white/10"}`}>
                 {regions.map(r => (
                   <button
                     key={r.id}
                     onClick={() => setRegionTab(r.id)}
                     className={cn(
                       "px-8 py-3 text-[13px] font-bold uppercase tracking-wider relative transition-colors",
-                      regionTab === r.id ? "text-sky-400" : "text-slate-500 hover:text-white"
+                      regionTab === r.id ? "text-sky-400" : `${embedded ? "text-muted-foreground" : "text-slate-500"} hover:${embedded ? "text-foreground" : "text-white"}`
                     )}
                   >
                     {r.label}
@@ -678,8 +680,8 @@ export default function ConfigureWindowsVps() {
                     key={loc.id}
                     onClick={() => setLocation(loc.id)}
                     className={cn(
-                      "w-full border p-4 flex items-center justify-between text-sm font-bold bg-white/5 backdrop-blur-md relative transition-all rounded-lg",
-                      location === loc.id ? "border-sky-500 bg-white/10" : "border-white/10",
+                      `w-full border p-4 flex items-center justify-between text-sm font-bold ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md relative transition-all rounded-lg`,
+                      location === loc.id ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"}` : (embedded ? "border-border" : "border-white/10"),
                       loc.recommended && "mt-6"
                     )}
                   >
@@ -688,9 +690,9 @@ export default function ConfigureWindowsVps() {
                         Recomendado - Melhor latência para sua região
                       </div>
                     )}
-                    <div className="flex-1 text-left text-white">{loc.name}</div>
-                    <div className="flex-1 text-center text-slate-400 font-medium">– Latência de {loc.latency}</div>
-                    <div className="flex-1 text-right text-white font-black">{loc.eur > 0 ? formatBRLPerMonth(loc.eur) : "Livre"}</div>
+                    <div className={`flex-1 text-left ${embedded ? "text-foreground" : "text-white"}`}>{loc.name}</div>
+                    <div className={`flex-1 text-center ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium`}>– Latência de {loc.latency}</div>
+                    <div className={`flex-1 text-right ${embedded ? "text-foreground" : "text-white"} font-black`}>{loc.eur > 0 ? formatBRLPerMonth(loc.eur) : "Livre"}</div>
                   </button>
                 ))}
               </div>
@@ -698,12 +700,12 @@ export default function ConfigureWindowsVps() {
           </div>
         </section>
 
-        <Separator className="bg-white/10" />
+        <Separator className={embedded ? "bg-border" : "bg-white/10"} />
 
         {/* Storage Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-white uppercase tracking-widest">Tipo de armazenamento</h2>
+            <h2 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}>Tipo de armazenamento</h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -712,26 +714,26 @@ export default function ConfigureWindowsVps() {
                 key={st.id}
                 onClick={() => setStorageType(st.id)}
                 className={cn(
-                  "cursor-pointer rounded-lg border p-4 flex items-center justify-between text-[13px] font-bold transition-all bg-white/5 backdrop-blur-md",
-                  storageType === st.id ? "border-sky-500 bg-white/10" : "border-white/10"
+                  `cursor-pointer rounded-lg border p-4 flex items-center justify-between text-[13px] font-bold transition-all ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
+                  storageType === st.id ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"}` : (embedded ? "border-border" : "border-white/10")
                 )}
               >
-                <span className="text-white">{st.name}</span>
-                <span className={cn(st.eur ? "text-white font-black" : "text-emerald-400")}>{st.eur ? formatBRLPerMonth(st.eur) : st.price}</span>
+                <span className={embedded ? "text-foreground" : "text-white"}>{st.name}</span>
+                <span className={cn(st.eur ? `${embedded ? "text-foreground" : "text-white"} font-black` : "text-emerald-400")}>{st.eur ? formatBRLPerMonth(st.eur) : st.price}</span>
               </div>
             ))}
           </div>
         </section>
 
-        <Separator className="bg-white/10" />
+        <Separator className={embedded ? "bg-border" : "bg-white/10"} />
 
         {/* Image Section */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-black text-white uppercase tracking-widest">Imagem (Windows Server Incluso)</h2>
+            <h2 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}>Imagem (Windows Server Incluso)</h2>
             <button
               onClick={() => setShowMoreImages(!showMoreImages)}
-              className="flex items-center gap-1 text-[13px] font-black text-white uppercase tracking-wider"
+              className={`flex items-center gap-1 text-[13px] font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-wider`}
             >
               {showMoreImages ? (
                 <>Fechar imagens <ChevronUp size={14} /></>
@@ -750,14 +752,14 @@ export default function ConfigureWindowsVps() {
                 exit={{ opacity: 0, height: 0 }}
                 className="space-y-8 overflow-hidden"
               >
-                <div className="flex justify-center border-b border-white/10">
+                <div className={`flex justify-center border-b ${embedded ? "border-border" : "border-white/10"}`}>
                   {imageCategories.map(cat => (
                     <button
                       key={cat.id}
                       onClick={() => setImageCategory(cat.id)}
                       className={cn(
                         "px-8 py-3 text-[13px] font-bold relative transition-colors",
-                        imageCategory === cat.id ? "text-sky-400" : "text-slate-500 hover:text-white"
+                        imageCategory === cat.id ? "text-sky-400" : `${embedded ? "text-muted-foreground" : "text-slate-500"} hover:${embedded ? "text-foreground" : "text-white"}`
                       )}
                     >
                       {cat.label}
@@ -778,16 +780,16 @@ export default function ConfigureWindowsVps() {
                         setOsImage(img.id);
                       }}
                       className={cn(
-                        "cursor-pointer rounded-lg border p-4 flex items-center gap-3 transition-all bg-white/5 backdrop-blur-md",
-                        osImage === img.id ? "border-sky-500 bg-white/10" : "border-white/10"
+                        `cursor-pointer rounded-lg border p-4 flex items-center gap-3 transition-all ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
+                        osImage === img.id ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"}` : (embedded ? "border-border" : "border-white/10")
                       )}
                     >
-                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center overflow-hidden">
-                        {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className="text-slate-500" />}
+                      <div className={`w-8 h-8 rounded-full ${embedded ? "bg-muted/40" : "bg-white/5"} flex items-center justify-center overflow-hidden`}>
+                        {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className={embedded ? "text-muted-foreground" : "text-slate-500"} />}
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-[13px] font-bold text-white">{img.name}</p>
-                        <p className="text-[12px] text-slate-400 font-medium uppercase tracking-wide">
+                        <p className={`text-[13px] font-bold ${embedded ? "text-foreground" : "text-white"}`}>{img.name}</p>
+                        <p className={`text-[12px] ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium uppercase tracking-wide`}>
                           {typeof img.price === "number" ? formatBRLPerMonth(img.price) : img.eur ? formatBRLPerMonth(img.eur) : img.price}
                         </p>
                       </div>
@@ -799,15 +801,15 @@ export default function ConfigureWindowsVps() {
           </AnimatePresence>
         </section>
 
-        <Separator className="bg-white/10" />
+        <Separator className={embedded ? "bg-border" : "bg-white/10"} />
 
         {/* Data Protection Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-white uppercase tracking-widest">Proteção de Dados com Backup Automático</h2>
+            <h2 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}>Proteção de Dados com Backup Automático</h2>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center bg-white/5 rounded-2xl p-10 border border-white/10 shadow-2xl backdrop-blur-md">
+          <div className={`grid grid-cols-1 lg:grid-cols-12 gap-10 items-center ${embedded ? "bg-muted/40" : "bg-white/5"} rounded-2xl p-10 border ${embedded ? "border-border" : "border-white/10"} shadow-2xl backdrop-blur-md`}>
             <div className="lg:col-span-5 flex flex-col md:flex-row items-center gap-4">
               <div className="relative w-64 h-64 flex-shrink-0">
                 <img src="/4870961_54433-nobg.svg" alt="Backup Shield" className="w-64 h-auto object-contain" />
@@ -821,7 +823,7 @@ export default function ConfigureWindowsVps() {
                     "Mantém as últimas 10 versões de backup.",
                     "Nenhuma configuração necessária."
                   ].map((text, i) => (
-                    <li key={i} className="flex items-center gap-3 text-sm font-bold text-slate-200 uppercase tracking-tight leading-snug">
+                    <li key={i} className={`flex items-center gap-3 text-sm font-bold ${embedded ? "text-muted-foreground" : "text-slate-200"} uppercase tracking-tight leading-snug`}>
                       <div className="w-1.5 h-1.5 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(0,163,255,0.5)] flex-shrink-0" />
                       {text}
                     </li>
@@ -834,39 +836,39 @@ export default function ConfigureWindowsVps() {
               <div
                 onClick={() => setAutoBackup(true)}
                 className={cn(
-                  "cursor-pointer w-full md:w-64 rounded-xl border p-8 text-center transition-all relative flex flex-col justify-center gap-2 bg-white/5 backdrop-blur-md",
-                  autoBackup ? "border-sky-500 bg-white/10 shadow-lg shadow-sky-500/20" : "border-white/10"
+                  `cursor-pointer w-full md:w-64 rounded-xl border p-8 text-center transition-all relative flex flex-col justify-center gap-2 ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
+                  autoBackup ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"} shadow-lg shadow-sky-500/20` : (embedded ? "border-border" : "border-white/10")
                 )}
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#000B12] text-sky-400 text-[10px] md:text-[12px] font-black px-2 md:px-4 py-0.5 md:py-1 rounded-full border border-sky-500/30 uppercase tracking-widest whitespace-nowrap">
+                <div className={`absolute -top-3 left-1/2 -translate-x-1/2 ${embedded ? "bg-card" : "bg-[#000B12]"} text-sky-400 text-[10px] md:text-[12px] font-black px-2 md:px-4 py-0.5 md:py-1 rounded-full border border-sky-500/30 uppercase tracking-widest whitespace-nowrap`}>
                   Nossa Recomendação
                 </div>
-                <p className="text-lg font-black text-white uppercase tracking-tight">Backup Automático</p>
-                <p className="text-2xl font-black text-white">{formatBRLPerMonth(1.50)}</p>
-                <p className="text-[13px] text-slate-400 font-medium leading-tight uppercase tracking-wider">Ative e esqueça.<br />Segurança de dados sem esforço.</p>
+                <p className={`text-lg font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Backup Automático</p>
+                <p className={`text-2xl font-black ${embedded ? "text-foreground" : "text-white"}`}>{formatBRLPerMonth(1.50)}</p>
+                <p className={`text-[13px] ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium leading-tight uppercase tracking-wider`}>Ative e esqueça.<br />Segurança de dados sem esforço.</p>
               </div>
 
               <div
                 onClick={() => setAutoBackup(false)}
                 className={cn(
-                  "cursor-pointer w-full md:w-64 rounded-xl border p-8 text-center transition-all flex items-center justify-center bg-white/5 backdrop-blur-md",
-                  !autoBackup ? "border-sky-500 bg-white/10" : "border-white/10"
+                  `cursor-pointer w-full md:w-64 rounded-xl border p-8 text-center transition-all flex items-center justify-center ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
+                  !autoBackup ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"}` : (embedded ? "border-border" : "border-white/10")
                 )}
               >
-                <p className="text-lg font-black text-slate-500 uppercase tracking-tight">Sem Proteção de Dados</p>
+                <p className={`text-lg font-black ${embedded ? "text-muted-foreground" : "text-slate-500"} uppercase tracking-tight`}>Sem Proteção de Dados</p>
               </div>
             </div>
           </div>
         </section>
 
-        <Separator className="bg-white/10" />
+        <Separator className={embedded ? "bg-border" : "bg-white/10"} />
 
         {/* Additional Features Section */}
-        <section className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 shadow-2xl">
+        <section className={`${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md rounded-2xl p-8 border ${embedded ? "border-border" : "border-white/10"} shadow-2xl`}>
           <div className="">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-base font-black text-white uppercase tracking-widest">Recursos Adicionais</h2>
-              <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[14px] font-black text-white uppercase tracking-wider">
+              <h2 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}>Recursos Adicionais</h2>
+              <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className={`flex items-center gap-1 text-[14px] font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-wider`}>
                 {showAdditionalFeatures ? <><ChevronUp size={14} /></> : <><ChevronDown size={14} /></>}
               </button>
             </div>
@@ -876,50 +878,50 @@ export default function ConfigureWindowsVps() {
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-12 overflow-hidden px-1 py-1">
 
                   <div className="space-y-10">
-                    <div className="flex flex-col md:flex-row md:items-center gap-6 border-b border-white/10 pb-8">
+                    <div className={`flex flex-col md:flex-row md:items-center gap-6 border-b ${embedded ? "border-border" : "border-white/10"} pb-8`}>
                       <div className="w-48 shrink-0">
-                        <h3 className="text-base font-black text-white uppercase tracking-widest">Rede</h3>
+                        <h3 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}>Rede</h3>
                       </div>
                       <div className="flex-1 space-y-6">
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                           <div className="w-48 flex items-center gap-2">
-                            <span className="text-base font-black text-slate-400 uppercase tracking-tight">Rede Privada</span>
+                            <span className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-tight`}>Rede Privada</span>
                           </div>
                           <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
-                            <SelectTrigger className="w-full md:w-[480px] h-12 border-white/10 bg-white/5 text-white">
+                            <SelectTrigger className={`w-full md:w-[480px] h-12 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                               <SelectValue placeholder="Selecione a rede" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                            <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}>
                               <SelectItem value="none">Sem Rede Privada</SelectItem>
                               <SelectItem value="enabled">
                                 <div className="flex justify-between w-[440px]">
                                   <span>Rede Privada Ativada</span>
-                                  <span className="font-bold text-white">{formatBRLPerMonth(2.29)}</span>
+                                  <span className={embedded ? "font-bold text-foreground" : "font-bold text-white"}>{formatBRLPerMonth(2.29)}</span>
                                 </div>
                               </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
 
-                        <div className="flex flex-col md:flex-row md:items-center gap-4 border-t border-white/10 pt-6">
+                        <div className={`flex flex-col md:flex-row md:items-center gap-4 border-t ${embedded ? "border-border" : "border-white/10"} pt-6`}>
                           <div className="w-48 flex items-center gap-2">
-                            <span className="text-base font-black text-slate-400 uppercase tracking-tight">Largura de Banda</span>
+                            <span className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-tight`}>Largura de Banda</span>
                           </div>
-                          <div className="md:w-[480px] h-12 border border-white/10 rounded-md px-4 flex flex-col justify-center bg-white/5">
-                            <span className="text-base font-black text-white uppercase tracking-tight">Tráfego Ilimitado</span>
-                            <p className="text-[13px] text-slate-400 font-medium uppercase tracking-widest">Política de Uso Justo</p>
+                          <div className={`md:w-[480px] h-12 border ${embedded ? "border-border" : "border-white/10"} rounded-md px-4 flex flex-col justify-center ${embedded ? "bg-muted/40" : "bg-white/5"}`}>
+                            <span className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Tráfego Ilimitado</span>
+                            <p className={`text-[13px] ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium uppercase tracking-widest`}>Política de Uso Justo</p>
                           </div>
                         </div>
 
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                           <div className="w-48 flex items-center gap-2">
-                            <span className="text-base font-black text-slate-400 uppercase tracking-tight">IPv4</span>
+                            <span className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-tight`}>IPv4</span>
                           </div>
                           <Select value={ipv4Address} onValueChange={setIpv4Address}>
-                            <SelectTrigger className="w-full md:w-[480px] h-12 border-white/10 bg-white/5 text-white">
+                            <SelectTrigger className={`w-full md:w-[480px] h-12 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                               <SelectValue placeholder="Selecione o IP" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                            <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}>
                               <SelectItem value="1ip">
                                 <div className="flex items-center justify-between w-[440px]">
                                   <span>1 Endereço IP</span>
@@ -940,24 +942,24 @@ export default function ConfigureWindowsVps() {
 
                     <div className="flex flex-col md:flex-row md:items-start gap-6">
                       <div className="w-48 shrink-0 pt-2">
-                        <h3 className="text-base font-black text-white uppercase tracking-widest">Complementos</h3>
+                        <h3 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}>Complementos</h3>
                       </div>
                       <div className="flex-1 space-y-6">
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                           <div className="w-48 flex items-center gap-2">
-                            <span className="text-base font-black text-slate-400 uppercase tracking-tight">Armazenamento de Objetos</span>
+                            <span className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-tight`}>Armazenamento de Objetos</span>
                           </div>
                           <Select value={objectStorage} onValueChange={setObjectStorage}>
-                            <SelectTrigger className="w-full md:w-[480px] h-12 border-white/10 bg-white/5 text-white">
+                            <SelectTrigger className={`w-full md:w-[480px] h-12 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                               <SelectValue placeholder="Selecione o armazenamento" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
-                              <SelectItem value="none" className="focus:bg-white/10 focus:text-white">Nenhum</SelectItem>
+                            <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}>
+                              <SelectItem value="none" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>Nenhum</SelectItem>
                               {(plan.objectStorageTiers || []).map((tier: any) => (
-                                <SelectItem key={tier.id} value={tier.id} className="focus:bg-white/10 focus:text-white">
+                                <SelectItem key={tier.id} value={tier.id} className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                                   <div className="flex justify-between w-[440px]">
                                     <span>{tier.name} na União Europeia</span>
-                                    <span className="font-bold text-white">{formatBRLPerMonth(tier.eur)}</span>
+                                    <span className={embedded ? "font-bold text-foreground" : "font-bold text-white"}>{formatBRLPerMonth(tier.eur)}</span>
                                   </div>
                                 </SelectItem>
                               ))}
@@ -967,13 +969,13 @@ export default function ConfigureWindowsVps() {
 
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                           <div className="w-48 flex items-center gap-2">
-                            <span className="text-base font-black text-slate-400 uppercase tracking-tight">Gerenciamento</span>
+                            <span className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-tight`}>Gerenciamento</span>
                           </div>
                           <Select value={serverManagement} onValueChange={setServerManagement}>
-                            <SelectTrigger className="w-full md:w-[480px] h-12 border-white/10 bg-white/5 text-white">
+                            <SelectTrigger className={`w-full md:w-[480px] h-12 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                               <SelectValue placeholder="Selecione o gerenciamento" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
+                            <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}>
                               <SelectItem value="unmanaged">
                                 <div className="flex justify-between w-[440px]">
                                   <span>Não Gerenciado</span>
@@ -992,18 +994,18 @@ export default function ConfigureWindowsVps() {
 
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                           <div className="w-48 flex items-center gap-2">
-                            <span className="text-base font-black text-slate-400 uppercase tracking-tight">Monitoramento</span>
+                            <span className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-tight`}>Monitoramento</span>
                           </div>
                           <Select value={monitoring} onValueChange={setMonitoring}>
-                            <SelectTrigger className="w-full md:w-[480px] h-12 border-white/10 bg-white/5 text-white">
+                            <SelectTrigger className={`w-full md:w-[480px] h-12 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                               <SelectValue placeholder="Selecione o monitoramento" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
-                              <SelectItem value="none" className="focus:bg-white/10 focus:text-white">Nenhum</SelectItem>
-                              <SelectItem value="full" className="focus:bg-white/10 focus:text-white">
+                            <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}>
+                              <SelectItem value="none" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>Nenhum</SelectItem>
+                              <SelectItem value="full" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                                 <div className="flex justify-between w-[440px]">
                                   <span>Monitoramento Completo</span>
-                                  <span className="font-bold text-white">{formatBRLPerMonth(11.49)}</span>
+                                  <span className={embedded ? "font-bold text-foreground" : "font-bold text-white"}>{formatBRLPerMonth(11.49)}</span>
                                 </div>
                               </SelectItem>
                             </SelectContent>
@@ -1018,26 +1020,26 @@ export default function ConfigureWindowsVps() {
           </div>
         </section>
 
-        <Separator className="bg-white/10" />
+        <Separator className={embedded ? "bg-border" : "bg-white/10"} />
 
         {/* Login and Password Section */}
-        <section className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 shadow-2xl">
-          <h2 className="text-base font-black text-white uppercase tracking-widest mb-8">Login e senha para seu servidor</h2>
+        <section className={`${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md rounded-2xl p-8 border ${embedded ? "border-border" : "border-white/10"} shadow-2xl`}>
+          <h2 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest mb-8`}>Login e senha para seu servidor</h2>
           <div className="max-w-3xl space-y-8">
             {/* Username */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
               <div className="md:col-span-3">
-                <span className="text-base font-black text-slate-400 uppercase tracking-widest">Usuário</span>
+                <span className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}>Usuário</span>
               </div>
               <div className="md:col-span-9">
-                <span className="text-white font-black uppercase tracking-widest text-lg">Administrador / root</span>
+                <span className={`${embedded ? "text-foreground" : "text-white"} font-black uppercase tracking-widest text-lg`}>Administrador / root</span>
               </div>
             </div>
 
             {/* Password */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-3 pt-3">
-                <span className="text-base font-bold text-slate-400 uppercase tracking-widest">Senha</span>
+                <span className={`text-base font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}>Senha</span>
               </div>
               <div className="md:col-span-9 space-y-2">
                 <div className="flex justify-start">
@@ -1070,11 +1072,11 @@ export default function ConfigureWindowsVps() {
                       setPasswordTouched(true);
                     }}
                     className={cn(
-                      "h-12 bg-white/5 border-white/10 text-white focus:border-sky-500 pr-12",
+                      `h-12 ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"} focus:border-sky-500 pr-12`,
                       passwordTouched && password.length > 0 && !isPasswordValid(password) && "border-red-500"
                     )}
                   />
-                  <button onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
+                  <button onClick={() => setShowPassword(!showPassword)} className={`absolute right-4 top-1/2 -translate-y-1/2 ${embedded ? "text-muted-foreground" : "text-slate-400"} hover:${embedded ? "text-foreground" : "text-white"} transition-colors`}>{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
                 </div>
                 {passwordTouched && password.length > 0 && !isPasswordValid(password) && (
                   <div className="flex items-center gap-2 text-red-500 text-sm mt-1 font-bold">
@@ -1098,54 +1100,54 @@ export default function ConfigureWindowsVps() {
         {
           showWindowsModal && (
             <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowWindowsModal(false)}>
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center gap-4"><img src="/windows.png" alt="Windows" className="w-10 h-10" /><h2 className="text-2xl font-black text-white uppercase tracking-tight">Windows Server</h2></div>
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`${embedded ? "bg-card" : "bg-[#000B12]"} rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border ${embedded ? "border-border" : "border-white/10"}`} onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-4"><img src="/windows.png" alt="Windows" className="w-10 h-10" /><h2 className={`text-2xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Windows Server</h2></div>
                 <div className="space-y-4">
-                  <label className="text-base font-bold text-slate-400 uppercase tracking-widest">Versão (Inclusa)</label>
+                  <label className={`text-base font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}>Versão (Inclusa)</label>
                   <Select value={windowsVersion} onValueChange={setWindowsVersion}>
-                    <SelectTrigger className="h-14 border-white/10 bg-white/5 text-white">
+                    <SelectTrigger className={`h-14 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                       <SelectValue>
                         <div className="flex items-center justify-between w-full pr-4 text-sm">
                           <span>Windows Server {windowsVersion} Datacenter</span>
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-white">
+                            <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>
                               {formatBRLPerMonth(windowsVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows)}
                             </span>
-                            <span className="text-slate-500">|</span>
-                            <span className="text-slate-500">Sem taxa de instalação</span>
+                            <span className={embedded ? "text-muted-foreground" : "text-slate-500"}>|</span>
+                            <span className={embedded ? "text-muted-foreground" : "text-slate-500"}>Sem taxa de instalação</span>
                           </div>
                         </div>
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="bg-[#000B12] border-white/10 text-white">
-                      <SelectItem value="2025" className="focus:bg-white/10 focus:text-white">
+                    <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}>
+                      <SelectItem value="2025" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                         <div className="flex items-center justify-between w-full md:w-[480px] text-sm flex-1 gap-4">
                           <span>Windows Server 2025 Datacenter</span>
                           <span className="font-black text-sky-400 ml-auto">{formatBRL(currentImagePrices.windows)}</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="2022" className="focus:bg-white/10 focus:text-white">
+                      <SelectItem value="2022" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                         <div className="flex items-center justify-between w-full md:w-[480px] text-sm">
                           <span>Windows Server 2022 Datacenter</span>
-                          <span className="font-black text-white">{formatBRL(currentImagePrices.windows)}</span>
+                          <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>{formatBRL(currentImagePrices.windows)}</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="2019" className="focus:bg-white/10 focus:text-white">
+                      <SelectItem value="2019" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                         <div className="flex items-center justify-between w-full md:w-[480px] text-sm">
                           <span>Windows Server 2019 Datacenter</span>
-                          <span className="font-black text-white">{formatBRL(currentImagePrices.windows)}</span>
+                          <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>{formatBRL(currentImagePrices.windows)}</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="2016" className="focus:bg-white/10 focus:text-white">
+                      <SelectItem value="2016" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                         <div className="flex items-center justify-between w-full md:w-[480px] text-sm">
                           <span>Windows Server 2016 Datacenter</span>
-                          <span className="font-black text-white">{formatBRL(currentImagePrices.win2016)}</span>
+                          <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>{formatBRL(currentImagePrices.win2016)}</span>
                         </div>
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowWindowsModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest">Fechar</Button><Button onClick={() => setShowWindowsModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button></div>
+                <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowWindowsModal(false)} className={`${embedded ? "text-muted-foreground" : "text-slate-400"} hover:${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}>Fechar</Button><Button onClick={() => setShowWindowsModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button></div>
               </motion.div>
             </div>
           )}
@@ -1155,13 +1157,13 @@ export default function ConfigureWindowsVps() {
         {
           showPleskModal && (
             <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskModal(false)}>
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className="text-2xl font-black text-white uppercase tracking-tight">Plesk + Linux</h2></div>
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`${embedded ? "bg-card" : "bg-[#000B12]"} rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border ${embedded ? "border-border" : "border-white/10"}`} onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className={`text-2xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Plesk + Linux</h2></div>
 
                 <div className="space-y-4">
-                  <label className="text-base font-black text-slate-400 uppercase tracking-widest">Licença</label>
+                  <label className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}>Licença</label>
                   <Select value={pleskLicence} onValueChange={setPleskLicence}>
-                    <SelectTrigger className="h-16 border-white/10 bg-white/5 text-white">
+                    <SelectTrigger className={`h-16 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                       <SelectValue>
                         <div className="flex items-center justify-between w-full pr-4 text-sm">
                           <div className="flex flex-col text-left">
@@ -1173,7 +1175,7 @@ export default function ConfigureWindowsVps() {
                             <span className="text-emerald-500 font-bold uppercase tracking-widest">free</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-white">
+                            <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>
                               {formatBRLPerMonth(pleskLicence === "admin" ? currentImagePrices.pleskLinux :
                                 pleskLicence === "host" ? currentImagePrices.pleskHost :
                                   currentImagePrices.pleskPro)}
@@ -1182,52 +1184,52 @@ export default function ConfigureWindowsVps() {
                         </div>
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120]">
-                      <SelectItem value="admin" className="focus:bg-white/10 focus:text-white">
+                    <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"} z-[120]`}>
+                      <SelectItem value="admin" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                         <div className="flex items-center justify-between w-full md:w-[480px] py-1 flex-1 gap-4">
                           <div className="flex flex-col">
-                            <span className="font-black text-white uppercase tracking-tighter">Plesk Obsidian Web Admin Edition</span>
+                            <span className={`font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tighter`}>Plesk Obsidian Web Admin Edition</span>
                             <span className="text-emerald-500 font-black text-sm uppercase">1 mês grátis</span>
                           </div>
                           <span className="font-black text-sky-400 ml-auto">{formatBRL(currentImagePrices.pleskLinux)}</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="host" className="focus:bg-white/10 focus:text-white">
+                      <SelectItem value="host" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                         <div className="flex items-center justify-between w-full md:w-[480px] py-1">
                           <div className="flex flex-col">
-                            <span className="font-black text-white uppercase tracking-tighter">Plesk Obsidian Web Host Edition</span>
+                            <span className={`font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tighter`}>Plesk Obsidian Web Host Edition</span>
                             <span className="text-emerald-500 font-black text-sm uppercase">1 mês grátis</span>
                           </div>
-                          <span className="font-black text-white">{formatBRL(currentImagePrices.pleskHost)}</span>
+                          <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>{formatBRL(currentImagePrices.pleskHost)}</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="pro" className="focus:bg-white/10 focus:text-white">
+                      <SelectItem value="pro" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                         <div className="flex items-center justify-between w-full md:w-[480px] py-1">
                           <div className="flex flex-col">
-                            <span className="font-black text-white uppercase tracking-tighter">Plesk Obsidian Web Pro Edition</span>
+                            <span className={`font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tighter`}>Plesk Obsidian Web Pro Edition</span>
                             <span className="text-emerald-500 font-black text-sm uppercase">1 mês grátis</span>
                           </div>
-                          <span className="font-black text-white">{formatBRL(currentImagePrices.pleskPro)}</span>
+                          <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>{formatBRL(currentImagePrices.pleskPro)}</span>
                         </div>
                       </SelectItem>
                     </SelectContent>
                   </Select>
                   <div className="space-y-3">
-                    <label className="text-base font-black text-slate-400 uppercase tracking-widest">Versão</label>
+                    <label className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}>Versão</label>
                     <Select value={pleskVersion} onValueChange={setPleskVersion}>
-                      <SelectTrigger className="h-14 border-white/10 bg-white/5 text-white">
+                      <SelectTrigger className={`h-14 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120]">
-                        <SelectItem value="Ubuntu 22.04" className="focus:bg-white/10 focus:text-white">Ubuntu 22.04</SelectItem>
-                        <SelectItem value="AlmaLinux 9" className="focus:bg-white/10 focus:text-white">AlmaLinux 9</SelectItem>
+                      <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"} z-[120]`}>
+                        <SelectItem value="Ubuntu 22.04" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>Ubuntu 22.04</SelectItem>
+                        <SelectItem value="AlmaLinux 9" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>AlmaLinux 9</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-4">
-                  <Button variant="ghost" onClick={() => setShowPleskModal(false)} className="text-slate-400 hover:text-white hover:bg-white/10 uppercase tracking-widest">Fechar</Button>
+                  <Button variant="ghost" onClick={() => setShowPleskModal(false)} className={`${embedded ? "text-muted-foreground" : "text-slate-400"} hover:${embedded ? "text-foreground" : "text-white"} hover:${embedded ? "bg-accent" : "bg-white/10"} uppercase tracking-widest`}>Fechar</Button>
                   <Button onClick={() => setShowPleskModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button>
                 </div>
               </motion.div>
@@ -1239,28 +1241,28 @@ export default function ConfigureWindowsVps() {
         {
           showPleskWindowsModal && (
             <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowPleskWindowsModal(false)}>
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`${embedded ? "bg-card" : "bg-[#000B12]"} rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border ${embedded ? "border-border" : "border-white/10"}`} onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-4">
                   <img src="/plesk.png" alt="Plesk" className="w-8 h-8 object-contain" />
-                  <h2 className="text-2xl font-black text-white uppercase tracking-tight">Plesk + Windows</h2>
+                  <h2 className={`text-2xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Plesk + Windows</h2>
                 </div>
 
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <label className="text-base font-black text-slate-400 uppercase tracking-widest">Licença</label>
+                    <label className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}>Licença</label>
                     <Select value={pleskWinLicence} onValueChange={setPleskWinLicence}>
-                      <SelectTrigger className="h-16 border-white/10 bg-white/5 text-white">
+                      <SelectTrigger className={`h-16 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                         <SelectValue>
                           <div className="flex items-center justify-between w-full pr-4 text-base leading-tight">
                             <div className="flex flex-col text-left">
-                              <span className="font-bold text-white">
+                              <span className={embedded ? "font-bold text-foreground" : "font-bold text-white"}>
                                 {pleskWinLicence === "admin" ? "Plesk Obsidian Web Admin Edition" :
                                   pleskWinLicence === "host" ? "Plesk Obsidian Web Host Edition" :
                                     "Plesk Obsidian Web Pro Edition"}
                               </span>
                               <span className="text-emerald-400 font-bold text-[13px] uppercase tracking-wider">1 mês grátis</span>
                             </div>
-                            <div className="flex items-center gap-2 text-slate-400 font-bold text-sm">
+                            <div className={`flex items-center gap-2 ${embedded ? "text-muted-foreground" : "text-slate-400"} font-bold text-sm`}>
                               <span>
                                 {formatBRLPerMonth(pleskWinLicence === "admin" ? currentImagePrices.pleskWin :
                                   pleskWinLicence === "host" ? currentImagePrices.pleskHost :
@@ -1270,8 +1272,8 @@ export default function ConfigureWindowsVps() {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120]">
-                        <SelectItem value="admin" className="focus:bg-white/10 focus:text-white">
+                      <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"} z-[120]`}>
+                        <SelectItem value="admin" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                           <div className="flex items-center justify-between w-full md:w-[480px] py-1 flex-1 gap-4">
                             <div className="flex flex-col">
                               <span className="font-bold text-sky-400">Plesk Obsidian Web Admin Edition</span>
@@ -1280,22 +1282,22 @@ export default function ConfigureWindowsVps() {
                             <span className="font-black text-sky-400 ml-auto">{formatBRL(currentImagePrices.pleskWin)}</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="host" className="focus:bg-white/10 focus:text-white">
+                        <SelectItem value="host" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                           <div className="flex items-center justify-between w-full md:w-[480px] py-1">
                             <div className="flex flex-col">
-                              <span className="font-bold text-white">Plesk Obsidian Web Host Edition</span>
+                              <span className={embedded ? "font-bold text-foreground" : "font-bold text-white"}>Plesk Obsidian Web Host Edition</span>
                               <span className="text-emerald-400 font-bold text-[13px] uppercase">1 mês grátis</span>
                             </div>
-                            <span className="font-black text-white">{formatBRL(currentImagePrices.pleskHost)}</span>
+                            <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>{formatBRL(currentImagePrices.pleskHost)}</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="pro" className="focus:bg-white/10 focus:text-white">
+                        <SelectItem value="pro" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                           <div className="flex items-center justify-between w-full md:w-[480px] py-1">
                             <div className="flex flex-col">
-                              <span className="font-bold text-white">Plesk Obsidian Web Pro Edition</span>
+                              <span className={embedded ? "font-bold text-foreground" : "font-bold text-white"}>Plesk Obsidian Web Pro Edition</span>
                               <span className="text-emerald-400 font-bold text-[13px] uppercase">1 mês grátis</span>
                             </div>
-                            <span className="font-black text-white">{formatBRL(currentImagePrices.pleskPro)}</span>
+                            <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>{formatBRL(currentImagePrices.pleskPro)}</span>
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -1303,12 +1305,12 @@ export default function ConfigureWindowsVps() {
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-base font-black text-slate-400 uppercase tracking-widest">Versão Windows</label>
+                    <label className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}>Versão Windows</label>
                     <Select value={pleskWinVersion} onValueChange={setPleskWinVersion}>
-                      <SelectTrigger className="h-16 border-white/10 bg-white/5 text-white">
+                      <SelectTrigger className={`h-16 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                         <SelectValue>
                           <div className="flex items-center justify-between w-full pr-4 text-base">
-                            <span className="font-bold text-white">Windows Server {pleskWinVersion} Datacenter</span>
+                            <span className={embedded ? "font-bold text-foreground" : "font-bold text-white"}>Windows Server {pleskWinVersion} Datacenter</span>
                             <div className="flex items-center gap-2 text-sky-400 font-black text-sm">
                               <span>
                                 {formatBRLPerMonth(pleskWinVersion === "2016" ? currentImagePrices.win2016 : currentImagePrices.windows)}
@@ -1318,22 +1320,22 @@ export default function ConfigureWindowsVps() {
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="z-[120]">
-                        <SelectItem value="2016" className="focus:bg-white/10 focus:text-white">
+                        <SelectItem value="2016" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                           <div className="flex items-center justify-between w-full md:w-[480px] py-1 flex-1 gap-4">
-                            <span className="font-bold text-white">Windows Server 2016 Datacenter</span>
+                            <span className={embedded ? "font-bold text-foreground" : "font-bold text-white"}>Windows Server 2016 Datacenter</span>
                             <span className="font-black text-sky-400 ml-auto">{formatBRL(currentImagePrices.win2016)}</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="2019" className="focus:bg-white/10 focus:text-white">
+                        <SelectItem value="2019" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                           <div className="flex items-center justify-between w-full md:w-[480px] py-1">
-                            <span className="font-bold text-white">Windows Server 2019 Datacenter</span>
-                            <span className="font-black text-white">{formatBRL(currentImagePrices.windows)}</span>
+                            <span className={embedded ? "font-bold text-foreground" : "font-bold text-white"}>Windows Server 2019 Datacenter</span>
+                            <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>{formatBRL(currentImagePrices.windows)}</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="2022" className="focus:bg-white/10 focus:text-white">
+                        <SelectItem value="2022" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>
                           <div className="flex items-center justify-between w-full md:w-[480px] py-1">
-                            <span className="font-bold text-white">Windows Server 2022 Datacenter</span>
-                            <span className="font-black text-white">{formatBRL(currentImagePrices.windows)}</span>
+                            <span className={embedded ? "font-bold text-foreground" : "font-bold text-white"}>Windows Server 2022 Datacenter</span>
+                            <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>{formatBRL(currentImagePrices.windows)}</span>
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -1342,7 +1344,7 @@ export default function ConfigureWindowsVps() {
                 </div>
 
                 <div className="flex justify-end gap-6 pt-4">
-                  <Button variant="ghost" onClick={() => setShowPleskWindowsModal(false)} className="text-slate-400 hover:text-white hover:bg-white/10 uppercase tracking-widest">Fechar</Button>
+                  <Button variant="ghost" onClick={() => setShowPleskWindowsModal(false)} className={`${embedded ? "text-muted-foreground" : "text-slate-400"} hover:${embedded ? "text-foreground" : "text-white"} hover:${embedded ? "bg-accent" : "bg-white/10"} uppercase tracking-widest`}>Fechar</Button>
                   <Button onClick={() => setShowPleskWindowsModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button>
                 </div>
               </motion.div>
@@ -1355,49 +1357,49 @@ export default function ConfigureWindowsVps() {
         {
           showCpanelModal && (
             <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowCpanelModal(false)}>
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`${embedded ? "bg-card" : "bg-[#000B12]"} rounded-2xl w-full max-w-[600px] p-10 space-y-8 shadow-2xl border ${embedded ? "border-border" : "border-white/10"}`} onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-4">
                   <img src="/cpanel.png" alt="cPanel" className="w-10 h-10 object-contain" />
-                  <h2 className="text-2xl font-black text-white uppercase tracking-tight">cPanel & WHM</h2>
+                  <h2 className={`text-2xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>cPanel & WHM</h2>
                 </div>
 
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <label className="text-base font-black text-slate-400 uppercase tracking-widest">Licença</label>
+                    <label className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}>Licença</label>
                     <Select value={cpanelLicence} onValueChange={setCpanelLicence}>
-                      <SelectTrigger className="h-16 border-white/10 bg-white/5 text-white">
+                      <SelectTrigger className={`h-16 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                         <SelectValue>
-                          <div className="flex items-center justify-between w-full pr-4 text-sm font-bold text-white">
+                          <div className={`flex items-center justify-between w-full pr-4 text-sm font-bold ${embedded ? "text-foreground" : "text-white"}`}>
                             <span>{cpanelLicence} contas</span>
                             <span>{formatBRLPerMonth(currentImagePrices.cpanel)}</span>
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120]">
-                        <SelectItem value="5" className="focus:bg-white/10 focus:text-white">5 contas</SelectItem>
-                        <SelectItem value="30" className="focus:bg-white/10 focus:text-white">30 contas</SelectItem>
-                        <SelectItem value="50" className="focus:bg-white/10 focus:text-white">50 contas</SelectItem>
-                        <SelectItem value="100" className="focus:bg-white/10 focus:text-white">100 contas</SelectItem>
+                      <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"} z-[120]`}>
+                        <SelectItem value="5" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>5 contas</SelectItem>
+                        <SelectItem value="30" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>30 contas</SelectItem>
+                        <SelectItem value="50" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>50 contas</SelectItem>
+                        <SelectItem value="100" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>100 contas</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-base font-black text-slate-400 uppercase tracking-widest">Versão</label>
+                    <label className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}>Versão</label>
                     <Select value={cpanelVersion} onValueChange={setCpanelVersion}>
-                      <SelectTrigger className="h-14 border-white/10 bg-white/5 text-white">
+                      <SelectTrigger className={`h-14 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120]">
-                        <SelectItem value="Ubuntu 22.04" className="focus:bg-white/10 focus:text-white">Ubuntu 22.04</SelectItem>
-                        <SelectItem value="AlmaLinux 9" className="focus:bg-white/10 focus:text-white">AlmaLinux 9</SelectItem>
+                      <SelectContent className={`${embedded ? "bg-card" : "bg-[#000B12]"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"} z-[120]`}>
+                        <SelectItem value="Ubuntu 22.04" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>Ubuntu 22.04</SelectItem>
+                        <SelectItem value="AlmaLinux 9" className={`focus:${embedded ? "bg-accent" : "bg-white/10"} focus:${embedded ? "text-foreground" : "text-white"}`}>AlmaLinux 9</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-4">
-                  <Button variant="ghost" onClick={() => setShowCpanelModal(false)} className="text-slate-400 hover:text-white hover:bg-white/10 uppercase tracking-widest">Fechar</Button>
+                  <Button variant="ghost" onClick={() => setShowCpanelModal(false)} className={`${embedded ? "text-muted-foreground" : "text-slate-400"} hover:${embedded ? "text-foreground" : "text-white"} hover:${embedded ? "bg-accent" : "bg-white/10"} uppercase tracking-widest`}>Fechar</Button>
                   <Button onClick={() => setShowCpanelModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button>
                 </div>
               </motion.div>
@@ -1406,13 +1408,13 @@ export default function ConfigureWindowsVps() {
       </AnimatePresence>
 
       {/* Fixed Bottom Summary Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#000B12]/90 border-t border-white/10 z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl pr-16 md:pr-0">
+      <div className={`${embedded ? "sticky" : "fixed left-0 right-0"} bottom-0 ${embedded ? "bg-background/90" : "bg-[#000B12]/90"} border-t ${embedded ? "border-border" : "border-white/10"} z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl pr-16 md:pr-0`}>
 
         <AnimatePresence>
           {showSummaryDetails && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-white/10 bg-white/5 backdrop-blur-md">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className={`overflow-hidden border-b ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`}>
               <div className="max-w-6xl mx-auto px-10 py-6">
-                <h3 className="text-base font-black text-white mb-4 uppercase tracking-widest">Detalhamento do Pedido</h3>
+                <h3 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} mb-4 uppercase tracking-widest`}>Detalhamento do Pedido</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
                   {(() => {
                     const selectedDur = durations.find((d: any) => d.id === duration) || durations[0];
@@ -1472,8 +1474,8 @@ export default function ConfigureWindowsVps() {
 
                     return items.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center text-base border-b border-white/5 pb-1">
-                        <span className="text-slate-400 font-medium">{item.label}</span>
-                        <span className="font-black text-white">{formatBRL(item.price / currentRate)}</span>
+                        <span className={embedded ? "text-muted-foreground font-medium" : "text-slate-400 font-medium"}>{item.label}</span>
+                        <span className={embedded ? "font-black text-foreground" : "font-black text-white"}>{formatBRL(item.price / currentRate)}</span>
                       </div>
                     ));
                   })()}
@@ -1484,11 +1486,11 @@ export default function ConfigureWindowsVps() {
         </AnimatePresence>
         <div className="max-w-7xl mx-auto px-2 md:px-10 h-auto md:h-24 flex items-center justify-between py-2 md:py-0">
           <div className="flex items-center gap-6">
-            <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center shadow-lg border border-white/10"><ShieldCheck className="w-6 h-6 text-sky-400" /></div>
+            <div className={`w-14 h-14 ${embedded ? "bg-muted/40" : "bg-white/5"} rounded-full flex items-center justify-center shadow-lg border ${embedded ? "border-border" : "border-white/10"}`}><ShieldCheck className="w-6 h-6 text-sky-400" /></div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-white text-sm md:text-lg uppercase tracking-widest leading-tight">Resumo</h3>
-                <button onClick={() => setShowSummaryDetails(!showSummaryDetails)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                <h3 className={`font-black ${embedded ? "text-foreground" : "text-white"} text-sm md:text-lg uppercase tracking-widest leading-tight`}>Resumo</h3>
+                <button onClick={() => setShowSummaryDetails(!showSummaryDetails)} className={`p-1 hover:${embedded ? "bg-accent" : "bg-white/10"} rounded-full transition-colors`}>
                   {showSummaryDetails ? <ChevronDown className="w-5 h-5 text-sky-400" /> : <ChevronUp className="w-5 h-5 text-sky-400" />}
                 </button>
               </div>
@@ -1568,10 +1570,10 @@ export default function ConfigureWindowsVps() {
               return (
                 <div className="flex items-center gap-4 md:gap-6 lg:gap-10">
                   <div className="flex flex-col gap-0.5 md:gap-1 min-w-0 md:min-w-[200px]">
-                    <div className="hidden md:flex justify-between items-center text-[13px] uppercase tracking-widest"><span className="text-slate-400 font-bold">Mensal</span><span className="font-black text-white whitespace-nowrap">{formatBRL(totalMonthly * qty / currentRate)}</span></div>
-                    <div className="flex justify-between items-center md:mt-1"><span className="font-black text-white text-[10px] md:text-[15px] uppercase tracking-tighter">Vencido Hoje</span><span className="text-sm md:text-2xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{formatBRL(dueToday / currentRate)}</span></div>
+                    <div className="hidden md:flex justify-between items-center text-[13px] uppercase tracking-widest"><span className={embedded ? "text-muted-foreground font-bold" : "text-slate-400 font-bold"}>Mensal</span><span className={`font-black ${embedded ? "text-foreground" : "text-white"} whitespace-nowrap`}>{formatBRL(totalMonthly * qty / currentRate)}</span></div>
+                    <div className="flex justify-between items-center md:mt-1"><span className={`font-black ${embedded ? "text-foreground" : "text-white"} text-[10px] md:text-[15px] uppercase tracking-tighter`}>Vencido Hoje</span><span className={`text-sm md:text-2xl font-black ${embedded ? "text-foreground" : "text-white"} whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]`}>{formatBRL(dueToday / currentRate)}</span></div>
                   </div>
-                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&password=${encodeURIComponent(password)}&storage=${storageType}&type=vps-windows`)} className={cn("font-black h-9 md:h-14 px-3 md:px-12 rounded-lg text-sm md:text-xl shadow-xl uppercase tracking-widest transition-all", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed")}>Próximo</Button>
+                  <Button disabled={!isPasswordValid(password)} onClick={() => router.push(`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&password=${encodeURIComponent(password)}&storage=${storageType}&type=vps-windows`)} className={cn("font-black h-9 md:h-14 px-3 md:px-12 rounded-lg text-sm md:text-xl shadow-xl uppercase tracking-widest transition-all", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : `${embedded ? "bg-muted" : "bg-white/10"} ${embedded ? "text-muted-foreground" : "text-slate-500"} cursor-not-allowed`)}>Próximo</Button>
                 </div>
               );
             })()}

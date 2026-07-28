@@ -404,7 +404,7 @@ const images = {
 
 // (Logic moved up)
 
-export default function VdsConfigurePage() {
+export default function VdsConfigurePage({ embedded = false }: { embedded?: boolean } = {}) {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -693,23 +693,23 @@ export default function VdsConfigurePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#000B12] text-white font-sans pb-40 relative overflow-hidden">
-      <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />
-      <Navbar variant="dark" />
+    <div className={`${embedded ? "min-h-full bg-background text-foreground" : "min-h-screen bg-[#000B12] text-white"} font-sans pb-40 relative ${embedded ? "" : "overflow-hidden"}`}>
+      {!embedded && <div className="fixed inset-0 bg-landing-gradient opacity-40 pointer-events-none" />}
+      {!embedded && <Navbar variant="dark" />}
 
-      <main className="mx-auto max-w-6xl px-4 md:px-6 pt-24 md:pt-32 pb-12 space-y-8 md:space-y-12">
+      <main className={`mx-auto max-w-6xl px-4 md:px-6 ${embedded ? "pt-6 md:pt-10" : "pt-24 md:pt-32"} pb-12 space-y-8 md:space-y-12`}>
         {/* Header Section */}
         <div className="mb-8">
-          <Link href="/vds#plans" className="group mb-6 flex items-center gap-2 text-lg font-bold text-sky-400 transition-all hover:text-sky-300">
+          <Link href={embedded ? "/vps-plans" : "/vds#plans"} className="group mb-6 flex items-center gap-2 text-lg font-bold text-sky-400 transition-all hover:text-sky-300">
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Voltar para VDS
           </Link>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white uppercase drop-shadow-sm">Configure seu {plan.name}</h1>
+          <h1 className={`text-2xl md:text-3xl font-black tracking-tight ${embedded ? "text-foreground" : "text-white"} uppercase drop-shadow-sm`}>Configure seu {plan.name}</h1>
         </div>
 
         {/* Plan Summary Section */}
         <div className="flex flex-col xl:flex-row xl:items-center gap-4 xl:gap-10">
-          <div className="flex-1 border-2 border-sky-500/50 bg-white/5 backdrop-blur-md rounded-xl p-4 md:p-8 relative shadow-2xl">
+          <div className={`flex-1 border-2 border-sky-500/50 ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md rounded-xl p-4 md:p-8 relative shadow-2xl`}>
             {/* Mobile: label→value list */}
             <div className="xl:hidden space-y-2 pb-6">
               {[
@@ -719,38 +719,38 @@ export default function VdsConfigurePage() {
                 { label: "Porta", value: plan.port },
               ].map((spec) => (
                 <div key={spec.label} className="flex items-start justify-between gap-3">
-                  <span className="text-[14px] font-bold text-slate-400 uppercase tracking-wide flex-shrink-0">{spec.label}</span>
-                  <span className="text-[15px] font-medium text-white text-right leading-tight">{spec.value}</span>
+                  <span className={`text-[14px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-wide flex-shrink-0`}>{spec.label}</span>
+                  <span className={`text-[15px] font-medium ${embedded ? "text-foreground" : "text-white"} text-right leading-tight`}>{spec.value}</span>
                 </div>
               ))}
             </div>
             {/* Desktop: 4-col grid */}
             <div className="hidden xl:grid xl:grid-cols-4 gap-8">
               <div className="space-y-1">
-                <p className="text-[14px] font-bold text-slate-400 uppercase">CPU</p>
+                <p className={`text-[14px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase`}>CPU</p>
                 <div className="flex flex-col">
-                  <p className="text-[15px] font-medium leading-tight text-white">{plan.vcpu}</p>
-                  <p className="text-[15px] font-medium leading-tight text-slate-400">{plan.cpuModel}</p>
+                  <p className={`text-[15px] font-medium leading-tight ${embedded ? "text-foreground" : "text-white"}`}>{plan.vcpu}</p>
+                  <p className={`text-[15px] font-medium leading-tight ${embedded ? "text-muted-foreground" : "text-slate-400"}`}>{plan.cpuModel}</p>
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-[14px] font-bold text-slate-400 uppercase">RAM</p>
-                <p className="text-[15px] font-medium leading-tight text-white">{plan.ram}</p>
+                <p className={`text-[14px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase`}>RAM</p>
+                <p className={`text-[15px] font-medium leading-tight ${embedded ? "text-foreground" : "text-white"}`}>{plan.ram}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[14px] font-bold text-slate-400 uppercase">ARMAZENAMENTO</p>
+                <p className={`text-[14px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase`}>ARMAZENAMENTO</p>
                 <div className="flex flex-col">
-                  <p className="text-[15px] font-medium leading-tight text-white">{plan.storage}</p>
-                  <p className="text-[15px] font-medium leading-tight text-slate-400">{plan.storageNote}</p>
+                  <p className={`text-[15px] font-medium leading-tight ${embedded ? "text-foreground" : "text-white"}`}>{plan.storage}</p>
+                  <p className={`text-[15px] font-medium leading-tight ${embedded ? "text-muted-foreground" : "text-slate-400"}`}>{plan.storageNote}</p>
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-[14px] font-bold text-slate-400 uppercase">PORTA</p>
-                <p className="text-[15px] font-medium leading-tight text-white">{plan.port}</p>
+                <p className={`text-[14px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase`}>PORTA</p>
+                <p className={`text-[15px] font-medium leading-tight ${embedded ? "text-foreground" : "text-white"}`}>{plan.port}</p>
               </div>
             </div>
             <button 
-              onClick={() => router.push('/vds#plans')}
+              onClick={() => router.push(embedded ? "/vps-plans" : "/vds#plans")}
               className="absolute bottom-4 right-4 text-[14px] font-black text-sky-400 hover:underline uppercase tracking-wider"
             >
               Mudar
@@ -758,24 +758,24 @@ export default function VdsConfigurePage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-[15px] font-bold text-slate-300 uppercase tracking-wide">Quantidade de servidores</span>
+            <span className={`text-[15px] font-bold ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-wide`}>Quantidade de servidores</span>
             <Select value={quantity} onValueChange={setQuantity}>
-              <SelectTrigger className="w-16 h-10 border border-white/10 bg-white/5 text-white">
+              <SelectTrigger className={`w-16 h-10 border ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"}`}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#000B12] border-white/10 text-white">
-                {[1, 2, 3, 4, 5, 10, 15, 20, 25].map(n => <SelectItem key={n} value={n.toString()} className="focus:bg-white/10 focus:text-white">{n}</SelectItem>)}
+              <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"}`}>
+                {[1, 2, 3, 4, 5, 10, 15, 20, 25].map(n => <SelectItem key={n} value={n.toString()} className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>{n}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        <Separator className="bg-white/10" />
+        <Separator className={`${embedded ? "bg-muted" : "bg-white/10"}`} />
 
         {/* Duration Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black text-white uppercase tracking-tight">Selecione o ciclo de faturamento</h2>
+            <h2 className={`text-xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Selecione o ciclo de faturamento</h2>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -785,23 +785,25 @@ export default function VdsConfigurePage() {
                   onClick={() => setDuration(d.id)}
                   className={cn(
                     "cursor-pointer rounded-xl border p-8 flex items-center justify-between transition-all relative h-24 shadow-xl backdrop-blur-md",
-                    duration === d.id ? "border-sky-500 bg-white/10" : "border-white/10 bg-white/5"
+                    duration === d.id
+                      ? (embedded ? "border-sky-500 bg-accent" : "border-sky-500 bg-white/10")
+                      : (embedded ? "border-border bg-muted/40" : "border-white/10 bg-white/5")
                   )}
                 >
                   {d.discount && (
-                    <div className="absolute -top-3 left-6 bg-[#000B12] text-emerald-400 text-[13px] font-black px-3 py-1 border border-emerald-500/30 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-500/10">
+                    <div className={`absolute -top-3 left-6 ${embedded ? "bg-card" : "bg-[#000B12]"} text-emerald-400 text-[13px] font-black px-3 py-1 border border-emerald-500/30 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-500/10`}>
                       {d.discount}
                     </div>
                   )}
                   <span className="text-lg font-medium">{d.label}</span>
                   <div className="text-right">
                     {d.oldEur && <p className="text-[14px] text-rose-500 line-through font-medium opacity-70">{formatBRLPerMonth(d.oldEur)}</p>}
-                    <p className="text-2xl font-black text-white">{formatBRLPerMonth(d.eur)}</p>
+                    <p className={`text-2xl font-black ${embedded ? "text-foreground" : "text-white"}`}>{formatBRLPerMonth(d.eur)}</p>
                   </div>
                 </div>
                 <div className={cn(
                   "text-center py-1.5 rounded-b-md text-[15px] font-bold transition-colors uppercase tracking-wider",
-                  d.setupFee === "Sem taxa de instalação" ? "bg-emerald-500/20 text-emerald-400" : "text-slate-400"
+                  d.setupFee === "Sem taxa de instalação" ? "bg-emerald-500/20 text-emerald-400" : (embedded ? "text-muted-foreground" : "text-slate-400")
                 )}>
                   {d.setupFee}
                 </div>
@@ -810,12 +812,12 @@ export default function VdsConfigurePage() {
           </div>
         </section>
 
-        <Separator className="bg-white/10" />
+        <Separator className={`${embedded ? "bg-muted" : "bg-white/10"}`} />
 
         {/* Region Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black text-white uppercase tracking-tight">Região</h2>
+            <h2 className={`text-xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Região</h2>
           </div>
 
           <div className="flex flex-nowrap items-start gap-8">
@@ -824,14 +826,14 @@ export default function VdsConfigurePage() {
             </div>
 
             <div className="flex-1 space-y-4">
-              <div className="flex border-b border-white/10">
+              <div className={`flex border-b ${embedded ? "border-border" : "border-white/10"}`}>
                 {regions.map(r => (
                   <button
                     key={r.id}
                     onClick={() => setRegionTab(r.id)}
                     className={cn(
                       "px-8 py-3 text-[15px] font-bold uppercase tracking-wider relative transition-colors",
-                      regionTab === r.id ? "text-sky-400" : "text-slate-500 hover:text-white"
+                      regionTab === r.id ? "text-sky-400" : (embedded ? "text-muted-foreground hover:text-foreground" : "text-slate-500 hover:text-white")
                     )}
                   >
                     {r.label}
@@ -846,8 +848,9 @@ export default function VdsConfigurePage() {
                     key={loc.id}
                     onClick={() => setLocation(loc.id)}
                     className={cn(
-                      "w-full border p-4 flex items-center justify-between text-base font-bold bg-white/5 backdrop-blur-md relative transition-all rounded-lg",
-                      location === loc.id ? "border-sky-500 bg-white/10" : "border-white/10",
+                      "w-full border p-4 flex items-center justify-between text-base font-bold backdrop-blur-md relative transition-all rounded-lg",
+                      embedded ? "bg-muted/40" : "bg-white/5",
+                      location === loc.id ? (embedded ? "border-sky-500 bg-accent" : "border-sky-500 bg-white/10") : (embedded ? "border-border" : "border-white/10"),
                       loc.recommended && "mt-6"
                     )}
                   >
@@ -856,14 +859,14 @@ export default function VdsConfigurePage() {
                         Recomendado - Melhor latência para sua região
                       </div>
                     )}
-                    <div className="flex-1 text-left text-white text-base md:text-lg">{loc.name}</div>
-                    <div className="flex-1 text-center text-slate-400 font-medium">{loc.latency && `– Latência de ${loc.latency}`}</div>
-                    <div className="flex-1 text-right text-white font-black text-base md:text-lg">{loc.eur ? formatBRLPerMonth(loc.eur) : "Grátis"}</div>
+                    <div className={`flex-1 text-left ${embedded ? "text-foreground" : "text-white"} text-base md:text-lg`}>{loc.name}</div>
+                    <div className={`flex-1 text-center ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium`}>{loc.latency && `– Latência de ${loc.latency}`}</div>
+                    <div className={`flex-1 text-right ${embedded ? "text-foreground" : "text-white"} font-black text-base md:text-lg`}>{loc.eur ? formatBRLPerMonth(loc.eur) : "Grátis"}</div>
                   </button>
                 ))}
                 {(!plan.locations[regionTab] || plan.locations[regionTab].length === 0) && (
-                  <div className="py-8 text-center border-2 border-dashed border-white/5 rounded-xl bg-white/5">
-                    <p className="text-sm text-slate-500">Regiões em breve para este plano.</p>
+                  <div className={`py-8 text-center border-2 border-dashed border-white/5 rounded-xl ${embedded ? "bg-muted/40" : "bg-white/5"}`}>
+                    <p className={`text-sm ${embedded ? "text-muted-foreground" : "text-slate-500"}`}>Regiões em breve para este plano.</p>
                   </div>
                 )}
               </div>
@@ -871,19 +874,19 @@ export default function VdsConfigurePage() {
           </div>
         </section>
 
-        <Separator className="bg-white/10" />
+        <Separator className={`${embedded ? "bg-muted" : "bg-white/10"}`} />
 
         {/* Storage Section - 2x2 Layout with VPS Styling */}
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black text-white uppercase tracking-tight">Armazenamento</h2>
+            <h2 className={`text-xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Armazenamento</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Fixed Base Box */}
-            <div className="flex items-center justify-between rounded-xl border border-sky-500/50 bg-white/10 p-5 shadow-xl relative overflow-hidden backdrop-blur-md">
+            <div className={`flex items-center justify-between rounded-xl border border-sky-500/50 ${embedded ? "bg-accent" : "bg-white/10"} p-5 shadow-xl relative overflow-hidden backdrop-blur-md`}>
               <div className="flex flex-col">
-                <span className="text-[15px] font-black text-white">{plan.storage} (Incluído)</span>
+                <span className={`text-[15px] font-black ${embedded ? "text-foreground" : "text-white"}`}>{plan.storage} (Incluído)</span>
                 <span className="text-[13px] text-sky-400 font-bold uppercase tracking-wider">Livre — Sempre Ativo</span>
               </div>
               <div className="flex items-center gap-3">
@@ -906,7 +909,7 @@ export default function VdsConfigurePage() {
                   }}
                   className={cn(
                     "flex items-center justify-between rounded-xl border p-5 transition-all shadow-xl relative overflow-hidden cursor-pointer backdrop-blur-md",
-                    qty > 0 ? "border-sky-500 bg-white/10" : "border-white/10 bg-white/5",
+                    qty > 0 ? (embedded ? "border-sky-500 bg-accent" : "border-sky-500 bg-white/10") : (embedded ? "border-border bg-muted/40" : "border-white/10 bg-white/5"),
                     disabled && "opacity-40 cursor-not-allowed grayscale-[0.5]"
                   )}
                 >
@@ -918,7 +921,7 @@ export default function VdsConfigurePage() {
                         )}>
                           {qty > 0 && <Check className="h-2.5 w-2.5" strokeWidth={4} />}
                         </div>
-                        <span className="text-[15px] font-bold text-white">{upgrade.name}</span>
+                        <span className={`text-[15px] font-bold ${embedded ? "text-foreground" : "text-white"}`}>{upgrade.name}</span>
                       </div>
                       <span className="text-[13px] text-sky-400 font-bold mt-1 ml-6">{formatBRLPerMonth(upgrade.eur)}</span>
                     </div>
@@ -929,13 +932,13 @@ export default function VdsConfigurePage() {
                       onValueChange={(v) => handleStorageQtyChange(upgrade.id, parseInt(v))}
                       disabled={disabled}
                     >
-                      <SelectTrigger className="h-9 w-16 border-white/10 bg-white/5 text-white text-[14px] font-bold px-3">
+                      <SelectTrigger className={`h-9 w-16 ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"} text-[14px] font-bold px-3`}>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#000B12] border-white/10 text-white z-[110]">
-                        <SelectItem value="0" className="focus:bg-white/10 focus:text-white">0</SelectItem>
-                        <SelectItem value="1" disabled={totalExtraBoxes >= 2 && qty === 0} className="focus:bg-white/10 focus:text-white">1</SelectItem>
-                        <SelectItem value="2" disabled={(totalExtraBoxes >= 1 && qty === 0) || (totalExtraBoxes >= 2 && qty === 1)} className="focus:bg-white/10 focus:text-white">2</SelectItem>
+                      <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"} z-[110]`}>
+                        <SelectItem value="0" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>0</SelectItem>
+                        <SelectItem value="1" disabled={totalExtraBoxes >= 2 && qty === 0} className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>1</SelectItem>
+                        <SelectItem value="2" disabled={(totalExtraBoxes >= 1 && qty === 0) || (totalExtraBoxes >= 2 && qty === 1)} className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>2</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -945,15 +948,15 @@ export default function VdsConfigurePage() {
           </div>
         </section>
 
-        <Separator className="bg-white/10" />
+        <Separator className={`${embedded ? "bg-muted" : "bg-white/10"}`} />
 
         {/* Image Section - Exact VPS Structure */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-black text-white uppercase tracking-widest">Imagem</h2>
+            <h2 className={`text-xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}>Imagem</h2>
             <button
               onClick={() => setShowMoreImages(!showMoreImages)}
-              className="flex items-center gap-1 text-[11px] font-black text-white uppercase tracking-wider"
+              className={`flex items-center gap-1 text-[11px] font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-wider`}
             >
               {showMoreImages ? (
                 <>Fechar imagens <ChevronUp size={14} /></>
@@ -972,14 +975,14 @@ export default function VdsConfigurePage() {
                 exit={{ opacity: 0, height: 0 }}
                 className="space-y-8 overflow-hidden"
               >
-                <div className="flex justify-center border-b border-white/10">
+                <div className={`flex justify-center border-b ${embedded ? "border-border" : "border-white/10"}`}>
                   {imageCategories.map(cat => (
                     <button
                       key={cat.id}
                       onClick={() => setImageCategory(cat.id)}
                       className={cn(
                         "px-8 py-3 text-[14px] font-black uppercase tracking-widest relative transition-colors",
-                        imageCategory === cat.id ? "text-sky-400" : "text-slate-500 hover:text-white"
+                        imageCategory === cat.id ? "text-sky-400" : (embedded ? "text-muted-foreground hover:text-foreground" : "text-slate-500 hover:text-white")
                       )}
                     >
                       {cat.label}
@@ -1020,14 +1023,14 @@ export default function VdsConfigurePage() {
                       }}
                       className={cn(
                         "cursor-pointer rounded-xl border p-4 flex items-center gap-3 transition-all relative overflow-hidden group",
-                        osImage === img.id ? "border-sky-500 bg-sky-500/10 shadow-[0_0_20px_rgba(0,163,255,0.1)]" : "border-white/5 bg-[#000B12]/40 hover:border-white/10 hover:bg-[#000B12]/60"
+                        osImage === img.id ? "border-sky-500 bg-sky-500/10 shadow-[0_0_20px_rgba(0,163,255,0.1)]" : `border-white/5 ${embedded ? "bg-card/40 hover:border-border hover:bg-card/60" : "bg-[#000B12]/40 hover:border-white/10 hover:bg-[#000B12]/60"}`
                       )}
                     >
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
-                        {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className="text-slate-400" />}
+                      <div className={`w-8 h-8 rounded-full ${embedded ? "bg-muted" : "bg-white/10"} flex items-center justify-center overflow-hidden`}>
+                        {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className={embedded ? "text-muted-foreground" : "text-slate-400"} />}
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-[14px] font-black text-white uppercase tracking-tight">{img.name}</p>
+                        <p className={`text-[14px] font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>{img.name}</p>
                         <p className="text-[13px] text-sky-400 font-black">
                           {typeof img.price === "number" ? formatBRLPerMonth(img.price) : img.eur ? formatBRLPerMonth(img.eur) : img.price}
                         </p>
@@ -1048,15 +1051,15 @@ export default function VdsConfigurePage() {
                     key={img.id}
                     onClick={() => setOsImage(img.id)}
                     className={cn(
-                      "w-64 cursor-pointer rounded-xl border p-4 flex items-center gap-3 transition-all bg-[#000B12]/40 shadow-xl",
-                      osImage === img.id ? "border-sky-500 shadow-sky-500/10" : "border-white/5 hover:border-white/10 hover:bg-[#000B12]/60"
+                      `w-64 cursor-pointer rounded-xl border p-4 flex items-center gap-3 transition-all shadow-xl ${embedded ? "bg-card/40" : "bg-[#000B12]/40"}`,
+                      osImage === img.id ? "border-sky-500 shadow-sky-500/10" : `border-white/5 ${embedded ? "hover:border-border hover:bg-card/60" : "hover:border-white/10 hover:bg-[#000B12]/60"}`
                     )}
                   >
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
-                      {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className="text-slate-400" />}
+                    <div className={`w-8 h-8 rounded-full ${embedded ? "bg-muted" : "bg-white/10"} flex items-center justify-center overflow-hidden`}>
+                      {img.icon ? <img src={img.icon} alt="" className="w-5 h-5 object-contain" /> : <Server size={16} className={embedded ? "text-muted-foreground" : "text-slate-400"} />}
                     </div>
                     <div className="flex-1 text-left">
-                      <p className="text-[14px] font-black text-white uppercase tracking-tight">{img.name}</p>
+                      <p className={`text-[14px] font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>{img.name}</p>
                       <p className="text-[13px] text-sky-400 font-black uppercase">
                         {(img as any).eur ? formatBRLPerMonth((img as any).eur) : "Incluído"}
                       </p>
@@ -1068,16 +1071,16 @@ export default function VdsConfigurePage() {
           </AnimatePresence>
         </section>
 
-        <Separator className="bg-white/10" />
+        <Separator className={`${embedded ? "bg-muted" : "bg-white/10"}`} />
 
         {/* Additional Features Section */}
-        <section className="bg-gradient-to-br from-white/5 to-transparent backdrop-blur-[2px] rounded-2xl shadow-2xl border border-white/10 overflow-hidden mb-8 transition-all hover:border-white/20 group">
+        <section className={`bg-gradient-to-br from-white/5 to-transparent backdrop-blur-[2px] rounded-2xl shadow-2xl border ${embedded ? "border-border" : "border-white/10"} overflow-hidden mb-8 transition-all hover:border-white/20 group`}>
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
-                <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Recursos Adicionais</h2>
+                <h2 className={`text-2xl md:text-3xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Recursos Adicionais</h2>
               </div>
-              <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className="flex items-center gap-1 text-[14px] font-black text-white uppercase tracking-widest hover:text-sky-400 transition-colors">
+              <button onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)} className={`flex items-center gap-1 text-[14px] font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest hover:text-sky-400 transition-colors`}>
                 {showAdditionalFeatures ? <><ChevronUp size={14} /> Fechar</> : <><ChevronDown size={14} /> Mostrar</>}
               </button>
             </div>
@@ -1087,20 +1090,20 @@ export default function VdsConfigurePage() {
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-12 overflow-hidden px-1 py-1">
                   {/* Networking */}
                   <div className="space-y-8">
-                    <h3 className="text-xl font-black text-white uppercase tracking-tight">Rede</h3>
+                    <h3 className={`text-xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Rede</h3>
                     <div className="space-y-6 pl-4">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-base font-black text-white uppercase tracking-tight">Rede Privada</span>
+                          <span className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Rede Privada</span>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={privateNetwork} onValueChange={setPrivateNetwork}>
-                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white text-left justify-start">
+                            <SelectTrigger className={`h-12 ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"} text-left justify-start`}>
                               <SelectValue placeholder="Selecione a rede" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
-                              <SelectItem value="none" className="focus:bg-white/10 focus:text-white">Sem Rede Privada</SelectItem>
-                              <SelectItem value="enabled" className="focus:bg-white/10 focus:text-white">
+                            <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"}`}>
+                              <SelectItem value="none" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>Sem Rede Privada</SelectItem>
+                              <SelectItem value="enabled" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                                 <div className="flex items-center justify-between w-full min-w-[300px]">
                                   <span>Rede Privada Ativada</span>
                                   <span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.privateNetworkEur)}</span>
@@ -1113,25 +1116,25 @@ export default function VdsConfigurePage() {
                       {/* Bandwidth (Fixed) */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-base font-black text-white uppercase tracking-tight">Largura de Banda</span>
+                          <span className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Largura de Banda</span>
                         </div>
                         <div className="md:col-span-9">
-                          <div className="h-12 border border-white/10 rounded-xl px-4 flex flex-col justify-center bg-white/5">
-                            <span className="text-base font-black text-white uppercase tracking-tight">Tráfego Ilimitado</span>
+                          <div className={`h-12 border ${embedded ? "border-border bg-muted/40" : "border-white/10 bg-white/5"} rounded-xl px-4 flex flex-col justify-center`}>
+                            <span className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Tráfego Ilimitado</span>
                             <span className="text-[13px] text-sky-400 font-bold uppercase tracking-wider">Política de Uso Justo</span>
                           </div>
                         </div>
                       </div>
                       {/* IPv4 */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-base font-black text-white uppercase tracking-tight">IPv4</span></div>
+                        <div className="md:col-span-3 flex items-center gap-2"><span className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>IPv4</span></div>
                         <div className="md:col-span-9">
                           <Select value={ipv4Address} onValueChange={setIpv4Address}>
-                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white text-left justify-start"><SelectValue /></SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
-                              <SelectItem value="1ip" className="focus:bg-white/10 focus:text-white"><div className="flex items-center justify-between w-full min-w-[350px]"><span>1 Endereço IP</span><span className="text-sky-400 font-black ml-4">Grátis</span></div></SelectItem>
+                            <SelectTrigger className={`h-12 ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"} text-left justify-start`}><SelectValue /></SelectTrigger>
+                            <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"}`}>
+                              <SelectItem value="1ip" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}><div className="flex items-center justify-between w-full min-w-[350px]"><span>1 Endereço IP</span><span className="text-sky-400 font-black ml-4">Grátis</span></div></SelectItem>
                               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(n => (
-                                <SelectItem key={n} value={`${n + 1}ip`} className="focus:bg-white/10 focus:text-white">
+                                <SelectItem key={n} value={`${n + 1}ip`} className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                                   <div className="flex items-center justify-between w-full">
                                     <span>1 Endereço IP + {n} IP{n > 1 ? "s" : ""} Adicional{n > 1 ? "ais" : ""}</span>
                                     <span className="text-sky-400 font-black ml-4 text-[13px]">{formatBRLPerMonth(plan.additionalIpEur * n)}</span>
@@ -1145,68 +1148,68 @@ export default function VdsConfigurePage() {
                     </div>
                   </div>
 
-                  <Separator className="bg-white/10" />
+                  <Separator className={`${embedded ? "bg-muted" : "bg-white/10"}`} />
 
                   {/* Add-Ons */}
                   <div className="space-y-8">
-                    <h3 className="text-base font-black text-white uppercase tracking-widest">Complementos</h3>
+                    <h3 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}>Complementos</h3>
                     <div className="space-y-6 pl-4">
                       {/* Backup Space */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div className="md:col-span-3 flex items-center gap-2">
-                          <span className="text-base font-black text-white uppercase tracking-tight">Espaço de Backup</span>
+                          <span className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Espaço de Backup</span>
                         </div>
                         <div className="md:col-span-9">
                           <Select value={backupSpace} onValueChange={setBackupSpace}>
-                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
-                              <SelectItem value="none" className="focus:bg-white/10 focus:text-white">Nenhum</SelectItem>
-                              <SelectItem value="100gb" className="focus:bg-white/10 focus:text-white"><div className="flex items-center justify-between w-full min-w-[380px]"><span>100 GB Armazenamento FTP</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(4.59)}</span></div></SelectItem>
-                              <SelectItem value="500gb" className="focus:bg-white/10 focus:text-white"><div className="flex items-center justify-between w-full"><span>500 GB Armazenamento FTP</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(13.79)}</span></div></SelectItem>
-                              <SelectItem value="1tb" className="focus:bg-white/10 focus:text-white"><div className="flex items-center justify-between w-full"><span>1 TB Armazenamento FTP</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(22.99)}</span></div></SelectItem>
-                              <SelectItem value="2tb" className="focus:bg-white/10 focus:text-white"><div className="flex items-center justify-between w-full"><span>2 TB Armazenamento FTP</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(36.79)}</span></div></SelectItem>
+                            <SelectTrigger className={`h-12 ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"}`}><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                            <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"}`}>
+                              <SelectItem value="none" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>Nenhum</SelectItem>
+                              <SelectItem value="100gb" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}><div className="flex items-center justify-between w-full min-w-[380px]"><span>100 GB Armazenamento FTP</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(4.59)}</span></div></SelectItem>
+                              <SelectItem value="500gb" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}><div className="flex items-center justify-between w-full"><span>500 GB Armazenamento FTP</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(13.79)}</span></div></SelectItem>
+                              <SelectItem value="1tb" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}><div className="flex items-center justify-between w-full"><span>1 TB Armazenamento FTP</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(22.99)}</span></div></SelectItem>
+                              <SelectItem value="2tb" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}><div className="flex items-center justify-between w-full"><span>2 TB Armazenamento FTP</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(36.79)}</span></div></SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div>
                       {/* Object Storage — Contabo discontinued this add-on, commented out (not deleted) per request */}
                       {/* <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-base font-black text-white uppercase tracking-tight">Armazenamento de Objetos</span></div>
+                        <div className="md:col-span-3 flex items-center gap-2"><span className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Armazenamento de Objetos</span></div>
                         <div className="md:col-span-9">
                           <Select value={objectStorage} onValueChange={setObjectStorage}>
-                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
-                              <SelectItem value="none" className="focus:bg-white/10 focus:text-white">Nenhum</SelectItem>
-                              <SelectItem value="250gb" className="focus:bg-white/10 focus:text-white"><div className="flex items-center justify-between w-full min-w-[380px]"><span>250 GB Object Storage na União Europeia</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.objectStoragePrices["250gb"])}</span></div></SelectItem>
-                              <SelectItem value="500gb" className="focus:bg-white/10 focus:text-white"><div className="flex items-center justify-between w-full"><span>500 GB Object Storage na União Europeia</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.objectStoragePrices["500gb"])}</span></div></SelectItem>
-                              <SelectItem value="750gb" className="focus:bg-white/10 focus:text-white"><div className="flex items-center justify-between w-full"><span>750 GB Object Storage na União Europeia</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.objectStoragePrices["750gb"])}</span></div></SelectItem>
-                              <SelectItem value="1tb" className="focus:bg-white/10 focus:text-white"><div className="flex items-center justify-between w-full"><span>1 TB Object Storage na União Europeia</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.objectStoragePrices["1tb"])}</span></div></SelectItem>
+                            <SelectTrigger className={`h-12 ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"}`}><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                            <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"}`}>
+                              <SelectItem value="none" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>Nenhum</SelectItem>
+                              <SelectItem value="250gb" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}><div className="flex items-center justify-between w-full min-w-[380px]"><span>250 GB Object Storage na União Europeia</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.objectStoragePrices["250gb"])}</span></div></SelectItem>
+                              <SelectItem value="500gb" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}><div className="flex items-center justify-between w-full"><span>500 GB Object Storage na União Europeia</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.objectStoragePrices["500gb"])}</span></div></SelectItem>
+                              <SelectItem value="750gb" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}><div className="flex items-center justify-between w-full"><span>750 GB Object Storage na União Europeia</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.objectStoragePrices["750gb"])}</span></div></SelectItem>
+                              <SelectItem value="1tb" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}><div className="flex items-center justify-between w-full"><span>1 TB Object Storage na União Europeia</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.objectStoragePrices["1tb"])}</span></div></SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div> */}
                       {/* Management — Contabo discontinued this add-on, commented out (not deleted) per request */}
                       {/* <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-base font-black text-white uppercase tracking-tight">Gerenciamento</span></div>
+                        <div className="md:col-span-3 flex items-center gap-2"><span className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Gerenciamento</span></div>
                         <div className="md:col-span-9">
                           <Select value={serverManagement} onValueChange={setServerManagement}>
-                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue /></SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
-                              <SelectItem value="unmanaged" className="focus:bg-white/10 focus:text-white"><div className="flex items-center justify-between w-full min-w-[340px]"><span>Não Gerenciado</span><span className="text-sky-400 font-black ml-4">Grátis</span></div></SelectItem>
-                              <SelectItem value="managed" className="focus:bg-white/10 focus:text-white"><div className="flex items-center justify-between w-full min-w-[340px]"><span>Gerenciado</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.managedEur)}</span></div></SelectItem>
+                            <SelectTrigger className={`h-12 ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"}`}><SelectValue /></SelectTrigger>
+                            <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"}`}>
+                              <SelectItem value="unmanaged" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}><div className="flex items-center justify-between w-full min-w-[340px]"><span>Não Gerenciado</span><span className="text-sky-400 font-black ml-4">Grátis</span></div></SelectItem>
+                              <SelectItem value="managed" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}><div className="flex items-center justify-between w-full min-w-[340px]"><span>Gerenciado</span><span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.managedEur)}</span></div></SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div> */}
                       {/* Monitoring */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                        <div className="md:col-span-3 flex items-center gap-2"><span className="text-base font-black text-white uppercase tracking-tight">Monitoramento</span></div>
+                        <div className="md:col-span-3 flex items-center gap-2"><span className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Monitoramento</span></div>
                         <div className="md:col-span-9">
                           <Select value={monitoring} onValueChange={setMonitoring}>
-                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white"><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                            <SelectContent className="bg-[#000B12] border-white/10 text-white">
-                              <SelectItem value="none" className="focus:bg-white/10 focus:text-white">Nenhum</SelectItem>
-                              <SelectItem value="full" className="focus:bg-white/10 focus:text-white">
+                            <SelectTrigger className={`h-12 ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"}`}><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                            <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"}`}>
+                              <SelectItem value="none" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>Nenhum</SelectItem>
+                              <SelectItem value="full" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                                 <div className="flex items-center justify-between w-full min-w-[340px]">
                                   <span>Monitoramento Completo</span>
                                   <span className="text-sky-400 font-black ml-4">{formatBRLPerMonth(plan.monitoringEur)}</span>
@@ -1224,18 +1227,18 @@ export default function VdsConfigurePage() {
           </div>
         </section>
 
-        <Separator className="bg-white/10" />
+        <Separator className={`${embedded ? "bg-muted" : "bg-white/10"}`} />
 
         {/* Auth Section */}
-        <section className="bg-gradient-to-br from-white/5 to-transparent backdrop-blur-[2px] rounded-2xl p-8 border border-white/10 shadow-2xl transition-all hover:border-white/20 group">
-          <h2 className="text-base font-black text-white uppercase tracking-widest mb-8">Login e senha para o seu servidor</h2>
+        <section className={`bg-gradient-to-br from-white/5 to-transparent backdrop-blur-[2px] rounded-2xl p-8 border ${embedded ? "border-border" : "border-white/10"} shadow-2xl transition-all hover:border-white/20 group`}>
+          <h2 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest mb-8`}>Login e senha para o seu servidor</h2>
           <div className="max-w-3xl space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-              <div className="md:col-span-3"><span className="text-base font-black text-slate-400 uppercase tracking-tight">Usuário</span></div>
-              <div className="md:col-span-9"><span className="text-white font-black uppercase tracking-tight text-lg">root</span></div>
+              <div className="md:col-span-3"><span className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-tight`}>Usuário</span></div>
+              <div className="md:col-span-9"><span className={`${embedded ? "text-foreground" : "text-white"} font-black uppercase tracking-tight text-lg`}>root</span></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              <div className="md:col-span-3 pt-3"><span className="text-base font-black text-slate-400 uppercase tracking-tight">Senha</span></div>
+              <div className="md:col-span-3 pt-3"><span className={`text-base font-black ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-tight`}>Senha</span></div>
               <div className="md:col-span-9 space-y-2">
                 <div className="flex justify-start">
                   <button onClick={() => {
@@ -1253,8 +1256,8 @@ export default function VdsConfigurePage() {
                   }} className="text-[#3B82F6] text-sm hover:underline font-bold">Gerar nova senha</button>
                 </div>
                 <div className="relative">
-                  <Input type={showPassword ? "text" : "password"} value={password} onChange={(e) => { setPassword(e.target.value); setPasswordTouched(true); }} className={cn("h-12 bg-white/5 border-white/5 text-white focus:border-sky-500 pr-12 rounded-xl", passwordTouched && password.length > 0 && !isPasswordValid(password) && "border-red-500")} />
-                  <button onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
+                  <Input type={showPassword ? "text" : "password"} value={password} onChange={(e) => { setPassword(e.target.value); setPasswordTouched(true); }} className={cn(`h-12 border-white/5 focus:border-sky-500 pr-12 rounded-xl ${embedded ? "bg-muted/40 text-foreground" : "bg-white/5 text-white"}`, passwordTouched && password.length > 0 && !isPasswordValid(password) && "border-red-500")} />
+                  <button onClick={() => setShowPassword(!showPassword)} className={`absolute right-4 top-1/2 -translate-y-1/2 ${embedded ? "text-muted-foreground hover:text-foreground" : "text-slate-500 hover:text-white"} transition-colors`}>{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
                 </div>
                 {passwordTouched && password.length > 0 && !isPasswordValid(password) && <p className="text-red-500 text-sm font-bold flex items-center gap-1"><AlertCircle size={14} /> Senha inválida (Mín. 8 caracteres, maiúscula, número e símbolo)</p>}
                 {isPasswordValid(password) && <p className="text-emerald-500 text-sm font-bold flex items-center gap-1"><Check size={14} /> Senha forte e segura</p>}
@@ -1265,17 +1268,17 @@ export default function VdsConfigurePage() {
       </main>
 
       {/* Fixed Bottom Summary Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#000B12]/90 border-t border-white/10 z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl pr-16 md:pr-0">
+      <div className={`${embedded ? "sticky" : "fixed left-0 right-0"} bottom-0 ${embedded ? "bg-card/90" : "bg-[#000B12]/90"} border-t ${embedded ? "border-border" : "border-white/10"} z-[100] shadow-[0_-4px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl pr-16 md:pr-0`}>
         <AnimatePresence>
           {showSummaryDetails && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-white/10 bg-white/5 backdrop-blur-md">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className={`overflow-hidden border-b ${embedded ? "border-border bg-muted/40" : "border-white/10 bg-white/5"} backdrop-blur-md`}>
               <div className="max-w-7xl mx-auto px-10 py-6">
-                <h3 className="text-base font-black text-white mb-4 uppercase tracking-widest">Detalhamento do Pedido</h3>
+                <h3 className={`text-base font-black ${embedded ? "text-foreground" : "text-white"} mb-4 uppercase tracking-widest`}>Detalhamento do Pedido</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
                   {(calculateItems() as any[]).map((item: any, idx: number) => (
                     <div key={idx} className="flex justify-between items-center text-lg border-b border-white/5 pb-1">
-                      <span className="text-slate-400 font-medium">{item.label}</span>
-                      <span className="font-black text-white">{formatBRL(item.price / currentRate)}</span>
+                      <span className={`${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium`}>{item.label}</span>
+                      <span className={`font-black ${embedded ? "text-foreground" : "text-white"}`}>{formatBRL(item.price / currentRate)}</span>
                     </div>
                   ))}
                 </div>
@@ -1286,11 +1289,11 @@ export default function VdsConfigurePage() {
 
         <div className="max-w-7xl mx-auto px-2 md:px-10 h-auto md:h-24 flex items-center justify-between py-2 md:py-0">
           <div className="flex items-center gap-6">
-            <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center shadow-lg border border-white/10"><ShieldCheck className="w-6 h-6 text-sky-400" /></div>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border ${embedded ? "bg-muted/40 border-border" : "bg-white/5 border-white/10"}`}><ShieldCheck className="w-6 h-6 text-sky-400" /></div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-white text-sm md:text-xl uppercase tracking-widest leading-tight">Resumo</h3>
-                <button onClick={() => setShowSummaryDetails(!showSummaryDetails)} className="p-1 hover:bg-white/10 rounded-full transition-colors">{showSummaryDetails ? <ChevronDown size={20} className="text-sky-400" /> : <ChevronUp size={20} className="text-sky-400" />}</button>
+                <h3 className={`font-black ${embedded ? "text-foreground" : "text-white"} text-sm md:text-xl uppercase tracking-widest leading-tight`}>Resumo</h3>
+                <button onClick={() => setShowSummaryDetails(!showSummaryDetails)} className={`p-1 ${embedded ? "hover:bg-accent" : "hover:bg-white/10"} rounded-full transition-colors`}>{showSummaryDetails ? <ChevronDown size={20} className="text-sky-400" /> : <ChevronUp size={20} className="text-sky-400" />}</button>
               </div>
             </div>
           </div>
@@ -1311,11 +1314,11 @@ export default function VdsConfigurePage() {
                   <div className="hidden md:block flex-1 text-center min-w-[150px]">{totalSavings > 0 && <p className="text-emerald-500 font-bold text-lg">Você economiza {formatBRL(totalSavings / currentRate)}.</p>}</div>
                   <div className="flex items-center gap-4 md:gap-6 lg:gap-10">
                     <div className="flex flex-col gap-0.5 md:gap-1 min-w-0 md:min-w-[200px]">
-                      <div className="hidden md:flex justify-between items-center text-[15px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[15px]">MENSAL </span><span className="text-white font-black whitespace-nowrap">{formatBRLPerMonth(totalBrl / durationMonths / currentRate)}</span></div>
-                      <div className="hidden md:flex justify-between items-center text-[15px] uppercase tracking-widest"><span className="text-slate-500 font-black flex items-center gap-1 text-[15px]">TAXA ÚNICA </span><span className="text-white font-black whitespace-nowrap">{formatBRL(0)}</span></div>
+                      <div className="hidden md:flex justify-between items-center text-[15px] uppercase tracking-widest"><span className={`${embedded ? "text-muted-foreground" : "text-slate-500"} font-black flex items-center gap-1 text-[15px]`}>MENSAL </span><span className={`${embedded ? "text-foreground" : "text-white"} font-black whitespace-nowrap`}>{formatBRLPerMonth(totalBrl / durationMonths / currentRate)}</span></div>
+                      <div className="hidden md:flex justify-between items-center text-[15px] uppercase tracking-widest"><span className={`${embedded ? "text-muted-foreground" : "text-slate-500"} font-black flex items-center gap-1 text-[15px]`}>TAXA ÚNICA </span><span className={`${embedded ? "text-foreground" : "text-white"} font-black whitespace-nowrap`}>{formatBRL(0)}</span></div>
                       <div className="flex justify-between items-center md:mt-1">
-                        <div className="flex flex-col"><span className="text-[10px] md:text-[17px] font-black text-white uppercase tracking-tighter">Vencido Hoje</span><span className="hidden md:block text-[14px] text-slate-500 font-black -mt-1 uppercase tracking-widest">Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span></div>
-                        <span className="text-sm md:text-3xl font-black text-white whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] ml-1 md:ml-0">{formatBRL(totalBrl / currentRate)}</span>
+                        <div className="flex flex-col"><span className={`text-[10px] md:text-[17px] font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tighter`}>Vencido Hoje</span><span className={`hidden md:block text-[14px] ${embedded ? "text-muted-foreground" : "text-slate-500"} font-black -mt-1 uppercase tracking-widest`}>Pré-pago {durationMonths} {durationMonths === 1 ? "Mês" : "Meses"}</span></div>
+                        <span className={`text-sm md:text-3xl font-black ${embedded ? "text-foreground" : "text-white"} whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] ml-1 md:ml-0`}>{formatBRL(totalBrl / currentRate)}</span>
                       </div>
                     </div>
                     <Button disabled={!isPasswordValid(password)} onClick={() => {
@@ -1323,7 +1326,7 @@ export default function VdsConfigurePage() {
                         const storageUpgradesJson = encodeURIComponent(JSON.stringify(storageUpgrades));
                         router.push(`/checkout/personal-data?planId=${id}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&monitoring=${monitoring}&privateNetwork=${privateNetwork}&ipv4Address=${ipv4Address}&objectStorage=${objectStorage}&password=${encodeURIComponent(password)}&type=vds&storageUpgrades=${storageUpgradesJson}`);
                       }
-                    }} className={cn("font-black h-9 md:h-14 px-3 md:px-12 rounded-lg text-sm md:text-xl shadow-xl uppercase tracking-widest transition-all min-w-0 md:min-w-[180px]", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : "bg-white/10 text-slate-500 cursor-not-allowed shadow-none")}>Próximo</Button>
+                    }} className={cn("font-black h-9 md:h-14 px-3 md:px-12 rounded-lg text-sm md:text-xl shadow-xl uppercase tracking-widest transition-all min-w-0 md:min-w-[180px]", isPasswordValid(password) ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sky-500/20" : (embedded ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none" : "bg-white/10 text-slate-500 cursor-not-allowed shadow-none"))}>Próximo</Button>
                   </div>
                 </>
               );
@@ -1336,28 +1339,28 @@ export default function VdsConfigurePage() {
       <AnimatePresence>
         {showUbuntuModal && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4" onClick={() => setShowUbuntuModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] overflow-hidden shadow-2xl p-10 space-y-8 border border-white/10" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/image.png" alt="Ubuntu" className="w-10 h-10" /><h2 className="text-2xl font-black text-white uppercase tracking-tight">Ubuntu</h2></div>
-              <p className="text-slate-400 text-[17px] font-medium leading-relaxed">Ubuntu é um sistema operacional livre e de código aberto baseado em Linux.</p>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`${embedded ? "bg-card border-border" : "bg-[#000B12] border-white/10"} rounded-2xl w-full max-w-[600px] overflow-hidden shadow-2xl p-10 space-y-8 border`} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-4"><img src="/image.png" alt="Ubuntu" className="w-10 h-10" /><h2 className={`text-2xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Ubuntu</h2></div>
+              <p className={`${embedded ? "text-muted-foreground" : "text-slate-400"} text-[17px] font-medium leading-relaxed`}>Ubuntu é um sistema operacional livre e de código aberto baseado em Linux.</p>
               <div className="space-y-4">
-                <label className="text-base font-bold text-slate-300 uppercase tracking-widest">Versão</label>
+                <label className={`text-base font-bold ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}>Versão</label>
                 <Select value={ubuntuVersion} onValueChange={setUbuntuVersion}>
-                  <SelectTrigger className="h-14 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white"><SelectItem value="Ubuntu 24.04">Ubuntu 24.04</SelectItem><SelectItem value="Ubuntu 22.04">Ubuntu 22.04</SelectItem></SelectContent>
+                  <SelectTrigger className={`h-14 rounded-xl ${embedded ? "bg-muted/40 border-border text-foreground" : "bg-white/5 border-white/10 text-white"}`}><SelectValue /></SelectTrigger>
+                  <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"}`}><SelectItem value="Ubuntu 24.04">Ubuntu 24.04</SelectItem><SelectItem value="Ubuntu 22.04">Ubuntu 22.04</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowUbuntuModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest">Pular</Button><Button onClick={() => setShowUbuntuModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Começar</Button></div>
+              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowUbuntuModal(false)} className={`${embedded ? "text-muted-foreground hover:text-foreground" : "text-slate-400 hover:text-white"} uppercase tracking-widest`}>Pular</Button><Button onClick={() => setShowUbuntuModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Começar</Button></div>
             </motion.div>
           </div>
         )}
         {showCpanelModal && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4" onClick={() => setShowCpanelModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] overflow-hidden shadow-2xl p-10 space-y-8 border border-white/10" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/cpanel.png" alt="cPanel" className="w-10 h-10" /><h2 className="text-2xl font-black text-white uppercase tracking-tight">cPanel</h2></div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`${embedded ? "bg-card border-border" : "bg-[#000B12] border-white/10"} rounded-2xl w-full max-w-[600px] overflow-hidden shadow-2xl p-10 space-y-8 border`} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-4"><img src="/cpanel.png" alt="cPanel" className="w-10 h-10" /><h2 className={`text-2xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>cPanel</h2></div>
               <div className="space-y-4">
-                <label className="text-base font-bold text-slate-300 uppercase tracking-widest">Licença</label>
+                <label className={`text-base font-bold ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}>Licença</label>
                 <Select value={cpanelLicence} onValueChange={setCpanelLicence}>
-                  <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-xl text-white">
+                  <SelectTrigger className={`h-14 ${embedded ? "bg-muted/40 border-border text-foreground" : "bg-white/5 border-white/10 text-white"} rounded-xl`}>
                     <div className="flex items-center justify-between w-full pr-2">
                       <span className="text-base">cPanel/WHM ({cpanelLicence} contas)</span>
                       <span className="text-sm text-sky-400 font-black">
@@ -1376,12 +1379,12 @@ export default function VdsConfigurePage() {
                       </span>
                     </div>
                   </SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120] max-h-[300px]">
+                  <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"} z-[120] max-h-[300px]`}>
                     {[5, 30, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000].map(count => (
-                      <SelectItem key={count} value={count.toString()} className="focus:bg-white/10 focus:text-white">
+                      <SelectItem key={count} value={count.toString()} className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                         <div className="flex items-center justify-between w-full min-w-[420px]">
-                          <span className={cn("flex-1", cpanelLicence === count.toString() ? "text-sky-400 font-black" : "text-slate-300")}>cPanel/WHM ({count} contas)</span>
-                          <span className="text-white font-black ml-4">
+                          <span className={cn("flex-1", cpanelLicence === count.toString() ? "text-sky-400 font-black" : embedded ? "text-muted-foreground" : "text-slate-300")}>cPanel/WHM ({count} contas)</span>
+                          <span className={`${embedded ? "text-foreground" : "text-white"} font-black ml-4`}>
                             {(() => {
                               let eur = currentImagePrices.cpanel;
                               if (count === 30) eur = 34.51;
@@ -1400,19 +1403,19 @@ export default function VdsConfigurePage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowCpanelModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest">Cancelar</Button><Button onClick={() => setShowCpanelModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button></div>
+              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowCpanelModal(false)} className={`${embedded ? "text-muted-foreground hover:text-foreground" : "text-slate-400 hover:text-white"} uppercase tracking-widest`}>Cancelar</Button><Button onClick={() => setShowCpanelModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button></div>
             </motion.div>
           </div>
         )}
 
         {showPleskModal && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4" onClick={() => setShowPleskModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] overflow-hidden shadow-2xl p-10 space-y-8 border border-white/10" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className="text-2xl font-black text-white uppercase tracking-tight">Plesk</h2></div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`${embedded ? "bg-card border-border" : "bg-[#000B12] border-white/10"} rounded-2xl w-full max-w-[600px] overflow-hidden shadow-2xl p-10 space-y-8 border`} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className={`text-2xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Plesk</h2></div>
               <div className="space-y-4">
-                <label className="text-base font-bold text-slate-300 uppercase tracking-widest">Edição</label>
+                <label className={`text-base font-bold ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}>Edição</label>
                 <Select value={pleskLicence} onValueChange={setPleskLicence}>
-                  <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-xl text-white">
+                  <SelectTrigger className={`h-14 ${embedded ? "bg-muted/40 border-border text-foreground" : "bg-white/5 border-white/10 text-white"} rounded-xl`}>
                     <div className="flex items-center justify-between w-full pr-2">
                       <span className="text-base">
                         {pleskLicence === "admin" ? "Web Admin Edition" : pleskLicence === "pro" ? "Web Pro Edition" : "Web Host Edition"}
@@ -1427,30 +1430,30 @@ export default function VdsConfigurePage() {
                       </span>
                     </div>
                   </SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120]">
-                    <SelectItem value="admin" className="focus:bg-white/10 focus:text-white">
+                  <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"} z-[120]`}>
+                    <SelectItem value="admin" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                       <div className="flex items-center justify-between w-full min-w-[400px]">
                         <span>Web Admin Edition (10 domínios)</span>
-                        <span className="text-white font-black ml-4">{formatBRL(currentImagePrices.pleskLinux)}</span>
+                        <span className={`${embedded ? "text-foreground" : "text-white"} font-black ml-4`}>{formatBRL(currentImagePrices.pleskLinux)}</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="pro" className="focus:bg-white/10 focus:text-white">
+                    <SelectItem value="pro" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                       <div className="flex items-center justify-between w-full min-w-[400px]">
                         <span>Web Pro Edition (30 domínios)</span>
-                        <span className="text-white font-black ml-4">{formatBRL(currentImagePrices.pleskPro)}</span>
+                        <span className={`${embedded ? "text-foreground" : "text-white"} font-black ml-4`}>{formatBRL(currentImagePrices.pleskPro)}</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="host" className="focus:bg-white/10 focus:text-white">
+                    <SelectItem value="host" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                       <div className="flex items-center justify-between w-full min-w-[400px]">
                         <span>Web Host Edition (ilimitado)</span>
-                        <span className="text-white font-black ml-4">{formatBRL(currentImagePrices.pleskHost)}</span>
+                        <span className={`${embedded ? "text-foreground" : "text-white"} font-black ml-4`}>{formatBRL(currentImagePrices.pleskHost)}</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex justify-end gap-4">
-                <Button variant="ghost" onClick={() => setShowPleskModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest">Cancelar</Button>
+                <Button variant="ghost" onClick={() => setShowPleskModal(false)} className={`${embedded ? "text-muted-foreground hover:text-foreground" : "text-slate-400 hover:text-white"} uppercase tracking-widest`}>Cancelar</Button>
                 <Button onClick={() => setShowPleskModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button>
               </div>
             </motion.div>
@@ -1458,13 +1461,13 @@ export default function VdsConfigurePage() {
         )}
         {showPleskWindowsModal && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4" onClick={() => setShowPleskWindowsModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] overflow-hidden shadow-2xl p-10 space-y-8 border border-white/10" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Plesk + Windows</h2></div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`${embedded ? "bg-card border-border" : "bg-[#000B12] border-white/10"} rounded-2xl w-full max-w-[600px] overflow-hidden shadow-2xl p-10 space-y-8 border`} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-4"><img src="/plesk.png" alt="Plesk" className="w-10 h-10" /><h2 className={`text-xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Plesk + Windows</h2></div>
               <div className="space-y-6">
                 <div className="space-y-4">
-                  <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Edição</label>
+                  <label className={`text-sm font-bold ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}>Edição</label>
                   <Select value={pleskWinLicence} onValueChange={setPleskWinLicence}>
-                    <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-xl text-white">
+                    <SelectTrigger className={`h-14 ${embedded ? "bg-muted/40 border-border text-foreground" : "bg-white/5 border-white/10 text-white"} rounded-xl`}>
                       <div className="flex items-center justify-between w-full pr-2">
                         <span className="text-sm">
                           {pleskWinLicence === "admin" ? "Web Admin Edition" : pleskWinLicence === "pro" ? "Web Pro Edition" : "Web Host Edition"}
@@ -1479,23 +1482,23 @@ export default function VdsConfigurePage() {
                         </span>
                       </div>
                     </SelectTrigger>
-                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120]">
-                      <SelectItem value="admin" className="focus:bg-white/10 focus:text-white">
+                    <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"} z-[120]`}>
+                      <SelectItem value="admin" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                         <div className="flex items-center justify-between w-full min-w-[400px]">
                           <span>Web Admin Edition (10 domínios)</span>
-                          <span className="text-white font-black ml-4">{formatBRL(currentImagePrices.pleskWin)}</span>
+                          <span className={`${embedded ? "text-foreground" : "text-white"} font-black ml-4`}>{formatBRL(currentImagePrices.pleskWin)}</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="pro" className="focus:bg-white/10 focus:text-white">
+                      <SelectItem value="pro" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                         <div className="flex items-center justify-between w-full min-w-[400px]">
                           <span>Web Pro Edition (30 domínios)</span>
-                          <span className="text-white font-black ml-4">{formatBRL(currentImagePrices.pleskPro)}</span>
+                          <span className={`${embedded ? "text-foreground" : "text-white"} font-black ml-4`}>{formatBRL(currentImagePrices.pleskPro)}</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="host" className="focus:bg-white/10 focus:text-white">
+                      <SelectItem value="host" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                         <div className="flex items-center justify-between w-full min-w-[400px]">
                           <span>Web Host Edition (ilimitado)</span>
-                          <span className="text-white font-black ml-4">{formatBRL(currentImagePrices.pleskHost)}</span>
+                          <span className={`${embedded ? "text-foreground" : "text-white"} font-black ml-4`}>{formatBRL(currentImagePrices.pleskHost)}</span>
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -1503,33 +1506,33 @@ export default function VdsConfigurePage() {
                 </div>
 
                 <div className="space-y-4">
-                  <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Versão do Windows</label>
+                  <label className={`text-sm font-bold ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}>Versão do Windows</label>
                   <Select value={pleskWinVersion} onValueChange={setPleskWinVersion}>
-                    <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-xl text-white">
+                    <SelectTrigger className={`h-14 ${embedded ? "bg-muted/40 border-border text-foreground" : "bg-white/5 border-white/10 text-white"} rounded-xl`}>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120]">
-                      <SelectItem value="2025" className="focus:bg-white/10 focus:text-white">Windows Server 2025</SelectItem>
-                      <SelectItem value="2022" className="focus:bg-white/10 focus:text-white">Windows Server 2022</SelectItem>
-                      <SelectItem value="2019" className="focus:bg-white/10 focus:text-white">Windows Server 2019</SelectItem>
-                      <SelectItem value="2016" className="focus:bg-white/10 focus:text-white">Windows Server 2016</SelectItem>
+                    <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"} z-[120]`}>
+                      <SelectItem value="2025" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>Windows Server 2025</SelectItem>
+                      <SelectItem value="2022" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>Windows Server 2022</SelectItem>
+                      <SelectItem value="2019" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>Windows Server 2019</SelectItem>
+                      <SelectItem value="2016" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>Windows Server 2016</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">O preço do Windows Server já está incluído na licença Plesk para Windows.</p>
+                  <p className={`text-[10px] ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium uppercase tracking-wider`}>O preço do Windows Server já está incluído na licença Plesk para Windows.</p>
                 </div>
               </div>
-              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowPleskWindowsModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest">Cancelar</Button><Button onClick={() => setShowPleskWindowsModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button></div>
+              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowPleskWindowsModal(false)} className={`${embedded ? "text-muted-foreground hover:text-foreground" : "text-slate-400 hover:text-white"} uppercase tracking-widest`}>Cancelar</Button><Button onClick={() => setShowPleskWindowsModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button></div>
             </motion.div>
           </div>
         )}
         {showWindowsModal && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4" onClick={() => setShowWindowsModal(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#000B12] rounded-2xl w-full max-w-[600px] p-10 space-y-8 border border-white/10 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-4"><img src="/windows.png" alt="Windows" className="w-10 h-10" /><h2 className="text-xl font-black text-white uppercase tracking-tight">Windows Server</h2></div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`${embedded ? "bg-card border-border" : "bg-[#000B12] border-white/10"} rounded-2xl w-full max-w-[600px] p-10 space-y-8 border shadow-2xl`} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-4"><img src="/windows.png" alt="Windows" className="w-10 h-10" /><h2 className={`text-xl font-black ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}>Windows Server</h2></div>
               <div className="space-y-4">
-                <label className="text-sm font-bold text-slate-300 uppercase tracking-widest">Versão</label>
+                <label className={`text-sm font-bold ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}>Versão</label>
                 <Select value={windowsVersion} onValueChange={setWindowsVersion}>
-                  <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-xl text-white">
+                  <SelectTrigger className={`h-14 ${embedded ? "bg-muted/40 border-border text-foreground" : "bg-white/5 border-white/10 text-white"} rounded-xl`}>
                     <div className="flex items-center justify-between w-full pr-2">
                       <span className="text-sm">Server {windowsVersion}</span>
                       <span className="text-xs text-sky-400 font-black">
@@ -1537,35 +1540,35 @@ export default function VdsConfigurePage() {
                       </span>
                     </div>
                   </SelectTrigger>
-                  <SelectContent className="bg-[#000B12] border-white/10 text-white z-[120]">
-                    <SelectItem value="2025" className="focus:bg-white/10 focus:text-white">
+                  <SelectContent className={`${embedded ? "bg-card border-border text-foreground" : "bg-[#000B12] border-white/10 text-white"} z-[120]`}>
+                    <SelectItem value="2025" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                       <div className="flex items-center justify-between w-full min-w-[400px]">
                         <span>Server 2025</span>
-                        <span className="text-white font-black ml-4">{formatBRL(currentImagePrices.windows)}</span>
+                        <span className={`${embedded ? "text-foreground" : "text-white"} font-black ml-4`}>{formatBRL(currentImagePrices.windows)}</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="2022" className="focus:bg-white/10 focus:text-white">
+                    <SelectItem value="2022" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                       <div className="flex items-center justify-between w-full min-w-[400px]">
                         <span>Server 2022</span>
-                        <span className="text-white font-black ml-4">{formatBRL(currentImagePrices.windows)}</span>
+                        <span className={`${embedded ? "text-foreground" : "text-white"} font-black ml-4`}>{formatBRL(currentImagePrices.windows)}</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="2019" className="focus:bg-white/10 focus:text-white">
+                    <SelectItem value="2019" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                       <div className="flex items-center justify-between w-full min-w-[400px]">
                         <span>Server 2019</span>
-                        <span className="text-white font-black ml-4">{formatBRL(currentImagePrices.windows)}</span>
+                        <span className={`${embedded ? "text-foreground" : "text-white"} font-black ml-4`}>{formatBRL(currentImagePrices.windows)}</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="2016" className="focus:bg-white/10 focus:text-white">
+                    <SelectItem value="2016" className={`${embedded ? "focus:bg-accent focus:text-foreground" : "focus:bg-white/10 focus:text-white"}`}>
                       <div className="flex items-center justify-between w-full min-w-[400px]">
                         <span>Server 2016</span>
-                        <span className="text-white font-black ml-4">{formatBRL(currentImagePrices.windows)}</span>
+                        <span className={`${embedded ? "text-foreground" : "text-white"} font-black ml-4`}>{formatBRL(currentImagePrices.windows)}</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowWindowsModal(false)} className="text-slate-400 hover:text-white uppercase tracking-widest">Cancelar</Button><Button onClick={() => setShowWindowsModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button></div>
+              <div className="flex justify-end gap-4"><Button variant="ghost" onClick={() => setShowWindowsModal(false)} className={`${embedded ? "text-muted-foreground hover:text-foreground" : "text-slate-400 hover:text-white"} uppercase tracking-widest`}>Cancelar</Button><Button onClick={() => setShowWindowsModal(false)} className="bg-sky-500 hover:bg-sky-400 text-white font-black uppercase tracking-widest px-8">Selecionar</Button></div>
             </motion.div>
           </div>
         )}
