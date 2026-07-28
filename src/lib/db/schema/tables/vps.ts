@@ -1,5 +1,7 @@
-import { pgTable, text, timestamp, uuid, real, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, real, boolean, jsonb, pgEnum } from "drizzle-orm/pg-core";
 import { pgUser } from "./user";
+
+export const vpsProvider = pgEnum("VpsProvider", ["contabo"]);
 
 /**
  * Tabela que vincula uma VM de um fornecedor (Ex: Contabo) a um usuário do Atlas.
@@ -12,6 +14,8 @@ export const pgVpsServers = pgTable("vps_nodes", {
   name: text("name").notNull(), // Ex: "Servidor Contabo 01"
   ip: text("ip").notNull(),
   os: text("os"), // Ex: "Ubuntu 22.04"
+  provider: vpsProvider("provider").default("contabo"),
+  externalId: text("external_id"),
   token: text("token").notNull().unique(), // Token que o bot usará para se autenticar
   status: text("status").default("pending"), // pending, active, suspended
   isBotInstalled: boolean("is_bot_installed").default(false),
