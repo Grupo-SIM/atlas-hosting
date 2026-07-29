@@ -21,9 +21,6 @@ export class DomApi {
   constructor() {
     this.tokenApi = process.env.DOM_API_KEY as string;
 
-    this.privateKeyPath = process.env
-      .DOM_WITHDRAWAL_SIGNATURE_KEY_PATH as string;
-
     this.api = axios.create({
       baseURL: "https://apiv3.dompagamentos.com.br/checkout/production/",
       headers: {

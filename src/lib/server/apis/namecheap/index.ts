@@ -314,7 +314,6 @@ export class NamecheapApiWrapper {
                 target: this.domainPricingCacheTable.tld,
               });
           }
-          this.dbDomainPricesLastRefreshed = Date.now();
           console.log("NCW: Domain Pricing DB Cache refresh completed.");
         } else {
           console.log(

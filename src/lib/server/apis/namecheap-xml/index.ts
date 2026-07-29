@@ -1,4 +1,3 @@
-import { XMLParser } from "fast-xml-parser"; // Example import
 import type {
   DomainPrivacyChangeEmailAddressCommandResponse,
   DomainPrivacyChangeEmailAddressParams,
@@ -145,22 +144,6 @@ export class NamecheapApiClient {
       ? "https://api.sandbox.namecheap.com/xml.response"
       : "https://api.namecheap.com/xml.response"; //
 
-    // Initialize XML parser here. Example with fast-xml-parser:
-    this.xmlParser = new XMLParser({
-      attributeNamePrefix: "@_",
-      ignoreAttributes: false,
-      parseAttributeValue: true,
-      parseTagValue: true,
-      // Define paths that should always be arrays for consistency
-      //   isArray: (name, jpath) => {
-      //     const arrayPaths = [
-      //       "ApiResponse.Errors.Error",
-      //     "ApiResponse.CommandResponse.DomainCheckResult",
-      //     "ApiResponse.CommandResponse.DomainRenewDetails",
-
-      //     return arrayPaths.includes(jpath);
-      //   }
-    });
   }
 
   private async request<
