@@ -1,46 +1,46 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-  "version": "0.2.0",
   "configurations": [
     {
-      "type": "bun",
+      "cwd": "${workspaceFolder}",
       "internalConsoleOptions": "neverOpen",
-      "request": "launch",
       "name": "Debug File",
       "program": "${file}",
-      "cwd": "${workspaceFolder}",
-      "stopOnEntry": false,
-      "watchMode": false
-    },
-    {
-      "type": "bun",
-      "internalConsoleOptions": "neverOpen",
       "request": "launch",
-      "name": "Run File",
-      "program": "${file}",
-      "cwd": "${workspaceFolder}",
-      "noDebug": true,
+      "stopOnEntry": false,
+      "type": "bun",
       "watchMode": false
     },
     {
-      "type": "bun",
+      "cwd": "${workspaceFolder}",
       "internalConsoleOptions": "neverOpen",
-      "request": "attach",
+      "name": "Run File",
+      "noDebug": true,
+      "program": "${file}",
+      "request": "launch",
+      "type": "bun",
+      "watchMode": false
+    },
+    {
+      "internalConsoleOptions": "neverOpen",
       "name": "Attach Bun",
-      "url": "ws://localhost:6499/",
-      "stopOnEntry": false
+      "request": "attach",
+      "stopOnEntry": false,
+      "type": "bun",
+      "url": "ws://localhost:6499/"
     },
     /*  run bun --bun dev */
     {
-      "name": "Next.js: debug server-side",
-      "type": "node-terminal",
-      "request": "launch",
       "command": "bun --bun dev",
       "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "neverOpen",
+      "name": "Next.js: debug server-side",
+      "request": "launch",
       "smartStep": true,
-      "internalConsoleOptions": "neverOpen"
+      "type": "node-terminal"
     }
-  ]
+  ],
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0"
 }

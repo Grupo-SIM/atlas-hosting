@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 type DeploymentOption = "wordpress" | "coolify";
 
@@ -10,7 +10,9 @@ interface DeploymentOptionsProps {
 }
 
 export function DeploymentOptions({ onSelect }: DeploymentOptionsProps) {
-  const [selectedOption, setSelectedOption] = useState<DeploymentOption | null>(null);
+  const [selectedOption, setSelectedOption] = useState<DeploymentOption | null>(
+    null
+  );
 
   const handleSelect = (option: DeploymentOption) => {
     setSelectedOption(option);
@@ -20,14 +22,14 @@ export function DeploymentOptions({ onSelect }: DeploymentOptionsProps) {
   return (
     <div className="flex gap-4">
       <Button
-        variant={selectedOption === "wordpress" ? "default" : "outline"}
         onClick={() => handleSelect("wordpress")}
+        variant={selectedOption === "wordpress" ? "default" : "outline"}
       >
         WordPress
       </Button>
       <Button
-        variant={selectedOption === "coolify" ? "default" : "outline"}
         onClick={() => handleSelect("coolify")}
+        variant={selectedOption === "coolify" ? "default" : "outline"}
       >
         Aplicação Customizada (Coolify)
       </Button>

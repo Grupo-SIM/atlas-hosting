@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
 import {
-  Chart as ChartJS,
   CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  Legend,
   LinearScale,
-  PointElement,
   LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
-  Filler,
 } from "chart.js";
+import { useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
 
 ChartJS.register(
@@ -35,14 +35,14 @@ interface AffiliateChartProps {
 
 export function AffiliateChart({ data }: AffiliateChartProps) {
   const [colors, setColors] = useState({
+    background: "#ffffff",
+    border: "#e4e4e7",
     foreground: "#0a0a0a",
     mutedForeground: "#6b7280",
-    border: "#e4e4e7",
-    background: "#ffffff",
     primary: "#3b82f6",
-    primaryWithOpacity: "#3b82f61a",
     primaryMuted: "#3b82f699",
     primaryMutedWithOpacity: "#3b82f60d",
+    primaryWithOpacity: "#3b82f61a",
   });
 
   useEffect(() => {
@@ -50,14 +50,14 @@ export function AffiliateChart({ data }: AffiliateChartProps) {
       const isDark = document.documentElement.classList.contains("dark");
 
       setColors({
+        background: isDark ? "#0a0a0a" : "#ffffff",
+        border: isDark ? "#27272a" : "#e4e4e7",
         foreground: isDark ? "#ffffff" : "#0a0a0a",
         mutedForeground: isDark ? "#a1a1aa" : "#6b7280",
-        border: isDark ? "#27272a" : "#e4e4e7",
-        background: isDark ? "#0a0a0a" : "#ffffff",
         primary: "#3b82f6",
-        primaryWithOpacity: isDark ? "#3b82f61a" : "#3b82f61a",
         primaryMuted: isDark ? "#3b82f699" : "#3b82f699",
         primaryMutedWithOpacity: isDark ? "#3b82f60d" : "#3b82f60d",
+        primaryWithOpacity: isDark ? "#3b82f61a" : "#3b82f61a",
       });
     };
 
@@ -67,35 +67,44 @@ export function AffiliateChart({ data }: AffiliateChartProps) {
     // Watch for theme changes
     const observer = new MutationObserver(updateColors);
     observer.observe(document.documentElement, {
-      attributes: true,
       attributeFilter: ["class"],
+      attributes: true,
     });
 
     return () => observer.disconnect();
   }, []);
 
   const options = {
-    responsive: true,
+    elements: {
+      line: {
+        tension: 0.4,
+      },
+      point: {
+        hoverRadius: 6,
+        radius: 4,
+      },
+    },
+    interaction: {
+      intersect: false,
+      mode: "index" as const,
+    },
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "top" as const,
         labels: {
-          usePointStyle: true,
           color: colors.foreground,
           font: {
             size: 12,
           },
+          usePointStyle: true,
         },
+        position: "top" as const,
       },
       tooltip: {
         backgroundColor: colors.background,
-        titleColor: colors.foreground,
         bodyColor: colors.foreground,
         borderColor: colors.border,
         borderWidth: 1,
-        cornerRadius: 8,
-        displayColors: true,
         callbacks: {
           label: (context: {
             dataset: { label?: string };
@@ -108,12 +117,12 @@ export function AffiliateChart({ data }: AffiliateChartProps) {
             return `${label}: ${context.parsed.y}`;
           },
         },
+        cornerRadius: 8,
+        displayColors: true,
+        titleColor: colors.foreground,
       },
     },
-    interaction: {
-      mode: "index" as const,
-      intersect: false,
-    },
+    responsive: true,
     scales: {
       x: {
         grid: {
@@ -128,78 +137,69 @@ export function AffiliateChart({ data }: AffiliateChartProps) {
         },
       },
       y: {
-        type: "linear" as const,
         display: true,
-        position: "left" as const,
         grid: {
           color: colors.border,
           drawBorder: false,
         },
+        position: "left" as const,
         ticks: {
-          color: colors.mutedForeground,
-          font: {
-            size: 12,
-          },
           callback: (value: number | string) => {
             return `R$ ${Number(value).toLocaleString("pt-BR")}`;
           },
+          color: colors.mutedForeground,
+          font: {
+            size: 12,
+          },
         },
+        type: "linear" as const,
       },
       y1: {
-        type: "linear" as const,
         display: true,
-        position: "right" as const,
         grid: {
-          drawOnChartArea: false,
           color: colors.border,
           drawBorder: false,
+          drawOnChartArea: false,
         },
+        position: "right" as const,
         ticks: {
           color: colors.mutedForeground,
           font: {
             size: 12,
           },
         },
-      },
-    },
-    elements: {
-      line: {
-        tension: 0.4,
-      },
-      point: {
-        radius: 4,
-        hoverRadius: 6,
+        type: "linear" as const,
       },
     },
   };
 
   const chartData = {
-    labels: data.map((item) => item.month),
     datasets: [
       {
-        label: "Ganhos",
-        data: data.map((item) => item.earnings),
-        borderColor: colors.primary,
         backgroundColor: colors.primaryWithOpacity,
+        borderColor: colors.primary,
+        data: data.map(item => item.earnings),
         fill: true,
-        yAxisID: "y",
+        label: "Ganhos",
         tension: 0.4,
+        yAxisID: "y",
       },
       {
-        label: "Indicações",
-        data: data.map((item) => item.referrals),
-        borderColor: colors.primaryMuted,
         backgroundColor: colors.primaryMutedWithOpacity,
+        borderColor: colors.primaryMuted,
+        data: data.map(item => item.referrals),
         fill: false,
-        yAxisID: "y1",
+        label: "Indicações",
         tension: 0.4,
+        yAxisID: "y1",
       },
     ],
+    labels: data.map(item => item.month),
   };
 
   return (
     <div className="h-[400px] w-full">
-      <Line options={options} data={chartData} />
+      <Line data={chartData} options={options} />
     </div>
   );
 }

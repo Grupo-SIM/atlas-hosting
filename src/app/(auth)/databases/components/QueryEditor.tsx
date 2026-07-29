@@ -1,10 +1,19 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import {
+  AlertCircle,
+  CheckCircle,
+  Database,
+  Download,
+  Loader2,
+  Play,
+  RotateCcw,
+  Save,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { useCallback, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Table,
@@ -14,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -21,16 +31,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
-import {
-  Play,
-  Loader2,
-  RotateCcw,
-  Save,
-  Download,
-  AlertCircle,
-  CheckCircle,
-  Database,
-} from "lucide-react";
 import { runDbQueryAction, type TableDataResult } from "../actions";
 
 interface QueryEditorProps {
@@ -54,8 +54,8 @@ export function QueryEditor({
   const executeQuery = useCallback(async () => {
     if (!query.trim()) {
       toast({
-        title: "Consulta vazia",
         description: "Por favor, insira uma consulta SQL.",
+        title: "Consulta vazia",
         variant: "default",
       });
       return;
@@ -78,8 +78,8 @@ export function QueryEditor({
       router.push(`?${params.toString()}`);
 
       toast({
-        title: "Consulta executada",
         description: `Consulta executada em ${endTime - startTime}ms`,
+        title: "Consulta executada",
       });
     } catch (err) {
       const errorMessage =
@@ -87,8 +87,8 @@ export function QueryEditor({
       setError(errorMessage);
       setExecutionTime(null);
       toast({
-        title: "Erro na consulta",
         description: errorMessage,
+        title: "Erro na consulta",
         variant: "destructive",
       });
     } finally {
@@ -114,14 +114,14 @@ export function QueryEditor({
       .writeText(query)
       .then(() => {
         toast({
-          title: "Consulta copiada",
           description: "A consulta foi copiada para a área de transferência.",
+          title: "Consulta copiada",
         });
       })
       .catch(() => {
         toast({
-          title: "Erro ao copiar",
           description: "Não foi possível copiar a consulta.",
+          title: "Erro ao copiar",
           variant: "destructive",
         });
       });
@@ -134,13 +134,11 @@ export function QueryEditor({
       // Convert result to CSV
       const csv = [
         // Header
-        result.columns
-          .map((col) => col.name)
-          .join(","),
+        result.columns.map(col => col.name).join(","),
         // Rows
-        ...result.rows.map((row) =>
+        ...result.rows.map(row =>
           result.columns
-            .map((col) => {
+            .map(col => {
               const value = row[col.name];
               // Escape values that contain commas or quotes
               if (
@@ -167,13 +165,13 @@ export function QueryEditor({
       document.body.removeChild(link);
 
       toast({
-        title: "Download iniciado",
         description: "Os resultados foram baixados como CSV.",
+        title: "Download iniciado",
       });
     } catch (err) {
       toast({
-        title: "Erro no download",
         description: "Não foi possível baixar os resultados.",
+        title: "Erro no download",
         variant: "destructive",
       });
     }
@@ -185,7 +183,7 @@ export function QueryEditor({
     if (typeof result === "string") {
       return (
         <div className="p-4">
-          <div className="flex items-center space-x-2 mb-3">
+          <div className="mb-3 flex items-center space-x-2">
             {error ? (
               <AlertCircle className="h-5 w-5 text-destructive" />
             ) : (
@@ -195,12 +193,12 @@ export function QueryEditor({
               {error ? "Erro na execução" : "Resultado"}
             </span>
             {executionTime && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge className="text-xs" variant="secondary">
                 {executionTime}ms
               </Badge>
             )}
           </div>
-          <pre className="text-sm whitespace-pre-wrap bg-muted/50 rounded-md p-3 font-mono">
+          <pre className="whitespace-pre-wrap rounded-md bg-muted/50 p-3 font-mono text-sm">
             {result}
           </pre>
         </div>
@@ -209,22 +207,22 @@ export function QueryEditor({
 
     if (result.columns && result.rows) {
       return (
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex h-full flex-col">
+          <div className="flex items-center justify-between border-b p-4">
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-5 w-5 text-green-500" />
               <span className="font-medium">Resultados da Consulta</span>
-              <Badge variant="secondary" className="text-xs">
+              <Badge className="text-xs" variant="secondary">
                 {result.rows.length} linha(s)
               </Badge>
               {executionTime && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge className="text-xs" variant="secondary">
                   {executionTime}ms
                 </Badge>
               )}
             </div>
             <Button onClick={downloadResults} size="sm" variant="outline">
-              <Download className="h-4 w-4 mr-2" />
+              <Download className="mr-2 h-4 w-4" />
               Baixar CSV
             </Button>
           </div>
@@ -233,11 +231,11 @@ export function QueryEditor({
             <Table>
               <TableHeader>
                 <TableRow>
-                  {result.columns.map((col) => (
-                    <TableHead key={col.name} className="whitespace-nowrap">
+                  {result.columns.map(col => (
+                    <TableHead className="whitespace-nowrap" key={col.name}>
                       <div className="flex items-center space-x-2">
                         <span className="font-medium">{col.name}</span>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge className="text-xs" variant="secondary">
                           {col.type}
                         </Badge>
                       </div>
@@ -255,10 +253,10 @@ export function QueryEditor({
 
                   return (
                     <TableRow key={rowKey}>
-                      {result.columns.map((col) => (
+                      {result.columns.map(col => (
                         <TableCell
+                          className="max-w-xs whitespace-nowrap"
                           key={col.name}
-                          className="whitespace-nowrap max-w-xs"
                         >
                           <TooltipProvider>
                             <Tooltip>
@@ -268,7 +266,7 @@ export function QueryEditor({
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <div className="max-w-md break-all whitespace-pre-wrap">
+                                <div className="max-w-md whitespace-pre-wrap break-all">
                                   {String(row[col.name] ?? "")}
                                 </div>
                               </TooltipContent>
@@ -291,39 +289,39 @@ export function QueryEditor({
   }, [result, error, executionTime, downloadResults]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Query Input */}
-      <div className="p-4 border-b space-y-4">
+      <div className="space-y-4 border-b p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">Consulta SQL</h3>
+          <h3 className="font-medium text-lg">Consulta SQL</h3>
           <div className="flex items-center space-x-2">
             <Button
+              disabled={!query.trim()}
               onClick={saveQuery}
               size="sm"
               variant="outline"
-              disabled={!query.trim()}
             >
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="mr-2 h-4 w-4" />
               Copiar
             </Button>
             <Button
+              disabled={!query.trim()}
               onClick={clearQuery}
               size="sm"
               variant="outline"
-              disabled={!query.trim()}
             >
-              <RotateCcw className="h-4 w-4 mr-2" />
+              <RotateCcw className="mr-2 h-4 w-4" />
               Limpar
             </Button>
             <Button
+              disabled={isExecuting || !query.trim()}
               onClick={executeQuery}
               size="sm"
-              disabled={isExecuting || !query.trim()}
             >
               {isExecuting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <Play className="h-4 w-4 mr-2" />
+                <Play className="mr-2 h-4 w-4" />
               )}
               Executar
             </Button>
@@ -331,23 +329,23 @@ export function QueryEditor({
         </div>
 
         <Textarea
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => {
+          className="min-h-[120px] font-mono text-sm"
+          disabled={isExecuting}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => {
             if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
               e.preventDefault();
               executeQuery();
             }
           }}
           placeholder="Digite sua consulta SQL aqui...&#10;&#10;Exemplo:&#10;SELECT * FROM wp_posts WHERE post_status = 'publish' LIMIT 10;"
-          className="min-h-[120px] font-mono text-sm"
-          disabled={isExecuting}
+          value={query}
         />
 
         {query.trim() && (
           <div className="flex items-center space-x-2">
             <Database className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               Pressione Ctrl+Enter para executar rapidamente
             </span>
           </div>
@@ -359,13 +357,13 @@ export function QueryEditor({
         <div className="flex-1 overflow-hidden">
           {error ? (
             <div className="p-4">
-              <div className="flex items-center space-x-2 mb-3">
+              <div className="mb-3 flex items-center space-x-2">
                 <AlertCircle className="h-5 w-5 text-destructive" />
                 <span className="font-medium text-destructive">
                   Erro na Consulta
                 </span>
               </div>
-              <pre className="text-sm whitespace-pre-wrap bg-destructive/10 border border-destructive/20 rounded-md p-3 font-mono">
+              <pre className="whitespace-pre-wrap rounded-md border border-destructive/20 bg-destructive/10 p-3 font-mono text-sm">
                 {error}
               </pre>
             </div>
@@ -377,17 +375,17 @@ export function QueryEditor({
 
       {/* Empty State */}
       {!result && !error && !isExecuting && (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center p-4">
-            <Database className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">
+        <div className="flex flex-1 items-center justify-center">
+          <div className="p-4 text-center">
+            <Database className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 font-medium text-lg">
               Pronto para executar consultas
             </h3>
-            <p className="text-muted-foreground mb-4 max-w-md">
+            <p className="mb-4 max-w-md text-muted-foreground">
               Digite uma consulta SQL acima e clique em "Executar" para ver os
               resultados.
             </p>
-            <div className="text-sm text-muted-foreground space-y-1">
+            <div className="space-y-1 text-muted-foreground text-sm">
               <p>
                 <strong>Dicas:</strong>
               </p>

@@ -1,8 +1,8 @@
 "use client";
 
-import { clearGuestCheckoutSession, checkIsLoggedIn } from "@/app/actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { checkIsLoggedIn, clearGuestCheckoutSession } from "@/app/actions";
 
 export default function Countdown() {
   const [timeLeft, setTimeLeft] = useState(5);
@@ -19,7 +19,7 @@ export default function Countdown() {
     void clearGuestCheckoutSession(invoiceId);
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft(prev => prev - 1);
     }, 1000);
 
     return () => clearInterval(interval);
@@ -36,8 +36,9 @@ export default function Countdown() {
   }, [timeLeft, router, isLoggedIn]);
 
   return (
-    <div className="text-sm text-muted-foreground font-medium bg-muted/50 px-4 py-2 rounded-full border border-border/50">
-      Redirecionando em <span className="text-primary font-bold">{timeLeft}</span> segundos...
+    <div className="rounded-full border border-border/50 bg-muted/50 px-4 py-2 font-medium text-muted-foreground text-sm">
+      Redirecionando em{" "}
+      <span className="font-bold text-primary">{timeLeft}</span> segundos...
     </div>
   );
 }

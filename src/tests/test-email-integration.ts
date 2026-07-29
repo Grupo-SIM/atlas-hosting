@@ -5,21 +5,21 @@
  * This script tests the IMAP and SMTP functionality with Plesk email accounts
  */
 
-import { createImapClient, createSmtpClient } from "@/lib/server/apis/email";
 import type { EmailToSend } from "@/lib/server/apis/email";
+import { createImapClient, createSmtpClient } from "@/lib/server/apis/email";
 
 // Mock configuration for testing
 const mockEmailConfig = {
+  encryptedImapPassword: "encrypted_password_here", // This would be encrypted in real usage
+  encryptedSmtpPassword: "encrypted_password_here", // This would be encrypted in real usage
   imapHost: "mail.leuilipe.top",
   imapPort: 993,
-  imapUsername: "neusa@leuilipe.top",
-  encryptedImapPassword: "encrypted_password_here", // This would be encrypted in real usage
   imapSecure: true,
+  imapUsername: "neusa@leuilipe.top",
   smtpHost: "mail.leuilipe.top",
   smtpPort: 465,
-  smtpUsername: "neusa@leuilipe.top",
-  encryptedSmtpPassword: "encrypted_password_here", // This would be encrypted in real usage
   smtpSecure: true,
+  smtpUsername: "neusa@leuilipe.top",
 };
 
 console.log("🧪 Testing Email Integration...\n");
@@ -40,7 +40,7 @@ async function testImapConnection() {
     const folders = await imapClient.getFolders();
     console.log(
       `📁 Found ${folders.length} folders:`,
-      folders.map((f) => f.name)
+      folders.map(f => f.name)
     );
 
     const emails = await imapClient.getEmails("INBOX", 10);
@@ -76,10 +76,10 @@ async function testSmtpConnection() {
 
     const testEmail: EmailToSend = {
       from: "neusa@leuilipe.top",
-      to: "test@example.com", // Safe test recipient
+      html: "<p>This is a <strong>test email</strong> to verify SMTP functionality.</p>",
       subject: "Test Email from Atlas Hosting",
       text: "This is a test email to verify SMTP functionality.",
-      html: "<p>This is a <strong>test email</strong> to verify SMTP functionality.</p>",
+      to: "test@example.com", // Safe test recipient
     };
 
     // Uncomment to actually send test email

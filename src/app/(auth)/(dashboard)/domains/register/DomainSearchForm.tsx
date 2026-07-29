@@ -1,13 +1,17 @@
 "use client";
 
-import { searchDomains } from "@/app/actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { startTransition, useActionState, useCallback } from "react";
 import { CgSpinner } from "react-icons/cg";
+import { searchDomains } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-export default function DomainSearchForm({ searchQuery }: { searchQuery: string }) {
+export default function DomainSearchForm({
+  searchQuery,
+}: {
+  searchQuery: string;
+}) {
   const [, doSearch, isPending] = useActionState(searchDomains, void 0);
 
   const onSubmit = useCallback(() => {
@@ -17,22 +21,28 @@ export default function DomainSearchForm({ searchQuery }: { searchQuery: string 
   }, [doSearch, searchQuery]);
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-row gap-2">
+    <form className="flex flex-row gap-2" onSubmit={onSubmit}>
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
         <Input
-          type="text"
-          placeholder="ex: minhaempresa.com"
           className="pl-10"
-          name="search"
           defaultValue={searchQuery}
+          name="search"
+          placeholder="ex: minhaempresa.com"
+          type="text"
         />
       </div>
-      <Button type="submit" size="icon" className="shrink-0" aria-label="Buscar">
-        {isPending ? 
-          <CgSpinner className="w-4 h-4 animate-spin" />
-          : <Search className="w-4 h-4" />
-        }
+      <Button
+        aria-label="Buscar"
+        className="shrink-0"
+        size="icon"
+        type="submit"
+      >
+        {isPending ? (
+          <CgSpinner className="h-4 w-4 animate-spin" />
+        ) : (
+          <Search className="h-4 w-4" />
+        )}
       </Button>
     </form>
   );

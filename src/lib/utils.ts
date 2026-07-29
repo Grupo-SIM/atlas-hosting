@@ -1,6 +1,6 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { type ClassValue, clsx } from "clsx";
 import { format } from "date-fns";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -8,10 +8,10 @@ export function cn(...inputs: ClassValue[]) {
 
 export function toBrl(value: number): string {
   return value.toLocaleString("pt-BR", {
-    style: "currency",
     currency: "BRL",
-    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+    style: "currency",
   });
 }
 
@@ -24,19 +24,19 @@ export function isValidCPF(cpfInput = "") {
   if (cpf.length !== 11 || new Set(cpf).size === 1) return false;
 
   for (let i = 1; i <= 9; i++)
-    sum = sum + Number.parseInt(cpf.substring(i - 1, i)) * (11 - i);
+    sum = sum + Number.parseInt(cpf.substring(i - 1, i), 10) * (11 - i);
   remainder = (sum * 10) % 11;
 
   if (remainder === 10 || remainder === 11) remainder = 0;
-  if (remainder !== Number.parseInt(cpf.substring(9, 10))) return false;
+  if (remainder !== Number.parseInt(cpf.substring(9, 10), 10)) return false;
 
   sum = 0;
   for (let i = 1; i <= 10; i++)
-    sum = sum + Number.parseInt(cpf.substring(i - 1, i)) * (12 - i);
+    sum = sum + Number.parseInt(cpf.substring(i - 1, i), 10) * (12 - i);
   remainder = (sum * 10) % 11;
 
   if (remainder === 10 || remainder === 11) remainder = 0;
-  if (remainder !== Number.parseInt(cpf.substring(10, 11))) return false;
+  if (remainder !== Number.parseInt(cpf.substring(10, 11), 10)) return false;
 
   return true;
 }

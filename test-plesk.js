@@ -1,6 +1,5 @@
-
-const axios = require('axios');
-const https = require('https');
+const axios = require("axios");
+const https = require("node:https");
 
 const apiUrl = "https://pro120.dns-pro.com.br:8443/api/v2";
 const rootUser = "jbmi4779";
@@ -11,11 +10,11 @@ async function testBasicAuth() {
   console.log("Testing Basic Auth...");
   try {
     const response = await axios.get(`${apiUrl}/server`, {
-      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
       auth: {
-        username: rootUser,
         password: rootPassword,
+        username: rootUser,
       },
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
     });
     console.log("Basic Auth Success:", response.status);
     return true;
@@ -30,10 +29,10 @@ async function testApiKey() {
   console.log("\nTesting API Key...");
   try {
     const response = await axios.get(`${apiUrl}/server`, {
-      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
       headers: {
-        'X-API-Key': apiKey,
+        "X-API-Key": apiKey,
       },
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
     });
     console.log("API Key Success:", response.status);
     return true;

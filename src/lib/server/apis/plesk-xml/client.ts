@@ -1,40 +1,38 @@
-import {
-  PLESK_API_LOGIN,
-  PLESK_API_PASSWORD,
-  PLESK_API_KEY,
-  PLESK_XML_API_URL,
-} from "@/lib/server/apis/plesk-xml/config";
-import type { AddWebspaceParams } from "@/app/api/wp-install-w/worker/types";
-import type {
-  ChangeMailSettingsPayload,
-  CreateMailPayload,
-  EnableMailServicePayload,
-  DiskUsageStats,
-  GetDnsRecordsResult,
-  GetWebspaceDiskUsageResult,
-  GetSetMailPrefsPayload,
-  GetSubscriptionResult,
-  MailName,
-  PleskApiError,
-  PleskPacket,
-  GetMailNamesResult,
-} from "@/lib/server/apis/plesk-xml/types";
 import axios, { type AxiosError } from "axios";
 import { format } from "date-fns";
 import { XMLParser } from "fast-xml-parser";
+import { cache } from "react";
 import type { DeepPartial } from "react-hook-form";
 import { create } from "xmlbuilder2";
+import type { AddWebspaceParams } from "@/app/api/wp-install-w/worker/types";
+import {
+  PLESK_API_KEY,
+  PLESK_API_LOGIN,
+  PLESK_API_PASSWORD,
+  PLESK_XML_API_URL,
+} from "@/lib/server/apis/plesk-xml/config";
+import type {
+  CreateMailPayload,
+  DiskUsageStats,
+  EnableMailServicePayload,
+  GetDnsRecordsResult,
+  GetMailNamesResult,
+  GetSubscriptionResult,
+  GetWebspaceDiskUsageResult,
+  MailName,
+  PleskApiError,
+  PleskPacket,
+} from "@/lib/server/apis/plesk-xml/types";
 import certificatesApi from "../certificates";
-import { cache } from "react";
 
 const xmlParser = new XMLParser({
-  ignoreAttributes: false,
   attributeNamePrefix: "@_",
-  parseTagValue: true,
+  ignoreAttributes: false,
   isArray: (tagName, jPath) => {
     if (jPath === "packet.mail.get_info.result.mailname") return true;
     return false;
   },
+  parseTagValue: true,
 });
 
 interface PleskRequestOptions {
@@ -46,7 +44,7 @@ interface PleskRequestOptions {
 async function requestPleskApi<TResponsePayload>(
   options: PleskRequestOptions
 ): Promise<TResponsePayload | undefined> {
-  const xmlRequest = create({ version: "1.0", encoding: "UTF-8" })
+  const xmlRequest = create({ encoding: "UTF-8", version: "1.0" })
     .ele("packet")
     .ele(options.operator)
     .ele(options.operation)
@@ -85,7 +83,7 @@ async function requestPleskApi<TResponsePayload>(
       "system" in parsedResponse.packet
         ? undefined
         : parsedResponse.packet[options.operator]?.[options.operation];
-    if (!operationResultContainer || !operationResultContainer.result) {
+    if (!operationResultContainer?.result) {
       console.error("Unexpected Plesk API response structure:", parsedResponse);
       throw new Error(
         "Unexpected Plesk API response structure: result not found."
@@ -123,14 +121,14 @@ export async function getMailAccounts(pleskId: number): Promise<MailName[]> {
   }
 
   const response = await requestPleskApi<GetMailNamesResult>({
-    operator: "mail",
     operation: "get_info",
+    operator: "mail",
     params: {
+      autoresponder: {},
       filter: { "site-id": pleskId },
+      forwarding: {},
       mailbox: {},
       "mailbox-usage": {},
-      forwarding: {},
-      autoresponder: {},
     },
   });
 
@@ -147,8 +145,8 @@ export async function setSiteProperties(
   params: DeepPartial<AddWebspaceParams>
 ) {
   return await requestPleskApi({
-    operator: "site",
     operation: "set",
+    operator: "site",
     params: {
       filter: {
         name: domainName,
@@ -165,11 +163,11 @@ export const getDomainDiskUsage = cache(
     }
 
     const response = await requestPleskApi<GetWebspaceDiskUsageResult>({
-      operator: "webspace",
       operation: "get",
+      operator: "webspace",
       params: {
-        filter: { name: domainName },
         dataset: { disk_usage: {} },
+        filter: { name: domainName },
       },
     });
 
@@ -209,17 +207,17 @@ export async function* installCertificate(domainName: string) {
   const certName = domainName.concat(format(new Date(), "dLy"));
 
   await requestPleskApi<void>({
-    operator: "certificate",
     operation: "install",
+    operator: "certificate",
     params: {
-      name: certName,
-      webspace: domainName,
       content: {
+        ca,
+        cert: certificate,
         csr,
         pvt: privateKey,
-        cert: certificate,
-        ca,
       },
+      name: certName,
+      webspace: domainName,
     },
   });
 
@@ -234,8 +232,8 @@ export async function activateMailForSite(siteId: number) {
   };
 
   const response = await requestPleskApi<{ status: string }>({
-    operator: "mail",
     operation: "enable",
+    operator: "mail",
     params: payload,
   });
 
@@ -250,14 +248,14 @@ export async function createMailAccount(
 ): Promise<{ id: number }> {
   const payload: CreateMailPayload = {
     filter: {
-      "site-id": siteId,
       mailname: mailAccountData,
+      "site-id": siteId,
     },
   };
 
   const response = await requestPleskApi<{ mailname: { id: number } }>({
-    operator: "mail",
     operation: "create",
+    operator: "mail",
     params: payload,
   });
 
@@ -270,8 +268,8 @@ export async function createMailAccount(
 
 export async function deleteMailAccount(mailNameId: number): Promise<void> {
   await requestPleskApi<void>({
-    operator: "mail",
     operation: "remove_mail_name",
+    operator: "mail",
     params: {
       filter: { mn_id: mailNameId },
     },
@@ -284,16 +282,16 @@ export async function createSubscription(params: AddWebspaceParams) {
     id: number;
     guid: string;
   }>({
-    operator: "webspace",
     operation: "add",
+    operator: "webspace",
     params,
   });
 }
 
 export async function createDomain(domainName: string) {
   return await requestPleskApi({
-    operator: "site",
     operation: "add",
+    operator: "site",
     params: {
       gen_setup: {
         name: domainName,
@@ -305,8 +303,8 @@ export async function createDomain(domainName: string) {
 
 export async function deleteDomain(domainName: string) {
   return await requestPleskApi({
-    operator: "site",
     operation: "del",
+    operator: "site",
     params: {
       filter: {
         name: domainName,
@@ -317,17 +315,17 @@ export async function deleteDomain(domainName: string) {
 
 export async function getDomain(domainName: string) {
   return await requestPleskApi<{ id: number }>({
-    operator: "site",
     operation: "get",
+    operator: "site",
     params: {
-      filter: {
-        name: domainName,
-      },
       dataset: {
+        disk_usage: {},
         gen_info: {},
         hosting: {},
-        disk_usage: {},
         performance: {},
+      },
+      filter: {
+        name: domainName,
       },
     },
   });
@@ -335,8 +333,8 @@ export async function getDomain(domainName: string) {
 
 export async function getDnsRecords(siteId: number) {
   return await requestPleskApi<GetDnsRecordsResult[]>({
-    operator: "dns",
     operation: "get_rec",
+    operator: "dns",
     params: {
       filter: {
         "site-id": siteId,
@@ -347,20 +345,20 @@ export async function getDnsRecords(siteId: number) {
 
 export async function getSubscription(domainName: string) {
   return await requestPleskApi<GetSubscriptionResult>({
-    operator: "webspace",
     operation: "get",
+    operator: "webspace",
     params: {
-      filter: {
-        name: domainName,
-      },
       dataset: {
+        disk_usage: {},
         gen_info: {},
         hosting: {},
-        stat: {},
-        disk_usage: {},
         performance: {},
-        subscriptions: {},
         "resource-usage": {},
+        stat: {},
+        subscriptions: {},
+      },
+      filter: {
+        name: domainName,
       },
     },
   });
@@ -368,8 +366,8 @@ export async function getSubscription(domainName: string) {
 
 export async function deleteSubscription(domainName: string) {
   return await requestPleskApi({
-    operator: "webspace",
     operation: "del",
+    operator: "webspace",
     params: {
       filter: {
         name: domainName,
@@ -386,10 +384,10 @@ export async function installCertificateHttp(domainName: string) {
     const certName = `${domainName}-${Date.now()}`;
 
     await createCertificate({
-      name: certName,
-      certificate: certificateData.certificate,
-      privateKey: certificateData.privateKey,
       ca: certificateData.ca,
+      certificate: certificateData.certificate,
+      name: certName,
+      privateKey: certificateData.privateKey,
     });
 
     await setSiteCertificate(domainName, certName);
@@ -411,24 +409,24 @@ export async function createCertificate(params: {
   ca?: string;
 }) {
   return await requestPleskApi({
-    operator: "certificate",
     operation: "install",
+    operator: "certificate",
     params: {
-      name: params.name,
       content: {
+        ca: params.ca || "",
+        cert: params.certificate,
         csr: "",
         pvt: params.privateKey,
-        cert: params.certificate,
-        ca: params.ca || "",
       },
+      name: params.name,
     },
   });
 }
 
 export async function deleteFtpUser(ftpLogin: string) {
   return requestPleskApi({
-    operator: "ftp-user",
     operation: "del",
+    operator: "ftp-user",
     params: {
       filter: {
         name: ftpLogin,

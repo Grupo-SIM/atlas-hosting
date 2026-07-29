@@ -70,9 +70,9 @@
      compensate for scrollbar removal. We override ALL of that so the scrollbar stays visible
      and no layout shift occurs. */
   html body[data-scroll-locked] {
-    overflow: hidden !important;
     padding-right: 0 !important;
     margin-right: 0 !important;
+    overflow: hidden !important;
   }
 
   html body .right-scroll-bar-position {
@@ -83,35 +83,35 @@
     margin-right: 0 !important;
   }
 
-  button, 
+  button,
   [role="button"] {
     cursor: pointer;
   }
 }
 
 .loader {
+  box-sizing: border-box;
+  display: inline-block;
   width: 48px;
   height: 48px;
-  border-radius: 50%;
-  display: inline-block;
-  @apply border-t-accent border-t-[4px] border-solid;
   border-right: 4px solid transparent;
-  box-sizing: border-box;
+  border-radius: 50%;
   animation: rotation 1s linear infinite;
+  @apply border-t-accent border-t-[4px] border-solid;
 }
 
 .loader::after {
-  content: "";
-  box-sizing: border-box;
   position: absolute;
-  left: 0;
   top: 0;
+  left: 0;
+  box-sizing: border-box;
   width: 48px;
   height: 48px;
-  border-radius: 50%;
-  @apply border-l-primary border-l-[4px] border-solid;
+  content: "";
   border-bottom: 4px solid transparent;
+  border-radius: 50%;
   animation: rotation 0.5s linear infinite reverse;
+  @apply border-l-primary border-l-[4px] border-solid;
 }
 
 @keyframes rotation {
@@ -126,81 +126,93 @@
 
 /* Grid pattern backgrounds */
 .bg-grid-white\/\[0\.02\] {
-  @apply opacity-70 dark:opacity-40;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.02) 1px,
-      transparent 1px);
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.02) 1px,
+    transparent 1px
+  );
   background-size: 16px 16px;
+  @apply opacity-70 dark:opacity-40;
 }
 
 .bg-grid-white\/\[0\.05\] {
-  @apply opacity-70 dark:opacity-40;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px,
-      transparent 1px);
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.05) 1px,
+    transparent 1px
+  );
   background-size: 16px 16px;
+  @apply opacity-70 dark:opacity-40;
 }
 
 /* Pattern backgrounds for QuickAction cards */
 .bg-dots-pattern {
-  @apply text-foreground/20 dark:text-foreground/40;
   background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
   background-size: 20px 20px;
+  @apply text-foreground/20 dark:text-foreground/40;
 }
 
 .bg-grid-pattern {
-  @apply text-foreground/20 dark:text-foreground/15;
-  background-image: linear-gradient(currentColor 1px, transparent 1px),
+  background-image:
+    linear-gradient(currentColor 1px, transparent 1px),
     linear-gradient(90deg, currentColor 1px, transparent 1px);
   background-size: 20px 20px;
+  @apply text-foreground/20 dark:text-foreground/15;
 }
 
 .bg-waves-pattern {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    currentColor 10px,
+    currentColor 11px
+  );
   @apply text-foreground/50 dark:text-foreground/15;
-  background-image: repeating-linear-gradient(45deg,
-      transparent,
-      transparent 10px,
-      currentColor 10px,
-      currentColor 11px);
 }
 
 /* Custom animated button for landing page */
 .custom-animated-button {
+  position: relative;
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
   padding: 0.75rem 1.5rem;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-decoration: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
-  font-weight: bold;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  cursor: pointer;
-  color: #ffffff;
   transition: all 300ms ease;
-  font-size: 14px;
-  position: relative;
-  overflow: hidden;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .custom-animated-button:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(34, 197, 94, 0.5);
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  transform: translateY(-2px);
 }
 
 .custom-animated-button::before {
-  content: "";
   position: absolute;
-  left: -100%;
   top: 0;
+  left: -100%;
+  z-index: -1;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.2), transparent);
+  content: "";
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(34, 197, 94, 0.2),
+    transparent
+  );
   transform: skewX(-20deg);
-  z-index: -1;
   transition: left 500ms ease;
 }
 
@@ -210,20 +222,20 @@
 
 /* CTA button style for "Comece agora" */
 .cta {
-  border: none;
-  background: none;
-  cursor: pointer;
-  text-decoration: none;
   display: inline-flex;
   align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
 }
 
 .cta span {
-  padding-bottom: 7px;
-  letter-spacing: 4px;
-  font-size: 14px;
   padding-right: 15px;
+  padding-bottom: 7px;
+  font-size: 14px;
   text-transform: uppercase;
+  letter-spacing: 4px;
 }
 
 .cta svg {
@@ -241,19 +253,19 @@
 
 .hover-underline-animation {
   position: relative;
-  color: #ffffff;
   padding-bottom: 20px;
+  color: #ffffff;
 }
 
 .hover-underline-animation:after {
-  content: "";
   position: absolute;
-  width: 100%;
-  transform: scaleX(0);
-  height: 2px;
   bottom: 0;
   left: 0;
+  width: 100%;
+  height: 2px;
+  content: "";
   background-color: #22c55e;
+  transform: scaleX(0);
   transform-origin: bottom right;
   transition: transform 0.25s ease-out;
 }
@@ -266,10 +278,10 @@
 /* Glass morphism effect for statistics cards */
 .statistics-card {
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
 }
 
 .statistics-card:hover {

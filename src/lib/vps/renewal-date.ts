@@ -12,7 +12,10 @@ export const RENEWAL_LEAD_DAYS = 2;
  * compra menos {@link RENEWAL_LEAD_DAYS}. A cobrança inicial continua sendo no
  * ato da compra — só o ciclo seguinte é antecipado.
  */
-export function firstRenewalDate(purchasedAt: Date, intervalMonths: number): Date {
+export function firstRenewalDate(
+  purchasedAt: Date,
+  intervalMonths: number
+): Date {
   return subDays(addMonths(purchasedAt, intervalMonths), RENEWAL_LEAD_DAYS);
 }
 
@@ -20,6 +23,9 @@ export function firstRenewalDate(purchasedAt: Date, intervalMonths: number): Dat
  * Data da renovação seguinte. Ancorada na renovação atual (que já carrega o
  * adiantamento), então o intervalo em relação à Contabo se mantém a cada ciclo.
  */
-export function nextRenewalDate(currentChargeDate: Date, intervalMonths: number): Date {
+export function nextRenewalDate(
+  currentChargeDate: Date,
+  intervalMonths: number
+): Date {
   return addMonths(currentChargeDate, intervalMonths);
 }

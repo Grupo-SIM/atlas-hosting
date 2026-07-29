@@ -1,8 +1,8 @@
 // src/app/(authenticated)/(dashboard)/sites/new/components/SubmitButton.tsx
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { CgSpinner } from "react-icons/cg";
+import { Button } from "@/components/ui/button";
 
 interface SubmitButtonProps {
   domain: string;
@@ -24,7 +24,7 @@ export function SubmitButton({
   const canSubmit = domain && adminUsername && adminPassword && siteName;
 
   return (
-    <Button type="submit" disabled={isPending || !canSubmit} className="w-full">
+    <Button className="w-full" disabled={isPending || !canSubmit} type="submit">
       {isPending && <CgSpinner className="mr-2 h-4 w-4 animate-spin" />}
       {buttonLabel}
     </Button>

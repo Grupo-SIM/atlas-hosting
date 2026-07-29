@@ -1,8 +1,8 @@
+import { desc, eq, isNull, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { pgUser } from "@/lib/db/schema/tables/user";
 import { pgAffiliateCommission } from "@/lib/db/schema/tables/affiliate";
-import { isNull, eq, and, desc, sql } from "drizzle-orm";
+import { pgUser } from "@/lib/db/schema/tables/user";
 
 function authError() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -10,12 +10,20 @@ function authError() {
 
 export async function GET(request: Request) {
   const token = request.headers.get("x-internal-token");
-  const expected = process.env.API_MACHINE_INTERNAL_TOKEN ?? process.env.INTERNAL_SERVICE_TOKEN;
+  const expected =
+    process.env.API_MACHINE_INTERNAL_TOKEN ??
+    process.env.INTERNAL_SERVICE_TOKEN;
   if (!expected || token !== expected) return authError();
 
   const { searchParams } = new URL(request.url);
-  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
-  const pageSize = Math.min(Math.max(1, parseInt(searchParams.get("pageSize") ?? "20")), 100);
+  const page = Math.max(
+    1,
+    Number.parseInt(searchParams.get("page") ?? "1", 10)
+  );
+  const pageSize = Math.min(
+    Math.max(1, Number.parseInt(searchParams.get("pageSize") ?? "20", 10)),
+    100
+  );
   const skip = (page - 1) * pageSize;
 
   const [countResult, users] = await Promise.all([
@@ -25,20 +33,26 @@ export async function GET(request: Request) {
       .where(isNull(pgUser.deletedAt)),
     db
       .select({
-        id: pgUser.id,
-        name: pgUser.name,
-        email: pgUser.email,
+        affiliateBalance: sql<number>`COALESCE(SUM(CASE WHEN ${pgAffiliateCommission.status} = 'available' THEN ${pgAffiliateCommission.commissionAmount} ELSE 0 END), 0)`,
         cpf: pgUser.billingDocument,
         createdAt: pgUser.createdAt,
-        affiliateBalance: sql<number>`COALESCE(SUM(CASE WHEN ${pgAffiliateCommission.status} = 'available' THEN ${pgAffiliateCommission.commissionAmount} ELSE 0 END), 0)`,
+        email: pgUser.email,
+        id: pgUser.id,
+        name: pgUser.name,
       })
       .from(pgUser)
       .leftJoin(
         pgAffiliateCommission,
-        eq(pgAffiliateCommission.affiliateUserId, pgUser.id),
+        eq(pgAffiliateCommission.affiliateUserId, pgUser.id)
       )
       .where(isNull(pgUser.deletedAt))
-      .groupBy(pgUser.id, pgUser.name, pgUser.email, pgUser.billingDocument, pgUser.createdAt)
+      .groupBy(
+        pgUser.id,
+        pgUser.name,
+        pgUser.email,
+        pgUser.billingDocument,
+        pgUser.createdAt
+      )
       .orderBy(desc(pgUser.createdAt))
       .limit(pageSize)
       .offset(skip),
@@ -47,16 +61,16 @@ export async function GET(request: Request) {
   const total = Number(countResult[0]?.count ?? 0);
 
   return NextResponse.json({
-    data: users.map((u) => ({
-      name: u.name,
-      email: u.email,
-      cpf: u.cpf ?? "",
+    data: users.map(u => ({
       balance: Number(u.affiliateBalance),
-      lockedBalance: 0,
+      cpf: u.cpf ?? "",
       createdAt: u.createdAt,
+      email: u.email,
+      lockedBalance: 0,
+      name: u.name,
     })),
-    total,
     page,
     pageSize,
+    total,
   });
 }

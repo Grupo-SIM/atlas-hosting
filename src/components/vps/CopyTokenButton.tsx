@@ -1,7 +1,6 @@
 "use client";
 
 import { toast } from "sonner";
-import { Copy } from "lucide-react";
 
 interface CopyTokenButtonProps {
   token: string;
@@ -14,9 +13,9 @@ export default function CopyTokenButton({ token }: CopyTokenButtonProps) {
   };
 
   return (
-    <button 
+    <button
+      className="max-w-[100px] cursor-pointer truncate rounded bg-muted px-1 text-left transition-colors hover:bg-muted-foreground/20"
       onClick={handleCopy}
-      className="bg-muted hover:bg-muted-foreground/20 px-1 rounded truncate max-w-[100px] transition-colors cursor-pointer text-left"
       title="Clique para copiar o token completo"
     >
       {token}

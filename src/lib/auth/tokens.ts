@@ -1,12 +1,12 @@
 import { randomBytes } from "node:crypto";
+import { and, eq, gt, isNotNull, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { 
-  pgPasswordResetToken, 
-  pgEmailVerificationToken,
+import {
+  type EmailVerificationToken,
   type PasswordResetToken,
-  type EmailVerificationToken 
+  pgEmailVerificationToken,
+  pgPasswordResetToken,
 } from "@/lib/db/schema";
-import { eq, and, gt, lt, isNotNull } from "drizzle-orm";
 
 /**
  * Generate a secure random token
@@ -25,7 +25,9 @@ export function generateVerificationCode(): string {
 /**
  * Password Reset Token Functions
  */
-export async function createPasswordResetToken(userId: string): Promise<PasswordResetToken> {
+export async function createPasswordResetToken(
+  userId: string
+): Promise<PasswordResetToken> {
   // Clean up any existing tokens for this user
   await db
     .delete(pgPasswordResetToken)
@@ -37,17 +39,19 @@ export async function createPasswordResetToken(userId: string): Promise<Password
   const [resetToken] = await db
     .insert(pgPasswordResetToken)
     .values({
-      userId,
-      token,
       expiresAt,
+      token,
       used: false,
+      userId,
     })
     .returning();
 
   return resetToken;
 }
 
-export async function validatePasswordResetToken(token: string): Promise<PasswordResetToken | null> {
+export async function validatePasswordResetToken(
+  token: string
+): Promise<PasswordResetToken | null> {
   const [resetToken] = await db
     .select()
     .from(pgPasswordResetToken)
@@ -63,7 +67,9 @@ export async function validatePasswordResetToken(token: string): Promise<Passwor
   return resetToken || null;
 }
 
-export async function markPasswordResetTokenAsUsed(token: string): Promise<void> {
+export async function markPasswordResetTokenAsUsed(
+  token: string
+): Promise<void> {
   await db
     .update(pgPasswordResetToken)
     .set({ used: true })
@@ -73,7 +79,10 @@ export async function markPasswordResetTokenAsUsed(token: string): Promise<void>
 /**
  * Email Verification Token Functions
  */
-export async function createEmailVerificationToken(userId: string, email: string): Promise<EmailVerificationToken> {
+export async function createEmailVerificationToken(
+  userId: string,
+  email: string
+): Promise<EmailVerificationToken> {
   // Clean up any existing tokens for this user and email
   await db
     .delete(pgEmailVerificationToken)
@@ -91,19 +100,21 @@ export async function createEmailVerificationToken(userId: string, email: string
   const [verificationToken] = await db
     .insert(pgEmailVerificationToken)
     .values({
-      userId,
+      code, // Always generate code for new tokens
       email,
-      token,
-      code: code, // Always generate code for new tokens
       expiresAt,
+      token,
       used: false,
+      userId,
     })
     .returning();
 
   return verificationToken;
 }
 
-export async function validateEmailVerificationToken(token: string): Promise<EmailVerificationToken | null> {
+export async function validateEmailVerificationToken(
+  token: string
+): Promise<EmailVerificationToken | null> {
   const [verificationToken] = await db
     .select()
     .from(pgEmailVerificationToken)
@@ -122,7 +133,10 @@ export async function validateEmailVerificationToken(token: string): Promise<Ema
 /**
  * Validate email verification code (5 digits) with email
  */
-export async function validateEmailVerificationCode(code: string, email: string): Promise<EmailVerificationToken | null> {
+export async function validateEmailVerificationCode(
+  code: string,
+  email: string
+): Promise<EmailVerificationToken | null> {
   const [verificationToken] = await db
     .select()
     .from(pgEmailVerificationToken)
@@ -140,7 +154,9 @@ export async function validateEmailVerificationCode(code: string, email: string)
   return verificationToken || null;
 }
 
-export async function markEmailVerificationTokenAsUsed(token: string): Promise<void> {
+export async function markEmailVerificationTokenAsUsed(
+  token: string
+): Promise<void> {
   await db
     .update(pgEmailVerificationToken)
     .set({ used: true })
@@ -151,7 +167,10 @@ export async function markEmailVerificationTokenAsUsed(token: string): Promise<v
  * Change Email Token Functions
  * These use the same table as email verification but with different logic
  */
-export async function createChangeEmailToken(userId: string, newEmail: string): Promise<EmailVerificationToken> {
+export async function createChangeEmailToken(
+  userId: string,
+  newEmail: string
+): Promise<EmailVerificationToken> {
   // Clean up any existing change email tokens for this user
   await db
     .delete(pgEmailVerificationToken)
@@ -168,18 +187,21 @@ export async function createChangeEmailToken(userId: string, newEmail: string): 
   const [changeEmailToken] = await db
     .insert(pgEmailVerificationToken)
     .values({
-      userId,
       email: newEmail, // This is the NEW email that needs to be verified
-      token,
       expiresAt,
+      token,
       used: false,
+      userId,
     })
     .returning();
 
   return changeEmailToken;
 }
 
-export async function validateChangeEmailToken(token: string, newEmail: string): Promise<EmailVerificationToken | null> {
+export async function validateChangeEmailToken(
+  token: string,
+  newEmail: string
+): Promise<EmailVerificationToken | null> {
   const [changeEmailToken] = await db
     .select()
     .from(pgEmailVerificationToken)
@@ -201,7 +223,7 @@ export async function validateChangeEmailToken(token: string, newEmail: string):
  */
 export async function cleanupExpiredTokens(): Promise<void> {
   const now = new Date();
-  
+
   // Clean up expired password reset tokens
   await db
     .delete(pgPasswordResetToken)
@@ -211,6 +233,6 @@ export async function cleanupExpiredTokens(): Promise<void> {
   await db
     .delete(pgEmailVerificationToken)
     .where(lt(pgEmailVerificationToken.expiresAt, now));
-    
-  console.log('Expired tokens cleaned up successfully');
+
+  console.log("Expired tokens cleaned up successfully");
 }

@@ -1,6 +1,5 @@
 import {
   boolean,
-  date,
   doublePrecision,
   integer,
   pgTable,
@@ -10,33 +9,33 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const pgDomainPricingCache = pgTable("domain_pricing_cache", {
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   id: uuid("id").primaryKey().defaultRandom(),
-  tld: text("tld").unique().notNull(),
+  maxRegisterYears: integer("max_register_years"),
+  minRegisterYears: integer("min_register_years"),
   price: doublePrecision("price"),
   renew: doublePrecision("renew"),
+  tld: text("tld").unique().notNull(),
   transfer: doublePrecision("transfer"),
-  minRegisterYears: integer("min_register_years"),
-  maxRegisterYears: integer("max_register_years"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 export const ipLocationCache = pgTable("ip_location_cache", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ip: text("ip").unique().notNull(),
+  as: text("as").notNull(),
+  asn: text("asn").notNull(),
+  cityName: text("city_name").notNull(),
   countryCode: text("country_code").notNull(),
   countryName: text("country_name").notNull(),
-  regionName: text("region_name").notNull(),
-  cityName: text("city_name").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  id: uuid("id").primaryKey().defaultRandom(),
+  ip: text("ip").unique().notNull(),
+  isProxy: boolean("is_proxy").notNull(),
   latitude: doublePrecision("latitude").notNull(),
   longitude: doublePrecision("longitude").notNull(),
-  zipCode: text("zip_code").notNull(),
+  regionName: text("region_name").notNull(),
   timeZone: text("time_zone").notNull(),
-  asn: text("asn").notNull(),
-  as: text("as").notNull(),
-  isProxy: boolean("is_proxy").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  zipCode: text("zip_code").notNull(),
 });
 
 export type DomainPricing = typeof pgDomainPricingCache.$inferSelect;

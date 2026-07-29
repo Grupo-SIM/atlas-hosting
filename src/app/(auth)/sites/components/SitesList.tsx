@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  startTransition,
+  useActionState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { deleteWordPressInstances } from "@/app/actions";
 import {
   Card,
@@ -9,17 +17,9 @@ import {
 } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/hooks/use-toast";
-import {
-  startTransition,
-  useActionState,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import type { ParsedWordPressInstance } from "@/lib/server/utils";
 import { BulkActionButtons } from "./BulkActionsButton";
 import { SiteCard } from "./SiteCard";
-import type { ParsedWordPressInstance } from "@/lib/server/utils";
 
 export interface SitesListProps {
   readyInstances: ParsedWordPressInstance[];
@@ -39,31 +39,31 @@ export function SitesList({
   const [state, doDelete, isPending] = useActionState(
     deleteWordPressInstances,
     {
-      status: "idle",
       message: "",
+      status: "idle",
     }
   );
 
   useEffect(() => {
     if (state.status === "success") {
-      setSelectedInstances((prevInstances) => {
-        setReadyInstances((prev) =>
-          prev.filter((i) => !prevInstances.includes(i.id))
+      setSelectedInstances(prevInstances => {
+        setReadyInstances(prev =>
+          prev.filter(i => !prevInstances.includes(i.id))
         );
-        setProcessingInstances((prev) =>
-          prev.filter((i) => !prevInstances.includes(i.id))
+        setProcessingInstances(prev =>
+          prev.filter(i => !prevInstances.includes(i.id))
         );
         return [];
       });
       setIsBulkMode(false);
       toast({
-        title: "Sites excluídos",
         description: state.message,
+        title: "Sites excluídos",
       });
     } else if (state.status === "error") {
       toast({
-        title: "Erro ao excluir sites",
         description: state.message,
+        title: "Erro ao excluir sites",
         variant: "destructive",
       });
     }
@@ -74,11 +74,11 @@ export function SitesList({
       return;
     }
     const domains = processingInstances
-      .map((instance) => instance.domain)
+      .map(instance => instance.domain)
       .join(",");
     const es = new EventSource(`/api/check-dns?domains=${domains}`);
 
-    es.onmessage = (event) => {
+    es.onmessage = event => {
       const data = JSON.parse(event.data);
       const newlyReady: (ParsedWordPressInstance & { ready: boolean })[] = [];
       const stillProcessing: ParsedWordPressInstance[] = [];
@@ -93,7 +93,7 @@ export function SitesList({
       }
 
       if (newlyReady.length > 0) {
-        setReadyInstances((prev) => [...prev, ...newlyReady]);
+        setReadyInstances(prev => [...prev, ...newlyReady]);
         setProcessingInstances(stillProcessing);
       }
     };
@@ -125,25 +125,25 @@ export function SitesList({
   }, [doDelete, selectedInstances]);
 
   const toggleInstanceSelection = useCallback((instanceId: number) => {
-    setSelectedInstances((prev) =>
+    setSelectedInstances(prev =>
       prev.includes(instanceId)
-        ? prev.filter((id) => id !== instanceId)
+        ? prev.filter(id => id !== instanceId)
         : [...prev, instanceId]
     );
   }, []);
 
   const toggleBulkMode = useCallback(() => {
-    setIsBulkMode((prev) => !prev);
+    setIsBulkMode(prev => !prev);
     setSelectedInstances([]);
   }, []);
 
   const bulkActionButtonsProps = useMemo(
     () => ({
       isBulkMode,
-      selectedCount: selectedInstances.length,
       isPending,
-      onToggleBulkMode: toggleBulkMode,
       onBulkDelete: handleBulkDelete,
+      onToggleBulkMode: toggleBulkMode,
+      selectedCount: selectedInstances.length,
     }),
     [
       isBulkMode,
@@ -157,12 +157,12 @@ export function SitesList({
   const siteCardProps = useCallback(
     (instance: ParsedWordPressInstance, isLoading: boolean) => ({
       instance,
-      isLoading,
       isBulkMode,
+      isLoading,
       isPending,
-      selectedInstances,
-      onToggleSelection: toggleInstanceSelection,
       onDelete: handleDelete,
+      onToggleSelection: toggleInstanceSelection,
+      selectedInstances,
     }),
     [
       isBulkMode,
@@ -192,11 +192,11 @@ export function SitesList({
       {readyInstances.length > 0 && (
         <div>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Sites Prontos</h2>
+            <h2 className="font-semibold text-lg">Sites Prontos</h2>
             <BulkActionButtons {...bulkActionButtonsProps} />
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {readyInstances.map((instance) => (
+            {readyInstances.map(instance => (
               <SiteCard key={instance.id} {...siteCardProps(instance, false)} />
             ))}
           </div>
@@ -206,11 +206,11 @@ export function SitesList({
       {processingInstances.length > 0 && (
         <div>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Sites em Processamento</h2>
+            <h2 className="font-semibold text-lg">Sites em Processamento</h2>
             <BulkActionButtons {...bulkActionButtonsProps} />
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {processingInstances.map((instance) => (
+            {processingInstances.map(instance => (
               <SiteCard key={instance.id} {...siteCardProps(instance, true)} />
             ))}
           </div>

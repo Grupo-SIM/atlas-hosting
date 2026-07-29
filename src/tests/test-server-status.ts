@@ -6,81 +6,81 @@
  */
 
 import type {
-  WpSiteList,
   WpPluginList,
+  WpSiteList,
   WpThemeList,
 } from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
 
 // Mock data structures for testing
 const mockWpSite: WpSiteList = {
+  archived: "0",
   blogId: "1",
-  url: "https://example.com",
-  lastUpdated: "2025-01-01",
-  registered: "2024-01-01",
-  siteId: "123",
+  deleted: "0",
   domain: "example.com",
+  langId: "1",
+  lastUpdated: "2025-01-01",
+  mature: "0",
   path: "/",
   public: "1",
-  archived: "0",
-  mature: "0",
+  registered: "2024-01-01",
+  siteId: "123",
   spam: "0",
-  deleted: "0",
-  langId: "1",
+  url: "https://example.com",
 };
 
 const mockPlugins: WpPluginList[] = [
   {
-    name: "akismet",
-    status: "active",
-    update: "available",
-    version: "5.0",
-    updateVersion: "5.1",
+    author: "Automattic",
     autoUpdate: "off",
-    updatePackage: "",
-    updateId: "1",
-    title: "Akismet Anti-Spam",
     description: "Anti-spam plugin",
     file: "akismet/akismet.php",
-    author: "Automattic",
-    testedUpTo: "6.4",
+    name: "akismet",
     requires: "5.8",
     requiresPhp: "7.4",
-    wporgStatus: "active",
+    status: "active",
+    testedUpTo: "6.4",
+    title: "Akismet Anti-Spam",
+    update: "available",
+    updateId: "1",
+    updatePackage: "",
+    updateVersion: "5.1",
+    version: "5.0",
     wporgLastUpdated: "2024-12-01",
+    wporgStatus: "active",
   },
   {
-    name: "hello-dolly",
-    status: "inactive",
-    update: "none",
-    version: "1.7.2",
-    updateVersion: "",
+    author: "Matt Mullenweg",
     autoUpdate: "off",
-    updatePackage: "",
-    updateId: "",
-    title: "Hello Dolly",
     description: "Sample plugin",
     file: "hello.php",
-    author: "Matt Mullenweg",
-    testedUpTo: "6.4",
+    name: "hello-dolly",
     requires: "2.5",
     requiresPhp: "5.2.4",
-    wporgStatus: "active",
+    status: "inactive",
+    testedUpTo: "6.4",
+    title: "Hello Dolly",
+    update: "none",
+    updateId: "",
+    updatePackage: "",
+    updateVersion: "",
+    version: "1.7.2",
     wporgLastUpdated: "2023-01-01",
+    wporgStatus: "active",
   },
 ];
 
 const mockThemes: WpThemeList[] = [
   {
+    autoUpdate: "off",
+    description: "Default theme",
     name: "twentytwentyfour",
     status: "active",
-    update: "none",
-    version: "1.0",
-    updateVersion: "",
-    autoUpdate: "off",
-    updatePackage: "",
-    updateId: "",
     title: "Twenty Twenty-Four",
-    description: "Default theme",
+    update: "none",
+    updateId: "",
+    updatePackage: "",
+    updateVersion: "",
+    version: "1.0",
   },
 ];
 
@@ -109,7 +109,7 @@ function getDomainParts(
 
 function calculateHealthScore(services: Array<{ status: string }>): number {
   const operationalCount = services.filter(
-    (s) => s.status === "operational"
+    s => s.status === "operational"
   ).length;
   const totalServices = services.length;
   return totalServices > 0
@@ -140,10 +140,10 @@ async function testServerStatusLogic() {
   // Test 2: WordPress data processing
   console.log("\n2️⃣ Testing WordPress data processing:");
   const pluginUpdates = mockPlugins.filter(
-    (plugin) => String(plugin.update) === "available"
+    plugin => String(plugin.update) === "available"
   ).length;
   const themeUpdates = mockThemes.filter(
-    (theme) => String(theme.update) === "available"
+    theme => String(theme.update) === "available"
   ).length;
 
   console.log(
@@ -168,10 +168,10 @@ async function testServerStatusLogic() {
   // Test 4: Service metrics
   console.log("\n4️⃣ Testing service metrics:");
   const mockMetrics = {
-    value: 85,
-    max: 100,
     label: "Health Score",
+    max: 100,
     trend: "stable" as const,
+    value: 85,
   };
   console.log(
     `   Metric: ${mockMetrics.label} = ${mockMetrics.value}/${mockMetrics.max} (${mockMetrics.trend})`
@@ -200,6 +200,6 @@ testServerStatusLogic()
   .then(() => {
     console.log("\n🎉 ServerStatus component logic validation complete!");
   })
-  .catch((error) => {
+  .catch(error => {
     console.error("❌ Test failed:", error);
   });

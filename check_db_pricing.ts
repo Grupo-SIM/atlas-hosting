@@ -1,6 +1,6 @@
+import { eq } from "drizzle-orm";
 import { db } from "./src/lib/db";
 import { pgDomainPricingCache } from "./src/lib/db/schema";
-import { eq } from "drizzle-orm";
 
 async function check() {
   const result = await db.query.pgDomainPricingCache.findFirst({

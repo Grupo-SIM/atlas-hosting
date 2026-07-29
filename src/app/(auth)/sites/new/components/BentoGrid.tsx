@@ -1,9 +1,8 @@
 "use client";
 
-import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
-import { Input } from "@/components/ui/input";
+import { ChevronsUpDown } from "lucide-react";
 import { useEffect, useState } from "react";
-import { TemplateData } from "../interface";
+import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -12,15 +11,16 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ChevronsUpDown } from "lucide-react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import type { User } from "@/lib/db/schema";
+import type { TemplateData } from "../interface";
 import { DeploymentForm } from "./DeploymentForm";
-import { User } from "@/lib/db/schema";
 
 const BentoGridComponent = ({
   templates,
@@ -38,16 +38,16 @@ const BentoGridComponent = ({
 
   useEffect(() => {
     setFilteredTemplates(
-      templates.filter((template) =>
-        template.name.toLowerCase().includes(search.toLowerCase()),
-      ),
+      templates.filter(template =>
+        template.name.toLowerCase().includes(search.toLowerCase())
+      )
     );
   }, [search, templates]);
 
   useEffect(() => {
     if (value) {
       setFilteredTemplates(
-        templates.filter((template) => template.tags.includes(value)),
+        templates.filter(template => template.tags.includes(value))
       );
     } else {
       setFilteredTemplates(templates);
@@ -56,22 +56,22 @@ const BentoGridComponent = ({
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row gap-2 mb-4">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row">
         <Input
+          className="w-full"
+          onChange={e => setSearch(e.target.value)}
           placeholder="Pesquise por um template..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full"
         />
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover onOpenChange={setOpen} open={open}>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
-              role="combobox"
               aria-expanded={open}
-              className="w-full sm:w-[200px] justify-between"
+              className="w-full justify-between sm:w-[200px]"
+              role="combobox"
+              variant="outline"
             >
-              {value ? tags.find((tag) => tag === value) : "Filtre por tag..."}
+              {value ? tags.find(tag => tag === value) : "Filtre por tag..."}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -80,14 +80,14 @@ const BentoGridComponent = ({
               <CommandInput placeholder="Search framework..." />
               <CommandEmpty>No framework found.</CommandEmpty>
               <CommandGroup>
-                {tags.map((tag) => (
+                {tags.map(tag => (
                   <CommandItem
                     key={tag}
-                    value={tag}
-                    onSelect={(currentValue) => {
+                    onSelect={currentValue => {
                       setValue(currentValue === value ? "" : currentValue);
                       setOpen(false);
                     }}
+                    value={tag}
                   >
                     {tag}
                   </CommandItem>
@@ -102,26 +102,26 @@ const BentoGridComponent = ({
           <Dialog key={i}>
             <DialogTrigger asChild>
               <BentoCard
-                name={template.name}
-                className=""
                 background={
                   <img
-                    src={`https://templates.dokploy.com/blueprints/${template.id}/${template.logo}`}
                     alt={template.name}
-                    className="absolute -right-20 -top-20 opacity-10"
+                    className="absolute -top-20 -right-20 opacity-10"
+                    src={`https://templates.dokploy.com/blueprints/${template.id}/${template.logo}`}
                   />
                 }
+                className=""
+                description={template.description}
                 Icon={() => (
                   <img
-                    src={`https://templates.dokploy.com/blueprints/${template.id}/${template.logo}`}
                     alt={template.name}
                     className="h-12 w-12"
+                    src={`https://templates.dokploy.com/blueprints/${template.id}/${template.logo}`}
                   />
                 )}
-                description={template.description}
-                version={template.version}
-                tags={template.tags}
                 links={template.links}
+                name={template.name}
+                tags={template.tags}
+                version={template.version}
               />
             </DialogTrigger>
             <DialogContent>

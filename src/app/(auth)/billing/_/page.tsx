@@ -1,21 +1,20 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { type Invoice, pgInvoice, pgPlan } from "@/lib/db/schema";
-import { toBrl } from "@/lib/utils";
 import clsx from "clsx";
 import { desc, eq } from "drizzle-orm";
 import { groupBy } from "lodash";
 import { CreditCard, FileText } from "lucide-react";
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getUser } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { type Invoice, pgInvoice } from "@/lib/db/schema";
+import { toBrl } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Minhas Faturas - Atlas Hosting",
   description: "Visualize e gerencie suas faturas.",
+  title: "Minhas Faturas - Atlas Hosting",
 };
 
 type InvoiceStatus = Invoice["status"];
@@ -68,14 +67,14 @@ export default async function BillingPage() {
   // Adjust field names (e.g., invoiceTable.user_id) if your schema differs.
   const _userInvoices = organizationId
     ? await db.query.pgInvoice.findMany({
-        where: eq(pgInvoice.orgId, organizationId),
         orderBy: [desc(pgInvoice.updatedAt)],
+        where: eq(pgInvoice.orgId, organizationId),
       })
     : [];
 
   const plans = groupBy(await db.query.pgPlan.findMany(), "id");
 
-  const userInvoices = _userInvoices.map((invoice) => {
+  const userInvoices = _userInvoices.map(invoice => {
     if (invoice.type === "domain") {
       return invoice;
     }
@@ -90,16 +89,16 @@ export default async function BillingPage() {
 
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="flex-grow container mx-auto py-8 px-4 md:px-6 w-full">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Minhas Faturas</h1>
+      <div className="container mx-auto w-full flex-grow px-4 py-8 md:px-6">
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="font-bold text-3xl">Minhas Faturas</h1>
         </div>
 
         {userInvoices.length === 0 ? (
           <Card className="mt-6">
-            <CardContent className="pt-6 flex flex-col items-center justify-center text-center min-h-[200px]">
-              <FileText size={48} className="text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">
+            <CardContent className="flex min-h-[200px] flex-col items-center justify-center pt-6 text-center">
+              <FileText className="mb-4 text-muted-foreground" size={48} />
+              <h3 className="mb-2 font-semibold text-xl">
                 Nenhuma fatura encontrada
               </h3>
               <p className="text-muted-foreground">
@@ -111,17 +110,17 @@ export default async function BillingPage() {
           </Card>
         ) : (
           <div className="space-y-6">
-            {userInvoices.map((invoice) => (
-              <Card key={invoice.id} className="overflow-hidden shadow-md">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 !py-4 !px-6 bg-muted/50 sm:items-center">
+            {userInvoices.map(invoice => (
+              <Card className="overflow-hidden shadow-md" key={invoice.id}>
+                <CardHeader className="!py-4 !px-6 flex flex-row items-start justify-between space-y-0 bg-muted/50 sm:items-center">
                   <div>
-                    <CardTitle className="text-xl font-medium">
+                    <CardTitle className="font-medium text-xl">
                       Fatura #{invoice.id.substring(0, 8).toUpperCase()}
                     </CardTitle>
                   </div>
                   <Badge
+                    className="mt-1 whitespace-nowrap text-sm sm:mt-0"
                     variant={getStatusVariant(invoice.status)}
-                    className="text-sm whitespace-nowrap mt-1 sm:mt-0"
                   >
                     {invoice.status === "pending" && "A pagar"}
                     {invoice.status === "paid" && "Pago"}
@@ -132,7 +131,7 @@ export default async function BillingPage() {
                 <CardContent className="pt-4">
                   <div
                     className={clsx([
-                      "grid gap-3 sm:grid-cols-2 text-sm items-center",
+                      "grid items-center gap-3 text-sm sm:grid-cols-2",
                       invoice.status === "pending"
                         ? "md:grid-cols-5"
                         : "md:grid-cols-4",

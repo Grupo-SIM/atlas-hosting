@@ -26,11 +26,11 @@ export function exportTableToPdf({
   }
 
   autoTable(doc, {
-    head: [columns],
     body: rows,
-    startY: subtitle ? 26 : 20,
-    styles: { fontSize: 8, cellPadding: 2 },
+    head: [columns],
     headStyles: { fillColor: [30, 41, 59] },
+    startY: subtitle ? 26 : 20,
+    styles: { cellPadding: 2, fontSize: 8 },
   });
 
   doc.save(filename);

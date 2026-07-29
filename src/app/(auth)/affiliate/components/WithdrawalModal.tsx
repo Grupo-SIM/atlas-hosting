@@ -1,18 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { requestWithdrawal } from "../actions";
 import { toBrl } from "@/lib/utils";
+import { requestWithdrawal } from "../actions";
 
 interface WithdrawalModalProps {
   open: boolean;
@@ -35,7 +35,7 @@ export function WithdrawalModal({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const parsedAmount = parseFloat(amount) || 0;
+  const parsedAmount = Number.parseFloat(amount) || 0;
   const netAmount = Math.max(0, parsedAmount - fee);
   const canSubmit =
     parsedAmount >= minWithdrawal &&
@@ -61,14 +61,14 @@ export function WithdrawalModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog onOpenChange={v => !v && onClose()} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Solicitar Saque</DialogTitle>
         </DialogHeader>
 
         {success ? (
-          <p className="text-center text-green-600 py-4">
+          <p className="py-4 text-center text-green-600">
             Solicitação enviada com sucesso!
           </p>
         ) : (
@@ -77,15 +77,15 @@ export function WithdrawalModal({
               <Label htmlFor="amount">Valor (R$)</Label>
               <Input
                 id="amount"
-                type="number"
-                min={minWithdrawal}
                 max={availableBalance}
-                step="0.01"
+                min={minWithdrawal}
+                onChange={e => setAmount(e.target.value)}
                 placeholder={`Mín. ${toBrl(minWithdrawal)}`}
+                step="0.01"
+                type="number"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Disponível: {toBrl(availableBalance)}
               </p>
             </div>
@@ -94,14 +94,14 @@ export function WithdrawalModal({
               <Label htmlFor="pixKey">Chave PIX</Label>
               <Input
                 id="pixKey"
+                onChange={e => setPixKey(e.target.value)}
                 placeholder="CPF, email, telefone ou chave aleatória"
                 value={pixKey}
-                onChange={(e) => setPixKey(e.target.value)}
               />
             </div>
 
             {parsedAmount > 0 && (
-              <div className="rounded-md bg-muted p-3 text-sm space-y-1">
+              <div className="space-y-1 rounded-md bg-muted p-3 text-sm">
                 <div className="flex justify-between">
                   <span>Valor bruto</span>
                   <span>{toBrl(parsedAmount)}</span>
@@ -110,23 +110,23 @@ export function WithdrawalModal({
                   <span>Taxa de saque</span>
                   <span>- {toBrl(fee)}</span>
                 </div>
-                <div className="flex justify-between font-medium border-t pt-1 mt-1">
+                <div className="mt-1 flex justify-between border-t pt-1 font-medium">
                   <span>Você receberá</span>
                   <span>{toBrl(netAmount)}</span>
                 </div>
               </div>
             )}
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-destructive text-sm">{error}</p>}
           </div>
         )}
 
         {!success && (
           <DialogFooter>
-            <Button variant="outline" onClick={onClose} disabled={loading}>
+            <Button disabled={loading} onClick={onClose} variant="outline">
               Cancelar
             </Button>
-            <Button onClick={handleSubmit} disabled={!canSubmit || loading}>
+            <Button disabled={!canSubmit || loading} onClick={handleSubmit}>
               {loading ? "Enviando..." : "Solicitar Saque"}
             </Button>
           </DialogFooter>

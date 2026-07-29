@@ -1,15 +1,11 @@
 "use client";
 
+import { Check, ChevronsUpDown, Loader2, Server } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Server, Plus, Loader2, Check, ChevronsUpDown } from "lucide-react";
+import { toast } from "sonner";
+import { registerVpsAction } from "@/app/vps-actions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -18,9 +14,13 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { registerVpsAction } from "@/app/vps-actions";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 interface User {
@@ -53,56 +53,61 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
       await registerVpsAction(userId, name, ip, "Ubuntu 22.04 LTS");
       toast.success("Servidor registrado com sucesso!");
       router.refresh(); // Atualiza a lista de servidores
-      
+
       // Limpar campos de texto
       (document.getElementById("vps-form") as HTMLFormElement)?.reset();
       setUserId("");
     } catch (error: any) {
-      toast.error("Erro ao registrar: " + error.message);
+      toast.error(`Erro ao registrar: ${error.message}`);
     } finally {
       setLoading(false);
     }
   }
 
-  const selectedUser = users.find((u) => u.id === userId);
+  const selectedUser = users.find(u => u.id === userId);
 
   return (
-    <form id="vps-form" action={handleSubmit} className="space-y-4">
+    <form action={handleSubmit} className="space-y-4" id="vps-form">
       <div className="space-y-2">
         <Label htmlFor="user-select">Usuário Destino</Label>
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover onOpenChange={setOpen} open={open}>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
-              role="combobox"
               aria-expanded={open}
-              className="w-full h-10 justify-between font-normal"
+              className="h-10 w-full justify-between font-normal"
               id="user-select"
+              role="combobox"
+              variant="outline"
             >
               {userId ? (
                 <span className="truncate">
                   {selectedUser?.name || "Sem Nome"} ({selectedUser?.email})
                 </span>
               ) : (
-                <span className="text-muted-foreground">Selecione um cliente...</span>
+                <span className="text-muted-foreground">
+                  Selecione um cliente...
+                </span>
               )}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <PopoverContent
+            align="start"
+            className="w-[var(--radix-popover-trigger-width)] p-0"
+          >
             <Command>
               <CommandInput placeholder="Buscar usuário..." />
               <CommandList>
                 <CommandEmpty>Nenhum usuário encontrado.</CommandEmpty>
                 <CommandGroup>
-                  {users.map((u) => (
+                  {users.map(u => (
                     <CommandItem
                       key={u.id}
-                      value={`${u.name} ${u.email} ${u.id}`}
                       onSelect={() => {
                         setUserId(u.id);
                         setOpen(false);
                       }}
+                      value={`${u.name} ${u.email} ${u.id}`}
                     >
                       <Check
                         className={cn(
@@ -112,7 +117,9 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
                       />
                       <div className="flex flex-col">
                         <span>{u.name || "Sem Nome"}</span>
-                        <span className="text-xs text-muted-foreground">{u.email}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {u.email}
+                        </span>
                       </div>
                     </CommandItem>
                   ))}
@@ -125,15 +132,27 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="name">Nome do Servidor</Label>
-        <Input name="name" id="name" placeholder="Ex: VPS Premium #01" required disabled={loading} />
+        <Input
+          disabled={loading}
+          id="name"
+          name="name"
+          placeholder="Ex: VPS Premium #01"
+          required
+        />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="ip">Endereço IP</Label>
-        <Input name="ip" id="ip" placeholder="0.0.0.0" required disabled={loading} />
+        <Input
+          disabled={loading}
+          id="ip"
+          name="ip"
+          placeholder="0.0.0.0"
+          required
+        />
       </div>
 
-      <Button type="submit" className="w-full gap-2" disabled={loading}>
+      <Button className="w-full gap-2" disabled={loading} type="submit">
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (

@@ -1,17 +1,20 @@
+import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  markEmailVerificationTokenAsUsed,
+  validateChangeEmailToken,
+} from "@/lib/auth/tokens";
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { validateChangeEmailToken, markEmailVerificationTokenAsUsed } from "@/lib/auth/tokens";
 import { sendNotificationEmail } from "@/lib/email/service";
-import { AppError } from "@/lib/errors";
 import { errorHandler } from "@/lib/error-handler";
+import { AppError } from "@/lib/errors";
 
 const verifyChangeEmailSchema = z.object({
-  token: z.string().min(1, "Token é obrigatório"),
   email: z.string().email("Email inválido"),
+  token: z.string().min(1, "Token é obrigatório"),
 });
 
 export async function POST(request: NextRequest) {
@@ -42,9 +45,9 @@ export async function POST(request: NextRequest) {
     // Update the user's email
     await db
       .update(pgUser)
-      .set({ 
-        email: email,
-        emailVerified: new Date() // Mark as verified since they verified the new email
+      .set({
+        email,
+        emailVerified: new Date(), // Mark as verified since they verified the new email
       })
       .where(eq(pgUser.id, user.id));
 
@@ -90,9 +93,9 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      valid: true,
-      email: email,
+      email,
       userId: changeEmailToken.userId,
+      valid: true,
     });
   } catch (error) {
     return errorHandler(error);

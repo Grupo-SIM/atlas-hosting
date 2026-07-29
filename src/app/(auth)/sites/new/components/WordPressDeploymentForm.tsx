@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,9 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
 import { createWordPressApplication } from "../../actions";
 
 export function WordPressDeploymentForm() {
@@ -30,22 +30,22 @@ export function WordPressDeploymentForm() {
     setIsSubmitting(true);
 
     const result = await createWordPressApplication({
-      siteTitle,
-      adminUsername,
-      adminPassword,
       adminEmail,
+      adminPassword,
+      adminUsername,
+      siteTitle,
     });
 
     if (result.success) {
       toast({
-        title: "Sucesso!",
         description: "Seu site WordPress foi criado com sucesso.",
+        title: "Sucesso!",
       });
       router.push("/sites");
     } else {
       toast({
-        title: "Erro!",
         description: result.error,
+        title: "Erro!",
         variant: "destructive",
       });
     }
@@ -68,36 +68,36 @@ export function WordPressDeploymentForm() {
               <Label htmlFor="site-title">Título do Site</Label>
               <Input
                 id="site-title"
+                onChange={e => setSiteTitle(e.target.value)}
                 placeholder="Meu Blog Incrível"
                 value={siteTitle}
-                onChange={(e) => setSiteTitle(e.target.value)}
               />
             </div>
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="admin-username">Usuário do Admin</Label>
               <Input
                 id="admin-username"
+                onChange={e => setAdminUsername(e.target.value)}
                 placeholder="admin"
                 value={adminUsername}
-                onChange={(e) => setAdminUsername(e.target.value)}
               />
             </div>
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="admin-password">Senha do Admin</Label>
               <Input
                 id="admin-password"
+                onChange={e => setAdminPassword(e.target.value)}
                 type="password"
                 value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
               />
             </div>
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="admin-email">Email do Admin</Label>
               <Input
                 id="admin-email"
+                onChange={e => setAdminEmail(e.target.value)}
                 placeholder="admin@example.com"
                 value={adminEmail}
-                onChange={(e) => setAdminEmail(e.target.value)}
               />
             </div>
           </div>
@@ -105,7 +105,10 @@ export function WordPressDeploymentForm() {
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button variant="outline">Cancelar</Button>
-        <Button onClick={() => document.querySelector('form')?.requestSubmit()} disabled={isSubmitting}>
+        <Button
+          disabled={isSubmitting}
+          onClick={() => document.querySelector("form")?.requestSubmit()}
+        >
           {isSubmitting ? "Criando..." : "Criar Site WordPress"}
         </Button>
       </CardFooter>

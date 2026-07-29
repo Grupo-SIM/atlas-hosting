@@ -17,24 +17,19 @@
  */
 
 import globalAxios, {
-  type AxiosResponse,
   type AxiosInstance,
   type AxiosRequestConfig,
+  type AxiosResponse,
 } from "axios";
-import type { Configuration } from "../configuration";
 // Some imports not used depending on template conditions
 // @ts-ignore
-import {
-  BASE_PATH,
-  COLLECTION_FORMATS,
-  type RequestArgs,
-  BaseAPI,
-  RequiredError,
-} from "../base";
-import { ErrorResponse } from "../models";
-import type { Extension } from "../models";
-import type { ExtensionInstallRequest } from "../models";
-import type { StatusResponse } from "../models";
+import { BASE_PATH, BaseAPI, type RequestArgs, RequiredError } from "../base";
+import type { Configuration } from "../configuration";
+import type {
+  Extension,
+  ExtensionInstallRequest,
+  StatusResponse,
+} from "../models";
 
 /**
  * ExtensionsApi - axios parameter creator
@@ -52,7 +47,7 @@ export const ExtensionsApiAxiosParamCreator = (
   extensionsGet: async (
     options: AxiosRequestConfig = {}
   ): Promise<RequestArgs> => {
-    const localVarPath = `/extensions`;
+    const localVarPath = "/extensions";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -68,7 +63,7 @@ export const ExtensionsApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -79,9 +74,9 @@ export const ExtensionsApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -93,8 +88,9 @@ export const ExtensionsApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -102,9 +98,9 @@ export const ExtensionsApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -125,7 +121,7 @@ export const ExtensionsApiAxiosParamCreator = (
         "Required parameter id was null or undefined when calling extensionsIdDelete."
       );
     }
-    const localVarPath = `/extensions/{id}`.replace(
+    const localVarPath = "/extensions/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -144,7 +140,7 @@ export const ExtensionsApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -155,9 +151,9 @@ export const ExtensionsApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -169,8 +165,9 @@ export const ExtensionsApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -178,9 +175,9 @@ export const ExtensionsApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -201,7 +198,7 @@ export const ExtensionsApiAxiosParamCreator = (
         "Required parameter id was null or undefined when calling extensionsIdDisablePut."
       );
     }
-    const localVarPath = `/extensions/{id}/disable`.replace(
+    const localVarPath = "/extensions/{id}/disable".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -220,7 +217,7 @@ export const ExtensionsApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -231,9 +228,9 @@ export const ExtensionsApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -245,8 +242,9 @@ export const ExtensionsApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -254,9 +252,9 @@ export const ExtensionsApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -277,7 +275,7 @@ export const ExtensionsApiAxiosParamCreator = (
         "Required parameter id was null or undefined when calling extensionsIdEnablePut."
       );
     }
-    const localVarPath = `/extensions/{id}/enable`.replace(
+    const localVarPath = "/extensions/{id}/enable".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -296,7 +294,7 @@ export const ExtensionsApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -307,9 +305,9 @@ export const ExtensionsApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -321,8 +319,9 @@ export const ExtensionsApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -330,9 +329,9 @@ export const ExtensionsApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -353,7 +352,7 @@ export const ExtensionsApiAxiosParamCreator = (
         "Required parameter id was null or undefined when calling extensionsIdGet."
       );
     }
-    const localVarPath = `/extensions/{id}`.replace(
+    const localVarPath = "/extensions/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -372,7 +371,7 @@ export const ExtensionsApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -383,9 +382,9 @@ export const ExtensionsApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -397,8 +396,9 @@ export const ExtensionsApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -406,9 +406,9 @@ export const ExtensionsApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -429,7 +429,7 @@ export const ExtensionsApiAxiosParamCreator = (
         "Required parameter body was null or undefined when calling extensionsPost."
       );
     }
-    const localVarPath = `/extensions`;
+    const localVarPath = "/extensions";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -445,7 +445,7 @@ export const ExtensionsApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -456,9 +456,9 @@ export const ExtensionsApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -472,8 +472,9 @@ export const ExtensionsApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -487,13 +488,12 @@ export const ExtensionsApiAxiosParamCreator = (
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
 });
-
 
 /**
  * ExtensionsApi - functional programming interface
@@ -512,7 +512,7 @@ export const ExtensionsApiFp = (configuration?: Configuration) => ({
     (
       axios?: AxiosInstance,
       basePath?: string
-    ) => Promise<AxiosResponse<Array<Extension>>>
+    ) => Promise<AxiosResponse<Extension[]>>
   > {
     const localVarAxiosArgs =
       await ExtensionsApiAxiosParamCreator(configuration).extensionsGet(
@@ -681,7 +681,6 @@ export const ExtensionsApiFp = (configuration?: Configuration) => ({
   },
 });
 
-
 /**
  * ExtensionsApi - factory interface
  * @export
@@ -699,10 +698,10 @@ export const ExtensionsApiFactory = (
    */
   async extensionsGet(
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<Extension>>> {
+  ): Promise<AxiosResponse<Extension[]>> {
     return ExtensionsApiFp(configuration)
       .extensionsGet(options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -717,7 +716,7 @@ export const ExtensionsApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return ExtensionsApiFp(configuration)
       .extensionsIdDelete(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -732,7 +731,7 @@ export const ExtensionsApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return ExtensionsApiFp(configuration)
       .extensionsIdDisablePut(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -747,7 +746,7 @@ export const ExtensionsApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return ExtensionsApiFp(configuration)
       .extensionsIdEnablePut(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -762,7 +761,7 @@ export const ExtensionsApiFactory = (
   ): Promise<AxiosResponse<Extension>> {
     return ExtensionsApiFp(configuration)
       .extensionsIdGet(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -777,10 +776,9 @@ export const ExtensionsApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return ExtensionsApiFp(configuration)
       .extensionsPost(body, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
 });
-
 
 /**
  * ExtensionsApi - object-oriented interface
@@ -798,10 +796,10 @@ export class ExtensionsApi extends BaseAPI {
    */
   public async extensionsGet(
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<Extension>>> {
+  ): Promise<AxiosResponse<Extension[]>> {
     return ExtensionsApiFp(this.configuration)
       .extensionsGet(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -817,7 +815,7 @@ export class ExtensionsApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return ExtensionsApiFp(this.configuration)
       .extensionsIdDelete(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -833,7 +831,7 @@ export class ExtensionsApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return ExtensionsApiFp(this.configuration)
       .extensionsIdDisablePut(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -849,7 +847,7 @@ export class ExtensionsApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return ExtensionsApiFp(this.configuration)
       .extensionsIdEnablePut(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -865,7 +863,7 @@ export class ExtensionsApi extends BaseAPI {
   ): Promise<AxiosResponse<Extension>> {
     return ExtensionsApiFp(this.configuration)
       .extensionsIdGet(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -881,6 +879,6 @@ export class ExtensionsApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return ExtensionsApiFp(this.configuration)
       .extensionsPost(body, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
 }

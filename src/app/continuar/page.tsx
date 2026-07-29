@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,8 +10,9 @@ import {
 } from "@/components/ui/card";
 
 export const metadata: Metadata = {
+  description:
+    "Faça login ou crie uma conta para concluir o registro do domínio.",
   title: "Continuar compra | Atlas Hosting",
-  description: "Faça login ou crie uma conta para concluir o registro do domínio.",
 };
 
 export const dynamic = "force-dynamic";
@@ -46,7 +47,9 @@ export default async function ContinuarPage({ searchParams }: PageProps) {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-16">
       <Card className="w-full max-w-md border-slate-200 bg-white text-slate-900 shadow-xl">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-slate-900">Continuar compra</CardTitle>
+          <CardTitle className="font-bold text-2xl text-slate-900">
+            Continuar compra
+          </CardTitle>
           <CardDescription className="text-base text-slate-500">
             Você já possui conta na Atlas Hosting?
           </CardDescription>
@@ -56,16 +59,22 @@ export default async function ContinuarPage({ searchParams }: PageProps) {
             asChild
             className="h-11 w-full bg-emerald-500 font-semibold text-white hover:bg-emerald-600"
           >
-            <Link href={`/login?redirect=${enc}`}>Sim — entrar com minha conta</Link>
+            <Link href={`/login?redirect=${enc}`}>
+              Sim — entrar com minha conta
+            </Link>
           </Button>
           <Button
             asChild
-            variant="outline"
             className="h-11 w-full border-slate-200 bg-transparent text-slate-600 hover:bg-slate-50"
+            variant="outline"
           >
             <Link href={`/signup?redirect=${enc}`}>Não — criar conta nova</Link>
           </Button>
-          <Button asChild variant="ghost" className="mt-1 text-slate-400 hover:text-slate-600">
+          <Button
+            asChild
+            className="mt-1 text-slate-400 hover:text-slate-600"
+            variant="ghost"
+          >
             <Link href="/domains/search">Cancelar e voltar à busca</Link>
           </Button>
         </CardContent>

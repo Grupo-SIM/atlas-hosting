@@ -53,8 +53,8 @@ export default class PleskWpToolkitApi {
   ) {
     try {
       const response = await this.api.cliIdCallPost("extension", {
-        params: ["--call", "wp-toolkit", ...this.parseCommand(command)],
         env,
+        params: ["--call", "wp-toolkit", ...this.parseCommand(command)],
       });
 
       return response.data;

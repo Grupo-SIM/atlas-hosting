@@ -1,13 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import {
-  VDS_PLANS,
-  getVdsMonthlyEuro,
-  isVdsPlanId,
-} from "./vds-catalog";
+import { getVdsMonthlyEuro, isVdsPlanId, VDS_PLANS } from "./vds-catalog";
 
 describe("Cloud VDS 24-month catalogue", () => {
   test("contains the five plans shown in the Contabo reference", () => {
-    expect(VDS_PLANS.map((plan) => plan.id)).toEqual([
+    expect(VDS_PLANS.map(plan => plan.id)).toEqual([
       "s",
       "m",
       "l",
@@ -36,11 +32,11 @@ describe("Cloud VDS 24-month catalogue", () => {
 
   test("preserves each card's Contabo resource comparison", () => {
     expect(VDS_PLANS[0]).toMatchObject({
-      name: "Cloud VDS S",
       cores: "6 Virtual Cores AMD EPYC 7282 2.8 GHz",
+      name: "Cloud VDS S",
+      port: "250 Mbit/s Port",
       ram: "24 GB RAM",
       storage: "180 GB NVMe",
-      port: "250 Mbit/s Port",
       traffic: "Unlimited Traffic*",
     });
   });

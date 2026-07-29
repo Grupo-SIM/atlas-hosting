@@ -57,9 +57,7 @@ function resolveSmtpConfig() {
       process.env.SMTP_USERNAME ||
       process.env.EMAIL_SERVER_USER
   );
-  const host = envTrim(
-    process.env.SMTP_HOST || process.env.EMAIL_SERVER_HOST
-  );
+  const host = envTrim(process.env.SMTP_HOST || process.env.EMAIL_SERVER_HOST);
   const portRaw = envTrim(
     process.env.SMTP_PORT ?? process.env.EMAIL_SERVER_PORT
   );
@@ -78,7 +76,7 @@ function resolveSmtpConfig() {
     user ||
     "noreply@atlashosting.com.br";
 
-  return { user, host, port, password, secure, fromEmail };
+  return { fromEmail, host, password, port, secure, user };
 }
 
 let warnedSmtpPasswordLikelyTruncated = false;
@@ -99,17 +97,17 @@ export function getSmtpRedactedMeta() {
     passwordSource = "SMTP_PASSWORD";
   }
   return {
-    host: c.host,
-    port: c.port,
-    secure: c.secure,
     fromEmail: c.fromEmail,
-    user: c.user,
-    userLength: c.user.length,
-    passwordLength: c.password.length,
+    host: c.host,
     passwordDollarCount: (c.password.match(/\$/g) ?? []).length,
+    passwordLength: c.password.length,
+    passwordSource,
     /** Primeiros bytes UTF-8 em hex; para `j0M$s5e55` espera-se `6a304d24...` (24 = `$`) */
     passwordUtf8PrefixHex: prefix.toString("hex"),
-    passwordSource,
+    port: c.port,
+    secure: c.secure,
+    user: c.user,
+    userLength: c.user.length,
   };
 }
 

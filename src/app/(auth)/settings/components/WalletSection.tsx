@@ -1,23 +1,27 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+  ArrowUpCircle,
+  Check,
+  CreditCard,
+  History,
+  Plus,
+  Star,
+  StarOff,
+  Trash2,
+  Wallet,
+} from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { IMaskInput } from "react-imask";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  type AddCardData,
+  addCard,
+  deleteCard,
+  getUserCards,
+  setDefaultCard,
+} from "@/app/(auth)/wallet/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,36 +32,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input, inputClasses } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import {
-  ArrowDownLeft,
-  ArrowUpCircle,
-  ArrowUpRight,
-  CreditCard,
-  Plus,
-  Wallet,
-  History,
-  Trash2,
-  Star,
-  StarOff,
-  Check,
-} from "lucide-react";
-import type { User } from "@/lib/db/schema/tables/user";
-import type { UserCard } from "@/lib/db/schema/tables/card";
-import { formatDate, toBrl } from "@/lib/utils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import {
-  addCard,
-  deleteCard,
-  setDefaultCard,
-  getUserCards,
-  type AddCardData,
-} from "@/app/(auth)/wallet/actions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { IMaskInput } from "react-imask";
+import { useToast } from "@/hooks/use-toast";
+import type { UserCard } from "@/lib/db/schema/tables/card";
+import type { User } from "@/lib/db/schema/tables/user";
+import { toBrl } from "@/lib/utils";
 
 interface WalletSectionProps {
   user: User;
@@ -107,21 +105,21 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
 
   // Card form state
   const [cardForm, setCardForm] = useState<AddCardData>({
-    cardNumber: "",
-    cardCvv: "",
-    cardExpiration: "",
-    holderName: "",
-    holderDocument: "",
+    billingCity: "",
+    billingEmail: "",
     // Billing information
     billingName: "",
-    billingEmail: "",
-    billingPhone: "",
-    billingStreet: "",
-    billingNumber: "",
     billingNeighborhood: "",
-    billingZipCode: "",
-    billingCity: "",
+    billingNumber: "",
+    billingPhone: "",
     billingState: "",
+    billingStreet: "",
+    billingZipCode: "",
+    cardCvv: "",
+    cardExpiration: "",
+    cardNumber: "",
+    holderDocument: "",
+    holderName: "",
   });
 
   // Check if user needs billing information
@@ -137,8 +135,8 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
       } catch (error) {
         console.error("Error loading cards:", error);
         toast({
-          title: "Erro",
           description: "Erro ao carregar cartões salvos",
+          title: "Erro",
           variant: "destructive",
         });
       } finally {
@@ -158,8 +156,8 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
       !cardForm.holderDocument
     ) {
       toast({
-        title: "Erro",
         description: "Todos os campos são obrigatórios",
+        title: "Erro",
         variant: "destructive",
       });
       return;
@@ -179,8 +177,8 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
         !cardForm.billingState
       ) {
         toast({
-          title: "Erro",
           description: "Todos os campos de cobrança são obrigatórios",
+          title: "Erro",
           variant: "destructive",
         });
         return;
@@ -192,34 +190,34 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
 
       if (result.status === "success") {
         toast({
-          title: "Sucesso",
           description: result.message,
+          title: "Sucesso",
         });
         setIsAddCardOpen(false);
         setCardForm({
-          cardNumber: "",
-          cardCvv: "",
-          cardExpiration: "",
-          holderName: "",
-          holderDocument: "",
+          billingCity: "",
+          billingEmail: "",
           // Reset billing information
           billingName: "",
-          billingEmail: "",
-          billingPhone: "",
-          billingStreet: "",
-          billingNumber: "",
           billingNeighborhood: "",
-          billingZipCode: "",
-          billingCity: "",
+          billingNumber: "",
+          billingPhone: "",
           billingState: "",
+          billingStreet: "",
+          billingZipCode: "",
+          cardCvv: "",
+          cardExpiration: "",
+          cardNumber: "",
+          holderDocument: "",
+          holderName: "",
         });
         // Reload cards
         const userCards = await getUserCards();
         setCards(userCards);
       } else {
         toast({
-          title: "Erro",
           description: result.message,
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -232,16 +230,16 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
 
       if (result.status === "success") {
         toast({
-          title: "Sucesso",
           description: result.message,
+          title: "Sucesso",
         });
         // Reload cards
         const userCards = await getUserCards();
         setCards(userCards);
       } else {
         toast({
-          title: "Erro",
           description: result.message,
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -255,16 +253,16 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
 
       if (result.status === "success") {
         toast({
-          title: "Sucesso",
           description: result.message,
+          title: "Sucesso",
         });
         // Reload cards
         const userCards = await getUserCards();
         setCards(userCards);
       } else {
         toast({
-          title: "Erro",
           description: result.message,
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -283,7 +281,7 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
             </CardTitle>
             <CardDescription>Saldo disponível em sua carteira</CardDescription>
           </div>
-          <Dialog open={isAddFundsOpen} onOpenChange={setIsAddFundsOpen}>
+          <Dialog onOpenChange={setIsAddFundsOpen} open={isAddFundsOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
@@ -299,15 +297,15 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
-                  {quickAddAmounts.map((amount) => (
+                  {quickAddAmounts.map(amount => (
                     <Button
-                      key={amount}
-                      variant="outline"
                       className="h-12"
+                      key={amount}
                       onClick={() => {
                         // Handle quick amount selection
                         console.log(`Adding ${amount} to wallet`);
                       }}
+                      variant="outline"
                     >
                       {toBrl(amount)}
                     </Button>
@@ -317,10 +315,10 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
                   <Label htmlFor="customAmount">Valor personalizado</Label>
                   <Input
                     id="customAmount"
-                    type="number"
-                    placeholder="Digite o valor..."
                     min="10"
+                    placeholder="Digite o valor..."
                     step="0.01"
+                    type="number"
                   />
                 </div>
                 <Button className="w-full">Adicionar fundos</Button>
@@ -331,19 +329,19 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
         <CardContent className="space-y-6">
           <div>
             <div className="flex items-baseline">
-              <span className="text-4xl font-bold">
+              <span className="font-bold text-4xl">
                 {toBrl(user.organization.wallet?.balance ?? 0)}
               </span>
               <Badge
+                className="mt-2 mb-auto ml-3 bg-green-500/10 text-green-500"
                 variant="outline"
-                className="ml-3 bg-green-500/10 text-green-500 mb-auto mt-2"
               >
                 <ArrowUpCircle className="mr-1 h-3 w-3" />
                 Ativo
               </Badge>
             </div>
             {invoices.length > 0 && (
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="mt-2 text-muted-foreground text-sm">
                 Última transação:{" "}
                 {format(invoices[0]?.createdAt, "PPP", { locale: ptBR })}
               </p>
@@ -364,7 +362,7 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
               Gerencie seus métodos de pagamento salvos
             </CardDescription>
           </div>
-          <Dialog open={isAddCardOpen} onOpenChange={setIsAddCardOpen}>
+          <Dialog onOpenChange={setIsAddCardOpen} open={isAddCardOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
                 <Plus className="mr-2 h-4 w-4" />
@@ -383,15 +381,15 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
                   <Label htmlFor="cardNumber">Número do cartão</Label>
                   <Input
                     id="cardNumber"
-                    placeholder="**** **** **** ****"
                     maxLength={19}
-                    value={formatCardNumber(cardForm.cardNumber)}
-                    onChange={(e) =>
-                      setCardForm((prev) => ({
+                    onChange={e =>
+                      setCardForm(prev => ({
                         ...prev,
                         cardNumber: e.target.value.replace(/\s/g, ""),
                       }))
                     }
+                    placeholder="**** **** **** ****"
+                    value={formatCardNumber(cardForm.cardNumber)}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -399,30 +397,30 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
                     <Label htmlFor="expiryDate">Validade</Label>
                     <Input
                       id="expiryDate"
-                      placeholder="MM/YY"
                       maxLength={5}
-                      value={cardForm.cardExpiration}
-                      onChange={(e) =>
-                        setCardForm((prev) => ({
+                      onChange={e =>
+                        setCardForm(prev => ({
                           ...prev,
                           cardExpiration: formatExpiryDate(e.target.value),
                         }))
                       }
+                      placeholder="MM/YY"
+                      value={cardForm.cardExpiration}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cvv">CVV</Label>
                     <Input
                       id="cvv"
-                      placeholder="***"
                       maxLength={4}
-                      value={cardForm.cardCvv}
-                      onChange={(e) =>
-                        setCardForm((prev) => ({
+                      onChange={e =>
+                        setCardForm(prev => ({
                           ...prev,
                           cardCvv: e.target.value.replace(/\D/g, ""),
                         }))
                       }
+                      placeholder="***"
+                      value={cardForm.cardCvv}
                     />
                   </div>
                 </div>
@@ -430,41 +428,41 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
                   <Label htmlFor="cardName">Nome no cartão</Label>
                   <Input
                     id="cardName"
-                    placeholder="Nome como aparece no cartão"
-                    value={cardForm.holderName}
-                    onChange={(e) =>
-                      setCardForm((prev) => ({
+                    onChange={e =>
+                      setCardForm(prev => ({
                         ...prev,
                         holderName: e.target.value,
                       }))
                     }
+                    placeholder="Nome como aparece no cartão"
+                    value={cardForm.holderName}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="holderDocument">CPF do portador</Label>
                   <IMaskInput
-                    id="holderDocument"
                     autoComplete="document"
-                    mask={[
-                      { mask: "000.000.000-00", lazy: true, maxLength: 11 },
-                      { mask: "00.000.000/0000-00", lazy: false },
-                    ]}
-                    unmask={true}
-                    placeholder="000.000.000-00"
                     className={inputClasses}
-                    onAccept={(value) =>
-                      setCardForm((prev) => ({
+                    id="holderDocument"
+                    mask={[
+                      { lazy: true, mask: "000.000.000-00", maxLength: 11 },
+                      { lazy: false, mask: "00.000.000/0000-00" },
+                    ]}
+                    onAccept={value =>
+                      setCardForm(prev => ({
                         ...prev,
                         holderDocument: value.replace(/\D/g, ""),
                       }))
                     }
+                    placeholder="000.000.000-00"
+                    unmask={true}
                   />
                 </div>
 
                 {/* Billing Information Section - Only show if user doesn't have domId */}
                 {needsBillingInfo && (
                   <div className="border-t pt-4">
-                    <h4 className="text-sm font-medium mb-3 text-muted-foreground">
+                    <h4 className="mb-3 font-medium text-muted-foreground text-sm">
                       Informações de Cobrança
                     </h4>
                     <div className="space-y-4">
@@ -472,74 +470,74 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
                         <Label htmlFor="billingName">Nome completo</Label>
                         <Input
                           id="billingName"
-                          placeholder="Nome completo do responsável"
-                          value={cardForm.billingName}
-                          onChange={(e) =>
-                            setCardForm((prev) => ({
+                          onChange={e =>
+                            setCardForm(prev => ({
                               ...prev,
                               billingName: e.target.value,
                             }))
                           }
+                          placeholder="Nome completo do responsável"
+                          value={cardForm.billingName}
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="billingEmail">Email</Label>
                         <Input
                           id="billingEmail"
-                          type="email"
-                          placeholder="email@exemplo.com"
-                          value={cardForm.billingEmail}
-                          onChange={(e) =>
-                            setCardForm((prev) => ({
+                          onChange={e =>
+                            setCardForm(prev => ({
                               ...prev,
                               billingEmail: e.target.value,
                             }))
                           }
+                          placeholder="email@exemplo.com"
+                          type="email"
+                          value={cardForm.billingEmail}
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="billingPhone">Telefone</Label>
                         <IMaskInput
+                          className={inputClasses}
                           id="billingPhone"
                           mask="(00) 00000-0000"
-                          placeholder="(11) 99999-9999"
-                          className={inputClasses}
-                          value={cardForm.billingPhone}
-                          onAccept={(value) =>
-                            setCardForm((prev) => ({
+                          onAccept={value =>
+                            setCardForm(prev => ({
                               ...prev,
                               billingPhone: value,
                             }))
                           }
+                          placeholder="(11) 99999-9999"
+                          value={cardForm.billingPhone}
                         />
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="sm:col-span-2 space-y-2">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div className="space-y-2 sm:col-span-2">
                           <Label htmlFor="billingStreet">Endereço</Label>
                           <Input
                             id="billingStreet"
-                            placeholder="Nome da rua"
-                            value={cardForm.billingStreet}
-                            onChange={(e) =>
-                              setCardForm((prev) => ({
+                            onChange={e =>
+                              setCardForm(prev => ({
                                 ...prev,
                                 billingStreet: e.target.value,
                               }))
                             }
+                            placeholder="Nome da rua"
+                            value={cardForm.billingStreet}
                           />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="billingNumber">Número</Label>
                           <Input
                             id="billingNumber"
-                            placeholder="123"
-                            value={cardForm.billingNumber}
-                            onChange={(e) =>
-                              setCardForm((prev) => ({
+                            onChange={e =>
+                              setCardForm(prev => ({
                                 ...prev,
                                 billingNumber: e.target.value,
                               }))
                             }
+                            placeholder="123"
+                            value={cardForm.billingNumber}
                           />
                         </div>
                       </div>
@@ -547,45 +545,45 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
                         <Label htmlFor="billingNeighborhood">Bairro</Label>
                         <Input
                           id="billingNeighborhood"
-                          placeholder="Nome do bairro"
-                          value={cardForm.billingNeighborhood}
-                          onChange={(e) =>
-                            setCardForm((prev) => ({
+                          onChange={e =>
+                            setCardForm(prev => ({
                               ...prev,
                               billingNeighborhood: e.target.value,
                             }))
                           }
+                          placeholder="Nome do bairro"
+                          value={cardForm.billingNeighborhood}
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="billingZipCode">CEP</Label>
                           <IMaskInput
+                            className={inputClasses}
                             id="billingZipCode"
                             mask="00000-000"
-                            placeholder="00000-000"
-                            className={inputClasses}
-                            value={cardForm.billingZipCode}
-                            onAccept={(value) =>
-                              setCardForm((prev) => ({
+                            onAccept={value =>
+                              setCardForm(prev => ({
                                 ...prev,
                                 billingZipCode: value,
                               }))
                             }
+                            placeholder="00000-000"
+                            value={cardForm.billingZipCode}
                           />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="billingCity">Cidade</Label>
                           <Input
                             id="billingCity"
-                            placeholder="Nome da cidade"
-                            value={cardForm.billingCity}
-                            onChange={(e) =>
-                              setCardForm((prev) => ({
+                            onChange={e =>
+                              setCardForm(prev => ({
                                 ...prev,
                                 billingCity: e.target.value,
                               }))
                             }
+                            placeholder="Nome da cidade"
+                            value={cardForm.billingCity}
                           />
                         </div>
                       </div>
@@ -593,15 +591,15 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
                         <Label htmlFor="billingState">Estado</Label>
                         <Input
                           id="billingState"
-                          placeholder="SP"
                           maxLength={2}
-                          value={cardForm.billingState}
-                          onChange={(e) =>
-                            setCardForm((prev) => ({
+                          onChange={e =>
+                            setCardForm(prev => ({
                               ...prev,
                               billingState: e.target.value.toUpperCase(),
                             }))
                           }
+                          placeholder="SP"
+                          value={cardForm.billingState}
                         />
                       </div>
                     </div>
@@ -609,8 +607,8 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
                 )}
                 <Button
                   className="w-full"
-                  onClick={handleAddCard}
                   disabled={isPending}
+                  onClick={handleAddCard}
                 >
                   {isPending ? "Adicionando..." : "Adicionar cartão"}
                 </Button>
@@ -625,13 +623,13 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
             </div>
           ) : cards.length > 0 ? (
             <div className="space-y-3">
-              {cards.map((card) => (
+              {cards.map(card => (
                 <div
+                  className="flex h-24 items-center justify-between rounded-lg border bg-card/50 p-4"
                   key={card.id}
-                  className="flex items-center justify-between p-4 border rounded-lg bg-card/50 h-24"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-lg text-white">
                       {getCardBrandIcon(card.brand)}
                     </div>
                     <div>
@@ -640,17 +638,17 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
                           **** **** **** {card.last4}
                         </p>
                         {card.isDefault && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge className="text-xs" variant="secondary">
                             <Star className="mr-1 h-3 w-3 fill-current" />
                             Padrão
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {card.brand.toUpperCase()} • Expira {card.expiryMonth}/
                         {card.expiryYear}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {card.holderName}
                       </p>
                     </div>
@@ -658,19 +656,19 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
                   <div className="flex items-center gap-2">
                     {!card.isDefault && (
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSetDefaultCard(card.id)}
                         disabled={isPending}
+                        onClick={() => handleSetDefaultCard(card.id)}
+                        size="sm"
+                        variant="ghost"
                       >
                         <StarOff className="h-4 w-4" />
                       </Button>
                     )}
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCardToDelete(card.id)}
                       disabled={isPending}
+                      onClick={() => setCardToDelete(card.id)}
+                      size="sm"
+                      variant="ghost"
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -679,14 +677,14 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+            <div className="py-8 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                 <CreditCard className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="text-muted-foreground mb-4">
+              <p className="mb-4 text-muted-foreground">
                 Nenhum cartão salvo encontrado
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Adicione um cartão para facilitar seus pagamentos futuros
               </p>
             </div>
@@ -708,18 +706,18 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
         <CardContent className="space-y-4">
           {invoices.length > 0 ? (
             <div className="space-y-3">
-              {invoices.map((transaction) => (
+              {invoices.map(transaction => (
                 <div
+                  className="flex items-center justify-between rounded-lg border bg-card/50 p-3"
                   key={transaction.id}
-                  className="flex items-center justify-between p-3 border rounded-lg bg-card/50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full flex items-center justify-center bg-emerald-500/10 text-emerald-500">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
                       <Check className="h-4 w-4" />
                     </div>
                     <div>
                       <p className="font-medium">{transaction.reference}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {format(transaction.createdAt, "PPP", { locale: ptBR })}
                       </p>
                     </div>
@@ -731,8 +729,8 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+            <div className="py-8 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                 <History className="h-6 w-6 text-muted-foreground" />
               </div>
               <p className="text-muted-foreground">
@@ -745,8 +743,8 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
 
       {/* Delete Card Confirmation Dialog */}
       <AlertDialog
-        open={!!cardToDelete}
         onOpenChange={() => setCardToDelete(null)}
+        open={!!cardToDelete}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -759,9 +757,9 @@ export function WalletSection({ user, invoices }: WalletSectionProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => cardToDelete && handleDeleteCard(cardToDelete)}
-              disabled={isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isPending}
+              onClick={() => cardToDelete && handleDeleteCard(cardToDelete)}
             >
               {isPending ? "Removendo..." : "Remover"}
             </AlertDialogAction>

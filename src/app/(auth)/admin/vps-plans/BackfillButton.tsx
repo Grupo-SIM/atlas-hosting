@@ -1,12 +1,15 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { backfillVpsSubscriptionsAction } from "./actions";
 
 export function BackfillButton() {
   const [pending, startTransition] = useTransition();
-  const [result, setResult] = useState<{ created: number; skipped: number } | null>(null);
+  const [result, setResult] = useState<{
+    created: number;
+    skipped: number;
+  } | null>(null);
 
   function handleClick() {
     startTransition(async () => {
@@ -17,11 +20,16 @@ export function BackfillButton() {
 
   return (
     <div className="flex items-center gap-3">
-      <Button variant="outline" size="sm" onClick={handleClick} disabled={pending}>
+      <Button
+        disabled={pending}
+        onClick={handleClick}
+        size="sm"
+        variant="outline"
+      >
         {pending ? "Importando..." : "Importar faturas antigas"}
       </Button>
       {result && (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-muted-foreground text-sm">
           {result.created} criadas, {result.skipped} ignoradas
         </span>
       )}

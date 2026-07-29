@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { PlanCard } from "./PlanCard";
+import { range } from "lodash";
+import { useEffect, useState } from "react";
 import {
   Carousel,
+  type CarouselApi,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-  type CarouselApi,
 } from "@/components/ui/carousel";
 import type { Organization, Plan, User } from "@/lib/db/schema";
-import { range } from "lodash";
+import { PlanCard } from "./PlanCard";
 
 interface PlansCarouselProps {
   plans: Plan[];
@@ -42,74 +42,74 @@ export function PlansCarousel({
   }, [api]);
 
   return (
-    <div className="relative max-w-6xl mx-auto">
+    <div className="relative mx-auto max-w-6xl">
       <Carousel
-        setApi={setApi}
+        className="w-full"
         opts={{
           align: "center",
           loop: true,
           slidesToScroll: 1,
         }}
-        className="w-full"
+        setApi={setApi}
       >
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-1 bg-gradient-to-b from-primary to-primary/50 rounded-full" />
-            <h2 className="text-2xl font-semibold text-foreground">
+            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-primary to-primary/50" />
+            <h2 className="font-semibold text-2xl text-foreground">
               Nossos Planos
             </h2>
-            <div className="hidden md:flex items-center gap-1 ml-4 text-sm text-muted-foreground">
-              <span className="bg-primary/10 px-2 py-1 rounded-md">
+            <div className="ml-4 hidden items-center gap-1 text-muted-foreground text-sm md:flex">
+              <span className="rounded-md bg-primary/10 px-2 py-1">
                 {current} de {count}
               </span>
             </div>
           </div>
 
           {/* Custom Navigation Buttons */}
-          <div className="hidden md:flex items-center gap-2">
-            <CarouselPrevious className="relative left-0 translate-y-0 h-10 w-10 border-2 border-border/50 hover:border-primary/50 transition-all duration-300 hover:scale-105 bg-background/80 backdrop-blur-sm" />
-            <CarouselNext className="relative right-0 translate-y-0 h-10 w-10 border-2 border-border/50 hover:border-primary/50 transition-all duration-300 hover:scale-105 bg-background/80 backdrop-blur-sm" />
+          <div className="hidden items-center gap-2 md:flex">
+            <CarouselPrevious className="relative left-0 h-10 w-10 translate-y-0 border-2 border-border/50 bg-background/80 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50" />
+            <CarouselNext className="relative right-0 h-10 w-10 translate-y-0 border-2 border-border/50 bg-background/80 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50" />
           </div>
         </div>
 
         <CarouselContent className="-ml-4 md:-ml-6">
           {plans.map((plan, index) => (
             <CarouselItem
-              key={plan.id}
               className={`pl-4 md:pl-6 ${
                 plans.length === 4
                   ? "md:basis-1/2 lg:basis-1/3"
                   : "md:basis-1/2 lg:basis-1/3 xl:basis-1/4"
               }`}
+              key={plan.id}
             >
               <div className="h-full transform transition-all duration-300 hover:scale-[1.02]">
-                <PlanCard plan={plan} user={user} searchParams={searchParams} />
+                <PlanCard plan={plan} searchParams={searchParams} user={user} />
               </div>
             </CarouselItem>
           ))}
         </CarouselContent>
 
         {/* Enhanced Mobile Navigation */}
-        <div className="flex flex-col items-center gap-4 mt-8 md:hidden">
+        <div className="mt-8 flex flex-col items-center gap-4 md:hidden">
           {/* Dots */}
           <div className="flex gap-2">
-            {range(count).map((i) => (
+            {range(count).map(i => (
               <button
-                type="button"
-                key={i}
-                onClick={() => api?.scrollTo(i)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                aria-label={`Go to slide ${i + 1}`}
+                className={`h-3 w-3 rounded-full transition-all duration-300 ${
                   i === current - 1
-                    ? "bg-primary scale-125"
+                    ? "scale-125 bg-primary"
                     : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
                 }`}
-                aria-label={`Go to slide ${i + 1}`}
+                key={i}
+                onClick={() => api?.scrollTo(i)}
+                type="button"
               />
             ))}
           </div>
 
           {/* Mobile Counter */}
-          <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+          <div className="rounded-full bg-muted/50 px-3 py-1 text-muted-foreground text-xs">
             {current} de {count} planos
           </div>
         </div>

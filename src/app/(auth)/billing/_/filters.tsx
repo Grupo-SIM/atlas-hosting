@@ -1,21 +1,26 @@
 "use client";
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { SimpayCalendar } from "./simpay-calendar";
 
-import { format } from "date-fns";
-
-export function BillingFilters({ 
-  status: initialStatus, 
-  type: initialType, 
+export function BillingFilters({
+  status: initialStatus,
+  type: initialType,
   date: initialDate,
   from,
-  to
-}: { status: string; type: string; date: string; from?: string; to?: string }) {
+  to,
+}: {
+  status: string;
+  type: string;
+  date: string;
+  from?: string;
+  to?: string;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -27,10 +32,10 @@ export function BillingFilters({
       } else {
         params.delete(key);
       }
-      
+
       // Reset to page 1 on filter change
       params.delete("page");
-      
+
       router.push(`/billing?${params.toString()}`, { scroll: false });
     });
   };
@@ -42,10 +47,19 @@ export function BillingFilters({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6 mb-8 transition-opacity", isPending && "opacity-70")}>
-      <div className="flex flex-wrap gap-4 items-center justify-between">
+    <div
+      className={cn(
+        "mb-8 flex flex-col gap-6 transition-opacity",
+        isPending && "opacity-70"
+      )}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-4">
-          <Tabs value={initialStatus} onValueChange={(v) => handleFilter("status", v)} className="w-full sm:w-auto">
+          <Tabs
+            className="w-full sm:w-auto"
+            onValueChange={v => handleFilter("status", v)}
+            value={initialStatus}
+          >
             <TabsList className="bg-muted/50 p-1">
               <TabsTrigger value="all">Todas</TabsTrigger>
               <TabsTrigger value="pending">Pendentes</TabsTrigger>
@@ -54,27 +68,36 @@ export function BillingFilters({
           </Tabs>
         </div>
 
-        {(initialStatus !== "all" || initialType !== "all" || initialDate !== "all") && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+        {(initialStatus !== "all" ||
+          initialType !== "all" ||
+          initialDate !== "all") && (
+          <Button
+            className="text-muted-foreground"
+            onClick={clearFilters}
+            size="sm"
+            variant="ghost"
+          >
             Limpar Filtros
           </Button>
         )}
       </div>
 
-      <div className="flex flex-wrap items-center bg-muted/30 p-1 rounded-xl w-fit gap-1">
+      <div className="flex w-fit flex-wrap items-center gap-1 rounded-xl bg-muted/30 p-1">
         {[
           { label: "Todo período", value: "all" },
           { label: "Hoje", value: "today" },
           { label: "Último Mês", value: "month" },
           { label: "Personalizado", value: "custom" },
-        ].map((d) => (
+        ].map(d => (
           <button
+            className={cn(
+              "rounded-lg px-4 py-2 font-medium text-sm transition-all",
+              initialDate === d.value
+                ? "bg-background text-primary shadow-sm"
+                : "text-muted-foreground hover:bg-background/50"
+            )}
             key={d.value}
             onClick={() => handleFilter("date", d.value)}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              initialDate === d.value ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:bg-background/50"
-            )}
           >
             {d.label}
           </button>
@@ -82,21 +105,21 @@ export function BillingFilters({
       </div>
 
       {initialDate === "custom" && (
-        <div className="animate-in fade-in slide-in-from-top-2 max-w-sm">
-          <SimpayCalendar 
+        <div className="fade-in slide-in-from-top-2 max-w-sm animate-in">
+          <SimpayCalendar
+            end={to ? new Date(`${to}T12:00:00`) : null}
             label="Escolha o Período"
-            start={from ? new Date(from + "T12:00:00") : null}
-            end={to ? new Date(to + "T12:00:00") : null}
             onChange={(start, end) => {
               const params = new URLSearchParams(window.location.search);
               if (start) params.set("from", format(start, "yyyy-MM-dd"));
               else params.delete("from");
-              
+
               if (end) params.set("to", format(end, "yyyy-MM-dd"));
               else params.delete("to");
-              
+
               router.push(`/billing?${params.toString()}`, { scroll: false });
             }}
+            start={from ? new Date(`${from}T12:00:00`) : null}
           />
         </div>
       )}

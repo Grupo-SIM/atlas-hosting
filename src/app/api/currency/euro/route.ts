@@ -5,27 +5,27 @@ export async function GET() {
   try {
     const [[rate], [usdRate]] = await Promise.all([
       currencyConversion.convertMultiple({
+        amounts: [1],
         from: "eur",
         to: "brl",
-        amounts: [1],
       }),
       currencyConversion.convertMultiple({
+        amounts: [1],
         from: "eur",
         to: "usd",
-        amounts: [1],
       }),
     ]);
 
     return NextResponse.json({
       rate,
-      usdRate,
       timestamp: new Date().toISOString(),
+      usdRate,
     });
   } catch (error) {
     console.error("Error fetching euro rate:", error);
     return NextResponse.json(
-      { rate: 5.86, usdRate: 1.08, error: "Failed to fetch" },
-      { status: 500 },
+      { error: "Failed to fetch", rate: 5.86, usdRate: 1.08 },
+      { status: 500 }
     );
   }
 }

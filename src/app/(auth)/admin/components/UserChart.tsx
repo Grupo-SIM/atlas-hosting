@@ -1,19 +1,19 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Line } from "react-chartjs-2";
 import {
-  Chart as chartJs,
   CategoryScale,
+  type ChartData,
+  Chart as chartJs,
+  Legend,
   LinearScale,
-  PointElement,
   LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
-  type ChartData,
 } from "chart.js";
-import { addMonths, format, isAfter, getMonth, toDate } from "date-fns";
+import { addMonths, format, getMonth, isAfter, toDate } from "date-fns";
+import { Line } from "react-chartjs-2";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 chartJs.register(
   CategoryScale,
@@ -38,7 +38,7 @@ function getMonthRange(userGrowth: UserGrowth[]) {
   if (userGrowth.length === 0) {
     return [];
   }
-  const months = userGrowth.map((u) => u.month).sort();
+  const months = userGrowth.map(u => u.month).sort();
   const start = months[0];
   const end = months[months.length - 1];
 
@@ -75,21 +75,21 @@ function getDateFromMonth(_month: number) {
 export function UserChart({ userGrowth }: UserChartProps) {
   // Map userGrowth to a lookup for fast access
   const growthMap = Object.fromEntries(
-    userGrowth.map((u) => [getMonth(toDate(`${u.month}-01`)), u.count])
+    userGrowth.map(u => [getMonth(toDate(`${u.month}-01`)), u.count])
   );
 
   // Build the data array for all months (0 if no data)
   const data: ChartData<"line", number[], string> = {
-    labels: months,
     datasets: [
       {
-        label: "Novos Usuários",
-        data: months.map((_, idx) => growthMap[idx] ?? 0),
-        borderColor: "rgb(59, 130, 246)",
         backgroundColor: "rgba(59, 130, 246, 1)",
+        borderColor: "rgb(59, 130, 246)",
+        data: months.map((_, idx) => growthMap[idx] ?? 0),
+        label: "Novos Usuários",
         tension: 0,
       },
     ],
+    labels: months,
   };
 
   return (
@@ -97,11 +97,11 @@ export function UserChart({ userGrowth }: UserChartProps) {
       <CardHeader>
         <CardTitle>Crescimento de Usuários</CardTitle>
       </CardHeader>
-      <CardContent className="max-h-120 h-120 w-full">
+      <CardContent className="h-120 max-h-120 w-full">
         <Line
           data={data}
           options={{
-            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: {
                 position: "bottom" as const,
@@ -110,6 +110,7 @@ export function UserChart({ userGrowth }: UserChartProps) {
                 display: false,
               },
             },
+            responsive: true,
             scales: {
               y: {
                 beginAtZero: true,
@@ -118,12 +119,11 @@ export function UserChart({ userGrowth }: UserChartProps) {
                 },
                 title: {
                   display: true,
-                  text: "Novos Usuários",
                   padding: 10,
+                  text: "Novos Usuários",
                 },
               },
             },
-            maintainAspectRatio: false,
           }}
         />
       </CardContent>

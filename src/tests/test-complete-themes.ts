@@ -19,7 +19,7 @@ async function testCompleteThemesImplementation() {
 
       if (site.themes && site.themes.length > 0) {
         console.log("  - Theme details:");
-        site.themes.forEach((theme) => {
+        site.themes.forEach(theme => {
           console.log(
             `    * ${theme.name} (${theme.status}) - v${theme.version}`
           );
@@ -53,7 +53,7 @@ testCompleteThemesImplementation()
     console.log("\n✅ All tests passed!");
     process.exit(0);
   })
-  .catch((error) => {
+  .catch(error => {
     console.error("\n❌ Tests failed:", error);
     process.exit(1);
   });

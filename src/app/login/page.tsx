@@ -1,12 +1,12 @@
-import AuthPage from "@/components/auth/AuthPage";
-import LoginForm from "@/components/auth/LoginForm";
 import type { Metadata } from "next";
 import { use } from "react";
+import AuthPage from "@/components/auth/AuthPage";
+import LoginForm from "@/components/auth/LoginForm";
 
 export const metadata: Metadata = {
-  title: "Login - Atlas Hosting",
   description:
     "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
+  title: "Login - Atlas Hosting",
 };
 
 interface LoginPageProps {
@@ -26,11 +26,11 @@ export default function LoginPage({
 
   return (
     <AuthPage
-      title="Bem-vindo"
       subtitle="Faça login para acessar sua conta"
       switchHref={signupSwitchHref}
-      switchTitle="Não possui uma conta?"
       switchText="Criar uma conta"
+      switchTitle="Não possui uma conta?"
+      title="Bem-vindo"
     >
       <LoginForm redirectTo={searchParams.redirect} />
     </AuthPage>

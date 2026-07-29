@@ -1,88 +1,101 @@
-import { getAllUsersWithBalanceAction } from "./actions";
-import { UsersTable } from "./UsersTable";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  CheckCircle,
+  Server,
+  ShieldCheck,
+  TrendingUp,
+  Users,
+  XCircle,
+} from "lucide-react";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { toBrl } from "@/lib/utils";
-import { Metadata } from "next";
-import { Users, ShieldCheck, CheckCircle, XCircle, TrendingUp, Server } from "lucide-react";
+import { getAllUsersWithBalanceAction } from "./actions";
+import { UsersTable } from "./UsersTable";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Usuários — Admin" };
 
 export default async function AdminUsersPage() {
   const admin = await getUser();
-  if (!admin || !admin.isAdmin) redirect("/home");
+  if (!admin?.isAdmin) redirect("/home");
 
   const users = await getAllUsersWithBalanceAction();
 
-  const active       = users.filter((u) => u.suspendedAt === null).length;
-  const suspended    = users.filter((u) => u.suspendedAt !== null).length;
-  const subscribers  = users.filter((u) => u.hasActiveSubscription).length;
-  const totalEarned  = users.reduce((acc, u) => acc + u.totalEarnedBrl, 0);
+  const active = users.filter(u => u.suspendedAt === null).length;
+  const suspended = users.filter(u => u.suspendedAt !== null).length;
+  const subscribers = users.filter(u => u.hasActiveSubscription).length;
+  const totalEarned = users.reduce((acc, u) => acc + u.totalEarnedBrl, 0);
   const totalBalance = users.reduce((acc, u) => acc + u.balanceCents / 100, 0);
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-4 md:pt-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="flex-1 space-y-6 p-4 pt-4 md:p-8 md:pt-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Usuários</h2>
+          <h2 className="font-bold text-3xl tracking-tight">Usuários</h2>
           <p className="text-muted-foreground">
             Gerencie contas de usuários da plataforma.
           </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
+        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-4 py-2">
           <ShieldCheck className="h-5 w-5 text-primary" />
-          <span className="text-sm font-bold text-primary">
+          <span className="font-bold text-primary text-sm">
             Acesso Restrito: Admin
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <CardTitle className="font-medium text-sm">Total</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.length}</div>
+            <div className="font-bold text-2xl">{users.length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ativos</CardTitle>
+            <CardTitle className="font-medium text-sm">Ativos</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{active}</div>
+            <div className="font-bold text-2xl text-green-600">{active}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Suspensos</CardTitle>
+            <CardTitle className="font-medium text-sm">Suspensos</CardTitle>
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{suspended}</div>
+            <div className="font-bold text-2xl text-red-600">{suspended}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes (com assinatura)</CardTitle>
+            <CardTitle className="font-medium text-sm">
+              Clientes (com assinatura)
+            </CardTitle>
             <Server className="h-4 w-4 text-sky-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-sky-600">{subscribers}</div>
+            <div className="font-bold text-2xl text-sky-600">{subscribers}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Saldo Total dos afiliados</CardTitle>
+            <CardTitle className="font-medium text-sm">
+              Saldo Total dos afiliados
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{toBrl(totalBalance)}</div>
+            <div className="font-bold text-2xl text-blue-600">
+              {toBrl(totalBalance)}
+            </div>
           </CardContent>
         </Card>
       </div>

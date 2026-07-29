@@ -1,28 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Reply,
-  ReplyAll,
-  Forward,
-  MoreHorizontal,
-  Star,
-  Archive,
-  Trash2,
-  Download,
-  Paperclip,
-  User,
-  Calendar,
-  Clock,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  Archive,
+  Clock,
+  Download,
+  Forward,
+  MoreHorizontal,
+  Paperclip,
+  Reply,
+  ReplyAll,
+  Star,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 interface EmailMessage {
   id: string;
@@ -62,7 +60,7 @@ export function PleskEmailView({
     return name
       .split("@")[0]
       .split(".")
-      .map((part) => part.charAt(0).toUpperCase())
+      .map(part => part.charAt(0).toUpperCase())
       .join("")
       .slice(0, 2);
   };
@@ -85,15 +83,15 @@ export function PleskEmailView({
     : [];
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="flex h-full flex-col">
       {/* Header */}
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-semibold truncate mb-2">
+          <div className="min-w-0 flex-1">
+            <h1 className="mb-2 truncate font-semibold text-xl">
               {email.subject}
             </h1>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <div className="flex items-center space-x-2 text-muted-foreground text-sm">
               <Badge
                 variant={email.folder === "spam" ? "destructive" : "secondary"}
               >
@@ -106,7 +104,7 @@ export function PleskEmailView({
               </Badge>
               {email.hasAttachment && (
                 <Badge variant="outline">
-                  <Paperclip className="h-3 w-3 mr-1" />
+                  <Paperclip className="mr-1 h-3 w-3" />
                   {mockAttachments.length} anexo(s)
                 </Badge>
               )}
@@ -115,7 +113,7 @@ export function PleskEmailView({
 
           {/* Actions */}
           <div className="flex items-center space-x-1">
-            <Button variant="ghost" size="sm" onClick={toggleStar}>
+            <Button onClick={toggleStar} size="sm" variant="ghost">
               <Star
                 className={cn(
                   "h-4 w-4",
@@ -125,13 +123,13 @@ export function PleskEmailView({
                 )}
               />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <Archive className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={onDelete}>
+            <Button onClick={onDelete} size="sm" variant="ghost">
               <Trash2 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </div>
@@ -139,16 +137,16 @@ export function PleskEmailView({
 
         {/* Reply Actions */}
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={onReply}>
-            <Reply className="h-4 w-4 mr-2" />
+          <Button onClick={onReply} size="sm" variant="outline">
+            <Reply className="mr-2 h-4 w-4" />
             Responder
           </Button>
-          <Button variant="outline" size="sm">
-            <ReplyAll className="h-4 w-4 mr-2" />
+          <Button size="sm" variant="outline">
+            <ReplyAll className="mr-2 h-4 w-4" />
             Responder a todos
           </Button>
-          <Button variant="outline" size="sm" onClick={onForward}>
-            <Forward className="h-4 w-4 mr-2" />
+          <Button onClick={onForward} size="sm" variant="outline">
+            <Forward className="mr-2 h-4 w-4" />
             Encaminhar
           </Button>
         </div>
@@ -157,7 +155,7 @@ export function PleskEmailView({
       </CardHeader>
 
       {/* Content */}
-      <CardContent className="flex-1 overflow-y-auto space-y-6">
+      <CardContent className="flex-1 space-y-6 overflow-y-auto">
         {/* Email Header Info */}
         <div className="space-y-4">
           {/* From */}
@@ -165,21 +163,21 @@ export function PleskEmailView({
             <Avatar className="h-10 w-10">
               <AvatarFallback>{getInitials(email.from)}</AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center space-x-2">
                 <p className="font-medium text-sm">{email.from}</p>
-                <Badge variant="outline" className="text-xs">
+                <Badge className="text-xs" variant="outline">
                   Remetente
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">Para: {email.to}</p>
+              <p className="text-muted-foreground text-xs">Para: {email.to}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium">
+              <p className="font-medium text-sm">
                 {format(email.date, "dd/MM/yyyy", { locale: ptBR })}
               </p>
-              <p className="text-xs text-muted-foreground flex items-center">
-                <Clock className="h-3 w-3 mr-1" />
+              <p className="flex items-center text-muted-foreground text-xs">
+                <Clock className="mr-1 h-3 w-3" />
                 {format(email.date, "HH:mm", { locale: ptBR })}
               </p>
             </div>
@@ -190,28 +188,28 @@ export function PleskEmailView({
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <Paperclip className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">
+                <span className="font-medium text-sm">
                   Anexos ({mockAttachments.length})
                 </span>
               </div>
               <div className="grid gap-2">
-                {mockAttachments.map((attachment) => (
+                {mockAttachments.map(attachment => (
                   <div
+                    className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-secondary/50"
                     key={attachment.id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/50 transition-colors"
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
+                      <div className="flex h-8 w-8 items-center justify-center rounded bg-primary/10">
                         <Paperclip className="h-4 w-4 text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{attachment.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="font-medium text-sm">{attachment.name}</p>
+                        <p className="text-muted-foreground text-xs">
                           {attachment.size}
                         </p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">
+                    <Button size="sm" variant="ghost">
                       <Download className="h-4 w-4" />
                     </Button>
                   </div>
@@ -225,7 +223,7 @@ export function PleskEmailView({
 
         {/* Email Body */}
         <div className="space-y-4">
-          <div className="prose prose-sm max-w-none dark:prose-invert">
+          <div className="prose prose-sm dark:prose-invert max-w-none">
             {email.body ? (
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
                 {email.body}
@@ -293,14 +291,14 @@ export function PleskEmailView({
         </div>
 
         {/* Quick Reply Actions */}
-        <div className="pt-4 border-t">
+        <div className="border-t pt-4">
           <div className="flex items-center space-x-2">
             <Button onClick={onReply}>
-              <Reply className="h-4 w-4 mr-2" />
+              <Reply className="mr-2 h-4 w-4" />
               Responder
             </Button>
-            <Button variant="outline" onClick={onForward}>
-              <Forward className="h-4 w-4 mr-2" />
+            <Button onClick={onForward} variant="outline">
+              <Forward className="mr-2 h-4 w-4" />
               Encaminhar
             </Button>
           </div>

@@ -1,7 +1,6 @@
-import { getUser } from "@/lib/auth";
 import dns from "node:dns";
 import { promisify } from "node:util";
-
+import { getUser } from "@/lib/auth";
 
 const resolve4 = promisify(dns.resolve4);
 
@@ -29,11 +28,11 @@ export async function GET(request: Request) {
 
   const domains = domainsParam
     .split(",")
-    .map((domain) => new URL(domain).hostname);
+    .map(domain => new URL(domain).hostname);
 
   // Initial DNS check for all domains
   const initialResults = await Promise.all(
-    domains.map(async (domain) => ({
+    domains.map(async domain => ({
       domain,
       ready: await checkDomain(domain),
     }))
@@ -41,15 +40,15 @@ export async function GET(request: Request) {
 
   // Filter out ready domains
   const pendingDomains = initialResults
-    .filter((result) => !result.ready)
-    .map((result) => result.domain);
+    .filter(result => !result.ready)
+    .map(result => result.domain);
 
   // If all domains are ready, return immediately
   if (pendingDomains.length === 0) {
     return new Response(
       JSON.stringify({
-        initial: Object.fromEntries(domains.map((domain) => [domain, true])),
         domains: {},
+        initial: Object.fromEntries(domains.map(domain => [domain, true])),
         updates: [],
       }),
       {
@@ -63,7 +62,7 @@ export async function GET(request: Request) {
   const response = new Response(
     // @ts-expect-error Bun async generators are not typed
     (async function* () {
-      const results = new Map(domains.map((domain) => [domain, false]));
+      const results = new Map(domains.map(domain => [domain, false]));
       // Set initial results
 
       for (const { domain, ready } of initialResults) {
@@ -73,7 +72,7 @@ export async function GET(request: Request) {
       let allReady = false;
 
       while (!allReady) {
-        const checks = pendingDomains.map(async (domain) => {
+        const checks = pendingDomains.map(async domain => {
           const ready = await checkDomain(domain);
           results.set(domain, ready);
           return { domain, ready };
@@ -83,27 +82,27 @@ export async function GET(request: Request) {
 
         // Send current state for all domains
         yield `data: ${JSON.stringify({
-          initial: {},
           domains: Object.fromEntries(
-            domains.map((domain) => [domain, results.get(domain)])
+            domains.map(domain => [domain, results.get(domain)])
           ),
+          initial: {},
           updates: domainResults,
         })}\n\n`;
 
         // Check if all domains are ready
-        allReady = Array.from(results.values()).every((ready) => ready);
+        allReady = Array.from(results.values()).every(ready => ready);
 
         if (!allReady) {
           // Wait for 10 seconds before next check
-          await new Promise((resolve) => setTimeout(resolve, 10000));
+          await new Promise(resolve => setTimeout(resolve, 10000));
         }
       }
     })(),
     {
       headers: {
+        "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
         "Content-Encoding": "none",
-        "Cache-Control": "no-cache, no-transform",
         "Content-Type": "text/event-stream; charset=utf-8",
       },
     }

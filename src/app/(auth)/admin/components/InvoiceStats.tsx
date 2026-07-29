@@ -1,6 +1,5 @@
-import { db } from "@/lib/db";
-import { pgInvoice, pgUser } from "@/lib/db/schema";
-import { sql, eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { Search } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -8,11 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { InvoiceChart } from "./InvoiceChart";
-import { InvoiceList } from "./InvoiceList";
-import { InvoiceClientFilter } from "./InvoiceClientFilter";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { db } from "@/lib/db";
+import { pgInvoice, pgUser } from "@/lib/db/schema";
+import { InvoiceChart } from "./InvoiceChart";
+import { InvoiceClientFilter } from "./InvoiceClientFilter";
+import { InvoiceList } from "./InvoiceList";
 
 interface InvoiceStatsProps {
   searchParams?: { page?: string; search?: string; clientId?: string };
@@ -23,16 +23,16 @@ export async function InvoiceStats({ searchParams }: InvoiceStatsProps) {
     await Promise.all([
       db
         .select({
-          status: pgInvoice.status,
           count: sql<number>`count(*)`,
+          status: pgInvoice.status,
           total: sql<number>`sum(amount)`,
         })
         .from(pgInvoice)
         .groupBy(pgInvoice.status),
       db
         .select({
-          type: pgInvoice.type,
           count: sql<number>`count(*)`,
+          type: pgInvoice.type,
         })
         .from(pgInvoice)
         .groupBy(pgInvoice.type),
@@ -48,14 +48,18 @@ export async function InvoiceStats({ searchParams }: InvoiceStatsProps) {
         .from(pgInvoice),
       // Só clientes que já têm ao menos uma fatura — é o universo relevante pro dropdown de filtro.
       db
-        .selectDistinct({ id: pgUser.id, name: pgUser.name, email: pgUser.email })
+        .selectDistinct({
+          email: pgUser.email,
+          id: pgUser.id,
+          name: pgUser.name,
+        })
         .from(pgInvoice)
         .innerJoin(pgUser, eq(pgInvoice.userId, pgUser.id))
         .orderBy(pgUser.name),
     ]);
 
   const selectedClient = searchParams?.clientId
-    ? clients.find((c) => c.id === searchParams.clientId) ?? null
+    ? (clients.find(c => c.id === searchParams.clientId) ?? null)
     : null;
 
   const totalCount = totalInvoices[0].count;
@@ -75,52 +79,51 @@ export async function InvoiceStats({ searchParams }: InvoiceStatsProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="font-medium text-sm">
                   Total de Faturas
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{totalCount}</div>
+                <div className="font-bold text-2xl">{totalCount}</div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="font-medium text-sm">
                   Valor Médio
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="font-bold text-2xl">
                   R$ {avgAmount.toFixed(2)}
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="font-medium text-sm">
                   Total Arrecadado
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="font-bold text-2xl">
                   R$ {totalAmount.toFixed(2)}
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="font-medium text-sm">
                   Taxa de Pagamento
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="font-bold text-2xl">
                   {(
-                    ((statusStats.find((s) => s.status === "paid")?.count ||
-                      0) /
+                    ((statusStats.find(s => s.status === "paid")?.count || 0) /
                       totalCount) *
                     100
                   ).toFixed(1)}
@@ -135,12 +138,15 @@ export async function InvoiceStats({ searchParams }: InvoiceStatsProps) {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Buscar faturas..." className="pl-8" />
+                <Search className="absolute top-2.5 left-2 h-4 w-4 text-muted-foreground" />
+                <Input className="pl-8" placeholder="Buscar faturas..." />
               </div>
               <InvoiceClientFilter clients={clients} />
             </div>
-            <InvoiceList searchParams={searchParams} selectedClient={selectedClient} />
+            <InvoiceList
+              searchParams={searchParams}
+              selectedClient={selectedClient}
+            />
           </div>
         </div>
       </CardContent>

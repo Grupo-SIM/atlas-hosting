@@ -1,4 +1,3 @@
-
 import { getDomainData } from "./src/app/(auth)/domain/utils";
 
 async function test() {

@@ -1,3 +1,3 @@
-export type OrganizationPageParams = {
+export interface OrganizationPageParams {
   action?: "createMember";
-};
+}

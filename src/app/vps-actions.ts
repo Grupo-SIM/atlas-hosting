@@ -1,24 +1,27 @@
 "use server";
 
-import { db } from "@/lib/db";
-import { pgVpsMetrics, pgVpsServers, pgUser } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
+import { desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getUser } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { pgUser, pgVpsMetrics, pgVpsServers } from "@/lib/db/schema";
 
 /**
  * Registra uma nova VPS manualmente para um usuário.
  * Usado por você (Breno) para entregar o servidor ao cliente.
  */
 export async function registerVpsAction(
-  userIdOrEmail: string, 
-  name: string, 
+  userIdOrEmail: string,
+  name: string,
   ip: string,
   os?: string
 ) {
   const admin = await getUser();
-  if (!admin || !admin.isAdmin) throw new Error("Não autorizado. Apenas administradores podem registrar novas VPS.");
+  if (!admin?.isAdmin)
+    throw new Error(
+      "Não autorizado. Apenas administradores podem registrar novas VPS."
+    );
 
   // Se o identificador for um e-mail, buscamos o usuário real no banco
   let targetUserId = userIdOrEmail;
@@ -31,14 +34,14 @@ export async function registerVpsAction(
   }
 
   const token = `atlas_${randomBytes(24).toString("hex")}`;
-  
+
   await db.insert(pgVpsServers).values({
-    userId: targetUserId,
-    name,
     ip,
+    name,
     os: os || "Linux",
-    token,
     status: "pending",
+    token,
+    userId: targetUserId,
   });
 
   revalidatePath("/home");
@@ -53,8 +56,8 @@ export async function getUserVpsServers() {
   if (!user) return [];
 
   return await db.query.pgVpsServers.findMany({
-    where: eq(pgVpsServers.userId, user.id),
     orderBy: [desc(pgVpsServers.createdAt)],
+    where: eq(pgVpsServers.userId, user.id),
   });
 }
 
@@ -63,9 +66,9 @@ export async function getUserVpsServers() {
  */
 export async function getVpsMetricsAction(vpsId: string, limit = 20) {
   return await db.query.pgVpsMetrics.findMany({
-    where: eq(pgVpsMetrics.vpsId, vpsId),
     limit,
     orderBy: [desc(pgVpsMetrics.timestamp)],
+    where: eq(pgVpsMetrics.vpsId, vpsId),
   });
 }
 
@@ -73,25 +76,30 @@ export async function getVpsMetricsAction(vpsId: string, limit = 20) {
  * Força a revalidação dos dados do painel VPS e sinaliza o bot.
  */
 export async function refreshVpsDataAction(vpsId?: string) {
-  console.log(`[VPS-Action] refreshVpsDataAction called, vpsId=${vpsId ?? "NONE"}`);
+  console.log(
+    `[VPS-Action] refreshVpsDataAction called, vpsId=${vpsId ?? "NONE"}`
+  );
 
   if (vpsId) {
     // Liga o sinalizador para o bot
     console.log(`[VPS-Action] Setting forceRefresh=true for vpsId=${vpsId}...`);
-    await db.update(pgVpsServers)
+    await db
+      .update(pgVpsServers)
       .set({ forceRefresh: true })
       .where(eq(pgVpsServers.id, vpsId));
-    
+
     // Confirma que foi salvo
     const check = await db.query.pgVpsServers.findFirst({
+      columns: { forceRefresh: true, id: true },
       where: eq(pgVpsServers.id, vpsId),
-      columns: { id: true, forceRefresh: true },
     });
-    console.log(`[VPS-Action] DB confirm: forceRefresh=${check?.forceRefresh} for vpsId=${vpsId}`);
+    console.log(
+      `[VPS-Action] DB confirm: forceRefresh=${check?.forceRefresh} for vpsId=${vpsId}`
+    );
   }
 
   revalidatePath("/manage/vps");
-  console.log(`[VPS-Action] revalidatePath done, returning success`);
+  console.log("[VPS-Action] revalidatePath done, returning success");
   return { success: true, timestamp: new Date().toISOString() };
 }
 
@@ -100,13 +108,13 @@ export async function refreshVpsDataAction(vpsId?: string) {
  */
 export async function getAllVpsServersAction() {
   const admin = await getUser();
-  if (!admin || !admin.isAdmin) throw new Error("Não autorizado.");
+  if (!admin?.isAdmin) throw new Error("Não autorizado.");
 
   return await db.query.pgVpsServers.findMany({
-    with: {
-      user: true // Note: ensure relations are defined in schema
-    },
     orderBy: [desc(pgVpsServers.createdAt)],
+    with: {
+      user: true, // Note: ensure relations are defined in schema
+    },
   });
 }
 
@@ -115,15 +123,15 @@ export async function getAllVpsServersAction() {
  */
 export async function getAllUsersAction() {
   const admin = await getUser();
-  if (!admin || !admin.isAdmin) throw new Error("Não autorizado.");
+  if (!admin?.isAdmin) throw new Error("Não autorizado.");
 
   return await db.query.pgUser.findMany({
     columns: {
-      id: true,
       email: true,
-      name: true
+      id: true,
+      name: true,
     },
-    orderBy: [pgUser.name]
+    orderBy: [pgUser.name],
   });
 }
 
@@ -132,12 +140,12 @@ export async function getAllUsersAction() {
  */
 export async function deleteVpsAction(vpsId: string) {
   const admin = await getUser();
-  if (!admin || !admin.isAdmin) throw new Error("Não autorizado.");
+  if (!admin?.isAdmin) throw new Error("Não autorizado.");
 
   await db.delete(pgVpsServers).where(eq(pgVpsServers.id, vpsId));
-  
+
   revalidatePath("/admin/vps");
   revalidatePath("/manage/vps");
-  
+
   return { success: true };
 }

@@ -1,20 +1,20 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useState } from "react";
+import { CgSpinner } from "react-icons/cg";
+import { createPlan } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { createPlan } from "@/app/actions";
-import { CgSpinner } from "react-icons/cg";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import type { Plan } from "@/lib/db/schema";
 
@@ -57,17 +57,17 @@ export function PlanModal() {
 
     startTransition(() => {
       const planInput: Omit<Plan, "id" | "createdAt" | "updatedAt"> = {
-        name: name.toString(),
+        backup: backup === "on",
+        cdn: cdn === "on",
         description: description.toString(),
-        price: +price,
+        email: email === "on",
+        featured: featured === "on",
         maxSites: Number.parseInt(maxSites as string, 10),
         maxStorage: Number.parseFloat(maxStorage as string),
+        name: name.toString(),
+        price: +price,
         ssl: ssl === "on",
-        backup: backup === "on",
-        email: email === "on",
-        cdn: cdn === "on",
         supportPriority: supportPriority === "on",
-        featured: featured === "on",
       };
       doCreate(planInput);
     });
@@ -80,7 +80,7 @@ export function PlanModal() {
   }, [state]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild={true}>
         <Button>Adicionar Plano</Button>
       </DialogTrigger>
@@ -88,28 +88,28 @@ export function PlanModal() {
         <DialogHeader>
           <DialogTitle>Novo Plano</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <Input name="name" placeholder="Nome" required={true} />
           <Input name="description" placeholder="Descrição" required={true} />
           <Input
             name="price"
-            type="number"
-            step="0.01"
             placeholder="Preço"
             required={true}
+            step="0.01"
+            type="number"
           />
           <Input
             name="maxSites"
-            type="number"
             placeholder="Max Sites"
             required={true}
+            type="number"
           />
           <Input
             name="maxStorage"
-            type="number"
-            step="0.1"
             placeholder="Max Storage (GB)"
             required={true}
+            step="0.1"
+            type="number"
           />
           <div className="flex items-center space-x-2">
             <Checkbox id="modal-ssl" name="ssl" />
@@ -138,13 +138,13 @@ export function PlanModal() {
           <DialogFooter>
             <Button type="submit">
               {isPending ? (
-                <CgSpinner className="w-4 h-4 mx-auto animate-spin" />
+                <CgSpinner className="mx-auto h-4 w-4 animate-spin" />
               ) : (
                 "Criar Plano"
               )}
             </Button>
             <DialogClose asChild={true}>
-              <Button variant="outline" type="button">
+              <Button type="button" variant="outline">
                 Cancelar
               </Button>
             </DialogClose>

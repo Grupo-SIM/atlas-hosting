@@ -1,6 +1,8 @@
 // prevents TS errors
 export declare let self: Worker;
 
+import axios from "axios";
+import { eq } from "drizzle-orm";
 import {
   parsePleskCliResponse,
   transformPleskHostToNamecheapHostName,
@@ -13,6 +15,7 @@ import type {
   DnsRecordType as NamecheapDnsRecordType,
 } from "@/lib/server/apis/namecheap/types";
 import pleskApi from "@/lib/server/apis/plesk";
+import WpCliApi from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
 import {
   createSubscription,
   deleteDomain,
@@ -21,15 +24,10 @@ import {
   getDomain,
 } from "@/lib/server/apis/plesk-xml/client";
 import type { GetDnsRecordsResult } from "@/lib/server/apis/plesk-xml/types";
-import { ELEMENTOR_PRO_PLUGIN_ID } from "@/lib/server/apis/plesk/wp-toolkit";
-import WpCliApi from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
 import { AppLogger } from "@/lib/server/logs";
 import { ClientRequestTypeEnum } from "@/plesk";
-import axios from "axios";
-import { eq } from "drizzle-orm";
 import type { InstallWpData } from "../types";
 import type { AddWebspaceParams } from "./types";
-import { generateSslForDomain } from "@/app/actions";
 
 self.onmessage = async (event: MessageEvent<InstallWpData>) => {
   const {
@@ -53,12 +51,12 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
       const pleskClientPassword = "Default#Password123";
 
       const result = await pleskApi.createClient({
-        name: user.name,
         email: userEmailForPlesk,
         login: user.id.replaceAll("-", "").substring(0, 50),
+        name: user.name,
         password: pleskClientPassword,
-        type: ClientRequestTypeEnum.Customer,
         status: 0,
+        type: ClientRequestTypeEnum.Customer,
       });
 
       sendProgress("INFO", "Atualizando os dados do usuário...");
@@ -81,7 +79,7 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
     }
 
     sendProgress("INFO", "Verificando e configurando domínio...");
-    let existingDomainInPlesk: { id: number } | undefined = undefined;
+    let existingDomainInPlesk: { id: number } | undefined;
 
     try {
       existingDomainInPlesk = await getDomain(domainName);
@@ -101,10 +99,10 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
 
     const params: AddWebspaceParams = {
       gen_setup: {
+        htype: "vrt_hst",
+        ip_address: process.env.SERVER_IP as string,
         name: domainName,
         "owner-id": pleskId,
-        ip_address: process.env.SERVER_IP as string,
-        htype: "vrt_hst",
       },
       hosting: {
         vrt_hst: {
@@ -268,9 +266,9 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
           }
 
           const namecheapEntry: DnsHostRecord = {
+            Address: pleskRecord.value,
             HostName: hostName,
             RecordType: recordTypeUpper as NamecheapDnsRecordType,
-            Address: pleskRecord.value,
             TTL: 1800, // Namecheap's default TTL
           };
 
@@ -290,9 +288,9 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
               `Cadastrando ${namecheapDnsEntries.length} registros DNS...`
             );
             const namecheapResponse = await namecheapApi.setHosts({
+              Records: namecheapDnsEntries,
               SLD: sld,
               TLD: tld,
-              Records: namecheapDnsEntries,
             });
 
             console.log({ namecheapResponse });
@@ -320,8 +318,8 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
             if (error instanceof Error && error.message.match(/^\d+$/)) {
               // Check if error.message is a Namecheap error code
               errorDetails = {
-                namecheapErrorCode: error.message,
                 message: "Erro da API Namecheap.",
+                namecheapErrorCode: error.message,
               };
               status = 400; // Bad request due to API constraints typically
             } else if (axios.isAxiosError(error)) {
@@ -490,9 +488,9 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
 
     const userLogger = new AppLogger(user);
     userLogger.log({
-      title: "Instalação do WordPress",
       description: `Instância do WordPress criada com sucesso em ${domainName}.`,
       severity: "success",
+      title: "Instalação do WordPress",
       type: "hosting",
     });
 
@@ -520,5 +518,5 @@ function sendProgress(
   data?: unknown
 ) {
   console.log(`[Worker] ${type}: ${message}`, data);
-  postMessage({ type, message, data });
+  postMessage({ data, message, type });
 }

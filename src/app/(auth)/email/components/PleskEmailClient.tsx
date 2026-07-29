@@ -1,13 +1,5 @@
 // @ts-nocheck
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import type { MailName } from "@/lib/server/apis/plesk-xml/types";
+
 import {
   Archive,
   HardDrive,
@@ -20,6 +12,16 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { User } from "@/lib/db/schema";
+import type { MailName } from "@/lib/server/apis/plesk-xml/types";
 import {
   deleteEmail,
   getEmailAccountSettings,
@@ -32,7 +34,6 @@ import { PleskEmailCompose } from "./PleskEmailCompose";
 import { PleskEmailList } from "./PleskEmailList";
 import { PleskEmailSidebar } from "./PleskEmailSidebar";
 import { PleskEmailView } from "./PleskEmailView";
-import type { User } from "@/lib/db/schema";
 
 export async function PleskEmailClient({
   user,
@@ -45,7 +46,7 @@ export async function PleskEmailClient({
   const currentAccountId =
     searchParams.accountId || initialMailAccounts[0]?.id.toString();
   const activeAccount = initialMailAccounts.find(
-    (acc) => acc.id.toString() === currentAccountId
+    acc => acc.id.toString() === currentAccountId
   );
 
   if (!activeAccount) {
@@ -84,7 +85,7 @@ export async function PleskEmailClient({
   if (accountConfigsResult.success && accountConfigsResult.data) {
     accountConfig =
       accountConfigsResult.data.find(
-        (config) =>
+        config =>
           config.emailAddress ===
           `${activeAccount.name}@${activeAccount.site_name}`
       ) ?? null;
@@ -102,7 +103,7 @@ export async function PleskEmailClient({
     );
     if (result.success && result.data) {
       // Ensure mapping from RealEmailMessage to EmailMessage if necessary
-      emails = result.data.map((email) => ({
+      emails = result.data.map(email => ({
         ...email,
         date: new Date(email.date), // Ensure date is a Date object
       }));
@@ -114,14 +115,14 @@ export async function PleskEmailClient({
     }
 
     if (selectedEmailId && action !== "compose") {
-      selectedEmailData = emails.find((e) => e.id === selectedEmailId) || null;
+      selectedEmailData = emails.find(e => e.id === selectedEmailId) || null;
       // markEmailAsRead will be called by PleskEmailView if needed
     }
 
     if (action === "compose" && replyToEmailId) {
       // Attempt to find the email to reply to from the current list
       // A more robust solution might involve fetching it specifically if not found
-      replyToEmailData = emails.find((e) => e.id === replyToEmailId) || null;
+      replyToEmailData = emails.find(e => e.id === replyToEmailId) || null;
       if (!replyToEmailData) {
         // Potentially fetch the specific email if not in the current list
         // For now, we assume it should be available or PleskEmailCompose handles ID.
@@ -135,49 +136,48 @@ export async function PleskEmailClient({
   // TODO: Fetch dynamic folder counts using getEmailFolders(accountConfig.id)
   const emailFoldersForSidebar: EmailFolder[] = [
     {
+      count: emails.filter(e => e.folder.toLowerCase() === "inbox" && !e.isRead)
+        .length,
+      icon: <Inbox className="h-4 w-4" />,
       id: "inbox",
       name: "Caixa de Entrada",
-      count: emails.filter(
-        (e) => e.folder.toLowerCase() === "inbox" && !e.isRead
-      ).length,
-      icon: <Inbox className="h-4 w-4" />,
     },
     {
-      id: "sent",
-      name: "Enviados",
       count: 0,
       icon: <Send className="h-4 w-4" />,
+      id: "sent",
+      name: "Enviados",
     }, // Placeholder counts
     {
-      id: "drafts",
-      name: "Rascunhos",
       count: 0,
       icon: <Mail className="h-4 w-4" />,
+      id: "drafts",
+      name: "Rascunhos",
     },
     {
-      id: "archive",
-      name: "Arquivo",
       count: 0,
       icon: <Archive className="h-4 w-4" />,
+      id: "archive",
+      name: "Arquivo",
     },
     {
-      id: "spam",
-      name: "Spam",
       count: 0,
       icon: <Shield className="h-4 w-4" />,
+      id: "spam",
+      name: "Spam",
     },
     {
-      id: "trash",
-      name: "Lixeira",
       count: 0,
       icon: <Trash2 className="h-4 w-4" />,
+      id: "trash",
+      name: "Lixeira",
     },
   ];
 
   const handleEmailSendAction = async (formData: FormData) => {
     "use server";
     if (!activeAccount || !accountConfig)
-      return { success: false, error: "Active account not configured." };
+      return { error: "Active account not configured.", success: false };
     formData.append("accountId", accountConfig.id);
     try {
       const result = await sendEmail(formData);
@@ -197,7 +197,7 @@ export async function PleskEmailClient({
   ) => {
     "use server";
     if (!activeAccount || !accountConfig)
-      return { success: false, error: "Active account not configured." };
+      return { error: "Active account not configured.", success: false };
     try {
       const result = await deleteEmail(accountConfig.id, emailId, folderName);
       if (result.success) {
@@ -216,10 +216,10 @@ export async function PleskEmailClient({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
               E-mail Plesk
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="mt-1 text-muted-foreground">
               Configure e gerencie suas contas de e-mail profissionais
             </p>
           </div>
@@ -227,9 +227,9 @@ export async function PleskEmailClient({
 
         {/* Setup Cards */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
+          <Card className="border-2 border-primary/20 border-dashed transition-colors hover:border-primary/40">
             <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Server className="h-6 w-6 text-primary" />
               </div>
               <CardTitle>Configuração Rápida</CardTitle>
@@ -243,7 +243,7 @@ export async function PleskEmailClient({
                 href={`/email?action=setupAccount${currentAccountId ? `&accountId=${currentAccountId}` : ""}${selectedFolder ? `&folder=${selectedFolder}` : ""}`}
               >
                 <Button className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Criar Conta de E-mail
                 </Button>
               </Link>
@@ -252,7 +252,7 @@ export async function PleskEmailClient({
 
           <Card>
             <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center mb-4">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/20">
                 <Shield className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
               <CardTitle>Segurança Avançada</CardTitle>
@@ -264,7 +264,7 @@ export async function PleskEmailClient({
 
           <Card>
             <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mb-4">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/20">
                 <HardDrive className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <CardTitle>Armazenamento Ilimitado</CardTitle>
@@ -277,9 +277,9 @@ export async function PleskEmailClient({
 
         {(initialMailAccounts.length === 0 || action === "setupAccount") && (
           <PleskEmailAccountSetup
+            cancelHref="/email"
             domains={domains}
             user={user}
-            cancelHref="/email"
             // onAccountCreated is handled by the form action within PleskEmailAccountSetup
             // onCancel should be a Link within PleskEmailAccountSetup to navigate away
             // e.g., <Link href={`/email${currentAccountId ? `?accountId=${currentAccountId}` : ''}`}>Cancelar</Link>
@@ -311,70 +311,70 @@ export async function PleskEmailClient({
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col md:flex-row gap-4 md:gap-6 overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] flex-col gap-4 overflow-hidden md:flex-row md:gap-6">
       {/* Sidebar */}
-      <div className="hidden md:block w-64 flex-shrink-0">
+      <div className="hidden w-64 flex-shrink-0 md:block">
         <PleskEmailSidebar
+          activeAccount={activeAccount}
           folders={emailFoldersForSidebar}
-          selectedFolder={selectedFolder}
           // onFolderSelect, onCompose, onAccountSelect, onAddAccount
           // will be handled by Link components within PleskEmailSidebar
           // It will need currentAccountId, selectedFolder to build links.
           mailAccounts={initialMailAccounts}
-          activeAccount={activeAccount}
+          selectedFolder={selectedFolder}
           user={user}
         />
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-6 min-w-0 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-hidden md:gap-6 lg:flex-row">
         {/* Email List */}
         <div className="w-full lg:w-96 lg:flex-shrink-0">
           <PleskEmailList
             emails={emails} // Assumes emails are already filtered for selectedFolder
-            selectedEmail={selectedEmailData}
             // onEmailSelect will be handled by Link components within PleskEmailList
             folder={selectedFolder}
+            selectedEmail={selectedEmailData}
             // isLoading is not needed for server component
           />
         </div>
 
         {/* Email Content */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           {action === "compose" ? (
             <PleskEmailCompose
+              fromAccount={activeAccount}
+              replyTo={replyToEmailData}
               // onSend will be a form action using handleEmailSendAction
               // onCancel will be a Link component
               sendAction={handleEmailSendAction}
-              replyTo={replyToEmailData}
-              fromAccount={activeAccount}
               // currentAccountId={currentAccountId}
               // currentFolder={selectedFolder}
               // selectedEmailId={selectedEmailId} // To build cancel link
             />
           ) : selectedEmailData ? (
             <PleskEmailView
-              email={selectedEmailData}
+              accountId={accountConfig.id}
               // onReply, onForward will be Link components
               // onDelete will be a form action using handleEmailDeleteAction
               deleteAction={handleEmailDeleteAction}
+              email={selectedEmailData}
               markAsReadAction={markEmailAsRead} // Pass the server action
-              accountId={accountConfig.id}
               // currentAccountId, currentFolder for Link construction
             />
           ) : (
-            <Card className="h-full flex items-center justify-center">
+            <Card className="flex h-full items-center justify-center">
               <CardContent>
                 <div className="text-center text-muted-foreground">
-                  <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">
+                  <Mail className="mx-auto mb-4 h-12 w-12 opacity-50" />
+                  <p className="mb-2 font-medium text-lg">
                     Nenhum e-mail selecionado
                   </p>
                   <p className="text-sm">
                     Selecione um e-mail da lista ou{" "}
                     <Link
-                      href={`/email?accountId=${currentAccountId}&folder=${selectedFolder}&action=compose`}
                       className="text-primary hover:underline"
+                      href={`/email?accountId=${currentAccountId}&folder=${selectedFolder}&action=compose`}
                     >
                       componha uma nova mensagem.
                     </Link>

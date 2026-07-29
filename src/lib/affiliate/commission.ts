@@ -1,7 +1,6 @@
 import { db } from "@/lib/db";
-import { pgAffiliateCommission, pgSystemConfig } from "@/lib/db/schema";
 import type { Invoice } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { pgAffiliateCommission } from "@/lib/db/schema";
 import { getActiveAttribution } from "./attribution";
 
 /**
@@ -38,10 +37,10 @@ export async function triggerCommissionIfApplicable(
   await db.insert(pgAffiliateCommission).values({
     affiliateUserId: attribution.affiliateUserId,
     buyerUserId: invoice.userId,
-    invoiceId: invoice.id,
-    grossAmount: invoice.amount,
     commissionAmount: invoice.amount * rate,
     commissionRate: rate,
+    grossAmount: invoice.amount,
+    invoiceId: invoice.id,
     status: "available",
   });
 }

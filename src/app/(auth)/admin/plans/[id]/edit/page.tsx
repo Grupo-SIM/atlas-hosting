@@ -1,3 +1,6 @@
+import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { notFound, redirect } from "next/navigation";
 import { updatePlan as updatePlanAction } from "@/app/actions"; // Renamed import
 import { Button } from "@/components/ui/button";
 import {
@@ -11,10 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; // Added Label
 import { db } from "@/lib/db";
-import { pgPlan, type Plan } from "@/lib/db/schema"; // Ensured Plan type is imported
-import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
-import { notFound, redirect } from "next/navigation";
+import { type Plan, pgPlan } from "@/lib/db/schema"; // Ensured Plan type is imported
 
 interface EditPlanPageProps {
   params: Promise<{ id: string }>;
@@ -38,7 +38,7 @@ export default async function EditPlanPage({
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
     const price = Number.parseFloat(formData.get("price") as string);
-    const maxSites = Number.parseInt(formData.get("maxSites") as string);
+    const maxSites = Number.parseInt(formData.get("maxSites") as string, 10);
     const maxStorage = Number.parseFloat(formData.get("maxStorage") as string);
     const ssl = formData.get("ssl") === "on";
     const backup = formData.get("backup") === "on";
@@ -48,17 +48,17 @@ export default async function EditPlanPage({
     const featured = formData.get("featured") === "on";
 
     const planUpdate: Partial<Omit<Plan, "id" | "createdAt" | "updatedAt">> = {
-      name,
+      backup,
+      cdn,
       description,
-      price,
+      email,
+      featured,
       maxSites,
       maxStorage,
+      name,
+      price,
       ssl,
-      backup,
-      email,
-      cdn,
       supportPriority,
-      featured,
     };
 
     await updatePlanAction(params.id, planUpdate); // Use imported server action
@@ -69,7 +69,7 @@ export default async function EditPlanPage({
   }
 
   return (
-    <div className="max-w-xl mx-auto py-10">
+    <div className="mx-auto max-w-xl py-10">
       <Card>
         <CardHeader>
           <CardTitle>Editar Plano</CardTitle>
@@ -80,114 +80,114 @@ export default async function EditPlanPage({
         <CardContent>
           <form action={handleUpdatePlan} className="space-y-6">
             <div>
-              <Label htmlFor="name" className="block mb-1 font-medium">
+              <Label className="mb-1 block font-medium" htmlFor="name">
                 Nome
               </Label>
               <Input
+                defaultValue={plan.name}
                 id="name"
                 name="name"
-                defaultValue={plan.name}
                 required={true}
               />
             </div>
             <div>
-              <Label htmlFor="description" className="block mb-1 font-medium">
+              <Label className="mb-1 block font-medium" htmlFor="description">
                 Descrição
               </Label>
               <Input
+                defaultValue={plan.description}
                 id="description"
                 name="description"
-                defaultValue={plan.description}
                 required={true}
               />
             </div>
             <div>
-              <Label htmlFor="price" className="block mb-1 font-medium">
+              <Label className="mb-1 block font-medium" htmlFor="price">
                 Preço (R$)
               </Label>
               <Input
+                defaultValue={plan.price}
                 id="price"
                 name="price"
-                type="number"
-                step="0.01"
-                defaultValue={plan.price}
                 required={true}
+                step="0.01"
+                type="number"
               />
             </div>
             <div>
-              <Label htmlFor="maxSites" className="block mb-1 font-medium">
+              <Label className="mb-1 block font-medium" htmlFor="maxSites">
                 Max. Sites
               </Label>
               <Input
+                defaultValue={plan.maxSites}
                 id="maxSites"
                 name="maxSites"
-                type="number"
-                defaultValue={plan.maxSites}
                 required={true}
+                type="number"
               />
             </div>
             <div>
-              <Label htmlFor="maxStorage" className="block mb-1 font-medium">
+              <Label className="mb-1 block font-medium" htmlFor="maxStorage">
                 Max. Armazenamento (GB)
               </Label>
               <Input
+                defaultValue={plan.maxStorage}
                 id="maxStorage"
                 name="maxStorage"
-                type="number"
-                step="0.1"
-                defaultValue={plan.maxStorage}
                 required={true}
+                step="0.1"
+                type="number"
               />
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
+                defaultChecked={plan.ssl ?? false}
                 id="ssl"
                 name="ssl"
-                defaultChecked={plan.ssl ?? false}
               />
               <Label htmlFor="ssl">SSL Grátis</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
+                defaultChecked={plan.backup ?? false}
                 id="backup"
                 name="backup"
-                defaultChecked={plan.backup ?? false}
               />
               <Label htmlFor="backup">Backup</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
+                defaultChecked={plan.email ?? false}
                 id="email"
                 name="email"
-                defaultChecked={plan.email ?? false}
               />
               <Label htmlFor="email">Email</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
+                defaultChecked={plan.cdn ?? false}
                 id="cdn"
                 name="cdn"
-                defaultChecked={plan.cdn ?? false}
               />
               <Label htmlFor="cdn">CDN</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
+                defaultChecked={plan.supportPriority ?? false}
                 id="supportPriority"
                 name="supportPriority"
-                defaultChecked={plan.supportPriority ?? false}
               />
               <Label htmlFor="supportPriority">Suporte Prioritário</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
+                defaultChecked={plan.featured ?? false}
                 id="featured"
                 name="featured"
-                defaultChecked={plan.featured ?? false}
               />
               <Label htmlFor="featured">Destacado</Label>
             </div>
-            <Button type="submit" className="w-full">
+            <Button className="w-full" type="submit">
               Salvar Alterações
             </Button>
           </form>

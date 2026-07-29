@@ -1,8 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { toast } from "sonner";
+import { createVpsRenewalInvoice } from "@/app/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,11 +17,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  suspendVpsSubscriptionAction,
-  reactivateVpsSubscriptionAction,
   cancelVpsSubscriptionAction,
+  reactivateVpsSubscriptionAction,
 } from "./actions";
-import { createVpsRenewalInvoice } from "@/app/actions";
 
 interface Props {
   id: string;
@@ -31,11 +30,17 @@ interface Props {
 
 const FIFTEEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000;
 
-export function SubscriptionActionsCell({ id, status, paymentMethod, nextChargeDate }: Props) {
+export function SubscriptionActionsCell({
+  id,
+  status,
+  paymentMethod,
+  nextChargeDate,
+}: Props) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
-  const dueSoon = new Date(nextChargeDate).getTime() <= Date.now() + FIFTEEN_DAYS_MS;
+  const dueSoon =
+    new Date(nextChargeDate).getTime() <= Date.now() + FIFTEEN_DAYS_MS;
   const canRenewPix =
     (paymentMethod === "pix" || paymentMethod === "boleto") &&
     (status === "paused" || (status === "active" && dueSoon));
@@ -55,7 +60,12 @@ export function SubscriptionActionsCell({ id, status, paymentMethod, nextChargeD
 
   if (canRenewPix) {
     primaryAction = (
-      <Button variant="default" size="sm" disabled={pending} onClick={handleRenew}>
+      <Button
+        disabled={pending}
+        onClick={handleRenew}
+        size="sm"
+        variant="default"
+      >
         Renovar (PIX)
       </Button>
     );
@@ -96,12 +106,12 @@ export function SubscriptionActionsCell({ id, status, paymentMethod, nextChargeD
   if (!canRenewPix && status === "paused") {
     primaryAction = (
       <Button
-        variant="default"
-        size="sm"
         disabled={pending}
         onClick={() =>
           startTransition(() => reactivateVpsSubscriptionAction(id))
         }
+        size="sm"
+        variant="default"
       >
         Reativar
       </Button>
@@ -114,13 +124,15 @@ export function SubscriptionActionsCell({ id, status, paymentMethod, nextChargeD
   const cancelAction = false && (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm" disabled={pending}>
+        <Button disabled={pending} size="sm" variant="destructive">
           Cancelar
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Cancelar assinatura definitivamente?</AlertDialogTitle>
+          <AlertDialogTitle>
+            Cancelar assinatura definitivamente?
+          </AlertDialogTitle>
           <AlertDialogDescription>
             Esta ação não pode ser desfeita. O cliente não será cobrado
             novamente por esta assinatura. Para retomar o serviço, será

@@ -1,6 +1,6 @@
+import https from "node:https";
+import axios, { type AxiosInstance } from "axios";
 import * as Plesk from "@/plesk";
-import axios, { type AxiosInstance, type AxiosResponse } from "axios";
-import https from "https";
 import SubscriptionApi from "./subscriptions";
 import PleskWpToolkitApi from "./wp-toolkit";
 
@@ -31,19 +31,22 @@ export class PleskApi {
     this.apiKey = process.env.PLESK_API_KEY;
 
     // Se estivermos em build, evita logs de inicialização e configurações pesadas
-    const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
-    
+    const isBuild = process.env.NEXT_PHASE === "phase-production-build";
+
     if (!isBuild) {
-      console.log(`[PleskApi] Initializing for ${this.apiUrl} using ${this.apiKey ? "API Key" : "Basic Auth"}`);
+      console.log(
+        `[PleskApi] Initializing for ${this.apiUrl} using ${this.apiKey ? "API Key" : "Basic Auth"}`
+      );
     }
 
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
       Accept: "application/json",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
       "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
       "Cache-Control": "no-cache",
+      "Content-Type": "application/json",
       Referer: `${this.apiUrl}/`,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     };
 
     if (this.apiKey) {
@@ -52,23 +55,23 @@ export class PleskApi {
 
     this.pleskAxios = axios.create({
       baseURL: this.apiUrl,
-      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
       headers,
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
       ...(this.apiKey
         ? {}
         : {
             auth: {
-              username: this.rootUser,
               password: this.rootPassword,
+              username: this.rootUser,
             },
           }),
     });
 
     this.apiConfig = new Plesk.Configuration({
-      basePath: this.apiUrl,
       apiKey: this.apiKey,
-      username: this.apiKey ? undefined : this.rootUser,
+      basePath: this.apiUrl,
       password: this.apiKey ? undefined : this.rootPassword,
+      username: this.apiKey ? undefined : this.rootUser,
     });
 
     const initParameters: ConstructorParameters<typeof Plesk.ClientsApi> = [
@@ -87,25 +90,6 @@ export class PleskApi {
 
     this.wordpress = new PleskWpToolkitApi(this.cliApi);
     this.subscriptions = new SubscriptionApi(this.cliApi);
-  }
-
-  private async withAuth<T extends AxiosResponse>(request: Promise<T>) {
-    // try {
-    // 	return
-    // }
-  }
-
-  private async getAuthToken() {
-    try {
-      const response = await this.authApi.authKeysPost({});
-      console.log(response);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.log(error.request);
-      }
-      return null;
-    }
   }
 
   public async getClients() {
@@ -193,22 +177,22 @@ export class PleskApi {
 
     try {
       const { data } = await this.domainsApi.domainsPost({
+        hosting_settings: {
+          ftp_login: `user_${Math.random().toString(36).substring(2, 10)}`,
+          ftp_password: `D%$%${Math.random().toString(36).substring(2, 10)}`,
+          php_handler_id: "fastcgi",
+          php_version: "8.2.28",
+          ssl: true,
+          upload_max_filesize: "10M",
+          webmail: true,
+        },
+        hosting_type: Plesk.DomainRequestHostingTypeEnum.Virtual,
         name: domainName,
         ownerClient: {
           externalId: user.guid,
           guid: user.guid,
           id: user.id,
           login: user.login,
-        },
-        hosting_type: Plesk.DomainRequestHostingTypeEnum.Virtual,
-        hosting_settings: {
-          php_handler_id: "fastcgi",
-          php_version: "8.2.28",
-          ssl: true,
-          webmail: true,
-          ftp_login: `user_${Math.random().toString(36).substring(2, 10)}`,
-          ftp_password: `D%$%${Math.random().toString(36).substring(2, 10)}`,
-          upload_max_filesize: "10M",
         },
       });
 
@@ -237,6 +221,11 @@ export class PleskApi {
 
     try {
       const { data } = await this.domainsApi.domainsPost({
+        hosting_settings: {
+          ftp_login: `user_${Math.random().toString(36).substring(2, 10)}`,
+          ftp_password: `D%$%${Math.random().toString(36).substring(2, 10)}`,
+        },
+        hosting_type: Plesk.DomainRequestHostingTypeEnum.Virtual,
         name: domainName,
         ownerClient: {
           externalId: user.guid,
@@ -244,13 +233,8 @@ export class PleskApi {
           id: user.id,
           login: user.login,
         },
-        hosting_type: Plesk.DomainRequestHostingTypeEnum.Virtual,
         plan: {
           name: "Coolify",
-        },
-        hosting_settings: {
-          ftp_login: `user_${Math.random().toString(36).substring(2, 10)}`,
-          ftp_password: `D%$%${Math.random().toString(36).substring(2, 10)}`,
         },
       });
 

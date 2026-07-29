@@ -1,6 +1,6 @@
-import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
 
 /**
  * Script de emergência para criar as tabelas de VPS na mão
@@ -41,15 +41,19 @@ export async function GET() {
       );
     `);
 
-    return NextResponse.json({ 
-      success: true, 
-      message: "Tabelas VPS criadas/verificadas com sucesso no banco de produção!" 
+    return NextResponse.json({
+      message:
+        "Tabelas VPS criadas/verificadas com sucesso no banco de produção!",
+      success: true,
     });
   } catch (error: any) {
     console.error("Erro no setup manual do banco:", error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: error.message,
+        success: false,
+      },
+      { status: 500 }
+    );
   }
 }

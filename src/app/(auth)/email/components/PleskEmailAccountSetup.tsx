@@ -1,3 +1,5 @@
+import { AlertCircle, Mail, Server } from "lucide-react";
+import Link from "next/link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,8 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, Mail, Server } from "lucide-react";
-import Link from "next/link";
 import { createPleskMailAccount } from "../actions";
 
 interface PleskEmailAccountSetupProps {
@@ -45,12 +45,10 @@ export function PleskEmailAccountSetup({
   cancelHref,
   errorMessage,
 }: PleskEmailAccountSetupProps) {
-  const availableDomains = domains.filter(
-    (domain) => domain.status === "active"
-  );
+  const availableDomains = domains.filter(domain => domain.status === "active");
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="mx-auto w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Mail className="h-5 w-5" />
@@ -75,20 +73,20 @@ export function PleskEmailAccountSetup({
             <div className="space-y-2">
               <Label htmlFor="domain">Domínio *</Label>
               <Select
-                name="domainId"
                 defaultValue={availableDomains[0]?.id}
+                name="domainId"
                 required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um domínio" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableDomains.map((domain) => (
+                  {availableDomains.map(domain => (
                     <SelectItem key={domain.id} value={domain.id}>
                       <div className="flex items-center space-x-2">
                         <Server className="h-4 w-4" />
                         <span>{domain.name}</span>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge className="text-xs" variant="secondary">
                           Plesk
                         </Badge>
                       </div>
@@ -97,7 +95,7 @@ export function PleskEmailAccountSetup({
                 </SelectContent>
               </Select>
               {availableDomains.length === 0 && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Nenhum domínio disponível. Configure um domínio com Plesk
                   primeiro.
                 </p>
@@ -109,16 +107,16 @@ export function PleskEmailAccountSetup({
               <Label htmlFor="username">Nome de usuário *</Label>
               <div className="flex items-center space-x-2">
                 <Input
-                  name="username"
-                  id="username"
-                  placeholder="admin"
                   className="flex-1"
+                  id="username"
+                  name="username"
                   pattern="[a-z0-9._-]+"
-                  title="Apenas letras minúsculas, números, pontos, hífens e sublinhados."
+                  placeholder="admin"
                   required
+                  title="Apenas letras minúsculas, números, pontos, hífens e sublinhados."
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Apenas letras minúsculas, números, pontos, hífens e sublinhados
               </p>
               {/* {username && selectedDomainData && (
@@ -135,12 +133,12 @@ export function PleskEmailAccountSetup({
             <div className="space-y-2">
               <Label htmlFor="displayName">Nome de exibição</Label>
               <Input
+                defaultValue={user.name}
                 id="displayName"
                 name="displayName"
-                defaultValue={user.name}
                 placeholder="João Silva"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Nome que aparecerá como remetente dos e-mails
               </p>
             </div>
@@ -152,11 +150,11 @@ export function PleskEmailAccountSetup({
               <Label htmlFor="password">Senha *</Label>
               <Input
                 id="password"
+                minLength={8}
                 name="password"
-                type="password"
                 placeholder="Digite uma senha segura"
                 required
-                minLength={8}
+                type="password"
               />
             </div>
 
@@ -165,18 +163,18 @@ export function PleskEmailAccountSetup({
               <Label htmlFor="confirmPassword">Confirmar senha *</Label>
               <Input
                 id="confirmPassword"
+                minLength={8}
                 name="confirmPassword" // Server action should validate this against 'password'
-                type="password"
                 placeholder="Digite a senha novamente"
                 required
-                minLength={8}
+                type="password"
               />
             </div>
 
             {/* Quota */}
             <div className="space-y-2">
               <Label htmlFor="quota">Cota de armazenamento (MB)</Label>
-              <Select name="quota" defaultValue="1000">
+              <Select defaultValue="1000" name="quota">
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -193,9 +191,9 @@ export function PleskEmailAccountSetup({
           </div>
 
           {/* Password Requirements (Static Info) */}
-          <div className="p-3 bg-muted rounded-lg">
-            <p className="text-sm font-medium mb-2">Requisitos da Senha:</p>
-            <ul className="text-xs text-muted-foreground space-y-1">
+          <div className="rounded-lg bg-muted p-3">
+            <p className="mb-2 font-medium text-sm">Requisitos da Senha:</p>
+            <ul className="space-y-1 text-muted-foreground text-xs">
               <li>• Mínimo de 8 caracteres</li>
               <li>• Pelo menos uma letra maiúscula</li>
               <li>• Pelo menos um número</li>
@@ -204,9 +202,9 @@ export function PleskEmailAccountSetup({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end space-x-2 pt-4 border-t">
+          <div className="flex items-center justify-end space-x-2 border-t pt-4">
             <Link href={cancelHref}>
-              <Button variant="outline" type="button">
+              <Button type="button" variant="outline">
                 Cancelar
               </Button>
             </Link>

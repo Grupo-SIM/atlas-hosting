@@ -17,25 +17,20 @@
  */
 
 import globalAxios, {
-  type AxiosResponse,
   type AxiosInstance,
   type AxiosRequestConfig,
+  type AxiosResponse,
 } from "axios";
-import type { Configuration } from "../configuration";
 // Some imports not used depending on template conditions
 // @ts-ignore
-import {
-  BASE_PATH,
-  COLLECTION_FORMATS,
-  type RequestArgs,
-  BaseAPI,
-  RequiredError,
-} from "../base";
-import { ErrorResponse } from "../models";
-import type { FtpUser } from "../models";
-import type { FtpUserRequest } from "../models";
-import type { FtpUserUpdateRequest } from "../models";
-import type { StatusResponse } from "../models";
+import { BASE_PATH, BaseAPI, type RequestArgs, RequiredError } from "../base";
+import type { Configuration } from "../configuration";
+import type {
+  FtpUser,
+  FtpUserRequest,
+  FtpUserUpdateRequest,
+  StatusResponse,
+} from "../models";
 
 /**
  * FtpUsersApi - axios parameter creator
@@ -57,7 +52,7 @@ export const FtpUsersApiAxiosParamCreator = (
     domain?: string,
     options: AxiosRequestConfig = {}
   ): Promise<RequestArgs> => {
-    const localVarPath = `/ftpusers`;
+    const localVarPath = "/ftpusers";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -73,7 +68,7 @@ export const FtpUsersApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -84,18 +79,18 @@ export const FtpUsersApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
     if (name !== undefined) {
-      localVarQueryParameter["name"] = name;
+      localVarQueryParameter.name = name;
     }
 
     if (domain !== undefined) {
-      localVarQueryParameter["domain"] = domain;
+      localVarQueryParameter.domain = domain;
     }
 
     const query = new URLSearchParams(localVarUrlObj.search);
@@ -106,8 +101,9 @@ export const FtpUsersApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -115,9 +111,9 @@ export const FtpUsersApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -138,7 +134,7 @@ export const FtpUsersApiAxiosParamCreator = (
         "Required parameter name was null or undefined when calling ftpusersNameDelete."
       );
     }
-    const localVarPath = `/ftpusers/{name}`.replace(
+    const localVarPath = "/ftpusers/{name}".replace(
       `{${"name"}}`,
       encodeURIComponent(String(name))
     );
@@ -157,7 +153,7 @@ export const FtpUsersApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -168,9 +164,9 @@ export const FtpUsersApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -182,8 +178,9 @@ export const FtpUsersApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -191,9 +188,9 @@ export const FtpUsersApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -223,7 +220,7 @@ export const FtpUsersApiAxiosParamCreator = (
         "Required parameter name was null or undefined when calling ftpusersNamePut."
       );
     }
-    const localVarPath = `/ftpusers/{name}`.replace(
+    const localVarPath = "/ftpusers/{name}".replace(
       `{${"name"}}`,
       encodeURIComponent(String(name))
     );
@@ -242,7 +239,7 @@ export const FtpUsersApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -253,9 +250,9 @@ export const FtpUsersApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -269,8 +266,9 @@ export const FtpUsersApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -284,9 +282,9 @@ export const FtpUsersApiAxiosParamCreator = (
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -307,7 +305,7 @@ export const FtpUsersApiAxiosParamCreator = (
         "Required parameter body was null or undefined when calling ftpusersPost."
       );
     }
-    const localVarPath = `/ftpusers`;
+    const localVarPath = "/ftpusers";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -323,7 +321,7 @@ export const FtpUsersApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -334,9 +332,9 @@ export const FtpUsersApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -350,8 +348,9 @@ export const FtpUsersApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -365,13 +364,12 @@ export const FtpUsersApiAxiosParamCreator = (
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
 });
-
 
 /**
  * FtpUsersApi - functional programming interface
@@ -394,7 +392,7 @@ export const FtpUsersApiFp = (configuration?: Configuration) => ({
     (
       axios?: AxiosInstance,
       basePath?: string
-    ) => Promise<AxiosResponse<Array<FtpUser>>>
+    ) => Promise<AxiosResponse<FtpUser[]>>
   > {
     const localVarAxiosArgs = await FtpUsersApiAxiosParamCreator(
       configuration
@@ -504,7 +502,6 @@ export const FtpUsersApiFp = (configuration?: Configuration) => ({
   },
 });
 
-
 /**
  * FtpUsersApi - factory interface
  * @export
@@ -526,10 +523,10 @@ export const FtpUsersApiFactory = (
     name?: string,
     domain?: string,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<FtpUser>>> {
+  ): Promise<AxiosResponse<FtpUser[]>> {
     return FtpUsersApiFp(configuration)
       .ftpusersGet(name, domain, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -544,7 +541,7 @@ export const FtpUsersApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return FtpUsersApiFp(configuration)
       .ftpusersNameDelete(name, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -561,7 +558,7 @@ export const FtpUsersApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return FtpUsersApiFp(configuration)
       .ftpusersNamePut(body, name, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -576,10 +573,9 @@ export const FtpUsersApiFactory = (
   ): Promise<AxiosResponse<FtpUser>> {
     return FtpUsersApiFp(configuration)
       .ftpusersPost(body, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
 });
-
 
 /**
  * FtpUsersApi - object-oriented interface
@@ -601,10 +597,10 @@ export class FtpUsersApi extends BaseAPI {
     name?: string,
     domain?: string,
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<FtpUser>>> {
+  ): Promise<AxiosResponse<FtpUser[]>> {
     return FtpUsersApiFp(this.configuration)
       .ftpusersGet(name, domain, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -620,7 +616,7 @@ export class FtpUsersApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return FtpUsersApiFp(this.configuration)
       .ftpusersNameDelete(name, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -638,7 +634,7 @@ export class FtpUsersApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return FtpUsersApiFp(this.configuration)
       .ftpusersNamePut(body, name, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -654,6 +650,6 @@ export class FtpUsersApi extends BaseAPI {
   ): Promise<AxiosResponse<FtpUser>> {
     return FtpUsersApiFp(this.configuration)
       .ftpusersPost(body, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
 }

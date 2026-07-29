@@ -1,14 +1,5 @@
-import { db } from "@/lib/db";
-import { pgInvoice, pgUser, pgOrganization } from "@/lib/db/schema";
-import { desc, sql, and } from "drizzle-orm";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { and, desc, sql } from "drizzle-orm";
+import { Badge } from "@/components/ui/badge";
 import {
   Pagination,
   PaginationContent,
@@ -17,7 +8,16 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { db } from "@/lib/db";
+import { pgInvoice, pgUser } from "@/lib/db/schema";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -27,7 +27,10 @@ interface InvoiceListProps {
   selectedClient?: { name: string; email: string } | null;
 }
 
-export async function InvoiceList({ searchParams, selectedClient }: InvoiceListProps) {
+export async function InvoiceList({
+  searchParams,
+  selectedClient,
+}: InvoiceListProps) {
   const page = Number(searchParams?.page) || 1;
   const search = searchParams?.search || "";
   const clientId = searchParams?.clientId || "";
@@ -43,14 +46,14 @@ export async function InvoiceList({ searchParams, selectedClient }: InvoiceListP
   const [invoices, totalInvoices] = await Promise.all([
     db
       .select({
-        id: pgInvoice.id,
         amount: pgInvoice.amount,
+        createdAt: pgInvoice.createdAt,
+        id: pgInvoice.id,
         status: pgInvoice.status,
         type: pgInvoice.type,
-        createdAt: pgInvoice.createdAt,
         user: {
-          name: pgUser.name,
           email: pgUser.email,
+          name: pgUser.name,
         },
       })
       .from(pgInvoice)
@@ -78,9 +81,9 @@ export async function InvoiceList({ searchParams, selectedClient }: InvoiceListP
         variant: "default" | "secondary" | "destructive" | "outline" | "action";
       }
     > = {
+      failed: { label: "Falhou", variant: "destructive" },
       paid: { label: "Pago", variant: "action" },
       pending: { label: "Pendente", variant: "secondary" },
-      failed: { label: "Falhou", variant: "destructive" },
       refunded: { label: "Reembolsado", variant: "outline" },
     };
     const { label, variant } = statusMap[status] || {
@@ -104,13 +107,16 @@ export async function InvoiceList({ searchParams, selectedClient }: InvoiceListP
   return (
     <div className="space-y-4">
       {selectedClient && (
-        <p className="text-sm text-muted-foreground">
-          Mostrando faturas de <span className="font-medium text-foreground">{selectedClient.name}</span>{" "}
+        <p className="text-muted-foreground text-sm">
+          Mostrando faturas de{" "}
+          <span className="font-medium text-foreground">
+            {selectedClient.name}
+          </span>{" "}
           ({selectedClient.email})
         </p>
       )}
 
-      <div className="rounded-md border overflow-x-auto">
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -124,19 +130,22 @@ export async function InvoiceList({ searchParams, selectedClient }: InvoiceListP
           <TableBody>
             {invoices.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                <TableCell
+                  className="h-24 text-center text-muted-foreground"
+                  colSpan={5}
+                >
                   Nenhuma fatura encontrada.
                 </TableCell>
               </TableRow>
             )}
-            {invoices.map((invoice) => (
+            {invoices.map(invoice => (
               <TableRow key={invoice.id}>
                 <TableCell>
                   <div>
                     <div className="font-medium">
                       {invoice.user?.name || "N/A"}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-muted-foreground text-sm">
                       {invoice.user?.email || "N/A"}
                     </div>
                   </div>
@@ -158,13 +167,13 @@ export async function InvoiceList({ searchParams, selectedClient }: InvoiceListP
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                href={pageQuery(page - 1)}
                 aria-disabled={page <= 1}
                 className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+                href={pageQuery(page - 1)}
               />
             </PaginationItem>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-              (pageNum) => (
+              pageNum => (
                 <PaginationItem key={pageNum}>
                   <PaginationLink
                     href={pageQuery(pageNum)}
@@ -177,11 +186,11 @@ export async function InvoiceList({ searchParams, selectedClient }: InvoiceListP
             )}
             <PaginationItem>
               <PaginationNext
-                href={pageQuery(page + 1)}
                 aria-disabled={page >= totalPages}
                 className={
                   page >= totalPages ? "pointer-events-none opacity-50" : ""
                 }
+                href={pageQuery(page + 1)}
               />
             </PaginationItem>
           </PaginationContent>

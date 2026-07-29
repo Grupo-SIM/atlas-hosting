@@ -1,15 +1,15 @@
 "use server";
 
+import axios from "axios";
 import { eq } from "drizzle-orm";
 import { cache } from "react";
+import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
 import { db } from "../db";
-import axios from "axios";
-import { pgUser, type OrganizationDomain, type User } from "../db/schema/index";
+import { type OrganizationDomain, pgUser, type User } from "../db/schema/index";
 import namecheapApi from "./apis/namecheap";
 import type { DomainListItem } from "./apis/namecheap/types";
 import pleskApi from "./apis/plesk";
 import type { WordPressInstance } from "./apis/plesk/wp-toolkit";
-import type { DomainsGetInfoCleanedResponse } from "@/lib/server/apis/namecheap/types";
 
 export interface ParsedWordPressInstance {
   id: number;
@@ -32,7 +32,7 @@ export async function domainHasWordPress(
       domainNameToCheck = `https://${domainNameToCheck}`;
     }
     const domainHostname = new URL(domainNameToCheck).hostname;
-    return wpInstances.some((wp) => {
+    return wpInstances.some(wp => {
       try {
         return new URL(wp.domain).hostname === domainHostname;
       } catch (e) {
@@ -48,7 +48,7 @@ export const getUserWordPressSites = cache(async function getUserWordPressSites(
   user: User
 ) {
   const userDomainNames = user.organization.domains.map(
-    (domain) => domain.domain
+    domain => domain.domain
   );
 
   // Fetch WordPress instances from Plesk
@@ -59,10 +59,10 @@ export const getUserWordPressSites = cache(async function getUserWordPressSites(
     if (wpResponse.stdout) {
       allWpInstances = JSON.parse(wpResponse.stdout).map(
         (instance: WordPressInstance) => ({
+          domain: instance.siteUrl || instance.mainDomainId, // site_url is usually the one from WP Toolkit JSON output
           id: instance.id, // WP Toolkit specific ID
           instanceId: instance.id, // Redundant, but kept for consistency if used elsewhere
           name: instance.name, // Title of the site
-          domain: instance.siteUrl || instance.mainDomainId, // site_url is usually the one from WP Toolkit JSON output
           path: instance.path,
           status: instance.stateText,
         })
@@ -80,11 +80,11 @@ export const getUserWordPressSites = cache(async function getUserWordPressSites(
   }
 
   // Filter WordPress instances to only show those associated with the user's Namecheap domains
-  const userWpInstances = allWpInstances.filter((instance) => {
+  const userWpInstances = allWpInstances.filter(instance => {
     if (!instance.domain) return false;
     try {
       const instanceHostname = new URL(instance.domain).hostname;
-      return userDomainNames.some((userDomain) => {
+      return userDomainNames.some(userDomain => {
         return (
           instanceHostname === userDomain ||
           instanceHostname === `www.${userDomain}`
@@ -106,8 +106,8 @@ export const getUserNamecheapDomains = cache(async function getUserDomains(
   try {
     const allDomains = await Promise.all(
       user.organization.domains
-        .filter((domain) => domain.active)
-        .map(async (domain) => {
+        .filter(domain => domain.active)
+        .map(async domain => {
           return namecheapApi.getInfo({
             DomainName: domain.domain,
           });
@@ -117,7 +117,7 @@ export const getUserNamecheapDomains = cache(async function getUserDomains(
     const wpInstances = await getUserWordPressSites(user); // Reuse the existing function
 
     const domainsWithPleskData = await Promise.all(
-      allDomains.map(async (domain) => {
+      allDomains.map(async domain => {
         let domainNameToCheck = domain.DomainName;
         try {
           // Ensure domain.Name is a valid URL string before parsing
@@ -127,7 +127,7 @@ export const getUserNamecheapDomains = cache(async function getUserDomains(
           const domainHostname = new URL(domainNameToCheck).hostname;
           return {
             ...domain,
-            inPlesk: wpInstances.some((wp) => {
+            inPlesk: wpInstances.some(wp => {
               try {
                 return new URL(wp.domain).hostname === domainHostname;
               } catch (e) {
@@ -179,7 +179,7 @@ async function _getUserCurrentDomain(
   }
 
   const fullDomain = domains.find(
-    (domain) => domain.domain === user.selectedDomain
+    domain => domain.domain === user.selectedDomain
   );
 
   if (!fullDomain) {

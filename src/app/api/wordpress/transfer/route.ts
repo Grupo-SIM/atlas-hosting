@@ -1,9 +1,9 @@
-import { getUser } from "@/lib/auth";
+import { exec } from "node:child_process";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { promisify } from "node:util";
 import { type NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { exec } from "child_process";
-import { promisify } from "util";
+import { getUser } from "@/lib/auth";
 import pleskApi from "@/lib/server/apis/plesk";
 import * as Plesk from "@/plesk";
 
@@ -94,10 +94,10 @@ export async function POST(request: NextRequest) {
       const adminUrl = `${siteUrl}/wp-admin`;
 
       return NextResponse.json({
-        message: "Site WordPress transferido com sucesso",
-        siteUrl,
         adminUrl,
         instanceId: wpInstance.instanceId,
+        message: "Site WordPress transferido com sucesso",
+        siteUrl,
       });
     } catch (error) {
       // Cleanup on error
@@ -138,16 +138,16 @@ async function parseWordPressExport(
   const homeUrl = extractHomeUrlFromDb(dbContent) || siteUrl;
 
   return {
-    files: filesPath,
     database: dbPath,
+    files: filesPath,
     wpConfig: {
-      dbName,
-      dbUser,
-      dbPassword,
       dbHost,
-      tablePrefix,
-      siteUrl,
+      dbName,
+      dbPassword,
+      dbUser,
       homeUrl,
+      siteUrl,
+      tablePrefix,
     },
   };
 }
@@ -193,12 +193,12 @@ async function ensurePleskAccount(user: any) {
   // Create Plesk customer account if needed
   try {
     const pleskClient = await pleskApi.createClient({
-      name: user.name,
       email: user.email,
+      externalId: user.id,
       login: user.email,
+      name: user.name,
       password: generateRandomPassword(),
       type: Plesk.ClientRequestTypeEnum.Customer,
-      externalId: user.id,
     });
 
     return pleskClient;
@@ -215,8 +215,8 @@ async function createPleskSubscription(domain: string, user: any) {
     const subscription = await pleskApi.subscriptions.createSubscription({
       domainName: domain,
       login: user.email,
-      password: generateRandomPassword(),
       ownerLogin: user.email,
+      password: generateRandomPassword(),
     });
 
     return subscription;
@@ -242,7 +242,7 @@ async function installWordPressOnPlesk(
       user.email
     );
 
-    if (!installResult || !installResult.stdout) {
+    if (!installResult?.stdout) {
       throw new Error("Falha na instalação do WordPress");
     }
 
@@ -253,8 +253,8 @@ async function installWordPressOnPlesk(
     }
 
     return {
-      instanceId: stdOut["instance-id"],
       adminPassword,
+      instanceId: stdOut["instance-id"],
     };
   } catch (error) {
     console.error("Erro ao instalar WordPress:", error);

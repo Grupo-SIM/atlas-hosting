@@ -1,29 +1,39 @@
+import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createUser, resignupUnverifiedUser } from "@/lib/auth/utils";
-import { AppLogger } from "@/lib/server/logs";
-import { errorHandler } from "@/lib/error-handler";
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { errorHandler } from "@/lib/error-handler";
+import { AppLogger } from "@/lib/server/logs";
 
 const signupSchema = z.object({
   email: z.string().email("Email inválido"),
-  password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres").max(100, "A senha deve ter no máximo 100 caracteres"),
-  fullName: z.string().min(1, "Nome é obrigatório").refine(
-    (name) => name.split(" ").length >= 2,
-    "Digite seu nome completo"
-  ),
+  fullName: z
+    .string()
+    .min(1, "Nome é obrigatório")
+    .refine(name => name.split(" ").length >= 2, "Digite seu nome completo"),
   organizationName: z.string().min(1, "Nome da organização é obrigatório"),
-  referrerId: z.string().optional(),
+  password: z
+    .string()
+    .min(8, "A senha deve ter pelo menos 8 caracteres")
+    .max(100, "A senha deve ter no máximo 100 caracteres"),
   ref: z.string().optional(),
+  referrerId: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, fullName, organizationName, referrerId: initialReferrerId, ref } = signupSchema.parse(body);
+    const {
+      email,
+      password,
+      fullName,
+      organizationName,
+      referrerId: initialReferrerId,
+      ref,
+    } = signupSchema.parse(body);
 
     let referrerId = initialReferrerId;
 
@@ -42,11 +52,11 @@ export async function POST(request: NextRequest) {
       where: eq(pgUser.email, email.toLowerCase()),
     });
 
-    if (existingUser && existingUser.emailVerified) {
+    if (existingUser?.emailVerified) {
       return NextResponse.json(
         {
-          status: "error",
           message: "Este email já está em uso",
+          status: "error",
         },
         { status: 400 }
       );
@@ -62,13 +72,19 @@ export async function POST(request: NextRequest) {
           password,
           organizationName
         )
-      : await createUser(fullName, email, password, organizationName, referrerId);
+      : await createUser(
+          fullName,
+          email,
+          password,
+          organizationName,
+          referrerId
+        );
 
     if (!user) {
       return NextResponse.json(
         {
-          status: "error",
           message: "Erro ao criar conta. Tente novamente.",
+          status: "error",
         },
         { status: 500 }
       );
@@ -78,21 +94,23 @@ export async function POST(request: NextRequest) {
     if (referrerId && !existingUser) {
       const userLogger = new AppLogger({ id: referrerId });
       userLogger.log({
-        type: "account",
-        title: "Usuário cadastrado com seu link de afiliado",
-        description: "Um novo usuário se cadastrou usando seu link de afiliado.",
+        description:
+          "Um novo usuário se cadastrou usando seu link de afiliado.",
         severity: "success",
+        title: "Usuário cadastrado com seu link de afiliado",
+        type: "account",
       });
     }
 
     return NextResponse.json(
       {
+        message:
+          "Conta criada com sucesso! Verifique seu email para ativar a conta.",
         status: "success",
-        message: "Conta criada com sucesso! Verifique seu email para ativar a conta.",
         user: {
+          email: user.email,
           id: user.id,
           name: user.name,
-          email: user.email,
         },
       },
       { status: 201 }
@@ -101,9 +119,9 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
-          status: "error",
-          message: "Dados inválidos",
           errors: error.errors,
+          message: "Dados inválidos",
+          status: "error",
         },
         { status: 400 }
       );
@@ -111,4 +129,3 @@ export async function POST(request: NextRequest) {
     return errorHandler(error);
   }
 }
-

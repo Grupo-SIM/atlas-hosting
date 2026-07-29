@@ -4,7 +4,9 @@ export async function registerNode() {
     const buildTime = readFileSync("BUILD_TIME", "utf8").trim();
     console.log(`[BOOT] Atlas Hosting iniciado — build: ${buildTime}`);
   } catch {
-    console.log("[BOOT] Atlas Hosting iniciado — build: desconhecido (dev local?)");
+    console.log(
+      "[BOOT] Atlas Hosting iniciado — build: desconhecido (dev local?)"
+    );
   }
 
   // A renovação de assinaturas VPS é disparada pelo serviço `vps-cron` do

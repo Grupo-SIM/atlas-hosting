@@ -1,19 +1,19 @@
 function config() {
   const envVars = {
-    SERVER_IP: process.env.SERVER_IP,
-    PUBLIC_URL: process.env.PUBLIC_URL,
-    WP_ADMIN_LOGIN: process.env.WP_ADMIN_LOGIN,
-    WP_ADMIN_PASS: process.env.WP_ADMIN_PASS,
-    NEXT_PUBLIC_DOM_PUBLIC_KEY: process.env.NEXT_PUBLIC_DOM_PUBLIC_KEY,
     ADMIN_PHONENUMBER: process.env.ADMIN_PHONENUMBER,
+    DOM_API_TOKEN: process.env.DOM_API_TOKEN,
     EMAIL_CREDENTIALS_ENCRYPTION_KEY:
       process.env.EMAIL_CREDENTIALS_ENCRYPTION_KEY,
     ENCRYPT_KEY: process.env.ENCRYPT_KEY,
-    DOM_API_TOKEN: process.env.DOM_API_TOKEN,
-    PLESK_XML_API_URL: process.env.PLESK_XML_API_URL,
-    PLESK_XML_API_LOGIN: process.env.PLESK_XML_API_LOGIN,
+    NEXT_PUBLIC_DOM_PUBLIC_KEY: process.env.NEXT_PUBLIC_DOM_PUBLIC_KEY,
     PLESK_API_URL: process.env.PLESK_API_URL,
-    PLESK_ROOT_USER: process.env.PLESK_ROOT_USER,
     PLESK_ROOT_PASSWORD: process.env.PLESK_ROOT_PASSWORD,
+    PLESK_ROOT_USER: process.env.PLESK_ROOT_USER,
+    PLESK_XML_API_LOGIN: process.env.PLESK_XML_API_LOGIN,
+    PLESK_XML_API_URL: process.env.PLESK_XML_API_URL,
+    PUBLIC_URL: process.env.PUBLIC_URL,
+    SERVER_IP: process.env.SERVER_IP,
+    WP_ADMIN_LOGIN: process.env.WP_ADMIN_LOGIN,
+    WP_ADMIN_PASS: process.env.WP_ADMIN_PASS,
   };
 }

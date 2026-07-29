@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createPlan as createPlanAction } from "@/app/actions"; // Renamed import to avoid conflict
 import { Button } from "@/components/ui/button";
 import {
@@ -11,8 +13,6 @@ import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; // Added Label import
 import type { Plan } from "@/lib/db/schema"; // Added Plan type
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export default function NewPlanPage() {
   async function handleCreatePlan(formData: FormData) {
@@ -20,7 +20,7 @@ export default function NewPlanPage() {
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
     const price = Number.parseFloat(formData.get("price") as string);
-    const maxSites = Number.parseInt(formData.get("maxSites") as string);
+    const maxSites = Number.parseInt(formData.get("maxSites") as string, 10);
     const maxStorage = Number.parseFloat(formData.get("maxStorage") as string);
     const ssl = formData.get("ssl") === "on";
     const backup = formData.get("backup") === "on";
@@ -31,17 +31,17 @@ export default function NewPlanPage() {
 
     // Construct the input object matching the server action's expected type
     const planInput: Omit<Plan, "id" | "createdAt" | "updatedAt"> = {
-      name,
+      backup,
+      cdn,
       description,
-      price,
+      email,
+      featured,
       maxSites,
       maxStorage,
+      name,
+      price,
       ssl,
-      backup,
-      email,
-      cdn,
       supportPriority,
-      featured,
     };
 
     await createPlanAction(undefined, planInput); // Pass undefined as prevState
@@ -51,7 +51,7 @@ export default function NewPlanPage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto py-10">
+    <div className="mx-auto max-w-xl py-10">
       <Card>
         <CardHeader>
           <CardTitle>Novo Plano</CardTitle>
@@ -62,50 +62,50 @@ export default function NewPlanPage() {
         <CardContent>
           <form action={handleCreatePlan} className="space-y-6">
             <div>
-              <Label htmlFor="name" className="block mb-1 font-medium">
+              <Label className="mb-1 block font-medium" htmlFor="name">
                 Nome
               </Label>
               <Input id="name" name="name" required={true} />
             </div>
             <div>
-              <Label htmlFor="description" className="block mb-1 font-medium">
+              <Label className="mb-1 block font-medium" htmlFor="description">
                 Descrição
               </Label>
               <Input id="description" name="description" required={true} />
             </div>
             <div>
-              <Label htmlFor="price" className="block mb-1 font-medium">
+              <Label className="mb-1 block font-medium" htmlFor="price">
                 Preço (R$)
               </Label>
               <Input
                 id="price"
                 name="price"
-                type="number"
-                step="0.01"
                 required={true}
+                step="0.01"
+                type="number"
               />
             </div>
             <div>
-              <Label htmlFor="maxSites" className="block mb-1 font-medium">
+              <Label className="mb-1 block font-medium" htmlFor="maxSites">
                 Max. Sites
               </Label>
               <Input
                 id="maxSites"
                 name="maxSites"
-                type="number"
                 required={true}
+                type="number"
               />
             </div>
             <div>
-              <Label htmlFor="maxStorage" className="block mb-1 font-medium">
+              <Label className="mb-1 block font-medium" htmlFor="maxStorage">
                 Max. Armazenamento (GB)
               </Label>
               <Input
                 id="maxStorage"
                 name="maxStorage"
-                type="number"
-                step="0.1"
                 required={true}
+                step="0.1"
+                type="number"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -132,7 +132,7 @@ export default function NewPlanPage() {
               <Checkbox id="featured" name="featured" />
               <Label htmlFor="featured">Destacado</Label>
             </div>
-            <Button type="submit" className="w-full">
+            <Button className="w-full" type="submit">
               Criar Plano
             </Button>
           </form>

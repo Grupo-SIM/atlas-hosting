@@ -1,24 +1,24 @@
 "use client";
 
-import AtlasLogo from "@/assets/atlas.svg";
-import { cn } from "@/lib/utils";
+import type { LucideProps } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
-  useState,
   type ForwardRefExoticComponent,
   type RefAttributes,
   useRef,
+  useState,
 } from "react";
-import type { LucideProps } from "lucide-react";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import { navigation } from "../navigation";
+import AtlasLogo from "@/assets/atlas.svg";
+import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "../../ui/tooltip";
+import { navigation } from "../navigation";
 
 export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
   const [isCompact, setIsCompact] = useState(true);
@@ -31,30 +31,30 @@ export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <motion.div
-      layout={true}
-      onMouseEnter={() => setIsCompact(false)}
-      onMouseLeave={() => setIsCompact(true)}
       animate={{
         width: isCompact ? 60 : 256,
       }}
+      className={cn(
+        "z-10 hidden h-screen shrink-0 whitespace-nowrap border-border border-r bg-card md:flex md:flex-col",
+        "relative overflow-hidden"
+      )}
+      layout={true}
+      onMouseEnter={() => setIsCompact(false)}
+      onMouseLeave={() => setIsCompact(true)}
       transition={{
         duration: 0.25,
         ease: "easeInOut",
       }}
-      className={cn(
-        "hidden md:flex md:flex-col bg-card whitespace-nowrap h-screen z-10 border-r border-border shrink-0",
-        "relative overflow-hidden"
-      )}
     >
       <motion.div
+        className="flex h-16 max-w-inherit items-center overflow-x-hidden px-3.5"
         layout
-        className="h-16 flex items-center px-3.5 overflow-x-hidden max-w-inherit"
       >
         <motion.div
-          className="min-h-8 min-w-8 h-8 w-8 object-contain"
           animate={{
             marginRight: isCompact ? "0" : "0.5rem",
           }}
+          className="h-8 min-h-8 w-8 min-w-8 object-contain"
           transition={{
             duration: 0.3,
             ease: "easeOut",
@@ -65,30 +65,30 @@ export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
         <AnimatePresence mode="popLayout" propagate>
           {!isCompact && (
             <motion.span
-              layout
-              initial={{ opacity: 0, width: 0 }}
               animate={{
                 opacity: 1,
                 width: "100%",
               }}
+              className="box-border max-w-full overflow-x-hidden whitespace-nowrap font-semibold text-lg"
               exit={{ opacity: 0, width: 0 }}
+              initial={{ opacity: 0, width: 0 }}
+              layout
               transition={{
                 duration: 0.3,
                 ease: "easeOut",
               }}
-              className="text-lg font-semibold overflow-x-hidden box-border whitespace-nowrap max-w-full"
             >
-              <motion.div layout className="w-fit min-w-fit">
+              <motion.div className="w-fit min-w-fit" layout>
                 Atlas Hosting
               </motion.div>
             </motion.span>
           )}
         </AnimatePresence>
       </motion.div>
-      <motion.nav className="flex-1 px-2 py-4 w-auto space-y-1 overflow-y-auto flex flex-col box-border m-0 relative z-90 inset-shadow-border inset-shadow-[0_1px_0_0]">
+      <motion.nav className="relative inset-shadow-[0_1px_0_0] inset-shadow-border z-90 m-0 box-border flex w-auto flex-1 flex-col space-y-1 overflow-y-auto px-2 py-4">
         <TooltipProvider delayDuration={0}>
-          {filteredNavigation.map((item) => (
-            <NavItem item={item as any} key={item.name} isCompact={isCompact} />
+          {filteredNavigation.map(item => (
+            <NavItem isCompact={isCompact} item={item as any} key={item.name} />
           ))}
         </TooltipProvider>
       </motion.nav>
@@ -117,19 +117,19 @@ function NavItem({
 
   const content = (
     <MotionLink
-      layout={true}
-      initial={{ marginLeft: 0, marginRight: 0 }}
-      key={item.name}
-      href={item.disabled ? "#" : item.href}
-      onClick={(e) => item.disabled && e.preventDefault()}
       className={cn(
-        "flex items-center px-3 py-2 text-sm font-medium rounded-md group transition-all relative w-full box-border",
+        "group relative box-border flex w-full items-center rounded-md px-3 py-2 font-medium text-sm transition-all",
         item.disabled
-          ? "opacity-50 cursor-not-allowed grayscale-[0.5]"
+          ? "cursor-not-allowed opacity-50 grayscale-[0.5]"
           : pathname === item.href
             ? "bg-accent text-accent-foreground"
             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       )}
+      href={item.disabled ? "#" : item.href}
+      initial={{ marginLeft: 0, marginRight: 0 }}
+      key={item.name}
+      layout={true}
+      onClick={e => item.disabled && e.preventDefault()}
       title={isCompact ? undefined : item.name}
     >
       <item.icon
@@ -145,26 +145,26 @@ function NavItem({
       <AnimatePresence mode="sync">
         {!isCompact && (
           <motion.span
-            initial={{ opacity: 0, width: 0, paddingLeft: 0 }}
             animate={{
               opacity: 1,
-              width: itemWidth || "auto",
               paddingLeft: "0.5rem",
+              width: itemWidth || "auto",
             }}
-            exit={{ opacity: 0, width: 0, paddingLeft: 0 }}
+            className="box-border w-full flex-1 overflow-x-hidden whitespace-nowrap"
+            exit={{ opacity: 0, paddingLeft: 0, width: 0 }}
+            initial={{ opacity: 0, paddingLeft: 0, width: 0 }}
+            ref={itemNameRef}
             transition={{
               duration: 0.3,
               ease: "easeOut",
             }}
-            ref={itemNameRef}
-            className="overflow-x-hidden whitespace-nowrap flex-1 w-full box-border"
           >
             {item.name}
           </motion.span>
         )}
       </AnimatePresence>
       {item.disabled && !isCompact && (
-        <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-primary/70 bg-primary/10 px-1.5 py-0.5 rounded">
+        <span className="ml-auto rounded bg-primary/10 px-1.5 py-0.5 font-bold text-[10px] text-primary/70 uppercase tracking-wider">
           Breve
         </span>
       )}
@@ -175,7 +175,7 @@ function NavItem({
     return (
       <Tooltip>
         <TooltipTrigger asChild>{content}</TooltipTrigger>
-        <TooltipContent side="right" className="font-medium">
+        <TooltipContent className="font-medium" side="right">
           Em breve
         </TooltipContent>
       </Tooltip>

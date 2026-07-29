@@ -12,28 +12,28 @@ export default class EmailService {
     private readonly fromEmail: string = "noreply@atlashosting.com.br"
   ) {
     this.transporter = nodemailer.createTransport({
+      auth: {
+        pass: this.password,
+        user: this.username,
+      },
+      debug: process.env.SMTP_DEBUG === "true",
       host: this.host,
+      logger: process.env.SMTP_DEBUG === "true",
       port: this.port,
       secure: this.secure,
-      auth: {
-        user: this.username,
-        pass: this.password,
-      },
       tls: {
         rejectUnauthorized: false,
       },
-      debug: process.env.SMTP_DEBUG === "true",
-      logger: process.env.SMTP_DEBUG === "true",
     });
   }
 
   public async sendEmail(message: EmailMessage): Promise<void> {
     await this.transporter.sendMail({
-      from: this.fromEmail,
-      to: message.to,
-      subject: message.subject,
-      html: message.body,
       attachments: message.attachments,
+      from: this.fromEmail,
+      html: message.body,
+      subject: message.subject,
+      to: message.to,
     });
   }
 }

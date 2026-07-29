@@ -1,6 +1,10 @@
-import { RenewCell } from "./RenewCell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { desc, eq } from "drizzle-orm";
+import { Barcode, Clock, CreditCard, QrCode, Server } from "lucide-react";
+import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -12,20 +16,18 @@ import {
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgVpsSubscription } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { toBrl } from "@/lib/utils";
-import { Metadata } from "next";
-import { Server, Clock, CreditCard, QrCode, Barcode } from "lucide-react";
+import { RenewCell } from "./RenewCell";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Minhas Assinaturas — Atlas Hosting" };
+export const metadata: Metadata = {
+  title: "Minhas Assinaturas — Atlas Hosting",
+};
 
 const PLAN_TYPE_LABEL: Record<string, string> = {
-  vps: "VPS",
-  vds: "VDS",
   "storage-vps": "Storage",
+  vds: "VDS",
+  vps: "VPS",
   "vps-windows": "Windows",
 };
 
@@ -40,20 +42,36 @@ function daysUntil(date: Date) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-    active:    { label: "Ativa",      variant: "default" },
-    paused:    { label: "Pausada",    variant: "secondary" },
-    cancelled: { label: "Cancelada",  variant: "outline" },
-    failed:    { label: "Falhou",     variant: "destructive" },
+  const map: Record<
+    string,
+    {
+      label: string;
+      variant: "default" | "secondary" | "destructive" | "outline";
+    }
+  > = {
+    active: { label: "Ativa", variant: "default" },
+    cancelled: { label: "Cancelada", variant: "outline" },
+    failed: { label: "Falhou", variant: "destructive" },
+    paused: { label: "Pausada", variant: "secondary" },
   };
-  const { label, variant } = map[status] ?? { label: status, variant: "outline" };
+  const { label, variant } = map[status] ?? {
+    label: status,
+    variant: "outline",
+  };
   return <Badge variant={variant}>{label}</Badge>;
 }
 
-function PaymentBadge({ method }: { method: "credit_card" | "pix" | "boleto" }) {
+function PaymentBadge({
+  method,
+}: {
+  method: "credit_card" | "pix" | "boleto";
+}) {
   if (method === "pix") {
     return (
-      <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30">
+      <Badge
+        className="gap-1 border-emerald-500/30 text-emerald-600"
+        variant="outline"
+      >
         <QrCode className="h-3 w-3" />
         PIX
       </Badge>
@@ -61,14 +79,17 @@ function PaymentBadge({ method }: { method: "credit_card" | "pix" | "boleto" }) 
   }
   if (method === "boleto") {
     return (
-      <Badge variant="outline" className="gap-1 text-amber-600 border-amber-500/30">
+      <Badge
+        className="gap-1 border-amber-500/30 text-amber-600"
+        variant="outline"
+      >
         <Barcode className="h-3 w-3" />
         Boleto
       </Badge>
     );
   }
   return (
-    <Badge variant="outline" className="gap-1">
+    <Badge className="gap-1" variant="outline">
       <CreditCard className="h-3 w-3" />
       Cartão
     </Badge>
@@ -79,26 +100,33 @@ export default async function MyVpsSubscriptionsPage() {
   const user = await getUser();
 
   const subs = await db.query.pgVpsSubscription.findMany({
-    where: eq(pgVpsSubscription.userId, user.id),
     orderBy: [desc(pgVpsSubscription.createdAt)],
+    where: eq(pgVpsSubscription.userId, user.id),
   });
 
-  const rows = subs.map((s) => ({
-    id: s.id,
-    planType: s.planType as keyof typeof PLAN_TYPE_LABEL,
-    intervalMonths: s.intervalMonths,
+  const rows = subs.map(s => ({
     amountBrl: s.amountBrl,
-    paymentMethod: (s.paymentMethod ?? ((s.config as any)?.cardToken ? "credit_card" : "pix")) as "credit_card" | "pix" | "boleto",
-    status: s.status as "active" | "cancelled" | "failed" | "paused",
+    id: s.id,
+    intervalMonths: s.intervalMonths,
     nextChargeDate: s.nextChargeDate,
+    paymentMethod: (s.paymentMethod ??
+      ((s.config as any)?.cardToken ? "credit_card" : "pix")) as
+      | "credit_card"
+      | "pix"
+      | "boleto",
+    planType: s.planType as keyof typeof PLAN_TYPE_LABEL,
+    status: s.status as "active" | "cancelled" | "failed" | "paused",
   }));
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-4 md:pt-6">
+    <div className="flex-1 space-y-6 p-4 pt-4 md:p-8 md:pt-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Minhas Assinaturas</h2>
+        <h2 className="font-bold text-3xl tracking-tight">
+          Minhas Assinaturas
+        </h2>
         <p className="text-muted-foreground">
-          Gerencie suas assinaturas de VPS/VDS e renove com PIX quando estiverem perto de vencer.
+          Gerencie suas assinaturas de VPS/VDS e renove com PIX quando estiverem
+          perto de vencer.
         </p>
       </div>
 
@@ -124,30 +152,47 @@ export default async function MyVpsSubscriptionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((sub) => {
+                {rows.map(sub => {
                   const isExpiring =
                     (sub.status === "active" &&
-                      sub.nextChargeDate.getTime() <= Date.now() + FIFTEEN_DAYS_MS) ||
+                      sub.nextChargeDate.getTime() <=
+                        Date.now() + FIFTEEN_DAYS_MS) ||
                     sub.status === "paused";
                   const remainingDays = daysUntil(sub.nextChargeDate);
                   return (
-                    <TableRow key={sub.id} className={isExpiring ? "bg-amber-500/10 hover:bg-amber-500/15" : undefined}>
+                    <TableRow
+                      className={
+                        isExpiring
+                          ? "bg-amber-500/10 hover:bg-amber-500/15"
+                          : undefined
+                      }
+                      key={sub.id}
+                    >
                       <TableCell>
                         <Badge variant="secondary">
                           {PLAN_TYPE_LABEL[sub.planType] ?? sub.planType}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{periodLabel(sub.intervalMonths)}</Badge>
+                        <Badge variant="outline">
+                          {periodLabel(sub.intervalMonths)}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <PaymentBadge method={sub.paymentMethod} />
                       </TableCell>
                       <TableCell className="text-sm">
                         <div className="flex flex-col gap-1">
-                          <span>{format(sub.nextChargeDate, "dd/MM/yyyy", { locale: ptBR })}</span>
+                          <span>
+                            {format(sub.nextChargeDate, "dd/MM/yyyy", {
+                              locale: ptBR,
+                            })}
+                          </span>
                           {isExpiring && (
-                            <Badge variant="outline" className="w-fit gap-1 text-amber-600 border-amber-500/40">
+                            <Badge
+                              className="w-fit gap-1 border-amber-500/40 text-amber-600"
+                              variant="outline"
+                            >
                               <Clock className="h-3 w-3" />
                               {sub.status === "paused" || remainingDays <= 0
                                 ? "Vencida"
@@ -156,16 +201,18 @@ export default async function MyVpsSubscriptionsPage() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm font-medium">{toBrl(sub.amountBrl)}</TableCell>
+                      <TableCell className="font-medium text-sm">
+                        {toBrl(sub.amountBrl)}
+                      </TableCell>
                       <TableCell>
                         <StatusBadge status={sub.status} />
                       </TableCell>
                       <TableCell className="text-right">
                         <RenewCell
                           id={sub.id}
-                          status={sub.status}
-                          paymentMethod={sub.paymentMethod}
                           nextChargeDate={sub.nextChargeDate}
+                          paymentMethod={sub.paymentMethod}
+                          status={sub.status}
                         />
                       </TableCell>
                     </TableRow>
@@ -173,7 +220,10 @@ export default async function MyVpsSubscriptionsPage() {
                 })}
                 {rows.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                    <TableCell
+                      className="h-24 text-center text-muted-foreground"
+                      colSpan={7}
+                    >
                       Você ainda não possui assinaturas de VPS/VDS.
                     </TableCell>
                   </TableRow>

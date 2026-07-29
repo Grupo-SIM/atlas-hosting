@@ -1,108 +1,117 @@
 "use client";
 
+import { motion } from "motion/react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { motion } from "motion/react";
 
 const faqs = [
   {
+    answer:
+      "Você recebe de volta parte do valor da sua hospedagem em formato de bônus, que pode ser usado dentro da própria plataforma ou transferido para serviços parceiros.",
     question: "Como funciona o sistema de cashback mensal?",
-    answer: "Você recebe de volta parte do valor da sua hospedagem em formato de bônus, que pode ser usado dentro da própria plataforma ou transferido para serviços parceiros.",
   },
   {
+    answer:
+      "Todos os planos incluem SSL ilimitado e backups automáticos diários, garantindo segurança e recuperação rápida em caso de imprevistos.",
     question: "Os planos incluem certificado SSL e backups automáticos?",
-    answer: "Todos os planos incluem SSL ilimitado e backups automáticos diários, garantindo segurança e recuperação rápida em caso de imprevistos.",
   },
   {
-    question: "Qual a diferença entre os planos Start, Premium, Business e Elite?",
-    answer: "A diferença está na quantidade de sites, visitas mensais, armazenamento e prioridade no suporte. Você pode comparar cada um na seção de planos.",
+    answer:
+      "A diferença está na quantidade de sites, visitas mensais, armazenamento e prioridade no suporte. Você pode comparar cada um na seção de planos.",
+    question:
+      "Qual a diferença entre os planos Start, Premium, Business e Elite?",
   },
   {
+    answer:
+      "Claro! Oferecemos 30 dias de garantia de satisfação. Se não curtir, devolvemos 100% do valor.",
     question: "É possível testar a hospedagem antes de decidir?",
-    answer: "Claro! Oferecemos 30 dias de garantia de satisfação. Se não curtir, devolvemos 100% do valor.",
   },
   {
+    answer:
+      "Não! Nossa interface foi criada para ser extremamente intuitiva, até mesmo para quem está criando um site pela primeira vez.",
     question: "Preciso ter conhecimento técnico para usar o painel?",
-    answer: "Não! Nossa interface foi criada para ser extremamente intuitiva, até mesmo para quem está criando um site pela primeira vez.",
   },
   {
+    answer:
+      "Sim. Temos estrutura escalável, CDN global e servidores otimizados para alta performance em qualquer tipo de projeto online.",
     question: "A hospedagem é boa para e-commerces e blogs com tráfego alto?",
-    answer: "Sim. Temos estrutura escalável, CDN global e servidores otimizados para alta performance em qualquer tipo de projeto online.",
   },
   {
+    answer:
+      "Você indica novos clientes e recebe 10% de comissão recorrente por cada assinatura ativa. Tudo direto na sua conta, sem burocracia.",
     question: "Como funciona o programa de afiliados?",
-    answer: "Você indica novos clientes e recebe 10% de comissão recorrente por cada assinatura ativa. Tudo direto na sua conta, sem burocracia.",
   },
   {
+    answer:
+      "Atendimento humano, direto e rápido para resolver dúvidas, realizar ajustes simples e orientar você no uso da plataforma.",
     question: "O que está incluso no suporte via WhatsApp?",
-    answer: "Atendimento humano, direto e rápido para resolver dúvidas, realizar ajustes simples e orientar você no uso da plataforma.",
   },
 ];
 
 export function FAQ() {
   return (
-    <section id="faq" className="py-24 px-4 relative bg-[#00050A] w-full overflow-hidden">
-      
+    <section
+      className="relative w-full overflow-hidden bg-[#00050A] px-4 py-24"
+      id="faq"
+    >
       {/* Giant "FAQ" Watermark on the Left */}
-      <div className="absolute left-[-110px] top-[250px] -rotate-90 select-none hidden 2xl:block pointer-events-none opacity-[0.05]">
-        <span 
-          className="text-[160px] font-black text-transparent tracking-widest"
-          style={{ WebkitTextStroke: '2px #ffffff' }}
+      <div className="pointer-events-none absolute top-[250px] left-[-110px] hidden -rotate-90 select-none opacity-[0.05] 2xl:block">
+        <span
+          className="font-black text-[160px] text-transparent tracking-widest"
+          style={{ WebkitTextStroke: "2px #ffffff" }}
         >
           FAQ
         </span>
       </div>
 
-      <div className="container mx-auto max-w-[1200px] relative z-10">
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-stretch">
-          
+      <div className="container relative z-10 mx-auto max-w-[1200px]">
+        <div className="flex flex-col items-stretch gap-12 lg:flex-row lg:gap-20">
           {/* Left Column: FAQ Content */}
-          <div className="flex-1 max-w-[700px]">
-            
+          <div className="max-w-[700px] flex-1">
             {/* Header */}
-            <div className="mb-10 animate-in fade-in slide-in-from-left-2 duration-300 fill-mode-both">
-              <div className="inline-flex flex-row items-center gap-3 mb-5 bg-white/5 py-1.5 px-3 rounded border border-white/10 shadow-sm">
-                <div className="w-1 h-4 bg-sky-500"></div>
-                <span className="text-xs font-semibold tracking-wider text-sky-400 uppercase">
+            <div className="fade-in slide-in-from-left-2 mb-10 animate-in fill-mode-both duration-300">
+              <div className="mb-5 inline-flex flex-row items-center gap-3 rounded border border-white/10 bg-white/5 px-3 py-1.5 shadow-sm">
+                <div className="h-4 w-1 bg-sky-500" />
+                <span className="font-semibold text-sky-400 text-xs uppercase tracking-wider">
                   TEM DÚVIDAS?
                 </span>
               </div>
-              
-              <h2 className="text-3xl md:text-[2.2rem] font-bold text-white mb-2 tracking-normal uppercase">
+
+              <h2 className="mb-2 font-bold text-3xl text-white uppercase tracking-normal md:text-[2.2rem]">
                 Perguntas Frequentes
               </h2>
             </div>
 
             {/* Accordion List */}
             <motion.div
-               initial={{ opacity: 0, y: 30 }}
-               whileInView={{ opacity: 1, y: 0 }}
-               viewport={{ once: true, margin: "200px" }}
-               transition={{ duration: 0.35, delay: 0.1 }}
+              initial={{ opacity: 0, y: 30 }}
+              transition={{ delay: 0.1, duration: 0.35 }}
+              viewport={{ margin: "200px", once: true }}
+              whileInView={{ opacity: 1, y: 0 }}
             >
-              <Accordion type="single" defaultValue="item-0" className="w-full flex-col gap-3 flex">
+              <Accordion
+                className="flex w-full flex-col gap-3"
+                defaultValue="item-0"
+                type="single"
+              >
                 {faqs.map((faq, index) => (
                   <AccordionItem
+                    className="overflow-hidden rounded-[12px] border border-white/10 border-none bg-white/5 shadow-sm transition-all duration-300 data-[state=open]:shadow-md"
                     key={index}
                     value={`item-${index}`}
-                    className="border-none rounded-[12px] overflow-hidden bg-white/5 border border-white/10 shadow-sm data-[state=open]:shadow-md transition-all duration-300"
                   >
-                    <AccordionTrigger 
-                      className="cursor-pointer px-5 py-5 hover:no-underline font-bold text-[13px] md:text-[14px] data-[state=open]:bg-sky-500 data-[state=open]:text-white text-slate-300 transition-colors duration-300 [&>svg]:w-5 [&>svg]:h-5 uppercase"
-                    >
-                      <span className="text-left w-full pr-4">{faq.question}</span>
+                    <AccordionTrigger className="cursor-pointer px-5 py-5 font-bold text-[13px] text-slate-300 uppercase transition-colors duration-300 hover:no-underline data-[state=open]:bg-sky-500 data-[state=open]:text-white md:text-[14px] [&>svg]:h-5 [&>svg]:w-5">
+                      <span className="w-full pr-4 text-left">
+                        {faq.question}
+                      </span>
                     </AccordionTrigger>
-                    
-                    <AccordionContent 
-                      className="bg-transparent px-5 py-6 text-slate-400 text-[13.5px] leading-[1.7] border-t border-white/10"
-                    >
-                      <div className="relative z-10">
-                        {faq.answer}
-                      </div>
+
+                    <AccordionContent className="border-white/10 border-t bg-transparent px-5 py-6 text-[13.5px] text-slate-400 leading-[1.7]">
+                      <div className="relative z-10">{faq.answer}</div>
                     </AccordionContent>
                   </AccordionItem>
                 ))}
@@ -111,20 +120,22 @@ export function FAQ() {
           </div>
 
           {/* Right Column: Cyber Image */}
-          <motion.div             whileInView={{ opacity: 1, x: 0 }}
-             viewport={{ once: true, margin: "200px" }}
-             transition={{ duration: 0.5 }}
-            className="hidden lg:flex flex-[0.7] justify-center items-start pt-[6px]"
+          <motion.div
+            className="hidden flex-[0.7] items-start justify-center pt-[6px] lg:flex"
+            transition={{ duration: 0.5 }}
+            viewport={{ margin: "200px", once: true }}
+            whileInView={{ opacity: 1, x: 0 }}
           >
-            <div className="relative w-full max-w-[420px] aspect-[3/4.5] rounded-[24px] overflow-hidden border-[1px] border-white/10 shadow-2xl p-[6px] bg-white/5 backdrop-blur-md">
-               <div className="w-full h-full rounded-[18px] overflow-hidden">
-                  <div 
-                    className="w-full h-full bg-cover bg-center"
-                    style={{
-                      backgroundImage: "url('/man-with-headphones-looking-laptop.jpg')",
-                    }}
-                  />
-               </div>
+            <div className="relative aspect-[3/4.5] w-full max-w-[420px] overflow-hidden rounded-[24px] border-[1px] border-white/10 bg-white/5 p-[6px] shadow-2xl backdrop-blur-md">
+              <div className="h-full w-full overflow-hidden rounded-[18px]">
+                <div
+                  className="h-full w-full bg-center bg-cover"
+                  style={{
+                    backgroundImage:
+                      "url('/man-with-headphones-looking-laptop.jpg')",
+                  }}
+                />
+              </div>
             </div>
           </motion.div>
         </div>
@@ -132,4 +143,3 @@ export function FAQ() {
     </section>
   );
 }
-

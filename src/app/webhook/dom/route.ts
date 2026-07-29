@@ -1,6 +1,7 @@
+import { and, eq, inArray, sql } from "drizzle-orm";
+import { NextResponse } from "next/server";
+import { syncCheckoutBoletoPayment } from "@/app/actions";
 import { adminNamecheapDetails } from "@/components/domains/DomainResult";
-import { registerDomainsFromPaidInvoice } from "@/lib/server/domains/registerFromPaidInvoice";
-import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
 import { db } from "@/lib/db";
 import {
   pgInvoice,
@@ -8,21 +9,23 @@ import {
   pgUser,
   pgVpsSubscription,
 } from "@/lib/db/schema";
-import type { PayloadWebhook, ChargeWebhookPayload } from "@/lib/server/apis/dom/types";
+import { sendVpsPurchaseNotifications } from "@/lib/notifications/vps-purchase";
 import domApi from "@/lib/server/apis/dom";
+import type {
+  ChargeWebhookPayload,
+  PayloadWebhook,
+} from "@/lib/server/apis/dom/types";
+import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
 import {
-  processPaymentDeclined,
   type PaymentDeclinedRepository,
+  processPaymentDeclined,
 } from "@/lib/server/dom/payment-declined";
 import {
   processSignatureCancellation,
   type SignatureCancellationRepository,
 } from "@/lib/server/dom/signature-cancellation";
-import { syncCheckoutBoletoPayment } from "@/app/actions";
+import { registerDomainsFromPaidInvoice } from "@/lib/server/domains/registerFromPaidInvoice";
 import { AppLogger } from "@/lib/server/logs";
-import { and, eq, inArray, sql } from "drizzle-orm";
-import { NextResponse } from "next/server";
-import { sendVpsPurchaseNotifications } from "@/lib/notifications/vps-purchase";
 
 // Placeholder functions for webhook actions
 async function onSignatureCreated(data: PayloadWebhook["data"]): Promise<void> {
@@ -34,59 +37,63 @@ async function onSignatureCancelled(
 ): Promise<void> {
   console.log("[Webhook Action] onSignatureCancelled called with data:", data);
   const cancellationRepository: SignatureCancellationRepository = {
-    findInvoice: (id) =>
-      db.query.pgInvoice.findFirst({
-        where: eq(pgInvoice.id, id),
-      }),
-    async clearOrganizationPlan(orgId, planId) {
-      const updatedOrganizations = await db
-        .update(pgOrganization)
-        .set({ planId: null, updatedAt: new Date() })
-        .where(
-          and(
-            eq(pgOrganization.id, orgId),
-            eq(pgOrganization.planId, planId),
-          ),
-        )
-        .returning({ id: pgOrganization.id });
-
-      return updatedOrganizations.length > 0;
-    },
     async cancelVpsSubscriptions(invoiceId, cancelledAt) {
       const cancelledSubscriptions = await db
         .update(pgVpsSubscription)
         .set({
-          status: "cancelled",
           cancelledAt,
+          status: "cancelled",
           updatedAt: cancelledAt,
         })
         .where(
           and(
             eq(pgVpsSubscription.lastInvoiceId, invoiceId),
-            eq(pgVpsSubscription.status, "active"),
-          ),
+            eq(pgVpsSubscription.status, "active")
+          )
         )
         .returning({ id: pgVpsSubscription.id });
 
       return cancelledSubscriptions.length;
     },
+    async clearOrganizationPlan(orgId, planId) {
+      const updatedOrganizations = await db
+        .update(pgOrganization)
+        .set({ planId: null, updatedAt: new Date() })
+        .where(
+          and(eq(pgOrganization.id, orgId), eq(pgOrganization.planId, planId))
+        )
+        .returning({ id: pgOrganization.id });
+
+      return updatedOrganizations.length > 0;
+    },
+    findInvoice: id =>
+      db.query.pgInvoice.findFirst({
+        where: eq(pgInvoice.id, id),
+      }),
   };
 
   const result = await processSignatureCancellation(
     data.external_reference,
-    cancellationRepository,
+    cancellationRepository
   );
   console.log("[Webhook] SIGNATURE-CANCELLED:", result);
 }
 
 async function onPaymentDeclined(
-  externalReference: string | undefined,
+  externalReference: string | undefined
 ): Promise<void> {
   const paymentDeclinedRepository: PaymentDeclinedRepository = {
-    findInvoice: (id) =>
-      db.query.pgInvoice.findFirst({
-        where: eq(pgInvoice.id, id),
-      }),
+    async clearOrganizationPlan(orgId, planId) {
+      const updatedOrganizations = await db
+        .update(pgOrganization)
+        .set({ planId: null, updatedAt: new Date() })
+        .where(
+          and(eq(pgOrganization.id, orgId), eq(pgOrganization.planId, planId))
+        )
+        .returning({ id: pgOrganization.id });
+
+      return updatedOrganizations.length > 0;
+    },
     async failInvoice(invoiceId) {
       const failedInvoices = await db
         .update(pgInvoice)
@@ -94,50 +101,40 @@ async function onPaymentDeclined(
         .where(
           and(
             eq(pgInvoice.id, invoiceId),
-            inArray(pgInvoice.status, ["pending", "processing"]),
-          ),
+            inArray(pgInvoice.status, ["pending", "processing"])
+          )
         )
         .returning({ id: pgInvoice.id });
 
       return failedInvoices.length > 0;
     },
-    async clearOrganizationPlan(orgId, planId) {
-      const updatedOrganizations = await db
-        .update(pgOrganization)
-        .set({ planId: null, updatedAt: new Date() })
-        .where(
-          and(
-            eq(pgOrganization.id, orgId),
-            eq(pgOrganization.planId, planId),
-          ),
-        )
-        .returning({ id: pgOrganization.id });
-
-      return updatedOrganizations.length > 0;
-    },
     async failVpsSubscriptions(invoiceId) {
       const failedSubscriptions = await db
         .update(pgVpsSubscription)
         .set({
-          status: "failed",
           failureCount: sql`${pgVpsSubscription.failureCount} + 1`,
+          status: "failed",
           updatedAt: new Date(),
         })
         .where(
           and(
             eq(pgVpsSubscription.lastInvoiceId, invoiceId),
-            eq(pgVpsSubscription.status, "active"),
-          ),
+            eq(pgVpsSubscription.status, "active")
+          )
         )
         .returning({ id: pgVpsSubscription.id });
 
       return failedSubscriptions.length;
     },
+    findInvoice: id =>
+      db.query.pgInvoice.findFirst({
+        where: eq(pgInvoice.id, id),
+      }),
   };
 
   const result = await processPaymentDeclined(
     externalReference,
-    paymentDeclinedRepository,
+    paymentDeclinedRepository
   );
   console.log("[Webhook] Pagamento recusado:", result);
 }
@@ -145,7 +142,9 @@ async function onPaymentDeclined(
 async function onChargeDeclined(payload: ChargeWebhookPayload): Promise<void> {
   const decoded = domApi.verifyChargeSignature(payload.signature);
   if (!decoded || decoded.id !== payload.data.id) {
-    console.error("[Webhook] Cobrança recusada com assinatura inválida ou inconsistente.");
+    console.error(
+      "[Webhook] Cobrança recusada com assinatura inválida ou inconsistente."
+    );
     return;
   }
 
@@ -180,15 +179,15 @@ async function onInvoiceCreated(data: PayloadWebhook["data"]): Promise<void> {
     }
 
     await db.insert(pgInvoice).values({
+      amount: oldInvoice.amount,
+      createdAt: new Date(),
+      dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+      orgId: oldInvoice.orgId,
+      reference: oldInvoice.reference,
       status: "processing",
       type: oldInvoice.type,
-      reference: oldInvoice.reference,
-      orgId: oldInvoice.orgId,
-      userId: oldInvoice.userId,
-      createdAt: new Date(),
       updatedAt: new Date(),
-      amount: oldInvoice.amount,
-      dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+      userId: oldInvoice.userId,
     });
 
     return;
@@ -237,7 +236,7 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
       where: eq(pgUser.organizationId, invoice.orgId),
     });
 
-    if (!user || !user.email) {
+    if (!user?.email) {
       throw new Error("Usuário não autenticado ou e-mail não encontrado.");
     }
 
@@ -262,13 +261,13 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
         })
         .where(eq(pgInvoice.id, invoiceId));
 
-      console.log("Namecheap registration result:", { registered, failed });
+      console.log("Namecheap registration result:", { failed, registered });
 
       try {
         logger.log({
-          title: "Novo(s) domínio(s) registrado(s)",
           description: `Domínios: ${registered.join(", ")}.`,
           severity: "success",
+          title: "Novo(s) domínio(s) registrado(s)",
           type: "hosting",
         });
       } catch {
@@ -276,19 +275,21 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
       }
     } catch (error) {
       logger.log({
-        title: "Erro ao registrar domínio",
-        description: `Erro ao processar fatura de domínio.`,
+        description: "Erro ao processar fatura de domínio.",
         severity: "danger",
+        title: "Erro ao registrar domínio",
         type: "hosting",
       });
 
-      console.error(`Erro ao registrar domínio(s) com Namecheap:`, error);
+      console.error("Erro ao registrar domínio(s) com Namecheap:", error);
 
       if (error instanceof Error) {
         throw error;
       }
 
-      throw new Error(`Falha ao registrar domínio(s). Por favor, tente novamente.`);
+      throw new Error(
+        "Falha ao registrar domínio(s). Por favor, tente novamente."
+      );
     }
   }
 
@@ -308,29 +309,31 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
       const config = meta?.config || {};
       try {
         await sendVpsPurchaseNotifications({
-          userName: user.name || "Cliente",
-          userEmail: user.email,
-          userPhone: (user as any).billingPhone || undefined,
-          userDocument: (user as any).billingDocument || undefined,
-          userAddress: (user as any).billingCity ? `${(user as any).billingStreet || ""}, ${(user as any).billingCity} - ${(user as any).billingState || ""}` : undefined,
-          isNewAccount: !!meta?.guestPassword,
-          guestPassword: meta?.guestPassword,
-          planId: meta?.vpsId || "10",
-          planName: `Cloud VPS ${meta?.vpsId || "10"}`,
-          quantity: parseInt(config.qty || "1", 10),
-          duration: parseInt(config.duration || "1", 10),
-          location: config.location || "eu",
-          storage: config.storage || "ssd-150",
-          image: config.image || "ubuntu",
           backup: config.backup === "true",
-          management: config.management || "unmanaged",
-          monitoring: config.monitoring,
-          privateNetwork: config.privateNetwork,
-          ipv4Address: config.ipv4Address,
-          objectStorage: config.objectStorage,
+          duration: Number.parseInt(config.duration || "1", 10),
+          guestPassword: meta?.guestPassword,
+          image: config.image || "ubuntu",
           invoiceId: invoice.id,
           invoiceRef: invoice.reference,
+          ipv4Address: config.ipv4Address,
+          isNewAccount: !!meta?.guestPassword,
+          location: config.location || "eu",
+          management: config.management || "unmanaged",
+          monitoring: config.monitoring,
+          objectStorage: config.objectStorage,
+          planId: meta?.vpsId || "10",
+          planName: `Cloud VPS ${meta?.vpsId || "10"}`,
+          privateNetwork: config.privateNetwork,
+          quantity: Number.parseInt(config.qty || "1", 10),
+          storage: config.storage || "ssd-150",
           totalAmount: invoice.amount,
+          userAddress: (user as any).billingCity
+            ? `${(user as any).billingStreet || ""}, ${(user as any).billingCity} - ${(user as any).billingState || ""}`
+            : undefined,
+          userDocument: (user as any).billingDocument || undefined,
+          userEmail: user.email,
+          userName: user.name || "Cliente",
+          userPhone: (user as any).billingPhone || undefined,
         });
       } catch (err) {
         console.error("[Webhook] Erro ao enviar notificações VPS:", err);
@@ -349,7 +352,9 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
 async function onChargeApproved(payload: ChargeWebhookPayload): Promise<void> {
   const decoded = domApi.verifyChargeSignature(payload.signature);
   if (!decoded || decoded.id !== payload.data.id) {
-    console.error("[Webhook] CHARGE-APPROVED com assinatura inválida ou inconsistente.");
+    console.error(
+      "[Webhook] CHARGE-APPROVED com assinatura inválida ou inconsistente."
+    );
     return;
   }
 
@@ -369,14 +374,19 @@ async function onChargeApproved(payload: ChargeWebhookPayload): Promise<void> {
   });
 
   if (!invoice) {
-    console.error("[Webhook] Fatura não encontrada para CHARGE-APPROVED:", invoiceId);
+    console.error(
+      "[Webhook] Fatura não encontrada para CHARGE-APPROVED:",
+      invoiceId
+    );
     return;
   }
 
   if (invoice.status === "paid") return;
 
   const result = await syncCheckoutBoletoPayment(invoice.id);
-  console.log(`[Webhook] CHARGE-APPROVED processado pra fatura ${invoice.id}: ${result.status}`);
+  console.log(
+    `[Webhook] CHARGE-APPROVED processado pra fatura ${invoice.id}: ${result.status}`
+  );
 }
 
 export async function POST(request: Request) {
@@ -387,12 +397,12 @@ export async function POST(request: Request) {
   try {
     payload = await request.json();
 
-    if (!payload || !payload.event || !payload.data) {
+    if (!payload?.event || !payload.data) {
       console.error("Invalid webhook payload structure:", payload);
       return NextResponse.json(
         {
-          success: false,
           message: "Invalid webhook payload structure.",
+          success: false,
           timestamp: new Date().toISOString(),
         },
         { status: 400 }
@@ -439,7 +449,8 @@ export async function POST(request: Request) {
         await onChargeDeclined(payload as unknown as ChargeWebhookPayload);
         actionTaken = "Processamento imediato de cobrança recusada iniciado.";
         details = payload.data;
-        break;      case "CHARGE-APPROVED":
+        break;
+      case "CHARGE-APPROVED":
         await onChargeApproved(payload as unknown as ChargeWebhookPayload);
         actionTaken = "Evento CHARGE-APPROVED processado.";
         details = payload.data;
@@ -454,12 +465,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        success: true,
-        message: "Webhook processado com sucesso.",
         actionTaken,
-        webhookType: payload.event,
         details,
+        message: "Webhook processado com sucesso.",
+        success: true,
         timestamp: new Date().toISOString(),
+        webhookType: payload.event,
       },
       { status: 200 }
     );
@@ -475,15 +486,15 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         {
-          success: false,
-          message: "Falha ao processar webhook.",
-          webhookType: payloadType,
           error: {
             message: error.message,
             stack:
               process.env.NODE_ENV === "development" ? error.stack : undefined,
           },
+          message: "Falha ao processar webhook.",
+          success: false,
           timestamp: new Date().toISOString(),
+          webhookType: payloadType,
         },
         { status: payload ? 400 : 500 }
       ); // 400 if payload was parsed, 500 if error before/during parsing

@@ -1,33 +1,31 @@
 import { describe, expect, test } from "bun:test";
 import {
-  processPaymentDeclined,
   type PaymentDeclinedInvoice,
   type PaymentDeclinedRepository,
+  processPaymentDeclined,
 } from "./payment-declined";
 
-type State = {
+interface State {
   invoiceStatus: "pending" | "processing" | "paid" | "failed";
   planId: string | null;
   vpsStatus: "active" | "failed" | null;
   failureCount: number;
-};
+}
 
 function repositoryFor(
   invoice: PaymentDeclinedInvoice | undefined,
-  state: State,
+  state: State
 ): PaymentDeclinedRepository {
   return {
-    async findInvoice(id) {
-      return invoice?.id === id ? invoice : undefined;
-    },
-    async failInvoice() {
-      if (state.invoiceStatus === "paid" || state.invoiceStatus === "failed") return false;
-      state.invoiceStatus = "failed";
-      return true;
-    },
     async clearOrganizationPlan(_orgId, planId) {
       if (state.planId !== planId) return false;
       state.planId = null;
+      return true;
+    },
+    async failInvoice() {
+      if (state.invoiceStatus === "paid" || state.invoiceStatus === "failed")
+        return false;
+      state.invoiceStatus = "failed";
       return true;
     },
     async failVpsSubscriptions() {
@@ -35,6 +33,9 @@ function repositoryFor(
       state.vpsStatus = "failed";
       state.failureCount += 1;
       return 1;
+    },
+    async findInvoice(id) {
+      return invoice?.id === id ? invoice : undefined;
     },
   };
 }
@@ -48,20 +49,22 @@ describe("processPaymentDeclined", () => {
       type: "vps",
     };
     const state: State = {
+      failureCount: 0,
       invoiceStatus: "pending",
       planId: null,
       vpsStatus: "active",
-      failureCount: 0,
     };
 
-    await expect(processPaymentDeclined(invoice.id, repositoryFor(invoice, state))).resolves.toEqual({
-      status: "vps-subscription-failed",
+    await expect(
+      processPaymentDeclined(invoice.id, repositoryFor(invoice, state))
+    ).resolves.toEqual({
       invoiceId: invoice.id,
+      status: "vps-subscription-failed",
     });
     expect(state).toMatchObject({
+      failureCount: 1,
       invoiceStatus: "failed",
       vpsStatus: "failed",
-      failureCount: 1,
     });
   });
 
@@ -73,15 +76,17 @@ describe("processPaymentDeclined", () => {
       type: "subscription",
     };
     const state: State = {
+      failureCount: 0,
       invoiceStatus: "processing",
       planId: "plan-1",
       vpsStatus: null,
-      failureCount: 0,
     };
 
-    await expect(processPaymentDeclined(invoice.id, repositoryFor(invoice, state))).resolves.toEqual({
-      status: "organisation-plan-failed",
+    await expect(
+      processPaymentDeclined(invoice.id, repositoryFor(invoice, state))
+    ).resolves.toEqual({
       invoiceId: invoice.id,
+      status: "organisation-plan-failed",
     });
     expect(state).toMatchObject({ invoiceStatus: "failed", planId: null });
   });
@@ -94,15 +99,17 @@ describe("processPaymentDeclined", () => {
       type: "subscription",
     };
     const state: State = {
+      failureCount: 0,
       invoiceStatus: "paid",
       planId: "plan-new",
       vpsStatus: null,
-      failureCount: 0,
     };
 
-    await expect(processPaymentDeclined(invoice.id, repositoryFor(invoice, state))).resolves.toEqual({
-      status: "organisation-plan-unchanged",
+    await expect(
+      processPaymentDeclined(invoice.id, repositoryFor(invoice, state))
+    ).resolves.toEqual({
       invoiceId: invoice.id,
+      status: "organisation-plan-unchanged",
     });
     expect(state).toMatchObject({ invoiceStatus: "paid", planId: "plan-new" });
   });

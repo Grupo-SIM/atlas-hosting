@@ -1,171 +1,127 @@
+import { XMLParser } from "fast-xml-parser"; // Example import
 import type {
+  DomainPrivacyChangeEmailAddressCommandResponse,
+  DomainPrivacyChangeEmailAddressParams,
+  DomainPrivacyDisableCommandResponse,
+  DomainPrivacyDisableParams,
+  DomainPrivacyEnableCommandResponse,
+  DomainPrivacyEnableParams,
+  DomainPrivacyGetListCommandResponse,
+  DomainPrivacyGetListParams,
+  DomainPrivacyRenewCommandResponse,
+  DomainPrivacyRenewParams,
+  DomainsCheckCommandResponse,
+  DomainsCheckParams,
+  DomainsCreateCommandResponse,
+  DomainsCreateParams,
+  DomainsDnsGetEmailForwardingCommandResponse,
+  DomainsDnsGetEmailForwardingParams,
+  DomainsDnsGetHostsCommandResponse,
+  DomainsDnsGetHostsParams,
+  DomainsDnsGetListCommandResponse,
+  DomainsDnsGetListParams,
+  DomainsDnsSetCustomCommandResponse,
+  DomainsDnsSetCustomParams,
+  DomainsDnsSetDefaultCommandResponse,
+  DomainsDnsSetDefaultParams,
+  DomainsDnsSetEmailForwardingCommandResponse,
+  DomainsDnsSetEmailForwardingParams,
+  DomainsDnsSetHostsCommandResponse,
+  DomainsDnsSetHostsParams,
+  DomainsGetContactsCommandResponse,
+  DomainsGetContactsParams,
+  DomainsGetInfoCommandResponse,
+  DomainsGetInfoParams,
+  DomainsGetListCommandResponse,
+  DomainsGetListParams,
+  DomainsGetRegistrarLockCommandResponse,
+  DomainsGetRegistrarLockParams,
+  DomainsGetTldListCommandResponse,
+  DomainsNsCreateCommandResponse,
+  DomainsNsCreateParams,
+  DomainsNsDeleteCommandResponse,
+  DomainsNsDeleteParams,
+  DomainsNsGetInfoCommandResponse,
+  DomainsNsGetInfoParams,
+  DomainsNsUpdateCommandResponse,
+  DomainsNsUpdateParams,
+  DomainsReactivateCommandResponse,
+  DomainsReactivateParams,
+  DomainsRenewCommandResponse,
+  DomainsRenewParams,
+  DomainsSetContactsCommandResponse,
+  DomainsSetContactsParams,
+  DomainsSetRegistrarLockCommandResponse,
+  DomainsSetRegistrarLockParams,
+  DomainsTransferCreateCommandResponse,
+  DomainsTransferCreateParams,
+  DomainsTransferGetListCommandResponse,
+  DomainsTransferGetListParams,
+  DomainsTransferGetStatusCommandResponse,
+  DomainsTransferGetStatusParams,
+  DomainsTransferUpdateStatusCommandResponse,
+  DomainsTransferUpdateStatusParams,
+  EmailForwardingRule,
+  HostRecordParams,
+  NamecheapApiResponse,
   NamecheapConfig,
   NamecheapError,
-  NamecheapApiResponse,
-  PagingInfo,
-  ContactParams,
-  ExtendedAttributesParams,
-  DomainsGetListParams,
-  DomainsGetListCommandResponse,
-  DomainEntry,
-  DomainsGetContactsParams,
-  DomainsGetContactsCommandResponse,
-  ContactDetailsApiResponse,
-  WhoisGuardContactDetails,
-  CurrentAttributes,
-  DomainsCreateParams,
-  DomainsCreateCommandResponse,
-  DomainsGetTldListCommandResponse,
-  TldInfo,
-  DomainsSetContactsParams,
-  DomainsSetContactsCommandResponse,
-  DomainsCheckParams,
-  DomainsCheckCommandResponse,
-  DomainCheckResultItem,
-  DomainsReactivateParams,
-  DomainsReactivateCommandResponse,
-  DomainsRenewParams,
-  DomainsRenewCommandResponse,
-  DomainRenewDetails,
-  DomainsGetRegistrarLockParams,
-  DomainsGetRegistrarLockCommandResponse,
-  DomainsSetRegistrarLockParams,
-  DomainsSetRegistrarLockCommandResponse,
-  DomainsGetInfoParams,
-  DomainsGetInfoCommandResponse,
-  DomainDetailsInfo,
-  WhoisguardInfo,
-  DnsDetailsInfo,
-  ModificationRightsInfo,
-  PremiumDnsSubscriptionInfo,
-  DomainsDnsSetDefaultParams,
-  DomainsDnsSetDefaultCommandResponse,
-  DomainsDnsSetCustomParams,
-  DomainsDnsSetCustomCommandResponse,
-  DomainsDnsGetListParams,
-  DomainsDnsGetListCommandResponse,
-  DomainsDnsGetHostsParams,
-  DomainsDnsGetHostsCommandResponse,
-  HostRecord,
-  DomainsDnsGetEmailForwardingParams,
-  DomainsDnsGetEmailForwardingCommandResponse,
-  EmailForwardingRecord,
-  DomainsDnsSetEmailForwardingParams,
-  DomainsDnsSetEmailForwardingCommandResponse,
-  EmailForwardingRule,
-  DomainsDnsSetHostsParams,
-  DomainsDnsSetHostsCommandResponse,
-  HostRecordParams,
-  DomainsNsCreateParams,
-  DomainsNsCreateCommandResponse,
-  DomainsNsDeleteParams,
-  DomainsNsDeleteCommandResponse,
-  DomainsNsGetInfoParams,
-  DomainsNsGetInfoCommandResponse,
-  NameserverStatus,
-  DomainsNsUpdateParams,
-  DomainsNsUpdateCommandResponse,
-  DomainsTransferCreateParams,
-  DomainsTransferCreateCommandResponse,
-  DomainsTransferGetStatusParams,
-  DomainsTransferGetStatusCommandResponse,
-  DomainsTransferUpdateStatusParams,
-  DomainsTransferUpdateStatusCommandResponse,
-  DomainsTransferGetListParams,
-  DomainsTransferGetListCommandResponse,
-  TransferEntry,
-  SslProductType,
-  SslCreateParams,
-  SslCreateCommandResponse,
-  SslCreateResult,
-  SslGetListParams,
-  SslGetListCommandResponse,
-  SslEntry,
-  SslListType,
-  SslSortByType,
-  SslParseCSRParams,
-  SslParseCSRCommandResponse,
-  CsrDetails,
-  SslGetApproverEmailListParams,
-  SslGetApproverEmailListCommandResponse,
-  ApproverEmailList,
-  SslActivateParams,
-  SslActivateCommandResponse,
-  DcvNameValue,
-  SslResendApproverEmailParams,
-  SslResendApproverEmailCommandResponse,
-  SslGetInfoParams,
-  SslGetInfoCommandResponse,
-  ProviderInfo,
-  CertificateDetails,
-  CertificateData,
-  SslRenewParams,
-  SslRenewCommandResponse,
-  SslReissueParams,
-  SslReissueCommandResponse,
-  SslResendFulfillmentEmailParams,
-  SslResendFulfillmentEmailCommandResponse,
-  SslPurchaseMoreSansParams,
-  SslPurchaseMoreSansCommandResponse,
-  SslPurchaseMoreSansResult,
-  SslRevokeCertificateParams,
-  SslRevokeCertificateCommandResponse,
-  SslEditDCVMethodParams,
-  SslEditDCVMethodCommandResponse,
-  DcvDomainResult,
-  DcvMethod,
-  UsersGetPricingParams,
-  UsersGetPricingCommandResponse,
-  ProductPrice,
-  ProductCategoryPricing,
-  ProductPricingInfo,
-  ProductTypePricing,
-  ProductCategoryDomain,
-  ProductCategorySsl,
-  ActionNameDomain,
-  ActionNameSsl,
-  UsersGetBalancesCommandResponse,
-  UsersChangePasswordParams,
-  UsersChangePasswordCommandResponse,
-  UsersUpdateParams,
-  UsersUpdateCommandResponse,
-  UsersCreateAddFundsRequestParams,
-  UsersCreateAddFundsRequestCommandResponse,
-  UsersGetAddFundsStatusParams,
-  UsersGetAddFundsStatusCommandResponse,
-  AddFundsStatus,
-  UsersCreateParams,
-  UsersCreateCommandResponse,
-  UsersLoginParams,
-  UsersLoginCommandResponse,
-  UsersResetPasswordParams,
-  UsersResetPasswordCommandResponse,
-  UsersAddressCreateParams,
-  UsersAddressCreateCommandResponse,
-  UsersAddressDeleteParams,
-  UsersAddressDeleteCommandResponse,
-  UsersAddressGetInfoParams,
-  UsersAddressGetInfoCommandResponse,
-  AddressInfo,
-  UsersAddressGetListCommandResponse,
-  UsersAddressSetDefaultParams,
-  UsersAddressSetDefaultCommandResponse,
-  UsersAddressUpdateParams,
-  UsersAddressUpdateCommandResponse,
-  DomainPrivacyChangeEmailAddressParams,
-  DomainPrivacyChangeEmailAddressCommandResponse,
-  DomainPrivacyEnableParams,
-  DomainPrivacyEnableCommandResponse,
-  DomainPrivacyDisableParams,
-  DomainPrivacyDisableCommandResponse,
-  DomainPrivacyGetListParams,
-  DomainPrivacyGetListCommandResponse,
-  DomainPrivacySubscription,
-  DomainPrivacyRenewParams,
-  DomainPrivacyRenewCommandResponse,
   RequestParams,
+  SslActivateCommandResponse,
+  SslActivateParams,
+  SslCreateCommandResponse,
+  SslCreateParams,
+  SslEditDCVMethodCommandResponse,
+  SslEditDCVMethodParams,
+  SslGetApproverEmailListCommandResponse,
+  SslGetApproverEmailListParams,
+  SslGetInfoCommandResponse,
+  SslGetInfoParams,
+  SslGetListCommandResponse,
+  SslGetListParams,
+  SslParseCSRCommandResponse,
+  SslParseCSRParams,
+  SslPurchaseMoreSansCommandResponse,
+  SslPurchaseMoreSansParams,
+  SslReissueCommandResponse,
+  SslReissueParams,
+  SslRenewCommandResponse,
+  SslRenewParams,
+  SslResendApproverEmailCommandResponse,
+  SslResendApproverEmailParams,
+  SslResendFulfillmentEmailCommandResponse,
+  SslResendFulfillmentEmailParams,
+  SslRevokeCertificateCommandResponse,
+  SslRevokeCertificateParams,
+  UsersAddressCreateCommandResponse,
+  UsersAddressCreateParams,
+  UsersAddressDeleteCommandResponse,
+  UsersAddressDeleteParams,
+  UsersAddressGetInfoCommandResponse,
+  UsersAddressGetInfoParams,
+  UsersAddressGetListCommandResponse,
+  UsersAddressSetDefaultCommandResponse,
+  UsersAddressSetDefaultParams,
+  UsersAddressUpdateCommandResponse,
+  UsersAddressUpdateParams,
+  UsersChangePasswordCommandResponse,
+  UsersChangePasswordParams,
+  UsersCreateAddFundsRequestCommandResponse,
+  UsersCreateAddFundsRequestParams,
+  UsersCreateCommandResponse,
+  UsersCreateParams,
+  UsersGetAddFundsStatusCommandResponse,
+  UsersGetAddFundsStatusParams,
+  UsersGetBalancesCommandResponse,
+  UsersGetPricingCommandResponse,
+  UsersGetPricingParams,
+  UsersLoginCommandResponse,
+  UsersLoginParams,
+  UsersResetPasswordCommandResponse,
+  UsersResetPasswordParams,
+  UsersUpdateCommandResponse,
+  UsersUpdateParams,
 } from "./types";
-import { XMLParser } from "fast-xml-parser"; // Example import
 
 // Helper to ensure a value is an array
 function ensureArray<T>(data: T | T | undefined): T {
@@ -177,13 +133,12 @@ function ensureArray<T>(data: T | T | undefined): T {
 export class NamecheapApiClient {
   private config: Required<NamecheapConfig>;
   private baseUrl: string;
-  private xmlParser: XMLParser;
 
   constructor(config: NamecheapConfig) {
     this.config = {
+      logRequests: false,
       userName: config.apiUser, // Default userName to apiUser
       useSandbox: false,
-      logRequests: false,
       ...config,
     };
     this.baseUrl = this.config.useSandbox
@@ -192,8 +147,8 @@ export class NamecheapApiClient {
 
     // Initialize XML parser here. Example with fast-xml-parser:
     this.xmlParser = new XMLParser({
-      ignoreAttributes: false,
       attributeNamePrefix: "@_",
+      ignoreAttributes: false,
       parseAttributeValue: true,
       parseTagValue: true,
       // Define paths that should always be arrays for consistency
@@ -219,11 +174,11 @@ export class NamecheapApiClient {
     method: "GET" | "POST" = "GET"
   ): Promise<NamecheapApiResponse<TResponsePayload>> {
     const globalParams: Record<string, string> = {
-      ApiUser: this.config.apiUser,
       ApiKey: this.config.apiKey,
-      UserName: this.config.userName,
+      ApiUser: this.config.apiUser,
       ClientIp: this.config.clientIp,
       Command: command,
+      UserName: this.config.userName,
     };
 
     let allParams: Record<string, string | number | boolean> = {
@@ -337,30 +292,30 @@ export class NamecheapApiClient {
         if (xmlText.includes('<ApiResponse Status="ERROR">')) {
           parsedXml = {
             "@_Status": "ERROR",
+            CommandResponse: { "@_Type": command },
             Errors: {
               Error: {
-                Number: "0",
                 Message:
                   "XML parsing placeholder error. Implement a real XML parser.",
+                Number: "0",
               },
             },
-            RequestedCommand: command,
-            CommandResponse: { "@_Type": command },
-            Server: "MockServer",
-            GMTTimeDifference: "0",
             ExecutionTime: "0.1",
+            GMTTimeDifference: "0",
+            RequestedCommand: command,
+            Server: "MockServer",
           };
         } else {
           parsedXml = {
             "@_Status": "OK",
-            Errors: "",
-            RequestedCommand: command,
             CommandResponse: {
               "@_Type": command /*... payload from parser... */,
             },
-            Server: "MockServer",
-            GMTTimeDifference: "0",
+            Errors: "",
             ExecutionTime: "0.1",
+            GMTTimeDifference: "0",
+            RequestedCommand: command,
+            Server: "MockServer",
           };
         }
       } catch (e) {
@@ -384,9 +339,8 @@ export class NamecheapApiClient {
         const errors: NamecheapError[] = Array.isArray(e) ? e : [e];
 
         const errorMessages =
-          errors
-            .map((err) => `Error ${err.Number}: ${err.Message}`)
-            .join(", ") || "Unknown error";
+          errors.map(err => `Error ${err.Number}: ${err.Message}`).join(", ") ||
+          "Unknown error";
         throw new Error(`Namecheap API Error for ${command}: ${errorMessages}`);
       }
 
@@ -405,25 +359,20 @@ export class NamecheapApiClient {
   // --- Domains Methods ---
   public domains = {
     /**
-     * Returns a list of domains for the particular user. [1]
+     * Checks the availability of domains. [4, 5]
      */
-    getList: (
-      params?: DomainsGetListParams
-    ): Promise<NamecheapApiResponse<DomainsGetListCommandResponse>> => {
-      return this.request<
-        DomainsGetListCommandResponse,
-        DomainsGetListParams | undefined
-      >("namecheap.domains.getList", params);
-    },
-    /**
-     * Gets contact information of the requested domain. [2]
-     */
-    getContacts: (
-      params: DomainsGetContactsParams
-    ): Promise<NamecheapApiResponse<DomainsGetContactsCommandResponse>> => {
-      return this.request<DomainsGetContactsCommandResponse>(
-        "namecheap.domains.getContacts",
-        params
+    check: (
+      params: DomainsCheckParams
+    ): Promise<NamecheapApiResponse<DomainsCheckCommandResponse>> => {
+      const apiParams = { ...params } as DomainsCheckParams;
+
+      if (Array.isArray(apiParams.domainList)) {
+        apiParams.domainList = apiParams.domainList.join(",");
+      }
+
+      return this.request<DomainsCheckCommandResponse>(
+        "namecheap.domains.check",
+        { DomainList: apiParams.domainList } as RequestParams
       );
     },
     /**
@@ -440,6 +389,52 @@ export class NamecheapApiClient {
       );
     },
     /**
+     * Gets contact information of the requested domain. [2]
+     */
+    getContacts: (
+      params: DomainsGetContactsParams
+    ): Promise<NamecheapApiResponse<DomainsGetContactsCommandResponse>> => {
+      return this.request<DomainsGetContactsCommandResponse>(
+        "namecheap.domains.getContacts",
+        params
+      );
+    },
+    /**
+     * Returns information about the requested domain.
+     */
+    getInfo: (
+      params: DomainsGetInfoParams
+    ): Promise<NamecheapApiResponse<DomainsGetInfoCommandResponse>> => {
+      return this.request<DomainsGetInfoCommandResponse>(
+        "namecheap.domains.getInfo",
+        params
+      );
+    },
+    /**
+     * Returns a list of domains for the particular user. [1]
+     */
+    getList: (
+      params?: DomainsGetListParams
+    ): Promise<NamecheapApiResponse<DomainsGetListCommandResponse>> => {
+      return this.request<
+        DomainsGetListCommandResponse,
+        DomainsGetListParams | undefined
+      >("namecheap.domains.getList", params);
+    },
+    /**
+     * Gets the RegistrarLock status of the requested domain. [6]
+     */
+    getRegistrarLock: (
+      params: DomainsGetRegistrarLockParams
+    ): Promise<
+      NamecheapApiResponse<DomainsGetRegistrarLockCommandResponse>
+    > => {
+      return this.request<DomainsGetRegistrarLockCommandResponse>(
+        "namecheap.domains.getRegistrarLock",
+        params
+      );
+    },
+    /**
      * Returns a list of TLDs.
      */
     getTldList: (): Promise<
@@ -448,35 +443,6 @@ export class NamecheapApiClient {
       return this.request<DomainsGetTldListCommandResponse, undefined>(
         "namecheap.domains.getTldList",
         undefined
-      );
-    },
-    /**
-     * Sets contact information for the domain. [3]
-     */
-    setContacts: (
-      params: DomainsSetContactsParams
-    ): Promise<NamecheapApiResponse<DomainsSetContactsCommandResponse>> => {
-      return this.request<DomainsSetContactsCommandResponse>(
-        "namecheap.domains.setContacts",
-        params,
-        "POST"
-      );
-    },
-    /**
-     * Checks the availability of domains. [4, 5]
-     */
-    check: (
-      params: DomainsCheckParams
-    ): Promise<NamecheapApiResponse<DomainsCheckCommandResponse>> => {
-      const apiParams = { ...params } as DomainsCheckParams;
-
-      if (Array.isArray(apiParams.domainList)) {
-        apiParams.domainList = apiParams.domainList.join(",");
-      }
-
-      return this.request<DomainsCheckCommandResponse>(
-        "namecheap.domains.check",
-        { DomainList: apiParams.domainList } as RequestParams
       );
     },
     /**
@@ -504,16 +470,15 @@ export class NamecheapApiClient {
       );
     },
     /**
-     * Gets the RegistrarLock status of the requested domain. [6]
+     * Sets contact information for the domain. [3]
      */
-    getRegistrarLock: (
-      params: DomainsGetRegistrarLockParams
-    ): Promise<
-      NamecheapApiResponse<DomainsGetRegistrarLockCommandResponse>
-    > => {
-      return this.request<DomainsGetRegistrarLockCommandResponse>(
-        "namecheap.domains.getRegistrarLock",
-        params
+    setContacts: (
+      params: DomainsSetContactsParams
+    ): Promise<NamecheapApiResponse<DomainsSetContactsCommandResponse>> => {
+      return this.request<DomainsSetContactsCommandResponse>(
+        "namecheap.domains.setContacts",
+        params,
+        "POST"
       );
     },
     /**
@@ -529,29 +494,42 @@ export class NamecheapApiClient {
         params
       );
     },
-    /**
-     * Returns information about the requested domain.
-     */
-    getInfo: (
-      params: DomainsGetInfoParams
-    ): Promise<NamecheapApiResponse<DomainsGetInfoCommandResponse>> => {
-      return this.request<DomainsGetInfoCommandResponse>(
-        "namecheap.domains.getInfo",
-        params
-      );
-    },
   };
 
   // --- Domains.Dns Methods ---
   public domainsDns = {
     /**
-     * Sets domain to use Namecheap's default DNS servers.
+     * Gets email forwarding settings for the requested domain.
      */
-    setDefault: (
-      params: DomainsDnsSetDefaultParams
-    ): Promise<NamecheapApiResponse<DomainsDnsSetDefaultCommandResponse>> => {
-      return this.request<DomainsDnsSetDefaultCommandResponse>(
-        "namecheap.domains.dns.setDefault",
+    getEmailForwarding: (
+      params: DomainsDnsGetEmailForwardingParams
+    ): Promise<
+      NamecheapApiResponse<DomainsDnsGetEmailForwardingCommandResponse>
+    > => {
+      return this.request<DomainsDnsGetEmailForwardingCommandResponse>(
+        "namecheap.domains.dns.getEmailForwarding",
+        params
+      );
+    },
+    /**
+     * Retrieves DNS host record settings for the requested domain.
+     */
+    getHosts: (
+      params: DomainsDnsGetHostsParams
+    ): Promise<NamecheapApiResponse<DomainsDnsGetHostsCommandResponse>> => {
+      return this.request<DomainsDnsGetHostsCommandResponse>(
+        "namecheap.domains.dns.getHosts",
+        params
+      );
+    },
+    /**
+     * Gets a list of DNS servers associated with the requested domain.
+     */
+    getList: (
+      params: DomainsDnsGetListParams
+    ): Promise<NamecheapApiResponse<DomainsDnsGetListCommandResponse>> => {
+      return this.request<DomainsDnsGetListCommandResponse>(
+        "namecheap.domains.dns.getList",
         params
       );
     },
@@ -571,37 +549,13 @@ export class NamecheapApiClient {
       );
     },
     /**
-     * Gets a list of DNS servers associated with the requested domain.
+     * Sets domain to use Namecheap's default DNS servers.
      */
-    getList: (
-      params: DomainsDnsGetListParams
-    ): Promise<NamecheapApiResponse<DomainsDnsGetListCommandResponse>> => {
-      return this.request<DomainsDnsGetListCommandResponse>(
-        "namecheap.domains.dns.getList",
-        params
-      );
-    },
-    /**
-     * Retrieves DNS host record settings for the requested domain.
-     */
-    getHosts: (
-      params: DomainsDnsGetHostsParams
-    ): Promise<NamecheapApiResponse<DomainsDnsGetHostsCommandResponse>> => {
-      return this.request<DomainsDnsGetHostsCommandResponse>(
-        "namecheap.domains.dns.getHosts",
-        params
-      );
-    },
-    /**
-     * Gets email forwarding settings for the requested domain.
-     */
-    getEmailForwarding: (
-      params: DomainsDnsGetEmailForwardingParams
-    ): Promise<
-      NamecheapApiResponse<DomainsDnsGetEmailForwardingCommandResponse>
-    > => {
-      return this.request<DomainsDnsGetEmailForwardingCommandResponse>(
-        "namecheap.domains.dns.getEmailForwarding",
+    setDefault: (
+      params: DomainsDnsSetDefaultParams
+    ): Promise<NamecheapApiResponse<DomainsDnsSetDefaultCommandResponse>> => {
+      return this.request<DomainsDnsSetDefaultCommandResponse>(
+        "namecheap.domains.dns.setDefault",
         params
       );
     },
@@ -696,6 +650,17 @@ export class NamecheapApiClient {
       );
     },
     /**
+     * Gets the list of domain transfers. [7, 8]
+     */
+    getList: (
+      params?: DomainsTransferGetListParams
+    ): Promise<NamecheapApiResponse<DomainsTransferGetListCommandResponse>> => {
+      return this.request<DomainsTransferGetListCommandResponse>(
+        "namecheap.domains.transfer.getList",
+        params
+      );
+    },
+    /**
      * Gets the status of a particular transfer.
      */
     getStatus: (
@@ -721,21 +686,22 @@ export class NamecheapApiClient {
         params
       );
     },
-    /**
-     * Gets the list of domain transfers. [7, 8]
-     */
-    getList: (
-      params?: DomainsTransferGetListParams
-    ): Promise<NamecheapApiResponse<DomainsTransferGetListCommandResponse>> => {
-      return this.request<DomainsTransferGetListCommandResponse>(
-        "namecheap.domains.transfer.getList",
-        params
-      );
-    },
   };
 
   // --- Ssl Methods ---
   public ssl = {
+    /**
+     * Activates a newly purchased SSL certificate.
+     */
+    activate: (
+      params: SslActivateParams
+    ): Promise<NamecheapApiResponse<SslActivateCommandResponse>> => {
+      return this.request<SslActivateCommandResponse>(
+        "namecheap.ssl.activate",
+        params,
+        "POST"
+      );
+    },
     /**
      * Creates a new SSL certificate.
      */
@@ -746,6 +712,49 @@ export class NamecheapApiClient {
         "namecheap.ssl.create",
         params,
         "POST"
+      );
+    },
+    /**
+     * Sets a new Domain Control Validation (DCV) method for a certificate.
+     */
+    editDCVMethod: (
+      params: SslEditDCVMethodParams
+    ): Promise<NamecheapApiResponse<SslEditDCVMethodCommandResponse>> => {
+      const apiParams = { ...params } as SslEditDCVMethodParams;
+      if ("dnsNames" in apiParams && Array.isArray(apiParams.dnsNames)) {
+        apiParams.dnsNames = apiParams.dnsNames.join(",");
+      }
+      if ("dcvMethods" in apiParams && Array.isArray(apiParams.dcvMethods)) {
+        apiParams.dcvMethods = apiParams.dcvMethods.join(",");
+      }
+      return this.request<SslEditDCVMethodCommandResponse>(
+        "namecheap.ssl.editDCVMethod",
+        apiParams,
+        "POST"
+      );
+    },
+    /**
+     * Gets approver email list for the requested certificate.
+     */
+    getApproverEmailList: (
+      params: SslGetApproverEmailListParams
+    ): Promise<
+      NamecheapApiResponse<SslGetApproverEmailListCommandResponse>
+    > => {
+      return this.request<SslGetApproverEmailListCommandResponse>(
+        "namecheap.ssl.getApproverEmailList",
+        params
+      );
+    },
+    /**
+     * Retrieves information about the requested SSL certificate.
+     */
+    getInfo: (
+      params: SslGetInfoParams
+    ): Promise<NamecheapApiResponse<SslGetInfoCommandResponse>> => {
+      return this.request<SslGetInfoCommandResponse>(
+        "namecheap.ssl.getInfo",
+        params
       );
     },
     /**
@@ -772,60 +781,13 @@ export class NamecheapApiClient {
       );
     },
     /**
-     * Gets approver email list for the requested certificate.
+     * Purchases more add-on domains for an already purchased certificate.
      */
-    getApproverEmailList: (
-      params: SslGetApproverEmailListParams
-    ): Promise<
-      NamecheapApiResponse<SslGetApproverEmailListCommandResponse>
-    > => {
-      return this.request<SslGetApproverEmailListCommandResponse>(
-        "namecheap.ssl.getApproverEmailList",
-        params
-      );
-    },
-    /**
-     * Activates a newly purchased SSL certificate.
-     */
-    activate: (
-      params: SslActivateParams
-    ): Promise<NamecheapApiResponse<SslActivateCommandResponse>> => {
-      return this.request<SslActivateCommandResponse>(
-        "namecheap.ssl.activate",
-        params,
-        "POST"
-      );
-    },
-    /**
-     * Resends the approver email.
-     */
-    resendApproverEmail: (
-      params: SslResendApproverEmailParams
-    ): Promise<NamecheapApiResponse<SslResendApproverEmailCommandResponse>> => {
-      return this.request<SslResendApproverEmailCommandResponse>(
-        "namecheap.ssl.resendApproverEmail",
-        params
-      );
-    },
-    /**
-     * Retrieves information about the requested SSL certificate.
-     */
-    getInfo: (
-      params: SslGetInfoParams
-    ): Promise<NamecheapApiResponse<SslGetInfoCommandResponse>> => {
-      return this.request<SslGetInfoCommandResponse>(
-        "namecheap.ssl.getInfo",
-        params
-      );
-    },
-    /**
-     * Renews an SSL certificate.
-     */
-    renew: (
-      params: SslRenewParams
-    ): Promise<NamecheapApiResponse<SslRenewCommandResponse>> => {
-      return this.request<SslRenewCommandResponse>(
-        "namecheap.ssl.renew",
+    purchaseMoreSans: (
+      params: SslPurchaseMoreSansParams
+    ): Promise<NamecheapApiResponse<SslPurchaseMoreSansCommandResponse>> => {
+      return this.request<SslPurchaseMoreSansCommandResponse>(
+        "namecheap.ssl.purchasemoresans",
         params,
         "POST"
       );
@@ -843,6 +805,29 @@ export class NamecheapApiClient {
       );
     },
     /**
+     * Renews an SSL certificate.
+     */
+    renew: (
+      params: SslRenewParams
+    ): Promise<NamecheapApiResponse<SslRenewCommandResponse>> => {
+      return this.request<SslRenewCommandResponse>(
+        "namecheap.ssl.renew",
+        params,
+        "POST"
+      );
+    },
+    /**
+     * Resends the approver email.
+     */
+    resendApproverEmail: (
+      params: SslResendApproverEmailParams
+    ): Promise<NamecheapApiResponse<SslResendApproverEmailCommandResponse>> => {
+      return this.request<SslResendApproverEmailCommandResponse>(
+        "namecheap.ssl.resendApproverEmail",
+        params
+      );
+    },
+    /**
      * Resends the fulfillment email containing the certificate.
      */
     resendFulfillmentEmail: (
@@ -853,18 +838,6 @@ export class NamecheapApiClient {
       return this.request<SslResendFulfillmentEmailCommandResponse>(
         "namecheap.ssl.resendfulfillmentemail",
         params
-      );
-    },
-    /**
-     * Purchases more add-on domains for an already purchased certificate.
-     */
-    purchaseMoreSans: (
-      params: SslPurchaseMoreSansParams
-    ): Promise<NamecheapApiResponse<SslPurchaseMoreSansCommandResponse>> => {
-      return this.request<SslPurchaseMoreSansCommandResponse>(
-        "namecheap.ssl.purchasemoresans",
-        params,
-        "POST"
       );
     },
     /**
@@ -879,51 +852,10 @@ export class NamecheapApiClient {
         "POST"
       );
     },
-    /**
-     * Sets a new Domain Control Validation (DCV) method for a certificate.
-     */
-    editDCVMethod: (
-      params: SslEditDCVMethodParams
-    ): Promise<NamecheapApiResponse<SslEditDCVMethodCommandResponse>> => {
-      const apiParams = { ...params } as SslEditDCVMethodParams;
-      if ("dnsNames" in apiParams && Array.isArray(apiParams.dnsNames)) {
-        apiParams.dnsNames = apiParams.dnsNames.join(",");
-      }
-      if ("dcvMethods" in apiParams && Array.isArray(apiParams.dcvMethods)) {
-        apiParams.dcvMethods = apiParams.dcvMethods.join(",");
-      }
-      return this.request<SslEditDCVMethodCommandResponse>(
-        "namecheap.ssl.editDCVMethod",
-        apiParams,
-        "POST"
-      );
-    },
   };
 
   // --- Users Methods ---
   public users = {
-    /**
-     * Returns pricing information for a requested product type.
-     */
-    getPricing: (
-      params: UsersGetPricingParams
-    ): Promise<NamecheapApiResponse<UsersGetPricingCommandResponse>> => {
-      return this.request<UsersGetPricingCommandResponse>(
-        "namecheap.users.getPricing",
-        params
-      );
-    },
-    /**
-     * Gets information about funds in the user's account.
-     */
-    getBalances: (): Promise<
-      NamecheapApiResponse<UsersGetBalancesCommandResponse>
-    > => {
-      return this.request<UsersGetBalancesCommandResponse, undefined>(
-        "namecheap.users.getBalances",
-        undefined
-      );
-    },
     /**
      * Changes the password of the user's account.
      */
@@ -937,13 +869,13 @@ export class NamecheapApiClient {
       );
     },
     /**
-     * Updates user account information for the particular user.
+     * Creates a new user account at Namecheap. [11, 12]
      */
-    update: (
-      params: UsersUpdateParams
-    ): Promise<NamecheapApiResponse<UsersUpdateCommandResponse>> => {
-      return this.request<UsersUpdateCommandResponse>(
-        "namecheap.users.update",
+    create: (
+      params: UsersCreateParams
+    ): Promise<NamecheapApiResponse<UsersCreateCommandResponse>> => {
+      return this.request<UsersCreateCommandResponse>(
+        "namecheap.users.create",
         params,
         "POST"
       );
@@ -974,15 +906,25 @@ export class NamecheapApiClient {
       );
     },
     /**
-     * Creates a new user account at Namecheap. [11, 12]
+     * Gets information about funds in the user's account.
      */
-    create: (
-      params: UsersCreateParams
-    ): Promise<NamecheapApiResponse<UsersCreateCommandResponse>> => {
-      return this.request<UsersCreateCommandResponse>(
-        "namecheap.users.create",
-        params,
-        "POST"
+    getBalances: (): Promise<
+      NamecheapApiResponse<UsersGetBalancesCommandResponse>
+    > => {
+      return this.request<UsersGetBalancesCommandResponse, undefined>(
+        "namecheap.users.getBalances",
+        undefined
+      );
+    },
+    /**
+     * Returns pricing information for a requested product type.
+     */
+    getPricing: (
+      params: UsersGetPricingParams
+    ): Promise<NamecheapApiResponse<UsersGetPricingCommandResponse>> => {
+      return this.request<UsersGetPricingCommandResponse>(
+        "namecheap.users.getPricing",
+        params
       );
     },
     /**
@@ -1005,6 +947,18 @@ export class NamecheapApiClient {
     ): Promise<NamecheapApiResponse<UsersResetPasswordCommandResponse>> => {
       return this.request<UsersResetPasswordCommandResponse>(
         "namecheap.users.resetPassword",
+        params,
+        "POST"
+      );
+    },
+    /**
+     * Updates user account information for the particular user.
+     */
+    update: (
+      params: UsersUpdateParams
+    ): Promise<NamecheapApiResponse<UsersUpdateCommandResponse>> => {
+      return this.request<UsersUpdateCommandResponse>(
+        "namecheap.users.update",
         params,
         "POST"
       );
@@ -1099,18 +1053,6 @@ export class NamecheapApiClient {
       );
     },
     /**
-     * Enables domain privacy protection.
-     */
-    enable: (
-      params: DomainPrivacyEnableParams
-    ): Promise<NamecheapApiResponse<DomainPrivacyEnableCommandResponse>> => {
-      return this.request<DomainPrivacyEnableCommandResponse>(
-        "namecheap.whoisguard.enable",
-        params,
-        "POST"
-      );
-    },
-    /**
      * Disables domain privacy protection.
      */
     disable: (
@@ -1118,6 +1060,18 @@ export class NamecheapApiClient {
     ): Promise<NamecheapApiResponse<DomainPrivacyDisableCommandResponse>> => {
       return this.request<DomainPrivacyDisableCommandResponse>(
         "namecheap.whoisguard.disable",
+        params,
+        "POST"
+      );
+    },
+    /**
+     * Enables domain privacy protection.
+     */
+    enable: (
+      params: DomainPrivacyEnableParams
+    ): Promise<NamecheapApiResponse<DomainPrivacyEnableCommandResponse>> => {
+      return this.request<DomainPrivacyEnableCommandResponse>(
+        "namecheap.whoisguard.enable",
         params,
         "POST"
       );
@@ -1149,8 +1103,8 @@ export class NamecheapApiClient {
 }
 
 export const namecheapXmlApi = new NamecheapApiClient({
-  apiUser: process.env.NAMECHEAP_API_USER as string,
   apiKey: process.env.NAMECHEAP_API_KEY as string,
+  apiUser: process.env.NAMECHEAP_API_USER as string,
   clientIp: process.env.PUBLIC_IP as string,
   logRequests: true,
 });

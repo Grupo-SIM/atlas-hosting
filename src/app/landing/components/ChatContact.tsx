@@ -1,26 +1,32 @@
 "use client";
 
-import { useEffect } from "react";
 import { motion } from "motion/react";
 import { Roboto } from "next/font/google";
-import '@n8n/chat/style.css';
-import { createChat } from '@n8n/chat';
+import { useEffect } from "react";
+import "@n8n/chat/style.css";
+import { createChat } from "@n8n/chat";
 
-const WEBHOOK_URL = 'https://bot.jbmidia.com/webhook/6229f9db-8b7f-40ad-8a71-503727e71c34/chat';
+const WEBHOOK_URL =
+  "https://bot.jbmidia.com/webhook/6229f9db-8b7f-40ad-8a71-503727e71c34/chat";
 
 const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["100", "300", "400", "500", "700", "900"],
   variable: "--font-roboto",
+  weight: ["100", "300", "400", "500", "700", "900"],
 });
 
 export function ChatContact() {
   useEffect(() => {
     const originalScrollIntoView = Element.prototype.scrollIntoView;
-    Element.prototype.scrollIntoView = function (this: Element, options?: boolean | ScrollIntoViewOptions) {
-      const chatEmbed = document.getElementById('n8n-chat-embed');
-      if (chatEmbed && chatEmbed.contains(this)) {
-        const messagesList = chatEmbed.querySelector('[class*="messages"]') as HTMLElement | null;
+    Element.prototype.scrollIntoView = function (
+      this: Element,
+      options?: boolean | ScrollIntoViewOptions
+    ) {
+      const chatEmbed = document.getElementById("n8n-chat-embed");
+      if (chatEmbed?.contains(this)) {
+        const messagesList = chatEmbed.querySelector(
+          '[class*="messages"]'
+        ) as HTMLElement | null;
         if (messagesList) {
           messagesList.scrollTop = messagesList.scrollHeight;
           return;
@@ -30,46 +36,48 @@ export function ChatContact() {
     };
 
     createChat({
-      webhookUrl: WEBHOOK_URL,
-      mode: 'fullscreen',
-      target: '#n8n-chat-embed',
-      showWelcomeScreen: false,
-      initialMessages: [
-        'Olá! 👋',
-        'Sou o Atlas, como posso te ajudar?',
-      ],
       i18n: {
         en: {
-          title: 'Atlas IA',
-          subtitle: 'Suporte 24/7',
-          footer: '',
-          getStarted: 'Nova Conversa',
-          inputPlaceholder: 'Digite sua pergunta...',
-          closeButtonTooltip: 'Fechar',
+          closeButtonTooltip: "Fechar",
+          footer: "",
+          getStarted: "Nova Conversa",
+          inputPlaceholder: "Digite sua pergunta...",
+          subtitle: "Suporte 24/7",
+          title: "Atlas IA",
         },
       },
+      initialMessages: ["Olá! 👋", "Sou o Atlas, como posso te ajudar?"],
+      mode: "fullscreen",
+      showWelcomeScreen: false,
+      target: "#n8n-chat-embed",
+      webhookUrl: WEBHOOK_URL,
     });
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       // Verifica se o evento veio de um textarea dentro do nosso chat
-      if (target.tagName === 'TEXTAREA' &&
-        (target.closest('#n8n-chat-embed') || target.closest('#n8n-chat-bubble')) &&
-        e.key === 'Enter' && !e.shiftKey) {
-
+      if (
+        target.tagName === "TEXTAREA" &&
+        (target.closest("#n8n-chat-embed") ||
+          target.closest("#n8n-chat-bubble")) &&
+        e.key === "Enter" &&
+        !e.shiftKey
+      ) {
         e.preventDefault();
-        const sendButton = target.closest('form')?.querySelector('button[class*="send"]') as HTMLButtonElement | null;
+        const sendButton = target
+          .closest("form")
+          ?.querySelector('button[class*="send"]') as HTMLButtonElement | null;
         if (sendButton && !sendButton.disabled) {
           sendButton.click();
         }
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       Element.prototype.scrollIntoView = originalScrollIntoView;
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -192,52 +200,59 @@ export function ChatContact() {
         }
       `}</style>
 
-      <section className={`${roboto.variable} py-20 lg:py-32 overflow-hidden relative bg-transparent`}>
-        <div className="container mx-auto max-w-7xl relative z-10 px-4">
-          <div className="flex flex-col lg:flex-row items-center gap-20">
-
+      <section
+        className={`${roboto.variable} relative overflow-hidden bg-transparent py-20 lg:py-32`}
+      >
+        <div className="container relative z-10 mx-auto max-w-7xl px-4">
+          <div className="flex flex-col items-center gap-20 lg:flex-row">
             {/* Text Content */}
             <div className="flex-1 text-center lg:text-left">
               <motion.div
+                className="mb-8 inline-flex items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-4 py-1.5 font-bold text-[14px] text-sky-400 uppercase tracking-[0.12em]"
                 initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="inline-flex items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-4 py-1.5 text-[14px] font-bold uppercase tracking-[0.12em] text-sky-400 mb-8"
+                whileInView={{ opacity: 1, x: 0 }}
               >
                 ● SUPORTE ONLINE AGORA
               </motion.div>
 
               <motion.h2
+                className={`${roboto.className} mb-6 font-black text-[2.5rem] text-white leading-[1.1] tracking-tight md:text-[3.5rem]`}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
                 transition={{ delay: 0.1 }}
-                className={`${roboto.className} text-[2.5rem] md:text-[3.5rem] font-black text-white mb-6 leading-[1.1] tracking-tight`}
+                viewport={{ once: true }}
+                whileInView={{ opacity: 1, y: 0 }}
               >
-                Ficou com alguma dúvida?<br />
+                Ficou com alguma dúvida?
+                <br />
                 <span className="text-[#00A3FF]">Converse com nossa IA.</span>
               </motion.h2>
 
               <motion.p
+                className="mx-auto mb-10 max-w-lg font-medium text-white text-xl leading-relaxed lg:mx-0"
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="text-white text-xl mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium"
+                viewport={{ once: true }}
+                whileInView={{ opacity: 1, y: 0 }}
               >
-                Tire suas dúvidas sobre planos, domínios e cashback em tempo real com o assistente inteligente Atlas.
+                Tire suas dúvidas sobre planos, domínios e cashback em tempo
+                real com o assistente inteligente Atlas.
               </motion.p>
 
               <motion.div
+                className="flex flex-col items-center gap-4 font-bold text-base text-white uppercase tracking-wide lg:items-start"
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
                 transition={{ delay: 0.3 }}
-                className="flex flex-col items-center lg:items-start gap-4 text-base font-bold text-white uppercase tracking-wide"
+                viewport={{ once: true }}
+                whileInView={{ opacity: 1, y: 0 }}
               >
-                {['Resposta em segundos', 'Disponível 24/7', 'Sem espera em filas'].map((item) => (
-                  <span key={item} className="flex items-center gap-3 w-fit">
-                    <span className="w-2 h-2 rounded-full bg-[#00A3FF]" />
+                {[
+                  "Resposta em segundos",
+                  "Disponível 24/7",
+                  "Sem espera em filas",
+                ].map(item => (
+                  <span className="flex w-fit items-center gap-3" key={item}>
+                    <span className="h-2 w-2 rounded-full bg-[#00A3FF]" />
                     {item}
                   </span>
                 ))}
@@ -245,20 +260,22 @@ export function ChatContact() {
             </div>
 
             {/* n8n Chat Embed */}
-            <div className="flex-1 w-full flex justify-center lg:justify-end">
+            <div className="flex w-full flex-1 justify-center lg:justify-end">
               <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
                 className="relative w-full max-w-[480px]"
+                initial={{ opacity: 0, y: 40 }}
+                viewport={{ once: true }}
+                whileInView={{ opacity: 1, y: 0 }}
               >
                 {/* Chat Widget Container - White Background as requested */}
-                <div className="relative rounded-[2.5rem] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] bg-white">
-                  <div id="n8n-chat-embed" style={{ width: '100%', height: '620px' }} />
+                <div className="relative overflow-hidden rounded-[2.5rem] bg-white shadow-[0_30px_60px_rgba(0,0,0,0.5)]">
+                  <div
+                    id="n8n-chat-embed"
+                    style={{ height: "620px", width: "100%" }}
+                  />
                 </div>
               </motion.div>
             </div>
-
           </div>
         </div>
       </section>

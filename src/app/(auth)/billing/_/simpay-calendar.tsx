@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 // Utils adapted from Simpay
 function startOfDay(date: Date) {
@@ -13,7 +17,11 @@ function startOfDay(date: Date) {
 }
 
 function isSameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 
 function formatDate(date: Date | null) {
@@ -34,18 +42,20 @@ function rangeDays(start: Date | null, end: Date | null) {
   return Math.floor(diff / (24 * 60 * 60 * 1000)) + 1;
 }
 
-type Props = {
+interface Props {
   label: string;
   start: Date | null;
   end: Date | null;
   onChange: (start: Date | null, end: Date | null) => void;
-};
+}
 
 export function SimpayCalendar({ label, start, end, onChange }: Props) {
   const today = startOfDay(new Date());
-  
+
   const [open, setOpen] = useState(false);
-  const [monthCursor, setMonthCursor] = useState(new Date((end || today).getFullYear(), (end || today).getMonth(), 1));
+  const [monthCursor, setMonthCursor] = useState(
+    new Date((end || today).getFullYear(), (end || today).getMonth(), 1)
+  );
   const [hoverDate, setHoverDate] = useState<Date | null>(null);
 
   // Internal draft state to prevent jumping during selection
@@ -70,14 +80,20 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
     const days: Array<{ date: Date; currentMonth: boolean }> = [];
 
     for (let i = normalizedStart - 1; i >= 0; i -= 1) {
-      days.push({ date: new Date(year, month - 1, daysInPrevMonth - i), currentMonth: false });
+      days.push({
+        currentMonth: false,
+        date: new Date(year, month - 1, daysInPrevMonth - i),
+      });
     }
     for (let day = 1; day <= daysInMonth; day += 1) {
-      days.push({ date: new Date(year, month, day), currentMonth: true });
+      days.push({ currentMonth: true, date: new Date(year, month, day) });
     }
     while (days.length < 42) {
       const nextDay = days.length - (normalizedStart + daysInMonth) + 1;
-      days.push({ date: new Date(year, month + 1, nextDay), currentMonth: false });
+      days.push({
+        currentMonth: false,
+        date: new Date(year, month + 1, nextDay),
+      });
     }
     return days;
   }, [monthCursor]);
@@ -105,12 +121,12 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
   }
 
   const visualRange = useMemo(() => {
-    if (!draftStart) return { start: null, end: null };
+    if (!draftStart) return { end: null, start: null };
     const endCandidate = draftEnd ?? hoverDate;
-    if (!endCandidate) return { start: draftStart, end: null };
+    if (!endCandidate) return { end: null, start: draftStart };
     return endCandidate.getTime() >= draftStart.getTime()
-      ? { start: draftStart, end: endCandidate }
-      : { start: endCandidate, end: draftStart };
+      ? { end: endCandidate, start: draftStart }
+      : { end: draftStart, start: endCandidate };
   }, [draftStart, draftEnd, hoverDate]);
 
   const selectedDays = rangeDays(visualRange.start, visualRange.end);
@@ -118,23 +134,27 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">{label}</span>}
-      <Popover open={open} onOpenChange={setOpen}>
+      {label && (
+        <span className="ml-1 font-black text-[10px] text-zinc-400 uppercase tracking-widest">
+          {label}
+        </span>
+      )}
+      <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger asChild>
           <button
-            type="button"
             className="flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-left outline-none transition-all hover:border-primary/50"
+            type="button"
           >
             <span className="inline-flex items-center gap-2 truncate">
               <CalendarDays className="h-4 w-4 shrink-0 text-zinc-400" />
-              <span className="truncate text-sm font-bold">
+              <span className="truncate font-bold text-sm">
                 {formatRange(start, end) || "Selecione o período"}
               </span>
             </span>
             {(start || end) && (
-              <X 
-                className="h-4 w-4 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" 
-                onClick={(e) => {
+              <X
+                className="h-4 w-4 text-zinc-400 transition-colors hover:text-zinc-900 dark:hover:text-white"
+                onClick={e => {
                   e.stopPropagation();
                   onChange(null, null);
                 }}
@@ -142,82 +162,112 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
             )}
           </button>
         </PopoverTrigger>
-        <PopoverContent 
-          side="bottom" 
-          sideOffset={8}
-          className="w-[340px] p-4 bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-2xl z-[100]" 
+        <PopoverContent
           align="start"
+          className="z-[100] w-[340px] rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl dark:border-white/10 dark:bg-zinc-950"
+          side="bottom"
+          sideOffset={8}
         >
-          <div className="h-8 mb-3 flex justify-center items-center">
+          <div className="mb-3 flex h-8 items-center justify-center">
             {selectedDays > 0 ? (
-              <span className="rounded-full bg-sky-500/10 px-3 py-1 text-xs font-bold text-sky-400 animate-in fade-in zoom-in-95 duration-200">
-                {selectedDays} {selectedDays === 1 ? "dia selecionado" : "dias selecionados"}
+              <span className="fade-in zoom-in-95 animate-in rounded-full bg-sky-500/10 px-3 py-1 font-bold text-sky-400 text-xs duration-200">
+                {selectedDays}{" "}
+                {selectedDays === 1 ? "dia selecionado" : "dias selecionados"}
               </span>
             ) : null}
           </div>
- 
+
           <div className="mb-3 flex items-center justify-between">
             <button
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-100 dark:hover:bg-white/10"
+              onClick={() =>
+                setMonthCursor(
+                  new Date(
+                    monthCursor.getFullYear(),
+                    monthCursor.getMonth() - 1,
+                    1
+                  )
+                )
+              }
               type="button"
-              onClick={() => setMonthCursor(new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1))}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <p className="text-sm font-bold capitalize text-zinc-800 dark:text-zinc-100">
+            <p className="font-bold text-sm text-zinc-800 capitalize dark:text-zinc-100">
               {format(monthCursor, "MMMM 'de' yyyy", { locale: ptBR })}
             </p>
             <button
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-100 dark:hover:bg-white/10"
+              onClick={() =>
+                setMonthCursor(
+                  new Date(
+                    monthCursor.getFullYear(),
+                    monthCursor.getMonth() + 1,
+                    1
+                  )
+                )
+              }
               type="button"
-              onClick={() => setMonthCursor(new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1))}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
- 
-          <div className="grid grid-cols-7 gap-1" onMouseLeave={() => setHoverDate(null)}>
+
+          <div
+            className="grid grid-cols-7 gap-1"
+            onMouseLeave={() => setHoverDate(null)}
+          >
             {weekDays.map((day, i) => (
-              <div key={`${day}-${i}`} className="py-1 text-center text-[10px] font-black uppercase text-zinc-400">
+              <div
+                className="py-1 text-center font-black text-[10px] text-zinc-400 uppercase"
+                key={`${day}-${i}`}
+              >
                 {day}
               </div>
             ))}
             {calendarDays.map(({ date, currentMonth }) => {
               const isStart = draftStart ? isSameDay(date, draftStart) : false;
-              const isHoverEnd = !draftEnd && hoverDate ? isSameDay(date, hoverDate) : false;
+              const isHoverEnd =
+                !draftEnd && hoverDate ? isSameDay(date, hoverDate) : false;
               const isEnd = draftEnd ? isSameDay(date, draftEnd) : isHoverEnd;
               const isToday = isSameDay(date, today);
               const inRange =
                 visualRange.start && visualRange.end
-                  ? date.getTime() >= startOfDay(visualRange.start).getTime() && date.getTime() <= startOfDay(visualRange.end).getTime()
+                  ? date.getTime() >= startOfDay(visualRange.start).getTime() &&
+                    date.getTime() <= startOfDay(visualRange.end).getTime()
                   : false;
- 
-              const mutedClass = currentMonth 
-                ? "text-zinc-700 dark:text-zinc-100" 
+
+              const mutedClass = currentMonth
+                ? "text-zinc-700 dark:text-zinc-100"
                 : "text-zinc-400 dark:text-zinc-500";
-              const rangeClass = inRange && !isStart && !isEnd ? "bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400" : "";
-              const todayClass = isToday && !isStart && !isEnd && !inRange
-                ? "border-2 border-sky-500 text-sky-500"
-                : "";
-              const edgeClass = isStart || isEnd
-                ? "bg-sky-500 text-white dark:text-white rounded-full shadow-md"
-                : "rounded-full hover:bg-sky-500/10 dark:hover:bg-sky-500/20 hover:text-sky-600 dark:hover:text-sky-400 transition-none";
- 
+              const rangeClass =
+                inRange && !isStart && !isEnd
+                  ? "bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400"
+                  : "";
+              const todayClass =
+                isToday && !isStart && !isEnd && !inRange
+                  ? "border-2 border-sky-500 text-sky-500"
+                  : "";
+              const edgeClass =
+                isStart || isEnd
+                  ? "bg-sky-500 text-white dark:text-white rounded-full shadow-md"
+                  : "rounded-full hover:bg-sky-500/10 dark:hover:bg-sky-500/20 hover:text-sky-600 dark:hover:text-sky-400 transition-none";
+
               return (
                 <button
-                  type="button"
-                  key={date.toISOString()}
-                  onClick={() => handleDateClick(startOfDay(date))}
-                  onMouseEnter={() => {
-                    if (draftStart && !draftEnd) setHoverDate(startOfDay(date));
-                  }}
                   className={cn(
-                    "h-9 w-9 text-sm font-bold flex items-center justify-center transition-none group relative z-10",
+                    "group relative z-10 flex h-9 w-9 items-center justify-center font-bold text-sm transition-none",
                     mutedClass,
                     rangeClass,
                     todayClass,
                     edgeClass
                   )}
+                  key={date.toISOString()}
+                  onClick={() => handleDateClick(startOfDay(date))}
+                  onMouseEnter={() => {
+                    if (draftStart && !draftEnd) setHoverDate(startOfDay(date));
+                  }}
+                  type="button"
                 >
                   <span className="relative z-20">
                     {date.getDate().toString().padStart(2, "0")}
@@ -226,20 +276,21 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
               );
             })}
           </div>
- 
-          <div className="mt-4 flex items-center justify-end gap-2 border-t border-zinc-100 dark:border-white/10 pt-3">
+
+          <div className="mt-4 flex items-center justify-end gap-2 border-zinc-100 border-t pt-3 dark:border-white/10">
             <button
+              className="px-3 py-1.5 font-bold text-xs text-zinc-400 transition-colors hover:text-zinc-900 dark:hover:text-white"
               onClick={() => {
                 setDraftStart(null);
                 setDraftEnd(null);
                 onChange(null, null);
                 setOpen(false);
               }}
-              className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
             >
               Limpar
             </button>
             <button
+              className="rounded-lg bg-sky-500 px-4 py-1.5 font-bold text-white text-xs shadow-sm transition-all hover:shadow-md active:scale-95"
               onClick={() => {
                 if (draftStart && !draftEnd) {
                   onChange(draftStart, draftStart);
@@ -248,7 +299,6 @@ export function SimpayCalendar({ label, start, end, onChange }: Props) {
                 }
                 setOpen(false);
               }}
-              className="bg-sky-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
             >
               Aplicar
             </button>

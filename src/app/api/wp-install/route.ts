@@ -1,9 +1,8 @@
 // src/app/api/wp-install/route.ts
-import { getUser } from "@/lib/auth/index";
-import pleskApi from "@/lib/server/apis/plesk";
-import { type CliCallResponse, ClientRequestTypeEnum } from "@/plesk";
-import type { DnsRecord as PleskDnsRecord } from "@/plesk/models"; // Corrected import path
 
+import axios from "axios";
+import { eq } from "drizzle-orm";
+import { getUser } from "@/lib/auth/index";
 import { db } from "@/lib/db";
 import { pgOrganization } from "@/lib/db/schema";
 import namecheapApi from "@/lib/server/apis/namecheap";
@@ -11,11 +10,11 @@ import type {
   DnsHostRecord,
   DnsRecordType as NamecheapDnsRecordType,
 } from "@/lib/server/apis/namecheap/types";
+import pleskApi from "@/lib/server/apis/plesk";
 import { installCertificate } from "@/lib/server/apis/plesk-xml/client";
-import { ELEMENTOR_PRO_PLUGIN_ID } from "@/lib/server/apis/plesk/wp-toolkit";
 import { AppLogger } from "@/lib/server/logs";
-import axios from "axios";
-import { eq } from "drizzle-orm";
+import { type CliCallResponse, ClientRequestTypeEnum } from "@/plesk";
+import type { DnsRecord as PleskDnsRecord } from "@/plesk/models"; // Corrected import path
 export const dynamic = "force-dynamic";
 
 // Helper function to send SSE messages
@@ -24,7 +23,7 @@ function* sendSSE(
   message: string,
   details?: unknown
 ) {
-  const payload = { type, message, step: message, details }; // 'step' for frontend compatibility
+  const payload = { details, message, step: message, type }; // 'step' for frontend compatibility
   // console.log("SSE Payload:", payload); // Kept for server-side debugging if needed
   console.log(payload);
   const data = JSON.stringify(payload);
@@ -85,12 +84,12 @@ export async function GET(request: Request) {
     // Not using SSE here as it's a preliminary a before stream starts
     return new Response(
       JSON.stringify({
-        type: "ERROR",
         message: "Parâmetros ausentes na requisição.",
+        type: "ERROR",
       }),
       {
-        status: 400,
         headers: { "Content-Type": "application/json" },
+        status: 400,
       }
     );
   }
@@ -103,10 +102,10 @@ export async function GET(request: Request) {
 
   if (!user) {
     return new Response(
-      JSON.stringify({ type: "ERROR", message: "Usuário não autenticado." }),
+      JSON.stringify({ message: "Usuário não autenticado.", type: "ERROR" }),
       {
-        status: 401,
         headers: { "Content-Type": "application/json" },
+        status: 401,
       }
     );
   }
@@ -124,12 +123,12 @@ export async function GET(request: Request) {
           yield* sendSSE("INFO", "Criando usuário de hospedagem no sistema...");
           const pleskClientPassword = "Default#Password123";
           const result = await pleskApi.createClient({
-            name: user.name,
             email: userEmailForPlesk,
             login: user.id.replaceAll("-", "").substring(0, 50),
+            name: user.name,
             password: pleskClientPassword,
-            type: ClientRequestTypeEnum.Customer,
             status: 0,
+            type: ClientRequestTypeEnum.Customer,
           });
 
           yield* sendSSE("INFO", "Atualizando os dados do usuário...");
@@ -163,8 +162,8 @@ export async function GET(request: Request) {
         await pleskApi.subscriptions.createSubscription({
           domainName,
           login: `${domainName.replace(/\./g, "_")}_${pleskId}`,
-          password: `${adminPassword}_${pleskId}`, // Consider a more robust password generation strategy
           ownerLogin: user.id.replaceAll("-", "").substring(0, 50),
+          password: `${adminPassword}_${pleskId}`, // Consider a more robust password generation strategy
         });
 
         // SLD and TLD determination (from user's original file)
@@ -330,9 +329,9 @@ export async function GET(request: Request) {
             }
 
             const namecheapEntry: DnsHostRecord = {
+              Address: pleskRecord.value,
               HostName: hostName,
               RecordType: recordTypeUpper as NamecheapDnsRecordType,
-              Address: pleskRecord.value,
               TTL: 1800, // Namecheap's default TTL
             };
 
@@ -352,9 +351,9 @@ export async function GET(request: Request) {
                 `Cadastrando ${namecheapDnsEntries.length} registros DNS...`
               );
               const namecheapResponse = await namecheapApi.setHosts({
+                Records: namecheapDnsEntries,
                 SLD: sld,
                 TLD: tld,
-                Records: namecheapDnsEntries,
               });
 
               if (namecheapResponse.IsSuccess) {
@@ -380,8 +379,8 @@ export async function GET(request: Request) {
               if (error instanceof Error && error.message.match(/^\d+$/)) {
                 // Check if error.message is a Namecheap error code
                 errorDetails = {
-                  namecheapErrorCode: error.message,
                   message: "Erro da API Namecheap.",
+                  namecheapErrorCode: error.message,
                 };
                 status = 400; // Bad request due to API constraints typically
               } else if (axios.isAxiosError(error)) {
@@ -403,7 +402,7 @@ export async function GET(request: Request) {
           "INFO",
           "Instalando plugins adicionais (Elementor Pro)..."
         );
-/*         await pleskApi.wordpress.addPluginToWebsite(
+        /*         await pleskApi.wordpress.addPluginToWebsite(
           +stdOut["instance-id"],
           ELEMENTOR_PRO_PLUGIN_ID
         ); */
@@ -436,9 +435,9 @@ export async function GET(request: Request) {
 
         const userLogger = new AppLogger(user);
         userLogger.log({
-          title: "Instalação do WordPress",
           description: `Instância do WordPress criada com sucesso em ${domainName}.`,
           severity: "success",
+          title: "Instalação do WordPress",
           type: "hosting",
         });
 
@@ -461,9 +460,9 @@ export async function GET(request: Request) {
     })(),
     {
       headers: {
+        "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
         "Content-Encoding": "none",
-        "Cache-Control": "no-cache, no-transform",
         "Content-Type": "text/event-stream; charset=utf-8",
       },
     }
@@ -485,9 +484,9 @@ interface PleskCliOutput {
 
 function parsePleskCliResponse(response: CliCallResponse): PleskCliOutput {
   let parsedOutput: PleskCliOutput = {
-    stderr: response.stderr || "",
     exit_code:
       response.code === 200 && !response.stderr ? 0 : response.code || -1,
+    stderr: response.stderr || "",
   };
   try {
     if (response.stdout) {

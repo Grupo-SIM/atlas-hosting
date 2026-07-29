@@ -1,30 +1,32 @@
+import { eq } from "drizzle-orm";
+import type { Metadata } from "next";
 import AuthPage from "@/components/auth/AuthPage";
 import SignupForm from "@/components/auth/SignupForm";
 import { db } from "@/lib/db";
 import { pgUser, type User } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Criar Conta - Atlas Hosting",
   description:
     "Serviços de hospedagem profissional com gerenciamento fácil e preços acessíveis",
+  title: "Criar Conta - Atlas Hosting",
 };
 
 export default async function SignupPage({
   searchParams,
-}: { searchParams: Promise<{ ref?: string; redirect?: string }> }) {
+}: {
+  searchParams: Promise<{ ref?: string; redirect?: string }>;
+}) {
   const resolvedParams = await searchParams;
 
   let refUser: Pick<User, "name" | "email" | "id"> | undefined;
   if (resolvedParams.ref) {
     refUser = await db.query.pgUser.findFirst({
-      where: eq(pgUser.affiliateCode, resolvedParams.ref),
       columns: {
+        email: true,
         id: true,
         name: true,
-        email: true,
       },
+      where: eq(pgUser.affiliateCode, resolvedParams.ref),
     });
   }
 
@@ -34,13 +36,13 @@ export default async function SignupPage({
 
   return (
     <AuthPage
-      title="Bem-vindo ao Atlas Hosting"
       subtitle="Preencha os campos para criar sua conta na plataforma"
       switchHref={loginSwitchHref}
-      switchTitle="Já possui uma conta?"
       switchText="Faça login"
+      switchTitle="Já possui uma conta?"
+      title="Bem-vindo ao Atlas Hosting"
     >
-      <SignupForm referrer={refUser} redirect={resolvedParams.redirect} />
+      <SignupForm redirect={resolvedParams.redirect} referrer={refUser} />
     </AuthPage>
   );
 }

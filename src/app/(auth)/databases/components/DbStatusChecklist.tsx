@@ -1,17 +1,18 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isEqual } from "lodash";
 import {
-  CheckCircle,
-  XCircle,
-  Loader2,
-  Database,
   Activity,
-  Shield,
   AlertTriangle,
+  CheckCircle,
+  Database,
+  Loader2,
+  Shield,
+  XCircle,
 } from "lucide-react";
 import { memo, useMemo } from "react";
-import { isEqual } from "lodash";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
@@ -19,7 +20,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Badge } from "@/components/ui/badge";
 
 interface DomainStatus {
   domain: string;
@@ -76,19 +76,19 @@ const DatabaseStatusCard = memo<DatabaseStatusCardProps>(
 
     return (
       <Card
-        className={`h-full ${getStatusColor()} hover:shadow-lg transition-all duration-300 group`}
+        className={`h-full ${getStatusColor()} group transition-all duration-300 hover:shadow-lg`}
       >
         <CardContent className="p-6">
-          <div className="flex items-start justify-between mb-4">
+          <div className="mb-4 flex items-start justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-white/50 dark:bg-black/20">
+              <div className="rounded-lg bg-white/50 p-2 dark:bg-black/20">
                 <Database className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+                <h3 className="font-semibold text-sm transition-colors group-hover:text-primary">
                   {domainStatus.domain.replace(/^https?:\/\/(www\.)?/, "")}
                 </h3>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   WordPress Database
                 </p>
               </div>
@@ -98,22 +98,22 @@ const DatabaseStatusCard = memo<DatabaseStatusCardProps>(
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Status</span>
+              <span className="text-muted-foreground text-sm">Status</span>
               {getStatusBadge()}
             </div>
 
             {domainStatus.error && (
-              <div className="mt-3 p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+              <div className="mt-3 rounded-lg bg-white/50 p-3 dark:bg-black/20">
                 <div className="flex items-start space-x-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
+                  <p className="text-muted-foreground text-xs leading-relaxed">
                     {domainStatus.error}
                   </p>
                 </div>
               </div>
             )}
 
-            <div className="flex items-center space-x-4 text-xs text-muted-foreground pt-2 border-t border-white/50 dark:border-black/20">
+            <div className="flex items-center space-x-4 border-white/50 border-t pt-2 text-muted-foreground text-xs dark:border-black/20">
               <div className="flex items-center space-x-1">
                 <Activity className="h-3 w-3" />
                 <span>Monitorado</span>
@@ -148,28 +148,28 @@ const DbStatusChecklist = memo<DbStatusChecklistProps>(
     const statusSummary = useMemo(() => {
       if (!hasStatuses) return null;
 
-      const okCount = domainStatuses.filter((s) => s.status === "OK").length;
+      const okCount = domainStatuses.filter(s => s.status === "OK").length;
       const errorCount = domainStatuses.filter(
-        (s) => s.status === "Error"
+        s => s.status === "Error"
       ).length;
-      const loadingCount = domainStatuses.filter((s) => s.loading).length;
+      const loadingCount = domainStatuses.filter(s => s.loading).length;
 
       return {
-        okCount,
         errorCount,
         loadingCount,
+        okCount,
         total: domainStatuses.length,
       };
     }, [domainStatuses, hasStatuses]);
 
     if (!hasStatuses) {
       return (
-        <Card className="mb-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-0 shadow-xl">
+        <Card className="mb-8 border-0 bg-gradient-to-br from-slate-50 to-slate-100 shadow-xl dark:from-slate-900 dark:to-slate-800">
           <CardContent className="p-8 text-center">
-            <div className="mx-auto w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">
               <Database className="h-8 w-8 text-slate-500" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+            <h3 className="mb-2 font-semibold text-lg text-slate-900 dark:text-slate-100">
               Nenhum Banco de Dados Encontrado
             </h3>
             <p className="text-slate-600 dark:text-slate-400">
@@ -183,10 +183,10 @@ const DbStatusChecklist = memo<DbStatusChecklistProps>(
     return (
       <div className="mb-8 space-y-6">
         {/* Header Section */}
-        <div className="text-center space-y-4">
-          <div className="inline-flex items-center space-x-3 bg-gradient-to-r from-primary/10 to-secondary/10 px-6 py-3 rounded-full">
+        <div className="space-y-4 text-center">
+          <div className="inline-flex items-center space-x-3 rounded-full bg-gradient-to-r from-primary/10 to-secondary/10 px-6 py-3">
             <Database className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            <h2 className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text font-bold text-2xl text-transparent">
               Saúde dos Bancos de Dados
             </h2>
           </div>
@@ -194,23 +194,23 @@ const DbStatusChecklist = memo<DbStatusChecklistProps>(
           {statusSummary && (
             <div className="flex items-center justify-center space-x-6 text-sm">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-emerald-500 rounded-full" />
-                <span className="text-emerald-700 dark:text-emerald-300 font-medium">
+                <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                <span className="font-medium text-emerald-700 dark:text-emerald-300">
                   {statusSummary.okCount} Saudáveis
                 </span>
               </div>
               {statusSummary.errorCount > 0 && (
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full" />
-                  <span className="text-red-700 dark:text-red-300 font-medium">
+                  <div className="h-3 w-3 rounded-full bg-red-500" />
+                  <span className="font-medium text-red-700 dark:text-red-300">
                     {statusSummary.errorCount} Com Erro
                   </span>
                 </div>
               )}
               {statusSummary.loadingCount > 0 && (
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-slate-400 rounded-full animate-pulse" />
-                  <span className="text-slate-700 dark:text-slate-300 font-medium">
+                  <div className="h-3 w-3 animate-pulse rounded-full bg-slate-400" />
+                  <span className="font-medium text-slate-700 dark:text-slate-300">
                     {statusSummary.loadingCount} Verificando
                   </span>
                 </div>
@@ -225,22 +225,22 @@ const DbStatusChecklist = memo<DbStatusChecklistProps>(
         {/* Carousel Section */}
         <div className="relative">
           {domainStatuses.length === 1 ? (
-            <div className="max-w-sm mx-auto">
+            <div className="mx-auto max-w-sm">
               <DatabaseStatusCard domainStatus={domainStatuses[0]} index={0} />
             </div>
           ) : (
             <Carousel
+              className="w-full"
               opts={{
                 align: "start",
                 loop: true,
               }}
-              className="w-full"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
                 {domainStatuses.map((domainStatus, index) => (
                   <CarouselItem
+                    className="pl-2 md:basis-1/2 md:pl-4 lg:basis-1/3 xl:basis-1/4"
                     key={domainStatus.domain}
-                    className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                   >
                     <DatabaseStatusCard
                       domainStatus={domainStatus}

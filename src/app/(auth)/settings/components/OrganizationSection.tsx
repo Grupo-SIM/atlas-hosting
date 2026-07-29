@@ -1,6 +1,23 @@
 "use client";
 
+import {
+  Building2,
+  Calendar,
+  Code,
+  Crown,
+  Edit,
+  MoreHorizontal,
+  Save,
+  Shield,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 import { useState, useTransition } from "react";
+import MemberPasswordInput from "@/app/(auth)/organization/components/MemberPasswordInput"; // Assuming path
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,36 +25,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -46,31 +51,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Building2,
-  Users,
-  Crown,
-  Calendar,
-  Edit,
-  Save,
-  X,
-  MoreHorizontal,
-  UserPlus,
-  Mail,
-  Shield,
-  Code,
-  Trash2,
-} from "lucide-react";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "@/hooks/use-toast";
 import type { RawUser, User } from "@/lib/db/schema/tables/user";
 import { formatDate } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "@/hooks/use-toast";
 import {
-  updateOrganizationNameAction,
   addMemberToOrganizationAction, // New action to be created
   removeMemberFromOrganizationAction, // New action to be created
   updateMemberRoleAction, // New action to be created
+  updateOrganizationNameAction,
 } from "../actions";
-import MemberPasswordInput from "@/app/(auth)/organization/components/MemberPasswordInput"; // Assuming path
 
 interface OrganizationSectionProps {
   user: User;
@@ -99,21 +95,21 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
 
         if (result.success) {
           toast({
-            title: "Sucesso",
             description: result.message,
+            title: "Sucesso",
           });
           setIsEditingOrg(false);
         } else {
           toast({
-            title: "Erro",
             description: result.message,
+            title: "Erro",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro",
           description: "Erro inesperado ao salvar nome da organização.",
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -129,7 +125,7 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
       try {
         const result = await addMemberToOrganizationAction(formData);
         if (result.success) {
-          toast({ title: "Sucesso", description: result.message });
+          toast({ description: result.message, title: "Sucesso" });
           setIsAddMemberOpen(false);
           // Form fields would ideally be reset here or dialog unmounted/remounted
           setNewMemberFullName("");
@@ -137,15 +133,15 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
           setNewMemberRole("member");
         } else {
           toast({
-            title: "Erro",
             description: result.message,
+            title: "Erro",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro",
           description: "Erro inesperado ao adicionar membro.",
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -167,18 +163,18 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
           organization.id
         );
         if (result.success) {
-          toast({ title: "Sucesso", description: result.message });
+          toast({ description: result.message, title: "Sucesso" });
         } else {
           toast({
-            title: "Erro",
             description: result.message,
+            title: "Erro",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro",
           description: "Erro inesperado ao remover membro.",
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -207,19 +203,19 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
           role
         );
         if (result.success) {
-          toast({ title: "Sucesso", description: result.message });
+          toast({ description: result.message, title: "Sucesso" });
           setEditingMember(null);
         } else {
           toast({
-            title: "Erro",
             description: result.message,
+            title: "Erro",
             variant: "destructive",
           });
         }
       } catch (error) {
         toast({
-          title: "Erro",
           description: "Erro inesperado ao atualizar função.",
+          title: "Erro",
           variant: "destructive",
         });
       }
@@ -269,27 +265,27 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                 {isEditingOrg ? (
                   <>
                     <Input
-                      id="orgName"
-                      value={orgName}
-                      onChange={(e) => setOrgName(e.target.value)}
                       className="flex-1"
                       disabled={!isOwner}
+                      id="orgName"
+                      onChange={e => setOrgName(e.target.value)}
+                      value={orgName}
                     />
                     <Button
-                      size="sm"
-                      onClick={handleSaveOrgName}
                       disabled={isPending}
+                      onClick={handleSaveOrgName}
+                      size="sm"
                     >
                       <Save className="h-4 w-4" />
                     </Button>
                     <Button
-                      size="sm"
-                      variant="outline"
+                      disabled={isPending}
                       onClick={() => {
                         setOrgName(organization.name);
                         setIsEditingOrg(false);
                       }}
-                      disabled={isPending}
+                      size="sm"
+                      variant="outline"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -297,15 +293,15 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                 ) : (
                   <>
                     <Input
-                      value={organization.name}
-                      readOnly
                       className="flex-1"
+                      readOnly
+                      value={organization.name}
                     />
                     {isOwner && (
                       <Button
+                        onClick={() => setIsEditingOrg(true)}
                         size="sm"
                         variant="outline"
-                        onClick={() => setIsEditingOrg(true)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -314,23 +310,23 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                 )}
               </div>
               {!isOwner && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Apenas o proprietário pode editar o nome da organização
                 </p>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Criada em</Label>
-                <Input value={formatDate(organization.createdAt)} readOnly />
+                <Input readOnly value={formatDate(organization.createdAt)} />
               </div>
               <div className="space-y-2">
                 <Label>ID da Organização</Label>
                 <Input
-                  value={organization.id}
-                  readOnly
                   className="font-mono text-sm"
+                  readOnly
+                  value={organization.id}
                 />
               </div>
             </div>
@@ -352,8 +348,7 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
           </div>
           {isOwner && (
             <Dialog
-              open={isAddMemberOpen}
-              onOpenChange={(isOpen) => {
+              onOpenChange={isOpen => {
                 setIsAddMemberOpen(isOpen);
                 if (!isOpen) {
                   setNewMemberFullName("");
@@ -361,9 +356,10 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                   setNewMemberRole("member");
                 }
               }}
+              open={isAddMemberOpen}
             >
               <DialogTrigger asChild>
-             {/*    <Button>
+                {/*    <Button>
                   <UserPlus className="mr-2 h-4 w-4" />
                   Adicionar Membro
                 </Button> */}
@@ -375,37 +371,37 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                     Convide um novo membro para sua organização
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleAddMember} className="space-y-4 mt-4">
+                <form className="mt-4 space-y-4" onSubmit={handleAddMember}>
                   <div className="space-y-2">
                     <Label htmlFor="newMemberFullName">Nome Completo</Label>
                     <Input
                       id="newMemberFullName"
                       name="fullName"
-                      value={newMemberFullName}
-                      onChange={(e) => setNewMemberFullName(e.target.value)}
+                      onChange={e => setNewMemberFullName(e.target.value)}
                       placeholder="Nome do membro"
                       required
+                      value={newMemberFullName}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="newMemberEmail">Endereço de email</Label>
                     <Input
                       id="newMemberEmail"
-                      type="email"
                       name="email"
-                      value={newMemberEmail}
-                      onChange={(e) => setNewMemberEmail(e.target.value)}
+                      onChange={e => setNewMemberEmail(e.target.value)}
                       placeholder="nome@example.com"
                       required
+                      type="email"
+                      value={newMemberEmail}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="newMemberRole">Função</Label>
                     <Select
-                      required
                       name="role"
-                      value={newMemberRole}
                       onValueChange={setNewMemberRole}
+                      required
+                      value={newMemberRole}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um cargo" />
@@ -421,7 +417,7 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                     <Label htmlFor="newMemberPassword">Senha</Label>
                     <MemberPasswordInput />{" "}
                     {/* Name="password" is handled inside */}
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       Uma senha segura será gerada. Compartilhe com o usuário.
                     </p>
                   </div>
@@ -431,7 +427,7 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                         Cancelar
                       </Button>
                     </DialogClose>
-                    <Button type="submit" disabled={isMemberActionPending}>
+                    <Button disabled={isMemberActionPending} type="submit">
                       {isMemberActionPending && (
                         <Save className="mr-2 h-4 w-4 animate-spin" />
                       )}
@@ -444,7 +440,7 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
           )}
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg overflow-x-auto">
+          <div className="overflow-x-auto rounded-lg border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -457,7 +453,7 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {members.map((member) => (
+                {members.map(member => (
                   <TableRow key={member.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -466,23 +462,23 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                           <AvatarFallback>
                             {member.name
                               .split(" ")
-                              .map((n) => n[0])
+                              .map(n => n[0])
                               .join("")
                               .toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium">{member.name}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-muted-foreground text-sm">
                             {member.email}
                           </p>
                         </div>
                         {member.id === organization.ownerId && (
                           <Badge
-                            variant="secondary"
                             className="bg-yellow-500/10 text-yellow-700"
+                            variant="secondary"
                           >
-                            <Crown className="w-3 h-3 mr-1" />
+                            <Crown className="mr-1 h-3 w-3" />
                             Proprietário
                           </Badge>
                         )}
@@ -511,9 +507,9 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
-                                variant="ghost"
-                                size="icon"
                                 className="h-8 w-8"
+                                size="icon"
+                                variant="ghost"
                               >
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
@@ -526,7 +522,7 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                                 Editar Função
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                className="text-destructive hover:!text-destructive-foreground hover:!bg-destructive"
+                                className="hover:!text-destructive-foreground hover:!bg-destructive text-destructive"
                                 onClick={() => handleRemoveMember(member.id)}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
@@ -544,8 +540,8 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
           </div>
 
           {members.length === 0 && (
-            <div className="text-center py-8">
-              <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+            <div className="py-8 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                 <Users className="h-6 w-6 text-muted-foreground" />
               </div>
               <p className="text-muted-foreground">Nenhum membro encontrado</p>
@@ -566,38 +562,38 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg border bg-card/50">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-lg border bg-card/50 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold">{members.length}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="font-bold text-2xl">{members.length}</p>
+                  <p className="text-muted-foreground text-sm">
                     Total de Membros
                   </p>
                 </div>
                 <Users className="h-8 w-8 text-blue-500" />
               </div>
             </div>
-            <div className="p-4 rounded-lg border bg-card/50">
+            <div className="rounded-lg border bg-card/50 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold">
+                  <p className="font-bold text-2xl">
                     {organization.domains?.length || 0}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Domínios Ativos
                   </p>
                 </div>
                 <Building2 className="h-8 w-8 text-green-500" />
               </div>
             </div>
-            <div className="p-4 rounded-lg border bg-card/50">
+            <div className="rounded-lg border bg-card/50 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold">
+                  <p className="font-bold text-2xl">
                     {formatDate(organization.createdAt).split("/")[2]}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Ano de Criação
                   </p>
                 </div>
@@ -611,8 +607,8 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
       {/* Edit Role Dialog */}
       {editingMember && (
         <Dialog
+          onOpenChange={isOpen => !isOpen && setEditingMember(null)}
           open={!!editingMember}
-          onOpenChange={(isOpen) => !isOpen && setEditingMember(null)}
         >
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -621,13 +617,13 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
                 Altere a função do membro na organização.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleUpdateMemberRole} className="space-y-4 mt-4">
+            <form className="mt-4 space-y-4" onSubmit={handleUpdateMemberRole}>
               <div className="space-y-2">
                 <Label htmlFor="editMemberRole">Função</Label>
                 <Select
-                  required
-                  name="role"
                   defaultValue={editingMember.organizationRole || "member"}
+                  name="role"
+                  required
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um cargo" />
@@ -642,14 +638,14 @@ export function OrganizationSection({ user }: OrganizationSectionProps) {
               <DialogFooter>
                 <DialogClose asChild>
                   <Button
+                    onClick={() => setEditingMember(null)}
                     type="button"
                     variant="outline"
-                    onClick={() => setEditingMember(null)}
                   >
                     Cancelar
                   </Button>
                 </DialogClose>
-                <Button type="submit" disabled={isMemberActionPending}>
+                <Button disabled={isMemberActionPending} type="submit">
                   {isMemberActionPending && (
                     <Save className="mr-2 h-4 w-4 animate-spin" />
                   )}

@@ -17,24 +17,19 @@
  */
 
 import globalAxios, {
-  type AxiosResponse,
   type AxiosInstance,
   type AxiosRequestConfig,
+  type AxiosResponse,
 } from "axios";
-import type { Configuration } from "../configuration";
 // Some imports not used depending on template conditions
 // @ts-ignore
-import {
-  BASE_PATH,
-  COLLECTION_FORMATS,
-  type RequestArgs,
-  BaseAPI,
-  RequiredError,
-} from "../base";
-import { ErrorResponse } from "../models";
-import type { SecretKeyRequest } from "../models";
-import type { SecretKeyResponse } from "../models";
-import type { StatusResponse } from "../models";
+import { BASE_PATH, BaseAPI, type RequestArgs, RequiredError } from "../base";
+import type { Configuration } from "../configuration";
+import type {
+  SecretKeyRequest,
+  SecretKeyResponse,
+  StatusResponse,
+} from "../models";
 
 /**
  * AuthenticationApi - axios parameter creator
@@ -61,7 +56,7 @@ export const AuthenticationApiAxiosParamCreator = (
         "Required parameter key was null or undefined when calling authKeysKeyDelete."
       );
     }
-    const localVarPath = `/auth/keys/{key}`.replace(
+    const localVarPath = "/auth/keys/{key}".replace(
       `{${"key"}}`,
       encodeURIComponent(String(key))
     );
@@ -80,7 +75,7 @@ export const AuthenticationApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -91,9 +86,9 @@ export const AuthenticationApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -105,8 +100,9 @@ export const AuthenticationApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -114,9 +110,9 @@ export const AuthenticationApiAxiosParamCreator = (
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -137,7 +133,7 @@ export const AuthenticationApiAxiosParamCreator = (
         "Required parameter body was null or undefined when calling authKeysPost."
       );
     }
-    const localVarPath = `/auth/keys`;
+    const localVarPath = "/auth/keys";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -153,7 +149,7 @@ export const AuthenticationApiAxiosParamCreator = (
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -164,9 +160,9 @@ export const AuthenticationApiAxiosParamCreator = (
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -180,8 +176,9 @@ export const AuthenticationApiAxiosParamCreator = (
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -195,13 +192,12 @@ export const AuthenticationApiAxiosParamCreator = (
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
 });
-
 
 /**
  * AuthenticationApi - functional programming interface
@@ -270,7 +266,6 @@ export const AuthenticationApiFp = (configuration?: Configuration) => ({
   },
 });
 
-
 /**
  * AuthenticationApi - factory interface
  * @export
@@ -293,7 +288,7 @@ export const AuthenticationApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return AuthenticationApiFp(configuration)
       .authKeysKeyDelete(key, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -308,10 +303,9 @@ export const AuthenticationApiFactory = (
   ): Promise<AxiosResponse<SecretKeyResponse>> {
     return AuthenticationApiFp(configuration)
       .authKeysPost(body, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
 });
-
 
 /**
  * AuthenticationApi - object-oriented interface
@@ -334,7 +328,7 @@ export class AuthenticationApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return AuthenticationApiFp(this.configuration)
       .authKeysKeyDelete(key, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -350,6 +344,6 @@ export class AuthenticationApi extends BaseAPI {
   ): Promise<AxiosResponse<SecretKeyResponse>> {
     return AuthenticationApiFp(this.configuration)
       .authKeysPost(body, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
 }

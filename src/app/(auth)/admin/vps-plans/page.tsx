@@ -1,22 +1,26 @@
-import { getVpsPlanSubscriptionsAction, getPixAllowAllDurationsAction, getBoletoEnabledAction } from "./actions";
-// import { BackfillButton } from "./BackfillButton";
-import { VpsPlansTable } from "./VpsPlansTable";
-import { PaymentSettingsCard } from "./PaymentSettingsCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { redirect } from "next/navigation";
-import { getUser } from "@/lib/auth";
-import { Metadata } from "next";
-import Link from "next/link";
 import {
-  Server,
-  ShieldCheck,
   CheckCircle,
-  PauseCircle,
-  XCircle,
   Clock,
   Link2,
+  PauseCircle,
+  Server,
+  ShieldCheck,
+  XCircle,
 } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getUser } from "@/lib/auth";
+import {
+  getBoletoEnabledAction,
+  getPixAllowAllDurationsAction,
+  getVpsPlanSubscriptionsAction,
+} from "./actions";
+import { PaymentSettingsCard } from "./PaymentSettingsCard";
+// import { BackfillButton } from "./BackfillButton";
+import { VpsPlansTable } from "./VpsPlansTable";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Planos VPS — Admin" };
@@ -25,96 +29,102 @@ const FIFTEEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000;
 
 export default async function AdminVpsPlansPage() {
   const admin = await getUser();
-  if (!admin || !admin.isAdmin) redirect("/home");
+  if (!admin?.isAdmin) redirect("/home");
 
   const plans = await getVpsPlanSubscriptionsAction();
   const pixAllowAllDurations = await getPixAllowAllDurationsAction();
   const boletoEnabled = await getBoletoEnabledAction();
 
-  const active   = plans.filter((p) => p.status === "active").length;
-  const paused   = plans.filter((p) => p.status === "paused").length;
-  const inactive = plans.filter((p) => p.status === "cancelled" || p.status === "failed").length;
+  const active = plans.filter(p => p.status === "active").length;
+  const paused = plans.filter(p => p.status === "paused").length;
+  const inactive = plans.filter(
+    p => p.status === "cancelled" || p.status === "failed"
+  ).length;
   const expiring = plans.filter(
-    (p) => p.status === "active" && p.nextChargeDate.getTime() <= Date.now() + FIFTEEN_DAYS_MS
+    p =>
+      p.status === "active" &&
+      p.nextChargeDate.getTime() <= Date.now() + FIFTEEN_DAYS_MS
   ).length;
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-4 md:pt-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="flex-1 space-y-6 p-4 pt-4 md:p-8 md:pt-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Planos VPS</h2>
+          <h2 className="font-bold text-3xl tracking-tight">Planos VPS</h2>
           <p className="text-muted-foreground">
             Gerencie assinaturas VPS dos clientes.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" asChild>
-            <Link href="/admin/vps-plans/payment-links" className="gap-2">
+          <Button asChild variant="outline">
+            <Link className="gap-2" href="/admin/vps-plans/payment-links">
               <Link2 className="h-4 w-4" />
               Links de Pagamento
             </Link>
           </Button>
           {/* <BackfillButton /> */}
-          <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
+          <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-4 py-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
-            <span className="text-sm font-bold text-primary">
+            <span className="font-bold text-primary text-sm">
               Acesso Restrito: Admin
             </span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <CardTitle className="font-medium text-sm">Total</CardTitle>
             <Server className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{plans.length}</div>
+            <div className="font-bold text-2xl">{plans.length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ativas</CardTitle>
+            <CardTitle className="font-medium text-sm">Ativas</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{active}</div>
+            <div className="font-bold text-2xl text-green-600">{active}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pausadas</CardTitle>
+            <CardTitle className="font-medium text-sm">Pausadas</CardTitle>
             <PauseCircle className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{paused}</div>
+            <div className="font-bold text-2xl text-yellow-600">{paused}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inativas</CardTitle>
+            <CardTitle className="font-medium text-sm">Inativas</CardTitle>
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{inactive}</div>
+            <div className="font-bold text-2xl text-red-600">{inactive}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">A vencer (15d)</CardTitle>
+            <CardTitle className="font-medium text-sm">
+              A vencer (15d)
+            </CardTitle>
             <Clock className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-600">{expiring}</div>
+            <div className="font-bold text-2xl text-amber-600">{expiring}</div>
           </CardContent>
         </Card>
       </div>
 
       <PaymentSettingsCard
-        initialPixAllowAllDurations={pixAllowAllDurations}
         initialBoletoEnabled={boletoEnabled}
+        initialPixAllowAllDurations={pixAllowAllDurations}
       />
 
       <Card>

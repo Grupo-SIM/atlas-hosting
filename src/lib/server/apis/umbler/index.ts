@@ -35,17 +35,72 @@ export type BrTld = (typeof BR_TLDS)[number];
  * How to find current prices: log in to umbler.com → Domínios → Registrar
  */
 export const UMBLER_TLD_PRICES: Record<string, UmblerTldPrice> = {
-  "com.br": { tld: "com.br", registerBRL: 40.0, renewBRL: 40.0, transferBRL: 40.0 },
-  "net.br":  { tld: "net.br",  registerBRL: 40.0, renewBRL: 40.0, transferBRL: 40.0 },
-  "org.br":  { tld: "org.br",  registerBRL: 40.0, renewBRL: 40.0, transferBRL: 40.0 },
-  "nom.br":  { tld: "nom.br",  registerBRL: 40.0, renewBRL: 40.0, transferBRL: 40.0 },
-  "ind.br":  { tld: "ind.br",  registerBRL: 40.0, renewBRL: 40.0, transferBRL: 40.0 },
-  "adv.br":  { tld: "adv.br",  registerBRL: 40.0, renewBRL: 40.0, transferBRL: 40.0 },
-  "arq.br":  { tld: "arq.br",  registerBRL: 40.0, renewBRL: 40.0, transferBRL: 40.0 },
-  "bio.br":  { tld: "bio.br",  registerBRL: 40.0, renewBRL: 40.0, transferBRL: 40.0 },
-  "eng.br":  { tld: "eng.br",  registerBRL: 40.0, renewBRL: 40.0, transferBRL: 40.0 },
-  "med.br":  { tld: "med.br",  registerBRL: 40.0, renewBRL: 40.0, transferBRL: 40.0 },
-  "vet.br":  { tld: "vet.br",  registerBRL: 40.0, renewBRL: 40.0, transferBRL: 40.0 },
+  "adv.br": {
+    registerBRL: 40.0,
+    renewBRL: 40.0,
+    tld: "adv.br",
+    transferBRL: 40.0,
+  },
+  "arq.br": {
+    registerBRL: 40.0,
+    renewBRL: 40.0,
+    tld: "arq.br",
+    transferBRL: 40.0,
+  },
+  "bio.br": {
+    registerBRL: 40.0,
+    renewBRL: 40.0,
+    tld: "bio.br",
+    transferBRL: 40.0,
+  },
+  "com.br": {
+    registerBRL: 40.0,
+    renewBRL: 40.0,
+    tld: "com.br",
+    transferBRL: 40.0,
+  },
+  "eng.br": {
+    registerBRL: 40.0,
+    renewBRL: 40.0,
+    tld: "eng.br",
+    transferBRL: 40.0,
+  },
+  "ind.br": {
+    registerBRL: 40.0,
+    renewBRL: 40.0,
+    tld: "ind.br",
+    transferBRL: 40.0,
+  },
+  "med.br": {
+    registerBRL: 40.0,
+    renewBRL: 40.0,
+    tld: "med.br",
+    transferBRL: 40.0,
+  },
+  "net.br": {
+    registerBRL: 40.0,
+    renewBRL: 40.0,
+    tld: "net.br",
+    transferBRL: 40.0,
+  },
+  "nom.br": {
+    registerBRL: 40.0,
+    renewBRL: 40.0,
+    tld: "nom.br",
+    transferBRL: 40.0,
+  },
+  "org.br": {
+    registerBRL: 40.0,
+    renewBRL: 40.0,
+    tld: "org.br",
+    transferBRL: 40.0,
+  },
+  "vet.br": {
+    registerBRL: 40.0,
+    renewBRL: 40.0,
+    tld: "vet.br",
+    transferBRL: 40.0,
+  },
 };
 
 export class UmblerApiWrapper {
@@ -58,16 +113,18 @@ export class UmblerApiWrapper {
     this.apiToken = process.env.UMBLER_API_TOKEN ?? "";
 
     // Basic auth: base64(userId:apiToken)
-    const credentials = Buffer.from(`${this.userId}:${this.apiToken}`).toString("base64");
+    const credentials = Buffer.from(`${this.userId}:${this.apiToken}`).toString(
+      "base64"
+    );
 
     this.client = axios.create({
       baseURL: "https://api.umbler.com",
-      timeout: 30_000,
       headers: {
+        Accept: "application/json",
         Authorization: `Basic ${credentials}`,
         "Content-Type": "application/json",
-        Accept: "application/json",
       },
+      timeout: 30_000,
     });
   }
 
@@ -87,14 +144,16 @@ export class UmblerApiWrapper {
     domainName: string
   ): Promise<DomainExtensionAvailabilityStatus[]> {
     // Strip TLD if provided — Umbler checks all .br variants automatically
-    const sld = domainName.includes(".") ? domainName.split(".")[0] : domainName;
+    const sld = domainName.includes(".")
+      ? domainName.split(".")[0]
+      : domainName;
 
     const { data } = await this.client.get<DomainExtensionAvailabilityStatus[]>(
       `/v1/domain-registrations/isavailable/${encodeURIComponent(sld)}`
     );
 
     // Filter to only .br TLDs we support and have pricing for
-    return data.filter((r) => {
+    return data.filter(r => {
       const tld = r.domain.includes(".")
         ? r.domain.split(".").slice(1).join(".")
         : "";

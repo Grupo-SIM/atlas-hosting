@@ -13,7 +13,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { suspendUserAction, reactivateUserAction, promoteToAdminAction } from "./actions";
+import {
+  promoteToAdminAction,
+  reactivateUserAction,
+  suspendUserAction,
+} from "./actions";
 import { startImpersonationAction } from "./impersonation-actions";
 
 interface Props {
@@ -32,26 +36,38 @@ export function UserActionsCell({ id, suspendedAt, isAdmin }: Props) {
   if (suspendedAt !== null) {
     return (
       <div className="flex items-center justify-end gap-2">
-        <ImpersonateButton id={id} pending={pending} startTransition={startTransition} />
+        <ImpersonateButton
+          id={id}
+          pending={pending}
+          startTransition={startTransition}
+        />
         <Button
-          variant="default"
-          size="sm"
           disabled={pending}
           onClick={() => startTransition(() => reactivateUserAction(id))}
+          size="sm"
+          variant="default"
         >
           Reativar
         </Button>
-        <PromoteButton id={id} pending={pending} startTransition={startTransition} />
+        <PromoteButton
+          id={id}
+          pending={pending}
+          startTransition={startTransition}
+        />
       </div>
     );
   }
 
   return (
     <div className="flex items-center justify-end gap-2">
-      <ImpersonateButton id={id} pending={pending} startTransition={startTransition} />
+      <ImpersonateButton
+        id={id}
+        pending={pending}
+        startTransition={startTransition}
+      />
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="outline" size="sm" disabled={pending}>
+          <Button disabled={pending} size="sm" variant="outline">
             Suspender
           </Button>
         </AlertDialogTrigger>
@@ -73,7 +89,11 @@ export function UserActionsCell({ id, suspendedAt, isAdmin }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <PromoteButton id={id} pending={pending} startTransition={startTransition} />
+      <PromoteButton
+        id={id}
+        pending={pending}
+        startTransition={startTransition}
+      />
     </div>
   );
 }
@@ -90,7 +110,7 @@ function ImpersonateButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={pending}>
+        <Button disabled={pending} size="sm" variant="outline">
           Acessar como
         </Button>
       </AlertDialogTrigger>
@@ -129,7 +149,7 @@ function PromoteButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="secondary" size="sm" disabled={pending}>
+        <Button disabled={pending} size="sm" variant="secondary">
           Tornar Admin
         </Button>
       </AlertDialogTrigger>

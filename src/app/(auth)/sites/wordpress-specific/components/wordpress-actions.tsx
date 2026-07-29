@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  AlertTriangle,
+  ArrowUpCircle,
+  Package,
+  RefreshCw,
+  Shield,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,16 +18,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  ArrowUpCircle,
-  RefreshCw,
-  Shield,
-  Package,
-  AlertTriangle,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import type { WordPressSiteInfo } from "../types";
 
 interface WordPressActionsButtonsProps {
@@ -32,7 +32,7 @@ export function WordPressActionsButtons({
 
   // Calculate sites with updates available
   const sitesWithUpdates = sites.filter(
-    (site) =>
+    site =>
       site.updatesAvailable?.core ||
       (site.updatesAvailable?.plugins &&
         site.updatesAvailable.plugins.length > 0)
@@ -66,7 +66,7 @@ export function WordPressActionsButtons({
     <div className="space-y-4">
       {/* Bulk Actions */}
       {sitesWithUpdates.length > 0 && (
-        <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950 dark:border-orange-800">
+        <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
           <CardHeader>
             <div className="flex items-center space-x-2">
               <AlertTriangle className="h-5 w-5 text-orange-600" />
@@ -81,21 +81,21 @@ export function WordPressActionsButtons({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {sitesWithUpdates.map((site) => (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {sitesWithUpdates.map(site => (
                 <Badge
+                  className="bg-white dark:bg-orange-900"
                   key={site.id}
                   variant="secondary"
-                  className="bg-white dark:bg-orange-900"
                 >
                   {site.url}
                 </Badge>
               ))}
             </div>
             <Button
-              onClick={handleUpdateAll}
+              className="bg-orange-600 text-white hover:bg-orange-700"
               disabled={isUpdating}
-              className="bg-orange-600 hover:bg-orange-700 text-white"
+              onClick={handleUpdateAll}
             >
               {isUpdating ? (
                 <>
@@ -124,27 +124,27 @@ export function WordPressActionsButtons({
         <CardContent>
           <div className="flex flex-wrap gap-3">
             <Button
-              variant="outline"
-              onClick={handleCreateBackup}
               className="flex items-center space-x-2"
+              onClick={handleCreateBackup}
+              variant="outline"
             >
               <Shield className="h-4 w-4" />
               <span>Backup de Todos os Sites</span>
             </Button>
 
             <Button
-              variant="outline"
-              onClick={() => router.refresh()}
               className="flex items-center space-x-2"
+              onClick={() => router.refresh()}
+              variant="outline"
             >
               <Package className="h-4 w-4" />
               <span>Verificar Plugins</span>
             </Button>
 
             <Button
-              variant="outline"
-              onClick={() => router.refresh()}
               className="flex items-center space-x-2"
+              onClick={() => router.refresh()}
+              variant="outline"
             >
               <RefreshCw className="h-4 w-4" />
               <span>Verificar Status</span>

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Input } from "@/components/ui/input";
-import Form from "next/form";
-import { SearchButton } from "./SearchButton";
 import { X } from "lucide-react";
+import Form from "next/form";
+import { useRef, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { SearchButton } from "./SearchButton";
 
 export default function RegisterDomainSearch({ domain }: DomainPageParams) {
   const [inputValue, setInputValue] = useState(domain || "");
@@ -19,26 +19,29 @@ export default function RegisterDomainSearch({ domain }: DomainPageParams) {
   };
 
   return (
-    <Form action="/domain" className="flex flex-col gap-4 w-full max-w-2xl mx-auto">
-      <input type="hidden" name="tab" value="register" />
-      
-      <div className="flex flex-row gap-2 w-full">
-        <div className="relative flex-1 group">
+    <Form
+      action="/domain"
+      className="mx-auto flex w-full max-w-2xl flex-col gap-4"
+    >
+      <input name="tab" type="hidden" value="register" />
+
+      <div className="flex w-full flex-row gap-2">
+        <div className="group relative flex-1">
           <Input
+            className="h-11 w-full rounded-2xl border-slate-200 bg-white px-4 pr-10 text-slate-950 outline-none backdrop-blur-md transition-all placeholder:text-slate-400 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 group-hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:group-hover:bg-white/10 dark:placeholder:text-slate-600"
+            name="domain"
+            onChange={e => setInputValue(e.target.value)}
+            placeholder="Digite o nome do domínio..."
             ref={inputRef}
             type="text"
-            name="domain"
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Digite o nome do domínio..."
-            className="w-full h-11 bg-white dark:bg-white/5 backdrop-blur-md border-slate-200 dark:border-white/10 rounded-2xl px-4 text-slate-950 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all outline-none pr-10 group-hover:bg-slate-50 dark:group-hover:bg-white/10"
           />
           {inputValue && (
             <button
-              type="button"
+              className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 text-slate-400 transition-colors hover:text-slate-950 dark:hover:text-white"
               onClick={handleClear}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer p-1"
               title="Limpar busca"
+              type="button"
             >
               <X className="h-4 w-4 stroke-[2.5px]" />
             </button>

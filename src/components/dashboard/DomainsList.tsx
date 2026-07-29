@@ -1,5 +1,7 @@
 "use client";
 
+import { ExternalLink, Globe, MoreHorizontal, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,40 +25,38 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ExternalLink, Globe, MoreHorizontal, RefreshCw } from "lucide-react";
-import Link from "next/link";
 
 export function DomainsList() {
   const domains = [
     {
+      autoRenew: true,
+      expiryDate: "Apr 12, 2025",
       id: 1,
       name: "mycompany.com",
       registrationDate: "Apr 12, 2024",
-      expiryDate: "Apr 12, 2025",
-      autoRenew: true,
       status: "active",
     },
     {
+      autoRenew: true,
+      expiryDate: "Jun 22, 2025",
       id: 2,
       name: "shop.mycompany.com",
       registrationDate: "Jun 22, 2024",
-      expiryDate: "Jun 22, 2025",
-      autoRenew: true,
       status: "active",
     },
     {
+      autoRenew: false,
+      expiryDate: "Apr 30, 2025",
       id: 3,
       name: "blog.mycompany.com",
       registrationDate: "Apr 30, 2024",
-      expiryDate: "Apr 30, 2025",
-      autoRenew: false,
       status: "active",
     },
   ];
 
   return (
     <Card>
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+      <CardHeader className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
           <CardTitle>Domains</CardTitle>
           <CardDescription>Manage your registered domains</CardDescription>
@@ -69,7 +69,7 @@ export function DomainsList() {
         </Link>
       </CardHeader>
       <CardContent>
-        <div className="border rounded-md overflow-x-auto">
+        <div className="overflow-x-auto rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -85,17 +85,17 @@ export function DomainsList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {domains.map((domain) => (
+              {domains.map(domain => (
                 <TableRow key={domain.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center">
                       <Badge
-                        variant="outline"
                         className={
                           domain.status === "active"
-                            ? "bg-green-500/10 text-green-500 border-green-200 dark:border-green-800 mr-2 h-2 w-2 p-0 rounded-full"
-                            : "bg-amber-500/10 text-amber-500 border-amber-200 dark:border-amber-800 mr-2 h-2 w-2 p-0 rounded-full"
+                            ? "mr-2 h-2 w-2 rounded-full border-green-200 bg-green-500/10 p-0 text-green-500 dark:border-green-800"
+                            : "mr-2 h-2 w-2 rounded-full border-amber-200 bg-amber-500/10 p-0 text-amber-500 dark:border-amber-800"
                         }
+                        variant="outline"
                       />
                       {domain.name}
                     </div>
@@ -107,10 +107,10 @@ export function DomainsList() {
                   <TableCell className="hidden md:table-cell">
                     {domain.autoRenew ? (
                       <Badge
+                        className="border-green-200 bg-green-500/10 text-green-500 dark:border-green-800"
                         variant="outline"
-                        className="bg-green-500/10 text-green-500 border-green-200 dark:border-green-800"
                       >
-                        <RefreshCw className="h-3 w-3 mr-1" />
+                        <RefreshCw className="mr-1 h-3 w-3" />
                         Auto-Renew
                       </Badge>
                     ) : (
@@ -120,7 +120,7 @@ export function DomainsList() {
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild={true}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button className="h-8 w-8" size="icon" variant="ghost">
                           <MoreHorizontal className="h-4 w-4" />
                           <span className="sr-only">Actions</span>
                         </Button>
@@ -129,7 +129,7 @@ export function DomainsList() {
                         <DropdownMenuItem>Manage DNS</DropdownMenuItem>
                         <DropdownMenuItem>Renew Domain</DropdownMenuItem>
                         <DropdownMenuItem>
-                          <ExternalLink className="h-4 w-4 mr-2" />
+                          <ExternalLink className="mr-2 h-4 w-4" />
                           <span>Open Website</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>

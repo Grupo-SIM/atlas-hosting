@@ -1,22 +1,22 @@
 import { relations } from "drizzle-orm";
-import { date, pgTable, text, uuid, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { pgUser } from "./user";
 
 export const pgLog = pgTable("log", {
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  deletedAt: timestamp("deleted_at", { mode: "date" }),
+  description: text("description").notNull(),
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull(),
-  type: text("type", { enum: ["hosting", "account", "security"] }).notNull(),
+  readAt: timestamp("read_at", { mode: "date" }),
   severity: text("severity", {
     enum: ["info", "warning", "danger", "success"],
   }).notNull(),
   title: text("title").notNull(),
-  description: text("description").notNull(),
-  readAt: timestamp("read_at", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  type: text("type", { enum: ["hosting", "account", "security"] }).notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" })
     .$default(() => new Date())
     .notNull(),
-  deletedAt: timestamp("deleted_at", { mode: "date" }),
+  userId: uuid("user_id").notNull(),
 });
 
 export const logsRelations = relations(pgLog, ({ one }) => ({

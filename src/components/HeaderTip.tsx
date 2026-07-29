@@ -1,7 +1,11 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function HeaderTip({ label, tip }: { label: string; tip: string }) {
   return (
@@ -9,7 +13,7 @@ export function HeaderTip({ label, tip }: { label: string; tip: string }) {
       {label}
       <Tooltip>
         <TooltipTrigger asChild>
-          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+          <Info className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
         </TooltipTrigger>
         <TooltipContent className="max-w-64">{tip}</TooltipContent>
       </Tooltip>

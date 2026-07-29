@@ -1,8 +1,8 @@
+import { eq } from "drizzle-orm";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     url.searchParams.set("error", "github_auth_failed");
     url.searchParams.set(
       "error_description",
-      "O código de autorização do GitHub não foi encontrado.",
+      "O código de autorização do GitHub não foi encontrado."
     );
     return NextResponse.redirect(url);
   }
@@ -22,17 +22,17 @@ export async function GET(req: NextRequest) {
     const tokenResponse = await fetch(
       "https://github.com/login/oauth/access_token",
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
         body: JSON.stringify({
           client_id: process.env.AUTH_GITHUB_ID,
           client_secret: process.env.AUTH_GITHUB_SECRET,
           code,
         }),
-      },
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      }
     );
 
     const tokenData = await tokenResponse.json();
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
     if (tokenData.error || !tokenData.access_token) {
       throw new Error(
         tokenData.error_description ||
-          "Falha ao trocar o código pelo token de acesso.",
+          "Falha ao trocar o código pelo token de acesso."
       );
     }
 

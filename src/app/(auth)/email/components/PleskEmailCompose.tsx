@@ -1,32 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  Send,
-  Paperclip,
-  Type,
   Bold,
   Italic,
+  MoreHorizontal,
+  Paperclip,
+  Save,
+  Send,
   Underline,
   X,
-  Upload,
-  Save,
-  MoreHorizontal,
 } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import type { MailName } from "@/lib/server/apis/plesk-xml/types";
 
 interface EmailMessage {
@@ -81,11 +72,11 @@ export function PleskEmailCompose({
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    setAttachments((prev) => [...prev, ...files]);
+    setAttachments(prev => [...prev, ...files]);
   };
 
   const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
+    setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSend = () => {
@@ -95,12 +86,12 @@ export function PleskEmailCompose({
     }
 
     onSend({
-      to: to.trim(),
-      cc: cc.trim() || undefined,
       bcc: bcc.trim() || undefined,
+      cc: cc.trim() || undefined,
+      html: `<p>${body.trim().replace(/\n/g, "</p><p>")}</p>`,
       subject: subject.trim(),
       text: body.trim(),
-      html: `<p>${body.trim().replace(/\n/g, "</p><p>")}</p>`,
+      to: to.trim(),
     });
   };
 
@@ -119,34 +110,34 @@ export function PleskEmailCompose({
   };
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="flex h-full flex-col">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">
             {replyTo ? "Responder" : "Nova mensagem"}
           </CardTitle>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={handleSaveDraft}>
-              <Save className="h-4 w-4 mr-2" />
+            <Button onClick={handleSaveDraft} size="sm" variant="ghost">
+              <Save className="mr-2 h-4 w-4" />
               Rascunho
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={onCancel}>
+            <Button onClick={onCancel} size="sm" variant="ghost">
               <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col space-y-4">
+      <CardContent className="flex flex-1 flex-col space-y-4">
         {/* From Account */}
         {fromAccount && (
           <div className="space-y-2">
             <Label htmlFor="from">De</Label>
             <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className="px-3 py-1">
+              <Badge className="px-3 py-1" variant="secondary">
                 {fromAccount.name}@{fromAccount.site_name}
               </Badge>
             </div>
@@ -160,20 +151,20 @@ export function PleskEmailCompose({
             <div className="flex items-center space-x-2 text-sm">
               {!showCc && (
                 <Button
-                  variant="link"
-                  size="sm"
-                  className="p-0 h-auto text-xs"
+                  className="h-auto p-0 text-xs"
                   onClick={() => setShowCc(true)}
+                  size="sm"
+                  variant="link"
                 >
                   Cc
                 </Button>
               )}
               {!showBcc && (
                 <Button
-                  variant="link"
-                  size="sm"
-                  className="p-0 h-auto text-xs"
+                  className="h-auto p-0 text-xs"
                   onClick={() => setShowBcc(true)}
+                  size="sm"
+                  variant="link"
                 >
                   Cco
                 </Button>
@@ -181,11 +172,11 @@ export function PleskEmailCompose({
             </div>
           </div>
           <Input
-            id="to"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            placeholder="destinatario@exemplo.com"
             className="w-full"
+            id="to"
+            onChange={e => setTo(e.target.value)}
+            placeholder="destinatario@exemplo.com"
+            value={to}
           />
         </div>
 
@@ -195,19 +186,19 @@ export function PleskEmailCompose({
             <div className="flex items-center justify-between">
               <Label htmlFor="cc">Cc</Label>
               <Button
-                variant="ghost"
-                size="sm"
-                className="p-0 h-auto"
+                className="h-auto p-0"
                 onClick={() => setShowCc(false)}
+                size="sm"
+                variant="ghost"
               >
                 <X className="h-3 w-3" />
               </Button>
             </div>
             <Input
               id="cc"
-              value={cc}
-              onChange={(e) => setCc(e.target.value)}
+              onChange={e => setCc(e.target.value)}
               placeholder="copia@exemplo.com"
+              value={cc}
             />
           </div>
         )}
@@ -218,19 +209,19 @@ export function PleskEmailCompose({
             <div className="flex items-center justify-between">
               <Label htmlFor="bcc">Cco</Label>
               <Button
-                variant="ghost"
-                size="sm"
-                className="p-0 h-auto"
+                className="h-auto p-0"
                 onClick={() => setShowBcc(false)}
+                size="sm"
+                variant="ghost"
               >
                 <X className="h-3 w-3" />
               </Button>
             </div>
             <Input
               id="bcc"
-              value={bcc}
-              onChange={(e) => setBcc(e.target.value)}
+              onChange={e => setBcc(e.target.value)}
               placeholder="copia-oculta@exemplo.com"
+              value={bcc}
             />
           </div>
         )}
@@ -240,9 +231,9 @@ export function PleskEmailCompose({
           <Label htmlFor="subject">Assunto *</Label>
           <Input
             id="subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
+            onChange={e => setSubject(e.target.value)}
             placeholder="Assunto da mensagem"
+            value={subject}
           />
         </div>
 
@@ -253,20 +244,20 @@ export function PleskEmailCompose({
             <div className="space-y-2">
               {attachments.map((file, index) => (
                 <div
+                  className="flex items-center justify-between rounded border p-2"
                   key={`${file.name}-${file.size}-${index}`}
-                  className="flex items-center justify-between p-2 border rounded"
                 >
                   <div className="flex items-center space-x-2">
                     <Paperclip className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">{file.name}</span>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge className="text-xs" variant="outline">
                       {formatFileSize(file.size)}
                     </Badge>
                   </div>
                   <Button
-                    variant="ghost"
-                    size="sm"
                     onClick={() => removeAttachment(index)}
+                    size="sm"
+                    variant="ghost"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -281,30 +272,30 @@ export function PleskEmailCompose({
         {/* Toolbar */}
         <div className="flex items-center space-x-2 py-2">
           <div className="flex items-center space-x-1">
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <Bold className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <Italic className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <Underline className="h-4 w-4" />
             </Button>
           </div>
-          <Separator orientation="vertical" className="h-6" />
+          <Separator className="h-6" orientation="vertical" />
           <div className="flex-1" />
           <div className="flex items-center space-x-2">
             <input
-              type="file"
+              className="hidden"
               id="file-upload"
               multiple
               onChange={handleFileUpload}
-              className="hidden"
+              type="file"
             />
             <Button
-              variant="ghost"
-              size="sm"
               onClick={() => document.getElementById("file-upload")?.click()}
+              size="sm"
+              variant="ghost"
             >
               <Paperclip className="h-4 w-4" />
             </Button>
@@ -315,25 +306,25 @@ export function PleskEmailCompose({
         <div className="flex-1 space-y-2">
           <Label htmlFor="body">Mensagem</Label>
           <Textarea
+            className="min-h-[200px] flex-1 resize-none"
             id="body"
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={e => setBody(e.target.value)}
             placeholder="Digite sua mensagem aqui..."
-            className="flex-1 min-h-[200px] resize-none"
+            value={body}
           />
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t">
+        <div className="flex items-center justify-between border-t pt-4">
           <div className="flex items-center space-x-2">
             {isDraft && <Badge variant="secondary">Salvo como rascunho</Badge>}
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline" onClick={onCancel}>
+            <Button onClick={onCancel} variant="outline">
               Cancelar
             </Button>
             <Button onClick={handleSend}>
-              <Send className="h-4 w-4 mr-2" />
+              <Send className="mr-2 h-4 w-4" />
               Enviar
             </Button>
           </div>

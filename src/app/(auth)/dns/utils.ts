@@ -1,7 +1,8 @@
 // src/app/(authenticated)/(dashboard)/sites/[domain]/dns/utils.ts
+
+import { cache } from "react";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 import type { DnsHostRecordItem } from "@/lib/server/apis/namecheap/types";
-import { cache } from "react";
 
 /**
  * Parses a domain name into its SLD (Second Level Domain) and TLD (Top Level Domain) parts
@@ -94,10 +95,10 @@ export const getCachedDnsRecords = cache(async function getCachedDnsRecords(
   try {
     const dnsInfo = await namecheapApi.getDnsHosts({ SLD: sld, TLD: tld });
     return {
+      isUsingOurDNS: dnsInfo.IsUsingOurDNS,
       records: dnsInfo.Hosts || [], // Ensure records is always an array
       sld,
       tld,
-      isUsingOurDNS: dnsInfo.IsUsingOurDNS,
     };
   } catch (error) {
     console.error(

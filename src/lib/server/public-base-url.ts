@@ -20,9 +20,12 @@ export function getServerPublicBaseUrl(): string {
   if (vercel) {
     return `https://${vercel}`.replace(/\/$/, "");
   }
-  
+
   // Fallback para produção em qualquer ambiente que não seja explicitamente local-dev
-  if (process.env.NODE_ENV !== "development" || (raw && !raw.includes("localhost"))) {
+  if (
+    process.env.NODE_ENV !== "development" ||
+    (raw && !raw.includes("localhost"))
+  ) {
     return "https://atlashosting.com.br";
   }
 

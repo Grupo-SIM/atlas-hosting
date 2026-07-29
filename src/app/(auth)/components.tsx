@@ -1,8 +1,8 @@
+import { find } from "lodash";
+import { redirect } from "next/navigation";
 import DomainSelector from "@/components/domains/DomainSelector";
 import { getUser } from "@/lib/auth";
 import { getUserCurrentDomain } from "@/lib/server/utils";
-import { find } from "lodash";
-import { redirect } from "next/navigation";
 
 export async function UserSiteSelect() {
   const user = await getUser();
@@ -15,7 +15,7 @@ export async function UserSiteSelect() {
 
   const selectedDomainInfo = find(
     user.organization.domains,
-    (domain) => domain.domain === selectedDomain?.domain
+    domain => domain.domain === selectedDomain?.domain
   );
 
   return (

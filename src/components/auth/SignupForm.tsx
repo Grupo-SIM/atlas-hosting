@@ -1,40 +1,43 @@
 "use client";
 
-import { signup } from "@/app/actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import type { User } from "@/lib/db/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { CgSpinner } from "react-icons/cg";
 import { z } from "zod";
+import { signup } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { User } from "@/lib/db/schema";
 // import GithubAuthButton from "./GithubAuthButton";
 // import GoogleAuthButton from "./GoogleAuthButton";
 
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 
 export default function SignupForm({
   referrer,
   redirect,
-}: { referrer?: Pick<User, "name" | "email" | "id">; redirect?: string }) {
+}: {
+  referrer?: Pick<User, "name" | "email" | "id">;
+  redirect?: string;
+}) {
   const [userType, setUserType] = useState<"PF" | "PJ">("PF");
-  
+
   const { register, handleSubmit, control, setValue, watch, ...methods } =
     useForm<SignupFormInputs>({
-      resolver: zodResolver(schema),
-      mode: "onChange",
-      reValidateMode: "onChange",
       defaultValues: {
         userType: "PF",
-      }
+      },
+      mode: "onChange",
+      resolver: zodResolver(schema),
+      reValidateMode: "onChange",
     });
 
   const { errors, isValid, isValidating } = useFormState({ control });
@@ -61,12 +64,12 @@ export default function SignupForm({
         firstName: data.email.split("@")[0],
         lastName: userType === "PF" ? "Pessoa Física" : "Pessoa Jurídica",
         organizationName: data.document,
+        ref,
         referrerId: referrer?.id,
-        ref
       };
 
       const result = await signup(
-        { status: "idle", message: "" },
+        { message: "", status: "idle" },
         signupData as any
       );
 
@@ -101,14 +104,13 @@ export default function SignupForm({
         .replace(/(\d{3})(\d)/, "$1.$2")
         .replace(/(\d{3})(\d)/, "$1.$2")
         .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    } else {
-      return digits
-        .slice(0, 14)
-        .replace(/^(\d{2})(\d)/, "$1.$2")
-        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-        .replace(/\.(\d{3})(\d)/, ".$1/$2")
-        .replace(/(\d{4})(\d)/, "$1-$2");
     }
+    return digits
+      .slice(0, 14)
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
   };
 
   const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,90 +119,107 @@ export default function SignupForm({
   };
 
   return (
-    <>
-      <form onSubmit={onSubmit} className="space-y-6">
-        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] h-[72px]">
-          <Label htmlFor="userType" className="text-white font-medium ml-1">Tipo de Conta</Label>
-          <Select 
-            onValueChange={(val: "PF" | "PJ") => handleUserTypeChange(val)} 
-            defaultValue="PF"
-          >
-            <SelectTrigger id="userType" className="w-full h-11 bg-white/80 border-none text-slate-900 rounded-md focus:ring-sky-500/50 font-medium">
-              <SelectValue placeholder="Selecione o tipo" />
-            </SelectTrigger>
-            <SelectContent className="bg-white border-none text-slate-900">
-              <SelectItem value="PF">Pessoa Física (CPF)</SelectItem>
-              <SelectItem value="PJ">Pessoa Jurídica (CNPJ)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] min-h-[72px] h-auto">
-          <Label htmlFor="document" className="text-white font-medium ml-1">
-            {userType === "PF" ? "CPF" : "CNPJ"}
-          </Label>
-          <Input
-            id="document"
-            type="text"
-            placeholder={userType === "PF" ? "000.000.000-00" : "00.000.000/0000-00"}
-            className="h-11 bg-white/80 border-none text-slate-900 placeholder:text-slate-500 rounded-md focus-visible:ring-sky-500/50 focus-visible:bg-white transition-all font-medium"
-            {...register("document")}
-            onChange={handleDocumentChange}
-          />
-          {errors.document && (
-            <p className="text-xs font-medium text-red-400 ml-1 mt-1">{errors.document.message}</p>
-          )}
-        </div>
-
-        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] min-h-[72px] h-auto">
-          <Label htmlFor="email" className="text-white font-medium ml-1">E-mail</Label>
-          <Input
-            type="email"
-            placeholder="Digite seu e-mail"
-            autoComplete="email"
-            className="h-11 bg-white/80 border-none text-slate-900 placeholder:text-slate-500 rounded-md focus-visible:ring-sky-500/50 focus-visible:bg-white transition-all font-medium"
-            {...register("email")}
-          />
-          {errors.email && (
-            <p className="text-xs font-medium text-red-400 ml-1 mt-1">{errors.email.message}</p>
-          )}
-        </div>
-
-        <div className="flex flex-col items-start gap-1 w-full max-w-[448px] min-h-[72px] h-auto">
-          <Label htmlFor="password" className="text-white font-medium ml-1">Senha</Label>
-          <Input
-            type="password"
-            placeholder="Digite sua senha"
-            autoComplete="new-password"
-            className="h-11 bg-white/80 border-none text-slate-900 placeholder:text-slate-500 rounded-md focus-visible:ring-sky-500/50 focus-visible:bg-white transition-all font-medium"
-            {...register("password")}
-          />
-          {errors.password && (
-            <p className="text-xs font-medium text-red-400 ml-1 mt-1">{errors.password.message}</p>
-          )}
-        </div>
-
-        {formError && <p className="text-xs text-red-400 ml-1">{formError}</p>}
-
-        <Button
-          type="submit"
-          className="w-full max-w-[448px] h-[48px] text-sm font-bold text-white rounded-[6px] transition-all shadow-lg uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
-          disabled={!isValid || isValidating || isLoading}
+    <form className="space-y-6" onSubmit={onSubmit}>
+      <div className="flex h-[72px] w-full max-w-[448px] flex-col items-start gap-1">
+        <Label className="ml-1 font-medium text-white" htmlFor="userType">
+          Tipo de Conta
+        </Label>
+        <Select
+          defaultValue="PF"
+          onValueChange={(val: "PF" | "PJ") => handleUserTypeChange(val)}
         >
-          {isLoading ? (
-            <CgSpinner className="h-6 w-6 animate-spin" />
-          ) : (
-            "Cadastrar"
-          )}
-        </Button>
-      </form>
-    </>
+          <SelectTrigger
+            className="h-11 w-full rounded-md border-none bg-white/80 font-medium text-slate-900 focus:ring-sky-500/50"
+            id="userType"
+          >
+            <SelectValue placeholder="Selecione o tipo" />
+          </SelectTrigger>
+          <SelectContent className="border-none bg-white text-slate-900">
+            <SelectItem value="PF">Pessoa Física (CPF)</SelectItem>
+            <SelectItem value="PJ">Pessoa Jurídica (CNPJ)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex h-auto min-h-[72px] w-full max-w-[448px] flex-col items-start gap-1">
+        <Label className="ml-1 font-medium text-white" htmlFor="document">
+          {userType === "PF" ? "CPF" : "CNPJ"}
+        </Label>
+        <Input
+          className="h-11 rounded-md border-none bg-white/80 font-medium text-slate-900 transition-all placeholder:text-slate-500 focus-visible:bg-white focus-visible:ring-sky-500/50"
+          id="document"
+          placeholder={
+            userType === "PF" ? "000.000.000-00" : "00.000.000/0000-00"
+          }
+          type="text"
+          {...register("document")}
+          onChange={handleDocumentChange}
+        />
+        {errors.document && (
+          <p className="mt-1 ml-1 font-medium text-red-400 text-xs">
+            {errors.document.message}
+          </p>
+        )}
+      </div>
+
+      <div className="flex h-auto min-h-[72px] w-full max-w-[448px] flex-col items-start gap-1">
+        <Label className="ml-1 font-medium text-white" htmlFor="email">
+          E-mail
+        </Label>
+        <Input
+          autoComplete="email"
+          className="h-11 rounded-md border-none bg-white/80 font-medium text-slate-900 transition-all placeholder:text-slate-500 focus-visible:bg-white focus-visible:ring-sky-500/50"
+          placeholder="Digite seu e-mail"
+          type="email"
+          {...register("email")}
+        />
+        {errors.email && (
+          <p className="mt-1 ml-1 font-medium text-red-400 text-xs">
+            {errors.email.message}
+          </p>
+        )}
+      </div>
+
+      <div className="flex h-auto min-h-[72px] w-full max-w-[448px] flex-col items-start gap-1">
+        <Label className="ml-1 font-medium text-white" htmlFor="password">
+          Senha
+        </Label>
+        <Input
+          autoComplete="new-password"
+          className="h-11 rounded-md border-none bg-white/80 font-medium text-slate-900 transition-all placeholder:text-slate-500 focus-visible:bg-white focus-visible:ring-sky-500/50"
+          placeholder="Digite sua senha"
+          type="password"
+          {...register("password")}
+        />
+        {errors.password && (
+          <p className="mt-1 ml-1 font-medium text-red-400 text-xs">
+            {errors.password.message}
+          </p>
+        )}
+      </div>
+
+      {formError && <p className="ml-1 text-red-400 text-xs">{formError}</p>}
+
+      <Button
+        className="h-[48px] w-full max-w-[448px] rounded-[6px] bg-gradient-to-r from-blue-600 to-indigo-600 font-bold text-sm text-white uppercase tracking-wider shadow-lg transition-all hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
+        disabled={!isValid || isValidating || isLoading}
+        type="submit"
+      >
+        {isLoading ? (
+          <CgSpinner className="h-6 w-6 animate-spin" />
+        ) : (
+          "Cadastrar"
+        )}
+      </Button>
+    </form>
   );
 }
 
 const schema = z.object({
-  userType: z.enum(["PF", "PJ"]),
-  document: z.string().min(11, "Documento inválido").max(18, "Documento inválido"),
+  document: z
+    .string()
+    .min(11, "Documento inválido")
+    .max(18, "Documento inválido"),
   email: z
     .string()
     .min(1, "E-mail é obrigatório")
@@ -209,6 +228,7 @@ const schema = z.object({
     .string()
     .min(8, "A senha deve ter pelo menos 8 caracteres")
     .max(100, "A senha deve ter no máximo 100 caracteres"),
+  userType: z.enum(["PF", "PJ"]),
 });
 
 export type SignupFormInputs = z.infer<typeof schema> & {

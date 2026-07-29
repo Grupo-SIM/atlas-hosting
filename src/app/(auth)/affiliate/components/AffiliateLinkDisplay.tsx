@@ -1,5 +1,9 @@
 "use client";
 
+import { TooltipArrow } from "@radix-ui/react-tooltip";
+import { debounce } from "lodash";
+import { CheckCircle, Copy } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,10 +12,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { TooltipArrow } from "@radix-ui/react-tooltip";
-import { debounce } from "lodash";
-import { CheckCircle, Copy } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function AffiliateLinkDisplay({
   affiliateLink,
@@ -36,11 +36,11 @@ export default function AffiliateLinkDisplay({
 
   return (
     <div className="flex gap-2">
-      <Input value={affiliateLink} readOnly className="font-mono" />
+      <Input className="font-mono" readOnly value={affiliateLink} />
       <TooltipProvider>
         <Tooltip open={copied}>
           <TooltipTrigger asChild>
-            <Button variant="outline" onClick={onCopy}>
+            <Button onClick={onCopy} variant="outline">
               {copied ? (
                 <CheckCircle className="h-4 w-4 text-green-500" />
               ) : (

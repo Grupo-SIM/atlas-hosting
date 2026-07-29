@@ -15,7 +15,6 @@ import { pgUser } from "./user";
  * Expires 30 days after last click.
  */
 export const pgAffiliateAttribution = pgTable("affiliate_attributions", {
-  id: uuid("id").primaryKey().defaultRandom(),
   affiliateUserId: uuid("affiliate_user_id")
     .notNull()
     .references(() => pgUser.id),
@@ -23,30 +22,31 @@ export const pgAffiliateAttribution = pgTable("affiliate_attributions", {
     .notNull()
     .unique()
     .references(() => pgUser.id),
-  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+  id: uuid("id").primaryKey().defaultRandom(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 /** One row per commission earned. Permanent audit trail. */
 export const pgAffiliateCommission = pgTable("affiliate_commissions", {
-  id: uuid("id").primaryKey().defaultRandom(),
   affiliateUserId: uuid("affiliate_user_id")
     .notNull()
     .references(() => pgUser.id),
   buyerUserId: uuid("buyer_user_id")
     .notNull()
     .references(() => pgUser.id),
+  commissionAmount: doublePrecision("commission_amount").notNull(),
+  commissionRate: doublePrecision("commission_rate").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  grossAmount: doublePrecision("gross_amount").notNull(),
+  id: uuid("id").primaryKey().defaultRandom(),
   invoiceId: uuid("invoice_id")
     .notNull()
     .references(() => pgInvoice.id),
-  grossAmount: doublePrecision("gross_amount").notNull(),
-  commissionAmount: doublePrecision("commission_amount").notNull(),
-  commissionRate: doublePrecision("commission_rate").notNull(),
   status: text("status", { enum: ["available", "withdrawn"] })
     .notNull()
     .default("available"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 export const pgAffiliateAttributionRelations = relations(

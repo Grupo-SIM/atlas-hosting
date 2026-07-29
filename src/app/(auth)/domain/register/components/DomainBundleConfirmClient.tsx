@@ -1,8 +1,11 @@
 "use client";
 
+import { TooltipArrow } from "@radix-ui/react-tooltip";
+import { Info } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -11,20 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { TooltipArrow } from "@radix-ui/react-tooltip";
-import { Info } from "lucide-react";
 
-type Props = {
+interface Props {
   domains: string[];
   disabled?: boolean;
-};
+}
 
 export function DomainBundleConfirmClient({ domains, disabled }: Props) {
   const [years, setYears] = useState("1");
@@ -42,14 +42,14 @@ export function DomainBundleConfirmClient({ domains, disabled }: Props) {
 
   return (
     <div className="mt-6 space-y-4 rounded-xl border border-border/80 bg-muted/20 p-4">
-      <p className="text-sm text-muted-foreground">
-        Uma única fatura inclui os {domains.length} domínios. Após o pagamento, todos são registrados
-        automaticamente.
+      <p className="text-muted-foreground text-sm">
+        Uma única fatura inclui os {domains.length} domínios. Após o pagamento,
+        todos são registrados automaticamente.
       </p>
       <div className="space-y-2">
         <Label>Período de registro</Label>
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <Select value={years} onValueChange={setYears}>
+          <Select onValueChange={setYears} value={years}>
             <SelectTrigger className="w-[180px]">
               <SelectValue />
             </SelectTrigger>
@@ -61,29 +61,37 @@ export function DomainBundleConfirmClient({ domains, disabled }: Props) {
           </Select>
           <div className="flex items-center justify-center gap-2">
             <Checkbox
-              id="bundle-wg"
               checked={whois}
-              onCheckedChange={(v) => setWhois(v === true)}
+              id="bundle-wg"
+              onCheckedChange={v => setWhois(v === true)}
             />
             <div className="flex items-center gap-1.5">
-              <Label htmlFor="bundle-wg" className="cursor-pointer text-sm font-normal">
+              <Label
+                className="cursor-pointer font-normal text-sm"
+                htmlFor="bundle-wg"
+              >
                 Proteção WHOIS
               </Label>
               <TooltipProvider>
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger asChild>
                     <button
-                      type="button"
-                      className="inline-flex shrink-0 rounded-full text-muted-foreground outline-offset-2 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring/70"
                       aria-label="O que é proteção WHOIS"
+                      className="inline-flex shrink-0 rounded-full text-muted-foreground outline-offset-2 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring/70"
+                      type="button"
                     >
-                      <Info className="size-4" strokeWidth={2} aria-hidden />
+                      <Info aria-hidden className="size-4" strokeWidth={2} />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent align="start" side="top" className="max-w-[min(18rem,calc(100vw-2rem))]">
-                    <p className="p-1 text-center text-sm leading-snug text-foreground/90">
-                      WHOIS é a listagem pública dos dados de registo do domínio. A proteção oculta os
-                      seus dados pessoais nessa consulta.
+                  <TooltipContent
+                    align="start"
+                    className="max-w-[min(18rem,calc(100vw-2rem))]"
+                    side="top"
+                  >
+                    <p className="p-1 text-center text-foreground/90 text-sm leading-snug">
+                      WHOIS é a listagem pública dos dados de registo do
+                      domínio. A proteção oculta os seus dados pessoais nessa
+                      consulta.
                     </p>
                     <TooltipArrow className="fill-border" />
                   </TooltipContent>
@@ -93,7 +101,12 @@ export function DomainBundleConfirmClient({ domains, disabled }: Props) {
           </div>
         </div>
       </div>
-      <Button asChild disabled={disabled} className="w-full sm:w-auto" size="lg">
+      <Button
+        asChild
+        className="w-full sm:w-auto"
+        disabled={disabled}
+        size="lg"
+      >
         <Link href={confirmHref}>Gerar fatura e ir ao pagamento</Link>
       </Button>
     </div>

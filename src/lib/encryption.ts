@@ -8,7 +8,7 @@ const TAG_LENGTH = 16;
 
 const getEncryptionKey = (): Buffer => {
   const keyHex = process.env.EMAIL_CREDENTIALS_ENCRYPTION_KEY;
-  if (!keyHex || keyHex.length !== 64) {
+  if (keyHex?.length !== 64) {
     // Expecting a 64-char hex string (32 bytes)
     console.error(
       "CRITICAL: EMAIL_CREDENTIALS_ENCRYPTION_KEY is not set or is not a 64-character hex string. Encryption will fail."

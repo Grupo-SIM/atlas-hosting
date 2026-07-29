@@ -28,12 +28,12 @@ export type BrTld = (typeof BR_TLDS)[number];
 
 // Product keys that map to .br TLDs in the ResellerClub pricing API
 const TLD_TO_PRODUCT_KEY: Record<string, string> = {
-  "com.br": "dotbr",
-  "net.br": "dotnetbr",
-  "org.br": "dotorgbr",
-  "nom.br": "dotnombr",
-  "ind.br": "dotindbr",
   "art.br": "dotartbr",
+  "com.br": "dotbr",
+  "ind.br": "dotindbr",
+  "net.br": "dotnetbr",
+  "nom.br": "dotnombr",
+  "org.br": "dotorgbr",
 };
 
 export class ResellerClubApiWrapper {
@@ -61,8 +61,8 @@ export class ResellerClubApiWrapper {
   /** Base query params added to every request */
   private get auth() {
     return {
-      "auth-userid": this.authUserId,
       "api-key": this.apiKey,
+      "auth-userid": this.authUserId,
     };
   }
 
@@ -89,9 +89,9 @@ export class ResellerClubApiWrapper {
     );
 
     return Object.entries(data).map(([domain, result]) => ({
+      classkey: result.classkey,
       domain,
       status: result.status as DomainAvailabilityStatus,
-      classkey: result.classkey,
     }));
   }
 
@@ -120,7 +120,7 @@ export class ResellerClubApiWrapper {
       )
     );
 
-    return results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+    return results.flatMap(r => (r.status === "fulfilled" ? r.value : []));
   }
 
   // ── Pricing ─────────────────────────────────────────────────────────────
@@ -162,29 +162,23 @@ export class ResellerClubApiWrapper {
 
       const priceInfo = info as Record<string, unknown>;
       const addCost = Number(
-        (priceInfo["add"] as Record<string, string> | undefined)?.[
-          "1"
-        ] ?? 0
+        (priceInfo.add as Record<string, string> | undefined)?.["1"] ?? 0
       );
       const renewCost = Number(
-        (priceInfo["renew"] as Record<string, string> | undefined)?.[
-          "1"
-        ] ?? 0
+        (priceInfo.renew as Record<string, string> | undefined)?.["1"] ?? 0
       );
       const transferCost = Number(
-        (priceInfo["transfer"] as Record<string, string> | undefined)?.[
-          "1"
-        ] ?? 0
+        (priceInfo.transfer as Record<string, string> | undefined)?.["1"] ?? 0
       );
-      const currency = String(priceInfo["currency"] ?? "USD");
+      const currency = String(priceInfo.currency ?? "USD");
 
       newCache.set(tld, {
-        productKey,
-        tld,
         addCost,
-        renewCost,
-        transferCost,
         currency,
+        productKey,
+        renewCost,
+        tld,
+        transferCost,
       });
     }
 
@@ -235,17 +229,17 @@ export class ResellerClubApiWrapper {
 
     const payload: Record<string, string | number | boolean | string[]> = {
       ...this.auth,
-      "domain-name": domainName,
-      years,
-      "ns[]": nameservers,
-      "customer-id": this.authUserId, // Reseller acting as customer
-      "reg-contact-id": registrantId,
       "admin-contact-id": adminId,
-      "tech-contact-id": techId,
-      "billing-contact-id": billingId,
-      "invoice-option": "NoInvoice",
-      "protect-privacy": privacyProtection,
       "auto-renew": autoRenew,
+      "billing-contact-id": billingId,
+      "customer-id": this.authUserId, // Reseller acting as customer
+      "domain-name": domainName,
+      "invoice-option": "NoInvoice",
+      "ns[]": nameservers,
+      "protect-privacy": privacyProtection,
+      "reg-contact-id": registrantId,
+      "tech-contact-id": techId,
+      years,
     };
 
     const { data } = await this.client.post<Record<string, unknown>>(
@@ -255,13 +249,13 @@ export class ResellerClubApiWrapper {
     );
 
     return {
-      entityId: Number(data["entityid"] ?? 0),
-      description: String(data["description"] ?? ""),
-      status: String(data["status"] ?? ""),
-      chargedAmount: data["actiontypestatus"]
-        ? Number(data["actiontypestatus"])
+      actionTypeStatus: String(data.actiontypestatus ?? ""),
+      chargedAmount: data.actiontypestatus
+        ? Number(data.actiontypestatus)
         : undefined,
-      actionTypeStatus: String(data["actiontypestatus"] ?? ""),
+      description: String(data.description ?? ""),
+      entityId: Number(data.entityid ?? 0),
+      status: String(data.status ?? ""),
     };
   }
 
@@ -279,18 +273,18 @@ export class ResellerClubApiWrapper {
       }
     );
 
-    const ns = (data["ns"] as string[] | undefined) ?? [];
+    const ns = (data.ns as string[] | undefined) ?? [];
     return {
-      entityId: Number(data["entityid"] ?? 0),
-      domainName: String(data["domainname"] ?? domainName),
-      status: String(data["domainstatus"] ?? ""),
-      expiryDate: String(data["endtime"] ?? ""),
-      createdDate: String(data["starttime"] ?? ""),
-      autoRenew: data["autoRenew"] === true || data["autoRenew"] === "true",
-      privacyProtection:
-        data["privacyprotectedallowed"] === true ||
-        data["privacyprotectedallowed"] === "true",
+      autoRenew: data.autoRenew === true || data.autoRenew === "true",
+      createdDate: String(data.starttime ?? ""),
+      domainName: String(data.domainname ?? domainName),
+      entityId: Number(data.entityid ?? 0),
+      expiryDate: String(data.endtime ?? ""),
       nameservers: Array.isArray(ns) ? ns : [ns],
+      privacyProtection:
+        data.privacyprotectedallowed === true ||
+        data.privacyprotectedallowed === "true",
+      status: String(data.domainstatus ?? ""),
     };
   }
 
@@ -305,18 +299,18 @@ export class ResellerClubApiWrapper {
   ): Promise<number> {
     const params: Record<string, string | number> = {
       ...this.auth,
-      name: contact.name,
-      company: contact.company ?? contact.name,
-      email: contact.email,
       "address-line-1": contact.address1,
       city: contact.city,
-      state: contact.state,
+      company: contact.company ?? contact.name,
       country: contact.country,
-      zipcode: contact.zipcode,
-      "phone-cc": contact.phoneCountryCode,
-      phone: contact.phone,
       "customer-id": this.authUserId,
+      email: contact.email,
+      name: contact.name,
+      phone: contact.phone,
+      "phone-cc": contact.phoneCountryCode,
+      state: contact.state,
       type: "Contact",
+      zipcode: contact.zipcode,
     };
 
     if (contact.address2) params["address-line-2"] = contact.address2;

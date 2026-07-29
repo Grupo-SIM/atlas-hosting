@@ -11,10 +11,10 @@ import { Progress } from "@/components/ui/progress";
 
 export function UsageStats() {
   const resources = [
-    { name: "Disk Space", used: 12.4, total: 50, percentage: 24.8 },
-    { name: "Bandwidth", used: 164, total: 500, percentage: 32.8 },
-    { name: "Databases", used: 3, total: 10, percentage: 30 },
-    { name: "Email Accounts", used: 5, total: 20, percentage: 25 },
+    { name: "Disk Space", percentage: 24.8, total: 50, used: 12.4 },
+    { name: "Bandwidth", percentage: 32.8, total: 500, used: 164 },
+    { name: "Databases", percentage: 30, total: 10, used: 3 },
+    { name: "Email Accounts", percentage: 25, total: 20, used: 5 },
   ];
 
   return (
@@ -28,9 +28,9 @@ export function UsageStats() {
       <CardContent className="space-y-5">
         {resources.map((resource, index) => (
           <div key={index}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium">{resource.name}</span>
-              <span className="text-sm text-muted-foreground">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="font-medium text-sm">{resource.name}</span>
+              <span className="text-muted-foreground text-sm">
                 {resource.used} / {resource.total}
                 {resource.name === "Disk Space" || resource.name === "Bandwidth"
                   ? " GB"
@@ -38,8 +38,8 @@ export function UsageStats() {
               </span>
             </div>
             <div className="flex items-center">
-              <Progress value={resource.percentage} className="h-2 flex-1" />
-              <span className="text-xs font-medium ml-2 w-10 text-right">
+              <Progress className="h-2 flex-1" value={resource.percentage} />
+              <span className="ml-2 w-10 text-right font-medium text-xs">
                 {resource.percentage}%
               </span>
             </div>

@@ -1,7 +1,4 @@
-
 import { db } from "../src/lib/db";
-import { pgUser } from "../src/lib/db/schema";
-import { isNull } from "drizzle-orm";
 
 async function checkCodes() {
   const users = await db.query.pgUser.findMany();

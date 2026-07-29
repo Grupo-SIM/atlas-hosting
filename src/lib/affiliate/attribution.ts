@@ -1,6 +1,6 @@
+import { and, eq, gt } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { pgAffiliateAttribution, pgUser } from "@/lib/db/schema";
-import { and, eq, gt } from "drizzle-orm";
 
 const ATTRIBUTION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -14,8 +14,8 @@ export async function recordAttribution(
   userId: string
 ): Promise<void> {
   const affiliate = await db.query.pgUser.findFirst({
-    where: eq(pgUser.affiliateCode, affiliateCode),
     columns: { id: true },
+    where: eq(pgUser.affiliateCode, affiliateCode),
   });
 
   if (!affiliate || affiliate.id === userId) return;
@@ -30,12 +30,12 @@ export async function recordAttribution(
       expiresAt,
     })
     .onConflictDoUpdate({
-      target: pgAffiliateAttribution.attributedUserId,
       set: {
         affiliateUserId: affiliate.id,
         expiresAt,
         updatedAt: new Date(),
       },
+      target: pgAffiliateAttribution.attributedUserId,
     });
 }
 

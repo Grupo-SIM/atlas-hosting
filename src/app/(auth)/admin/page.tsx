@@ -1,10 +1,10 @@
+import { db } from "@/lib/db";
+import { type Plan, pgPlan } from "@/lib/db/schema";
 import { DomainStats } from "./components/DomainStats";
 import { InvoiceStats } from "./components/InvoiceStats";
-import PlansSection from "./components/PlansSection";
 import { PlanStats } from "./components/PlanStats";
+import PlansSection from "./components/PlansSection";
 import { UserStats } from "./components/UserStats";
-import { db } from "@/lib/db";
-import { pgPlan, type Plan } from "@/lib/db/schema";
 
 interface AdminPageProps {
   searchParams: Promise<{ page?: string; search?: string; clientId?: string }>;
@@ -22,10 +22,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   return (
     <div className="space-y-10 p-2 md:p-6">
       <header className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-1">
+        <h1 className="mb-1 font-bold text-3xl tracking-tight md:text-4xl">
           Administrador
         </h1>
-        <p className="text-muted-foreground text-lg">
+        <p className="text-lg text-muted-foreground">
           Visão geral das estatísticas da plataforma de hospedagem
         </p>
       </header>

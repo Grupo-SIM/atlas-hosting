@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  MoreHorizontal,
+  Search,
+  Shield,
+  UserCog,
+  UserMinus,
+} from "lucide-react";
+import { useState, useTransition } from "react";
+import { removeMemberFromOrganizationAction } from "@/app/(auth)/settings/actions"; // Assuming actions are shared or similar ones exist for this context
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,23 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { RawUser } from "@/lib/db/schema/tables/user";
-import {
-  Ban,
-  Mail,
-  MoreHorizontal,
-  Search,
-  Shield,
-  UserCog,
-  UserMinus,
-} from "lucide-react";
-import { useState, useTransition } from "react";
-import type { User } from "@/lib/db/schema/tables/user"; // Changed from RawUser
 import { toast } from "@/hooks/use-toast"; // For potential actions
-import {
-  removeMemberFromOrganizationAction,
-  updateMemberRoleAction,
-} from "@/app/(auth)/settings/actions"; // Assuming actions are shared or similar ones exist for this context
+import type { RawUser } from "@/lib/db/schema/tables/user"; // Changed from RawUser
 
 interface MemberManagementProps {
   members: RawUser[]; // Changed from RawUser to User for consistency with OrganizationSection
@@ -62,7 +56,7 @@ export function MemberManagement({
   // Add state for edit role dialog if needed, similar to OrganizationSection
 
   const filteredMembers = members.filter(
-    (member) =>
+    member =>
       (member.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       (member.email?.toLowerCase() || "").includes(searchQuery.toLowerCase())
   );
@@ -70,9 +64,9 @@ export function MemberManagement({
   const getStatusBadgeInfo = (member: RawUser) => {
     if (member.deletedAt) {
       return {
-        text: "Suspenso",
         className:
           "bg-red-500/10 text-red-500 border-red-200 dark:border-red-800",
+        text: "Suspenso",
       };
     }
     // Add logic for 'invited' if you have such a status
@@ -80,9 +74,9 @@ export function MemberManagement({
     //   return { text: "Convidado", className: "bg-yellow-500/10 text-yellow-500 border-yellow-200 dark:border-yellow-800" };
     // }
     return {
-      text: "Ativo",
       className:
         "bg-green-500/10 text-green-500 border-green-200 dark:border-green-800",
+      text: "Ativo",
     };
   };
 
@@ -104,7 +98,7 @@ export function MemberManagement({
   const getRoleIcon = (role?: string | null) => {
     switch (role) {
       case "admin":
-        return <Shield className="h-3 w-3 mr-1" />;
+        return <Shield className="mr-1 h-3 w-3" />;
       // Add other icons if needed
       default:
         return null;
@@ -114,7 +108,7 @@ export function MemberManagement({
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle>Gerenciamento de Membros</CardTitle>
             <CardDescription>
@@ -123,19 +117,19 @@ export function MemberManagement({
           </div>
           <div className="flex gap-2">
             <div className="relative flex-1 md:min-w-[300px]">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
               <Input
+                className="pl-9"
+                onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Buscar membros..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
               />
             </div>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="border rounded-lg overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -148,7 +142,7 @@ export function MemberManagement({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMembers.map((member) => (
+              {filteredMembers.map(member => (
                 <TableRow key={member.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -157,7 +151,7 @@ export function MemberManagement({
                         <AvatarFallback>
                           {member.name
                             ?.split(" ")
-                            .map((n) => n[0])
+                            .map(n => n[0])
                             .join("")
                             .toUpperCase() ||
                             member.email?.charAt(0).toUpperCase() ||
@@ -168,7 +162,7 @@ export function MemberManagement({
                         <p className="font-medium">
                           {member.name || "Usuário sem nome"}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           {member.email || "Sem email"}
                         </p>
                       </div>
@@ -192,8 +186,8 @@ export function MemberManagement({
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant="outline"
                       className={getStatusBadgeInfo(member).className}
+                      variant="outline"
                     >
                       {getStatusBadgeInfo(member).text}
                     </Badge>
@@ -204,9 +198,9 @@ export function MemberManagement({
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
-                              variant="ghost"
-                              size="icon"
                               className="h-8 w-8"
+                              size="icon"
+                              variant="ghost"
                             >
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Ações</span>
@@ -218,7 +212,7 @@ export function MemberManagement({
                                 /* TODO: Open edit role dialog */
                               }}
                             >
-                              <UserCog className="h-4 w-4 mr-2" />
+                              <UserCog className="mr-2 h-4 w-4" />
                               Alterar Função
                             </DropdownMenuItem>
                             {/* Add other actions like resend invite or suspend if applicable */}
@@ -228,7 +222,7 @@ export function MemberManagement({
                             </DropdownMenuItem> */}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className="text-red-600 dark:text-red-400 hover:!text-red-50 hover:!bg-red-600"
+                              className="hover:!text-red-50 hover:!bg-red-600 text-red-600 dark:text-red-400"
                               onClick={async () => {
                                 if (
                                   !confirm(
@@ -243,8 +237,8 @@ export function MemberManagement({
                                       organizationId
                                     );
                                   toast({
-                                    title: result.success ? "Sucesso" : "Erro",
                                     description: result.message,
+                                    title: result.success ? "Sucesso" : "Erro",
                                     variant: result.success
                                       ? "default"
                                       : "destructive",
@@ -252,7 +246,7 @@ export function MemberManagement({
                                 });
                               }}
                             >
-                              <UserMinus className="h-4 w-4 mr-2" />
+                              <UserMinus className="mr-2 h-4 w-4" />
                               Remover Membro
                             </DropdownMenuItem>
                           </DropdownMenuContent>

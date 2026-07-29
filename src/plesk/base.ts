@@ -12,13 +12,13 @@
  * Do not edit the class manually.
  */
 
-import type { Configuration } from "./configuration";
 // Some imports not used depending on template conditions
 // @ts-ignore
 import globalAxios, {
-  type AxiosRequestConfig,
   type AxiosInstance,
+  type AxiosRequestConfig,
 } from "axios";
+import type { Configuration } from "./configuration";
 
 export const BASE_PATH = "/api/v2".replace(/\/+$/, "");
 
@@ -28,9 +28,9 @@ export const BASE_PATH = "/api/v2".replace(/\/+$/, "");
  */
 export const COLLECTION_FORMATS = {
   csv: ",",
+  pipes: "|",
   ssv: " ",
   tsv: "\t",
-  pipes: "|",
 };
 
 /**

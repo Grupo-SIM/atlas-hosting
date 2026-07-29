@@ -6,7 +6,7 @@ import "swagger-ui-react/swagger-ui.css";
 
 // Importar SwaggerUI dinamicamente para evitar problemas de SSR
 const SwaggerUI = dynamic(
-  () => import("swagger-ui-react").then((mod) => mod.default),
+  () => import("swagger-ui-react").then(mod => mod.default),
   { ssr: false }
 );
 
@@ -17,15 +17,15 @@ export default function ApiDocsPage() {
   useEffect(() => {
     // Carregar a especificação do Swagger
     fetch("/api/swagger")
-      .then((res) => {
+      .then(res => {
         if (!res.ok) throw new Error("Falha na resposta da API");
         return res.json();
       })
-      .then((data) => {
+      .then(data => {
         setSpec(data);
         setLoading(false);
       })
-      .catch((error) => {
+      .catch(error => {
         console.error("Erro ao carregar especificação Swagger:", error);
         setLoading(false);
       });
@@ -33,10 +33,12 @@ export default function ApiDocsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground font-medium">Carregando documentação da API...</p>
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="font-medium text-muted-foreground">
+            Carregando documentação da API...
+          </p>
         </div>
       </div>
     );
@@ -44,10 +46,14 @@ export default function ApiDocsPage() {
 
   if (!spec) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center p-8 bg-red-50 border border-red-200 rounded-xl">
-          <h2 className="text-red-600 font-bold text-xl mb-2">Erro de Carregamento</h2>
-          <p className="text-red-500">Não foi possível carregar a documentação JSON da API.</p>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
+          <h2 className="mb-2 font-bold text-red-600 text-xl">
+            Erro de Carregamento
+          </h2>
+          <p className="text-red-500">
+            Não foi possível carregar a documentação JSON da API.
+          </p>
         </div>
       </div>
     );

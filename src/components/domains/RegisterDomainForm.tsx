@@ -1,7 +1,7 @@
-import type { DomainData } from "@/app/(auth)/domains/register/types";
-import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import Form from "next/form";
+import type { DomainData } from "@/app/(auth)/domains/register/types";
+import { Button } from "@/components/ui/button";
 
 export default function RegisterDomainForm({
   domainData,
@@ -9,15 +9,15 @@ export default function RegisterDomainForm({
   return (
     <Form action="/domains/register" className="flex items-center gap-2">
       <input
-        type="hidden"
         name="search"
-        value={domainData.domain.domain}
         readOnly={true}
+        type="hidden"
+        value={domainData.domain.domain}
       />
-      <input type="hidden" name="confirm" value="true" readOnly={true} />
+      <input name="confirm" readOnly={true} type="hidden" value="true" />
       <Button
+        className="flex w-45 items-center justify-between gap-2"
         disabled={!domainData}
-        className="w-45 flex gap-2 items-center justify-between"
         type="submit"
       >
         <span>Registrar domínio</span>

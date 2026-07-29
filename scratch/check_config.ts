@@ -1,6 +1,4 @@
-
 import { db } from "../src/lib/db";
-import { pgSystemConfig } from "../src/lib/db/schema";
 
 async function checkConfig() {
   const config = await db.query.pgSystemConfig.findFirst();

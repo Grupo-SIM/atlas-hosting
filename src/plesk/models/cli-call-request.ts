@@ -24,7 +24,7 @@ export interface CliCallRequest {
    * @memberof CliCallRequest
    * @example ["--get","FullHostName"]
    */
-  params?: Array<string>;
+  params?: string[];
 
   /**
    * @type {any}

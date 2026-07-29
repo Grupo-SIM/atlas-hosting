@@ -1,19 +1,54 @@
 "use client";
 
-import { getUserCardsForCheckout } from "@/app/(auth)/wallet/actions";
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+import clsx from "clsx";
+import { AnimatePresence, motion } from "framer-motion";
+import { isValidPhoneNumber } from "libphonenumber-js";
+import { isString, pick } from "lodash";
 import {
-  completeCheckout,
-  completeCheckoutWithSavedCard,
-  initiateCheckoutPix,
-  markPixPaymentComplete,
-  syncCheckoutPixPayment,
-  initiateCheckoutBoleto,
-  syncCheckoutBoletoPayment,
-} from "@/app/actions";
+  AlertCircle,
+  ArrowLeft,
+  Barcode,
+  Check,
+  Clock,
+  CreditCard,
+  Loader2,
+  Plus,
+  QrCode,
+  Store,
+  User,
+  UserCheck,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
+import { Controller, type UseFormReturn, useForm } from "react-hook-form";
+import { IMaskInput } from "react-imask";
+import { toast } from "sonner";
+import { z } from "zod";
 import {
   getUserBillingInfo,
   saveUserBillingInfo,
 } from "@/app/(auth)/billing/actions";
+import { getUserCardsForCheckout } from "@/app/(auth)/wallet/actions";
+import {
+  completeCheckout,
+  completeCheckoutWithSavedCard,
+  initiateCheckoutBoleto,
+  initiateCheckoutPix,
+  markPixPaymentComplete,
+  syncCheckoutBoletoPayment,
+  syncCheckoutPixPayment,
+} from "@/app/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,56 +66,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input, inputClasses } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { isValidPhoneNumber } from "libphonenumber-js";
-import {
-  AlertCircle,
-  ArrowLeft,
-  Barcode,
-  Check,
-  Clock,
-  CreditCard,
-  Loader2,
-  Plus,
-  QrCode,
-  Store,
-  User,
-  UserCheck,
-} from "lucide-react";
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useId,
-  useImperativeHandle,
-  useRef,
-  useState,
-  useTransition,
-  type ChangeEvent,
-} from "react";
-import {
-  Controller,
-  useForm,
-  useFormState,
-  type UseFormReturn,
-} from "react-hook-form";
-import { IMaskInput } from "react-imask";
-import { usePaymentInputs } from "react-payment-inputs";
-import { toast } from "sonner";
-import { z } from "zod";
 import { Skeleton } from "../ui/skeleton";
-import clsx from "clsx";
-import { AnimatePresence, motion } from "framer-motion";
-import axios from "axios";
-import { isString, pick } from "lodash";
-import { useRouter } from "next/navigation";
 
-const atlasInputClasses = "flex h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-slate-600 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all outline-none disabled:opacity-50";
+const atlasInputClasses =
+  "flex h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-slate-600 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all outline-none disabled:opacity-50";
 
 export interface SavedCard {
   id: string;
@@ -93,11 +87,11 @@ export interface SavedCard {
   cardToken: string;
 }
 
-export type CheckoutSidebarActionState = {
+export interface CheckoutSidebarActionState {
   label: string;
   disabled: boolean;
   hidden?: boolean;
-};
+}
 
 interface InstallmentRate {
   n: number;
@@ -133,61 +127,57 @@ export interface ModernCheckoutFormHandle {
 type CheckoutStep = "billing" | "payment";
 
 const billingAddressSchema = z.object({
-  firstName: z
-    .string()
-    .trim()
-    .min(2, "Nome deve ter pelo menos 2 caracteres"),
-  lastName: z
-    .string()
-    .trim()
-    .min(2, "Sobrenome deve ter pelo menos 2 caracteres"),
+  address: z.object({
+    city: z.string().min(1, "Cidade é obrigatória"),
+    neighborhood: z.string().min(1, "Bairro é obrigatório"),
+    number: z.string().min(1, "Número é obrigatório"),
+    state: z.string().length(2, "Digite o código de 2 dígitos do estado"),
+    street: z.string().min(1, "Rua é obrigatória"),
+    zipCode: z
+      .string()
+      .min(1, "CEP é obrigatório")
+      .refine(v => v.replace(/\D/g, "").length === 8, "CEP inválido"),
+  }),
   document: z
     .string()
     .min(1, "Documento é obrigatório")
     .refine(
-      (v) => {
+      v => {
         const d = v.replace(/\D/g, "");
         return isValidCPF(d) || isValidCNPJ(d);
       },
       { message: "Documento inválido" }
     ),
+  firstName: z.string().trim().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  lastName: z
+    .string()
+    .trim()
+    .min(2, "Sobrenome deve ter pelo menos 2 caracteres"),
   phoneNumber: z
     .string()
     .min(1, "Telefone é obrigatório")
-    .refine(
-      (v) => isValidPhoneNumber(`55${v.replace(/\D/g, "")}`, "BR"),
-      { message: "Número de telefone inválido" }
-    ),
-  address: z.object({
-    street: z.string().min(1, "Rua é obrigatória"),
-    number: z.string().min(1, "Número é obrigatório"),
-    neighborhood: z.string().min(1, "Bairro é obrigatório"),
-    city: z.string().min(1, "Cidade é obrigatória"),
-    state: z.string().length(2, "Digite o código de 2 dígitos do estado"),
-    zipCode: z
-      .string()
-      .min(1, "CEP é obrigatório")
-      .refine((v) => v.replace(/\D/g, "").length === 8, "CEP inválido"),
-  }),
+    .refine(v => isValidPhoneNumber(`55${v.replace(/\D/g, "")}`, "BR"), {
+      message: "Número de telefone inválido",
+    }),
 });
 
 const newCardSchema = billingAddressSchema.merge(
   z.object({
-    cardNumber: z
-      .string()
-      .min(1, "Número do cartão é obrigatório")
-      .refine(
-        (v) => /^\d{16}$/.test(v.replace(/\D/g, "")),
-        "Número do cartão deve ter 16 dígitos"
-      ),
     cardCvv: z
       .string()
       .min(1, "CVV é obrigatório")
-      .refine((v) => /^\d{3,4}$/.test(v.replace(/\D/g, "")), "CVV inválido"),
+      .refine(v => /^\d{3,4}$/.test(v.replace(/\D/g, "")), "CVV inválido"),
     cardExpiration: z
       .string()
       .min(1, "Data de validade é obrigatória")
       .regex(/^[0-9]{2}\/[0-9]{2}$/, "Data inválida"),
+    cardNumber: z
+      .string()
+      .min(1, "Número do cartão é obrigatório")
+      .refine(
+        v => /^\d{16}$/.test(v.replace(/\D/g, "")),
+        "Número do cartão deve ter 16 dígitos"
+      ),
   })
 );
 
@@ -206,112 +196,118 @@ interface OpenCepResponse {
 const ModernCheckoutForm = forwardRef<
   ModernCheckoutFormHandle,
   ModernCheckoutFormProps
->(({ invoiceId, invoiceType, isAnnualVps = false, allowBoleto = false, hasExistingUser = false, initialStep, onSidebarActionStateChange, onPaymentMethodChange, selectedInstallments = 1, onInstallmentsChange, installmentRates }, ref) => {
-  const allowPix = invoiceType === "domain" || isAnnualVps;
-  const id = useId();
-  const sidebarActionCbRef = useRef(onSidebarActionStateChange);
-  sidebarActionCbRef.current = onSidebarActionStateChange;
-  const paymentMethodCbRef = useRef(onPaymentMethodChange);
-  paymentMethodCbRef.current = onPaymentMethodChange;
-  const [paymentMethod, setPaymentMethod] = useState<"new" | "pix" | string | null>();
-  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
-  const [isLoadingCards, setIsLoadingCards] = useState(true);
-  const [isPending, startTransition] = useTransition();
-  const [isPixLoading, setIsPixLoading] = useState(false);
-  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
-  const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
-  const [pixSession, setPixSession] = useState<{
-    pix_qrcode: string;
-    pix_content: string;
-    paymentId: string;
-    transactionId: string;
-  } | null>(null);
-  const [pixCopied, setPixCopied] = useState(false);
-  const [isBoletoLoading, setIsBoletoLoading] = useState(false);
-  const [boletoSession, setBoletoSession] = useState<{
-    boletoUrl: string;
-    boletoDigitableLine: string;
-    transactionId: string;
-  } | null>(null);
-  const [boletoCopied, setBoletoCopied] = useState(false);
-  /** Mensagem amigável exibida em modal quando o pagamento falha ou é recusado. */
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-  const pixCopiedResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const boletoCopiedResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>(initialStep || "billing");
-  const [savedBillingInfo, setSavedBillingInfo] = useState<any>(null);
+>(
+  (
+    {
+      invoiceId,
+      invoiceType,
+      isAnnualVps = false,
+      allowBoleto = false,
+      hasExistingUser = false,
+      initialStep,
+      onSidebarActionStateChange,
+      onPaymentMethodChange,
+      selectedInstallments = 1,
+      onInstallmentsChange,
+      installmentRates,
+    },
+    ref
+  ) => {
+    const allowPix = invoiceType === "domain" || isAnnualVps;
+    const id = useId();
+    const sidebarActionCbRef = useRef(onSidebarActionStateChange);
+    sidebarActionCbRef.current = onSidebarActionStateChange;
+    const paymentMethodCbRef = useRef(onPaymentMethodChange);
+    paymentMethodCbRef.current = onPaymentMethodChange;
+    const [paymentMethod, setPaymentMethod] = useState<
+      "new" | "pix" | string | null
+    >();
+    const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+    const [isLoadingCards, setIsLoadingCards] = useState(true);
+    const [isPending, startTransition] = useTransition();
+    const [isPixLoading, setIsPixLoading] = useState(false);
+    const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+    const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
+    const [pixSession, setPixSession] = useState<{
+      pix_qrcode: string;
+      pix_content: string;
+      paymentId: string;
+      transactionId: string;
+    } | null>(null);
+    const [pixCopied, setPixCopied] = useState(false);
+    const [isBoletoLoading, setIsBoletoLoading] = useState(false);
+    const [boletoSession, setBoletoSession] = useState<{
+      boletoUrl: string;
+      boletoDigitableLine: string;
+      transactionId: string;
+    } | null>(null);
+    const [boletoCopied, setBoletoCopied] = useState(false);
+    /** Mensagem amigável exibida em modal quando o pagamento falha ou é recusado. */
+    const [paymentError, setPaymentError] = useState<string | null>(null);
+    const pixCopiedResetRef = useRef<ReturnType<typeof setTimeout> | null>(
+      null
+    );
+    const boletoCopiedResetRef = useRef<ReturnType<typeof setTimeout> | null>(
+      null
+    );
+    const [currentStep, setCurrentStep] = useState<CheckoutStep>(
+      initialStep || "billing"
+    );
+    const [savedBillingInfo, setSavedBillingInfo] = useState<any>(null);
 
-  // Fetch saved billing info on mount
-  useEffect(() => {
-    const fetchBilling = async () => {
-      const info = await getUserBillingInfo();
-      if (info) {
-        setSavedBillingInfo(info);
-      } else if (currentStep === "payment") {
-        setCurrentStep("billing");
-      }
-    };
-    fetchBilling();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // Fetch saved billing info on mount
+    useEffect(() => {
+      const fetchBilling = async () => {
+        const info = await getUserBillingInfo();
+        if (info) {
+          setSavedBillingInfo(info);
+        } else if (currentStep === "payment") {
+          setCurrentStep("billing");
+        }
+      };
+      fetchBilling();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-  // Always use the full schema for form management
-  const methods = useForm<NewCardFormInputs>({
-    resolver: zodResolver(newCardSchema),
-    mode: "onChange",
-    shouldUnregister: false,
-  });
+    // Always use the full schema for form management
+    const methods = useForm<NewCardFormInputs>({
+      mode: "onChange",
+      resolver: zodResolver(newCardSchema),
+      shouldUnregister: false,
+    });
 
-  const {
-    getValues,
-    handleSubmit,
-    trigger,
-    formState: { errors, touchedFields },
-    control,
-    setValue,
-    watch,
-    register,
-  } = methods;
+    const {
+      getValues,
+      handleSubmit,
+      trigger,
+      formState: { errors, touchedFields },
+      control,
+      setValue,
+      watch,
+      register,
+    } = methods;
 
-  const allValues = watch();
+    const allValues = watch();
 
-  // Watch billing fields to trigger re-renders for the sidebar button
-  const watchedBillingFields = watch([
-    "firstName",
-    "lastName",
-    "document",
-    "phoneNumber",
-    "address.zipCode",
-    "address.street",
-    "address.number",
-    "address.neighborhood",
-    "address.city",
-    "address.state",
-  ]);
+    // Watch billing fields to trigger re-renders for the sidebar button
+    const watchedBillingFields = watch([
+      "firstName",
+      "lastName",
+      "document",
+      "phoneNumber",
+      "address.zipCode",
+      "address.street",
+      "address.number",
+      "address.neighborhood",
+      "address.city",
+      "address.state",
+    ]);
 
-  const handleAutoFill = useCallback(() => {
-    if (!savedBillingInfo) return;
+    const handleAutoFill = useCallback(() => {
+      if (!savedBillingInfo) return;
 
-    const options = { shouldValidate: true, shouldDirty: true };
+      const options = { shouldDirty: true, shouldValidate: true };
 
-    setValue("firstName", savedBillingInfo.firstName, options);
-    setValue("lastName", savedBillingInfo.lastName, options);
-    setValue("document", savedBillingInfo.document, options);
-    setValue("phoneNumber", savedBillingInfo.phoneNumber, options);
-    setValue("address.zipCode", savedBillingInfo.address.zipCode, options);
-    setValue("address.street", savedBillingInfo.address.street, options);
-    setValue("address.number", savedBillingInfo.address.number, options);
-    setValue("address.neighborhood", savedBillingInfo.address.neighborhood, options);
-    setValue("address.city", savedBillingInfo.address.city, options);
-    setValue("address.state", savedBillingInfo.address.state, options);
-
-    toast.success("Dados preenchidos com as informações do seu perfil!");
-  }, [savedBillingInfo, setValue]);
-
-  // Auto-fill when starting directly at payment step (guest just submitted personal-data form)
-  useEffect(() => {
-    if (currentStep === "payment" && savedBillingInfo) {
-      const options = { shouldValidate: true, shouldDirty: true };
       setValue("firstName", savedBillingInfo.firstName, options);
       setValue("lastName", savedBillingInfo.lastName, options);
       setValue("document", savedBillingInfo.document, options);
@@ -319,472 +315,572 @@ const ModernCheckoutForm = forwardRef<
       setValue("address.zipCode", savedBillingInfo.address.zipCode, options);
       setValue("address.street", savedBillingInfo.address.street, options);
       setValue("address.number", savedBillingInfo.address.number, options);
-      setValue("address.neighborhood", savedBillingInfo.address.neighborhood, options);
+      setValue(
+        "address.neighborhood",
+        savedBillingInfo.address.neighborhood,
+        options
+      );
       setValue("address.city", savedBillingInfo.address.city, options);
       setValue("address.state", savedBillingInfo.address.state, options);
-    }
-  // Only run when savedBillingInfo first loads while on payment step
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savedBillingInfo]);
 
-  // Load saved cards only
-  useEffect(() => {
-    const loadCards = async () => {
-      if (!hasExistingUser) {
-        setIsLoadingCards(false);
-        setSavedCards([]);
+      toast.success("Dados preenchidos com as informações do seu perfil!");
+    }, [savedBillingInfo, setValue]);
+
+    // Auto-fill when starting directly at payment step (guest just submitted personal-data form)
+    useEffect(() => {
+      if (currentStep === "payment" && savedBillingInfo) {
+        const options = { shouldDirty: true, shouldValidate: true };
+        setValue("firstName", savedBillingInfo.firstName, options);
+        setValue("lastName", savedBillingInfo.lastName, options);
+        setValue("document", savedBillingInfo.document, options);
+        setValue("phoneNumber", savedBillingInfo.phoneNumber, options);
+        setValue("address.zipCode", savedBillingInfo.address.zipCode, options);
+        setValue("address.street", savedBillingInfo.address.street, options);
+        setValue("address.number", savedBillingInfo.address.number, options);
+        setValue(
+          "address.neighborhood",
+          savedBillingInfo.address.neighborhood,
+          options
+        );
+        setValue("address.city", savedBillingInfo.address.city, options);
+        setValue("address.state", savedBillingInfo.address.state, options);
+      }
+      // Only run when savedBillingInfo first loads while on payment step
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [savedBillingInfo]);
+
+    // Load saved cards only
+    useEffect(() => {
+      const loadCards = async () => {
+        if (!hasExistingUser) {
+          setIsLoadingCards(false);
+          setSavedCards([]);
+          return;
+        }
+
+        setIsLoadingCards(true);
+
+        try {
+          const cards = await getUserCardsForCheckout();
+          setSavedCards(cards);
+
+          // Set default card as selected if available
+          const defaultCard = cards.find(card => card.isDefault);
+          if (defaultCard && cards.length > 0) {
+            setPaymentMethod(defaultCard.id);
+          }
+        } catch (error) {
+          console.error("Error loading cards:", error);
+        } finally {
+          setIsLoadingCards(false);
+        }
+      };
+
+      loadCards();
+    }, []);
+
+    useEffect(() => {
+      if (paymentMethod !== "pix") {
+        setPixSession(null);
+      }
+      if (paymentMethod !== "boleto") {
+        setBoletoSession(null);
+      }
+    }, [paymentMethod]);
+
+    useEffect(() => {
+      setPixCopied(false);
+      if (pixCopiedResetRef.current) {
+        clearTimeout(pixCopiedResetRef.current);
+        pixCopiedResetRef.current = null;
+      }
+    }, [pixSession?.pix_content]);
+
+    useEffect(
+      () => () => {
+        if (pixCopiedResetRef.current) clearTimeout(pixCopiedResetRef.current);
+      },
+      []
+    );
+
+    const copyPixToClipboard = useCallback(() => {
+      if (!pixSession) return;
+      void navigator.clipboard
+        .writeText(pixSession.pix_content)
+        .then(() => {
+          if (pixCopiedResetRef.current)
+            clearTimeout(pixCopiedResetRef.current);
+          setPixCopied(true);
+          pixCopiedResetRef.current = setTimeout(() => {
+            setPixCopied(false);
+            pixCopiedResetRef.current = null;
+          }, 2200);
+        })
+        .catch(() => toast.error("Não foi possível copiar."));
+    }, [pixSession]);
+
+    useEffect(() => {
+      setBoletoCopied(false);
+      if (boletoCopiedResetRef.current) {
+        clearTimeout(boletoCopiedResetRef.current);
+        boletoCopiedResetRef.current = null;
+      }
+    }, [boletoSession?.boletoDigitableLine]);
+
+    useEffect(
+      () => () => {
+        if (boletoCopiedResetRef.current)
+          clearTimeout(boletoCopiedResetRef.current);
+      },
+      []
+    );
+
+    const copyBoletoToClipboard = useCallback(() => {
+      if (!boletoSession) return;
+      void navigator.clipboard
+        .writeText(boletoSession.boletoDigitableLine)
+        .then(() => {
+          if (boletoCopiedResetRef.current)
+            clearTimeout(boletoCopiedResetRef.current);
+          setBoletoCopied(true);
+          boletoCopiedResetRef.current = setTimeout(() => {
+            setBoletoCopied(false);
+            boletoCopiedResetRef.current = null;
+          }, 2200);
+        })
+        .catch(() => toast.error("Não foi possível copiar."));
+    }, [boletoSession]);
+
+    const handleInitiatePix = useCallback(async () => {
+      const ok = await trigger([
+        "firstName",
+        "lastName",
+        "document",
+        "phoneNumber",
+        "address.street",
+        "address.number",
+        "address.neighborhood",
+        "address.city",
+        "address.state",
+        "address.zipCode",
+      ]);
+      if (!ok) {
+        toast.error("Preencha os dados de cobrança corretamente.");
         return;
       }
-
-      setIsLoadingCards(true);
-
+      const v = getValues();
+      setIsPixLoading(true);
       try {
-        const cards = await getUserCardsForCheckout();
-        setSavedCards(cards);
-
-        // Set default card as selected if available
-        const defaultCard = cards.find((card) => card.isDefault);
-        if (defaultCard && cards.length > 0) {
-          setPaymentMethod(defaultCard.id);
+        const res = await initiateCheckoutPix({
+          address: v.address,
+          document: v.document,
+          firstName: v.firstName,
+          invoiceId,
+          lastName: v.lastName,
+          phoneNumber: v.phoneNumber,
+        });
+        if (res.status === "success") {
+          setPixSession({
+            paymentId: res.paymentId,
+            pix_content: res.pix_content,
+            pix_qrcode: res.pix_qrcode,
+            transactionId: res.transactionId,
+          });
+          toast.success("PIX gerado. Escaneie ou copie o código.");
+          // Save billing info for future use
+          void saveUserBillingInfo({
+            address: v.address,
+            document: v.document,
+            phoneNumber: v.phoneNumber,
+          });
+        } else {
+          setPaymentError(res.message);
         }
-      } catch (error) {
-        console.error("Error loading cards:", error);
-      } finally {
-        setIsLoadingCards(false);
-      }
-    };
-
-    loadCards();
-  }, []);
-
-  useEffect(() => {
-    if (paymentMethod !== "pix") {
-      setPixSession(null);
-    }
-    if (paymentMethod !== "boleto") {
-      setBoletoSession(null);
-    }
-  }, [paymentMethod]);
-
-
-  useEffect(() => {
-    setPixCopied(false);
-    if (pixCopiedResetRef.current) {
-      clearTimeout(pixCopiedResetRef.current);
-      pixCopiedResetRef.current = null;
-    }
-  }, [pixSession?.pix_content]);
-
-  useEffect(
-    () => () => {
-      if (pixCopiedResetRef.current) clearTimeout(pixCopiedResetRef.current);
-    },
-    []
-  );
-
-  const copyPixToClipboard = useCallback(() => {
-    if (!pixSession) return;
-    void navigator.clipboard
-      .writeText(pixSession.pix_content)
-      .then(() => {
-        if (pixCopiedResetRef.current) clearTimeout(pixCopiedResetRef.current);
-        setPixCopied(true);
-        pixCopiedResetRef.current = setTimeout(() => {
-          setPixCopied(false);
-          pixCopiedResetRef.current = null;
-        }, 2200);
-      })
-      .catch(() => toast.error("Não foi possível copiar."));
-  }, [pixSession]);
-
-  useEffect(() => {
-    setBoletoCopied(false);
-    if (boletoCopiedResetRef.current) {
-      clearTimeout(boletoCopiedResetRef.current);
-      boletoCopiedResetRef.current = null;
-    }
-  }, [boletoSession?.boletoDigitableLine]);
-
-  useEffect(
-    () => () => {
-      if (boletoCopiedResetRef.current) clearTimeout(boletoCopiedResetRef.current);
-    },
-    []
-  );
-
-  const copyBoletoToClipboard = useCallback(() => {
-    if (!boletoSession) return;
-    void navigator.clipboard
-      .writeText(boletoSession.boletoDigitableLine)
-      .then(() => {
-        if (boletoCopiedResetRef.current) clearTimeout(boletoCopiedResetRef.current);
-        setBoletoCopied(true);
-        boletoCopiedResetRef.current = setTimeout(() => {
-          setBoletoCopied(false);
-          boletoCopiedResetRef.current = null;
-        }, 2200);
-      })
-      .catch(() => toast.error("Não foi possível copiar."));
-  }, [boletoSession]);
-
-  const handleInitiatePix = useCallback(async () => {
-    const ok = await trigger([
-      "firstName",
-      "lastName",
-      "document",
-      "phoneNumber",
-      "address.street",
-      "address.number",
-      "address.neighborhood",
-      "address.city",
-      "address.state",
-      "address.zipCode",
-    ]);
-    if (!ok) {
-      toast.error("Preencha os dados de cobrança corretamente.");
-      return;
-    }
-    const v = getValues();
-    setIsPixLoading(true);
-    try {
-      const res = await initiateCheckoutPix({
-        invoiceId,
-        firstName: v.firstName,
-        lastName: v.lastName,
-        document: v.document,
-        phoneNumber: v.phoneNumber,
-        address: v.address,
-      });
-      if (res.status === "success") {
-        setPixSession({
-          pix_qrcode: res.pix_qrcode,
-          pix_content: res.pix_content,
-          paymentId: res.paymentId,
-          transactionId: res.transactionId,
-        });
-        toast.success("PIX gerado. Escaneie ou copie o código.");
-        // Save billing info for future use
-        void saveUserBillingInfo({
-          document: v.document,
-          phoneNumber: v.phoneNumber,
-          address: v.address,
-        });
-      } else {
-        setPaymentError(res.message);
-      }
-    } catch {
-      setPaymentError("Não foi possível gerar o PIX no momento. Tente novamente em instantes.");
-    } finally {
-      setIsPixLoading(false);
-    }
-  }, [invoiceId, getValues, trigger]);
-
-  const handleInitiateBoleto = useCallback(async () => {
-    const ok = await trigger([
-      "firstName",
-      "lastName",
-      "document",
-      "phoneNumber",
-      "address.street",
-      "address.number",
-      "address.neighborhood",
-      "address.city",
-      "address.state",
-      "address.zipCode",
-    ]);
-    if (!ok) {
-      toast.error("Preencha os dados de cobrança corretamente.");
-      return;
-    }
-    const v = getValues();
-    setIsBoletoLoading(true);
-    try {
-      const res = await initiateCheckoutBoleto({
-        invoiceId,
-        firstName: v.firstName,
-        lastName: v.lastName,
-        document: v.document,
-        phoneNumber: v.phoneNumber,
-        address: v.address,
-      });
-      if (res.status === "success") {
-        setBoletoSession({
-          boletoUrl: res.boletoUrl,
-          boletoDigitableLine: res.boletoDigitableLine,
-          transactionId: res.transactionId,
-        });
-        toast.success("Boleto gerado.");
-        void saveUserBillingInfo({
-          document: v.document,
-          phoneNumber: v.phoneNumber,
-          address: v.address,
-        });
-      } else {
-        setPaymentError(res.message);
-      }
-    } catch {
-      setPaymentError("Não foi possível gerar o boleto no momento. Tente novamente em instantes.");
-    } finally {
-      setIsBoletoLoading(false);
-    }
-  }, [invoiceId, getValues, trigger]);
-
-  const router = useRouter();
-
-  const onSubmit = useCallback(
-    (values: NewCardFormInputs) => {
-      if (paymentMethod === "new") {
-        // New card payment
-        startTransition(async () => {
-          try {
-            const result = await completeCheckout(null, {
-              ...values,
-              invoiceId,
-              installments: selectedInstallments,
-            });
-
-            if (result.status === "success") {
-              toast.success(result.message);
-              void saveUserBillingInfo(values);
-              router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
-            } else {
-              setPaymentError(result.message);
-            }
-          } catch (error) {
-            setPaymentError("Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes.");
-          }
-        });
-      } else {
-        // Saved card payment
-        const selectedCard = savedCards.find(
-          (card) => card.id === paymentMethod
+      } catch {
+        setPaymentError(
+          "Não foi possível gerar o PIX no momento. Tente novamente em instantes."
         );
-        if (!selectedCard) {
-          toast.error("Cartão selecionado não encontrado");
+      } finally {
+        setIsPixLoading(false);
+      }
+    }, [invoiceId, getValues, trigger]);
+
+    const handleInitiateBoleto = useCallback(async () => {
+      const ok = await trigger([
+        "firstName",
+        "lastName",
+        "document",
+        "phoneNumber",
+        "address.street",
+        "address.number",
+        "address.neighborhood",
+        "address.city",
+        "address.state",
+        "address.zipCode",
+      ]);
+      if (!ok) {
+        toast.error("Preencha os dados de cobrança corretamente.");
+        return;
+      }
+      const v = getValues();
+      setIsBoletoLoading(true);
+      try {
+        const res = await initiateCheckoutBoleto({
+          address: v.address,
+          document: v.document,
+          firstName: v.firstName,
+          invoiceId,
+          lastName: v.lastName,
+          phoneNumber: v.phoneNumber,
+        });
+        if (res.status === "success") {
+          setBoletoSession({
+            boletoDigitableLine: res.boletoDigitableLine,
+            boletoUrl: res.boletoUrl,
+            transactionId: res.transactionId,
+          });
+          toast.success("Boleto gerado.");
+          void saveUserBillingInfo({
+            address: v.address,
+            document: v.document,
+            phoneNumber: v.phoneNumber,
+          });
+        } else {
+          setPaymentError(res.message);
+        }
+      } catch {
+        setPaymentError(
+          "Não foi possível gerar o boleto no momento. Tente novamente em instantes."
+        );
+      } finally {
+        setIsBoletoLoading(false);
+      }
+    }, [invoiceId, getValues, trigger]);
+
+    const router = useRouter();
+
+    const onSubmit = useCallback(
+      (values: NewCardFormInputs) => {
+        if (paymentMethod === "new") {
+          // New card payment
+          startTransition(async () => {
+            try {
+              const result = await completeCheckout(null, {
+                ...values,
+                installments: selectedInstallments,
+                invoiceId,
+              });
+
+              if (result.status === "success") {
+                toast.success(result.message);
+                void saveUserBillingInfo(values);
+                router.push(
+                  `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+                );
+              } else {
+                setPaymentError(result.message);
+              }
+            } catch (error) {
+              setPaymentError(
+                "Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes."
+              );
+            }
+          });
+        } else {
+          // Saved card payment
+          const selectedCard = savedCards.find(
+            card => card.id === paymentMethod
+          );
+          if (!selectedCard) {
+            toast.error("Cartão selecionado não encontrado");
+            return;
+          }
+
+          startTransition(async () => {
+            try {
+              const result = await completeCheckout(null, {
+                ...values,
+                cardToken: selectedCard.cardToken,
+                installments: selectedInstallments,
+                invoiceId,
+              });
+
+              if (result.status === "success") {
+                toast.success(result.message);
+                router.push(
+                  `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+                );
+              } else {
+                setPaymentError(result.message);
+              }
+            } catch (error) {
+              setPaymentError(
+                "Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes."
+              );
+            }
+          });
+        }
+      },
+      [paymentMethod, savedCards, invoiceId, router]
+    );
+
+    const handleCheckPayment = useCallback(async () => {
+      setIsVerifyingPayment(true);
+      const result = await syncCheckoutPixPayment(invoiceId);
+      if (result.status === "COMPLETED") {
+        setIsPaymentConfirmed(true);
+        router.push(
+          `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+        );
+      }
+      // isVerifyingPayment stays true after click — polling will redirect when confirmed
+    }, [invoiceId, router]);
+
+    const handleCheckBoletoPayment = useCallback(async () => {
+      setIsVerifyingPayment(true);
+      const result = await syncCheckoutBoletoPayment(invoiceId);
+      if (result.status === "COMPLETED") {
+        setIsPaymentConfirmed(true);
+        router.push(
+          `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+        );
+      }
+      // isVerifyingPayment stays true after click — polling will redirect when confirmed
+    }, [invoiceId, router]);
+
+    // Simplified submit for existing users (only payment method)
+    const onSimpleSubmit = useCallback(() => {
+      if (paymentMethod === "new") {
+        // For new card with existing user, we need card data and billing data
+        const values = getValues();
+        const {
+          cardNumber,
+          cardExpiration,
+          cardCvv,
+          firstName,
+          lastName,
+          document,
+        } = values;
+
+        if (!cardNumber || !cardExpiration || !cardCvv) {
+          toast.error("Por favor, preencha todos os dados do cartão");
+          return;
+        }
+
+        if (!firstName || !lastName || !document) {
+          toast.error(
+            "Por favor, preencha o nome, sobrenome e documento do titular do cartão"
+          );
           return;
         }
 
         startTransition(async () => {
           try {
             const result = await completeCheckout(null, {
-              ...values,
-              cardToken: selectedCard.cardToken,
-              invoiceId,
+              address: {
+                city: "",
+                neighborhood: "",
+                number: "",
+                state: "",
+                street: "",
+                zipCode: "",
+              },
+              cardCvv,
+              cardExpiration,
+              cardNumber,
+              document: document.replace(/\D/g, ""),
+              firstName: firstName.trim(),
               installments: selectedInstallments,
+              invoiceId,
+              lastName: lastName.trim(),
+              phoneNumber: "", // Will be populated from existing user data on server
             });
 
             if (result.status === "success") {
-              toast.success(result.message);
-              router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
+              router.push(
+                `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+              );
             } else {
               setPaymentError(result.message);
             }
           } catch (error) {
-            setPaymentError("Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes.");
+            setPaymentError(
+              "Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes."
+            );
           }
         });
-      }
-    },
-    [paymentMethod, savedCards, invoiceId, router]
-  );
-
-  const handleCheckPayment = useCallback(async () => {
-    setIsVerifyingPayment(true);
-    const result = await syncCheckoutPixPayment(invoiceId);
-    if (result.status === "COMPLETED") {
-      setIsPaymentConfirmed(true);
-      router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
-    }
-    // isVerifyingPayment stays true after click — polling will redirect when confirmed
-  }, [invoiceId, router]);
-
-  const handleCheckBoletoPayment = useCallback(async () => {
-    setIsVerifyingPayment(true);
-    const result = await syncCheckoutBoletoPayment(invoiceId);
-    if (result.status === "COMPLETED") {
-      setIsPaymentConfirmed(true);
-      router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
-    }
-    // isVerifyingPayment stays true after click — polling will redirect when confirmed
-  }, [invoiceId, router]);
-
-  // Simplified submit for existing users (only payment method)
-  const onSimpleSubmit = useCallback(() => {
-    if (paymentMethod === "new") {
-      // For new card with existing user, we need card data and billing data
-      const values = getValues();
-      const { cardNumber, cardExpiration, cardCvv, firstName, lastName, document } =
-        values;
-
-      if (!cardNumber || !cardExpiration || !cardCvv) {
-        toast.error("Por favor, preencha todos os dados do cartão");
         return;
       }
 
-      if (!firstName || !lastName || !document) {
-        toast.error(
-          "Por favor, preencha o nome, sobrenome e documento do titular do cartão"
-        );
+      const selectedCard = savedCards.find(card => card.id === paymentMethod);
+      if (!selectedCard) {
+        toast.error("Cartão selecionado não encontrado");
         return;
       }
 
       startTransition(async () => {
         try {
-          const result = await completeCheckout(null, {
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            document: document.replace(/\D/g, ""),
-            phoneNumber: "", // Will be populated from existing user data on server
+          const result = await completeCheckoutWithSavedCard(null, {
             address: {
-              street: "",
-              number: "",
-              neighborhood: "",
               city: "",
+              neighborhood: "",
+              number: "",
               state: "",
+              street: "",
               zipCode: "",
             },
-            cardNumber,
-            cardExpiration,
-            cardCvv,
-            invoiceId,
+            card: selectedCard,
+            document: "",
+            firstName: "", // Will be populated from existing user data on server
             installments: selectedInstallments,
+            invoiceId,
+            lastName: "",
+            phoneNumber: "",
           });
 
           if (result.status === "success") {
-            router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
+            toast.success(result.message);
           } else {
             setPaymentError(result.message);
           }
         } catch (error) {
-          setPaymentError("Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes.");
+          setPaymentError(
+            "Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes."
+          );
         }
       });
-      return;
-    }
+    }, [paymentMethod, savedCards, invoiceId, getValues, router]);
 
-    const selectedCard = savedCards.find((card) => card.id === paymentMethod);
-    if (!selectedCard) {
-      toast.error("Cartão selecionado não encontrado");
-      return;
-    }
+    const getCardBrandIcon = (brand: string) => {
+      switch (brand.toLowerCase()) {
+        case "visa":
+          return "💳";
+        case "mastercard":
+          return "💳";
+        case "american express":
+        case "amex":
+          return "💳";
+        default:
+          return "💳";
+      }
+    };
 
-    startTransition(async () => {
-      try {
-        const result = await completeCheckoutWithSavedCard(null, {
-          firstName: "", // Will be populated from existing user data on server
-          lastName: "",
-          document: "",
-          phoneNumber: "",
-          address: {
-            street: "",
-            number: "",
-            neighborhood: "",
-            city: "",
-            state: "",
-            zipCode: "",
-          },
-          invoiceId,
-          card: selectedCard,
-          installments: selectedInstallments,
-        });
+    const isPaymentComplete = () => {
+      if (paymentMethod === "pix" || paymentMethod === "boleto") {
+        return true;
+      }
+      if (paymentMethod === "new") {
+        const values = getValues();
+        return values.cardNumber && values.cardCvv && values.cardExpiration;
+      }
+      return (
+        !!paymentMethod &&
+        paymentMethod !== "new" &&
+        paymentMethod !== "pix" &&
+        paymentMethod !== "boleto"
+      );
+    };
 
-        if (result.status === "success") {
-          toast.success(result.message);
-        } else {
-          setPaymentError(result.message);
+    function isFirstStepValid() {
+      const billingFields = pick(
+        getValues(),
+        "firstName",
+        "lastName",
+        "document",
+        "phoneNumber",
+        "address"
+      );
+
+      const isTouched = Object.values(
+        pick(
+          billingFields,
+          "firstName",
+          "lastName",
+          "document",
+          "phoneNumber",
+          "address"
+        )
+      ).every(e => {
+        if (!isString(e)) {
+          return e && Object.values(e).every(v => !!v);
         }
-      } catch (error) {
-        setPaymentError("Não foi possível processar o pagamento. Nenhuma cobrança foi confirmada. Tente novamente em instantes.");
+        return !!e;
+      });
+
+      if (!isTouched) {
+        return false;
       }
-    });
-  }, [paymentMethod, savedCards, invoiceId, getValues, router]);
 
-  const getCardBrandIcon = (brand: string) => {
-    switch (brand.toLowerCase()) {
-      case "visa":
-        return "💳";
-      case "mastercard":
-        return "💳";
-      case "american express":
-      case "amex":
-        return "💳";
-      default:
-        return "💳";
+      const isValid = Object.values(
+        pick(
+          errors,
+          "firstName",
+          "lastName",
+          "document",
+          "phoneNumber",
+          "address"
+        )
+      ).every(e => {
+        if (!isString(e)) {
+          return Object.values(e).some(v => !v);
+        }
+        return !e;
+      });
+
+      return isValid;
     }
-  };
 
-  const isPaymentComplete = () => {
-    if (paymentMethod === "pix" || paymentMethod === "boleto") {
-      return true;
-    }
-    if (paymentMethod === "new") {
-      const values = getValues();
-      return values.cardNumber && values.cardCvv && values.cardExpiration;
-    }
-    return !!paymentMethod && paymentMethod !== "new" && paymentMethod !== "pix" && paymentMethod !== "boleto";
-  };
+    const canProceedToPayment = isFirstStepValid();
 
-  function isFirstStepValid() {
-    const billingFields = pick(
-      getValues(),
-      "firstName",
-      "lastName",
-      "document",
-      "phoneNumber",
-      "address"
-    );
-
-    const isTouched = Object.values(
-      pick(billingFields, "firstName", "lastName", "document", "phoneNumber", "address")
-    ).every((e) => {
-      if (!isString(e)) {
-        return e && Object.values(e).every((v) => !!v);
+    const canCompleteCheckout = () => {
+      if (paymentMethod === "pix" || paymentMethod === "boleto") {
+        return canProceedToPayment;
       }
-      return !!e;
-    });
+      return canProceedToPayment && isPaymentComplete();
+    };
 
-    if (!isTouched) {
-      return false;
-    }
+    const allowCardFinalize = canCompleteCheckout();
 
-    const isValid = Object.values(
-      pick(errors, "firstName", "lastName", "document", "phoneNumber", "address")
-    ).every((e) => {
-      if (!isString(e)) {
-        return Object.values(e).some((v) => !v);
+    const handleContinueToPayment = () => {
+      if (canProceedToPayment) {
+        setCurrentStep("payment");
       }
-      return !e;
-    });
+    };
 
-    return isValid;
-  }
+    const handleBackToBilling = () => {
+      setCurrentStep("billing");
+    };
 
-  const canProceedToPayment = isFirstStepValid();
-
-  const canCompleteCheckout = () => {
-    if (paymentMethod === "pix" || paymentMethod === "boleto") {
-      return canProceedToPayment;
-    }
-    return canProceedToPayment && isPaymentComplete();
-  };
-
-  const allowCardFinalize = canCompleteCheckout();
-
-  const handleContinueToPayment = () => {
-    if (canProceedToPayment) {
-      setCurrentStep("payment");
-    }
-  };
-
-  const handleBackToBilling = () => {
-    setCurrentStep("billing");
-  };
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      submit: () => {
-        if (hasExistingUser) {
+    useImperativeHandle(
+      ref,
+      () => ({
+        submit: () => {
+          if (hasExistingUser) {
+            if (paymentMethod === "pix") {
+              if (!pixSession) {
+                void handleInitiatePix();
+              } else {
+                void handleCheckPayment();
+              }
+              return;
+            }
+            if (paymentMethod === "boleto") {
+              if (!boletoSession) {
+                void handleInitiateBoleto();
+              } else {
+                void handleCheckBoletoPayment();
+              }
+              return;
+            }
+            onSimpleSubmit();
+            return;
+          }
+          if (currentStep === "billing") {
+            if (canProceedToPayment) {
+              setCurrentStep("payment");
+            }
+            return;
+          }
           if (paymentMethod === "pix") {
             if (!pixSession) {
               void handleInitiatePix();
@@ -801,569 +897,286 @@ const ModernCheckoutForm = forwardRef<
             }
             return;
           }
-          onSimpleSubmit();
-          return;
+          handleSubmit(onSubmit)();
+        },
+      }),
+      [
+        hasExistingUser,
+        currentStep,
+        canProceedToPayment,
+        paymentMethod,
+        pixSession,
+        boletoSession,
+        handleSubmit,
+        onSubmit,
+        onSimpleSubmit,
+        handleInitiatePix,
+        handleCheckPayment,
+        handleInitiateBoleto,
+        handleCheckBoletoPayment,
+        invoiceId,
+      ]
+    );
+
+    useEffect(() => {
+      const notify = sidebarActionCbRef.current;
+      if (!notify) return;
+
+      let label = "Finalizar Transação";
+      let disabled = false;
+      let hidden = false;
+
+      if (!hasExistingUser && currentStep === "billing") {
+        label = "Continuar";
+        disabled = !canProceedToPayment;
+      } else if (paymentMethod === "pix") {
+        if (isPixLoading) {
+          label = "Gerando PIX...";
+          disabled = true;
+        } else if (pixSession) {
+          // QR code visível: oculta o botão lateral, o usuário usa "Já paguei"
+          hidden = true;
+          disabled = true;
+          label = "";
+        } else {
+          label = "Gerar PIX";
+          disabled = !canProceedToPayment;
         }
-        if (currentStep === "billing") {
-          if (canProceedToPayment) {
-            setCurrentStep("payment");
-          }
-          return;
+      } else if (paymentMethod === "boleto") {
+        if (isBoletoLoading) {
+          label = "Gerando Boleto...";
+          disabled = true;
+        } else if (boletoSession) {
+          // Boleto visível: oculta o botão lateral, o usuário usa "Já paguei"
+          hidden = true;
+          disabled = true;
+          label = "";
+        } else {
+          label = "Gerar Boleto";
+          disabled = !canProceedToPayment;
         }
-        if (paymentMethod === "pix") {
-          if (!pixSession) {
-            void handleInitiatePix();
-          } else {
-            void handleCheckPayment();
-          }
-          return;
+      } else {
+        if (isPending) {
+          label = "Processando...";
+          disabled = true;
+        } else {
+          label = "Finalizar Transação";
+          disabled = !allowCardFinalize;
         }
-        if (paymentMethod === "boleto") {
-          if (!boletoSession) {
-            void handleInitiateBoleto();
-          } else {
-            void handleCheckBoletoPayment();
-          }
-          return;
-        }
-        handleSubmit(onSubmit)();
-      },
-    }),
-    [
+      }
+
+      notify({ disabled, hidden, label });
+    }, [
       hasExistingUser,
       currentStep,
-      canProceedToPayment,
       paymentMethod,
       pixSession,
+      isPixLoading,
       boletoSession,
-      handleSubmit,
-      onSubmit,
-      onSimpleSubmit,
-      handleInitiatePix,
-      handleCheckPayment,
-      handleInitiateBoleto,
-      handleCheckBoletoPayment,
-      invoiceId,
-    ]
-  );
+      isBoletoLoading,
+      isVerifyingPayment,
+      isPaymentConfirmed,
+      isPending,
+      canProceedToPayment,
+      allowCardFinalize,
+      watchedBillingFields,
+    ]);
 
-  useEffect(() => {
-    const notify = sidebarActionCbRef.current;
-    if (!notify) return;
+    useEffect(() => {
+      paymentMethodCbRef.current?.(paymentMethod ?? null);
+    }, [paymentMethod]);
 
-    let label = "Finalizar Transação";
-    let disabled = false;
-    let hidden = false;
+    // Detecção do pagamento PIX: SSE primário (push em tempo real) + polling fallback
+    useEffect(() => {
+      if (!pixSession || isPixLoading) return;
 
-    if (!hasExistingUser && currentStep === "billing") {
-      label = "Continuar";
-      disabled = !canProceedToPayment;
-    } else if (paymentMethod === "pix") {
-      if (isPixLoading) {
-        label = "Gerando PIX...";
-        disabled = true;
-      } else if (pixSession) {
-        // QR code visível: oculta o botão lateral, o usuário usa "Já paguei"
-        hidden = true;
-        disabled = true;
-        label = "";
-      } else {
-        label = "Gerar PIX";
-        disabled = !canProceedToPayment;
-      }
-    } else if (paymentMethod === "boleto") {
-      if (isBoletoLoading) {
-        label = "Gerando Boleto...";
-        disabled = true;
-      } else if (boletoSession) {
-        // Boleto visível: oculta o botão lateral, o usuário usa "Já paguei"
-        hidden = true;
-        disabled = true;
-        label = "";
-      } else {
-        label = "Gerar Boleto";
-        disabled = !canProceedToPayment;
-      }
-    } else {
-      if (isPending) {
-        label = "Processando...";
-        disabled = true;
-      } else {
-        label = "Finalizar Transação";
-        disabled = !allowCardFinalize;
-      }
-    }
+      const paymentId = pixSession.paymentId;
+      const simApi = (
+        process.env.NEXT_PUBLIC_SIMPAY_API_URL ??
+        "https://simpay-back.simintermediacoes.com"
+      ).replace(/\/+$/, "");
+      let done = false;
 
-    notify({ label, disabled, hidden });
-  }, [
-    hasExistingUser,
-    currentStep,
-    paymentMethod,
-    pixSession,
-    isPixLoading,
-    boletoSession,
-    isBoletoLoading,
-    isVerifyingPayment,
-    isPaymentConfirmed,
-    isPending,
-    canProceedToPayment,
-    allowCardFinalize,
-    watchedBillingFields,
-  ]);
-
-  useEffect(() => {
-    paymentMethodCbRef.current?.(paymentMethod ?? null);
-  }, [paymentMethod]);
-
-  // Detecção do pagamento PIX: SSE primário (push em tempo real) + polling fallback
-  useEffect(() => {
-    if (!pixSession || isPixLoading) return;
-
-    const paymentId = pixSession.paymentId;
-    const simApi = (process.env.NEXT_PUBLIC_SIMPAY_API_URL ?? "https://simpay-back.simintermediacoes.com").replace(/\/+$/, "");
-    let done = false;
-
-    // Chamado quando SSE indica pagamento. O servidor re-verifica na Simpay
-    // e só marca como pago se o gateway confirmar de fato.
-    const handleSseConfirmed = async () => {
-      if (done) return;
-      const { confirmed } = await markPixPaymentComplete(invoiceId);
-      // Não confirmado pelo gateway: mantém o polling de fallback ativo.
-      if (!confirmed || done) return;
-      done = true;
-      setIsPaymentConfirmed(true);
-      router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
-    };
-
-    // SSE primário: Simpay faz push instantâneo ao confirmar o pagamento
-    let es: EventSource | null = new EventSource(`${simApi}/checkout/pix/${paymentId}/sse`);
-    es.addEventListener("payment-status", (e) => {
-      try {
-        const d = JSON.parse((e as MessageEvent).data) as { status?: string };
-        if (d.status === "COMPLETED") { es?.close(); void handleSseConfirmed(); }
-      } catch { /* ignore */ }
-    });
-    es.addEventListener("heartbeat", () => { /* keepalive */ });
-    es.onerror = () => { es?.close(); es = null; };
-
-    // Fallback: polling via servidor a cada 1.5s (caso SSE não esteja disponível)
-    const intervalId = setInterval(async () => {
-      if (done) { clearInterval(intervalId); return; }
-      const result = await syncCheckoutPixPayment(invoiceId);
-      if (!done && result.status === "COMPLETED") {
+      // Chamado quando SSE indica pagamento. O servidor re-verifica na Simpay
+      // e só marca como pago se o gateway confirmar de fato.
+      const handleSseConfirmed = async () => {
+        if (done) return;
+        const { confirmed } = await markPixPaymentComplete(invoiceId);
+        // Não confirmado pelo gateway: mantém o polling de fallback ativo.
+        if (!confirmed || done) return;
         done = true;
-        clearInterval(intervalId);
+        setIsPaymentConfirmed(true);
+        router.push(
+          `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+        );
+      };
+
+      // SSE primário: Simpay faz push instantâneo ao confirmar o pagamento
+      let es: EventSource | null = new EventSource(
+        `${simApi}/checkout/pix/${paymentId}/sse`
+      );
+      es.addEventListener("payment-status", e => {
+        try {
+          const d = JSON.parse((e as MessageEvent).data) as { status?: string };
+          if (d.status === "COMPLETED") {
+            es?.close();
+            void handleSseConfirmed();
+          }
+        } catch {
+          /* ignore */
+        }
+      });
+      es.addEventListener("heartbeat", () => {
+        /* keepalive */
+      });
+      es.onerror = () => {
         es?.close();
-        setIsPaymentConfirmed(true);
-        router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
-      }
-    }, 1500);
+        es = null;
+      };
 
-    const stopAt = setTimeout(() => {
-      done = true;
-      clearInterval(intervalId);
-      es?.close();
-    }, 15 * 60 * 1000);
+      // Fallback: polling via servidor a cada 1.5s (caso SSE não esteja disponível)
+      const intervalId = setInterval(async () => {
+        if (done) {
+          clearInterval(intervalId);
+          return;
+        }
+        const result = await syncCheckoutPixPayment(invoiceId);
+        if (!done && result.status === "COMPLETED") {
+          done = true;
+          clearInterval(intervalId);
+          es?.close();
+          setIsPaymentConfirmed(true);
+          router.push(
+            `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+          );
+        }
+      }, 1500);
 
-    return () => {
-      done = true;
-      clearInterval(intervalId);
-      clearTimeout(stopAt);
-      es?.close();
-    };
-  }, [pixSession, isPixLoading, invoiceId, router]);
+      const stopAt = setTimeout(
+        () => {
+          done = true;
+          clearInterval(intervalId);
+          es?.close();
+        },
+        15 * 60 * 1000
+      );
 
-  // Detecção do pagamento do boleto: só polling (confirmação assíncrona, pode levar dias —
-  // o webhook do DOM Pagamentos é a fonte de verdade fora desta sessão de checkout).
-  useEffect(() => {
-    if (!boletoSession || isBoletoLoading) return;
-
-    let done = false;
-    const intervalId = setInterval(async () => {
-      if (done) { clearInterval(intervalId); return; }
-      const result = await syncCheckoutBoletoPayment(invoiceId);
-      if (!done && result.status === "COMPLETED") {
+      return () => {
         done = true;
         clearInterval(intervalId);
-        setIsPaymentConfirmed(true);
-        router.push(`/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`);
-      }
-    }, 5000);
+        clearTimeout(stopAt);
+        es?.close();
+      };
+    }, [pixSession, isPixLoading, invoiceId, router]);
 
-    const stopAt = setTimeout(() => {
-      done = true;
-      clearInterval(intervalId);
-    }, 15 * 60 * 1000);
+    // Detecção do pagamento do boleto: só polling (confirmação assíncrona, pode levar dias —
+    // o webhook do DOM Pagamentos é a fonte de verdade fora desta sessão de checkout).
+    useEffect(() => {
+      if (!boletoSession || isBoletoLoading) return;
 
-    return () => {
-      done = true;
-      clearInterval(intervalId);
-      clearTimeout(stopAt);
-    };
-  }, [boletoSession, isBoletoLoading, invoiceId, router]);
+      let done = false;
+      const intervalId = setInterval(async () => {
+        if (done) {
+          clearInterval(intervalId);
+          return;
+        }
+        const result = await syncCheckoutBoletoPayment(invoiceId);
+        if (!done && result.status === "COMPLETED") {
+          done = true;
+          clearInterval(intervalId);
+          setIsPaymentConfirmed(true);
+          router.push(
+            `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+          );
+        }
+      }, 5000);
 
-  // Modal amigável de falha de pagamento (sem detalhes técnicos/sensíveis).
-  const paymentErrorModal = (
-    <Dialog
-      open={!!paymentError}
-      onOpenChange={(open) => {
-        if (!open) setPaymentError(null);
-      }}
-    >
-      <DialogContent className="border-white/10 bg-slate-950 text-white sm:max-w-md">
-        <DialogHeader>
-          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-red-500/10">
-            <AlertCircle className="text-red-400" size={24} strokeWidth={2} />
-          </div>
-          <DialogTitle className="text-center">
-            Pagamento não concluído
-          </DialogTitle>
-          <DialogDescription className="text-center text-slate-400">
-            {paymentError}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="sm:justify-center">
-          <Button
-            type="button"
-            onClick={() => setPaymentError(null)}
-            className="w-full sm:w-auto"
-          >
-            Entendi, tentar novamente
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+      const stopAt = setTimeout(
+        () => {
+          done = true;
+          clearInterval(intervalId);
+        },
+        15 * 60 * 1000
+      );
 
-  // Render simplified version for existing users with domId
-  if (hasExistingUser) {
-    return (
-      <div className="space-y-6">
-        {paymentErrorModal}
-        <Card className="bg-white/5 backdrop-blur-md border-white/10 rounded-3xl shadow-2xl overflow-hidden">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
-                <Store className="text-sky-400" size={18} strokeWidth={2.5} />
-              </div>
-              <div>
-                <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Método de Pagamento</CardTitle>
-                <CardDescription className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 opacity-80">
-                  Escolha como deseja pagar
-                </CardDescription>
-              </div>
+      return () => {
+        done = true;
+        clearInterval(intervalId);
+        clearTimeout(stopAt);
+      };
+    }, [boletoSession, isBoletoLoading, invoiceId, router]);
+
+    // Modal amigável de falha de pagamento (sem detalhes técnicos/sensíveis).
+    const paymentErrorModal = (
+      <Dialog
+        onOpenChange={open => {
+          if (!open) setPaymentError(null);
+        }}
+        open={!!paymentError}
+      >
+        <DialogContent className="border-white/10 bg-slate-950 text-white sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-red-500/10">
+              <AlertCircle className="text-red-400" size={24} strokeWidth={2} />
             </div>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              value={paymentMethod}
-              onValueChange={setPaymentMethod}
-              className="grid gap-3"
+            <DialogTitle className="text-center">
+              Pagamento não concluído
+            </DialogTitle>
+            <DialogDescription className="text-center text-slate-400">
+              {paymentError}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => setPaymentError(null)}
+              type="button"
             >
-              {allowPix && (
-                <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
-                  <RadioGroupItem
-                    value="pix"
-                    className="sr-only"
-                  />
-                  <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 shadow-lg shadow-emerald-500/20">
-                    <QrCode
-                      size={20}
-                      className="text-emerald-400"
-                    />
-                  </div>
-                  <div>
-                    <span className="font-black text-white uppercase tracking-tight text-sm">PIX</span>
-                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                      QR Code no app do banco
-                    </div>
-                  </div>
-                </Label>
-              )}
-
-              {allowBoleto && (
-                <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
-                  <RadioGroupItem
-                    value="boleto"
-                    className="sr-only"
-                  />
-                  <div className="flex size-10 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 shadow-lg shadow-amber-500/20">
-                    <Barcode
-                      size={20}
-                      className="text-amber-400"
-                    />
-                  </div>
-                  <div>
-                    <span className="font-black text-white uppercase tracking-tight text-sm">Boleto</span>
-                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                      Vencimento em 3 dias úteis
-                    </div>
-                  </div>
-                </Label>
-              )}
-
-              {(isLoadingCards || savedCards.length > 0) && <Separator className="bg-white/10" />}
-
-              {isLoadingCards ? (
-                <Skeleton className="h-21 w-full" />
-              ) : (
-                savedCards.length > 0 &&
-                savedCards.map((card) => (
-                  <Label
-                    key={card.id}
-                    className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50"
-                  >
-                    <RadioGroupItem
-                      value={card.id}
-                      className="sr-only"
-                    />
-                    <div className="text-2xl opacity-80">
-                      {getCardBrandIcon(card.brand)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-black text-white uppercase tracking-tight text-sm">
-                          **** **** **** {card.last4}
-                        </span>
-                        {card.isDefault && (
-                          <Badge variant="secondary" className="bg-sky-500/10 text-sky-400 border-sky-500/20 uppercase text-[9px] font-black">Padrão</Badge>
-                        )}
-                      </div>
-                      <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                        {card.holderName} • {card.expiryMonth}/
-                        {card.expiryYear}
-                      </div>
-                    </div>
-                  </Label>
-                ))
-              )}
-
-              {(isLoadingCards || savedCards.length > 0) && <Separator className="bg-white/10" />}
-
-              <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
-                <RadioGroupItem
-                  value="new"
-                  className="sr-only"
-                />
-                <div className="flex size-10 items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/5">
-                  <Plus size={20} className="text-sky-400" strokeWidth={3} />
-                </div>
-                <div>
-                  <span className="font-black text-white uppercase tracking-tight text-sm">Novo cartão</span>
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Digite os dados de um novo cartão
-                  </div>
-                </div>
-              </Label>
-            </RadioGroup>
-          </CardContent>
-        </Card>
-
-        {paymentMethod === "pix" && (
-          pixSession ? (
-            <PixQrCodeCard
-              pixSession={pixSession}
-              pixCopied={pixCopied}
-              copyPixToClipboard={copyPixToClipboard}
-              onBack={() => setPixSession(null)}
-              onCheckPayment={() => void handleCheckPayment()}
-              isPixLoading={isPixLoading}
-              isVerifyingPayment={isVerifyingPayment}
-              isPaymentConfirmed={isPaymentConfirmed}
-            />
-          ) : (
-            <BillingInformationSection
-              methods={methods}
-              id={id}
-              savedInfo={savedBillingInfo}
-              onAutoFill={handleAutoFill}
-              hasExistingUser={hasExistingUser}
-            />
-          )
-        )}
-
-        {paymentMethod === "boleto" && (
-          boletoSession ? (
-            <BoletoCard
-              boletoSession={boletoSession}
-              boletoCopied={boletoCopied}
-              copyBoletoToClipboard={copyBoletoToClipboard}
-              onBack={() => setBoletoSession(null)}
-              onCheckPayment={() => void handleCheckBoletoPayment()}
-              isBoletoLoading={isBoletoLoading}
-              isVerifyingPayment={isVerifyingPayment}
-              isPaymentConfirmed={isPaymentConfirmed}
-            />
-          ) : (
-            <BillingInformationSection
-              methods={methods}
-              id={id}
-              savedInfo={savedBillingInfo}
-              onAutoFill={handleAutoFill}
-              hasExistingUser={hasExistingUser}
-            />
-          )
-        )}
-
-        <AnimatePresence>
-          {paymentMethod === "new" && <NewCardFormSection {...methods} />}
-        </AnimatePresence>
-
-      </div>
+              Entendi, tentar novamente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     );
-  }
 
-  return (
-    <div className="space-y-4">
-      {paymentErrorModal}
-      {/* Billing Information Step */}
-      {currentStep === "billing" && (
-        <>
-          {paymentMethod === "pix" && pixSession ? (
-            <PixQrCodeCard
-              pixSession={pixSession}
-              pixCopied={pixCopied}
-              copyPixToClipboard={copyPixToClipboard}
-              onBack={() => setPixSession(null)}
-              onCheckPayment={() => void handleCheckPayment()}
-              isPixLoading={isPixLoading}
-              isVerifyingPayment={isVerifyingPayment}
-              isPaymentConfirmed={isPaymentConfirmed}
-            />
-          ) : paymentMethod === "boleto" && boletoSession ? (
-            <BoletoCard
-              boletoSession={boletoSession}
-              boletoCopied={boletoCopied}
-              copyBoletoToClipboard={copyBoletoToClipboard}
-              onBack={() => setBoletoSession(null)}
-              onCheckPayment={() => void handleCheckBoletoPayment()}
-              isBoletoLoading={isBoletoLoading}
-              isVerifyingPayment={isVerifyingPayment}
-              isPaymentConfirmed={isPaymentConfirmed}
-            />
-          ) : (
-            <BillingInformationSection
-              methods={methods}
-              id={id}
-              savedInfo={savedBillingInfo}
-              onAutoFill={handleAutoFill}
-              hasExistingUser={hasExistingUser}
-            />
-          )}
-
-          {/* Payment Card - Collapsed/Preview */}
-          <Card className="opacity-50">
+    // Render simplified version for existing users with domId
+    if (hasExistingUser) {
+      return (
+        <div className="space-y-6">
+          {paymentErrorModal}
+          <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
             <CardHeader>
               <div className="flex items-center gap-4">
                 <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
-                  <CreditCard
-                    className="text-sky-400"
-                    size={18}
-                    strokeWidth={2.5}
-                  />
+                  <Store className="text-sky-400" size={18} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Pagamento</CardTitle>
+                  <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+                    Método de Pagamento
+                  </CardTitle>
+                  <CardDescription className="mt-0.5 font-bold text-[11px] text-slate-400 uppercase tracking-widest opacity-80">
+                    Escolha como deseja pagar
+                  </CardDescription>
                 </div>
               </div>
-            </CardHeader>
-          </Card>
-
-          {/* Continue Button */}
-          <div className="flex justify-between items-center pt-8">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => router.back()}
-              className="text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest transition-all"
-            >
-              <ArrowLeft size={16} className="mr-2" strokeWidth={3} />
-              Voltar
-            </Button>
-            <Button
-              onClick={handleContinueToPayment}
-              disabled={!canProceedToPayment}
-              className="min-w-44 h-12 bg-white text-slate-950 text-base font-bold hover:bg-white/90 border-0 shadow-lg transition-all hover:scale-[1.02] active:scale-95"
-            >
-              Continuar
-              <Check className="ml-2 h-4 w-4" strokeWidth={3} />
-            </Button>
-          </div>
-        </>
-      )}
-
-      {/* Payment Step */}
-      {currentStep === "payment" && (
-        <>
-          {/* Billing Summary Card or PIX QR Code */}
-          {paymentMethod === "pix" && pixSession ? (
-            <PixQrCodeCard
-              pixSession={pixSession}
-              pixCopied={pixCopied}
-              copyPixToClipboard={copyPixToClipboard}
-              onBack={() => setPixSession(null)}
-              onCheckPayment={() => void handleCheckPayment()}
-              isPixLoading={isPixLoading}
-              isVerifyingPayment={isVerifyingPayment}
-              isPaymentConfirmed={isPaymentConfirmed}
-            />
-          ) : paymentMethod === "boleto" && boletoSession ? (
-            <BoletoCard
-              boletoSession={boletoSession}
-              boletoCopied={boletoCopied}
-              copyBoletoToClipboard={copyBoletoToClipboard}
-              onBack={() => setBoletoSession(null)}
-              onCheckPayment={() => void handleCheckBoletoPayment()}
-              isBoletoLoading={isBoletoLoading}
-              isVerifyingPayment={isVerifyingPayment}
-              isPaymentConfirmed={isPaymentConfirmed}
-            />
-          ) : (
-            <BillingSummaryCard
-              values={allValues}
-              onEdit={handleBackToBilling}
-            />
-          )}
-
-          <Card className="bg-white/5 backdrop-blur-md border-white/10 rounded-3xl shadow-2xl overflow-hidden">
-            <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
-                <CreditCard
-                  className="text-sky-400"
-                  size={18}
-                  strokeWidth={2.5}
-                />
-              </div>
-              <div>
-                <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Método de Pagamento</CardTitle>
-                <CardDescription className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 opacity-80">
-                  Escolha como deseja pagar
-                </CardDescription>
-              </div>
-            </div>
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={paymentMethod}
-                onValueChange={setPaymentMethod}
                 className="grid gap-3"
+                onValueChange={setPaymentMethod}
+                value={paymentMethod}
               >
                 {allowPix && (
                   <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
-                    <RadioGroupItem
-                      value="pix"
-                      className="sr-only"
-                    />
-                    <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 shadow-lg shadow-emerald-500/20">
-                      <QrCode
-                        size={20}
-                        className="text-emerald-400"
-                      />
+                    <RadioGroupItem className="sr-only" value="pix" />
+                    <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 shadow-emerald-500/20 shadow-lg">
+                      <QrCode className="text-emerald-400" size={20} />
                     </div>
                     <div>
-                      <span className="font-black text-white uppercase tracking-tight text-sm">PIX</span>
-                      <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                      <span className="font-black text-sm text-white uppercase tracking-tight">
+                        PIX
+                      </span>
+                      <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
                         QR Code no app do banco
                       </div>
                     </div>
@@ -1372,76 +1185,75 @@ const ModernCheckoutForm = forwardRef<
 
                 {allowBoleto && (
                   <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
-                    <RadioGroupItem
-                      value="boleto"
-                      className="sr-only"
-                    />
-                    <div className="flex size-10 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 shadow-lg shadow-amber-500/20">
-                      <Barcode
-                        size={20}
-                        className="text-amber-400"
-                      />
+                    <RadioGroupItem className="sr-only" value="boleto" />
+                    <div className="flex size-10 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 shadow-amber-500/20 shadow-lg">
+                      <Barcode className="text-amber-400" size={20} />
                     </div>
                     <div>
-                      <span className="font-black text-white uppercase tracking-tight text-sm">Boleto</span>
-                      <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                      <span className="font-black text-sm text-white uppercase tracking-tight">
+                        Boleto
+                      </span>
+                      <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
                         Vencimento em 3 dias úteis
                       </div>
                     </div>
                   </Label>
                 )}
 
-                {(isLoadingCards || savedCards.length > 0) && <Separator className="bg-white/10" />}
+                {(isLoadingCards || savedCards.length > 0) && (
+                  <Separator className="bg-white/10" />
+                )}
 
                 {isLoadingCards ? (
-                  <div className="py-4 text-center text-sm text-muted-foreground">
-                    <Skeleton className="h-21 w-full" />
-                  </div>
-                ) : hasExistingUser && savedCards.length > 0 ? (
-                  <>
-                    {savedCards.map((card) => (
-                      <Label
-                        key={card.id}
-                        className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50"
-                      >
-                        <RadioGroupItem
-                          value={card.id}
-                          className="sr-only"
-                        />
-                        <div className="text-2xl opacity-80">
-                          {getCardBrandIcon(card.brand)}
+                  <Skeleton className="h-21 w-full" />
+                ) : (
+                  savedCards.length > 0 &&
+                  savedCards.map(card => (
+                    <Label
+                      className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50"
+                      key={card.id}
+                    >
+                      <RadioGroupItem className="sr-only" value={card.id} />
+                      <div className="text-2xl opacity-80">
+                        {getCardBrandIcon(card.brand)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-sm text-white uppercase tracking-tight">
+                            **** **** **** {card.last4}
+                          </span>
+                          {card.isDefault && (
+                            <Badge
+                              className="border-sky-500/20 bg-sky-500/10 font-black text-[9px] text-sky-400 uppercase"
+                              variant="secondary"
+                            >
+                              Padrão
+                            </Badge>
+                          )}
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-black text-white uppercase tracking-tight text-sm">
-                              **** **** **** {card.last4}
-                            </span>
-                            {card.isDefault && (
-                              <Badge variant="secondary" className="bg-sky-500/10 text-sky-400 border-sky-500/20 uppercase text-[9px] font-black">Padrão</Badge>
-                            )}
-                          </div>
-                          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                            {card.holderName} • {card.expiryMonth}/
-                            {card.expiryYear}
-                          </div>
+                        <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                          {card.holderName} • {card.expiryMonth}/
+                          {card.expiryYear}
                         </div>
-                      </Label>
-                    ))}
-                    <Separator className="bg-white/10" />
-                  </>
-                ) : null}
+                      </div>
+                    </Label>
+                  ))
+                )}
+
+                {(isLoadingCards || savedCards.length > 0) && (
+                  <Separator className="bg-white/10" />
+                )}
 
                 <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
-                  <RadioGroupItem
-                    value="new"
-                    className="sr-only"
-                  />
-                  <div className="flex size-10 items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/5">
-                    <Plus size={20} className="text-sky-400" strokeWidth={3} />
+                  <RadioGroupItem className="sr-only" value="new" />
+                  <div className="flex size-10 items-center justify-center rounded-xl border border-white/20 border-dashed bg-white/5">
+                    <Plus className="text-sky-400" size={20} strokeWidth={3} />
                   </div>
                   <div>
-                    <span className="font-black text-white uppercase tracking-tight text-sm">Novo cartão</span>
-                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                    <span className="font-black text-sm text-white uppercase tracking-tight">
+                      Novo cartão
+                    </span>
+                    <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
                       Digite os dados de um novo cartão
                     </div>
                   </div>
@@ -1450,58 +1262,352 @@ const ModernCheckoutForm = forwardRef<
             </CardContent>
           </Card>
 
-          {/* New Card Form - Only show if "new" is selected */}
-          {paymentMethod === "new" && <NewCardFormSection {...methods} />}
+          {paymentMethod === "pix" &&
+            (pixSession ? (
+              <PixQrCodeCard
+                copyPixToClipboard={copyPixToClipboard}
+                isPaymentConfirmed={isPaymentConfirmed}
+                isPixLoading={isPixLoading}
+                isVerifyingPayment={isVerifyingPayment}
+                onBack={() => setPixSession(null)}
+                onCheckPayment={() => void handleCheckPayment()}
+                pixCopied={pixCopied}
+                pixSession={pixSession}
+              />
+            ) : (
+              <BillingInformationSection
+                hasExistingUser={hasExistingUser}
+                id={id}
+                methods={methods}
+                onAutoFill={handleAutoFill}
+                savedInfo={savedBillingInfo}
+              />
+            ))}
 
-              {/* Navigation Buttons */}
-              <div className="flex justify-between">
-                <Button
-                  variant="outline"
-                  onClick={handleBackToBilling}
-                  className="flex items-center gap-2"
+          {paymentMethod === "boleto" &&
+            (boletoSession ? (
+              <BoletoCard
+                boletoCopied={boletoCopied}
+                boletoSession={boletoSession}
+                copyBoletoToClipboard={copyBoletoToClipboard}
+                isBoletoLoading={isBoletoLoading}
+                isPaymentConfirmed={isPaymentConfirmed}
+                isVerifyingPayment={isVerifyingPayment}
+                onBack={() => setBoletoSession(null)}
+                onCheckPayment={() => void handleCheckBoletoPayment()}
+              />
+            ) : (
+              <BillingInformationSection
+                hasExistingUser={hasExistingUser}
+                id={id}
+                methods={methods}
+                onAutoFill={handleAutoFill}
+                savedInfo={savedBillingInfo}
+              />
+            ))}
+
+          <AnimatePresence>
+            {paymentMethod === "new" && <NewCardFormSection {...methods} />}
+          </AnimatePresence>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {paymentErrorModal}
+        {/* Billing Information Step */}
+        {currentStep === "billing" && (
+          <>
+            {paymentMethod === "pix" && pixSession ? (
+              <PixQrCodeCard
+                copyPixToClipboard={copyPixToClipboard}
+                isPaymentConfirmed={isPaymentConfirmed}
+                isPixLoading={isPixLoading}
+                isVerifyingPayment={isVerifyingPayment}
+                onBack={() => setPixSession(null)}
+                onCheckPayment={() => void handleCheckPayment()}
+                pixCopied={pixCopied}
+                pixSession={pixSession}
+              />
+            ) : paymentMethod === "boleto" && boletoSession ? (
+              <BoletoCard
+                boletoCopied={boletoCopied}
+                boletoSession={boletoSession}
+                copyBoletoToClipboard={copyBoletoToClipboard}
+                isBoletoLoading={isBoletoLoading}
+                isPaymentConfirmed={isPaymentConfirmed}
+                isVerifyingPayment={isVerifyingPayment}
+                onBack={() => setBoletoSession(null)}
+                onCheckPayment={() => void handleCheckBoletoPayment()}
+              />
+            ) : (
+              <BillingInformationSection
+                hasExistingUser={hasExistingUser}
+                id={id}
+                methods={methods}
+                onAutoFill={handleAutoFill}
+                savedInfo={savedBillingInfo}
+              />
+            )}
+
+            {/* Payment Card - Collapsed/Preview */}
+            <Card className="opacity-50">
+              <CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
+                    <CreditCard
+                      className="text-sky-400"
+                      size={18}
+                      strokeWidth={2.5}
+                    />
+                  </div>
+                  <div>
+                    <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+                      Pagamento
+                    </CardTitle>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* Continue Button */}
+            <div className="flex items-center justify-between pt-8">
+              <Button
+                className="font-black text-slate-500 text-xs uppercase tracking-widest transition-all hover:text-white"
+                onClick={() => router.back()}
+                type="button"
+                variant="ghost"
+              >
+                <ArrowLeft className="mr-2" size={16} strokeWidth={3} />
+                Voltar
+              </Button>
+              <Button
+                className="h-12 min-w-44 border-0 bg-white font-bold text-base text-slate-950 shadow-lg transition-all hover:scale-[1.02] hover:bg-white/90 active:scale-95"
+                disabled={!canProceedToPayment}
+                onClick={handleContinueToPayment}
+              >
+                Continuar
+                <Check className="ml-2 h-4 w-4" strokeWidth={3} />
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* Payment Step */}
+        {currentStep === "payment" && (
+          <>
+            {/* Billing Summary Card or PIX QR Code */}
+            {paymentMethod === "pix" && pixSession ? (
+              <PixQrCodeCard
+                copyPixToClipboard={copyPixToClipboard}
+                isPaymentConfirmed={isPaymentConfirmed}
+                isPixLoading={isPixLoading}
+                isVerifyingPayment={isVerifyingPayment}
+                onBack={() => setPixSession(null)}
+                onCheckPayment={() => void handleCheckPayment()}
+                pixCopied={pixCopied}
+                pixSession={pixSession}
+              />
+            ) : paymentMethod === "boleto" && boletoSession ? (
+              <BoletoCard
+                boletoCopied={boletoCopied}
+                boletoSession={boletoSession}
+                copyBoletoToClipboard={copyBoletoToClipboard}
+                isBoletoLoading={isBoletoLoading}
+                isPaymentConfirmed={isPaymentConfirmed}
+                isVerifyingPayment={isVerifyingPayment}
+                onBack={() => setBoletoSession(null)}
+                onCheckPayment={() => void handleCheckBoletoPayment()}
+              />
+            ) : (
+              <BillingSummaryCard
+                onEdit={handleBackToBilling}
+                values={allValues}
+              />
+            )}
+
+            <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
+              <CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
+                    <CreditCard
+                      className="text-sky-400"
+                      size={18}
+                      strokeWidth={2.5}
+                    />
+                  </div>
+                  <div>
+                    <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+                      Método de Pagamento
+                    </CardTitle>
+                    <CardDescription className="mt-0.5 font-bold text-[11px] text-slate-400 uppercase tracking-widest opacity-80">
+                      Escolha como deseja pagar
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup
+                  className="grid gap-3"
+                  onValueChange={setPaymentMethod}
+                  value={paymentMethod}
                 >
-                  <ArrowLeft size={16} />
-                  Voltar
-                </Button>
+                  {allowPix && (
+                    <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                      <RadioGroupItem className="sr-only" value="pix" />
+                      <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 shadow-emerald-500/20 shadow-lg">
+                        <QrCode className="text-emerald-400" size={20} />
+                      </div>
+                      <div>
+                        <span className="font-black text-sm text-white uppercase tracking-tight">
+                          PIX
+                        </span>
+                        <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                          QR Code no app do banco
+                        </div>
+                      </div>
+                    </Label>
+                  )}
 
-                <Button
-                  onClick={() => {
-                    if (paymentMethod === "pix") {
-                      void handleInitiatePix();
-                    } else if (paymentMethod === "boleto") {
-                      void handleInitiateBoleto();
-                    } else {
-                      handleSubmit(onSubmit)();
-                    }
-                  }}
-                  disabled={
-                    isPixLoading ||
-                    isBoletoLoading ||
-                    isPending ||
-                    (paymentMethod === "pix" && !canProceedToPayment) ||
-                    (paymentMethod === "boleto" && !canProceedToPayment) ||
-                    (paymentMethod !== "pix" && paymentMethod !== "boleto" && !canCompleteCheckout())
+                  {allowBoleto && (
+                    <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                      <RadioGroupItem className="sr-only" value="boleto" />
+                      <div className="flex size-10 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 shadow-amber-500/20 shadow-lg">
+                        <Barcode className="text-amber-400" size={20} />
+                      </div>
+                      <div>
+                        <span className="font-black text-sm text-white uppercase tracking-tight">
+                          Boleto
+                        </span>
+                        <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                          Vencimento em 3 dias úteis
+                        </div>
+                      </div>
+                    </Label>
+                  )}
+
+                  {(isLoadingCards || savedCards.length > 0) && (
+                    <Separator className="bg-white/10" />
+                  )}
+
+                  {isLoadingCards ? (
+                    <div className="py-4 text-center text-muted-foreground text-sm">
+                      <Skeleton className="h-21 w-full" />
+                    </div>
+                  ) : hasExistingUser && savedCards.length > 0 ? (
+                    <>
+                      {savedCards.map(card => (
+                        <Label
+                          className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50"
+                          key={card.id}
+                        >
+                          <RadioGroupItem className="sr-only" value={card.id} />
+                          <div className="text-2xl opacity-80">
+                            {getCardBrandIcon(card.brand)}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-sm text-white uppercase tracking-tight">
+                                **** **** **** {card.last4}
+                              </span>
+                              {card.isDefault && (
+                                <Badge
+                                  className="border-sky-500/20 bg-sky-500/10 font-black text-[9px] text-sky-400 uppercase"
+                                  variant="secondary"
+                                >
+                                  Padrão
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                              {card.holderName} • {card.expiryMonth}/
+                              {card.expiryYear}
+                            </div>
+                          </div>
+                        </Label>
+                      ))}
+                      <Separator className="bg-white/10" />
+                    </>
+                  ) : null}
+
+                  <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                    <RadioGroupItem className="sr-only" value="new" />
+                    <div className="flex size-10 items-center justify-center rounded-xl border border-white/20 border-dashed bg-white/5">
+                      <Plus
+                        className="text-sky-400"
+                        size={20}
+                        strokeWidth={3}
+                      />
+                    </div>
+                    <div>
+                      <span className="font-black text-sm text-white uppercase tracking-tight">
+                        Novo cartão
+                      </span>
+                      <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                        Digite os dados de um novo cartão
+                      </div>
+                    </div>
+                  </Label>
+                </RadioGroup>
+              </CardContent>
+            </Card>
+
+            {/* New Card Form - Only show if "new" is selected */}
+            {paymentMethod === "new" && <NewCardFormSection {...methods} />}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between">
+              <Button
+                className="flex items-center gap-2"
+                onClick={handleBackToBilling}
+                variant="outline"
+              >
+                <ArrowLeft size={16} />
+                Voltar
+              </Button>
+
+              <Button
+                className="h-12 min-w-56 border-0 bg-white font-bold text-base text-slate-950 shadow-lg transition-all hover:scale-[1.02] hover:bg-white/90 active:scale-95"
+                disabled={
+                  isPixLoading ||
+                  isBoletoLoading ||
+                  isPending ||
+                  (paymentMethod === "pix" && !canProceedToPayment) ||
+                  (paymentMethod === "boleto" && !canProceedToPayment) ||
+                  (paymentMethod !== "pix" &&
+                    paymentMethod !== "boleto" &&
+                    !canCompleteCheckout())
+                }
+                onClick={() => {
+                  if (paymentMethod === "pix") {
+                    void handleInitiatePix();
+                  } else if (paymentMethod === "boleto") {
+                    void handleInitiateBoleto();
+                  } else {
+                    handleSubmit(onSubmit)();
                   }
-                  className="min-w-56 h-12 bg-white text-slate-950 text-base font-bold hover:bg-white/90 border-0 shadow-lg transition-all hover:scale-[1.02] active:scale-95"
-                >
-                  {isPixLoading
-                    ? "Gerando PIX..."
-                    : isBoletoLoading
-                      ? "Gerando Boleto..."
-                      : paymentMethod === "pix"
-                        ? "Gerar PIX"
-                        : paymentMethod === "boleto"
-                          ? "Gerar Boleto"
-                          : isPending
-                            ? "Processando..."
-                            : "Finalizar Transação"}
-                </Button>
-              </div>
-        </>
-      )}
-    </div>
-  );
-});
+                }}
+              >
+                {isPixLoading
+                  ? "Gerando PIX..."
+                  : isBoletoLoading
+                    ? "Gerando Boleto..."
+                    : paymentMethod === "pix"
+                      ? "Gerar PIX"
+                      : paymentMethod === "boleto"
+                        ? "Gerar Boleto"
+                        : isPending
+                          ? "Processando..."
+                          : "Finalizar Transação"}
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+);
 
 function InstallmentSelector({
   rates,
@@ -1513,18 +1619,18 @@ function InstallmentSelector({
   onChange: (n: number) => void;
 }) {
   const toBrlLocal = (v: number) =>
-    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    v.toLocaleString("pt-BR", { currency: "BRL", style: "currency" });
 
   return (
     <Card className="border border-white/10 bg-white/5">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-black text-white uppercase tracking-tight">
+        <CardTitle className="font-black text-sm text-white uppercase tracking-tight">
           Parcelas
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {rates.map((r) => {
+          {rates.map(r => {
             const isSelected = selected === r.n;
             const label =
               r.buyerRate === 0
@@ -1532,21 +1638,23 @@ function InstallmentSelector({
                 : `${r.n}x +${(r.buyerRate * 100).toFixed(2)}% + R$${r.fixedFee}`;
             return (
               <button
-                key={r.n}
-                type="button"
-                onClick={() => onChange(r.n)}
                 className={`rounded-xl border px-3 py-2 text-left text-xs transition-all ${
                   isSelected
                     ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
                     : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white"
                 }`}
+                key={r.n}
+                onClick={() => onChange(r.n)}
+                type="button"
               >
                 <span className="font-black">{r.n}x</span>
                 <br />
                 {r.buyerRate === 0 ? (
                   <span className="text-emerald-400">sem juros</span>
                 ) : (
-                  <span>{(r.buyerRate * 100).toFixed(2)}% + {toBrlLocal(r.fixedFee)}</span>
+                  <span>
+                    {(r.buyerRate * 100).toFixed(2)}% + {toBrlLocal(r.fixedFee)}
+                  </span>
                 )}
               </button>
             );
@@ -1577,7 +1685,7 @@ function PixQrCodeCard({
   isPaymentConfirmed: boolean;
 }) {
   return (
-    <Card className="bg-white/5 backdrop-blur-md border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+    <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -1589,19 +1697,21 @@ function PixQrCodeCard({
               />
             </div>
             <div>
-              <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Pague com PIX</CardTitle>
-              <CardDescription className="text-slate-400 font-medium">
+              <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+                Pague com PIX
+              </CardTitle>
+              <CardDescription className="font-medium text-slate-400">
                 Escaneie o QR ou copie o código no app do banco
               </CardDescription>
             </div>
           </div>
           <Button
-            variant="ghost"
-            size="sm"
+            className="text-slate-500 transition-colors hover:text-white"
             onClick={onBack}
-            className="text-slate-500 hover:text-white transition-colors"
+            size="sm"
+            variant="ghost"
           >
-            <ArrowLeft size={16} className="mr-2" />
+            <ArrowLeft className="mr-2" size={16} />
             Voltar
           </Button>
         </div>
@@ -1612,33 +1722,33 @@ function PixQrCodeCard({
             <div className="absolute -inset-1 rounded-xl bg-gradient-to-tr from-emerald-500/20 to-emerald-500/0 blur-sm" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={pixSession.pix_qrcode}
               alt="QR Code PIX"
               className="relative mx-auto max-w-[320px] rounded-lg border border-border bg-white p-2"
+              src={pixSession.pix_qrcode}
             />
           </div>
         ) : null}
 
         <div className="space-y-3">
           <Button
-            type="button"
-            variant="outline"
             className={clsx(
-              "w-full h-12 text-base font-medium overflow-hidden transition-all duration-300",
+              "h-12 w-full overflow-hidden font-medium text-base transition-all duration-300",
               pixCopied
                 ? "border-emerald-500/45 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
                 : "hover:border-emerald-500/30 hover:bg-emerald-500/5"
             )}
             onClick={copyPixToClipboard}
+            type="button"
+            variant="outline"
           >
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence initial={false} mode="wait">
               <motion.span
-                key={pixCopied ? "copied" : "copy"}
-                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
                 className="inline-flex items-center justify-center gap-2"
+                exit={{ opacity: 0, y: -8 }}
+                initial={{ opacity: 0, y: 8 }}
+                key={pixCopied ? "copied" : "copy"}
+                transition={{ duration: 0.18, ease: "easeOut" }}
               >
                 {pixCopied ? (
                   <>
@@ -1655,17 +1765,17 @@ function PixQrCodeCard({
             </AnimatePresence>
           </Button>
 
-          <p className="text-center text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">
-            Após o pagamento, a confirmação é automática e seu pedido
-            será processado instantaneamente.
+          <p className="px-4 text-center font-black text-[10px] text-slate-500 uppercase tracking-widest">
+            Após o pagamento, a confirmação é automática e seu pedido será
+            processado instantaneamente.
           </p>
         </div>
 
         <div className="pt-2">
           <Button
-            className="w-full h-14 bg-sky-500 hover:bg-sky-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-sky-500/20"
-            onClick={onCheckPayment}
+            className="h-14 w-full rounded-2xl bg-sky-500 font-black text-white uppercase tracking-widest shadow-lg shadow-sky-500/20 hover:bg-sky-600"
             disabled={isPixLoading || isVerifyingPayment || isPaymentConfirmed}
+            onClick={onCheckPayment}
           >
             {isPaymentConfirmed ? (
               <>
@@ -1697,7 +1807,11 @@ function BoletoCard({
   isVerifyingPayment,
   isPaymentConfirmed,
 }: {
-  boletoSession: { boletoUrl: string; boletoDigitableLine: string; transactionId: string };
+  boletoSession: {
+    boletoUrl: string;
+    boletoDigitableLine: string;
+    transactionId: string;
+  };
   boletoCopied: boolean;
   copyBoletoToClipboard: () => void;
   onBack: () => void;
@@ -1714,27 +1828,35 @@ function BoletoCard({
   };
 
   return (
-    <Card className="bg-white/5 backdrop-blur-md border-white/10 rounded-3xl shadow-2xl overflow-hidden">
-      <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
+    <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
+      <Dialog onOpenChange={setShowInfoModal} open={showInfoModal}>
         <DialogContent className="border-white/10 bg-slate-950 text-white sm:max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-amber-500/10">
               <Clock className="text-amber-400" size={24} strokeWidth={2} />
             </div>
-            <DialogTitle className="text-center">Pagamento em processamento</DialogTitle>
-            <DialogDescription className="text-center text-slate-400 space-y-2">
+            <DialogTitle className="text-center">
+              Pagamento em processamento
+            </DialogTitle>
+            <DialogDescription className="space-y-2 text-center text-slate-400">
               <span className="block">
-                Recebemos seu clique de confirmação. Boletos não são compensados na hora —
-                o banco pode levar até 2 dias úteis pra processar o pagamento.
+                Recebemos seu clique de confirmação. Boletos não são compensados
+                na hora — o banco pode levar até 2 dias úteis pra processar o
+                pagamento.
               </span>
               <span className="block">
-                Assim que a compensação for confirmada, sua compra é liberada automaticamente
-                e você recebe um e-mail. Não precisa ficar com esta página aberta.
+                Assim que a compensação for confirmada, sua compra é liberada
+                automaticamente e você recebe um e-mail. Não precisa ficar com
+                esta página aberta.
               </span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-center">
-            <Button type="button" onClick={() => setShowInfoModal(false)} className="w-full sm:w-auto">
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => setShowInfoModal(false)}
+              type="button"
+            >
               Entendi
             </Button>
           </DialogFooter>
@@ -1744,26 +1866,24 @@ function BoletoCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
-              <Barcode
-                className="text-amber-400"
-                size={18}
-                strokeWidth={2.5}
-              />
+              <Barcode className="text-amber-400" size={18} strokeWidth={2.5} />
             </div>
             <div>
-              <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Pague com Boleto</CardTitle>
-              <CardDescription className="text-slate-400 font-medium">
+              <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+                Pague com Boleto
+              </CardTitle>
+              <CardDescription className="font-medium text-slate-400">
                 Pague no app do banco ou lotérica com a linha digitável
               </CardDescription>
             </div>
           </div>
           <Button
-            variant="ghost"
-            size="sm"
+            className="text-slate-500 transition-colors hover:text-white"
             onClick={onBack}
-            className="text-slate-500 hover:text-white transition-colors"
+            size="sm"
+            variant="ghost"
           >
-            <ArrowLeft size={16} className="mr-2" />
+            <ArrowLeft className="mr-2" size={16} />
             Voltar
           </Button>
         </div>
@@ -1771,24 +1891,24 @@ function BoletoCard({
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <Button
-            type="button"
-            variant="outline"
             className={clsx(
-              "w-full h-12 text-base font-medium overflow-hidden transition-all duration-300",
+              "h-12 w-full overflow-hidden font-medium text-base transition-all duration-300",
               boletoCopied
                 ? "border-emerald-500/45 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
                 : "hover:border-emerald-500/30 hover:bg-emerald-500 hover:text-white"
             )}
             onClick={copyBoletoToClipboard}
+            type="button"
+            variant="outline"
           >
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence initial={false} mode="wait">
               <motion.span
-                key={boletoCopied ? "copied" : "copy"}
-                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
                 className="inline-flex items-center justify-center gap-2"
+                exit={{ opacity: 0, y: -8 }}
+                initial={{ opacity: 0, y: 8 }}
+                key={boletoCopied ? "copied" : "copy"}
+                transition={{ duration: 0.18, ease: "easeOut" }}
               >
                 {boletoCopied ? (
                   <>
@@ -1807,16 +1927,20 @@ function BoletoCard({
 
           <Button
             asChild
+            className="h-12 w-full font-medium text-base hover:border-emerald-500/30 hover:bg-emerald-500 hover:text-white"
             type="button"
             variant="outline"
-            className="w-full h-12 text-base font-medium hover:border-emerald-500/30 hover:bg-emerald-500 hover:text-white"
           >
-            <a href={boletoSession.boletoUrl} target="_blank" rel="noopener noreferrer">
+            <a
+              href={boletoSession.boletoUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
               Visualizar / imprimir boleto (PDF)
             </a>
           </Button>
 
-          <p className="text-center text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">
+          <p className="px-4 text-center font-black text-[10px] text-slate-500 uppercase tracking-widest">
             Após o pagamento, a compensação pode levar até 2 dias úteis. A
             confirmação é automática assim que o banco processar.
           </p>
@@ -1824,9 +1948,11 @@ function BoletoCard({
 
         <div className="pt-2">
           <Button
-            className="w-full h-14 bg-sky-500 hover:bg-sky-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-sky-500/20"
+            className="h-14 w-full rounded-2xl bg-sky-500 font-black text-white uppercase tracking-widest shadow-lg shadow-sky-500/20 hover:bg-sky-600"
+            disabled={
+              isBoletoLoading || isVerifyingPayment || isPaymentConfirmed
+            }
             onClick={handleCheckPaymentClick}
-            disabled={isBoletoLoading || isVerifyingPayment || isPaymentConfirmed}
           >
             {isPaymentConfirmed ? (
               <>
@@ -1869,7 +1995,7 @@ function BillingInformationSection({
   } = methods;
 
   return (
-    <Card className="bg-white/5 backdrop-blur-md border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+    <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
       <CardHeader>
         <div className="flex items-center gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
@@ -1877,17 +2003,17 @@ function BillingInformationSection({
           </div>
           <div className="flex flex-1 items-center justify-between">
             <div>
-              <CardTitle className="text-xl font-black text-white uppercase tracking-tight">
+              <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
                 Informações de Cobrança
               </CardTitle>
             </div>
             {hasExistingUser && savedInfo && onAutoFill && (
               <Button
+                className="flex h-9 items-center gap-2 rounded-xl border-sky-500/30 bg-sky-500/5 px-4 font-black text-[10px] text-sky-400 uppercase tracking-[0.2em] shadow-lg shadow-sky-500/10 transition-all hover:scale-105 hover:bg-sky-500/10 active:scale-95"
+                onClick={onAutoFill}
+                size="sm"
                 type="button"
                 variant="outline"
-                size="sm"
-                onClick={onAutoFill}
-                className="flex items-center gap-2 border-sky-500/30 bg-sky-500/5 text-sky-400 hover:bg-sky-500/10 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] px-4 h-9 shadow-lg shadow-sky-500/10 transition-all hover:scale-105 active:scale-95"
               >
                 <UserCheck size={14} />
                 Usar dados do perfil
@@ -1900,88 +2026,97 @@ function BillingInformationSection({
         {/* Personal Information */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor={`${id}-firstName`} className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+            <Label
+              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              htmlFor={`${id}-firstName`}
+            >
               Nome
             </Label>
             <Input
+              autoComplete="given-name"
               id={`${id}-firstName`}
               placeholder="Seu nome"
-              autoComplete="given-name"
               {...register("firstName")}
               className={atlasInputClasses}
             />
             {errors.firstName && (
-              <p className="text-xs text-red-400">{errors.firstName.message}</p>
+              <p className="text-red-400 text-xs">{errors.firstName.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor={`${id}-lastName`} className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+            <Label
+              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              htmlFor={`${id}-lastName`}
+            >
               Sobrenome
             </Label>
             <Input
+              autoComplete="family-name"
               id={`${id}-lastName`}
               placeholder="Seu sobrenome"
-              autoComplete="family-name"
               {...register("lastName")}
               className={atlasInputClasses}
             />
             {errors.lastName && (
-              <p className="text-xs text-red-400">{errors.lastName.message}</p>
+              <p className="text-red-400 text-xs">{errors.lastName.message}</p>
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor={`${id}-document`} className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+            <Label
+              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              htmlFor={`${id}-document`}
+            >
               CPF ou CNPJ
             </Label>
             <Controller
-              name="document"
               control={control}
+              name="document"
               render={({ field }) => (
                 <IMaskInput
                   {...field}
+                  autoComplete="off"
+                  className={atlasInputClasses}
                   mask={[
                     { mask: "000.000.000-00" },
                     { mask: "00.000.000/0000-00" },
                   ]}
+                  onAccept={value => field.onChange(value)}
                   placeholder="000.000.000-00"
-                  autoComplete="off"
-                  className={atlasInputClasses}
-                  onAccept={(value) => field.onChange(value)}
                 />
               )}
             />
             {errors.document && (
-              <p className="text-xs text-red-400">{errors.document.message}</p>
+              <p className="text-red-400 text-xs">{errors.document.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label
+              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
               htmlFor={`${id}-phoneNumber`}
-              className="text-[11px] font-black text-slate-400 uppercase tracking-wider"
             >
               Telefone
             </Label>
             <Controller
-              name="phoneNumber"
               control={control}
+              name="phoneNumber"
               render={({ field }) => (
                 <IMaskInput
                   {...field}
-                  mask="(00) 00000-0000"
-                  placeholder="(11) 99999-9999"
                   autoComplete="tel"
                   className={atlasInputClasses}
-                  onAccept={(value) => field.onChange(value)}
+                  mask="(00) 00000-0000"
+                  onAccept={value => field.onChange(value)}
+                  placeholder="(11) 99999-9999"
                 />
               )}
             />
             {errors.phoneNumber && (
-              <p className="text-xs text-red-400">
+              <p className="text-red-400 text-xs">
                 {errors.phoneNumber.message}
               </p>
             )}
@@ -1990,23 +2125,21 @@ function BillingInformationSection({
 
         <div className="space-y-2">
           <Label
+            className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
             htmlFor={`${id}-address.zipCode`}
-            className="text-[11px] font-black text-slate-400 uppercase tracking-wider"
           >
             CEP
           </Label>
           <Controller
-            name="address.zipCode"
             control={control}
+            name="address.zipCode"
             render={({ field }) => (
               <IMaskInput
                 {...field}
-                mask="00000-000"
-                unmask={true}
-                placeholder="00000-000"
                 autoComplete="postal-code"
                 className={atlasInputClasses}
-                onAccept={(value) => {
+                mask="00000-000"
+                onAccept={value => {
                   field.onChange(value);
 
                   (async () => {
@@ -2027,11 +2160,13 @@ function BillingInformationSection({
                     }
                   })();
                 }}
+                placeholder="00000-000"
+                unmask={true}
               />
             )}
           />
           {errors.address?.zipCode && (
-            <p className="text-xs text-red-400">
+            <p className="text-red-400 text-xs">
               {errors.address.zipCode.message}
             </p>
           )}
@@ -2042,20 +2177,20 @@ function BillingInformationSection({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-2 md:col-span-2">
               <Label
+                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
                 htmlFor={`${id}-address.street`}
-                className="text-[11px] font-black text-slate-400 uppercase tracking-wider"
               >
                 Rua
               </Label>
               <Input
+                autoComplete="address-line1"
                 id={`${id}-address.street`}
                 placeholder="Nome da rua"
-                autoComplete="address-line1"
                 {...register("address.street")}
                 className={atlasInputClasses}
               />
               {errors.address?.street && (
-                <p className="text-xs text-red-400">
+                <p className="text-red-400 text-xs">
                   {errors.address.street.message}
                 </p>
               )}
@@ -2063,31 +2198,31 @@ function BillingInformationSection({
 
             <div className="space-y-2">
               <Label
+                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
                 htmlFor={`${id}-address.number`}
-                className="text-[11px] font-black text-slate-400 uppercase tracking-wider"
               >
                 Número
               </Label>
               <Input
+                autoComplete="address-line2"
                 id={`${id}-address.number`}
                 placeholder="123"
-                autoComplete="address-line2"
                 {...register("address.number")}
                 className={atlasInputClasses}
               />
               {errors.address?.number && (
-                <p className="text-xs text-red-400">
+                <p className="text-red-400 text-xs">
                   {errors.address.number.message}
                 </p>
               )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label
+                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
                 htmlFor={`${id}-address.neighborhood`}
-                className="text-[11px] font-black text-slate-400 uppercase tracking-wider"
               >
                 Bairro
               </Label>
@@ -2098,27 +2233,27 @@ function BillingInformationSection({
                 className={atlasInputClasses}
               />
               {errors.address?.neighborhood && (
-                <p className="text-xs text-red-400">
+                <p className="text-red-400 text-xs">
                   {errors.address.neighborhood.message}
                 </p>
               )}
             </div>
             <div className="space-y-2">
               <Label
+                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
                 htmlFor={`${id}-address.city`}
-                className="text-[11px] font-black text-slate-400 uppercase tracking-wider"
               >
                 Cidade
               </Label>
               <Input
+                autoComplete="address-level2"
                 id={`${id}-address.city`}
                 placeholder="Nome da cidade"
-                autoComplete="address-level2"
                 {...register("address.city")}
                 className={atlasInputClasses}
               />
               {errors.address?.city && (
-                <p className="text-xs text-red-400">
+                <p className="text-red-400 text-xs">
                   {errors.address.city.message}
                 </p>
               )}
@@ -2126,21 +2261,21 @@ function BillingInformationSection({
 
             <div className="space-y-2">
               <Label
+                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
                 htmlFor={`${id}-address.state`}
-                className="text-[11px] font-black text-slate-400 uppercase tracking-wider"
               >
                 Estado
               </Label>
               <Input
-                id={`${id}-address.state`}
-                placeholder="SP"
                 autoComplete="address-level1"
+                id={`${id}-address.state`}
                 maxLength={2}
+                placeholder="SP"
                 {...register("address.state")}
                 className={atlasInputClasses}
               />
               {errors.address?.state && (
-                <p className="text-xs text-red-400">
+                <p className="text-red-400 text-xs">
                   {errors.address.state.message}
                 </p>
               )}
@@ -2160,26 +2295,23 @@ function BillingSummaryCard({
   onEdit: () => void;
 }) {
   return (
-    <Card className="bg-white/5 backdrop-blur-md border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+    <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
-              <UserCheck
-                className="text-emerald-400 h-5 w-5"
-                strokeWidth={3}
-              />
+              <UserCheck className="h-5 w-5 text-emerald-400" strokeWidth={3} />
             </div>
             <div>
-              <CardTitle className="text-xl font-black text-white uppercase tracking-tight">
+              <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
                 Informações de Cobrança
               </CardTitle>
-              <CardDescription className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 opacity-80">
+              <CardDescription className="mt-0.5 font-bold text-[11px] text-slate-400 uppercase tracking-widest opacity-80">
                 Dados confirmados
               </CardDescription>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={onEdit}>
+          <Button onClick={onEdit} size="sm" variant="outline">
             Editar
           </Button>
         </div>
@@ -2188,17 +2320,23 @@ function BillingSummaryCard({
         <div className="space-y-3 text-sm">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
-              <span className="font-medium">{values.firstName} {values.lastName}</span>
-              <div className="text-slate-400 font-medium">{values.document}</div>
+              <span className="font-medium">
+                {values.firstName} {values.lastName}
+              </span>
+              <div className="font-medium text-slate-400">
+                {values.document}
+              </div>
             </div>
             <div>
               <span className="font-medium">Telefone</span>
-              <div className="text-slate-400 font-medium">{values.phoneNumber}</div>
+              <div className="font-medium text-slate-400">
+                {values.phoneNumber}
+              </div>
             </div>
           </div>
           <div>
             <span className="font-medium">Endereço</span>
-            <div className="text-slate-400 font-medium">
+            <div className="font-medium text-slate-400">
               {values.address?.street}, {values.address?.number} •{" "}
               {values.address?.neighborhood}
               <br />
@@ -2219,90 +2357,101 @@ function NewCardFormSection({
 }: UseFormReturn<NewCardFormInputs>) {
   return (
     <MotionCard
-      initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
+      className="rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md"
       exit={{ opacity: 0, y: -20 }}
-      transition={{ ease: [0.25, 1, 0.5, 1], duration: 0.6 }}
-      className="bg-white/5 backdrop-blur-md border-white/10 rounded-3xl shadow-2xl"
+      initial={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
     >
       <CardHeader>
-        <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Dados do Cartão</CardTitle>
-        <CardDescription className="text-slate-400 font-medium">
+        <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+          Dados do Cartão
+        </CardTitle>
+        <CardDescription className="font-medium text-slate-400">
           Insira os dados do seu cartão de crédito
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="space-y-2 col-span-2">
-            <Label htmlFor="cardNumber" className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="col-span-2 space-y-2">
+            <Label
+              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              htmlFor="cardNumber"
+            >
               Número do Cartão
             </Label>
             <Controller
-              name="cardNumber"
               control={control}
+              name="cardNumber"
               render={({ field }) => (
                 <IMaskInput
                   {...field}
-                  mask="0000 0000 0000 0000"
-                  unmask={true}
-                  placeholder="0000 0000 0000 0000"
                   autoComplete="cc-number"
                   className={atlasInputClasses}
-                  onAccept={(value) => field.onChange(value)}
+                  mask="0000 0000 0000 0000"
+                  onAccept={value => field.onChange(value)}
+                  placeholder="0000 0000 0000 0000"
+                  unmask={true}
                 />
               )}
             />
             {errors.cardNumber && touchedFields.cardNumber && (
-              <p className="text-xs text-red-400">
+              <p className="text-red-400 text-xs">
                 {errors.cardNumber.message}
               </p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cardCvv" className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+            <Label
+              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              htmlFor="cardCvv"
+            >
               CVV
             </Label>
             <Controller
-              name="cardCvv"
               control={control}
+              name="cardCvv"
               render={({ field }) => (
                 <IMaskInput
                   {...field}
-                  mask="000"
-                  unmask={true}
-                  placeholder="123"
                   autoComplete="cc-csc"
                   className={atlasInputClasses}
-                  onAccept={(value) => field.onChange(value)}
+                  mask="000"
+                  onAccept={value => field.onChange(value)}
+                  placeholder="123"
+                  unmask={true}
                 />
               )}
             />
             {errors.cardCvv && touchedFields.cardCvv && (
-              <p className="text-xs text-red-400">{errors.cardCvv.message}</p>
+              <p className="text-red-400 text-xs">{errors.cardCvv.message}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cardExpiration" className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+            <Label
+              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              htmlFor="cardExpiration"
+            >
               Data de Validade
             </Label>
             <Controller
-              name="cardExpiration"
               control={control}
+              name="cardExpiration"
               render={({ field }) => (
                 <IMaskInput
                   {...field}
-                  mask="00/00"
-                  placeholderChar=" "
-                  lazy={false}
-                  placeholder="MM/AA"
                   autoComplete="cc-exp"
                   className={clsx([atlasInputClasses, "text-center"])}
-                  onAccept={(value) => field.onChange(value)}
+                  lazy={false}
+                  mask="00/00"
+                  onAccept={value => field.onChange(value)}
+                  placeholder="MM/AA"
+                  placeholderChar=" "
                 />
               )}
             />
             {errors.cardExpiration && touchedFields.cardExpiration && (
-              <p className="text-xs text-red-400">
+              <p className="text-red-400 text-xs">
                 {errors.cardExpiration.message}
               </p>
             )}
@@ -2311,68 +2460,75 @@ function NewCardFormSection({
 
         {/* Billing Information for Card Holder */}
         <div className="mt-8 space-y-6">
-          <h3 className="text-xs font-black text-sky-500 uppercase tracking-widest">
+          <h3 className="font-black text-sky-500 text-xs uppercase tracking-widest">
             Informações do Titular
           </h3>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="firstName" className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+              <Label
+                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+                htmlFor="firstName"
+              >
                 Nome do Titular
               </Label>
               <Input
-                placeholder="Nome"
                 autoComplete="given-name"
+                placeholder="Nome"
                 {...register("firstName")}
                 className={atlasInputClasses}
               />
               {errors.firstName && (
-                <p className="text-xs text-red-400">
+                <p className="text-red-400 text-xs">
                   {errors.firstName.message}
                 </p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+              <Label
+                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+                htmlFor="lastName"
+              >
                 Sobrenome do Titular
               </Label>
               <Input
-                placeholder="Sobrenome"
                 autoComplete="family-name"
+                placeholder="Sobrenome"
                 {...register("lastName")}
                 className={atlasInputClasses}
               />
               {errors.lastName && (
-                <p className="text-xs text-red-400">
+                <p className="text-red-400 text-xs">
                   {errors.lastName.message}
                 </p>
               )}
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="document" className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+            <Label
+              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              htmlFor="document"
+            >
               CPF ou CNPJ do titular
             </Label>
             <Controller
-              name="document"
               control={control}
+              name="document"
               render={({ field }) => (
                 <IMaskInput
                   {...field}
+                  autoComplete="document"
+                  className={atlasInputClasses}
                   mask={[
                     { mask: "000.000.000-00" },
                     { mask: "00.000.000/0000-00" },
                   ]}
+                  onAccept={value => field.onChange(value)}
                   placeholder="000.000.000-00"
-                  autoComplete="document"
-                  className={atlasInputClasses}
-                  onAccept={(value) => field.onChange(value)}
                 />
               )}
             />
             {errors.document && (
-              <p className="text-xs text-red-400">
-                {errors.document.message}
-              </p>
+              <p className="text-red-400 text-xs">{errors.document.message}</p>
             )}
           </div>
         </div>

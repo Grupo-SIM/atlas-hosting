@@ -10,37 +10,37 @@ import {
 import { pgUser } from "./user";
 
 export const pgSystemConfig = pgTable("system_config", {
+  // Off by default: boleto não é oferecido como forma de pagamento. Quando ligado
+  // pelo admin, boleto fica disponível pra qualquer compra de VPS/VDS/Storage VPS.
+  boletoEnabled: boolean("boleto_enabled").notNull().default(false),
   domainFee: doublePrecision("domain_fee").notNull().default(5.0),
-  referrerCommission: doublePrecision("referrer_commission")
-    .notNull()
-    .default(0.1),
   minWithdrawalAmount: doublePrecision("min_withdrawal_amount")
     .notNull()
     .default(100.0),
-  withdrawalFee: doublePrecision("withdrawal_fee").notNull().default(2.0),
   // Off by default: PIX só é aceito no plano de 24 meses. Quando ligado, o admin
   // libera PIX pra qualquer duração (1/12/24 meses) de VPS/VDS/Storage VPS.
   pixAllowAllDurations: boolean("pix_allow_all_durations")
     .notNull()
     .default(false),
-  // Off by default: boleto não é oferecido como forma de pagamento. Quando ligado
-  // pelo admin, boleto fica disponível pra qualquer compra de VPS/VDS/Storage VPS.
-  boletoEnabled: boolean("boleto_enabled").notNull().default(false),
+  referrerCommission: doublePrecision("referrer_commission")
+    .notNull()
+    .default(0.1),
+  withdrawalFee: doublePrecision("withdrawal_fee").notNull().default(2.0),
 });
 
 export const pgWithdrawalRequests = pgTable("withdraw_requests", {
+  amount: doublePrecision("amount").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  fee: doublePrecision("fee").default(2.0),
   id: uuid("id").primaryKey(),
-  userId: uuid("user_id").notNull(),
+  pixKey: text("pix_key"),
+  rejectionReason: text("rejection_reason"),
+  simpayWithdrawalId: text("simpay_withdrawal_id"),
   status: text("status", {
     enum: ["pending", "approved", "rejected"],
   }).notNull(),
-  amount: doublePrecision("amount").notNull(),
-  pixKey: text("pix_key"),
-  simpayWithdrawalId: text("simpay_withdrawal_id"),
-  fee: doublePrecision("fee").default(2.0),
-  rejectionReason: text("rejection_reason"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  userId: uuid("user_id").notNull(),
 });
 
 export const pgWithdrawalRequestsRelations = relations(

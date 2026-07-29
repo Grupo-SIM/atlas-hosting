@@ -1,8 +1,8 @@
+import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { pgOrganization, pgUser, pgWallet } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
 
 export async function GET() {
   // Buscar usuário diretamente da sessão do NextAuth, sem usar getUser() que redireciona
@@ -42,8 +42,8 @@ export async function GET() {
     .insert(pgOrganization)
     .values({
       name: user.name,
-      walletId,
       ownerId: user.id,
+      walletId,
     })
     .returning();
 

@@ -1,5 +1,4 @@
-
-const pleskApi = require('./src/lib/server/apis/plesk/index.ts').default;
+const pleskApi = require("./src/lib/server/apis/plesk/index.ts").default;
 
 async function test() {
   console.log("Starting internal test...");

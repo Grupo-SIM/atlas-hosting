@@ -12,8 +12,8 @@ export interface ResellerClubConfig {
 export type DomainAvailabilityStatus =
   | "available"
   | "unavailable"
-  | "regthroughus"       // registered through the reseller's own account
-  | "regthroughothers"   // registered through another registrar
+  | "regthroughus" // registered through the reseller's own account
+  | "regthroughothers" // registered through another registrar
   | "unknown";
 
 export interface DomainAvailabilityResult {
@@ -61,7 +61,7 @@ export interface ResellerClubContact {
   country: string;
   zipcode: string;
   phoneCountryCode: string; // e.g. "55"
-  phone: string;            // e.g. "11999999999"
+  phone: string; // e.g. "11999999999"
   fax?: string;
   faxCountryCode?: string;
 }

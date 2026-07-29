@@ -17,24 +17,19 @@
  */
 
 import globalAxios, {
-  type AxiosResponse,
   type AxiosInstance,
   type AxiosRequestConfig,
+  type AxiosResponse,
 } from "axios";
-import type { Configuration } from "../configuration";
 // Some imports not used depending on template conditions
 // @ts-ignore
-import {
-  BASE_PATH,
-  COLLECTION_FORMATS,
-  type RequestArgs,
-  BaseAPI,
-  RequiredError,
-} from "../base";
-import type { CliCallRequest } from "../models";
-import type { CliCallResponse } from "../models";
-import { ErrorResponse } from "../models";
-import type { InlineResponse200 } from "../models";
+import { BASE_PATH, BaseAPI, type RequestArgs, RequiredError } from "../base";
+import type { Configuration } from "../configuration";
+import type {
+  CliCallRequest,
+  CliCallResponse,
+  InlineResponse200,
+} from "../models";
 
 /**
  * CliApi - axios parameter creator
@@ -50,7 +45,7 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
   cliCommandsGet: async (
     options: AxiosRequestConfig = {}
   ): Promise<RequestArgs> => {
-    const localVarPath = `/cli/commands`;
+    const localVarPath = "/cli/commands";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -66,7 +61,7 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -77,9 +72,9 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -91,8 +86,9 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -100,9 +96,9 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -125,7 +121,7 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter id was null or undefined when calling cliIdCallPost."
       );
     }
-    const localVarPath = `/cli/{id}/call`.replace(
+    const localVarPath = "/cli/{id}/call".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -144,7 +140,7 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -155,9 +151,9 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -171,8 +167,9 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -186,9 +183,9 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -209,7 +206,7 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter id was null or undefined when calling cliIdRefGet."
       );
     }
-    const localVarPath = `/cli/{id}/ref`.replace(
+    const localVarPath = "/cli/{id}/ref".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id))
     );
@@ -228,7 +225,7 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -239,9 +236,9 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -253,8 +250,9 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -262,13 +260,12 @@ export const CliApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
 });
-
 
 /**
  * CliApi - functional programming interface
@@ -287,7 +284,7 @@ export const CliApiFp = (configuration?: Configuration) => ({
     (
       axios?: AxiosInstance,
       basePath?: string
-    ) => Promise<AxiosResponse<Array<string>>>
+    ) => Promise<AxiosResponse<string[]>>
   > {
     const localVarAxiosArgs =
       await CliApiAxiosParamCreator(configuration).cliCommandsGet(options);
@@ -366,7 +363,6 @@ export const CliApiFp = (configuration?: Configuration) => ({
   },
 });
 
-
 /**
  * CliApi - factory interface
  * @export
@@ -384,10 +380,10 @@ export const CliApiFactory = (
    */
   async cliCommandsGet(
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<string>>> {
+  ): Promise<AxiosResponse<string[]>> {
     return CliApiFp(configuration)
       .cliCommandsGet(options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -404,7 +400,7 @@ export const CliApiFactory = (
   ): Promise<AxiosResponse<CliCallResponse>> {
     return CliApiFp(configuration)
       .cliIdCallPost(id, body, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    * plesk: >= 17.9
@@ -419,10 +415,9 @@ export const CliApiFactory = (
   ): Promise<AxiosResponse<InlineResponse200>> {
     return CliApiFp(configuration)
       .cliIdRefGet(id, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
 });
-
 
 /**
  * CliApi - object-oriented interface
@@ -440,10 +435,10 @@ export class CliApi extends BaseAPI {
    */
   public async cliCommandsGet(
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<string>>> {
+  ): Promise<AxiosResponse<string[]>> {
     return CliApiFp(this.configuration)
       .cliCommandsGet(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -461,7 +456,7 @@ export class CliApi extends BaseAPI {
   ): Promise<AxiosResponse<CliCallResponse>> {
     return CliApiFp(this.configuration)
       .cliIdCallPost(id, body, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    * plesk: >= 17.9
@@ -477,6 +472,6 @@ export class CliApi extends BaseAPI {
   ): Promise<AxiosResponse<InlineResponse200>> {
     return CliApiFp(this.configuration)
       .cliIdRefGet(id, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
 }

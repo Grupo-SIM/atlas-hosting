@@ -42,14 +42,14 @@ export class ImapEmailClient {
   async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.imap = new Imap({
-        user: this.config.username,
-        password: this.config.password,
         host: this.config.host,
+        password: this.config.password,
         port: this.config.port,
         tls: this.config.secure,
         tlsOptions: {
           rejectUnauthorized: false, // For self-signed certificates
         },
+        user: this.config.username,
       });
 
       if (!this.imap) {
@@ -98,7 +98,7 @@ export class ImapEmailClient {
         const folders: EmailFolder[] = [];
 
         const parseBoxes = (boxList: Record<string, any>, prefix = "") => {
-          Object.keys(boxList).forEach((name) => {
+          Object.keys(boxList).forEach(name => {
             const box = boxList[name] as {
               flags?: string[];
               children?: Record<string, any>;
@@ -107,10 +107,10 @@ export class ImapEmailClient {
             const fullName = prefix + name;
 
             folders.push({
-              id: fullName.toLowerCase(),
-              name: fullName,
               count: 0, // Will be updated when opening folder
               flags: box.flags || [],
+              id: fullName.toLowerCase(),
+              name: fullName,
             });
 
             if (box.children) {
@@ -165,7 +165,7 @@ export class ImapEmailClient {
 
           msg.on("body", (stream, info) => {
             let buffer = "";
-            stream.on("data", (chunk) => {
+            stream.on("data", chunk => {
               buffer += chunk.toString("utf8");
             });
             stream.once("end", () => {
@@ -174,7 +174,7 @@ export class ImapEmailClient {
               } else {
                 // Parse headers
                 const lines = buffer.split("\r\n");
-                lines.forEach((line) => {
+                lines.forEach(line => {
                   const match = line.match(/^([^:]+):\s*(.*)$/);
                   if (match) {
                     headers[match[1].toLowerCase()] = match[2];
@@ -184,7 +184,7 @@ export class ImapEmailClient {
             });
           });
 
-          msg.once("attributes", (attrs) => {
+          msg.once("attributes", attrs => {
             // Check for attachments
             if (attrs.struct) {
               const checkStruct = (struct: Record<string, any>): void => {
@@ -203,25 +203,25 @@ export class ImapEmailClient {
 
           msg.once("end", () => {
             const email: EmailMessage = {
-              id: `${seqno}`,
-              from: headers.from || "Unknown",
-              to: headers.to || "Unknown",
-              subject: headers.subject || "No Subject",
-              preview: this.extractPreview(body),
+              body: this.stripHtml(body),
               date: headers.date ? new Date(headers.date) : new Date(),
+              folder: folderName.toLowerCase(),
+              from: headers.from || "Unknown",
+              hasAttachment,
+              html: body,
+              id: `${seqno}`,
               isRead: false, // Will be determined by flags
               isStarred: false,
-              hasAttachment,
-              folder: folderName.toLowerCase(),
-              body: this.stripHtml(body),
-              html: body,
+              preview: this.extractPreview(body),
+              subject: headers.subject || "No Subject",
+              to: headers.to || "Unknown",
             };
 
             emails.push(email);
           });
         });
 
-        fetch.once("error", (err) => {
+        fetch.once("error", err => {
           reject(err);
         });
 
@@ -252,7 +252,7 @@ export class ImapEmailClient {
           return;
         }
 
-        this.imap.seq.addFlags(messageId, "\\Seen", (err) => {
+        this.imap.seq.addFlags(messageId, "\\Seen", err => {
           if (err) {
             reject(err);
             return;
@@ -281,7 +281,7 @@ export class ImapEmailClient {
           return;
         }
 
-        this.imap.seq.addFlags(messageId, "\\Deleted", (err) => {
+        this.imap.seq.addFlags(messageId, "\\Deleted", err => {
           if (err) {
             reject(err);
             return;
@@ -292,7 +292,7 @@ export class ImapEmailClient {
             return;
           }
 
-          this.imap.expunge((err) => {
+          this.imap.expunge(err => {
             if (err) {
               reject(err);
               return;
@@ -334,10 +334,10 @@ export async function createImapClient(accountConfig: {
 
   const config: ImapConfig = {
     host: accountConfig.imapHost,
+    password,
     port: accountConfig.imapPort,
     secure: accountConfig.imapSecure,
     username: accountConfig.imapUsername,
-    password,
   };
 
   return new ImapEmailClient(config);

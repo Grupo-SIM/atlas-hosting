@@ -6,7 +6,9 @@ async function test() {
     const servers = await db.select().from(pgVpsServers);
     console.log("--- DEBUG SERVIDORES ---");
     servers.forEach(s => {
-      console.log(`VPS: ${s.name} | Status: ${s.status} | Processos no Banco: ${s.topProcesses?.length || 0}`);
+      console.log(
+        `VPS: ${s.name} | Status: ${s.status} | Processos no Banco: ${s.topProcesses?.length || 0}`
+      );
     });
     console.log("------------------------");
   } catch (e) {

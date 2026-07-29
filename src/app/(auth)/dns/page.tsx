@@ -1,26 +1,27 @@
+import { isError } from "lodash";
+import { AlertCircle, ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
+import NoDomains from "@/components/domains/NoDomains";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { getUserCurrentDomain } from "@/lib/server/utils";
-import { isError } from "lodash";
-import { AlertCircle, ArrowLeft } from "lucide-react";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { DnsRecordsManager } from "./components/DnsRecordManager";
-import { getCachedDnsRecords, type CachedDnsData } from "./utils";
-import NoDomains from "@/components/domains/NoDomains";
+import { type CachedDnsData, getCachedDnsRecords } from "./utils";
 
 export const metadata: Metadata = {
-  title: "Gerenciamento de DNS - Atlas Hosting",
   description:
     "Gerencie os registros DNS do seu domínio facilmente com o Atlas Hosting.",
+  title: "Gerenciamento de DNS - Atlas Hosting",
 };
 
 export default async function DnsManagementPage({
   searchParams,
-}: { searchParams: Promise<{ domain?: string }> }) {
+}: {
+  searchParams: Promise<{ domain?: string }>;
+}) {
   const { domain: domainFromQuery } = await searchParams;
   const user = await getUser();
 
@@ -29,7 +30,7 @@ export default async function DnsManagementPage({
   if (domainFromQuery) {
     domain = user.organization.domains.find(d => d.domain === domainFromQuery);
   }
-  
+
   // Fallback para o domínio selecionado se não veio na query ou não foi encontrado
   if (!domain) {
     domain = await getUserCurrentDomain(user);
@@ -37,7 +38,7 @@ export default async function DnsManagementPage({
 
   if (!domain) {
     return (
-      <Card className="max-w-2xl mx-auto mt-8">
+      <Card className="mx-auto mt-8 max-w-2xl">
         <NoDomains />
       </Card>
     );
@@ -59,23 +60,23 @@ export default async function DnsManagementPage({
   }
 
   const breadcrumbItems = [
-    { label: "Sites", href: "/sites" }, // Adjust href as needed
-    { label: domainName, href: `/sites/${domainName}` }, // Adjust href as needed
+    { href: "/sites", label: "Sites" }, // Adjust href as needed
+    { href: `/sites/${domainName}`, label: domainName }, // Adjust href as needed
     { label: "Gerenciamento de DNS" },
   ];
 
   return (
-    <div className="space-y-6 p-4 md:p-6 pb-16">
+    <div className="space-y-6 p-4 pb-16 md:p-6">
       {/* <Breadcrumb items={breadcrumbItems} /> */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" asChild={true}>
+          <Button asChild={true} size="icon" variant="outline">
             <Link href="/domains">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
               Editor de Zona DNS
             </h1>
             <p className="text-muted-foreground">
@@ -112,9 +113,9 @@ export default async function DnsManagementPage({
         <DnsRecordsManager
           domainName={domainName}
           initialRecords={initialDnsData.records}
+          isUsingOurDNS={initialDnsData.isUsingOurDNS}
           sld={initialDnsData.sld}
           tld={initialDnsData.tld}
-          isUsingOurDNS={initialDnsData.isUsingOurDNS}
         />
       )}
       {!fetchError &&

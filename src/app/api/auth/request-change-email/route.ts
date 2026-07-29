@@ -1,19 +1,19 @@
+import { verify } from "@node-rs/argon2";
+import { and, eq, ne } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/auth";
+import { createChangeEmailToken } from "@/lib/auth/tokens";
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema";
-import { eq, and, ne } from "drizzle-orm";
-import { createChangeEmailToken } from "@/lib/auth/tokens";
 import { sendChangeEmailVerificationEmail } from "@/lib/email/service";
-import { auth } from "@/auth";
-import { verify } from "@node-rs/argon2";
-import { AppError } from "@/lib/errors";
 import { errorHandler } from "@/lib/error-handler";
+import { AppError } from "@/lib/errors";
 
 const requestChangeEmailSchema = z.object({
-  newEmail: z.string().email("Email inválido"),
   currentPassword: z.string().min(1, "Senha atual é obrigatória"),
+  newEmail: z.string().email("Email inválido"),
 });
 
 export async function POST(request: NextRequest) {
@@ -57,12 +57,7 @@ export async function POST(request: NextRequest) {
     const [existingUser] = await db
       .select()
       .from(pgUser)
-      .where(
-        and(
-          eq(pgUser.email, newEmail),
-          ne(pgUser.id, user.id)
-        )
-      )
+      .where(and(eq(pgUser.email, newEmail), ne(pgUser.id, user.id)))
       .limit(1);
 
     if (existingUser) {

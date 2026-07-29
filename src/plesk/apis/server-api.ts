@@ -17,26 +17,21 @@
  */
 
 import globalAxios, {
-  type AxiosResponse,
   type AxiosInstance,
   type AxiosRequestConfig,
+  type AxiosResponse,
 } from "axios";
-import type { Configuration } from "../configuration";
 // Some imports not used depending on template conditions
 // @ts-ignore
-import {
-  BASE_PATH,
-  COLLECTION_FORMATS,
-  type RequestArgs,
-  BaseAPI,
-  RequiredError,
-} from "../base";
-import { ErrorResponse } from "../models";
-import type { ServerInit } from "../models";
-import type { ServerIp } from "../models";
-import type { ServerLicense } from "../models";
-import type { ServerMeta } from "../models";
-import type { StatusResponse } from "../models";
+import { BASE_PATH, BaseAPI, type RequestArgs, RequiredError } from "../base";
+import type { Configuration } from "../configuration";
+import type {
+  ServerInit,
+  ServerIp,
+  ServerLicense,
+  ServerMeta,
+  StatusResponse,
+} from "../models";
 
 /**
  * ServerApi - axios parameter creator
@@ -50,7 +45,7 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   serverGet: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-    const localVarPath = `/server`;
+    const localVarPath = "/server";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -66,7 +61,7 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -77,9 +72,9 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -91,8 +86,9 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -100,9 +96,9 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -123,7 +119,7 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter body was null or undefined when calling serverInitPost."
       );
     }
-    const localVarPath = `/server/init`;
+    const localVarPath = "/server/init";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -139,7 +135,7 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -150,9 +146,9 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -166,8 +162,9 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -181,9 +178,9 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -195,7 +192,7 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
   serverIpsGet: async (
     options: AxiosRequestConfig = {}
   ): Promise<RequestArgs> => {
-    const localVarPath = `/server/ips`;
+    const localVarPath = "/server/ips";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -211,7 +208,7 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -222,9 +219,9 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -236,8 +233,9 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -245,9 +243,9 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
     };
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
   /**
@@ -268,7 +266,7 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
         "Required parameter body was null or undefined when calling serverLicensePost."
       );
     }
-    const localVarPath = `/server/license`;
+    const localVarPath = "/server/license";
     // use dummy base URL string because the URL constructor only accepts absolute URLs.
     const localVarUrlObj = new URL(localVarPath, "https://example.com");
     let baseOptions;
@@ -284,7 +282,7 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
     const localVarQueryParameter = {} as any;
 
     // authentication APIKeyHeader required
-    if (configuration && configuration.apiKey) {
+    if (configuration?.apiKey) {
       const localVarApiKeyValue =
         typeof configuration.apiKey === "function"
           ? await configuration.apiKey("X-API-Key")
@@ -295,9 +293,9 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
     // authentication BasicAuth required
     // http basic authentication required
     if (configuration && (configuration.username! || configuration.password!)) {
-      localVarRequestOptions["auth"] = {
-        username: configuration.username!,
+      localVarRequestOptions.auth = {
         password: configuration.password!,
+        username: configuration.username!,
       };
     }
 
@@ -311,8 +309,9 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
       query.set(key, options.params[key]);
     }
     localVarUrlObj.search = new URLSearchParams(query).toString();
-    const headersFromBaseOptions =
-      baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    const headersFromBaseOptions = baseOptions?.headers
+      ? baseOptions.headers
+      : {};
     localVarRequestOptions.headers = {
       ...localVarHeaderParameter,
       ...headersFromBaseOptions,
@@ -326,13 +325,12 @@ export const ServerApiAxiosParamCreator = (configuration?: Configuration) => ({
       : body || "";
 
     return {
+      options: localVarRequestOptions,
       url:
         localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-      options: localVarRequestOptions,
     };
   },
 });
-
 
 /**
  * ServerApi - functional programming interface
@@ -408,7 +406,7 @@ export const ServerApiFp = (configuration?: Configuration) => ({
     (
       axios?: AxiosInstance,
       basePath?: string
-    ) => Promise<AxiosResponse<Array<ServerIp>>>
+    ) => Promise<AxiosResponse<ServerIp[]>>
   > {
     const localVarAxiosArgs =
       await ServerApiAxiosParamCreator(configuration).serverIpsGet(options);
@@ -455,7 +453,6 @@ export const ServerApiFp = (configuration?: Configuration) => ({
   },
 });
 
-
 /**
  * ServerApi - factory interface
  * @export
@@ -476,7 +473,7 @@ export const ServerApiFactory = (
   ): Promise<AxiosResponse<ServerMeta>> {
     return ServerApiFp(configuration)
       .serverGet(options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -491,7 +488,7 @@ export const ServerApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return ServerApiFp(configuration)
       .serverInitPost(body, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -501,10 +498,10 @@ export const ServerApiFactory = (
    */
   async serverIpsGet(
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<ServerIp>>> {
+  ): Promise<AxiosResponse<ServerIp[]>> {
     return ServerApiFp(configuration)
       .serverIpsGet(options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
   /**
    *
@@ -519,10 +516,9 @@ export const ServerApiFactory = (
   ): Promise<AxiosResponse<StatusResponse>> {
     return ServerApiFp(configuration)
       .serverLicensePost(body, options)
-      .then((request) => request(axios, basePath));
+      .then(request => request(axios, basePath));
   },
 });
-
 
 /**
  * ServerApi - object-oriented interface
@@ -543,7 +539,7 @@ export class ServerApi extends BaseAPI {
   ): Promise<AxiosResponse<ServerMeta>> {
     return ServerApiFp(this.configuration)
       .serverGet(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -559,7 +555,7 @@ export class ServerApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return ServerApiFp(this.configuration)
       .serverInitPost(body, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -570,10 +566,10 @@ export class ServerApi extends BaseAPI {
    */
   public async serverIpsGet(
     options?: AxiosRequestConfig
-  ): Promise<AxiosResponse<Array<ServerIp>>> {
+  ): Promise<AxiosResponse<ServerIp[]>> {
     return ServerApiFp(this.configuration)
       .serverIpsGet(options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
   /**
    *
@@ -589,6 +585,6 @@ export class ServerApi extends BaseAPI {
   ): Promise<AxiosResponse<StatusResponse>> {
     return ServerApiFp(this.configuration)
       .serverLicensePost(body, options)
-      .then((request) => request(this.axios, this.basePath));
+      .then(request => request(this.axios, this.basePath));
   }
 }

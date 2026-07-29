@@ -1,32 +1,33 @@
-import { NextResponse } from "next/server";
+import { and, eq, lte } from "drizzle-orm";
+import { after, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import {
-  pgVpsSubscription,
   pgInvoice,
-  pgUser,
-  pgUserCard,
-  pgOrganization,
   pgLog,
+  pgOrganization,
+  pgVpsSubscription,
 } from "@/lib/db/schema";
-import { eq, lte, and } from "drizzle-orm";
-import simpayApi from "@/lib/server/apis/simpay";
-import currencyConversion from "@/lib/server/apis/currency";
 import { triggerPurchaseNotifications } from "@/lib/notifications/vps-purchase";
+import currencyConversion from "@/lib/server/apis/currency";
+import simpayApi from "@/lib/server/apis/simpay";
 import { nextRenewalDate } from "@/lib/vps/renewal-date";
-import { after } from "next/server";
 
 function ensureAuthorized(req: Request): boolean {
   // Allow requests from localhost (internal cron)
   const forwarded = req.headers.get("x-forwarded-for") || "";
   const host = req.headers.get("host") || "";
-  const isLocal = host.startsWith("localhost") || host.startsWith("127.0.0.1") || forwarded === "";
+  const isLocal =
+    host.startsWith("localhost") ||
+    host.startsWith("127.0.0.1") ||
+    forwarded === "";
   if (isLocal) return true;
 
   const auth = req.headers.get("authorization") || "";
   const token = auth.replace("Bearer ", "").trim();
   const cronSecret = process.env.CRON_SECRET;
   const internalToken =
-    process.env.API_MACHINE_INTERNAL_TOKEN || process.env.INTERNAL_SERVICE_TOKEN;
+    process.env.API_MACHINE_INTERNAL_TOKEN ||
+    process.env.INTERNAL_SERVICE_TOKEN;
   if (cronSecret && token === cronSecret) return true;
   if (internalToken && token === internalToken) return true;
   return false;
@@ -49,18 +50,25 @@ export async function POST(req: Request) {
       lte(pgVpsSubscription.nextChargeDate, now)
     ),
     with: {
-      user: true,
       organization: true,
+      user: true,
     },
   });
 
   if (dueSubscriptions.length === 0) {
-    return NextResponse.json({ processed: 0, message: "Nenhuma assinatura vencida." });
+    return NextResponse.json({
+      message: "Nenhuma assinatura vencida.",
+      processed: 0,
+    });
   }
 
   let rate = 5.86;
   try {
-    const [fetchedRate] = await currencyConversion.convertMultiple({ from: "eur", to: "brl", amounts: [1] });
+    const [fetchedRate] = await currencyConversion.convertMultiple({
+      amounts: [1],
+      from: "eur",
+      to: "brl",
+    });
     rate = fetchedRate;
   } catch {
     // use fallback
@@ -81,7 +89,11 @@ export async function POST(req: Request) {
       if (sub.paymentMethod === "pix" || !cardToken) {
         await db
           .update(pgVpsSubscription)
-          .set({ status: "paused", pausedAt: new Date(), updatedAt: new Date() })
+          .set({
+            pausedAt: new Date(),
+            status: "paused",
+            updatedAt: new Date(),
+          })
           .where(eq(pgVpsSubscription.id, sub.id));
         results.push({ id: sub.id, status: "paused" });
         continue;
@@ -94,7 +106,10 @@ export async function POST(req: Request) {
       const claimed = await db
         .update(pgVpsSubscription)
         .set({
-          nextChargeDate: nextRenewalDate(sub.nextChargeDate, sub.intervalMonths),
+          nextChargeDate: nextRenewalDate(
+            sub.nextChargeDate,
+            sub.intervalMonths
+          ),
           updatedAt: new Date(),
         })
         .where(
@@ -107,7 +122,9 @@ export async function POST(req: Request) {
         .returning({ id: pgVpsSubscription.id });
 
       if (claimed.length === 0) {
-        console.warn(`[VPS-CRON] Assinatura ${sub.id} já reservada por outra execução — pulando.`);
+        console.warn(
+          `[VPS-CRON] Assinatura ${sub.id} já reservada por outra execução — pulando.`
+        );
         results.push({ id: sub.id, status: "skipped" });
         continue;
       }
@@ -128,21 +145,21 @@ export async function POST(req: Request) {
       const [newInvoice] = await db
         .insert(pgInvoice)
         .values({
-          orgId: sub.orgId,
-          userId: sub.userId,
-          type: "vps",
-          reference: `VPS-REN-${sub.planId}-${Date.now()}`,
           amount: sub.amountBrl,
-          status: "pending",
-          dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
           currency: "BRL",
           description,
+          dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
           metadata: {
-            vpsId: sub.planId,
             config: sub.config,
             isRenewal: true,
             subscriptionId: sub.id,
+            vpsId: sub.planId,
           } as any,
+          orgId: sub.orgId,
+          reference: `VPS-REN-${sub.planId}-${Date.now()}`,
+          status: "pending",
+          type: "vps",
+          userId: sub.userId,
         })
         .returning();
 
@@ -151,18 +168,20 @@ export async function POST(req: Request) {
 
       // Charge the card
       await simpayApi.createCardPayment({
-        price: sub.amountBrl,
-        document: user?.billingDocument?.replace(/\D/g, "") || "00000000000",
-        document_type: (user?.billingDocument?.replace(/\D/g, "")?.length === 14 ? "CNPJ" : "CPF") as "CPF" | "CNPJ",
-        email: user?.email || "",
-        name: user?.name || "",
-        mobile_phone: user?.billingPhone?.replace(/\D/g, "") || "00000000000",
-        description,
-        holder_name: savedCard?.holderName || user?.name || "",
-        token: cardToken,
         bin: savedCard?.last4 || cardToken.substring(0, 6),
         brand: savedCard?.brand || "unknown",
+        description,
+        document: user?.billingDocument?.replace(/\D/g, "") || "00000000000",
+        document_type: (user?.billingDocument?.replace(/\D/g, "")?.length === 14
+          ? "CNPJ"
+          : "CPF") as "CPF" | "CNPJ",
+        email: user?.email || "",
+        holder_name: savedCard?.holderName || user?.name || "",
         installments: 1,
+        mobile_phone: user?.billingPhone?.replace(/\D/g, "") || "00000000000",
+        name: user?.name || "",
+        price: sub.amountBrl,
+        token: cardToken,
       });
 
       // next_charge_date já foi avançado na reserva acima.
@@ -174,15 +193,20 @@ export async function POST(req: Request) {
       await db
         .update(pgVpsSubscription)
         .set({
-          lastInvoiceId: newInvoice.id,
           failureCount: 0,
+          lastInvoiceId: newInvoice.id,
           updatedAt: new Date(),
         })
         .where(eq(pgVpsSubscription.id, sub.id));
 
       // Notify (renewal: skip WhatsApp, keep email/etc.)
       after(async () => {
-        await triggerPurchaseNotifications(newInvoice, user, { paymentMethod: "credit_card" }, { isRenewal: true });
+        await triggerPurchaseNotifications(
+          newInvoice,
+          user,
+          { paymentMethod: "credit_card" },
+          { isRenewal: true }
+        );
       });
 
       results.push({ id: sub.id, status: "charged" });
@@ -207,19 +231,22 @@ export async function POST(req: Request) {
       await db
         .insert(pgLog)
         .values({
-          userId: sub.userId,
-          type: "hosting",
-          severity: "danger",
-          title: `Falha na renovação da VPS ${sub.planId}`,
           description:
             `Tentativa ${newFailures} de 3 falhou: ${reason}. ` +
             `Assinatura ${sub.id}, vencimento ${sub.nextChargeDate.toISOString()}, valor R$ ${sub.amountBrl.toFixed(2)}.` +
             (newStatus === "failed"
               ? " Limite de tentativas atingido — a assinatura foi marcada como falha e não será mais cobrada automaticamente."
               : ""),
+          severity: "danger",
+          title: `Falha na renovação da VPS ${sub.planId}`,
+          type: "hosting",
+          userId: sub.userId,
         })
-        .catch((logErr) =>
-          console.error(`[VPS-CRON] Não foi possível registrar o log da falha ${sub.id}:`, logErr)
+        .catch(logErr =>
+          console.error(
+            `[VPS-CRON] Não foi possível registrar o log da falha ${sub.id}:`,
+            logErr
+          )
         );
 
       // Devolve a reserva: a cobrança não passou, então a assinatura continua
@@ -227,14 +254,14 @@ export async function POST(req: Request) {
       await db
         .update(pgVpsSubscription)
         .set({
-          nextChargeDate: sub.nextChargeDate,
           failureCount: newFailures,
+          nextChargeDate: sub.nextChargeDate,
           status: newStatus as any,
           updatedAt: new Date(),
         })
         .where(eq(pgVpsSubscription.id, sub.id));
 
-      results.push({ id: sub.id, status: "error", error: reason });
+      results.push({ error: reason, id: sub.id, status: "error" });
     }
   }
 

@@ -1,12 +1,11 @@
+import { inArray } from "drizzle-orm";
+import { cache } from "react";
 import type { DomainData } from "@/app/(auth)/domain/types";
 import { db } from "@/lib/db";
 import { pgDomainPricingCache } from "@/lib/db/schema";
 import currencyConversion from "@/lib/server/apis/currency";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 import type { DomainsCheckUserParams } from "@/lib/server/apis/namecheap/types";
-import { inArray } from "drizzle-orm";
-import { cache } from "react";
-
 
 export const getDomainData = cache(async function getDomainData(
   searchQuery: string
@@ -18,7 +17,7 @@ export const getDomainData = cache(async function getDomainData(
   const domainNameOnly = searchQuery.includes(".")
     ? searchQuery.split(".")[0]
     : searchQuery;
-  let domainsToSearch = recommendedTlds.map((tld) => `${domainNameOnly}${tld}`);
+  let domainsToSearch = recommendedTlds.map(tld => `${domainNameOnly}${tld}`);
   if (searchQuery.includes(".") && !domainsToSearch.includes(searchQuery)) {
     domainsToSearch.unshift(searchQuery);
   }
@@ -31,41 +30,65 @@ export const getDomainData = cache(async function getDomainData(
       return null;
     }
 
-    const tldKeys = [...new Set(domainsToSearch.map((d) => d.split(".").pop() as string))];
+    const tldKeys = [
+      ...new Set(domainsToSearch.map(d => d.split(".").pop() as string)),
+    ];
 
-    let pricings: Array<{ tld: string; price: number | null; renew: number | null; transfer: number | null; currency?: string | null; allPrices?: Record<number, number> }> =
-      await db.query.pgDomainPricingCache.findMany({
-        where: inArray(pgDomainPricingCache.tld, tldKeys),
-      });
+    const pricings: Array<{
+      tld: string;
+      price: number | null;
+      renew: number | null;
+      transfer: number | null;
+      currency?: string | null;
+      allPrices?: Record<number, number>;
+    }> = await db.query.pgDomainPricingCache.findMany({
+      where: inArray(pgDomainPricingCache.tld, tldKeys),
+    });
 
     // Fallback: busca direto na Namecheap para TLDs sem cache
-    const missingTlds = tldKeys.filter((t) => !pricings.some((p) => p.tld === t));
+    const missingTlds = tldKeys.filter(t => !pricings.some(p => p.tld === t));
     if (missingTlds.length > 0) {
       const settled = await Promise.allSettled(
-        missingTlds.map(async (tld) => {
+        missingTlds.map(async tld => {
           const pricingData = await namecheapApi.getPricing(tld);
           const categories = pricingData?.ProductType?.Categories || [];
 
-          const regCat = categories.find(c => c.Name.toUpperCase() === "REGISTER");
-          const renewCat = categories.find(c => c.Name.toUpperCase() === "RENEW");
-          const transCat = categories.find(c => c.Name.toUpperCase() === "TRANSFER");
+          const regCat = categories.find(
+            c => c.Name.toUpperCase() === "REGISTER"
+          );
+          const renewCat = categories.find(
+            c => c.Name.toUpperCase() === "RENEW"
+          );
+          const transCat = categories.find(
+            c => c.Name.toUpperCase() === "TRANSFER"
+          );
 
           const get1YearPrice = (cat: any) => {
             const products = cat?.Products || [];
-            const prod = products.find((p: any) => p.Name.toLowerCase() === tld.toLowerCase());
+            const prod = products.find(
+              (p: any) => p.Name.toLowerCase() === tld.toLowerCase()
+            );
             if (!prod) return 0;
-            const priceDetail = prod.Prices.find((p: any) => p.Duration === 1 && p.DurationType === "YEAR");
+            const priceDetail = prod.Prices.find(
+              (p: any) => p.Duration === 1 && p.DurationType === "YEAR"
+            );
             return priceDetail?.YourPrice ?? priceDetail?.Price ?? 0;
           };
 
           const getAllYearPrices = (cat: any) => {
             const products = cat?.Products || [];
-            const prod = products.find((p: any) => p.Name.toLowerCase() === tld.toLowerCase());
+            const prod = products.find(
+              (p: any) => p.Name.toLowerCase() === tld.toLowerCase()
+            );
             if (!prod) return {};
 
             const yearPrices: Record<number, number> = {};
             prod.Prices.forEach((p: any) => {
-              if (p.DurationType === "YEAR" && p.Duration >= 1 && p.Duration <= 10) {
+              if (
+                p.DurationType === "YEAR" &&
+                p.Duration >= 1 &&
+                p.Duration <= 10
+              ) {
                 yearPrices[p.Duration] = p.YourPrice ?? p.Price ?? 0;
               }
             });
@@ -78,12 +101,12 @@ export const getDomainData = cache(async function getDomainData(
           const transfer = get1YearPrice(transCat) || p1;
 
           return {
-            tld,
-            price: p1,
-            renew: renew,
-            transfer: transfer,
+            allPrices: regPrices,
             currency: "USD",
-            allPrices: regPrices
+            price: p1,
+            renew,
+            tld,
+            transfer,
           };
         })
       );
@@ -94,139 +117,190 @@ export const getDomainData = cache(async function getDomainData(
       }
     }
 
-    const pricingRecord = Object.fromEntries(pricings.map((p) => [p.tld, p]));
+    const pricingRecord = Object.fromEntries(pricings.map(p => [p.tld, p]));
 
     // Fetch config and exchange rate once, outside the loop
     const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
     let fee = 1;
     if (feeEnabled) {
       try {
-        const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
-        const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
+        const envFeeValue =
+          process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
+        const envFee = envFeeValue ? Number.parseFloat(envFeeValue) : undefined;
         // Se o valor no env for 0.20, tratamos como 20%. Se for 20, tratamos como 20%.
-        const envFeeNormalized = envFee !== undefined ? (envFee > 0 && envFee < 1 ? envFee * 100 : envFee) : undefined;
+        const envFeeNormalized =
+          envFee !== undefined
+            ? envFee > 0 && envFee < 1
+              ? envFee * 100
+              : envFee
+            : undefined;
 
         const config = await db.query.pgSystemConfig.findFirst();
         const finalFeePercent = envFeeNormalized ?? config?.domainFee ?? 30;
         fee = 1 + finalFeePercent / 100;
       } catch {
-        fee = 1.20;
+        fee = 1.2;
       }
     }
 
     // Fetch USD→BRL rate once for all conversions and increments
     const [usdToBrlRate] = await currencyConversion.convertMultiple({
+      amounts: [1],
       from: "usd",
       to: "brl",
-      amounts: [1],
     });
 
-    const domainDataMapped = await Promise.all(checkResult.Results.map(async (domainDetail) => {
-      const fullDomainName = domainDetail.Domain;
-      let tldForLookup = "";
-      const parts = fullDomainName.split(".");
-      if (parts.length > 1) {
-        let bestMatch = "";
-        for (const knownTld of Object.keys(pricingRecord)) {
-          if (fullDomainName.toLowerCase().endsWith(`.${knownTld}`)) {
-            if (knownTld.length > bestMatch.length) {
-              bestMatch = knownTld;
+    const domainDataMapped = await Promise.all(
+      checkResult.Results.map(async domainDetail => {
+        const fullDomainName = domainDetail.Domain;
+        let tldForLookup = "";
+        const parts = fullDomainName.split(".");
+        if (parts.length > 1) {
+          let bestMatch = "";
+          for (const knownTld of Object.keys(pricingRecord)) {
+            if (fullDomainName.toLowerCase().endsWith(`.${knownTld}`)) {
+              if (knownTld.length > bestMatch.length) {
+                bestMatch = knownTld;
+              }
             }
           }
+          tldForLookup =
+            bestMatch ||
+            parts
+              .slice(parts.length > 2 ? -2 : -1)
+              .join(".")
+              .toLowerCase();
         }
-        tldForLookup =
-          bestMatch ||
-          parts
-            .slice(parts.length > 2 ? -2 : -1)
-            .join(".")
-            .toLowerCase();
-      }
 
-      const standardBrlPrices = pricingRecord[tldForLookup];
+        const standardBrlPrices = pricingRecord[tldForLookup];
 
-      if (!standardBrlPrices) {
+        if (!standardBrlPrices) {
+          return {
+            available: domainDetail.Available,
+            domain: fullDomainName,
+            isPremium: domainDetail.IsPremiumName,
+            priceBRL: 0,
+            renewBRL: 0,
+            transferBRL: 0,
+          };
+        }
+
+        const alreadyBrl = standardBrlPrices?.currency === "BRL";
+        const toPrice = (amount: number) =>
+          alreadyBrl ? amount : amount * usdToBrlRate;
+
+        let priceBRL = 0;
+        let renewBRL = 0;
+        let transferBRL = 0;
+
+        const fixedFee = Number(process.env.DOMAIN_FIXED_FEE || 4);
+        const feeMarkup = fee;
+
+        if (
+          domainDetail.IsPremiumName &&
+          (domainDetail.PremiumRegistrationPrice ?? 0) > 0
+        ) {
+          priceBRL =
+            Math.round(
+              (toPrice(domainDetail.PremiumRegistrationPrice ?? 0) * feeMarkup +
+                fixedFee) *
+                100
+            ) / 100;
+          renewBRL =
+            Math.round(
+              (toPrice(domainDetail.PremiumRenewalPrice ?? 0) * feeMarkup +
+                fixedFee) *
+                100
+            ) / 100;
+          transferBRL =
+            Math.round(
+              (toPrice(domainDetail.PremiumTransferPrice ?? 0) * feeMarkup +
+                fixedFee) *
+                100
+            ) / 100;
+        } else if (standardBrlPrices?.price) {
+          priceBRL =
+            Math.round(
+              (toPrice(standardBrlPrices.price ?? 0) * feeMarkup + fixedFee) *
+                100
+            ) / 100;
+          renewBRL =
+            Math.round(
+              (toPrice(standardBrlPrices.renew ?? 0) * feeMarkup + fixedFee) *
+                100
+            ) / 100;
+          transferBRL =
+            Math.round(
+              (toPrice(standardBrlPrices.transfer ?? 0) * feeMarkup +
+                fixedFee) *
+                100
+            ) / 100;
+        }
+
+        const multiYearPricesBRL: Record<number, number> = {};
+
+        // Se for PREMIUM, ignoramos a tabela de preços padrão do TLD (pois domínios premium têm preços únicos)
+        if (
+          !domainDetail.IsPremiumName &&
+          standardBrlPrices?.allPrices &&
+          Object.keys(standardBrlPrices.allPrices).length > 0
+        ) {
+          for (const [year, usdPrice] of Object.entries(
+            standardBrlPrices.allPrices
+          )) {
+            const yearNum = Number.parseInt(year, 10);
+            multiYearPricesBRL[yearNum] =
+              Math.round(
+                (toPrice(usdPrice as number) * fee + fixedFee * yearNum) * 100
+              ) / 100;
+          }
+        } else {
+          // Fallback robusto para Premium ou TLDs sem tabela completa:
+          // preço = registro + (anos-1) * renovação
+          multiYearPricesBRL[1] = priceBRL;
+          for (let year = 2; year <= 10; year++) {
+            const total = priceBRL + renewBRL * (year - 1);
+            multiYearPricesBRL[year] = Math.round(total * 100) / 100;
+          }
+        }
+
         return {
+          available:
+            (domainDetail.Available ||
+              (domainDetail.IsPremiumName && priceBRL > 0)) &&
+            priceBRL > 0,
           domain: fullDomainName,
-          available: domainDetail.Available,
-          priceBRL: 0,
-          renewBRL: 0,
-          transferBRL: 0,
           isPremium: domainDetail.IsPremiumName,
+          multiYearPricesBRL,
+          priceBRL,
+          renewBRL,
+          transferBRL,
         };
-      }
-
-      const alreadyBrl = standardBrlPrices?.currency === "BRL";
-      const toPrice = (amount: number) =>
-        alreadyBrl ? amount : amount * usdToBrlRate;
-
-      let priceBRL = 0;
-      let renewBRL = 0;
-      let transferBRL = 0;
-
-      const fixedFee = Number(process.env.DOMAIN_FIXED_FEE || 4);
-      const feeMarkup = fee;
-
-      if (domainDetail.IsPremiumName && (domainDetail.PremiumRegistrationPrice ?? 0) > 0) {
-        priceBRL = Math.round((toPrice(domainDetail.PremiumRegistrationPrice ?? 0) * feeMarkup + fixedFee) * 100) / 100;
-        renewBRL = Math.round((toPrice(domainDetail.PremiumRenewalPrice ?? 0) * feeMarkup + fixedFee) * 100) / 100;
-        transferBRL = Math.round((toPrice(domainDetail.PremiumTransferPrice ?? 0) * feeMarkup + fixedFee) * 100) / 100;
-      } else if (standardBrlPrices?.price) {
-        priceBRL = Math.round((toPrice(standardBrlPrices.price ?? 0) * feeMarkup + fixedFee) * 100) / 100;
-        renewBRL = Math.round((toPrice(standardBrlPrices.renew ?? 0) * feeMarkup + fixedFee) * 100) / 100;
-        transferBRL = Math.round((toPrice(standardBrlPrices.transfer ?? 0) * feeMarkup + fixedFee) * 100) / 100;
-      }
-
-      let multiYearPricesBRL: Record<number, number> = {};
-
-      // Se for PREMIUM, ignoramos a tabela de preços padrão do TLD (pois domínios premium têm preços únicos)
-      if (!domainDetail.IsPremiumName && standardBrlPrices?.allPrices && Object.keys(standardBrlPrices.allPrices).length > 0) {
-        for (const [year, usdPrice] of Object.entries(standardBrlPrices.allPrices)) {
-          const yearNum = parseInt(year, 10);
-          multiYearPricesBRL[yearNum] = Math.round((toPrice(usdPrice as number) * fee + (fixedFee * yearNum)) * 100) / 100;
-        }
-      } else {
-        // Fallback robusto para Premium ou TLDs sem tabela completa: 
-        // preço = registro + (anos-1) * renovação
-        multiYearPricesBRL[1] = priceBRL;
-        for (let year = 2; year <= 10; year++) {
-          const total = priceBRL + (renewBRL * (year - 1));
-          multiYearPricesBRL[year] = Math.round(total * 100) / 100;
-        }
-      }
-
-      return {
-        domain: fullDomainName,
-        available: (domainDetail.Available || (domainDetail.IsPremiumName && priceBRL > 0)) && priceBRL > 0,
-        priceBRL,
-        renewBRL,
-        transferBRL,
-        isPremium: domainDetail.IsPremiumName,
-        multiYearPricesBRL,
-      };
-    }));
+      })
+    );
 
     let mainDomainData = domainDataMapped.find(
-      (item) => item.domain.toLowerCase() === searchQuery.toLowerCase()
+      item => item.domain.toLowerCase() === searchQuery.toLowerCase()
     );
     if (!mainDomainData) {
       mainDomainData =
         domainDataMapped.length > 0
           ? domainDataMapped[0]
           : {
-            domain: searchQuery,
-            available: false,
-            priceBRL: 0,
-            renewBRL: 0,
-            transferBRL: 0,
-            isPremium: false,
-            multiYearPricesBRL: undefined,
-          };
+              available: false,
+              domain: searchQuery,
+              isPremium: false,
+              multiYearPricesBRL: undefined,
+              priceBRL: 0,
+              renewBRL: 0,
+              transferBRL: 0,
+            };
     }
     return {
       available: mainDomainData.available,
       domain: mainDomainData,
       extraDomains: domainDataMapped.filter(
-        (item) =>
+        item =>
           item.domain.toLowerCase() !== mainDomainData?.domain.toLowerCase()
       ),
     };
@@ -260,9 +334,10 @@ export async function getAllDomainPrices(tlds: string[]) {
   let fee = 1;
   if (feeEnabled) {
     try {
-      const envFeeValue = process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
-      const envFee = envFeeValue ? parseFloat(envFeeValue) : undefined;
-      
+      const envFeeValue =
+        process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
+      const envFee = envFeeValue ? Number.parseFloat(envFeeValue) : undefined;
+
       let finalFeePercent: number;
       if (envFee !== undefined) {
         if (envFee > 0 && envFee < 1) {
@@ -278,34 +353,34 @@ export async function getAllDomainPrices(tlds: string[]) {
       }
       fee = 1 + finalFeePercent / 100;
     } catch {
-      fee = 1.20;
+      fee = 1.2;
     }
   }
 
   const fixedFee = Number(process.env.DOMAIN_FIXED_FEE) || 4;
 
   const [usdToBrlRate] = await currencyConversion.convertMultiple({
+    amounts: [1],
     from: "usd",
     to: "brl",
-    amounts: [1],
   });
 
   return await Promise.all(
-    domainPricesFromDb.map(async (item) => {
+    domainPricesFromDb.map(async item => {
       const baseReg = (item.price ?? 0) * usdToBrlRate;
       const baseRenew = (item.renew ?? 0) * usdToBrlRate;
       const baseTransfer = (item.transfer ?? 0) * usdToBrlRate;
 
       return {
-        tld: item.tld,
-        price: item.price ?? undefined,
-        renew: item.renew ?? undefined,
-        transfer: item.transfer ?? undefined,
-        minRegisterYears: item.minRegisterYears ?? undefined,
         maxRegisterYears: item.maxRegisterYears ?? undefined,
-        registrationPrice: baseReg > 0 ? (baseReg * fee) + fixedFee : 0,
-        renewalPrice: baseRenew > 0 ? (baseRenew * fee) + fixedFee : 0,
-        transferPrice: baseTransfer > 0 ? (baseTransfer * fee) + fixedFee : 0,
+        minRegisterYears: item.minRegisterYears ?? undefined,
+        price: item.price ?? undefined,
+        registrationPrice: baseReg > 0 ? baseReg * fee + fixedFee : 0,
+        renew: item.renew ?? undefined,
+        renewalPrice: baseRenew > 0 ? baseRenew * fee + fixedFee : 0,
+        tld: item.tld,
+        transfer: item.transfer ?? undefined,
+        transferPrice: baseTransfer > 0 ? baseTransfer * fee + fixedFee : 0,
       };
     })
   );

@@ -1,5 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CreditCard, Loader2, Plus } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,20 +24,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Plus, CreditCard, Loader2 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useState } from "react";
-import { addCard, type AddCardData } from "../actions";
 import { toast } from "@/hooks/use-toast";
+import { type AddCardData, addCard } from "../actions";
 
 const cardSchema = z.object({
-  cardNumber: z
-    .string()
-    .min(13, "Número do cartão deve ter pelo menos 13 dígitos")
-    .max(19, "Número do cartão deve ter no máximo 19 dígitos")
-    .regex(/^[\d\s]+$/, "Número do cartão deve conter apenas números"),
   cardCvv: z
     .string()
     .min(3, "CVV deve ter pelo menos 3 dígitos")
@@ -41,15 +36,20 @@ const cardSchema = z.object({
   cardExpiration: z
     .string()
     .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Formato deve ser MM/AA"),
-  holderName: z
+  cardNumber: z
     .string()
-    .min(2, "Nome do portador deve ter pelo menos 2 caracteres")
-    .max(100, "Nome do portador deve ter no máximo 100 caracteres"),
+    .min(13, "Número do cartão deve ter pelo menos 13 dígitos")
+    .max(19, "Número do cartão deve ter no máximo 19 dígitos")
+    .regex(/^[\d\s]+$/, "Número do cartão deve conter apenas números"),
   holderDocument: z
     .string()
     .min(11, "Documento deve ter pelo menos 11 dígitos")
     .max(14, "Documento deve ter no máximo 14 dígitos")
     .regex(/^[\d.-]+$/, "Documento deve conter apenas números, pontos e hífen"),
+  holderName: z
+    .string()
+    .min(2, "Nome do portador deve ter pelo menos 2 caracteres")
+    .max(100, "Nome do portador deve ter no máximo 100 caracteres"),
 });
 
 export function AddCardModal() {
@@ -57,14 +57,14 @@ export function AddCardModal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AddCardData>({
-    resolver: zodResolver(cardSchema),
     defaultValues: {
-      cardNumber: "",
       cardCvv: "",
       cardExpiration: "",
-      holderName: "",
+      cardNumber: "",
       holderDocument: "",
+      holderName: "",
     },
+    resolver: zodResolver(cardSchema),
   });
 
   const formatCardNumber = (value: string) => {
@@ -106,22 +106,22 @@ export function AddCardModal() {
 
       if (result.status === "success") {
         toast({
-          title: "Sucesso",
           description: result.message,
+          title: "Sucesso",
         });
         form.reset();
         setOpen(false);
       } else {
         toast({
-          title: "Erro",
           description: result.message,
+          title: "Erro",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Erro",
         description: "Erro inesperado ao adicionar cartão",
+        title: "Erro",
         variant: "destructive",
       });
     } finally {
@@ -130,7 +130,7 @@ export function AddCardModal() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="mr-2 h-4 w-4" />
@@ -150,7 +150,7 @@ export function AddCardModal() {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="cardNumber"
@@ -161,11 +161,11 @@ export function AddCardModal() {
                     <Input
                       placeholder="1234 5678 9012 3456"
                       {...field}
-                      onChange={(e) => {
+                      maxLength={19}
+                      onChange={e => {
                         const formatted = formatCardNumber(e.target.value);
                         field.onChange(formatted);
                       }}
-                      maxLength={19}
                     />
                   </FormControl>
                   <FormMessage />
@@ -184,11 +184,11 @@ export function AddCardModal() {
                       <Input
                         placeholder="MM/AA"
                         {...field}
-                        onChange={(e) => {
+                        maxLength={5}
+                        onChange={e => {
                           const formatted = formatExpiration(e.target.value);
                           field.onChange(formatted);
                         }}
-                        maxLength={5}
                       />
                     </FormControl>
                     <FormMessage />
@@ -207,11 +207,11 @@ export function AddCardModal() {
                         placeholder="123"
                         type="password"
                         {...field}
-                        onChange={(e) => {
+                        maxLength={4}
+                        onChange={e => {
                           const numbers = e.target.value.replace(/\D/g, "");
                           field.onChange(numbers);
                         }}
-                        maxLength={4}
                       />
                     </FormControl>
                     <FormMessage />
@@ -230,7 +230,7 @@ export function AddCardModal() {
                     <Input
                       placeholder="João Silva"
                       {...field}
-                      onChange={(e) => {
+                      onChange={e => {
                         field.onChange(e.target.value.toUpperCase());
                       }}
                     />
@@ -250,11 +250,11 @@ export function AddCardModal() {
                     <Input
                       placeholder="000.000.000-00"
                       {...field}
-                      onChange={(e) => {
+                      maxLength={18}
+                      onChange={e => {
                         const formatted = formatDocument(e.target.value);
                         field.onChange(formatted);
                       }}
-                      maxLength={18}
                     />
                   </FormControl>
                   <FormMessage />
@@ -264,14 +264,14 @@ export function AddCardModal() {
 
             <DialogFooter className="gap-2 sm:gap-0">
               <Button
+                disabled={isSubmitting}
+                onClick={() => setOpen(false)}
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={isSubmitting}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button disabled={isSubmitting} type="submit">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -1,5 +1,5 @@
-import TestPaymentClient from "./test-payment-client";
 import { notFound } from "next/navigation";
+import TestPaymentClient from "./test-payment-client";
 
 export default function TestPaymentPage() {
   const allowed =

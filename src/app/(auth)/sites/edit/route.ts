@@ -14,14 +14,14 @@ export async function GET(request: Request) {
   getTokenUrl.pathname = getTokenUrl.pathname.replaceAll("//", "/");
 
   const response = await fetch(getTokenUrl.toString(), {
-    method: "POST",
+    body: new URLSearchParams({
+      password: process.env.WP_ADMIN_PASS!,
+      username: process.env.WP_ADMIN_LOGIN!,
+    }),
     headers: {
       "Content-Type": "x-www-form-urlencoded",
     },
-    body: new URLSearchParams({
-      username: process.env.WP_ADMIN_LOGIN!,
-      password: process.env.WP_ADMIN_PASS!,
-    }),
+    method: "POST",
   });
 
   if (!response.ok) {

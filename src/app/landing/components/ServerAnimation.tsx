@@ -5,11 +5,11 @@ import serverData from "../../../../public/Server.json";
 
 export default function ServerAnimation() {
   return (
-    <div className="w-full h-full flex items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center">
       <Lottie
         animationData={serverData}
+        className="h-full w-full"
         loop={true}
-        className="w-full h-full"
       />
     </div>
   );

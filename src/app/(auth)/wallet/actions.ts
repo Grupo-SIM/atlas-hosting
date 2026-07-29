@@ -1,14 +1,14 @@
 "use server";
 
+import axios from "axios";
+import { and, eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { cache } from "react";
 import { auth } from "@/auth";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgOrganization, pgUser, pgUserCard } from "@/lib/db/schema";
 import domApi from "@/lib/server/apis/dom";
-import axios from "axios";
-import { and, eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
-import { cache } from "react";
 
 export interface AddCardData {
   cardNumber: string;
@@ -40,7 +40,7 @@ export async function addCard(cardData: AddCardData): Promise<ActionResponse> {
 
     // Parse expiration date
     const [expMonth, expYear] = cardData.cardExpiration.split("/");
-    const fullYear = 2000 + Number.parseInt(expYear);
+    const fullYear = 2000 + Number.parseInt(expYear, 10);
 
     // If user doesn't have domId, create a DOM client first
     if (!user.organization?.domId) {
@@ -56,26 +56,26 @@ export async function addCard(cardData: AddCardData): Promise<ActionResponse> {
         !cardData.billingState
       ) {
         return {
-          status: "error",
           message: "Informações de cobrança são obrigatórias",
+          status: "error",
         };
       }
 
       // Create DOM client with billing information
       const { id } = await domApi.createClient({
-        userId: user.id,
-        name: cardData.billingName,
-        email: cardData.billingEmail,
-        document: cardData.holderDocument.replace(/\D/g, ""),
-        mobilePhone: cardData.billingPhone.replace(/\D/g, ""),
         address: {
-          street: cardData.billingStreet,
-          number: cardData.billingNumber,
-          neighborhood: cardData.billingNeighborhood,
-          zip_code: cardData.billingZipCode.replace(/\D/g, ""),
           city: cardData.billingCity,
+          neighborhood: cardData.billingNeighborhood,
+          number: cardData.billingNumber,
           state: cardData.billingState,
+          street: cardData.billingStreet,
+          zip_code: cardData.billingZipCode.replace(/\D/g, ""),
         },
+        document: cardData.holderDocument.replace(/\D/g, ""),
+        email: cardData.billingEmail,
+        mobilePhone: cardData.billingPhone.replace(/\D/g, ""),
+        name: cardData.billingName,
+        userId: user.id,
       });
 
       await db
@@ -88,18 +88,18 @@ export async function addCard(cardData: AddCardData): Promise<ActionResponse> {
 
     // Create card token via DOM API
     const tokenData = await domApi.createCardToken(user.id, {
-      number: cardData.cardNumber.replace(/\D/g, ""),
       cvv: cardData.cardCvv,
-      exp_month: Number.parseInt(expMonth),
+      exp_month: Number.parseInt(expMonth, 10),
       exp_year: fullYear,
-      holder_name: cardData.holderName,
       holder_document: cardData.holderDocument.replace(/\D/g, ""),
+      holder_name: cardData.holderName,
+      number: cardData.cardNumber.replace(/\D/g, ""),
     });
 
     if (!user?.organization?.wallet) {
       return {
-        status: "error",
         message: "Carteira não encontrada",
+        status: "error",
       };
     }
 
@@ -112,21 +112,21 @@ export async function addCard(cardData: AddCardData): Promise<ActionResponse> {
 
     // Save card to database
     await db.insert(pgUserCard).values({
-      walletId: user.organization.wallet.id,
-      cardToken: tokenData.token,
-      last4: tokenData.last4,
       brand: tokenData.brand,
+      cardToken: tokenData.token,
       expiryMonth: tokenData.expiryMonth,
       expiryYear: tokenData.expiryYear,
       holderName: tokenData.holderName,
       isDefault: isFirstCard,
+      last4: tokenData.last4,
+      walletId: user.organization.wallet.id,
     });
 
     revalidatePath("/settings");
 
     return {
-      status: "success",
       message: "Cartão adicionado com sucesso",
+      status: "success",
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -135,9 +135,9 @@ export async function addCard(cardData: AddCardData): Promise<ActionResponse> {
 
     console.error("Error adding card:", error);
     return {
-      status: "error",
       message:
         error instanceof Error ? error.message : "Erro ao adicionar cartão",
+      status: "error",
     };
   }
 }
@@ -148,8 +148,8 @@ export async function deleteCard(cardId: string): Promise<ActionResponse> {
 
     if (!user?.organization?.wallet) {
       return {
-        status: "error",
         message: "Carteira não encontrada",
+        status: "error",
       };
     }
 
@@ -163,8 +163,8 @@ export async function deleteCard(cardId: string): Promise<ActionResponse> {
 
     if (!card) {
       return {
-        status: "error",
         message: "Cartão não encontrado",
+        status: "error",
       };
     }
 
@@ -182,8 +182,8 @@ export async function deleteCard(cardId: string): Promise<ActionResponse> {
     // If this was the default card, make another card default if available
     if (card.isDefault) {
       const remainingCards = await db.query.pgUserCard.findMany({
-        where: eq(pgUserCard.walletId, user.organization.wallet.id),
         limit: 1,
+        where: eq(pgUserCard.walletId, user.organization.wallet.id),
       });
 
       if (remainingCards.length > 0) {
@@ -197,14 +197,14 @@ export async function deleteCard(cardId: string): Promise<ActionResponse> {
     revalidatePath("/settings");
 
     return {
-      status: "success",
       message: "Cartão removido com sucesso",
+      status: "success",
     };
   } catch (error) {
     console.error("Error deleting card:", error);
     return {
-      status: "error",
       message: "Erro ao remover cartão",
+      status: "error",
     };
   }
 }
@@ -214,8 +214,8 @@ export async function setDefaultCard(cardId: string): Promise<ActionResponse> {
     const session = await auth();
     if (!session?.user?.id) {
       return {
-        status: "error",
         message: "Usuário não autenticado",
+        status: "error",
       };
     }
 
@@ -233,8 +233,8 @@ export async function setDefaultCard(cardId: string): Promise<ActionResponse> {
 
     if (!user?.organization?.wallet) {
       return {
-        status: "error",
         message: "Carteira não encontrada",
+        status: "error",
       };
     }
 
@@ -258,14 +258,14 @@ export async function setDefaultCard(cardId: string): Promise<ActionResponse> {
     revalidatePath("/settings");
 
     return {
-      status: "success",
       message: "Cartão padrão atualizado",
+      status: "success",
     };
   } catch (error) {
     console.error("Error setting default card:", error);
     return {
-      status: "error",
       message: "Erro ao definir cartão padrão",
+      status: "error",
     };
   }
 }
@@ -310,11 +310,11 @@ export async function getCustomerFromDOM() {
     const customerData = await domApi.getCustomer(user.id);
 
     return {
-      name: customerData.name,
-      email: customerData.email,
-      document: customerData.document,
-      mobilePhone: customerData.mobile_phone,
       address: customerData.address,
+      document: customerData.document,
+      email: customerData.email,
+      mobilePhone: customerData.mobile_phone,
+      name: customerData.name,
     };
   } catch (error) {
     console.error("Error fetching customer from DOM:", error);

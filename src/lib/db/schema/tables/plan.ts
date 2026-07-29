@@ -7,21 +7,20 @@ import {
   text,
   uuid,
 } from "drizzle-orm/pg-core";
-import { pgUser } from "./user";
 import { pgOrganization } from "./organization";
 
 export const pgPlan = pgTable("plans", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
+  backup: boolean("backup").default(true),
+  cdn: boolean("cdn").default(false),
   description: text("description").notNull(),
-  price: doublePrecision("price").notNull(),
+  email: boolean("email").default(true),
   featured: boolean("featured").default(false),
+  id: uuid("id").primaryKey().defaultRandom(),
   maxSites: integer("max_sites").notNull(),
   maxStorage: doublePrecision("max_storage").notNull(),
+  name: text("name").notNull(),
+  price: doublePrecision("price").notNull(),
   ssl: boolean("ssl").default(true),
-  backup: boolean("backup").default(true),
-  email: boolean("email").default(true),
-  cdn: boolean("cdn").default(false),
   supportPriority: boolean("support_priority").default(false),
 });
 

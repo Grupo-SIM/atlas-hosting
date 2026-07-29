@@ -1,4 +1,3 @@
-import type { DomainPageParams } from "@/app/(auth)/domain/types";
 import { relations } from "drizzle-orm";
 import {
   doublePrecision,
@@ -8,37 +7,38 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { DomainPageParams } from "@/app/(auth)/domain/types";
 import { pgOrganization } from "./organization";
 import { pgUser } from "./user";
 
 export const defaultDomainRegisterOptions: DomainRegisterInvoiceOptions = {
-  years: "1",
   whoisguard: "true",
+  years: "1",
 };
 
 export const pgInvoice = pgTable("invoices", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  orgId: uuid("org_id")
-    .notNull()
-    .references(() => pgOrganization.id),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => pgUser.id),
   amount: doublePrecision("amount").notNull(),
-  reference: text("reference").notNull(),
-  type: text("type", { enum: ["subscription", "domain", "vps"] }).notNull(),
-  status: text("status", {
-    enum: ["pending", "paid", "failed", "processing", "expired"],
-  }).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  currency: text("currency").default("BRL").notNull(), // Added currency, defaulting to BRL
+  description: text("description"), // Added description, optional
+  dueDate: timestamp("due_date", { mode: "date" }).notNull(),
+  id: uuid("id").primaryKey().defaultRandom(),
   metadata: json("metadata")
     .$type<DomainRegisterInvoiceOptions | VpsInvoiceOptions>()
     .default(defaultDomainRegisterOptions)
     .notNull(),
-  dueDate: timestamp("due_date", { mode: "date" }).notNull(),
-  currency: text("currency").default("BRL").notNull(), // Added currency, defaulting to BRL
-  description: text("description"), // Added description, optional
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => pgOrganization.id),
+  reference: text("reference").notNull(),
+  status: text("status", {
+    enum: ["pending", "paid", "failed", "processing", "expired"],
+  }).notNull(),
+  type: text("type", { enum: ["subscription", "domain", "vps"] }).notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => pgUser.id),
 });
 
 export const invoiceRelations = relations(pgInvoice, ({ one }) => ({
@@ -56,7 +56,7 @@ export type Invoice = typeof pgInvoice.$inferSelect;
 export type InvoiceInsert = typeof pgInvoice.$inferInsert;
 export type InvoiceSelect = typeof pgInvoice.$inferSelect;
 
-export type PixCheckoutSnapshot = {
+export interface PixCheckoutSnapshot {
   firstName: string;
   lastName: string;
   document: string;
@@ -69,7 +69,7 @@ export type PixCheckoutSnapshot = {
     state: string;
     zipCode: string;
   };
-};
+}
 
 export type DomainRegisterInvoiceOptions = Pick<
   DomainPageParams,
@@ -92,7 +92,7 @@ export type DomainRegisterInvoiceOptions = Pick<
   domainRegistration?: DomainRegistrationOutcome;
 };
 
-export type DomainRegistrationOutcome = {
+export interface DomainRegistrationOutcome {
   status: "success" | "partial" | "failed";
   /** Domínios que a organização passou a possuir (registrados agora ou já existentes) */
   registered: string[];
@@ -104,9 +104,9 @@ export type DomainRegistrationOutcome = {
   errors: Record<string, string>;
   /** ISO timestamp da tentativa */
   at: string;
-};
+}
 
-export type DomainRenewInvoiceOptions = {
+export interface DomainRenewInvoiceOptions {
   type: "renew";
   domain: string;
   simpayPaymentId?: string;
@@ -115,9 +115,9 @@ export type DomainRenewInvoiceOptions = {
   guestCheckout?: boolean;
   guestPassword?: string;
   isRenewal?: boolean;
-};
+}
 
-export type VpsInvoiceOptions = {
+export interface VpsInvoiceOptions {
   vpsId: string;
   config: any;
   simpayPaymentId?: string;
@@ -127,4 +127,4 @@ export type VpsInvoiceOptions = {
   guestCheckout?: boolean;
   guestPassword?: string;
   priceBreakdown?: Record<string, number>;
-};
+}

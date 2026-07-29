@@ -1,8 +1,8 @@
-'use client';
-import dynamic from 'next/dynamic';
+"use client";
+import dynamic from "next/dynamic";
 
 const N8nChatBubble = dynamic(
-  () => import('./N8nChatBubble').then((m) => m.N8nChatBubble),
+  () => import("./N8nChatBubble").then(m => m.N8nChatBubble),
   { ssr: false }
 );
 

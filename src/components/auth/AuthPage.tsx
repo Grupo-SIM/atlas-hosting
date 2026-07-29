@@ -1,13 +1,13 @@
-import Link from "next/link";
+import { Roboto } from "next/font/google";
 import Image from "next/image";
+import Link from "next/link";
 import type { PropsWithChildren } from "react";
-import { FaBolt, FaLock, FaHeadset } from "react-icons/fa6";
-import { Roboto } from 'next/font/google';
+import { FaBolt, FaHeadset, FaLock } from "react-icons/fa6";
 
 const roboto = Roboto({
   subsets: ["latin"],
+  variable: "--font-roboto",
   weight: ["100", "300", "400", "500", "700", "900"],
-  variable: "--font-roboto"
 });
 
 export default function AuthPage({
@@ -19,107 +19,148 @@ export default function AuthPage({
   children,
 }: PropsWithChildren<AuthPageProps>) {
   return (
-    <div className={`${roboto.variable} relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-[#020617]`}>
+    <div
+      className={`${roboto.variable} relative flex min-h-screen items-center justify-center overflow-hidden bg-[#020617] p-4`}
+    >
       {/* Background Video */}
       <div className="absolute inset-0 z-0">
         <video
           autoPlay
-          muted
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
           loop
+          muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-30"
         >
-          <source src="/vecteezy_powerful-server-room-in-modern-data-center-cloud-computing_7999282.mp4" type="video/mp4" />
+          <source
+            src="/vecteezy_powerful-server-room-in-modern-data-center-cloud-computing_7999282.mp4"
+            type="video/mp4"
+          />
         </video>
         <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/20 to-black/60" />
       </div>
 
       {/* Main Container */}
-      <div className="relative z-10 w-full max-w-[1662px] h-auto lg:h-[703px] flex flex-col lg:flex-row rounded-[59px] overflow-hidden border border-[#00A8DA] shadow-[0_40px_100px_rgba(0,0,0,0.8)] bg-[rgba(0,29,48,0.79)] backdrop-blur-md">
-        
+      <div className="relative z-10 flex h-auto w-full max-w-[1662px] flex-col overflow-hidden rounded-[59px] border border-[#00A8DA] bg-[rgba(0,29,48,0.79)] shadow-[0_40px_100px_rgba(0,0,0,0.8)] backdrop-blur-md lg:h-[703px] lg:flex-row">
         {/* Left Side: Branding & Features */}
-        <div className="flex-1 p-8 md:p-16 lg:p-20 flex flex-col justify-center">
-          <div className="flex flex-col gap-[16px] max-w-[571px]">
+        <div className="flex flex-1 flex-col justify-center p-8 md:p-16 lg:p-20">
+          <div className="flex max-w-[571px] flex-col gap-[16px]">
             {/* Branding */}
-            <Link href="/" className="flex items-center gap-[7.5px] h-[40px] hover:opacity-80 transition-opacity">
-              <div className="relative w-[35.5px] h-[32px]">
-                <Image src="/logo-branca.svg" alt="Atlas Logo" fill className="object-contain" />
+            <Link
+              className="flex h-[40px] items-center gap-[7.5px] transition-opacity hover:opacity-80"
+              href="/"
+            >
+              <div className="relative h-[32px] w-[35.5px]">
+                <Image
+                  alt="Atlas Logo"
+                  className="object-contain"
+                  fill
+                  src="/logo-branca.svg"
+                />
               </div>
-              <span className={`${roboto.className} text-[36px] font-bold text-white tracking-tight`}>
+              <span
+                className={`${roboto.className} font-bold text-[36px] text-white tracking-tight`}
+              >
                 Atlas Hosting
               </span>
             </Link>
 
             {/* Headline */}
-            <h1 className={`${roboto.className} text-[48px] leading-[48px] font-bold text-white mt-4`}>
-              Hospedagem de Sites<br />
+            <h1
+              className={`${roboto.className} mt-4 font-bold text-[48px] text-white leading-[48px]`}
+            >
+              Hospedagem de Sites
+              <br />
               Profissional
             </h1>
 
             {/* Subheadline */}
-            <p className="text-[#DBEAFE] text-[20px] leading-[28px] font-normal max-w-[571px]">
+            <p className="max-w-[571px] font-normal text-[#DBEAFE] text-[20px] leading-[28px]">
               Infraestrutura otimizada para alta performance e segurança
             </p>
           </div>
 
-          <div className="flex flex-col gap-8 mt-12">
+          <div className="mt-12 flex flex-col gap-8">
             <div className="flex items-center gap-5">
-              <div className="h-14 w-14 rounded-2xl bg-[#0B2144] flex items-center justify-center text-white shadow-lg">
-                <FaBolt className="w-6 h-6" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0B2144] text-white shadow-lg">
+                <FaBolt className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-lg">99.9% de Uptime</h3>
-                <p className="text-[#DBEAFE]/70 text-sm">Servidores com alta disponibilidade</p>
+                <h3 className="font-bold text-lg text-white">
+                  99.9% de Uptime
+                </h3>
+                <p className="text-[#DBEAFE]/70 text-sm">
+                  Servidores com alta disponibilidade
+                </p>
               </div>
             </div>
 
             <div className="flex items-center gap-5">
-              <div className="h-14 w-14 rounded-2xl bg-[#0B2144] flex items-center justify-center text-white shadow-lg">
-                <FaLock className="w-6 h-6" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0B2144] text-white shadow-lg">
+                <FaLock className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-lg">SSL Grátis</h3>
-                <p className="text-[#DBEAFE]/70 text-sm">Certificado SSL em todos os planos</p>
+                <h3 className="font-bold text-lg text-white">SSL Grátis</h3>
+                <p className="text-[#DBEAFE]/70 text-sm">
+                  Certificado SSL em todos os planos
+                </p>
               </div>
             </div>
 
             <div className="flex items-center gap-5">
-              <div className="h-14 w-14 rounded-2xl bg-[#0B2144] flex items-center justify-center text-white shadow-lg">
-                <FaHeadset className="w-6 h-6" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0B2144] text-white shadow-lg">
+                <FaHeadset className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-lg">Suporte 24/7</h3>
-                <p className="text-[#DBEAFE]/70 text-sm">Atendimento especializado</p>
+                <h3 className="font-bold text-lg text-white">Suporte 24/7</h3>
+                <p className="text-[#DBEAFE]/70 text-sm">
+                  Atendimento especializado
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Right Side: Form Container (Black Panel) */}
-        <div className="flex-1 max-w-full lg:max-w-[733px] lg:h-[703px] p-8 md:p-16 lg:p-20 bg-[rgba(0,0,0,0.79)] border border-[#00A8DA] rounded-[59px] flex flex-col justify-center">
-          <div className="w-full max-w-sm mx-auto">
+        <div className="flex max-w-full flex-1 flex-col justify-center rounded-[59px] border border-[#00A8DA] bg-[rgba(0,0,0,0.79)] p-8 md:p-16 lg:h-[703px] lg:max-w-[733px] lg:p-20">
+          <div className="mx-auto w-full max-w-sm">
             {/* Form Logo (Blue Filter) */}
-            <div className="flex justify-center mb-8">
-              <Link href="/" className="relative w-12 h-12 block hover:opacity-80 transition-opacity" style={{ filter: 'invert(52%) sepia(98%) saturate(1476%) hue-rotate(159deg) brightness(98%) contrast(101%)' }}>
-                <Image src="/logo-branca.svg" alt="Atlas Logo" fill className="object-contain" />
+            <div className="mb-8 flex justify-center">
+              <Link
+                className="relative block h-12 w-12 transition-opacity hover:opacity-80"
+                href="/"
+                style={{
+                  filter:
+                    "invert(52%) sepia(98%) saturate(1476%) hue-rotate(159deg) brightness(98%) contrast(101%)",
+                }}
+              >
+                <Image
+                  alt="Atlas Logo"
+                  className="object-contain"
+                  fill
+                  src="/logo-branca.svg"
+                />
               </Link>
             </div>
 
-            <div className="text-left mb-10">
-              <h2 className={`${roboto.className} text-3xl font-bold text-white mb-2`}>{title}</h2>
-              <p className="text-[#DBEAFE]/60 text-sm font-medium">{subtitle}</p>
+            <div className="mb-10 text-left">
+              <h2
+                className={`${roboto.className} mb-2 font-bold text-3xl text-white`}
+              >
+                {title}
+              </h2>
+              <p className="font-medium text-[#DBEAFE]/60 text-sm">
+                {subtitle}
+              </p>
             </div>
 
-            <div className="auth-form-container">
-              {children}
-            </div>
+            <div className="auth-form-container">{children}</div>
 
             <div className="mt-10 text-center">
-              <p className="text-white text-sm font-medium">
+              <p className="font-medium text-sm text-white">
                 {switchTitle}{" "}
                 <Link
+                  className="font-bold text-sky-400 transition-colors hover:text-sky-300"
                   href={switchHref}
-                  className="text-sky-400 font-bold hover:text-sky-300 transition-colors"
                 >
                   {switchText}
                 </Link>

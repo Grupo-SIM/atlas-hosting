@@ -34,13 +34,13 @@ export class SmtpEmailClient {
 
   async connect(): Promise<void> {
     this.transporter = nodemailer.createTransport({
+      auth: {
+        pass: this.config.password,
+        user: this.config.username,
+      },
       host: this.config.host,
       port: this.config.port,
       secure: this.config.secure, // true for 465, false for other ports
-      auth: {
-        user: this.config.username,
-        pass: this.config.password,
-      },
       tls: {
         rejectUnauthorized: false, // For self-signed certificates
       },
@@ -67,31 +67,31 @@ export class SmtpEmailClient {
 
     try {
       const mailOptions = {
-        from: emailData.from,
-        to: Array.isArray(emailData.to)
-          ? emailData.to.join(", ")
-          : emailData.to,
-        cc: emailData.cc
-          ? Array.isArray(emailData.cc)
-            ? emailData.cc.join(", ")
-            : emailData.cc
-          : undefined,
+        attachments: emailData.attachments,
         bcc: emailData.bcc
           ? Array.isArray(emailData.bcc)
             ? emailData.bcc.join(", ")
             : emailData.bcc
           : undefined,
+        cc: emailData.cc
+          ? Array.isArray(emailData.cc)
+            ? emailData.cc.join(", ")
+            : emailData.cc
+          : undefined,
+        from: emailData.from,
+        html: emailData.html,
         subject: emailData.subject,
         text: emailData.text,
-        html: emailData.html,
-        attachments: emailData.attachments,
+        to: Array.isArray(emailData.to)
+          ? emailData.to.join(", ")
+          : emailData.to,
       };
 
       const result = await this.transporter.sendMail(mailOptions);
 
       return {
-        messageId: result.messageId,
         accepted: result.accepted as string[],
+        messageId: result.messageId,
         rejected: result.rejected as string[],
       };
     } catch (error) {
@@ -119,10 +119,10 @@ export async function createSmtpClient(accountConfig: {
 
   const config: SmtpConfig = {
     host: accountConfig.smtpHost,
+    password,
     port: accountConfig.smtpPort,
     secure: accountConfig.smtpSecure,
     username: accountConfig.smtpUsername,
-    password,
   };
 
   const client = new SmtpEmailClient(config);

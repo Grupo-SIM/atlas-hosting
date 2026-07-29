@@ -1,5 +1,7 @@
 "use client";
 
+import { ExternalLink, MoreHorizontal, RefreshCw, Server } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,8 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ExternalLink, MoreHorizontal, RefreshCw, Server } from "lucide-react";
-import Link from "next/link";
 import { RenewDomainModal } from "./RenewDomainModal";
 
 interface DomainActionsMenuProps {
@@ -17,41 +17,48 @@ interface DomainActionsMenuProps {
   domainName: string;
 }
 
-export function DomainActionsMenu({ domainId, domainName }: DomainActionsMenuProps) {
+export function DomainActionsMenu({
+  domainId,
+  domainName,
+}: DomainActionsMenuProps) {
   const [isRenewOpen, setIsRenewOpen] = useState(false);
 
   return (
     <>
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 flex items-center justify-center shrink-0">
-          <MoreHorizontal className="h-4 w-4" />
-          <span className="sr-only">Ações para {domainName}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <Link href={`/dns?domain=${domainId}`}>
-            <Server className="h-4 w-4 mr-2" /> Gerenciar DNS
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className="cursor-pointer"
-          onClick={() => setIsRenewOpen(true)}
-        >
-          <RefreshCw className="h-4 w-4 mr-2" /> Renovar Domínio
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <a
-            href={`http://${domainName}`}
-            target="_blank"
-            rel="noopener noreferrer"
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            className="flex h-8 w-8 shrink-0 items-center justify-center"
+            size="icon"
+            variant="ghost"
           >
-            <ExternalLink className="h-4 w-4 mr-2" /> Visitar Site
-          </a>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+            <MoreHorizontal className="h-4 w-4" />
+            <span className="sr-only">Ações para {domainName}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link href={`/dns?domain=${domainId}`}>
+              <Server className="mr-2 h-4 w-4" /> Gerenciar DNS
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onClick={() => setIsRenewOpen(true)}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" /> Renovar Domínio
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <a
+              href={`http://${domainName}`}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <ExternalLink className="mr-2 h-4 w-4" /> Visitar Site
+            </a>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {isRenewOpen && (
         <RenewDomainModal

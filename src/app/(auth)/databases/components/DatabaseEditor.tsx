@@ -1,11 +1,7 @@
 "use client";
 
+import { Database, Terminal } from "lucide-react";
 import { Suspense } from "react";
-import { TableList } from "./TableList";
-import { QueryEditor } from "./QueryEditor";
-import { DataTable } from "./DataTable";
-import { LoadingSkeleton } from "./LoadingSkeleton";
-import { ErrorBoundary } from "./ErrorBoundary";
 import {
   Card,
   CardContent,
@@ -14,7 +10,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Database, Terminal } from "lucide-react";
+import { DataTable } from "./DataTable";
+import { ErrorBoundary } from "./ErrorBoundary";
+import { LoadingSkeleton } from "./LoadingSkeleton";
+import { QueryEditor } from "./QueryEditor";
+import { TableList } from "./TableList";
 
 interface DatabaseEditorProps {
   instanceId: number;
@@ -37,10 +37,10 @@ export function DatabaseEditor({
   const currentQuery = searchParams.query;
 
   return (
-    <div className="h-full flex flex-col space-y-4">
+    <div className="flex h-full flex-col space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="font-bold text-3xl tracking-tight">
             Editor de Banco de Dados
           </h1>
           <p className="text-muted-foreground">
@@ -50,22 +50,22 @@ export function DatabaseEditor({
       </div>
 
       <Tabs
+        className="flex flex-1 flex-col"
         defaultValue={currentTable ? "table" : "query"}
-        className="flex-1 flex flex-col"
       >
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="table" className="flex items-center gap-2">
+          <TabsTrigger className="flex items-center gap-2" value="table">
             <Database className="h-4 w-4" />
             Visualizador de Tabelas
           </TabsTrigger>
-          <TabsTrigger value="query" className="flex items-center gap-2">
+          <TabsTrigger className="flex items-center gap-2" value="query">
             <Terminal className="h-4 w-4" />
             Editor de Consultas
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="table" className="flex-1 flex flex-col space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1">
+        <TabsContent className="flex flex-1 flex-col space-y-4" value="table">
+          <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-4">
             <Card className="lg:col-span-1">
               <CardHeader>
                 <CardTitle className="text-base">Tabelas do Banco</CardTitle>
@@ -85,7 +85,7 @@ export function DatabaseEditor({
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-3 flex flex-col">
+            <Card className="flex flex-col lg:col-span-3">
               <CardHeader>
                 <CardTitle className="text-base">
                   {currentTable
@@ -98,21 +98,21 @@ export function DatabaseEditor({
                     : "Selecione uma tabela para visualizar os dados"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col p-0">
+              <CardContent className="flex flex-1 flex-col p-0">
                 {currentTable ? (
                   <ErrorBoundary>
                     <Suspense fallback={<LoadingSkeleton />}>
                       <DataTable
                         instanceId={instanceId}
-                        tableName={currentTable}
                         searchParams={searchParams}
+                        tableName={currentTable}
                       />
                     </Suspense>
                   </ErrorBoundary>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                  <div className="flex flex-1 items-center justify-center text-muted-foreground">
                     <div className="text-center">
-                      <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <Database className="mx-auto mb-4 h-12 w-12 opacity-50" />
                       <p>Selecione uma tabela para começar</p>
                     </div>
                   </div>
@@ -122,8 +122,8 @@ export function DatabaseEditor({
           </div>
         </TabsContent>
 
-        <TabsContent value="query" className="flex-1 flex flex-col">
-          <Card className="flex-1 flex flex-col">
+        <TabsContent className="flex flex-1 flex-col" value="query">
+          <Card className="flex flex-1 flex-col">
             <CardHeader>
               <CardTitle className="text-base">
                 Editor de Consultas SQL
@@ -132,12 +132,12 @@ export function DatabaseEditor({
                 Execute consultas personalizadas no banco de dados
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col p-0">
+            <CardContent className="flex flex-1 flex-col p-0">
               <ErrorBoundary>
                 <Suspense fallback={<LoadingSkeleton />}>
                   <QueryEditor
-                    instanceId={instanceId}
                     initialQuery={currentQuery}
+                    instanceId={instanceId}
                   />
                 </Suspense>
               </ErrorBoundary>

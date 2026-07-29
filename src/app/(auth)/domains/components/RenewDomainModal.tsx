@@ -1,17 +1,17 @@
 "use client";
 
+import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { createDomainRenewalInvoice } from "@/app/actions";
+import ModernCheckoutForm from "@/components/checkout/ModernCheckoutForm";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import ModernCheckoutForm from "@/components/checkout/ModernCheckoutForm";
-import { createDomainRenewalInvoice } from "@/app/actions";
-import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface RenewDomainModalProps {
   domainName: string;
@@ -23,22 +23,34 @@ type State =
   | { status: "error"; message: string }
   | { status: "ready"; invoiceId: string; priceBRL: number };
 
-export function RenewDomainModal({ domainName, onClose }: RenewDomainModalProps) {
+export function RenewDomainModal({
+  domainName,
+  onClose,
+}: RenewDomainModalProps) {
   const [state, setState] = useState<State>({ status: "loading" });
 
   useEffect(() => {
-    createDomainRenewalInvoice(domainName).then((res) => {
+    createDomainRenewalInvoice(domainName).then(res => {
       if (res.status === "error") {
-        setState({ status: "error", message: res.message });
+        setState({ message: res.message, status: "error" });
       } else {
-        setState({ status: "ready", invoiceId: res.invoiceId, priceBRL: res.priceBRL });
+        setState({
+          invoiceId: res.invoiceId,
+          priceBRL: res.priceBRL,
+          status: "ready",
+        });
       }
     });
   }, [domainName]);
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog
+      onOpenChange={open => {
+        if (!open) onClose();
+      }}
+      open
+    >
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <RefreshCw className="h-5 w-5" />
@@ -47,7 +59,13 @@ export function RenewDomainModal({ domainName, onClose }: RenewDomainModalProps)
           <DialogDescription>
             Renovação de <strong>{domainName}</strong> por mais 1 ano.
             {state.status === "ready" && (
-              <> Valor: <strong>R$ {(state.priceBRL / 100).toFixed(2).replace(".", ",")}</strong></>
+              <>
+                {" "}
+                Valor:{" "}
+                <strong>
+                  R$ {(state.priceBRL / 100).toFixed(2).replace(".", ",")}
+                </strong>
+              </>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -61,8 +79,12 @@ export function RenewDomainModal({ domainName, onClose }: RenewDomainModalProps)
         {state.status === "error" && (
           <div className="flex flex-col items-center gap-4 py-8">
             <AlertCircle className="h-10 w-10 text-destructive" />
-            <p className="text-sm text-muted-foreground text-center">{state.message}</p>
-            <Button variant="outline" onClick={onClose}>Fechar</Button>
+            <p className="text-center text-muted-foreground text-sm">
+              {state.message}
+            </p>
+            <Button onClick={onClose} variant="outline">
+              Fechar
+            </Button>
           </div>
         )}
 

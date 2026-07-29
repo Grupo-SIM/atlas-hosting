@@ -1,3 +1,7 @@
+import { eq } from "drizzle-orm";
+import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
+import type { DomainData, DomainPageParams } from "@/app/(auth)/domain/types";
+import { getDomainData } from "@/app/(auth)/domain/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,36 +10,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgDomainPricingCache } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
-import { eq } from "drizzle-orm";
-import { TooltipArrow } from "@radix-ui/react-tooltip";
-import { AlertCircle, Check, CheckCircle2, X, XCircle } from "lucide-react";
-import { Suspense } from "react";
-import { FaCircleQuestion } from "react-icons/fa6";
-import { Skeleton } from "../ui/skeleton";
-import { Checkbox } from "../ui/checkbox";
-import { Label } from "../ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Separator } from "../ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
-import Form from "next/form";
-import { getDomainData } from "@/app/(auth)/domain/utils";
-import type { DomainData, DomainPageParams } from "@/app/(auth)/domain/types";
 import { DomainPriceSelector } from "./DomainPriceSelector";
-import { getUser } from "@/lib/auth";
 
 export async function DomainResult({
   searchParams,
@@ -53,14 +32,18 @@ export async function DomainResult({
   ]);
 
   const isAlreadyOwned = user.organization.domains.some(
-    (d) => d.domain.toLowerCase() === domain.toLowerCase()
+    d => d.domain.toLowerCase() === domain.toLowerCase()
   );
 
-  const selectedYears = searchParams.years ? parseInt(searchParams.years, 10) : 1;
+  const selectedYears = searchParams.years
+    ? Number.parseInt(searchParams.years, 10)
+    : 1;
 
-  let price = (domainData?.domain?.multiYearPricesBRL && domainData.domain.multiYearPricesBRL[selectedYears]) 
+  let price = domainData?.domain?.multiYearPricesBRL?.[selectedYears]
     ? domainData.domain.multiYearPricesBRL[selectedYears]
-    : (domainData?.domain?.priceBRL ? domainData.domain.priceBRL * selectedYears : undefined);
+    : domainData?.domain?.priceBRL
+      ? domainData.domain.priceBRL * selectedYears
+      : undefined;
 
   if (!domainData?.domain || !price) {
     return (
@@ -70,8 +53,8 @@ export async function DomainResult({
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Não foi possível verificar a disponibilidade do domínio &quot;{domain}&quot;. Tente
-            novamente ou verifique o termo.
+            Não foi possível verificar a disponibilidade do domínio &quot;
+            {domain}&quot;. Tente novamente ou verifique o termo.
           </p>
         </CardContent>
       </Card>
@@ -92,8 +75,8 @@ export async function DomainResult({
   const tld = fullDomain.split(".").pop() ?? "";
   const tldRow = tld
     ? await db.query.pgDomainPricingCache.findFirst({
+        columns: { maxRegisterYears: true, minRegisterYears: true },
         where: eq(pgDomainPricingCache.tld, tld),
-        columns: { minRegisterYears: true, maxRegisterYears: true },
       })
     : null;
 
@@ -105,12 +88,14 @@ export async function DomainResult({
   );
 
   return (
-    <Card className="bg-white dark:bg-white/5 backdrop-blur-md border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden">
-      <CardHeader className="border-b border-slate-100 dark:border-white/5 pb-6">
+    <Card className="overflow-hidden rounded-3xl border-slate-200 bg-white shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-white/5">
+      <CardHeader className="border-slate-100 border-b pb-6 dark:border-white/5">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Resultado da Busca: {fullDomain}</CardTitle>
-            <CardDescription className="text-slate-500 dark:text-slate-400 font-medium">
+            <CardTitle className="font-black text-slate-900 text-xl uppercase tracking-tight dark:text-white">
+              Resultado da Busca: {fullDomain}
+            </CardTitle>
+            <CardDescription className="font-medium text-slate-500 dark:text-slate-400">
               {available
                 ? "Este domínio está disponível para registro!"
                 : isAlreadyOwned
@@ -119,35 +104,43 @@ export async function DomainResult({
             </CardDescription>
           </div>
           {available ? (
-            <div className="bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 shadow-emerald-500/10 shadow-lg">
               <CheckCircle2 className="h-6 w-6 text-emerald-400" />
             </div>
           ) : (
-            <div className="bg-rose-500/10 p-2 rounded-xl border border-rose-500/20 shadow-lg shadow-rose-500/10">
+            <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-2 shadow-lg shadow-rose-500/10">
               <XCircle className="h-6 w-6 text-rose-400" />
             </div>
           )}
         </div>
       </CardHeader>
       <CardContent className="pt-8">
-        <div className="flex items-center justify-between gap-4 mb-8">
+        <div className="mb-8 flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <div className="flex-1">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{fullDomain}</h3>
+              <h3 className="font-black text-2xl text-slate-900 uppercase tracking-tighter dark:text-white">
+                {fullDomain}
+              </h3>
               {available ? (
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                  <p className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.2em]">Disponível</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                  <p className="font-black text-[11px] text-emerald-400 uppercase tracking-[0.2em]">
+                    Disponível
+                  </p>
                 </div>
               ) : isAlreadyOwned ? (
-                <div className="flex items-center gap-2 mt-1">
+                <div className="mt-1 flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-sky-500" />
-                  <p className="text-[11px] font-black text-sky-400 uppercase tracking-[0.2em]">Sua conta</p>
+                  <p className="font-black text-[11px] text-sky-400 uppercase tracking-[0.2em]">
+                    Sua conta
+                  </p>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 mt-1">
+                <div className="mt-1 flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                  <p className="text-[11px] font-black text-rose-400 uppercase tracking-[0.2em]">Indisponível</p>
+                  <p className="font-black text-[11px] text-rose-400 uppercase tracking-[0.2em]">
+                    Indisponível
+                  </p>
                 </div>
               )}
             </div>
@@ -155,9 +148,9 @@ export async function DomainResult({
         </div>
 
         {isPremium && available ? (
-          <div className="mb-8 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
-            <p className="text-xs font-bold text-amber-500/90 uppercase tracking-wider">
+          <div className="mb-8 flex items-center gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <AlertCircle className="h-5 w-5 shrink-0 text-amber-500" />
+            <p className="font-bold text-amber-500/90 text-xs uppercase tracking-wider">
               Domínio Premium: O preço de registro é {toBrl(price!)}.
             </p>
           </div>
@@ -165,21 +158,24 @@ export async function DomainResult({
 
         {available ? (
           <div className="mt-4">
-            <DomainPriceSelector 
-              domain={fullDomain}
+            <DomainPriceSelector
               defaultYears={selectedYears.toString()}
-              whoisguard={searchParams.whoisguard ?? "off"}
-              registerOptions={registerOptions}
+              domain={fullDomain}
               isConfirming={!!searchParams.confirm}
-              price={price}
-              renewBRL={renewBRL}
-              multiYearPricesBRL={domainData.domain.multiYearPricesBRL}
               isPremium={isPremium}
+              multiYearPricesBRL={domainData.domain.multiYearPricesBRL}
+              price={price}
+              registerOptions={registerOptions}
+              renewBRL={renewBRL}
+              whoisguard={searchParams.whoisguard ?? "off"}
             />
           </div>
         ) : (
-          <div className="border-t border-white/5 pt-6 mt-6">
-            <DomainUnavailable domainData={domainData} isAlreadyOwned={isAlreadyOwned} />
+          <div className="mt-6 border-white/5 border-t pt-6">
+            <DomainUnavailable
+              domainData={domainData}
+              isAlreadyOwned={isAlreadyOwned}
+            />
           </div>
         )}
       </CardContent>
@@ -187,11 +183,17 @@ export async function DomainResult({
   );
 }
 
-function DomainUnavailable({ domainData, isAlreadyOwned }: { domainData: DomainData; isAlreadyOwned: boolean }) {
+function DomainUnavailable({
+  domainData,
+  isAlreadyOwned,
+}: {
+  domainData: DomainData;
+  isAlreadyOwned: boolean;
+}) {
   if (isAlreadyOwned) {
     return (
       <div className="flex items-center justify-end gap-2 border-t p-4">
-        <Button variant="outline" disabled={true}>
+        <Button disabled={true} variant="outline">
           <Check className="mr-2 h-4 w-4 text-green-500" />
           Já registrado em sua conta
         </Button>
@@ -201,15 +203,15 @@ function DomainUnavailable({ domainData, isAlreadyOwned }: { domainData: DomainD
 
   return (
     <div className="flex items-center justify-end gap-2 border-t p-4">
-      <Button variant="outline" disabled={true}>
+      <Button disabled={true} variant="outline">
         <X className="mr-2 h-4 w-4" />
         Indisponível
       </Button>
-      <Button variant="link" className="text-sm" asChild={true}>
+      <Button asChild={true} className="text-sm" variant="link">
         <a
           href={`https://www.whois.com/whois/${domainData?.domain?.domain}`}
-          target="_blank"
           rel="noopener noreferrer"
+          target="_blank"
         >
           Tentar pesquisa WHOIS
         </a>
@@ -217,7 +219,6 @@ function DomainUnavailable({ domainData, isAlreadyOwned }: { domainData: DomainD
     </div>
   );
 }
-
 
 export const adminNamecheapDetails = {
   Address1: "Beco Neuteu Maia",

@@ -1,8 +1,7 @@
-import { db } from "@/lib/db";
-import { pgUser } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { getUser } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { pgUser } from "@/lib/db/schema";
 
 /**
  * Endpoint para promover um usuário a ADMIN via e-mail.
@@ -20,7 +19,10 @@ export async function POST(req: Request) {
     // }
 
     if (!email) {
-      return NextResponse.json({ error: "E-mail é obrigatório." }, { status: 400 });
+      return NextResponse.json(
+        { error: "E-mail é obrigatório." },
+        { status: 400 }
+      );
     }
 
     // 2. Buscar o usuário pelo e-mail
@@ -29,19 +31,22 @@ export async function POST(req: Request) {
     });
 
     if (!targetUser) {
-      return NextResponse.json({ error: "Usuário não encontrado." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Usuário não encontrado." },
+        { status: 404 }
+      );
     }
 
     // 3. Atualizar para Admin
-    await db.update(pgUser)
+    await db
+      .update(pgUser)
       .set({ isAdmin: true })
       .where(eq(pgUser.email, email));
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `Usuário ${email} agora é um Administrador Atlas.` 
+    return NextResponse.json({
+      message: `Usuário ${email} agora é um Administrador Atlas.`,
+      success: true,
     });
-
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

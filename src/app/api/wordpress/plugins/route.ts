@@ -1,6 +1,6 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import pleskApi from "@/lib/server/apis/plesk";
-import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true, result });
+    return NextResponse.json({ result, success: true });
   } catch (error) {
     console.error("Error managing WordPress plugins:", error);
     return NextResponse.json(

@@ -1,16 +1,6 @@
 "use client";
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -21,6 +11,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { ParsedWordPressInstance } from "@/lib/server/utils";
 
 export interface SiteCardProps {
@@ -50,9 +50,9 @@ export function SiteCard({
         {isBulkMode && (
           <Checkbox
             checked={isSelected}
-            onCheckedChange={() => onToggleSelection(instance.id)}
-            disabled={isPending}
             className="mt-1"
+            disabled={isPending}
+            onCheckedChange={() => onToggleSelection(instance.id)}
           />
         )}
         <div className="flex-1">
@@ -61,16 +61,16 @@ export function SiteCard({
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-gray-500">Status: {instance.status}</p>
-        <p className="text-sm text-gray-500">Caminho: {instance.path}</p>
+        <p className="text-gray-500 text-sm">Status: {instance.status}</p>
+        <p className="text-gray-500 text-sm">Caminho: {instance.path}</p>
       </CardContent>
       <CardFooter className="flex justify-end gap-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
-              variant="destructive"
               disabled={isLoading || isPending}
               size="sm"
+              variant="destructive"
             >
               {isLoading ? "Excluindo..." : "Excluir"}
             </Button>

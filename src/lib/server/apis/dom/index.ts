@@ -1,22 +1,21 @@
-import { db } from "@/lib/db";
-import { pgOrganization, pgUser } from "@/lib/db/schema";
 import axios, { type AxiosInstance } from "axios";
 import { eq } from "drizzle-orm";
 import jwt from "jsonwebtoken";
+import { db } from "@/lib/db";
+import { pgOrganization, pgUser } from "@/lib/db/schema";
 import {
-  Receiver,
+  type CreateBoletoTransactionParams,
   type CreateClientParams,
   type CreateOneTimePaymentParams,
   type CreateRecurrentPaymentParams,
   type CreateSubscriptionParams,
-  type PayloadWebhook,
-  type CreateBoletoTransactionParams,
   type DomTransaction,
+  type PayloadWebhook,
+  Receiver,
 } from "./types";
 
 export class DomApi {
   private api: AxiosInstance;
-  private privateKeyPath: string;
   private tokenApi: string;
 
   constructor() {
@@ -44,14 +43,17 @@ export class DomApi {
     externalReference,
     newClient,
   }: CreateRecurrentPaymentParams) {
-    console.log(`[DOM][createRecurrentPayment] Iniciando pagamento recorrente`, {
-      userId,
-      externalReference,
-      value,
-      description,
-      hasNewClient: !!newClient,
-      cardType: "token" in card ? "token" : "raw_card",
-    });
+    console.log(
+      "[DOM][createRecurrentPayment] Iniciando pagamento recorrente",
+      {
+        cardType: "token" in card ? "token" : "raw_card",
+        description,
+        externalReference,
+        hasNewClient: !!newClient,
+        userId,
+        value,
+      }
+    );
 
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, userId),
@@ -61,28 +63,34 @@ export class DomApi {
     });
 
     if (!user) {
-      console.error(`[DOM][createRecurrentPayment] Usuário não encontrado: ${userId}`);
+      console.error(
+        `[DOM][createRecurrentPayment] Usuário não encontrado: ${userId}`
+      );
       throw new Error("User not found");
     }
 
-    console.log(`[DOM][createRecurrentPayment] Usuário encontrado:`, {
-      userId: user.id,
+    console.log("[DOM][createRecurrentPayment] Usuário encontrado:", {
+      domId: user.organization?.domId ?? "(sem DOM ID)",
       email: user.email,
       organizationId: user.organization?.id,
-      domId: user.organization?.domId ?? "(sem DOM ID)",
+      userId: user.id,
     });
 
     let domId = user.organization?.domId ?? "";
 
     if (!domId) {
       if (!newClient) {
-        console.error(`[DOM][createRecurrentPayment] Sem DOM ID e sem dados para criar cliente`);
+        console.error(
+          "[DOM][createRecurrentPayment] Sem DOM ID e sem dados para criar cliente"
+        );
         throw new Error("User does not have a DOM ID");
       }
 
-      console.log(`[DOM][createRecurrentPayment] Criando novo cliente DOM...`);
+      console.log("[DOM][createRecurrentPayment] Criando novo cliente DOM...");
       const client = await this.createClient(newClient);
-      console.log(`[DOM][createRecurrentPayment] Cliente DOM criado: ${client.id}`);
+      console.log(
+        `[DOM][createRecurrentPayment] Cliente DOM criado: ${client.id}`
+      );
 
       await db
         .update(pgOrganization)
@@ -103,7 +111,9 @@ export class DomApi {
     let cardToken = "token" in card ? card.token : "";
 
     if (!("token" in card)) {
-      console.log(`[DOM][createRecurrentPayment] Tokenizando cartão para customerId=${domId}...`);
+      console.log(
+        `[DOM][createRecurrentPayment] Tokenizando cartão para customerId=${domId}...`
+      );
       const {
         data: { token },
       } = await this.api.post<{ token: string }>(
@@ -111,56 +121,66 @@ export class DomApi {
         card,
         {
           headers: {
-            "Content-Type": "application/json",
             Accept: "application/json",
+            "Content-Type": "application/json",
           },
         }
       );
 
       cardToken = token;
-      console.log(`[DOM][createRecurrentPayment] Cartão tokenizado com sucesso`);
+      console.log(
+        "[DOM][createRecurrentPayment] Cartão tokenizado com sucesso"
+      );
     } else {
       cardToken = card.token;
-      console.log(`[DOM][createRecurrentPayment] Usando token de cartão existente`);
+      console.log(
+        "[DOM][createRecurrentPayment] Usando token de cartão existente"
+      );
     }
 
     const params: CreateSubscriptionParams = {
-      card: {
-        token: cardToken,
-        installments: 1,
+      auto_recurring: {
+        billing_day: billingDay,
+        billing_type: "prepaid",
+        description,
+        frequency: 1,
+        frequency_type: "MONTH",
+        retry_days: 3,
+        value,
       },
+      card: {
+        installments: 1,
+        token: cardToken,
+      },
+      cashback_active: true,
       customer_id: domId,
       external_reference: externalReference,
       payment_method: "credit_card",
-      auto_recurring: {
-        description,
-        value,
-        billing_day: billingDay,
-        frequency_type: "MONTH",
-        billing_type: "prepaid",
-        retry_days: 3,
-        frequency: 1,
-      },
-      cashback_active: true,
       postbackurl: `${process.env.PUBLIC_URL}/webhook/dom`,
     };
 
-    console.log(`[DOM][createRecurrentPayment] Enviando para DOM API:`, JSON.stringify(params, null, 2));
+    console.log(
+      "[DOM][createRecurrentPayment] Enviando para DOM API:",
+      JSON.stringify(params, null, 2)
+    );
 
     try {
       const { data } = await this.api.post("/recurrence/subscriptions", params);
-      console.log(`[DOM][createRecurrentPayment] Resposta da DOM API (SUCESSO):`, JSON.stringify(data, null, 2));
+      console.log(
+        "[DOM][createRecurrentPayment] Resposta da DOM API (SUCESSO):",
+        JSON.stringify(data, null, 2)
+      );
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error(`[DOM][createRecurrentPayment] ERRO na DOM API:`, {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
+        console.error("[DOM][createRecurrentPayment] ERRO na DOM API:", {
           data: JSON.stringify(error.response?.data, null, 2),
           message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
         });
       } else {
-        console.error(`[DOM][createRecurrentPayment] ERRO inesperado:`, error);
+        console.error("[DOM][createRecurrentPayment] ERRO inesperado:", error);
       }
       throw error;
     }
@@ -173,12 +193,15 @@ export class DomApi {
     userId,
     externalReference,
   }: CreateOneTimePaymentParams) {
-    console.log(`[DOM][createOneTimePayment] Iniciando pagamento único (domínio)`, {
-      userId,
-      externalReference,
-      value,
-      description,
-    });
+    console.log(
+      "[DOM][createOneTimePayment] Iniciando pagamento único (domínio)",
+      {
+        description,
+        externalReference,
+        userId,
+        value,
+      }
+    );
 
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, userId),
@@ -186,60 +209,68 @@ export class DomApi {
     });
 
     if (!user) {
-      console.error(`[DOM][createOneTimePayment] Usuário não encontrado: ${userId}`);
+      console.error(
+        `[DOM][createOneTimePayment] Usuário não encontrado: ${userId}`
+      );
       throw new Error("User not found");
     }
 
-    console.log(`[DOM][createOneTimePayment] Usuário encontrado:`, {
-      userId: user.id,
+    console.log("[DOM][createOneTimePayment] Usuário encontrado:", {
+      domId: user.organization?.domId ?? "(sem DOM ID)",
       email: user.email,
       organizationId: user.organization?.id,
-      domId: user.organization?.domId ?? "(sem DOM ID)",
+      userId: user.id,
     });
 
     const domId = user.organization?.domId;
     if (!domId) {
-      console.error(`[DOM][createOneTimePayment] Usuário sem DOM customer ID`);
+      console.error("[DOM][createOneTimePayment] Usuário sem DOM customer ID");
       throw new Error("User does not have a DOM ID");
     }
 
     const params: CreateSubscriptionParams = {
-      card: {
-        token: card.token,
-        installments: card.installments ?? 1,
+      auto_recurring: {
+        billing_type: "prepaid",
+        description,
+        frequency: 1,
+        frequency_type: "MONTH",
+        repetitions: 1,
+        retry_days: 3,
+        value,
       },
+      card: {
+        installments: card.installments ?? 1,
+        token: card.token,
+      },
+      cashback_active: true,
       customer_id: domId,
       external_reference: externalReference,
       payment_method: "credit_card",
-      auto_recurring: {
-        description,
-        value,
-        frequency_type: "MONTH",
-        frequency: 1,
-        repetitions: 1,
-        billing_type: "prepaid",
-        retry_days: 3,
-      },
-      cashback_active: true,
       postbackurl: `${process.env.PUBLIC_URL}/webhook/dom`,
     };
 
-    console.log(`[DOM][createOneTimePayment] Enviando para DOM API (repetitions=1, cobrança única):`, JSON.stringify(params, null, 2));
+    console.log(
+      "[DOM][createOneTimePayment] Enviando para DOM API (repetitions=1, cobrança única):",
+      JSON.stringify(params, null, 2)
+    );
 
     try {
       const { data } = await this.api.post("/recurrence/subscriptions", params);
-      console.log(`[DOM][createOneTimePayment] Resposta da DOM API (SUCESSO):`, JSON.stringify(data, null, 2));
+      console.log(
+        "[DOM][createOneTimePayment] Resposta da DOM API (SUCESSO):",
+        JSON.stringify(data, null, 2)
+      );
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error(`[DOM][createOneTimePayment] ERRO na DOM API:`, {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
+        console.error("[DOM][createOneTimePayment] ERRO na DOM API:", {
           data: JSON.stringify(error.response?.data, null, 2),
           message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
         });
       } else {
-        console.error(`[DOM][createOneTimePayment] ERRO inesperado:`, error);
+        console.error("[DOM][createOneTimePayment] ERRO inesperado:", error);
       }
       throw error;
     }
@@ -256,14 +287,17 @@ export class DomApi {
     address,
     userId,
   }: CreateClientParams) {
-    console.log(`[DOM][createClient] Criando cliente DOM para userId=${userId}`, {
-      name,
-      email,
-      document: `${document.substring(0, 3)}...${document.slice(-2)}`,
-      documentType: document.length === 11 ? "CPF" : "CNPJ",
-      codeExternal,
-      mobilePhone,
-    });
+    console.log(
+      `[DOM][createClient] Criando cliente DOM para userId=${userId}`,
+      {
+        codeExternal,
+        document: `${document.substring(0, 3)}...${document.slice(-2)}`,
+        documentType: document.length === 11 ? "CPF" : "CNPJ",
+        email,
+        mobilePhone,
+        name,
+      }
+    );
 
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, userId),
@@ -275,42 +309,49 @@ export class DomApi {
     }
 
     const payload = {
-      name,
-      email,
+      address,
+      code_external: codeExternal,
       document,
       document_type: document.length === 11 ? "CPF" : "CNPJ",
-      code_external: codeExternal,
+      email,
       // gender,
       // birthdate,
       mobile_phone: mobilePhone,
-      address,
+      name,
     };
 
-    console.log(`[DOM][createClient] Enviando para DOM API /customers:`, JSON.stringify(payload, null, 2));
+    console.log(
+      "[DOM][createClient] Enviando para DOM API /customers:",
+      JSON.stringify(payload, null, 2)
+    );
 
     try {
       const { data } = await this.api.post<CreateClientParams & { id: string }>(
         "/customers",
         payload
       );
-      console.log(`[DOM][createClient] Cliente criado com SUCESSO. DOM customer ID: ${data.id}`);
+      console.log(
+        `[DOM][createClient] Cliente criado com SUCESSO. DOM customer ID: ${data.id}`
+      );
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error(`[DOM][createClient] ERRO na DOM API:`, {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
+        console.error("[DOM][createClient] ERRO na DOM API:", {
           data: JSON.stringify(error.response?.data, null, 2),
           message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
         });
 
         // Se o cliente já existe, retorna o ID existente
         if (error.response?.data?.id) {
-          console.log(`[DOM][createClient] Cliente já existe na DOM, retornando ID: ${error.response.data.id}`);
+          console.log(
+            `[DOM][createClient] Cliente já existe na DOM, retornando ID: ${error.response.data.id}`
+          );
           return { id: error.response.data.id as string };
         }
       } else {
-        console.error(`[DOM][createClient] ERRO inesperado:`, error);
+        console.error("[DOM][createClient] ERRO inesperado:", error);
       }
 
       throw error;
@@ -382,13 +423,16 @@ export class DomApi {
       holder_document: string;
     }
   ) {
-    console.log(`[DOM][createCardToken] Tokenizando cartão para userId=${userId}`, {
-      last4: cardData.number.slice(-4),
-      exp_month: cardData.exp_month,
-      exp_year: cardData.exp_year,
-      holder_name: cardData.holder_name,
-      holder_document: `${cardData.holder_document.substring(0, 3)}...`,
-    });
+    console.log(
+      `[DOM][createCardToken] Tokenizando cartão para userId=${userId}`,
+      {
+        exp_month: cardData.exp_month,
+        exp_year: cardData.exp_year,
+        holder_document: `${cardData.holder_document.substring(0, 3)}...`,
+        holder_name: cardData.holder_name,
+        last4: cardData.number.slice(-4),
+      }
+    );
 
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, userId),
@@ -404,11 +448,13 @@ export class DomApi {
 
     const domId = user.organization?.domId;
     if (!domId) {
-      console.error(`[DOM][createCardToken] Usuário sem DOM customer ID`);
+      console.error("[DOM][createCardToken] Usuário sem DOM customer ID");
       throw new Error("User does not have a DOM customer ID");
     }
 
-    console.log(`[DOM][createCardToken] Enviando para DOM API /customers/${domId}/card-token`);
+    console.log(
+      `[DOM][createCardToken] Enviando para DOM API /customers/${domId}/card-token`
+    );
 
     try {
       const { data } = await this.api.post<{ token: string }>(
@@ -416,36 +462,36 @@ export class DomApi {
         cardData,
         {
           headers: {
-            "Content-Type": "application/json",
             Accept: "application/json",
+            "Content-Type": "application/json",
           },
         }
       );
 
-      console.log(`[DOM][createCardToken] Cartão tokenizado com SUCESSO:`, {
-        token: data.token,
-        last4: cardData.number.slice(-4),
+      console.log("[DOM][createCardToken] Cartão tokenizado com SUCESSO:", {
         brand: this.detectCardBrand(cardData.number),
+        last4: cardData.number.slice(-4),
+        token: data.token,
       });
 
       return {
-        token: data.token,
-        last4: cardData.number.slice(-4),
         brand: this.detectCardBrand(cardData.number),
         expiryMonth: cardData.exp_month.toString().padStart(2, "0"),
         expiryYear: cardData.exp_year.toString(),
         holderName: cardData.holder_name,
+        last4: cardData.number.slice(-4),
+        token: data.token,
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error(`[DOM][createCardToken] ERRO na DOM API:`, {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
+        console.error("[DOM][createCardToken] ERRO na DOM API:", {
           data: JSON.stringify(error.response?.data, null, 2),
           message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
         });
       } else {
-        console.error(`[DOM][createCardToken] ERRO inesperado:`, error);
+        console.error("[DOM][createCardToken] ERRO inesperado:", error);
       }
       throw error;
     }
@@ -476,8 +522,8 @@ export class DomApi {
     try {
       await this.api.delete(`/customers/${domId}/cards/${cardToken}`, {
         headers: {
-          "Content-Type": "application/json",
           Accept: "application/json",
+          "Content-Type": "application/json",
         },
       });
     } catch (error) {
@@ -515,8 +561,8 @@ export class DomApi {
         `/customers/${domId}/card-token/${cardToken}`,
         {
           headers: {
-            "Content-Type": "application/json",
             Accept: "application/json",
+            "Content-Type": "application/json",
           },
         }
       );
@@ -553,19 +599,19 @@ export class DomApi {
     try {
       const { data } = await this.api.get(`/customers/${domId}`, {
         headers: {
-          "Content-Type": "application/json",
           Accept: "application/json",
+          "Content-Type": "application/json",
         },
       });
 
       return {
-        id: data.id,
-        name: data.name,
-        email: data.email,
+        address: data.address,
         document: data.document,
         document_type: data.document_type,
+        email: data.email,
+        id: data.id,
         mobile_phone: data.mobile_phone,
-        address: data.address,
+        name: data.name,
       };
     } catch (error) {
       console.error("Error fetching customer from DOM:", error);
@@ -590,37 +636,42 @@ export class DomApi {
     const payload = {
       cod_external: codExternal,
       customer,
+      metadata: description,
       payment: {
-        total: value,
-        payment_method: "boleto" as const,
         boleto: {
           boleto_due_days: boletoDueDays,
           ...(instructions ? { instructions } : {}),
         },
+        payment_method: "boleto" as const,
+        total: value,
       },
-      metadata: description,
       postbackUrl: postbackUrl ?? `${process.env.PUBLIC_URL}/webhook/dom`,
     };
 
-    console.log(`[DOM][createBoletoTransaction] Criando boleto`, {
+    console.log("[DOM][createBoletoTransaction] Criando boleto", {
       codExternal,
-      value,
       description,
+      value,
     });
 
     try {
-      const { data } = await this.api.post<DomTransaction>("transactions", payload);
-      console.log(`[DOM][createBoletoTransaction] Boleto criado com SUCESSO: ${data.id}`);
+      const { data } = await this.api.post<DomTransaction>(
+        "transactions",
+        payload
+      );
+      console.log(
+        `[DOM][createBoletoTransaction] Boleto criado com SUCESSO: ${data.id}`
+      );
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error(`[DOM][createBoletoTransaction] ERRO na DOM API:`, {
-          status: error.response?.status,
+        console.error("[DOM][createBoletoTransaction] ERRO na DOM API:", {
           data: JSON.stringify(error.response?.data, null, 2),
           message: error.message,
+          status: error.response?.status,
         });
       } else {
-        console.error(`[DOM][createBoletoTransaction] ERRO inesperado:`, error);
+        console.error("[DOM][createBoletoTransaction] ERRO inesperado:", error);
       }
       throw error;
     }
@@ -631,7 +682,9 @@ export class DomApi {
    * https://dom-pagamentos.readme.io/reference/consultar-transacao
    */
   public async getTransaction(transactionId: string): Promise<DomTransaction> {
-    const { data } = await this.api.get<DomTransaction>(`transactions/${transactionId}`);
+    const { data } = await this.api.get<DomTransaction>(
+      `transactions/${transactionId}`
+    );
     return data;
   }
 
@@ -641,7 +694,9 @@ export class DomApi {
    * deve bater com o id da transação no corpo do webhook, senão é inválido/adulterado.
    * https://dom-pagamentos.readme.io/reference/webhook-verificacao-de-assinatura
    */
-  public verifyChargeSignature(signature: string): { id: string; exp: number } | null {
+  public verifyChargeSignature(
+    signature: string
+  ): { id: string; exp: number } | null {
     try {
       return jwt.verify(signature, this.tokenApi, {
         algorithms: ["HS256"],
@@ -662,8 +717,8 @@ export class DomApi {
     if (
       number.startsWith("5") ||
       (number.startsWith("2") &&
-        Number.parseInt(number.substring(0, 4)) >= 2221 &&
-        Number.parseInt(number.substring(0, 4)) <= 2720)
+        Number.parseInt(number.substring(0, 4), 10) >= 2221 &&
+        Number.parseInt(number.substring(0, 4), 10) <= 2720)
     )
       return "Mastercard";
     if (number.startsWith("3")) return "American Express";

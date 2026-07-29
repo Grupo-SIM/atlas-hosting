@@ -1,12 +1,12 @@
-import { DeSECClient } from "./DeSECClient";
 import { AuthService } from "./AuthService";
-import { TokenService } from "./TokenService";
+import { DeSECClient } from "./DeSECClient";
 import { DomainService } from "./DomainService";
-import { RRsetService } from "./RRsetService";
 import { DynDNSService } from "./DynDNSService";
+import { RRsetService } from "./RRsetService";
+import { TokenService } from "./TokenService";
 
-export * from "./types";
 export * from "./errors";
+export * from "./types";
 
 /**
  * The main deSEC API wrapper class.

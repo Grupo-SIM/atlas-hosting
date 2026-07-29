@@ -1,15 +1,17 @@
+import { and, desc, eq } from "drizzle-orm";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgLog } from "@/lib/db/schema/tables/log";
 import { pgUser } from "@/lib/db/schema/tables/user";
-import { and, desc, eq } from "drizzle-orm";
 import { OrganizationHeaderActions } from "./components/OrganizationHeaderActions";
 import { OrganizationTabs } from "./components/OrganizationTabs";
 import type { OrganizationPageParams } from "./types";
 
 export default async function OrganizationPage({
   searchParams,
-}: { searchParams: Promise<OrganizationPageParams> }) {
+}: {
+  searchParams: Promise<OrganizationPageParams>;
+}) {
   const params = await searchParams;
   const user = await getUser();
 
@@ -18,9 +20,9 @@ export default async function OrganizationPage({
     .select({
       log: pgLog,
       user: {
+        email: pgUser.email,
         id: pgUser.id,
         name: pgUser.name,
-        email: pgUser.email,
       },
     })
     .from(pgLog)
@@ -30,19 +32,19 @@ export default async function OrganizationPage({
     .limit(10);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       <OrganizationHeaderActions
-        organizationName={user.organization.name}
-        organizationId={user.organizationId ?? ""}
         dialogOpen={params.action === "createMember"}
+        organizationId={user.organizationId ?? ""}
+        organizationName={user.organization.name}
         searchParams={params}
       />
       <OrganizationTabs
-        user={user}
         auditLogs={auditLogs}
         currentUserId={user.id}
-        organizationId={user.organizationId ?? ""}
         isOwner={user.id === user.organization.ownerId}
+        organizationId={user.organizationId ?? ""}
+        user={user}
       />
     </div>
   );
