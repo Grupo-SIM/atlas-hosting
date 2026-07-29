@@ -6,11 +6,13 @@ import {
   pgUser,
   pgUserCard,
   pgOrganization,
+  pgLog,
 } from "@/lib/db/schema";
 import { eq, lte, and } from "drizzle-orm";
 import simpayApi from "@/lib/server/apis/simpay";
 import currencyConversion from "@/lib/server/apis/currency";
 import { triggerPurchaseNotifications } from "@/lib/notifications/vps-purchase";
+import { nextRenewalDate } from "@/lib/vps/renewal-date";
 import { after } from "next/server";
 
 function ensureAuthorized(req: Request): boolean {
@@ -28,12 +30,6 @@ function ensureAuthorized(req: Request): boolean {
   if (cronSecret && token === cronSecret) return true;
   if (internalToken && token === internalToken) return true;
   return false;
-}
-
-function addMonths(date: Date, months: number): Date {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
-  return d;
 }
 
 export async function GET(req: Request) {
@@ -73,6 +69,9 @@ export async function POST(req: Request) {
   const results: { id: string; status: string; error?: string }[] = [];
 
   for (const sub of dueSubscriptions) {
+    // Guardado fora do try para o catch conseguir marcar a fatura como falha.
+    let renewalInvoiceId: string | undefined;
+
     try {
       const config = sub.config as any;
       const cardToken: string = config?.cardToken;
@@ -85,6 +84,31 @@ export async function POST(req: Request) {
           .set({ status: "paused", pausedAt: new Date(), updatedAt: new Date() })
           .where(eq(pgVpsSubscription.id, sub.id));
         results.push({ id: sub.id, status: "paused" });
+        continue;
+      }
+
+      // Reserva otimista: avança next_charge_date ANTES de cobrar, condicionada ao
+      // valor que acabamos de ler. Se outro processo (segundo agendador, replica,
+      // execução sobreposta) já pegou essa assinatura, o UPDATE afeta 0 linhas e
+      // pulamos — sem fatura duplicada nem cobrança dupla no cartão do cliente.
+      const claimed = await db
+        .update(pgVpsSubscription)
+        .set({
+          nextChargeDate: nextRenewalDate(sub.nextChargeDate, sub.intervalMonths),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(pgVpsSubscription.id, sub.id),
+            eq(pgVpsSubscription.status, "active"),
+            eq(pgVpsSubscription.nextChargeDate, sub.nextChargeDate)
+          )
+        )
+        .returning({ id: pgVpsSubscription.id });
+
+      if (claimed.length === 0) {
+        console.warn(`[VPS-CRON] Assinatura ${sub.id} já reservada por outra execução — pulando.`);
+        results.push({ id: sub.id, status: "skipped" });
         continue;
       }
 
@@ -123,6 +147,7 @@ export async function POST(req: Request) {
         .returning();
 
       if (!newInvoice) throw new Error("Falha ao criar fatura de renovação.");
+      renewalInvoiceId = newInvoice.id;
 
       // Charge the card
       await simpayApi.createCardPayment({
@@ -140,8 +165,7 @@ export async function POST(req: Request) {
         installments: 1,
       });
 
-      // Mark invoice as paid and advance next charge date
-      const nextChargeDate = addMonths(sub.nextChargeDate, sub.intervalMonths);
+      // next_charge_date já foi avançado na reserva acima.
       await db
         .update(pgInvoice)
         .set({ status: "paid" })
@@ -150,7 +174,6 @@ export async function POST(req: Request) {
       await db
         .update(pgVpsSubscription)
         .set({
-          nextChargeDate,
           lastInvoiceId: newInvoice.id,
           failureCount: 0,
           updatedAt: new Date(),
@@ -168,17 +191,50 @@ export async function POST(req: Request) {
 
       const newFailures = (sub.failureCount || 0) + 1;
       const newStatus = newFailures >= 3 ? "failed" : "active";
+      const reason = err?.message || "erro desconhecido";
 
+      // A fatura criada nesta tentativa não foi paga: marca como falha em vez de
+      // deixar pendente pra sempre, senão cada retentativa deixa uma órfã.
+      if (renewalInvoiceId) {
+        await db
+          .update(pgInvoice)
+          .set({ status: "failed" })
+          .where(eq(pgInvoice.id, renewalInvoiceId));
+      }
+
+      // Registro persistente: sem isso, a falha só existia no stdout do container
+      // e sumia no próximo deploy.
+      await db
+        .insert(pgLog)
+        .values({
+          userId: sub.userId,
+          type: "hosting",
+          severity: "danger",
+          title: `Falha na renovação da VPS ${sub.planId}`,
+          description:
+            `Tentativa ${newFailures} de 3 falhou: ${reason}. ` +
+            `Assinatura ${sub.id}, vencimento ${sub.nextChargeDate.toISOString()}, valor R$ ${sub.amountBrl.toFixed(2)}.` +
+            (newStatus === "failed"
+              ? " Limite de tentativas atingido — a assinatura foi marcada como falha e não será mais cobrada automaticamente."
+              : ""),
+        })
+        .catch((logErr) =>
+          console.error(`[VPS-CRON] Não foi possível registrar o log da falha ${sub.id}:`, logErr)
+        );
+
+      // Devolve a reserva: a cobrança não passou, então a assinatura continua
+      // vencida e precisa ser retentada na próxima execução.
       await db
         .update(pgVpsSubscription)
         .set({
+          nextChargeDate: sub.nextChargeDate,
           failureCount: newFailures,
           status: newStatus as any,
           updatedAt: new Date(),
         })
         .where(eq(pgVpsSubscription.id, sub.id));
 
-      results.push({ id: sub.id, status: "error", error: err?.message });
+      results.push({ id: sub.id, status: "error", error: reason });
     }
   }
 

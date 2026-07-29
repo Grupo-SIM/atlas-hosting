@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { addMilliseconds, addMonths } from "date-fns";
+import { firstRenewalDate } from "@/lib/vps/renewal-date";
 
 export type VpsPlanRow = {
   id: string;
@@ -179,7 +180,7 @@ export async function backfillVpsSubscriptionsAction(): Promise<{ created: numbe
       : config.type === "vps-windows" ? "vps-windows"
       : "vps";
 
-    const nextChargeDate = addMonths(new Date(inv.createdAt), intervalMonths);
+    const nextChargeDate = firstRenewalDate(new Date(inv.createdAt), intervalMonths);
 
     try {
       await db.insert(pgVpsSubscription).values({

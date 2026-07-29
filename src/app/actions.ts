@@ -17,6 +17,7 @@ export async function checkIsLoggedIn(): Promise<boolean> {
   const user = await getOptionalUser();
   return !!user;
 }
+import { firstRenewalDate, nextRenewalDate } from "@/lib/vps/renewal-date";
 import pleskApi from "@/lib/server/apis/plesk";
 import { ClientRequestTypeEnum } from "@/plesk";
 import { cookies, headers } from "next/headers";
@@ -1729,8 +1730,7 @@ async function createVpsSubscriptionIfNeeded(
   if (opts.paymentMethod === "pix" && !(await isPixEligibleForVpsConfig(config))) return;
   if (opts.paymentMethod === "boleto" && !(await isBoletoEligibleForVpsConfig(config))) return;
   const planType = (config.type === "vds" ? "vds" : config.type === "storage-vps" ? "storage-vps" : config.type === "vps-windows" ? "vps-windows" : "vps");
-  const nextChargeDate = new Date();
-  nextChargeDate.setMonth(nextChargeDate.getMonth() + intervalMonths);
+  const nextChargeDate = firstRenewalDate(new Date(), intervalMonths);
 
   const finalConfig = opts.cardToken ? { ...config, cardToken: opts.cardToken } : config;
 
@@ -1780,11 +1780,10 @@ async function handleVpsNonCardPaid(
         where: eq(pgVpsSubscription.id, meta.subscriptionId),
       });
       if (!sub) return;
-      const base = sub.nextChargeDate && sub.nextChargeDate.getTime() > Date.now()
-        ? new Date(sub.nextChargeDate)
-        : new Date();
-      const nextChargeDate = new Date(base);
-      nextChargeDate.setMonth(nextChargeDate.getMonth() + sub.intervalMonths);
+      const onSchedule = !!sub.nextChargeDate && sub.nextChargeDate.getTime() > Date.now();
+      const nextChargeDate = onSchedule
+        ? nextRenewalDate(new Date(sub.nextChargeDate), sub.intervalMonths)
+        : firstRenewalDate(new Date(), sub.intervalMonths);
       await db
         .update(pgVpsSubscription)
         .set({
