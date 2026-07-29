@@ -4,7 +4,10 @@ import { Check, ChevronsUpDown, Loader2, Server } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { registerVpsAction } from "@/app/vps-actions";
+import {
+  getVpsSubscriptionsForUserAction,
+  registerVpsAction,
+} from "@/app/vps-actions";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -29,6 +32,14 @@ interface User {
   email: string;
 }
 
+interface VpsSubscription {
+  id: string;
+  planId: string;
+  planType: string;
+  status: string;
+  vpsNodeId: string | null;
+}
+
 interface AdminVpsAddFormProps {
   users: User[];
 }
@@ -37,6 +48,9 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string>("");
+  const [vpsSubscriptionId, setVpsSubscriptionId] = useState("");
+  const [subscriptions, setSubscriptions] = useState<VpsSubscription[]>([]);
+  const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
   const [open, setOpen] = useState(false);
 
   async function handleSubmit(formData: FormData) {
@@ -50,13 +64,21 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
     const ip = formData.get("ip") as string;
 
     try {
-      await registerVpsAction(userId, name, ip, "Ubuntu 22.04 LTS");
+      await registerVpsAction(
+        userId,
+        name,
+        ip,
+        "Ubuntu 22.04 LTS",
+        vpsSubscriptionId || undefined
+      );
       toast.success("Servidor registrado com sucesso!");
       router.refresh(); // Atualiza a lista de servidores
 
       // Limpar campos de texto
       (document.getElementById("vps-form") as HTMLFormElement)?.reset();
       setUserId("");
+      setVpsSubscriptionId("");
+      setSubscriptions([]);
     } catch (error: any) {
       toast.error(`Erro ao registrar: ${error.message}`);
     } finally {
@@ -65,6 +87,25 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
   }
 
   const selectedUser = users.find(u => u.id === userId);
+  const availableSubscriptions = subscriptions.filter(
+    subscription => !subscription.vpsNodeId
+  );
+
+  async function selectUser(nextUserId: string) {
+    setUserId(nextUserId);
+    setVpsSubscriptionId("");
+    setSubscriptions([]);
+    setOpen(false);
+    setLoadingSubscriptions(true);
+
+    try {
+      setSubscriptions(await getVpsSubscriptionsForUserAction(nextUserId));
+    } catch (error: any) {
+      toast.error(`Erro ao carregar assinaturas: ${error.message}`);
+    } finally {
+      setLoadingSubscriptions(false);
+    }
+  }
 
   return (
     <form action={handleSubmit} className="space-y-4" id="vps-form">
@@ -103,10 +144,7 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
                   {users.map(u => (
                     <CommandItem
                       key={u.id}
-                      onSelect={() => {
-                        setUserId(u.id);
-                        setOpen(false);
-                      }}
+                      onSelect={() => selectUser(u.id)}
                       value={`${u.name} ${u.email} ${u.id}`}
                     >
                       <Check
@@ -119,6 +157,64 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
                         <span>{u.name || "Sem Nome"}</span>
                         <span className="text-muted-foreground text-xs">
                           {u.email}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="vps-subscriptions">
+          Assinaturas VPS{" "}
+          <span className="text-muted-foreground">(opcional)</span>
+        </Label>
+        <Popover onOpenChange={setOpen} open={open}>
+          <PopoverTrigger asChild>
+            <Button
+              aria-expanded={open}
+              className="h-10 w-full justify-between font-normal"
+              id="vps-subscriptions"
+              role="combobox"
+              variant="outline"
+            >
+              <span className="text-muted-foreground">
+                Selecione uma assinatura...
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="start"
+            className="w-[var(--radix-popover-trigger-width)] p-0"
+          >
+            <Command>
+              <CommandInput placeholder="Buscar assinaturas..." />
+              <CommandList>
+                <CommandEmpty>Nenhuma assinatura encontrada.</CommandEmpty>
+                <CommandGroup>
+                  {availableSubscriptions.map(subscription => (
+                    <CommandItem
+                      key={subscription.id}
+                      onSelect={() => setVpsSubscriptionId(subscription.id)}
+                      value={subscription.id}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          vpsSubscriptionId === subscription.id
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span>
+                          {subscription.planType} #{subscription.planId} —{" "}
+                          {subscription.status}
                         </span>
                       </div>
                     </CommandItem>

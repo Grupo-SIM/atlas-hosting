@@ -11,6 +11,7 @@ import {
 import { pgInvoice } from "./invoice";
 import { pgOrganization } from "./organization";
 import { pgUser } from "./user";
+import { pgVpsServers } from "./vps";
 
 export const pgVpsSubscription = pgTable("vps_subscriptions", {
   amountBrl: doublePrecision("amount_brl").notNull(),
@@ -44,6 +45,9 @@ export const pgVpsSubscription = pgTable("vps_subscriptions", {
   userId: uuid("user_id")
     .notNull()
     .references(() => pgUser.id),
+  vpsNodeId: uuid("vps_node_id").references(() => pgVpsServers.id, {
+    onDelete: "set null",
+  }),
 });
 
 export const vpsSubscriptionRelations = relations(
@@ -61,7 +65,11 @@ export const vpsSubscriptionRelations = relations(
       fields: [pgVpsSubscription.userId],
       references: [pgUser.id],
     }),
-  })
+    vpsNode: one(pgVpsServers, {
+      fields: [pgVpsSubscription.vpsNodeId],
+      references: [pgVpsServers.id],
+    }),
+  }),
 );
 
 export type VpsSubscription = typeof pgVpsSubscription.$inferSelect;

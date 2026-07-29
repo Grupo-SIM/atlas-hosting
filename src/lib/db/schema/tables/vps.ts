@@ -9,6 +9,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { pgUser } from "./user";
+import { pgVpsSubscription } from "./vps-subscription";
 
 export const vpsProvider = pgEnum("VpsProvider", ["contabo"]);
 
@@ -29,18 +30,17 @@ export const pgVpsServers = pgTable("vps_nodes", {
   provider: vpsProvider("provider").default("contabo"),
   status: text("status").default("pending"), // pending, active, suspended
   token: text("token").notNull().unique(), // Token que o bot usará para se autenticar
-  topProcesses:
-    jsonb("top_processes").$type<
-      {
-        name: string;
-        cpu: number;
-        mem_abs: string;
-        pid: number;
-        ram?: number;
-        user?: string;
-        threads?: number;
-      }[]
-    >(),
+  topProcesses: jsonb("top_processes").$type<
+    {
+      name: string;
+      cpu: number;
+      mem_abs: string;
+      pid: number;
+      ram?: number;
+      user?: string;
+      threads?: number;
+    }[]
+  >(),
   updatedAt: timestamp("updated_at").defaultNow(),
   userId: uuid("user_id")
     .notNull()
@@ -68,6 +68,7 @@ import { relations } from "drizzle-orm";
 
 export const vpsServersRelations = relations(pgVpsServers, ({ one, many }) => ({
   metrics: many(pgVpsMetrics),
+  subscriptions: many(pgVpsSubscription),
   user: one(pgUser, {
     fields: [pgVpsServers.userId],
     references: [pgUser.id],
