@@ -1,10 +1,12 @@
 import { and, eq, lte } from "drizzle-orm";
 import { after, NextResponse } from "next/server";
+import { cancelVps } from "@/lib/contabo";
 import { db } from "@/lib/db";
 import {
   pgInvoice,
   pgLog,
   pgOrganization,
+  pgVpsServers,
   pgVpsSubscription,
 } from "@/lib/db/schema";
 import { triggerPurchaseNotifications } from "@/lib/notifications/vps-purchase";
@@ -167,22 +169,45 @@ export async function POST(req: Request) {
       renewalInvoiceId = newInvoice.id;
 
       // Charge the card
-      await simpayApi.createCardPayment({
-        bin: savedCard?.last4 || cardToken.substring(0, 6),
-        brand: savedCard?.brand || "unknown",
-        description,
-        document: user?.billingDocument?.replace(/\D/g, "") || "00000000000",
-        document_type: (user?.billingDocument?.replace(/\D/g, "")?.length === 14
-          ? "CNPJ"
-          : "CPF") as "CPF" | "CNPJ",
-        email: user?.email || "",
-        holder_name: savedCard?.holderName || user?.name || "",
-        installments: 1,
-        mobile_phone: user?.billingPhone?.replace(/\D/g, "") || "00000000000",
-        name: user?.name || "",
-        price: sub.amountBrl,
-        token: cardToken,
-      });
+      try {
+        await simpayApi.createCardPayment({
+          bin: savedCard?.last4 || cardToken.substring(0, 6),
+          brand: savedCard?.brand || "unknown",
+          description,
+          document: user?.billingDocument?.replace(/\D/g, "") || "00000000000",
+          document_type: (user?.billingDocument?.replace(/\D/g, "")?.length ===
+          14
+            ? "CNPJ"
+            : "CPF") as "CPF" | "CNPJ",
+          email: user?.email || "",
+          holder_name: savedCard?.holderName || user?.name || "",
+          installments: 1,
+          mobile_phone: user?.billingPhone?.replace(/\D/g, "") || "00000000000",
+          name: user?.name || "",
+          price: sub.amountBrl,
+          token: cardToken,
+        });
+      } catch (e) {
+        // SLOT VPS_RENEWAL_PAYMENT_FAILURE: execute aqui a função exclusiva de renovação recusada/falha.
+        if (sub.vpsNodeId) {
+          const vps = await db.query.pgVpsServers.findFirst({
+            columns: {
+              externalId: true,
+              renewDate: true,
+            },
+            where: eq(pgVpsServers.id, sub.vpsNodeId),
+          });
+
+          if (vps?.externalId && vps.renewDate) {
+            await cancelVps(vps.externalId, vps.renewDate);
+          }
+        }
+
+        throw e;
+      }
+
+      // SLOT VPS_RENEWAL_PAYMENT_SUCCESS: execute aqui a função exclusiva de renovação aprovada.
+      // Todo: se múltiplas tentativas de renovação forem implementadas, descancelar na Contabo aqui.
 
       // next_charge_date já foi avançado na reserva acima.
       await db

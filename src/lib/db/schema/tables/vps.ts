@@ -4,6 +4,7 @@ import {
   pgEnum,
   pgTable,
   real,
+  smallint,
   text,
   timestamp,
   uuid,
@@ -28,19 +29,21 @@ export const pgVpsServers = pgTable("vps_nodes", {
   name: text("name").notNull(), // Ex: "Servidor Contabo 01"
   os: text("os"), // Ex: "Ubuntu 22.04"
   provider: vpsProvider("provider").default("contabo"),
+  renewDate: smallint("renew_date"),
   status: text("status").default("pending"), // pending, active, suspended
   token: text("token").notNull().unique(), // Token que o bot usará para se autenticar
-  topProcesses: jsonb("top_processes").$type<
-    {
-      name: string;
-      cpu: number;
-      mem_abs: string;
-      pid: number;
-      ram?: number;
-      user?: string;
-      threads?: number;
-    }[]
-  >(),
+  topProcesses:
+    jsonb("top_processes").$type<
+      {
+        name: string;
+        cpu: number;
+        mem_abs: string;
+        pid: number;
+        ram?: number;
+        user?: string;
+        threads?: number;
+      }[]
+    >(),
   updatedAt: timestamp("updated_at").defaultNow(),
   userId: uuid("user_id")
     .notNull()
