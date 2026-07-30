@@ -44,6 +44,9 @@ interface AdminVpsAddFormProps {
   users: User[];
 }
 
+const subscriptionLabel = (subscription: VpsSubscription) =>
+  `${subscription.planType} #${subscription.planId} — ${subscription.status}`;
+
 export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -51,7 +54,11 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
   const [vpsSubscriptionId, setVpsSubscriptionId] = useState("");
   const [subscriptions, setSubscriptions] = useState<VpsSubscription[]>([]);
   const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
-  const [open, setOpen] = useState(false);
+  // Um estado por combobox. Compartilhar um só faz os dois Popover montarem
+  // juntos, e o auto-focus do segundo conta como "focus outside" pro primeiro,
+  // que dispara onOpenChange(false) e fecha os dois no mesmo instante.
+  const [userOpen, setUserOpen] = useState(false);
+  const [subscriptionOpen, setSubscriptionOpen] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     if (!userId) {
@@ -90,12 +97,15 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
   const availableSubscriptions = subscriptions.filter(
     subscription => !subscription.vpsNodeId
   );
+  const selectedSubscription = availableSubscriptions.find(
+    subscription => subscription.id === vpsSubscriptionId
+  );
 
   async function selectUser(nextUserId: string) {
     setUserId(nextUserId);
     setVpsSubscriptionId("");
     setSubscriptions([]);
-    setOpen(false);
+    setUserOpen(false);
     setLoadingSubscriptions(true);
 
     try {
@@ -111,10 +121,10 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
     <form action={handleSubmit} className="space-y-4" id="vps-form">
       <div className="space-y-2">
         <Label htmlFor="user-select">Usuário Destino</Label>
-        <Popover onOpenChange={setOpen} open={open}>
+        <Popover onOpenChange={setUserOpen} open={userOpen}>
           <PopoverTrigger asChild>
             <Button
-              aria-expanded={open}
+              aria-expanded={userOpen}
               className="h-10 w-full justify-between font-normal"
               id="user-select"
               role="combobox"
@@ -173,18 +183,26 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
           Assinaturas VPS{" "}
           <span className="text-muted-foreground">(opcional)</span>
         </Label>
-        <Popover onOpenChange={setOpen} open={open}>
+        <Popover onOpenChange={setSubscriptionOpen} open={subscriptionOpen}>
           <PopoverTrigger asChild>
             <Button
-              aria-expanded={open}
+              aria-expanded={subscriptionOpen}
               className="h-10 w-full justify-between font-normal"
               id="vps-subscriptions"
               role="combobox"
               variant="outline"
             >
-              <span className="text-muted-foreground">
-                Selecione uma assinatura...
-              </span>
+              {selectedSubscription ? (
+                <span className="truncate">
+                  {subscriptionLabel(selectedSubscription)}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">
+                  {loadingSubscriptions
+                    ? "Carregando assinaturas..."
+                    : "Selecione uma assinatura..."}
+                </span>
+              )}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -195,13 +213,20 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
             <Command>
               <CommandInput placeholder="Buscar assinaturas..." />
               <CommandList>
-                <CommandEmpty>Nenhuma assinatura encontrada.</CommandEmpty>
+                <CommandEmpty>
+                  {userId
+                    ? "Nenhuma assinatura encontrada."
+                    : "Selecione um cliente primeiro."}
+                </CommandEmpty>
                 <CommandGroup>
                   {availableSubscriptions.map(subscription => (
                     <CommandItem
                       key={subscription.id}
-                      onSelect={() => setVpsSubscriptionId(subscription.id)}
-                      value={subscription.id}
+                      onSelect={() => {
+                        setVpsSubscriptionId(subscription.id);
+                        setSubscriptionOpen(false);
+                      }}
+                      value={`${subscriptionLabel(subscription)} ${subscription.id}`}
                     >
                       <Check
                         className={cn(
@@ -212,10 +237,7 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
                         )}
                       />
                       <div className="flex flex-col">
-                        <span>
-                          {subscription.planType} #{subscription.planId} —{" "}
-                          {subscription.status}
-                        </span>
+                        <span>{subscriptionLabel(subscription)}</span>
                       </div>
                     </CommandItem>
                   ))}
