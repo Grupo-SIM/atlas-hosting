@@ -178,6 +178,7 @@ export async function getVpsSubscriptionsForUserAction(userId: string) {
       id: true,
       planId: true,
       planType: true,
+      createdAt: true,
       status: true,
       vpsNodeId: true,
     },

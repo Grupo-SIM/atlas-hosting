@@ -1,5 +1,6 @@
 "use client";
 
+import { format } from "date-fns";
 import { Check, ChevronsUpDown, Loader2, Server } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -36,6 +37,7 @@ interface VpsSubscription {
   id: string;
   planId: string;
   planType: string;
+  createdAt: Date;
   status: string;
   vpsNodeId: string | null;
 }
@@ -45,7 +47,7 @@ interface AdminVpsAddFormProps {
 }
 
 const subscriptionLabel = (subscription: VpsSubscription) =>
-  `${subscription.planType} #${subscription.planId} — ${subscription.status}`;
+  `${format(subscription.createdAt, "yyyy/M/d @ HH:mm")} (${subscription.id})`;
 
 export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
   const router = useRouter();
@@ -180,8 +182,7 @@ export default function AdminVpsAddForm({ users }: AdminVpsAddFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="vps-subscriptions">
-          Assinaturas VPS{" "}
-          <span className="text-muted-foreground">(opcional)</span>
+          Assinatura <span className="text-muted-foreground">(opcional)</span>
         </Label>
         <Popover onOpenChange={setSubscriptionOpen} open={subscriptionOpen}>
           <PopoverTrigger asChild>
