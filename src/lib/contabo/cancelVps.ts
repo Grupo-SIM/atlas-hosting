@@ -2,9 +2,13 @@ import { addMonths, format, setDate } from "date-fns";
 import type { Contabo } from "./types";
 import { getContaboApi } from "./utils";
 
-const contaboApi = await getContaboApi();
-
 export const cancelVps = async (vpsId: string | number, renewDate: number) => {
+  // Resolvido aqui, não no topo do módulo: um `await` de nível superior faria a
+  // autenticação na Contabo acontecer no import, e o `next build` (que não tem
+  // as credenciais) quebraria ao coletar os dados da rota que importa isto.
+  // `getContaboApi` já memoiza a promise, então continua sendo um cliente só.
+  const contaboApi = await getContaboApi();
+
   const today = new Date();
 
   let cancelDate = setDate(today, renewDate);

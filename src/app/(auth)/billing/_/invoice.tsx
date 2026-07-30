@@ -8,6 +8,7 @@ import {
   FileText,
   Package,
   Tag,
+  UserRound,
 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -16,14 +17,43 @@ import { Separator } from "@/components/ui/separator";
 import type { Invoice } from "@/lib/db/schema";
 import { cn, toBrl } from "@/lib/utils";
 
+export interface InvoiceCustomer {
+  name: string | null;
+  email: string | null;
+  document: string | null;
+  phone: string | null;
+  street: string | null;
+  number: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+}
+
 export default function InvoiceCard({
   invoice,
+  customer,
   isExpanded: initialExpanded = false,
 }: {
   isExpanded?: boolean;
   invoice: Invoice;
+  customer?: InvoiceCustomer | null;
 }) {
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
+
+  const customerFields = customer
+    ? ([
+        { label: "Nome", value: customer.name },
+        { label: "E-mail", value: customer.email },
+        {
+          label: documentLabel(customer.document),
+          value: formatDocument(customer.document),
+        },
+        { label: "Telefone", value: formatPhone(customer.phone) },
+        { label: "Endereço", value: formatAddress(customer) },
+        { label: "CEP", value: formatZipCode(customer.zipCode) },
+      ].filter(field => !!field.value) as { label: string; value: string }[])
+    : [];
 
   const breakdownInformation = (() => {
     if (invoice.type === "subscription") {
@@ -194,6 +224,33 @@ export default function InvoiceCard({
               </div>
             </div>
 
+            {customerFields.length > 0 && (
+              <>
+                <Separator />
+
+                {/* Customer Information */}
+                <div className="space-y-4">
+                  <h3 className="flex items-center gap-2 font-semibold text-lg">
+                    <UserRound className="h-5 w-5" />
+                    Dados do Cliente
+                  </h3>
+
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-3 rounded-lg bg-muted/30 p-4 sm:grid-cols-2">
+                    {customerFields.map(field => (
+                      <div key={field.label}>
+                        <p className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                          {field.label}
+                        </p>
+                        <p className="break-words font-medium text-sm">
+                          {field.value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
             <Separator />
 
             {/* Product Information */}
@@ -266,6 +323,54 @@ export default function InvoiceCard({
     </div>
   );
 }
+
+const onlyDigits = (value: string | null | undefined) =>
+  (value || "").replace(/\D/g, "");
+
+const documentLabel = (document: string | null) =>
+  onlyDigits(document).length === 14 ? "CNPJ" : "CPF";
+
+const formatDocument = (document: string | null) => {
+  const digits = onlyDigits(document);
+  if (digits.length === 11) {
+    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  }
+  if (digits.length === 14) {
+    return digits.replace(
+      /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+      "$1.$2.$3/$4-$5"
+    );
+  }
+  return document || "";
+};
+
+const formatPhone = (phone: string | null) => {
+  const digits = onlyDigits(phone);
+  if (digits.length === 11) {
+    return digits.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+  }
+  if (digits.length === 10) {
+    return digits.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+  }
+  return phone || "";
+};
+
+const formatZipCode = (zipCode: string | null) => {
+  const digits = onlyDigits(zipCode);
+  return digits.length === 8
+    ? digits.replace(/(\d{5})(\d{3})/, "$1-$2")
+    : zipCode || "";
+};
+
+const formatAddress = (customer: InvoiceCustomer) => {
+  const streetLine = [customer.street, customer.number]
+    .filter(Boolean)
+    .join(", ");
+  const cityLine = [customer.city, customer.state].filter(Boolean).join(" - ");
+  return [streetLine, customer.neighborhood, cityLine]
+    .filter(Boolean)
+    .join(" · ");
+};
 
 const statusLabel = {
   expired: "Expirada",

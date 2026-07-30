@@ -12,8 +12,39 @@ import { getRealUser, getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgInvoice, pgUser } from "@/lib/db/schema";
 import { BillingFilters } from "./_/filters";
-import InvoiceCard from "./_/invoice";
+import InvoiceCard, { type InvoiceCustomer } from "./_/invoice";
 import { BillingListSkeleton } from "./loading";
+
+interface InvoiceUser {
+  name: string | null;
+  email: string | null;
+  billingDocument: string | null;
+  billingPhone: string | null;
+  billingStreet: string | null;
+  billingNumber: string | null;
+  billingNeighborhood: string | null;
+  billingCity: string | null;
+  billingState: string | null;
+  billingZipCode: string | null;
+}
+
+const toInvoiceCustomer = (
+  user: InvoiceUser | null | undefined
+): InvoiceCustomer | null =>
+  user
+    ? {
+        city: user.billingCity,
+        document: user.billingDocument,
+        email: user.email,
+        name: user.name,
+        neighborhood: user.billingNeighborhood,
+        number: user.billingNumber,
+        phone: user.billingPhone,
+        state: user.billingState,
+        street: user.billingStreet,
+        zipCode: user.billingZipCode,
+      }
+    : null;
 
 export default async function BillingPage({
   searchParams: _searchParams,
@@ -86,6 +117,22 @@ export default async function BillingPage({
   const allInvoices = await db.query.pgInvoice.findMany({
     orderBy: [desc(pgInvoice.updatedAt)],
     where: eq(pgInvoice.orgId, organizationId),
+    with: {
+      user: {
+        columns: {
+          billingCity: true,
+          billingDocument: true,
+          billingNeighborhood: true,
+          billingNumber: true,
+          billingPhone: true,
+          billingState: true,
+          billingStreet: true,
+          billingZipCode: true,
+          email: true,
+          name: true,
+        },
+      },
+    },
   });
 
   const plans = groupBy(await db.query.pgPlan.findMany(), "id");
@@ -238,6 +285,7 @@ export default async function BillingPage({
             <div className="mt-8 space-y-6">
               {paginatedInvoices.map(invoice => (
                 <InvoiceCard
+                  customer={toInvoiceCustomer(invoice.user)}
                   invoice={invoice as any}
                   isExpanded={searchParams.id === invoice.id}
                   key={invoice.id}
