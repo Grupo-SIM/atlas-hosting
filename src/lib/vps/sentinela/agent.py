@@ -1,12 +1,12 @@
-import psutil
-import socket
+import aiohttp
+import asyncio
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 import docker
 import os
+import psutil
+import socket
 import time
-import asyncio
-import aiohttp
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # --- CONFIGURAÇÕES ---
 ATLAS_TOKEN = "{{ATLAS_TOKEN}}"
@@ -62,6 +62,23 @@ def get_system_metrics(detailed=False):
             continue
 
     cpu_cores = psutil.cpu_percent(interval=1.0, percpu=True)
+
+    cores_n: int | str = "{{CPU_CORES}}"
+    if cores_n != "":
+        cores_n = int(cores_n)
+        original_sum = sum(cpu_cores)
+
+        mock_cores: list[float] = []
+        for i in range(cores_n):
+            original_idx = int(i * psutil.cpu_count() / cores_n)
+            mock_cores.append(cpu_cores[original_idx])
+
+        mock_sum = sum(mock_cores)
+
+        cpu_cores = [
+            min(100, round(c * (original_sum / mock_sum), 1)) for c in mock_cores
+        ]
+
     avg_cpu = sum(cpu_cores) / len(cpu_cores) if cpu_cores else 0
 
     vmem = psutil.virtual_memory()
@@ -87,18 +104,23 @@ def get_system_metrics(detailed=False):
         except:
             continue
 
+    disk = "{{DISK}}"
+    if disk != "":
+        disk = int(disk) * 1024**3
+
     disks = []
     for part in psutil.disk_partitions():
         if any(x in part.device for x in ["loop", "snap", "tmpfs"]):
             continue
         try:
             usage = psutil.disk_usage(part.mountpoint)
+            total = usage.total if disk == "" else disk
             disks.append(
                 {
                     "mount": part.mountpoint,
-                    "total": format_bytes(usage.total),
+                    "total": format_bytes(total),
                     "used": format_bytes(usage.used),
-                    "percent": usage.percent,
+                    "percent": usage.used / total,
                 }
             )
         except:
@@ -118,17 +140,23 @@ def get_system_metrics(detailed=False):
         except:
             pass
 
+    ram = "{{RAM}}"
+    if ram != "":
+        ram = int(ram) * 1024**3
+    else:
+        ram = vmem.total
+
     return {
         "cpu": avg_cpu,
         "cpu_cores": cpu_cores,
         "load_avg": [load1, load5, load15],
         "ram": {
-            "total": format_bytes(vmem.total),
+            "total": format_bytes(ram),
             "used": format_bytes(vmem.used),
-            "available": format_bytes(vmem.available),
-            "cached": format_bytes(getattr(vmem, "cached", 0)),
-            "free": format_bytes(vmem.free),
-            "percent": vmem.percent,
+            "available": format_bytes(ram - vmem.used),
+            "cached": format_bytes(vmem.cached),
+            "free": format_bytes(ram - vmem.used - vmem.cached),
+            "percent": vmem.used / ram,
         },
         "disks": disks,
         "uptime": uptime_str,
@@ -159,11 +187,13 @@ async def sync_with_atlas():
                 "disks_details": m["disks"],
             },
         }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(ATLAS_API_URL, json=payload, timeout=15) as resp:
-                print(
-                    f"[{datetime.now().strftime('%H:%M:%S')}] 📡 Atlas Sync: {resp.status}"
-                )
+        async with (
+            aiohttp.ClientSession() as session,
+            session.post(ATLAS_API_URL, json=payload, timeout=15) as resp,
+        ):
+            print(
+                f"[{datetime.now().strftime('%H:%M:%S')}] 📡 Atlas Sync: {resp.status}"
+            )
     except Exception as e:
         print(f"❌ Erro Atlas: {e}")
 
@@ -178,22 +208,22 @@ async def atlas_task():
 async def command_pulse_task():
     while True:
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{ATLAS_API_URL}?token={ATLAS_TOKEN}", timeout=5
-                ) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        if data.get("refresh"):
-                            print("⚡ COMANDO DE ATUALIZAÇÃO FORÇADA RECEBIDO!")
-                            await sync_with_atlas()
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(f"{ATLAS_API_URL}?token={ATLAS_TOKEN}", timeout=5) as resp,
+            ):
+                if resp.status == 200:
+                    data = await resp.json()
+                    if data.get("refresh"):
+                        print("⚡ COMANDO DE ATUALIZAÇÃO FORÇADA RECEBIDO!")
+                        await sync_with_atlas()
         except:
             pass
         await asyncio.sleep(3)
 
 
 async def main():
-    print(f"🚀 Sentinela V7 (Ultra Pulse) Ativo")
+    print("🚀 Sentinela V7 (Ultra Pulse) Ativo")
     asyncio.create_task(atlas_task())
     asyncio.create_task(command_pulse_task())
     while True:

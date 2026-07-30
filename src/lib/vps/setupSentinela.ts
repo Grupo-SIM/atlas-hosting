@@ -3,6 +3,14 @@ import service from "./sentinela/sentinela.service";
 import { transferFile } from "./utils";
 
 interface SetupSentinelaArgs {
+  overrides?: {
+    /** Amount of cores. */
+    cpu?: number;
+    /** Total storage in GB. */
+    disk?: number;
+    /** RAM in GB. */
+    ram?: number;
+  };
   token: string;
   vm: {
     ip: string;
@@ -12,6 +20,7 @@ interface SetupSentinelaArgs {
 }
 
 export const setupSentinela = async ({
+  overrides: { cpu, disk, ram } = {},
   token,
   vm: { ip, password, user = "root" },
 }: SetupSentinelaArgs) => {
@@ -27,7 +36,12 @@ export const setupSentinela = async ({
 		"`.quiet(),
     (async () => {
       // Transferir arquivos para o servidor
-      const agent = agentStr.replaceAll("{{ATLAS_TOKEN}}", token);
+      const agent = agentStr
+        .replaceAll("{{ATLAS_TOKEN}}", token)
+        .replaceAll("{{CPU}}", String(cpu ?? ""))
+        .replaceAll("{{DISK}}", String(disk ?? ""))
+        .replaceAll("{{RAM}}", String(ram ?? ""));
+
       await Promise.all([
         transferFile({
           file: agent,
