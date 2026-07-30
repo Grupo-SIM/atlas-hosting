@@ -2,9 +2,9 @@ import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createVpsInvoice } from "@/app/actions";
-import { getOptionalUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgVpsPaymentLink } from "@/lib/db/schema";
+import { paymentLinkEffectiveStatus } from "@/lib/payment-links/status";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Pagamento — Atlas Hosting" };
@@ -29,6 +29,7 @@ export default async function PayLinkPage({
 
   const link = await db.query.pgVpsPaymentLink.findFirst({
     where: eq(pgVpsPaymentLink.id, linkId),
+    with: { resultingInvoice: true },
   });
 
   if (!link) {
@@ -39,7 +40,13 @@ export default async function PayLinkPage({
       />
     );
   }
-  if (link.status === "cancelled") {
+
+  const effectiveStatus = paymentLinkEffectiveStatus(
+    link.status,
+    (link.resultingInvoice as { status?: string } | null)?.status
+  );
+
+  if (effectiveStatus === "cancelled") {
     return (
       <StatusMessage
         message="Este link de pagamento foi cancelado."
@@ -47,7 +54,7 @@ export default async function PayLinkPage({
       />
     );
   }
-  if (link.status === "used") {
+  if (effectiveStatus === "paid") {
     return (
       <StatusMessage
         message="Este link de pagamento já foi usado."
@@ -82,20 +89,8 @@ export default async function PayLinkPage({
     redirect(`/checkout/personal-data?${query}`);
   }
 
-  // Vinculado a um cliente específico — só essa conta pode usar o link.
-  const user = await getOptionalUser();
-  if (!user) {
-    redirect(`/login?callbackUrl=${encodeURIComponent(`/pay/${link.id}`)}`);
-  }
-  if (user.id !== link.linkedUserId) {
-    return (
-      <StatusMessage
-        message="Este link de pagamento foi gerado para outra conta. Faça login com a conta correta para continuar."
-        title="Link de outra conta"
-      />
-    );
-  }
-
+  // Vinculado a um cliente: a cobrança nasce na conta dele, mas quem tem o link
+  // paga — sem login. `createVpsInvoice` resolve o dono pelo próprio link.
   const result = await createVpsInvoice({
     config: commonConfig,
     planId: link.planId,

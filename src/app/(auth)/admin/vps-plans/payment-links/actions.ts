@@ -7,6 +7,10 @@ import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgUser, pgVpsPaymentLink } from "@/lib/db/schema";
 import {
+  type PaymentLinkEffectiveStatus,
+  paymentLinkEffectiveStatus,
+} from "@/lib/payment-links/status";
+import {
   findSellablePlan,
   type SellableProductType,
 } from "@/lib/vps-sellable-plans";
@@ -20,7 +24,7 @@ export interface PaymentLinkRow {
   amountBrl: number;
   allowPix: boolean;
   allowBoleto: boolean;
-  status: "pending" | "used" | "cancelled";
+  status: PaymentLinkEffectiveStatus;
   linkedUserName: string | null;
   linkedUserEmail: string | null;
   createdAt: Date;
@@ -34,7 +38,10 @@ export async function getVpsPaymentLinksAction(): Promise<PaymentLinkRow[]> {
   const links = await db.query.pgVpsPaymentLink.findMany({
     limit: 200,
     orderBy: [desc(pgVpsPaymentLink.createdAt)],
-    with: { linkedUser: { columns: { email: true, name: true } } },
+    with: {
+      linkedUser: { columns: { email: true, name: true } },
+      resultingInvoice: { columns: { status: true } },
+    },
   });
 
   return links.map(l => ({
@@ -49,7 +56,10 @@ export async function getVpsPaymentLinksAction(): Promise<PaymentLinkRow[]> {
     planId: l.planId,
     planName: l.planName,
     productType: l.productType as SellableProductType,
-    status: l.status as PaymentLinkRow["status"],
+    status: paymentLinkEffectiveStatus(
+      l.status,
+      (l.resultingInvoice as { status?: string } | null)?.status
+    ),
     usedAt: l.usedAt,
   }));
 }
@@ -135,6 +145,19 @@ export async function cancelVpsPaymentLinkAction(id: string): Promise<void> {
     .update(pgVpsPaymentLink)
     .set({ status: "cancelled" })
     .where(eq(pgVpsPaymentLink.id, id));
+
+  revalidatePath("/admin/vps-plans/payment-links");
+}
+
+/**
+ * Apaga a linha do link. A fatura gerada por ele (se houver) não é tocada — ela
+ * pertence ao cliente e pode até já estar paga; some só o registro do link.
+ */
+export async function deleteVpsPaymentLinkAction(id: string): Promise<void> {
+  const admin = await getUser();
+  if (!admin?.isAdmin) redirect("/home");
+
+  await db.delete(pgVpsPaymentLink).where(eq(pgVpsPaymentLink.id, id));
 
   revalidatePath("/admin/vps-plans/payment-links");
 }

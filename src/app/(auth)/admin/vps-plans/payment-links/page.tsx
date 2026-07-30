@@ -23,6 +23,7 @@ import {
 } from "./actions";
 import { CancelLinkButton } from "./CancelLinkButton";
 import { CopyLinkButton } from "./CopyLinkButton";
+import { DeleteLinkButton } from "./DeleteLinkButton";
 import { PaymentLinkForm } from "./PaymentLinkForm";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +34,8 @@ const STATUS_LABEL: Record<
   { label: string; variant: "default" | "secondary" | "outline" }
 > = {
   cancelled: { label: "Cancelado", variant: "outline" },
+  paid: { label: "Pago", variant: "default" },
   pending: { label: "Aguardando pagamento", variant: "secondary" },
-  used: { label: "Pago", variant: "default" },
 };
 
 export default async function VpsPaymentLinksPage() {
@@ -176,6 +177,11 @@ export default async function VpsPaymentLinksPage() {
                               <CancelLinkButton id={l.id} />
                             </>
                           )}
+                          <DeleteLinkButton
+                            id={l.id}
+                            isPaid={l.status === "paid"}
+                            planName={l.planName}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>

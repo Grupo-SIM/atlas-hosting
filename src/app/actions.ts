@@ -3317,6 +3317,25 @@ export async function checkDomainNameservers(
   }
 }
 
+/**
+ * Dono da cobrança de um link vinculado a cliente. Quem tem o link paga, sem
+ * login: a identidade sai do próprio link no banco, nunca de algo que o caller
+ * mandou. Link genérico (sem cliente vinculado) devolve null — esse segue pelo
+ * fluxo de convidado, que coleta os dados de quem está pagando.
+ */
+async function resolvePaymentLinkOwner(paymentLinkId: string) {
+  const link = await db.query.pgVpsPaymentLink.findFirst({
+    where: eq(pgVpsPaymentLink.id, paymentLinkId),
+  });
+  if (!link || link.status === "cancelled" || !link.linkedUserId) return null;
+
+  const owner = await db.query.pgUser.findFirst({
+    where: eq(pgUser.id, link.linkedUserId),
+    with: { organization: true },
+  });
+  return owner?.organization ? owner : null;
+}
+
 export async function createVpsInvoice(data: {
   planId: string;
   config: any;
@@ -3324,8 +3343,18 @@ export async function createVpsInvoice(data: {
 }) {
   const { planId, config, guestInfo } = data;
   let user = await getOptionalUser();
-  const isGuestCheckout = !user && !!guestInfo;
   let guestPassword = "";
+
+  const paymentLinkId =
+    typeof config?.paymentLinkId === "string" && config.paymentLinkId
+      ? config.paymentLinkId
+      : null;
+
+  if (!user && paymentLinkId) {
+    user = (await resolvePaymentLinkOwner(paymentLinkId)) as any;
+  }
+
+  const isGuestCheckout = !user && !!guestInfo;
 
   if (!user) {
     if (guestInfo) {
@@ -3357,6 +3386,42 @@ export async function createVpsInvoice(data: {
     const customQty = Number.parseInt(config.qty || "1", 10);
     const customFinalAmountBrl = customLinkAmountBrl * customQty;
     try {
+      // Abrir o link não pode gerar uma fatura nova a cada visita nem revalidar
+      // um link já pago. A fatura pendente anterior é reaproveitada.
+      if (paymentLinkId) {
+        const link = await db.query.pgVpsPaymentLink.findFirst({
+          where: eq(pgVpsPaymentLink.id, paymentLinkId),
+          with: { resultingInvoice: true },
+        });
+        if (!link) {
+          return {
+            message: "Link de pagamento não encontrado.",
+            status: "error",
+          };
+        }
+        if (link.status === "cancelled") {
+          return {
+            message: "Este link de pagamento foi cancelado.",
+            status: "error",
+          };
+        }
+
+        const priorInvoice = link.resultingInvoice as Invoice | null;
+        if (priorInvoice?.status === "paid") {
+          return {
+            message: "Este link de pagamento já foi pago.",
+            status: "error",
+          };
+        }
+        if (priorInvoice?.status === "pending") {
+          return {
+            invoiceId: priorInvoice.id,
+            redirectUrl: `/checkout/${priorInvoice.id}?initialStep=payment`,
+            status: "success",
+          };
+        }
+      }
+
       const description = `Hospedagem ${planId} (${customDuration} ${customDuration === 1 ? "mês" : "meses"}) — cobrança personalizada`;
       const [newInvoice] = await db
         .insert(pgInvoice)
@@ -3381,15 +3446,13 @@ export async function createVpsInvoice(data: {
 
       if (!newInvoice) throw new Error("Erro ao criar fatura.");
 
-      if (typeof config.paymentLinkId === "string" && config.paymentLinkId) {
+      // Só amarra a fatura ao link. O link vira "pago" quando a fatura for paga,
+      // não agora — criar a cobrança é apenas abrir a tela de pagamento.
+      if (paymentLinkId) {
         await db
           .update(pgVpsPaymentLink)
-          .set({
-            resultingInvoiceId: newInvoice.id,
-            status: "used",
-            usedAt: new Date(),
-          })
-          .where(eq(pgVpsPaymentLink.id, config.paymentLinkId));
+          .set({ resultingInvoiceId: newInvoice.id })
+          .where(eq(pgVpsPaymentLink.id, paymentLinkId));
       }
 
       return {

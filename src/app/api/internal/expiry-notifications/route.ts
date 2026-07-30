@@ -13,7 +13,7 @@ const ADMIN_NOTIFY_EMAIL = "jbmidiadigital@gmail.com";
 
 /** Dias-antes-do-vencimento em que disparamos aviso. Cron roda 1x/dia — cada
  * assinatura/domínio recebe um email por checkpoint cruzado, não um por dia. */
-const EXPIRY_CHECKPOINTS_DAYS = [15, 7, 3, 1];
+const EXPIRY_CHECKPOINTS_DAYS = [7, 3, 1];
 
 function ensureAuthorized(req: Request): boolean {
   // Allow requests from localhost (internal cron)
