@@ -2,7 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getUser } from "@/lib/auth/index";
+import { getOptionalUser } from "@/lib/auth/index";
 import { db } from "@/lib/db";
 import { pgUser } from "@/lib/db/schema/tables/user";
 
@@ -18,7 +18,11 @@ export async function saveUserBillingInfo(data: {
     zipCode: string;
   };
 }) {
-  const user = await getUser();
+  // getOptionalUser, não getUser: estas duas ações rodam no checkout de convidado,
+  // e `getUser` REDIRECIONA pra /login quando não há sessão em vez de devolver
+  // null — o que jogava quem está pagando sem conta pra tela de login. Com o
+  // opcional, os guards de null abaixo passam a valer de verdade.
+  const user = await getOptionalUser();
 
   if (!user) {
     return { message: "Usuário não autenticado.", status: "error" };
@@ -55,7 +59,7 @@ export async function saveUserBillingInfo(data: {
 }
 
 export async function getUserBillingInfo() {
-  const user = await getUser();
+  const user = await getOptionalUser();
 
   if (!user) return null;
 

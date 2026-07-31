@@ -78,13 +78,18 @@ import {
 } from "@/lib/vps-catalog";
 import type { DomainPageParams } from "./(auth)/domain/types";
 
+/**
+ * Identidade mínima pra abrir a cobrança de um convidado: nome e e-mail. Documento,
+ * telefone e endereço são opcionais porque o passo de cobrança do próprio checkout
+ * já os coleta — pedir antes seria duplicar o mesmo formulário.
+ */
 export interface GuestInfo {
   email: string;
   firstName: string;
   lastName: string;
-  document: string;
-  phoneNumber: string;
-  address: {
+  document?: string;
+  phoneNumber?: string;
+  address?: {
     street: string;
     number: string;
     neighborhood: string;
@@ -120,22 +125,38 @@ async function findOrCreateGuestUser(info: GuestInfo) {
     })) as any;
   }
 
-  // Update billing info regardless if new or existing (as per user request: "apos preencher essas informacoes... vincule")
-  if (user) {
-    await db
-      .update(pgUser)
-      .set({
-        billingCity: info.address.city,
-        billingDocument: info.document.replace(/\D/g, ""),
-        billingNeighborhood: info.address.neighborhood,
-        billingNumber: info.address.number,
-        billingPhone: info.phoneNumber.replace(/\D/g, ""),
-        billingState: info.address.state,
-        billingStreet: info.address.street,
-        billingZipCode: info.address.zipCode.replace(/\D/g, ""),
-        updatedAt: new Date(),
-      })
-      .where(eq(pgUser.id, user.id));
+  // Só grava dados de cobrança em conta recém-criada. Se a conta já existia, quem
+  // preencheu o formulário é um visitante anônimo que apenas digitou um e-mail —
+  // deixá-lo sobrescrever endereço/documento/telefone seria permitir que qualquer
+  // um adulterasse o cadastro do titular.
+  if (isNew && user) {
+    // Só o que veio preenchido: o checkout coleta o endereço completo no passo de
+    // cobrança, então aqui normalmente chega só nome/e-mail.
+    const billing = {
+      ...(info.document
+        ? { billingDocument: info.document.replace(/\D/g, "") }
+        : {}),
+      ...(info.phoneNumber
+        ? { billingPhone: info.phoneNumber.replace(/\D/g, "") }
+        : {}),
+      ...(info.address
+        ? {
+            billingCity: info.address.city,
+            billingNeighborhood: info.address.neighborhood,
+            billingNumber: info.address.number,
+            billingState: info.address.state,
+            billingStreet: info.address.street,
+            billingZipCode: info.address.zipCode.replace(/\D/g, ""),
+          }
+        : {}),
+    };
+
+    if (Object.keys(billing).length > 0) {
+      await db
+        .update(pgUser)
+        .set({ ...billing, updatedAt: new Date() })
+        .where(eq(pgUser.id, user.id));
+    }
   }
 
   // Always create a session so subsequent payment actions work
@@ -168,15 +189,22 @@ async function findOrCreateGuestUser(info: GuestInfo) {
     );
   }
 
-  const sessionToken = generateSessionToken();
-  await createSession(sessionToken, user.id);
-  const cookieStore = await cookies();
-  cookieStore.set("session_token", sessionToken, {
-    httpOnly: true,
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
+  // Sessão SÓ para conta recém-criada pelo próprio checkout. Antes ela era criada
+  // sempre, então digitar o e-mail de um cliente existente logava o visitante
+  // como ele — sem senha, sem verificação —, expondo cartões salvos, faturas e
+  // servidores. Quem já tem conta paga sem sessão: `completeCheckout` resolve o
+  // dono pela fatura, e cartão salvo exige login de verdade.
+  if (isNew) {
+    const sessionToken = generateSessionToken();
+    await createSession(sessionToken, user.id);
+    const cookieStore = await cookies();
+    cookieStore.set("session_token", sessionToken, {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  }
 
   return { isNew, passwordPlain, user };
 }
@@ -1356,6 +1384,32 @@ export interface InitiateCheckoutPixPayload {
   };
 }
 
+/**
+ * Quem está pagando a fatura, com ou sem login.
+ *
+ * O checkout de convidado roda sem sessão — `getUser()` não serve aqui porque ele
+ * REDIRECIONA pra /login em vez de devolver null. Sem sessão, o dono sai da
+ * própria fatura; havendo sessão, ela precisa ser do dono, senão um cliente
+ * logado pagaria/consultaria a fatura de outro só com o id.
+ */
+async function resolveInvoicePayer(invoiceId: string) {
+  const invoice = await db.query.pgInvoice.findFirst({
+    where: eq(pgInvoice.id, invoiceId),
+    with: { user: { with: { organization: true } } },
+  });
+  if (!invoice) return { invoice: null, user: null };
+
+  const sessionUser = await getOptionalUser();
+  if (sessionUser) {
+    if (invoice.orgId !== sessionUser.organization.id) {
+      return { invoice: null, user: null };
+    }
+    return { invoice, user: sessionUser as any };
+  }
+
+  return { invoice, user: ((invoice.user as any) ?? null) as any };
+}
+
 export async function initiateCheckoutPix(
   payload: InitiateCheckoutPixPayload
 ): Promise<
@@ -1368,18 +1422,15 @@ export async function initiateCheckoutPix(
       transactionId: string;
     }
 > {
-  const user = await getUser();
   const snap = buildPixCheckoutSnapshot(payload);
   if (!snap.ok) {
     return { message: snap.message, status: "error" };
   }
   const billing = snap.billing;
 
-  const invoice = await db.query.pgInvoice.findFirst({
-    where: eq(pgInvoice.id, payload.invoiceId),
-  });
+  const { invoice, user } = await resolveInvoicePayer(payload.invoiceId);
 
-  if (!invoice || invoice.orgId !== user.organization.id) {
+  if (!invoice || !user) {
     return { message: "Fatura não encontrada.", status: "error" };
   }
 
@@ -1468,18 +1519,15 @@ export async function initiateCheckoutBoleto(
       transactionId: string;
     }
 > {
-  const user = await getUser();
   const snap = buildPixCheckoutSnapshot(payload);
   if (!snap.ok) {
     return { message: snap.message, status: "error" };
   }
   const billing = snap.billing;
 
-  const invoice = await db.query.pgInvoice.findFirst({
-    where: eq(pgInvoice.id, payload.invoiceId),
-  });
+  const { invoice, user } = await resolveInvoicePayer(payload.invoiceId);
 
-  if (!invoice || invoice.orgId !== user.organization.id) {
+  if (!invoice || !user) {
     return { message: "Fatura não encontrada.", status: "error" };
   }
 
@@ -2004,24 +2052,18 @@ export async function completeCheckout(
     ...values
   }: CheckoutFormInputs & { invoiceId: string; cardToken?: string }
 ): Promise<ActionResponse> {
-  let user = await getUser();
-
   if (!invoiceId) {
     return { message: "ID da fatura é obrigatório.", status: "error" };
   }
 
-  let invoice = await db.query.pgInvoice.findFirst({
-    where: eq(pgInvoice.id, invoiceId),
-    with: { user: { with: { organization: true } } },
-  });
+  // getOptionalUser via helper: com `getUser()` o fallback abaixo nunca rodava,
+  // porque sem sessão ele redirecionava pra /login antes de retornar.
+  const payer = await resolveInvoicePayer(invoiceId);
+  let invoice = payer.invoice;
+  const user = payer.user;
 
   if (!invoice) {
     return { message: "Fatura não encontrada.", status: "error" };
-  }
-
-  // Fallback to invoice user if no session
-  if (!user) {
-    user = invoice.user as any;
   }
 
   if (!user) {
@@ -2367,7 +2409,7 @@ export async function completeCheckoutWithSavedCard(
     card: SavedCard;
   }
 ): Promise<ActionResponse> {
-  let user = await getUser();
+  const user = await getOptionalUser();
 
   if (!invoiceId) {
     return { message: "ID da fatura é obrigatório.", status: "error" };
@@ -2382,14 +2424,18 @@ export async function completeCheckoutWithSavedCard(
     return { message: "Fatura não encontrada.", status: "error" };
   }
 
-  // Fallback to invoice user if no session
-  if (!user) {
-    user = invoice.user as any;
-  }
-
+  // Cobrar um cartão guardado é operação autenticada: aqui não existe o fallback
+  // "dono da fatura" que o pagamento com cartão novo tem, senão qualquer visitante
+  // de posse do id da fatura cobraria o cartão do titular.
   if (!user) {
     return {
-      message: "Usuário não encontrado. Faça login para continuar.",
+      message: "Faça login para pagar com um cartão salvo.",
+      status: "error",
+    };
+  }
+  if (invoice.userId !== user.id) {
+    return {
+      message: "Esta fatura não pertence à sua conta.",
       status: "error",
     };
   }
