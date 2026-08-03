@@ -30,19 +30,26 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { exportTableToPdf } from "@/lib/exportPdf";
 import type { UserRow } from "./actions";
+import { getUserClientStatus } from "./status";
 import { UserActionsCell } from "./UserActionsCell";
 
 function toBrl(value: number) {
   return value.toLocaleString("pt-BR", { currency: "BRL", style: "currency" });
 }
 
+const STATUS_LABEL = {
+  active: "Ativo",
+  inactive: "Inativo",
+  suspended: "Suspenso",
+} as const;
+
+const STATUS_TIP =
+  "Ativo: tem algo contratado conosco (VPS/VDS ou domínio). Inativo: tem conta mas não paga nada. Suspenso: conta bloqueada por um admin.";
+
 export function UsersTable({ users }: { users: UserRow[] }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "suspended"
-  >("all");
-  const [subscriptionFilter, setSubscriptionFilter] = useState<
-    "all" | "subscriber" | "none"
+    "all" | "active" | "inactive" | "suspended"
   >("all");
   const [dateFilter, setDateFilter] = useState<DateRangeValue>(null);
 
@@ -54,25 +61,16 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         u.email.toLowerCase().includes(search.toLowerCase());
 
       const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "active" && u.suspendedAt === null) ||
-        (statusFilter === "suspended" && u.suspendedAt !== null);
-
-      const matchesSubscription =
-        subscriptionFilter === "all" ||
-        (subscriptionFilter === "subscriber" && u.hasActiveSubscription) ||
-        (subscriptionFilter === "none" && !u.hasActiveSubscription);
+        statusFilter === "all" || getUserClientStatus(u) === statusFilter;
 
       const createdDay = format(u.createdAt, "yyyy-MM-dd");
       const matchesDate =
         !dateFilter ||
         (createdDay >= dateFilter.from && createdDay <= dateFilter.to);
 
-      return (
-        matchesSearch && matchesStatus && matchesSubscription && matchesDate
-      );
+      return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [users, search, statusFilter, subscriptionFilter, dateFilter]);
+  }, [users, search, statusFilter, dateFilter]);
 
   const periodLabel = dateFilter
     ? dateFilter.from === dateFilter.to
@@ -91,7 +89,6 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         "Saldo Disponível",
         "Criado em",
         "Status",
-        "Assinatura",
         "Cobrança",
       ],
       filename: `usuarios${dateFilter ? `-${dateFilter.from}_a_${dateFilter.to}` : ""}.pdf`,
@@ -101,8 +98,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         toBrl(u.totalEarnedBrl),
         toBrl(u.balanceCents / 100),
         format(u.createdAt, "dd/MM/yyyy", { locale: ptBR }),
-        u.suspendedAt === null ? "Ativo" : "Suspenso",
-        u.hasActiveSubscription ? "Cliente" : "Sem assinatura",
+        STATUS_LABEL[getUserClientStatus(u)],
         u.subscriptionPaymentMethod === null
           ? "—"
           : u.subscriptionPaymentMethod === "credit_card"
@@ -126,7 +122,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
           value={search}
         />
         <Select
-          onValueChange={v => setStatusFilter(v as any)}
+          onValueChange={v => setStatusFilter(v as typeof statusFilter)}
           value={statusFilter}
         >
           <SelectTrigger className="w-40">
@@ -135,20 +131,8 @@ export function UsersTable({ users }: { users: UserRow[] }) {
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="active">Ativos</SelectItem>
+            <SelectItem value="inactive">Inativos</SelectItem>
             <SelectItem value="suspended">Suspensos</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select
-          onValueChange={v => setSubscriptionFilter(v as any)}
-          value={subscriptionFilter}
-        >
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Assinatura" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos (assinatura)</SelectItem>
-            <SelectItem value="subscriber">Com assinatura</SelectItem>
-            <SelectItem value="none">Sem assinatura</SelectItem>
           </SelectContent>
         </Select>
         <DatePickerFilter
@@ -186,21 +170,12 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                 </TableHead>
                 <TableHead>Criado em</TableHead>
                 <TableHead>
-                  <HeaderTip
-                    label="Status"
-                    tip="Se a conta (login) está ativa ou foi suspensa por um admin. Não indica se ele é cliente."
-                  />
-                </TableHead>
-                <TableHead>
-                  <HeaderTip
-                    label="Assinatura"
-                    tip="Se o usuário tem assinatura VPS/VDS ativa ou pausada — ou seja, se é cliente pagante."
-                  />
+                  <HeaderTip label="Status" tip={STATUS_TIP} />
                 </TableHead>
                 <TableHead>
                   <HeaderTip
                     label="Cobrança"
-                    tip="Forma de cobrança da assinatura: Automático (cartão) ou Manual (PIX/Boleto)."
+                    tip="Forma de cobrança da assinatura VPS/VDS: Automático (cartão) ou Manual (PIX/Boleto). “—” significa que o usuário não tem assinatura."
                   />
                 </TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -227,25 +202,21 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                     {format(u.createdAt, "dd/MM/yyyy", { locale: ptBR })}
                   </TableCell>
                   <TableCell>
-                    {u.suspendedAt === null ? (
-                      <Badge variant="default">Ativo</Badge>
-                    ) : (
-                      <Badge variant="destructive">Suspenso</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {u.hasActiveSubscription ? (
-                      <Badge className="border-sky-500/30 bg-sky-500/15 text-sky-600 hover:bg-sky-500/15">
-                        Cliente
-                      </Badge>
-                    ) : (
-                      <Badge
-                        className="border-slate-500/30 text-slate-500"
-                        variant="outline"
-                      >
-                        Sem assinatura
-                      </Badge>
-                    )}
+                    {(() => {
+                      const status = getUserClientStatus(u);
+                      if (status === "suspended")
+                        return <Badge variant="destructive">Suspenso</Badge>;
+                      if (status === "active")
+                        return <Badge variant="default">Ativo</Badge>;
+                      return (
+                        <Badge
+                          className="border-slate-500/30 text-slate-500"
+                          variant="outline"
+                        >
+                          Inativo
+                        </Badge>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     {u.subscriptionPaymentMethod === null ? (
@@ -277,7 +248,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                 <TableRow>
                   <TableCell
                     className="h-24 text-center text-muted-foreground"
-                    colSpan={8}
+                    colSpan={7}
                   >
                     Nenhum usuário encontrado.
                   </TableCell>

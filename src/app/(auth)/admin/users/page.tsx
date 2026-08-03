@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { toBrl } from "@/lib/utils";
 import { getAllUsersWithBalanceAction } from "./actions";
+import { getUserClientStatus } from "./status";
 import { UsersTable } from "./UsersTable";
 
 export const dynamic = "force-dynamic";
@@ -23,10 +24,10 @@ export default async function AdminUsersPage() {
 
   const users = await getAllUsersWithBalanceAction();
 
-  const active = users.filter(u => u.suspendedAt === null).length;
-  const suspended = users.filter(u => u.suspendedAt !== null).length;
-  const subscribers = users.filter(u => u.hasActiveSubscription).length;
-  const totalEarned = users.reduce((acc, u) => acc + u.totalEarnedBrl, 0);
+  const statuses = users.map(getUserClientStatus);
+  const active = statuses.filter(s => s === "active").length;
+  const inactive = statuses.filter(s => s === "inactive").length;
+  const suspended = statuses.filter(s => s === "suspended").length;
   const totalBalance = users.reduce((acc, u) => acc + u.balanceCents / 100, 0);
 
   return (
@@ -58,11 +59,24 @@ export default async function AdminUsersPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="font-medium text-sm">Ativos</CardTitle>
+            <CardTitle className="font-medium text-sm">
+              Ativos (com contrato)
+            </CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="font-bold text-2xl text-green-600">{active}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="font-medium text-sm">
+              Inativos (sem contrato)
+            </CardTitle>
+            <Server className="h-4 w-4 text-slate-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="font-bold text-2xl text-slate-500">{inactive}</div>
           </CardContent>
         </Card>
         <Card>
@@ -72,17 +86,6 @@ export default async function AdminUsersPage() {
           </CardHeader>
           <CardContent>
             <div className="font-bold text-2xl text-red-600">{suspended}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="font-medium text-sm">
-              Clientes (com assinatura)
-            </CardTitle>
-            <Server className="h-4 w-4 text-sky-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="font-bold text-2xl text-sky-600">{subscribers}</div>
           </CardContent>
         </Card>
         <Card>

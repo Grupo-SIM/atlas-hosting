@@ -7,6 +7,7 @@ import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   pgAffiliateCommission,
+  pgOrganizationDomains,
   pgUser,
   pgVpsSubscription,
 } from "@/lib/db/schema";
@@ -21,6 +22,8 @@ export interface UserRow {
   suspendedAt: Date | null;
   createdAt: Date;
   hasActiveSubscription: boolean;
+  /** Tem ao menos um domínio ativo registrado na organização dele. */
+  hasActiveDomain: boolean;
   /** Método de cobrança da assinatura mais recente (cartão = automático; pix/boleto = manual). Null se não assina. */
   subscriptionPaymentMethod: "credit_card" | "pix" | "boleto" | null;
 }
@@ -29,28 +32,35 @@ export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
   const admin = await getUser();
   if (!admin?.isAdmin) redirect("/home");
 
-  const [users, commissionTotals, activeSubscriptions] = await Promise.all([
-    db.query.pgUser.findMany({
-      orderBy: [desc(pgUser.createdAt)],
-      with: { organization: { with: { wallet: true } } },
-    }),
-    db
-      .select({
-        affiliateUserId: pgAffiliateCommission.affiliateUserId,
-        total: sum(pgAffiliateCommission.commissionAmount),
-      })
-      .from(pgAffiliateCommission)
-      .groupBy(pgAffiliateCommission.affiliateUserId),
-    db
-      .select({
-        createdAt: pgVpsSubscription.createdAt,
-        paymentMethod: pgVpsSubscription.paymentMethod,
-        userId: pgVpsSubscription.userId,
-      })
-      .from(pgVpsSubscription)
-      .where(inArray(pgVpsSubscription.status, ["active", "paused"]))
-      .orderBy(desc(pgVpsSubscription.createdAt)),
-  ]);
+  const [users, commissionTotals, activeSubscriptions, activeDomains] =
+    await Promise.all([
+      db.query.pgUser.findMany({
+        orderBy: [desc(pgUser.createdAt)],
+        with: { organization: { with: { wallet: true } } },
+      }),
+      db
+        .select({
+          affiliateUserId: pgAffiliateCommission.affiliateUserId,
+          total: sum(pgAffiliateCommission.commissionAmount),
+        })
+        .from(pgAffiliateCommission)
+        .groupBy(pgAffiliateCommission.affiliateUserId),
+      db
+        .select({
+          createdAt: pgVpsSubscription.createdAt,
+          paymentMethod: pgVpsSubscription.paymentMethod,
+          userId: pgVpsSubscription.userId,
+        })
+        .from(pgVpsSubscription)
+        .where(inArray(pgVpsSubscription.status, ["active", "paused"]))
+        .orderBy(desc(pgVpsSubscription.createdAt)),
+      db
+        .selectDistinct({
+          organizationId: pgOrganizationDomains.organizationId,
+        })
+        .from(pgOrganizationDomains)
+        .where(eq(pgOrganizationDomains.active, true)),
+    ]);
 
   const totalsMap = new Map(
     commissionTotals.map(r => [r.affiliateUserId, Number(r.total ?? 0)])
@@ -62,10 +72,14 @@ export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
       paymentMethodMap.set(s.userId, s.paymentMethod);
   }
 
+  const orgsWithDomain = new Set(activeDomains.map(d => d.organizationId));
+
   return users.map(u => ({
     balanceCents: (u.organization as any)?.wallet?.balance ?? 0,
     createdAt: u.createdAt,
     email: u.email,
+    hasActiveDomain:
+      u.organizationId !== null && orgsWithDomain.has(u.organizationId),
     hasActiveSubscription: paymentMethodMap.has(u.id),
     id: u.id,
     isAdmin: u.isAdmin ?? false,
