@@ -24,6 +24,7 @@ import {
 import { CancelLinkButton } from "./CancelLinkButton";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { DeleteLinkButton } from "./DeleteLinkButton";
+import { EditLinkCustomerButton } from "./EditLinkCustomerButton";
 import { PaymentLinkForm } from "./PaymentLinkForm";
 
 export const dynamic = "force-dynamic";
@@ -148,18 +149,27 @@ export default async function VpsPaymentLinksPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {l.linkedUserName ? (
-                          <div className="flex flex-col">
-                            <span>{l.linkedUserName}</span>
-                            <span className="text-muted-foreground text-xs">
-                              {l.linkedUserEmail}
+                        <div className="flex items-center gap-1">
+                          {l.linkedUserName ? (
+                            <div className="flex flex-col">
+                              <span>{l.linkedUserName}</span>
+                              <span className="text-muted-foreground text-xs">
+                                {l.linkedUserEmail}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              Genérico
                             </span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">
-                            Genérico
-                          </span>
-                        )}
+                          )}
+                          {l.status === "pending" && (
+                            <EditLinkCustomerButton
+                              currentCustomerId={l.linkedUserId}
+                              customers={customers}
+                              id={l.id}
+                            />
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant={status.variant}>{status.label}</Badge>

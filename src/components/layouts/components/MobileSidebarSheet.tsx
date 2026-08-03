@@ -2,23 +2,29 @@
 
 import { Menu } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import AtlasLogo from "@/assets/atlas.svg";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { navigation } from "../navigation";
+import { isAdminPath, playAdminThemeTransition } from "../admin-mode";
+import {
+  adminEntryItem,
+  clientNavigation,
+  type NavigationItem,
+} from "../navigation";
 
 export function MobileSidebarSheet({ isAdmin }: { isAdmin: boolean }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const inAdminMode = isAdminPath(pathname);
 
-  const filteredNavigation = navigation.filter(item =>
-    isAdmin
-      ? (item as any).isAdmin || (item as any).showForAdmin
-      : !(item as any).isAdmin
-  );
+  const filteredNavigation: NavigationItem[] = [
+    ...clientNavigation.filter(item => !isAdmin || item.showForAdmin),
+    ...(isAdmin ? [adminEntryItem] : []),
+  ];
 
   return (
     <>
@@ -45,21 +51,38 @@ export function MobileSidebarSheet({ isAdmin }: { isAdmin: boolean }) {
               <Link
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-sm transition-colors",
-                  (item as any).disabled
+                  item.disabled
                     ? "cursor-not-allowed text-muted-foreground opacity-50"
-                    : pathname === item.href
+                    : (
+                          item.adminModeSwitch === "enter"
+                            ? inAdminMode
+                            : pathname === item.href
+                        )
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
-                href={(item as any).disabled ? "#" : item.href}
+                href={item.disabled ? "#" : item.href}
                 key={item.name}
-                onClick={() => {
-                  if (!(item as any).disabled) setOpen(false);
+                onClick={e => {
+                  if (item.disabled) return;
+                  setOpen(false);
+                  const goesToAdmin = item.adminModeSwitch === "enter";
+                  if (goesToAdmin === inAdminMode) return;
+                  e.preventDefault();
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  playAdminThemeTransition({
+                    enable: goesToAdmin,
+                    origin: {
+                      x: rect.left + rect.width / 2,
+                      y: rect.top + rect.height / 2,
+                    },
+                  });
+                  router.push(item.href);
                 }}
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
                 <span className="flex-1">{item.name}</span>
-                {(item as any).disabled && (
+                {item.disabled && (
                   <span className="rounded bg-primary/10 px-1.5 py-0.5 font-bold text-[10px] text-primary/70 uppercase tracking-wider">
                     Breve
                   </span>

@@ -1,54 +1,33 @@
-import { db } from "@/lib/db";
-import { type Plan, pgPlan } from "@/lib/db/schema";
-import { DomainStats } from "./components/DomainStats";
-import { InvoiceStats } from "./components/InvoiceStats";
-import { PlanStats } from "./components/PlanStats";
-import PlansSection from "./components/PlansSection";
-import { UserStats } from "./components/UserStats";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { AdminQuickActions } from "@/components/dashboard/AdminQuickActions";
+import { getUser } from "@/lib/auth";
 
-interface AdminPageProps {
-  searchParams: Promise<{ page?: string; search?: string; clientId?: string }>;
-}
+export const metadata: Metadata = { title: "Administração — Atlas Hosting" };
 
-export default async function AdminPage({ searchParams }: AdminPageProps) {
-  const resolvedSearchParams = await searchParams;
-
-  // Fetch initial plans data on the server
-  const initialPlans: Plan[] = await db
-    .select()
-    .from(pgPlan)
-    .orderBy(pgPlan.id);
+/**
+ * Passo intermediário entre a sidebar e as telas de admin: mesmo layout do
+ * dashboard do cliente, com os antigos itens de admin da sidebar virando cards.
+ */
+export default async function AdminDashboardPage() {
+  const user = await getUser();
+  if (!user?.isAdmin) redirect("/home");
 
   return (
-    <div className="space-y-10 p-2 md:p-6">
-      <header className="mb-6">
-        <h1 className="mb-1 font-bold text-3xl tracking-tight md:text-4xl">
-          Administrador
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Visão geral das estatísticas da plataforma de hospedagem
-        </p>
-      </header>
+    <div className="space-y-8 p-6 pb-16">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div>
+          <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
+            Área administrativa
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Ferramentas internas da plataforma. Clique em qualquer item da
+            sidebar para voltar ao painel do cliente.
+          </p>
+        </div>
+      </div>
 
-      <section className="space-y-6">
-        <UserStats />
-      </section>
-
-      <section className="space-y-6">
-        <PlanStats />
-      </section>
-
-      <section className="space-y-6">
-        <InvoiceStats searchParams={resolvedSearchParams} />
-      </section>
-
-      <section className="space-y-6">
-        <DomainStats />
-      </section>
-
-      <section className="space-y-6">
-        <PlansSection initialPlans={initialPlans} />
-      </section>
+      <AdminQuickActions />
     </div>
   );
 }

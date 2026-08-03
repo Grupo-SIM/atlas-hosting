@@ -1,11 +1,9 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { desc, eq } from "drizzle-orm";
-import { ArrowLeft, CheckCircle, UserCircle, XCircle } from "lucide-react";
-import Link from "next/link";
+import { CheckCircle, UserCircle, XCircle } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -49,11 +47,6 @@ export default async function AffiliateDetailsPage({ params }: PageProps) {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center gap-4">
-        <Button asChild size="icon" variant="ghost">
-          <Link href="/admin/affiliates">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        </Button>
         <div>
           <h1 className="font-bold text-3xl tracking-tight">
             Detalhes: {affiliate.name}

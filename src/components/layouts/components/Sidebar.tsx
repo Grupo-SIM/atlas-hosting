@@ -1,15 +1,9 @@
 "use client";
 
-import type { LucideProps } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  type ForwardRefExoticComponent,
-  type RefAttributes,
-  useRef,
-  useState,
-} from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import AtlasLogo from "@/assets/atlas.svg";
 import { cn } from "@/lib/utils";
 import {
@@ -18,16 +12,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../ui/tooltip";
-import { navigation } from "../navigation";
+import { isAdminPath, playAdminThemeTransition } from "../admin-mode";
+import {
+  adminEntryItem,
+  clientNavigation,
+  type NavigationItem,
+} from "../navigation";
 
 export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
   const [isCompact, setIsCompact] = useState(true);
 
-  const filteredNavigation = navigation.filter(item =>
-    isAdmin
-      ? (item as any).isAdmin || (item as any).showForAdmin
-      : !(item as any).isAdmin
-  );
+  /** A sidebar é sempre a mesma; o admin só ganha a porta de entrada do painel. */
+  const filteredNavigation: NavigationItem[] = [
+    ...clientNavigation.filter(item => !isAdmin || item.showForAdmin),
+    ...(isAdmin ? [adminEntryItem] : []),
+  ];
 
   return (
     <motion.div
@@ -88,7 +87,7 @@ export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
       <motion.nav className="relative inset-shadow-[0_1px_0_0] inset-shadow-border z-90 m-0 box-border flex w-auto flex-1 flex-col space-y-1 overflow-y-auto px-2 py-4">
         <TooltipProvider delayDuration={0}>
           {filteredNavigation.map(item => (
-            <NavItem isCompact={isCompact} item={item as any} key={item.name} />
+            <NavItem isCompact={isCompact} item={item} key={item.name} />
           ))}
         </TooltipProvider>
       </motion.nav>
@@ -101,19 +100,34 @@ function NavItem({
   isCompact,
 }: {
   isCompact: boolean;
-  item: {
-    name: string;
-    href: string;
-    icon: ForwardRefExoticComponent<
-      Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
-    >;
-    disabled?: boolean;
-  };
+  item: NavigationItem;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const itemNameRef = useRef<HTMLSpanElement>(null);
   const itemWidth = itemNameRef.current?.scrollWidth;
+
+  const inAdminMode = isAdminPath(pathname);
+  const goesToAdmin = item.adminModeSwitch === "enter";
+  /** Entrar no admin, ou sair dele clicando em qualquer outro item da sidebar. */
+  const switchesAdminMode = goesToAdmin !== inAdminMode;
+  const isActive = goesToAdmin ? inAdminMode : pathname === item.href;
+
+  const handleAdminModeSwitch = (
+    event: React.MouseEvent<HTMLAnchorElement>
+  ) => {
+    event.preventDefault();
+    const rect = event.currentTarget.getBoundingClientRect();
+    playAdminThemeTransition({
+      enable: goesToAdmin,
+      origin: {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      },
+    });
+    router.push(item.href);
+  };
 
   const content = (
     <MotionLink
@@ -121,7 +135,7 @@ function NavItem({
         "group relative box-border flex w-full items-center rounded-md px-3 py-2 font-medium text-sm transition-all",
         item.disabled
           ? "cursor-not-allowed opacity-50 grayscale-[0.5]"
-          : pathname === item.href
+          : isActive
             ? "bg-accent text-accent-foreground"
             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       )}
@@ -129,7 +143,13 @@ function NavItem({
       initial={{ marginLeft: 0, marginRight: 0 }}
       key={item.name}
       layout={true}
-      onClick={e => item.disabled && e.preventDefault()}
+      onClick={e => {
+        if (item.disabled) {
+          e.preventDefault();
+          return;
+        }
+        if (switchesAdminMode) handleAdminModeSwitch(e);
+      }}
       title={isCompact ? undefined : item.name}
     >
       <item.icon
@@ -137,7 +157,7 @@ function NavItem({
           "h-5 w-5 flex-shrink-0",
           item.disabled
             ? "text-muted-foreground"
-            : pathname === item.href
+            : isActive
               ? "text-accent-foreground"
               : "text-muted-foreground group-hover:text-accent-foreground"
         )}

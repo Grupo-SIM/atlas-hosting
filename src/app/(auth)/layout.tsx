@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 import DomainSelector from "@/components/domains/DomainSelector";
+import { AdminThemeSync } from "@/components/layouts/components/AdminThemeSync";
+import { PageBackButton } from "@/components/layouts/components/PageBackButton";
 import Sidebar from "@/components/layouts/components/Sidebar";
 import Topbar from "@/components/layouts/components/Topbar";
 import { getUser } from "@/lib/auth";
@@ -27,6 +29,14 @@ export default async function AuthLayout({
 
   return (
     <div className="flex max-h-screen min-h-screen overflow-hidden bg-background">
+      {/* Aplica a paleta de admin antes da primeira pintura — sem piscar tema claro. */}
+      <script
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: script inline anti-flash de tema
+        dangerouslySetInnerHTML={{
+          __html: `(function(){try{var p=location.pathname;if(p==="/admin"||p.indexOf("/admin/")===0){document.documentElement.classList.add("admin-theme")}}catch(e){}})()`,
+        }}
+      />
+      <AdminThemeSync />
       <Sidebar isAdmin={user.isAdmin || false} />
       <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
         <ImpersonationBanner />
@@ -35,6 +45,7 @@ export default async function AuthLayout({
         </Topbar>
 
         <main className="flex-1 overflow-y-auto border-border bg-background md:border-l">
+          <PageBackButton />
           {children}
         </main>
       </div>

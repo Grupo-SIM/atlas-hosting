@@ -27,7 +27,7 @@ import {
 } from "../ui/tooltip";
 import { MotionDiv } from "./MotionDiv";
 
-const containerVariants = {
+export const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -38,7 +38,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants: Variants = {
+export const itemVariants: Variants = {
   hidden: { opacity: 0, scale: 0.95, y: 30 },
   visible: {
     opacity: 1,
@@ -268,7 +268,7 @@ interface QuickActionCardProps {
   target?: string;
 }
 
-function QuickActionCard({
+export function QuickActionCard({
   Icon,
   title,
   subtitle,

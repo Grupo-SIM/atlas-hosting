@@ -50,6 +50,39 @@
     --input: 216 34% 17%;
     --ring: 216 34% 17%;
   }
+
+  /* Modo admin: paleta neutra do shadcn (cinza/preto), independente de light/dark.
+     Os seletores duplicados vencem `.dark` por especificidade. */
+  .admin-theme,
+  .dark.admin-theme {
+    --background: 24, 24, 27;
+    --foreground: 0 0% 98%;
+    --card: 240 4% 15.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 4% 15.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 5% 26%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 5% 26%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 5% 26%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 40%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 26%;
+    --input: 240 5% 26%;
+    --ring: 240 5% 65%;
+  }
+}
+
+/* A troca de tema é animada por clip-path no ::view-transition-new(root);
+   o crossfade padrão atrapalharia o efeito de círculo. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  mix-blend-mode: normal;
+  animation: none;
 }
 
 @layer base {

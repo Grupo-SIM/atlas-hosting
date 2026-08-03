@@ -154,21 +154,24 @@ export default async function MyDomainsPage({
             Gerencie seus domínios registrados e configurações de DNS
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button asChild={true} variant="outline">
-            <Link href="/domain?tab=transfer">
-              <Globe className="mr-2 h-4 w-4" /> Trazer Domínio
-            </Link>
-          </Button>
-          <Button
-            asChild={true}
-            className="border-0 bg-white font-bold text-slate-950 shadow-lg hover:bg-white/90"
-          >
-            <Link href="/domain?tab=register">
-              <Plus className="mr-2 h-4 w-4" /> Registrar Novo
-            </Link>
-          </Button>
-        </div>
+        {/* Sem domínio nenhum, a chamada pra ação fica só no estado vazio. */}
+        {processedDomains.length > 0 && (
+          <div className="flex gap-3">
+            <Button asChild={true} variant="outline">
+              <Link href="/domain?tab=transfer">
+                <Globe className="mr-2 h-4 w-4" /> Trazer Domínio
+              </Link>
+            </Button>
+            <Button
+              asChild={true}
+              className="border-0 bg-white font-bold text-slate-950 shadow-lg hover:bg-white/90"
+            >
+              <Link href="/domain?tab=register">
+                <Plus className="mr-2 h-4 w-4" /> Registrar Novo
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Domain Statistics Cards */}

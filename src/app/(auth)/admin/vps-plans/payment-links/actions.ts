@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { pgUser, pgVpsPaymentLink } from "@/lib/db/schema";
+import { pgInvoice, pgUser, pgVpsPaymentLink } from "@/lib/db/schema";
 import {
   type PaymentLinkEffectiveStatus,
   paymentLinkEffectiveStatus,
@@ -25,6 +25,7 @@ export interface PaymentLinkRow {
   allowPix: boolean;
   allowBoleto: boolean;
   status: PaymentLinkEffectiveStatus;
+  linkedUserId: string | null;
   linkedUserName: string | null;
   linkedUserEmail: string | null;
   createdAt: Date;
@@ -52,6 +53,7 @@ export async function getVpsPaymentLinksAction(): Promise<PaymentLinkRow[]> {
     id: l.id,
     intervalMonths: l.intervalMonths,
     linkedUserEmail: (l.linkedUser as any)?.email ?? null,
+    linkedUserId: l.linkedUserId,
     linkedUserName: (l.linkedUser as any)?.name ?? null,
     planId: l.planId,
     planName: l.planName,
@@ -76,6 +78,31 @@ export async function searchCustomersAction(): Promise<
     orderBy: [desc(pgUser.createdAt)],
   });
   return users;
+}
+
+/**
+ * "none"/vazio = link genérico. Caso contrário resolve o cliente e a org dele —
+ * sem org não dá pra pendurar a cobrança em lugar nenhum.
+ */
+async function resolveLinkedCustomer(linkedUserId: string): Promise<{
+  linkedOrgId: string | null;
+  resolvedLinkedUserId: string | null;
+}> {
+  const id = linkedUserId.trim();
+  if (!id || id === "none")
+    return { linkedOrgId: null, resolvedLinkedUserId: null };
+
+  const linkedUser = await db.query.pgUser.findFirst({
+    where: eq(pgUser.id, id),
+  });
+  if (!linkedUser) throw new Error("Cliente selecionado não encontrado.");
+  if (!linkedUser.organizationId)
+    throw new Error("Cliente selecionado não tem organização vinculada.");
+
+  return {
+    linkedOrgId: linkedUser.organizationId,
+    resolvedLinkedUserId: linkedUser.id,
+  };
 }
 
 export async function createVpsPaymentLinkAction(
@@ -108,18 +135,8 @@ export async function createVpsPaymentLinkAction(
     throw new Error("Valor inválido.");
   }
 
-  let linkedOrgId: string | null = null;
-  let resolvedLinkedUserId: string | null = null;
-  if (linkedUserId && linkedUserId !== "none") {
-    const linkedUser = await db.query.pgUser.findFirst({
-      where: eq(pgUser.id, linkedUserId),
-    });
-    if (!linkedUser) throw new Error("Cliente selecionado não encontrado.");
-    if (!linkedUser.organizationId)
-      throw new Error("Cliente selecionado não tem organização vinculada.");
-    resolvedLinkedUserId = linkedUser.id;
-    linkedOrgId = linkedUser.organizationId;
-  }
+  const { linkedOrgId, resolvedLinkedUserId } =
+    await resolveLinkedCustomer(linkedUserId);
 
   await db.insert(pgVpsPaymentLink).values({
     allowBoleto,
@@ -135,6 +152,85 @@ export async function createVpsPaymentLinkAction(
   });
 
   revalidatePath("/admin/vps-plans/payment-links");
+}
+
+/**
+ * Troca (ou remove) o cliente vinculado de um link que ainda não foi pago.
+ *
+ * Se o link já gerou uma fatura pendente — alguém abriu a URL — ela precisa
+ * acompanhar a troca: vira do novo cliente, ou expira quando o link volta a ser
+ * genérico (aí a próxima abertura cria uma fatura nova pelo fluxo de checkout).
+ */
+export async function updateVpsPaymentLinkCustomerAction(
+  id: string,
+  linkedUserId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = await getUser();
+  if (!admin?.isAdmin) redirect("/home");
+
+  const link = await db.query.pgVpsPaymentLink.findFirst({
+    where: eq(pgVpsPaymentLink.id, id),
+    with: { resultingInvoice: { columns: { id: true, status: true } } },
+  });
+  if (!link) return { error: "Link não encontrado.", ok: false };
+
+  const invoice = link.resultingInvoice as {
+    id: string;
+    status: string;
+  } | null;
+  const status = paymentLinkEffectiveStatus(link.status, invoice?.status);
+  if (status !== "pending") {
+    return {
+      error:
+        "Só dá pra trocar o cliente de um link que ainda está aguardando pagamento.",
+      ok: false,
+    };
+  }
+
+  let linkedOrgId: string | null;
+  let resolvedLinkedUserId: string | null;
+  try {
+    ({ linkedOrgId, resolvedLinkedUserId } =
+      await resolveLinkedCustomer(linkedUserId));
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Cliente inválido.",
+      ok: false,
+    };
+  }
+  if (resolvedLinkedUserId === link.linkedUserId) return { ok: true };
+
+  if (invoice?.status === "pending") {
+    if (resolvedLinkedUserId && linkedOrgId) {
+      await db
+        .update(pgInvoice)
+        .set({
+          orgId: linkedOrgId,
+          updatedAt: new Date(),
+          userId: resolvedLinkedUserId,
+        })
+        .where(eq(pgInvoice.id, invoice.id));
+    } else {
+      await db
+        .update(pgInvoice)
+        .set({ status: "expired", updatedAt: new Date() })
+        .where(eq(pgInvoice.id, invoice.id));
+    }
+  }
+
+  await db
+    .update(pgVpsPaymentLink)
+    .set({
+      linkedOrgId,
+      linkedUserId: resolvedLinkedUserId,
+      // Link genérico com fatura expirada precisa gerar uma nova na próxima visita.
+      resultingInvoiceId:
+        invoice && !resolvedLinkedUserId ? null : link.resultingInvoiceId,
+    })
+    .where(eq(pgVpsPaymentLink.id, id));
+
+  revalidatePath("/admin/vps-plans/payment-links");
+  return { ok: true };
 }
 
 export async function cancelVpsPaymentLinkAction(id: string): Promise<void> {

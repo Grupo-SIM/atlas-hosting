@@ -1,10 +1,8 @@
 import { isError } from "lodash";
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import NoDomains from "@/components/domains/NoDomains";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { getUserCurrentDomain } from "@/lib/server/utils";
@@ -70,11 +68,6 @@ export default async function DnsManagementPage({
       {/* <Breadcrumb items={breadcrumbItems} /> */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Button asChild={true} size="icon" variant="outline">
-            <Link href="/domains">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
           <div>
             <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
               Editor de Zona DNS

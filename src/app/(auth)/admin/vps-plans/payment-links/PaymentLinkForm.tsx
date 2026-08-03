@@ -21,6 +21,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { SellablePlan } from "@/lib/vps-sellable-plans";
+import { type Customer, CustomerCombobox } from "./CustomerCombobox";
 
 const PRODUCT_TYPE_LABEL: Record<string, string> = {
   "storage-vps": "Storage VPS",
@@ -28,12 +29,6 @@ const PRODUCT_TYPE_LABEL: Record<string, string> = {
   vps: "Cloud VPS",
   "vps-windows": "VPS Windows",
 };
-
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-}
 
 export function PaymentLinkForm({
   plans,
@@ -47,14 +42,24 @@ export function PaymentLinkForm({
   const [planKey, setPlanKey] = useState("");
   const [planOpen, setPlanOpen] = useState(false);
   const [customerId, setCustomerId] = useState("none");
-  const [customerOpen, setCustomerOpen] = useState(false);
+  /** Só dígitos, em centavos: digitar 8990 vira R$ 89,90 (estilo caixa). */
+  const [amountCents, setAmountCents] = useState("");
   const [allowPix, setAllowPix] = useState(false);
   const [allowBoleto, setAllowBoleto] = useState(false);
 
   const selectedPlan = plans.find(
     p => `${p.productType}:${p.planId}` === planKey
   );
-  const selectedCustomer = customers.find(c => c.id === customerId);
+
+  const amountValue = amountCents ? Number(amountCents) / 100 : 0;
+  const amountDisplay = amountCents
+    ? amountValue.toLocaleString("pt-BR", {
+        maximumFractionDigits: 2,
+        minimumFractionDigits: 2,
+      })
+    : "";
+  /** O form manda ponto decimal; a vírgula é só da tela. */
+  const amountBrl = amountCents ? amountValue.toFixed(2) : "";
 
   return (
     <form
@@ -149,90 +154,24 @@ export function PaymentLinkForm({
         <Label htmlFor="amountBrl">Valor por ciclo (R$) *</Label>
         <Input
           id="amountBrl"
-          min="0.01"
-          name="amountBrl"
-          placeholder="Ex: 89.90"
-          required
-          step="0.01"
-          type="number"
+          inputMode="numeric"
+          onChange={e => {
+            const digits = e.target.value.replace(/\D/g, "").slice(0, 9);
+            setAmountCents(digits.replace(/^0+(?=\d)/, ""));
+          }}
+          placeholder="Ex: 89,90"
+          value={amountDisplay}
         />
+        <input name="amountBrl" type="hidden" value={amountBrl} />
       </div>
 
       <div className="space-y-2 md:col-span-2 lg:col-span-2">
         <Label>Vincular a cliente (opcional)</Label>
-        <Popover onOpenChange={setCustomerOpen} open={customerOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              aria-expanded={customerOpen}
-              className="h-10 w-full justify-between font-normal"
-              role="combobox"
-              type="button"
-              variant="outline"
-            >
-              {customerId !== "none" && selectedCustomer ? (
-                <span className="truncate">
-                  {selectedCustomer.name} ({selectedCustomer.email})
-                </span>
-              ) : (
-                <span className="text-muted-foreground">
-                  Genérico — qualquer pessoa pode pagar
-                </span>
-              )}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            align="start"
-            className="w-[var(--radix-popover-trigger-width)] p-0"
-          >
-            <Command>
-              <CommandInput placeholder="Buscar cliente..." />
-              <CommandList>
-                <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem
-                    onSelect={() => {
-                      setCustomerId("none");
-                      setCustomerOpen(false);
-                    }}
-                    value="none genérico qualquer"
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        customerId === "none" ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    Genérico — qualquer pessoa pode pagar
-                  </CommandItem>
-                  {customers.map(c => (
-                    <CommandItem
-                      key={c.id}
-                      onSelect={() => {
-                        setCustomerId(c.id);
-                        setCustomerOpen(false);
-                      }}
-                      value={`${c.name} ${c.email} ${c.id}`}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          customerId === c.id ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      <div className="flex flex-col">
-                        <span>{c.name}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {c.email}
-                        </span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <CustomerCombobox
+          customers={customers}
+          onChange={setCustomerId}
+          value={customerId}
+        />
         <input name="linkedUserId" type="hidden" value={customerId} />
       </div>
 
@@ -277,7 +216,7 @@ export function PaymentLinkForm({
       <div className="flex items-end md:col-span-2 lg:col-span-3">
         <Button
           className="w-full md:w-auto"
-          disabled={!selectedPlan}
+          disabled={!selectedPlan || amountValue <= 0}
           type="submit"
         >
           <Plus className="mr-2 h-4 w-4" />
