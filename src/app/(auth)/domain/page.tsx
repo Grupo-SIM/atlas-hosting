@@ -1,4 +1,3 @@
-import { query } from "dns-query";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createDomainBundleInvoice, createDomainInvoice } from "@/app/actions";
@@ -19,6 +18,7 @@ import { DomainBundleSection } from "./register/components/DomainBundleSection";
 import RegisterDomainSearch from "./register/components/RegisterDomainSearch";
 import { TransferDomainsList } from "./register/components/TransferDomainsList";
 import { TransferForm } from "./register/components/TransferForm";
+import { transferGuide } from "./register/transfer-guide";
 import type { DomainPageParams } from "./types";
 import { getAllDomainPrices, getDomainData, popularExtensions } from "./utils";
 
@@ -105,33 +105,6 @@ export default async function DomainPage({
     }
   }
 
-  Promise.all(
-    transferDomains.map(async (domain: OrganizationDomain) => {
-      // check if already registered the nameservers
-      const done = [];
-      const r = await query(
-        {
-          question: {
-            name: domain.domain,
-            type: "NS",
-          },
-        },
-        { endpoints: ["1.1.1.1", "8.8.8.8"] }
-      );
-      if (
-        r.answers?.some(
-          answer =>
-            answer.type === "NS" &&
-            [
-              "dns1.registrar-servers.com",
-              "dns2.registrar-servers.com",
-            ].includes(answer.data.trim())
-        )
-      ) {
-        done.push(domain.domain);
-      }
-    })
-  );
 
   return (
     <div className="w-full">
@@ -205,8 +178,8 @@ export default async function DomainPage({
         </TabsContent>
 
         <TabsContent className="mt-8 space-y-8" value="transfer">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_auto]">
-            <Card className="w-full max-w-2xl">
+          <div className="mx-auto max-w-2xl">
+            <Card className="w-full">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl">
                   Transferir Domínio Existente
@@ -223,74 +196,9 @@ export default async function DomainPage({
                     Como funciona a transferência:
                   </h3>
                   <div className="space-y-2 text-muted-foreground text-sm">
-                    <p>• Adicione seu domínio existente acima</p>
-                    <p>
-                      • No painel do seu registrador atual, crie ou edite o{" "}
-                      <strong>Registro A</strong>
-                    </p>
-                    <p>
-                      • Aponte o registro A para o IP do nosso servidor:{" "}
-                      <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-                        {process.env.SERVER_IP || "66.94.101.192"}
-                      </code>
-                    </p>
-                    <p>
-                      • Aguarde a propagação DNS (geralmente 5 min a 24 horas)
-                    </p>
-                    <p>
-                      • Clique em &quot;Verificar&quot; para confirmar e ativar
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="flex max-w-2xl flex-col">
-              <CardHeader>
-                <CardTitle>Guia de Configuração</CardTitle>
-                <CardDescription>
-                  Como apontar seu domínio para a Atlas Hosting
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex h-full flex-col justify-center gap-6">
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">
-                    IP do Servidor Atlas
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between rounded-md bg-muted p-3 font-mono text-sm">
-                      <span>
-                        Registro A → {process.env.SERVER_IP || "66.94.101.192"}
-                      </span>
-                    </div>
-                    <p className="text-muted-foreground text-xs">
-                      Configure este IP como valor do registro A (tipo A) no seu
-                      registrador atual (Hostinger, GoDaddy, Registro.br, etc.)
-                    </p>
-                  </div>
-
-                  <div className="space-y-2 border-t pt-4">
-                    <h4 className="font-medium text-sm">
-                      Passo a passo rápido:
-                    </h4>
-                    <ol className="list-inside list-decimal space-y-1 text-muted-foreground text-sm">
-                      <li>Acesse o painel DNS do seu registrador</li>
-                      <li>
-                        Encontre ou crie um registro do tipo <strong>A</strong>
-                      </li>
-                      <li>
-                        No campo &quot;Host&quot; ou &quot;Nome&quot;, coloque{" "}
-                        <code className="rounded bg-muted px-1 text-xs">@</code>
-                      </li>
-                      <li>
-                        No campo &quot;Valor&quot; ou &quot;Aponta para&quot;,
-                        cole:{" "}
-                        <code className="rounded bg-muted px-1 text-xs">
-                          {process.env.SERVER_IP || "186.194.55.237"}
-                        </code>
-                      </li>
-                      <li>Salve e aguarde a propagação</li>
-                    </ol>
+                    {transferGuide.steps.map(step => (
+                      <p key={step}>• {step}</p>
+                    ))}
                   </div>
                 </div>
               </CardContent>

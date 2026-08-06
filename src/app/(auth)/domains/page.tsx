@@ -33,14 +33,36 @@ interface ProcessedDomain {
   id: string; // Using domain name as ID
   name: string;
   registrationDate: string;
-  expiryDate: string;
+  expiryDate: string | null;
   status: "active" | "expired" | "unknown";
   autoRenew: boolean;
   isLocked: boolean;
   usesOurDNS: boolean;
   features: string[];
+  isExternal: boolean;
 }
 
+function isDomainOutsideNamecheap(error: unknown): boolean {
+  return error instanceof Error && error.message.includes("Err 2030166");
+}
+
+function externalDomainFallback(domain: {
+  createdAt: Date;
+  domain: string;
+}): ProcessedDomain {
+  return {
+    autoRenew: false,
+    expiryDate: null,
+    features: ["DNS via Atlas"],
+    id: domain.domain,
+    isLocked: false,
+    isExternal: true,
+    name: domain.domain,
+    registrationDate: format(domain.createdAt, "dd/MM/yyyy", { locale: ptBR }),
+    status: "active",
+    usesOurDNS: true,
+  };
+}
 export default async function MyDomainsPage({
   searchParams,
 }: {
@@ -85,13 +107,13 @@ export default async function MyDomainsPage({
               : "N/A",
             status: isBefore(d.ExpireDate, new Date()) ? "expired" : "active",
             usesOurDNS: d.DnsDetails?.IsUsingOurDNS ?? false,
+            isExternal: false,
           } as ProcessedDomain;
         } catch (error) {
-          console.error(
-            `Failed to fetch Namecheap info for ${domain.domain}:`,
-            error
-          );
-          // Retorna fallback para que o erro num domínio não quebre a página inteira
+          if (isDomainOutsideNamecheap(error)) {
+            return externalDomainFallback(domain);
+          }
+          console.error(`Failed to fetch Namecheap info for ${domain.domain}:`, error);
           return {
             autoRenew: false,
             expiryDate: "Indisponível",
@@ -116,7 +138,7 @@ export default async function MyDomainsPage({
       active: domains.filter(d => d.status === "active").length,
       expired: domains.filter(d => d.status === "expired").length,
       expiringThisMonth: domains.filter(d => {
-        if (d.expiryDate === "Nunca") return false;
+        if (!d.expiryDate || d.expiryDate === "Nunca") return false;
         try {
           const [day, month, year] = d.expiryDate.split("/");
           const expiryDate = new Date(
@@ -390,7 +412,7 @@ export default async function MyDomainsPage({
                       <TableCell>
                         <div className="flex flex-col items-center gap-1">
                           <span className="font-medium">
-                            {domain.expiryDate}
+                            {domain.isExternal ? null : domain.expiryDate}
                           </span>
                           {domain.status === "expired" && (
                             <Badge className="text-xs" variant="destructive">
