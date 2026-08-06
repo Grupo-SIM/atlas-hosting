@@ -2,7 +2,8 @@
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FileDown } from "lucide-react";
+import { ClipboardList, FileDown } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   DatePickerFilter,
@@ -147,6 +148,12 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         >
           <FileDown className="h-4 w-4" />
           Exportar PDF
+        </Button>
+        <Button asChild className="gap-2" variant="outline">
+          <Link href="/admin/assinaturas-manuais">
+            <ClipboardList className="h-4 w-4" />
+            Assinaturas Manuais
+          </Link>
         </Button>
       </div>
 

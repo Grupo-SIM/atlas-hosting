@@ -15,6 +15,8 @@ import { pgUser } from "./user";
 export const pgOrganization = pgTable("organization", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   deletedAt: timestamp("deleted_at", { mode: "date" }),
+  /** CNPJ da empresa, só dígitos. Opcional — nem toda org é pessoa jurídica. */
+  document: text("document"),
   dokployId: text("dokploy_id"),
   domId: text("dom_id"),
   id: uuid("id").primaryKey().defaultRandom(),

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Info } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -15,6 +15,12 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Separator } from "../ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 interface DomainPriceSelectorProps {
   domain: string;
@@ -166,6 +172,17 @@ export function DomainPriceSelector({
             </li>
             <li className="rounded bg-green-100 px-2 py-1 text-green-700 text-xs dark:bg-green-800/30 dark:text-green-400">
               Proteção de Privacidade
+            </li>
+            <li className="flex items-center gap-1 rounded bg-green-100 px-2 py-1 text-green-700 text-xs dark:bg-green-800/30 dark:text-green-400">
+              100% de cashback
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 shrink-0 cursor-help opacity-80" />
+                  </TooltipTrigger>
+                  <TooltipContent>Até R$250 </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </li>
           </ul>
         </div>

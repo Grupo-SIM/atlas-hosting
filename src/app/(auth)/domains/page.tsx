@@ -12,13 +12,7 @@ import Link from "next/link";
 import NoDomains from "@/components/domains/NoDomains";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -313,20 +307,12 @@ export default async function MyDomainsPage({
         </Card>
       )}
 
-      {/* Domain Management Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
-            Seus Domínios
-          </CardTitle>
-          <CardDescription>
-            Lista de todos os seus domínios registrados com informações
-            detalhadas
-          </CardDescription>
-        </CardHeader>
+      {/* Domain Management Table — sem card/cabeçalho: a tabela já se explica */}
+      <Card className="border-0 bg-transparent shadow-none">
         <CardContent
-          className={cn({ "mx-auto max-w-2xl": processedDomains.length === 0 })}
+          className={cn("px-0", {
+            "mx-auto max-w-2xl": processedDomains.length === 0,
+          })}
         >
           <div className="overflow-x-auto rounded-lg border">
             {processedDomains.length === 0 ? (

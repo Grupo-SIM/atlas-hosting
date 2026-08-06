@@ -45,7 +45,7 @@ export default async function SettingsPage({
         <TabsList className="grid w-full grid-cols-2">
           <Link className="block w-full" href="/settings?tab=user">
             <TabsTrigger className="pointer-events-none w-full" value="user">
-              Perfil
+              Pessoal
             </TabsTrigger>
           </Link>
           <Link className="block w-full" href="/settings?tab=organization">
@@ -53,7 +53,7 @@ export default async function SettingsPage({
               className="pointer-events-none w-full"
               value="organization"
             >
-              Organização
+              Empresarial
             </TabsTrigger>
           </Link>
         </TabsList>

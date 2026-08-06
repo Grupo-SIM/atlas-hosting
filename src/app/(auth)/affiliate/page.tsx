@@ -1,4 +1,4 @@
-import { eq, sum } from "drizzle-orm";
+import { and, eq, ne, sum } from "drizzle-orm";
 import type { Metadata } from "next";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -27,10 +27,16 @@ export default async function AffiliatePage() {
 
   const { available, pendingWithdrawals } = await getAffiliateBalance(user.id);
 
+  // Comissão cancelada (venda não entregue) não conta como ganho.
   const [allTimeRow] = await db
     .select({ total: sum(pgAffiliateCommission.commissionAmount) })
     .from(pgAffiliateCommission)
-    .where(eq(pgAffiliateCommission.affiliateUserId, user.id));
+    .where(
+      and(
+        eq(pgAffiliateCommission.affiliateUserId, user.id),
+        ne(pgAffiliateCommission.status, "cancelled")
+      )
+    );
   const totalEarnedAllTime = Number(allTimeRow?.total ?? 0);
 
   const referredUsers = await db.query.pgUser.findMany({

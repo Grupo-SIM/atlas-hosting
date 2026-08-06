@@ -2,6 +2,7 @@ import { count, eq, sql, sum } from "drizzle-orm";
 import { ExternalLink, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { HeaderTip } from "@/components/HeaderTip";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,35 +19,69 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { db } from "@/lib/db";
-import { pgInvoice, pgUser } from "@/lib/db/schema";
+import {
+  pgAffiliateCommission,
+  pgUser,
+  pgWithdrawalRequests,
+} from "@/lib/db/schema";
 
 export const metadata: Metadata = {
   title: "Gerenciar Afiliados - Admin",
 };
 
-export default async function AdminAffiliatesPage() {
-  const systemConfig = await db.query.pgSystemConfig.findFirst();
-  const commissionRate = systemConfig?.referrerCommission ?? 10;
+function toBrl(value: number) {
+  return value.toLocaleString("pt-BR", { currency: "BRL", style: "currency" });
+}
 
-  // Buscar usuários que indicaram alguém ou tem código de afiliado
+export default async function AdminAffiliatesPage() {
+  // Buscar usuários que indicaram alguém ou tem código de afiliado.
+  // Sem join com faturas: ele multiplicava o afiliado por cada fatura do indicado
+  // e inflava a contagem (3 indicados com 8 faturas viravam "10 indicações").
   const affiliates = await db
     .select({
       affiliateCode: pgUser.affiliateCode,
       email: pgUser.email,
       id: pgUser.id,
       name: pgUser.name,
-      referralCount: count(sql`CASE WHEN referred.id IS NOT NULL THEN 1 END`),
-      totalSales: sum(pgInvoice.amount),
+      referralCount: count(sql`referred.id`),
     })
     .from(pgUser)
     .leftJoin(
       sql`${pgUser} as referred`,
       eq(sql`referred.referrer_id`, pgUser.id)
     )
-    .leftJoin(pgInvoice, eq(pgInvoice.userId, sql`referred.id`))
     .groupBy(pgUser.id, pgUser.name, pgUser.email, pgUser.affiliateCode)
     .having(sql`count(referred.id) > 0`);
+
+  // Saldo líquido = comissões disponíveis menos o que já está preso em saques
+  // pendentes. Mesma conta do `getAffiliateBalance` que o afiliado vê na conta dele.
+  const [availableRows, pendingRows] = await Promise.all([
+    db
+      .select({
+        total: sum(pgAffiliateCommission.commissionAmount),
+        userId: pgAffiliateCommission.affiliateUserId,
+      })
+      .from(pgAffiliateCommission)
+      .where(eq(pgAffiliateCommission.status, "available"))
+      .groupBy(pgAffiliateCommission.affiliateUserId),
+    db
+      .select({
+        total: sum(pgWithdrawalRequests.amount),
+        userId: pgWithdrawalRequests.userId,
+      })
+      .from(pgWithdrawalRequests)
+      .where(eq(pgWithdrawalRequests.status, "pending"))
+      .groupBy(pgWithdrawalRequests.userId),
+  ]);
+
+  const availableByUser = new Map(
+    availableRows.map(r => [r.userId, Number(r.total ?? 0)])
+  );
+  const pendingByUser = new Map(
+    pendingRows.map(r => [r.userId, Number(r.total ?? 0)])
+  );
 
   return (
     <div className="space-y-6 p-6">
@@ -80,59 +115,88 @@ export default async function AdminAffiliatesPage() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Afiliado</TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Indicações</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {affiliates.map(affiliate => {
-                  const salesValue = Number(affiliate.totalSales ?? 0);
-                  const commissionValue = salesValue * (commissionRate / 100);
+            <TooltipProvider delayDuration={150}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Afiliado</TableHead>
+                    <TableHead>Código</TableHead>
+                    <TableHead>
+                      <HeaderTip
+                        label="Indicações"
+                        tip="Contas criadas com o link deste afiliado."
+                      />
+                    </TableHead>
+                    <TableHead>Saldo</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {affiliates.map(affiliate => {
+                    const available = availableByUser.get(affiliate.id) ?? 0;
+                    const pending = pendingByUser.get(affiliate.id) ?? 0;
+                    const balance = Math.max(0, available - pending);
 
-                  return (
-                    <TableRow key={affiliate.id}>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{affiliate.name}</span>
-                          <span className="text-muted-foreground text-xs">
-                            {affiliate.email}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-                          {affiliate.affiliateCode || "---"}
-                        </code>
-                      </TableCell>
-                      <TableCell>{affiliate.referralCount}</TableCell>
-                      <TableCell className="text-right">
-                        <Button asChild size="sm" variant="ghost">
-                          <Link href={`/admin/affiliates/${affiliate.id}`}>
-                            <ExternalLink className="mr-2 h-4 w-4" />
-                            Detalhes
-                          </Link>
-                        </Button>
+                    return (
+                      <TableRow key={affiliate.id}>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {affiliate.name}
+                            </span>
+                            <span className="text-muted-foreground text-xs">
+                              {affiliate.email}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+                            {affiliate.affiliateCode || "---"}
+                          </code>
+                        </TableCell>
+                        <TableCell>{affiliate.referralCount}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span
+                              className={
+                                balance > 0
+                                  ? "font-medium"
+                                  : "text-muted-foreground"
+                              }
+                            >
+                              {toBrl(balance)}
+                            </span>
+                            {pending > 0 && (
+                              <span className="text-muted-foreground text-xs">
+                                {toBrl(pending)} em saque pendente
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button asChild size="sm" variant="ghost">
+                            <Link href={`/admin/affiliates/${affiliate.id}`}>
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              Detalhes
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {affiliates.length === 0 && (
+                    <TableRow>
+                      <TableCell
+                        className="py-10 text-center text-muted-foreground"
+                        colSpan={5}
+                      >
+                        Nenhum afiliado encontrado
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-                {affiliates.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      className="py-10 text-center text-muted-foreground"
-                      colSpan={6}
-                    >
-                      Nenhum afiliado encontrado
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
           </div>
         </CardContent>
       </Card>

@@ -102,6 +102,12 @@ function statusBadge(status: string) {
       icon: CheckCircle2,
       label: "Disponível",
     },
+    cancelled: {
+      className:
+        "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20 backdrop-blur-md shadow-sm",
+      icon: XCircle,
+      label: "Cancelada",
+    },
     pending: {
       className:
         "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 backdrop-blur-md shadow-sm shadow-amber-500/5",

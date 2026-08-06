@@ -3,7 +3,6 @@ import { User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { type HTMLAttributes, type PropsWithChildren, Suspense } from "react";
 import { FaUserAlt } from "react-icons/fa";
-import { ModeToggle } from "@/components/ModeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getUser } from "@/lib/auth";
 import { LogoutButton } from "./LogoutButton";
 import { MobileSidebarSheet } from "./MobileSidebarSheet";
+import { ThemeToggleSlot } from "./ThemeToggleSlot";
 
 export default async function Topbar({
   children,
@@ -39,7 +39,7 @@ export default async function Topbar({
       <MobileSidebarSheet isAdmin={isAdmin ?? false} />
       <div className="flex flex-1 items-center justify-end gap-3">
         {children}
-        <ModeToggle />
+        <ThemeToggleSlot />
         <DropdownMenu>
           <DropdownMenuTrigger asChild={true}>
             <Button

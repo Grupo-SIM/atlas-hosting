@@ -52,8 +52,8 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
 function UserName({ user }: WelcomeHeaderProps) {
   const firstName = user?.name?.split(" ")[0];
   return firstName
-    ? `Bem-vindo de volta, ${firstName}!`
-    : "Bem-vindo de volta!";
+    ? `Bem-vindo, ${firstName}!`
+    : "Bem-vindo!";
 }
 
 export function UserPlanBadge({ user }: WelcomeHeaderProps) {

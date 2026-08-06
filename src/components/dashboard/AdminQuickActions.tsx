@@ -1,4 +1,4 @@
-import { ClipboardList, Server, Ticket, Users } from "lucide-react";
+import { Server, Ticket, Users } from "lucide-react";
 import { MotionDiv } from "./MotionDiv";
 import {
   containerVariants,
@@ -83,15 +83,6 @@ export function AdminQuickActions() {
             pattern="waves"
             subtitle="Crie e gerencie vouchers de desconto"
             title="Vouchers"
-          />
-
-          <QuickActionCard
-            gradient="from-zinc-600 to-neutral-800"
-            href="/admin/assinaturas-manuais"
-            Icon={ClipboardList}
-            pattern="grid"
-            subtitle="Cadastre clientes que pagam fora da plataforma"
-            title="Assinaturas Manuais"
           />
         </div>
       </MotionDiv>

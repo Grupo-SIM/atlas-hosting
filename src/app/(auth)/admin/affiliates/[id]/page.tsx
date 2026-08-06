@@ -1,9 +1,8 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { desc, eq } from "drizzle-orm";
-import { CheckCircle, UserCircle, XCircle } from "lucide-react";
+import { desc, eq, inArray } from "drizzle-orm";
+import { UserCircle } from "lucide-react";
 import { notFound } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -20,7 +19,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { db } from "@/lib/db";
-import { pgUser } from "@/lib/db/schema";
+import { pgAffiliateCommission, pgInvoice, pgUser } from "@/lib/db/schema";
+import {
+  type ReferralPurchase,
+  ReferralPurchasesDialog,
+} from "./ReferralPurchasesDialog";
 
 interface PageProps {
   params: Promise<{
@@ -43,6 +46,47 @@ export default async function AffiliateDetailsPage({ params }: PageProps) {
     orderBy: [desc(pgUser.createdAt)],
     where: eq(pgUser.referrerId, affiliate.id),
   });
+
+  // O que cada indicado comprou, com a comissão que a compra rendeu a este
+  // afiliado (nem toda compra rende: renovação e atribuição expirada não contam).
+  const referralIds = referrals.map(r => r.id);
+  const [invoices, commissions] = await Promise.all([
+    referralIds.length
+      ? db.query.pgInvoice.findMany({
+          orderBy: [desc(pgInvoice.createdAt)],
+          where: inArray(pgInvoice.userId, referralIds),
+        })
+      : [],
+    referralIds.length
+      ? db.query.pgAffiliateCommission.findMany({
+          where: eq(pgAffiliateCommission.affiliateUserId, affiliate.id),
+        })
+      : [],
+  ]);
+
+  const commissionByInvoice = new Map(
+    commissions.map(c => [
+      c.invoiceId,
+      { amount: c.commissionAmount, cancelled: c.status === "cancelled" },
+    ])
+  );
+
+  const purchasesByUser = new Map<string, ReferralPurchase[]>();
+  for (const invoice of invoices) {
+    const list = purchasesByUser.get(invoice.userId) ?? [];
+    const commission = commissionByInvoice.get(invoice.id);
+    list.push({
+      amount: invoice.amount,
+      commissionAmount: commission?.amount ?? null,
+      commissionCancelled: !!commission?.cancelled,
+      createdAt: invoice.createdAt,
+      description: invoice.description || invoice.reference,
+      id: invoice.id,
+      status: invoice.status,
+      type: invoice.type,
+    });
+    purchasesByUser.set(invoice.userId, list);
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -85,50 +129,55 @@ export default async function AffiliateDetailsPage({ params }: PageProps) {
                   <TableHead>Usuário</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Data de Registro</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
+                  <TableHead>Compras</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {referrals.map(user => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <UserCircle className="h-4 w-4 text-muted-foreground" />
-                        {user.name}
-                      </div>
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      {format(new Date(user.createdAt), "PPP", {
-                        locale: ptBR,
-                      })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {!user.deletedAt ? (
-                        <Badge
-                          className="bg-green-500/10 text-green-500"
-                          variant="outline"
-                        >
-                          <CheckCircle className="mr-1 h-3 w-3" />
-                          Ativo
-                        </Badge>
-                      ) : (
-                        <Badge
-                          className="bg-red-500/10 text-red-500"
-                          variant="outline"
-                        >
-                          <XCircle className="mr-1 h-3 w-3" />
-                          Inativo
-                        </Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {referrals.map(user => {
+                  const purchases = purchasesByUser.get(user.id) ?? [];
+                  const paidCount = purchases.filter(
+                    p => p.status === "paid"
+                  ).length;
+
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <UserCircle className="h-4 w-4 text-muted-foreground" />
+                          {user.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        {format(new Date(user.createdAt), "PPP", {
+                          locale: ptBR,
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        {paidCount > 0 ? (
+                          <span>
+                            {paidCount} {paidCount === 1 ? "paga" : "pagas"}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Nenhuma</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <ReferralPurchasesDialog
+                          purchases={purchases}
+                          userEmail={user.email}
+                          userName={user.name}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {referrals.length === 0 && (
                   <TableRow>
                     <TableCell
                       className="py-10 text-center text-muted-foreground"
-                      colSpan={4}
+                      colSpan={5}
                     >
                       Nenhuma indicação encontrada.
                     </TableCell>

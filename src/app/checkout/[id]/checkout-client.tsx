@@ -253,7 +253,8 @@ export default function CheckoutClient({
                         </span>
                       </div>
                       <p className="font-bold text-[10px] text-emerald-500/70 uppercase leading-relaxed tracking-widest">
-                        Todos os seus gastos serão convertidos em vale-compras.
+                        Todos os seus gastos serão convertidos em vale-compras,
+                        até R$ 250 por transação.
                       </p>
                     </div>
                   </CardContent>

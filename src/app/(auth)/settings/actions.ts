@@ -12,6 +12,7 @@ import {
   type UserSettings,
   userSettings,
 } from "@/lib/db/schema";
+import { isValidCNPJ, isValidCPF } from "@/lib/utils";
 
 export interface ActionResponse {
   success: boolean;
@@ -289,7 +290,9 @@ export async function changePasswordAction(
 }
 
 export async function updateOrganizationNameAction(
-  organizationName: string
+  organizationName: string,
+  /** CNPJ com ou sem máscara. String vazia limpa o campo. */
+  document?: string
 ): Promise<ActionResponse> {
   try {
     const user = await getUser();
@@ -297,7 +300,7 @@ export async function updateOrganizationNameAction(
     // Check if user is owner
     if (user.organization?.ownerId !== user.id) {
       return {
-        message: "Apenas o proprietário pode alterar o nome da organização.",
+        message: "Apenas o proprietário pode alterar os dados da organização.",
         success: false,
       };
     }
@@ -309,10 +312,21 @@ export async function updateOrganizationNameAction(
       };
     }
 
+    const name = organizationName.trim();
+    if (!name) {
+      return { message: "Informe o nome da organização.", success: false };
+    }
+
+    const digits = (document ?? "").replace(/\D/g, "");
+    if (digits && !(isValidCPF(digits) || isValidCNPJ(digits))) {
+      return { message: "CNPJ/CPF inválido.", success: false };
+    }
+
     await db
       .update(pgOrganization)
       .set({
-        name: organizationName,
+        document: document === undefined ? undefined : digits || null,
+        name,
         updatedAt: new Date(),
       })
       .where(eq(pgOrganization.id, user.organizationId));
@@ -320,13 +334,13 @@ export async function updateOrganizationNameAction(
     revalidatePath("/settings");
 
     return {
-      message: "Nome da organização atualizado com sucesso.",
+      message: "Dados da organização atualizados com sucesso.",
       success: true,
     };
   } catch (error) {
-    console.error("Error updating organization name:", error);
+    console.error("Error updating organization:", error);
     return {
-      message: "Erro ao atualizar nome da organização. Tente novamente.",
+      message: "Erro ao atualizar dados da organização. Tente novamente.",
       success: false,
     };
   }

@@ -44,7 +44,11 @@ export const pgAffiliateCommission = pgTable("affiliate_commissions", {
   invoiceId: uuid("invoice_id")
     .notNull()
     .references(() => pgInvoice.id),
-  status: text("status", { enum: ["available", "withdrawn"] })
+  /**
+   * `cancelled` = venda não entregue (ex.: domínio pago mas não registrado).
+   * Fica na tabela para auditoria, mas sai do saldo e do total ganho.
+   */
+  status: text("status", { enum: ["available", "withdrawn", "cancelled"] })
     .notNull()
     .default("available"),
 });

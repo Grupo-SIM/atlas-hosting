@@ -231,7 +231,7 @@ export default async function DomainPage({
                     <p>
                       • Aponte o registro A para o IP do nosso servidor:{" "}
                       <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-                        {process.env.SERVER_IP || "186.194.55.237"}
+                        {process.env.SERVER_IP || "66.94.101.192"}
                       </code>
                     </p>
                     <p>
@@ -260,7 +260,7 @@ export default async function DomainPage({
                   <div className="space-y-2">
                     <div className="flex items-center justify-between rounded-md bg-muted p-3 font-mono text-sm">
                       <span>
-                        Registro A → {process.env.SERVER_IP || "186.194.55.237"}
+                        Registro A → {process.env.SERVER_IP || "66.94.101.192"}
                       </span>
                     </div>
                     <p className="text-muted-foreground text-xs">

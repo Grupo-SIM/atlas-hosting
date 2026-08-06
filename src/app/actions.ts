@@ -56,12 +56,16 @@ import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
 import ip2Location from "@/lib/server/apis/ip2location";
 import namecheapApi, { getDomainPricing } from "@/lib/server/apis/namecheap";
-import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
 import pleskApi from "@/lib/server/apis/plesk";
 import simpayApi, {
   SimpayPaymentDeclinedError,
 } from "@/lib/server/apis/simpay";
-import { registerDomainsFromPaidInvoice } from "@/lib/server/domains/registerFromPaidInvoice";
+import {
+  buildNamecheapContact,
+  fulfillDomainInvoice,
+  incompleteContactMessage,
+  missingContactFields,
+} from "@/lib/server/domains/checkoutFulfillment";
 import { renewDomainFromPaidInvoice } from "@/lib/server/domains/renewFromPaidInvoice";
 import { AppLogger } from "@/lib/server/logs";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
@@ -1247,8 +1251,7 @@ function buildPixCheckoutSnapshot(
 
 async function processInvoiceAfterPayment(
   invoice: Invoice,
-  user: User,
-  billing: PixCheckoutSnapshot
+  user: User
 ): Promise<void> {
   if (invoice.type !== "domain") return;
 
@@ -1263,23 +1266,89 @@ async function processInvoiceAfterPayment(
     return;
   }
 
-  const contact = {
-    Address1: `${billing.address.street}, ${billing.address.number}`,
-    City: billing.address.city,
-    Country: "BR",
-    EmailAddress: user.email,
-    FirstName: billing.firstName.trim(),
-    LastName: billing.lastName.trim(),
-    Phone: `+55.${billing.phoneNumber.replace(/\D/g, "")}`,
-    PostalCode: billing.address.zipCode,
-    StateProvince: billing.address.state,
-  };
-
-  await registerDomainsFromPaidInvoice(
-    invoice,
-    contact as NamecheapContactDetails
-  );
+  // Registro de domínio novo não passa mais por aqui: acontece em
+  // `settleNonCardInvoice`, antes da fatura virar paga.
   await sendWelcomePasswordEmailIfGuest(invoice, user);
+}
+
+/** Fatura de domínio que precisa de registro novo na Namecheap (não é renovação nem teste). */
+function domainInvoiceNeedsRegistration(invoice: Invoice): boolean {
+  if (invoice.type !== "domain") return false;
+  const meta = invoice.metadata as DomainRegisterInvoiceOptions &
+    DomainRenewInvoiceOptions;
+  if (meta?.testPaymentOnly) return false;
+  return meta?.type !== "renew";
+}
+
+/**
+ * Fecha uma fatura paga por PIX ou boleto. Para domínio novo, registra primeiro e
+ * só então marca como paga e gera comissão — se o registrador recusar, a fatura
+ * continua pendente para reprocessamento ou estorno. Retorna `false` nesse caso.
+ */
+async function settleNonCardInvoice(
+  invoice: Invoice,
+  user: User,
+  billing: PixCheckoutSnapshot | null | undefined,
+  method: "pix" | "boleto"
+): Promise<boolean> {
+  const logPrefix = `[CHECKOUT-${method.toUpperCase()}]`;
+
+  if (domainInvoiceNeedsRegistration(invoice)) {
+    if (!billing) {
+      console.error(
+        `${logPrefix} Fatura ${invoice.id} sem dados de cobrança; registro do domínio não pode ser feito.`
+      );
+      return false;
+    }
+
+    const contact = buildNamecheapContact(billing, user.email);
+    const missing = missingContactFields(contact);
+    if (missing.length) {
+      console.error(
+        `${logPrefix} Contato incompleto para registrar domínio (fatura ${invoice.id}): ${missing.join(", ")}`
+      );
+      return false;
+    }
+
+    const fulfillment = await fulfillDomainInvoice({
+      contact,
+      invoice,
+      logPrefix,
+      onFulfilled: async () => {
+        await triggerCommissionIfApplicable(invoice as any).catch(() => {});
+      },
+    });
+
+    if (!fulfillment.ok) return false;
+
+    after(async () => {
+      await sendWelcomePasswordEmailIfGuest(invoice, user);
+      await triggerPurchaseNotifications(invoice, user, {
+        ...billing,
+        paymentMethod: method,
+      });
+    });
+
+    return true;
+  }
+
+  await db
+    .update(pgInvoice)
+    .set({ status: "paid" })
+    .where(eq(pgInvoice.id, invoice.id));
+
+  after(async () => {
+    await triggerCommissionIfApplicable(invoice as any).catch(() => {});
+    await processInvoiceAfterPayment(invoice, user);
+    await handleVpsNonCardPaid(invoice, user, method);
+    await triggerPurchaseNotifications(
+      invoice,
+      user,
+      billing ? { ...billing, paymentMethod: method } : undefined
+    );
+  });
+
+  return true;
 }
 
 async function fulfillCheckoutAfterPixPaid(
@@ -1319,34 +1388,13 @@ async function fulfillCheckoutAfterPixPaid(
       redirect(paymentSuccessUrl(invoice.id));
     }
 
-    const contact = {
-      Address1: `${billing.address.street}, ${billing.address.number}`,
-      City: billing.address.city,
-      Country: "BR",
-      EmailAddress: user.email,
-      FirstName: billing.firstName.trim(),
-      LastName: billing.lastName.trim(),
-      Phone: `+55.${billing.phoneNumber.replace(/\D/g, "")}`,
-      PostalCode: billing.address.zipCode,
-      StateProvince: billing.address.state,
-    };
-    const { registered, failed } = await registerDomainsFromPaidInvoice(
-      invoice,
-      contact as NamecheapContactDetails
-    );
-    if (failed.length) {
-      console.error("[CHECKOUT-PIX] Falha ao registrar domínio(s):", failed);
-    }
-    if (registered.length === 0) {
-      console.error(
-        `[CHECKOUT-PIX] Nenhum domínio registrado para fatura ${invoice.id}`
+    // Registro antes de marcar como paga: sem domínio, sem venda concluída.
+    const settled = await settleNonCardInvoice(invoice, user, billing, "pix");
+    if (!settled) {
+      redirect(
+        `/checkout/${invoice.id}?erro=registro-dominio&initialStep=payment`
       );
     }
-
-    await db
-      .update(pgInvoice)
-      .set({ status: "paid" })
-      .where(eq(pgInvoice.id, invoice.id));
     redirect(paymentSuccessUrl(invoice.id));
   }
 
@@ -1652,22 +1700,14 @@ export async function syncCheckoutBoletoPayment(
     return { status: "PENDING" };
   }
 
-  await db
-    .update(pgInvoice)
-    .set({ status: "paid" })
-    .where(eq(pgInvoice.id, invoice.id));
+  const settled = await settleNonCardInvoice(
+    invoice as Invoice,
+    user as User,
+    billing,
+    "boleto"
+  );
 
-  after(async () => {
-    await triggerCommissionIfApplicable(invoice as any).catch(() => {});
-    await processInvoiceAfterPayment(invoice, user, billing);
-    await handleVpsNonCardPaid(invoice as Invoice, user, "boleto");
-    await triggerPurchaseNotifications(invoice, user, {
-      ...billing,
-      paymentMethod: "boleto",
-    });
-  });
-
-  return { status: "COMPLETED" };
+  return { status: settled ? "COMPLETED" : "PENDING" };
 }
 
 /**
@@ -1754,22 +1794,14 @@ export async function markPixPaymentComplete(
     return { confirmed: false };
   }
 
-  await db
-    .update(pgInvoice)
-    .set({ status: "paid" })
-    .where(eq(pgInvoice.id, invoice.id));
+  const settled = await settleNonCardInvoice(
+    invoice as Invoice,
+    user as User,
+    meta.pixCheckout,
+    "pix"
+  );
 
-  const billing = meta.pixCheckout;
-  after(async () => {
-    await triggerCommissionIfApplicable(invoice as any).catch(() => {});
-    if (billing) {
-      await processInvoiceAfterPayment(invoice, user, billing);
-    }
-    await handleVpsNonCardPaid(invoice as Invoice, user, "pix");
-    await triggerPurchaseNotifications(invoice, user, billing ?? undefined);
-  });
-
-  return { confirmed: true };
+  return { confirmed: settled };
 }
 
 /** Polling do status PIX (Simpay). Quando COMPLETED, marca como pago e processa em background. */
@@ -1810,22 +1842,14 @@ export async function syncCheckoutPixPayment(
   const isCompleted = await verifySimpayPixCompleted(paymentId);
 
   if (isCompleted) {
-    await db
-      .update(pgInvoice)
-      .set({ status: "paid" })
-      .where(eq(pgInvoice.id, invoice.id));
+    const settled = await settleNonCardInvoice(
+      invoice as Invoice,
+      user as User,
+      billing,
+      "pix"
+    );
 
-    after(async () => {
-      await triggerCommissionIfApplicable(invoice as any).catch(() => {});
-      await processInvoiceAfterPayment(invoice, user, billing);
-      await handleVpsNonCardPaid(invoice as Invoice, user, "pix");
-      await triggerPurchaseNotifications(invoice, user, {
-        ...billing,
-        paymentMethod: "pix",
-      });
-    });
-
-    return { status: "COMPLETED" };
+    return { status: settled ? "COMPLETED" : "PENDING" };
   }
 
   return { status: "PENDING" };
@@ -2238,6 +2262,30 @@ export async function completeCheckout(
   );
 
   if (invoice.type === "domain") {
+    const contact = buildNamecheapContact(values, user.email);
+    const registerMeta = invoice.metadata as
+      | DomainRegisterInvoiceOptions
+      | DomainRenewInvoiceOptions;
+    const skipsRegistration =
+      (registerMeta as DomainRenewInvoiceOptions).type === "renew" ||
+      !!(registerMeta as DomainRegisterInvoiceOptions).testPaymentOnly;
+
+    // Cadastro incompleto = registro recusado pela Namecheap. Barrar antes de
+    // cobrar o cartão, não depois.
+    if (!skipsRegistration) {
+      const missing = missingContactFields(contact);
+      if (missing.length) {
+        console.error(
+          `[CHECKOUT] Contato incompleto para registrar domínio (fatura ${invoiceId}): ${missing.join(", ")}`
+        );
+        await revertInvoiceToPending(invoiceId);
+        return {
+          message: incompleteContactMessage(missing),
+          status: "error",
+        };
+      }
+    }
+
     console.log("\n[SIMPAY] ── PAGAMENTO ÚNICO (DOMÍNIO) ──");
     try {
       const simpayResult = await simpayApi.createCardPayment({
@@ -2300,39 +2348,22 @@ export async function completeCheckout(
       redirect("/domains");
     }
 
-    const contact = {
-      Address1: `${values.address.street}, ${values.address.number}`,
-      City: values.address.city,
-      Country: "BR",
-      EmailAddress: user.email,
-      FirstName: values.firstName.trim(),
-      LastName: values.lastName.trim(),
-      Phone: `+55.${values.phoneNumber.replace(/\D/g, "")}`,
-      PostalCode: values.address.zipCode.replace(/\D/g, ""),
-      StateProvince: values.address.state,
-    };
-
-    await db
-      .update(pgInvoice)
-      .set({ status: "paid" })
-      .where(eq(pgInvoice.id, invoiceId));
-    await triggerCommissionIfApplicable(invoice as any).catch(() => {});
-    after(async () => {
-      console.log("\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO(S) ──");
-      const { registered, failed } = await registerDomainsFromPaidInvoice(
-        invoice,
-        contact as NamecheapContactDetails
-      );
-      if (failed.length)
-        console.error("[NAMECHEAP] Falha parcial/total:", failed);
-      if (registered.length)
-        console.log("[NAMECHEAP] ✓ Registrados:", registered.join(", "));
-      else
-        console.warn(
-          `[NAMECHEAP] ✗ Nenhum domínio registrado para fatura ${invoiceId}`
-        );
-      await sendWelcomePasswordEmailIfGuest(invoice, user as any);
+    // Registra primeiro; só vira "paga" (e só gera comissão) se o domínio saiu.
+    const fulfillment = await fulfillDomainInvoice({
+      contact,
+      invoice,
+      onFulfilled: async () => {
+        await triggerCommissionIfApplicable(invoice as any).catch(() => {});
+        after(async () => {
+          await sendWelcomePasswordEmailIfGuest(invoice, user as any);
+        });
+      },
     });
+
+    if (!fulfillment.ok) {
+      return { message: fulfillment.message ?? "", status: "error" };
+    }
+
     console.log(
       `[CHECKOUT] ✓ Fatura ${invoiceId} marcada como PAGA. Redirecionando para /payment/success.`
     );
@@ -2549,6 +2580,28 @@ export async function completeCheckoutWithSavedCard(
   );
 
   if (invoice.type === "domain") {
+    const contact = buildNamecheapContact(values, user.email);
+    const savedRegisterMeta = invoice.metadata as
+      | DomainRegisterInvoiceOptions
+      | DomainRenewInvoiceOptions;
+    const savedSkipsRegistration =
+      (savedRegisterMeta as DomainRenewInvoiceOptions).type === "renew" ||
+      !!(savedRegisterMeta as DomainRegisterInvoiceOptions).testPaymentOnly;
+
+    if (!savedSkipsRegistration) {
+      const missing = missingContactFields(contact);
+      if (missing.length) {
+        console.error(
+          `[CHECKOUT-SAVED] Contato incompleto para registrar domínio (fatura ${invoiceId}): ${missing.join(", ")}`
+        );
+        await revertInvoiceToPending(invoiceId);
+        return {
+          message: incompleteContactMessage(missing),
+          status: "error",
+        };
+      }
+    }
+
     console.log("\n[SIMPAY] ── PAGAMENTO ÚNICO (DOMÍNIO / CARTÃO SALVO) ──");
     try {
       const domResult = await simpayApi.createCardPayment({
@@ -2612,39 +2665,20 @@ export async function completeCheckoutWithSavedCard(
       return { message: "/domains", status: "success" };
     }
 
-    const contact = {
-      Address1: `${values.address.street}, ${values.address.number}`,
-      City: values.address.city,
-      Country: "BR",
-      EmailAddress: user.email,
-      FirstName: values.firstName.trim(),
-      LastName: values.lastName.trim(),
-      Phone: `+55.${values.phoneNumber.replace(/\D/g, "")}`,
-      PostalCode: values.address.zipCode.replace(/\D/g, ""),
-      StateProvince: values.address.state,
-    };
-
-    await db
-      .update(pgInvoice)
-      .set({ status: "paid" })
-      .where(eq(pgInvoice.id, invoiceId));
-    await triggerCommissionIfApplicable(invoice as any).catch(() => {});
-    console.log(`[CHECKOUT-SAVED] ✓ Fatura ${invoiceId} marcada como PAGA.`);
-    after(async () => {
-      console.log("\n[NAMECHEAP] ── REGISTRANDO DOMÍNIO(S) (CARTÃO SALVO) ──");
-      const { registered, failed } = await registerDomainsFromPaidInvoice(
-        invoice,
-        contact as NamecheapContactDetails
-      );
-      if (failed.length)
-        console.error(
-          "[NAMECHEAP] Falha parcial/total (cartão salvo):",
-          failed
-        );
-      if (registered.length)
-        console.log("[NAMECHEAP] ✓ Registrados:", registered.join(", "));
+    const fulfillment = await fulfillDomainInvoice({
+      contact,
+      invoice,
+      logPrefix: "[NAMECHEAP/CARTÃO SALVO]",
+      onFulfilled: async () => {
+        await triggerCommissionIfApplicable(invoice as any).catch(() => {});
+      },
     });
 
+    if (!fulfillment.ok) {
+      return { message: fulfillment.message ?? "", status: "error" };
+    }
+
+    console.log(`[CHECKOUT-SAVED] ✓ Fatura ${invoiceId} marcada como PAGA.`);
     return { message: paymentSuccessUrl(invoiceId), status: "success" };
   }
 
@@ -3207,7 +3241,7 @@ async function addDomainToPlesk(domain: string): Promise<boolean> {
 
 /** IP do servidor para onde os domínios transferidos devem apontar */
 function getServerIp(): string {
-  return process.env.SERVER_IP || "186.194.55.237";
+  return process.env.SERVER_IP || "66.94.101.192";
 }
 
 export async function addDomainForTransfer(
