@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { getUserCurrentDomain } from "@/lib/server/utils";
 import { DnsRecordsManager } from "./components/DnsRecordManager";
-import { type CachedDnsData, getCachedDnsRecords } from "./utils";
+import { type CachedPleskDnsData, getCachedPleskDnsRecords } from "./plesk-utils";
 
 export const metadata: Metadata = {
   description:
@@ -44,11 +44,11 @@ export default async function DnsManagementPage({
 
   const domainName = domain.domain;
 
-  let initialDnsData: CachedDnsData | null = null;
+  let initialDnsData: CachedPleskDnsData | null = null;
   let fetchError: string | null = null;
 
   try {
-    initialDnsData = await getCachedDnsRecords(domainName);
+    initialDnsData = await getCachedPleskDnsRecords(domainName);
   } catch (error) {
     console.error(`Erro ao carregar a página DNS para ${domainName}:`, error);
     fetchError = isError(error)

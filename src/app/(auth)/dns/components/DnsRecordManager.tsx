@@ -58,59 +58,13 @@ import type {
   DnsHostRecordItem,
   DnsRecordType,
 } from "@/lib/server/apis/namecheap/types";
+import { dnsRecordTypes, type PleskDnsRecordType } from "../record-types";
 import {
-  addDnsRecordAction,
+  addPleskDnsRecordAction as addDnsRecordAction,
   type DnsActionResult,
-  deleteDnsRecordAction,
-  updateDnsRecordAction,
-} from "../actions";
-
-const recordTypes: {
-  value: DnsRecordType;
-  label: string;
-  description: string;
-  needsPriority?: boolean;
-}[] = [
-  { description: "Aponta para um endereço IPv4", label: "A", value: "A" },
-  { description: "Aponta para um endereço IPv6", label: "AAAA", value: "AAAA" },
-  {
-    description: "Aponta para outro domínio",
-    label: "CNAME",
-    value: "CNAME",
-  },
-  {
-    description: "Define servidores de e-mail para o domínio",
-    label: "MX",
-    needsPriority: true,
-    value: "MX",
-  },
-  {
-    description: "Armazena informações de texto, muitas vezes para verificação",
-    label: "TXT",
-    value: "TXT",
-  },
-  {
-    description: "Redireciona para outro endereço da web (não mascarado)",
-    label: "URL Redirect",
-    value: "URL",
-  },
-  {
-    description:
-      "Redirecionamento permanente para outro endereço da web (não mascarado)",
-    label: "URL Redirect (301)",
-    value: "URL301",
-  },
-  {
-    description: "Exibe uma página da web dentro de um frame (mascarado)",
-    label: "FRAME",
-    value: "FRAME",
-  },
-  {
-    description: "Autorização de Autoridade de Certificação",
-    label: "CAA",
-    value: "CAA",
-  },
-];
+  deletePleskDnsRecordAction as deleteDnsRecordAction,
+  updatePleskDnsRecordAction as updateDnsRecordAction,
+} from "../plesk-actions";
 
 const commonTTLs = [
   { label: "1 minuto", value: "60" },
@@ -147,7 +101,7 @@ export function DnsRecordsManager({
   // Form state for adding/editing
   const [formMode, setFormMode] = useState<FormMode>("add");
   const [selectedRecordType, setSelectedRecordType] =
-    useState<DnsRecordType>("A");
+    useState<PleskDnsRecordType>("A");
   const [hostName, setHostName] = useState("@"); // Default to root
   const [address, setAddress] = useState("");
   const [ttl, setTtl] = useState("3600"); // Default 1 hour
@@ -240,7 +194,7 @@ export function DnsRecordsManager({
 
   const openEditModal = (record: DnsHostRecordItem) => {
     setFormMode("edit");
-    setSelectedRecordType(record.Type as DnsRecordType);
+    setSelectedRecordType(record.Type as PleskDnsRecordType);
     setHostName(record.Name);
     setAddress(record.Address);
     setTtl(record.TTL.toString());
@@ -282,7 +236,7 @@ export function DnsRecordsManager({
     );
   }, [records, searchQuery]);
 
-  const selectedRecordTypeInfo = recordTypes.find(
+  const selectedRecordTypeInfo = dnsRecordTypes.find(
     rt => rt.value === selectedRecordType
   );
 
@@ -363,7 +317,7 @@ export function DnsRecordsManager({
                             <Badge variant="outline">{record.Type}</Badge>
                           </TooltipTrigger>
                           <TooltipContent>
-                            {recordTypes.find(rt => rt.value === record.Type)
+                            {dnsRecordTypes.find(rt => rt.value === record.Type)
                               ?.description || "N/A"}
                           </TooltipContent>
                         </Tooltip>
@@ -498,16 +452,16 @@ export function DnsRecordsManager({
               </label>
               <Select
                 name="recordType"
-                onValueChange={v => setSelectedRecordType(v as DnsRecordType)}
+                onValueChange={v => setSelectedRecordType(v as PleskDnsRecordType)}
                 value={selectedRecordType}
               >
                 <SelectTrigger id="recordType">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {recordTypes.map(type => (
+                  {dnsRecordTypes.map(type => (
                     <SelectItem key={type.value} value={type.value}>
-                      {type.label} ({type.description})
+                      {type.value} ({type.description})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -564,13 +518,7 @@ export function DnsRecordsManager({
                 id="address"
                 name="address"
                 onChange={e => setAddress(e.target.value)}
-                placeholder={
-                  selectedRecordType === "A"
-                    ? "Endereço IPv4 (ex: 192.168.1.1)"
-                    : selectedRecordType === "CNAME"
-                      ? "Domínio de destino (ex: exemplo.com)"
-                      : "Conteúdo/Endereço"
-                }
+                placeholder={selectedRecordTypeInfo?.placeholder || "Valor do registro"}
                 value={address}
               />
             </div>
@@ -662,13 +610,13 @@ export function DnsRecordsManager({
             </DialogDescription>
           </DialogHeader>
           <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4">
-            {recordTypes.map(type => (
+            {dnsRecordTypes.map(type => (
               <div
                 className="rounded-md border bg-muted/50 p-3"
                 key={type.value}
               >
                 <h4 className="font-semibold">
-                  {type.label} ({type.value})
+                  {type.value} ({type.value})
                 </h4>
                 <p className="text-muted-foreground text-sm">
                   {type.description}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { addDomainForTransfer } from "@/app/actions";
+import { addExternalDomainForTransfer } from "../transfer-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 export function TransferForm({ defaultDomain }: { defaultDomain?: string }) {
   const { toast } = useToast();
   const [state, formAction, isPending] = useActionState(
-    addDomainForTransfer,
+    addExternalDomainForTransfer,
     null
   );
   const formRef = useRef<HTMLFormElement>(null);

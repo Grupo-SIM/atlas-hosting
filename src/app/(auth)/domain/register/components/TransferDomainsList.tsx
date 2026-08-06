@@ -5,7 +5,7 @@ import { Clock, RefreshCw } from "lucide-react";
 import { motion, type Variants } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { checkDomainNameservers } from "@/app/actions";
+import { verifyExternalDomainTransfer } from "../transfer-actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,7 +33,7 @@ export function TransferDomainsList({ domains }: TransferDomainsListProps) {
     formData.set("domain", domain.domain);
 
     try {
-      const result = await checkDomainNameservers(null, formData);
+      const result = await verifyExternalDomainTransfer(null, formData);
 
       toast({
         description: result.message,
