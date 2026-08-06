@@ -443,7 +443,6 @@ export default async function MyDomainsPage({
                       </TableCell>
                       <TableCell className="w-12 text-right">
                         <DomainActionsMenu
-                          domainId={domain.id}
                           domainName={domain.name}
                           key={`actions-${domain.id}`}
                         />

@@ -74,7 +74,7 @@ import { isValidCNPJ, isValidCPF } from "@/lib/utils";
 import { Skeleton } from "../ui/skeleton";
 
 const atlasInputClasses =
-  "flex h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-slate-600 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all outline-none disabled:opacity-50";
+  "flex h-12 w-full rounded-xl border border-border bg-muted/40 px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all outline-none disabled:opacity-50";
 
 export interface SavedCard {
   id: string;
@@ -1114,7 +1114,7 @@ const ModernCheckoutForm = forwardRef<
         }}
         open={!!paymentError}
       >
-        <DialogContent className="border-white/10 bg-slate-950 text-white sm:max-w-md">
+        <DialogContent className="border-border bg-background text-foreground sm:max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-red-500/10">
               <AlertCircle className="text-red-400" size={24} strokeWidth={2} />
@@ -1122,7 +1122,7 @@ const ModernCheckoutForm = forwardRef<
             <DialogTitle className="text-center">
               Pagamento não concluído
             </DialogTitle>
-            <DialogDescription className="text-center text-slate-400">
+            <DialogDescription className="text-center text-muted-foreground">
               {paymentError}
             </DialogDescription>
           </DialogHeader>
@@ -1144,17 +1144,17 @@ const ModernCheckoutForm = forwardRef<
       return (
         <div className="space-y-6">
           {paymentErrorModal}
-          <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
+          <Card className="overflow-hidden rounded-3xl border-border bg-muted/40 shadow-2xl backdrop-blur-md">
             <CardHeader>
               <div className="flex items-center gap-4">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40 shadow-xl">
                   <Store className="text-sky-400" size={18} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+                  <CardTitle className="font-black text-foreground text-xl uppercase tracking-tight">
                     Método de Pagamento
                   </CardTitle>
-                  <CardDescription className="mt-0.5 font-bold text-[11px] text-slate-400 uppercase tracking-widest opacity-80">
+                  <CardDescription className="mt-0.5 font-bold text-[11px] text-muted-foreground uppercase tracking-widest opacity-80">
                     Escolha como deseja pagar
                   </CardDescription>
                 </div>
@@ -1167,16 +1167,16 @@ const ModernCheckoutForm = forwardRef<
                 value={paymentMethod}
               >
                 {allowPix && (
-                  <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                  <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-border bg-muted/40 p-5 shadow-xl transition-all hover:bg-muted/60 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
                     <RadioGroupItem className="sr-only" value="pix" />
                     <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 shadow-emerald-500/20 shadow-lg">
                       <QrCode className="text-emerald-400" size={20} />
                     </div>
                     <div>
-                      <span className="font-black text-sm text-white uppercase tracking-tight">
+                      <span className="font-black text-foreground text-sm uppercase tracking-tight">
                         PIX
                       </span>
-                      <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                      <div className="font-bold text-[11px] text-muted-foreground uppercase tracking-widest">
                         QR Code no app do banco
                       </div>
                     </div>
@@ -1184,16 +1184,16 @@ const ModernCheckoutForm = forwardRef<
                 )}
 
                 {allowBoleto && (
-                  <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                  <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-border bg-muted/40 p-5 shadow-xl transition-all hover:bg-muted/60 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
                     <RadioGroupItem className="sr-only" value="boleto" />
                     <div className="flex size-10 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 shadow-amber-500/20 shadow-lg">
                       <Barcode className="text-amber-400" size={20} />
                     </div>
                     <div>
-                      <span className="font-black text-sm text-white uppercase tracking-tight">
+                      <span className="font-black text-foreground text-sm uppercase tracking-tight">
                         Boleto
                       </span>
-                      <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                      <div className="font-bold text-[11px] text-muted-foreground uppercase tracking-widest">
                         Vencimento em 3 dias úteis
                       </div>
                     </div>
@@ -1201,7 +1201,7 @@ const ModernCheckoutForm = forwardRef<
                 )}
 
                 {(isLoadingCards || savedCards.length > 0) && (
-                  <Separator className="bg-white/10" />
+                  <Separator className="bg-muted/60" />
                 )}
 
                 {isLoadingCards ? (
@@ -1210,7 +1210,7 @@ const ModernCheckoutForm = forwardRef<
                   savedCards.length > 0 &&
                   savedCards.map(card => (
                     <Label
-                      className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50"
+                      className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-border bg-muted/40 p-5 shadow-xl transition-all hover:bg-muted/60 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50"
                       key={card.id}
                     >
                       <RadioGroupItem className="sr-only" value={card.id} />
@@ -1219,7 +1219,7 @@ const ModernCheckoutForm = forwardRef<
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-black text-sm text-white uppercase tracking-tight">
+                          <span className="font-black text-foreground text-sm uppercase tracking-tight">
                             **** **** **** {card.last4}
                           </span>
                           {card.isDefault && (
@@ -1231,7 +1231,7 @@ const ModernCheckoutForm = forwardRef<
                             </Badge>
                           )}
                         </div>
-                        <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                        <div className="font-bold text-[11px] text-muted-foreground uppercase tracking-widest">
                           {card.holderName} • {card.expiryMonth}/
                           {card.expiryYear}
                         </div>
@@ -1241,19 +1241,19 @@ const ModernCheckoutForm = forwardRef<
                 )}
 
                 {(isLoadingCards || savedCards.length > 0) && (
-                  <Separator className="bg-white/10" />
+                  <Separator className="bg-muted/60" />
                 )}
 
-                <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-border bg-muted/40 p-5 shadow-xl transition-all hover:bg-muted/60 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
                   <RadioGroupItem className="sr-only" value="new" />
-                  <div className="flex size-10 items-center justify-center rounded-xl border border-white/20 border-dashed bg-white/5">
+                  <div className="flex size-10 items-center justify-center rounded-xl border border-border border-dashed bg-muted/40">
                     <Plus className="text-sky-400" size={20} strokeWidth={3} />
                   </div>
                   <div>
-                    <span className="font-black text-sm text-white uppercase tracking-tight">
+                    <span className="font-black text-foreground text-sm uppercase tracking-tight">
                       Novo cartão
                     </span>
-                    <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                    <div className="font-bold text-[11px] text-muted-foreground uppercase tracking-widest">
                       Digite os dados de um novo cartão
                     </div>
                   </div>
@@ -1352,10 +1352,10 @@ const ModernCheckoutForm = forwardRef<
             )}
 
             {/* Payment Card - Collapsed/Preview */}
-            <Card className="opacity-50">
+            <Card className="overflow-hidden rounded-3xl border-border bg-muted/40 opacity-50 shadow-2xl backdrop-blur-md">
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40 shadow-xl">
                     <CreditCard
                       className="text-sky-400"
                       size={18}
@@ -1363,7 +1363,7 @@ const ModernCheckoutForm = forwardRef<
                     />
                   </div>
                   <div>
-                    <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+                    <CardTitle className="font-black text-foreground text-xl uppercase tracking-tight">
                       Pagamento
                     </CardTitle>
                   </div>
@@ -1374,7 +1374,7 @@ const ModernCheckoutForm = forwardRef<
             {/* Continue Button */}
             <div className="flex items-center justify-between pt-8">
               <Button
-                className="font-black text-slate-500 text-xs uppercase tracking-widest transition-all hover:text-white"
+                className="font-black text-muted-foreground text-xs uppercase tracking-widest transition-all hover:text-foreground"
                 onClick={() => router.back()}
                 type="button"
                 variant="ghost"
@@ -1383,7 +1383,7 @@ const ModernCheckoutForm = forwardRef<
                 Voltar
               </Button>
               <Button
-                className="h-12 min-w-44 border-0 bg-white font-bold text-base text-slate-950 shadow-lg transition-all hover:scale-[1.02] hover:bg-white/90 active:scale-95"
+                className="h-12 min-w-44 border-0 bg-primary font-bold text-base text-primary-foreground shadow-lg transition-all hover:scale-[1.02] hover:bg-primary/90 active:scale-95"
                 disabled={!canProceedToPayment}
                 onClick={handleContinueToPayment}
               >
@@ -1427,10 +1427,10 @@ const ModernCheckoutForm = forwardRef<
               />
             )}
 
-            <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
+            <Card className="overflow-hidden rounded-3xl border-border bg-muted/40 shadow-2xl backdrop-blur-md">
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40 shadow-xl">
                     <CreditCard
                       className="text-sky-400"
                       size={18}
@@ -1438,10 +1438,10 @@ const ModernCheckoutForm = forwardRef<
                     />
                   </div>
                   <div>
-                    <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+                    <CardTitle className="font-black text-foreground text-xl uppercase tracking-tight">
                       Método de Pagamento
                     </CardTitle>
-                    <CardDescription className="mt-0.5 font-bold text-[11px] text-slate-400 uppercase tracking-widest opacity-80">
+                    <CardDescription className="mt-0.5 font-bold text-[11px] text-muted-foreground uppercase tracking-widest opacity-80">
                       Escolha como deseja pagar
                     </CardDescription>
                   </div>
@@ -1454,16 +1454,16 @@ const ModernCheckoutForm = forwardRef<
                   value={paymentMethod}
                 >
                   {allowPix && (
-                    <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                    <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-border bg-muted/40 p-5 shadow-xl transition-all hover:bg-muted/60 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
                       <RadioGroupItem className="sr-only" value="pix" />
                       <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 shadow-emerald-500/20 shadow-lg">
                         <QrCode className="text-emerald-400" size={20} />
                       </div>
                       <div>
-                        <span className="font-black text-sm text-white uppercase tracking-tight">
+                        <span className="font-black text-foreground text-sm uppercase tracking-tight">
                           PIX
                         </span>
-                        <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                        <div className="font-bold text-[11px] text-muted-foreground uppercase tracking-widest">
                           QR Code no app do banco
                         </div>
                       </div>
@@ -1471,16 +1471,16 @@ const ModernCheckoutForm = forwardRef<
                   )}
 
                   {allowBoleto && (
-                    <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                    <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-border bg-muted/40 p-5 shadow-xl transition-all hover:bg-muted/60 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
                       <RadioGroupItem className="sr-only" value="boleto" />
                       <div className="flex size-10 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 shadow-amber-500/20 shadow-lg">
                         <Barcode className="text-amber-400" size={20} />
                       </div>
                       <div>
-                        <span className="font-black text-sm text-white uppercase tracking-tight">
+                        <span className="font-black text-foreground text-sm uppercase tracking-tight">
                           Boleto
                         </span>
-                        <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                        <div className="font-bold text-[11px] text-muted-foreground uppercase tracking-widest">
                           Vencimento em 3 dias úteis
                         </div>
                       </div>
@@ -1488,7 +1488,7 @@ const ModernCheckoutForm = forwardRef<
                   )}
 
                   {(isLoadingCards || savedCards.length > 0) && (
-                    <Separator className="bg-white/10" />
+                    <Separator className="bg-muted/60" />
                   )}
 
                   {isLoadingCards ? (
@@ -1499,7 +1499,7 @@ const ModernCheckoutForm = forwardRef<
                     <>
                       {savedCards.map(card => (
                         <Label
-                          className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50"
+                          className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-border bg-muted/40 p-5 shadow-xl transition-all hover:bg-muted/60 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50"
                           key={card.id}
                         >
                           <RadioGroupItem className="sr-only" value={card.id} />
@@ -1508,7 +1508,7 @@ const ModernCheckoutForm = forwardRef<
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-black text-sm text-white uppercase tracking-tight">
+                              <span className="font-black text-foreground text-sm uppercase tracking-tight">
                                 **** **** **** {card.last4}
                               </span>
                               {card.isDefault && (
@@ -1520,20 +1520,20 @@ const ModernCheckoutForm = forwardRef<
                                 </Badge>
                               )}
                             </div>
-                            <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                            <div className="font-bold text-[11px] text-muted-foreground uppercase tracking-widest">
                               {card.holderName} • {card.expiryMonth}/
                               {card.expiryYear}
                             </div>
                           </div>
                         </Label>
                       ))}
-                      <Separator className="bg-white/10" />
+                      <Separator className="bg-muted/60" />
                     </>
                   ) : null}
 
-                  <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-5 shadow-xl transition-all hover:bg-white/10 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
+                  <Label className="relative flex cursor-pointer items-center gap-4 rounded-xl border border-border bg-muted/40 p-5 shadow-xl transition-all hover:bg-muted/60 has-[[data-state=checked]]:border-sky-500/50 has-[[data-state=checked]]:bg-sky-500/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-500/50">
                     <RadioGroupItem className="sr-only" value="new" />
-                    <div className="flex size-10 items-center justify-center rounded-xl border border-white/20 border-dashed bg-white/5">
+                    <div className="flex size-10 items-center justify-center rounded-xl border border-border border-dashed bg-muted/40">
                       <Plus
                         className="text-sky-400"
                         size={20}
@@ -1541,10 +1541,10 @@ const ModernCheckoutForm = forwardRef<
                       />
                     </div>
                     <div>
-                      <span className="font-black text-sm text-white uppercase tracking-tight">
+                      <span className="font-black text-foreground text-sm uppercase tracking-tight">
                         Novo cartão
                       </span>
-                      <div className="font-bold text-[11px] text-slate-500 uppercase tracking-widest">
+                      <div className="font-bold text-[11px] text-muted-foreground uppercase tracking-widest">
                         Digite os dados de um novo cartão
                       </div>
                     </div>
@@ -1568,7 +1568,7 @@ const ModernCheckoutForm = forwardRef<
               </Button>
 
               <Button
-                className="h-12 min-w-56 border-0 bg-white font-bold text-base text-slate-950 shadow-lg transition-all hover:scale-[1.02] hover:bg-white/90 active:scale-95"
+                className="h-12 min-w-56 border-0 bg-primary font-bold text-base text-primary-foreground shadow-lg transition-all hover:scale-[1.02] hover:bg-primary/90 active:scale-95"
                 disabled={
                   isPixLoading ||
                   isBoletoLoading ||
@@ -1622,9 +1622,9 @@ function InstallmentSelector({
     v.toLocaleString("pt-BR", { currency: "BRL", style: "currency" });
 
   return (
-    <Card className="border border-white/10 bg-white/5">
+    <Card className="border border-border bg-muted/40">
       <CardHeader className="pb-3">
-        <CardTitle className="font-black text-sm text-white uppercase tracking-tight">
+        <CardTitle className="font-black text-foreground text-sm uppercase tracking-tight">
           Parcelas
         </CardTitle>
       </CardHeader>
@@ -1641,7 +1641,7 @@ function InstallmentSelector({
                 className={`rounded-xl border px-3 py-2 text-left text-xs transition-all ${
                   isSelected
                     ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
-                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white"
+                    : "border-border bg-muted/40 text-muted-foreground hover:border-border hover:text-foreground"
                 }`}
                 key={r.n}
                 onClick={() => onChange(r.n)}
@@ -1685,11 +1685,11 @@ function PixQrCodeCard({
   isPaymentConfirmed: boolean;
 }) {
   return (
-    <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
+    <Card className="overflow-hidden rounded-3xl border-border bg-muted/40 shadow-2xl backdrop-blur-md">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40 shadow-xl">
               <QrCode
                 className="text-emerald-400"
                 size={18}
@@ -1697,16 +1697,16 @@ function PixQrCodeCard({
               />
             </div>
             <div>
-              <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+              <CardTitle className="font-black text-foreground text-xl uppercase tracking-tight">
                 Pague com PIX
               </CardTitle>
-              <CardDescription className="font-medium text-slate-400">
+              <CardDescription className="font-medium text-muted-foreground">
                 Escaneie o QR ou copie o código no app do banco
               </CardDescription>
             </div>
           </div>
           <Button
-            className="text-slate-500 transition-colors hover:text-white"
+            className="text-muted-foreground transition-colors hover:text-foreground"
             onClick={onBack}
             size="sm"
             variant="ghost"
@@ -1723,7 +1723,7 @@ function PixQrCodeCard({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="QR Code PIX"
-              className="relative mx-auto max-w-[320px] rounded-lg border border-border bg-white p-2"
+              className="relative mx-auto max-w-[320px] rounded-lg border border-border bg-primary p-2"
               src={pixSession.pix_qrcode}
             />
           </div>
@@ -1765,7 +1765,7 @@ function PixQrCodeCard({
             </AnimatePresence>
           </Button>
 
-          <p className="px-4 text-center font-black text-[10px] text-slate-500 uppercase tracking-widest">
+          <p className="px-4 text-center font-black text-[10px] text-muted-foreground uppercase tracking-widest">
             Após o pagamento, a confirmação é automática e seu pedido será
             processado instantaneamente.
           </p>
@@ -1828,9 +1828,9 @@ function BoletoCard({
   };
 
   return (
-    <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
+    <Card className="overflow-hidden rounded-3xl border-border bg-muted/40 shadow-2xl backdrop-blur-md">
       <Dialog onOpenChange={setShowInfoModal} open={showInfoModal}>
-        <DialogContent className="border-white/10 bg-slate-950 text-white sm:max-w-md">
+        <DialogContent className="border-border bg-background text-foreground sm:max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-amber-500/10">
               <Clock className="text-amber-400" size={24} strokeWidth={2} />
@@ -1838,7 +1838,7 @@ function BoletoCard({
             <DialogTitle className="text-center">
               Pagamento em processamento
             </DialogTitle>
-            <DialogDescription className="space-y-2 text-center text-slate-400">
+            <DialogDescription className="space-y-2 text-center text-muted-foreground">
               <span className="block">
                 Recebemos seu clique de confirmação. Boletos não são compensados
                 na hora — o banco pode levar até 2 dias úteis pra processar o
@@ -1865,20 +1865,20 @@ function BoletoCard({
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40 shadow-xl">
               <Barcode className="text-amber-400" size={18} strokeWidth={2.5} />
             </div>
             <div>
-              <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+              <CardTitle className="font-black text-foreground text-xl uppercase tracking-tight">
                 Pague com Boleto
               </CardTitle>
-              <CardDescription className="font-medium text-slate-400">
+              <CardDescription className="font-medium text-muted-foreground">
                 Pague no app do banco ou lotérica com a linha digitável
               </CardDescription>
             </div>
           </div>
           <Button
-            className="text-slate-500 transition-colors hover:text-white"
+            className="text-muted-foreground transition-colors hover:text-foreground"
             onClick={onBack}
             size="sm"
             variant="ghost"
@@ -1940,7 +1940,7 @@ function BoletoCard({
             </a>
           </Button>
 
-          <p className="px-4 text-center font-black text-[10px] text-slate-500 uppercase tracking-widest">
+          <p className="px-4 text-center font-black text-[10px] text-muted-foreground uppercase tracking-widest">
             Após o pagamento, a compensação pode levar até 2 dias úteis. A
             confirmação é automática assim que o banco processar.
           </p>
@@ -1995,15 +1995,15 @@ function BillingInformationSection({
   } = methods;
 
   return (
-    <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
+    <Card className="overflow-hidden rounded-3xl border-border bg-muted/40 shadow-2xl backdrop-blur-md">
       <CardHeader>
         <div className="flex items-center gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40 shadow-xl">
             <User className="text-sky-400" size={18} strokeWidth={2.5} />
           </div>
           <div className="flex flex-1 items-center justify-between">
             <div>
-              <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+              <CardTitle className="font-black text-foreground text-xl uppercase tracking-tight">
                 Informações de Cobrança
               </CardTitle>
             </div>
@@ -2027,7 +2027,7 @@ function BillingInformationSection({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label
-              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
               htmlFor={`${id}-firstName`}
             >
               Nome
@@ -2046,7 +2046,7 @@ function BillingInformationSection({
 
           <div className="space-y-2">
             <Label
-              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
               htmlFor={`${id}-lastName`}
             >
               Sobrenome
@@ -2067,7 +2067,7 @@ function BillingInformationSection({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label
-              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
               htmlFor={`${id}-document`}
             >
               CPF ou CNPJ
@@ -2096,7 +2096,7 @@ function BillingInformationSection({
 
           <div className="space-y-2">
             <Label
-              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
               htmlFor={`${id}-phoneNumber`}
             >
               Telefone
@@ -2125,7 +2125,7 @@ function BillingInformationSection({
 
         <div className="space-y-2">
           <Label
-            className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+            className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
             htmlFor={`${id}-address.zipCode`}
           >
             CEP
@@ -2177,7 +2177,7 @@ function BillingInformationSection({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-2 md:col-span-2">
               <Label
-                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+                className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
                 htmlFor={`${id}-address.street`}
               >
                 Rua
@@ -2198,7 +2198,7 @@ function BillingInformationSection({
 
             <div className="space-y-2">
               <Label
-                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+                className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
                 htmlFor={`${id}-address.number`}
               >
                 Número
@@ -2221,7 +2221,7 @@ function BillingInformationSection({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label
-                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+                className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
                 htmlFor={`${id}-address.neighborhood`}
               >
                 Bairro
@@ -2240,7 +2240,7 @@ function BillingInformationSection({
             </div>
             <div className="space-y-2">
               <Label
-                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+                className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
                 htmlFor={`${id}-address.city`}
               >
                 Cidade
@@ -2261,7 +2261,7 @@ function BillingInformationSection({
 
             <div className="space-y-2">
               <Label
-                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+                className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
                 htmlFor={`${id}-address.state`}
               >
                 Estado
@@ -2295,18 +2295,18 @@ function BillingSummaryCard({
   onEdit: () => void;
 }) {
   return (
-    <Card className="overflow-hidden rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
+    <Card className="overflow-hidden rounded-3xl border-border bg-muted/40 shadow-2xl backdrop-blur-md">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-xl">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40 shadow-xl">
               <UserCheck className="h-5 w-5 text-emerald-400" strokeWidth={3} />
             </div>
             <div>
-              <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+              <CardTitle className="font-black text-foreground text-xl uppercase tracking-tight">
                 Informações de Cobrança
               </CardTitle>
-              <CardDescription className="mt-0.5 font-bold text-[11px] text-slate-400 uppercase tracking-widest opacity-80">
+              <CardDescription className="mt-0.5 font-bold text-[11px] text-muted-foreground uppercase tracking-widest opacity-80">
                 Dados confirmados
               </CardDescription>
             </div>
@@ -2323,20 +2323,20 @@ function BillingSummaryCard({
               <span className="font-medium">
                 {values.firstName} {values.lastName}
               </span>
-              <div className="font-medium text-slate-400">
+              <div className="font-medium text-muted-foreground">
                 {values.document}
               </div>
             </div>
             <div>
               <span className="font-medium">Telefone</span>
-              <div className="font-medium text-slate-400">
+              <div className="font-medium text-muted-foreground">
                 {values.phoneNumber}
               </div>
             </div>
           </div>
           <div>
             <span className="font-medium">Endereço</span>
-            <div className="font-medium text-slate-400">
+            <div className="font-medium text-muted-foreground">
               {values.address?.street}, {values.address?.number} •{" "}
               {values.address?.neighborhood}
               <br />
@@ -2358,16 +2358,16 @@ function NewCardFormSection({
   return (
     <MotionCard
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur-md"
+      className="rounded-3xl border-border bg-muted/40 shadow-2xl backdrop-blur-md"
       exit={{ opacity: 0, y: -20 }}
       initial={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
     >
       <CardHeader>
-        <CardTitle className="font-black text-white text-xl uppercase tracking-tight">
+        <CardTitle className="font-black text-foreground text-xl uppercase tracking-tight">
           Dados do Cartão
         </CardTitle>
-        <CardDescription className="font-medium text-slate-400">
+        <CardDescription className="font-medium text-muted-foreground">
           Insira os dados do seu cartão de crédito
         </CardDescription>
       </CardHeader>
@@ -2375,7 +2375,7 @@ function NewCardFormSection({
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <div className="col-span-2 space-y-2">
             <Label
-              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
               htmlFor="cardNumber"
             >
               Número do Cartão
@@ -2403,7 +2403,7 @@ function NewCardFormSection({
           </div>
           <div className="space-y-2">
             <Label
-              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
               htmlFor="cardCvv"
             >
               CVV
@@ -2429,7 +2429,7 @@ function NewCardFormSection({
           </div>
           <div className="space-y-2">
             <Label
-              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
               htmlFor="cardExpiration"
             >
               Data de Validade
@@ -2466,7 +2466,7 @@ function NewCardFormSection({
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <Label
-                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+                className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
                 htmlFor="firstName"
               >
                 Nome do Titular
@@ -2485,7 +2485,7 @@ function NewCardFormSection({
             </div>
             <div className="space-y-2">
               <Label
-                className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+                className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
                 htmlFor="lastName"
               >
                 Sobrenome do Titular
@@ -2505,7 +2505,7 @@ function NewCardFormSection({
           </div>
           <div className="space-y-2">
             <Label
-              className="font-black text-[11px] text-slate-400 uppercase tracking-wider"
+              className="font-black text-[11px] text-muted-foreground uppercase tracking-wider"
               htmlFor="document"
             >
               CPF ou CNPJ do titular

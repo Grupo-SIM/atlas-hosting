@@ -200,7 +200,9 @@ export default function CheckoutClient({
         : displayBase;
 
   return (
-    <div className="relative z-0 min-h-screen w-full overflow-x-hidden bg-[#000B12] pt-8 pb-12">
+    // `dark` fixo: esta página é escura por design (bg-[#000B12]) e o formulário
+    // de checkout agora usa tokens de tema — sem isso ele clarearia aqui.
+    <div className="dark relative z-0 min-h-screen w-full overflow-x-hidden bg-[#000B12] pt-8 pb-12">
       <div className="pointer-events-none fixed inset-0 bg-landing-gradient opacity-40" />
       <div className="container relative z-10 mx-auto px-6 py-4 md:py-6">
         <div className="mx-auto max-w-6xl">

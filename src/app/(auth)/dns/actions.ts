@@ -18,6 +18,11 @@ export interface DnsActionResult {
   errors?: { field?: string; message: string }[];
 }
 
+const dnsEditingDisabled: DnsActionResult = {
+  message: "A edição de DNS não está disponível na Atlas. Gerencie os registros no provedor DNS atual.",
+  success: false,
+};
+
 // Maps DnsHostRecordItem (from getHosts) to DnsHostRecord (for setHosts)
 function mapItemToRecord(item: DnsHostRecordItem): DnsHostRecord {
   return {
@@ -173,108 +178,21 @@ function parseAndValidateFormData(formData: FormData): {
 
 export async function addDnsRecordAction(
   _prevState: DnsActionResult | null,
-  formData: FormData
+  _formData: FormData
 ): Promise<DnsActionResult> {
-  const { data, error } = parseAndValidateFormData(formData);
-  if (error || !data)
-    return (
-      error || {
-        message: "Dados de formulário inválidos para adicionar registro.",
-        success: false,
-      }
-    );
-
-  return performDnsOperation(data.domainName, currentItems => {
-    const newRecordItem: DnsHostRecordItem = {
-      Address: data.address,
-      HostId: 0, // Placeholder, Namecheap assigns this upon creation. Not sent.
-      MXPref: data.recordType === "MX" ? data.mxPref : undefined,
-      Name: data.hostName,
-      TTL: data.ttl,
-      Type: data.recordType,
-    };
-    // Potentially check for duplicate records before adding if Namecheap doesn't handle it gracefully
-    return [...currentItems, newRecordItem];
-  });
+  return dnsEditingDisabled;
 }
 
 export async function updateDnsRecordAction(
   _prevState: DnsActionResult | null,
-  formData: FormData
+  _formData: FormData
 ): Promise<DnsActionResult> {
-  const { data, error } = parseAndValidateFormData(formData);
-  if (error || !data)
-    return (
-      error || {
-        message: "Dados de formulário inválidos para atualizar o registro.",
-        success: false,
-      }
-    );
-  if (data.hostId === undefined)
-    return {
-      message: "HostId é obrigatório para a operação de atualização.",
-      success: false,
-    };
-
-  const hostIdToUpdate = data.hostId;
-
-  return performDnsOperation(data.domainName, currentItems => {
-    const itemIndex = currentItems.findIndex(
-      item => item.HostId === hostIdToUpdate
-    );
-    if (itemIndex === -1) {
-      // This error will be caught by performDnsOperation's try/catch
-      throw new Error(
-        "Registro a ser atualizado não encontrado. Pode ter sido excluído por outro processo."
-      );
-    }
-    const updatedItems = [...currentItems];
-    updatedItems[itemIndex] = {
-      ...updatedItems[itemIndex], // Preserve original HostId and any other non-editable fields
-      Address: data.address,
-      MXPref: data.recordType === "MX" ? data.mxPref : undefined, // Ensure MXPref is cleared if type changes from MX
-      Name: data.hostName,
-      TTL: data.ttl,
-      Type: data.recordType,
-    };
-    // If type is not MX, ensure MXPref is removed
-    if (updatedItems[itemIndex].Type !== "MX") {
-      updatedItems[itemIndex].MXPref = undefined;
-    }
-    return updatedItems;
-  });
+  return dnsEditingDisabled;
 }
 
 export async function deleteDnsRecordAction(
   _prevState: DnsActionResult | null,
-  formData: FormData
+  _formData: FormData
 ): Promise<DnsActionResult> {
-  const domainName = formData.get("domainName") as string;
-  const hostIdStr = formData.get("hostId") as string;
-
-  if (!domainName || !hostIdStr) {
-    return {
-      message: "Nome de domínio e HostId são obrigatórios para exclusão.",
-      success: false,
-    };
-  }
-  const hostIdNum = Number.parseInt(hostIdStr, 10);
-  if (Number.isNaN(hostIdNum)) {
-    return { message: "Formato de HostId inválido.", success: false };
-  }
-
-  return performDnsOperation(domainName, currentItems => {
-    const initialLength = currentItems.length;
-    const filteredItems = currentItems.filter(
-      item => item.HostId !== hostIdNum
-    );
-    if (filteredItems.length === initialLength) {
-      console.warn(
-        `Registro com HostId ${hostIdNum} para o domínio ${domainName} não encontrado durante a tentativa de exclusão. Pode já ter sido excluído.`
-      );
-      // No need to throw an error, just proceed with the (unchanged) list.
-      // Namecheap will just set the same records again.
-    }
-    return filteredItems;
-  });
+  return dnsEditingDisabled;
 }
