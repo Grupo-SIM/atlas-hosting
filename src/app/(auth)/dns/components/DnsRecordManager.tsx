@@ -1,7 +1,15 @@
-// src/app/(authenticated)/(dashboard)/sites/[domain]/dns/components/DnsRecordsManager.tsx
 "use client";
 
-import { Copy, HelpCircle, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import {
+  Cloud,
+  Copy,
+  Download,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   startTransition,
@@ -12,8 +20,17 @@ import {
   useMemo,
   useState,
 } from "react";
-import { CgSpinner } from "react-icons/cg";
-import { toast } from "sonner"; // Assuming you use 'sonner' for toasts
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +50,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -40,6 +58,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -48,655 +67,559 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
 import type {
-  DnsHostRecordItem,
-  DnsRecordType,
-} from "@/lib/server/apis/namecheap/types";
+  CloudflareDnsRecord,
+  CloudflareDnsRecordType,
+} from "@/lib/server/apis/cloudflare";
 import {
-  addPleskDnsRecordAction,
+  addCloudflareDnsRecordAction,
   type DnsActionResult,
-  deletePleskDnsRecordAction,
-  updatePleskDnsRecordAction,
-} from "../plesk-actions";
+  deleteCloudflareDnsRecordAction,
+  importCloudflareZoneFileAction,
+  updateCloudflareDnsRecordAction,
+} from "../cloudflare-actions";
+import { editableCloudflareRecordTypes } from "../cloudflare-record-input";
 
-const recordTypes: {
-  value: DnsRecordType;
-  label: string;
-  description: string;
-  needsPriority?: boolean;
-}[] = [
-  { description: "Aponta para um endereço IPv4", label: "A", value: "A" },
-  { description: "Aponta para um endereço IPv6", label: "AAAA", value: "AAAA" },
-  {
-    description: "Aponta para outro domínio",
-    label: "CNAME",
-    value: "CNAME",
-  },
-  {
-    description: "Define servidores de e-mail para o domínio",
-    label: "MX",
-    needsPriority: true,
-    value: "MX",
-  },
-  {
-    description: "Armazena informações de texto, muitas vezes para verificação",
-    label: "TXT",
-    value: "TXT",
-  },
-  {
-    description: "Autorização de Autoridade de Certificação",
-    label: "CAA",
-    value: "CAA",
-  },
-  {
-    description: "Localiza serviços por porta e protocolo",
-    label: "SRV",
-    value: "SRV",
-  },
-  {
-    description: "Associa certificados TLS ao DNS",
-    label: "TLSA",
-    value: "TLSA",
-  },
-  {
-    description: "Delega um subdomínio para outro nameserver",
-    label: "NS",
-    value: "NS",
-  },
-];
+const typeDescriptions: Partial<Record<CloudflareDnsRecordType, string>> = {
+  A: "Endereço IPv4",
+  AAAA: "Endereço IPv6",
+  CAA: "Autoridades certificadoras permitidas",
+  CNAME: "Alias para outro hostname",
+  HTTPS: "Parâmetros de conexão HTTPS",
+  MX: "Servidor de e-mail",
+  NS: "Delegação de subdomínio",
+  SRV: "Localização de serviço",
+  SVCB: "Parâmetros de conexão de serviço",
+  TLSA: "Associação de certificado TLS",
+  TXT: "Texto, políticas e verificações",
+};
 
-const commonTTLs = [
+const ttlOptions = [
+  { label: "Automático", value: "1" },
   { label: "1 minuto", value: "60" },
   { label: "5 minutos", value: "300" },
-  { label: "10 minutos", value: "600" },
   { label: "30 minutos", value: "1800" },
   { label: "1 hora", value: "3600" },
   { label: "4 horas", value: "14400" },
-  { label: "12 horas", value: "43200" },
   { label: "24 horas", value: "86400" },
 ];
 
-interface DnsRecordsManagerProps {
-  domainName: string;
-  initialRecords: DnsHostRecordItem[];
-  sld: string; // Not directly used by client, but good to have if actions needed it differently
-  tld: string; // Same as sld
-  isUsingOurDNS: boolean;
-  readOnly?: boolean;
-}
-
-type FormMode = "add" | "edit";
-interface EditingRecordState extends DnsHostRecordItem {
-  // DnsHostRecordItem already has all necessary fields
-}
-
 export function DnsRecordsManager({
+  domainId,
   domainName,
   initialRecords,
   readOnly = false,
-}: DnsRecordsManagerProps) {
-  const router = useRouter();
+}: {
+  domainId: string;
+  domainName: string;
+  initialRecords: CloudflareDnsRecord[];
+  readOnly?: boolean;
+}) {
   const formId = useId();
-  const isProtectedRecord = (record: DnsHostRecordItem) => {
-    const isApex =
-      record.Name.replace(/\.$/, "").toLowerCase() === domainName.toLowerCase();
-    return (
-      record.Type === ("SOA" as DnsRecordType) ||
-      (record.Type === "NS" && isApex)
-    );
-  };
-  const [records, setRecords] = useState<DnsHostRecordItem[]>(initialRecords);
-  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+  const [records, setRecords] = useState(initialRecords);
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [editing, setEditing] = useState<CloudflareDnsRecord | null>(null);
+  const [deleting, setDeleting] = useState<CloudflareDnsRecord | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [recordType, setRecordType] = useState<CloudflareDnsRecordType>("A");
+  const [host, setHost] = useState("@");
+  const [content, setContent] = useState("");
+  const [ttl, setTtl] = useState("1");
+  const [priority, setPriority] = useState("10");
+  const [proxied, setProxied] = useState(false);
+  const [comment, setComment] = useState("");
+  const [srvWeight, setSrvWeight] = useState("5");
+  const [srvPort, setSrvPort] = useState("443");
+  const [caaFlags, setCaaFlags] = useState("0");
+  const [caaTag, setCaaTag] = useState("issue");
 
-  // Form state for adding/editing
-  const [formMode, setFormMode] = useState<FormMode>("add");
-  const [selectedRecordType, setSelectedRecordType] =
-    useState<DnsRecordType>("A");
-  const [hostName, setHostName] = useState("@"); // Default to root
-  const [address, setAddress] = useState("");
-  const [ttl, setTtl] = useState("3600"); // Default 1 hour
-  const [mxPref, setMxPref] = useState("10");
-  const [currentEditingRecord, setCurrentEditingRecord] =
-    useState<EditingRecordState | null>(null);
-
-  const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [recordToDelete, setRecordToDelete] =
-    useState<DnsHostRecordItem | null>(null);
-
-  const [showHelpDialog, setShowHelpDialog] = useState(false);
-
-  // Server action states
-  const [addState, addFormAction, isPendingAdd] = useActionState(
-    addPleskDnsRecordAction,
+  const [addState, addAction, adding] = useActionState(
+    addCloudflareDnsRecordAction,
     null
   );
-  const [updateState, updateFormAction, isPendingUpdate] = useActionState(
-    updatePleskDnsRecordAction,
+  const [updateState, updateAction, updating] = useActionState(
+    updateCloudflareDnsRecordAction,
     null
   );
-  const [deleteState, deleteFormAction, isPendingDelete] = useActionState(
-    deletePleskDnsRecordAction,
+  const [deleteState, deleteAction, deletingRecord] = useActionState(
+    deleteCloudflareDnsRecordAction,
+    null
+  );
+  const [importState, importAction, importing] = useActionState(
+    importCloudflareZoneFileAction,
     null
   );
 
-  useEffect(() => {
-    setRecords(initialRecords);
-  }, [initialRecords]);
-
-  const processFormState = useCallback(
-    (
-      state: DnsActionResult | null,
-      successMessage: string,
-      modalCloser?: () => void
-    ) => {
+  useEffect(() => setRecords(initialRecords), [initialRecords]);
+  const handleResult = useCallback(
+    (state: DnsActionResult | null, close: () => void) => {
       if (!state) return;
       if (state.success) {
-        toast.success(successMessage);
-        modalCloser?.();
+        toast.success(state.message);
+        close();
         router.refresh();
-        // Records will be updated by parent component re-render due to revalidateTag
-      } else {
-        toast.error(state.message || "Ocorreu um erro desconhecido.", {
-          description: state.errors
-            ?.map(e => `${e.field ? `${e.field}: ` : ""}${e.message}`)
-            .join("\n"),
-        });
-      }
+      } else toast.error(state.message);
     },
-    []
-  );
-
-  useEffect(
-    () =>
-      processFormState(addState, "Registro DNS adicionado com sucesso!", () =>
-        setIsAddEditModalOpen(false)
-      ),
-    [addState, processFormState]
+    [router]
   );
   useEffect(
-    () =>
-      processFormState(
-        updateState,
-        "Registro DNS atualizado com sucesso!",
-        () => setIsAddEditModalOpen(false)
-      ),
-    [updateState, processFormState]
+    () => handleResult(addState, () => setEditorOpen(false)),
+    [addState, handleResult]
   );
   useEffect(
-    () =>
-      processFormState(deleteState, "Registro DNS excluído com sucesso!", () =>
-        setIsDeleteModalOpen(false)
-      ),
-    [deleteState, processFormState]
+    () => handleResult(updateState, () => setEditorOpen(false)),
+    [handleResult, updateState]
+  );
+  useEffect(
+    () => handleResult(deleteState, () => setDeleting(null)),
+    [deleteState, handleResult]
+  );
+  useEffect(
+    () => handleResult(importState, () => setImportOpen(false)),
+    [handleResult, importState]
   );
 
-  const openAddModal = () => {
-    setFormMode("add");
-    setSelectedRecordType("A");
-    setHostName("@");
-    setAddress("");
-    setTtl("3600");
-    setMxPref("10");
-    setCurrentEditingRecord(null);
-    setIsAddEditModalOpen(true);
+  const openAdd = () => {
+    setEditing(null);
+    setRecordType("A");
+    setHost("@");
+    setContent("");
+    setTtl("1");
+    setPriority("10");
+    setProxied(false);
+    setComment("");
+    setEditorOpen(true);
+  };
+  const openEdit = (record: CloudflareDnsRecord) => {
+    setEditing(record);
+    setRecordType(record.type);
+    setHost(
+      record.name === domainName
+        ? "@"
+        : record.name.replace(`.${domainName}`, "")
+    );
+    setContent(record.data?.target || record.data?.value || record.content);
+    setTtl(String(record.ttl));
+    setPriority(String(record.priority ?? record.data?.priority ?? 10));
+    setProxied(Boolean(record.proxied));
+    setComment(record.comment || "");
+    setSrvWeight(String(record.data?.weight ?? 5));
+    setSrvPort(String(record.data?.port ?? 443));
+    setCaaFlags(String(record.data?.flags ?? 0));
+    setCaaTag(record.data?.tag || "issue");
+    setEditorOpen(true);
   };
 
-  const openEditModal = (record: DnsHostRecordItem) => {
-    setFormMode("edit");
-    setSelectedRecordType(record.Type as DnsRecordType);
-    setHostName(record.Name);
-    setAddress(record.Address);
-    setTtl(record.TTL.toString());
-    setMxPref(record.MXPref?.toString() || "10");
-    setCurrentEditingRecord(record);
-    setIsAddEditModalOpen(true);
-  };
-
-  const openDeleteModal = (record: DnsHostRecordItem) => {
-    setRecordToDelete(record);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleteSubmit = () => {
-    if (!recordToDelete) return;
-    const formData = new FormData();
-    formData.append("domainName", domainName);
-    formData.append("hostId", recordToDelete.HostId.toString());
-
-    startTransition(() => {
-      deleteFormAction(formData);
-    });
-  };
-
-  const filteredRecords = useMemo(() => {
-    if (!searchQuery) return records;
-    const lowerQuery = searchQuery.toLowerCase();
+  const filtered = useMemo(() => {
+    const needle = query.toLowerCase();
     return records.filter(
       record =>
-        record.Name.toLowerCase().includes(lowerQuery) ||
-        record.Type.toLowerCase().includes(lowerQuery) ||
-        record.Address.toLowerCase().includes(lowerQuery) ||
-        record.TTL.toString().includes(lowerQuery) ||
-        record.MXPref?.toString().includes(lowerQuery)
+        (typeFilter === "all" || record.type === typeFilter) &&
+        (!needle ||
+          record.name.toLowerCase().includes(needle) ||
+          record.content.toLowerCase().includes(needle) ||
+          record.type.toLowerCase().includes(needle))
     );
-  }, [records, searchQuery]);
-
-  const selectedRecordTypeInfo = recordTypes.find(
-    rt => rt.value === selectedRecordType
-  );
-
-  const handleCopyValue = (value: string, fieldName: string) => {
-    navigator.clipboard
-      .writeText(value)
-      .then(() =>
-        toast.success(`${fieldName} copiado para a área de transferência!`)
-      )
-      .catch(() => toast.error(`Falha ao copiar ${fieldName}.`));
-  };
+  }, [query, records, typeFilter]);
+  const canProxy = ["A", "AAAA", "CNAME"].includes(recordType);
+  const editable = (record: CloudflareDnsRecord) =>
+    (editableCloudflareRecordTypes as readonly string[]).includes(record.type);
 
   return (
-    <TooltipProvider>
+    <>
       <Card>
-        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <CardHeader className="gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <CardTitle>Gerenciar Registros DNS</CardTitle>
+            <CardTitle>Registros DNS</CardTitle>
             <CardDescription>
-              Visualizar, adicionar, editar ou excluir registros DNS para{" "}
-              {domainName}. As alterações podem levar até 24 horas para
-              propagar.
+              Zona autoritativa Cloudflare de {domainName}. TTL 1 significa
+              automático.
             </CardDescription>
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setShowHelpDialog(true)}
-              size="icon"
-              variant="outline"
-            >
-              <HelpCircle className="h-5 w-5" />
-              <span className="sr-only">Guia de Registros DNS</span>
-            </Button>
-            {!readOnly && (
-              <Button onClick={openAddModal}>
-                <Plus className="mr-2 h-4 w-4" /> Adicionar Registro
+          {!readOnly && (
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline">
+                <a href={`/api/domains/${domainId}/dns/export`}>
+                  <Download className="mr-2 h-4 w-4" /> Exportar
+                </a>
               </Button>
-            )}
-          </div>
+              <Button onClick={() => setImportOpen(true)} variant="outline">
+                <Upload className="mr-2 h-4 w-4" /> Importar
+              </Button>
+              <Button onClick={openAdd}>
+                <Plus className="mr-2 h-4 w-4" /> Adicionar registro
+              </Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="relative">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-            <Input
-              className="w-full pl-10 md:w-1/2 lg:w-1/3"
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Buscar registros (ex: por nome, tipo, conteúdo)"
-              value={searchQuery}
-            />
-          </div>
-
-          {filteredRecords.length === 0 && (
-            <div className="py-8 text-center text-muted-foreground">
-              Nenhum registro DNS encontrado
-              {searchQuery ? " correspondente à sua pesquisa" : ""}.
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                onChange={event => setQuery(event.target.value)}
+                placeholder="Buscar por nome, tipo ou conteúdo"
+                value={query}
+              />
             </div>
-          )}
-
-          {filteredRecords.length > 0 && (
-            <div className="overflow-x-auto rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Nome (Host)</TableHead>
-                    <TableHead>Valor</TableHead>
-                    {records.some(r => r.Type === "MX") && (
-                      <TableHead>Prioridade</TableHead>
-                    )}
-                    <TableHead>TTL</TableHead>
+            <Select onValueChange={setTypeFilter} value={typeFilter}>
+              <SelectTrigger className="w-full sm:w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                {[...new Set(records.map(record => record.type))]
+                  .sort()
+                  .map(type => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="overflow-x-auto rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Conteúdo</TableHead>
+                  <TableHead>Proxy</TableHead>
+                  <TableHead>TTL</TableHead>
+                  {!readOnly && (
+                    <TableHead className="text-right">Ações</TableHead>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map(record => (
+                  <TableRow key={record.id}>
+                    <TableCell className="min-w-48 font-medium">
+                      <span>{record.name}</span>
+                      <Button
+                        className="ml-1 h-7 w-7"
+                        onClick={() =>
+                          navigator.clipboard.writeText(record.name)
+                        }
+                        size="icon"
+                        variant="ghost"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{record.type}</Badge>
+                    </TableCell>
+                    <TableCell className="max-w-md break-all">
+                      {record.content}
+                    </TableCell>
+                    <TableCell>
+                      {record.proxiable ? (
+                        <Badge
+                          variant={record.proxied ? "default" : "secondary"}
+                        >
+                          <Cloud className="mr-1 h-3 w-3" />
+                          {record.proxied ? "Proxied" : "DNS only"}
+                        </Badge>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {record.ttl === 1 ? "Auto" : `${record.ttl}s`}
+                    </TableCell>
                     {!readOnly && (
-                      <TableHead className="text-right">Ações</TableHead>
+                      <TableCell className="text-right">
+                        <Button
+                          disabled={!editable(record)}
+                          onClick={() => openEdit(record)}
+                          size="icon"
+                          variant="ghost"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          className="text-destructive"
+                          onClick={() => setDeleting(record)}
+                          size="icon"
+                          variant="ghost"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     )}
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRecords.map(record => (
-                    <TableRow key={record.HostId}>
-                      <TableCell>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Badge variant="outline">{record.Type}</Badge>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {recordTypes.find(rt => rt.value === record.Type)
-                              ?.description || "N/A"}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell className="break-all font-medium">
-                        {record.Name}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              className="ml-1 h-6 w-6"
-                              onClick={() =>
-                                handleCopyValue(record.Name, "Host name")
-                              }
-                              size="icon"
-                              variant="ghost"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Copiar</TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell className="break-all">
-                        {record.Address}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              className="ml-1 h-6 w-6"
-                              onClick={() =>
-                                handleCopyValue(record.Address, "Address/Value")
-                              }
-                              size="icon"
-                              variant="ghost"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Copiar</TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                      {records.some(r => r.Type === "MX") && (
-                        <TableCell>
-                          {record.Type === "MX" ? record.MXPref : "N/A"}
-                        </TableCell>
-                      )}
-                      <TableCell>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            {commonTTLs.find(
-                              ct => ct.value === record.TTL.toString()
-                            )?.label || `${record.TTL}s`}
-                          </TooltipTrigger>
-                          <TooltipContent>{record.TTL} segundos</TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                      {!readOnly && (
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  className="h-8 w-8"
-                                  disabled={isProtectedRecord(record)}
-                                  onClick={() => openEditModal(record)}
-                                  size="icon"
-                                  variant="ghost"
-                                >
-                                  <Pencil className="h-4 w-4" />{" "}
-                                  <span className="sr-only">Editar</span>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Editar Registro</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  className="h-8 w-8 text-destructive hover:text-destructive/90"
-                                  disabled={isProtectedRecord(record)}
-                                  onClick={() => openDeleteModal(record)}
-                                  size="icon"
-                                  variant="ghost"
-                                >
-                                  <Trash2 className="h-4 w-4" />{" "}
-                                  <span className="sr-only">Deletar</span>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Deletar Registro</TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                ))}
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell className="h-24 text-center" colSpan={6}>
+                      Nenhum registro encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <p className="text-muted-foreground text-xs">
+            {filtered.length} de {records.length} registros exibidos. Tipos
+            complexos importados permanecem visíveis mesmo quando não são
+            editáveis neste formulário.
+          </p>
         </CardContent>
       </Card>
 
-      {/* Add/Edit Record Modal */}
-      <Dialog onOpenChange={setIsAddEditModalOpen} open={isAddEditModalOpen}>
-        <DialogContent className="sm:max-w-lg">
+      <Dialog onOpenChange={setEditorOpen} open={editorOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
-              {formMode === "add"
-                ? "Adicionar Novo Registro DNS"
-                : "Editar Registro DNS"}
+              {editing ? "Editar registro DNS" : "Adicionar registro DNS"}
             </DialogTitle>
             <DialogDescription>
-              {formMode === "add"
-                ? "Insira os detalhes para o seu novo registro DNS."
-                : `Modificando registro para ${currentEditingRecord?.Name}`}
+              As alterações são enviadas diretamente à zona Cloudflare.
             </DialogDescription>
           </DialogHeader>
           <form
-            action={formMode === "add" ? addFormAction : updateFormAction}
-            className="space-y-4 py-2"
+            action={editing ? updateAction : addAction}
+            className="space-y-4"
           >
-            <input name="domainName" type="hidden" value={domainName} />
-            {formMode === "edit" && currentEditingRecord && (
-              <input
-                name="hostId"
-                type="hidden"
-                value={currentEditingRecord.HostId}
-              />
+            <input name="domainId" type="hidden" value={domainId} />
+            {editing && (
+              <input name="recordId" type="hidden" value={editing.id} />
             )}
-
-            <div>
-              <label
-                className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
-                htmlFor={`${formId}-record-type`}
-              >
-                Tipo de Registro
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor={`${formId}-type`}>Tipo</Label>
               <Select
                 name="recordType"
-                onValueChange={v => setSelectedRecordType(v as DnsRecordType)}
-                value={selectedRecordType}
+                onValueChange={value =>
+                  setRecordType(value as CloudflareDnsRecordType)
+                }
+                value={recordType}
               >
-                <SelectTrigger id={`${formId}-record-type`}>
-                  <SelectValue placeholder="Select type" />
+                <SelectTrigger id={`${formId}-type`}>
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {recordTypes.map(type => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label} ({type.description})
+                  {editableCloudflareRecordTypes.map(type => (
+                    <SelectItem key={type} value={type}>
+                      {type} — {typeDescriptions[type]}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
-            <div>
-              <label
-                className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
-                htmlFor={`${formId}-host`}
-              >
-                Nome (Host)
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor={`${formId}-host`}>Nome</Label>
               <Input
                 id={`${formId}-host`}
                 name="hostName"
-                onChange={e => setHostName(e.target.value)}
-                placeholder="@ para raiz, www, mail, etc."
-                value={hostName}
+                onChange={event => setHost(event.target.value)}
+                value={host}
               />
-              <p className="mt-1 text-muted-foreground text-xs">
-                Use "@" para o domínio raiz ({domainName}). Para subdomínios,
-                apenas insira a parte do subdomínio (ex: "www", "mail").
+              <p className="text-muted-foreground text-xs">
+                Use @ para {domainName} ou informe apenas o subdomínio.
               </p>
             </div>
-
-            {selectedRecordTypeInfo?.needsPriority && (
-              <div>
-                <label
-                  className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
-                  htmlFor={`${formId}-mx-pref`}
-                >
-                  Prioridade (MX)
-                </label>
+            {(recordType === "MX" || recordType === "SRV") && (
+              <div className="space-y-2">
+                <Label htmlFor={`${formId}-priority`}>Prioridade</Label>
                 <Input
-                  id={`${formId}-mx-pref`}
-                  name="mxPref"
-                  onChange={e => setMxPref(e.target.value)}
-                  placeholder="e.g., 10"
+                  id={`${formId}-priority`}
+                  name="priority"
+                  onChange={event => setPriority(event.target.value)}
                   type="number"
-                  value={mxPref}
+                  value={priority}
                 />
               </div>
             )}
-
-            <div>
-              <label
-                className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
-                htmlFor={`${formId}-address`}
-              >
-                Valor
-              </label>
+            {recordType === "SRV" && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Peso</Label>
+                  <Input
+                    name="srvWeight"
+                    onChange={event => setSrvWeight(event.target.value)}
+                    type="number"
+                    value={srvWeight}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Porta</Label>
+                  <Input
+                    name="srvPort"
+                    onChange={event => setSrvPort(event.target.value)}
+                    type="number"
+                    value={srvPort}
+                  />
+                </div>
+              </div>
+            )}
+            {recordType === "CAA" && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Flags</Label>
+                  <Input
+                    name="caaFlags"
+                    onChange={event => setCaaFlags(event.target.value)}
+                    type="number"
+                    value={caaFlags}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tag</Label>
+                  <Select
+                    name="caaTag"
+                    onValueChange={setCaaTag}
+                    value={caaTag}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="issue">issue</SelectItem>
+                      <SelectItem value="issuewild">issuewild</SelectItem>
+                      <SelectItem value="iodef">iodef</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor={`${formId}-content`}>
+                {recordType === "SRV"
+                  ? "Destino"
+                  : recordType === "CAA"
+                    ? "Valor"
+                    : "Conteúdo"}
+              </Label>
               <Input
-                id={`${formId}-address`}
-                name="address"
-                onChange={e => setAddress(e.target.value)}
-                placeholder={
-                  selectedRecordType === "A"
-                    ? "Endereço IPv4 (ex: 192.168.1.1)"
-                    : selectedRecordType === "CNAME"
-                      ? "Domínio de destino (ex: exemplo.com)"
-                      : "Conteúdo/Endereço"
-                }
-                value={address}
+                id={`${formId}-content`}
+                name="content"
+                onChange={event => setContent(event.target.value)}
+                value={content}
               />
             </div>
-
-            <div>
-              <label
-                className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
-                htmlFor={`${formId}-ttl`}
-              >
-                TTL (Tempo De Vida)
-              </label>
+            <div className="space-y-2">
+              <Label>TTL</Label>
               <Select name="ttl" onValueChange={setTtl} value={ttl}>
-                <SelectTrigger id={`${formId}-ttl`}>
-                  <SelectValue placeholder="Select TTL" />
+                <SelectTrigger>
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {commonTTLs.map(t => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                  {ttlOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            {canProxy && (
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <Label htmlFor={`${formId}-proxied`}>Proxy Cloudflare</Label>
+                  <p className="text-muted-foreground text-xs">
+                    Desativado por padrão para evitar mudanças de tráfego.
+                  </p>
+                </div>
+                <Switch
+                  checked={proxied}
+                  id={`${formId}-proxied`}
+                  onCheckedChange={setProxied}
+                />
+                <input
+                  name="proxied"
+                  type="hidden"
+                  value={proxied ? "on" : ""}
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Comentário</Label>
+              <Input
+                name="comment"
+                onChange={event => setComment(event.target.value)}
+                value={comment}
+              />
+            </div>
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline">Cancelar</Button>
+                <Button type="button" variant="outline">
+                  Cancelar
+                </Button>
               </DialogClose>
-              <Button
-                disabled={formMode === "add" ? isPendingAdd : isPendingUpdate}
-                type="submit"
-              >
-                {(formMode === "add" ? isPendingAdd : isPendingUpdate) ? (
-                  <>
-                    <CgSpinner className="mr-2 h-4 w-4 animate-spin" />{" "}
-                    Salvando...
-                  </>
-                ) : formMode === "add" ? (
-                  "Adicionar Registro"
-                ) : (
-                  "Salvar Alterações"
-                )}
+              <Button disabled={adding || updating} type="submit">
+                {adding || updating ? "Salvando..." : "Salvar"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Modal */}
-      <Dialog onOpenChange={setIsDeleteModalOpen} open={isDeleteModalOpen}>
+      <Dialog onOpenChange={setImportOpen} open={importOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogTitle>Importar arquivo de zona</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir o registro DNS para o host "
-              {recordToDelete?.Name}" do tipo {recordToDelete?.Type} apontando
-              para "{recordToDelete?.Address}"? Esta ação não pode ser desfeita.
+              Envie um arquivo BIND de até 256 KiB. Registros existentes não são
+              removidos automaticamente.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancelar</Button>
-            </DialogClose>
-            <Button
-              disabled={isPendingDelete}
-              onClick={handleDeleteSubmit}
-              variant="destructive"
-            >
-              {isPendingDelete ? (
-                <>
-                  <CgSpinner className="mr-2 h-4 w-4 animate-spin" />{" "}
-                  Excluindo...
-                </>
-              ) : (
-                "Excluir Registro"
-              )}
-            </Button>
-          </DialogFooter>
+          <form action={importAction} className="space-y-4">
+            <input name="domainId" type="hidden" value={domainId} />
+            <Input
+              accept=".txt,.zone,text/plain"
+              name="file"
+              required
+              type="file"
+            />
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Cancelar
+                </Button>
+              </DialogClose>
+              <Button disabled={importing} type="submit">
+                {importing ? "Importando..." : "Importar"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
-      {/* Help Dialog */}
-      <Dialog onOpenChange={setShowHelpDialog} open={showHelpDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Guia de Registros DNS</DialogTitle>
-            <DialogDescription>
-              Tipos comuns de registros DNS e seus usos.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4">
-            {recordTypes.map(type => (
-              <div
-                className="rounded-md border bg-muted/50 p-3"
-                key={type.value}
-              >
-                <h4 className="font-semibold">
-                  {type.label} ({type.value})
-                </h4>
-                <p className="text-muted-foreground text-sm">
-                  {type.description}
-                </p>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Fechar</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </TooltipProvider>
+      <AlertDialog
+        onOpenChange={open => !open && setDeleting(null)}
+        open={Boolean(deleting)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir registro DNS?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O registro {deleting?.type} de {deleting?.name} será removido
+              imediatamente da Cloudflare.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deletingRecord}
+              onClick={() => {
+                if (!deleting) return;
+                const data = new FormData();
+                data.set("domainId", domainId);
+                data.set("recordId", deleting.id);
+                startTransition(() => deleteAction(data));
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

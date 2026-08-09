@@ -1,14 +1,16 @@
 "use server";
 
-import { lookupTxt, query } from "dns-query";
+import { lookupTxt } from "dns-query";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgOrganizationDomains } from "@/lib/db/schema";
 import { normalizeDomainName } from "@/lib/server/domains/authorization";
-import { getAtlasNameservers } from "@/lib/server/domains/dns-config";
-import { preparePleskDnsZone } from "@/lib/server/domains/prepare-dns-zone";
+import {
+  hasPublishedDsRecords,
+  provisionCloudflareZone,
+} from "@/lib/server/domains/cloudflare-dns";
 import {
   createDomainVerificationRecord,
   type DomainVerificationRecord,
@@ -45,7 +47,8 @@ export async function addExternalDomain(
   if (!user) return { message: "Usuário não autenticado.", status: "error" };
 
   const domain = normalizeDomainName(String(formData.get("domain") || ""));
-  const dnsMode = formData.get("dnsMode") === "external" ? "external" : "atlas";
+  const dnsMode =
+    formData.get("dnsMode") === "external" ? "external" : "cloudflare";
   if (!isValidDomain(domain)) {
     return {
       message: "Informe um domínio válido, sem protocolo ou caminho.",
@@ -81,7 +84,7 @@ export async function addExternalDomain(
     connectionStatus: "pending_verification",
     dnsMode,
     domain,
-    expectedNameservers: dnsMode === "atlas" ? getAtlasNameservers() : null,
+    expectedNameservers: null,
     lastDnsError: null,
     organizationId: user.organization.id,
     registrarProvider: null,
@@ -149,18 +152,57 @@ export async function verifyExternalDomain(
     };
   }
 
-  let connectionStatus = "unmanaged";
-  let lastDnsError: string | null = null;
-  if (pending.dnsMode === "atlas") {
-    connectionStatus = "awaiting_nameservers";
+  if (pending.dnsMode === "cloudflare") {
+    if (await hasPublishedDsRecords(domain)) {
+      return {
+        message:
+          "A propriedade foi confirmada, mas existe um registro DNSSEC/DS ativo. Remova-o no registrador antes de continuar.",
+        status: "error",
+      };
+    }
     try {
-      await preparePleskDnsZone(domain);
+      const zone = await provisionCloudflareZone(domain, true);
+      await db
+        .update(pgOrganizationDomains)
+        .set({
+          active: true,
+          cloudflareZoneId: zone.id,
+          cloudflareZoneStatus: zone.status,
+          connectionStatus: "review_records",
+          dnsImportStatus: "scanning",
+          dnsScanStartedAt: new Date(),
+          expectedNameservers: zone.name_servers,
+          lastDnsCheckAt: new Date(),
+          lastDnsError: null,
+          registrarProvider: "external",
+          verifiedAt: new Date(),
+        })
+        .where(eq(pgOrganizationDomains.id, pending.id));
+      revalidatePath("/domain");
+      revalidatePath(`/domains/${pending.id}`);
+      return {
+        isCorrect: true,
+        message:
+          "Propriedade confirmada. Revise os registros encontrados antes de trocar os nameservers.",
+        nameservers: zone.name_servers,
+        status: "success",
+      };
     } catch (error) {
-      connectionStatus = "error";
-      lastDnsError =
+      const message =
         error instanceof Error
           ? error.message
-          : "Falha ao preparar a zona DNS.";
+          : "Falha ao criar a zona na Cloudflare.";
+      await db
+        .update(pgOrganizationDomains)
+        .set({
+          active: true,
+          connectionStatus: "error",
+          lastDnsError: message,
+          registrarProvider: "external",
+          verifiedAt: new Date(),
+        })
+        .where(eq(pgOrganizationDomains.id, pending.id));
+      return { message, status: "error" };
     }
   }
 
@@ -168,8 +210,9 @@ export async function verifyExternalDomain(
     .update(pgOrganizationDomains)
     .set({
       active: true,
-      connectionStatus,
-      lastDnsError,
+      connectionStatus: "unmanaged",
+      lastDnsError: null,
+      registrarProvider: "external",
       verifiedAt: new Date(),
     })
     .where(eq(pgOrganizationDomains.id, pending.id));
@@ -177,75 +220,7 @@ export async function verifyExternalDomain(
   revalidatePath(`/domains/${pending.id}`);
   return {
     isCorrect: true,
-    message:
-      pending.dnsMode === "atlas"
-        ? "Propriedade confirmada. Agora troque os nameservers pelos nameservers Atlas."
-        : "Propriedade confirmada. O DNS continuará no seu provedor atual.",
-    nameservers:
-      pending.dnsMode === "atlas" ? getAtlasNameservers() : undefined,
+    message: "Propriedade confirmada. O DNS continuará no seu provedor atual.",
     status: "success",
   };
-}
-
-export async function verifyAtlasNameservers(
-  domainId: string
-): Promise<ExternalDomainResult> {
-  const user = await getUser();
-  if (!user) return { message: "Usuário não autenticado.", status: "error" };
-  const domain = await db.query.pgOrganizationDomains.findFirst({
-    where: and(
-      eq(pgOrganizationDomains.id, domainId),
-      eq(pgOrganizationDomains.organizationId, user.organization.id)
-    ),
-  });
-  if (!domain || domain.dnsMode !== "atlas")
-    return { message: "Domínio não encontrado.", status: "error" };
-
-  const expected = (
-    domain.expectedNameservers?.length
-      ? domain.expectedNameservers
-      : getAtlasNameservers()
-  ).sort();
-  try {
-    const responses = await Promise.all(
-      ["1.1.1.1", "8.8.8.8"].map(endpoint =>
-        query(
-          { question: { name: domain.domain, type: "NS" } },
-          { endpoints: [endpoint] }
-        )
-      )
-    );
-    const sets = responses.map(response =>
-      (response.answers || [])
-        .filter(answer => answer.type === "NS")
-        .map(answer => String(answer.data).toLowerCase().replace(/\.$/, ""))
-        .sort()
-    );
-    const connected = sets.every(found =>
-      expected.every(ns => found.includes(ns))
-    );
-    await db
-      .update(pgOrganizationDomains)
-      .set({
-        connectionStatus: connected ? "connected" : "awaiting_nameservers",
-        lastDnsCheckAt: new Date(),
-        lastDnsError: null,
-      })
-      .where(eq(pgOrganizationDomains.id, domain.id));
-    revalidatePath(`/domains/${domain.id}`);
-    return {
-      isCorrect: connected,
-      message: connected
-        ? "Nameservers confirmados. O DNS já é gerenciado pelo Atlas."
-        : "A alteração ainda não apareceu nos dois resolvedores. Tente novamente em alguns minutos.",
-      nameservers: expected,
-      status: connected ? "success" : "error",
-    };
-  } catch {
-    return {
-      message: "Não foi possível consultar os nameservers agora.",
-      nameservers: expected,
-      status: "error",
-    };
-  }
 }

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { createDomainBundleInvoice, createDomainInvoice } from "@/app/actions";
 import { DomainResult } from "@/components/domains/DomainResult";
 import { DomainSuggestions } from "@/components/domains/DomainSuggestions";
+import { PageBackButton } from "@/components/layouts/components/PageBackButton";
 import {
   Card,
   CardContent,
@@ -16,7 +17,6 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { getUser } from "@/lib/auth";
 import type { OrganizationDomain } from "@/lib/db/schema/tables/organization";
 import { createDomainVerificationRecord } from "@/lib/server/domains/verification";
-import { BackButton } from "./components/BackButton";
 import { DomainBundleSection } from "./register/components/DomainBundleSection";
 import RegisterDomainSearch from "./register/components/RegisterDomainSearch";
 import { TransferDomainsList } from "./register/components/TransferDomainsList";
@@ -117,7 +117,7 @@ export default async function DomainPage({
 
   return (
     <div className="w-full">
-      <BackButton />
+      <PageBackButton />
       <div className="mx-auto mb-8 flex w-full max-w-2xl rounded-xl bg-muted/50 p-1">
         <Link
           className={`flex flex-1 items-center justify-center rounded-lg px-4 py-2 font-medium transition-all duration-200 ${

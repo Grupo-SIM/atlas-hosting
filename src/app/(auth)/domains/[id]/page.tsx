@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock,
   Globe2,
+  ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -22,17 +23,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgOrganizationDomains } from "@/lib/db/schema";
-import { getAtlasNameservers } from "@/lib/server/domains/dns-config";
+import {
+  type CloudflareDnsRecord,
+  cloudflareApi,
+} from "@/lib/server/apis/cloudflare";
 import { discoverPublicDnsRecords } from "@/lib/server/domains/public-dns";
 import { DnsRecordsManager } from "../../dns/components/DnsRecordManager";
-import { getCachedPleskDnsRecords } from "../../dns/plesk-utils";
+import { DnsScanReview } from "./DnsScanReview";
 import { DomainDnsControls } from "./DomainDnsControls";
 
 const statusLabels: Record<string, string> = {
+  awaiting_activation: "Aguardando ativação",
   awaiting_nameservers: "Aguardando nameservers",
   connected: "Conectado",
   error: "Erro na conexão",
+  migration_required: "Migração disponível",
   pending_verification: "Aguardando verificação",
+  provisioning: "Criando zona",
+  review_records: "Revisar registros",
   unmanaged: "DNS externo",
 };
 
@@ -51,22 +59,37 @@ export default async function DomainDetailsPage({
   });
   if (!domain) notFound();
 
-  let records = [] as Awaited<ReturnType<typeof discoverPublicDnsRecords>>;
+  let records: CloudflareDnsRecord[] = [];
+  let scannedRecords: CloudflareDnsRecord[] = [];
   let error: string | null = null;
   try {
-    records =
-      domain.dnsMode === "atlas"
-        ? (await getCachedPleskDnsRecords(domain.domain)).records
-        : await discoverPublicDnsRecords(domain.domain);
+    if (domain.cloudflareZoneId) {
+      const [zoneRecords, scan] = await Promise.all([
+        cloudflareApi.listDnsRecords(domain.cloudflareZoneId),
+        domain.dnsImportStatus === "scanning"
+          ? cloudflareApi.listScannedRecords(domain.cloudflareZoneId)
+          : Promise.resolve([]),
+      ]);
+      records = zoneRecords;
+      scannedRecords = scan;
+    } else {
+      records = (await discoverPublicDnsRecords(domain.domain)).map(record => ({
+        content: record.Address,
+        id: String(record.HostId),
+        name: record.Name,
+        priority: record.MXPref,
+        proxied: false,
+        ttl: record.TTL,
+        type: record.Type as CloudflareDnsRecord["type"],
+      }));
+    }
   } catch (caught) {
     error =
       caught instanceof Error
         ? caught.message
         : "Não foi possível carregar os registros DNS.";
   }
-  const nameservers = domain.expectedNameservers?.length
-    ? domain.expectedNameservers
-    : getAtlasNameservers();
+  const nameservers = domain.expectedNameservers || [];
 
   return (
     <div className="space-y-6 p-4 pb-16 md:p-6">
@@ -94,7 +117,6 @@ export default async function DomainDetailsPage({
           </p>
         </div>
       </div>
-
       <Tabs defaultValue="dns">
         <TabsList>
           <TabsTrigger value="overview">Visão geral</TabsTrigger>
@@ -104,8 +126,7 @@ export default async function DomainDetailsPage({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Globe2 className="h-5 w-5" />
-                Informações do domínio
+                <Globe2 className="h-5 w-5" /> Informações do domínio
               </CardTitle>
               <CardDescription>Estado da conexão com o Atlas.</CardDescription>
             </CardHeader>
@@ -124,9 +145,11 @@ export default async function DomainDetailsPage({
               <div>
                 <p className="text-muted-foreground text-sm">Modo DNS</p>
                 <p className="font-medium">
-                  {domain.dnsMode === "atlas"
-                    ? "Gerenciado pelo Atlas"
-                    : "Provedor atual"}
+                  {domain.dnsMode === "cloudflare"
+                    ? "Atlas / Cloudflare"
+                    : domain.dnsMode === "legacy_plesk"
+                      ? "Plesk legado"
+                      : "Provedor atual"}
                 </p>
               </div>
               <div>
@@ -142,23 +165,37 @@ export default async function DomainDetailsPage({
         </TabsContent>
         <TabsContent className="space-y-5" value="dns">
           <DomainDnsControls
-            canSwitchMode={domain.registrarProvider !== "namecheap"}
             connectionStatus={domain.connectionStatus}
+            dnsImportStatus={domain.dnsImportStatus}
             dnsMode={domain.dnsMode}
             domainId={domain.id}
             nameservers={nameservers}
+            registrarProvider={domain.registrarProvider}
           />
-          {domain.dnsMode === "external" && (
+          {domain.dnsImportStatus === "scanning" && domain.cloudflareZoneId && (
+            <DnsScanReview domainId={domain.id} records={scannedRecords} />
+          )}
+          {domain.dnsMode !== "cloudflare" && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Visualização pública parcial</AlertTitle>
               <AlertDescription>
-                Servidores DNS não permitem listar uma zona completa. Exibimos
-                registros comuns detectados publicamente; subdomínios
+                DNS público não permite listar uma zona completa. Subdomínios
                 desconhecidos podem não aparecer.
               </AlertDescription>
             </Alert>
           )}
+          {domain.dnsMode === "cloudflare" &&
+            domain.connectionStatus !== "connected" && (
+              <Alert>
+                <ShieldAlert className="h-4 w-4" />
+                <AlertTitle>Zona ainda não ativa</AlertTitle>
+                <AlertDescription>
+                  Você pode preparar os registros agora, mas o tráfego só usará
+                  esta zona após a delegação dos nameservers.
+                </AlertDescription>
+              </Alert>
+            )}
           {domain.lastDnsError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -174,15 +211,10 @@ export default async function DomainDetailsPage({
             </Alert>
           ) : (
             <DnsRecordsManager
+              domainId={domain.id}
               domainName={domain.domain}
               initialRecords={records}
-              isUsingOurDNS={domain.dnsMode === "atlas"}
-              readOnly={
-                domain.dnsMode !== "atlas" ||
-                domain.connectionStatus !== "connected"
-              }
-              sld=""
-              tld=""
+              readOnly={!domain.cloudflareZoneId}
             />
           )}
         </TabsContent>

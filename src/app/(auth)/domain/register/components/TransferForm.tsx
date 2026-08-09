@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Eye, Server } from "lucide-react";
+import { Cloud, Copy, Eye } from "lucide-react";
 import { useActionState, useEffect, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { addExternalDomain } from "../transfer-actions";
 
 export function TransferForm({ defaultDomain }: { defaultDomain?: string }) {
   const { toast } = useToast();
-  const atlasId = useId();
+  const cloudflareId = useId();
   const externalId = useId();
   const [state, formAction, isPending] = useActionState(
     addExternalDomain,
@@ -47,19 +47,19 @@ export function TransferForm({ defaultDomain }: { defaultDomain?: string }) {
       />
       <RadioGroup
         className="grid gap-3 sm:grid-cols-2"
-        defaultValue="atlas"
+        defaultValue="cloudflare"
         name="dnsMode"
       >
-        <Label className="cursor-pointer" htmlFor={atlasId}>
+        <Label className="cursor-pointer" htmlFor={cloudflareId}>
           <Card className="h-full transition-colors has-[[data-state=checked]]:border-primary">
             <CardContent className="flex gap-3 p-4">
-              <RadioGroupItem id={atlasId} value="atlas" />
+              <RadioGroupItem id={cloudflareId} value="cloudflare" />
               <div className="space-y-1">
                 <div className="flex items-center gap-2 font-medium">
-                  <Server className="h-4 w-4" /> Gerenciar DNS pelo Atlas
+                  <Cloud className="h-4 w-4" /> Gerenciar DNS pelo Atlas
                 </div>
                 <p className="text-muted-foreground text-xs">
-                  Edite registros DNS pelo painel Atlas. Recomendado.
+                  Importe e edite registros pelo Atlas com DNS Cloudflare.
                 </p>
               </div>
             </CardContent>

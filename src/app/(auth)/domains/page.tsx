@@ -55,8 +55,8 @@ function externalDomainFallback(domain: {
     expiryDate: null,
     features: ["DNS via Atlas"],
     id: domain.domain,
-    isLocked: false,
     isExternal: true,
+    isLocked: false,
     name: domain.domain,
     registrationDate: format(domain.createdAt, "dd/MM/yyyy", { locale: ptBR }),
     status: "active",
@@ -90,7 +90,11 @@ export default async function MyDomainsPage({
               autoRenew: false,
               expiryDate: "Externo",
               features: [
-                domain.dnsMode === "atlas" ? "DNS Atlas" : "DNS externo",
+                domain.dnsMode === "cloudflare"
+                  ? "DNS Atlas / Cloudflare"
+                  : domain.dnsMode === "legacy_plesk"
+                    ? "Migração DNS disponível"
+                    : "DNS externo",
               ],
               id: domain.id,
               isLocked: false,
@@ -99,7 +103,7 @@ export default async function MyDomainsPage({
                 locale: ptBR,
               }),
               status: "active",
-              usesOurDNS: domain.dnsMode === "atlas",
+              usesOurDNS: domain.dnsMode === "cloudflare",
             } as ProcessedDomain;
           }
           const d = await namecheapApi.getInfo({
@@ -117,6 +121,7 @@ export default async function MyDomainsPage({
               d.AutoRenew && "Auto-Renew",
             ].filter(Boolean) as string[],
             id: domain.id,
+            isExternal: false,
             isLocked: d.IsLocked,
             name: d.DomainName,
             registrationDate: d.CreatedDate
@@ -124,13 +129,15 @@ export default async function MyDomainsPage({
               : "N/A",
             status: isBefore(d.ExpireDate, new Date()) ? "expired" : "active",
             usesOurDNS: d.DnsDetails?.IsUsingOurDNS ?? false,
-            isExternal: false,
           } as ProcessedDomain;
         } catch (error) {
           if (isDomainOutsideNamecheap(error)) {
             return externalDomainFallback(domain);
           }
-          console.error(`Failed to fetch Namecheap info for ${domain.domain}:`, error);
+          console.error(
+            `Failed to fetch Namecheap info for ${domain.domain}:`,
+            error
+          );
           return {
             autoRenew: false,
             expiryDate: "Indisponível",
@@ -460,6 +467,7 @@ export default async function MyDomainsPage({
                       </TableCell>
                       <TableCell className="w-12 text-right">
                         <DomainActionsMenu
+                          domainId={domain.id}
                           domainName={domain.name}
                           key={`actions-${domain.id}`}
                         />

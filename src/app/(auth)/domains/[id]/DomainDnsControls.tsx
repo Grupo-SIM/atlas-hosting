@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, ExternalLink, RefreshCw, Server } from "lucide-react";
+import { Check, Cloud, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useTransition } from "react";
 import { toast } from "sonner";
@@ -12,51 +12,43 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { verifyAtlasNameservers } from "../../domain/register/transfer-actions";
-import { enableAtlasDns, keepExternalDns } from "./actions";
+import {
+  keepExternalDns,
+  refreshCloudflareConnection,
+  startCloudflareMigration,
+} from "./actions";
 
 export function DomainDnsControls({
   connectionStatus,
-  canSwitchMode,
+  dnsImportStatus,
   dnsMode,
   domainId,
   nameservers,
+  registrarProvider,
 }: {
   connectionStatus: string;
-  canSwitchMode: boolean;
+  dnsImportStatus: string;
   dnsMode: string;
   domainId: string;
   nameservers: string[];
+  registrarProvider: string | null;
 }) {
-  const [pending, startTransition] = useTransition();
   const router = useRouter();
-  const run = (
-    action: () => Promise<{
-      message: string;
-      success?: boolean;
-      status?: string;
-    }>
-  ) =>
+  const [pending, startTransition] = useTransition();
+  const run = (action: () => Promise<{ message: string; success: boolean }>) =>
     startTransition(async () => {
       const result = await action();
-      if (result.success || result.status === "success")
-        toast.success(result.message);
+      if (result.success) toast.success(result.message);
       else toast.error(result.message);
       router.refresh();
     });
 
   useEffect(() => {
-    if (dnsMode !== "atlas" || connectionStatus !== "awaiting_nameservers")
+    if (dnsMode !== "cloudflare" || connectionStatus !== "awaiting_activation")
       return;
-    const timer = window.setInterval(async () => {
-      const result = await verifyAtlasNameservers(domainId);
-      if (result.status === "success") {
-        toast.success(result.message);
-        router.refresh();
-      }
-    }, 30_000);
+    const timer = window.setInterval(() => router.refresh(), 30_000);
     return () => window.clearInterval(timer);
-  }, [connectionStatus, dnsMode, domainId, router]);
+  }, [connectionStatus, dnsMode, router]);
 
   if (dnsMode === "external") {
     return (
@@ -66,43 +58,70 @@ export function DomainDnsControls({
             <ExternalLink className="h-5 w-5" /> DNS no provedor atual
           </CardTitle>
           <CardDescription>
-            O Atlas exibe apenas registros detectáveis publicamente e não altera
-            sua zona.
+            O Atlas exibe apenas registros públicos detectáveis e não altera a
+            zona.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button
             disabled={pending}
-            onClick={() => run(() => enableAtlasDns(domainId))}
+            onClick={() => run(() => startCloudflareMigration(domainId))}
           >
-            <Server className="mr-2 h-4 w-4" />
-            Gerenciar DNS pelo Atlas
+            <Cloud className="mr-2 h-4 w-4" /> Gerenciar DNS pelo Atlas
           </Button>
         </CardContent>
       </Card>
     );
   }
 
+  if (
+    dnsMode === "legacy_plesk" ||
+    (dnsMode === "cloudflare" && nameservers.length === 0)
+  ) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Migração para Cloudflare</CardTitle>
+          <CardDescription>
+            Criaremos a zona e encontraremos registros existentes. Os
+            nameservers só serão alterados após sua revisão.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            disabled={pending}
+            onClick={() => run(() => startCloudflareMigration(domainId))}
+          >
+            <Cloud className="mr-2 h-4 w-4" /> Iniciar migração assistida
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (dnsImportStatus !== "complete") return null;
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Nameservers Atlas</CardTitle>
+        <CardTitle>Nameservers Cloudflare</CardTitle>
         <CardDescription>
           {connectionStatus === "connected"
-            ? "Conexão ativa e verificada."
-            : "Substitua todos os nameservers atuais pelos abaixo e salve."}
+            ? "Delegação ativa e confirmada pela Cloudflare."
+            : registrarProvider === "namecheap"
+              ? "A Atlas já enviou estes nameservers à Namecheap."
+              : "Substitua todos os nameservers atuais pelos abaixo."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-2 sm:grid-cols-2">
-          {nameservers.map(ns => (
+          {nameservers.map(nameserver => (
             <div
               className="flex items-center justify-between rounded-md border bg-muted/30 p-3 font-mono text-sm"
-              key={ns}
+              key={nameserver}
             >
-              <span>{ns}</span>
+              <span>{nameserver}</span>
               <Button
-                onClick={() => navigator.clipboard.writeText(ns)}
+                onClick={() => navigator.clipboard.writeText(nameserver)}
                 size="icon"
                 variant="ghost"
               >
@@ -115,23 +134,23 @@ export function DomainDnsControls({
           {connectionStatus !== "connected" && (
             <Button
               disabled={pending}
-              onClick={() => run(() => verifyAtlasNameservers(domainId))}
+              onClick={() => run(() => refreshCloudflareConnection(domainId))}
             >
               {pending ? (
                 <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Check className="mr-2 h-4 w-4" />
-              )}
-              Verificar nameservers
+              )}{" "}
+              Verificar ativação
             </Button>
           )}
-          {canSwitchMode && (
+          {registrarProvider !== "namecheap" && (
             <Button
               disabled={pending}
               onClick={() => run(() => keepExternalDns(domainId))}
               variant="outline"
             >
-              Já movi o DNS para outro provedor
+              Manter em outro provedor
             </Button>
           )}
         </div>

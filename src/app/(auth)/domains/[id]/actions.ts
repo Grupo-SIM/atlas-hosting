@@ -1,17 +1,22 @@
 "use server";
 
-import { query } from "dns-query";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgOrganizationDomains } from "@/lib/db/schema";
-import { getAtlasNameservers } from "@/lib/server/domains/dns-config";
-import { preparePleskDnsZone } from "@/lib/server/domains/prepare-dns-zone";
+import { cloudflareApi } from "@/lib/server/apis/cloudflare";
+import {
+  hasPublishedDsRecords,
+  persistCloudflareZone,
+  provisionCloudflareZone,
+  refreshCloudflareZone,
+} from "@/lib/server/domains/cloudflare-dns";
+import { REGISTRAR_ADAPTERS } from "@/lib/server/registrars";
 
 export interface ModeActionResult {
-  success: boolean;
   message: string;
+  success: boolean;
 }
 
 async function ownedDomain(id: string) {
@@ -25,34 +30,121 @@ async function ownedDomain(id: string) {
   });
 }
 
-export async function enableAtlasDns(id: string): Promise<ModeActionResult> {
+async function saveError(id: string, error: unknown) {
+  const message =
+    error instanceof Error ? error.message : "Falha ao configurar a zona DNS.";
+  await db
+    .update(pgOrganizationDomains)
+    .set({ connectionStatus: "error", lastDnsError: message })
+    .where(eq(pgOrganizationDomains.id, id));
+  return { message, success: false } satisfies ModeActionResult;
+}
+
+export async function startCloudflareMigration(
+  id: string
+): Promise<ModeActionResult> {
   const domain = await ownedDomain(id);
   if (!domain?.active)
     return { message: "Domínio ativo não encontrado.", success: false };
+  if (await hasPublishedDsRecords(domain.domain)) {
+    return {
+      message:
+        "Remova primeiro o DNSSEC/registro DS no registrador atual para evitar indisponibilidade durante a troca.",
+      success: false,
+    };
+  }
   try {
-    await preparePleskDnsZone(domain.domain);
+    const zone = await provisionCloudflareZone(domain.domain, true);
+    await persistCloudflareZone(domain.id, zone, {
+      connectionStatus: "review_records",
+      importStatus: "scanning",
+    });
+    revalidatePath(`/domains/${id}`);
+    return {
+      message:
+        "Zona criada. A Cloudflare está procurando registros para sua revisão.",
+      success: true,
+    };
+  } catch (error) {
+    return saveError(id, error);
+  }
+}
+
+export async function completeCloudflareScanReview(
+  id: string,
+  acceptedIds: string[]
+): Promise<ModeActionResult> {
+  const domain = await ownedDomain(id);
+  if (!domain?.active || !domain.cloudflareZoneId)
+    return { message: "Zona Cloudflare não encontrada.", success: false };
+  try {
+    const scanned = await cloudflareApi.listScannedRecords(
+      domain.cloudflareZoneId
+    );
+    const accepted = new Set(acceptedIds);
+    await cloudflareApi.reviewScannedRecords(
+      domain.cloudflareZoneId,
+      scanned.filter(record => accepted.has(record.id)),
+      scanned
+        .filter(record => !accepted.has(record.id))
+        .map(record => record.id)
+    );
+
+    let connectionStatus = "awaiting_nameservers";
+    if (domain.registrarProvider === "namecheap") {
+      const adapter = REGISTRAR_ADAPTERS.get("namecheap");
+      if (!adapter)
+        throw new Error("Integração com o registrador indisponível.");
+      await adapter.setNameservers(
+        domain.domain,
+        domain.expectedNameservers || []
+      );
+      connectionStatus = "awaiting_activation";
+    }
+
     await db
       .update(pgOrganizationDomains)
       .set({
-        connectionStatus: "awaiting_nameservers",
-        dnsMode: "atlas",
-        expectedNameservers: getAtlasNameservers(),
+        connectionStatus,
+        dnsImportedAt: new Date(),
+        dnsImportStatus: "complete",
         lastDnsError: null,
       })
       .where(eq(pgOrganizationDomains.id, id));
     revalidatePath(`/domains/${id}`);
     return {
-      message: "Zona preparada. Troque os nameservers para concluir.",
+      message:
+        domain.registrarProvider === "namecheap"
+          ? "Registros importados e nameservers atualizados na Namecheap."
+          : "Registros importados. Agora altere os nameservers no registrador.",
       success: true,
     };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Falha ao preparar a zona DNS.";
-    await db
-      .update(pgOrganizationDomains)
-      .set({ connectionStatus: "error", lastDnsError: message })
-      .where(eq(pgOrganizationDomains.id, id));
-    return { message, success: false };
+    return saveError(id, error);
+  }
+}
+
+export async function refreshCloudflareConnection(
+  id: string
+): Promise<ModeActionResult> {
+  const domain = await ownedDomain(id);
+  if (!domain?.cloudflareZoneId)
+    return { message: "Zona Cloudflare não encontrada.", success: false };
+  try {
+    await cloudflareApi
+      .triggerActivationCheck(domain.cloudflareZoneId)
+      .catch(() => undefined);
+    const zone = await refreshCloudflareZone(id, domain.cloudflareZoneId);
+    revalidatePath(`/domains/${id}`);
+    return {
+      message:
+        zone.status === "active"
+          ? "Nameservers confirmados. O domínio está ativo na Cloudflare."
+          : "A Cloudflare ainda aguarda a propagação dos nameservers.",
+      success: zone.status === "active",
+    };
+  } catch (error) {
+    return saveError(id, error);
   }
 }
 
@@ -62,40 +154,7 @@ export async function keepExternalDns(id: string): Promise<ModeActionResult> {
     return { message: "Domínio ativo não encontrado.", success: false };
   if (domain.registrarProvider === "namecheap") {
     return {
-      message:
-        "Domínios comprados pelo Atlas usam o DNS gerenciado pelo Atlas.",
-      success: false,
-    };
-  }
-  const atlasNameservers = getAtlasNameservers();
-  try {
-    const responses = await Promise.all(
-      ["1.1.1.1", "8.8.8.8"].map(endpoint =>
-        query(
-          { question: { name: domain.domain, type: "NS" } },
-          { endpoints: [endpoint] }
-        )
-      )
-    );
-    const hasExternalDelegation = responses.every(response => {
-      const found = (response.answers || [])
-        .filter(answer => answer.type === "NS")
-        .map(answer => String(answer.data).toLowerCase().replace(/\.$/, ""));
-      return (
-        found.length >= 2 &&
-        found.every(nameserver => !atlasNameservers.includes(nameserver))
-      );
-    });
-    if (!hasExternalDelegation) {
-      return {
-        message:
-          "Altere primeiro os nameservers no registrador para o novo provedor e aguarde a propagação.",
-        success: false,
-      };
-    }
-  } catch {
-    return {
-      message: "Não foi possível confirmar os nameservers do novo provedor.",
+      message: "Domínios comprados pelo Atlas usam DNS Cloudflare.",
       success: false,
     };
   }
@@ -109,8 +168,7 @@ export async function keepExternalDns(id: string): Promise<ModeActionResult> {
     .where(eq(pgOrganizationDomains.id, id));
   revalidatePath(`/domains/${id}`);
   return {
-    message:
-      "O DNS continuará no provedor atual. A zona Atlas foi preservada como backup.",
+    message: "O DNS continuará no provedor atual.",
     success: true,
   };
 }
