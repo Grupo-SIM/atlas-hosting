@@ -657,6 +657,34 @@ export class NamecheapApiWrapper {
       httpMethod
     );
   };
+
+  public setCustomNameservers = async (params: {
+    SLD: string;
+    TLD: string;
+    Nameservers: string[];
+  }): Promise<{ Domain: string; Updated: boolean }> => {
+    return this._makeRequest<
+      {
+        DomainDNSSetCustomResult?: Array<{
+          $: { Domain: string; Updated: string };
+        }>;
+      },
+      { Domain: string; Updated: boolean }
+    >(
+      "namecheap.domains.dns.setCustom",
+      {
+        Nameservers: params.Nameservers.join(","),
+        SLD: params.SLD,
+        TLD: params.TLD,
+      },
+      raw => {
+        const result = raw.DomainDNSSetCustomResult?.[0]?.$;
+        if (!result)
+          throw new Error("Resposta setCustom inválida da Namecheap.");
+        return { Domain: result.Domain, Updated: result.Updated === "true" };
+      }
+    );
+  };
   // --- END: Added for namecheap.domains.dns.setHosts ---
 
   // --- Method 4: namecheap.domains.getTldList ---

@@ -1,25 +1,24 @@
 import type { Metadata } from "next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { redirect } from "next/navigation";
+import { getUser } from "@/lib/auth";
+import { getUserCurrentDomain } from "@/lib/server/utils";
 
 export const metadata: Metadata = {
-  description: "Cadastro de domínios no Atlas Hosting.",
+  description: "Gerencie os registros DNS do seu domínio pelo Atlas Hosting.",
   title: "Gerenciamento de DNS - Atlas Hosting",
 };
 
-export default function DnsManagementPage() {
-  return (
-    <div className="p-4 pb-16 md:p-6">
-      <Card className="mx-auto max-w-2xl">
-        <CardHeader>
-          <CardTitle>Gerenciamento de DNS indisponível</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            A Atlas não altera zonas DNS de domínios cadastrados. Gerencie os
-            registros no provedor DNS atual do domínio.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+export default async function LegacyDnsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ domain?: string }>;
+}) {
+  const { domain: requested } = await searchParams;
+  const user = await getUser();
+  const domain = requested
+    ? user.organization.domains.find(
+        item => item.id === requested || item.domain === requested
+      )
+    : await getUserCurrentDomain(user);
+  redirect(domain ? `/domains/${domain.id}` : "/domains");
 }

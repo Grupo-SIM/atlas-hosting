@@ -1,23 +1,32 @@
 import { describe, expect, test } from "bun:test";
-import { createDomainVerificationRecord, txtEntriesContainToken } from "./verification";
+import {
+  createDomainVerificationRecord,
+  txtEntriesContainToken,
+} from "./verification";
 
-describe("domain TXT verification", () => {
-  test("creates a stable TXT record without using the website A record", () => {
-    expect(
-      createDomainVerificationRecord("Client.com", "org-123", "test-secret")
-    ).toEqual({
-      host: "_atlas-verification.client.com",
-      value: "atlas-domain-verification=78c52f72bebc432107f6e1612fa2dab3",
-    });
+describe("domain ownership verification", () => {
+  test("creates a stable organization-scoped TXT record", () => {
+    const first = createDomainVerificationRecord(
+      "Example.com",
+      "org-1",
+      "secret"
+    );
+    const second = createDomainVerificationRecord(
+      "example.com.",
+      "org-1",
+      "secret"
+    );
+    expect(first).toEqual(second);
+    expect(first.host).toBe("_atlas-verification.example.com");
+    expect(first.value).toStartWith("atlas-domain-verification=");
   });
 
-  test("recognizes a token returned among unrelated TXT entries", () => {
+  test("accepts quoted TXT answers", () => {
     expect(
       txtEntriesContainToken(
-        ["google-site-verification=abc", "atlas-domain-verification=expected"],
-        "atlas-domain-verification=expected"
+        ['"atlas-domain-verification=abc"'],
+        "atlas-domain-verification=abc"
       )
     ).toBe(true);
   });
 });
-

@@ -1,6 +1,7 @@
 "use client";
 
-import { ExternalLink, MoreHorizontal, RefreshCw } from "lucide-react";
+import { ExternalLink, MoreHorizontal, RefreshCw, Server } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,10 +13,14 @@ import {
 import { RenewDomainModal } from "./RenewDomainModal";
 
 interface DomainActionsMenuProps {
+  domainId: string;
   domainName: string;
 }
 
-export function DomainActionsMenu({ domainName }: DomainActionsMenuProps) {
+export function DomainActionsMenu({
+  domainId,
+  domainName,
+}: DomainActionsMenuProps) {
   const [isRenewOpen, setIsRenewOpen] = useState(false);
 
   return (
@@ -32,6 +37,11 @@ export function DomainActionsMenu({ domainName }: DomainActionsMenuProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link href={`/domains/${domainId}`}>
+              <Server className="mr-2 h-4 w-4" /> Detalhes e DNS
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="cursor-pointer"
             onClick={() => setIsRenewOpen(true)}

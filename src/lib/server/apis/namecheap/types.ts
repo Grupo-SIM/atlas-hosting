@@ -138,6 +138,8 @@ export type DnsRecordType =
   | "MX"
   | "MXE"
   | "NS"
+  | "SRV"
+  | "TLSA"
   | "TXT"
   | "URL"
   | "URL301"

@@ -30,7 +30,7 @@ import { DomainActionsMenu } from "./components/DomainActionsMenu";
 
 // Define a type for the processed domain to be used in the table
 interface ProcessedDomain {
-  id: string; // Using domain name as ID
+  id: string;
   name: string;
   registrationDate: string;
   expiryDate: string | null;
@@ -85,6 +85,23 @@ export default async function MyDomainsPage({
     const domainsRaw = await Promise.all(
       dbDomains.map(async domain => {
         try {
+          if (domain.registrarProvider !== "namecheap") {
+            return {
+              autoRenew: false,
+              expiryDate: "Externo",
+              features: [
+                domain.dnsMode === "atlas" ? "DNS Atlas" : "DNS externo",
+              ],
+              id: domain.id,
+              isLocked: false,
+              name: domain.domain,
+              registrationDate: format(domain.createdAt, "dd/MM/yyyy", {
+                locale: ptBR,
+              }),
+              status: "active",
+              usesOurDNS: domain.dnsMode === "atlas",
+            } as ProcessedDomain;
+          }
           const d = await namecheapApi.getInfo({
             DomainName: domain.domain,
           });
@@ -99,7 +116,7 @@ export default async function MyDomainsPage({
               d.Whoisguard?.Enabled && "Domain Privacy",
               d.AutoRenew && "Auto-Renew",
             ].filter(Boolean) as string[],
-            id: d.DomainName,
+            id: domain.id,
             isLocked: d.IsLocked,
             name: d.DomainName,
             registrationDate: d.CreatedDate
@@ -118,7 +135,7 @@ export default async function MyDomainsPage({
             autoRenew: false,
             expiryDate: "Indisponível",
             features: ["Falha na Sincronização"],
-            id: domain.domain,
+            id: domain.id,
             isLocked: false,
             name: domain.domain,
             registrationDate: "Indisponível",

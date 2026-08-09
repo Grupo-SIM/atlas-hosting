@@ -41,7 +41,8 @@ src/app/api/route.ts
 *.old.ts
 
 pnpm-lock.yaml
-drizzle/
+drizzle/*
+!drizzle/0002_add-domain-dns-management.sql
 
 php-api/
 

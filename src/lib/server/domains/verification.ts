@@ -25,6 +25,9 @@ export function createDomainVerificationRecord(
   };
 }
 
-export function txtEntriesContainToken(entries: readonly string[], token: string): boolean {
-  return entries.some(entry => entry.trim() === token);
+export function txtEntriesContainToken(
+  entries: readonly string[],
+  token: string
+): boolean {
+  return entries.some(entry => entry.replace(/^"|"$/g, "").trim() === token);
 }

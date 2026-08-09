@@ -1,17 +1,8 @@
 import { cache } from "react";
-import { listPleskDnsRecords } from "@/lib/server/apis/plesk/dns";
 import type { DnsHostRecordItem } from "@/lib/server/apis/namecheap/types";
+import { listPleskDnsRecords } from "@/lib/server/apis/plesk/dns";
 
-export interface CachedPleskDnsData {
-  isUsingOurDNS: true;
-  records: DnsHostRecordItem[];
-  sld: string;
-  tld: string;
-}
-
-export const getCachedPleskDnsRecords = cache(async function getCachedPleskDnsRecords(
-  domainName: string
-): Promise<CachedPleskDnsData> {
+export const getCachedPleskDnsRecords = cache(async (domainName: string) => {
   const records = await listPleskDnsRecords(domainName);
   return {
     isUsingOurDNS: true,

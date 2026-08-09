@@ -1,5 +1,8 @@
-import type { DnsRecord, DnsRecordRequest } from "@/plesk";
-import { DnsRecordRequestTypeEnum } from "@/plesk";
+import type {
+  DnsRecord,
+  DnsRecordRequest,
+  DnsRecordRequestTypeEnum,
+} from "@/plesk";
 import pleskApi from ".";
 
 export interface PleskDnsRecord {
@@ -29,9 +32,8 @@ export function normalizePleskDnsRecord(record: DnsRecord): PleskDnsRecord {
   ) {
     throw new Error("O Plesk retornou um registro DNS incompleto.");
   }
-
-  const priority = record.type === "MX" ? Number.parseInt(record.opt || "", 10) : undefined;
-
+  const priority =
+    record.type === "MX" ? Number.parseInt(record.opt || "", 10) : undefined;
   return {
     host: record.host,
     id: record.id,
@@ -54,7 +56,9 @@ function toPleskRecord(input: PleskDnsRecordInput): DnsRecordRequest {
   };
 }
 
-export async function listPleskDnsRecords(domain: string): Promise<PleskDnsRecord[]> {
+export async function listPleskDnsRecords(
+  domain: string
+): Promise<PleskDnsRecord[]> {
   const { data } = await pleskApi.dnsApi.dnsRecordsGet(domain);
   return data.map(normalizePleskDnsRecord);
 }
@@ -62,24 +66,24 @@ export async function listPleskDnsRecords(domain: string): Promise<PleskDnsRecor
 export async function createPleskDnsRecord(
   domain: string,
   input: PleskDnsRecordInput
-): Promise<PleskDnsRecord> {
-  const { data } = await pleskApi.dnsApi.dnsRecordsPost(toPleskRecord(input), domain);
+) {
+  const { data } = await pleskApi.dnsApi.dnsRecordsPost(
+    toPleskRecord(input),
+    domain
+  );
   return normalizePleskDnsRecord(data);
 }
 
 export async function updatePleskDnsRecord(
   id: number,
   input: PleskDnsRecordInput
-): Promise<void> {
-  await pleskApi.dnsApi.dnsRecordsIdPut(toPleskRecord(input) as unknown as DnsRecord, id);
+) {
+  await pleskApi.dnsApi.dnsRecordsIdPut(
+    toPleskRecord(input) as unknown as DnsRecord,
+    id
+  );
 }
 
-export async function deletePleskDnsRecord(id: number): Promise<void> {
+export async function deletePleskDnsRecord(id: number) {
   await pleskApi.dnsApi.dnsRecordsIdDelete(id);
 }
-
-
-
-
-
-

@@ -6,6 +6,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { pgPlan } from "@/lib/db/schema/tables/plan";
@@ -54,15 +55,26 @@ export const organizationRelations = relations(
   })
 );
 
-export const pgOrganizationDomains = pgTable("organization_domains", {
-  active: boolean("active").default(true).notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  domain: text("domain").notNull(),
-  id: uuid("id").primaryKey().defaultRandom(),
-  organizationId: uuid("organization_id")
-    .notNull()
-    .references(() => pgOrganization.id),
-});
+export const pgOrganizationDomains = pgTable(
+  "organization_domains",
+  {
+    active: boolean("active").default(true).notNull(),
+    connectionStatus: text("connection_status").default("connected").notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    dnsMode: text("dns_mode").default("atlas").notNull(),
+    domain: text("domain").notNull(),
+    expectedNameservers: text("expected_nameservers").array(),
+    id: uuid("id").primaryKey().defaultRandom(),
+    lastDnsCheckAt: timestamp("last_dns_check_at", { mode: "date" }),
+    lastDnsError: text("last_dns_error"),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => pgOrganization.id),
+    registrarProvider: text("registrar_provider"),
+    verifiedAt: timestamp("verified_at", { mode: "date" }),
+  },
+  table => [uniqueIndex("organization_domains_domain_unique").on(table.domain)]
+);
 
 export const pgUserPermission = pgTable(
   "domain_to_user",

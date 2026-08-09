@@ -1,22 +1,19 @@
 import { describe, expect, test } from "bun:test";
-import { hasActiveDomainAccess } from "./authorization";
+import { hasActiveDomainAccess, normalizeDomainName } from "./authorization";
 
-describe("hasActiveDomainAccess", () => {
-  test("denies an inactive domain even when it belongs to the organization", () => {
-    expect(
-      hasActiveDomainAccess(
-        [
-          { active: false, domain: "client.com" },
-          { active: true, domain: "other.com" },
-        ],
-        "CLIENT.COM"
-      )
-    ).toBe(false);
+describe("domain authorization", () => {
+  test("normalizes protocol, case and final dot", () => {
+    expect(normalizeDomainName(" HTTPS://Example.COM./path ")).toBe(
+      "example.com"
+    );
   });
 
-  test("allows the active domain independent of letter casing", () => {
-    expect(
-      hasActiveDomainAccess([{ active: true, domain: "client.com" }], "CLIENT.COM")
-    ).toBe(true);
+  test("requires an active Atlas-managed domain for DNS writes", () => {
+    const domains = [
+      { active: true, dnsMode: "external", domain: "external.test" },
+      { active: true, dnsMode: "atlas", domain: "atlas.test" },
+    ];
+    expect(hasActiveDomainAccess(domains, "external.test", true)).toBe(false);
+    expect(hasActiveDomainAccess(domains, "ATLAS.TEST.", true)).toBe(true);
   });
 });

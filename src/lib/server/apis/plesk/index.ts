@@ -1,5 +1,5 @@
 import https from "node:https";
-import axios, { type AxiosInstance } from "axios";
+import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
 import * as Plesk from "@/plesk";
 import SubscriptionApi from "./subscriptions";
 import PleskWpToolkitApi from "./wp-toolkit";
@@ -65,6 +65,31 @@ export class PleskApi {
               username: this.rootUser,
             },
           }),
+    });
+
+    // Algumas instalações mantêm uma chave antiga no ambiente. Se o Plesk a
+    // rejeitar, refazemos uma única vez com as credenciais root já configuradas.
+    this.pleskAxios.interceptors.response.use(undefined, async error => {
+      const config = error.config as
+        | (AxiosRequestConfig & { __atlasBasicRetry?: boolean })
+        | undefined;
+      if (
+        error.response?.status === 401 &&
+        this.apiKey &&
+        this.rootUser &&
+        this.rootPassword &&
+        config &&
+        !config.__atlasBasicRetry
+      ) {
+        config.__atlasBasicRetry = true;
+        config.headers = {
+          ...config.headers,
+          Authorization: `Basic ${Buffer.from(`${this.rootUser}:${this.rootPassword}`).toString("base64")}`,
+          "X-API-Key": undefined,
+        };
+        return this.pleskAxios.request(config);
+      }
+      return Promise.reject(error);
     });
 
     this.apiConfig = new Plesk.Configuration({

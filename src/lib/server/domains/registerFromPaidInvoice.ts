@@ -9,11 +9,11 @@ import {
 } from "@/lib/db/schema";
 import namecheapApi from "@/lib/server/apis/namecheap";
 import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
+import { getAtlasNameservers } from "@/lib/server/domains/dns-config";
+import { preparePleskDnsZone } from "@/lib/server/domains/prepare-dns-zone";
+import { REGISTRAR_ADAPTERS } from "@/lib/server/registrars";
 
-const DEFAULT_NS = [
-  "dns1.registrar-servers.com",
-  "dns2.registrar-servers.com",
-] as const;
+const DEFAULT_NS = getAtlasNameservers();
 
 /** Domínios a registrar: pacote (`metadata.bundleDomains`) ou fatura avulsa (`reference`). */
 export function domainNamesFromInvoice(
@@ -53,10 +53,29 @@ async function isLinkedInDb(orgId: string, domain: string): Promise<boolean> {
 
 async function linkDomain(orgId: string, domain: string): Promise<void> {
   if (await isLinkedInDb(orgId, domain)) return;
+  let connectionStatus = "awaiting_nameservers";
+  let lastDnsError: string | null = null;
+  try {
+    await preparePleskDnsZone(domain);
+    await REGISTRAR_ADAPTERS.get("namecheap")?.setNameservers(
+      domain,
+      DEFAULT_NS
+    );
+  } catch (error) {
+    connectionStatus = "error";
+    lastDnsError =
+      error instanceof Error ? error.message : "Falha ao configurar DNS Atlas.";
+  }
   await db.insert(pgOrganizationDomains).values({
     active: true,
+    connectionStatus,
+    dnsMode: "atlas",
     domain,
+    expectedNameservers: DEFAULT_NS,
+    lastDnsError,
     organizationId: orgId,
+    registrarProvider: "namecheap",
+    verifiedAt: new Date(),
   });
 }
 
@@ -160,7 +179,7 @@ export async function registerDomainsFromPaidInvoice(
         Admin: contact,
         AuxBilling: contact,
         DomainName,
-        Nameservers: [...DEFAULT_NS],
+        Nameservers: DEFAULT_NS,
         Registrant: contact,
         Tech: contact,
         WGEnabled: whoisguard ? "yes" : "no",

@@ -8,6 +8,7 @@ import {
   useActionState,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useState,
 } from "react";
@@ -58,13 +59,58 @@ import type {
   DnsHostRecordItem,
   DnsRecordType,
 } from "@/lib/server/apis/namecheap/types";
-import { dnsRecordTypes, type PleskDnsRecordType } from "../record-types";
 import {
-  addPleskDnsRecordAction as addDnsRecordAction,
+  addPleskDnsRecordAction,
   type DnsActionResult,
-  deletePleskDnsRecordAction as deleteDnsRecordAction,
-  updatePleskDnsRecordAction as updateDnsRecordAction,
+  deletePleskDnsRecordAction,
+  updatePleskDnsRecordAction,
 } from "../plesk-actions";
+
+const recordTypes: {
+  value: DnsRecordType;
+  label: string;
+  description: string;
+  needsPriority?: boolean;
+}[] = [
+  { description: "Aponta para um endereço IPv4", label: "A", value: "A" },
+  { description: "Aponta para um endereço IPv6", label: "AAAA", value: "AAAA" },
+  {
+    description: "Aponta para outro domínio",
+    label: "CNAME",
+    value: "CNAME",
+  },
+  {
+    description: "Define servidores de e-mail para o domínio",
+    label: "MX",
+    needsPriority: true,
+    value: "MX",
+  },
+  {
+    description: "Armazena informações de texto, muitas vezes para verificação",
+    label: "TXT",
+    value: "TXT",
+  },
+  {
+    description: "Autorização de Autoridade de Certificação",
+    label: "CAA",
+    value: "CAA",
+  },
+  {
+    description: "Localiza serviços por porta e protocolo",
+    label: "SRV",
+    value: "SRV",
+  },
+  {
+    description: "Associa certificados TLS ao DNS",
+    label: "TLSA",
+    value: "TLSA",
+  },
+  {
+    description: "Delega um subdomínio para outro nameserver",
+    label: "NS",
+    value: "NS",
+  },
+];
 
 const commonTTLs = [
   { label: "1 minuto", value: "60" },
@@ -83,6 +129,7 @@ interface DnsRecordsManagerProps {
   sld: string; // Not directly used by client, but good to have if actions needed it differently
   tld: string; // Same as sld
   isUsingOurDNS: boolean;
+  readOnly?: boolean;
 }
 
 type FormMode = "add" | "edit";
@@ -93,15 +140,25 @@ interface EditingRecordState extends DnsHostRecordItem {
 export function DnsRecordsManager({
   domainName,
   initialRecords,
+  readOnly = false,
 }: DnsRecordsManagerProps) {
   const router = useRouter();
+  const formId = useId();
+  const isProtectedRecord = (record: DnsHostRecordItem) => {
+    const isApex =
+      record.Name.replace(/\.$/, "").toLowerCase() === domainName.toLowerCase();
+    return (
+      record.Type === ("SOA" as DnsRecordType) ||
+      (record.Type === "NS" && isApex)
+    );
+  };
   const [records, setRecords] = useState<DnsHostRecordItem[]>(initialRecords);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Form state for adding/editing
   const [formMode, setFormMode] = useState<FormMode>("add");
   const [selectedRecordType, setSelectedRecordType] =
-    useState<PleskDnsRecordType>("A");
+    useState<DnsRecordType>("A");
   const [hostName, setHostName] = useState("@"); // Default to root
   const [address, setAddress] = useState("");
   const [ttl, setTtl] = useState("3600"); // Default 1 hour
@@ -118,15 +175,15 @@ export function DnsRecordsManager({
 
   // Server action states
   const [addState, addFormAction, isPendingAdd] = useActionState(
-    addDnsRecordAction,
+    addPleskDnsRecordAction,
     null
   );
   const [updateState, updateFormAction, isPendingUpdate] = useActionState(
-    updateDnsRecordAction,
+    updatePleskDnsRecordAction,
     null
   );
   const [deleteState, deleteFormAction, isPendingDelete] = useActionState(
-    deleteDnsRecordAction,
+    deletePleskDnsRecordAction,
     null
   );
 
@@ -194,7 +251,7 @@ export function DnsRecordsManager({
 
   const openEditModal = (record: DnsHostRecordItem) => {
     setFormMode("edit");
-    setSelectedRecordType(record.Type as PleskDnsRecordType);
+    setSelectedRecordType(record.Type as DnsRecordType);
     setHostName(record.Name);
     setAddress(record.Address);
     setTtl(record.TTL.toString());
@@ -206,10 +263,6 @@ export function DnsRecordsManager({
   const openDeleteModal = (record: DnsHostRecordItem) => {
     setRecordToDelete(record);
     setIsDeleteModalOpen(true);
-  };
-
-  const handleAddEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    // FormData will be handled by the form action
   };
 
   const handleDeleteSubmit = () => {
@@ -236,7 +289,7 @@ export function DnsRecordsManager({
     );
   }, [records, searchQuery]);
 
-  const selectedRecordTypeInfo = dnsRecordTypes.find(
+  const selectedRecordTypeInfo = recordTypes.find(
     rt => rt.value === selectedRecordType
   );
 
@@ -270,9 +323,11 @@ export function DnsRecordsManager({
               <HelpCircle className="h-5 w-5" />
               <span className="sr-only">Guia de Registros DNS</span>
             </Button>
-            <Button onClick={openAddModal}>
-              <Plus className="mr-2 h-4 w-4" /> Adicionar Registro
-            </Button>
+            {!readOnly && (
+              <Button onClick={openAddModal}>
+                <Plus className="mr-2 h-4 w-4" /> Adicionar Registro
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -305,7 +360,9 @@ export function DnsRecordsManager({
                       <TableHead>Prioridade</TableHead>
                     )}
                     <TableHead>TTL</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    {!readOnly && (
+                      <TableHead className="text-right">Ações</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -317,7 +374,7 @@ export function DnsRecordsManager({
                             <Badge variant="outline">{record.Type}</Badge>
                           </TooltipTrigger>
                           <TooltipContent>
-                            {dnsRecordTypes.find(rt => rt.value === record.Type)
+                            {recordTypes.find(rt => rt.value === record.Type)
                               ?.description || "N/A"}
                           </TooltipContent>
                         </Tooltip>
@@ -373,38 +430,42 @@ export function DnsRecordsManager({
                           <TooltipContent>{record.TTL} segundos</TooltipContent>
                         </Tooltip>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                className="h-8 w-8"
-                                onClick={() => openEditModal(record)}
-                                size="icon"
-                                variant="ghost"
-                              >
-                                <Pencil className="h-4 w-4" />{" "}
-                                <span className="sr-only">Editar</span>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Editar Registro</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                className="h-8 w-8 text-destructive hover:text-destructive/90"
-                                onClick={() => openDeleteModal(record)}
-                                size="icon"
-                                variant="ghost"
-                              >
-                                <Trash2 className="h-4 w-4" />{" "}
-                                <span className="sr-only">Deletar</span>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Deletar Registro</TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </TableCell>
+                      {!readOnly && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  className="h-8 w-8"
+                                  disabled={isProtectedRecord(record)}
+                                  onClick={() => openEditModal(record)}
+                                  size="icon"
+                                  variant="ghost"
+                                >
+                                  <Pencil className="h-4 w-4" />{" "}
+                                  <span className="sr-only">Editar</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Editar Registro</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  className="h-8 w-8 text-destructive hover:text-destructive/90"
+                                  disabled={isProtectedRecord(record)}
+                                  onClick={() => openDeleteModal(record)}
+                                  size="icon"
+                                  variant="ghost"
+                                >
+                                  <Trash2 className="h-4 w-4" />{" "}
+                                  <span className="sr-only">Deletar</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Deletar Registro</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -432,7 +493,6 @@ export function DnsRecordsManager({
           <form
             action={formMode === "add" ? addFormAction : updateFormAction}
             className="space-y-4 py-2"
-            onSubmit={handleAddEditSubmit}
           >
             <input name="domainName" type="hidden" value={domainName} />
             {formMode === "edit" && currentEditingRecord && (
@@ -446,22 +506,22 @@ export function DnsRecordsManager({
             <div>
               <label
                 className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
-                htmlFor="recordType"
+                htmlFor={`${formId}-record-type`}
               >
                 Tipo de Registro
               </label>
               <Select
                 name="recordType"
-                onValueChange={v => setSelectedRecordType(v as PleskDnsRecordType)}
+                onValueChange={v => setSelectedRecordType(v as DnsRecordType)}
                 value={selectedRecordType}
               >
-                <SelectTrigger id="recordType">
+                <SelectTrigger id={`${formId}-record-type`}>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {dnsRecordTypes.map(type => (
+                  {recordTypes.map(type => (
                     <SelectItem key={type.value} value={type.value}>
-                      {type.value} ({type.description})
+                      {type.label} ({type.description})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -471,12 +531,12 @@ export function DnsRecordsManager({
             <div>
               <label
                 className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
-                htmlFor="hostName"
+                htmlFor={`${formId}-host`}
               >
                 Nome (Host)
               </label>
               <Input
-                id="hostName"
+                id={`${formId}-host`}
                 name="hostName"
                 onChange={e => setHostName(e.target.value)}
                 placeholder="@ para raiz, www, mail, etc."
@@ -492,12 +552,12 @@ export function DnsRecordsManager({
               <div>
                 <label
                   className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
-                  htmlFor="mxPref"
+                  htmlFor={`${formId}-mx-pref`}
                 >
                   Prioridade (MX)
                 </label>
                 <Input
-                  id="mxPref"
+                  id={`${formId}-mx-pref`}
                   name="mxPref"
                   onChange={e => setMxPref(e.target.value)}
                   placeholder="e.g., 10"
@@ -510,15 +570,21 @@ export function DnsRecordsManager({
             <div>
               <label
                 className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
-                htmlFor="address"
+                htmlFor={`${formId}-address`}
               >
                 Valor
               </label>
               <Input
-                id="address"
+                id={`${formId}-address`}
                 name="address"
                 onChange={e => setAddress(e.target.value)}
-                placeholder={selectedRecordTypeInfo?.placeholder || "Valor do registro"}
+                placeholder={
+                  selectedRecordType === "A"
+                    ? "Endereço IPv4 (ex: 192.168.1.1)"
+                    : selectedRecordType === "CNAME"
+                      ? "Domínio de destino (ex: exemplo.com)"
+                      : "Conteúdo/Endereço"
+                }
                 value={address}
               />
             </div>
@@ -526,12 +592,12 @@ export function DnsRecordsManager({
             <div>
               <label
                 className="mb-1 block font-medium text-gray-700 text-sm dark:text-gray-300"
-                htmlFor="ttl"
+                htmlFor={`${formId}-ttl`}
               >
                 TTL (Tempo De Vida)
               </label>
               <Select name="ttl" onValueChange={setTtl} value={ttl}>
-                <SelectTrigger id="ttl">
+                <SelectTrigger id={`${formId}-ttl`}>
                   <SelectValue placeholder="Select TTL" />
                 </SelectTrigger>
                 <SelectContent>
@@ -610,13 +676,13 @@ export function DnsRecordsManager({
             </DialogDescription>
           </DialogHeader>
           <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4">
-            {dnsRecordTypes.map(type => (
+            {recordTypes.map(type => (
               <div
                 className="rounded-md border bg-muted/50 p-3"
                 key={type.value}
               >
                 <h4 className="font-semibold">
-                  {type.value} ({type.value})
+                  {type.label} ({type.value})
                 </h4>
                 <p className="text-muted-foreground text-sm">
                   {type.description}
