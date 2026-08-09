@@ -1,21 +1,60 @@
 # Gerenciamento DNS Atlas
 
-O Atlas usa o Plesk como autoridade DNS para domínios gerenciados. A Namecheap
-é tratada como registrador: a API apenas consulta o domínio e configura os
-nameservers; o editor não usa `setHosts`, pois esse método substitui a coleção
-completa de registros.
+O Atlas usa zonas **full** da Cloudflare como autoridade para todo domínio com
+`dns_mode = 'cloudflare'`. A Namecheap continua sendo o registrador dos domínios
+comprados pela plataforma e só recebe os nameservers atribuídos a cada zona.
+O Plesk não é mais usado como servidor DNS.
 
 ## Configuração
 
-- `ATLAS_DNS_NAMESERVERS`: pelo menos dois nameservers compartilhados, separados
-  por vírgula. Exemplo: `ns1.meuservidor.inf.br,ns2.meuservidor.inf.br`.
-- `DOMAIN_VERIFICATION_SECRET`: segredo usado para assinar o TXT de propriedade.
-  Se ausente, o sistema usa `AUTH_SECRET`.
-- Credenciais `PLESK_*` e `NAMECHEAP_*` já utilizadas pelo projeto.
+- `CLOUDFLARE_API_TOKEN`: token server-only com `Zone Read`, `Zone Edit`,
+  `DNS Read` e `DNS Edit`, limitado à conta operacional do Atlas.
+- `DOMAIN_VERIFICATION_SECRET`: segredo que assina o TXT de propriedade. Se
+  ausente, o sistema usa `AUTH_SECRET`.
+- `NAMECHEAP_*`: continuam necessários para compra, renovação, consulta e
+  delegação dos domínios registrados pelo Atlas.
 
-Antes do deploy, aplique `drizzle/0002_add-domain-dns-management.sql`. O backfill
-mantém domínios existentes no provedor atual para evitar qualquer mudança de
-delegação sem consentimento.
+O IP de saída dos jobs de compra e reconciliação deve constar na allowlist da
+API Namecheap; caso contrário, a API responde com o erro `1011150`.
 
-Os nameservers configurados precisam responder autoritativamente pelas zonas
-criadas no Plesk antes que o fluxo seja liberado em produção.
+O token é usado sem `account.id`: o escopo da conta é determinado pela política
+do próprio token. Nunca envie esse token a Client Components ou ao navegador.
+
+## Estados e fluxos
+
+- `external`: o Atlas mostra somente registros públicos detectáveis.
+- `cloudflare`: a zona é editável pelo Atlas, mesmo enquanto aguarda delegação.
+- `legacy_plesk`: domínio preexistente que precisa iniciar a migração assistida.
+
+Domínios externos passam por TXT de propriedade, criação da zona, scan, revisão
+dos registros e troca manual dos nameservers. Em domínios Namecheap existentes,
+a troca é executada pelo Atlas somente depois da revisão. Compras novas criam a
+zona e delegam automaticamente logo após o registro.
+
+O scan da Cloudflare é assíncrono e procura apenas registros comuns. O usuário
+deve revisar o resultado e pode complementar a zona manualmente ou importar um
+arquivo BIND de até 256 KiB. A edição usa operações individuais; não há
+substituição destrutiva da coleção completa.
+
+## Migração e rollout
+
+1. Aplique `drizzle/0002_add-domain-dns-management.sql` ou execute o `db:push`
+   controlado do ambiente.
+2. Rode `bun scripts/reconcile-domain-dns.ts` para visualizar a classificação.
+3. Depois de revisar o resumo, rode o mesmo comando com `--apply`.
+4. Migre os domínios `legacy_plesk` individualmente pela tela de detalhes.
+
+O script é dry-run por padrão. Ele classifica domínios encontrados na conta
+Namecheap como `legacy_plesk`; os demais permanecem `external`. Ele não cria
+zonas nem troca nameservers.
+
+Antes da delegação, o Atlas procura registros DS publicados. DNSSEC antigo deve
+ser removido no registrador para evitar `SERVFAIL`. A primeira versão não publica
+DS automaticamente na Namecheap.
+
+Referências:
+
+- https://developers.cloudflare.com/api/resources/zones/methods/create/
+- https://developers.cloudflare.com/api/resources/dns/subresources/records/
+- https://developers.cloudflare.com/dns/zone-setups/reference/domain-status/
+- https://developers.cloudflare.com/dns/dnssec/
