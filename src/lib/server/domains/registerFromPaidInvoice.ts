@@ -9,11 +9,8 @@ import {
 } from "@/lib/db/schema";
 import namecheapApi from "@/lib/server/apis/namecheap";
 import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
-import { getAtlasNameservers } from "@/lib/server/domains/dns-config";
-import { preparePleskDnsZone } from "@/lib/server/domains/prepare-dns-zone";
+import { provisionCloudflareZone } from "@/lib/server/domains/cloudflare-dns";
 import { REGISTRAR_ADAPTERS } from "@/lib/server/registrars";
-
-const DEFAULT_NS = getAtlasNameservers();
 
 /** Domínios a registrar: pacote (`metadata.bundleDomains`) ou fatura avulsa (`reference`). */
 export function domainNamesFromInvoice(
@@ -51,27 +48,58 @@ async function isLinkedInDb(orgId: string, domain: string): Promise<boolean> {
   return !!existing;
 }
 
-async function linkDomain(orgId: string, domain: string): Promise<void> {
+async function linkDomain(
+  orgId: string,
+  domain: string,
+  newlyRegistered: boolean
+): Promise<void> {
   if (await isLinkedInDb(orgId, domain)) return;
-  let connectionStatus = "awaiting_nameservers";
+  if (!newlyRegistered) {
+    await db.insert(pgOrganizationDomains).values({
+      active: true,
+      connectionStatus: "migration_required",
+      dnsMode: "legacy_plesk",
+      domain,
+      organizationId: orgId,
+      registrarProvider: "namecheap",
+      verifiedAt: new Date(),
+    });
+    return;
+  }
+
+  let connectionStatus = "provisioning";
+  let cloudflareZoneId: string | null = null;
+  let cloudflareZoneStatus: string | null = null;
+  let expectedNameservers: string[] | null = null;
   let lastDnsError: string | null = null;
   try {
-    await preparePleskDnsZone(domain);
+    const zone = await provisionCloudflareZone(domain, false);
+    cloudflareZoneId = zone.id;
+    cloudflareZoneStatus = zone.status;
+    expectedNameservers = zone.name_servers;
     await REGISTRAR_ADAPTERS.get("namecheap")?.setNameservers(
       domain,
-      DEFAULT_NS
+      zone.name_servers
     );
+    connectionStatus =
+      zone.status === "active" ? "connected" : "awaiting_activation";
   } catch (error) {
     connectionStatus = "error";
     lastDnsError =
-      error instanceof Error ? error.message : "Falha ao configurar DNS Atlas.";
+      error instanceof Error
+        ? error.message
+        : "Falha ao configurar DNS na Cloudflare.";
   }
   await db.insert(pgOrganizationDomains).values({
     active: true,
+    cloudflareZoneId,
+    cloudflareZoneStatus,
     connectionStatus,
-    dnsMode: "atlas",
+    dnsImportedAt: new Date(),
+    dnsImportStatus: "complete",
+    dnsMode: "cloudflare",
     domain,
-    expectedNameservers: DEFAULT_NS,
+    expectedNameservers,
     lastDnsError,
     organizationId: orgId,
     registrarProvider: "namecheap",
@@ -164,7 +192,7 @@ export async function registerDomainsFromPaidInvoice(
         console.warn(
           `[REGISTER] ${DomainName} já está na conta Namecheap; vinculando sem nova cobrança.`
         );
-        await linkDomain(invoice.orgId, DomainName);
+        await linkDomain(invoice.orgId, DomainName, false);
         result.registered.push(DomainName);
         result.skipped.push(DomainName);
         continue;
@@ -179,7 +207,6 @@ export async function registerDomainsFromPaidInvoice(
         Admin: contact,
         AuxBilling: contact,
         DomainName,
-        Nameservers: DEFAULT_NS,
         Registrant: contact,
         Tech: contact,
         WGEnabled: whoisguard ? "yes" : "no",
@@ -190,7 +217,7 @@ export async function registerDomainsFromPaidInvoice(
         console.log(
           `[REGISTER] ✓ ${DomainName} registrado (OrderID: ${domainResult.OrderID}).`
         );
-        await linkDomain(invoice.orgId, DomainName);
+        await linkDomain(invoice.orgId, DomainName, true);
         result.registered.push(DomainName);
       } else {
         console.error(
