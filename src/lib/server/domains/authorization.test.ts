@@ -11,7 +11,7 @@ describe("domain authorization", () => {
   test("requires an active Atlas-managed domain for DNS writes", () => {
     const domains = [
       { active: true, dnsMode: "external", domain: "external.test" },
-      { active: true, dnsMode: "atlas", domain: "atlas.test" },
+      { active: true, dnsMode: "cloudflare", domain: "atlas.test" },
     ];
     expect(hasActiveDomainAccess(domains, "external.test", true)).toBe(false);
     expect(hasActiveDomainAccess(domains, "ATLAS.TEST.", true)).toBe(true);

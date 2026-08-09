@@ -59,9 +59,14 @@ export const pgOrganizationDomains = pgTable(
   "organization_domains",
   {
     active: boolean("active").default(true).notNull(),
+    cloudflareZoneId: text("cloudflare_zone_id"),
+    cloudflareZoneStatus: text("cloudflare_zone_status"),
     connectionStatus: text("connection_status").default("connected").notNull(),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-    dnsMode: text("dns_mode").default("atlas").notNull(),
+    dnsImportedAt: timestamp("dns_imported_at", { mode: "date" }),
+    dnsImportStatus: text("dns_import_status").default("not_started").notNull(),
+    dnsMode: text("dns_mode").default("external").notNull(),
+    dnsScanStartedAt: timestamp("dns_scan_started_at", { mode: "date" }),
     domain: text("domain").notNull(),
     expectedNameservers: text("expected_nameservers").array(),
     id: uuid("id").primaryKey().defaultRandom(),
@@ -73,7 +78,12 @@ export const pgOrganizationDomains = pgTable(
     registrarProvider: text("registrar_provider"),
     verifiedAt: timestamp("verified_at", { mode: "date" }),
   },
-  table => [uniqueIndex("organization_domains_domain_unique").on(table.domain)]
+  table => [
+    uniqueIndex("organization_domains_domain_unique").on(table.domain),
+    uniqueIndex("organization_domains_cloudflare_zone_unique").on(
+      table.cloudflareZoneId
+    ),
+  ]
 );
 
 export const pgUserPermission = pgTable(

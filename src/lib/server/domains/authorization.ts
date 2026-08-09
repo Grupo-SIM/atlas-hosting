@@ -23,6 +23,6 @@ export function hasActiveDomainAccess(
     candidate =>
       candidate.active &&
       normalizeDomainName(candidate.domain) === normalizedDomain &&
-      (!requireAtlasDns || candidate.dnsMode === "atlas")
+      (!requireAtlasDns || candidate.dnsMode === "cloudflare")
   );
 }
