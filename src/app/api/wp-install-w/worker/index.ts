@@ -9,7 +9,6 @@ import {
 } from "@/app/api/wp-install-w/utils";
 import { db } from "@/lib/db";
 import { pgOrganization } from "@/lib/db/schema";
-import namecheapApi from "@/lib/server/apis/namecheap";
 import type {
   DnsHostRecord,
   DnsRecordType as NamecheapDnsRecordType,
@@ -20,10 +19,10 @@ import {
   createSubscription,
   deleteDomain,
   deleteFtpUser,
-  getDnsRecords,
   getDomain,
 } from "@/lib/server/apis/plesk-xml/client";
 import type { GetDnsRecordsResult } from "@/lib/server/apis/plesk-xml/types";
+import { configureWebHostingDns } from "@/lib/server/domains/cloudflare-dns";
 import { AppLogger } from "@/lib/server/logs";
 import { ClientRequestTypeEnum } from "@/plesk";
 import type { InstallWpData } from "../types";
@@ -186,7 +185,8 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
 
     // --on--- START: Full DNS Synchronization with Namecheap -----
     async function setupDns() {
-      sendProgress("INFO", "Iniciando configuração de DNS...");
+      sendProgress("INFO", "Configurando registros DNS na Cloudflare...");
+      await configureWebHostingDns(domainName, serverIp!);
 
       let pleskDnsRecords: GetDnsRecordsResult[] | undefined;
       try {
@@ -194,7 +194,7 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
           throw new Error("salve campeão");
         }
 
-        pleskDnsRecords = await getDnsRecords(sub.id);
+        pleskDnsRecords = [];
       } catch (error) {
         console.error(
           `Erro ao atualizar registros DNS para ${domainName}:`,
@@ -287,11 +287,8 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
               "INFO",
               `Cadastrando ${namecheapDnsEntries.length} registros DNS...`
             );
-            const namecheapResponse = await namecheapApi.setHosts({
-              Records: namecheapDnsEntries,
-              SLD: sld,
-              TLD: tld,
-            });
+            await configureWebHostingDns(domainName, serverIp!);
+            const namecheapResponse = { IsSuccess: true };
 
             console.log({ namecheapResponse });
 

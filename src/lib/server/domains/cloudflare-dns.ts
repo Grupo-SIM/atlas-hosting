@@ -1,5 +1,5 @@
 import { query } from "dns-query";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { pgOrganizationDomains } from "@/lib/db/schema";
 import {
@@ -70,4 +70,39 @@ export async function refreshCloudflareZone(domainId: string, zoneId: string) {
     })
     .where(eq(pgOrganizationDomains.id, domainId));
   return zone;
+}
+
+export async function getManagedCloudflareZone(domain: string) {
+  const managed = await db.query.pgOrganizationDomains.findFirst({
+    where: and(
+      eq(pgOrganizationDomains.domain, domain.toLowerCase()),
+      eq(pgOrganizationDomains.dnsMode, "cloudflare"),
+      eq(pgOrganizationDomains.active, true)
+    ),
+  });
+  if (!managed?.cloudflareZoneId)
+    throw new Error(
+      `O domínio ${domain} não possui uma zona Cloudflare gerenciada pelo Atlas.`
+    );
+  return { domain: managed, zoneId: managed.cloudflareZoneId };
+}
+
+export async function configureWebHostingDns(domain: string, serverIp: string) {
+  const { zoneId } = await getManagedCloudflareZone(domain);
+  await Promise.all([
+    cloudflareApi.upsertDnsRecord(zoneId, {
+      content: serverIp,
+      name: domain,
+      proxied: false,
+      ttl: 1,
+      type: "A",
+    }),
+    cloudflareApi.upsertDnsRecord(zoneId, {
+      content: serverIp,
+      name: `www.${domain}`,
+      proxied: false,
+      ttl: 1,
+      type: "A",
+    }),
+  ]);
 }

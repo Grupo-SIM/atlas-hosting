@@ -4,8 +4,8 @@ import { Readable } from "node:stream";
 import acme from "acme-client";
 import { Client as FtpClient } from "basic-ftp";
 import { lookupTxt } from "dns-query";
-import namecheapApi from "../namecheap";
-import type { DnsHostRecord, DnsRecordType } from "../namecheap/types";
+import { getManagedCloudflareZone } from "../../domains/cloudflare-dns";
+import { cloudflareApi } from "../cloudflare";
 import { getSubscription } from "../plesk-xml/client";
 
 export class CertificatesApi {
@@ -15,30 +15,7 @@ export class CertificatesApi {
   private readonly challengeDirectory = ".well-known/acme-challenge"; // Change this to your desired directory
 
   public async getCertificate(domainName: string) {
-    const sld = domainName.split(".")[0];
-    const tld = domainName.split(".")[1];
     let keyAuthorization = "";
-
-    const currentDnsRecords = await namecheapApi
-      .getDnsHosts({
-        SLD: sld,
-        TLD: tld,
-      })
-      .then(({ Hosts }) =>
-        Hosts.filter(
-          ({ Type, Address }) => Type !== "TXT" || Address === "_acme-challenge"
-        )
-          .map(host => ({
-            Address: host.Address,
-            HostName: host.Name,
-            RecordType: host.Type as DnsRecordType,
-          }))
-          .filter(
-            predicate =>
-              predicate.HostName !== "_acme-challenge" ||
-              predicate.RecordType !== "TXT"
-          )
-      );
     try {
       // --- 1. Initialize ACME Client & Account ---
       console.log("Initializing ACME client...");
@@ -96,27 +73,14 @@ export class CertificatesApi {
         console.log(`  Domain: ${challengeDomain}`);
         console.log(`  Value: ${keyAuthorization}`);
 
-        const newDnsRecords: DnsHostRecord[] = [
-          {
-            Address: keyAuthorization,
-            HostName: "_acme-challenge",
-            RecordType: "TXT",
-          },
-        ];
-
-        const recordsToSet = currentDnsRecords.concat(newDnsRecords);
-
-        console.log(recordsToSet);
-
-        // --- 3a. Create DNS TXT Record ---
-        // This part is highly dependent on your DNS provider's API
-        const result = await namecheapApi.setHosts({
-          Records: recordsToSet,
-          SLD: sld,
-          TLD: tld,
+        const { zoneId } = await getManagedCloudflareZone(domainName);
+        const challengeRecord = await cloudflareApi.createDnsRecord(zoneId, {
+          content: keyAuthorization,
+          name: `_acme-challenge.${domainName}`,
+          proxied: false,
+          ttl: 60,
+          type: "TXT",
         });
-
-        console.log({ result });
 
         console.log(
           "TXT record creation initiated. Waiting for propagation..."
@@ -138,33 +102,37 @@ export class CertificatesApi {
 
         // --- 3c. Notify Let's Encrypt to Verify Challenge ---
         console.log("Notifying Let's Encrypt to verify challenge...");
-        let done = false;
-        while (!done) {
-          try {
-            await client.completeChallenge(dnsChallenge);
-            done = true;
-          } catch (error) {
-            console.error("Error completing challenge:", error);
-            await Bun.sleep(5000);
+        try {
+          let done = false;
+          while (!done) {
+            try {
+              await client.completeChallenge(dnsChallenge);
+              done = true;
+            } catch (error) {
+              console.error("Error completing challenge:", error);
+              await Bun.sleep(5000);
+            }
           }
-        }
 
-        done = false;
-
-        // --- 3d. Wait for Challenge Validation ---
-        console.log("Waiting for challenge validation...");
-        while (!done) {
-          try {
-            await client.waitForValidStatus(dnsChallenge); // Or poll authz.status
-            done = true;
-          } catch (error) {
-            console.error("Error waiting for challenge validation:", error);
-            await Bun.sleep(5000);
+          done = false;
+          console.log("Waiting for challenge validation...");
+          while (!done) {
+            try {
+              await client.waitForValidStatus(dnsChallenge);
+              done = true;
+            } catch (error) {
+              console.error("Error waiting for challenge validation:", error);
+              await Bun.sleep(5000);
+            }
           }
+          console.log(
+            `Challenge for ${authz.identifier.value} validated successfully.`
+          );
+        } finally {
+          await cloudflareApi
+            .deleteDnsRecord(zoneId, challengeRecord.id)
+            .catch(error => console.warn("Falha ao remover TXT ACME:", error));
         }
-        console.log(
-          `Challenge for ${authz.identifier.value} validated successfully.`
-        );
       }
 
       // --- 4. Finalize Order & Get Certificate ---

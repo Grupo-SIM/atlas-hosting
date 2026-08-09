@@ -27,7 +27,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { User } from "@/lib/db/schema";
-import namecheapApi from "@/lib/server/apis/namecheap";
+import { cloudflareApi } from "@/lib/server/apis/cloudflare";
 import pleskApi from "@/lib/server/apis/plesk";
 import WpCliApi, {
   type WpPluginList,
@@ -426,23 +426,19 @@ async function fetchSslStatus(domainName: string): Promise<Service> {
 }
 
 async function fetchDnsStatus(domainName: string): Promise<Service> {
-  const domainParts = getDomainParts(domainName);
-  if (domainParts) {
+  if (domainName.includes(".")) {
     try {
-      const dnsResponse = await namecheapApi.getDnsHosts({
-        SLD: domainParts.sld,
-        TLD: domainParts.tld,
-      });
+      const zone = await cloudflareApi.findZone(domainName);
+      if (!zone) throw new Error("Zona Cloudflare não encontrada.");
+      const records = await cloudflareApi.listDnsRecords(zone.id);
 
-      const hasARecord = dnsResponse.Hosts?.some(
+      const hasARecord = records.some(
         record =>
-          record.Type === "A" &&
-          (record.Name === "@" ||
-            record.Name === domainName ||
-            record.Name === "")
+          record.type === "A" &&
+          record.name.toLowerCase() === domainName.toLowerCase()
       );
 
-      const recordCount = dnsResponse.Hosts?.length || 0;
+      const recordCount = records.length;
 
       if (hasARecord) {
         return {
@@ -468,7 +464,7 @@ async function fetchDnsStatus(domainName: string): Promise<Service> {
     } catch (error) {
       console.error(`Error fetching DNS status for ${domainName}:`, error);
       return {
-        details: "Não foi possível obter registros DNS do Namecheap",
+        details: "Não foi possível obter registros DNS da Cloudflare",
         icon: <Globe className="h-5 w-5" />,
         id: "dns",
         name: "Registros DNS",
@@ -1298,30 +1294,6 @@ function ServiceSummaryFooterSkeleton() {
       </div>
     </div>
   );
-}
-
-// Simplified helper from your worker - ensure it's robust or use a library
-function getDomainParts(
-  domainName: string
-): { sld: string; tld: string } | null {
-  const domainParts = domainName.split(".");
-  if (domainParts.length < 2) return null;
-  const commonSecondLevel = ["co", "com", "org", "net", "gov", "ac", "edu"];
-  if (
-    domainParts.length > 2 &&
-    commonSecondLevel.includes(
-      domainParts[domainParts.length - 2].toLowerCase()
-    )
-  ) {
-    const tld = domainParts.slice(-2).join(".");
-    const sld = domainParts.slice(0, -2).join(".");
-    return { sld, tld };
-  }
-  // If not a common second-level domain or only two parts (e.g., example.com)
-  const tld = domainParts.pop()?.toLowerCase() || "";
-  const sld = domainParts.join(".");
-  if (!tld || !sld) return null;
-  return { sld, tld };
 }
 
 function getStatusName(

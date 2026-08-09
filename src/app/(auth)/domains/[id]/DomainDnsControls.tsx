@@ -46,9 +46,13 @@ export function DomainDnsControls({
   useEffect(() => {
     if (dnsMode !== "cloudflare" || connectionStatus !== "awaiting_activation")
       return;
-    const timer = window.setInterval(() => router.refresh(), 30_000);
+    const timer = window.setInterval(async () => {
+      const result = await refreshCloudflareConnection(domainId);
+      if (result.success) toast.success(result.message);
+      router.refresh();
+    }, 60_000);
     return () => window.clearInterval(timer);
-  }, [connectionStatus, dnsMode, router]);
+  }, [connectionStatus, dnsMode, domainId, router]);
 
   if (dnsMode === "external") {
     return (

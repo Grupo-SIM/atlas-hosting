@@ -5,13 +5,13 @@ import { eq } from "drizzle-orm";
 import { getUser } from "@/lib/auth/index";
 import { db } from "@/lib/db";
 import { pgOrganization } from "@/lib/db/schema";
-import namecheapApi from "@/lib/server/apis/namecheap";
 import type {
   DnsHostRecord,
   DnsRecordType as NamecheapDnsRecordType,
 } from "@/lib/server/apis/namecheap/types";
 import pleskApi from "@/lib/server/apis/plesk";
 import { installCertificate } from "@/lib/server/apis/plesk-xml/client";
+import { configureWebHostingDns } from "@/lib/server/domains/cloudflare-dns";
 import { AppLogger } from "@/lib/server/logs";
 import { type CliCallResponse, ClientRequestTypeEnum } from "@/plesk";
 import type { DnsRecord as PleskDnsRecord } from "@/plesk/models"; // Corrected import path
@@ -253,11 +253,15 @@ export async function GET(request: Request) {
         await pleskApi.wordpress.createAdminUser(+stdOut["instance-id"]);
 
         // ----- START: Full DNS Synchronization with Namecheap -----
-        yield* sendSSE("INFO", "Iniciando configuração de DNS...");
+        yield* sendSSE("INFO", "Configurando registros DNS na Cloudflare...");
+        await configureWebHostingDns(
+          domainName,
+          process.env.SERVER_IP || "66.94.101.192"
+        );
 
         let pleskDnsRecords: PleskDnsRecord[];
         try {
-          const response = await pleskApi.dnsApi.dnsRecordsGet(domainName);
+          const response = { data: [] as PleskDnsRecord[] };
           pleskDnsRecords = response.data;
         } catch (error) {
           console.error(
@@ -350,11 +354,11 @@ export async function GET(request: Request) {
                 "INFO",
                 `Cadastrando ${namecheapDnsEntries.length} registros DNS...`
               );
-              const namecheapResponse = await namecheapApi.setHosts({
-                Records: namecheapDnsEntries,
-                SLD: sld,
-                TLD: tld,
-              });
+              await configureWebHostingDns(
+                domainName,
+                process.env.SERVER_IP || "66.94.101.192"
+              );
+              const namecheapResponse = { IsSuccess: true };
 
               if (namecheapResponse.IsSuccess) {
                 yield* sendSSE(
