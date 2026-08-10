@@ -56,6 +56,7 @@ export default async function DomainDetailsPage({
     ),
   });
   if (!domain) notFound();
+  const isAtlasPurchasedDomain = domain.registrarProvider === "namecheap";
 
   let records: CloudflareDnsRecord[] = [];
   let scannedRecords: CloudflareDnsRecord[] = [];
@@ -64,7 +65,7 @@ export default async function DomainDetailsPage({
     if (domain.dnsMode === "cloudflare" && domain.cloudflareZoneId) {
       const [zoneRecords, scan] = await Promise.all([
         cloudflareApi.listDnsRecords(domain.cloudflareZoneId),
-        domain.dnsImportStatus === "scanning"
+        !isAtlasPurchasedDomain && domain.dnsImportStatus === "scanning"
           ? cloudflareApi.listScannedRecords(domain.cloudflareZoneId)
           : Promise.resolve([]),
       ]);
@@ -157,51 +158,58 @@ export default async function DomainDetailsPage({
           </Card>
         </TabsContent>
         <TabsContent className="space-y-5" value="dns">
-          <DomainDnsControls
-            connectionStatus={domain.connectionStatus}
-            dnsImportStatus={domain.dnsImportStatus}
-            dnsMode={domain.dnsMode}
-            domainId={domain.id}
-            nameservers={nameservers}
-            registrarProvider={domain.registrarProvider}
-          />
-          {domain.dnsMode === "cloudflare" &&
-            domain.dnsImportStatus === "scanning" &&
-            domain.cloudflareZoneId && (
-              <DnsScanReview domainId={domain.id} records={scannedRecords} />
-            )}
-          {domain.dnsMode !== "cloudflare" && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Visualização pública parcial</AlertTitle>
-              <AlertDescription>
-                DNS público não permite listar uma zona completa. Subdomínios
-                desconhecidos podem não aparecer.
-              </AlertDescription>
-            </Alert>
-          )}
-          {domain.dnsMode === "cloudflare" &&
-            domain.connectionStatus !== "connected" && (
-              <Alert>
-                <ShieldAlert className="h-4 w-4" />
-                <AlertTitle>Zona ainda não ativa</AlertTitle>
-                <AlertDescription>
-                  Você pode preparar os registros agora, mas o tráfego só usará
-                  o DNS do Atlas após a delegação dos nameservers.
-                </AlertDescription>
-              </Alert>
-            )}
-          {domain.lastDnsError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Falha na conexão DNS</AlertTitle>
-              <AlertDescription>
-                {domain.lastDnsError.replace(
-                  /cloudflare/gi,
-                  "serviço de DNS do Atlas"
+          {!isAtlasPurchasedDomain && (
+            <>
+              <DomainDnsControls
+                connectionStatus={domain.connectionStatus}
+                dnsImportStatus={domain.dnsImportStatus}
+                dnsMode={domain.dnsMode}
+                domainId={domain.id}
+                nameservers={nameservers}
+                registrarProvider={domain.registrarProvider}
+              />
+              {domain.dnsMode === "cloudflare" &&
+                domain.dnsImportStatus === "scanning" &&
+                domain.cloudflareZoneId && (
+                  <DnsScanReview
+                    domainId={domain.id}
+                    records={scannedRecords}
+                  />
                 )}
-              </AlertDescription>
-            </Alert>
+              {domain.dnsMode !== "cloudflare" && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Visualização pública parcial</AlertTitle>
+                  <AlertDescription>
+                    DNS público não permite listar uma zona completa.
+                    Subdomínios desconhecidos podem não aparecer.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {domain.dnsMode === "cloudflare" &&
+                domain.connectionStatus !== "connected" && (
+                  <Alert>
+                    <ShieldAlert className="h-4 w-4" />
+                    <AlertTitle>Zona ainda não ativa</AlertTitle>
+                    <AlertDescription>
+                      Você pode preparar os registros agora, mas o tráfego só
+                      usará o DNS do Atlas após a delegação dos nameservers.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              {domain.lastDnsError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Falha na conexão DNS</AlertTitle>
+                  <AlertDescription>
+                    {domain.lastDnsError.replace(
+                      /cloudflare/gi,
+                      "serviço de DNS do Atlas"
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
           )}
           {error ? (
             <Alert variant="destructive">

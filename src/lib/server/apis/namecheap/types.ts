@@ -434,8 +434,8 @@ export interface DomainsGetInfoCleanedResponse {
   Whoisguard: NamecheapWhoisguardInfo;
   DnsDetails: NamecheapDnsDetails;
   Modificationrights?: {
-    All: boolean;
-    ChangeDNS: boolean;
+    All?: boolean;
+    ChangeDNS?: boolean;
   };
 }
 
@@ -468,7 +468,7 @@ export interface RawWhoisguard {
 }
 
 export interface RawModificationrights {
-  $: { All: "true" | "false"; ChangeDNS: "true" | "false" };
+  $: { All?: "true" | "false"; ChangeDNS?: "true" | "false" };
 }
 
 export interface RawDomainsGetInfoCommandResponseContent {

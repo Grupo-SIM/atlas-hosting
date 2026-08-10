@@ -48,6 +48,23 @@ O script é dry-run por padrão. Ele classifica domínios encontrados na conta
 Namecheap como `legacy_plesk`; os demais permanecem `external`. Ele não cria
 zonas nem troca nameservers.
 
+Para provisionar automaticamente um domínio Namecheap já marcado no banco com
+`registrar_provider = 'namecheap'` e `dns_mode = 'cloudflare'`, use o script
+separado abaixo. Ele também é dry-run por padrão:
+
+```bash
+bun scripts/provision-namecheap-cloudflare-dns.ts
+bun scripts/provision-namecheap-cloudflare-dns.ts --apply
+bun scripts/provision-namecheap-cloudflare-dns.ts --apply --domain example.com
+```
+
+O tempo padrão reservado ao scan assíncrono da Cloudflare é 60 segundos. Ele
+pode ser alterado com `--scan-wait-seconds N`. O script cria ou reutiliza a
+zona, aceita os registros encontrados sem proxy e só envia os nameservers à
+Namecheap quando a zona contém pelo menos um registro. Domínios com DNSSEC/DS
+publicado, fora da conta configurada ou sem permissão de alteração são
+registrados como erro e não têm os nameservers modificados.
+
 Antes da delegação, o Atlas procura registros DS publicados. DNSSEC antigo deve
 ser removido no registrador para evitar `SERVFAIL`. A primeira versão não publica
 DS automaticamente na Namecheap.

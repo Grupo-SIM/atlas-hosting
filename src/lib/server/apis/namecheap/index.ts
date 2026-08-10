@@ -1065,8 +1065,14 @@ export class NamecheapApiWrapper {
       IsPremium: resultAttrs.IsPremium === "true",
       Modificationrights: resultNode.Modificationrights?.[0]?.$
         ? {
-            All: resultNode.Modificationrights[0].$.All === "true",
-            ChangeDNS: resultNode.Modificationrights[0].$.ChangeDNS === "true",
+            All:
+              resultNode.Modificationrights[0].$.All === undefined
+                ? undefined
+                : resultNode.Modificationrights[0].$.All === "true",
+            ChangeDNS:
+              resultNode.Modificationrights[0].$.ChangeDNS === undefined
+                ? undefined
+                : resultNode.Modificationrights[0].$.ChangeDNS === "true",
           }
         : undefined,
       OwnerName: resultAttrs.OwnerName,
