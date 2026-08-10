@@ -153,6 +153,15 @@ export function DomainDnsSetupDialog({
                 nameservers do domínio.
               </DialogDescription>
             </DialogHeader>
+            {displayedFeedback?.status === "error" && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Não foi possível importar os registros</AlertTitle>
+                <AlertDescription>
+                  {displayedFeedback.message} Tente novamente.
+                </AlertDescription>
+              </Alert>
+            )}
             <DnsScanReview
               domainId={domainId}
               embedded

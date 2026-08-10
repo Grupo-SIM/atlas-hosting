@@ -35,11 +35,24 @@ async function ownedDomain(id: string) {
   });
 }
 
-async function saveError(id: string, error: unknown) {
-  const message = formatAtlasDnsError(error, "Falha ao configurar a zona DNS.");
+async function saveError(
+  id: string,
+  error: unknown,
+  options: {
+    connectionStatus?: string;
+    fallback?: string;
+  } = {}
+) {
+  const message = formatAtlasDnsError(
+    error,
+    options.fallback || "Falha ao configurar a zona DNS."
+  );
   await db
     .update(pgOrganizationDomains)
-    .set({ connectionStatus: "error", lastDnsError: message })
+    .set({
+      connectionStatus: options.connectionStatus || "error",
+      lastDnsError: message,
+    })
     .where(eq(pgOrganizationDomains.id, id));
   return {
     message,
@@ -128,7 +141,10 @@ export async function completeCloudflareScanReview(
       success: true,
     };
   } catch (error) {
-    return saveError(id, error);
+    return saveError(id, error, {
+      connectionStatus: "review_records",
+      fallback: "Não foi possível importar os registros DNS.",
+    });
   }
 }
 
