@@ -1,7 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "Bash(serena start-mcp-server --context claude-code)",
       "Bash(grep -l \"useContext\" c:/Users/breno/Desktop/JB/atlas-hosting/src/app/landing/components/*.tsx)",
       "Bash(npm show:*)",
       "Bash(node -e \"const v = JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); console.log\\(v.slice\\(-10\\).join\\('\\\\n'\\)\\)\")",
@@ -27,15 +26,9 @@
       "Bash(grep -n \"^export default\\\\|^function \\\\|^export function\\\\|^const.*=.*{$\\\\|^export const\" \"src/app/vps-windows/configure/[id]/page.tsx\")",
       "Bash(./node_modules/.bin/tsc --noEmit)",
       "Bash(./node_modules/.bin/tsc --noEmit --strict)",
-      "mcp__serena__initial_instructions",
-      "mcp__serena__get_symbols_overview",
-      "mcp__serena__find_symbol",
-      "mcp__serena__replace_content",
-      "mcp__serena__replace_symbol_body",
       "Bash(npx --yes next build)",
       "Bash(del \"c:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\atlas-hosting\\\\vercel.json\")",
       "Bash(./node_modules/.bin/tsc --noEmit --skipLibCheck)",
-      "mcp__serena__check_onboarding_performed",
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(cat drizzle.config.ts)",
@@ -43,8 +36,6 @@
       "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts, null, 2\\)\\)\")",
       "Bash(Test-Path \"c:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\atlas-hosting\\\\src\\\\components\\\\ui\\\\alert-dialog.tsx\")",
       "PowerShell($dir = \"c:\\\\Users\\\\breno\\\\Desktop\\\\JB\\\\atlas-hosting\\\\src\\\\app\\\\\\(auth\\)\\\\admin\\\\vps-plans\"; if \\(!\\(Test-Path $dir\\)\\) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }; Write-Output \"Directory ready: $dir\")",
-      "mcp__serena__find_referencing_symbols",
-      "mcp__serena__insert_after_symbol",
       "PowerShell(cd \"c:/Users/breno/Desktop/JB/atlas-hosting\" && npx tsc --noEmit 2>&1 | Out-String | Select-String -Pattern \"vps-plan\" -AllMatches | ForEach-Object { $_.Line })",
       "PowerShell(cd \"c:/Users/breno/Desktop/JB/atlas-hosting\" && npx tsc --noEmit 2>&1 | Where-Object { $_ -match \"vps-plans|BackfillButton|backfill\" })",
       "PowerShell(Set-Location \"c:/Users/breno/Desktop/JB/atlas-hosting\"; $out = \\(npx tsc --noEmit 2>&1\\); $out | Where-Object { $_ -match \"vps-plan|BackfillButton|backfill\" })",
@@ -60,59 +51,5 @@
       "C:\\Users\\breno\\Desktop\\JB\\back-simpay\\src\\modules\\atlas\\services",
       "C:\\Users\\breno\\Desktop\\JB\\back-simpay\\src\\modules\\atlas\\controllers"
     ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "serena-hooks remind --client=claude-code"
-          }
-        ]
-      },
-      {
-        "matcher": "mcp_serena_*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "serena-hooks auto-approve --client=claude-code"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "serena-hooks activate --client=claude-code"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "serena-hooks cleanup --client=claude-code"
-          }
-        ]
-      }
-    ]
-  },
-  "mcpServers": {
-    "serena": {
-      "command": "serena",
-      "args": [
-        "start-mcp-server",
-        "--context",
-        "claude-code"
-      ]
-    }
   }
 }
