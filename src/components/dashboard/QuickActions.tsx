@@ -10,13 +10,16 @@ import {
   HousePlus,
   LucideBookMarked,
   Mail,
+  Package,
+  Server,
+  ShoppingCart,
   Sparkles,
-  Train as Transfer,
+  Ticket,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { FaTasks } from "react-icons/fa";
-import { getUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "../ui/skeleton";
 import {
@@ -60,16 +63,40 @@ export function QuickActions() {
       initial="hidden"
       variants={containerVariants}
     >
+      {/* Hosting Section */}
+      <MotionDiv variants={itemVariants}>
+        <SectionHeading
+          gradient="from-sky-500 to-blue-600"
+          Icon={Server}
+          title="Hospedagem"
+        />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <QuickActionCard
+            gradient="from-sky-500 to-blue-600"
+            href="/manage/vps"
+            Icon={Server}
+            pattern="grid"
+            subtitle="Acompanhe e gerencie seus servidores ativos"
+            title="Meus Servidores"
+          />
+          <QuickActionCard
+            gradient="from-orange-500 to-amber-600"
+            href="/vps-plans"
+            Icon={ShoppingCart}
+            pattern="waves"
+            subtitle="Encontre o servidor ideal para seu projeto"
+            title="Contratar Servidor"
+          />
+        </div>
+      </MotionDiv>
+
       {/* Domains Section */}
       <MotionDiv variants={itemVariants}>
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
-            <Globe className="h-4 w-4 text-white" />
-          </div>
-          <h2 className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text font-bold text-2xl text-transparent">
-            Domínios
-          </h2>
-        </div>
+        <SectionHeading
+          gradient="from-emerald-500 to-teal-600"
+          Icon={Globe}
+          title="Domínios"
+        />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <QuickActionCard
             gradient="from-blue-500 to-indigo-500"
@@ -88,38 +115,41 @@ export function QuickActions() {
             subtitle="Registre um novo domínio"
             title="Novo Domínio"
           />
-
-          <QuickActionCard
-            gradient="from-orange-500 to-amber-500"
-            href="/dns"
-            Icon={Transfer}
-            pattern="waves"
-            subtitle="Gerencie suas configurações DNS"
-            title="Zona DNS"
-          />
         </div>
       </MotionDiv>
 
-      {/* Billing Section */}
+      {/* Financial Section */}
       <MotionDiv variants={itemVariants}>
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg">
-            <CreditCard className="h-4 w-4 text-white" />
-          </div>
-          <h2 className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text font-bold text-2xl text-transparent">
-            Faturas
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {/* <QuickActionCard
-            Icon={CreditCard}
-            title="Assinaturas"
-            subtitle="Gerencie suas assinaturas ativas"
-            href="/subscriptions"
-            gradient="from-purple-500 to-violet-500"
+        <SectionHeading
+          gradient="from-violet-500 to-pink-600"
+          Icon={CreditCard}
+          title="Financeiro"
+        />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <QuickActionCard
+            gradient="from-violet-500 to-purple-600"
+            href="/minhas-assinaturas"
+            Icon={Package}
             pattern="grid"
-          /> */}
-
+            subtitle="Consulte e renove suas assinaturas"
+            title="Gerenciar Assinaturas"
+          />
+          <QuickActionCard
+            gradient="from-cyan-500 to-sky-600"
+            href="/affiliate"
+            Icon={Users}
+            pattern="grid"
+            subtitle="Acompanhe suas indicações, comissões e saques"
+            title="Programa de Afiliados"
+          />
+          <QuickActionCard
+            gradient="from-amber-500 to-yellow-600"
+            href="/vouchers"
+            Icon={Ticket}
+            pattern="waves"
+            subtitle="Consulte e copie seus vouchers de desconto"
+            title="Meus Vouchers"
+          />
           <QuickActionCard
             gradient="from-blue-500 to-cyan-500"
             href="/billing"
@@ -131,6 +161,32 @@ export function QuickActions() {
         </div>
       </MotionDiv>
     </MotionDiv>
+  );
+}
+
+function SectionHeading({
+  gradient,
+  Icon,
+  title,
+}: {
+  gradient: string;
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  title: string;
+}) {
+  return (
+    <div className="mb-6 flex items-center gap-3">
+      <div
+        className={cn(
+          "flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br shadow-lg",
+          gradient
+        )}
+      >
+        <Icon className="h-4 w-4 text-white" />
+      </div>
+      <h2 className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text font-bold text-2xl text-transparent">
+        {title}
+      </h2>
+    </div>
   );
 }
 
@@ -409,13 +465,7 @@ export function QuickActionCard({
   );
 }
 
-async function AdminPanelCard() {
-  const user = await getUser();
-
-  const canAdministrate = !!(
-    user.organization.planId && user.organization.domains.length > 0
-  );
-
+function AdminPanelCard() {
   return (
     <TooltipProvider>
       <Tooltip>
