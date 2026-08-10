@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { pgOrganizationDomains } from "@/lib/db/schema";
 import { cloudflareApi } from "@/lib/server/apis/cloudflare";
 import {
+  formatAtlasDnsError,
   hasPublishedDsRecords,
   persistCloudflareZone,
   provisionCloudflareZone,
@@ -31,8 +32,7 @@ async function ownedDomain(id: string) {
 }
 
 async function saveError(id: string, error: unknown) {
-  const message =
-    error instanceof Error ? error.message : "Falha ao configurar a zona DNS.";
+  const message = formatAtlasDnsError(error, "Falha ao configurar a zona DNS.");
   await db
     .update(pgOrganizationDomains)
     .set({ connectionStatus: "error", lastDnsError: message })
@@ -62,7 +62,7 @@ export async function startCloudflareMigration(
     revalidatePath(`/domains/${id}`);
     return {
       message:
-        "Zona criada. A Cloudflare está procurando registros para sua revisão.",
+        "DNS preparado. O Atlas está procurando registros para sua revisão.",
       success: true,
     };
   } catch (error) {
@@ -76,7 +76,7 @@ export async function completeCloudflareScanReview(
 ): Promise<ModeActionResult> {
   const domain = await ownedDomain(id);
   if (!domain?.active || !domain.cloudflareZoneId)
-    return { message: "Zona Cloudflare não encontrada.", success: false };
+    return { message: "Zona DNS não encontrada.", success: false };
   try {
     const scanned = await cloudflareApi.listScannedRecords(
       domain.cloudflareZoneId
@@ -129,7 +129,7 @@ export async function refreshCloudflareConnection(
 ): Promise<ModeActionResult> {
   const domain = await ownedDomain(id);
   if (!domain?.cloudflareZoneId)
-    return { message: "Zona Cloudflare não encontrada.", success: false };
+    return { message: "Zona DNS não encontrada.", success: false };
   try {
     await cloudflareApi
       .triggerActivationCheck(domain.cloudflareZoneId)
@@ -139,8 +139,8 @@ export async function refreshCloudflareConnection(
     return {
       message:
         zone.status === "active"
-          ? "Nameservers confirmados. O domínio está ativo na Cloudflare."
-          : "A Cloudflare ainda aguarda a propagação dos nameservers.",
+          ? "Nameservers confirmados. O DNS do Atlas está ativo."
+          : "O Atlas ainda aguarda a propagação dos nameservers.",
       success: zone.status === "active",
     };
   } catch (error) {
@@ -154,7 +154,7 @@ export async function keepExternalDns(id: string): Promise<ModeActionResult> {
     return { message: "Domínio ativo não encontrado.", success: false };
   if (domain.registrarProvider === "namecheap") {
     return {
-      message: "Domínios comprados pelo Atlas usam DNS Cloudflare.",
+      message: "Domínios comprados pelo Atlas usam o DNS do Atlas.",
       success: false,
     };
   }

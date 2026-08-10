@@ -45,7 +45,7 @@ describe("Cloudflare DNS record input", () => {
     form.set("content", "ns.example.net");
     form.set("ttl", "3600");
     expect(parseCloudflareRecordForm(form, "example.com").message).toContain(
-      "atribuídos pela Cloudflare"
+      "atribuídos pelo Atlas"
     );
   });
 });

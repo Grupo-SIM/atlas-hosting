@@ -47,12 +47,12 @@ export function TransferDomainsList({
         variant: result.isCorrect ? "default" : "destructive",
       });
 
-      if (result.isCorrect) {
-        router.refresh();
+      if (result.isCorrect && result.domainId) {
+        router.push(`/domains/${result.domainId}`);
       }
     } catch {
       toast({
-        description: "Não foi possível verificar os nameservers.",
+        description: "Não foi possível verificar o registro TXT.",
         title: "Erro",
         variant: "destructive",
       });
@@ -70,10 +70,10 @@ export function TransferDomainsList({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5 text-yellow-500" />
-          Domínios em Transferência
+          Domínios aguardando configuração
         </CardTitle>
         <CardDescription>
-          Confirme a propriedade dos domínios adicionados
+          Adicione o TXT no seu provedor atual e confirme a propriedade.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -102,7 +102,7 @@ export function TransferDomainsList({
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm text-yellow-800">
                     <Clock className="h-3 w-3" />
-                    Aguardando TXT
+                    Aguardando verificação
                   </span>
 
                   <Button
@@ -135,25 +135,53 @@ export function TransferDomainsList({
                 </div>
               </div>
               {verificationRecords[domain.id] && (
-                <div className="grid gap-2 border-t pt-3 sm:grid-cols-2">
-                  {[
-                    ["Host TXT", verificationRecords[domain.id].host],
-                    ["Valor TXT", verificationRecords[domain.id].value],
-                  ].map(([label, value]) => (
-                    <div className="rounded-md bg-muted/50 p-3" key={label}>
-                      <div className="mb-1 flex items-center justify-between text-xs">
-                        <span className="font-medium">{label}</span>
-                        <Button
-                          onClick={() => navigator.clipboard.writeText(value)}
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
+                <div className="space-y-3 border-t pt-3">
+                  <div>
+                    <p className="font-medium text-sm">
+                      Adicione um registro do tipo TXT
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      Não altere os outros registros ou nameservers durante esta
+                      verificação.
+                    </p>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {[
+                      [
+                        "Nome/Host",
+                        verificationRecords[domain.id].host.replace(
+                          `.${domain.domain}`,
+                          ""
+                        ),
+                      ],
+                      ["Conteúdo/Valor", verificationRecords[domain.id].value],
+                    ].map(([label, value]) => (
+                      <div className="rounded-md bg-muted/50 p-3" key={label}>
+                        <div className="mb-1 flex items-center justify-between text-xs">
+                          <span className="font-medium">{label}</span>
+                          <Button
+                            aria-label={`Copiar ${label.toLowerCase()}`}
+                            onClick={() => navigator.clipboard.writeText(value)}
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        <code className="break-all text-xs">{value}</code>
                       </div>
-                      <code className="break-all text-xs">{value}</code>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    O primeiro campo também pode aparecer como &quot;Nome&quot;
+                    no seu provedor. Normalmente ele acrescenta
+                    <code className="mx-1">.{domain.domain}</code>
+                    automaticamente; se pedir o nome completo, use
+                    <code className="ml-1">
+                      {verificationRecords[domain.id].host}
+                    </code>
+                    .
+                  </p>
                 </div>
               )}
             </div>

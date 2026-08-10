@@ -253,7 +253,7 @@ export async function GET(request: Request) {
         await pleskApi.wordpress.createAdminUser(+stdOut["instance-id"]);
 
         // ----- START: Full DNS Synchronization with Namecheap -----
-        yield* sendSSE("INFO", "Configurando registros DNS na Cloudflare...");
+        yield* sendSSE("INFO", "Configurando registros DNS no Atlas...");
         await configureWebHostingDns(
           domainName,
           process.env.SERVER_IP || "66.94.101.192"

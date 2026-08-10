@@ -9,7 +9,10 @@ import {
 } from "@/lib/db/schema";
 import namecheapApi from "@/lib/server/apis/namecheap";
 import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
-import { provisionCloudflareZone } from "@/lib/server/domains/cloudflare-dns";
+import {
+  formatAtlasDnsError,
+  provisionCloudflareZone,
+} from "@/lib/server/domains/cloudflare-dns";
 import { REGISTRAR_ADAPTERS } from "@/lib/server/registrars";
 
 /** Domínios a registrar: pacote (`metadata.bundleDomains`) ou fatura avulsa (`reference`). */
@@ -85,10 +88,10 @@ async function linkDomain(
       zone.status === "active" ? "connected" : "awaiting_activation";
   } catch (error) {
     connectionStatus = "error";
-    lastDnsError =
-      error instanceof Error
-        ? error.message
-        : "Falha ao configurar DNS na Cloudflare.";
+    lastDnsError = formatAtlasDnsError(
+      error,
+      "Falha ao configurar o DNS no Atlas."
+    );
   }
   await db.insert(pgOrganizationDomains).values({
     active: true,

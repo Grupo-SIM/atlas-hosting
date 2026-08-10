@@ -25,6 +25,11 @@ export async function hasPublishedDsRecords(domain: string): Promise<boolean> {
   }
 }
 
+export function formatAtlasDnsError(error: unknown, fallback: string) {
+  const message = error instanceof Error ? error.message : fallback;
+  return message.replace(/cloudflare/gi, "serviço de DNS do Atlas");
+}
+
 export async function provisionCloudflareZone(
   domain: string,
   scanExistingRecords: boolean
@@ -82,7 +87,7 @@ export async function getManagedCloudflareZone(domain: string) {
   });
   if (!managed?.cloudflareZoneId)
     throw new Error(
-      `O domínio ${domain} não possui uma zona Cloudflare gerenciada pelo Atlas.`
+      `O domínio ${domain} não possui uma zona DNS gerenciada pelo Atlas.`
     );
   return { domain: managed, zoneId: managed.cloudflareZoneId };
 }

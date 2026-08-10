@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { pgOrganizationDomains } from "@/lib/db/schema";
 import { normalizeDomainName } from "@/lib/server/domains/authorization";
 import {
+  formatAtlasDnsError,
   hasPublishedDsRecords,
   provisionCloudflareZone,
 } from "@/lib/server/domains/cloudflare-dns";
@@ -18,6 +19,7 @@ import {
 } from "@/lib/server/domains/verification";
 
 export interface ExternalDomainResult {
+  domainId?: string;
   isCorrect?: boolean;
   message: string;
   nameservers?: string[];
@@ -181,6 +183,7 @@ export async function verifyExternalDomain(
       revalidatePath("/domain");
       revalidatePath(`/domains/${pending.id}`);
       return {
+        domainId: pending.id,
         isCorrect: true,
         message:
           "Propriedade confirmada. Revise os registros encontrados antes de trocar os nameservers.",
@@ -188,10 +191,10 @@ export async function verifyExternalDomain(
         status: "success",
       };
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Falha ao criar a zona na Cloudflare.";
+      const message = formatAtlasDnsError(
+        error,
+        "Falha ao preparar o DNS no Atlas."
+      );
       await db
         .update(pgOrganizationDomains)
         .set({
@@ -219,6 +222,7 @@ export async function verifyExternalDomain(
   revalidatePath("/domain");
   revalidatePath(`/domains/${pending.id}`);
   return {
+    domainId: pending.id,
     isCorrect: true,
     message: "Propriedade confirmada. O DNS continuará no seu provedor atual.",
     status: "success",

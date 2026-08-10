@@ -429,7 +429,7 @@ async function fetchDnsStatus(domainName: string): Promise<Service> {
   if (domainName.includes(".")) {
     try {
       const zone = await cloudflareApi.findZone(domainName);
-      if (!zone) throw new Error("Zona Cloudflare não encontrada.");
+      if (!zone) throw new Error("Zona DNS não encontrada.");
       const records = await cloudflareApi.listDnsRecords(zone.id);
 
       const hasARecord = records.some(
@@ -464,7 +464,7 @@ async function fetchDnsStatus(domainName: string): Promise<Service> {
     } catch (error) {
       console.error(`Error fetching DNS status for ${domainName}:`, error);
       return {
-        details: "Não foi possível obter registros DNS da Cloudflare",
+        details: "Não foi possível obter os registros DNS do Atlas",
         icon: <Globe className="h-5 w-5" />,
         id: "dns",
         name: "Registros DNS",

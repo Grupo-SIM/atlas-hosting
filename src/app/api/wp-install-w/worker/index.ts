@@ -185,7 +185,7 @@ self.onmessage = async (event: MessageEvent<InstallWpData>) => {
 
     // --on--- START: Full DNS Synchronization with Namecheap -----
     async function setupDns() {
-      sendProgress("INFO", "Configurando registros DNS na Cloudflare...");
+      sendProgress("INFO", "Configurando registros DNS no Atlas...");
       await configureWebHostingDns(domainName, serverIp!);
 
       let pleskDnsRecords: GetDnsRecordsResult[] | undefined;

@@ -235,7 +235,7 @@ export function DnsRecordsManager({
           <div>
             <CardTitle>Registros DNS</CardTitle>
             <CardDescription>
-              Zona autoritativa Cloudflare de {domainName}. TTL 1 significa
+              DNS gerenciado pelo Atlas para {domainName}. TTL 1 significa
               automático.
             </CardDescription>
           </div>
@@ -324,7 +324,7 @@ export function DnsRecordsManager({
                           variant={record.proxied ? "default" : "secondary"}
                         >
                           <Cloud className="mr-1 h-3 w-3" />
-                          {record.proxied ? "Proxied" : "DNS only"}
+                          {record.proxied ? "Com proxy" : "Somente DNS"}
                         </Badge>
                       ) : (
                         "—"
@@ -380,7 +380,7 @@ export function DnsRecordsManager({
               {editing ? "Editar registro DNS" : "Adicionar registro DNS"}
             </DialogTitle>
             <DialogDescription>
-              As alterações são enviadas diretamente à zona Cloudflare.
+              As alterações são aplicadas diretamente ao DNS do Atlas.
             </DialogDescription>
           </DialogHeader>
           <form
@@ -521,7 +521,7 @@ export function DnsRecordsManager({
             {canProxy && (
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div>
-                  <Label htmlFor={`${formId}-proxied`}>Proxy Cloudflare</Label>
+                  <Label htmlFor={`${formId}-proxied`}>Proxy do Atlas</Label>
                   <p className="text-muted-foreground text-xs">
                     Desativado por padrão para evitar mudanças de tráfego.
                   </p>
@@ -600,7 +600,7 @@ export function DnsRecordsManager({
             <AlertDialogTitle>Excluir registro DNS?</AlertDialogTitle>
             <AlertDialogDescription>
               O registro {deleting?.type} de {deleting?.name} será removido
-              imediatamente da Cloudflare.
+              imediatamente do DNS do Atlas.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

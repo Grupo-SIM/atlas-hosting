@@ -91,7 +91,7 @@ export default async function MyDomainsPage({
               expiryDate: "Externo",
               features: [
                 domain.dnsMode === "cloudflare"
-                  ? "DNS Atlas / Cloudflare"
+                  ? "DNS gerenciado pelo Atlas"
                   : domain.dnsMode === "legacy_plesk"
                     ? "Migração DNS disponível"
                     : "DNS externo",

@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { createDomainBundleInvoice, createDomainInvoice } from "@/app/actions";
 import { DomainResult } from "@/components/domains/DomainResult";
 import { DomainSuggestions } from "@/components/domains/DomainSuggestions";
-import { PageBackButton } from "@/components/layouts/components/PageBackButton";
 import {
   Card,
   CardContent,
@@ -117,7 +116,6 @@ export default async function DomainPage({
 
   return (
     <div className="w-full">
-      <PageBackButton />
       <div className="mx-auto mb-8 flex w-full max-w-2xl rounded-xl bg-muted/50 p-1">
         <Link
           className={`flex flex-1 items-center justify-center rounded-lg px-4 py-2 font-medium transition-all duration-200 ${
@@ -184,86 +182,50 @@ export default async function DomainPage({
           )}
         </TabsContent>
 
-        <TabsContent className="mt-8 space-y-8" value="transfer">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_auto]">
-            <Card className="w-full max-w-2xl">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">
-                  Conectar Domínio Existente
-                </CardTitle>
+        <TabsContent className="mt-6" value="transfer">
+          <div className="mx-auto max-w-5xl space-y-5">
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle>Conectar domínio existente</CardTitle>
                 <CardDescription>
-                  Adicione seu domínio existente à sua organização Atlas Hosting
+                  Adicione o domínio sem transferir o registro para o Atlas.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent>
                 <TransferForm defaultDomain={domain} />
-
-                <div className="border-t pt-6">
-                  <h3 className="mb-3 font-semibold">
-                    Como funciona a conexão:
-                  </h3>
-                  <div className="space-y-2 text-muted-foreground text-sm">
-                    <p>
-                      • Escolha se o Atlas gerenciará o DNS ou apenas
-                      acompanhará o domínio
-                    </p>
-                    <p>
-                      • Crie o registro TXT exibido para comprovar a propriedade
-                    </p>
-                    <p>• Clique em &quot;Verificar&quot; após a propagação</p>
-                    <p>
-                      • No modo gerenciado, siga as instruções de nameservers
-                      nos detalhes do domínio
-                    </p>
-                  </div>
-                </div>
               </CardContent>
             </Card>
 
-            <Card className="flex max-w-2xl flex-col">
-              <CardHeader>
-                <CardTitle>Guia de Configuração</CardTitle>
-                <CardDescription>
-                  Conexão segura, sem transferência de registrador
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex h-full flex-col justify-center gap-6">
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">
-                    O que será alterado?
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="rounded-md bg-muted p-3 text-sm">
-                      Primeiro, apenas um TXT de verificação. O Atlas só
-                      solicitará a troca de nameservers se você escolher o
-                      gerenciamento pelo Atlas.
-                    </div>
-                    <p className="text-muted-foreground text-xs">
-                      No modo informativo, seus registros e nameservers
-                      continuam intocados no provedor atual.
-                    </p>
-                  </div>
+            <TransferDomainsList
+              domains={transferDomains}
+              verificationRecords={verificationRecords}
+            />
 
-                  <div className="space-y-2 border-t pt-4">
-                    <h4 className="font-medium text-sm">
-                      Fluxo do modo gerenciado:
-                    </h4>
-                    <ol className="list-inside list-decimal space-y-1 text-muted-foreground text-sm">
-                      <li>Verifique a propriedade por TXT</li>
-                      <li>Revise os nameservers Atlas atribuídos</li>
-                      <li>Substitua os nameservers no registrador</li>
-                      <li>Confirme a propagação no Atlas</li>
-                    </ol>
-                  </div>
+            <Card className="bg-muted/20">
+              <CardContent className="grid gap-4 p-5 text-sm md:grid-cols-3">
+                <div>
+                  <p className="font-medium">1. Comprove a propriedade</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Adicione o TXT mostrado no domínio pendente e verifique.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium">2. Escolha como usar o DNS</p>
+                  <p className="mt-1 text-muted-foreground">
+                    O Atlas pode gerenciar os registros ou apenas acompanhar o
+                    domínio.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium">3. Conclua nos detalhes</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Após verificar, você seguirá automaticamente para as
+                    próximas instruções.
+                  </p>
                 </div>
               </CardContent>
             </Card>
           </div>
-
-          <TransferDomainsList
-            domains={transferDomains}
-            verificationRecords={verificationRecords}
-          />
         </TabsContent>
       </Tabs>
     </div>

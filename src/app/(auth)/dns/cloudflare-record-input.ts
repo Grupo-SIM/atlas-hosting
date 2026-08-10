@@ -60,7 +60,7 @@ export function parseCloudflareRecordForm(
     };
   if (type === "NS" && name === normalizeDomainName(domain))
     return {
-      message: "Nameservers principais são atribuídos pela Cloudflare.",
+      message: "Os nameservers principais são atribuídos pelo Atlas.",
     };
 
   const input: CloudflareDnsRecordInput = {

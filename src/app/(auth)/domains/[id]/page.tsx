@@ -1,17 +1,14 @@
 import { and, eq } from "drizzle-orm";
 import {
   AlertCircle,
-  ArrowLeft,
   CheckCircle2,
   Clock,
   Globe2,
   ShieldAlert,
 } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -27,6 +24,7 @@ import {
   type CloudflareDnsRecord,
   cloudflareApi,
 } from "@/lib/server/apis/cloudflare";
+import { formatAtlasDnsError } from "@/lib/server/domains/cloudflare-dns";
 import { discoverPublicDnsRecords } from "@/lib/server/domains/public-dns";
 import { DnsRecordsManager } from "../../dns/components/DnsRecordManager";
 import { DnsScanReview } from "./DnsScanReview";
@@ -63,7 +61,7 @@ export default async function DomainDetailsPage({
   let scannedRecords: CloudflareDnsRecord[] = [];
   let error: string | null = null;
   try {
-    if (domain.cloudflareZoneId) {
+    if (domain.dnsMode === "cloudflare" && domain.cloudflareZoneId) {
       const [zoneRecords, scan] = await Promise.all([
         cloudflareApi.listDnsRecords(domain.cloudflareZoneId),
         domain.dnsImportStatus === "scanning"
@@ -84,21 +82,16 @@ export default async function DomainDetailsPage({
       }));
     }
   } catch (caught) {
-    error =
-      caught instanceof Error
-        ? caught.message
-        : "Não foi possível carregar os registros DNS.";
+    error = formatAtlasDnsError(
+      caught,
+      "Não foi possível carregar os registros DNS."
+    );
   }
   const nameservers = domain.expectedNameservers || [];
 
   return (
     <div className="space-y-6 p-4 pb-16 md:p-6">
       <div className="flex items-start gap-4">
-        <Button asChild size="icon" variant="outline">
-          <Link href="/domains">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
@@ -146,10 +139,10 @@ export default async function DomainDetailsPage({
                 <p className="text-muted-foreground text-sm">Modo DNS</p>
                 <p className="font-medium">
                   {domain.dnsMode === "cloudflare"
-                    ? "Atlas / Cloudflare"
+                    ? "Gerenciado pelo Atlas"
                     : domain.dnsMode === "legacy_plesk"
-                      ? "Plesk legado"
-                      : "Provedor atual"}
+                      ? "Configuração assistida"
+                      : "Somente acompanhamento"}
                 </p>
               </div>
               <div>
@@ -172,9 +165,11 @@ export default async function DomainDetailsPage({
             nameservers={nameservers}
             registrarProvider={domain.registrarProvider}
           />
-          {domain.dnsImportStatus === "scanning" && domain.cloudflareZoneId && (
-            <DnsScanReview domainId={domain.id} records={scannedRecords} />
-          )}
+          {domain.dnsMode === "cloudflare" &&
+            domain.dnsImportStatus === "scanning" &&
+            domain.cloudflareZoneId && (
+              <DnsScanReview domainId={domain.id} records={scannedRecords} />
+            )}
           {domain.dnsMode !== "cloudflare" && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
@@ -192,7 +187,7 @@ export default async function DomainDetailsPage({
                 <AlertTitle>Zona ainda não ativa</AlertTitle>
                 <AlertDescription>
                   Você pode preparar os registros agora, mas o tráfego só usará
-                  esta zona após a delegação dos nameservers.
+                  o DNS do Atlas após a delegação dos nameservers.
                 </AlertDescription>
               </Alert>
             )}
@@ -200,7 +195,12 @@ export default async function DomainDetailsPage({
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Falha na conexão DNS</AlertTitle>
-              <AlertDescription>{domain.lastDnsError}</AlertDescription>
+              <AlertDescription>
+                {domain.lastDnsError.replace(
+                  /cloudflare/gi,
+                  "serviço de DNS do Atlas"
+                )}
+              </AlertDescription>
             </Alert>
           )}
           {error ? (
@@ -214,7 +214,9 @@ export default async function DomainDetailsPage({
               domainId={domain.id}
               domainName={domain.domain}
               initialRecords={records}
-              readOnly={!domain.cloudflareZoneId}
+              readOnly={
+                domain.dnsMode !== "cloudflare" || !domain.cloudflareZoneId
+              }
             />
           )}
         </TabsContent>
