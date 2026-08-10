@@ -50,4 +50,5 @@ export interface DomainPageParams {
   bundle?: string;
   confirm?: string;
   action?: "search";
+  returnTo?: string;
 }

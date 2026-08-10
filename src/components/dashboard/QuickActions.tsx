@@ -109,7 +109,7 @@ export function QuickActions() {
 
           <QuickActionCard
             gradient="from-green-500 to-emerald-500"
-            href="/domain?tab=register"
+            href="/domain?tab=register&returnTo=%2Fhome"
             Icon={HousePlus}
             pattern="dots"
             subtitle="Registre um novo domínio"

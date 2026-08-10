@@ -11,9 +11,11 @@ import { DomainSuggestionsClient } from "./DomainSuggestionsClient";
 export async function DomainSuggestions({
   domainDataPromise,
   searchQuery,
+  returnTo,
 }: {
   domainDataPromise: Promise<DomainData>;
   searchQuery: string;
+  returnTo?: string;
 }) {
   const domainData = await domainDataPromise;
 
@@ -50,6 +52,7 @@ export async function DomainSuggestions({
           domainName={domainName}
           initialDomains={domainData.extraDomains}
           key={`${domainName}-${domainData.extraDomains.length}`} // Força reset quando mudar
+          returnTo={returnTo}
         />
       </CardContent>
     </Card>

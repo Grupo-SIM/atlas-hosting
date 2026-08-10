@@ -1,6 +1,7 @@
 import { find } from "lodash";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 import DomainSelector from "@/components/domains/DomainSelector";
 import { AdminThemeSync } from "@/components/layouts/components/AdminThemeSync";
@@ -45,7 +46,9 @@ export default async function AuthLayout({
         </Topbar>
 
         <main className="flex-1 overflow-y-auto border-border bg-background md:border-l">
-          <PageBackButton />
+          <Suspense fallback={null}>
+            <PageBackButton />
+          </Suspense>
           {children}
         </main>
       </div>

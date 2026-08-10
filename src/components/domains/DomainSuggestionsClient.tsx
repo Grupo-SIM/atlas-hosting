@@ -11,9 +11,11 @@ import { toBrl } from "@/lib/utils";
 export function DomainSuggestionsClient({
   initialDomains,
   domainName,
+  returnTo,
 }: {
   initialDomains: DomainWithAvailability[];
   domainName: string;
+  returnTo?: string;
 }) {
   const [domains, setDomains] = useState(initialDomains);
   const [loaded, setLoaded] = useState(false);
@@ -70,7 +72,11 @@ export function DomainSuggestionsClient({
                 size="sm"
                 variant="outline"
               >
-                <Link href={`/domain?domain=${domain.domain}`}>Registrar</Link>
+                <Link
+                  href={`/domain?domain=${encodeURIComponent(domain.domain)}&returnTo=${encodeURIComponent(returnTo || "/home")}`}
+                >
+                  Registrar
+                </Link>
               </Button>
             )}
           </div>

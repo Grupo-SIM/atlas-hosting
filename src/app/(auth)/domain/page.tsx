@@ -27,6 +27,15 @@ interface DomainMainPageProps {
   searchParams: Promise<DomainPageParams & { tab?: string }>;
 }
 
+function getReturnTo(value: string | undefined): "/domains" | "/home" {
+  return value === "/domains" ? "/domains" : "/home";
+}
+
+function getDomainTabHref(tab: "register" | "transfer", returnTo: string) {
+  const params = new URLSearchParams({ returnTo, tab });
+  return `/domain?${params.toString()}`;
+}
+
 function parseBundleDomains(raw: string | string[] | undefined): string[] {
   const s = Array.isArray(raw) ? raw[0] : raw;
   if (!s?.trim()) return [];
@@ -45,6 +54,7 @@ export default async function DomainPage({
 }: DomainMainPageProps) {
   const resolvedSearchParams = await searchParams;
   const activeTab = resolvedSearchParams.tab || "register";
+  const returnTo = getReturnTo(resolvedSearchParams.returnTo);
   const domain = resolvedSearchParams.domain
     ? String(resolvedSearchParams.domain).trim()
     : "";
@@ -52,7 +62,7 @@ export default async function DomainPage({
 
   // Validate tab parameter
   if (activeTab !== "register" && activeTab !== "transfer") {
-    redirect("/domain?tab=register");
+    redirect(getDomainTabHref("register", returnTo));
   }
 
   const user = await getUser();
@@ -123,7 +133,7 @@ export default async function DomainPage({
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground/80"
           }`}
-          href="/domain?tab=register"
+          href={getDomainTabHref("register", returnTo)}
         >
           Encontrar novo domínio
         </Link>
@@ -133,7 +143,7 @@ export default async function DomainPage({
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground/80"
           }`}
-          href="/domain?tab=transfer"
+          href={getDomainTabHref("transfer", returnTo)}
         >
           <Sparkles className="h-4 w-4" />
           Conectar domínio existente
@@ -161,7 +171,7 @@ export default async function DomainPage({
               Digite no campo de pesquisa o nome de domínio que você deseja e
               descubra se ele está disponível!
             </p>
-            <RegisterDomainSearch domain={domain} />
+            <RegisterDomainSearch domain={domain} returnTo={returnTo} />
           </div>
 
           {/* TODO: reativar quando necessário */}
@@ -247,6 +257,7 @@ function DomainSearchResults({
       <DomainResult searchParams={searchParams} />
       <DomainSuggestions
         domainDataPromise={domainDataPromise}
+        returnTo={searchParams.returnTo}
         searchQuery={searchParams.domain || ""}
       />
     </div>

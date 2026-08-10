@@ -15,12 +15,12 @@ export default function NoDomains() {
           asChild={true}
           className="border-0 bg-gradient-to-r from-sky-500 to-sky-600 font-bold text-white hover:brightness-110"
         >
-          <Link href="/domain?tab=register">
+          <Link href="/domain?tab=register&returnTo=%2Fdomains">
             <Globe className="mr-2 h-4 w-4" /> Registrar Novo Domínio
           </Link>
         </Button>
         <Button asChild={true} variant="outline">
-          <Link href="/domain?tab=transfer">
+          <Link href="/domain?tab=transfer&returnTo=%2Fdomains">
             <Globe className="mr-2 h-4 w-4" /> Trazer Domínio
           </Link>
         </Button>

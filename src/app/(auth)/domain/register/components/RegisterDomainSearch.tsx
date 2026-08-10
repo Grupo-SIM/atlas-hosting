@@ -6,7 +6,10 @@ import { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { SearchButton } from "./SearchButton";
 
-export default function RegisterDomainSearch({ domain }: DomainPageParams) {
+export default function RegisterDomainSearch({
+  domain,
+  returnTo,
+}: DomainPageParams) {
   const [inputValue, setInputValue] = useState(domain || "");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -24,6 +27,7 @@ export default function RegisterDomainSearch({ domain }: DomainPageParams) {
       className="mx-auto flex w-full max-w-2xl flex-col gap-4"
     >
       <input name="tab" type="hidden" value="register" />
+      <input name="returnTo" type="hidden" value={returnTo || "/home"} />
 
       <div className="flex w-full flex-row gap-2">
         <div className="group relative flex-1">
@@ -57,4 +61,5 @@ export default function RegisterDomainSearch({ domain }: DomainPageParams) {
 
 export interface DomainPageParams {
   domain?: string;
+  returnTo?: string;
 }
