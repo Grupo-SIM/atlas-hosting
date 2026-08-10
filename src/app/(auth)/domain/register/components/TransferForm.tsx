@@ -30,7 +30,7 @@ export function TransferForm({ defaultDomain }: { defaultDomain?: string }) {
         variant: "default",
       });
       formRef.current?.reset();
-      router.refresh();
+      router.push("/domains");
     } else if (state?.status === "error") {
       toast({
         description: state.message,

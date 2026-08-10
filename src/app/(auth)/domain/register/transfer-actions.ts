@@ -101,9 +101,10 @@ export async function addExternalDomain(
   }
 
   revalidatePath("/domain");
+  revalidatePath("/domains");
   return {
     message:
-      "Domínio adicionado. Crie o registro TXT abaixo e depois clique em Verificar.",
+      "Domínio adicionado. Consulte as instruções na sua lista de domínios.",
     status: "success",
     verification,
   };
@@ -181,6 +182,7 @@ export async function verifyExternalDomain(
         })
         .where(eq(pgOrganizationDomains.id, pending.id));
       revalidatePath("/domain");
+      revalidatePath("/domains");
       revalidatePath(`/domains/${pending.id}`);
       return {
         domainId: pending.id,
@@ -205,6 +207,7 @@ export async function verifyExternalDomain(
           verifiedAt: new Date(),
         })
         .where(eq(pgOrganizationDomains.id, pending.id));
+      revalidatePath("/domains");
       return { message, status: "error" };
     }
   }
@@ -220,6 +223,7 @@ export async function verifyExternalDomain(
     })
     .where(eq(pgOrganizationDomains.id, pending.id));
   revalidatePath("/domain");
+  revalidatePath("/domains");
   revalidatePath(`/domains/${pending.id}`);
   return {
     domainId: pending.id,

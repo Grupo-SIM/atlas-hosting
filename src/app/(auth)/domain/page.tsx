@@ -13,12 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { getUser } from "@/lib/auth";
-import type { OrganizationDomain } from "@/lib/db/schema/tables/organization";
-import { createDomainVerificationRecord } from "@/lib/server/domains/verification";
 import { DomainBundleSection } from "./register/components/DomainBundleSection";
 import RegisterDomainSearch from "./register/components/RegisterDomainSearch";
-import { TransferDomainsList } from "./register/components/TransferDomainsList";
 import { TransferForm } from "./register/components/TransferForm";
 import type { DomainPageParams } from "./types";
 import { getDomainData } from "./utils";
@@ -64,27 +60,6 @@ export default async function DomainPage({
   if (activeTab !== "register" && activeTab !== "transfer") {
     redirect(getDomainTabHref("register", returnTo));
   }
-
-  const user = await getUser();
-
-  // Get existing domains that are in transfer status (active: false)
-  const transferDomains = user.organization.domains.filter(
-    (d: OrganizationDomain) => !d.active
-  );
-  const verificationSecret =
-    process.env.DOMAIN_VERIFICATION_SECRET || process.env.AUTH_SECRET;
-  const verificationRecords = verificationSecret
-    ? Object.fromEntries(
-        transferDomains.map(item => [
-          item.id,
-          createDomainVerificationRecord(
-            item.domain,
-            user.organization.id,
-            verificationSecret
-          ),
-        ])
-      )
-    : {};
 
   let isError = false;
   // Handle domain search for register tab
@@ -206,17 +181,13 @@ export default async function DomainPage({
               </CardContent>
             </Card>
 
-            <TransferDomainsList
-              domains={transferDomains}
-              verificationRecords={verificationRecords}
-            />
-
             <Card className="bg-muted/20">
               <CardContent className="grid gap-4 p-5 text-sm md:grid-cols-3">
                 <div>
                   <p className="font-medium">1. Comprove a propriedade</p>
                   <p className="mt-1 text-muted-foreground">
-                    Adicione o TXT mostrado no domínio pendente e verifique.
+                    Abra as instruções na lista de domínios, adicione o TXT e
+                    verifique.
                   </p>
                 </div>
                 <div>

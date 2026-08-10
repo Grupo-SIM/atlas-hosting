@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Calendar,
   CheckCircle,
+  Clock,
   Globe,
   Plus,
   RefreshCw,
@@ -25,8 +26,13 @@ import {
 // import { plansTable, Plan } from "@/lib/db/schema"; // Keep if used
 import { getUser } from "@/lib/auth";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
+import {
+  createDomainVerificationRecord,
+  type DomainVerificationRecord,
+} from "@/lib/server/domains/verification";
 import { cn } from "@/lib/utils";
 import { DomainActionsMenu } from "./components/DomainActionsMenu";
+import { PendingDomainInstructionsDialog } from "./components/PendingDomainInstructionsDialog";
 
 // Define a type for the processed domain to be used in the table
 interface ProcessedDomain {
@@ -63,20 +69,34 @@ function externalDomainFallback(domain: {
     usesOurDNS: true,
   };
 }
-export default async function MyDomainsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
-  const q = await searchParams;
+export default async function MyDomainsPage() {
   const user = await getUser();
+  const pendingDomains = user.organization.domains.filter(
+    domain => !domain.active
+  );
+  const verificationSecret =
+    process.env.DOMAIN_VERIFICATION_SECRET || process.env.AUTH_SECRET;
+  const verificationRecords: Record<string, DomainVerificationRecord> =
+    verificationSecret
+      ? Object.fromEntries(
+          pendingDomains.map(domain => [
+            domain.id,
+            createDomainVerificationRecord(
+              domain.domain,
+              user.organization.id,
+              verificationSecret
+            ),
+          ])
+        )
+      : {};
+  const hasDomains = user.organization.domains.length > 0;
 
   let processedDomains: ProcessedDomain[] = [];
   let domainStats = {
     active: 0,
     expired: 0,
     expiringThisMonth: 0,
-    total: 0,
+    total: pendingDomains.length,
   };
 
   try {
@@ -177,7 +197,7 @@ export default async function MyDomainsPage({
           return false;
         }
       }).length,
-      total: domains.length,
+      total: domains.length + pendingDomains.length,
     };
   } catch (error) {
     console.error("Error fetching domain info:", error);
@@ -195,10 +215,10 @@ export default async function MyDomainsPage({
           </p>
         </div>
         {/* Sem domínio nenhum, a chamada pra ação fica só no estado vazio. */}
-        {processedDomains.length > 0 && (
+        {hasDomains ? (
           <div className="flex gap-3">
             <Button asChild={true} variant="outline">
-              <Link href="/domain?tab=transfer">
+              <Link href="/domain?tab=transfer&returnTo=%2Fdomains">
                 <Globe className="mr-2 h-4 w-4" /> Trazer Domínio
               </Link>
             </Button>
@@ -206,16 +226,16 @@ export default async function MyDomainsPage({
               asChild={true}
               className="border-0 bg-white font-bold text-slate-950 shadow-lg hover:bg-white/90"
             >
-              <Link href="/domain?tab=register">
+              <Link href="/domain?tab=register&returnTo=%2Fdomains">
                 <Plus className="mr-2 h-4 w-4" /> Registrar Novo
               </Link>
             </Button>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Domain Statistics Cards */}
-      {processedDomains.length > 0 && (
+      {hasDomains ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="p-6">
@@ -279,7 +299,7 @@ export default async function MyDomainsPage({
             </CardContent>
           </Card>
         </div>
-      )}
+      ) : null}
 
       {/* Quick Actions Card */}
       {/* {processedDomains.length > 0 && (
@@ -357,11 +377,11 @@ export default async function MyDomainsPage({
       <Card className="border-0 bg-transparent shadow-none">
         <CardContent
           className={cn("px-0", {
-            "mx-auto max-w-2xl": processedDomains.length === 0,
+            "mx-auto max-w-2xl": !hasDomains,
           })}
         >
           <div className="overflow-x-auto rounded-lg border">
-            {processedDomains.length === 0 ? (
+            {!hasDomains ? (
               <NoDomains />
             ) : (
               <Table>
@@ -385,6 +405,61 @@ export default async function MyDomainsPage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                  {pendingDomains.map(domain => {
+                    const verification = verificationRecords[domain.id];
+
+                    return (
+                      <TableRow
+                        className="transition-colors hover:bg-muted/50"
+                        key={domain.id}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Badge
+                              className="h-2 w-2 rounded-full border-yellow-500 bg-yellow-500 p-0"
+                              variant="outline"
+                            />
+                            <div>
+                              <p className="font-medium">{domain.domain}</p>
+                              <Badge
+                                className="mt-1 border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400"
+                                variant="outline"
+                              >
+                                <Clock className="mr-1 h-3 w-3" />
+                                Aguardando verificação
+                              </Badge>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden text-center md:table-cell">
+                          <span className="font-medium">
+                            {format(domain.createdAt, "dd/MM/yyyy", {
+                              locale: ptBR,
+                            })}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground">
+                          —
+                        </TableCell>
+                        <TableCell className="hidden text-muted-foreground lg:table-cell">
+                          —
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {verification ? (
+                            <PendingDomainInstructionsDialog
+                              domain={domain.domain}
+                              host={verification.host}
+                              value={verification.value}
+                            />
+                          ) : (
+                            <Button disabled={true} size="sm" variant="outline">
+                              Instruções indisponíveis
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                   {processedDomains.map(domain => (
                     <TableRow
                       className="transition-colors hover:bg-muted/50"
