@@ -136,7 +136,7 @@ export async function completeCloudflareScanReview(
     return {
       message:
         domain.registrarProvider === "namecheap"
-          ? "Registros importados e nameservers atualizados na Namecheap."
+          ? "Registros importados e nameservers atualizados pelo Atlas."
           : "Registros importados. Agora altere os nameservers no registrador.",
       success: true,
     };

@@ -118,7 +118,7 @@ export default async function DomainDetailsPage({
               </CardTitle>
               <CardDescription>Estado da conexão com o Atlas.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-3">
+            <CardContent className="grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-muted-foreground text-sm">Propriedade</p>
                 <p className="flex items-center gap-2 font-medium">
@@ -138,14 +138,6 @@ export default async function DomainDetailsPage({
                     : domain.dnsMode === "legacy_plesk"
                       ? "Configuração assistida"
                       : "Somente acompanhamento"}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Registrador</p>
-                <p className="font-medium">
-                  {domain.registrarProvider === "namecheap"
-                    ? "Namecheap (via Atlas)"
-                    : "Externo"}
                 </p>
               </div>
             </CardContent>
