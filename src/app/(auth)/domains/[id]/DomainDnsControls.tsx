@@ -1,18 +1,8 @@
 "use client";
 
-import {
-  AlertCircle,
-  Check,
-  CheckCircle2,
-  Clock3,
-  Cloud,
-  Copy,
-  Eye,
-  RefreshCw,
-} from "lucide-react";
+import { Check, Cloud, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,20 +15,15 @@ import { useToast } from "@/hooks/use-toast";
 import {
   keepExternalDns,
   type ModeActionResult,
-  refreshCloudflareConnection,
   startCloudflareMigration,
 } from "./actions";
 
 export function DomainDnsControls({
-  connectionStatus,
-  dnsImportStatus,
   dnsMode,
   domainId,
   nameservers,
   registrarProvider,
 }: {
-  connectionStatus: string;
-  dnsImportStatus: string;
   dnsMode: string;
   domainId: string;
   nameservers: string[];
@@ -47,10 +32,6 @@ export function DomainDnsControls({
   const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
-  const [activationFeedback, setActivationFeedback] = useState<{
-    message: string;
-    status: "error" | "pending" | "success";
-  } | null>(null);
   const run = (
     action: () => Promise<ModeActionResult>,
     onResult?: (result: ModeActionResult) => void
@@ -86,33 +67,8 @@ export function DomainDnsControls({
       }
     });
 
-  useEffect(() => {
-    if (dnsMode !== "cloudflare" || connectionStatus !== "awaiting_activation")
-      return;
-    const timer = window.setInterval(async () => {
-      const result = await refreshCloudflareConnection(domainId);
-      const status = result.status || (result.success ? "success" : "error");
-      setActivationFeedback({ message: result.message, status });
-      if (status === "success") {
-        toast({
-          description: result.message,
-          title: "DNS ativado",
-        });
-      }
-      router.refresh();
-    }, 60_000);
-    return () => window.clearInterval(timer);
-  }, [connectionStatus, dnsMode, domainId, router, toast]);
-
   const managed = dnsMode !== "external";
   const needsSetup = managed && nameservers.length === 0;
-  const displayedFeedback =
-    connectionStatus === "connected"
-      ? {
-          message: "Nameservers confirmados. O DNS do Atlas está ativo.",
-          status: "success" as const,
-        }
-      : activationFeedback;
 
   return (
     <div className="space-y-5">
@@ -210,116 +166,6 @@ export function DomainDnsControls({
             >
               <Cloud className="mr-2 h-4 w-4" /> Iniciar configuração
             </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {managed && nameservers.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Configure os nameservers do Atlas</CardTitle>
-            <CardDescription>
-              {connectionStatus === "connected"
-                ? "Configuração ativa e confirmada pelo Atlas."
-                : registrarProvider === "namecheap"
-                  ? "O Atlas já enviou estes nameservers ao registrador."
-                  : "Substitua todos os nameservers atuais pelos endereços abaixo."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {dnsImportStatus !== "complete" && (
-              <div className="rounded-md bg-muted p-3 text-sm">
-                Revise os registros encontrados nesta página antes de concluir a
-                troca. Os nameservers já estão disponíveis para a próxima etapa.
-              </div>
-            )}
-            {registrarProvider !== "namecheap" &&
-              connectionStatus !== "connected" && (
-                <ol className="list-inside list-decimal space-y-1 text-muted-foreground text-sm">
-                  <li>Acesse a área de nameservers no seu registrador</li>
-                  <li>Remova todos os nameservers atuais</li>
-                  <li>Adicione somente os endereços abaixo e salve</li>
-                  <li>Volte ao Atlas e verifique a ativação</li>
-                </ol>
-              )}
-            <div className="grid gap-2 sm:grid-cols-2">
-              {nameservers.map(nameserver => (
-                <div
-                  className="flex items-center justify-between rounded-md border bg-muted/30 p-3 font-mono text-sm"
-                  key={nameserver}
-                >
-                  <span>{nameserver}</span>
-                  <Button
-                    aria-label={`Copiar nameserver ${nameserver}`}
-                    onClick={() => navigator.clipboard.writeText(nameserver)}
-                    size="icon"
-                    variant="ghost"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-            {displayedFeedback && (
-              <Alert
-                className={
-                  displayedFeedback.status === "success"
-                    ? "border-emerald-500/50 bg-emerald-500/10"
-                    : displayedFeedback.status === "pending"
-                      ? "border-amber-500/50 bg-amber-500/10"
-                      : undefined
-                }
-                variant={
-                  displayedFeedback.status === "error"
-                    ? "destructive"
-                    : "default"
-                }
-              >
-                {displayedFeedback.status === "success" ? (
-                  <CheckCircle2 className="h-4 w-4" />
-                ) : displayedFeedback.status === "pending" ? (
-                  <Clock3 className="h-4 w-4" />
-                ) : (
-                  <AlertCircle className="h-4 w-4" />
-                )}
-                <AlertTitle>
-                  {displayedFeedback.status === "success"
-                    ? "Nameservers configurados corretamente"
-                    : displayedFeedback.status === "pending"
-                      ? "Ativação ainda pendente"
-                      : "Falha ao verificar os nameservers"}
-                </AlertTitle>
-                <AlertDescription>{displayedFeedback.message}</AlertDescription>
-              </Alert>
-            )}
-            {connectionStatus !== "connected" && (
-              <Button
-                disabled={pending}
-                onClick={() =>
-                  run(
-                    () => refreshCloudflareConnection(domainId, true),
-                    result =>
-                      setActivationFeedback({
-                        message: result.message,
-                        status:
-                          result.status ||
-                          (result.success ? "success" : "error"),
-                      })
-                  )
-                }
-              >
-                {pending ? (
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="mr-2 h-4 w-4" />
-                )}{" "}
-                {pending
-                  ? "Verificando..."
-                  : activationFeedback
-                    ? "Verificar novamente"
-                    : "Verificar ativação"}
-              </Button>
-            )}
           </CardContent>
         </Card>
       )}

@@ -1,11 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Globe2,
-  ShieldAlert,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Globe2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +21,8 @@ import {
 import { formatAtlasDnsError } from "@/lib/server/domains/cloudflare-dns";
 import { discoverPublicDnsRecords } from "@/lib/server/domains/public-dns";
 import { DnsRecordsManager } from "../../dns/components/DnsRecordManager";
-import { DnsScanReview } from "./DnsScanReview";
 import { DomainDnsControls } from "./DomainDnsControls";
+import { DomainDnsSetupDialog } from "./DomainDnsSetupDialog";
 
 const statusLabels: Record<string, string> = {
   awaiting_activation: "Aguardando ativação",
@@ -161,21 +155,21 @@ export default async function DomainDetailsPage({
           {!isAtlasPurchasedDomain && (
             <>
               <DomainDnsControls
-                connectionStatus={domain.connectionStatus}
-                dnsImportStatus={domain.dnsImportStatus}
                 dnsMode={domain.dnsMode}
                 domainId={domain.id}
                 nameservers={nameservers}
                 registrarProvider={domain.registrarProvider}
               />
-              {domain.dnsMode === "cloudflare" &&
-                domain.dnsImportStatus === "scanning" &&
-                domain.cloudflareZoneId && (
-                  <DnsScanReview
-                    domainId={domain.id}
-                    records={scannedRecords}
-                  />
-                )}
+              {domain.dnsMode === "cloudflare" && domain.cloudflareZoneId && (
+                <DomainDnsSetupDialog
+                  connectionStatus={domain.connectionStatus}
+                  dnsImportStatus={domain.dnsImportStatus}
+                  domainId={domain.id}
+                  lastDnsError={domain.lastDnsError}
+                  nameservers={nameservers}
+                  scannedRecords={scannedRecords}
+                />
+              )}
               {domain.dnsMode !== "cloudflare" && (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
@@ -186,18 +180,7 @@ export default async function DomainDetailsPage({
                   </AlertDescription>
                 </Alert>
               )}
-              {domain.dnsMode === "cloudflare" &&
-                domain.connectionStatus !== "connected" && (
-                  <Alert>
-                    <ShieldAlert className="h-4 w-4" />
-                    <AlertTitle>Zona ainda não ativa</AlertTitle>
-                    <AlertDescription>
-                      Você pode preparar os registros agora, mas o tráfego só
-                      usará o DNS do Atlas após a delegação dos nameservers.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              {domain.lastDnsError && (
+              {domain.lastDnsError && !domain.cloudflareZoneId && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Falha na conexão DNS</AlertTitle>
