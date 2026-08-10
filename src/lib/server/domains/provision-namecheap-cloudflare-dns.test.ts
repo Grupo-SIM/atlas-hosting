@@ -70,6 +70,7 @@ function registrarInfo(
 }
 
 function dependencies(options?: {
+  activationCheckError?: Error;
   currentNameservers?: string[];
   dnssec?: boolean;
   existingRecords?: CloudflareDnsRecord[];
@@ -77,11 +78,13 @@ function dependencies(options?: {
   scannedRecords?: CloudflareDnsRecord[];
   setNameserversError?: Error;
   zone?: CloudflareZone;
+  zoneStatuses?: CloudflareZone["status"][];
 }) {
   const calls: string[] = [];
   const patches: Array<{ id: string; patch: NamecheapCloudflareStatePatch }> =
     [];
   let liveRecords = [...(options?.existingRecords || [])];
+  let zoneStatusIndex = 0;
   const info =
     options?.info ||
     registrarInfo({
@@ -100,6 +103,13 @@ function dependencies(options?: {
     async getRegistrarInfo(domain) {
       calls.push(`info:${domain}`);
       return info;
+    },
+    async getZone(zoneId) {
+      calls.push(`get-zone:${zoneId}`);
+      const statuses = options?.zoneStatuses || ["active"];
+      const status = statuses[Math.min(zoneStatusIndex, statuses.length - 1)];
+      zoneStatusIndex += 1;
+      return { ...(options?.zone || zone), status };
     },
     async hasPublishedDsRecords(domain) {
       calls.push(`ds:${domain}`);
@@ -124,6 +134,10 @@ function dependencies(options?: {
     async sleep(milliseconds) {
       calls.push(`sleep:${milliseconds}`);
     },
+    async triggerActivationCheck(zoneId) {
+      calls.push(`activation:${zoneId}`);
+      if (options?.activationCheckError) throw options.activationCheckError;
+    },
     async triggerDnsScan(zoneId) {
       calls.push(`scan:${zoneId}`);
     },
@@ -143,13 +157,15 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
     const results = await provisionNamecheapCloudflareDomains(
       [candidate()],
       60_000,
+      0,
       fake.dependencies
     );
 
     expect(results).toEqual([
       {
         domain: "example.com",
-        message: "Zona configurada e nameservers enviados à Namecheap.",
+        message:
+          "Zona configurada e nameservers enviados à Namecheap. Zona ativa confirmada pela Cloudflare.",
         status: "success",
       },
     ]);
@@ -160,10 +176,17 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
     );
     expect(fake.patches.at(-1)?.patch).toEqual(
       expect.objectContaining({
-        cloudflareZoneId: "zone-1",
-        connectionStatus: "awaiting_activation",
-        dnsImportStatus: "complete",
+        cloudflareZoneStatus: "active",
+        connectionStatus: "connected",
         lastDnsError: null,
+      })
+    );
+    expect(fake.patches).toContainEqual(
+      expect.objectContaining({
+        patch: expect.objectContaining({
+          cloudflareZoneId: "zone-1",
+          dnsImportStatus: "complete",
+        }),
       })
     );
   });
@@ -181,6 +204,7 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
     const [result] = await provisionNamecheapCloudflareDomains(
       [candidate({ cloudflareZoneId: "zone-1", dnsImportStatus: "complete" })],
       60_000,
+      0,
       fake.dependencies
     );
 
@@ -194,7 +218,7 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
     expect(fake.patches.at(-1)?.patch.connectionStatus).toBe("connected");
   });
 
-  test("keeps an active zone awaiting activation after repairing delegation", async () => {
+  test("rechecks an active zone after repairing delegation", async () => {
     const fake = dependencies({
       existingRecords: [record],
       zone: { ...zone, status: "active" },
@@ -203,13 +227,13 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
     const [result] = await provisionNamecheapCloudflareDomains(
       [candidate()],
       0,
+      0,
       fake.dependencies
     );
 
     expect(result.status).toBe("success");
-    expect(fake.patches.at(-1)?.patch.connectionStatus).toBe(
-      "awaiting_activation"
-    );
+    expect(fake.calls).toContain("get-zone:zone-1");
+    expect(fake.patches.at(-1)?.patch.connectionStatus).toBe("connected");
   });
 
   test("accepts the account-wide modification permission without ChangeDNS", async () => {
@@ -220,6 +244,7 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
 
     const [result] = await provisionNamecheapCloudflareDomains(
       [candidate()],
+      0,
       0,
       fake.dependencies
     );
@@ -233,6 +258,7 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
 
     const [result] = await provisionNamecheapCloudflareDomains(
       [candidate()],
+      0,
       0,
       fake.dependencies
     );
@@ -257,10 +283,12 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
     const [outsideResult] = await provisionNamecheapCloudflareDomains(
       [candidate()],
       0,
+      0,
       outside.dependencies
     );
     const [restrictedResult] = await provisionNamecheapCloudflareDomains(
       [candidate()],
+      0,
       0,
       restricted.dependencies
     );
@@ -280,6 +308,7 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
 
     const [result] = await provisionNamecheapCloudflareDomains(
       [candidate()],
+      0,
       0,
       fake.dependencies
     );
@@ -309,11 +338,142 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
         candidate(),
       ],
       30_000,
+      0,
       fake.dependencies
     );
 
     expect(results.map(result => result.status)).toEqual(["error", "success"]);
     expect(fake.calls.filter(call => call === "sleep:30000")).toHaveLength(1);
+  });
+
+  test("polls pending zones until Cloudflare confirms activation", async () => {
+    const fake = dependencies({
+      existingRecords: [record],
+      zoneStatuses: ["pending", "pending", "active"],
+    });
+
+    const [result] = await provisionNamecheapCloudflareDomains(
+      [candidate()],
+      0,
+      60_000,
+      fake.dependencies
+    );
+
+    expect(result.status).toBe("success");
+    expect(fake.calls.filter(call => call === "sleep:15000")).toHaveLength(2);
+    expect(fake.patches.at(-1)?.patch).toEqual(
+      expect.objectContaining({
+        cloudflareZoneStatus: "active",
+        connectionStatus: "connected",
+        lastDnsError: null,
+      })
+    );
+  });
+
+  test("triggers activation once after 60 seconds and survives trigger errors", async () => {
+    const fake = dependencies({
+      activationCheckError: new Error("Activation check rate limited"),
+      existingRecords: [record],
+      zoneStatuses: ["pending", "pending", "pending", "pending", "active"],
+    });
+
+    const [result] = await provisionNamecheapCloudflareDomains(
+      [candidate()],
+      0,
+      75_000,
+      fake.dependencies
+    );
+
+    expect(result.status).toBe("success");
+    expect(
+      fake.calls.filter(call => call === "activation:zone-1")
+    ).toHaveLength(1);
+    expect(fake.patches.at(-1)?.patch.connectionStatus).toBe("connected");
+    expect(fake.patches.at(-1)?.patch.lastDnsError).toBeNull();
+  });
+
+  test("times out without changing the connection status to error", async () => {
+    const fake = dependencies({
+      existingRecords: [record],
+      zoneStatuses: ["pending"],
+    });
+
+    const [result] = await provisionNamecheapCloudflareDomains(
+      [candidate()],
+      0,
+      30_000,
+      fake.dependencies
+    );
+
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("dentro de 30 segundos");
+    expect(fake.patches.at(-1)?.patch.connectionStatus).toBe(
+      "awaiting_activation"
+    );
+    expect(fake.patches.at(-1)?.patch.lastDnsError).toContain(
+      "dentro de 30 segundos"
+    );
+    expect(fake.calls.some(call => call.startsWith("activation:"))).toBe(false);
+  });
+
+  test("treats a moved Cloudflare zone as a terminal error", async () => {
+    const fake = dependencies({
+      existingRecords: [record],
+      zoneStatuses: ["moved"],
+    });
+
+    const [result] = await provisionNamecheapCloudflareDomains(
+      [candidate()],
+      0,
+      60_000,
+      fake.dependencies
+    );
+
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("moved");
+    expect(fake.patches.at(-1)?.patch).toEqual(
+      expect.objectContaining({
+        cloudflareZoneStatus: "moved",
+        connectionStatus: "error",
+      })
+    );
+  });
+
+  test("polls multiple zones within one shared wait budget", async () => {
+    const fake = dependencies({ existingRecords: [record] });
+    const reads = new Map<string, number>();
+    fake.dependencies.ensureZone = async domain => ({
+      ...zone,
+      id: `zone-${domain}`,
+      name: domain,
+    });
+    fake.dependencies.getZone = async zoneId => {
+      const read = (reads.get(zoneId) || 0) + 1;
+      reads.set(zoneId, read);
+      const activatesAfter = zoneId.includes("one.test") ? 2 : 3;
+      return {
+        ...zone,
+        id: zoneId,
+        name: zoneId.slice("zone-".length),
+        status: read >= activatesAfter ? "active" : "pending",
+      };
+    };
+
+    const results = await provisionNamecheapCloudflareDomains(
+      [
+        candidate({ domain: "one.test", id: "domain-one" }),
+        candidate({ domain: "two.test", id: "domain-two" }),
+      ],
+      0,
+      60_000,
+      fake.dependencies
+    );
+
+    expect(results.map(result => result.status)).toEqual([
+      "success",
+      "success",
+    ]);
+    expect(fake.calls.filter(call => call === "sleep:15000")).toHaveLength(2);
   });
 
   test("a retry resumes after a nameserver failure without rescanning", async () => {
@@ -324,6 +484,7 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
     const [failed] = await provisionNamecheapCloudflareDomains(
       [candidate()],
       0,
+      0,
       first.dependencies
     );
     expect(failed.status).toBe("error");
@@ -331,6 +492,7 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
     const retry = dependencies({ existingRecords: [record] });
     const [completed] = await provisionNamecheapCloudflareDomains(
       [candidate({ cloudflareZoneId: "zone-1" })],
+      0,
       0,
       retry.dependencies
     );

@@ -5,6 +5,7 @@ import { pgOrganizationDomains } from "@/lib/db/schema";
 import { provisionNamecheapCloudflareDomains } from "@/lib/server/domains/provision-namecheap-cloudflare-dns";
 
 interface CliOptions {
+  activationWaitSeconds: number;
   apply: boolean;
   domain?: string;
   scanWaitSeconds: number;
@@ -27,6 +28,13 @@ function optionValue(args: string[], name: string) {
 
 function parseOptions(args: string[]): CliOptions {
   const domain = optionValue(args, "--domain")?.trim().toLowerCase();
+  const activationWaitValue =
+    optionValue(args, "--activation-wait-seconds") ?? "600";
+  const activationWaitSeconds = Number(activationWaitValue);
+  if (!Number.isInteger(activationWaitSeconds) || activationWaitSeconds < 0)
+    throw new Error(
+      "--activation-wait-seconds deve ser um inteiro maior ou igual a zero."
+    );
   const waitValue = optionValue(args, "--scan-wait-seconds") ?? "60";
   const scanWaitSeconds = Number(waitValue);
   if (!Number.isInteger(scanWaitSeconds) || scanWaitSeconds < 0)
@@ -34,6 +42,7 @@ function parseOptions(args: string[]): CliOptions {
       "--scan-wait-seconds deve ser um inteiro maior ou igual a zero."
     );
   return {
+    activationWaitSeconds,
     apply: args.includes("--apply"),
     domain: domain || undefined,
     scanWaitSeconds,
@@ -67,6 +76,7 @@ async function main() {
   console.log(
     JSON.stringify(
       {
+        activationWaitSeconds: options.activationWaitSeconds,
         apply: options.apply,
         candidates: candidates.map(candidate => ({
           cloudflareZoneId: candidate.cloudflareZoneId,
@@ -88,7 +98,8 @@ async function main() {
 
   const results = await provisionNamecheapCloudflareDomains(
     candidates,
-    options.scanWaitSeconds * 1000
+    options.scanWaitSeconds * 1000,
+    options.activationWaitSeconds * 1000
   );
   for (const result of results)
     console.log(

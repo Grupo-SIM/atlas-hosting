@@ -56,6 +56,7 @@ separado abaixo. Ele também é dry-run por padrão:
 bun scripts/provision-namecheap-cloudflare-dns.ts
 bun scripts/provision-namecheap-cloudflare-dns.ts --apply
 bun scripts/provision-namecheap-cloudflare-dns.ts --apply --domain example.com
+bun scripts/provision-namecheap-cloudflare-dns.ts --apply --activation-wait-seconds 600
 ```
 
 O tempo padrão reservado ao scan assíncrono da Cloudflare é 60 segundos. Ele
@@ -64,6 +65,15 @@ zona, aceita os registros encontrados sem proxy e só envia os nameservers à
 Namecheap quando a zona contém pelo menos um registro. Domínios com DNSSEC/DS
 publicado, fora da conta configurada ou sem permissão de alteração são
 registrados como erro e não têm os nameservers modificados.
+
+Depois da delegação, o script consulta as zonas pendentes em paralelo a cada 15
+segundos e aguarda até 10 minutos pela confirmação da Cloudflare. Esse limite
+pode ser alterado com `--activation-wait-seconds N`. Após 60 segundos, o script
+solicita uma única checagem de ativação para cada zona ainda pendente. Uma
+execução só termina com sucesso quando todas as zonas chegam a
+`cloudflare_zone_status = 'active'` e `connection_status = 'connected'`. Se o
+prazo expirar, o processo retorna código 1 e preserva a zona como
+`awaiting_activation` para permitir uma nova tentativa.
 
 Antes da delegação, o Atlas procura registros DS publicados. DNSSEC antigo deve
 ser removido no registrador para evitar `SERVFAIL`. A primeira versão não publica

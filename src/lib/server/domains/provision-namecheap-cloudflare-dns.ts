@@ -36,6 +36,7 @@ export interface NamecheapCloudflareStatePatch {
 
 export interface NamecheapCloudflareProvisioningDependencies {
   ensureZone(domain: string): Promise<CloudflareZone>;
+  getZone(zoneId: string): Promise<CloudflareZone>;
   getRegistrarInfo(domain: string): Promise<DomainsGetInfoCleanedResponse>;
   hasPublishedDsRecords(domain: string): Promise<boolean>;
   listDnsRecords(zoneId: string): Promise<CloudflareDnsRecord[]>;
@@ -47,6 +48,7 @@ export interface NamecheapCloudflareProvisioningDependencies {
   ): Promise<void>;
   setNameservers(domain: string, nameservers: string[]): Promise<void>;
   sleep(milliseconds: number): Promise<void>;
+  triggerActivationCheck(zoneId: string): Promise<void>;
   triggerDnsScan(zoneId: string): Promise<void>;
   updateDomain(id: string, patch: NamecheapCloudflareStatePatch): Promise<void>;
 }
@@ -63,6 +65,14 @@ interface PreparedDomain {
   scanStarted: boolean;
   zone: CloudflareZone;
 }
+
+interface PendingActivation {
+  prepared: PreparedDomain;
+  provisioningMessage: string;
+}
+
+const ACTIVATION_CHECK_DELAY_MILLISECONDS = 60_000;
+const ACTIVATION_POLL_INTERVAL_MILLISECONDS = 15_000;
 
 function errorMessage(error: unknown) {
   return formatAtlasDnsError(error, "Falha ao provisionar o DNS do domínio.");
@@ -139,7 +149,7 @@ async function prepareDomain(
 async function finalizeDomain(
   prepared: PreparedDomain,
   dependencies: NamecheapCloudflareProvisioningDependencies
-): Promise<NamecheapCloudflareProvisioningResult> {
+): Promise<NamecheapCloudflareProvisioningResult | PendingActivation> {
   const { candidate, currentNameservers, scanStarted, zone } = prepared;
   if (scanStarted) {
     const scannedRecords = await dependencies.listScannedRecords(zone.id);
@@ -174,21 +184,197 @@ async function finalizeDomain(
     lastDnsError: null,
   });
 
-  return {
-    domain: candidate.domain,
-    message: nameserversAlreadyMatch
-      ? "Zona configurada; os nameservers já estavam corretos."
-      : "Zona configurada e nameservers enviados à Namecheap.",
-    status: "success",
-  };
+  const provisioningMessage = nameserversAlreadyMatch
+    ? "Zona configurada; os nameservers já estavam corretos."
+    : "Zona configurada e nameservers enviados à Namecheap.";
+  if (nameserversAlreadyMatch && zone.status === "active")
+    return {
+      domain: candidate.domain,
+      message: `${provisioningMessage} Zona ativa confirmada pela Cloudflare.`,
+      status: "success",
+    };
+  return { prepared, provisioningMessage };
+}
+
+function isProvisioningResult(
+  value: NamecheapCloudflareProvisioningResult | PendingActivation
+): value is NamecheapCloudflareProvisioningResult {
+  return "status" in value;
+}
+
+async function savePendingActivationError(
+  pending: PendingActivation,
+  error: unknown,
+  dependencies: NamecheapCloudflareProvisioningDependencies
+) {
+  await dependencies.updateDomain(pending.prepared.candidate.id, {
+    connectionStatus: "awaiting_activation",
+    lastDnsCheckAt: new Date(),
+    lastDnsError: errorMessage(error),
+  });
+}
+
+async function monitorCloudflareActivation(
+  pendingDomains: PendingActivation[],
+  waitMilliseconds: number,
+  dependencies: NamecheapCloudflareProvisioningDependencies
+): Promise<Map<string, NamecheapCloudflareProvisioningResult>> {
+  const results = new Map<string, NamecheapCloudflareProvisioningResult>();
+  const pending = new Map(
+    pendingDomains.map(domain => [domain.prepared.candidate.id, domain])
+  );
+  const activationCheckTriggered = new Set<string>();
+  let elapsedMilliseconds = 0;
+
+  while (pending.size > 0) {
+    await Promise.all(
+      [...pending.values()].map(async pendingDomain => {
+        const { candidate, zone: initialZone } = pendingDomain.prepared;
+        let zone: CloudflareZone;
+        try {
+          zone = await dependencies.getZone(initialZone.id);
+        } catch (error) {
+          try {
+            await savePendingActivationError(
+              pendingDomain,
+              error,
+              dependencies
+            );
+          } catch (persistenceError) {
+            results.set(
+              candidate.id,
+              await saveFailure(candidate, persistenceError, dependencies)
+            );
+            pending.delete(candidate.id);
+          }
+          return;
+        }
+
+        try {
+          if (zone.status === "active") {
+            await dependencies.updateDomain(candidate.id, {
+              cloudflareZoneStatus: zone.status,
+              connectionStatus: "connected",
+              expectedNameservers: zone.name_servers,
+              lastDnsCheckAt: new Date(),
+              lastDnsError: null,
+            });
+            results.set(candidate.id, {
+              domain: candidate.domain,
+              message: `${pendingDomain.provisioningMessage} Zona ativa confirmada pela Cloudflare.`,
+              status: "success",
+            });
+            pending.delete(candidate.id);
+            return;
+          }
+
+          if (zone.status === "moved") {
+            const message =
+              "A Cloudflare marcou a zona como moved após verificar a delegação.";
+            await dependencies.updateDomain(candidate.id, {
+              cloudflareZoneStatus: zone.status,
+              connectionStatus: "error",
+              expectedNameservers: zone.name_servers,
+              lastDnsCheckAt: new Date(),
+              lastDnsError: message,
+            });
+            results.set(candidate.id, {
+              domain: candidate.domain,
+              message,
+              status: "error",
+            });
+            pending.delete(candidate.id);
+            return;
+          }
+
+          await dependencies.updateDomain(candidate.id, {
+            cloudflareZoneStatus: zone.status,
+            connectionStatus: "awaiting_activation",
+            expectedNameservers: zone.name_servers,
+            lastDnsCheckAt: new Date(),
+            lastDnsError: null,
+          });
+        } catch (persistenceError) {
+          results.set(
+            candidate.id,
+            await saveFailure(candidate, persistenceError, dependencies)
+          );
+          pending.delete(candidate.id);
+        }
+      })
+    );
+
+    if (pending.size === 0 || elapsedMilliseconds >= waitMilliseconds) break;
+
+    const sleepMilliseconds = Math.min(
+      ACTIVATION_POLL_INTERVAL_MILLISECONDS,
+      waitMilliseconds - elapsedMilliseconds
+    );
+    await dependencies.sleep(sleepMilliseconds);
+    elapsedMilliseconds += sleepMilliseconds;
+
+    if (elapsedMilliseconds >= ACTIVATION_CHECK_DELAY_MILLISECONDS)
+      await Promise.all(
+        [...pending.values()].map(async pendingDomain => {
+          const { candidate, zone } = pendingDomain.prepared;
+          if (activationCheckTriggered.has(candidate.id)) return;
+          activationCheckTriggered.add(candidate.id);
+          try {
+            await dependencies.triggerActivationCheck(zone.id);
+          } catch (error) {
+            try {
+              await savePendingActivationError(
+                pendingDomain,
+                error,
+                dependencies
+              );
+            } catch (persistenceError) {
+              results.set(
+                candidate.id,
+                await saveFailure(candidate, persistenceError, dependencies)
+              );
+              pending.delete(candidate.id);
+            }
+          }
+        })
+      );
+  }
+
+  await Promise.all(
+    [...pending.values()].map(async pendingDomain => {
+      const { candidate } = pendingDomain.prepared;
+      const message = `A zona não foi ativada pela Cloudflare dentro de ${Math.floor(waitMilliseconds / 1000)} segundos.`;
+      try {
+        await dependencies.updateDomain(candidate.id, {
+          connectionStatus: "awaiting_activation",
+          lastDnsCheckAt: new Date(),
+          lastDnsError: message,
+        });
+        results.set(candidate.id, {
+          domain: candidate.domain,
+          message,
+          status: "error",
+        });
+      } catch (persistenceError) {
+        results.set(
+          candidate.id,
+          await saveFailure(candidate, persistenceError, dependencies)
+        );
+      }
+    })
+  );
+
+  return results;
 }
 
 export async function provisionNamecheapCloudflareDomains(
   candidates: NamecheapCloudflareCandidate[],
   scanWaitMilliseconds: number,
+  activationWaitMilliseconds: number,
   dependencies: NamecheapCloudflareProvisioningDependencies = defaultNamecheapCloudflareProvisioningDependencies
 ): Promise<NamecheapCloudflareProvisioningResult[]> {
   const prepared: PreparedDomain[] = [];
+  const pendingActivation: PendingActivation[] = [];
   const results = new Map<string, NamecheapCloudflareProvisioningResult>();
 
   for (const candidate of candidates) {
@@ -207,10 +393,10 @@ export async function provisionNamecheapCloudflareDomains(
 
   for (const domain of prepared) {
     try {
-      results.set(
-        domain.candidate.id,
-        await finalizeDomain(domain, dependencies)
-      );
+      const finalized = await finalizeDomain(domain, dependencies);
+      if (isProvisioningResult(finalized))
+        results.set(domain.candidate.id, finalized);
+      else pendingActivation.push(finalized);
     } catch (error) {
       results.set(
         domain.candidate.id,
@@ -218,6 +404,13 @@ export async function provisionNamecheapCloudflareDomains(
       );
     }
   }
+
+  const activationResults = await monitorCloudflareActivation(
+    pendingActivation,
+    activationWaitMilliseconds,
+    dependencies
+  );
+  for (const [id, result] of activationResults) results.set(id, result);
 
   return candidates.map(candidate => {
     const result = results.get(candidate.id);
@@ -230,6 +423,7 @@ export const defaultNamecheapCloudflareProvisioningDependencies: NamecheapCloudf
   {
     ensureZone: domain => cloudflareApi.ensureZone(domain),
     getRegistrarInfo: domain => namecheapApi.getInfo({ DomainName: domain }),
+    getZone: zoneId => cloudflareApi.getZone(zoneId),
     hasPublishedDsRecords,
     listDnsRecords: zoneId => cloudflareApi.listDnsRecords(zoneId),
     listScannedRecords: zoneId => cloudflareApi.listScannedRecords(zoneId),
@@ -243,6 +437,8 @@ export const defaultNamecheapCloudflareProvisioningDependencies: NamecheapCloudf
     },
     sleep: milliseconds =>
       new Promise(resolve => setTimeout(resolve, milliseconds)),
+    triggerActivationCheck: zoneId =>
+      cloudflareApi.triggerActivationCheck(zoneId),
     triggerDnsScan: zoneId => cloudflareApi.triggerDnsScan(zoneId),
     async updateDomain(id, patch) {
       await db
