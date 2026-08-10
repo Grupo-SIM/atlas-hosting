@@ -1,9 +1,18 @@
 "use client";
 
-import { Check, Cloud, Copy, Eye, RefreshCw } from "lucide-react";
+import {
+  AlertCircle,
+  Check,
+  CheckCircle2,
+  Clock3,
+  Cloud,
+  Copy,
+  Eye,
+  RefreshCw,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useTransition } from "react";
-import { toast } from "sonner";
+import { useEffect, useState, useTransition } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,8 +21,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import {
   keepExternalDns,
+  type ModeActionResult,
   refreshCloudflareConnection,
   startCloudflareMigration,
 } from "./actions";
@@ -34,13 +45,45 @@ export function DomainDnsControls({
   registrarProvider: string | null;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [pending, startTransition] = useTransition();
-  const run = (action: () => Promise<{ message: string; success: boolean }>) =>
+  const [activationFeedback, setActivationFeedback] = useState<{
+    message: string;
+    status: "error" | "pending" | "success";
+  } | null>(null);
+  const run = (
+    action: () => Promise<ModeActionResult>,
+    onResult?: (result: ModeActionResult) => void
+  ) =>
     startTransition(async () => {
-      const result = await action();
-      if (result.success) toast.success(result.message);
-      else toast.error(result.message);
-      router.refresh();
+      try {
+        const result = await action();
+        const status = result.status || (result.success ? "success" : "error");
+        toast({
+          description: result.message,
+          title:
+            status === "error"
+              ? "Não foi possível concluir"
+              : status === "pending"
+                ? "Verificação concluída"
+                : "Tudo certo",
+          variant: status === "error" ? "destructive" : "default",
+        });
+        onResult?.(result);
+        router.refresh();
+      } catch {
+        const result: ModeActionResult = {
+          message: "Não foi possível comunicar com o DNS do Atlas.",
+          status: "error",
+          success: false,
+        };
+        toast({
+          description: result.message,
+          title: "Erro na verificação",
+          variant: "destructive",
+        });
+        onResult?.(result);
+      }
     });
 
   useEffect(() => {
@@ -48,14 +91,28 @@ export function DomainDnsControls({
       return;
     const timer = window.setInterval(async () => {
       const result = await refreshCloudflareConnection(domainId);
-      if (result.success) toast.success(result.message);
+      const status = result.status || (result.success ? "success" : "error");
+      setActivationFeedback({ message: result.message, status });
+      if (status === "success") {
+        toast({
+          description: result.message,
+          title: "DNS ativado",
+        });
+      }
       router.refresh();
     }, 60_000);
     return () => window.clearInterval(timer);
-  }, [connectionStatus, dnsMode, domainId, router]);
+  }, [connectionStatus, dnsMode, domainId, router, toast]);
 
   const managed = dnsMode !== "external";
   const needsSetup = managed && nameservers.length === 0;
+  const displayedFeedback =
+    connectionStatus === "connected"
+      ? {
+          message: "Nameservers confirmados. O DNS do Atlas está ativo.",
+          status: "success" as const,
+        }
+      : activationFeedback;
 
   return (
     <div className="space-y-5">
@@ -203,17 +260,64 @@ export function DomainDnsControls({
                 </div>
               ))}
             </div>
+            {displayedFeedback && (
+              <Alert
+                className={
+                  displayedFeedback.status === "success"
+                    ? "border-emerald-500/50 bg-emerald-500/10"
+                    : displayedFeedback.status === "pending"
+                      ? "border-amber-500/50 bg-amber-500/10"
+                      : undefined
+                }
+                variant={
+                  displayedFeedback.status === "error"
+                    ? "destructive"
+                    : "default"
+                }
+              >
+                {displayedFeedback.status === "success" ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : displayedFeedback.status === "pending" ? (
+                  <Clock3 className="h-4 w-4" />
+                ) : (
+                  <AlertCircle className="h-4 w-4" />
+                )}
+                <AlertTitle>
+                  {displayedFeedback.status === "success"
+                    ? "Nameservers configurados corretamente"
+                    : displayedFeedback.status === "pending"
+                      ? "Ativação ainda pendente"
+                      : "Falha ao verificar os nameservers"}
+                </AlertTitle>
+                <AlertDescription>{displayedFeedback.message}</AlertDescription>
+              </Alert>
+            )}
             {connectionStatus !== "connected" && (
               <Button
                 disabled={pending}
-                onClick={() => run(() => refreshCloudflareConnection(domainId))}
+                onClick={() =>
+                  run(
+                    () => refreshCloudflareConnection(domainId, true),
+                    result =>
+                      setActivationFeedback({
+                        message: result.message,
+                        status:
+                          result.status ||
+                          (result.success ? "success" : "error"),
+                      })
+                  )
+                }
               >
                 {pending ? (
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Check className="mr-2 h-4 w-4" />
                 )}{" "}
-                Verificar ativação
+                {pending
+                  ? "Verificando..."
+                  : activationFeedback
+                    ? "Verificar novamente"
+                    : "Verificar ativação"}
               </Button>
             )}
           </CardContent>

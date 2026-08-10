@@ -9,6 +9,8 @@ import { cloudflareApi } from "@/lib/server/apis/cloudflare";
 import {
   formatAtlasDnsError,
   hasPublishedDsRecords,
+  lookupPublishedNameservers,
+  matchesExpectedNameservers,
   persistCloudflareZone,
   provisionCloudflareZone,
   refreshCloudflareZone,
@@ -17,6 +19,8 @@ import { REGISTRAR_ADAPTERS } from "@/lib/server/registrars";
 
 export interface ModeActionResult {
   message: string;
+  observedNameservers?: string[];
+  status?: "error" | "pending" | "success";
   success: boolean;
 }
 
@@ -37,7 +41,11 @@ async function saveError(id: string, error: unknown) {
     .update(pgOrganizationDomains)
     .set({ connectionStatus: "error", lastDnsError: message })
     .where(eq(pgOrganizationDomains.id, id));
-  return { message, success: false } satisfies ModeActionResult;
+  return {
+    message,
+    status: "error",
+    success: false,
+  } satisfies ModeActionResult;
 }
 
 export async function startCloudflareMigration(
@@ -125,23 +133,71 @@ export async function completeCloudflareScanReview(
 }
 
 export async function refreshCloudflareConnection(
-  id: string
+  id: string,
+  repairRegistrar = false
 ): Promise<ModeActionResult> {
   const domain = await ownedDomain(id);
   if (!domain?.cloudflareZoneId)
-    return { message: "Zona DNS não encontrada.", success: false };
+    return {
+      message: "Zona DNS não encontrada.",
+      status: "error",
+      success: false,
+    };
   try {
     await cloudflareApi
       .triggerActivationCheck(domain.cloudflareZoneId)
       .catch(() => undefined);
-    const zone = await refreshCloudflareZone(id, domain.cloudflareZoneId);
+    const [zone, observedNameservers] = await Promise.all([
+      refreshCloudflareZone(id, domain.cloudflareZoneId),
+      lookupPublishedNameservers(domain.domain),
+    ]);
+    const expectedNameservers = domain.expectedNameservers || [];
+    const nameserversMatch = matchesExpectedNameservers(
+      expectedNameservers,
+      observedNameservers
+    );
     revalidatePath(`/domains/${id}`);
+    if (zone.status === "active") {
+      return {
+        message: "Nameservers confirmados. O DNS do Atlas está ativo.",
+        observedNameservers,
+        status: "success",
+        success: true,
+      };
+    }
+    if (nameserversMatch) {
+      return {
+        message:
+          "Os nameservers públicos estão corretos. A ativação ainda está em propagação; tente novamente em alguns minutos.",
+        observedNameservers,
+        status: "pending",
+        success: true,
+      };
+    }
+    if (
+      repairRegistrar &&
+      domain.registrarProvider === "namecheap" &&
+      expectedNameservers.length > 0
+    ) {
+      const registrar = REGISTRAR_ADAPTERS.get("namecheap");
+      if (!registrar)
+        throw new Error("Integração com o registrador indisponível.");
+      await registrar.setNameservers(domain.domain, expectedNameservers);
+      return {
+        message:
+          "Os nameservers ainda estavam diferentes. O Atlas reenviou a configuração ao registrador; aguarde a propagação e verifique novamente.",
+        observedNameservers,
+        status: "pending",
+        success: true,
+      };
+    }
     return {
-      message:
-        zone.status === "active"
-          ? "Nameservers confirmados. O DNS do Atlas está ativo."
-          : "O Atlas ainda aguarda a propagação dos nameservers.",
-      success: zone.status === "active",
+      message: observedNameservers.length
+        ? `Os nameservers ainda não correspondem aos do Atlas. Atualmente publicados: ${observedNameservers.join(", ")}.`
+        : "Nenhum nameserver público foi localizado ainda. Confira a alteração no registrador e aguarde a propagação.",
+      observedNameservers,
+      status: "pending",
+      success: true,
     };
   } catch (error) {
     return saveError(id, error);

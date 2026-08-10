@@ -30,6 +30,43 @@ export function formatAtlasDnsError(error: unknown, fallback: string) {
   return message.replace(/cloudflare/gi, "serviço de DNS do Atlas");
 }
 
+function normalizeNameserver(nameserver: string) {
+  return nameserver.trim().toLowerCase().replace(/\.$/, "");
+}
+
+export function matchesExpectedNameservers(
+  expected: string[],
+  published: string[]
+) {
+  const expectedSet = new Set(expected.map(normalizeNameserver));
+  const publishedSet = new Set(published.map(normalizeNameserver));
+  return (
+    expectedSet.size > 0 &&
+    expectedSet.size === publishedSet.size &&
+    [...expectedSet].every(nameserver => publishedSet.has(nameserver))
+  );
+}
+
+export async function lookupPublishedNameservers(domain: string) {
+  const responses = await Promise.all(
+    ["1.1.1.1", "8.8.8.8"].map(endpoint =>
+      query(
+        { question: { name: domain, type: "NS" } },
+        { endpoints: [endpoint] }
+      ).catch(() => null)
+    )
+  );
+  return [
+    ...new Set(
+      responses
+        .flatMap(response => response?.answers || [])
+        .filter(answer => answer.type === "NS")
+        .map(answer => normalizeNameserver(String(answer.data)))
+        .filter(Boolean)
+    ),
+  ].sort();
+}
+
 export async function provisionCloudflareZone(
   domain: string,
   scanExistingRecords: boolean

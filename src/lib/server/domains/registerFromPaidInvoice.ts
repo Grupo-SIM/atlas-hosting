@@ -7,6 +7,7 @@ import {
   pgInvoice,
   pgOrganizationDomains,
 } from "@/lib/db/schema";
+import type { CloudflareZone } from "@/lib/server/apis/cloudflare";
 import namecheapApi from "@/lib/server/apis/namecheap";
 import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
 import {
@@ -38,6 +39,32 @@ export interface RegisterResult {
   skipped: string[];
   /** Mensagem de erro real do registrador, por domínio que falhou. */
   errors: Record<string, string>;
+}
+
+export async function provisionPurchasedDomainDns(
+  domain: string,
+  dependencies?: {
+    provisionZone?: (
+      domainName: string,
+      scanExistingRecords: boolean
+    ) => Promise<CloudflareZone>;
+    setNameservers?: (
+      domainName: string,
+      nameservers: string[]
+    ) => Promise<void>;
+  }
+) {
+  const zone = await (dependencies?.provisionZone || provisionCloudflareZone)(
+    domain,
+    false
+  );
+  const setNameservers =
+    dependencies?.setNameservers ||
+    REGISTRAR_ADAPTERS.get("namecheap")?.setNameservers;
+  if (!setNameservers)
+    throw new Error("Integração com o registrador indisponível.");
+  await setNameservers(domain, zone.name_servers);
+  return zone;
 }
 
 /** Já existe vínculo domínio→organização no nosso banco? (idempotência principal) */
@@ -76,14 +103,10 @@ async function linkDomain(
   let expectedNameservers: string[] | null = null;
   let lastDnsError: string | null = null;
   try {
-    const zone = await provisionCloudflareZone(domain, false);
+    const zone = await provisionPurchasedDomainDns(domain);
     cloudflareZoneId = zone.id;
     cloudflareZoneStatus = zone.status;
     expectedNameservers = zone.name_servers;
-    await REGISTRAR_ADAPTERS.get("namecheap")?.setNameservers(
-      domain,
-      zone.name_servers
-    );
     connectionStatus =
       zone.status === "active" ? "connected" : "awaiting_activation";
   } catch (error) {
