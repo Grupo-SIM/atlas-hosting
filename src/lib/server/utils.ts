@@ -182,11 +182,7 @@ async function _getUserCurrentDomain(
     domain => domain.domain === user.selectedDomain
   );
 
-  if (!fullDomain) {
-    throw new Error(
-      `Selected domain "${user.selectedDomain}" not found in user's domains.`
-    );
-  }
-
-  return fullDomain;
+  // Domínio selecionado pode ter sido removido da conta (ex.: admin excluiu).
+  // Cai no fallback do caller em vez de quebrar a página.
+  return fullDomain ?? null;
 }
