@@ -58,6 +58,7 @@ import ip2Location from "@/lib/server/apis/ip2location";
 import namecheapApi, { getDomainPricing } from "@/lib/server/apis/namecheap";
 import pleskApi from "@/lib/server/apis/plesk";
 import simpayApi, {
+  isApprovedPaymentStatus,
   SimpayPaymentDeclinedError,
 } from "@/lib/server/apis/simpay";
 import {
@@ -1517,6 +1518,7 @@ export async function initiateCheckoutPix(
     const mergedMeta: DomainRegisterInvoiceOptions = {
       ...(invoice.metadata as DomainRegisterInvoiceOptions),
       pixCheckout: billing,
+      pixCreatedAt: new Date().toISOString(),
       pixTransactionId: pixRes.transactionId ?? "",
       simpayPaymentId: paymentId,
     };
@@ -1714,32 +1716,36 @@ export async function syncCheckoutBoletoPayment(
  * Consulta a Simpay para saber se o pagamento PIX foi realmente concluído.
  * Fonte da verdade do gateway — nunca confiar apenas no cliente/SSE.
  */
-async function verifySimpayPixCompleted(paymentId: string): Promise<boolean> {
+async function verifySimpayPixCompleted(
+  paymentId: string,
+  transactionId?: string
+): Promise<boolean> {
   const simApi = (process.env.SIMPAY_API_URL ?? "").replace(/\/+$/, "");
 
   if (simApi) {
-    try {
-      const directRes = await fetch(
-        `${simApi}/atlas/payments/pix-status/${paymentId}`
-      );
-      if (directRes.ok) {
-        const directData = (await directRes.json()) as { status?: string };
-        if (
-          directData.status === "COMPLETED" ||
-          directData.status === "PAID" ||
-          directData.status === "APPROVED"
-        ) {
-          return true;
+    // Versões diferentes do back-Simpay devolveram o ID da DOM em campos
+    // distintos. Consultamos ambos para reconciliar cobranças antigas também.
+    const directIds = [...new Set([transactionId, paymentId].filter(Boolean))];
+    for (const directId of directIds) {
+      try {
+        const directRes = await fetch(
+          `${simApi}/atlas/payments/pix-status/${directId}`
+        );
+        if (directRes.ok) {
+          const directData = (await directRes.json()) as { status?: string };
+          if (isApprovedPaymentStatus(directData.status)) {
+            return true;
+          }
         }
+      } catch {
+        /* tenta o outro ID e depois o status persistido na Simpay */
       }
-    } catch {
-      /* fall through to getPaymentStatus */
     }
   }
 
   try {
     const remote = await simpayApi.getPaymentStatus(paymentId);
-    if (remote.status === "COMPLETED") return true;
+    if (isApprovedPaymentStatus(remote.status)) return true;
   } catch (err) {
     console.error(
       `[CHECKOUT-PIX] Falha ao verificar status do pagamento ${paymentId}:`,
@@ -1748,6 +1754,41 @@ async function verifySimpayPixCompleted(paymentId: string): Promise<boolean> {
   }
 
   return false;
+}
+
+const pixSettlementInFlight = new Map<string, Promise<boolean>>();
+
+/** Evita que SSE, polling, clique manual e cron entreguem a mesma fatura em paralelo. */
+async function settlePixInvoiceIfPaid(
+  invoice: Invoice,
+  user: User,
+  billing: PixCheckoutSnapshot | null | undefined
+): Promise<boolean> {
+  if (!billing) return false;
+  const running = pixSettlementInFlight.get(invoice.id);
+  if (running) return running;
+
+  const attempt = (async () => {
+    const meta = invoice.metadata as DomainRegisterInvoiceOptions;
+    if (!meta.simpayPaymentId) return false;
+    if (
+      !(await verifySimpayPixCompleted(
+        meta.simpayPaymentId,
+        meta.pixTransactionId
+      ))
+    )
+      return false;
+    return settleNonCardInvoice(invoice, user, billing, "pix");
+  })();
+  pixSettlementInFlight.set(invoice.id, attempt);
+
+  try {
+    return await attempt;
+  } finally {
+    if (pixSettlementInFlight.get(invoice.id) === attempt) {
+      pixSettlementInFlight.delete(invoice.id);
+    }
+  }
 }
 
 /**
@@ -1786,22 +1827,17 @@ export async function markPixPaymentComplete(
     return { confirmed: false };
   }
 
-  const completed = await verifySimpayPixCompleted(paymentId);
-  if (!completed) {
+  const confirmed = await settlePixInvoiceIfPaid(
+    invoice as Invoice,
+    user as User,
+    meta.pixCheckout
+  );
+  if (!confirmed) {
     console.warn(
       `[CHECKOUT-PIX] SSE indicou pagamento da fatura ${invoiceId}, mas a Simpay NÃO confirmou. Fatura permanece pendente.`
     );
-    return { confirmed: false };
   }
-
-  const settled = await settleNonCardInvoice(
-    invoice as Invoice,
-    user as User,
-    meta.pixCheckout,
-    "pix"
-  );
-
-  return { confirmed: settled };
+  return { confirmed };
 }
 
 /** Polling do status PIX (Simpay). Quando COMPLETED, marca como pago e processa em background. */
@@ -1838,21 +1874,12 @@ export async function syncCheckoutPixPayment(
     return { status: "PENDING" };
   }
 
-  // Check DOM directly first (no webhook wait) then fall back to DB-based status
-  const isCompleted = await verifySimpayPixCompleted(paymentId);
-
-  if (isCompleted) {
-    const settled = await settleNonCardInvoice(
-      invoice as Invoice,
-      user as User,
-      billing,
-      "pix"
-    );
-
-    return { status: settled ? "COMPLETED" : "PENDING" };
-  }
-
-  return { status: "PENDING" };
+  const settled = await settlePixInvoiceIfPaid(
+    invoice as Invoice,
+    user as User,
+    billing
+  );
+  return { status: settled ? "COMPLETED" : "PENDING" };
 }
 
 /**

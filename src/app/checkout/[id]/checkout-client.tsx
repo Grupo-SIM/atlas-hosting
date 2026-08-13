@@ -87,29 +87,6 @@ export default function CheckoutClient({
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    let canExpire = false;
-    const timer = setTimeout(() => {
-      canExpire = true;
-    }, 2000);
-
-    const expireInvoice = () => {
-      if (!canExpire) return;
-      fetch(`/api/invoices/${invoice.id}/expire`, {
-        keepalive: true,
-        method: "POST",
-      }).catch(() => {});
-    };
-
-    window.addEventListener("beforeunload", expireInvoice);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("beforeunload", expireInvoice);
-      expireInvoice();
-    };
-  }, [invoice.id]);
-
   const [sidebarAction, setSidebarAction] =
     useState<CheckoutSidebarActionState>({
       disabled: false,

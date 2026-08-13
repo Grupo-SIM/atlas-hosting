@@ -7,7 +7,8 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "domain:reprocess": "bun scripts/reprocess-domain-invoice.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.9.1",

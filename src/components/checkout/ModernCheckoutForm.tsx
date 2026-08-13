@@ -626,26 +626,48 @@ const ModernCheckoutForm = forwardRef<
 
     const handleCheckPayment = useCallback(async () => {
       setIsVerifyingPayment(true);
-      const result = await syncCheckoutPixPayment(invoiceId);
-      if (result.status === "COMPLETED") {
-        setIsPaymentConfirmed(true);
-        router.push(
-          `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+      try {
+        const result = await syncCheckoutPixPayment(invoiceId);
+        if (result.status === "COMPLETED") {
+          setIsPaymentConfirmed(true);
+          router.push(
+            `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+          );
+          return;
+        }
+        toast.info(
+          "O gateway ainda não confirmou o pagamento. Continuaremos verificando automaticamente."
         );
+      } catch {
+        toast.error(
+          "Não foi possível consultar o pagamento agora. Tente novamente em instantes."
+        );
+      } finally {
+        setIsVerifyingPayment(false);
       }
-      // isVerifyingPayment stays true after click — polling will redirect when confirmed
     }, [invoiceId, router]);
 
     const handleCheckBoletoPayment = useCallback(async () => {
       setIsVerifyingPayment(true);
-      const result = await syncCheckoutBoletoPayment(invoiceId);
-      if (result.status === "COMPLETED") {
-        setIsPaymentConfirmed(true);
-        router.push(
-          `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+      try {
+        const result = await syncCheckoutBoletoPayment(invoiceId);
+        if (result.status === "COMPLETED") {
+          setIsPaymentConfirmed(true);
+          router.push(
+            `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+          );
+          return;
+        }
+        toast.info(
+          "O gateway ainda não confirmou o pagamento. Continuaremos verificando automaticamente."
         );
+      } catch {
+        toast.error(
+          "Não foi possível consultar o pagamento agora. Tente novamente em instantes."
+        );
+      } finally {
+        setIsVerifyingPayment(false);
       }
-      // isVerifyingPayment stays true after click — polling will redirect when confirmed
     }, [invoiceId, router]);
 
     // Simplified submit for existing users (only payment method)
@@ -1001,14 +1023,18 @@ const ModernCheckoutForm = forwardRef<
       // e só marca como pago se o gateway confirmar de fato.
       const handleSseConfirmed = async () => {
         if (done) return;
-        const { confirmed } = await markPixPaymentComplete(invoiceId);
-        // Não confirmado pelo gateway: mantém o polling de fallback ativo.
-        if (!confirmed || done) return;
-        done = true;
-        setIsPaymentConfirmed(true);
-        router.push(
-          `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
-        );
+        try {
+          const { confirmed } = await markPixPaymentComplete(invoiceId);
+          // Não confirmado pelo gateway: mantém o polling de fallback ativo.
+          if (!confirmed || done) return;
+          done = true;
+          setIsPaymentConfirmed(true);
+          router.push(
+            `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+          );
+        } catch (error) {
+          console.error("[CHECKOUT-PIX] Falha após confirmação SSE:", error);
+        }
       };
 
       // SSE primário: Simpay faz push instantâneo ao confirmar o pagamento
@@ -1040,15 +1066,19 @@ const ModernCheckoutForm = forwardRef<
           clearInterval(intervalId);
           return;
         }
-        const result = await syncCheckoutPixPayment(invoiceId);
-        if (!done && result.status === "COMPLETED") {
-          done = true;
-          clearInterval(intervalId);
-          es?.close();
-          setIsPaymentConfirmed(true);
-          router.push(
-            `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
-          );
+        try {
+          const result = await syncCheckoutPixPayment(invoiceId);
+          if (!done && result.status === "COMPLETED") {
+            done = true;
+            clearInterval(intervalId);
+            es?.close();
+            setIsPaymentConfirmed(true);
+            router.push(
+              `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+            );
+          }
+        } catch (error) {
+          console.error("[CHECKOUT-PIX] Falha no polling:", error);
         }
       }, 1500);
 
@@ -1057,6 +1087,7 @@ const ModernCheckoutForm = forwardRef<
           done = true;
           clearInterval(intervalId);
           es?.close();
+          setIsVerifyingPayment(false);
         },
         15 * 60 * 1000
       );
@@ -1080,14 +1111,18 @@ const ModernCheckoutForm = forwardRef<
           clearInterval(intervalId);
           return;
         }
-        const result = await syncCheckoutBoletoPayment(invoiceId);
-        if (!done && result.status === "COMPLETED") {
-          done = true;
-          clearInterval(intervalId);
-          setIsPaymentConfirmed(true);
-          router.push(
-            `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
-          );
+        try {
+          const result = await syncCheckoutBoletoPayment(invoiceId);
+          if (!done && result.status === "COMPLETED") {
+            done = true;
+            clearInterval(intervalId);
+            setIsPaymentConfirmed(true);
+            router.push(
+              `/payment/success?invoiceId=${encodeURIComponent(invoiceId)}`
+            );
+          }
+        } catch (error) {
+          console.error("[CHECKOUT-BOLETO] Falha no polling:", error);
         }
       }, 5000);
 
@@ -1095,6 +1130,7 @@ const ModernCheckoutForm = forwardRef<
         () => {
           done = true;
           clearInterval(intervalId);
+          setIsVerifyingPayment(false);
         },
         15 * 60 * 1000
       );

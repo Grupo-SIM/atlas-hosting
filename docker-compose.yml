@@ -150,6 +150,26 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+  pix-reconciliation-cron:
+    image: alpine:latest
+    networks:
+      - externa
+    environment:
+      - CRON_SECRET=EUt18pjzZD6z
+    command:
+      - sh
+      - -c
+      - >-
+        while true; do
+        wget -q -O- --post-data=''
+        --header="Authorization: Bearer $$CRON_SECRET"
+        https://atlashosting.com.br/api/internal/domain-payments/reconcile;
+        sleep 300;
+        done
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
 networks:
   externa:
     external: true
