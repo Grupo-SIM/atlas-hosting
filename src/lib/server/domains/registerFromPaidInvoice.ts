@@ -41,6 +41,28 @@ export interface RegisterResult {
   errors: Record<string, string>;
 }
 
+/**
+ * Indica que uma tentativa anterior pode ter sido concluída no registrador sem
+ * que a aplicação recebesse a resposta. Nesse caso, encontrar o domínio na
+ * conta durante o reprocessamento significa concluir o provisionamento Atlas,
+ * e não importar o domínio como uma migração antiga.
+ */
+export function hasAmbiguousPreviousRegistration(
+  metadata: DomainRegisterInvoiceOptions,
+  domain: string
+): boolean {
+  const previousError = metadata.domainRegistration?.errors[domain];
+  if (!previousError) return false;
+
+  const normalized = previousError.toLowerCase();
+  return (
+    normalized.includes("timeout") ||
+    normalized.includes("econnreset") ||
+    normalized.includes("socket hang up") ||
+    normalized.includes("network error")
+  );
+}
+
 export async function provisionPurchasedDomainDns(
   domain: string,
   dependencies?: {
@@ -215,10 +237,16 @@ export async function registerDomainsFromPaidInvoice(
 
       // 2) Já é nosso na Namecheap mas faltou vincular → só vincula, sem recomprar.
       if (await isOwnedAtNamecheap(DomainName)) {
-        console.warn(
-          `[REGISTER] ${DomainName} já está na conta Namecheap; vinculando sem nova cobrança.`
+        const shouldProvisionDns = hasAmbiguousPreviousRegistration(
+          meta,
+          DomainName
         );
-        await linkDomain(invoice.orgId, DomainName, false);
+        console.warn(
+          shouldProvisionDns
+            ? `[REGISTER] ${DomainName} foi registrado apesar da falha anterior; concluindo o provisionamento sem nova cobrança.`
+            : `[REGISTER] ${DomainName} já está na conta Namecheap; vinculando sem nova cobrança.`
+        );
+        await linkDomain(invoice.orgId, DomainName, shouldProvisionDns);
         result.registered.push(DomainName);
         result.skipped.push(DomainName);
         continue;
@@ -256,6 +284,34 @@ export async function registerDomainsFromPaidInvoice(
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+
+      // Uma falha de transporte não prova que a operação de compra falhou: a
+      // Namecheap pode ter registrado o domínio e perdido apenas a resposta.
+      // Reconcilia a posse antes de deixar a fatura pendente ou permitir retry.
+      if (await isOwnedAtNamecheap(DomainName)) {
+        console.warn(
+          `[REGISTER] ${DomainName} consta na conta Namecheap após erro no createDomain; conciliando sem nova compra.`
+        );
+        try {
+          await linkDomain(invoice.orgId, DomainName, true);
+          result.registered.push(DomainName);
+          continue;
+        } catch (reconciliationError) {
+          const reconciliationMessage =
+            reconciliationError instanceof Error
+              ? reconciliationError.message
+              : String(reconciliationError);
+          console.error(
+            `[REGISTER] ✗ Erro ao conciliar ${DomainName}:`,
+            reconciliationMessage
+          );
+          result.failed.push(DomainName);
+          result.errors[DomainName] =
+            `Domínio registrado na Namecheap, mas não foi possível vinculá-lo: ${reconciliationMessage}`;
+          continue;
+        }
+      }
+
       console.error(`[REGISTER] ✗ Erro ao registrar ${DomainName}:`, message);
       result.failed.push(DomainName);
       result.errors[DomainName] = message;

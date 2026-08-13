@@ -956,7 +956,10 @@ export class NamecheapApiWrapper {
       "namecheap.domains.create",
       this._parseDomainsCreateParams(params),
       this._parseDomainsCreateResponse,
-      "GET"
+      // A criação envia muitos dados de contato e a própria Namecheap recomenda
+      // POST para este comando. Além de evitar URLs grandes, isso reduz falhas em
+      // proxies/CDNs que precisam encaminhar a requisição de registro.
+      "POST"
     );
 
   // --- Method: namecheap.domains.renew ---
