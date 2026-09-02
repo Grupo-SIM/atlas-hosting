@@ -9,6 +9,13 @@ const verificationHosts = new Set([
   "raa.name-services.com",
 ]);
 
+export class GmailRefreshTokenExpiredError extends Error {
+  constructor() {
+    super("GMAIL_REFRESH_TOKEN inválido ou expirado.");
+    this.name = "GmailRefreshTokenExpiredError";
+  }
+}
+
 type GmailMessagePart = {
   body?: { data?: string };
   headers?: { name: string; value: string }[];
@@ -92,9 +99,15 @@ async function gmailAccessToken(): Promise<string> {
     }),
     method: "POST",
   });
-  if (!response.ok) throw new Error(`OAuth Gmail retornou ${response.status}.`);
-  const data = (await response.json()) as { access_token?: string };
-  if (!data.access_token) throw new Error("OAuth Gmail não retornou access token.");
+  const data = (await response.json().catch(() => null)) as
+    | { access_token?: string; error?: string }
+    | null;
+  if (!response.ok) {
+    if (data?.error === "invalid_grant") throw new GmailRefreshTokenExpiredError();
+    throw new Error(`OAuth Gmail retornou ${response.status}.`);
+  }
+  if (!data?.access_token)
+    throw new Error("OAuth Gmail não retornou access token.");
   return data.access_token;
 }
 
