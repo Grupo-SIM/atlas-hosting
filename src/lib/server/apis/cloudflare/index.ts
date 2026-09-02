@@ -121,11 +121,22 @@ export class CloudflareApi {
   }
 
   async listScannedRecords(zoneId: string): Promise<CloudflareDnsRecord[]> {
-    return (
-      await this.request<CloudflareDnsRecord[]>(
-        `/zones/${zoneId}/dns_records/scan/review`
-      )
-    ).result;
+    const records: CloudflareDnsRecord[] = [];
+    let page = 1;
+    let totalPages = 1;
+    do {
+      const params = new URLSearchParams({
+        page: String(page),
+        per_page: "100",
+      });
+      const response = await this.request<CloudflareDnsRecord[]>(
+        `/zones/${zoneId}/dns_records/scan/review?${params.toString()}`
+      );
+      records.push(...response.result);
+      totalPages = response.result_info?.total_pages || 1;
+      page += 1;
+    } while (page <= totalPages);
+    return records;
   }
 
   async reviewScannedRecords(

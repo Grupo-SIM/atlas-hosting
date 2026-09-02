@@ -52,8 +52,8 @@ export function DnsScanReview({
     <div className="space-y-4">
       {embedded && (
         <p className="text-muted-foreground text-sm">
-          A varredura consulta apenas nomes comuns. Adicione manualmente
-          qualquer entrada ausente antes de continuar.
+          A varredura pode não encontrar todos os subdomínios. Importe o arquivo
+          de zona ou adicione entradas ausentes antes de continuar.
         </p>
       )}
       {records.length === 0 ? (
@@ -125,9 +125,9 @@ export function DnsScanReview({
       <CardHeader>
         <CardTitle>Revise os registros encontrados</CardTitle>
         <CardDescription>
-          A varredura consulta apenas nomes comuns. Confirme os registros abaixo
-          e adicione manualmente qualquer entrada ausente antes de trocar os
-          nameservers.
+          A varredura pode não encontrar todos os subdomínios. Confirme os
+          registros abaixo e importe o arquivo de zona ou adicione entradas
+          ausentes antes de trocar os nameservers.
         </CardDescription>
       </CardHeader>
       <CardContent>{content}</CardContent>

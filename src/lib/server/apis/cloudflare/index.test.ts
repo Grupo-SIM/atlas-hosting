@@ -57,6 +57,32 @@ describe("CloudflareApi", () => {
     ).toEqual(["1", "2"]);
   });
 
+  test("paginates scanned DNS records", async () => {
+    let page = 0;
+    const api = new CloudflareApi("token", async url => {
+      page += 1;
+      expect(String(url)).toContain(
+        `dns_records/scan/review?page=${page}&per_page=100`
+      );
+      return json(
+        [
+          {
+            content: `192.0.2.${page}`,
+            id: String(page),
+            name: "example.com",
+            ttl: 1,
+            type: "A",
+          },
+        ],
+        { total_pages: 2 }
+      );
+    });
+
+    expect(
+      (await api.listScannedRecords("zone-1")).map(record => record.id)
+    ).toEqual(["1", "2"]);
+  });
+
   test("normalizes Cloudflare API errors", async () => {
     const api = new CloudflareApi(
       "token",
