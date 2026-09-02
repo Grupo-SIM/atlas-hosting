@@ -1,6 +1,7 @@
 "use client";
 
 import { CreditCard, Server, ShieldCheck, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -195,7 +196,14 @@ export function DomainCart({ cartItems, removeFromCart }: DomainCartProps) {
           </Button>
 
           <p className="pt-2 text-center text-muted-foreground text-xs">
-            By proceeding, you agree to our Terms of Service and Privacy Policy
+            Ao continuar, você concorda com nossos{" "}
+            <Link className="underline hover:text-foreground" href="/termos">
+              Termos de Serviço
+            </Link>{" "}
+            e{" "}
+            <Link className="underline hover:text-foreground" href="/privacidade">
+              Política de Privacidade
+            </Link>
           </p>
         </div>
       </div>
