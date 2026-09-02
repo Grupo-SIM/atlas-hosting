@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { getDomainDnsSetupStep } from "./DomainDnsSetupDialog";
+import {
+  getDomainDnsSetupStep,
+  shouldOpenDomainDnsSetup,
+} from "./DomainDnsSetupDialog";
 
 describe("domain DNS setup step", () => {
   test("opens record review until the import is complete", () => {
@@ -28,5 +31,10 @@ describe("domain DNS setup step", () => {
         "b.ns.cloudflare.com",
       ])
     ).toBeNull();
+  });
+
+  test("opens record review after external-domain verification", () => {
+    expect(shouldOpenDomainDnsSetup(true, "records")).toBe(true);
+    expect(shouldOpenDomainDnsSetup(true, "nameservers")).toBe(false);
   });
 });

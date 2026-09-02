@@ -38,10 +38,18 @@ export function getDomainDnsSetupStep(
   return dnsImportStatus === "complete" ? "nameservers" : "records";
 }
 
+export function shouldOpenDomainDnsSetup(
+  initiallyOpen: boolean,
+  step: DomainDnsSetupStep
+) {
+  return initiallyOpen && step === "records";
+}
+
 export function DomainDnsSetupDialog({
   connectionStatus,
   dnsImportStatus,
   domainId,
+  initiallyOpen = false,
   lastDnsError,
   nameservers,
   scannedRecords,
@@ -49,24 +57,26 @@ export function DomainDnsSetupDialog({
   connectionStatus: string;
   dnsImportStatus: string;
   domainId: string;
+  initiallyOpen?: boolean;
   lastDnsError: string | null;
   nameservers: string[];
   scannedRecords: CloudflareDnsRecord[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
-  const [activationFeedback, setActivationFeedback] = useState<{
-    message: string;
-    status: "error" | "pending" | "success";
-  } | null>(null);
   const step = getDomainDnsSetupStep(
     connectionStatus,
     dnsImportStatus,
     nameservers
   );
-
+  const [open, setOpen] = useState(() =>
+    shouldOpenDomainDnsSetup(initiallyOpen, step)
+  );
+  const [pending, startTransition] = useTransition();
+  const [activationFeedback, setActivationFeedback] = useState<{
+    message: string;
+    status: "error" | "pending" | "success";
+  } | null>(null);
   const verify = () =>
     startTransition(async () => {
       try {
@@ -165,7 +175,7 @@ export function DomainDnsSetupDialog({
             <DnsScanReview
               domainId={domainId}
               embedded
-              onComplete={() => setOpen(false)}
+              onComplete={() => setOpen(true)}
               records={scannedRecords}
             />
           </>

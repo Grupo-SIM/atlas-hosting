@@ -54,7 +54,7 @@ export function PendingDomainInstructionsDialog({
       });
 
       if (result.isCorrect && result.domainId) {
-        router.push(`/domains/${result.domainId}`);
+        router.push(`/domains/${result.domainId}?setup=records`);
       } else {
         router.refresh();
       }

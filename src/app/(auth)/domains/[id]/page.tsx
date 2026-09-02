@@ -38,10 +38,13 @@ const statusLabels: Record<string, string> = {
 
 export default async function DomainDetailsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ setup?: string }>;
 }) {
   const { id } = await params;
+  const { setup } = await searchParams;
   const user = await getUser();
   const domain = await db.query.pgOrganizationDomains.findFirst({
     where: and(
@@ -157,6 +160,7 @@ export default async function DomainDetailsPage({
                   connectionStatus={domain.connectionStatus}
                   dnsImportStatus={domain.dnsImportStatus}
                   domainId={domain.id}
+                  initiallyOpen={setup === "records"}
                   lastDnsError={domain.lastDnsError}
                   nameservers={nameservers}
                   scannedRecords={scannedRecords}
