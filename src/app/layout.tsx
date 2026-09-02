@@ -3,7 +3,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 import type { Metadata } from "next";
 import { N8nChatWrapper } from "@/components/N8nChatWrapper";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 
 const roboto = Roboto({
   display: "swap",
