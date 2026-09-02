@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgOrganizationDomains } from "@/lib/db/schema";
@@ -108,106 +107,98 @@ export default async function DomainDetailsPage({
           </p>
         </div>
       </div>
-      <Tabs defaultValue="dns">
-        <TabsList>
-          <TabsTrigger value="overview">Visão geral</TabsTrigger>
-          <TabsTrigger value="dns">Registros DNS</TabsTrigger>
-        </TabsList>
-        <TabsContent className="space-y-5" value="overview">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe2 className="h-5 w-5" /> Informações do domínio
-              </CardTitle>
-              <CardDescription>Estado da conexão com o Atlas.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-muted-foreground text-sm">Propriedade</p>
-                <p className="flex items-center gap-2 font-medium">
-                  {domain.active ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  ) : (
-                    <Clock className="h-4 w-4 text-amber-500" />
-                  )}
-                  {domain.active ? "Verificada" : "Pendente"}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Modo DNS</p>
-                <p className="font-medium">
-                  {domain.dnsMode === "cloudflare"
-                    ? "Gerenciado pelo Atlas"
-                    : domain.dnsMode === "legacy_plesk"
-                      ? "Configuração assistida"
-                      : "Somente acompanhamento"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent className="space-y-5" value="dns">
-          {!isAtlasPurchasedDomain && (
-            <>
-              <DomainDnsControls
-                dnsMode={domain.dnsMode}
-                domainId={domain.id}
-                nameservers={nameservers}
-                registrarProvider={domain.registrarProvider}
-              />
-              {domain.dnsMode === "cloudflare" && domain.cloudflareZoneId && (
-                <DomainDnsSetupDialog
-                  connectionStatus={domain.connectionStatus}
-                  dnsImportStatus={domain.dnsImportStatus}
-                  domainId={domain.id}
-                  initiallyOpen={setup === "records"}
-                  lastDnsError={domain.lastDnsError}
-                  nameservers={nameservers}
-                  scannedRecords={scannedRecords}
-                />
-              )}
-              {domain.dnsMode !== "cloudflare" && (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Visualização pública parcial</AlertTitle>
-                  <AlertDescription>
-                    DNS público não permite listar uma zona completa.
-                    Subdomínios desconhecidos podem não aparecer.
-                  </AlertDescription>
-                </Alert>
-              )}
-              {domain.lastDnsError && !domain.cloudflareZoneId && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Falha na conexão DNS</AlertTitle>
-                  <AlertDescription>
-                    {domain.lastDnsError.replace(
-                      /cloudflare/gi,
-                      "serviço de DNS do Atlas"
-                    )}
-                  </AlertDescription>
-                </Alert>
-              )}
-            </>
-          )}
-          {error ? (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Registros indisponíveis</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : (
-            <DnsRecordsManager
+      <section aria-label="Registros DNS" className="space-y-5">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe2 className="h-5 w-5" /> Informações do domínio
+            </CardTitle>
+            <CardDescription>Estado da conexão com o Atlas.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-muted-foreground text-sm">Propriedade</p>
+              <p className="flex items-center gap-2 font-medium">
+                {domain.active ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                ) : (
+                  <Clock className="h-4 w-4 text-amber-500" />
+                )}
+                {domain.active ? "Verificada" : "Pendente"}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm">Modo DNS</p>
+              <p className="font-medium">
+                {domain.dnsMode === "cloudflare"
+                  ? "Gerenciado pelo Atlas"
+                  : domain.dnsMode === "legacy_plesk"
+                    ? "Configuração assistida"
+                    : "Somente acompanhamento"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        {!isAtlasPurchasedDomain && (
+          <>
+            <DomainDnsControls
+              dnsMode={domain.dnsMode}
               domainId={domain.id}
-              domainName={domain.domain}
-              initialRecords={records}
-              readOnly={
-                domain.dnsMode !== "cloudflare" || !domain.cloudflareZoneId
-              }
+              nameservers={nameservers}
+              registrarProvider={domain.registrarProvider}
             />
-          )}
-        </TabsContent>
-      </Tabs>
+            {domain.dnsMode === "cloudflare" && domain.cloudflareZoneId && (
+              <DomainDnsSetupDialog
+                connectionStatus={domain.connectionStatus}
+                dnsImportStatus={domain.dnsImportStatus}
+                domainId={domain.id}
+                initiallyOpen={setup === "records"}
+                lastDnsError={domain.lastDnsError}
+                nameservers={nameservers}
+                scannedRecords={scannedRecords}
+              />
+            )}
+            {domain.dnsMode !== "cloudflare" && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Visualização pública parcial</AlertTitle>
+                <AlertDescription>
+                  DNS público não permite listar uma zona completa. Subdomínios
+                  desconhecidos podem não aparecer.
+                </AlertDescription>
+              </Alert>
+            )}
+            {domain.lastDnsError && !domain.cloudflareZoneId && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Falha na conexão DNS</AlertTitle>
+                <AlertDescription>
+                  {domain.lastDnsError.replace(
+                    /cloudflare/gi,
+                    "serviço de DNS do Atlas"
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+          </>
+        )}
+        {error ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Registros indisponíveis</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : (
+          <DnsRecordsManager
+            domainId={domain.id}
+            domainName={domain.domain}
+            initialRecords={records}
+            readOnly={
+              domain.dnsMode !== "cloudflare" || !domain.cloudflareZoneId
+            }
+          />
+        )}
+      </section>
     </div>
   );
 }
