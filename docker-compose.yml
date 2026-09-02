@@ -13,8 +13,8 @@ services:
       - APP_BASE_URL=https://atlashosting.com.br
       - AUTH_GITHUB_ID=Ov23liVTVJJKRFMyVISJ
       - AUTH_GITHUB_SECRET=6a54fff1a3a579ba946f79890cd89e6210dac5f5
-      - AUTH_GOOGLE_ID=404406884763-8krdr3j009p43741msrht7ir0dpcdcce.apps.googleusercontent.com
-      - AUTH_GOOGLE_SECRET=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
+      - GOOGLE_CLIENT_ID=404406884763-8krdr3j009p43741msrht7ir0dpcdcce.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=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
       - AUTH_SECRET=QrfzhYA9oJ5aWqkrFoY55M+6Olm6Mj2ow9knfm/U6hA=
       - AUTH_TRUST_HOST=true
       - COOLIFY_API_KEY=1|Obt21a1DyTPkD7Af89Vs5sWoZOcLU8T2nxk179GR518d2d3d

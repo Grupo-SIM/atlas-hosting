@@ -19,8 +19,8 @@ type GmailMessage = GmailMessagePart & { id: string };
 
 function gmailConfig() {
   return {
-    clientId: process.env.GMAIL_CLIENT_ID,
-    clientSecret: process.env.GMAIL_CLIENT_SECRET,
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     refreshToken: process.env.GMAIL_REFRESH_TOKEN,
   };
 }
