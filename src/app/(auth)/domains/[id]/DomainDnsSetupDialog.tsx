@@ -11,7 +11,7 @@ import {
   ServerCog,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,27 +72,23 @@ export function DomainDnsSetupDialog({
   const [open, setOpen] = useState(() =>
     shouldOpenDomainDnsSetup(initiallyOpen, step)
   );
+  const openRef = useRef(open);
   const [pending, startTransition] = useTransition();
   const [activationFeedback, setActivationFeedback] = useState<{
     message: string;
     status: "error" | "pending" | "success";
   } | null>(null);
+
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
   const verify = () =>
     startTransition(async () => {
       try {
         const result = await refreshCloudflareConnection(domainId, true);
         const status = result.status || (result.success ? "success" : "error");
         setActivationFeedback({ message: result.message, status });
-        toast({
-          description: result.message,
-          title:
-            status === "error"
-              ? "Não foi possível concluir"
-              : status === "pending"
-                ? "Verificação concluída"
-                : "DNS ativado",
-          variant: status === "error" ? "destructive" : "default",
-        });
         if (status === "success") setOpen(false);
         router.refresh();
       } catch {
@@ -105,11 +101,6 @@ export function DomainDnsSetupDialog({
           message: result.message,
           status: "error",
         });
-        toast({
-          description: result.message,
-          title: "Erro na verificação",
-          variant: "destructive",
-        });
       }
     });
 
@@ -121,7 +112,8 @@ export function DomainDnsSetupDialog({
       setActivationFeedback({ message: result.message, status });
       if (status === "success") {
         setOpen(false);
-        toast({ description: result.message, title: "DNS ativado" });
+        if (!openRef.current)
+          toast({ description: result.message, title: "DNS ativado" });
       }
       router.refresh();
     }, 60_000);
