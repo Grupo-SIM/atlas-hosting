@@ -14,6 +14,7 @@ import {
   formatAtlasDnsError,
   provisionCloudflareZone,
 } from "@/lib/server/domains/cloudflare-dns";
+import { atlasRegistrantContact } from "@/lib/server/domains/atlas-registrant";
 import { REGISTRAR_ADAPTERS } from "@/lib/server/registrars";
 
 /** Domínios a registrar: pacote (`metadata.bundleDomains`) ou fatura avulsa (`reference`). */
@@ -209,7 +210,7 @@ async function persistOutcome(
  */
 export async function registerDomainsFromPaidInvoice(
   invoice: Pick<Invoice, "id" | "reference" | "metadata" | "orgId">,
-  contact: NamecheapContactDetails
+  _billingContact: NamecheapContactDetails
 ): Promise<RegisterResult> {
   const meta = invoice.metadata as DomainRegisterInvoiceOptions;
   const years = Math.max(1, Number.parseInt(String(meta?.years ?? "1"), 10));
@@ -222,6 +223,7 @@ export async function registerDomainsFromPaidInvoice(
     registered: [],
     skipped: [],
   };
+  const atlasContact = atlasRegistrantContact();
 
   for (const DomainName of names) {
     try {
@@ -258,11 +260,11 @@ export async function registerDomainsFromPaidInvoice(
       );
       const domainResult = await namecheapApi.createDomain({
         AddFreeWhoisguard: whoisguard ? "yes" : "no",
-        Admin: contact,
-        AuxBilling: contact,
+        Admin: atlasContact,
+        AuxBilling: atlasContact,
         DomainName,
-        Registrant: contact,
-        Tech: contact,
+        Registrant: atlasContact,
+        Tech: atlasContact,
         WGEnabled: whoisguard ? "yes" : "no",
         Years: years,
       });

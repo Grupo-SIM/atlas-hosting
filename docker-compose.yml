@@ -8,6 +8,7 @@ services:
       - default
     environment:
       - ADMIN_PHONENUMBER=+55.83991598702
+      - GMAIL_EMAIL=atlashostdigital@gmail.com
       - DOMAIN_FIXED_FEE=4
       - APP_BASE_URL=https://atlashosting.com.br
       - AUTH_GITHUB_ID=Ov23liVTVJJKRFMyVISJ
@@ -164,6 +165,9 @@ services:
         wget -q -O- --post-data=''
         --header="Authorization: Bearer $$CRON_SECRET"
         https://atlashosting.com.br/api/internal/domain-payments/reconcile;
+        wget -q -O- --post-data=''
+        --header="Authorization: Bearer $$CRON_SECRET"
+        https://atlashosting.com.br/api/internal/namecheap-verification;
         sleep 300;
         done
     deploy:
