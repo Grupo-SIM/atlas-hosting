@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { syncCheckoutPixPayment } from "@/app/actions";
 import { db } from "@/lib/db";
@@ -10,6 +10,8 @@ export const runtime = "nodejs";
 
 const QUERY_LIMIT = 200;
 const PROCESS_LIMIT = 50;
+const PROCESS_CONCURRENCY = 5;
+const SETTLEMENT_CLAIM_TIMEOUT_MS = 15 * 60 * 1000;
 
 function ensureAuthorized(request: Request): boolean {
   const authorization = request.headers.get("authorization") ?? "";
@@ -26,10 +28,62 @@ export async function GET(request: Request) {
   return POST(request);
 }
 
+async function reconcileInvoice(invoice: typeof pgInvoice.$inferSelect) {
+  try {
+    const result = await syncCheckoutPixPayment(invoice.id);
+    if (result.status !== "COMPLETED") {
+      await db
+        .update(pgInvoice)
+        .set({ updatedAt: new Date() })
+        .where(
+          and(
+            eq(pgInvoice.id, invoice.id),
+            inArray(pgInvoice.status, ["pending", "expired"])
+          )
+        );
+    }
+    return {
+      invoiceId: invoice.id,
+      status: result.status === "COMPLETED" ? "completed" : "pending",
+    } as const;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[PIX-RECONCILIATION] Fatura ${invoice.id}:`, message);
+    await db
+      .update(pgInvoice)
+      .set({ updatedAt: new Date() })
+      .where(
+        and(
+          eq(pgInvoice.id, invoice.id),
+          inArray(pgInvoice.status, ["pending", "expired"])
+        )
+      );
+    return { error: message, invoiceId: invoice.id, status: "error" } as const;
+  }
+}
+
+/** Recupera uma reserva interrompida por restart/falha durante a entrega. */
+async function releaseStaleSettlementClaims(): Promise<void> {
+  const staleAt = new Date(Date.now() - SETTLEMENT_CLAIM_TIMEOUT_MS);
+  await db
+    .update(pgInvoice)
+    .set({ status: "pending", updatedAt: new Date() })
+    .where(
+      and(
+        eq(pgInvoice.type, "domain"),
+        eq(pgInvoice.status, "processing"),
+        lte(pgInvoice.updatedAt, staleAt),
+        sql`${pgInvoice.metadata}->>'pixSettlementStartedAt' is not null`
+      )
+    );
+}
+
 export async function POST(request: Request) {
   if (!ensureAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  await releaseStaleSettlementClaims();
 
   const invoices = await db.query.pgInvoice.findMany({
     limit: QUERY_LIMIT,
@@ -45,44 +99,10 @@ export async function POST(request: Request) {
     .filter(invoice => shouldReconcilePixDomainInvoice(invoice))
     .slice(0, PROCESS_LIMIT);
 
-  const results: Array<{
-    invoiceId: string;
-    status: "completed" | "pending" | "error";
-    error?: string;
-  }> = [];
-
-  for (const invoice of candidates) {
-    try {
-      const result = await syncCheckoutPixPayment(invoice.id);
-      results.push({
-        invoiceId: invoice.id,
-        status: result.status === "COMPLETED" ? "completed" : "pending",
-      });
-      if (result.status !== "COMPLETED") {
-        await db
-          .update(pgInvoice)
-          .set({ updatedAt: new Date() })
-          .where(
-            and(
-              eq(pgInvoice.id, invoice.id),
-              inArray(pgInvoice.status, ["pending", "expired"])
-            )
-          );
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error(`[PIX-RECONCILIATION] Fatura ${invoice.id}:`, message);
-      results.push({ error: message, invoiceId: invoice.id, status: "error" });
-      await db
-        .update(pgInvoice)
-        .set({ updatedAt: new Date() })
-        .where(
-          and(
-            eq(pgInvoice.id, invoice.id),
-            inArray(pgInvoice.status, ["pending", "expired"])
-          )
-        );
-    }
+  const results: Awaited<ReturnType<typeof reconcileInvoice>>[] = [];
+  for (let offset = 0; offset < candidates.length; offset += PROCESS_CONCURRENCY) {
+    const batch = candidates.slice(offset, offset + PROCESS_CONCURRENCY);
+    results.push(...(await Promise.all(batch.map(reconcileInvoice))));
   }
 
   return NextResponse.json({

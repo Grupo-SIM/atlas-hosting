@@ -1,6 +1,10 @@
 import type { DomainRegisterInvoiceOptions, Invoice } from "@/lib/db/schema";
 
-export const PIX_RECONCILIATION_DELAY_MS = 15 * 60 * 1000;
+/**
+ * O checkout aberto já verifica o PIX em tempo real. Quando o cliente fecha a
+ * página, o cron assume após esta curta janela e continua a entrega no servidor.
+ */
+export const PIX_RECONCILIATION_DELAY_MS = 30 * 1000;
 
 type ReconciliationInvoice = Pick<
   Invoice,

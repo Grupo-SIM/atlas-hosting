@@ -19,7 +19,7 @@ export async function checkIsLoggedIn(): Promise<boolean> {
 
 import axios from "axios";
 import { query } from "dns-query";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import ipaddrJs from "ipaddr.js";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -1758,6 +1758,38 @@ async function verifySimpayPixCompleted(
 
 const pixSettlementInFlight = new Map<string, Promise<boolean>>();
 
+/**
+ * Reserva a entrega em banco antes de chamar a Namecheap. A trava em memória
+ * acima só cobre uma instância; esta protege cron, browser e múltiplas réplicas.
+ */
+async function claimPixInvoiceSettlement(invoice: Invoice): Promise<boolean> {
+  const metadata = {
+    ...(invoice.metadata as Record<string, unknown>),
+    pixSettlementStartedAt: new Date().toISOString(),
+  } as Invoice["metadata"];
+  const claimed = await db
+    .update(pgInvoice)
+    .set({ metadata, status: "processing", updatedAt: new Date() })
+    .where(
+      and(
+        eq(pgInvoice.id, invoice.id),
+        inArray(pgInvoice.status, ["pending", "expired"])
+      )
+    )
+    .returning({ id: pgInvoice.id });
+
+  return claimed.length > 0;
+}
+
+async function releasePixInvoiceSettlement(invoiceId: string): Promise<void> {
+  await db
+    .update(pgInvoice)
+    .set({ status: "pending", updatedAt: new Date() })
+    .where(
+      and(eq(pgInvoice.id, invoiceId), eq(pgInvoice.status, "processing"))
+    );
+}
+
 /** Evita que SSE, polling, clique manual e cron entreguem a mesma fatura em paralelo. */
 async function settlePixInvoiceIfPaid(
   invoice: Invoice,
@@ -1778,7 +1810,15 @@ async function settlePixInvoiceIfPaid(
       ))
     )
       return false;
-    return settleNonCardInvoice(invoice, user, billing, "pix");
+
+    if (!(await claimPixInvoiceSettlement(invoice))) return false;
+
+    try {
+      return await settleNonCardInvoice(invoice, user, billing, "pix");
+    } catch (error) {
+      await releasePixInvoiceSettlement(invoice.id);
+      throw error;
+    }
   })();
   pixSettlementInFlight.set(invoice.id, attempt);
 
@@ -1864,6 +1904,9 @@ export async function syncCheckoutPixPayment(
 
   if (invoice.status === "paid") {
     return { status: "COMPLETED" };
+  }
+  if (invoice.status === "processing") {
+    return { status: "PENDING" };
   }
 
   const meta = invoice.metadata as DomainRegisterInvoiceOptions;

@@ -79,6 +79,8 @@ export type DomainRegisterInvoiceOptions = Pick<
   pixTransactionId?: string;
   /** Momento em que a cobrança PIX foi criada; usado pela reconciliação após o polling inicial. */
   pixCreatedAt?: string;
+  /** Reserva temporária da entrega PIX; evita tentativas paralelas de registro no registrador. */
+  pixSettlementStartedAt?: string;
   pixCheckout?: PixCheckoutSnapshot;
   /** Cobrança real só para testar PIX/cartão; não chama Namecheap nem vincula domínio */
   testPaymentOnly?: boolean;

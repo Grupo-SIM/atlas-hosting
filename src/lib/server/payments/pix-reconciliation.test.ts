@@ -31,6 +31,10 @@ function invoice(
 }
 
 describe("PIX domain reconciliation candidate", () => {
+  test("starts the server fallback after thirty seconds", () => {
+    expect(PIX_RECONCILIATION_DELAY_MS).toBe(30_000);
+  });
+
   test("includes old pending and expired PIX domain invoices", () => {
     expect(shouldReconcilePixDomainInvoice(invoice(), now)).toBe(true);
     expect(
@@ -38,7 +42,7 @@ describe("PIX domain reconciliation candidate", () => {
     ).toBe(true);
   });
 
-  test("waits until the checkout polling window has elapsed", () => {
+  test("waits thirty seconds before the server reconciliation starts", () => {
     const metadata = {
       ...(invoice().metadata as Record<string, unknown>),
       pixCreatedAt: new Date(

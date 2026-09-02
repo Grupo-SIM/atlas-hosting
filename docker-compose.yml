@@ -168,7 +168,7 @@ services:
         wget -q -O- --post-data=''
         --header="Authorization: Bearer $$CRON_SECRET"
         https://atlashosting.com.br/api/internal/namecheap-verification;
-        sleep 300;
+        sleep 30;
         done
     deploy:
       replicas: 1
