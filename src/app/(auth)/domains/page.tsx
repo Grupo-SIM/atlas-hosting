@@ -48,6 +48,31 @@ interface ProcessedDomain {
   isExternal: boolean;
 }
 
+function getExternalDomainDnsFeature(domain: {
+  cloudflareZoneStatus: string | null;
+  connectionStatus: string;
+  dnsMode: string;
+}) {
+  if (domain.dnsMode === "legacy_plesk") return "Migração DNS disponível";
+  if (domain.dnsMode !== "cloudflare") return "DNS externo";
+
+  if (
+    domain.connectionStatus === "connected" &&
+    domain.cloudflareZoneStatus === "active"
+  ) {
+    return "DNS gerenciado pelo Atlas";
+  }
+
+  if (
+    domain.connectionStatus === "awaiting_nameservers" ||
+    domain.connectionStatus === "awaiting_activation"
+  ) {
+    return "Aguardando troca de nameservers";
+  }
+
+  return "DNS em configuração no Atlas";
+}
+
 function isDomainOutsideNamecheap(error: unknown): boolean {
   return error instanceof Error && error.message.includes("Err 2030166");
 }
@@ -110,11 +135,7 @@ export default async function MyDomainsPage() {
               autoRenew: false,
               expiryDate: "Externo",
               features: [
-                domain.dnsMode === "cloudflare"
-                  ? "DNS gerenciado pelo Atlas"
-                  : domain.dnsMode === "legacy_plesk"
-                    ? "Migração DNS disponível"
-                    : "DNS externo",
+                getExternalDomainDnsFeature(domain),
               ],
               id: domain.id,
               isLocked: false,
@@ -123,7 +144,9 @@ export default async function MyDomainsPage() {
                 locale: ptBR,
               }),
               status: "active",
-              usesOurDNS: domain.dnsMode === "cloudflare",
+              usesOurDNS:
+                domain.connectionStatus === "connected" &&
+                domain.cloudflareZoneStatus === "active",
             } as ProcessedDomain;
           }
           const d = await namecheapApi.getInfo({
