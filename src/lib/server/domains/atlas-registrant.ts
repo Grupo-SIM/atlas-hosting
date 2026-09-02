@@ -9,7 +9,7 @@ export function atlasRegistrantContact(): NamecheapContactDetails {
     Address1: process.env.ATLAS_REGISTRANT_ADDRESS1 || "Beco Neuteu Maia",
     City: process.env.ATLAS_REGISTRANT_CITY || "Rio Branco",
     Country: process.env.ATLAS_REGISTRANT_COUNTRY || "BR",
-    EmailAddress: process.env.GMAIL_EMAIL || "atlashostdigital@gmail.com",
+    EmailAddress: process.env.DOMAIN_EMAIL || "atlashostdigital@gmail.com",
     FirstName: process.env.ATLAS_REGISTRANT_FIRST_NAME || "Lucas",
     LastName: process.env.ATLAS_REGISTRANT_LAST_NAME || "Garrafielo",
     Phone:
