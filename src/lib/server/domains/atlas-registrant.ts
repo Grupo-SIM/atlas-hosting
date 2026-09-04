@@ -10,8 +10,8 @@ export function atlasRegistrantContact(): NamecheapContactDetails {
     City: process.env.ATLAS_REGISTRANT_CITY || "Rio Branco",
     Country: process.env.ATLAS_REGISTRANT_COUNTRY || "BR",
     EmailAddress: process.env.DOMAIN_EMAIL || "atlashostdigital@gmail.com",
-    FirstName: process.env.ATLAS_REGISTRANT_FIRST_NAME || "Lucas",
-    LastName: process.env.ATLAS_REGISTRANT_LAST_NAME || "Garrafielo",
+    FirstName: process.env.ATLAS_REGISTRANT_FIRST_NAME || "SIM",
+    LastName: process.env.ATLAS_REGISTRANT_LAST_NAME || "Intermediacoes",
     Phone:
       process.env.ATLAS_REGISTRANT_PHONE ||
       process.env.ADMIN_PHONENUMBER ||
