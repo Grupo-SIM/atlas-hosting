@@ -3,6 +3,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 import type { Metadata } from "next";
 import { N8nChatWrapper } from "@/components/N8nChatWrapper";
+import { LocalInteractionFeedback } from "@/components/ui/LocalInteractionFeedback";
+import { NavigationIndicator } from "@/components/ui/NavigationIndicator";
 import { Toaster } from "@/components/ui/sonner";
 
 const roboto = Roboto({
@@ -42,6 +44,8 @@ export default async function RootLayout({
           enableSystem={false}
         >
           {children}
+          <LocalInteractionFeedback />
+          <NavigationIndicator />
           <Toaster />
           <N8nChatWrapper />
         </ThemeProvider>

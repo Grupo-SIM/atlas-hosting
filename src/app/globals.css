@@ -120,6 +120,49 @@
   [role="button"] {
     cursor: pointer;
   }
+
+  /* Safari applies this before React hydrates. It confirms the tap reached the
+     control without pretending that a local action needs a network loader. */
+  button:not(:disabled),
+  a[href],
+  [role="button"]:not([aria-disabled="true"]) {
+    -webkit-tap-highlight-color: rgb(14 165 233 / 35%);
+    touch-action: manipulation;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    button:not(:disabled):active,
+    a[href]:active,
+    [role="button"]:not([aria-disabled="true"]):active {
+      filter: brightness(0.88);
+      opacity: 0.9;
+    }
+  }
+
+  [data-interaction-feedback="true"] {
+    filter: brightness(0.72);
+    opacity: 0.78;
+  }
+}
+
+.navigation-indicator-bar {
+  animation: navigation-indicator 1.2s ease-in-out infinite;
+  background: linear-gradient(90deg, #0284c7, #38bdf8, #0284c7);
+  transform-origin: left;
+}
+
+@keyframes navigation-indicator {
+  0% {
+    transform: scaleX(0.08);
+  }
+
+  50% {
+    transform: scaleX(0.7);
+  }
+
+  100% {
+    transform: scaleX(0.95);
+  }
 }
 
 .loader {
