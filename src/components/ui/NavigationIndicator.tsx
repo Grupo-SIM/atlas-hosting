@@ -18,7 +18,9 @@ function isInternalNavigation(event: MouseEvent): boolean {
     return false;
   }
 
-  const anchor = (event.target as Element | null)?.closest("a[href]");
+  const anchor = (event.target as Element | null)?.closest<HTMLAnchorElement>(
+    "a[href]"
+  );
   if (
     !anchor ||
     anchor.hasAttribute("download") ||

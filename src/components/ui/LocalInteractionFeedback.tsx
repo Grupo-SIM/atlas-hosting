@@ -52,7 +52,7 @@ export function LocalInteractionFeedback() {
     };
 
     const originalFetch = window.fetch;
-    window.fetch = (...args) => {
+    window.fetch = ((...args) => {
       const interaction = controlForRequest();
       let request: Promise<Response>;
 
@@ -70,7 +70,7 @@ export function LocalInteractionFeedback() {
       }
 
       return request;
-    };
+    }) as typeof window.fetch;
 
     const originalXhrSend = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.send = function send(body) {

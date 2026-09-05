@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: [process.env.APP_BASE_URL?.replace(/https?:\/\//, "")],
+  allowedDevOrigins: process.env.APP_BASE_URL
+    ? [process.env.APP_BASE_URL.replace(/https?:\/\//, "")]
+    : [],
   experimental: {
     useCache: false,
     workerThreads: false,

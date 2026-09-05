@@ -1,4 +1,5 @@
 import { Roboto } from "next/font/google";
+import { Suspense, type ReactNode } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 import type { Metadata } from "next";
@@ -29,7 +30,7 @@ export const viewport = {
 export default async function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <html lang="en" suppressHydrationWarning={true}>
@@ -45,7 +46,9 @@ export default async function RootLayout({
         >
           {children}
           <LocalInteractionFeedback />
-          <NavigationIndicator />
+          <Suspense fallback={null}>
+            <NavigationIndicator />
+          </Suspense>
           <Toaster />
           <N8nChatWrapper />
         </ThemeProvider>
