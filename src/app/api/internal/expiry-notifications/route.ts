@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { pgOrganizationDomains, pgVpsSubscription } from "@/lib/db/schema";
 import { sendNotificationEmail } from "@/lib/email/service";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
+import { checkNamecheapBalanceSafely } from "@/lib/server/domains/namecheap-balance-alert";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { getStorageVpsPlan } from "@/lib/storage-vps-catalog";
 import { getVdsPlan } from "@/lib/vds-catalog";
@@ -148,6 +149,7 @@ export async function POST(req: Request) {
   const baseUrl = getServerPublicBaseUrl();
   let subscriptionsNotified = 0;
   let domainsNotified = 0;
+  const namecheapBalance = await checkNamecheapBalanceSafely("cron diário");
 
   // 1) Assinaturas VPS/VDS/Storage/Windows ativas prestes a vencer/cobrar
   const activeSubs = await db.query.pgVpsSubscription.findMany({
@@ -209,6 +211,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     checkpoints: EXPIRY_CHECKPOINTS_DAYS,
     domainsNotified,
+    namecheapBalance,
     subscriptionsNotified,
   });
 }

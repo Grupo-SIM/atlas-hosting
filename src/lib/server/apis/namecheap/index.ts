@@ -46,10 +46,12 @@ import type {
   RawDomainsRenewCommandResponseContent,
   RawNamecheapApiResponse,
   RawUsersCreateCommandResponseContent,
+  RawUsersGetBalancesCommandResponseContent,
   RawUsersGetPricingCommandResponseContent,
   TldListItem,
   UsersCreateCleanedResponse,
   UsersCreateUserParams,
+  UsersGetBalancesCleanedResponse,
   UsersGetPricingCleanedResponse,
   UsersGetPricingUserParams,
 } from "./types";
@@ -853,6 +855,33 @@ export class NamecheapApiWrapper {
 
     this.pricingCache.set(tld, { data: response, timestamp: Date.now() });
     return response;
+  }
+
+  public async getBalances(): Promise<UsersGetBalancesCleanedResponse> {
+    return this._makeRequest<
+      RawUsersGetBalancesCommandResponseContent,
+      UsersGetBalancesCleanedResponse
+    >(
+      "namecheap.users.getBalances",
+      {},
+      raw => {
+        const balances = raw.UserGetBalancesResult?.[0]?.$;
+        if (!balances)
+          throw new Error("UserGetBalancesResult ausente ou inválido.");
+
+        return {
+          AccountBalance: Number.parseFloat(balances.AccountBalance),
+          AvailableBalance: Number.parseFloat(balances.AvailableBalance),
+          Currency: balances.Currency,
+          EarnedAmount: Number.parseFloat(balances.EarnedAmount),
+          FundsRequiredForAutoRenew: Number.parseFloat(
+            balances.FundsRequiredForAutoRenew
+          ),
+          WithdrawableAmount: Number.parseFloat(balances.WithdrawableAmount),
+        };
+      },
+      "GET"
+    );
   }
 
   /**

@@ -92,6 +92,8 @@ export type DomainRegisterInvoiceOptions = Pick<
   isRenewal?: boolean;
   /** Base cost in BRL paid to Namecheap before markup and fixed fee */
   namecheapCostBrl?: number;
+  /** Exact Namecheap cost in USD quoted when the invoice was created */
+  namecheapCostUsd?: number;
   /** Resultado da última tentativa de registro na Namecheap (persistido para auditoria/reprocesso) */
   domainRegistration?: DomainRegistrationOutcome;
 };
@@ -113,6 +115,7 @@ export interface DomainRegistrationOutcome {
 export interface DomainRenewInvoiceOptions {
   type: "renew";
   domain: string;
+  namecheapCostUsd?: number;
   simpayPaymentId?: string;
   pixTransactionId?: string;
   pixCheckout?: PixCheckoutSnapshot;

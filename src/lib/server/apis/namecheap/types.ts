@@ -299,6 +299,28 @@ export interface UsersGetPricingCleanedResponse {
   ProductType: ProductTypePricingInfo | null;
 }
 
+export interface UsersGetBalancesCleanedResponse {
+  AccountBalance: number;
+  AvailableBalance: number;
+  Currency: string;
+  EarnedAmount: number;
+  FundsRequiredForAutoRenew: number;
+  WithdrawableAmount: number;
+}
+
+export interface RawUsersGetBalancesCommandResponseContent {
+  UserGetBalancesResult?: Array<{
+    $: {
+      AccountBalance: string;
+      AvailableBalance: string;
+      Currency: string;
+      EarnedAmount: string;
+      FundsRequiredForAutoRenew: string;
+      WithdrawableAmount: string;
+    };
+  }>;
+}
+
 export interface RawPriceAttributes {
   Duration: string;
   DurationType: string;

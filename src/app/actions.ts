@@ -67,6 +67,7 @@ import {
   incompleteContactMessage,
   missingContactFields,
 } from "@/lib/server/domains/checkoutFulfillment";
+import { validateNamecheapFundsForPayment } from "@/lib/server/domains/namecheap-balance-alert";
 import { renewDomainFromPaidInvoice } from "@/lib/server/domains/renewFromPaidInvoice";
 import { AppLogger } from "@/lib/server/logs";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
@@ -753,6 +754,7 @@ export async function createDomainInvoice(
 
     let priceInBrl = 0;
     let namecheapCostBrl = 0;
+    let namecheapCostUsd = 0;
 
     // Se for premium, usamos o preço premium retornado no check
     if (
@@ -768,6 +770,7 @@ export async function createDomainInvoice(
       });
       const targetYears = Number.parseInt(yearStr, 10);
       const fixedFee = Number(process.env.DOMAIN_FIXED_FEE) || 4;
+      namecheapCostUsd = basePriceUSD * targetYears;
       namecheapCostBrl = baseUsdAsBrl * targetYears;
       priceInBrl = baseUsdAsBrl * fee + fixedFee * targetYears;
     } else {
@@ -842,6 +845,7 @@ export async function createDomainInvoice(
         from: "usd",
         to: "brl",
       });
+      namecheapCostUsd = totalUSD;
       const envFixedFee = process.env.DOMAIN_FIXED_FEE;
       const fixedFee = envFixedFee !== undefined ? Number(envFixedFee) : 4;
       namecheapCostBrl = baseUsdAsBrl;
@@ -861,6 +865,7 @@ export async function createDomainInvoice(
           guestCheckout: isGuestCheckout || undefined,
           guestPassword: guestPassword || undefined,
           namecheapCostBrl: namecheapCostBrl > 0 ? namecheapCostBrl : undefined,
+          namecheapCostUsd: namecheapCostUsd > 0 ? namecheapCostUsd : undefined,
           whoisguard,
           years: yearStr,
         },
@@ -927,6 +932,7 @@ export async function createDomainBundleInvoice({
 
   try {
     let totalBrl = 0;
+    let totalUsd = 0;
     const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
     let fee = 1;
     if (feeEnabled) {
@@ -993,6 +999,7 @@ export async function createDomainBundleInvoice({
         from: "usd",
         to: "brl",
       });
+      totalUsd += priceUSD;
       const envFixedFee = process.env.DOMAIN_FIXED_FEE;
       const fixedFee =
         envFixedFee !== undefined ? Number.parseFloat(envFixedFee) : 4;
@@ -1013,6 +1020,7 @@ export async function createDomainBundleInvoice({
         dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
         metadata: {
           bundleDomains: list,
+          namecheapCostUsd: totalUsd,
           whoisguard: wgOn ? "on" : "off",
           years: yearStr,
         },
@@ -1124,6 +1132,7 @@ export async function createDomainRenewalInvoice(
       dueDate,
       metadata: {
         domain: domainName,
+        namecheapCostUsd: renewUSD,
         type: "renew",
       } as unknown as DomainRenewInvoiceOptions,
       orgId: user.organization.id,
@@ -1487,6 +1496,11 @@ export async function initiateCheckoutPix(
     return { message: "Esta fatura já foi paga.", status: "error" };
   }
 
+  const namecheapFunds = await validateNamecheapFundsForPayment(invoice);
+  if (!namecheapFunds.ok) {
+    return { message: namecheapFunds.message, status: "error" };
+  }
+
   if (invoice.type === "vps") {
     const meta = invoice.metadata as any;
     if (!(await isPixEligibleForVpsConfig(meta?.config || {}))) {
@@ -1583,6 +1597,11 @@ export async function initiateCheckoutBoleto(
 
   if (invoice.status === "paid") {
     return { message: "Esta fatura já foi paga.", status: "error" };
+  }
+
+  const namecheapFunds = await validateNamecheapFundsForPayment(invoice);
+  if (!namecheapFunds.ok) {
+    return { message: namecheapFunds.message, status: "error" };
   }
 
   if (invoice.type === "vps") {
@@ -2167,6 +2186,11 @@ export async function completeCheckout(
     };
   }
 
+  const namecheapFunds = await validateNamecheapFundsForPayment(invoice);
+  if (!namecheapFunds.ok) {
+    return { message: namecheapFunds.message, status: "error" };
+  }
+
   const selectedInstallments = values.installments ?? 1;
   const buyerRates = await fetchAtlasBuyerRates(selectedInstallments);
   if (buyerRates === null) {
@@ -2543,6 +2567,11 @@ export async function completeCheckoutWithSavedCard(
 
   if (!card) {
     return { message: "Token do cartão é obrigatório.", status: "error" };
+  }
+
+  const namecheapFunds = await validateNamecheapFundsForPayment(invoice);
+  if (!namecheapFunds.ok) {
+    return { message: namecheapFunds.message, status: "error" };
   }
 
   const savedInstallments = (values as any).installments ?? 1;

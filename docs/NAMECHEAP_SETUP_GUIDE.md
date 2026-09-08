@@ -39,14 +39,14 @@ Para começar a revender certificados SSL com a Namecheap, você precisa atender
 
 ### 2.1 Como Funciona
 
-A Namecheap oferece um sistema de cobrança automática que permite usar cartão de crédito quando o saldo da conta é insuficiente.
+A API da Namecheap cobra registros e renovações exclusivamente do saldo da conta.
+O cartão padrão salvo não é usado diretamente nas operações feitas pela API.
 
-**Ordem de cobrança:**
-1. **Primeiro:** Tenta usar o saldo da conta Namecheap
-2. **Segundo:** Se saldo insuficiente, tenta cobrar do cartão padrão
-3. **Terceiro:** Se cartão padrão falhar, tenta cartões alternativos (na ordem definida)
+O cartão pode ser usado para adicionar fundos, mas a API disponível para isso
+exige redirecionamento à página da Namecheap para envio dos dados do cartão. Ela
+não oferece recarga automática e desacompanhada usando o cartão padrão salvo.
 
-### 2.2 Configuração do Cartão de Crédito
+### 2.2 Configuração do Cartão de Crédito para Auto-renovação da Namecheap
 
 **Passos para configurar:**
 
@@ -71,17 +71,18 @@ A Namecheap oferece um sistema de cobrança automática que permite usar cartão
 - ✅ Renovações de certificados SSL
 - ✅ Renovações de outros serviços
 
-**Precisa testar:**
-- ⚠️ Novos registros de domínios via API quando saldo é insuficiente
-- ⚠️ Compras via API quando saldo é insuficiente
+**Não funciona:**
+- ❌ Novos registros feitos pela API usando diretamente o cartão padrão
+- ❌ Renovações disparadas pela API usando diretamente o cartão padrão
+- ❌ Recarga automática e desacompanhada do saldo via API
 
 ### 2.4 Limitações
 
-**Importante:** A documentação oficial da Namecheap foca principalmente em **renovações automáticas**. Para novos registros via API quando o saldo é insuficiente, é recomendado:
+Para registros e renovações disparados pelo Atlas Hosting:
 
-1. **Testar primeiro:** Tentar registrar um domínio via API com saldo baixo para verificar se o cartão é usado automaticamente
-2. **Manter saldo mínimo:** Manter pelo menos US$ 50-100 de saldo para garantir funcionamento
-3. **Monitorar saldo:** Implementar sistema de monitoramento para alertar quando saldo estiver baixo
+1. **Manter saldo:** Manter fundos suficientes na conta Namecheap
+2. **Monitorar saldo:** O cron diário consulta `namecheap.users.getBalances`
+3. **Alertar:** Saldo disponível abaixo de US$ 40 gera aviso para `DOMAIN_EMAIL`
 
 ---
 
@@ -108,23 +109,30 @@ A Namecheap oferece um sistema de cobrança automática que permite usar cartão
 **Quando cliente compra domínio:**
 
 ```
-1. Cliente escolhe domínio e paga via DOM API
-2. Sistema verifica saldo Namecheap antes de criar fatura
-3. Cliente paga → Dinheiro vai para conta DOM
-4. Webhook confirma pagamento
-5. Sistema tenta registrar domínio via API Namecheap:
+1. Cliente escolhe domínio e inicia o checkout
+2. Antes de criar a cobrança, o sistema consulta o saldo disponível na Namecheap
+3. Consulta falhou ou saldo < custo Namecheap da fatura → pagamento bloqueado
+   com erro genérico para o cliente
+   - Saldo insuficiente confirmado → aviso imediato ao `DOMAIN_EMAIL`
+4. Cliente paga → Dinheiro vai para conta DOM
+5. Webhook confirma pagamento
+6. Sistema tenta registrar domínio via API Namecheap:
    - Se saldo suficiente → Registra usando saldo
-   - Se saldo insuficiente → Namecheap tenta usar cartão (se configurado)
-6. Margem fica na conta DOM
+   - Se saldo insuficiente → Registro falha
+7. Após uma compra e no cron diário, o sistema consulta o saldo:
+   - Saldo < US$ 40 → Envia aviso ao `DOMAIN_EMAIL`
+8. Margem fica na conta DOM
 ```
 
 ### 3.3 Monitoramento
 
-**Implementar:**
-- Verificação de saldo antes de criar faturas
-- Monitoramento periódico do saldo (a cada hora)
-- Alertas quando saldo < US$ 60
-- Dashboard mostrando saldo atual
+**Implementado:**
+- Bloqueio da cobrança quando a consulta falha ou o saldo não cobre o custo
+- Aviso imediato ao `DOMAIN_EMAIL` para cada tentativa bloqueada por saldo
+- Consulta após registros e renovações concluídos
+- Consulta de segurança no cron diário de vencimentos
+- Aviso ao `DOMAIN_EMAIL` quando saldo disponível < US$ 40
+- Cooldown de 20 horas entre avisos
 
 **Benefícios:**
 - Evita vender sem saldo suficiente
@@ -149,14 +157,14 @@ A Namecheap oferece um sistema de cobrança automática que permite usar cartão
 ### 4.2 Quando Recarregar
 
 **Sinais de alerta:**
-- Saldo < US$ 60 (margem de segurança)
+- Saldo < US$ 40
 - Múltiplas vendas pendentes
 - Alertas do sistema de monitoramento
 
 **Estratégia:**
-- Recarregar quando saldo < US$ 60
+- Recarregar quando receber o aviso de saldo < US$ 40
 - Manter sempre acima de US$ 50 para garantir acesso à API
-- Usar cartão como backup automático
+- Usar o cartão para adicionar fundos manualmente
 
 ---
 
@@ -179,16 +187,16 @@ A Namecheap oferece um sistema de cobrança automática que permite usar cartão
   - `NAMECHEAP_API_USER`
   - `NAMECHEAP_API_KEY`
   - `PUBLIC_IP` (IP whitelisted na Namecheap)
+  - `DOMAIN_EMAIL` (destinatário do aviso de saldo baixo)
 - [ ] Testar conexão com API
-- [ ] Implementar verificação de saldo antes de criar faturas
-- [ ] Implementar monitoramento de saldo
-- [ ] Configurar alertas de saldo baixo
+- [x] Implementar monitoramento de saldo
+- [x] Configurar alertas de saldo baixo
 - [ ] Testar registro de domínio via API
 
 ### 5.3 Testes
 
 - [ ] Testar registro de domínio com saldo suficiente
-- [ ] Testar registro de domínio com saldo insuficiente (verificar se cartão funciona)
+- [ ] Testar registro de domínio com saldo insuficiente
 - [ ] Testar renovação automática
 - [ ] Verificar se margem está sendo calculada corretamente
 - [ ] Testar webhook de pagamento
@@ -214,7 +222,7 @@ A Namecheap oferece um sistema de cobrança automática que permite usar cartão
 
 - PayPal não funciona para pagamentos recorrentes (exceto Apps)
 - Saldo mínimo de US$ 50 deve ser mantido para acesso à API
-- Novos registros via API com saldo insuficiente precisam ser testados
+- Pedidos via API não usam diretamente o cartão padrão salvo
 - Não há transferência automática de dinheiro da DOM para Namecheap
 
 ---
@@ -223,27 +231,18 @@ A Namecheap oferece um sistema de cobrança automática que permite usar cartão
 
 ### 7.1 Implementações Necessárias
 
-1. **Sistema de Verificação de Saldo**
-   - Verificar saldo antes de criar faturas
-   - Bloquear vendas se saldo insuficiente
-
-2. **Sistema de Monitoramento**
-   - Verificar saldo periodicamente (a cada hora)
-   - Enviar alertas quando saldo < US$ 60
-
-3. **Dashboard de Saldo**
+1. **Dashboard de Saldo**
    - Mostrar saldo atual da Namecheap
    - Mostrar margem acumulada na DOM
    - Histórico de transações
 
-4. **Tratamento de Erros**
+2. **Tratamento de Erros**
    - Tratar erros de saldo insuficiente
    - Retry automático (se aplicável)
    - Notificações de falhas
 
 ### 7.2 Melhorias Futuras
 
-- Sistema de recarga automática (se Namecheap permitir)
 - Integração com múltiplos registradores
 - Relatórios de lucro/margem
 - Previsão de quando saldo vai acabar
@@ -255,23 +254,22 @@ A Namecheap oferece um sistema de cobrança automática que permite usar cartão
 ### Requisitos Mínimos
 - **Depósito inicial:** US$ 50 (para API + SSL)
 - **Saldo recomendado:** US$ 100-200 (para operação segura)
-- **Cartão de crédito:** Recomendado (backup automático)
+- **Cartão de crédito:** Recomendado para recargas manuais
 
 ### Vantagens
 - ✅ Acesso à API com requisitos baixos
-- ✅ Pagamento automático para renovações
-- ✅ Possível pagamento automático para novos registros (testar)
+- ✅ Monitoramento do saldo disponível
+- ✅ Aviso abaixo de US$ 40
 - ✅ Margem fica na conta DOM
 
 ### Cuidados
 - ⚠️ Manter saldo mínimo de US$ 50
 - ⚠️ Monitorar saldo regularmente
-- ⚠️ Testar se cartão funciona para novos registros
+- ⚠️ Recarregar saldo manualmente
 - ⚠️ Não há transferência automática DOM → Namecheap
 
 ---
 
-**Última atualização:** 13 de Novembro de 2025  
-**Versão:** 1.0  
+**Última atualização:** 8 de setembro de 2026
+**Versão:** 1.1
 **Autor:** Atlas Hosting Development Team
-

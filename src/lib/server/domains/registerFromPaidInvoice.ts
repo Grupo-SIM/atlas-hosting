@@ -10,6 +10,7 @@ import {
 import type { CloudflareZone } from "@/lib/server/apis/cloudflare";
 import namecheapApi from "@/lib/server/apis/namecheap";
 import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
+import { checkNamecheapBalanceSafely } from "./namecheap-balance-alert";
 import {
   formatAtlasDnsError,
   provisionCloudflareZone,
@@ -321,6 +322,10 @@ export async function registerDomainsFromPaidInvoice(
   }
 
   await persistOutcome(invoice, result);
+
+  if (result.registered.some(domain => !result.skipped.includes(domain))) {
+    await checkNamecheapBalanceSafely("registro de domínio");
+  }
 
   return result;
 }
