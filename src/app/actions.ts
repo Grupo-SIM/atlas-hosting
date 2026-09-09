@@ -51,6 +51,7 @@ import {
   type User,
 } from "@/lib/db/schema";
 import { sendNotificationEmail } from "@/lib/email/service";
+import { provisionPaidVps } from "@/lib/contabo";
 import { triggerPurchaseNotifications } from "@/lib/notifications/vps-purchase";
 import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
@@ -1351,6 +1352,7 @@ async function settleNonCardInvoice(
     await triggerCommissionIfApplicable(invoice as any).catch(() => {});
     await processInvoiceAfterPayment(invoice, user);
     await handleVpsNonCardPaid(invoice, user, method);
+    await provisionPaidVps(invoice.id);
     await triggerPurchaseNotifications(
       invoice,
       user,
@@ -1416,6 +1418,8 @@ async function fulfillCheckoutAfterPixPaid(
 
   // Notifications (WhatsApp + email) via Unified Helper
   after(async () => {
+    await handleVpsNonCardPaid(invoice, user, "pix");
+    await provisionPaidVps(invoice.id);
     await triggerPurchaseNotifications(
       invoice,
       user,
@@ -2516,6 +2520,7 @@ export async function completeCheckout(
       cardToken,
       paymentMethod: "credit_card",
     });
+    await provisionPaidVps(invoice.id);
   });
 
   redirect(paymentSuccessUrl(invoiceId));
@@ -2837,6 +2842,7 @@ export async function completeCheckoutWithSavedCard(
       cardToken,
       paymentMethod: "credit_card",
     });
+    await provisionPaidVps(invoice.id);
   });
 
   return { message: paymentSuccessUrl(invoiceId), status: "success" };
@@ -3515,12 +3521,55 @@ async function resolvePaymentLinkOwner(paymentLinkId: string) {
   return owner?.organization ? owner : null;
 }
 
+/** Valores antigos na URL não podem voltar a colocar recursos removidos no carrinho. */
+function validateVpsCheckoutConfig(config: Record<string, unknown>): string | null {
+  const image = typeof config.image === "string" ? config.image : "ubuntu";
+  const allowedImages = new Set([
+    "ubuntu",
+    "windows",
+    "almalinux",
+    "rockylinux",
+    "debian",
+    "plesk",
+    "plesk-linux",
+    "rhel",
+    "webmin",
+    "webmin-lamp",
+  ]);
+  if (!allowedImages.has(image)) {
+    return "A imagem selecionada não está mais disponível para compra.";
+  }
+  if (config.objectStorage && config.objectStorage !== "none") {
+    return "Armazenamento de objetos não está disponível para compra.";
+  }
+  if (config.monitoring === "full") {
+    return "Monitoramento completo não está disponível para compra.";
+  }
+  const upgrades = config.storageUpgrades;
+  if (
+    upgrades &&
+    typeof upgrades === "object" &&
+    Object.values(upgrades as Record<string, unknown>).some(value => {
+      const quantity =
+        typeof value === "number" ? value : Number.parseInt(String(value), 10);
+      return Number.isFinite(quantity) && quantity > 0;
+    })
+  ) {
+    return "Expansões de armazenamento VDS não estão disponíveis para compra.";
+  }
+  return null;
+}
+
 export async function createVpsInvoice(data: {
   planId: string;
   config: any;
   guestInfo?: GuestInfo;
 }) {
   const { planId, config, guestInfo } = data;
+  const unsupportedVpsConfig = validateVpsCheckoutConfig(config ?? {});
+  if (unsupportedVpsConfig) {
+    return { message: unsupportedVpsConfig, status: "error" };
+  }
   let user = await getOptionalUser();
   let guestPassword = "";
 

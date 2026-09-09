@@ -1461,9 +1461,7 @@ const locations: Record<string, Location[]> = {
 const imageCategories = [
   { id: "popular", label: "Popular" },
   { id: "os", label: "SO" },
-  { id: "apps", label: "Novidade: Aplicativos" },
   { id: "panels", label: "Painéis" },
-  { id: "blockchain", label: "Blockchain" },
 ];
 
 const images = {
@@ -2714,7 +2712,16 @@ export default function VpsConfigurePage({
                     dynamicImages[
                       imageCategory as keyof typeof dynamicImages
                     ] || []
-                  ).map((img: any) => (
+                  )
+                    .filter(
+                      (img: any) =>
+                        ![
+                          "cpanel", "plesk-win", "n8n", "wireguard",
+                          "nextcloud", "gitlab", "docker", "lamp",
+                          "openclaw", "ipfs", "flux", "horizen", "deepseek",
+                        ].includes(img.id)
+                    )
+                    .map((img: any) => (
                     <button
                       className={cn(
                         `flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
@@ -3139,7 +3146,7 @@ export default function VpsConfigurePage({
                   />
 
                   {/* Add-Ons Sub-section */}
-                  <div className="space-y-8">
+                  <div className="hidden space-y-8">
                     <h3
                       className={`font-black text-lg md:text-2xl ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}
                     >

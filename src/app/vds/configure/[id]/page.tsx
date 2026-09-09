@@ -600,9 +600,7 @@ const regions = [
 const imageCategories = [
   { id: "popular", label: "Popular" },
   { id: "os", label: "SO" },
-  { id: "apps", label: "Novidade: Aplicativos" },
   { id: "panels", label: "Painéis" },
-  { id: "blockchain", label: "Blockchain" },
 ];
 
 const images = {
@@ -1522,7 +1520,7 @@ export default function VdsConfigurePage({
               return (
                 <div
                   className={cn(
-                    "relative flex cursor-pointer items-center justify-between overflow-hidden rounded-xl border p-5 shadow-xl backdrop-blur-md transition-all",
+                    "hidden relative flex cursor-pointer items-center justify-between overflow-hidden rounded-xl border p-5 shadow-xl backdrop-blur-md transition-all",
                     qty > 0
                       ? embedded
                         ? "border-sky-500 bg-accent"
@@ -1678,7 +1676,16 @@ export default function VdsConfigurePage({
                     dynamicImages[
                       imageCategory as keyof typeof dynamicImages
                     ] || []
-                  ).map((img: any) => (
+                  )
+                    .filter(
+                      (img: any) =>
+                        ![
+                          "cpanel", "plesk-win", "n8n", "wireguard",
+                          "nextcloud", "gitlab", "docker", "lamp",
+                          "openclaw", "ipfs", "flux", "horizen", "deepseek",
+                        ].includes(img.id)
+                    )
+                    .map((img: any) => (
                     <button
                       className={cn(
                         "group relative flex cursor-pointer items-center gap-3 overflow-hidden rounded-xl border p-4 transition-all",
@@ -2111,7 +2118,7 @@ export default function VdsConfigurePage({
                         </div>
                       </div> */}
                       {/* Monitoring */}
-                      <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-12">
+                      <div className="hidden grid-cols-1 items-center gap-4 md:grid-cols-12">
                         <div className="flex items-center gap-2 md:col-span-3">
                           <span
                             className={`font-black text-base ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}

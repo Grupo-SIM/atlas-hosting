@@ -5,6 +5,7 @@ type AtlasPlanType = "storage-vps" | "vds" | "vps" | "vps-windows";
 export interface AtlasVpsConfiguration {
   backup?: boolean | string;
   cpanelLicence?: string;
+  debianVersion?: string;
   duration?: string;
   image?: string;
   ipv4Address?: string;
@@ -12,10 +13,15 @@ export interface AtlasVpsConfiguration {
   management?: string;
   monitoring?: string;
   objectStorage?: string;
+  password?: string;
   pleskLicence?: string;
   privateNetwork?: string;
+  rhelVersion?: string;
   storage?: string;
   storageUpgrades?: Record<string, number>;
+  ubuntuVersion?: string;
+  webminVersion?: string;
+  windowsVersion?: string;
 }
 
 export interface BuildContaboInstanceRequestInput {
@@ -66,31 +72,6 @@ const REGIONS: Record<string, Contabo.Body.CreateInstance["region"]> = {
   "us-west": "US-west",
 };
 
-const CPANEL_LICENSES = new Set([
-  "5",
-  "30",
-  "50",
-  "100",
-  "150",
-  "200",
-  "250",
-  "300",
-  "350",
-  "400",
-  "450",
-  "500",
-  "550",
-  "600",
-  "650",
-  "700",
-  "750",
-  "800",
-  "850",
-  "900",
-  "950",
-  "1000",
-]);
-
 function asEnabled(value: boolean | string | undefined): boolean {
   return value === true || value === "true" || value === "enabled";
 }
@@ -138,14 +119,6 @@ function resolveProductId(
 function resolveLicense(
   config: AtlasVpsConfiguration
 ): Contabo.Body.CreateInstance["license"] | undefined {
-  if (config.image === "cpanel") {
-    const license = config.cpanelLicence || "5";
-    if (!CPANEL_LICENSES.has(license)) {
-      throw new Error(`Licença cPanel inválida para Contabo: ${license}.`);
-    }
-    return `cPanel${license}` as Contabo.Body.CreateInstance["license"];
-  }
-
   if (config.image === "plesk" || config.image === "plesk-linux") {
     const licenses = {
       admin: "PleskAdmin",
@@ -163,24 +136,6 @@ function resolveLicense(
 }
 
 function assertSupportedOptions(config: AtlasVpsConfiguration): void {
-  if (config.objectStorage && config.objectStorage !== "none") {
-    throw new Error(
-      "Object Storage é recurso separado na API da Contabo; não pode ser criado no payload da VPS."
-    );
-  }
-  if (config.management === "managed" || config.monitoring === "full") {
-    throw new Error(
-      "Gerenciamento e monitoramento não possuem complemento equivalente na API da Contabo."
-    );
-  }
-  if (
-    config.storageUpgrades &&
-    Object.values(config.storageUpgrades).some(quantity => quantity > 0)
-  ) {
-    throw new Error(
-      "Expansões de disco por quantidade não possuem mapeamento confirmado na API da Contabo."
-    );
-  }
   if (config.ipv4Address && !["1ip", "2ip"].includes(config.ipv4Address)) {
     throw new Error(
       `Quantidade de IPv4 sem suporte na API da Contabo: ${config.ipv4Address}.`

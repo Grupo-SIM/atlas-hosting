@@ -648,9 +648,7 @@ const regions = [
 const imageCategories = [
   { id: "popular", label: "Popular" },
   { id: "os", label: "SO" },
-  { id: "apps", label: "Novidade: Aplicativos" },
   { id: "panels", label: "Painéis" },
-  { id: "blockchain", label: "Blockchain" },
 ];
 
 // (Function removed, logic moved up)
@@ -1385,7 +1383,16 @@ export default function ConfigureWindowsVps({
                     dynamicImages[
                       imageCategory as keyof typeof dynamicImages
                     ] || []
-                  ).map((img: any) => (
+                  )
+                    .filter(
+                      (img: any) =>
+                        ![
+                          "cpanel", "plesk-win", "n8n", "wireguard",
+                          "nextcloud", "gitlab", "docker", "lamp",
+                          "openclaw", "ipfs", "flux", "horizen", "deepseek",
+                        ].includes(img.id)
+                    )
+                    .map((img: any) => (
                     <button
                       className={cn(
                         `flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
@@ -1708,7 +1715,7 @@ export default function ConfigureWindowsVps({
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-6 md:flex-row md:items-start">
+                    <div className="hidden flex-col gap-6 md:flex-row md:items-start">
                       <div className="w-48 shrink-0 pt-2">
                         <h3
                           className={`font-black text-base ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}

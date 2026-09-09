@@ -15,5 +15,6 @@ export * from "./tables/user";
 export * from "./tables/voucher";
 export * from "./tables/vps";
 export * from "./tables/vps-payment-link";
+export * from "./tables/vps-provisioning-job";
 export * from "./tables/vps-subscription";
 export * from "./tables/wallet";

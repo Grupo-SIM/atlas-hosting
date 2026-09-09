@@ -576,9 +576,7 @@ const regions = [
 const imageCategories = [
   { id: "popular", label: "Popular" },
   { id: "os", label: "SO" },
-  { id: "apps", label: "Novidade: Aplicativos" },
   { id: "panels", label: "Painéis" },
-  { id: "blockchain", label: "Blockchain" },
 ];
 
 const images = (prices: any) => ({
@@ -1261,7 +1259,16 @@ export default function ConfigureStorageVps({
                     images(currentImagePrices)[
                       imageCategory as keyof ReturnType<typeof images>
                     ] || []
-                  ).map((img: any) => (
+                  )
+                    .filter(
+                      (img: any) =>
+                        ![
+                          "cpanel", "plesk-win", "n8n", "wireguard",
+                          "nextcloud", "gitlab", "docker", "lamp",
+                          "openclaw", "ipfs", "flux", "horizen", "deepseek",
+                        ].includes(img.id)
+                    )
+                    .map((img: any) => (
                     <button
                       className={cn(
                         `flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
@@ -1573,7 +1580,7 @@ export default function ConfigureStorageVps({
                   <Separator
                     className={`${embedded ? "bg-border" : "bg-white/10"}`}
                   />
-                  <div className="space-y-8">
+                  <div className="hidden space-y-8">
                     <h3
                       className={`font-black text-lg ${embedded ? "text-foreground" : "text-white"} uppercase tracking-widest`}
                     >

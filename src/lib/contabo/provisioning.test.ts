@@ -37,13 +37,12 @@ describe("buildContaboInstanceRequest", () => {
     });
   });
 
-  test("mapeia VDS e licença cPanel", () => {
+  test("mapeia VDS sem licença removida", () => {
     expect(
       buildContaboInstanceRequest({
         config: {
-          cpanelLicence: "100",
           duration: "24",
-          image: "cpanel",
+          image: "ubuntu",
           location: "us-east",
         },
         displayName: "VDS cliente",
@@ -52,7 +51,6 @@ describe("buildContaboInstanceRequest", () => {
         planType: "vds",
       })
     ).toMatchObject({
-      license: "cPanel100",
       period: 24,
       productId: "V11",
       region: "US-east",
@@ -81,16 +79,15 @@ describe("buildContaboInstanceRequest", () => {
     ).toMatchObject({ productId: "V105" });
   });
 
-  test("recusa opções sem equivalente no payload de instância", () => {
-
-    expect(() =>
+  test("ignora extras manuais no payload de instância", () => {
+    expect(
       buildContaboInstanceRequest({
-        config: { objectStorage: "1tb" },
+        config: { monitoring: "full", objectStorage: "1tb" },
         displayName: "Cloud",
         imageId: "image-uuid",
         planId: "4",
         planType: "vps",
       })
-    ).toThrow("Object Storage");
+    ).toMatchObject({ productId: "V153" });
   });
 });
