@@ -18,6 +18,35 @@ export namespace Contabo {
         | "Technical issues / Outages / Performance"
         | "Too expensive / price";
     }
+
+    export interface CreateInstance {
+      addOns?: {
+        additionalIps?: Record<string, never>;
+        backup?: Record<string, never>;
+        privateNetworking?: Record<string, never>;
+      };
+      defaultUser?: "admin" | "administrator" | "root";
+      displayName?: string;
+      imageId: string;
+      license?:
+        | "PleskAdmin"
+        | "PleskHost"
+        | "PleskPro"
+        | `cPanel${5 | 30 | 50 | 100 | 150 | 200 | 250 | 300 | 350 | 400 | 450 | 500 | 550 | 600 | 650 | 700 | 750 | 800 | 850 | 900 | 950 | 1000}`;
+      period: 1 | 12 | 24;
+      productId: string;
+      region:
+        | "AUS"
+        | "EU"
+        | "IND"
+        | "JPN"
+        | "SIN"
+        | "UK"
+        | "US-central"
+        | "US-east"
+        | "US-west";
+      rootPassword?: number;
+    }
   }
 
   export interface CancelInstanceResponseData {
@@ -72,6 +101,19 @@ export namespace Contabo {
 
     export interface CancelInstance extends LinkSelf {
       data: CancelInstanceResponseData[];
+    }
+
+    export interface CreateInstance extends LinkSelf {
+      data: Array<{
+        createdDate: string;
+        customerId: string;
+        imageId: string;
+        instanceId: number;
+        productId: string;
+        region: string;
+        status: string;
+        tenantId: string;
+      }>;
     }
 
     export interface CreateSecret extends LinkSelf, Pagination {
