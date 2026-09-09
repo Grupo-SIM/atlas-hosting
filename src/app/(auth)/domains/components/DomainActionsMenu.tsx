@@ -1,6 +1,12 @@
 "use client";
 
-import { ExternalLink, MoreHorizontal, RefreshCw, Server } from "lucide-react";
+import {
+  ArrowRightLeft,
+  ExternalLink,
+  MoreHorizontal,
+  RefreshCw,
+  Server,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,13 +17,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RenewDomainModal } from "./RenewDomainModal";
+import { DomainTransferDialog } from "./DomainTransferDialog";
 
 interface DomainActionsMenuProps {
+  canTransfer: boolean;
   domainId: string;
   domainName: string;
 }
 
 export function DomainActionsMenu({
+  canTransfer,
   domainId,
   domainName,
 }: DomainActionsMenuProps) {
@@ -48,6 +57,17 @@ export function DomainActionsMenu({
           >
             <RefreshCw className="mr-2 h-4 w-4" /> Renovar Domínio
           </DropdownMenuItem>
+          {canTransfer && (
+            <DomainTransferDialog
+              domainId={domainId}
+              domainName={domainName}
+              trigger={
+                <DropdownMenuItem className="cursor-pointer">
+                  <ArrowRightLeft className="mr-2 h-4 w-4" /> Transferir domínio
+                </DropdownMenuItem>
+              }
+            />
+          )}
           <DropdownMenuItem asChild className="cursor-pointer">
             <a
               href={`http://${domainName}`}

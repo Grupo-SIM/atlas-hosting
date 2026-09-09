@@ -32,7 +32,9 @@ import {
 } from "@/lib/server/domains/verification";
 import { cn } from "@/lib/utils";
 import { DomainActionsMenu } from "./components/DomainActionsMenu";
+import { DomainTransfersPanel } from "./components/DomainTransfersPanel";
 import { PendingDomainInstructionsDialog } from "./components/PendingDomainInstructionsDialog";
+import { getDomainTransfersForUser } from "./transfer-actions";
 
 // Define a type for the processed domain to be used in the table
 interface ProcessedDomain {
@@ -96,6 +98,7 @@ function externalDomainFallback(domain: {
 }
 export default async function MyDomainsPage() {
   const user = await getUser();
+  const domainTransfers = await getDomainTransfersForUser(user.id);
   const pendingDomains = user.organization.domains.filter(
     domain => !domain.active
   );
@@ -256,6 +259,8 @@ export default async function MyDomainsPage() {
           </div>
         ) : null}
       </div>
+
+      <DomainTransfersPanel transfers={domainTransfers} userId={user.id} />
 
       {/* Domain Statistics Cards */}
       {hasDomains ? (
@@ -565,6 +570,10 @@ export default async function MyDomainsPage() {
                       </TableCell>
                       <TableCell className="w-12 text-right">
                         <DomainActionsMenu
+                          canTransfer={
+                            user.id === user.organization.ownerId &&
+                            !user.impersonatedBy
+                          }
                           domainId={domain.id}
                           domainName={domain.name}
                           key={`actions-${domain.id}`}

@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
@@ -98,6 +98,56 @@ export const pgUserPermission = pgTable(
   },
   t => [primaryKey({ columns: [t.userId, t.domainId] })]
 );
+
+export const pgDomainTransfer = pgTable(
+  "domain_transfers",
+  {
+    cancelledAt: timestamp("cancelled_at", { mode: "date" }),
+    completedAt: timestamp("completed_at", { mode: "date" }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    domainId: uuid("domain_id")
+      .notNull()
+      .references(() => pgOrganizationDomains.id),
+    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+    id: uuid("id").primaryKey().defaultRandom(),
+    rejectedAt: timestamp("rejected_at", { mode: "date" }),
+    sourceAcceptedAt: timestamp("source_accepted_at", { mode: "date" }),
+    sourceOrganizationId: uuid("source_organization_id")
+      .notNull()
+      .references(() => pgOrganization.id),
+    sourceUserId: uuid("source_user_id")
+      .notNull()
+      .references(() => pgUser.id),
+    status: text("status", {
+      enum: [
+        "pending_both",
+        "awaiting_source",
+        "awaiting_target",
+        "completed",
+        "rejected",
+        "cancelled",
+        "expired",
+      ],
+    }).notNull(),
+    targetAcceptedAt: timestamp("target_accepted_at", { mode: "date" }),
+    targetOrganizationId: uuid("target_organization_id")
+      .notNull()
+      .references(() => pgOrganization.id),
+    targetUserId: uuid("target_user_id")
+      .notNull()
+      .references(() => pgUser.id),
+    updatedAt: timestamp("updated_at", { mode: "date" })
+      .$default(() => new Date())
+      .notNull(),
+  },
+  table => [
+    uniqueIndex("domain_transfers_active_domain_unique")
+      .on(table.domainId)
+      .where(
+        sql`${table.status} in ('pending_both', 'awaiting_source', 'awaiting_target')`
+      ),
+  ]
+);
 export const domainToUserRelations = relations(pgUserPermission, ({ one }) => ({
   domain: one(pgOrganizationDomains, {
     fields: [pgUserPermission.domainId],
@@ -128,3 +178,5 @@ export type OrganizationDomainInsert =
   typeof pgOrganizationDomains.$inferInsert;
 export type UserDomainAccess = typeof pgUserPermission.$inferSelect;
 export type UserDomainAccessInsert = typeof pgUserPermission.$inferInsert;
+export type DomainTransfer = typeof pgDomainTransfer.$inferSelect;
+export type DomainTransferInsert = typeof pgDomainTransfer.$inferInsert;

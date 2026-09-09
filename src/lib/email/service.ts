@@ -222,6 +222,32 @@ export async function sendNotificationEmail(
   });
 }
 
+export async function sendDomainTransferStatusEmail({
+  actionUrl,
+  domain,
+  email,
+  firstName,
+  state,
+}: {
+  actionUrl: string;
+  domain: string;
+  email: string;
+  firstName: string;
+  state: string;
+}): Promise<void> {
+  await sendNotificationEmail(
+    email,
+    firstName,
+    "Atlas Hosting",
+    `Transferência do domínio ${domain}`,
+    `Estado atual da transferência de ${domain}: ${state}`,
+    "info",
+    actionUrl,
+    "Ver transferência",
+    "A confirmação só pode ser feita após entrar na conta Atlas participante."
+  );
+}
+
 /**
  * Send change email verification email
  */
