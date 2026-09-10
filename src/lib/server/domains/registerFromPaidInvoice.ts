@@ -10,7 +10,10 @@ import {
 import type { CloudflareZone } from "@/lib/server/apis/cloudflare";
 import namecheapApi from "@/lib/server/apis/namecheap";
 import type { NamecheapContactDetails } from "@/lib/server/apis/namecheap/types";
-import { checkNamecheapBalanceSafely } from "./namecheap-balance-alert";
+import {
+  notifyLowNamecheapBalanceAfterActionSafely,
+  notifyNamecheapActionFailureSafely,
+} from "./namecheap-balance-alert";
 import {
   formatAtlasDnsError,
   provisionCloudflareZone,
@@ -276,6 +279,9 @@ export async function registerDomainsFromPaidInvoice(
         );
         await linkDomain(invoice.orgId, DomainName, true);
         result.registered.push(DomainName);
+        await notifyLowNamecheapBalanceAfterActionSafely(
+          `registro do domínio ${DomainName}`
+        );
       } else {
         console.error(
           `[REGISTER] ✗ ${DomainName} não registrado. Resposta:`,
@@ -284,6 +290,10 @@ export async function registerDomainsFromPaidInvoice(
         result.failed.push(DomainName);
         result.errors[DomainName] =
           "Namecheap retornou Registered=false (verifique saldo/disponibilidade).";
+        await notifyNamecheapActionFailureSafely(
+          `registro do domínio ${DomainName}`,
+          result.errors[DomainName]
+        );
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -318,14 +328,14 @@ export async function registerDomainsFromPaidInvoice(
       console.error(`[REGISTER] ✗ Erro ao registrar ${DomainName}:`, message);
       result.failed.push(DomainName);
       result.errors[DomainName] = message;
+      await notifyNamecheapActionFailureSafely(
+        `registro do domínio ${DomainName}`,
+        message
+      );
     }
   }
 
   await persistOutcome(invoice, result);
-
-  if (result.registered.some(domain => !result.skipped.includes(domain))) {
-    await checkNamecheapBalanceSafely("registro de domínio");
-  }
 
   return result;
 }

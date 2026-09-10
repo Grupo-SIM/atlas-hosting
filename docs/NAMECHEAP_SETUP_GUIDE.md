@@ -81,8 +81,8 @@ não oferece recarga automática e desacompanhada usando o cartão padrão salvo
 Para registros e renovações disparados pelo Atlas Hosting:
 
 1. **Manter saldo:** Manter fundos suficientes na conta Namecheap
-2. **Monitorar saldo:** O cron diário consulta `namecheap.users.getBalances`
-3. **Alertar:** Saldo disponível abaixo de US$ 40 gera aviso para `DOMAIN_EMAIL`
+2. **Monitorar saldo:** Após cada registro ou renovação concluídos, o Atlas consulta `namecheap.users.getBalances`
+3. **Alertar:** Cada ação que deixar o saldo disponível abaixo de US$ 40 gera aviso para `DOMAIN_EMAIL`
 
 ---
 
@@ -119,7 +119,7 @@ Para registros e renovações disparados pelo Atlas Hosting:
 6. Sistema tenta registrar domínio via API Namecheap:
    - Se saldo suficiente → Registra usando saldo
    - Se saldo insuficiente → Registro falha
-7. Após uma compra e no cron diário, o sistema consulta o saldo:
+7. Após uma compra concluída, o sistema consulta o saldo:
    - Saldo < US$ 40 → Envia aviso ao `DOMAIN_EMAIL`
 8. Margem fica na conta DOM
 ```
@@ -130,9 +130,9 @@ Para registros e renovações disparados pelo Atlas Hosting:
 - Bloqueio da cobrança quando a consulta falha ou o saldo não cobre o custo
 - Aviso imediato ao `DOMAIN_EMAIL` para cada tentativa bloqueada por saldo
 - Consulta após registros e renovações concluídos
-- Consulta de segurança no cron diário de vencimentos
-- Aviso ao `DOMAIN_EMAIL` quando saldo disponível < US$ 40
-- Cooldown de 20 horas entre avisos
+- Consulta após cada registro e renovação concluídos
+- Aviso ao `DOMAIN_EMAIL` para cada ação que deixar saldo disponível < US$ 40
+- Aviso ao `DOMAIN_EMAIL` para cada falha de saldo, consulta ou operação Namecheap
 
 **Benefícios:**
 - Evita vender sem saldo suficiente

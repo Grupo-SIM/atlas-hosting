@@ -5,38 +5,12 @@ import {
   validateNamecheapFundsForPayment,
 } from "./namecheap-balance-alert";
 
-const TWENTY_HOURS_MS = 20 * 60 * 60 * 1000;
-
 describe("Namecheap low balance alert", () => {
   test("alerts only below USD 40", () => {
-    expect(shouldSendNamecheapBalanceAlert(39.99, 0, TWENTY_HOURS_MS)).toBe(
-      true
+    expect(shouldSendNamecheapBalanceAlert(39.99)).toBe(true);
+    expect(shouldSendNamecheapBalanceAlert(NAMECHEAP_LOW_BALANCE_USD)).toBe(
+      false
     );
-    expect(
-      shouldSendNamecheapBalanceAlert(
-        NAMECHEAP_LOW_BALANCE_USD,
-        0,
-        TWENTY_HOURS_MS
-      )
-    ).toBe(false);
-  });
-
-  test("suppresses another alert during the cooldown", () => {
-    const previousAlertAt = 1_000;
-    expect(
-      shouldSendNamecheapBalanceAlert(
-        10,
-        previousAlertAt,
-        previousAlertAt + TWENTY_HOURS_MS - 1
-      )
-    ).toBe(false);
-    expect(
-      shouldSendNamecheapBalanceAlert(
-        10,
-        previousAlertAt,
-        previousAlertAt + TWENTY_HOURS_MS
-      )
-    ).toBe(true);
   });
 
   test("allows payment when available balance covers the quoted cost", async () => {

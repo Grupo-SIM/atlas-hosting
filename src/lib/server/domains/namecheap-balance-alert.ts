@@ -8,17 +8,14 @@ import { namecheapApi } from "@/lib/server/apis/namecheap";
 import type { UsersGetBalancesCleanedResponse } from "@/lib/server/apis/namecheap/types";
 
 export const NAMECHEAP_LOW_BALANCE_USD = 40;
-const ALERT_COOLDOWN_MS = 20 * 60 * 60 * 1000;
 const PAYMENT_BLOCKED_MESSAGE =
   "Não foi possível processar sua solicitação no momento. Nenhuma cobrança foi realizada. Tente novamente em instantes.";
-
-let lastAlertAt = 0;
 
 export interface NamecheapBalanceAlertResult {
   availableBalance: number;
   currency: string;
   notified: boolean;
-  reason?: "cooldown" | "recipient_not_configured" | "sufficient_balance";
+  reason?: "recipient_not_configured" | "sufficient_balance";
 }
 
 export type NamecheapFundsValidation =
@@ -40,15 +37,8 @@ interface InsufficientBalanceNotifier {
   notify(availableBalance: number, requiredBalance: number): Promise<void>;
 }
 
-export function shouldSendNamecheapBalanceAlert(
-  availableBalance: number,
-  previousAlertAt: number,
-  now: number
-): boolean {
-  return (
-    availableBalance < NAMECHEAP_LOW_BALANCE_USD &&
-    now - previousAlertAt >= ALERT_COOLDOWN_MS
-  );
+export function shouldSendNamecheapBalanceAlert(availableBalance: number): boolean {
+  return availableBalance < NAMECHEAP_LOW_BALANCE_USD;
 }
 
 async function notifyLowNamecheapBalance(
@@ -71,16 +61,6 @@ async function notifyLowNamecheapBalance(
     return { ...result, notified: false, reason: "recipient_not_configured" };
   }
 
-  const now = Date.now();
-  if (
-    !shouldSendNamecheapBalanceAlert(
-      balances.AvailableBalance,
-      lastAlertAt,
-      now
-    )
-  )
-    return { ...result, notified: false, reason: "cooldown" };
-
   await sendNotificationEmail(
     recipient,
     "Admin",
@@ -89,27 +69,62 @@ async function notifyLowNamecheapBalance(
     `O saldo disponível na conta Namecheap está em <strong>${balances.Currency} ${balances.AvailableBalance.toFixed(2)}</strong>, abaixo do limite de <strong>USD ${NAMECHEAP_LOW_BALANCE_USD.toFixed(2)}</strong>. Adicione fundos para evitar falhas no registro e na renovação de domínios.`,
     "danger"
   );
-  lastAlertAt = now;
 
   return { ...result, notified: true };
 }
 
-export async function checkNamecheapBalanceAndNotify(): Promise<NamecheapBalanceAlertResult> {
+export async function notifyLowNamecheapBalanceAfterAction(): Promise<NamecheapBalanceAlertResult> {
   const balances = await namecheapApi.getBalances();
   return notifyLowNamecheapBalance(balances);
 }
 
-export async function checkNamecheapBalanceSafely(
+export async function notifyLowNamecheapBalanceAfterActionSafely(
   context: string
 ): Promise<NamecheapBalanceAlertResult | null> {
   try {
-    return await checkNamecheapBalanceAndNotify();
+    return await notifyLowNamecheapBalanceAfterAction();
   } catch (error) {
     console.error(
       `[NAMECHEAP][BALANCE] Falha ao consultar saldo após ${context}:`,
       error
     );
     return null;
+  }
+}
+
+export async function notifyNamecheapActionFailure(
+  action: string,
+  error: string
+): Promise<void> {
+  const recipient = process.env.DOMAIN_EMAIL?.trim();
+  if (!recipient) {
+    console.error(
+      `[NAMECHEAP][ACTION] ${action} falhou, mas DOMAIN_EMAIL não está configurado.`
+    );
+    return;
+  }
+
+  await sendNotificationEmail(
+    recipient,
+    "Admin",
+    "Atlas Hosting",
+    `Falha na Namecheap: ${action}`,
+    `A ação <strong>${action}</strong> falhou na Namecheap.<br><br>Detalhe: <strong>${error}</strong>.`,
+    "danger"
+  );
+}
+
+export async function notifyNamecheapActionFailureSafely(
+  action: string,
+  error: string
+): Promise<void> {
+  try {
+    await notifyNamecheapActionFailure(action, error);
+  } catch (notificationError) {
+    console.error(
+      `[NAMECHEAP][ACTION] Falha ao enviar alerta de ${action}:`,
+      notificationError
+    );
   }
 }
 
@@ -168,6 +183,10 @@ export async function validateNamecheapFundsForPayment(
       "[NAMECHEAP][BALANCE] Consulta falhou; pagamento bloqueado:",
       error
     );
+    await notifyNamecheapActionFailureSafely(
+      "consulta de saldo antes do pagamento",
+      error instanceof Error ? error.message : String(error)
+    );
     return {
       message: PAYMENT_BLOCKED_MESSAGE,
       ok: false,
@@ -178,6 +197,10 @@ export async function validateNamecheapFundsForPayment(
   if (balances.Currency !== "USD") {
     console.error(
       `[NAMECHEAP][BALANCE] Moeda inesperada ${balances.Currency}; pagamento bloqueado.`
+    );
+    await notifyNamecheapActionFailureSafely(
+      "consulta de saldo antes do pagamento",
+      `A Namecheap retornou a moeda inesperada ${balances.Currency}.`
     );
     return {
       message: PAYMENT_BLOCKED_MESSAGE,
@@ -206,17 +229,6 @@ export async function validateNamecheapFundsForPayment(
       ok: false,
       reason: "insufficient_balance",
     };
-  }
-
-  if (balances.AvailableBalance < NAMECHEAP_LOW_BALANCE_USD) {
-    try {
-      await notifyLowNamecheapBalance(balances);
-    } catch (error) {
-      console.error(
-        "[NAMECHEAP][BALANCE] Falha ao enviar aviso de saldo baixo:",
-        error
-      );
-    }
   }
 
   return { ok: true };
