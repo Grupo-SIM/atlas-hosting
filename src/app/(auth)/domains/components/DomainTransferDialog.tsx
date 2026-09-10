@@ -24,10 +24,14 @@ import { useToast } from "@/hooks/use-toast";
 export function DomainTransferDialog({
   domainId,
   domainName,
+  open,
+  onOpenChange,
   trigger,
 }: {
   domainId: string;
   domainName: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   trigger?: ReactNode;
 }) {
   const router = useRouter();
@@ -36,6 +40,15 @@ export function DomainTransferDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const dialogOpen = open ?? isOpen;
+  const setDialogOpen = onOpenChange ?? setIsOpen;
+  const dialogTrigger =
+    trigger ??
+    (open === undefined ? (
+      <Button className="w-full justify-start" variant="outline">
+        <ArrowRightLeft className="mr-2 h-4 w-4" /> Transferir domínio
+      </Button>
+    ) : null);
 
   function showResult(result: { message: string; success: boolean }) {
     toast({
@@ -58,7 +71,7 @@ export function DomainTransferDialog({
       const result = await createDomainTransfer(domainId, email);
       showResult(result);
       if (!result.success) return;
-      setIsOpen(false);
+      setDialogOpen(false);
       setEmail("");
       setIsVerified(false);
       router.refresh();
@@ -66,14 +79,8 @@ export function DomainTransferDialog({
   }
 
   return (
-    <Dialog onOpenChange={setIsOpen} open={isOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button className="w-full justify-start" variant="outline">
-            <ArrowRightLeft className="mr-2 h-4 w-4" /> Transferir domínio
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
+      {dialogTrigger && <DialogTrigger asChild>{dialogTrigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Transferir {domainName}</DialogTitle>

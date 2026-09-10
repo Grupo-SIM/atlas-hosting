@@ -31,6 +31,7 @@ export function DomainActionsMenu({
   domainName,
 }: DomainActionsMenuProps) {
   const [isRenewOpen, setIsRenewOpen] = useState(false);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
 
   return (
     <>
@@ -58,15 +59,12 @@ export function DomainActionsMenu({
             <RefreshCw className="mr-2 h-4 w-4" /> Renovar Domínio
           </DropdownMenuItem>
           {canTransfer && (
-            <DomainTransferDialog
-              domainId={domainId}
-              domainName={domainName}
-              trigger={
-                <DropdownMenuItem className="cursor-pointer">
-                  <ArrowRightLeft className="mr-2 h-4 w-4" /> Transferir domínio
-                </DropdownMenuItem>
-              }
-            />
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onSelect={() => setIsTransferOpen(true)}
+            >
+              <ArrowRightLeft className="mr-2 h-4 w-4" /> Transferir domínio
+            </DropdownMenuItem>
           )}
           <DropdownMenuItem asChild className="cursor-pointer">
             <a
@@ -86,6 +84,12 @@ export function DomainActionsMenu({
           onClose={() => setIsRenewOpen(false)}
         />
       )}
+      <DomainTransferDialog
+        domainId={domainId}
+        domainName={domainName}
+        onOpenChange={setIsTransferOpen}
+        open={isTransferOpen}
+      />
     </>
   );
 }
