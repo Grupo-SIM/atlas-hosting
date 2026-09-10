@@ -9,7 +9,8 @@ export async function registerNode() {
     );
   }
 
-  // A renovação de assinaturas VPS é disparada pelo serviço `vps-cron` do
-  // docker-compose, não daqui. Ter um agendador dentro do app além do externo
-  // fazia os dois baterem no mesmo endpoint e arriscava cobrança duplicada.
+  const { startInternalScheduler } = await import(
+    "./src/lib/server/internal-scheduler"
+  );
+  startInternalScheduler();
 }

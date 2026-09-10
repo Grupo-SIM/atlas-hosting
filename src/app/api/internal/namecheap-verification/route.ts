@@ -11,6 +11,10 @@ function authorized(request: Request): boolean {
   return Boolean(process.env.CRON_SECRET && token === process.env.CRON_SECRET);
 }
 
+export async function GET(request: Request) {
+  return POST(request);
+}
+
 export async function POST(request: Request) {
   if (!authorized(request))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
