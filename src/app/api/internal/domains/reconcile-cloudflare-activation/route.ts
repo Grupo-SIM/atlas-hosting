@@ -6,6 +6,7 @@ import { cloudflareApi } from "@/lib/server/apis/cloudflare";
 import {
   reconcileCloudflareActivation,
   type CloudflareActivationStatePatch,
+  type PendingCloudflareZone,
 } from "@/lib/server/domains/reconcile-cloudflare-activation";
 
 export const dynamic = "force-dynamic";
@@ -53,23 +54,27 @@ export async function GET(request: Request) {
       )
     )
     .limit(PROCESS_LIMIT);
+  const pendingCandidates = candidates.filter(
+    (candidate): candidate is PendingCloudflareZone => candidate.zoneId !== null
+  );
   const results = [] as Awaited<
     ReturnType<typeof reconcileCloudflareActivation>
   >[];
 
-  for (let index = 0; index < candidates.length; index += PROCESS_CONCURRENCY) {
-    const batch = candidates.slice(index, index + PROCESS_CONCURRENCY);
+  for (
+    let index = 0;
+    index < pendingCandidates.length;
+    index += PROCESS_CONCURRENCY
+  ) {
+    const batch = pendingCandidates.slice(index, index + PROCESS_CONCURRENCY);
     const batchResults = await Promise.all(
       batch.map(candidate =>
-        reconcileCloudflareActivation(
-          { ...candidate, zoneId: candidate.zoneId },
-          {
+        reconcileCloudflareActivation(candidate, {
             getZone: zoneId => cloudflareApi.getZone(zoneId),
             triggerActivationCheck: zoneId =>
               cloudflareApi.triggerActivationCheck(zoneId),
             updateDomain,
-          }
-        )
+          })
       )
     );
     results.push(...batchResults);
