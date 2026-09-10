@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   type Invoice,
+  pgInvoice,
   pgLog,
   pgVpsProvisioningJob,
   pgVpsServers,
