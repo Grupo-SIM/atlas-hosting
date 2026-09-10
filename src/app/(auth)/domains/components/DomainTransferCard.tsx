@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, CircleX, ExternalLink, X } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import {
@@ -11,6 +10,14 @@ import {
 } from "@/app/(auth)/domains/transfer-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { domainTransferStatusMessage } from "@/lib/server/domains/domain-transfer";
 
@@ -25,9 +32,13 @@ const statusLabel = {
 } as const;
 
 export function DomainTransferCard({
+  showDetails = true,
+  showSummary = true,
   transfer,
   viewerId,
 }: {
+  showDetails?: boolean;
+  showSummary?: boolean;
   transfer: DomainTransferView;
   viewerId: string;
 }) {
@@ -64,31 +75,78 @@ export function DomainTransferCard({
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-center md:justify-between">
-      <div className="space-y-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="font-medium">{transfer.domain}</p>
-          <Badge variant="outline">{statusLabel[transfer.status]}</Badge>
-        </div>
-        <p className="text-muted-foreground text-sm">
-          {domainTransferStatusMessage(
-            transfer.status,
-            viewerId,
-            transfer.sourceUserId,
-            transfer.targetUserId
-          )}
-        </p>
-        {isOpen && (
-          <p className="text-muted-foreground text-xs">
-            Expira em {transfer.expiresAt.toLocaleDateString("pt-BR")}.
+      {showSummary && (
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-medium">{transfer.domain}</p>
+            <Badge variant="outline">{statusLabel[transfer.status]}</Badge>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            {domainTransferStatusMessage(
+              transfer.status,
+              viewerId,
+              transfer.sourceUserId,
+              transfer.targetUserId
+            )}
           </p>
-        )}
-      </div>
+          {isOpen && (
+            <p className="text-muted-foreground text-xs">
+              Expira em {transfer.expiresAt.toLocaleDateString("pt-BR")}.
+            </p>
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
-        <Button asChild disabled={isPending} size="sm" variant="outline">
-          <Link href={`/domains/transfers/${transfer.id}`}>
-            <ExternalLink className="mr-2 h-4 w-4" /> Detalhes
-          </Link>
-        </Button>
+        {showDetails && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button disabled={isPending} size="sm" variant="outline">
+                <ExternalLink className="mr-2 h-4 w-4" /> Detalhes
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Transferência de {transfer.domain}</DialogTitle>
+                <DialogDescription>
+                  A transferência será concluída após a confirmação das duas contas.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 text-sm">
+                <div className="rounded-md border p-3">
+                  <p className="font-medium">Conta de origem</p>
+                  <p className="text-muted-foreground">
+                    {transfer.sourceName} · {transfer.sourceEmail}
+                  </p>
+                  <p className="mt-2">
+                    {transfer.sourceAcceptedAt
+                      ? `Confirmada em ${transfer.sourceAcceptedAt.toLocaleDateString("pt-BR")}`
+                      : "Aguardando confirmação"}
+                  </p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="font-medium">Conta de destino</p>
+                  <p className="text-muted-foreground">
+                    {transfer.targetName} · {transfer.targetEmail}
+                  </p>
+                  <p className="mt-2">
+                    {transfer.targetAcceptedAt
+                      ? `Confirmada em ${transfer.targetAcceptedAt.toLocaleDateString("pt-BR")}`
+                      : "Aguardando confirmação"}
+                  </p>
+                </div>
+                {isOpen ? (
+                  <p className="text-muted-foreground">
+                    Expira em {transfer.expiresAt.toLocaleDateString("pt-BR")}.
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Esta solicitação não aceita mais confirmações.
+                  </p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
         {canAccept && (
           <Button disabled={isPending} onClick={() => run("accept")} size="sm">
             <Check className="mr-2 h-4 w-4" /> Aceitar
