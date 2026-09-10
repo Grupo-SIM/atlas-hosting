@@ -121,8 +121,7 @@ export const AtlasNotificationEmail = ({
             {!hideIntro && (
               <Text style={paragraph}>
                 Estamos entrando em contato para informar sobre uma atualização
-                importante na sua conta Atlas Hosting para{" "}
-                <strong>{organizationName}</strong>.
+                importante na sua conta Atlas Hosting.
               </Text>
             )}
 

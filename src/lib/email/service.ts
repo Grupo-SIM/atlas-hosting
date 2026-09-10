@@ -227,12 +227,14 @@ export async function sendDomainTransferStatusEmail({
   domain,
   email,
   firstName,
+  recipientCanReject,
   state,
 }: {
   actionUrl: string;
   domain: string;
   email: string;
   firstName: string;
+  recipientCanReject: boolean;
   state: string;
 }): Promise<void> {
   await sendNotificationEmail(
@@ -243,8 +245,12 @@ export async function sendDomainTransferStatusEmail({
     `Estado atual da transferência de ${domain}: ${state}`,
     "info",
     actionUrl,
-    "Ver transferência",
-    "A confirmação só pode ser feita após entrar na conta Atlas participante."
+    recipientCanReject
+      ? "Aceitar ou recusar transferência"
+      : "Confirmar ou cancelar transferência",
+    recipientCanReject
+      ? "Acesse sua conta Atlas para aceitar ou recusar a transferência."
+      : "Acesse sua conta Atlas para confirmar ou cancelar a transferência."
   );
 }
 

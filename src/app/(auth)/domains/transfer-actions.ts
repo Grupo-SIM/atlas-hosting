@@ -110,6 +110,7 @@ async function notifyDomainTransfer(transferId: string) {
       domain: transfer.domain,
       email: transfer.sourceEmail,
       firstName: transfer.sourceName.split(" ")[0] || transfer.sourceEmail,
+      recipientCanReject: false,
       state: domainTransferStatusMessage(
         transfer.status,
         transfer.sourceUserId,
@@ -122,6 +123,7 @@ async function notifyDomainTransfer(transferId: string) {
       domain: transfer.domain,
       email: transfer.targetEmail,
       firstName: transfer.targetName.split(" ")[0] || transfer.targetEmail,
+      recipientCanReject: true,
       state: domainTransferStatusMessage(
         transfer.status,
         transfer.targetUserId,
