@@ -6,6 +6,7 @@ export * from "./tables/email";
 export * from "./tables/invoice";
 export * from "./tables/log";
 export * from "./tables/manual-subscription";
+export * from "./tables/next-charge-backup";
 export * from "./tables/organization";
 export * from "./tables/plan";
 export * from "./tables/session";
