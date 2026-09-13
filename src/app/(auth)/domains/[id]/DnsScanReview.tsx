@@ -1,9 +1,10 @@
 "use client";
 
-import { Check, RefreshCw } from "lucide-react";
+import { Check, RefreshCw, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { CloudflareDnsRecord } from "@/lib/server/apis/cloudflare";
+import {
+  type DnsActionResult,
+  importCloudflareZoneFileAction,
+} from "../../dns/cloudflare-actions";
 import { completeCloudflareScanReview } from "./actions";
 
 export function DnsScanReview({
@@ -33,9 +40,25 @@ export function DnsScanReview({
   const [selected, setSelected] = useState(
     () => new Set(records.map(record => record.id))
   );
+  const [zoneFileState, importZoneFile, importingZoneFile] = useActionState(
+    importCloudflareZoneFileAction,
+    null
+  );
   useEffect(() => {
     setSelected(new Set(records.map(record => record.id)));
   }, [records]);
+  useEffect(() => {
+    const state: DnsActionResult | null = zoneFileState;
+    if (!state) return;
+    if (state.success) {
+      toast.success(
+        `${state.message} Os registros do arquivo já estão na zona do Atlas.`
+      );
+      router.refresh();
+      return;
+    }
+    toast.error(state.message);
+  }, [router, zoneFileState]);
   const finish = () =>
     startTransition(async () => {
       const result = await completeCloudflareScanReview(domainId, [
@@ -51,11 +74,42 @@ export function DnsScanReview({
   const content = (
     <div className="space-y-4">
       {embedded && (
-        <p className="text-muted-foreground text-sm">
-          A varredura pode não encontrar todos os subdomínios. Importe o arquivo
-          de zona ou adicione entradas ausentes antes de continuar.
-        </p>
+        <Alert>
+          <AlertTitle>Varredura parcial</AlertTitle>
+          <AlertDescription>
+            A busca automática encontra somente padrões comuns. Para preservar
+            subdomínios personalizados, DKIM e outros registros ausentes,
+            importe o arquivo BIND completo antes de continuar. Os NS do domínio
+            principal não são importados porque passam a ser controlados pelo
+            Atlas.
+          </AlertDescription>
+        </Alert>
       )}
+      <form action={importZoneFile} className="rounded-lg border p-4">
+        <input name="domainId" type="hidden" value={domainId} />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="min-w-0 flex-1 space-y-2">
+            <Label htmlFor={`${domainId}-zone-file`}>
+              Arquivo de zona BIND completo
+            </Label>
+            <Input
+              accept=".txt,.zone,text/plain"
+              id={`${domainId}-zone-file`}
+              name="file"
+              required
+              type="file"
+            />
+          </div>
+          <Button disabled={importingZoneFile} type="submit" variant="outline">
+            <Upload className="mr-2 h-4 w-4" />
+            {importingZoneFile ? "Importando..." : "Importar arquivo"}
+          </Button>
+        </div>
+        <p className="mt-2 text-muted-foreground text-xs">
+          O arquivo é importado diretamente na zona do Atlas e não remove os
+          registros encontrados na varredura.
+        </p>
+      </form>
       {records.length === 0 ? (
         <div className="rounded-lg border border-dashed p-6 text-center">
           <p className="text-muted-foreground text-sm">
@@ -125,9 +179,9 @@ export function DnsScanReview({
       <CardHeader>
         <CardTitle>Revise os registros encontrados</CardTitle>
         <CardDescription>
-          A varredura pode não encontrar todos os subdomínios. Confirme os
-          registros abaixo e importe o arquivo de zona ou adicione entradas
-          ausentes antes de trocar os nameservers.
+          A varredura encontra somente padrões comuns. Importe o arquivo BIND
+          completo ou adicione os registros ausentes antes de trocar os
+          nameservers.
         </CardDescription>
       </CardHeader>
       <CardContent>{content}</CardContent>
