@@ -64,13 +64,20 @@ export async function GET(request: Request) {
   const vpsTotalRevenue = vpsInvoices.reduce((s, i) => s + (i.amount ?? 0), 0);
   const vpsTotalContaboCost = vpsTotalRevenue / 2;
 
-  // Affiliate commissions — current available balance (not period-filtered)
+  // Affiliate commissions available in the selected period. A commission only
+  // belongs to this report when it was generated inside its date range.
   const availableResult = await db
     .select({
       total: sql<number>`COALESCE(SUM(${pgAffiliateCommission.commissionAmount}), 0)`,
     })
     .from(pgAffiliateCommission)
-    .where(eq(pgAffiliateCommission.status, "available"));
+    .where(
+      and(
+        eq(pgAffiliateCommission.status, "available"),
+        gte(pgAffiliateCommission.createdAt, startDate),
+        lte(pgAffiliateCommission.createdAt, endDate)
+      )
+    );
   const totalAvailable = Number(availableResult[0]?.total ?? 0);
 
   // Commissions generated in period (custo afiliado)
