@@ -52,7 +52,7 @@ export interface SimpayPixPaymentParams {
   email: string;
   name: string;
   mobile_phone: string;
-  /** Identificador do produto; use prefixo `atlas ` para conciliação no back Simpay */
+  /** Identificador do produto: `DOMAIN <domínio>` ou `HOSTING <referência>`. */
   description: string;
   /** Loja no Simpay; se omitido, usa ATLAS_SIMPAY_STORE / SIMPAY_STORE / "atlas" */
   store?: string;

@@ -1157,11 +1157,15 @@ export async function createDomainRenewalInvoice(
 const TEST_PAYMENT_AMOUNT_BRL = 1;
 
 /**
- * Texto de conciliação na Simpay (PIX e cartão): "atlas " + reference da fatura.
- * Fatura teste R$1 usa o mesmo padrão; muda só amount e reference.
+ * Texto de conciliação na Simpay e DOM. A categoria vem antes da referência,
+ * permitindo o relatório financeiro separar domínios de hospedagem.
  */
-function atlasSimpayInvoiceDescription(reference: string): string {
-  return `atlas ${reference.trim()}`;
+function atlasSimpayInvoiceDescription(
+  reference: string,
+  invoiceType: Invoice["type"]
+): string {
+  const productType = invoiceType === "domain" ? "DOMAIN" : "HOSTING";
+  return `${productType} ${reference.trim()}`;
 }
 
 /**
@@ -1519,7 +1523,7 @@ export async function initiateCheckoutPix(
 
   try {
     const pixRes = await simpayApi.createPixPayment({
-      description: atlasSimpayInvoiceDescription(invoice.reference),
+      description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
       document: docDigits,
       document_type: docDigits.length === 11 ? "CPF" : "CNPJ",
       email: user.email,
@@ -1642,7 +1646,7 @@ export async function initiateCheckoutBoleto(
         mobile_phone: billing.phoneNumber.replace(/\D/g, ""),
         name: `${billing.firstName} ${billing.lastName}`.trim(),
       },
-      description: atlasSimpayInvoiceDescription(invoice.reference),
+      description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
       value: invoice.amount + BOLETO_FEE,
     });
 
@@ -2389,7 +2393,7 @@ export async function completeCheckout(
       const simpayResult = await simpayApi.createCardPayment({
         bin: cardToken.substring(0, 6),
         brand: "unknown",
-        description: atlasSimpayInvoiceDescription(invoice.reference),
+        description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
         document: values.document.replace(/\D/g, ""),
         document_type:
           values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
@@ -2473,7 +2477,7 @@ export async function completeCheckout(
     const result = await simpayApi.createCardPayment({
       bin: cardToken.substring(0, 6),
       brand: "unknown",
-      description: atlasSimpayInvoiceDescription(invoice.reference),
+      description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
       document: values.document.replace(/\D/g, ""),
       document_type:
         values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
@@ -2711,7 +2715,7 @@ export async function completeCheckoutWithSavedCard(
       const domResult = await simpayApi.createCardPayment({
         bin: card.last4 || cardToken.substring(0, 6),
         brand: card.brand || "unknown",
-        description: atlasSimpayInvoiceDescription(invoice.reference),
+        description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
         document: values.document.replace(/\D/g, ""),
         document_type:
           values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
@@ -2793,7 +2797,7 @@ export async function completeCheckoutWithSavedCard(
     const result = await simpayApi.createCardPayment({
       bin: card.last4 || cardToken.substring(0, 6),
       brand: card.brand || "unknown",
-      description: atlasSimpayInvoiceDescription(invoice.reference),
+      description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
       document: values.document.replace(/\D/g, ""),
       document_type:
         values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",

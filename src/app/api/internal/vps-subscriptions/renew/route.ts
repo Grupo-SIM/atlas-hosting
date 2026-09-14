@@ -173,7 +173,7 @@ export async function POST(req: Request) {
         await simpayApi.createCardPayment({
           bin: savedCard?.last4 || cardToken.substring(0, 6),
           brand: savedCard?.brand || "unknown",
-          description,
+          description: `HOSTING ${description}`,
           document: user?.billingDocument?.replace(/\D/g, "") || "00000000000",
           document_type: (user?.billingDocument?.replace(/\D/g, "")?.length ===
           14
