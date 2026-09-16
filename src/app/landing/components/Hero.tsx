@@ -2,8 +2,9 @@
 
 import { Search, Shield } from "lucide-react";
 import { Roboto } from "next/font/google";
-import Link from "next/link";
 import { useState } from "react";
+
+import { OfferModal } from "./OfferModal";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -13,6 +14,7 @@ const roboto = Roboto({
 
 export function Hero() {
   const [domain, setDomain] = useState("");
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const handleSearch = () => {
     const query = domain.trim();
     if (!query) return;
@@ -93,16 +95,17 @@ export function Hero() {
                 <p
                   className={`${roboto.className} mx-auto mb-8 max-w-[440px] text-[14px] text-white/90 leading-relaxed sm:text-[16px] md:mx-0 md:mb-10 md:text-[1.05rem]`}
                 >
-                  A única hospedagem do Brasil com 100% de Cashback
+                  A única hospedagem do Brasil com cashback
                 </p>
 
                 <div className="flex flex-col items-center justify-center gap-4 sm:flex-row md:justify-start">
-                  <Link
+                  <button
                     className={`${roboto.className} w-fit cursor-pointer rounded-[12px] border-2 border-white bg-transparent px-12 py-4 font-bold text-[14px] text-white uppercase tracking-wider transition-colors hover:bg-white/10 sm:w-auto md:text-[15px]`}
-                    href="#plans"
+                    onClick={() => setIsOfferModalOpen(true)}
+                    type="button"
                   >
-                    Resgatar minha oferta
-                  </Link>
+                    Ganhar agora
+                  </button>
 
                   <div className="flex items-center gap-2 text-[12px] text-white/70 md:text-[13px]">
                     <Shield className="h-4 w-4 text-emerald-400" />
@@ -114,6 +117,8 @@ export function Hero() {
           </div>
         </div>
       </div>
+
+      <OfferModal onOpenChange={setIsOfferModalOpen} open={isOfferModalOpen} />
     </section>
   );
 }
