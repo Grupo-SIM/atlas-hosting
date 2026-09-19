@@ -109,7 +109,7 @@ export function Hero() {
 
                   <div className="flex items-center gap-2 text-[12px] text-white/70 md:text-[13px]">
                     <Shield className="h-4 w-4 text-emerald-400" />
-                    <span>Garantia de 30 dias — sem risco</span>
+                    <span>Garantia de 30 dias</span>
                   </div>
                 </div>
               </div>

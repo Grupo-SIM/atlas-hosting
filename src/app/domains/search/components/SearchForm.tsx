@@ -34,7 +34,7 @@ export default function SearchForm({ defaultValue = "" }: SearchFormProps) {
               defaultValue={defaultValue}
               id="domain-search-input"
               name="q"
-              placeholder="ex.: minhaempresa ou minhaempresa.com"
+              placeholder="ex: minhaempresa.com"
               type="text"
             />
           </div>
