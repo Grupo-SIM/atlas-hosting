@@ -503,11 +503,11 @@ export default async function MyDomainsPage() {
                 </TableHeader>
                 <TableBody>
                   {sortedDomains.map(item => {
-                    if (item.kind !== "pending") return null;
-                    const domain = item.domain;
-                    const verification = verificationRecords[domain.id];
+                    if (item.kind === "pending") {
+                      const domain = item.domain;
+                      const verification = verificationRecords[domain.id];
 
-                    return (
+                      return (
                       <TableRow
                         className="transition-colors hover:bg-muted/50"
                         key={domain.id}
@@ -557,12 +557,14 @@ export default async function MyDomainsPage() {
                           )}
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
-                  {sortedDomains.map(item => item.kind === "processed" && (
+                      );
+                    }
+
+                    const domain = item.domain;
+                    return (
                     <TableRow
                       className="transition-colors hover:bg-muted/50"
-                      key={item.item.domain.id}
+                      key={domain.id}
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -570,18 +572,18 @@ export default async function MyDomainsPage() {
                             <Badge
                               className={cn(
                                 "mr-3 h-2 w-2 rounded-full p-0",
-                                item.domain.status === "active"
+                                domain.status === "active"
                                   ? "border-green-500 bg-green-500"
-                                  : item.domain.status === "expired"
+                                  : domain.status === "expired"
                                     ? "border-red-500 bg-red-500"
                                     : "border-gray-500 bg-gray-500"
                               )}
                               variant="outline"
                             />
                             <div>
-                              <p className="font-medium">{item.domain.name}</p>
+                              <p className="font-medium">{domain.name}</p>
                               <div className="mt-1 flex gap-1">
-                                {item.domain.features.slice(0, 2).map(feature => (
+                                {domain.features.slice(0, 2).map(feature => (
                                   <Badge
                                     className="text-xs"
                                     key={feature}
@@ -651,7 +653,8 @@ export default async function MyDomainsPage() {
                         />
                       </TableCell>
                     </TableRow>
-                  ))}
+                  );
+                  })}
                 </TableBody>
               </Table>
             )}
