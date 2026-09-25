@@ -79,6 +79,57 @@ function isDomainOutsideNamecheap(error: unknown): boolean {
   return error instanceof Error && error.message.includes("Err 2030166");
 }
 
+function isTransientNamecheapError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return /timeout|ECONNRESET|ECONNABORTED|socket hang up|network error|Status: (429|5\d\d)/i.test(
+    error.message
+  );
+}
+
+async function getNamecheapDomainInfo(domainName: string) {
+  try {
+    return await namecheapApi.getInfo({ DomainName: domainName });
+  } catch (error) {
+    if (!isTransientNamecheapError(error)) throw error;
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return namecheapApi.getInfo({ DomainName: domainName });
+  }
+}
+
+async function recoverNamecheapDomain(domain: {
+  id: string;
+  domain: string;
+}): Promise<ProcessedDomain | null> {
+  const response = await namecheapApi.getList({
+    Page: 1,
+    PageSize: 10,
+    SearchTerm: domain.domain,
+  });
+  const item = response.Domains.find(
+    candidate => candidate.Name.toLowerCase() === domain.domain.toLowerCase()
+  );
+  if (!item) return null;
+
+  const created = new Date(item.Created);
+  const expires = new Date(item.Expires);
+  return {
+    autoRenew: item.AutoRenew,
+    expiryDate: Number.isNaN(expires.getTime())
+      ? "Indisponível"
+      : format(expires, "dd/MM/yyyy", { locale: ptBR }),
+    features: ["Dados recuperados da Namecheap"],
+    id: domain.id,
+    isExternal: false,
+    isLocked: item.IsLocked,
+    name: item.Name,
+    registrationDate: Number.isNaN(created.getTime())
+      ? "Indisponível"
+      : format(created, "dd/MM/yyyy", { locale: ptBR }),
+    status: item.IsExpired ? "expired" : "active",
+    usesOurDNS: item.IsOurDNS,
+  };
+}
+
 function externalDomainFallback(domain: {
   createdAt: Date;
   domain: string;
@@ -152,9 +203,7 @@ export default async function MyDomainsPage() {
                 domain.cloudflareZoneStatus === "active",
             } as ProcessedDomain;
           }
-          const d = await namecheapApi.getInfo({
-            DomainName: domain.domain,
-          });
+          const d = await getNamecheapDomainInfo(domain.domain);
 
           return {
             autoRenew: d.AutoRenew,
@@ -179,6 +228,15 @@ export default async function MyDomainsPage() {
         } catch (error) {
           if (isDomainOutsideNamecheap(error)) {
             return externalDomainFallback(domain);
+          }
+          try {
+            const recovered = await recoverNamecheapDomain(domain);
+            if (recovered) return recovered;
+          } catch (recoveryError) {
+            console.error(
+              `Failed to recover Namecheap info for ${domain.domain}:`,
+              recoveryError
+            );
           }
           console.error(
             `Failed to fetch Namecheap info for ${domain.domain}:`,
@@ -228,6 +286,17 @@ export default async function MyDomainsPage() {
   } catch (error) {
     console.error("Error fetching domain info:", error);
   }
+
+  const sortedDomains = [
+    ...pendingDomains.map(domain => ({ kind: "pending" as const, domain })),
+    ...processedDomains.map(domain => ({ kind: "processed" as const, domain })),
+  ].sort((a, b) =>
+    (a.kind === "pending" ? a.domain.domain : a.domain.name).localeCompare(
+      b.kind === "pending" ? b.domain.domain : b.domain.name,
+      "pt-BR",
+      { sensitivity: "base" }
+    )
+  );
 
   return (
     <div className="space-y-6 p-6 pb-16">
@@ -433,7 +502,9 @@ export default async function MyDomainsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pendingDomains.map(domain => {
+                  {sortedDomains.map(item => {
+                    if (item.kind !== "pending") return null;
+                    const domain = item.domain;
                     const verification = verificationRecords[domain.id];
 
                     return (
@@ -488,10 +559,10 @@ export default async function MyDomainsPage() {
                       </TableRow>
                     );
                   })}
-                  {processedDomains.map(domain => (
+                  {sortedDomains.map(item => item.kind === "processed" && (
                     <TableRow
                       className="transition-colors hover:bg-muted/50"
-                      key={domain.id}
+                      key={item.item.domain.id}
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -499,18 +570,18 @@ export default async function MyDomainsPage() {
                             <Badge
                               className={cn(
                                 "mr-3 h-2 w-2 rounded-full p-0",
-                                domain.status === "active"
+                                item.domain.status === "active"
                                   ? "border-green-500 bg-green-500"
-                                  : domain.status === "expired"
+                                  : item.domain.status === "expired"
                                     ? "border-red-500 bg-red-500"
                                     : "border-gray-500 bg-gray-500"
                               )}
                               variant="outline"
                             />
                             <div>
-                              <p className="font-medium">{domain.name}</p>
+                              <p className="font-medium">{item.domain.name}</p>
                               <div className="mt-1 flex gap-1">
-                                {domain.features.slice(0, 2).map(feature => (
+                                {item.domain.features.slice(0, 2).map(feature => (
                                   <Badge
                                     className="text-xs"
                                     key={feature}
