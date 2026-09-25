@@ -215,14 +215,18 @@ export function DnsRecordsManager({
 
   const filtered = useMemo(() => {
     const needle = query.toLowerCase();
-    return records.filter(
-      record =>
-        (typeFilter === "all" || record.type === typeFilter) &&
-        (!needle ||
-          record.name.toLowerCase().includes(needle) ||
-          record.content.toLowerCase().includes(needle) ||
-          record.type.toLowerCase().includes(needle))
-    );
+    return records
+      .filter(
+        record =>
+          (typeFilter === "all" || record.type === typeFilter) &&
+          (!needle ||
+            record.name.toLowerCase().includes(needle) ||
+            record.content.toLowerCase().includes(needle) ||
+            record.type.toLowerCase().includes(needle))
+      )
+      .sort((a, b) =>
+        a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" })
+      );
   }, [query, records, typeFilter]);
   const canProxy = ["A", "AAAA", "CNAME"].includes(recordType);
   const editable = (record: CloudflareDnsRecord) =>
