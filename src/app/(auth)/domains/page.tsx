@@ -32,6 +32,8 @@ import {
 } from "@/lib/server/domains/verification";
 import { cn } from "@/lib/utils";
 import { DomainActionsMenu } from "./components/DomainActionsMenu";
+import { DomainConnectionRecovery } from "./components/DomainConnectionRecovery";
+import { DomainSyncRetryButton } from "./components/DomainSyncRetryButton";
 import { DomainTransfersPanel } from "./components/DomainTransfersPanel";
 import { PendingDomainInstructionsDialog } from "./components/PendingDomainInstructionsDialog";
 import { getDomainTransfersForUser } from "./transfer-actions";
@@ -133,18 +135,24 @@ async function recoverNamecheapDomain(domain: {
 function externalDomainFallback(domain: {
   createdAt: Date;
   domain: string;
+  id: string;
+  cloudflareZoneStatus: string | null;
+  connectionStatus: string;
+  dnsMode: string;
 }): ProcessedDomain {
   return {
     autoRenew: false,
     expiryDate: null,
-    features: ["DNS via Atlas"],
-    id: domain.domain,
+    features: [getExternalDomainDnsFeature(domain)],
+    id: domain.id,
     isExternal: true,
     isLocked: false,
     name: domain.domain,
     registrationDate: format(domain.createdAt, "dd/MM/yyyy", { locale: ptBR }),
     status: "active",
-    usesOurDNS: true,
+    usesOurDNS:
+      domain.connectionStatus === "connected" &&
+      domain.cloudflareZoneStatus === "active",
   };
 }
 export default async function MyDomainsPage() {
@@ -169,6 +177,19 @@ export default async function MyDomainsPage() {
         )
       : {};
   const hasDomains = user.organization.domains.length > 0;
+  const domainsAwaitingCloudflare = new Set(
+    user.organization.domains
+      .filter(
+        domain =>
+          domain.active &&
+          domain.registrarProvider !== "namecheap" &&
+          domain.dnsMode === "cloudflare" &&
+          domain.cloudflareZoneId &&
+          (domain.connectionStatus === "awaiting_nameservers" ||
+            domain.connectionStatus === "awaiting_activation")
+      )
+      .map(domain => domain.id)
+  );
 
   let processedDomains: ProcessedDomain[] = [];
   let domainStats = {
@@ -192,6 +213,7 @@ export default async function MyDomainsPage() {
                 getExternalDomainDnsFeature(domain),
               ],
               id: domain.id,
+              isExternal: true,
               isLocked: false,
               name: domain.domain,
               registrationDate: format(domain.createdAt, "dd/MM/yyyy", {
@@ -245,7 +267,7 @@ export default async function MyDomainsPage() {
           return {
             autoRenew: false,
             expiryDate: "Indisponível",
-            features: ["Falha na Sincronização"],
+            features: ["Consulta ao registrador indisponível"],
             id: domain.id,
             isLocked: false,
             name: domain.domain,
@@ -582,7 +604,10 @@ export default async function MyDomainsPage() {
                             />
                             <div>
                               <p className="font-medium">{domain.name}</p>
-                              <div className="mt-1 flex gap-1">
+                              {domainsAwaitingCloudflare.has(domain.id) && (
+                                <DomainConnectionRecovery domainId={domain.id} />
+                              )}
+                              <div className="mt-1 flex flex-wrap items-center gap-1">
                                 {domain.features.slice(0, 2).map(feature => (
                                   <Badge
                                     className="text-xs"
@@ -596,6 +621,9 @@ export default async function MyDomainsPage() {
                                   <Badge className="text-xs" variant="outline">
                                     +{domain.features.length - 2}
                                   </Badge>
+                                )}
+                                {domain.status === "unknown" && (
+                                  <DomainSyncRetryButton />
                                 )}
                               </div>
                             </div>
@@ -612,7 +640,7 @@ export default async function MyDomainsPage() {
                       <TableCell>
                         <div className="flex flex-col items-center gap-1">
                           <span className="font-medium">
-                            {domain.isExternal ? null : domain.expiryDate}
+                            {domain.isExternal ? "—" : domain.expiryDate}
                           </span>
                           {domain.status === "expired" && (
                             <Badge className="text-xs" variant="destructive">
@@ -623,7 +651,11 @@ export default async function MyDomainsPage() {
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         <div className="flex flex-wrap gap-1">
-                          {domain.autoRenew ? (
+                          {domain.isExternal ? (
+                            <Badge variant="outline">No registrador</Badge>
+                          ) : domain.status === "unknown" ? (
+                            <span className="text-muted-foreground text-sm">—</span>
+                          ) : domain.autoRenew ? (
                             <Badge
                               className="border-[#01FC8D]/30 bg-[#01FC8D]/10 text-[#00b363] dark:text-[#01FC8D]"
                               variant="outline"
@@ -649,6 +681,7 @@ export default async function MyDomainsPage() {
                           }
                           domainId={domain.id}
                           domainName={domain.name}
+                          canRenew={!domain.isExternal && domain.status !== "unknown"}
                           key={`actions-${domain.id}`}
                         />
                       </TableCell>

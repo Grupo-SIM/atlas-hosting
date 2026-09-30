@@ -105,7 +105,10 @@ export function DomainDnsSetupDialog({
     });
 
   useEffect(() => {
-    if (connectionStatus !== "awaiting_activation") return;
+    if (
+      connectionStatus !== "awaiting_activation" &&
+      connectionStatus !== "awaiting_nameservers"
+    ) return;
     const timer = window.setInterval(async () => {
       const result = await refreshCloudflareConnection(domainId);
       const status = result.status || (result.success ? "success" : "error");

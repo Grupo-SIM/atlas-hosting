@@ -1,4 +1,4 @@
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { pgOrganizationDomains } from "@/lib/db/schema";
@@ -48,7 +48,10 @@ export async function GET(request: Request) {
     .where(
       and(
         eq(pgOrganizationDomains.active, true),
-        eq(pgOrganizationDomains.connectionStatus, "awaiting_activation"),
+        inArray(pgOrganizationDomains.connectionStatus, [
+          "awaiting_nameservers",
+          "awaiting_activation",
+        ]),
         eq(pgOrganizationDomains.dnsMode, "cloudflare"),
         isNotNull(pgOrganizationDomains.cloudflareZoneId)
       )

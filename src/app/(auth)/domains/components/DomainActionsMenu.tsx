@@ -21,12 +21,14 @@ import { DomainTransferDialog } from "./DomainTransferDialog";
 
 interface DomainActionsMenuProps {
   canTransfer: boolean;
+  canRenew: boolean;
   domainId: string;
   domainName: string;
 }
 
 export function DomainActionsMenu({
   canTransfer,
+  canRenew,
   domainId,
   domainName,
 }: DomainActionsMenuProps) {
@@ -52,12 +54,14 @@ export function DomainActionsMenu({
               <Server className="mr-2 h-4 w-4" /> Detalhes e DNS
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={() => setIsRenewOpen(true)}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" /> Renovar Domínio
-          </DropdownMenuItem>
+          {canRenew && (
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => setIsRenewOpen(true)}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Renovar Domínio
+            </DropdownMenuItem>
+          )}
           {canTransfer && (
             <DropdownMenuItem
               className="cursor-pointer"

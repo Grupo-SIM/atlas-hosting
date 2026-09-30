@@ -1083,10 +1083,10 @@ export class NamecheapApiWrapper {
 
     return {
       AutoRenew: autoRenewStatus,
-      CreatedDate: domainDetailsRaw?.CreatedDate[0] || "N/A",
+      CreatedDate: domainDetailsRaw?.CreatedDate?.[0] || "N/A",
       DnsDetails: dnsDetails,
       DomainName: resultAttrs.DomainName,
-      ExpireDate: domainDetailsRaw?.ExpiredDate[0] || "N/A",
+      ExpireDate: domainDetailsRaw?.ExpiredDate?.[0] || "N/A",
       ID: Number.parseInt(resultAttrs.ID, 10),
       IsLocked:
         resultAttrs.Status.toUpperCase() === "CLIENTHOLD" ||
