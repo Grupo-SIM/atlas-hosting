@@ -6,8 +6,7 @@ import { useEffect } from "react";
 import "@n8n/chat/style.css";
 import { createChat } from "@n8n/chat";
 
-const WEBHOOK_URL =
-  "https://bot.jbmidia.com/webhook/6229f9db-8b7f-40ad-8a71-503727e71c34/chat";
+const WEBHOOK_URL = `${process.env.NEXT_PUBLIC_N8N_URL}/webhook/6229f9db-8b7f-40ad-8a71-503727e71c34/chat`;
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -89,7 +88,7 @@ export function ChatContact() {
           --chat--color--primary-shade-50: #0091E6;
           --chat--color--primary--shade-100: #007FC9;
           --chat--color--secondary: #00A3FF;
-          
+
           --chat--spacing: 1rem;
           --chat--border-radius: 1.5rem;
           --chat--font-family: 'Roboto', var(--font-roboto), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -106,7 +105,7 @@ export function ChatContact() {
           --chat--message--user--background: #00A3FF;
           --chat--message--user--color: #ffffff;
           --chat--message--border-radius: 1.25rem;
-          
+
           --chat--messages-list--padding: 1.25rem;
 
           --chat--input--background: #f8fafc;
@@ -115,7 +114,7 @@ export function ChatContact() {
           --chat--input--container--background: #ffffff;
           --chat--input--container--border: none;
           --chat--input--container--padding: 1rem;
-          
+
           --chat--footer--background: #ffffff;
           --chat--window--border-radius: 1.5rem;
         }
