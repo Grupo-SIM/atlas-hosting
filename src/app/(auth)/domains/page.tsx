@@ -1,4 +1,4 @@
-import { format, isBefore } from "date-fns"; // Added parseISO, format
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale"; // For pt-BR date formatting
 import {
   AlertTriangle,
@@ -26,6 +26,7 @@ import {
 // import { plansTable, Plan } from "@/lib/db/schema"; // Keep if used
 import { getUser } from "@/lib/auth";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
+import { getRegistrarDates } from "@/lib/server/domains/registrar-dates";
 import {
   createDomainVerificationRecord,
   type DomainVerificationRecord,
@@ -228,10 +229,8 @@ export default async function MyDomainsPage() {
           const d = await getNamecheapDomainInfo(domain.domain);
 
           return {
+            ...getRegistrarDates(d.CreatedDate, d.ExpireDate),
             autoRenew: d.AutoRenew,
-            expiryDate: d.ExpireDate
-              ? format(d.ExpireDate, "dd/MM/yyyy", { locale: ptBR })
-              : "Nunca",
             features: [
               d.DnsDetails?.IsUsingOurDNS && "DNS Management",
               d.Whoisguard?.Enabled && "Domain Privacy",
@@ -241,10 +240,6 @@ export default async function MyDomainsPage() {
             isExternal: false,
             isLocked: d.IsLocked,
             name: d.DomainName,
-            registrationDate: d.CreatedDate
-              ? format(d.CreatedDate, "dd/MM/yyyy", { locale: ptBR })
-              : "N/A",
-            status: isBefore(d.ExpireDate, new Date()) ? "expired" : "active",
             usesOurDNS: d.DnsDetails?.IsUsingOurDNS ?? false,
           } as ProcessedDomain;
         } catch (error) {
