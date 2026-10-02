@@ -61,11 +61,23 @@ function planTypeFromConfig(config: Record<string, unknown>): VpsPlanType {
   return "vps";
 }
 
+async function describeError(error: unknown): Promise<string> {
+  const base = error instanceof Error ? error.message : String(error);
+  const response = (error as { response?: Response })?.response;
+  if (!response) return base;
+  try {
+    const body = await response.clone().text();
+    return body ? `${base} — ${body}` : base;
+  } catch {
+    return base;
+  }
+}
+
 async function failProvisioning(
   invoice: Invoice,
   error: unknown
 ): Promise<void> {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = await describeError(error);
   await db
     .update(pgVpsProvisioningJob)
     .set({ error: message, status: "failed", updatedAt: new Date() })
@@ -223,6 +235,7 @@ export async function provisionPaidVps(invoiceId: string): Promise<void> {
       planType
     );
   } catch (error) {
+    console.error(`[CONTABO] Provisionamento falhou para fatura ${invoice.id}:`, error);
     await failProvisioning(invoice, error);
   }
 }

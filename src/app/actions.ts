@@ -31,6 +31,7 @@ import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
 import { recordAttribution } from "@/lib/affiliate/attribution";
 import { triggerCommissionIfApplicable } from "@/lib/affiliate/commission";
 import { DEFAULT_POST_LOGIN_PATH } from "@/lib/consts/default-auth-path";
+import { provisionPaidVps } from "@/lib/contabo";
 import { db } from "@/lib/db";
 import {
   type DomainRegisterInvoiceOptions,
@@ -51,7 +52,6 @@ import {
   type User,
 } from "@/lib/db/schema";
 import { sendNotificationEmail } from "@/lib/email/service";
-import { provisionPaidVps } from "@/lib/contabo";
 import { triggerPurchaseNotifications } from "@/lib/notifications/vps-purchase";
 import currencyConversion from "@/lib/server/apis/currency";
 import domApi from "@/lib/server/apis/dom";
@@ -1523,7 +1523,10 @@ export async function initiateCheckoutPix(
 
   try {
     const pixRes = await simpayApi.createPixPayment({
-      description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
+      description: atlasSimpayInvoiceDescription(
+        invoice.reference,
+        invoice.type
+      ),
       document: docDigits,
       document_type: docDigits.length === 11 ? "CPF" : "CNPJ",
       email: user.email,
@@ -1646,7 +1649,10 @@ export async function initiateCheckoutBoleto(
         mobile_phone: billing.phoneNumber.replace(/\D/g, ""),
         name: `${billing.firstName} ${billing.lastName}`.trim(),
       },
-      description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
+      description: atlasSimpayInvoiceDescription(
+        invoice.reference,
+        invoice.type
+      ),
       value: invoice.amount + BOLETO_FEE,
     });
 
@@ -2393,7 +2399,10 @@ export async function completeCheckout(
       const simpayResult = await simpayApi.createCardPayment({
         bin: cardToken.substring(0, 6),
         brand: "unknown",
-        description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
+        description: atlasSimpayInvoiceDescription(
+          invoice.reference,
+          invoice.type
+        ),
         document: values.document.replace(/\D/g, ""),
         document_type:
           values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
@@ -2477,7 +2486,10 @@ export async function completeCheckout(
     const result = await simpayApi.createCardPayment({
       bin: cardToken.substring(0, 6),
       brand: "unknown",
-      description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
+      description: atlasSimpayInvoiceDescription(
+        invoice.reference,
+        invoice.type
+      ),
       document: values.document.replace(/\D/g, ""),
       document_type:
         values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
@@ -2576,6 +2588,31 @@ export async function completeCheckoutWithSavedCard(
 
   if (!card) {
     return { message: "Token do cartão é obrigatório.", status: "error" };
+  }
+
+  // O formulário de cartão salvo não envia dados de cobrança: completa a partir
+  // do cadastro do usuário. O Simpay exige CPF/CNPJ e nome.
+  if (!values.document?.replace(/\D/g, "")) {
+    values.document = (
+      user.billingDocument ??
+      user.organization?.document ??
+      ""
+    ).replace(/\D/g, "");
+  }
+  if (!values.firstName?.trim()) {
+    const [first, ...rest] = (user.name ?? "").trim().split(/\s+/);
+    values.firstName = first ?? "";
+    values.lastName = rest.join(" ") || first || "";
+  }
+  if (!values.phoneNumber) {
+    values.phoneNumber = user.billingPhone ?? "";
+  }
+  if (!values.document) {
+    return {
+      message:
+        "Informe seu CPF/CNPJ no cadastro para pagar com o cartão salvo.",
+      status: "error",
+    };
   }
 
   const namecheapFunds = await validateNamecheapFundsForPayment(invoice);
@@ -2715,7 +2752,10 @@ export async function completeCheckoutWithSavedCard(
       const domResult = await simpayApi.createCardPayment({
         bin: card.last4 || cardToken.substring(0, 6),
         brand: card.brand || "unknown",
-        description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
+        description: atlasSimpayInvoiceDescription(
+          invoice.reference,
+          invoice.type
+        ),
         document: values.document.replace(/\D/g, ""),
         document_type:
           values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
@@ -2797,7 +2837,10 @@ export async function completeCheckoutWithSavedCard(
     const result = await simpayApi.createCardPayment({
       bin: card.last4 || cardToken.substring(0, 6),
       brand: card.brand || "unknown",
-      description: atlasSimpayInvoiceDescription(invoice.reference, invoice.type),
+      description: atlasSimpayInvoiceDescription(
+        invoice.reference,
+        invoice.type
+      ),
       document: values.document.replace(/\D/g, ""),
       document_type:
         values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
@@ -3526,7 +3569,9 @@ async function resolvePaymentLinkOwner(paymentLinkId: string) {
 }
 
 /** Valores antigos na URL não podem voltar a colocar recursos removidos no carrinho. */
-function validateVpsCheckoutConfig(config: Record<string, unknown>): string | null {
+function validateVpsCheckoutConfig(
+  config: Record<string, unknown>
+): string | null {
   const image = typeof config.image === "string" ? config.image : "ubuntu";
   const allowedImages = new Set([
     "ubuntu",

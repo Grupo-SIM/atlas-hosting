@@ -107,7 +107,12 @@ function resolveProductId(
     );
   }
 
-  if (!storage || storage === "default" || storage === `${planId}-ssd`) {
+  if (
+    !storage ||
+    storage === "default" ||
+    storage === `${planId}-ssd` ||
+    storage === `${planId}-storage-base`
+  ) {
     return product.ssd;
   }
   if (storage === `${planId}-storage-upgrade` || storage === `${planId}-nvme`) {
