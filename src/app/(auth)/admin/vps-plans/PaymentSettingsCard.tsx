@@ -26,7 +26,8 @@ export function PaymentSettingsCard({
     setPixEnabled(checked);
     startPixTransition(async () => {
       try {
-        await setPixAllowAllDurationsAction(checked);
+        const result = await setPixAllowAllDurationsAction(checked);
+        if (!result.ok) throw new Error(result.error);
         toast.success(
           checked
             ? "PIX liberado para todas as durações (1/12/24 meses)."
@@ -34,7 +35,7 @@ export function PaymentSettingsCard({
         );
       } catch (error) {
         setPixEnabled(!checked);
-        toast.error("Erro ao salvar configuração de PIX.");
+        toast.error(error instanceof Error ? error.message : "Erro ao salvar configuração de PIX.");
       }
     });
   };
@@ -43,7 +44,8 @@ export function PaymentSettingsCard({
     setBoletoEnabled(checked);
     startBoletoTransition(async () => {
       try {
-        await setBoletoEnabledAction(checked);
+        const result = await setBoletoEnabledAction(checked);
+        if (!result.ok) throw new Error(result.error);
         toast.success(
           checked
             ? "Boleto liberado para qualquer compra."
@@ -51,7 +53,7 @@ export function PaymentSettingsCard({
         );
       } catch (error) {
         setBoletoEnabled(!checked);
-        toast.error("Erro ao salvar configuração de boleto.");
+        toast.error(error instanceof Error ? error.message : "Erro ao salvar configuração de boleto.");
       }
     });
   };

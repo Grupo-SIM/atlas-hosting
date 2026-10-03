@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgInvoice, pgSystemConfig, pgVpsSubscription } from "@/lib/db/schema";
+import { savePaymentSettings } from "@/lib/server/payment-settings";
 import { firstRenewalDate } from "@/lib/vps/renewal-date";
 
 export interface VpsPlanRow {
@@ -128,14 +129,18 @@ export async function getPixAllowAllDurationsAction(): Promise<boolean> {
 
 export async function setPixAllowAllDurationsAction(
   enabled: boolean
-): Promise<void> {
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!admin?.isAdmin) return { ok: false, error: "Acesso restrito a administradores." };
 
-  // system_config is a singleton table (always exactly one row, no primary key).
-  await db.update(pgSystemConfig).set({ pixAllowAllDurations: enabled });
-
-  revalidatePath("/admin/vps-plans");
+  try {
+    await savePaymentSettings({ pixAllowAllDurations: enabled });
+    revalidatePath("/admin/vps-plans");
+    return { ok: true };
+  } catch (error) {
+    console.error("[payment-settings] PIX save failed", error);
+    return { ok: false, error: "Erro ao salvar configuração de PIX." };
+  }
 }
 
 export async function getBoletoEnabledAction(): Promise<boolean> {
@@ -146,13 +151,18 @@ export async function getBoletoEnabledAction(): Promise<boolean> {
   return config?.boletoEnabled ?? false;
 }
 
-export async function setBoletoEnabledAction(enabled: boolean): Promise<void> {
+export async function setBoletoEnabledAction(enabled: boolean): Promise<{ ok: true } | { ok: false; error: string }> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!admin?.isAdmin) return { ok: false, error: "Acesso restrito a administradores." };
 
-  await db.update(pgSystemConfig).set({ boletoEnabled: enabled });
-
-  revalidatePath("/admin/vps-plans");
+  try {
+    await savePaymentSettings({ boletoEnabled: enabled });
+    revalidatePath("/admin/vps-plans");
+    return { ok: true };
+  } catch (error) {
+    console.error("[payment-settings] Boleto save failed", error);
+    return { ok: false, error: "Erro ao salvar configuração de boleto." };
+  }
 }
 
 export async function backfillVpsSubscriptionsAction(): Promise<{
