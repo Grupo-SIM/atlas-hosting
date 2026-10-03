@@ -44,8 +44,22 @@ export default function AuthPage({
 
       {/* Main Container */}
       <div className="relative z-10 flex h-auto w-full max-w-[1662px] flex-col overflow-hidden rounded-[59px] border border-[#00A8DA] bg-[rgba(0,29,48,0.79)] shadow-[0_40px_100px_rgba(0,0,0,0.8)] backdrop-blur-md lg:h-[703px] lg:flex-row">
+        {backHref && (
+          <Button
+            aria-label="Voltar à página inicial"
+            asChild
+            className="absolute top-6 left-6 h-9 w-9 cursor-pointer rounded-md border-[#00A8DA] bg-[#0B2144] text-white shadow-sm hover:bg-[#12335B] hover:text-white focus-visible:ring-[#00A8DA] md:top-8 md:left-8"
+            size="icon"
+            title="Voltar à página inicial"
+            variant="outline"
+          >
+            <Link href={backHref}>
+              <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+            </Link>
+          </Button>
+        )}
         {/* Left Side: Branding & Features */}
-        <div className="flex flex-1 flex-col justify-center p-8 md:p-16 lg:p-20">
+        <div className="flex flex-1 flex-col justify-center p-8 pt-24 md:p-16 md:pt-28 lg:p-20">
           <div className="flex max-w-[571px] flex-col gap-[16px]">
             {/* Branding */}
             <Link
@@ -125,20 +139,6 @@ export default function AuthPage({
 
         {/* Right Side: Form Container (Black Panel) */}
         <div className="relative flex max-w-full flex-1 flex-col justify-center rounded-[59px] border border-[#00A8DA] bg-[rgba(0,0,0,0.79)] p-8 md:p-16 lg:h-[703px] lg:max-w-[733px] lg:p-20">
-          {backHref && (
-            <Button
-              aria-label="Voltar à página inicial"
-              asChild
-              className="absolute top-6 left-6 h-9 w-9 rounded-md border-border bg-muted/50 text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground md:top-8 md:left-8"
-              size="icon"
-              title="Voltar à página inicial"
-              variant="outline"
-            >
-              <Link href={backHref}>
-                <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-              </Link>
-            </Button>
-          )}
           <div className="mx-auto w-full max-w-sm">
             {/* Form Logo (Blue Filter) */}
             <div className="mb-8 flex justify-center">
