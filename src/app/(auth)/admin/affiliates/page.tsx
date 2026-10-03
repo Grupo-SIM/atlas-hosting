@@ -1,4 +1,4 @@
-import { count, eq, sql, sum } from "drizzle-orm";
+import { count, eq, ne, sql, sum } from "drizzle-orm";
 import { ExternalLink, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { db } from "@/lib/db";
 import {
@@ -26,6 +27,8 @@ import {
   pgUser,
   pgWithdrawalRequests,
 } from "@/lib/db/schema";
+
+import { AffiliateReportButton } from "./components";
 
 export const metadata: Metadata = {
   title: "Gerenciar Afiliados - Admin",
@@ -53,11 +56,15 @@ export default async function AdminAffiliatesPage() {
       eq(sql`referred.referrer_id`, pgUser.id)
     )
     .groupBy(pgUser.id, pgUser.name, pgUser.email, pgUser.affiliateCode)
-    .having(sql`count(referred.id) > 0`);
+    .having(sql`count(referred.id) > 0 or exists (
+      select 1 from ${pgAffiliateCommission}
+      where ${pgAffiliateCommission.affiliateUserId} = ${pgUser.id}
+    )`)
+    .orderBy(pgUser.name, pgUser.id);
 
   // Saldo líquido = comissões disponíveis menos o que já está preso em saques
   // pendentes. Mesma conta do `getAffiliateBalance` que o afiliado vê na conta dele.
-  const [availableRows, pendingRows] = await Promise.all([
+  const [availableRows, pendingRows, commissionRows] = await Promise.all([
     db
       .select({
         total: sum(pgAffiliateCommission.commissionAmount),
@@ -74,6 +81,16 @@ export default async function AdminAffiliatesPage() {
       .from(pgWithdrawalRequests)
       .where(eq(pgWithdrawalRequests.status, "pending"))
       .groupBy(pgWithdrawalRequests.userId),
+    db
+      .select({
+        commissionTotal: sum(pgAffiliateCommission.commissionAmount),
+        salesCount: count(),
+        salesTotal: sum(pgAffiliateCommission.grossAmount),
+        userId: pgAffiliateCommission.affiliateUserId,
+      })
+      .from(pgAffiliateCommission)
+      .where(ne(pgAffiliateCommission.status, "cancelled"))
+      .groupBy(pgAffiliateCommission.affiliateUserId),
   ]);
 
   const availableByUser = new Map(
@@ -81,6 +98,31 @@ export default async function AdminAffiliatesPage() {
   );
   const pendingByUser = new Map(
     pendingRows.map(r => [r.userId, Number(r.total ?? 0)])
+  );
+
+  const commissionsByUser = new Map(commissionRows.map(row => [row.userId, row]));
+  const report = affiliates.map(affiliate => {
+    const commission = commissionsByUser.get(affiliate.id);
+    const pending = pendingByUser.get(affiliate.id) ?? 0;
+    return {
+      ...affiliate,
+      balance: Math.max(0, (availableByUser.get(affiliate.id) ?? 0) - pending),
+      commissionTotal: Number(commission?.commissionTotal ?? 0),
+      pending,
+      salesCount: commission?.salesCount ?? 0,
+      salesTotal: Number(commission?.salesTotal ?? 0),
+    };
+  });
+  const totals = report.reduce(
+    (total, row) => ({
+      balance: total.balance + row.balance,
+      commissionTotal: total.commissionTotal + row.commissionTotal,
+      pending: total.pending + row.pending,
+      referrals: total.referrals + row.referralCount,
+      salesCount: total.salesCount + row.salesCount,
+      salesTotal: total.salesTotal + row.salesTotal,
+    }),
+    { balance: 0, commissionTotal: 0, pending: 0, referrals: 0, salesCount: 0, salesTotal: 0 }
   );
 
   return (
@@ -92,7 +134,7 @@ export default async function AdminAffiliatesPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="font-medium text-sm">
@@ -104,17 +146,36 @@ export default async function AdminAffiliatesPage() {
             <div className="font-bold text-2xl">{affiliates.length}</div>
           </CardContent>
         </Card>
+        {[
+          { label: "Total de indicações", value: String(totals.referrals) },
+          { label: "Vendas comissionadas", value: toBrl(totals.salesTotal) },
+          { label: "Comissões acumuladas", value: toBrl(totals.commissionTotal) },
+          { label: "Saldo disponível", value: toBrl(totals.balance) },
+          { label: "Saques pendentes", value: toBrl(totals.pending) },
+        ].map(stat => (
+          <Card key={stat.label}>
+            <CardHeader className="pb-2">
+              <CardTitle className="font-medium text-sm">{stat.label}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="font-bold text-2xl">{stat.value}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Afiliados</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>Relatório de Afiliados</CardTitle>
+            <AffiliateReportButton rows={report} />
+          </div>
           <CardDescription>
-            Visualize o desempenho de cada afiliado do sistema
+            Histórico completo de indicações e vendas que geraram comissão. Comissões canceladas não entram nos totais; saldo disponível desconta saques pendentes.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <ScrollArea className="w-full">
             <TooltipProvider delayDuration={150}>
               <Table>
                 <TableHeader>
@@ -127,12 +188,14 @@ export default async function AdminAffiliatesPage() {
                         tip="Contas criadas com o link deste afiliado."
                       />
                     </TableHead>
-                    <TableHead>Saldo</TableHead>
+                    <TableHead>Vendas comissionadas</TableHead>
+                    <TableHead>Comissões acumuladas</TableHead>
+                    <TableHead>Saldo disponível</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {affiliates.map(affiliate => {
+                  {report.map(affiliate => {
                     const available = availableByUser.get(affiliate.id) ?? 0;
                     const pending = pendingByUser.get(affiliate.id) ?? 0;
                     const balance = Math.max(0, available - pending);
@@ -156,6 +219,13 @@ export default async function AdminAffiliatesPage() {
                         </TableCell>
                         <TableCell>{affiliate.referralCount}</TableCell>
                         <TableCell>
+                          <div>{toBrl(affiliate.salesTotal)}</div>
+                          <div className="text-muted-foreground text-xs">
+                            {affiliate.salesCount} {affiliate.salesCount === 1 ? "venda" : "vendas"}
+                          </div>
+                        </TableCell>
+                        <TableCell>{toBrl(affiliate.commissionTotal)}</TableCell>
+                        <TableCell>
                           <div className="flex flex-col">
                             <span
                               className={
@@ -174,7 +244,7 @@ export default async function AdminAffiliatesPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button asChild size="sm" variant="ghost">
+                          <Button asChild size="sm" variant="outline">
                             <Link href={`/admin/affiliates/${affiliate.id}`}>
                               <ExternalLink className="mr-2 h-4 w-4" />
                               Detalhes
@@ -188,7 +258,7 @@ export default async function AdminAffiliatesPage() {
                     <TableRow>
                       <TableCell
                         className="py-10 text-center text-muted-foreground"
-                        colSpan={5}
+                        colSpan={7}
                       >
                         Nenhum afiliado encontrado
                       </TableCell>
@@ -197,7 +267,8 @@ export default async function AdminAffiliatesPage() {
                 </TableBody>
               </Table>
             </TooltipProvider>
-          </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>
