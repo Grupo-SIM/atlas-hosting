@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import {
   approvePendingNamecheapVerifications,
   GmailRefreshTokenExpiredError,
@@ -59,8 +59,9 @@ describe("Namecheap Gmail verification", () => {
     process.env.GOOGLE_CLIENT_ID = "client-id";
     process.env.GOOGLE_CLIENT_SECRET = "client-secret";
     process.env.GMAIL_REFRESH_TOKEN = "refresh-token";
-    globalThis.fetch = async () =>
-      new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 });
+    spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 })
+    );
 
     await expect(approvePendingNamecheapVerifications()).rejects.toBeInstanceOf(
       GmailRefreshTokenExpiredError

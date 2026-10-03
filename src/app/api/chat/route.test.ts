@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { POST } from "./route";
 
 const originalFetch = globalThis.fetch;
@@ -19,20 +19,21 @@ const request = () => new Request("http://localhost/api/chat", {
 });
 
 function mockUpstream(response: Response) {
-  globalThis.fetch = (async () => response) as typeof fetch;
+  spyOn(globalThis, "fetch").mockResolvedValue(response);
 }
 
 describe("Atlas IA proxy", () => {
   test("reads runtime configuration and forwards chat payload", async () => {
     process.env.N8N_URL = "https://n8n.example.com/";
     process.env.NEXT_PUBLIC_N8N_URL = "https://old.example.com";
-    globalThis.fetch = (async (url, options) => {
-      expect(String(url)).toBe("https://n8n.example.com/webhook/6229f9db-8b7f-40ad-8a71-503727e71c34/chat");
-      expect(options?.method).toBe("POST");
-      expect(JSON.parse(options?.body as string)).toEqual(payload);
-      return Response.json({ output: "Olá!" });
-    }) as typeof fetch;
+    const fetchMock = spyOn(globalThis, "fetch").mockResolvedValue(
+      Response.json({ output: "Olá!" })
+    );
     expect(await (await POST(request())).json()).toEqual({ output: "Olá!" });
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe("https://n8n.example.com/webhook/6229f9db-8b7f-40ad-8a71-503727e71c34/chat");
+    expect(options?.method).toBe("POST");
+    expect(JSON.parse(options?.body as string)).toEqual(payload);
   });
 
   test("supports existing environment variable", async () => {
@@ -48,7 +49,7 @@ describe("Atlas IA proxy", () => {
   test("missing configuration never requests a relative site URL", async () => {
     delete process.env.N8N_URL;
     delete process.env.NEXT_PUBLIC_N8N_URL;
-    globalThis.fetch = (async () => { throw new Error("Unexpected fetch"); }) as typeof fetch;
+    spyOn(globalThis, "fetch").mockRejectedValue(new Error("Unexpected fetch"));
     expect((await POST(request())).status).toBe(503);
   });
 
@@ -68,7 +69,7 @@ describe("Atlas IA proxy", () => {
 
   test("handles upstream network failures", async () => {
     process.env.N8N_URL = "https://n8n.example.com";
-    globalThis.fetch = (async () => { throw new Error("Offline"); }) as typeof fetch;
+    spyOn(globalThis, "fetch").mockRejectedValue(new Error("Offline"));
     expect((await POST(request())).status).toBe(502);
   });
 });
