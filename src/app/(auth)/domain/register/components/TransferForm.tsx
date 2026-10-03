@@ -86,9 +86,11 @@ export function TransferForm({ defaultDomain }: { defaultDomain?: string }) {
           </Card>
         </Label>
       </RadioGroup>
-      <Button disabled={isPending} type="submit">
-        {isPending ? "Adicionando..." : "Adicionar Domínio"}
-      </Button>
+      <div className="flex justify-end">
+        <Button disabled={isPending} type="submit">
+          {isPending ? "Adicionando..." : "Adicionar Domínio"}
+        </Button>
+      </div>
     </form>
   );
 }
