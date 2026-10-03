@@ -1,9 +1,10 @@
+import { ArrowLeft } from "lucide-react";
 import { Roboto } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import type { PropsWithChildren } from "react";
 import { FaBolt, FaHeadset, FaLock } from "react-icons/fa6";
-import { LuArrowLeft } from "react-icons/lu";
+import { Button } from "@/components/ui/button";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -125,14 +126,18 @@ export default function AuthPage({
         {/* Right Side: Form Container (Black Panel) */}
         <div className="relative flex max-w-full flex-1 flex-col justify-center rounded-[59px] border border-[#00A8DA] bg-[rgba(0,0,0,0.79)] p-8 md:p-16 lg:h-[703px] lg:max-w-[733px] lg:p-20">
           {backHref && (
-            <Link
+            <Button
               aria-label="Voltar à página inicial"
-              className="absolute top-6 left-6 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[#00A8DA] text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 md:top-8 md:left-8"
-              href={backHref}
+              asChild
+              className="absolute top-6 left-6 h-9 w-9 rounded-md border-border bg-muted/50 text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground md:top-8 md:left-8"
+              size="icon"
               title="Voltar à página inicial"
+              variant="outline"
             >
-              <LuArrowLeft aria-hidden="true" className="h-5 w-5" />
-            </Link>
+              <Link href={backHref}>
+                <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+              </Link>
+            </Button>
           )}
           <div className="mx-auto w-full max-w-sm">
             {/* Form Logo (Blue Filter) */}
