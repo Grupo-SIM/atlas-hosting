@@ -57,8 +57,8 @@ export default async function EmailPage({
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground text-sm">
-              Use o seletor de domínio no topo da página para escolher um
-              domínio configurado para hospedagem.
+              Cadastre um domínio e configure sua hospedagem para gerenciar
+              suas contas de e-mail.
             </p>
           </CardContent>
         </Card>

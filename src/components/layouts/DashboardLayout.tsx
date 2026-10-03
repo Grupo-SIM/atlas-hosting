@@ -15,27 +15,9 @@ export default async function DashboardLayout({
     <div className="flex max-h-screen min-h-screen bg-background">
       <Sidebar isAdmin={user.isAdmin || false} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar isAdmin={user.isAdmin || false}>
-          {/* <UserSiteSelect user={user} /> */}
-        </Topbar>
+        <Topbar isAdmin={user.isAdmin || false} />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
 }
-
-/* 
-async function UserSiteSelect({ user }: { user: User }) {
-  const domains = await getUserDomains(user);
-  const selectedDomain = await getUserCurrentDomain(user);
-
-  return (
-    selectedDomain && (
-      <DomainSelector
-        domains={domains}
-        selectedDomain={user.organization.domains}
-      />
-    )
-  );
-}
- */
