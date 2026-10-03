@@ -6,6 +6,7 @@ export async function POST(request: Request) {
   const environment = process.env;
   const baseUrl = environment.N8N_URL || environment.NEXT_PUBLIC_N8N_URL;
   if (!baseUrl) {
+    console.error("[Atlas IA] Missing n8n URL configuration");
     return Response.json({ output: UNAVAILABLE }, { status: 503 });
   }
 
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
       throw new Error("Invalid n8n protocol");
     }
   } catch {
+    console.error("[Atlas IA] Invalid n8n URL configuration");
     return Response.json({ output: UNAVAILABLE }, { status: 503 });
   }
 
@@ -36,16 +38,26 @@ export async function POST(request: Request) {
       signal: AbortSignal.timeout(60_000),
     });
     if (!response.ok) {
+      console.error("[Atlas IA] n8n HTTP failure", {
+        status: response.status,
+        contentType: response.headers.get("content-type"),
+      });
       return Response.json({ output: UNAVAILABLE }, { status: 502 });
     }
     const text = await response.text();
     if (response.headers.get("content-type")?.includes("text/html") || /^\s*(?:<!doctype\s+html|<html\b)/i.test(text)) {
+      console.error("[Atlas IA] Unexpected HTML response from n8n", { status: response.status });
       return Response.json({ output: UNAVAILABLE }, { status: 502 });
     }
     return new Response(text, {
       headers: { "Content-Type": response.headers.get("content-type") || "text/plain", "Cache-Control": "no-store" },
     });
-  } catch {
+  } catch (error) {
+    const cause = error instanceof Error ? error.cause : undefined;
+    console.error("[Atlas IA] n8n request failed", {
+      name: error instanceof Error ? error.name : "UnknownError",
+      code: cause && typeof cause === "object" && "code" in cause ? cause.code : undefined,
+    });
     return Response.json({ output: UNAVAILABLE }, { status: 502 });
   }
 }

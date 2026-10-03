@@ -1,16 +1,23 @@
-import { afterEach, describe, expect, spyOn, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { POST } from "./route";
+
+let errorLog: ReturnType<typeof spyOn>;
 
 const originalFetch = globalThis.fetch;
 const originalUrl = process.env.N8N_URL;
 const originalPublicUrl = process.env.NEXT_PUBLIC_N8N_URL;
 
 afterEach(() => {
+  errorLog?.mockRestore();
   globalThis.fetch = originalFetch;
   if (originalUrl === undefined) delete process.env.N8N_URL;
   else process.env.N8N_URL = originalUrl;
   if (originalPublicUrl === undefined) delete process.env.NEXT_PUBLIC_N8N_URL;
   else process.env.NEXT_PUBLIC_N8N_URL = originalPublicUrl;
+});
+
+beforeEach(() => {
+  errorLog = spyOn(console, "error").mockImplementation(() => {});
 });
 
 const payload = { action: "sendMessage", sessionId: "session", chatInput: "Olá" };
@@ -59,6 +66,7 @@ describe("Atlas IA proxy", () => {
     const response = await POST(request());
     expect(response.status).toBe(502);
     expect((await response.json()).output).toContain("indisponível");
+    expect(errorLog).toHaveBeenCalledWith("[Atlas IA] n8n HTTP failure", { status: 404, contentType: null });
   });
 
   test("rejects HTML even with success status", async () => {
@@ -69,7 +77,9 @@ describe("Atlas IA proxy", () => {
 
   test("handles upstream network failures", async () => {
     process.env.N8N_URL = "https://n8n.example.com";
-    spyOn(globalThis, "fetch").mockRejectedValue(new Error("Offline"));
+    spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Secret URL must not be logged", { cause: { code: "ECONNREFUSED" } }));
     expect((await POST(request())).status).toBe(502);
+    expect(errorLog).toHaveBeenCalledWith("[Atlas IA] n8n request failed", { name: "TypeError", code: "ECONNREFUSED" });
+    expect(JSON.stringify(errorLog.mock.calls)).not.toContain("Secret URL");
   });
 });
