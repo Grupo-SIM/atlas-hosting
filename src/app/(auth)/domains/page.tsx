@@ -274,7 +274,21 @@ export default async function MyDomainsPage() {
       })
     );
 
-    const domains = domainsRaw.filter(Boolean);
+    const domains = domainsRaw.map((processed, index) => {
+      const domain = dbDomains[index];
+      if (domain.dnsMode !== "cloudflare") return processed;
+
+      return {
+        ...processed,
+        features: [
+          getExternalDomainDnsFeature(domain),
+          ...processed.features.filter(feature => feature !== "DNS Management"),
+        ],
+        usesOurDNS:
+          domain.connectionStatus === "connected" &&
+          domain.cloudflareZoneStatus === "active",
+      };
+    });
 
     processedDomains = domains;
 
@@ -656,14 +670,14 @@ export default async function MyDomainsPage() {
                               variant="outline"
                             >
                               <RefreshCw className="mr-1 h-3 w-3" />
-                              Automática
+                              Renovação automática
                             </Badge>
                           ) : (
                             <Badge
                               className="border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
                               variant="outline"
                             >
-                              Manual
+                              Renovação manual
                             </Badge>
                           )}
                         </div>
