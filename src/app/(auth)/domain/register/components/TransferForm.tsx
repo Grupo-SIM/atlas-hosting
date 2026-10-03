@@ -86,7 +86,7 @@ export function TransferForm({ defaultDomain }: { defaultDomain?: string }) {
           </Card>
         </Label>
       </RadioGroup>
-      <Button className="w-full" disabled={isPending} size="lg" type="submit">
+      <Button disabled={isPending} type="submit">
         {isPending ? "Adicionando..." : "Adicionar Domínio"}
       </Button>
     </form>
