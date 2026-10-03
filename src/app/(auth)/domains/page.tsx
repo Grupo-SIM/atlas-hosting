@@ -32,6 +32,7 @@ import {
   type DomainVerificationRecord,
 } from "@/lib/server/domains/verification";
 import { cn } from "@/lib/utils";
+import { DeleteDomainButton } from "./components";
 import { DomainActionsMenu } from "./components/DomainActionsMenu";
 import { DomainConnectionRecovery } from "./components/DomainConnectionRecovery";
 import { DomainSyncRetryButton } from "./components/DomainSyncRetryButton";
@@ -575,6 +576,7 @@ export default async function MyDomainsPage() {
                           —
                         </TableCell>
                         <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
                           {verification ? (
                             <PendingDomainInstructionsDialog
                               domain={domain.domain}
@@ -586,6 +588,10 @@ export default async function MyDomainsPage() {
                               Instruções indisponíveis
                             </Button>
                           )}
+                          {user.id === user.organization.ownerId && !user.impersonatedBy && domain.registrarProvider !== "namecheap" && (
+                            <DeleteDomainButton domainId={domain.id} domainName={domain.domain} />
+                          )}
+                          </div>
                         </TableCell>
                       </TableRow>
                       );
@@ -683,6 +689,7 @@ export default async function MyDomainsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="w-12 text-right">
+                        <div className="flex items-center justify-end gap-2">
                         <DomainActionsMenu
                           canTransfer={
                             user.id === user.organization.ownerId &&
@@ -693,6 +700,10 @@ export default async function MyDomainsPage() {
                           canRenew={!domain.isExternal && domain.status !== "unknown"}
                           key={`actions-${domain.id}`}
                         />
+                        {domain.isExternal && user.id === user.organization.ownerId && !user.impersonatedBy && (
+                          <DeleteDomainButton domainId={domain.id} domainName={domain.name} />
+                        )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
