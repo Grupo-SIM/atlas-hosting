@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import "@n8n/chat/style.css";
 import { createChat } from "@n8n/chat";
 
-const WEBHOOK_URL = `${process.env.NEXT_PUBLIC_N8N_URL}/webhook/6229f9db-8b7f-40ad-8a71-503727e71c34/chat`;
+const WEBHOOK_URL = "/api/chat";
 
 const roboto = Roboto({
   subsets: ["latin"],
