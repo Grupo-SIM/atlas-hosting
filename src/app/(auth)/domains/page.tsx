@@ -278,12 +278,15 @@ export default async function MyDomainsPage() {
     const domains = domainsRaw.map((processed, index) => {
       const domain = dbDomains[index];
       if (domain.dnsMode !== "cloudflare") return processed;
+      const dnsFeature = getExternalDomainDnsFeature(domain);
 
       return {
         ...processed,
         features: [
-          getExternalDomainDnsFeature(domain),
-          ...processed.features.filter(feature => feature !== "DNS Management"),
+          dnsFeature,
+          ...processed.features.filter(
+            feature => feature !== "DNS Management" && feature !== dnsFeature
+          ),
         ],
         usesOurDNS:
           domain.connectionStatus === "connected" &&
