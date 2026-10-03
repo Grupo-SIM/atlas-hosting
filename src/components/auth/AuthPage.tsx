@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { PropsWithChildren } from "react";
 import { FaBolt, FaHeadset, FaLock } from "react-icons/fa6";
+import { LuArrowLeft } from "react-icons/lu";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -17,6 +18,7 @@ export default function AuthPage({
   switchTitle,
   switchText,
   children,
+  backHref,
 }: PropsWithChildren<AuthPageProps>) {
   return (
     <div
@@ -121,7 +123,17 @@ export default function AuthPage({
         </div>
 
         {/* Right Side: Form Container (Black Panel) */}
-        <div className="flex max-w-full flex-1 flex-col justify-center rounded-[59px] border border-[#00A8DA] bg-[rgba(0,0,0,0.79)] p-8 md:p-16 lg:h-[703px] lg:max-w-[733px] lg:p-20">
+        <div className="relative flex max-w-full flex-1 flex-col justify-center rounded-[59px] border border-[#00A8DA] bg-[rgba(0,0,0,0.79)] p-8 md:p-16 lg:h-[703px] lg:max-w-[733px] lg:p-20">
+          {backHref && (
+            <Link
+              aria-label="Voltar à página inicial"
+              className="absolute top-6 left-6 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[#00A8DA] text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 md:top-8 md:left-8"
+              href={backHref}
+              title="Voltar à página inicial"
+            >
+              <LuArrowLeft aria-hidden="true" className="h-5 w-5" />
+            </Link>
+          )}
           <div className="mx-auto w-full max-w-sm">
             {/* Form Logo (Blue Filter) */}
             <div className="mb-8 flex justify-center">
@@ -174,6 +186,7 @@ export default function AuthPage({
 }
 
 interface AuthPageProps {
+  backHref?: string;
   title: string;
   subtitle: string;
   switchHref: string;

@@ -26,6 +26,7 @@ export default function LoginPage({
 
   return (
     <AuthPage
+      backHref="/"
       subtitle="Faça login para acessar sua conta"
       switchHref={signupSwitchHref}
       switchText="Criar uma conta"
