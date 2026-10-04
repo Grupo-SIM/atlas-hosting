@@ -18,8 +18,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { db } from "@/lib/db";
 import { pgAffiliateCommission, pgInvoice, pgUser } from "@/lib/db/schema";
+import { AffiliateSalesTable } from "./components";
+import { toBrl } from "./components/format-money";
 import {
   type ReferralPurchase,
   ReferralPurchasesDialog,
@@ -57,11 +60,14 @@ export default async function AffiliateDetailsPage({ params }: PageProps) {
           where: inArray(pgInvoice.userId, referralIds),
         })
       : [],
-    referralIds.length
-      ? db.query.pgAffiliateCommission.findMany({
-          where: eq(pgAffiliateCommission.affiliateUserId, affiliate.id),
-        })
-      : [],
+    db.query.pgAffiliateCommission.findMany({
+      orderBy: [desc(pgAffiliateCommission.createdAt)],
+      where: eq(pgAffiliateCommission.affiliateUserId, affiliate.id),
+      with: {
+        buyerUser: { columns: { email: true, name: true } },
+        invoice: { columns: { description: true, reference: true } },
+      },
+    }),
   ]);
 
   const commissionByInvoice = new Map(
@@ -88,6 +94,13 @@ export default async function AffiliateDetailsPage({ params }: PageProps) {
     purchasesByUser.set(invoice.userId, list);
   }
 
+  const activeCommissions = commissions.filter(c => c.status !== "cancelled");
+  const salesTotal = activeCommissions.reduce((sum, c) => sum + c.grossAmount, 0);
+  const commissionTotal = activeCommissions.reduce(
+    (sum, c) => sum + c.commissionAmount,
+    0
+  );
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center gap-4">
@@ -101,18 +114,27 @@ export default async function AffiliateDetailsPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="font-medium text-muted-foreground text-sm uppercase">
-              Total de Indicações
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-bold text-2xl">{referrals.length}</div>
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Total de Indicações", value: String(referrals.length) },
+          { label: "Total de Vendas", value: String(activeCommissions.length) },
+          { label: "Vendas comissionadas", value: toBrl(salesTotal) },
+          { label: "Comissões acumuladas", value: toBrl(commissionTotal) },
+        ].map(stat => (
+          <Card key={stat.label}>
+            <CardHeader className="pb-2">
+              <CardTitle className="font-medium text-muted-foreground text-sm uppercase">
+                {stat.label}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="font-bold text-2xl">{stat.value}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      <AffiliateSalesTable sales={commissions} />
 
       <Card>
         <CardHeader>
@@ -122,7 +144,7 @@ export default async function AffiliateDetailsPage({ params }: PageProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <ScrollArea className="w-full">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -185,7 +207,8 @@ export default async function AffiliateDetailsPage({ params }: PageProps) {
                 )}
               </TableBody>
             </Table>
-          </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>
