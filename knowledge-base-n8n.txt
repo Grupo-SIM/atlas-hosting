@@ -1,8 +1,14 @@
 BASE DE CONHECIMENTO COMPLETA - ATLAS HOSTING
-Atualizada em: 2026-05-11
+Atualizada em: 2026-10-04
 
 IMPORTANTE SOBRE PREÇOS:
 Os valores apresentados são aproximados e podem variar. O valor exato será exibido no momento da contratação.
+- Câmbio de referência desta base: €1 = R$5,86 (referência do código, não cotação em tempo real). O site atualiza a conversão conforme a cotação disponível.
+- Os preços principais abaixo são equivalentes mensais para o período de 24 meses, na União Europeia, sem adicionais; Windows inclui a licença indicada.
+- Períodos disponíveis: 1, 12 e 24 meses. O desconto na base do servidor é de 15% em 12 meses e 20% em 24 meses, em relação a 1 mês; licenças e adicionais são cobrados à parte e não recebem esse desconto.
+- O valor mensal equivalente não representa o total da contratação: o total depende do período, da quantidade de servidores e dos adicionais selecionados.
+- Os planos atuais listados não têm taxa de instalação.
+- PIX disponível por padrão para 24 meses; outros períodos dependem de liberação administrativa. Cartão permite cobrança recorrente; PIX e boleto exigem renovação manual. Boleto depende de liberação.
 
 ================================================================================
 1. VISÃO GERAL DA EMPRESA
@@ -14,10 +20,12 @@ A Atlas Hosting é uma provedora de infraestrutura em nuvem de alta performance,
 ================================================================================
 9 regiões, 11 localidades, disponibilidade global:
 
-- Américas: Brasil, Estados Unidos (Leste, Central e Oeste)
+- Américas: Estados Unidos (Leste, Central e Oeste)
 - Europa: Reino Unido e União Europeia (EU)
 - Ásia: Índia, Singapura e Japão
 - Oceania: Austrália (Sydney)
+- A União Europeia é a localização base, sem adicional. Outras regiões podem acrescentar custo mensal conforme o plano.
+- Brasil não consta entre as opções atuais de contratação de VPS; não oferecer essa localização sem confirmação do suporte.
 
 ================================================================================
 3. O SISTEMA DE 100% CASHBACK (VALE BÔNUS)
@@ -44,97 +52,122 @@ A Atlas Hosting é uma provedora de infraestrutura em nuvem de alta performance,
 6. PLANOS CLOUD VPS (LINUX)
 ================================================================================
 Todos incluem: Tráfego ilimitado, Proteção DDoS, 100% de Cashback e Suporte 24/7.
-Período de 12 meses.
+Períodos de 1, 12 e 24 meses; preço principal referente a 24 meses.
+Nomes atuais: Cloud VPS 4, 6, 8, 12, 16 e 18, conforme a quantidade de vCPUs. Os nomes VPS 10/20/30/40/50/60 são legados e não devem ser usados para novas recomendações de Cloud VPS.
+Armazenamento base SSD; não prometer a antiga opção NVMe/SSD para esta linha.
 
-VPS 10:
-  - Preço: ~R$42,19/mês
+Cloud VPS 4:
+  - Preço: ~R$51,57/mês (24 meses)
+  - Outros períodos: ~R$54,85/mês (12 meses) ou ~R$64,46/mês (1 mês)
   - CPU: 4 núcleos de vCPU
   - RAM: 8 GB
-  - Armazenamento: 75 GB NVMe ou 150 GB SSD
+  - Armazenamento: 100 GB SSD
   - Rede: Porta de 200 Mbit/s
   - Snapshots: 1
-  - Backup automático opcional: +~R$17,58/mês
+  - Backup automático opcional: +~R$19,34/mês
+  - Upgrade de armazenamento opcional: 200 GB SSD por +~R$17,58/mês
 
-VPS 20 ★ MAIS VENDIDO:
-  - Preço: ~R$65,63/mês
+Cloud VPS 6 ★ MAIS VENDIDO:
+  - Preço: ~R$70,32/mês (24 meses)
+  - Outros períodos: ~R$74,77/mês (12 meses) ou ~R$87,90/mês (1 mês)
   - CPU: 6 núcleos de vCPU
   - RAM: 12 GB
-  - Armazenamento: 100 GB NVMe ou 200 GB SSD
+  - Armazenamento: 200 GB SSD
   - Rede: Porta de 300 Mbit/s
   - Snapshots: 2
-  - Backup automático opcional: +~R$23,44/mês
+  - Backup automático opcional: +~R$39,26/mês
+  - Upgrade de armazenamento opcional: 400 GB SSD por +~R$35,16/mês
 
-VPS 30:
-  - Preço: ~R$131,26/mês
+Cloud VPS 8:
+  - Preço: ~R$131,26/mês (24 meses)
+  - Outros períodos: ~R$139,47/mês (12 meses) ou ~R$164,08/mês (1 mês)
   - CPU: 8 núcleos de vCPU
   - RAM: 24 GB
-  - Armazenamento: 200 GB NVMe ou 400 GB SSD
+  - Armazenamento: 300 GB SSD
   - Rede: Porta de 600 Mbit/s
   - Snapshots: 3
-  - Backup automático opcional: +~R$41,02/mês
+  - Backup automático opcional: +~R$58,60/mês
+  - Upgrade de armazenamento opcional: 600 GB SSD por +~R$52,74/mês
 
-VPS 40:
-  - Preço: ~R$234,40/mês
+Cloud VPS 12:
+  - Preço: ~R$234,40/mês (24 meses)
+  - Outros períodos: ~R$249,05/mês (12 meses) ou ~R$293,00/mês (1 mês)
   - CPU: 12 núcleos de vCPU
   - RAM: 48 GB
-  - Armazenamento: 250 GB NVMe ou 500 GB SSD
+  - Armazenamento: 400 GB SSD
   - Rede: Porta de 800 Mbit/s
   - Snapshots: 3
+  - Backup automático opcional: +~R$78,52/mês
+  - Upgrade de armazenamento opcional: 800 GB SSD por +~R$70,32/mês
 
-VPS 50:
-  - Preço: ~R$346,91/mês
+Cloud VPS 16:
+  - Preço: ~R$346,91/mês (24 meses)
+  - Outros períodos: ~R$368,59/mês (12 meses) ou ~R$433,64/mês (1 mês)
   - CPU: 16 núcleos de vCPU
   - RAM: 64 GB
-  - Armazenamento: 300 GB NVMe ou 600 GB SSD
+  - Armazenamento: 500 GB SSD
   - Rede: Porta de 1 Gbit/s
   - Snapshots: 3
+  - Backup automático opcional: +~R$97,86/mês
+  - Upgrade de armazenamento opcional: 1 TB SSD por +~R$87,90/mês
 
-VPS 60:
-  - Preço: ~R$459,42/mês
+Cloud VPS 18:
+  - Preço: ~R$459,42/mês (24 meses)
+  - Outros períodos: ~R$488,14/mês (12 meses) ou ~R$574,28/mês (1 mês)
   - CPU: 18 núcleos de vCPU
   - RAM: 96 GB
-  - Armazenamento: 350 GB NVMe ou 700 GB SSD
+  - Armazenamento: 600 GB SSD
   - Rede: Porta de 1 Gbit/s
   - Snapshots: 3
+  - Backup automático opcional: +~R$117,20/mês
+  - Upgrade de armazenamento opcional: 1,2 TB SSD por +~R$105,48/mês
 
 ================================================================================
 7. PLANOS CLOUD VDS - SERVIDORES VIRTUAIS DEDICADOS (AMD EPYC)
 ================================================================================
-Todos incluem: Núcleos físicos dedicados, RAM 100% dedicada, NVMe empresarial,
+Todos incluem: Recursos dedicados, RAM 100% dedicada, NVMe empresarial,
 Tráfego ilimitado, Firewall Grátis, 100% de Cashback e Suporte 24/7.
 Processador: AMD EPYC 7282 2.8 GHz.
+Períodos de 1, 12 e 24 meses; preço principal referente a 24 meses.
+A quantidade de CPU abaixo corresponde aos núcleos virtuais anunciados no catálogo; não confundir com núcleos físicos.
+Backup automático: preço ainda não confirmado nesta linha; consultar o suporte, sem prometer gratuidade.
 
-VDS S:
-  - Preço: ~R$322,53/mês
-  - Núcleos Físicos: 3
+Cloud VDS S:
+  - Preço: ~R$365,66/mês (24 meses)
+  - Outros períodos: ~R$388,52/mês (12 meses) ou ~R$457,08/mês (1 mês)
+  - CPU: 6 núcleos virtuais AMD EPYC 7282 2.8 GHz
   - RAM: 24 GB (dedicada)
   - Armazenamento: 180 GB NVMe
   - Rede: Porta de 250 Mbit/s
 
-VDS M:
-  - Preço: ~R$420,04/mês
-  - Núcleos Físicos: 4
+Cloud VDS M:
+  - Preço: ~R$459,42/mês (24 meses)
+  - Outros períodos: ~R$488,14/mês (12 meses) ou ~R$574,28/mês (1 mês)
+  - CPU: 8 núcleos virtuais AMD EPYC 7282 2.8 GHz
   - RAM: 32 GB (dedicada)
   - Armazenamento: 240 GB NVMe
   - Rede: Porta de 500 Mbit/s
 
-VDS L:
-  - Preço: ~R$600,06/mês
-  - Núcleos Físicos: 6
+Cloud VDS L:
+  - Preço: ~R$646,94/mês (24 meses)
+  - Outros períodos: ~R$687,38/mês (12 meses) ou ~R$808,68/mês (1 mês)
+  - CPU: 12 núcleos virtuais AMD EPYC 7282 2.8 GHz
   - RAM: 48 GB (dedicada)
   - Armazenamento: 360 GB NVMe
   - Rede: Porta de 750 Mbit/s
 
-VDS XL:
-  - Preço: ~R$772,58/mês
-  - Núcleos Físicos: 8
+Cloud VDS XL:
+  - Preço: ~R$881,34/mês (24 meses)
+  - Outros períodos: ~R$936,43/mês (12 meses) ou ~R$1.101,68/mês (1 mês)
+  - CPU: 16 núcleos virtuais AMD EPYC 7282 2.8 GHz
   - RAM: 64 GB (dedicada)
   - Armazenamento: 480 GB NVMe
   - Rede: Porta de 1 Gbit/s
 
-VDS XXL:
-  - Preço: ~R$1.115,74/mês
-  - Núcleos Físicos: 12
+Cloud VDS XXL:
+  - Preço: ~R$1.303,26/mês (24 meses)
+  - Outros períodos: ~R$1.384,72/mês (12 meses) ou ~R$1.629,08/mês (1 mês)
+  - CPU: 24 núcleos virtuais AMD EPYC 7282 2.8 GHz
   - RAM: 96 GB (dedicada)
   - Armazenamento: 720 GB NVMe
   - Rede: Porta de 1 Gbit/s
@@ -143,38 +176,46 @@ VDS XXL:
 8. PLANOS STORAGE VPS (FOCO EM ARMAZENAMENTO)
 ================================================================================
 Ideais para backup, arquivos e aplicações que demandam muito espaço em disco.
-Todos incluem: Tráfego ilimitado, 100% de Cashback e Suporte 24/7.
+Todos incluem: Tráfego ilimitado, Proteção DDoS, 100% de Cashback e Suporte 24/7.
+Períodos de 1, 12 e 24 meses; preço principal referente a 24 meses.
+Os nomes Storage VPS 10/20/30/40/50 permanecem válidos para esta linha.
+Backup automático: preço ainda não confirmado nesta linha; consultar o suporte.
 
 Storage VPS 10 (S):
-  - Preço: ~R$42,19/mês
+  - Preço: ~R$51,57/mês (24 meses)
+  - Outros períodos: ~R$54,85/mês (12 meses) ou ~R$64,46/mês (1 mês)
   - CPU: 2 núcleos de vCPU
   - RAM: 4 GB
   - Armazenamento: 300 GB SSD
   - Rede: Porta de 200 Mbit/s
 
 Storage VPS 20 (M) ★ VALOR IMBATÍVEL:
-  - Preço: ~R$65,63/mês
+  - Preço: ~R$70,32/mês (24 meses)
+  - Outros períodos: ~R$74,77/mês (12 meses) ou ~R$87,90/mês (1 mês)
   - CPU: 3 núcleos de vCPU
   - RAM: 8 GB
   - Armazenamento: 400 GB SSD
   - Rede: Porta de 300 Mbit/s
 
 Storage VPS 30 (L):
-  - Preço: ~R$131,26/mês
+  - Preço: ~R$131,26/mês (24 meses)
+  - Outros períodos: ~R$139,47/mês (12 meses) ou ~R$164,08/mês (1 mês)
   - CPU: 6 núcleos de vCPU
   - RAM: 18 GB
   - Armazenamento: 1 TB SSD
   - Rede: Porta de 600 Mbit/s
 
 Storage VPS 40 (XL):
-  - Preço: ~R$234,40/mês
+  - Preço: ~R$234,40/mês (24 meses)
+  - Outros períodos: ~R$249,05/mês (12 meses) ou ~R$293,00/mês (1 mês)
   - CPU: 8 núcleos de vCPU
   - RAM: 30 GB
   - Armazenamento: 1,2 TB SSD
   - Rede: Porta de 800 Mbit/s
 
 Storage VPS 50 (XXL):
-  - Preço: ~R$346,91/mês
+  - Preço: ~R$346,91/mês (24 meses)
+  - Outros períodos: ~R$368,59/mês (12 meses) ou ~R$433,64/mês (1 mês)
   - CPU: 14 núcleos de vCPU
   - RAM: 50 GB
   - Armazenamento: 1,4 TB SSD
@@ -184,70 +225,74 @@ Storage VPS 50 (XXL):
 9. PLANOS VPS WINDOWS
 ================================================================================
 Licença Windows Server inclusa. Pronto para RDP e workloads corporativos.
-Todos incluem: Tráfego ilimitado, 100% de Cashback e Suporte 24/7.
-Período de 12 meses.
+Versões Windows Server disponíveis no configurador: 2025, 2022, 2019 e 2016; o preço da licença é o mesmo entre versões para um mesmo plano.
+Todos incluem: Tráfego ilimitado, Proteção DDoS, 100% de Cashback e Suporte 24/7.
+Períodos de 1, 12 e 24 meses; preço principal referente a 24 meses.
+Mesma infraestrutura SSD do Cloud VPS, com Windows pré-selecionado no configurador.
+Backup, upgrade de disco e localização seguem as opções do Cloud VPS e são cobrados à parte.
 
-Cloud VPS 10 Windows (S):
-  - Preço: ~R$130,09/mês
+Cloud VPS 4 Windows:
+  - Preço: ~R$145,33/mês (24 meses)
+  - Outros períodos: ~R$148,61/mês (12 meses) ou ~R$158,22/mês (1 mês)
   - CPU: 4 núcleos de vCPU
   - RAM: 8 GB
-  - Armazenamento: 75 GB NVMe ou 150 GB SSD
-  - Snapshots: 1
+  - Armazenamento: 100 GB SSD
   - Rede: Porta de 200 Mbit/s
+  - Snapshots: 1
 
-Cloud VPS 20 Windows (M):
-  - Preço: ~R$247,29/mês
+Cloud VPS 6 Windows:
+  - Preço: ~R$269,56/mês (24 meses)
+  - Outros períodos: ~R$274,01/mês (12 meses) ou ~R$287,14/mês (1 mês)
   - CPU: 6 núcleos de vCPU
   - RAM: 12 GB
-  - Armazenamento: 100 GB NVMe ou 200 GB SSD
-  - Snapshots: 2
+  - Armazenamento: 200 GB SSD
   - Rede: Porta de 300 Mbit/s
-  - Taxa de instalação: GRÁTIS
+  - Snapshots: 2
 
-Cloud VPS 30 Windows (L):
-  - Preço: ~R$435,98/mês
+Cloud VPS 8 Windows:
+  - Preço: ~R$459,42/mês (24 meses)
+  - Outros períodos: ~R$467,63/mês (12 meses) ou ~R$492,24/mês (1 mês)
   - CPU: 8 núcleos de vCPU
   - RAM: 24 GB
-  - Armazenamento: 200 GB NVMe ou 400 GB SSD
-  - Snapshots: 3
+  - Armazenamento: 300 GB SSD
   - Rede: Porta de 600 Mbit/s
-  - Taxa de instalação: GRÁTIS
+  - Snapshots: 3
 
-Cloud VPS 40 Windows (XL):
-  - Preço: ~R$808,68/mês
+Cloud VPS 12 Windows:
+  - Preço: ~R$855,56/mês (24 meses)
+  - Outros períodos: ~R$870,21/mês (12 meses) ou ~R$914,16/mês (1 mês)
   - CPU: 12 núcleos de vCPU
   - RAM: 48 GB
-  - Armazenamento: 250 GB NVMe ou 500 GB SSD
-  - Snapshots: 3
+  - Armazenamento: 400 GB SSD
   - Rede: Porta de 800 Mbit/s
-  - Taxa de instalação: GRÁTIS
+  - Snapshots: 3
 
-Cloud VPS 50 Windows (XXL):
-  - Preço: ~R$1.032,53/mês
+Cloud VPS 16 Windows:
+  - Preço: ~R$1.085,27/mês (24 meses)
+  - Outros períodos: ~R$1.106,95/mês (12 meses) ou ~R$1.172,00/mês (1 mês)
   - CPU: 16 núcleos de vCPU
   - RAM: 64 GB
-  - Armazenamento: 300 GB NVMe ou 600 GB SSD
-  - Snapshots: 3
+  - Armazenamento: 500 GB SSD
   - Rede: Porta de 1 Gbit/s
-  - Taxa de instalação: GRÁTIS
+  - Snapshots: 3
 
-Cloud VPS 60 Windows (XXXL):
-  - Preço: ~R$1.279,82/mês
+Cloud VPS 18 Windows:
+  - Preço: ~R$1.361,86/mês (24 meses)
+  - Outros períodos: ~R$1.390,58/mês (12 meses) ou ~R$1.476,72/mês (1 mês)
   - CPU: 18 núcleos de vCPU
   - RAM: 96 GB
-  - Armazenamento: 350 GB NVMe ou 700 GB SSD
-  - Snapshots: 3
+  - Armazenamento: 600 GB SSD
   - Rede: Porta de 1 Gbit/s
-  - Taxa de instalação: GRÁTIS
+  - Snapshots: 3
 
 ================================================================================
 10. DIFERENCIAIS TÉCNICOS
 ================================================================================
 - Proteção DDoS sempre ativa em todos os planos
 - Tráfego ilimitado (entrada ilimitada) até 1 Gbit/s
-- Armazenamento NVMe de nível empresarial
+- Armazenamento SSD em Cloud VPS, VPS Windows e Storage VPS; NVMe empresarial em Cloud VDS
 - Firewall grátis incluso (VDS)
-- Snapshots para backup rápido
+- Snapshots em Cloud VPS e VPS Windows (1 a 3 conforme o plano); backup automático opcional cobrado à parte
 - Disponibilidade global: 9 regiões, 11 localidades
 
 ================================================================================
@@ -259,4 +304,9 @@ Cloud VPS 60 Windows (XXXL):
 - Responda sempre em Português (Brasil).
 - Seja técnico, mas direto ao ponto.
 - Ao citar preços, sempre informe que são aproximados e podem variar.
-- Indique o VPS 20 como a melhor opção custo-benefício quando o cliente não souber qual escolher.
+- Indique o Cloud VPS 6 como a melhor opção custo-benefício quando o cliente não souber qual escolher.
+- Use os nomes atuais do catálogo; não confunda Cloud VPS 6 com Storage VPS 20 (M).
+- Ao informar um preço, cite o período contratado, o câmbio de referência e que localização, licença e adicionais podem alterar o total.
+- Não aplique o desconto do servidor sobre licenças e adicionais. Não trate o valor mensal equivalente como o total a pagar.
+- Não ofereça Brasil como localização de VPS nem NVMe como armazenamento base de Cloud VPS/Windows sem confirmação do suporte.
+- Não informe preço ou gratuidade de backup automático para VDS/Storage enquanto não houver confirmação.
