@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 interface Props {
   id: string;
   status: "active" | "cancelled" | "failed" | "paused";
-  paymentMethod: "credit_card" | "pix" | "boleto";
+  paymentMethod: "credit_card" | "pix" | "boleto" | "voucher";
   nextChargeDate: Date;
 }
 
@@ -28,7 +28,7 @@ export function RenewCell({
   const dueSoon =
     new Date(nextChargeDate).getTime() <= Date.now() + FIFTEEN_DAYS_MS;
   const canRenew =
-    (paymentMethod === "pix" || paymentMethod === "boleto") &&
+    (paymentMethod === "pix" || paymentMethod === "boleto" || paymentMethod === "voucher") &&
     (status === "paused" || (status === "active" && dueSoon));
 
   if (!canRenew) {

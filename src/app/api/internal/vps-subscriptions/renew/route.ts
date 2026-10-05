@@ -88,7 +88,7 @@ export async function POST(req: Request) {
 
       // PIX é pagamento único, sem cobrança recorrente: pausa no vencimento
       // para o cliente/admin renovar manualmente. Não cobra, não marca como falha.
-      if (sub.paymentMethod === "pix" || !cardToken) {
+      if (sub.paymentMethod !== "credit_card" || !cardToken) {
         await db
           .update(pgVpsSubscription)
           .set({

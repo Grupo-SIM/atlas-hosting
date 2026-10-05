@@ -19,7 +19,7 @@ export interface VpsPlanRow {
   planType: "vps" | "vds" | "storage-vps" | "vps-windows";
   intervalMonths: number;
   amountBrl: number;
-  paymentMethod: "credit_card" | "pix" | "boleto";
+  paymentMethod: "credit_card" | "pix" | "boleto" | "voucher";
   status: "active" | "cancelled" | "failed" | "paused";
   nextChargeDate: Date;
   pausedAt: Date | null;
@@ -174,10 +174,10 @@ export async function backfillVpsSubscriptionsAction(): Promise<{
 
   // IDs de faturas que já têm subscription vinculada
   const existingSubs = await db.query.pgVpsSubscription.findMany({
-    columns: { lastInvoiceId: true },
+    columns: { lastInvoiceId: true, initialInvoiceId: true },
   });
   const linkedInvoiceIds = existingSubs
-    .map(s => s.lastInvoiceId)
+    .flatMap(s => [s.lastInvoiceId, s.initialInvoiceId])
     .filter((id): id is string => id !== null);
 
   // Faturas VPS pagas sem subscription correspondente
@@ -200,6 +200,7 @@ export async function backfillVpsSubscriptionsAction(): Promise<{
 
   for (const inv of invoices) {
     const meta = inv.metadata as any;
+    if (meta?.isRenewal) { skipped++; continue; }
     const config = meta?.config || {};
     const intervalMonths = Number.parseInt(config.duration || "1", 10);
     const planType =
@@ -218,7 +219,8 @@ export async function backfillVpsSubscriptionsAction(): Promise<{
 
     try {
       await db.insert(pgVpsSubscription).values({
-        amountBrl: inv.amount,
+        amountBrl: inv.originalAmount ?? inv.amount,
+        initialInvoiceId: inv.id,
         config,
         failureCount: 0,
         intervalMonths,
@@ -229,8 +231,7 @@ export async function backfillVpsSubscriptionsAction(): Promise<{
         planType: planType as any,
         status: "active",
         userId: inv.userId,
-      });
-      created++;
+      }).onConflictDoNothing({ target: pgVpsSubscription.initialInvoiceId }).returning({ id: pgVpsSubscription.id }).then(rows => { if (rows.length) created++; else skipped++; });
     } catch {
       skipped++;
     }

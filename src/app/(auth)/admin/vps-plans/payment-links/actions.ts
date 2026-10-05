@@ -213,6 +213,11 @@ export async function updateVpsPaymentLinkCustomerAction(
       await tx
         .update(pgInvoice)
         .set({
+          // A voucher belongs to the original payer; transferring the invoice releases it.
+          amount: sql`coalesce(${pgInvoice.originalAmount}, ${pgInvoice.amount})`,
+          originalAmount: null,
+          voucherId: null,
+          voucherDiscount: 0,
           orgId: linkedOrgId,
           updatedAt: new Date(),
           userId: resolvedLinkedUserId,

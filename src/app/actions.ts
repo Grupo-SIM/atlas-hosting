@@ -1,8 +1,9 @@
 "use server";
 
+
 import type { LoginFormInputs } from "@/components/auth/LoginForm";
 import type { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
-import { getOptionalUser, getUser } from "@/lib/auth/index";
+import { getOptionalUser, getRealUser, getUser } from "@/lib/auth/index";
 import {
   authenticateUser,
   createGuestUser,
@@ -31,6 +32,7 @@ import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
 import { recordAttribution } from "@/lib/affiliate/attribution";
 import { triggerCommissionIfApplicable } from "@/lib/affiliate/commission";
 import { DEFAULT_POST_LOGIN_PATH } from "@/lib/consts/default-auth-path";
+import { completeProvisioningConfiguration } from "@/lib/contabo/link-configuration";
 import { provisionPaidVps } from "@/lib/contabo";
 import { db } from "@/lib/db";
 import {
@@ -71,6 +73,7 @@ import {
 import { validateNamecheapFundsForPayment } from "@/lib/server/domains/namecheap-balance-alert";
 import { renewDomainFromPaidInvoice } from "@/lib/server/domains/renewFromPaidInvoice";
 import { AppLogger } from "@/lib/server/logs";
+import { isFinalCardDecline } from "@/lib/server/payments/card-failure";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { getStorageVpsMonthlyEuro } from "@/lib/storage-vps-catalog";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
@@ -1304,7 +1307,7 @@ async function settleNonCardInvoice(
   invoice: Invoice,
   user: User,
   billing: PixCheckoutSnapshot | null | undefined,
-  method: "pix" | "boleto"
+  method: "pix" | "boleto" | "voucher"
 ): Promise<boolean> {
   const logPrefix = `[CHECKOUT-${method.toUpperCase()}]`;
 
@@ -1476,6 +1479,31 @@ async function resolveInvoicePayer(invoiceId: string) {
   return { invoice, user: ((invoice.user as any) ?? null) as any };
 }
 
+/** Confirma desconto integral internamente: nenhum gateway recebe valor zero. */
+export async function completeVoucherCheckout(invoiceId: string): Promise<ActionResponse> {
+  const user = await getRealUser();
+  const invoice = await db.query.pgInvoice.findFirst({ where: eq(pgInvoice.id, invoiceId) });
+  if (!invoice || invoice.userId !== user.id || invoice.orgId !== user.organization.id || !invoice.voucherId || invoice.amount !== 0) return { status: "error", message: "Fatura indisponível para confirmação interna." };
+  if (invoice.status === "paid") return { status: "success", message: "Fatura já confirmada." };
+  const nameParts = (user.name ?? "").split(/\s+/);
+  const snapshot = buildPixCheckoutSnapshot({
+    invoiceId,
+    firstName: nameParts[0] ?? "",
+    lastName: nameParts.slice(1).join(" ") || nameParts[0] || "",
+    document: user.billingDocument ?? user.organization.document ?? "",
+    phoneNumber: user.billingPhone ?? "",
+    address: { street: user.billingStreet ?? "", number: user.billingNumber ?? "", neighborhood: user.billingNeighborhood ?? "", city: user.billingCity ?? "", state: user.billingState ?? "", zipCode: user.billingZipCode ?? "" },
+  });
+  if (domainInvoiceNeedsRegistration(invoice) && !snapshot.ok) return { status: "error", message: "Complete os dados de cobrança no cadastro antes de confirmar o voucher integral." };
+  const funds = await validateNamecheapFundsForPayment(invoice);
+  if (!funds.ok) return { status: "error", message: funds.message };
+  const [claimed] = await db.update(pgInvoice).set({ status: "processing", updatedAt: new Date() }).where(and(eq(pgInvoice.id, invoiceId), eq(pgInvoice.status, "pending"), eq(pgInvoice.amount, 0), eq(pgInvoice.voucherId, invoice.voucherId), sql`${pgInvoice.dueDate} > now()`, sql`${pgInvoice.metadata}->>'simpayPaymentId' is null`, sql`${pgInvoice.metadata}->>'pixTransactionId' is null`, sql`${pgInvoice.metadata}->>'domTransactionId' is null`, sql`${pgInvoice.metadata}->>'paymentStartedAt' is null`)).returning();
+  if (!claimed) return { status: "error", message: "Fatura expirada ou confirmação em andamento." };
+  const settled = await settleNonCardInvoice(claimed, user, snapshot.ok ? snapshot.billing : undefined, "voucher");
+  revalidatePath(`/checkout/${invoiceId}`);
+  return { status: settled ? "success" : "error", message: settled ? "Pagamento confirmado com voucher integral." : "Não foi possível concluir a entrega; tente novamente." };
+}
+
 export async function initiateCheckoutPix(
   payload: InitiateCheckoutPixPayload
 ): Promise<
@@ -1504,6 +1532,13 @@ export async function initiateCheckoutPix(
     return { message: "Esta fatura já foi paga.", status: "error" };
   }
 
+  if (invoice.voucherId && (invoice.status !== "pending" || invoice.dueDate <= new Date())) {
+    return { status: "error", message: "Fatura com voucher expirada ou pagamento em andamento." };
+  }
+  if (invoice.amount <= 0) {
+    return { status: "error", message: "Use Confirmar voucher integral para concluir sem cobrança." };
+  }
+
   const namecheapFunds = await validateNamecheapFundsForPayment(invoice);
   if (!namecheapFunds.ok) {
     return { message: namecheapFunds.message, status: "error" };
@@ -1520,6 +1555,9 @@ export async function initiateCheckoutPix(
   }
 
   const docDigits = billing.document.replace(/\D/g, "");
+
+  const [claimed] = await db.update(pgInvoice).set({ status: "processing", metadata: { ...invoice.metadata, paymentStartedAt: new Date().toISOString() } as Invoice["metadata"], updatedAt: new Date() }).where(and(eq(pgInvoice.id, invoice.id), eq(pgInvoice.status, "pending"), eq(pgInvoice.amount, invoice.amount), sql`${pgInvoice.dueDate} > now()`, sql`${pgInvoice.metadata}->>'simpayPaymentId' is null`, sql`${pgInvoice.metadata}->>'pixTransactionId' is null`, sql`${pgInvoice.metadata}->>'domTransactionId' is null`, sql`${pgInvoice.metadata}->>'paymentStartedAt' is null`)).returning({ id: pgInvoice.id });
+  if (!claimed) return { status: "error", message: "Pagamento já iniciado, fatura expirada ou valor alterado. Atualize o checkout." };
 
   try {
     const pixRes = await simpayApi.createPixPayment({
@@ -1610,6 +1648,13 @@ export async function initiateCheckoutBoleto(
     return { message: "Esta fatura já foi paga.", status: "error" };
   }
 
+  if (invoice.voucherId && (invoice.status !== "pending" || invoice.dueDate <= new Date())) {
+    return { status: "error", message: "Fatura com voucher expirada ou pagamento em andamento." };
+  }
+  if (invoice.amount <= 0) {
+    return { status: "error", message: "Use Confirmar voucher integral para concluir sem cobrança." };
+  }
+
   const namecheapFunds = await validateNamecheapFundsForPayment(invoice);
   if (!namecheapFunds.ok) {
     return { message: namecheapFunds.message, status: "error" };
@@ -1629,6 +1674,9 @@ export async function initiateCheckoutBoleto(
 
   const docDigits = billing.document.replace(/\D/g, "");
   const zipDigits = billing.address.zipCode.replace(/\D/g, "");
+
+  const [claimed] = await db.update(pgInvoice).set({ status: "processing", metadata: { ...invoice.metadata, paymentStartedAt: new Date().toISOString() } as Invoice["metadata"], updatedAt: new Date() }).where(and(eq(pgInvoice.id, invoice.id), eq(pgInvoice.status, "pending"), eq(pgInvoice.amount, invoice.amount), sql`${pgInvoice.dueDate} > now()`, sql`${pgInvoice.metadata}->>'simpayPaymentId' is null`, sql`${pgInvoice.metadata}->>'pixTransactionId' is null`, sql`${pgInvoice.metadata}->>'domTransactionId' is null`, sql`${pgInvoice.metadata}->>'paymentStartedAt' is null`)).returning({ id: pgInvoice.id });
+  if (!claimed) return { status: "error", message: "Pagamento já iniciado, fatura expirada ou valor alterado. Atualize o checkout." };
 
   try {
     const tx = await domApi.createBoletoTransaction({
@@ -1963,7 +2011,7 @@ export async function syncCheckoutPixPayment(
  * operadora recusa o pagamento, sem vazar detalhes internos (URLs, envs, stack).
  */
 function friendlyCardPaymentError(err: unknown, fallback: string): string {
-  if (err instanceof SimpayPaymentDeclinedError) return err.message;
+  if (err instanceof SimpayPaymentDeclinedError && isFinalCardDecline(err)) return err.message;
   return fallback;
 }
 
@@ -1972,8 +2020,8 @@ async function revertInvoiceToPending(invoiceId: string): Promise<void> {
   try {
     await db
       .update(pgInvoice)
-      .set({ status: "pending" })
-      .where(eq(pgInvoice.id, invoiceId));
+      .set({ status: "pending", metadata: sql`(${pgInvoice.metadata}::jsonb - 'paymentStartedAt')::json` })
+      .where(and(eq(pgInvoice.id, invoiceId), eq(pgInvoice.status, "processing")));
   } catch (e) {
     console.error(
       `[CHECKOUT] Falha ao reverter fatura ${invoiceId} para pendente:`,
@@ -2063,7 +2111,7 @@ export async function isBoletoEligibleForVpsConfig(
 async function createVpsSubscriptionIfNeeded(
   invoice: Invoice,
   user: { id: string; organization: { id: string } },
-  opts: { paymentMethod: "credit_card" | "pix" | "boleto"; cardToken?: string }
+  opts: { paymentMethod: "credit_card" | "pix" | "boleto" | "voucher"; cardToken?: string }
 ): Promise<void> {
   if (invoice.type !== "vps") return;
   const meta = invoice.metadata as any;
@@ -2093,9 +2141,24 @@ async function createVpsSubscriptionIfNeeded(
     ? { ...config, cardToken: opts.cardToken }
     : config;
 
+  if (meta?.isRenewal && meta?.subscriptionId) {
+    await db.update(pgVpsSubscription).set({
+      config: finalConfig,
+      paymentMethod: opts.paymentMethod,
+      status: "active",
+      pausedAt: null,
+      failureCount: 0,
+      nextChargeDate,
+      lastInvoiceId: invoice.id,
+      updatedAt: new Date(),
+    }).where(and(eq(pgVpsSubscription.id, meta.subscriptionId), eq(pgVpsSubscription.userId, invoice.userId), sql`${pgVpsSubscription.lastInvoiceId} IS DISTINCT FROM ${invoice.id}`));
+    return;
+  }
+
   try {
     await db.insert(pgVpsSubscription).values({
-      amountBrl: invoice.amount,
+      amountBrl: invoice.originalAmount ?? invoice.amount,
+      initialInvoiceId: invoice.id,
       config: finalConfig,
       failureCount: 0,
       intervalMonths,
@@ -2107,7 +2170,7 @@ async function createVpsSubscriptionIfNeeded(
       planType: planType as any,
       status: "active",
       userId: user.id,
-    });
+    }).onConflictDoNothing({ target: pgVpsSubscription.initialInvoiceId });
     console.log(
       `[SUBSCRIPTION] ✓ Assinatura VPS criada para fatura ${invoice.id} (${opts.paymentMethod}) — próxima cobrança: ${nextChargeDate.toISOString()}`
     );
@@ -2130,7 +2193,7 @@ async function createVpsSubscriptionIfNeeded(
 async function handleVpsNonCardPaid(
   invoice: Invoice,
   user: { id: string; organization: { id: string } },
-  paymentMethod: "pix" | "boleto"
+  paymentMethod: "pix" | "boleto" | "voucher"
 ): Promise<void> {
   if (invoice.type !== "vps") return;
   const meta = invoice.metadata as any;
@@ -2140,7 +2203,7 @@ async function handleVpsNonCardPaid(
       const sub = await db.query.pgVpsSubscription.findFirst({
         where: eq(pgVpsSubscription.id, meta.subscriptionId),
       });
-      if (!sub) return;
+      if (!sub || sub.userId !== invoice.userId || sub.lastInvoiceId === invoice.id) return;
       const onSchedule =
         !!sub.nextChargeDate && sub.nextChargeDate.getTime() > Date.now();
       const nextChargeDate = onSchedule
@@ -2150,13 +2213,14 @@ async function handleVpsNonCardPaid(
         .update(pgVpsSubscription)
         .set({
           failureCount: 0,
+          paymentMethod,
           lastInvoiceId: invoice.id,
           nextChargeDate,
           pausedAt: null,
           status: "active",
           updatedAt: new Date(),
         })
-        .where(eq(pgVpsSubscription.id, sub.id));
+        .where(and(eq(pgVpsSubscription.id, sub.id), eq(pgVpsSubscription.userId, invoice.userId), sql`${pgVpsSubscription.lastInvoiceId} IS DISTINCT FROM ${invoice.id}`));
       console.log(
         `[SUBSCRIPTION] ✓ Renovação ${paymentMethod.toUpperCase()} da assinatura ${sub.id} — próxima cobrança: ${nextChargeDate.toISOString()}`
       );
@@ -2200,6 +2264,13 @@ export async function completeCheckout(
     };
   }
 
+  if (invoice.voucherId && (invoice.status !== "pending" || invoice.dueDate <= new Date())) {
+    return { status: "error", message: "Fatura com voucher expirada ou pagamento em andamento." };
+  }
+  if (invoice.amount <= 0) {
+    return { status: "error", message: "Use Confirmar voucher integral para concluir sem cobrança." };
+  }
+
   const namecheapFunds = await validateNamecheapFundsForPayment(invoice);
   if (!namecheapFunds.ok) {
     return { message: namecheapFunds.message, status: "error" };
@@ -2222,15 +2293,14 @@ export async function completeCheckout(
   // Update status to processing
   const updatedInvoice = await db
     .update(pgInvoice)
-    .set({ status: "processing" })
-    .where(eq(pgInvoice.id, invoiceId))
+    .set({ status: "processing", metadata: { ...invoice.metadata, paymentStartedAt: new Date().toISOString() } as Invoice["metadata"] })
+    .where(and(eq(pgInvoice.id, invoiceId), eq(pgInvoice.status, "pending"), eq(pgInvoice.amount, invoice.amount), sql`${pgInvoice.dueDate} > now()`, sql`${pgInvoice.metadata}->>'simpayPaymentId' is null`, sql`${pgInvoice.metadata}->>'pixTransactionId' is null`, sql`${pgInvoice.metadata}->>'domTransactionId' is null`, sql`${pgInvoice.metadata}->>'paymentStartedAt' is null`))
     .returning()
     .execute()
     .then(r => r[0]);
 
-  if (updatedInvoice) {
-    invoice = updatedInvoice as any;
-  }
+  if (!updatedInvoice) return { status: "error", message: "Pagamento já iniciado, fatura expirada ou valor alterado. Atualize o checkout." };
+  invoice = updatedInvoice as any;
 
   if (!invoice) throw new Error("Fatura não encontrada");
 
@@ -2284,6 +2354,7 @@ export async function completeCheckout(
       } else {
         console.error("[DOM] ✗ ERRO ao criar cliente:", error);
       }
+      await revertInvoiceToPending(invoiceId);
       return {
         message: "Erro ao criar cliente no sistema de domínios.",
         status: "error",
@@ -2322,6 +2393,7 @@ export async function completeCheckout(
 
       if (!user?.organization?.wallet) {
         console.error("[CHECKOUT] Carteira da organização não encontrada.");
+        await revertInvoiceToPending(invoiceId);
         return { message: "Carteira não encontrada", status: "error" };
       }
 
@@ -2355,7 +2427,8 @@ export async function completeCheckout(
       } else {
         console.error("[DOM] ✗ ERRO na tokenização do cartão:", err);
       }
-      throw err;
+      await revertInvoiceToPending(invoiceId);
+      return { status: "error", message: "Não foi possível cadastrar o cartão. Verifique os dados e tente novamente." };
     }
   } else {
     console.log(`[DOM] Usando cardToken já fornecido: ${cardToken}`);
@@ -2421,11 +2494,11 @@ export async function completeCheckout(
       });
     } catch (err) {
       console.error("[SIMPAY] ✗ ERRO ao registrar pagamento na Simpay:", err);
-      await revertInvoiceToPending(invoiceId);
+      if (isFinalCardDecline(err)) await revertInvoiceToPending(invoiceId);
       return {
         message: friendlyCardPaymentError(
           err,
-          "Não foi possível processar o pagamento do domínio. Nenhuma cobrança foi confirmada. Tente novamente em instantes."
+          "Não foi possível confirmar o resultado da cobrança. A fatura permanece bloqueada para conciliação; não tente pagar novamente antes de verificar o resultado."
         ),
         status: "error",
       };
@@ -2508,11 +2581,11 @@ export async function completeCheckout(
     });
   } catch (err) {
     console.error("[SIMPAY] ✗ ERRO ao registrar assinatura na Simpay:", err);
-    await revertInvoiceToPending(invoiceId);
+    if (isFinalCardDecline(err)) await revertInvoiceToPending(invoiceId);
     return {
       message: friendlyCardPaymentError(
         err,
-        "Não foi possível concluir o pagamento. Nenhuma cobrança foi confirmada. Verifique os dados do cartão e tente novamente."
+        "Não foi possível confirmar o resultado da cobrança. A fatura permanece bloqueada para conciliação; não tente pagar novamente antes de verificar o resultado."
       ),
       status: "error",
     };
@@ -2615,6 +2688,13 @@ export async function completeCheckoutWithSavedCard(
     };
   }
 
+  if (invoice.voucherId && (invoice.status !== "pending" || invoice.dueDate <= new Date())) {
+    return { status: "error", message: "Fatura com voucher expirada ou pagamento em andamento." };
+  }
+  if (invoice.amount <= 0) {
+    return { status: "error", message: "Use Confirmar voucher integral para concluir sem cobrança." };
+  }
+
   const namecheapFunds = await validateNamecheapFundsForPayment(invoice);
   if (!namecheapFunds.ok) {
     return { message: namecheapFunds.message, status: "error" };
@@ -2634,15 +2714,15 @@ export async function completeCheckoutWithSavedCard(
     .update(pgInvoice)
     .set({
       status: "processing",
+      metadata: { ...invoice.metadata, paymentStartedAt: new Date().toISOString() } as Invoice["metadata"],
     })
-    .where(eq(pgInvoice.id, invoiceId))
+    .where(and(eq(pgInvoice.id, invoiceId), eq(pgInvoice.status, "pending"), eq(pgInvoice.amount, invoice.amount), sql`${pgInvoice.dueDate} > now()`, sql`${pgInvoice.metadata}->>'simpayPaymentId' is null`, sql`${pgInvoice.metadata}->>'pixTransactionId' is null`, sql`${pgInvoice.metadata}->>'domTransactionId' is null`, sql`${pgInvoice.metadata}->>'paymentStartedAt' is null`))
     .returning()
     .execute()
     .then(r => r[0]);
 
-  if (updatedInvoice) {
-    invoice = updatedInvoice as any;
-  }
+  if (!updatedInvoice) return { status: "error", message: "Pagamento já iniciado, fatura expirada ou valor alterado. Atualize o checkout." };
+  invoice = updatedInvoice as any;
 
   if (!invoice) {
     console.error(`[CHECKOUT-SAVED] Fatura ${invoiceId} não encontrada.`);
@@ -2775,11 +2855,11 @@ export async function completeCheckoutWithSavedCard(
       });
     } catch (err) {
       console.error("[SIMPAY] ✗ ERRO ao registrar pagamento na Simpay:", err);
-      await revertInvoiceToPending(invoiceId);
+      if (isFinalCardDecline(err)) await revertInvoiceToPending(invoiceId);
       return {
         message: friendlyCardPaymentError(
           err,
-          "Não foi possível processar o pagamento do domínio. Nenhuma cobrança foi confirmada. Tente novamente em instantes."
+          "Não foi possível confirmar o resultado da cobrança. A fatura permanece bloqueada para conciliação; não tente pagar novamente antes de verificar o resultado."
         ),
         status: "error",
       };
@@ -2863,11 +2943,11 @@ export async function completeCheckoutWithSavedCard(
       "[SIMPAY] ✗ ERRO ao registrar assinatura na Simpay (cartão salvo):",
       err
     );
-    await revertInvoiceToPending(invoiceId);
+    if (isFinalCardDecline(err)) await revertInvoiceToPending(invoiceId);
     return {
       message: friendlyCardPaymentError(
         err,
-        "Não foi possível concluir o pagamento com o cartão salvo. Nenhuma cobrança foi confirmada. Tente outro cartão ou método de pagamento."
+        "Não foi possível confirmar o resultado da cobrança. A fatura permanece bloqueada para conciliação; não tente pagar novamente antes de verificar o resultado."
       ),
       status: "error",
     };
@@ -3609,11 +3689,15 @@ function validateVpsCheckoutConfig(
   return null;
 }
 
+type VpsInvoiceCreationResult =
+  | { status: "success"; invoiceId: string; redirectUrl: string; message?: never }
+  | { status: "error"; message: string; invoiceId?: never; redirectUrl?: never };
+
 export async function createVpsInvoice(data: {
   planId: string;
   config: any;
   guestInfo?: GuestInfo;
-}) {
+}): Promise<VpsInvoiceCreationResult> {
   const { planId, config, guestInfo } = data;
   const unsupportedVpsConfig = validateVpsCheckoutConfig(config ?? {});
   if (unsupportedVpsConfig) {
@@ -3645,6 +3729,31 @@ export async function createVpsInvoice(data: {
 
   if (!user) return { message: "Usuário não encontrado.", status: "error" };
 
+  if (paymentLinkId) {
+    const authoritativeLink = await db.query.pgVpsPaymentLink.findFirst({
+      where: eq(pgVpsPaymentLink.id, paymentLinkId),
+    });
+    if (!authoritativeLink || authoritativeLink.status === "cancelled") {
+      return { message: "Link indisponível.", status: "error" };
+    }
+    if (authoritativeLink.linkedUserId && authoritativeLink.linkedUserId !== user.id) {
+      return { message: "Link pertence a outro cliente.", status: "error" };
+    }
+    if (planId !== authoritativeLink.planId) {
+      return { message: "Plano diverge do link contratado.", status: "error" };
+    }
+    Object.assign(config, {
+      customLinkAmountBrl: authoritativeLink.amountBrl,
+      customLinkAllowPix: authoritativeLink.allowPix,
+      customLinkAllowBoleto: authoritativeLink.allowBoleto,
+      duration: String(authoritativeLink.intervalMonths),
+      qty: "1",
+      type: authoritativeLink.productType,
+    });
+  } else if (config.customLinkAmountBrl !== undefined) {
+    return { message: "Preço personalizado exige link válido.", status: "error" };
+  }
+
   // Admin-generated custom payment link (arbitrary period, admin-typed price) — bypasses
   // the whole catalog pricing engine below entirely, the admin already decided the amount.
   const customLinkAmountBrl =
@@ -3662,11 +3771,14 @@ export async function createVpsInvoice(data: {
     const customDuration = Number.parseInt(config.duration || "1", 10);
     const customQty = Number.parseInt(config.qty || "1", 10);
     const customFinalAmountBrl = customLinkAmountBrl * customQty;
+    const checkoutUser = user;
     try {
+      return await db.transaction(async (tx): Promise<VpsInvoiceCreationResult> => {
+        if (paymentLinkId) await tx.execute(sql`SELECT id FROM vps_payment_links WHERE id = ${paymentLinkId} FOR UPDATE`);
       // Abrir o link não pode gerar uma fatura nova a cada visita nem revalidar
       // um link já pago. A fatura pendente anterior é reaproveitada.
       if (paymentLinkId) {
-        const link = await db.query.pgVpsPaymentLink.findFirst({
+        const link = await tx.query.pgVpsPaymentLink.findFirst({
           where: eq(pgVpsPaymentLink.id, paymentLinkId),
           with: { resultingInvoice: true },
         });
@@ -3683,6 +3795,8 @@ export async function createVpsInvoice(data: {
           };
         }
 
+        if (link.linkedUserId && link.linkedUserId !== checkoutUser.id) return { message: "Link pertence a outro cliente.", status: "error" };
+        Object.assign(config, { customLinkAmountBrl: link.amountBrl, duration: String(link.intervalMonths), customLinkAllowPix: link.allowPix, customLinkAllowBoleto: link.allowBoleto, type: link.productType, qty: "1" });
         const priorInvoice = link.resultingInvoice as Invoice | null;
         if (priorInvoice?.status === "paid") {
           return {
@@ -3690,7 +3804,8 @@ export async function createVpsInvoice(data: {
             status: "error",
           };
         }
-        if (priorInvoice?.status === "pending") {
+        if (priorInvoice && ["pending", "processing"].includes(priorInvoice.status)) {
+          if (priorInvoice.userId !== checkoutUser.id) return { message: "Link já aberto por outro cliente.", status: "error" };
           return {
             invoiceId: priorInvoice.id,
             redirectUrl: `/checkout/${priorInvoice.id}?initialStep=payment`,
@@ -3699,8 +3814,11 @@ export async function createVpsInvoice(data: {
         }
       }
 
+      // Links have no server configurator; persist provisioning defaults and a strong password.
+      config.image = config.type === "vps-windows" ? "windows" : (config.image || "ubuntu");
+      Object.assign(config, completeProvisioningConfiguration(config, config.type));
       const description = `Hospedagem ${planId} (${customDuration} ${customDuration === 1 ? "mês" : "meses"}) — cobrança personalizada`;
-      const [newInvoice] = await db
+      const [newInvoice] = await tx
         .insert(pgInvoice)
         .values({
           amount: customFinalAmountBrl,
@@ -3713,11 +3831,11 @@ export async function createVpsInvoice(data: {
             guestPassword: guestPassword || undefined,
             vpsId: planId,
           },
-          orgId: user.organization.id,
+          orgId: checkoutUser.organization.id,
           reference: `VPS-LINK-${planId}-${Date.now()}`,
           status: "pending",
           type: "vps",
-          userId: user.id,
+          userId: checkoutUser.id,
         })
         .returning();
 
@@ -3726,7 +3844,7 @@ export async function createVpsInvoice(data: {
       // Só amarra a fatura ao link. O link vira "pago" quando a fatura for paga,
       // não agora — criar a cobrança é apenas abrir a tela de pagamento.
       if (paymentLinkId) {
-        await db
+        await tx
           .update(pgVpsPaymentLink)
           .set({ resultingInvoiceId: newInvoice.id })
           .where(eq(pgVpsPaymentLink.id, paymentLinkId));
@@ -3737,6 +3855,7 @@ export async function createVpsInvoice(data: {
         redirectUrl: `/checkout/${newInvoice.id}?initialStep=payment`,
         status: "success",
       };
+      });
     } catch (error) {
       console.error("Error creating custom-link VPS invoice:", error);
       return { message: "Erro ao processar o pedido.", status: "error" };
@@ -4391,7 +4510,7 @@ export async function createVpsRenewalInvoice(
     };
   }
 
-  if (sub.paymentMethod !== "pix" && sub.paymentMethod !== "boleto") {
+  if (sub.paymentMethod !== "pix" && sub.paymentMethod !== "boleto" && sub.paymentMethod !== "voucher") {
     return {
       message:
         "Renovação manual disponível apenas para assinaturas PIX ou boleto.",

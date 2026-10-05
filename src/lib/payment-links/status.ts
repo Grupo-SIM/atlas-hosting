@@ -19,7 +19,7 @@ export function paymentLinkEffectiveStatus(
 
 export function assertPaymentLinkEditable(invoice: { status: string; metadata?: unknown } | null | undefined) {
   const metadata = invoice?.metadata as Record<string, unknown> | undefined;
-  if (invoice && (invoice.status === "paid" || invoice.status === "processing" || metadata?.simpayPaymentId || metadata?.pixTransactionId || metadata?.pixSettlementStartedAt)) {
+  if (invoice && (invoice.status === "paid" || invoice.status === "processing" || metadata?.simpayPaymentId || metadata?.pixTransactionId || metadata?.pixSettlementStartedAt || metadata?.domTransactionId || metadata?.paymentStartedAt)) {
     throw new Error("Pagamento iniciado. Concilie a cobrança antes de alterar ou cancelar o link.");
   }
 }

@@ -14,6 +14,7 @@ import { sendNotificationEmail } from "@/lib/email/service";
 import { createContaboPasswordSecret } from "./createSecret";
 import { createVps } from "./createVps";
 import { getContaboInstanceIpv4 } from "./getVps";
+import { completeProvisioningConfiguration } from "./link-configuration";
 import { resolveContaboImageId } from "./image-id";
 import {
   buildContaboInstanceRequest,
@@ -198,10 +199,11 @@ export async function provisionPaidVps(invoiceId: string): Promise<void> {
   }
 
   try {
-    const password = config.password;
-    if (typeof password !== "string" || password.length === 0) {
-      throw new Error("Fatura VPS sem senha para criar o segredo Contabo.");
-    }
+    const resolvedConfig = completeProvisioningConfiguration(config, planType);
+    Object.assign(config, resolvedConfig);
+    // Covers older direct-link invoices. Save before calling supplier so retries reuse credentials.
+    await db.update(pgInvoice).set({ metadata: { ...invoice.metadata, config } as Invoice["metadata"] }).where(eq(pgInvoice.id, invoice.id));
+    const password = resolvedConfig.password;
 
     const secretId = await createContaboPasswordSecret(
       `atlas-${invoice.id}`.slice(0, 255),

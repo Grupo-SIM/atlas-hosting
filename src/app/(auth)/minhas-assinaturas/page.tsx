@@ -64,8 +64,9 @@ function StatusBadge({ status }: { status: string }) {
 function PaymentBadge({
   method,
 }: {
-  method: "credit_card" | "pix" | "boleto";
+  method: "credit_card" | "pix" | "boleto" | "voucher";
 }) {
+  if (method === "voucher") return <Badge variant="outline">Voucher integral</Badge>;
   if (method === "pix") {
     return (
       <Badge
@@ -113,7 +114,8 @@ export default async function MyVpsSubscriptionsPage() {
       ((s.config as any)?.cardToken ? "credit_card" : "pix")) as
       | "credit_card"
       | "pix"
-      | "boleto",
+      | "boleto"
+      | "voucher",
     planType: s.planType as keyof typeof PLAN_TYPE_LABEL,
     status: s.status as "active" | "cancelled" | "failed" | "paused",
   }));

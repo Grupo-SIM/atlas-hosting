@@ -21,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getRealUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgVoucher } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
@@ -33,6 +34,8 @@ export const metadata: Metadata = {
 
 async function createVoucher(formData: FormData) {
   "use server";
+  const user = await getRealUser();
+  if (!user.isAdmin) throw new Error("Acesso restrito a administradores.");
 
   const code = (formData.get("code") as string)
     ?.replace(/\s/g, "")
@@ -48,7 +51,10 @@ async function createVoucher(formData: FormData) {
   if (
     !code ||
     !discountType ||
-    Number.isNaN(discountValue) ||
+    !["fixed", "percentage"].includes(discountType) ||
+    !Number.isFinite(discountValue) ||
+    (discountType === "percentage" && discountValue > 100) ||
+    !Number.isSafeInteger(maxUses) || maxUses < 1 ||
     discountValue <= 0
   ) {
     return;
@@ -83,6 +89,8 @@ async function createVoucher(formData: FormData) {
 }
 
 export default async function AdminVouchersPage() {
+  const admin = await getRealUser();
+  if (!admin.isAdmin) redirect("/home");
   const vouchers = await db.query.pgVoucher.findMany({
     orderBy: [desc(pgVoucher.createdAt)],
     with: {

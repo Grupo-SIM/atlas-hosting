@@ -27,7 +27,7 @@ interface VpsPurchaseData {
   userNeighborhood?: string;
   userZipCode?: string;
   userFullName?: string;
-  paymentMethod?: "pix" | "credit_card";
+  paymentMethod?: "pix" | "credit_card" | "voucher";
   isNewAccount: boolean;
   guestPassword?: string;
   serverPassword?: string;
@@ -144,7 +144,7 @@ function buildAdminWhatsAppMessage(data: VpsPurchaseData): string {
       ? "💠 PIX"
       : data.paymentMethod === "credit_card"
         ? "💳 Cartão de Crédito"
-        : "N/A";
+        : data.paymentMethod === "voucher" ? "🎟 Voucher integral" : "N/A";
   const cycleLabel =
     durationMonths === 1
       ? "Mensal (cobrado todo mês)"
@@ -409,7 +409,7 @@ export async function triggerPurchaseNotifications(
           ? "💠 PIX"
           : billing?.paymentMethod === "credit_card"
             ? "💳 Cartão de Crédito"
-            : "N/A";
+            : billing?.paymentMethod === "voucher" ? "🎟 Voucher integral" : "N/A";
       const msg = [
         "🛒 *NOVA ASSINATURA*",
         "",

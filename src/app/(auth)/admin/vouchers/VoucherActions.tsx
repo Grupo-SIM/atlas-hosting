@@ -50,7 +50,7 @@ export default function VoucherActions({
         await deleteVoucher(voucherId);
         toast.success(`Voucher ${code} excluído com sucesso!`);
       } catch (error) {
-        toast.error("Erro ao excluir voucher.");
+        toast.error(error instanceof Error ? error.message : "Erro ao excluir voucher.");
       }
     });
   };

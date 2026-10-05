@@ -1,6 +1,8 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   doublePrecision,
+  integer,
   json,
   pgTable,
   text,
@@ -10,6 +12,7 @@ import {
 import type { DomainPageParams } from "@/app/(auth)/domain/types";
 import { pgOrganization } from "./organization";
 import { pgUser } from "./user";
+import { pgVoucher } from "./voucher";
 
 export const defaultDomainRegisterOptions: DomainRegisterInvoiceOptions = {
   whoisguard: "true",
@@ -18,6 +21,10 @@ export const defaultDomainRegisterOptions: DomainRegisterInvoiceOptions = {
 
 export const pgInvoice = pgTable("invoices", {
   amount: doublePrecision("amount").notNull(),
+  originalAmount: doublePrecision("original_amount"),
+  voucherConsumed: boolean("voucher_consumed").notNull().default(false),
+  voucherDiscount: integer("voucher_discount").notNull().default(0),
+  voucherId: uuid("voucher_id").references(() => pgVoucher.id),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   currency: text("currency").default("BRL").notNull(), // Added currency, defaulting to BRL
   description: text("description"), // Added description, optional
@@ -75,6 +82,8 @@ export type DomainRegisterInvoiceOptions = Pick<
   DomainPageParams,
   "whoisguard" | "years"
 > & {
+  /** Gateway initiation claim retained until a definitive result or reconciliation. */
+  paymentStartedAt?: string;
   simpayPaymentId?: string;
   pixTransactionId?: string;
   /** Momento em que a cobrança PIX foi criada; usado pela reconciliação após o polling inicial. */
@@ -116,6 +125,8 @@ export interface DomainRenewInvoiceOptions {
   type: "renew";
   domain: string;
   namecheapCostUsd?: number;
+  /** Gateway initiation claim retained until a definitive result or reconciliation. */
+  paymentStartedAt?: string;
   simpayPaymentId?: string;
   pixTransactionId?: string;
   pixCheckout?: PixCheckoutSnapshot;
@@ -127,6 +138,8 @@ export interface DomainRenewInvoiceOptions {
 export interface VpsInvoiceOptions {
   vpsId: string;
   config: any;
+  /** Gateway initiation claim retained until a definitive result or reconciliation. */
+  paymentStartedAt?: string;
   simpayPaymentId?: string;
   pixTransactionId?: string;
   pixCheckout?: PixCheckoutSnapshot;

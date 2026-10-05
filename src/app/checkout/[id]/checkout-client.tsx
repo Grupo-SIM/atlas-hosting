@@ -10,8 +10,11 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
-import { applyVoucher, consumeVoucher } from "@/app/(auth)/vouchers/actions";
+import { useDebouncedInput } from "@/hooks/use-debounced-input";
+import { completeVoucherCheckout } from "@/app/actions";
+import { applyVoucher, removeVoucher } from "@/app/(auth)/vouchers/actions";
 import { Footer } from "@/app/landing/components/Footer";
 import ModernCheckoutForm, {
   type CheckoutSidebarActionState,
@@ -62,7 +65,7 @@ export default function CheckoutClient({
   allowBoleto,
 }: CheckoutClientProps) {
   const router = useRouter();
-  const base = invoice.amount;
+  const base = invoice.originalAmount ?? invoice.amount;
   const checkoutFormRef = useRef<ModernCheckoutFormHandle>(null);
   const userHasDomId = !!user?.organization?.domId;
 
@@ -102,7 +105,8 @@ export default function CheckoutClient({
     setSelectedInstallments(1);
   }, []);
 
-  const [voucherCode, setVoucherCode] = useState("");
+  const [settledVoucherCode, setSettledVoucherCode] = useState("");
+  const [voucherCode, setVoucherCode] = useDebouncedInput(settledVoucherCode, setSettledVoucherCode);
   const [voucherLoading, setVoucherLoading] = useState(false);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [appliedVoucher, setAppliedVoucher] = useState<{
@@ -110,7 +114,7 @@ export default function CheckoutClient({
     discount: number;
     finalAmount: number;
     message: string;
-  } | null>(null);
+  } | null>(invoice.voucherId ? { voucherId: invoice.voucherId, discount: invoice.voucherDiscount / 100, finalAmount: invoice.amount, message: "Voucher reservado para esta fatura." } : null);
 
   const onSidebarActionStateChange = useCallback(
     (next: CheckoutSidebarActionState) => {
@@ -141,7 +145,8 @@ export default function CheckoutClient({
           message: result.message,
           voucherId: result.voucherId,
         });
-        await consumeVoucher(invoice.id, result.voucherId);
+        toast.success(result.message);
+        router.refresh();
       }
     } catch {
       setVoucherError("Erro ao aplicar voucher.");
@@ -150,10 +155,19 @@ export default function CheckoutClient({
     }
   };
 
-  const handleRemoveVoucher = () => {
-    setAppliedVoucher(null);
-    setVoucherCode("");
-    setVoucherError(null);
+  const handleRemoveVoucher = async () => {
+    setVoucherLoading(true);
+    try {
+      const result = await removeVoucher(invoice.id);
+      if (result.status === "error") { setVoucherError(result.message); return; }
+      setAppliedVoucher(null);
+      setVoucherCode("");
+      setSettledVoucherCode("");
+      setVoucherError(null);
+      toast.success(result.message);
+      router.refresh();
+    } catch { setVoucherError("Erro ao remover voucher."); }
+    finally { setVoucherLoading(false); }
   };
 
   const whoisGuard = (invoice.metadata as any)?.whoisguard === "on";
@@ -373,7 +387,8 @@ export default function CheckoutClient({
                             className="h-8 w-8 rounded-full p-0 hover:bg-white/5"
                             onClick={handleRemoveVoucher}
                             size="sm"
-                            variant="ghost"
+                            aria-label="Remover voucher"
+                            variant="outline"
                           >
                             <X className="h-4 w-4 text-emerald-400" />
                           </Button>
@@ -391,7 +406,8 @@ export default function CheckoutClient({
                                 void handleApplyVoucher();
                               }
                             }}
-                            placeholder="CÓDIGO"
+                            name="voucherCode"
+                            placeholder="Ex: ATLAS15"
                             value={voucherCode}
                           />
                           <Button
@@ -495,15 +511,23 @@ export default function CheckoutClient({
                   </CardContent>
                 </Card>
 
-                {!sidebarAction.hidden && (
+                {(!sidebarAction.hidden || displayBase === 0) && (
                   <GradientButton
                     className="w-full min-w-full cursor-pointer px-4 text-lg disabled:opacity-60"
-                    disabled={sidebarAction.disabled}
-                    onClick={() => {
-                      checkoutFormRef.current?.submit();
+                    disabled={displayBase === 0 ? voucherLoading : sidebarAction.disabled}
+                    onClick={async () => {
+                      if (displayBase === 0) {
+                        setVoucherLoading(true);
+                        try {
+                          const result = await completeVoucherCheckout(invoice.id);
+                          if (result.status === "error") setVoucherError(result.message);
+                          else { toast.success(result.message); router.refresh(); }
+                        } catch { setVoucherError("Erro ao confirmar voucher."); }
+                        finally { setVoucherLoading(false); }
+                      } else checkoutFormRef.current?.submit();
                     }}
                   >
-                    {sidebarAction.label}
+                    {displayBase === 0 ? "Confirmar voucher integral" : sidebarAction.label}
                   </GradientButton>
                 )}
               </div>

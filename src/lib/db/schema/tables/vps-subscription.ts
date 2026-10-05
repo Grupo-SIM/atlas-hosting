@@ -20,6 +20,7 @@ export const pgVpsSubscription = pgTable("vps_subscriptions", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   failureCount: integer("failure_count").notNull().default(0),
   id: uuid("id").primaryKey().defaultRandom(),
+  initialInvoiceId: uuid("initial_invoice_id").unique().references(() => pgInvoice.id),
   intervalMonths: integer("interval_months").notNull(),
   lastInvoiceId: uuid("last_invoice_id").references(() => pgInvoice.id),
   nextChargeDate: timestamp("next_charge_date", { mode: "date" }).notNull(),
@@ -28,7 +29,7 @@ export const pgVpsSubscription = pgTable("vps_subscriptions", {
     .references(() => pgOrganization.id),
   pausedAt: timestamp("paused_at", { mode: "date" }),
   paymentMethod: text("payment_method", {
-    enum: ["credit_card", "pix", "boleto"],
+    enum: ["credit_card", "pix", "boleto", "voucher"],
   })
     .notNull()
     .default("credit_card"),

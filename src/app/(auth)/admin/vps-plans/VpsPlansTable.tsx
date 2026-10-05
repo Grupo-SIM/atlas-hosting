@@ -46,8 +46,9 @@ function daysUntil(date: Date) {
 function PaymentBadge({
   method,
 }: {
-  method: "credit_card" | "pix" | "boleto";
+  method: "credit_card" | "pix" | "boleto" | "voucher";
 }) {
+  if (method === "voucher") return <Badge variant="outline">Voucher integral</Badge>;
   if (method === "pix") {
     return (
       <Badge
@@ -82,7 +83,7 @@ function PaymentBadge({
 function ChargeModeBadge({
   method,
 }: {
-  method: "credit_card" | "pix" | "boleto";
+  method: "credit_card" | "pix" | "boleto" | "voucher";
 }) {
   if (method === "credit_card") {
     return (
@@ -179,7 +180,7 @@ export function VpsPlansTable({ plans }: { plans: VpsPlanRow[] }) {
           ? "PIX"
           : plan.paymentMethod === "boleto"
             ? "Boleto"
-            : "Cartão",
+            : plan.paymentMethod === "voucher" ? "Voucher integral" : "Cartão",
         plan.paymentMethod === "credit_card" ? "Automático" : "Manual",
         format(plan.nextChargeDate, "dd/MM/yyyy", { locale: ptBR }),
         toBrl(plan.amountBrl),
