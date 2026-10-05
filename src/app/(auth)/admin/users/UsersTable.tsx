@@ -2,8 +2,7 @@
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ClipboardList, FileDown } from "lucide-react";
-import Link from "next/link";
+import { FileDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   DatePickerFilter,
@@ -29,9 +28,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useDebouncedInput } from "@/hooks/use-debounced-input";
 import { exportTableToPdf } from "@/lib/exportPdf";
 import type { UserRow } from "./actions";
 import { getUserClientStatus } from "./status";
+import { matchesSubscriptionFilter, subscriptionBillingLabel, type SubscriptionFilter } from "./subscription-status";
 import { UserActionsCell } from "./UserActionsCell";
 
 function toBrl(value: number) {
@@ -49,9 +50,11 @@ const STATUS_TIP =
 
 export function UsersTable({ users }: { users: UserRow[] }) {
   const [search, setSearch] = useState("");
+  const [localSearch, setLocalSearch] = useDebouncedInput(search, setSearch);
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive" | "suspended"
   >("all");
+  const [subscriptionFilter, setSubscriptionFilter] = useState<SubscriptionFilter>("all");
   const [dateFilter, setDateFilter] = useState<DateRangeValue>(null);
 
   const filtered = useMemo(() => {
@@ -69,9 +72,9 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         !dateFilter ||
         (createdDay >= dateFilter.from && createdDay <= dateFilter.to);
 
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesSearch && matchesStatus && matchesDate && matchesSubscriptionFilter(u, subscriptionFilter);
     });
-  }, [users, search, statusFilter, dateFilter]);
+  }, [users, search, statusFilter, dateFilter, subscriptionFilter]);
 
   const periodLabel = dateFilter
     ? dateFilter.from === dateFilter.to
@@ -100,11 +103,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         toBrl(u.balanceCents / 100),
         format(u.createdAt, "dd/MM/yyyy", { locale: ptBR }),
         STATUS_LABEL[getUserClientStatus(u)],
-        u.subscriptionPaymentMethod === null
-          ? "—"
-          : u.subscriptionPaymentMethod === "credit_card"
-            ? "Automático"
-            : `Manual (${u.subscriptionPaymentMethod === "pix" ? "PIX" : "Boleto"})`,
+        subscriptionBillingLabel(u),
       ]),
       subtitle: periodLabel
         ? `Filtrado por data de criação: ${periodLabel}`
@@ -118,9 +117,9 @@ export function UsersTable({ users }: { users: UserRow[] }) {
       <div className="flex flex-wrap items-center gap-3">
         <Input
           className="max-w-sm"
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => setLocalSearch(e.target.value)}
           placeholder="Buscar por nome ou email..."
-          value={search}
+          value={localSearch}
         />
         <Select
           onValueChange={v => setStatusFilter(v as typeof statusFilter)}
@@ -149,15 +148,18 @@ export function UsersTable({ users }: { users: UserRow[] }) {
           <FileDown className="h-4 w-4" />
           Exportar PDF
         </Button>
-        <Button asChild className="gap-2" variant="outline">
-          <Link href="/admin/assinaturas-manuais">
-            <ClipboardList className="h-4 w-4" />
-            Assinaturas Manuais
-          </Link>
-        </Button>
+        <Select value={subscriptionFilter} onValueChange={v => setSubscriptionFilter(v as SubscriptionFilter)}>
+          <SelectTrigger className="w-48"><SelectValue placeholder="Assinatura" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as assinaturas</SelectItem>
+            <SelectItem value="automatic">Automática</SelectItem>
+            <SelectItem value="manual">Manual</SelectItem>
+            <SelectItem value="none">Sem assinatura</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
+      <div className="overflow-x-auto scrollbar-themed rounded-md border">
         <TooltipProvider delayDuration={150}>
           <Table>
             <TableHeader>
@@ -182,7 +184,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                 <TableHead>
                   <HeaderTip
                     label="Cobrança"
-                    tip="Forma de cobrança da assinatura VPS/VDS: Automático (cartão) ou Manual (PIX/Boleto). “—” significa que o usuário não tem assinatura."
+                    tip="Todas as assinaturas vigentes. Automática exige recorrência ativa com cartão salvo; demais são manuais."
                   />
                 </TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -226,21 +228,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                     })()}
                   </TableCell>
                   <TableCell>
-                    {u.subscriptionPaymentMethod === null ? (
-                      <span className="text-muted-foreground text-xs">—</span>
-                    ) : u.subscriptionPaymentMethod === "credit_card" ? (
-                      <Badge className="border-emerald-500/30 bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/15">
-                        Automático
-                      </Badge>
-                    ) : (
-                      <Badge className="border-amber-500/30 bg-amber-500/15 text-amber-600 hover:bg-amber-500/15">
-                        Manual (
-                        {u.subscriptionPaymentMethod === "pix"
-                          ? "PIX"
-                          : "Boleto"}
-                        )
-                      </Badge>
-                    )}
+                    <Badge variant="outline">{subscriptionBillingLabel(u)}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <UserActionsCell

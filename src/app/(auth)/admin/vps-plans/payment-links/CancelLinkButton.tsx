@@ -18,13 +18,13 @@ export function CancelLinkButton({ id }: { id: string }) {
           try {
             await cancelVpsPaymentLinkAction(id);
             toast.success("Link cancelado.");
-          } catch {
-            toast.error("Erro ao cancelar o link.");
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Erro ao cancelar o link.");
           }
         });
       }}
       size="sm"
-      variant="ghost"
+      variant="outline"
     >
       <XCircle className="h-4 w-4" />
       Cancelar

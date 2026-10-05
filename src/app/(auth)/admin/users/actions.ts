@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { classifySubscriptions } from "./subscription-status";
 import {
   pgAffiliateCommission,
   pgOrganizationDomains,
@@ -24,8 +25,9 @@ export interface UserRow {
   hasActiveSubscription: boolean;
   /** Tem ao menos um domínio ativo registrado na organização dele. */
   hasActiveDomain: boolean;
-  /** Método de cobrança da assinatura mais recente (cartão = automático; pix/boleto = manual). Null se não assina. */
-  subscriptionPaymentMethod: "credit_card" | "pix" | "boleto" | null;
+  /** Todas as assinaturas vigentes; recorrência depende de cartão com token ativo. */
+  hasAutomaticSubscription: boolean;
+  hasManualSubscription: boolean;
 }
 
 export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
@@ -49,6 +51,9 @@ export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
         .select({
           createdAt: pgVpsSubscription.createdAt,
           paymentMethod: pgVpsSubscription.paymentMethod,
+          config: pgVpsSubscription.config,
+          status: pgVpsSubscription.status,
+          nextChargeDate: pgVpsSubscription.nextChargeDate,
           userId: pgVpsSubscription.userId,
         })
         .from(pgVpsSubscription)
@@ -65,11 +70,11 @@ export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
   const totalsMap = new Map(
     commissionTotals.map(r => [r.affiliateUserId, Number(r.total ?? 0)])
   );
-  // Ordenado por createdAt desc: a primeira ocorrência por usuário é a assinatura mais recente.
-  const paymentMethodMap = new Map<string, "credit_card" | "pix" | "boleto">();
-  for (const s of activeSubscriptions) {
-    if (!paymentMethodMap.has(s.userId))
-      paymentMethodMap.set(s.userId, s.paymentMethod);
+  const subscriptionsByUser = new Map<string, typeof activeSubscriptions>();
+  for (const subscription of activeSubscriptions) {
+    const current = subscriptionsByUser.get(subscription.userId) ?? [];
+    current.push(subscription);
+    subscriptionsByUser.set(subscription.userId, current);
   }
 
   const orgsWithDomain = new Set(activeDomains.map(d => d.organizationId));
@@ -80,11 +85,10 @@ export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
     email: u.email,
     hasActiveDomain:
       u.organizationId !== null && orgsWithDomain.has(u.organizationId),
-    hasActiveSubscription: paymentMethodMap.has(u.id),
+    ...classifySubscriptions(subscriptionsByUser.get(u.id) ?? []),
     id: u.id,
     isAdmin: u.isAdmin ?? false,
     name: u.name,
-    subscriptionPaymentMethod: paymentMethodMap.get(u.id) ?? null,
     suspendedAt: u.suspendedAt ?? null,
     totalEarnedBrl: totalsMap.get(u.id) ?? 0,
   }));

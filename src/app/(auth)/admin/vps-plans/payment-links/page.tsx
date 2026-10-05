@@ -57,8 +57,7 @@ export default async function VpsPaymentLinksPage() {
           Links de Pagamento
         </h2>
         <p className="text-muted-foreground">
-          Crie cobranças com período e valor customizados (ex: a cada 2 ou 3
-          meses) e gere um link pra o cliente pagar.
+          Selecione um plano e defina preço e período contratados. Criar link não cobra; checkout gera fatura. Pagamento confirmado cria assinatura e inicia provisionamento, acompanhados em Planos VPS e Usuários. Cartão com recorrência ativa renova automaticamente; PIX e boleto exigem pagamento manual.
         </p>
       </div>
 

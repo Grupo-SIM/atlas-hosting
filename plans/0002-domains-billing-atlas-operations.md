@@ -5,7 +5,7 @@ Plano aprovado pelo usuário. Execução exclusivamente local; sem banco externo
 ## Progresso
 
 - [x] Domínios: exclusão segura, confirmação e recuperação. Backend valida dono, vigência/recorrência Namecheap, cobranças e transferências; DNS removido antes do vínculo; histórico preservado por migration 0007 (não executada). Modal esclarece nameservers e limites de recuperação. 18 testes Bun passaram com dependências simuladas.
-- [ ] Usuários e VPS: filtros, remoção da tela manual, links e cobrança idempotente.
+- [x] Usuários e VPS: filtros consideram todas assinaturas vigentes e token real; tela manual removida com redirecionamento. Links usam preço/período do servidor e criação transacional; cancelamento expira fatura e bloqueia cobrança iniciada. Migration 0009 entrega chave idempotente por fatura inicial, sem executar. 5 testes Bun passaram; integração de pagamento compartilhada com etapa de vouchers.
 - [ ] Vouchers: autorização, reservas, centavos, persistência e confirmação.
 - [x] Fornecedores: consulta administrativa e alertas individuais.
 - [ ] Atlas IA e documentação operacional/produto.
