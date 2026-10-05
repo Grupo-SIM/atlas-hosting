@@ -32,7 +32,7 @@ import {
   type DomainVerificationRecord,
 } from "@/lib/server/domains/verification";
 import { cn } from "@/lib/utils";
-import { DeleteDomainButton } from "./components";
+import { DeleteDomainButton, DomainList, DomainTableRow } from "./components";
 import { DomainActionsMenu } from "./components/DomainActionsMenu";
 import { DomainConnectionRecovery } from "./components/DomainConnectionRecovery";
 import { DomainSyncRetryButton } from "./components/DomainSyncRetryButton";
@@ -516,6 +516,7 @@ export default async function MyDomainsPage() {
             {!hasDomains ? (
               <NoDomains />
             ) : (
+              <DomainList domainIds={user.organization.domains.map(domain => domain.id)}>
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
@@ -543,7 +544,8 @@ export default async function MyDomainsPage() {
                       const verification = verificationRecords[domain.id];
 
                       return (
-                      <TableRow
+                      <DomainTableRow
+                        domainId={domain.id}
                         className="transition-colors hover:bg-muted/50"
                         key={domain.id}
                       >
@@ -596,13 +598,14 @@ export default async function MyDomainsPage() {
                           )}
                           </div>
                         </TableCell>
-                      </TableRow>
+                      </DomainTableRow>
                       );
                     }
 
                     const domain = item.domain;
                     return (
-                    <TableRow
+                    <DomainTableRow
+                      domainId={domain.id}
                       className="transition-colors hover:bg-muted/50"
                       key={domain.id}
                     >
@@ -708,11 +711,12 @@ export default async function MyDomainsPage() {
                         )}
                         </div>
                       </TableCell>
-                    </TableRow>
+                    </DomainTableRow>
                   );
                   })}
                 </TableBody>
               </Table>
+              </DomainList>
             )}
           </div>
         </CardContent>

@@ -36,7 +36,8 @@ export async function deleteDomain(domainId: string) {
     return { success: false, message: error instanceof Error ? error.message : "Não foi possível apagar o domínio." };
   }
 
-  revalidatePath("/domains");
+  // The client refreshes /domains after removing the row locally. Revalidating
+  // here would delay the action response with registrar lookups for other domains.
   revalidatePath("/email");
   return { success: true, message: "Domínio removido do painel Atlas." };
 }

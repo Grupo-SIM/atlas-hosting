@@ -2,15 +2,17 @@
 
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState } from "react";
 import { ConfirmActionButton } from "@/components/ui/ConfirmActionButton";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDomain } from "../delete-actions";
+import { useDomainList } from "./domain-list-context";
 
 export function DeleteDomainButton({ domainId, domainName }: { domainId: string; domainName: string }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
+  const { removeDomain } = useDomainList();
 
   return (
     <ConfirmActionButton
@@ -18,15 +20,21 @@ export function DeleteDomainButton({ domainId, domainName }: { domainId: string;
       confirmation={`Apagar ${domainName} do painel Atlas? Clique novamente em até 3 segundos. Registro, DNS e hospedagem permanecem no provedor.`}
       disabled={pending}
       label={`Apagar domínio ${domainName}`}
-      onConfirm={() => startTransition(async () => {
+      onConfirm={async () => {
+        setPending(true);
         try {
           const result = await deleteDomain(domainId);
           toast({ title: result.success ? "Domínio apagado" : "Não foi possível apagar", description: result.message, variant: result.success ? "default" : "destructive" });
-          if (result.success) router.refresh();
+          if (result.success) {
+            removeDomain(domainId);
+            router.refresh();
+          }
         } catch {
           toast({ title: "Não foi possível apagar", description: "Tente novamente em instantes.", variant: "destructive" });
+        } finally {
+          setPending(false);
         }
-      })}
+      }}
       size="icon"
       variant="outline"
     >
