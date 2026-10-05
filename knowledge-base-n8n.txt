@@ -1,5 +1,5 @@
 BASE DE CONHECIMENTO COMPLETA - ATLAS HOSTING
-Atualizada em: 2026-10-04
+Atualizada em: 2026-10-05
 
 IMPORTANTE SOBRE PREÇOS:
 Os valores apresentados são aproximados e podem variar. O valor exato será exibido no momento da contratação.
@@ -46,7 +46,7 @@ A Atlas Hosting é uma provedora de infraestrutura em nuvem de alta performance,
 ================================================================================
 - O cliente acompanha domínios, faturas e status da VM pelo painel.
 - Por segurança, o cliente NÃO consegue reiniciar, desligar ou reinstalar a VM pelo painel.
-- Qualquer ação técnica deve ser solicitada ao suporte 24/7 via WhatsApp: +55 68 9207-8221.
+- Alterações DNS, verificação de posse e procedimentos descritos nesta base são feitos pelo painel. Reinício, desligamento e reinstalação de VM continuam sem procedimento seguro no painel; nesses casos, solicitar operação ao suporte.
 
 ================================================================================
 6. PLANOS CLOUD VPS (LINUX)
@@ -298,8 +298,8 @@ Cloud VPS 18 Windows:
 ================================================================================
 11. DIRETRIZES DO CHATBOT
 ================================================================================
-- Se o usuário perguntar algo que não esteja neste texto, responda:
-  "Infelizmente não tenho essa informação específica aqui, mas nosso suporte humano pode te ajudar agora mesmo no WhatsApp: +55 68 9207-8221"
+- Para procedimentos descritos abaixo, explicar os passos pelo painel, efeitos e limites; não encaminhar automaticamente ao suporte.
+- Quando faltar informação, identificar exatamente o limite; não inventar comandos, prazos, saldos ou garantias. Encaminhar ao suporte somente o caso sem procedimento seguro documentado (por exemplo, recuperação no registrador ou reconciliação de pagamento iniciado).
 
 - Responda sempre em Português (Brasil).
 - Seja técnico, mas direto ao ponto.
@@ -310,3 +310,87 @@ Cloud VPS 18 Windows:
 - Não aplique o desconto do servidor sobre licenças e adicionais. Não trate o valor mensal equivalente como o total a pagar.
 - Não ofereça Brasil como localização de VPS nem NVMe como armazenamento base de Cloud VPS/Windows sem confirmação do suporte.
 - Não informe preço ou gratuidade de backup automático para VDS/Storage enquanto não houver confirmação.
+
+
+================================================================================
+12. DOMÍNIOS E DNS: PROCEDIMENTOS PELO PAINEL
+================================================================================
+DNS gerenciado Atlas usa Cloudflare; registrador é quem mantém o registro do domínio. DNS externo permanece no provedor atual, e o Atlas mostra somente registros públicos detectáveis. DNS público não permite listar toda a zona, especialmente subdomínios desconhecidos. Hospedagem, registro do domínio e DNS são serviços distintos.
+
+Adicionar domínio externo e verificar posse:
+1. Acessar Domínios e adicionar o nome completo, sem URL/caminho.
+2. Copiar o TXT de verificação exibido pelo painel para o DNS que está autoritativo hoje.
+3. Manter o TXT publicado e usar a verificação pelo painel. A criação/alteração de um registro pode levar tempo para aparecer nos resolvedores; não prometer prazo fixo.
+4. Verificação de posse não muda os nameservers nem transfere o registro do domínio ao Atlas.
+
+Migrar para DNS gerenciado Atlas:
+1. Em Domínios, abrir os detalhes do domínio e iniciar a configuração/migração disponível.
+2. Antes de alterar nameservers, copiar/exportar a zona atual no provedor de origem. Manter essa cópia fora do Atlas para recuperação.
+3. Revisar todos os registros encontrados pelo scan. Scan automático não garante inventário completo. Complementar manualmente ou importar arquivo BIND (até 256 KiB).
+4. Conferir A/AAAA de site e subdomínios, CNAME, MX do e-mail, TXT de SPF/DKIM/DMARC e verificações, SRV/CAA quando utilizados. Preservar prioridades MX, valores completos e endereços reais. Não apagar registros desconhecidos sem entender sua finalidade. Evitar proxy em registros destinados a e-mail; seguir os valores exigidos pelo provedor.
+5. Se DNSSEC estiver ativo no registrador, remover/desativar o DS antigo antes da troca, conforme procedimento do registrador. DS antigo apontando para chaves de outra zona pode causar SERVFAIL. O Atlas não publica DS automaticamente; não prometer ativação DNSSEC pelo painel.
+6. Após concluir revisão, seguir os nameservers exibidos pelo Atlas. Para domínio externo, entrar no registrador original, remover nameservers antigos e cadastrar somente os atribuídos à zona. Não adivinhar endereços nem reutilizar nameservers de outro domínio. Para domínio registrado pelo Atlas na Namecheap, a delegação é feita pelo Atlas após revisão, quando o fluxo oferece essa ação.
+7. Voltar aos detalhes e verificar a ativação. Enquanto aparecer aguardando nameservers/ativação, conferir delegação e DNSSEC. Propagação depende do registrador, TTL e cache dos resolvedores; não garantir ativação imediata ou prazo universal.
+8. Validar site e e-mail depois da troca. Manter zona antiga durante transição até confirmar que os serviços funcionam.
+
+Editar registros:
+Abrir detalhes do domínio gerenciado e a área de registros DNS. Adicionar/editar cada registro com tipo, nome e valor exigidos pelo serviço; excluir somente o registro desejado. Salvar e conferir resultado. Cada alteração afeta a resolução DNS após cache/TTL. Não alterar MX/TXT de e-mail por tentativa: consultar configuração do provedor e comparar com cópia da zona anterior.
+
+Domínio conectado ainda sem site ou e-mail:
+Status conectado comprova delegação da zona; não comprova configuração do site, entrega de e-mail, validade do SSL ou provisionamento VPS. Conferir registros e serviço de destino. Trocar nameservers não copia conteúdo de hospedagem nem caixas de e-mail.
+
+Excluir domínio:
+1. Em Domínios, usar Excluir e ler o modal com consequências. A ação pertence ao dono real da organização; não pode ser executada por acesso como cliente/impersonação.
+2. Para domínio externo com DNS gerenciado, preparar registros no novo DNS e trocar nameservers no registrador original ANTES de excluir. Sem isso, site e e-mail podem parar de resolver. A confirmação permite prosseguir sem comprovação da troca; responsabilidade de revisar permanece com quem confirma.
+3. Confirmar exclusão. Atlas apaga primeiro a zona Cloudflare e depois o vínculo e permissões locais. Zona já ausente conta como sucesso. Se a Cloudflare falhar, vínculo permanece e usuário pode tentar novamente. Se apenas a limpeza local falhar após apagar DNS, tentar novamente; zona não será restaurada automaticamente.
+4. Exclusão não apaga hospedagem, VPS ou registro no fornecedor; não cancela registro do domínio. Histórico financeiro e transferências permanece preservado.
+
+Bloqueios de exclusão:
+Domínio comprado não pode ser excluído enquanto a vigência paga estiver válida, houver recorrência/renovação automática ativa ou renovação pendente. Renovação manual também pode ter vigência paga válida. Transferência de conta em andamento bloqueia exclusão. Resolver o motivo mostrado antes de repetir; não oferecer exclusão como modo de cancelar registro ou interromper cobrança.
+
+Recuperar depois da exclusão:
+Domínio externo precisa ser adicionado novamente, ter posse verificada e DNS recriado. Não há restauração automática dos registros apagados. Usar a cópia da zona anterior e só trocar nameservers depois de revisar os novos registros. Nameservers de uma nova zona podem ser diferentes.
+Domínio comprado expirado depende exclusivamente das opções de renovação/restauração ainda suportadas pelo registrador e da situação do registro. Não garantir disponibilidade para nova compra, prazo, preço de restauração ou retorno dos registros DNS. Quando o painel não oferece recuperação segura, identificar que a consulta deve ser feita ao registrador pela operação Atlas.
+
+Renovação:
+Conferir validade e forma de renovação em Domínios e faturas no painel. Cartão cadastrado, sozinho, não comprova recorrência ativa. PIX/boleto precisam pagamento manual. Pagamento pendente não renova o domínio; aguardar confirmação e processamento no registrador. Falha de registro/renovação após pagamento exige conciliação operacional; não recomendar pagar novamente sem revisar a fatura existente.
+
+Transferência entre contas Atlas:
+Solicitar pela opção de transferência do domínio; as duas contas devem aceitar conforme status exibido. Não é transferência de registrador. Solicitação em andamento impede exclusão. Após conclusão, usar a conta destinatária para gerenciar o domínio. Não prometer que convite pendente altera posse imediatamente.
+
+================================================================================
+13. LINKS VPS, FATURAS E PROVISIONAMENTO
+================================================================================
+Operação administrativa:
+1. Administração > Planos VPS > Links de pagamento. Escolher plano obrigatório, cliente (se aplicável), preço total contratado e período personalizado permitido no formulário. Revisar permissões de PIX/boleto e criar o link.
+2. Criar link não cobra cliente, não cria assinatura e não provisiona servidor.
+3. Abrir o link conduz ao checkout; dados/login identificam cliente quando o link não foi previamente vinculado. Checkout gera ou reutiliza a fatura do link; preço e período vêm do contrato persistido no servidor.
+4. Compartilhar link por canal autorizado fora deste procedimento. Nunca afirmar que link criado significa pagamento confirmado.
+5. Pagamento confirmado cria assinatura e inicia provisionamento. Assinatura aparece em Planos VPS e Usuários. Notificação repetida do mesmo pagamento não deve criar segunda assinatura ou cobrar novamente.
+6. Cartão renova automaticamente somente com recorrência realmente ativa. PIX, boleto e cartão sem recorrência ativa exigem renovação manual. Renovação mantém preço e período contratados; desconto de voucher da fatura inicial não se repete.
+
+Cliente:
+Abrir link, conferir plano, período e valor da fatura; escolher pagamento permitido e concluir checkout. Consultar Faturas para verificar situação. Fatura pendente/processando não comprova contratação concluída. Após confirmação, consultar Minhas Assinaturas e Hospedagem; provisionamento pode continuar em processamento até fornecedor atribuir servidor/IP. Não prometer disponibilização instantânea nem prazo fixo. Não contratar novamente para tentar acelerar pedido em processamento.
+
+Cancelar link:
+Em Links de pagamento, cancelar link ainda disponível invalida a fatura não paga. Se pagamento já foi iniciado (PIX/boleto emitido ou operação no gateway), cancelar exige conciliação prévia: não presumir que ainda pendente significa que cliente não pode pagar. Não apagar evidência de cobrança nem prometer estorno automático. Link pago já foi utilizado; cancelá-lo não é cancelamento da assinatura.
+
+Usuários:
+Administração > Usuários oferece filtros Todos, Automática, Manual e Sem assinatura. São consideradas todas as assinaturas vigentes. Usuário com assinaturas dos dois tipos aparece em ambos os filtros. Cartão sem recorrência ativa classifica como manual. Registros externos legados permanecem preservados; a antiga página de Assinaturas Manuais redireciona para Usuários, sem criar novas cobranças ou converter pagamentos externos.
+
+================================================================================
+14. VOUCHERS E VALOR DO CHECKOUT
+================================================================================
+1. Abrir fatura pendente no checkout e informar voucher na área de desconto. Servidor valida prazo, disponibilidade, titularidade/vínculo e limite de usos. Voucher inválido, expirado, esgotado ou de outra conta deve ser recusado.
+2. Aplicação reserva um uso para ESSA fatura e persiste valor original, vínculo do voucher e desconto. Não consome definitivamente antes do pagamento. Não acumula dois vouchers; remover atual antes de aplicar outro.
+3. Valor exibido é o persistido pelo servidor; recarregar a página mantém desconto. Desconto é calculado em centavos e nunca torna total negativo.
+4. Antes de iniciar pagamento, remover voucher restaura valor original e libera reserva. Fatura expirada sem pagamento iniciado libera reserva. PIX/boleto já emitido ou pagamento iniciado exige conciliação antes de alterar voucher; não recomendar remover desconto de cobrança em andamento.
+5. Confirmação de pagamento consome uso uma única vez; repetição de confirmação não consome novamente. Pagamento abandonado/expirado que não iniciou operação libera a reserva; operação já iniciada precisa conciliação para evitar reutilização de desconto antes de saber resultado.
+6. Desconto integral usa confirmação interna pelo checkout; para domínio, os dados de cobrança completos precisam estar salvos no cadastro antes de confirmar. Não envia cobrança zero ao gateway. Confirmar a fatura continua necessário para ativar serviço/provisionamento. Reserva de voucher, isoladamente, não entrega serviço.
+7. Voucher vale apenas para fatura aplicada. Renovações preservam preço contratado sem repetir desconto inicial. Não prometer desconto em todas as parcelas/períodos futuros.
+
+================================================================================
+15. FORNECEDORES E AVISOS OPERACIONAIS
+================================================================================
+Administração > Fornecedores permite consultar saldo disponível, saldo total, moeda e fundos necessários para renovação automática da Namecheap. Contabo mostra configuração e inventário VPS; API integrada não oferece consulta financeira. Falha significa indisponibilidade, nunca saldo zero. Credenciais ficam exclusivamente no servidor.
+Avisos operacionais usam EMERGENCY_ALERT_EMAILS separado por vírgulas, com DOMAIN_EMAIL como fallback. Cada envio é individual. Limite de saldo baixo permanece USD 40; avisos surgem nas operações existentes, compras bloqueadas e falhas. Não há monitoramento periódico novo ou recarga automática. Esses dados administrativos não devem ser revelados a clientes sem autorização.
