@@ -30,12 +30,10 @@ const generateContaboApi = async () => {
 
 export const getContaboApi = async () => {
   if (!apiPromise) {
-    try {
-      apiPromise = generateContaboApi();
-    } catch (e) {
+    apiPromise = generateContaboApi().catch(error => {
       apiPromise = null;
-      throw e;
-    }
+      throw error;
+    });
   }
 
   return (await apiPromise).extend(config => ({

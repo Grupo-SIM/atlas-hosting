@@ -1,4 +1,4 @@
-import { Server, Ticket, Users } from "lucide-react";
+import { Globe, Server, Ticket, Users } from "lucide-react";
 import { MotionDiv } from "./MotionDiv";
 import {
   containerVariants,
@@ -35,6 +35,15 @@ export function AdminQuickActions() {
             pattern="grid"
             subtitle="Gerencie os servidores VPS da plataforma"
             title="Administração de VPS"
+          />
+
+          <QuickActionCard
+            gradient="from-zinc-500 to-zinc-700"
+            href="/admin/suppliers"
+            Icon={Globe}
+            pattern="grid"
+            subtitle="Saldo Namecheap e inventário Contabo"
+            title="Fornecedores"
           />
 
           <QuickActionCard

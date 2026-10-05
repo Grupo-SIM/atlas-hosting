@@ -3,6 +3,7 @@ import type {
   DomainRenewInvoiceOptions,
   Invoice,
 } from "@/lib/db/schema";
+import { deliverEmergencyAlert, getEmergencyRecipients } from "@/lib/server/emergency-alerts";
 import { sendNotificationEmail } from "@/lib/email/service";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 import type { UsersGetBalancesCleanedResponse } from "@/lib/server/apis/namecheap/types";
@@ -53,24 +54,24 @@ async function notifyLowNamecheapBalance(
     return { ...result, notified: false, reason: "sufficient_balance" };
   }
 
-  const recipient = process.env.DOMAIN_EMAIL?.trim();
-  if (!recipient) {
+  const recipients = getEmergencyRecipients();
+  if (!recipients.length) {
     console.error(
-      `[NAMECHEAP][BALANCE] Saldo baixo (${balances.Currency} ${balances.AvailableBalance.toFixed(2)}), mas DOMAIN_EMAIL não está configurado.`
+      `[NAMECHEAP][BALANCE] Saldo baixo (${balances.Currency} ${balances.AvailableBalance.toFixed(2)}), mas EMERGENCY_ALERT_EMAILS/DOMAIN_EMAIL não estão configurados.`
     );
     return { ...result, notified: false, reason: "recipient_not_configured" };
   }
 
-  await sendNotificationEmail(
+  const notified = await deliverEmergencyAlert(recipient => sendNotificationEmail(
     recipient,
     "Admin",
     "Atlas Hosting",
     "Saldo baixo na Namecheap",
     `O saldo disponível na conta Namecheap está em <strong>${balances.Currency} ${balances.AvailableBalance.toFixed(2)}</strong>, abaixo do limite de <strong>USD ${NAMECHEAP_LOW_BALANCE_USD.toFixed(2)}</strong>. Adicione fundos para evitar falhas no registro e na renovação de domínios.`,
     "danger"
-  );
+  ), recipients);
 
-  return { ...result, notified: true };
+  return { ...result, notified };
 }
 
 export async function notifyLowNamecheapBalanceAfterAction(): Promise<NamecheapBalanceAlertResult> {
@@ -96,22 +97,22 @@ export async function notifyNamecheapActionFailure(
   action: string,
   error: string
 ): Promise<void> {
-  const recipient = process.env.DOMAIN_EMAIL?.trim();
-  if (!recipient) {
+  const recipients = getEmergencyRecipients();
+  if (!recipients.length) {
     console.error(
-      `[NAMECHEAP][ACTION] ${action} falhou, mas DOMAIN_EMAIL não está configurado.`
+      `[NAMECHEAP][ACTION] ${action} falhou, mas EMERGENCY_ALERT_EMAILS/DOMAIN_EMAIL não estão configurados.`
     );
     return;
   }
 
-  await sendNotificationEmail(
+  await deliverEmergencyAlert(recipient => sendNotificationEmail(
     recipient,
     "Admin",
     "Atlas Hosting",
     `Falha na Namecheap: ${action}`,
     `A ação <strong>${action}</strong> falhou na Namecheap.<br><br>Detalhe: <strong>${error}</strong>.`,
     "danger"
-  );
+  ), recipients);
 }
 
 export async function notifyNamecheapActionFailureSafely(
@@ -132,22 +133,22 @@ async function notifyInsufficientNamecheapBalance(
   availableBalance: number,
   requiredBalance: number
 ): Promise<void> {
-  const recipient = process.env.DOMAIN_EMAIL?.trim();
-  if (!recipient) {
+  const recipients = getEmergencyRecipients();
+  if (!recipients.length) {
     console.error(
-      "[NAMECHEAP][BALANCE] Compra bloqueada por saldo insuficiente, mas DOMAIN_EMAIL não está configurado."
+      "[NAMECHEAP][BALANCE] Compra bloqueada por saldo insuficiente, mas EMERGENCY_ALERT_EMAILS/DOMAIN_EMAIL não estão configurados."
     );
     return;
   }
 
-  await sendNotificationEmail(
+  await deliverEmergencyAlert(recipient => sendNotificationEmail(
     recipient,
     "Admin",
     "Atlas Hosting",
     "Compra de domínio bloqueada por saldo insuficiente",
     `Uma tentativa de compra foi bloqueada antes da cobrança do cliente. Saldo disponível: <strong>USD ${availableBalance.toFixed(2)}</strong>. Custo necessário na Namecheap: <strong>USD ${requiredBalance.toFixed(2)}</strong>. Adicione fundos à conta para liberar novas compras.`,
     "danger"
-  );
+  ), recipients);
 }
 
 export async function validateNamecheapFundsForPayment(

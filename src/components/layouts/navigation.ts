@@ -49,6 +49,7 @@ export const adminEntryItem: NavigationItem = {
 export const adminNavigation: NavigationItem[] = [
   { href: "/admin/vps", icon: Shield, name: "Administração" },
   { href: "/admin/users", icon: Users, name: "Usuários Admin" },
+  { href: "/admin/suppliers", icon: Globe, name: "Fornecedores" },
   { href: "/admin/vps-plans", icon: Server, name: "Planos VPS" },
   { href: "/admin/affiliates", icon: Users, name: "Afiliados Admin" },
   { href: "/admin/vouchers", icon: Ticket, name: "Vouchers Admin" },

@@ -9,6 +9,7 @@ import {
   pgVpsServers,
   pgVpsSubscription,
 } from "@/lib/db/schema";
+import { deliverEmergencyAlert, getEmergencyRecipients } from "@/lib/server/emergency-alerts";
 import { sendNotificationEmail } from "@/lib/email/service";
 import { createContaboPasswordSecret } from "./createSecret";
 import { createVps } from "./createVps";
@@ -39,19 +40,19 @@ async function notifyAdmin(
   message: string,
   severity: "warning" | "danger"
 ): Promise<void> {
-  const recipient = process.env.EMAIL;
-  if (!recipient) {
-    console.error(`[CONTABO] EMAIL ausente; alerta não enviado: ${title}`);
+  const recipients = getEmergencyRecipients();
+  if (!recipients.length) {
+    console.error(`[CONTABO] EMERGENCY_ALERT_EMAILS/DOMAIN_EMAIL ausentes; alerta não enviado: ${title}`);
     return;
   }
-  await sendNotificationEmail(
+  await deliverEmergencyAlert(recipient => sendNotificationEmail(
     recipient,
     "Admin",
     "Atlas Hosting",
     title,
     message,
     severity
-  );
+  ), recipients);
 }
 
 function planTypeFromConfig(config: Record<string, unknown>): VpsPlanType {
