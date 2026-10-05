@@ -115,3 +115,23 @@ describe("CloudflareApi", () => {
     );
   });
 });
+
+ describe("Cloudflare zone deletion", () => {
+  test("deletes the zone and accepts an already absent zone", async () => {
+    for (const status of [200, 404]) {
+      const api = new CloudflareApi("token", async (url, init) => {
+        expect(String(url)).toEndWith("/zones/zone-1");
+        expect(init?.method).toBe("DELETE");
+        return new Response(JSON.stringify({ success: status === 200, result: { id: "zone-1" }, errors: [] }), { status, headers: { "content-type": "application/json" } });
+      });
+      await expect(api.deleteZone("zone-1")).resolves.toBeUndefined();
+    }
+  });
+
+  test("does not hide authorization or provider failure", async () => {
+    for (const status of [403, 500]) {
+      const api = new CloudflareApi("token", async () => new Response(JSON.stringify({ success: false, errors: [{ code: 10000, message: "failed" }] }), { status, headers: { "content-type": "application/json" } }));
+      await expect(api.deleteZone("zone-1")).rejects.toThrow("failed");
+    }
+  });
+});

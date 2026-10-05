@@ -72,16 +72,16 @@ async function getTransferView(
   if (!transfer) return null;
 
   const [domain, sourceUser, targetUser] = await Promise.all([
-    db.query.pgOrganizationDomains.findFirst({
+    transfer.domainId ? db.query.pgOrganizationDomains.findFirst({
       where: eq(pgOrganizationDomains.id, transfer.domainId),
-    }),
+    }) : Promise.resolve(undefined),
     db.query.pgUser.findFirst({ where: eq(pgUser.id, transfer.sourceUserId) }),
     db.query.pgUser.findFirst({ where: eq(pgUser.id, transfer.targetUserId) }),
   ]);
-  if (!domain || !sourceUser || !targetUser) return null;
+  if ((!domain && !transfer.domainName) || !sourceUser || !targetUser) return null;
 
   return {
-    domain: domain.domain,
+    domain: domain?.domain || transfer.domainName!,
     expiresAt: transfer.expiresAt,
     id: transfer.id,
     sourceAcceptedAt: transfer.sourceAcceptedAt,
@@ -238,6 +238,7 @@ export async function createDomainTransfer(
       .insert(pgDomainTransfer)
       .values({
         domainId: domain.id,
+        domainName: domain.domain,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         sourceOrganizationId: user.organization.id,
         sourceUserId: user.id,
@@ -272,6 +273,7 @@ async function completeDomainTransfer(transferId: string, actorId: string) {
       throw new Error("Você não participa desta transferência.");
     }
 
+    if (!transfer.domainId) throw new Error("O domínio foi removido do Atlas.");
     const domain = await tx.query.pgOrganizationDomains.findFirst({
       where: and(
         eq(pgOrganizationDomains.id, transfer.domainId),

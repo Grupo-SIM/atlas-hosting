@@ -106,8 +106,8 @@ export const pgDomainTransfer = pgTable(
     completedAt: timestamp("completed_at", { mode: "date" }),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     domainId: uuid("domain_id")
-      .notNull()
-      .references(() => pgOrganizationDomains.id),
+      .references(() => pgOrganizationDomains.id, { onDelete: "set null" }),
+    domainName: text("domain_name"),
     expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
     id: uuid("id").primaryKey().defaultRandom(),
     rejectedAt: timestamp("rejected_at", { mode: "date" }),

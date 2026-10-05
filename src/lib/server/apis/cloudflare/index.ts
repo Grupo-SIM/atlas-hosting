@@ -110,6 +110,15 @@ export class CloudflareApi {
     return (await this.request<CloudflareZone>(`/zones/${zoneId}`)).result;
   }
 
+  async deleteZone(zoneId: string): Promise<void> {
+    try {
+      await this.request(`/zones/${encodeURIComponent(zoneId)}`, { method: "DELETE" });
+    } catch (error) {
+      if (error instanceof CloudflareApiError && error.status === 404) return;
+      throw error;
+    }
+  }
+
   async triggerActivationCheck(zoneId: string): Promise<void> {
     await this.request(`/zones/${zoneId}/activation_check`, { method: "PUT" });
   }

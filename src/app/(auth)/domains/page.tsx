@@ -52,6 +52,7 @@ interface ProcessedDomain {
   usesOurDNS: boolean;
   features: string[];
   isExternal: boolean;
+  hasManagedZone?: boolean;
 }
 
 function getExternalDomainDnsFeature(domain: {
@@ -228,14 +229,17 @@ export default async function MyDomainsPage() {
             } as ProcessedDomain;
           }
           const d = await getNamecheapDomainInfo(domain.domain);
+          const inventory = await namecheapApi.getList({ Page: 1, PageSize: 100, SearchTerm: domain.domain });
+          const registration = inventory.Domains.find(item => item.Name.toLowerCase() === domain.domain.toLowerCase());
+          if (!registration) throw new Error("Registro não encontrado no inventário da Namecheap.");
 
           return {
             ...getRegistrarDates(d.CreatedDate, d.ExpireDate),
-            autoRenew: d.AutoRenew,
+            autoRenew: registration.AutoRenew,
             features: [
               d.DnsDetails?.IsUsingOurDNS && "DNS Management",
               d.Whoisguard?.Enabled && "Domain Privacy",
-              d.AutoRenew && "Auto-Renew",
+              registration.AutoRenew && "Auto-Renew",
             ].filter(Boolean) as string[],
             id: domain.id,
             isExternal: false,
@@ -277,11 +281,12 @@ export default async function MyDomainsPage() {
 
     const domains = domainsRaw.map((processed, index) => {
       const domain = dbDomains[index];
-      if (domain.dnsMode !== "cloudflare") return processed;
+      if (domain.dnsMode !== "cloudflare") return { ...processed, hasManagedZone: !!domain.cloudflareZoneId };
       const dnsFeature = getExternalDomainDnsFeature(domain);
 
       return {
         ...processed,
+        hasManagedZone: !!domain.cloudflareZoneId,
         features: [
           dnsFeature,
           ...processed.features.filter(
@@ -593,8 +598,8 @@ export default async function MyDomainsPage() {
                               Instruções indisponíveis
                             </Button>
                           )}
-                          {user.id === user.organization.ownerId && !user.impersonatedBy && domain.registrarProvider !== "namecheap" && (
-                            <DeleteDomainButton domainId={domain.id} domainName={domain.domain} />
+                          {user.id === user.organization.ownerId && !user.impersonatedBy && (
+                            <DeleteDomainButton domainId={domain.id} domainName={domain.domain} isExternal={domain.registrarProvider !== "namecheap"} hasManagedZone={!!domain.cloudflareZoneId} />
                           )}
                           </div>
                         </TableCell>
@@ -706,8 +711,8 @@ export default async function MyDomainsPage() {
                           canRenew={!domain.isExternal && domain.status !== "unknown"}
                           key={`actions-${domain.id}`}
                         />
-                        {domain.isExternal && user.id === user.organization.ownerId && !user.impersonatedBy && (
-                          <DeleteDomainButton domainId={domain.id} domainName={domain.name} />
+                        {user.id === user.organization.ownerId && !user.impersonatedBy && (
+                          <DeleteDomainButton domainId={domain.id} domainName={domain.name} isExternal={domain.isExternal} hasManagedZone={domain.hasManagedZone} />
                         )}
                         </div>
                       </TableCell>
