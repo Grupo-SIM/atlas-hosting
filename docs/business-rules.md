@@ -11,7 +11,7 @@
 
 ## Assinaturas, usuários e links VPS
 
-- Filtros de usuários avaliam todas as assinaturas vigentes. Usuário com assinaturas automáticas e manuais aparece nos dois filtros. Cartão sem recorrência ativa é manual.
+- Tabela, PDF e filtros de usuários mostram os métodos de cobrança de todas as assinaturas vigentes: cartão de crédito, PIX, boleto e voucher. Usuário com vários métodos aparece em cada filtro correspondente. Assinaturas expiradas ou canceladas não contam; sem assinatura vigente aparece como Sem assinatura.
 - Página Assinaturas Manuais foi removida; URL redireciona para Usuários. Tabela e registros antigos são preservados; pagamentos externos não viram cobranças.
 - Link VPS exige plano e preserva preço e período personalizados. Criação não cobra; checkout cria/reutiliza fatura; pagamento confirmado cria assinatura e inicia provisionamento. Assinaturas aparecem em Planos VPS e Usuários.
 - Links diretos persistem senha forte e configuração mínima de provisionamento; Windows usa imagem Windows. Faturas antigas sem esses dados são completadas antes da chamada ao fornecedor, preservando credenciais nos retries.

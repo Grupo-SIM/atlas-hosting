@@ -1,31 +1,33 @@
-export type SubscriptionFilter = "all" | "automatic" | "manual" | "none";
+export const BILLING_METHOD_LABELS = {
+  credit_card: "Cartão de crédito",
+  pix: "PIX",
+  boleto: "Boleto",
+  voucher: "Voucher",
+} as const;
+
+export type BillingMethod = keyof typeof BILLING_METHOD_LABELS;
+export type SubscriptionFilter = "all" | BillingMethod | "none";
 
 export function classifySubscriptions(subscriptions: {
   status: string;
   nextChargeDate: Date;
-  paymentMethod: string;
-  config: unknown;
+  paymentMethod: BillingMethod;
 }[], now = new Date()) {
   const current = subscriptions.filter(s =>
     ["active", "paused"].includes(s.status) && s.nextChargeDate > now);
-  const automatic = (s: typeof current[number]) =>
-    s.status === "active" && s.paymentMethod === "credit_card" &&
-    typeof (s.config as { cardToken?: unknown } | null)?.cardToken === "string" &&
-    Boolean((s.config as { cardToken?: string }).cardToken?.trim());
   return {
     hasActiveSubscription: current.length > 0,
-    hasAutomaticSubscription: current.some(automatic),
-    hasManualSubscription: current.some(s => !automatic(s)),
+    billingMethods: (Object.keys(BILLING_METHOD_LABELS) as BillingMethod[])
+      .filter(method => current.some(s => s.paymentMethod === method)),
   };
 }
 
 export function matchesSubscriptionFilter(user: ReturnType<typeof classifySubscriptions>, filter: SubscriptionFilter) {
-  if (filter === "automatic") return user.hasAutomaticSubscription;
-  if (filter === "manual") return user.hasManualSubscription;
+  if (filter === "all") return true;
   if (filter === "none") return !user.hasActiveSubscription;
-  return true;
+  return user.billingMethods.includes(filter);
 }
 
 export function subscriptionBillingLabel(user: ReturnType<typeof classifySubscriptions>) {
-  return [user.hasAutomaticSubscription && "Automática", user.hasManualSubscription && "Manual"].filter(Boolean).join(" / ") || "-";
+  return user.billingMethods.map(method => BILLING_METHOD_LABELS[method]).join(" / ") || "Sem assinatura";
 }

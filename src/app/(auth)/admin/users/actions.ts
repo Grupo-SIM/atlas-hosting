@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { classifySubscriptions } from "./subscription-status";
+import { classifySubscriptions, type BillingMethod } from "./subscription-status";
 import {
   pgAffiliateCommission,
   pgOrganizationDomains,
@@ -25,9 +25,8 @@ export interface UserRow {
   hasActiveSubscription: boolean;
   /** Tem ao menos um domínio ativo registrado na organização dele. */
   hasActiveDomain: boolean;
-  /** Todas as assinaturas vigentes; recorrência depende de cartão com token ativo. */
-  hasAutomaticSubscription: boolean;
-  hasManualSubscription: boolean;
+  /** Métodos de cobrança de todas as assinaturas vigentes. */
+  billingMethods: BillingMethod[];
 }
 
 export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
@@ -51,7 +50,6 @@ export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
         .select({
           createdAt: pgVpsSubscription.createdAt,
           paymentMethod: pgVpsSubscription.paymentMethod,
-          config: pgVpsSubscription.config,
           status: pgVpsSubscription.status,
           nextChargeDate: pgVpsSubscription.nextChargeDate,
           userId: pgVpsSubscription.userId,

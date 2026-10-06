@@ -32,7 +32,7 @@ import { useDebouncedInput } from "@/hooks/use-debounced-input";
 import { exportTableToPdf } from "@/lib/exportPdf";
 import type { UserRow } from "./actions";
 import { getUserClientStatus } from "./status";
-import { matchesSubscriptionFilter, subscriptionBillingLabel, type SubscriptionFilter } from "./subscription-status";
+import { BILLING_METHOD_LABELS, matchesSubscriptionFilter, subscriptionBillingLabel, type SubscriptionFilter } from "./subscription-status";
 import { UserActionsCell } from "./UserActionsCell";
 
 function toBrl(value: number) {
@@ -93,7 +93,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         "Saldo Disponível",
         "Criado em",
         "Status",
-        "Cobrança",
+        "Método de cobrança",
       ],
       filename: `usuarios${dateFilter ? `-${dateFilter.from}_a_${dateFilter.to}` : ""}.pdf`,
       rows: filtered.map(u => [
@@ -149,11 +149,12 @@ export function UsersTable({ users }: { users: UserRow[] }) {
           Exportar PDF
         </Button>
         <Select value={subscriptionFilter} onValueChange={v => setSubscriptionFilter(v as SubscriptionFilter)}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Assinatura" /></SelectTrigger>
+          <SelectTrigger className="w-48"><SelectValue placeholder="Método de cobrança" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas as assinaturas</SelectItem>
-            <SelectItem value="automatic">Automática</SelectItem>
-            <SelectItem value="manual">Manual</SelectItem>
+            <SelectItem value="all">Todos os métodos</SelectItem>
+            {Object.entries(BILLING_METHOD_LABELS).map(([method, label]) => (
+              <SelectItem key={method} value={method}>{label}</SelectItem>
+            ))}
             <SelectItem value="none">Sem assinatura</SelectItem>
           </SelectContent>
         </Select>
@@ -183,8 +184,8 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                 </TableHead>
                 <TableHead>
                   <HeaderTip
-                    label="Cobrança"
-                    tip="Todas as assinaturas vigentes. Automática exige recorrência ativa com cartão salvo; demais são manuais."
+                    label="Método de cobrança"
+                    tip="Métodos de pagamento de todas as assinaturas vigentes: cartão de crédito, PIX, boleto ou voucher."
                   />
                 </TableHead>
                 <TableHead className="text-right">Ações</TableHead>

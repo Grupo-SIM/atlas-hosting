@@ -376,7 +376,7 @@ Cancelar link:
 Em Links de pagamento, cancelar link ainda disponível invalida a fatura não paga. Se pagamento já foi iniciado (PIX/boleto emitido ou operação no gateway), cancelar exige conciliação prévia: não presumir que ainda pendente significa que cliente não pode pagar. Não apagar evidência de cobrança nem prometer estorno automático. Link pago já foi utilizado; cancelá-lo não é cancelamento da assinatura.
 
 Usuários:
-Administração > Usuários oferece filtros Todos, Automática, Manual e Sem assinatura. São consideradas todas as assinaturas vigentes. Usuário com assinaturas dos dois tipos aparece em ambos os filtros. Cartão sem recorrência ativa classifica como manual. Registros externos legados permanecem preservados; a antiga página de Assinaturas Manuais redireciona para Usuários, sem criar novas cobranças ou converter pagamentos externos.
+Administração > Usuários mostra métodos de cobrança na tabela e no PDF, com filtros Todos os métodos, Cartão de crédito, PIX, Boleto, Voucher e Sem assinatura. São consideradas todas as assinaturas vigentes. Usuário com vários métodos aparece em cada filtro correspondente. Assinaturas expiradas ou canceladas não contam. Registros externos legados permanecem preservados; a antiga página de Assinaturas Manuais redireciona para Usuários, sem criar novas cobranças ou converter pagamentos externos.
 
 ================================================================================
 14. VOUCHERS E VALOR DO CHECKOUT
