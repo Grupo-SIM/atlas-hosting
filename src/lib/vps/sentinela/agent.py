@@ -114,13 +114,14 @@ def get_system_metrics(detailed=False):
             continue
         try:
             usage = psutil.disk_usage(part.mountpoint)
-            total = usage.total if disk == "" else disk
+            total = disk if disk != "" and part.mountpoint == "/" else usage.total
+            used = usage.used * (total / usage.total)
             disks.append(
                 {
                     "mount": part.mountpoint,
                     "total": format_bytes(total),
-                    "used": format_bytes(usage.used),
-                    "percent": usage.used / total,
+                    "used": format_bytes(used),
+                    "percent": usage.used / usage.total,
                 }
             )
         except:
@@ -146,17 +147,19 @@ def get_system_metrics(detailed=False):
     else:
         ram = vmem.total
 
+    ram_scale = ram / vmem.total
+
     return {
         "cpu": avg_cpu,
         "cpu_cores": cpu_cores,
         "load_avg": [load1, load5, load15],
         "ram": {
             "total": format_bytes(ram),
-            "used": format_bytes(vmem.used),
-            "available": format_bytes(ram - vmem.used),
-            "cached": format_bytes(vmem.cached),
-            "free": format_bytes(ram - vmem.used - vmem.cached),
-            "percent": vmem.used / ram,
+            "used": format_bytes(vmem.used * ram_scale),
+            "available": format_bytes(vmem.available * ram_scale),
+            "cached": format_bytes(vmem.cached * ram_scale),
+            "free": format_bytes(vmem.free * ram_scale),
+            "percent": vmem.used / vmem.total,
         },
         "disks": disks,
         "uptime": uptime_str,
