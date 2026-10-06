@@ -27,13 +27,13 @@ export function DeleteDomainButton({ domainId, domainName, isExternal = false, h
         <DialogHeader>
           <DialogTitle>Apagar {domainName} do Atlas?</DialogTitle>
           <DialogDescription>
-            {hasManagedZone ? "A zona DNS e todos os registros gerenciados pelo Atlas serão apagados, junto do vínculo e das permissões no painel." : "O vínculo e as permissões do domínio serão removidos do painel. O DNS externo permanece no provedor atual."} A hospedagem e o registro no fornecedor não serão cancelados. Histórico financeiro e transferências serão preservados.
+            {hasManagedZone ? "A zona DNS e todos os registros gerenciados pelo Atlas serão apagados, junto do vínculo e das permissões no painel." : "O vínculo e as permissões do domínio serão removidos do painel. O DNS externo permanece no provedor atual."} A hospedagem e o registro no fornecedor não serão cancelados.
           </DialogDescription>
         </DialogHeader>
         {isExternal ? (
           <div className="space-y-3 text-sm">
             {hasManagedZone && <p>Antes de continuar, troque os nameservers no registrador original e configure os registros no novo DNS. Sem essa troca, seu site e e-mail podem parar de funcionar. Você pode continuar sem comprovar a troca.</p>}
-            <p>Para voltar ao Atlas, adicione o domínio novamente e verifique sua posse.{hasManagedZone && " Recrie o DNS: registros apagados não têm restauração automática."}</p>
+            <p>Para voltar ao Atlas, realize o fluxo de conectar domínio novamente; registros DNS apagados não têm restauração automática.</p>
           </div>
         ) : (
           <p className="text-sm">A exclusão exige vigência paga encerrada, renovação automática desativada e ausência de cobrança ou transferência pendente. A recuperação de um registro expirado depende das opções oferecidas pelo registrador, sem garantia de disponibilidade ou prazo.</p>
