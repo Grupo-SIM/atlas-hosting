@@ -10,7 +10,7 @@ import time
 
 # --- CONFIGURAÇÕES ---
 ATLAS_TOKEN = "{{ATLAS_TOKEN}}"
-ATLAS_API_URL = "https://atlashosting.com.br/api/vps/telemetry"
+ATLAS_API_URL = "{{ATLAS_BASE_URL}}/api/vps/telemetry"
 
 ATLAS_INTERVAL = 60
 VM_NAME = socket.gethostname()
@@ -63,7 +63,7 @@ def get_system_metrics(detailed=False):
 
     cpu_cores = psutil.cpu_percent(interval=1.0, percpu=True)
 
-    cores_n: int | str = "{{CPU_CORES}}"
+    cores_n: int | str = "{{CPU}}"
     if cores_n != "":
         cores_n = int(cores_n)
         original_sum = sum(cpu_cores)

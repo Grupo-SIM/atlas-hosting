@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/bin/python3 /opt/sentinela/agent.py
+ExecStart=/usr/bin/python3 /opt/sentinela/{{AGENT_FILENAME}}.py
 Restart=always
 RestartSec=10
 # Ensures Python output is sent straight to syslog without buffering
