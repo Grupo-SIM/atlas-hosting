@@ -27,5 +27,5 @@ export function matchesSubscriptionFilter(user: ReturnType<typeof classifySubscr
 }
 
 export function subscriptionBillingLabel(user: ReturnType<typeof classifySubscriptions>) {
-  return [user.hasAutomaticSubscription && "Automática", user.hasManualSubscription && "Manual"].filter(Boolean).join(" / ") || "Sem assinatura";
+  return [user.hasAutomaticSubscription && "Automática", user.hasManualSubscription && "Manual"].filter(Boolean).join(" / ") || "-";
 }
