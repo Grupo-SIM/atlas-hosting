@@ -42,7 +42,7 @@ export function AdminQuickActions() {
             href="/admin/suppliers"
             Icon={Globe}
             pattern="grid"
-            subtitle="Saldo Namecheap e inventário Contabo"
+            subtitle="Saldo Namecheap para domínios"
             title="Fornecedores"
           />
 
