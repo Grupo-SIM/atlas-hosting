@@ -1,5 +1,5 @@
-import agentStr from "./sentinela/agent.py";
-import service from "./sentinela/sentinela.service";
+import agentStr from "./sentinela/agent.py" with { type: "text" };
+import service from "./sentinela/sentinela.service" with { type: "text" };
 import { transferFile } from "./utils";
 
 interface SetupSentinelaArgs {
