@@ -24,10 +24,18 @@ export async function GET(request: Request) {
     db
       .select({
         affiliateUserId: pgAffiliateAttribution.affiliateUserId,
-        total: sql<number>`COUNT(*)`,
+        referredId: pgAffiliateAttribution.attributedUserId,
       })
       .from(pgAffiliateAttribution)
-      .groupBy(pgAffiliateAttribution.affiliateUserId),
+      .union(
+        db
+          .select({
+            affiliateUserId: pgAffiliateCommission.affiliateUserId,
+            referredId: pgAffiliateCommission.buyerUserId,
+          })
+          .from(pgAffiliateCommission)
+          .where(ne(pgAffiliateCommission.status, "cancelled"))
+      ),
     db
       .select({
         affiliateUserId: pgAffiliateCommission.affiliateUserId,
@@ -50,9 +58,11 @@ export async function GET(request: Request) {
       .orderBy(desc(pgUser.createdAt)),
   ]);
 
-  const referralMap = new Map(
-    referrals.map(r => [r.affiliateUserId, Number(r.total)])
-  );
+  // Atribuições expiram/são regravadas; compradores com comissão também contam como indicados.
+  const referralMap = new Map<string, number>();
+  for (const r of referrals) {
+    referralMap.set(r.affiliateUserId, (referralMap.get(r.affiliateUserId) ?? 0) + 1);
+  }
   const commissionMap = new Map(
     commissions.map(c => [
       c.affiliateUserId,

@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import {
@@ -22,23 +22,47 @@ export async function GET(
 
   const { id } = await params;
 
-  const referrals = await db
-    .select({
-      id: pgUser.id,
-      name: pgUser.name,
-      email: pgUser.email,
-      cpf: pgUser.billingDocument,
-      generated: sql<number>`COALESCE((
-        SELECT SUM(${pgAffiliateCommission.commissionAmount})
-        FROM ${pgAffiliateCommission}
-        WHERE ${pgAffiliateCommission.buyerUserId} = ${pgUser.id}
-          AND ${pgAffiliateCommission.affiliateUserId} = ${id}
-          AND ${pgAffiliateCommission.status} <> 'cancelled'
-      ), 0)`,
-    })
+  const buyerIds = await db
+    .select({ id: pgAffiliateAttribution.attributedUserId })
     .from(pgAffiliateAttribution)
-    .innerJoin(pgUser, eq(pgUser.id, pgAffiliateAttribution.attributedUserId))
-    .where(eq(pgAffiliateAttribution.affiliateUserId, id));
+    .where(eq(pgAffiliateAttribution.affiliateUserId, id))
+    .union(
+      db
+        .select({ id: pgAffiliateCommission.buyerUserId })
+        .from(pgAffiliateCommission)
+        .where(
+          and(
+            eq(pgAffiliateCommission.affiliateUserId, id),
+            ne(pgAffiliateCommission.status, "cancelled")
+          )
+        )
+    );
+
+  const referrals = buyerIds.length
+    ? await db
+        .select({
+          id: pgUser.id,
+          name: pgUser.name,
+          email: pgUser.email,
+          cpf: pgUser.billingDocument,
+          generated: sql<number>`COALESCE((
+            SELECT SUM(${pgAffiliateCommission.commissionAmount})
+            FROM ${pgAffiliateCommission}
+            WHERE ${pgAffiliateCommission.buyerUserId} = ${pgUser.id}
+              AND ${pgAffiliateCommission.affiliateUserId} = ${id}
+              AND ${pgAffiliateCommission.status} <> 'cancelled'
+          ), 0)`,
+        })
+        .from(pgUser)
+        .where(inArray(pgUser.id, buyerIds.map(b => b.id)))
+    : [];
+
+  const [balance] = await db
+    .select({
+      available: sql<number>`COALESCE(SUM(${pgAffiliateCommission.commissionAmount}) FILTER (WHERE ${pgAffiliateCommission.status} = 'available'), 0)`,
+    })
+    .from(pgAffiliateCommission)
+    .where(eq(pgAffiliateCommission.affiliateUserId, id));
 
   const [self] = await db
     .select({
@@ -53,7 +77,9 @@ export async function GET(
 
   return NextResponse.json({
     data: {
-      affiliate: self ?? null,
+      affiliate: self
+        ? { ...self, platformBalance: Number(balance?.available ?? 0) }
+        : null,
       referrals: referrals.map(r => ({
         id: r.id,
         name: r.name,
