@@ -42,8 +42,7 @@ export function SubscriptionActionsCell({
   const dueSoon =
     new Date(nextChargeDate).getTime() <= Date.now() + FIFTEEN_DAYS_MS;
   const canRenewPix =
-    (paymentMethod === "pix" || paymentMethod === "boleto" || paymentMethod === "voucher") &&
-    (status === "paused" || (status === "active" && dueSoon));
+    ((status === "paused" || status === "failed" || status === "active") && dueSoon);
 
   const handleRenew = () => {
     startTransition(async () => {
@@ -66,7 +65,7 @@ export function SubscriptionActionsCell({
         size="sm"
         variant="default"
       >
-        Renovar (PIX)
+        Renovar plano
       </Button>
     );
   }

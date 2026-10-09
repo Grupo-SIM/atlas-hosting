@@ -136,6 +136,11 @@ export interface DomainRenewInvoiceOptions {
 }
 
 export interface VpsInvoiceOptions {
+  /** Identifica a assinatura e o ciclo de renovação, evitando entrega duplicada. */
+  subscriptionId?: string;
+  renewalCycle?: string;
+  /** Cobrança de cartão pendente: ID retornado pelo gateway para conciliação. */
+  renewalCardPaymentId?: string;
   vpsId: string;
   config: any;
   /** Gateway initiation claim retained until a definitive result or reconciliation. */

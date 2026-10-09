@@ -35,7 +35,7 @@ interface EmailData {
 /**
  * Send email using the configured provider
  */
-async function sendEmail(data: EmailData): Promise<void> {
+async function sendEmail(data: EmailData, throwOnFailure = false): Promise<void> {
   console.log(`Sending email to ${data.to} with subject: ${data.subject}`);
 
   // In development, just log the email
@@ -51,6 +51,7 @@ async function sendEmail(data: EmailData): Promise<void> {
     console.error(
       `[email] Não foi possível enviar para ${data.to}: SMTP não configurado.`
     );
+    if (throwOnFailure) throw new Error("SMTP não configurado.");
     return;
   }
 
@@ -80,7 +81,8 @@ async function sendEmail(data: EmailData): Promise<void> {
       "[email] SMTP usado no envio (sem senha):",
       getSmtpRedactedMeta()
     );
-    // Do not re-throw — email failures must never block user creation or other actions
+    if (throwOnFailure) throw error;
+    // Other flows preserve their existing non-blocking email behavior.
   }
 }
 
@@ -190,7 +192,8 @@ export async function sendNotificationEmail(
   severity: "success" | "info" | "warning" | "danger",
   actionUrl?: string,
   actionText?: string,
-  additionalInfo?: string
+  additionalInfo?: string,
+  throwOnFailure = false
 ): Promise<void> {
   const html = await render(
     AtlasNotificationEmail({
@@ -219,7 +222,7 @@ export async function sendNotificationEmail(
     html,
     subject: `${subjectPrefix} - ${title}`,
     to: email,
-  });
+  }, throwOnFailure);
 }
 
 export async function sendDomainTransferStatusEmail({

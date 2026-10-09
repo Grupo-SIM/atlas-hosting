@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
+import { RenewalPendingBanner } from "./components";
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 import { AdminThemeSync } from "@/components/layouts/components/AdminThemeSync";
 import { PageBackButton } from "@/components/layouts/components/PageBackButton";
@@ -40,6 +41,9 @@ export default async function AuthLayout({
         <Topbar isAdmin={user.isAdmin || false} />
 
         <main className="flex-1 overflow-y-auto border-border bg-background md:border-l">
+          <Suspense fallback={<div className="h-24 animate-pulse border border-border bg-muted" aria-label="Carregando avisos de assinatura" />}>
+            <RenewalPendingBanner />
+          </Suspense>
           <Suspense fallback={null}>
             <PageBackButton />
           </Suspense>

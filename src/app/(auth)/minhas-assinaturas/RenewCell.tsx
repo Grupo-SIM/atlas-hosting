@@ -28,8 +28,7 @@ export function RenewCell({
   const dueSoon =
     new Date(nextChargeDate).getTime() <= Date.now() + FIFTEEN_DAYS_MS;
   const canRenew =
-    (paymentMethod === "pix" || paymentMethod === "boleto" || paymentMethod === "voucher") &&
-    (status === "paused" || (status === "active" && dueSoon));
+    ((status === "paused" || status === "failed" || status === "active") && dueSoon);
 
   if (!canRenew) {
     return <span className="text-muted-foreground text-sm">—</span>;
@@ -58,7 +57,7 @@ export function RenewCell({
       ) : (
         <QrCode className="h-3.5 w-3.5" />
       )}
-      Renovar com {paymentMethod === "boleto" ? "Boleto" : "PIX"}
+      Renovar plano
     </Button>
   );
 }

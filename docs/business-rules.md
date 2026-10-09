@@ -34,3 +34,12 @@
 - Avisos apenas nas operações existentes: saldo baixo (limite USD 40), compra bloqueada e falha operacional. Sem monitoramento periódico novo.
 
 Procedimentos do cliente e limites reais ficam em `knowledge-base-n8n.txt`; configuração de avisos em [operational-alerts.md](operational-alerts.md). Atualização N8N é entrega de arquivo local, sem publicação automática.
+
+## Renovação VPS e proteção de cobrança Contabo
+
+- Compra no dia X: cobrança da próxima renovação no dia X − 2 do ciclo contratado. Cartão com token tem uma tentativa nessa data e outra em X − 1; reinícios não repetem tentativa no mesmo dia civil de Recife. Timeout/resposta pendente preserva reserva de pagamento e exige conciliação, sem repetir cobrança incerta; ausência de confirmação mantém prazo de cancelamento.
+- Sem pagamento confirmado após segunda tentativa (ou até X − 1 para métodos manuais), agendar cancelamento da instância vinculada na Contabo para o aniversário X. Ausência de vínculo ou erro do fornecedor gera falha operacional; nunca reportar cancelamento confirmado nesses casos.
+- Aviso de renovação pendente aparece na plataforma a partir de 15 dias antes da cobrança. Cliente recebe emails aos 15 e 8 dias com plano, valor, período, data e checkout de renovação. Checkpoints persistidos evitam reenvio em reinícios; pagamento antecipado encerra avisos daquele ciclo.
+- Checkout é reutilizado dentro do ciclo. Pagamento confirmado mantém aniversário original e avança período contratado, independentemente de Pix/cartão/boleto/voucher. Reconciliação no servidor também cobre renovações Pix VPS com checkout fechado, inclusive após agendamento do cancelamento. Cobranças de cartão pendentes com ID retornado pelo gateway continuam sendo conciliadas após esse agendamento.
+- Pagamento confirmado após agendamento do cancelamento registra necessidade de retirada manual e envia email emergencial para `EMERGENCY_ALERT_EMAILS` (fallback `DOMAIN_EMAIL`), com nome e ID da instância na Contabo. API pública não oferece retirada automática de cancelamento de VPS. Falha SMTP mantém alerta pendente para nova tentativa; pagamento permanece reconhecido.
+- Cancelamento executado pela Contabo não é reversível pelo pagamento: alerta exige conferir existência da instância antes de prometer continuidade do serviço.

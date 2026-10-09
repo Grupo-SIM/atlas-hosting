@@ -70,7 +70,8 @@ async function releaseStaleSettlementClaims(): Promise<void> {
     .set({ status: "pending", updatedAt: new Date() })
     .where(
       and(
-        eq(pgInvoice.type, "domain"),
+        inArray(pgInvoice.type, ["domain", "vps"]),
+        sql`(${pgInvoice.type} != 'vps' OR (${pgInvoice.metadata}->>'isRenewal' = 'true' AND ${pgInvoice.metadata}->>'subscriptionId' is not null))`,
         eq(pgInvoice.status, "processing"),
         lte(pgInvoice.updatedAt, staleAt),
         sql`${pgInvoice.metadata}->>'pixSettlementStartedAt' is not null`
@@ -89,7 +90,8 @@ export async function POST(request: Request) {
     limit: QUERY_LIMIT,
     orderBy: asc(pgInvoice.updatedAt),
     where: and(
-      eq(pgInvoice.type, "domain"),
+      inArray(pgInvoice.type, ["domain", "vps"]),
+      sql`(${pgInvoice.type} != 'vps' OR (${pgInvoice.metadata}->>'isRenewal' = 'true' AND ${pgInvoice.metadata}->>'subscriptionId' is not null))`,
       inArray(pgInvoice.status, ["pending", "expired"]),
       sql`${pgInvoice.metadata}->>'simpayPaymentId' is not null`,
       sql`${pgInvoice.metadata}->'pixCheckout' is not null`

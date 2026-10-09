@@ -25,3 +25,11 @@ Disparos permanecem nas operações existentes: saldo disponível Namecheap abai
 ## Validação local
 
 Fornecedores e envio devem ser simulados. `unshare -Urn bun --no-env-file test` bloqueia rede e ignora `.env` nos testes. Nenhuma migration foi aplicada ao banco externo; SQL entregue deve ser revisado antes de execução pelo operador.
+
+### Renovação paga após cancelamento agendado
+
+O fluxo de renovação VPS usa os mesmos destinatários `EMERGENCY_ALERT_EMAILS` (lista separada por vírgulas, fallback `DOMAIN_EMAIL`). Quando uma renovação Pix ou cartão é reconhecida após agendamento de cancelamento, o email **URGENTE: desagendar cancelamento da VPS na Contabo** informa nome, ID Contabo, data agendada e assinatura Atlas. Retire o cancelamento no painel Contabo antes da data indicada. O envio não retira o cancelamento e não comprova continuidade de uma instância já removida.
+
+A pendência fica em `vps_subscriptions.config.renewalCancellation.withdrawalRequired`; `alertSentAt` indica envio SMTP aceito, não execução da retirada. Erros SMTP são retentados pelo agendador. Sem `vpsNodeId`/ID Contabo, cancelamento não é presumido: consulte logs de falha operacional e recupere o vínculo correto.
+
+Prévia local dos emails: `bun scripts/render-renewal-email.ts` gera `docs/examples/vps-renewal-15-days.html` e `vps-renewal-8-days.html`, sem enviar mensagens nem criar cobranças. Link da prévia é ilustrativo.

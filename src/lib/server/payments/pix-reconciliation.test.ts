@@ -42,6 +42,10 @@ describe("PIX domain reconciliation candidate", () => {
     ).toBe(true);
   });
 
+  test("reconciles VPS renewal without an open checkout", () => {
+    expect(shouldReconcilePixDomainInvoice(invoice({ type: "vps", metadata: { ...invoice().metadata, vpsId: "4", config: { duration: "1" }, isRenewal: true, subscriptionId: "sub" } }), now)).toBe(true);
+  });
+
   test("waits thirty seconds before the server reconciliation starts", () => {
     const metadata = {
       ...(invoice().metadata as Record<string, unknown>),
@@ -54,11 +58,12 @@ describe("PIX domain reconciliation candidate", () => {
     );
   });
 
-  test("ignores paid, non-domain, renewal and incomplete invoices", () => {
+  test("ignores paid, subscription, domain renewal and incomplete invoices", () => {
     expect(
       shouldReconcilePixDomainInvoice(invoice({ status: "paid" }), now)
     ).toBe(false);
-    expect(shouldReconcilePixDomainInvoice(invoice({ type: "vps" }), now)).toBe(
+    expect(shouldReconcilePixDomainInvoice(invoice({ type: "vps" }), now)).toBe(false);
+    expect(shouldReconcilePixDomainInvoice(invoice({ type: "subscription" }), now)).toBe(
       false
     );
     expect(

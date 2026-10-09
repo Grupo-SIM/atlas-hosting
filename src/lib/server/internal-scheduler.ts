@@ -31,7 +31,7 @@ function internalRequest(path: string) {
 async function invokeInternalGet(path: string): Promise<void> {
   const request = internalRequest(path);
   const handler = await (async () => {
-    switch (path) {
+    switch (path.split("?")[0]) {
       case "/api/internal/vps-subscriptions/renew":
         return (await import("@/app/api/internal/vps-subscriptions/renew/route"))
           .GET;
@@ -133,6 +133,10 @@ export function startInternalScheduler() {
     name: "expiry-notifications",
     run: () => invokeInternalGet("/api/internal/expiry-notifications"),
   };
+  const subscriptionReminders: ScheduledJob = {
+    name: "vps-expiry-notifications",
+    run: () => invokeInternalGet("/api/internal/expiry-notifications?subscriptionsOnly=true"),
+  };
   const pixReconciliation: ScheduledJob = {
     name: "pix-reconciliation",
     async run() {
@@ -156,10 +160,9 @@ export function startInternalScheduler() {
 
   scheduleEvery(pixReconciliation, THIRTY_SECONDS);
   scheduleEvery(cloudflareActivation, FIFTEEN_MINUTES);
-  runJob(vpsRenewal);
-  scheduleDailyAtUtcHour(vpsRenewal, 11);
-  // Não roda no boot: endpoint atual não persiste checkpoints já notificados.
-  // Mantemos uma execução diária para não reenviar avisos após um restart.
+  scheduleEvery(vpsRenewal, FIFTEEN_MINUTES);
+  scheduleEvery(subscriptionReminders, FIFTEEN_MINUTES);
+  // Checkpoints VPS persistidos; domínios mantêm execução diária.
   scheduleDailyAtUtcHour(expiryNotifications, 12);
   console.info("[SCHEDULER] Agendadores internos iniciados.");
 }

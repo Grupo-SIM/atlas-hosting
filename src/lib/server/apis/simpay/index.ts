@@ -115,14 +115,16 @@ function resolveSimpayStore(override?: string): string {
  */
 export class SimpayPaymentDeclinedError extends Error {
   public readonly gatewayStatus: string;
+  public readonly paymentId?: string;
 
-  constructor(gatewayStatus: string, message?: string) {
+  constructor(gatewayStatus: string, message?: string, paymentId?: string) {
     super(
       message ||
         "O pagamento não foi aprovado pela operadora do cartão. Nenhuma cobrança foi efetuada. Verifique os dados do cartão ou tente outro método de pagamento."
     );
     this.name = "SimpayPaymentDeclinedError";
     this.gatewayStatus = gatewayStatus;
+    this.paymentId = paymentId;
   }
 }
 
@@ -242,7 +244,7 @@ class SimpayApi {
         `[SIMPAY] ✗ Pagamento NÃO aprovado (status="${gatewayStatus}"). Resposta completa:`,
         data
       );
-      throw new SimpayPaymentDeclinedError(gatewayStatus);
+      throw new SimpayPaymentDeclinedError(gatewayStatus, undefined, paymentId ? String(paymentId) : undefined);
     }
 
     console.log("[SIMPAY] ✓ Pagamento criado com sucesso:", {

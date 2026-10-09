@@ -1,7 +1,9 @@
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { pgOrganizationDomains, pgVpsSubscription } from "@/lib/db/schema";
+import { ensureRenewalInvoice } from "@/lib/server/subscriptions/renewal-invoice";
+import { daysUntilRenewal, renewalEmailMessage, RENEWAL_REMINDER_DAYS } from "@/lib/server/subscriptions/renewal-policy";
 import { sendNotificationEmail } from "@/lib/email/service";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
@@ -16,24 +18,8 @@ const ADMIN_NOTIFY_EMAIL = "jbmidiadigital@gmail.com";
 const EXPIRY_CHECKPOINTS_DAYS = [7, 3, 1];
 
 function ensureAuthorized(req: Request): boolean {
-  // Allow requests from localhost (internal cron)
-  const forwarded = req.headers.get("x-forwarded-for") || "";
-  const host = req.headers.get("host") || "";
-  const isLocal =
-    host.startsWith("localhost") ||
-    host.startsWith("127.0.0.1") ||
-    forwarded === "";
-  if (isLocal) return true;
-
-  const auth = req.headers.get("authorization") || "";
-  const token = auth.replace("Bearer ", "").trim();
-  const cronSecret = process.env.CRON_SECRET;
-  const internalToken =
-    process.env.API_MACHINE_INTERNAL_TOKEN ||
-    process.env.INTERNAL_SERVICE_TOKEN;
-  if (cronSecret && token === cronSecret) return true;
-  if (internalToken && token === internalToken) return true;
-  return false;
+  const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  return !!token && [process.env.CRON_SECRET, process.env.API_MACHINE_INTERNAL_TOKEN, process.env.INTERNAL_SERVICE_TOKEN].filter(Boolean).includes(token);
 }
 
 function daysUntil(date: Date): number {
@@ -67,37 +53,28 @@ async function notifySubscriptionExpiring(
   if (!user?.email) return;
 
   const planLabel = `${PLAN_TYPE_LABEL[sub.planType] || sub.planType} — ${planDisplayName(sub.planType, sub.planId)}`;
-  const dateLabel = sub.nextChargeDate.toLocaleDateString("pt-BR");
   const dayWord = daysLeft === 1 ? "dia" : "dias";
-  const renewNote =
-    sub.paymentMethod === "credit_card"
-      ? "Ela será renovada automaticamente no cartão cadastrado."
-      : "Esse plano não renova sozinho — renove manualmente pelo painel pra não perder o servidor.";
-  const severity = daysLeft <= 3 ? "danger" : "warning";
-  const title = `Sua assinatura ${planLabel} vence em ${daysLeft} ${dayWord}`;
-  const message = `Sua assinatura <strong>${planLabel}</strong> vence em <strong>${dateLabel}</strong> (${daysLeft} ${dayWord}). ${renewNote}`;
+  const invoice = await ensureRenewalInvoice(sub);
+  const severity = "warning";
+  const title = `Sua assinatura ${planLabel} renova em ${daysLeft} ${dayWord}`;
+  const plan = sub.planType === "vds" ? getVdsPlan(sub.planId) : sub.planType === "storage-vps" ? getStorageVpsPlan(sub.planId) : getCloudVpsPlan(sub.planId);
+  const details = plan ? `${"cores" in plan ? plan.cores : plan.vcpu} · ${plan.ram} · ${plan.storage}` : undefined;
+  const message = renewalEmailMessage(planLabel, sub.amountBrl, sub.intervalMonths, sub.nextChargeDate, details);
 
-  await sendNotificationEmail(
-    user.email,
-    (user.name || "Cliente").split(" ")[0],
-    "Atlas Hosting",
-    title,
-    message,
-    severity,
-    `${baseUrl}/minhas-assinaturas`,
-    "Gerenciar Assinatura"
-  );
+  const marker = `${sub.nextChargeDate.toISOString()}:${daysLeft}`;
+  await db.transaction(async tx => {
+    await tx.execute(sql`select id from vps_subscriptions where id = ${sub.id} for update`);
+    const current = await tx.query.pgVpsSubscription.findFirst({ where: eq(pgVpsSubscription.id, sub.id) });
+    if (!current || current.status !== "active" || current.nextChargeDate.getTime() !== sub.nextChargeDate.getTime() || (current.config as any)?.renewalReminderSent?.[marker]) return;
+    await sendNotificationEmail(
+      user.email, (user.name || "Cliente").split(" ")[0], "Atlas Hosting", title, message, severity,
+      `${baseUrl}/checkout/${invoice.id}?initialStep=payment`, "Pagar renovação", undefined, true,
+    );
+    await tx.update(pgVpsSubscription).set({
+      config: sql`jsonb_set(${pgVpsSubscription.config}::jsonb, '{renewalReminderSent}', coalesce(${pgVpsSubscription.config}::jsonb->'renewalReminderSent', '{}'::jsonb) || jsonb_build_object(${marker}::text, true))::json`,
+    }).where(eq(pgVpsSubscription.id, sub.id));
+  });
 
-  await sendNotificationEmail(
-    ADMIN_NOTIFY_EMAIL,
-    "Admin",
-    "Atlas Hosting",
-    title,
-    `${message}<br><br>Cliente: ${user.name || "N/A"} (${user.email})`,
-    severity,
-    `${baseUrl}/admin/vps-plans`,
-    "Ver no Admin"
-  );
 }
 
 async function notifyDomainExpiring(
@@ -155,8 +132,9 @@ export async function POST(req: Request) {
   });
 
   for (const sub of activeSubs) {
-    const daysLeft = daysUntil(sub.nextChargeDate);
-    if (!EXPIRY_CHECKPOINTS_DAYS.includes(daysLeft)) continue;
+    const daysLeft = daysUntilRenewal(sub.nextChargeDate);
+    if (!RENEWAL_REMINDER_DAYS.some(day => day === daysLeft)) continue;
+    if ((sub.config as any)?.renewalReminderSent?.[`${sub.nextChargeDate.toISOString()}:${daysLeft}`]) continue;
     try {
       await notifySubscriptionExpiring(sub as any, daysLeft, baseUrl);
       subscriptionsNotified++;
@@ -166,6 +144,10 @@ export async function POST(req: Request) {
         err
       );
     }
+  }
+
+  if (new URL(req.url).searchParams.get("subscriptionsOnly") === "true") {
+    return NextResponse.json({ subscriptionsNotified, checkpoints: RENEWAL_REMINDER_DAYS });
   }
 
   // 2) Domínios ativos registrados via Namecheap/Atlas. Domínios só "apontados"

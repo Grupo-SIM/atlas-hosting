@@ -27,15 +27,17 @@ export function shouldReconcilePixDomainInvoice(
   now = new Date(),
   delayMs = PIX_RECONCILIATION_DELAY_MS
 ): boolean {
-  if (invoice.type !== "domain") return false;
+  if (invoice.type !== "domain" && invoice.type !== "vps") return false;
   if (invoice.status !== "pending" && invoice.status !== "expired") {
     return false;
   }
 
   const metadata = invoice.metadata as DomainRegisterInvoiceOptions & {
     type?: string;
+    subscriptionId?: string;
   };
-  if (metadata.type === "renew" || metadata.isRenewal) return false;
+  if (invoice.type === "domain" && (metadata.type === "renew" || metadata.isRenewal)) return false;
+  if (invoice.type === "vps" && (!metadata.isRenewal || !metadata.subscriptionId)) return false;
   if (metadata.testPaymentOnly) return false;
   if (!metadata.simpayPaymentId || !metadata.pixCheckout) return false;
 

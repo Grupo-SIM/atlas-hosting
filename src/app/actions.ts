@@ -18,6 +18,8 @@ export async function checkIsLoggedIn(): Promise<boolean> {
   return !!user;
 }
 
+import { ensureRenewalInvoice } from "@/lib/server/subscriptions/renewal-invoice";
+import { applyRenewalPayment } from "@/lib/server/subscriptions/lifecycle";
 import axios from "axios";
 import { query } from "dns-query";
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -78,7 +80,7 @@ import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { getStorageVpsMonthlyEuro } from "@/lib/storage-vps-catalog";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
 import { getVdsMonthlyEuro } from "@/lib/vds-catalog";
-import { firstRenewalDate, nextRenewalDate } from "@/lib/vps/renewal-date";
+import { firstRenewalDate } from "@/lib/vps/renewal-date";
 import {
   CLOUD_VPS_LOCATION_EUR,
   CLOUD_VPS_STORAGE_UPGRADE_EUR,
@@ -1350,15 +1352,27 @@ async function settleNonCardInvoice(
     return true;
   }
 
+  // Renovação financeira antes do background: cron não pode cancelar ciclo já pago.
+  if (invoice.type === "vps" && (invoice.metadata as any).isRenewal) {
+    await handleVpsNonCardPaid(invoice, user, method);
+  }
+
   await db
     .update(pgInvoice)
     .set({ status: "paid" })
     .where(eq(pgInvoice.id, invoice.id));
 
+  // O agendador chama este fluxo sem contexto HTTP; renovação não usa after().
+  if (invoice.type === "vps" && (invoice.metadata as any).isRenewal) {
+    await triggerCommissionIfApplicable(invoice as any).catch(() => {});
+    await triggerPurchaseNotifications(invoice, user, billing ? { ...billing, paymentMethod: method } : { paymentMethod: method }, { isRenewal: true }).catch(error => console.error(`${logPrefix} Falha na notificação da renovação ${invoice.id}:`, error));
+    return true;
+  }
+
   after(async () => {
     await triggerCommissionIfApplicable(invoice as any).catch(() => {});
     await processInvoiceAfterPayment(invoice, user);
-    await handleVpsNonCardPaid(invoice, user, method);
+    if (!(invoice.metadata as any).isRenewal) await handleVpsNonCardPaid(invoice, user, method);
     await provisionPaidVps(invoice.id);
     await triggerPurchaseNotifications(
       invoice,
@@ -1417,6 +1431,10 @@ async function fulfillCheckoutAfterPixPaid(
     redirect(paymentSuccessUrl(invoice.id));
   }
 
+  if (invoice.type === "vps" && (invoice.metadata as any).isRenewal) {
+    await handleVpsNonCardPaid(invoice, user, "pix");
+  }
+
   // Generic (non-domain) invoice — mark as paid
   await db
     .update(pgInvoice)
@@ -1425,7 +1443,7 @@ async function fulfillCheckoutAfterPixPaid(
 
   // Notifications (WhatsApp + email) via Unified Helper
   after(async () => {
-    await handleVpsNonCardPaid(invoice, user, "pix");
+    if (!(invoice.metadata as any).isRenewal) await handleVpsNonCardPaid(invoice, user, "pix");
     await provisionPaidVps(invoice.id);
     await triggerPurchaseNotifications(
       invoice,
@@ -2115,6 +2133,10 @@ async function createVpsSubscriptionIfNeeded(
 ): Promise<void> {
   if (invoice.type !== "vps") return;
   const meta = invoice.metadata as any;
+  if (meta?.isRenewal && meta?.subscriptionId) {
+    await applyRenewalPayment(invoice, opts.paymentMethod, opts.cardToken);
+    return;
+  }
   const config = meta?.config || {};
   const intervalMonths: number = Number.parseInt(config.duration || "1", 10);
   if (
@@ -2140,20 +2162,6 @@ async function createVpsSubscriptionIfNeeded(
   const finalConfig = opts.cardToken
     ? { ...config, cardToken: opts.cardToken }
     : config;
-
-  if (meta?.isRenewal && meta?.subscriptionId) {
-    await db.update(pgVpsSubscription).set({
-      config: finalConfig,
-      paymentMethod: opts.paymentMethod,
-      status: "active",
-      pausedAt: null,
-      failureCount: 0,
-      nextChargeDate,
-      lastInvoiceId: invoice.id,
-      updatedAt: new Date(),
-    }).where(and(eq(pgVpsSubscription.id, meta.subscriptionId), eq(pgVpsSubscription.userId, invoice.userId), sql`${pgVpsSubscription.lastInvoiceId} IS DISTINCT FROM ${invoice.id}`));
-    return;
-  }
 
   try {
     await db.insert(pgVpsSubscription).values({
@@ -2199,37 +2207,8 @@ async function handleVpsNonCardPaid(
   const meta = invoice.metadata as any;
 
   if (meta?.isRenewal && meta?.subscriptionId) {
-    try {
-      const sub = await db.query.pgVpsSubscription.findFirst({
-        where: eq(pgVpsSubscription.id, meta.subscriptionId),
-      });
-      if (!sub || sub.userId !== invoice.userId || sub.lastInvoiceId === invoice.id) return;
-      const onSchedule =
-        !!sub.nextChargeDate && sub.nextChargeDate.getTime() > Date.now();
-      const nextChargeDate = onSchedule
-        ? nextRenewalDate(new Date(sub.nextChargeDate), sub.intervalMonths)
-        : firstRenewalDate(new Date(), sub.intervalMonths);
-      await db
-        .update(pgVpsSubscription)
-        .set({
-          failureCount: 0,
-          paymentMethod,
-          lastInvoiceId: invoice.id,
-          nextChargeDate,
-          pausedAt: null,
-          status: "active",
-          updatedAt: new Date(),
-        })
-        .where(and(eq(pgVpsSubscription.id, sub.id), eq(pgVpsSubscription.userId, invoice.userId), sql`${pgVpsSubscription.lastInvoiceId} IS DISTINCT FROM ${invoice.id}`));
-      console.log(
-        `[SUBSCRIPTION] ✓ Renovação ${paymentMethod.toUpperCase()} da assinatura ${sub.id} — próxima cobrança: ${nextChargeDate.toISOString()}`
-      );
-    } catch (err) {
-      console.error(
-        `[SUBSCRIPTION] ✗ Erro ao renovar assinatura VPS (${paymentMethod}):`,
-        err
-      );
-    }
+    await applyRenewalPayment(invoice, paymentMethod);
+
     return;
   }
 
@@ -4510,14 +4489,6 @@ export async function createVpsRenewalInvoice(
     };
   }
 
-  if (sub.paymentMethod !== "pix" && sub.paymentMethod !== "boleto" && sub.paymentMethod !== "voucher") {
-    return {
-      message:
-        "Renovação manual disponível apenas para assinaturas PIX ou boleto.",
-      status: "error",
-    };
-  }
-
   // Elegível quando a vencer (≤15 dias) ou já pausada/vencida.
   const fifteenDaysMs = 15 * 24 * 60 * 60 * 1000;
   const dueSoon = sub.nextChargeDate.getTime() <= Date.now() + fifteenDaysMs;
@@ -4530,27 +4501,7 @@ export async function createVpsRenewalInvoice(
   }
 
   try {
-    const config = sub.config as any;
-    const [newInvoice] = await db
-      .insert(pgInvoice)
-      .values({
-        amount: sub.amountBrl,
-        currency: "BRL",
-        description: `Renovação VPS ${sub.planId} — ${sub.intervalMonths} ${sub.intervalMonths === 1 ? "mês" : "meses"}`,
-        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        metadata: {
-          config,
-          isRenewal: true,
-          subscriptionId: sub.id,
-          vpsId: sub.planId,
-        } as any,
-        orgId: sub.orgId,
-        reference: `VPS-REN-${sub.planId}-${Date.now()}`,
-        status: "pending",
-        type: "vps",
-        userId: sub.userId,
-      })
-      .returning();
+    const newInvoice = await ensureRenewalInvoice(sub);
 
     if (!newInvoice) throw new Error("Falha ao criar fatura de renovação.");
 
