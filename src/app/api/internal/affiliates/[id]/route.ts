@@ -1,10 +1,11 @@
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import {
   pgAffiliateAttribution,
   pgAffiliateCommission,
 } from "@/lib/db/schema/tables/affiliate";
+import { pgInvoice } from "@/lib/db/schema/tables/invoice";
 import { pgUser } from "@/lib/db/schema/tables/user";
 
 /** Indicados de um afiliado do Atlas, com o valor de comissão gerado por cada um. */
@@ -38,6 +39,51 @@ export async function GET(
         )
     );
 
+  // Compras que geraram comissão para este afiliado (com a fatura), uma linha por comissão.
+  // A soma por comprador é feita aqui em código: usar subquery em sql`` com colunas de
+  // outra tabela faz o Drizzle omitir o prefixo da tabela e a comparação nunca bate.
+  const commissionRows = await db
+    .select({
+      buyerUserId: pgAffiliateCommission.buyerUserId,
+      commissionAmount: pgAffiliateCommission.commissionAmount,
+      grossAmount: pgAffiliateCommission.grossAmount,
+      createdAt: pgAffiliateCommission.createdAt,
+      invoiceDescription: pgInvoice.description,
+      invoiceType: pgInvoice.type,
+      invoiceReference: pgInvoice.reference,
+    })
+    .from(pgAffiliateCommission)
+    .innerJoin(pgInvoice, eq(pgInvoice.id, pgAffiliateCommission.invoiceId))
+    .where(
+      and(
+        eq(pgAffiliateCommission.affiliateUserId, id),
+        ne(pgAffiliateCommission.status, "cancelled")
+      )
+    )
+    .orderBy(desc(pgAffiliateCommission.createdAt));
+
+  const purchasesByBuyer = new Map<
+    string,
+    {
+      title: string;
+      type: string;
+      grossAmount: number;
+      commissionAmount: number;
+      createdAt: Date;
+    }[]
+  >();
+  for (const row of commissionRows) {
+    const list = purchasesByBuyer.get(row.buyerUserId) ?? [];
+    list.push({
+      title: row.invoiceDescription?.trim() || row.invoiceReference,
+      type: row.invoiceType,
+      grossAmount: Number(row.grossAmount),
+      commissionAmount: Number(row.commissionAmount),
+      createdAt: row.createdAt,
+    });
+    purchasesByBuyer.set(row.buyerUserId, list);
+  }
+
   const referrals = buyerIds.length
     ? await db
         .select({
@@ -45,13 +91,6 @@ export async function GET(
           name: pgUser.name,
           email: pgUser.email,
           cpf: pgUser.billingDocument,
-          generated: sql<number>`COALESCE((
-            SELECT SUM(${pgAffiliateCommission.commissionAmount})
-            FROM ${pgAffiliateCommission}
-            WHERE ${pgAffiliateCommission.buyerUserId} = ${pgUser.id}
-              AND ${pgAffiliateCommission.affiliateUserId} = ${id}
-              AND ${pgAffiliateCommission.status} <> 'cancelled'
-          ), 0)`,
         })
         .from(pgUser)
         .where(inArray(pgUser.id, buyerIds.map(b => b.id)))
@@ -80,13 +119,22 @@ export async function GET(
       affiliate: self
         ? { ...self, platformBalance: Number(balance?.available ?? 0) }
         : null,
-      referrals: referrals.map(r => ({
-        id: r.id,
-        name: r.name,
-        email: r.email,
-        cpf: r.cpf ?? null,
-        generated: Number(r.generated),
-      })),
+      referrals: referrals.map(r => {
+        const purchases = purchasesByBuyer.get(r.id) ?? [];
+        return {
+          id: r.id,
+          name: r.name,
+          email: r.email,
+          cpf: r.cpf ?? null,
+          generated: Number(
+            purchases.reduce((sum, p) => sum + p.commissionAmount, 0).toFixed(2)
+          ),
+          grossTotal: Number(
+            purchases.reduce((sum, p) => sum + p.grossAmount, 0).toFixed(2)
+          ),
+          purchases,
+        };
+      }),
     },
   });
 }
