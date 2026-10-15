@@ -12,6 +12,18 @@ type Fetcher = (
   init?: RequestInit
 ) => Promise<Response>;
 
+function normalizeDnsRecord<T extends CloudflareDnsRecordInput>(record: T): T {
+  if (record.type !== "TXT") return record;
+  const content = record.content;
+  return {
+    ...record,
+    content:
+      content.startsWith('"') && content.endsWith('"')
+        ? content
+        : JSON.stringify(content),
+  };
+}
+
 export class CloudflareApiError extends Error {
   readonly codes: number[];
   readonly status: number;
@@ -155,7 +167,7 @@ export class CloudflareApi {
   ): Promise<void> {
     await this.request(`/zones/${zoneId}/dns_records/scan/review`, {
       body: JSON.stringify({
-        accepts: accepts.map(record => ({ ...record, proxied: false })),
+        accepts: accepts.map(record => ({ ...normalizeDnsRecord(record), proxied: false })),
         rejects: rejectIds.map(id => ({ id })),
       }),
       method: "POST",
@@ -187,7 +199,7 @@ export class CloudflareApi {
   ): Promise<CloudflareDnsRecord> {
     return (
       await this.request<CloudflareDnsRecord>(`/zones/${zoneId}/dns_records`, {
-        body: JSON.stringify(record),
+        body: JSON.stringify(normalizeDnsRecord(record)),
         method: "POST",
       })
     ).result;
@@ -201,7 +213,7 @@ export class CloudflareApi {
     return (
       await this.request<CloudflareDnsRecord>(
         `/zones/${zoneId}/dns_records/${recordId}`,
-        { body: JSON.stringify(record), method: "PUT" }
+        { body: JSON.stringify(normalizeDnsRecord(record)), method: "PUT" }
       )
     ).result;
   }

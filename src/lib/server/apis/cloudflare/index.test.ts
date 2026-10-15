@@ -135,3 +135,32 @@ describe("CloudflareApi", () => {
     }
   });
 });
+
+describe("Cloudflare TXT payloads", () => {
+  test("quotes TXT on create and update, preserving existing quoted chunks", async () => {
+    for (const content of ["v=spf1 ~all", '"v=spf1 ~all"', '"first" "second"', "", 'text with "quotes" and \\ backslash']) {
+      const expected = content.startsWith('"') && content.endsWith('"')
+        ? content
+        : JSON.stringify(content);
+      const api = new CloudflareApi("token", async (_url, init) => {
+        const payload = JSON.parse(String(init?.body));
+        expect(payload.content).toBe(expected);
+        return json({ ...payload, id: "record-1" });
+      });
+      const record = { content, name: "example.com", ttl: 1, type: "TXT" as const };
+      await api.createDnsRecord("zone-1", record);
+      await api.updateDnsRecord("zone-1", "record-1", record);
+      expect(record.content).toBe(content);
+    }
+  });
+
+  test("preserves non-TXT content", async () => {
+    const record = { content: "192.0.2.1", name: "example.com", ttl: 1, type: "A" as const };
+    const api = new CloudflareApi("token", async (_url, init) => {
+      expect(JSON.parse(String(init?.body))).toEqual(record);
+      return json({ ...record, id: "record-1" });
+    });
+    await api.createDnsRecord("zone-1", record);
+    await api.updateDnsRecord("zone-1", "record-1", record);
+  });
+});
