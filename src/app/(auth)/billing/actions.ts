@@ -79,26 +79,26 @@ export async function getUserBillingInfo() {
       where: eq(pgUser.id, user.id),
     });
 
-    if (!dbUser?.billingDocument) return null;
+    if (!dbUser) return null;
 
     // Split name into first and last name as a helper
-    const nameParts = dbUser.name.split(" ");
+    const nameParts = dbUser.name.trim().split(/\s+/);
     const firstName = nameParts[0] || "";
     const lastName = nameParts.slice(1).join(" ") || "";
 
     return {
       address: {
-        city: dbUser.billingCity,
-        neighborhood: dbUser.billingNeighborhood,
-        number: dbUser.billingNumber,
-        state: dbUser.billingState,
-        street: dbUser.billingStreet,
-        zipCode: dbUser.billingZipCode,
+        city: dbUser.billingCity ?? "",
+        neighborhood: dbUser.billingNeighborhood ?? "",
+        number: dbUser.billingNumber ?? "",
+        state: dbUser.billingState ?? "",
+        street: dbUser.billingStreet ?? "",
+        zipCode: dbUser.billingZipCode ?? "",
       },
-      document: dbUser.billingDocument,
+      document: dbUser.billingDocument ?? "",
       firstName,
       lastName,
-      phoneNumber: dbUser.billingPhone,
+      phoneNumber: dbUser.billingPhone ?? "",
     };
   } catch (error) {
     console.error("Error fetching billing info:", error);

@@ -110,6 +110,7 @@ interface ModernCheckoutFormProps {
   /** Boleto liberado pra esta fatura — ver isBoletoEligibleForVpsConfig em actions.ts. */
   allowBoleto?: boolean;
   hasExistingUser?: boolean;
+  isAuthenticated?: boolean;
   initialStep?: CheckoutStep;
   /** Atualiza texto/estado do botão principal da coluna lateral (checkout-client). */
   onSidebarActionStateChange?: (state: CheckoutSidebarActionState) => void;
@@ -204,6 +205,7 @@ const ModernCheckoutForm = forwardRef<
       isAnnualVps = false,
       allowBoleto = false,
       hasExistingUser = false,
+      isAuthenticated = false,
       initialStep,
       onSidebarActionStateChange,
       onPaymentMethodChange,
@@ -253,21 +255,8 @@ const ModernCheckoutForm = forwardRef<
     const [currentStep, setCurrentStep] = useState<CheckoutStep>(
       initialStep || "billing"
     );
-    const [savedBillingInfo, setSavedBillingInfo] = useState<any>(null);
-
-    // Fetch saved billing info on mount
-    useEffect(() => {
-      const fetchBilling = async () => {
-        const info = await getUserBillingInfo();
-        if (info) {
-          setSavedBillingInfo(info);
-        } else if (currentStep === "payment") {
-          setCurrentStep("billing");
-        }
-      };
-      fetchBilling();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    const [savedBillingInfo, setSavedBillingInfo] = useState<Awaited<ReturnType<typeof getUserBillingInfo>>>(null);
+    const [isLoadingBilling, setIsLoadingBilling] = useState(true);
 
     // Always use the full schema for form management
     const methods = useForm<NewCardFormInputs>({
@@ -279,6 +268,7 @@ const ModernCheckoutForm = forwardRef<
     const {
       getValues,
       handleSubmit,
+      reset,
       trigger,
       formState: { errors, touchedFields },
       control,
@@ -326,33 +316,35 @@ const ModernCheckoutForm = forwardRef<
       toast.success("Dados preenchidos com as informações do seu perfil!");
     }, [savedBillingInfo, setValue]);
 
-    // Auto-fill when starting directly at payment step (guest just submitted personal-data form)
+    // Hydrate before showing the form, so saved data never overwrites typing.
     useEffect(() => {
-      if (currentStep === "payment" && savedBillingInfo) {
-        const options = { shouldDirty: true, shouldValidate: true };
-        setValue("firstName", savedBillingInfo.firstName, options);
-        setValue("lastName", savedBillingInfo.lastName, options);
-        setValue("document", savedBillingInfo.document, options);
-        setValue("phoneNumber", savedBillingInfo.phoneNumber, options);
-        setValue("address.zipCode", savedBillingInfo.address.zipCode, options);
-        setValue("address.street", savedBillingInfo.address.street, options);
-        setValue("address.number", savedBillingInfo.address.number, options);
-        setValue(
-          "address.neighborhood",
-          savedBillingInfo.address.neighborhood,
-          options
-        );
-        setValue("address.city", savedBillingInfo.address.city, options);
-        setValue("address.state", savedBillingInfo.address.state, options);
-      }
-      // Only run when savedBillingInfo first loads while on payment step
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [savedBillingInfo]);
+      let active = true;
+      const loadBilling = async () => {
+        try {
+          const info = await getUserBillingInfo();
+          if (!active) return;
+          setSavedBillingInfo(info);
+          if (info) {
+            reset({ ...getValues(), ...info });
+          }
+          setCurrentStep(billingAddressSchema.safeParse(info).success ? "payment" : "billing");
+        } catch {
+          if (active) {
+            setCurrentStep("billing");
+            toast.error("Não foi possível carregar seus dados de cobrança. Preencha os dados para continuar.");
+          }
+        } finally {
+          if (active) setIsLoadingBilling(false);
+        }
+      };
+      void loadBilling();
+      return () => { active = false; };
+    }, [getValues, reset]);
 
     // Load saved cards only
     useEffect(() => {
       const loadCards = async () => {
-        if (!hasExistingUser) {
+        if (!isAuthenticated) {
           setIsLoadingCards(false);
           setSavedCards([]);
           return;
@@ -365,7 +357,7 @@ const ModernCheckoutForm = forwardRef<
           setSavedCards(cards);
 
           // Set default card as selected if available
-          const defaultCard = cards.find(card => card.isDefault);
+          const defaultCard = cards.find(card => card.isDefault) ?? cards[0];
           if (defaultCard && cards.length > 0) {
             setPaymentMethod(defaultCard.id);
           }
@@ -377,7 +369,7 @@ const ModernCheckoutForm = forwardRef<
       };
 
       loadCards();
-    }, []);
+    }, [isAuthenticated]);
 
     useEffect(() => {
       if (paymentMethod !== "pix") {
@@ -598,9 +590,9 @@ const ModernCheckoutForm = forwardRef<
 
           startTransition(async () => {
             try {
-              const result = await completeCheckout(null, {
+              const result = await completeCheckoutWithSavedCard(null, {
                 ...values,
-                cardToken: selectedCard.cardToken,
+                card: selectedCard,
                 installments: selectedInstallments,
                 invoiceId,
               });
@@ -623,6 +615,14 @@ const ModernCheckoutForm = forwardRef<
       },
       [paymentMethod, savedCards, invoiceId, router]
     );
+
+    const submitCardPayment = useCallback(() => {
+      if (paymentMethod === "new") {
+        void handleSubmit(onSubmit)();
+      } else if (billingAddressSchema.safeParse(getValues()).success) {
+        onSubmit(getValues());
+      }
+    }, [paymentMethod, handleSubmit, onSubmit, getValues]);
 
     const handleCheckPayment = useCallback(async () => {
       setIsVerifyingPayment(true);
@@ -865,7 +865,13 @@ const ModernCheckoutForm = forwardRef<
 
     const handleContinueToPayment = () => {
       if (canProceedToPayment) {
-        setCurrentStep("payment");
+        startTransition(async () => {
+          if (isAuthenticated) {
+            const result = await saveUserBillingInfo(getValues());
+            if (result.status === "error") toast.error(result.message);
+          }
+          setCurrentStep("payment");
+        });
       }
     };
 
@@ -898,9 +904,7 @@ const ModernCheckoutForm = forwardRef<
             return;
           }
           if (currentStep === "billing") {
-            if (canProceedToPayment) {
-              setCurrentStep("payment");
-            }
+            handleContinueToPayment();
             return;
           }
           if (paymentMethod === "pix") {
@@ -919,11 +923,13 @@ const ModernCheckoutForm = forwardRef<
             }
             return;
           }
-          handleSubmit(onSubmit)();
+          submitCardPayment();
         },
       }),
       [
         hasExistingUser,
+        isAuthenticated,
+        submitCardPayment,
         currentStep,
         canProceedToPayment,
         paymentMethod,
@@ -987,9 +993,12 @@ const ModernCheckoutForm = forwardRef<
         }
       }
 
+      if (isLoadingBilling || isLoadingCards || isPending) disabled = true;
       notify({ disabled, hidden, label });
     }, [
       hasExistingUser,
+      isLoadingBilling,
+      isLoadingCards,
       currentStep,
       paymentMethod,
       pixSession,
@@ -1176,6 +1185,15 @@ const ModernCheckoutForm = forwardRef<
     );
 
     // Render simplified version for existing users with domId
+    if (isLoadingBilling || isLoadingCards) {
+      return (
+        <div aria-busy="true" aria-label="Carregando dados de cobrança e cartões" className="space-y-4">
+          <Skeleton className="h-52 w-full rounded-3xl" />
+          <Skeleton className="h-72 w-full rounded-3xl" />
+        </div>
+      );
+    }
+
     if (hasExistingUser) {
       return (
         <div className="space-y-6">
@@ -1531,7 +1549,7 @@ const ModernCheckoutForm = forwardRef<
                     <div className="py-4 text-center text-muted-foreground text-sm">
                       <Skeleton className="h-21 w-full" />
                     </div>
-                  ) : hasExistingUser && savedCards.length > 0 ? (
+                  ) : savedCards.length > 0 ? (
                     <>
                       {savedCards.map(card => (
                         <Label
@@ -1621,7 +1639,7 @@ const ModernCheckoutForm = forwardRef<
                   } else if (paymentMethod === "boleto") {
                     void handleInitiateBoleto();
                   } else {
-                    handleSubmit(onSubmit)();
+                    submitCardPayment();
                   }
                 }}
               >

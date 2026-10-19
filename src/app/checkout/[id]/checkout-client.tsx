@@ -221,6 +221,7 @@ export default function CheckoutClient({
               <ModernCheckoutForm
                 allowBoleto={allowBoleto}
                 hasExistingUser={userHasDomId}
+                isAuthenticated={!!user}
                 initialStep={initialStep}
                 installmentRates={rates?.installments}
                 invoiceId={invoice.id}
