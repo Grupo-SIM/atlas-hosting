@@ -12,7 +12,9 @@ type Fetcher = (
   init?: RequestInit
 ) => Promise<Response>;
 
-function normalizeDnsRecord<T extends CloudflareDnsRecordInput>(record: T): T {
+function normalizeDnsRecord<
+  T extends Pick<CloudflareDnsRecordInput, "content" | "type">,
+>(record: T): T {
   if (record.type !== "TXT") return record;
   const content = record.content;
   return {

@@ -137,6 +137,31 @@ describe("CloudflareApi", () => {
 });
 
 describe("Cloudflare TXT payloads", () => {
+  test("normalizes scanned records with nullable comments while preserving metadata", async () => {
+    const record = {
+      comment: null,
+      content: "v=spf1 ~all",
+      id: "record-1",
+      name: "example.com",
+      proxied: true,
+      ttl: 1,
+      type: "TXT" as const,
+    };
+    const api = new CloudflareApi("token", async (url, init) => {
+      expect(String(url)).toEndWith("/zones/zone-1/dns_records/scan/review");
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(String(init?.body))).toEqual({
+        accepts: [{ ...record, content: '"v=spf1 ~all"', proxied: false }],
+        rejects: [{ id: "rejected-1" }],
+      });
+      return json(null);
+    });
+
+    await api.reviewScannedRecords("zone-1", [record], ["rejected-1"]);
+    expect(record.content).toBe("v=spf1 ~all");
+    expect(record.proxied).toBe(true);
+  });
+
   test("quotes TXT on create and update, preserving existing quoted chunks", async () => {
     for (const content of ["v=spf1 ~all", '"v=spf1 ~all"', '"first" "second"', "", 'text with "quotes" and \\ backslash']) {
       const expected = content.startsWith('"') && content.endsWith('"')
