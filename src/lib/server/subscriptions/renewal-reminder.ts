@@ -29,7 +29,8 @@ export async function notifySubscriptionExpiring(
     user: { name: string | null; email: string };
   },
   daysLeft: number,
-  baseUrl: string
+  baseUrl: string,
+  options: { allowResend?: boolean } = {}
 ): Promise<boolean> {
   const user = sub.user;
   if (!user?.email) return false;
@@ -49,7 +50,7 @@ export async function notifySubscriptionExpiring(
   return db.transaction(async tx => {
     await tx.execute(sql`select id from vps_subscriptions where id = ${sub.id} for update`);
     const current = await tx.query.pgVpsSubscription.findFirst({ where: eq(pgVpsSubscription.id, sub.id) });
-    if (!current || current.status !== "active" || current.nextChargeDate.getTime() !== sub.nextChargeDate.getTime() || (current.config as any)?.renewalReminderSent?.[marker]) return false;
+    if (!current || current.status !== "active" || current.nextChargeDate.getTime() !== sub.nextChargeDate.getTime() || (!options.allowResend && (current.config as any)?.renewalReminderSent?.[marker])) return false;
     const currentInvoice = await tx.query.pgInvoice.findFirst({ where: eq(pgInvoice.id, invoice.id) });
     // Cobrança em andamento ou já paga não deve gerar pedido de pagamento.
     if (!currentInvoice || !["pending", "failed"].includes(currentInvoice.status) || (current.config as any)?.renewalCardUncertain) return false;

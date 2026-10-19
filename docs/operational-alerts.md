@@ -50,8 +50,8 @@ curl -X POST 'http://localhost:3000/api/internal/vps-subscriptions/renewal-email
 ```
 
 Resposta: `{ subscriptionId, daysLeft, sent }`. `sent: false` indica envio ignorado
-(por exemplo, lembrete já enviado naquele dia/ciclo ou assinatura alterada durante
-processamento). Compartilha proteção contra duplicação com o cron. SMTP aceito
+(por exemplo, assinatura alterada ou pagamento já realizado/em processamento).
+Envios manuais permitem reenvio no mesmo dia/ciclo; o cron mantém deduplicação. SMTP aceito
 não comprova entrega na caixa de entrada. Falhas de envio retornam HTTP 500 e não
 marcam lembrete como enviado. JSON inválido retorna 400; assinatura inexistente,
 404; inativa, sem destinatário ou com cobrança hoje/passada, 409.

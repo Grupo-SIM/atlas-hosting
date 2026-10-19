@@ -59,3 +59,19 @@ test("payment advancing cycle during reminder preparation prevents stale reminde
   expect(await notifySubscriptionExpiring(snapshot, 0, "https://atlas.example.test")).toBe(false);
   expect(sent).toHaveLength(0);
 });
+
+test("manual resend bypasses persisted checkpoint", async () => {
+  sub.config.renewalReminderSent = { [`${sub.nextChargeDate.toISOString()}:1`]: true };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    expect(await notifySubscriptionExpiring(sub, 1, "https://atlas.example.test", { allowResend: true })).toBe(true);
+  }
+  expect(sent).toHaveLength(2);
+});
+
+for (const status of ["paid", "processing"]) {
+  test(`manual resend still skips ${status} payment`, async () => {
+    invoice.status = status;
+    expect(await notifySubscriptionExpiring(sub, 1, "https://atlas.example.test", { allowResend: true })).toBe(false);
+    expect(sent).toHaveLength(0);
+  });
+}

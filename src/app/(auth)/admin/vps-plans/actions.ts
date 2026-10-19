@@ -260,10 +260,10 @@ export async function sendRenewalReminderAction(id: string) {
     if (daysLeft < 1) {
       return { status: "error", message: "A data de renovação precisa ser futura." } as const;
     }
-    const sent = await notifySubscriptionExpiring(sub, daysLeft, getServerPublicBaseUrl());
+    const sent = await notifySubscriptionExpiring(sub, daysLeft, getServerPublicBaseUrl(), { allowResend: true });
     return { status: sent ? "success" : "info", message: sent
       ? "Lembrete enviado ao cliente."
-      : "Envio ignorado: lembrete já enviado hoje ou assinatura alterada." } as const;
+      : "Envio ignorado: assinatura alterada ou pagamento já realizado/em processamento." } as const;
   } catch (error) {
     console.error(`[RENEWAL-EMAIL] Falha na assinatura ${id}:`, error);
     return { status: "error", message: "Não foi possível enviar o lembrete. Tente novamente." } as const;

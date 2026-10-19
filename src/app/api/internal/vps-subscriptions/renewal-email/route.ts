@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const sent = await notifySubscriptionExpiring(sub, daysLeft, getServerPublicBaseUrl());
+    const sent = await notifySubscriptionExpiring(sub, daysLeft, getServerPublicBaseUrl(), { allowResend: true });
     return NextResponse.json({ subscriptionId: sub.id, daysLeft, sent });
   } catch (error) {
     console.error(`[RENEWAL-EMAIL] Failed for subscription ${sub.id}:`, error);
