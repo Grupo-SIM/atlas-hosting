@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { firstRenewalDate, nextRenewalDate } from "@/lib/vps/renewal-date";
-import { daysUntilRenewal, renewalAttemptDay, renewalEmailMessage } from "./renewal-policy";
+import { daysUntilRenewal, RENEWAL_REMINDER_DAYS, renewalAttemptDay, renewalEmailMessage } from "./renewal-policy";
 
 describe("VPS renewal calendar", () => {
   const purchase = new Date("2026-10-22T18:00:00-03:00");
@@ -17,6 +17,11 @@ describe("VPS renewal calendar", () => {
   test("reminders use Recife calendar regardless of purchase time", () => {
     expect(daysUntilRenewal(renewal, new Date("2026-11-05T09:00:00-03:00"))).toBe(15);
     expect(daysUntilRenewal(renewal, new Date("2026-11-12T23:00:00-03:00"))).toBe(8);
+  });
+  test("reminder checkpoints include eve and renewal day in Recife", () => {
+    expect(RENEWAL_REMINDER_DAYS).toEqual([15, 8, 1, 0]);
+    expect(daysUntilRenewal(renewal, new Date("2026-11-20T02:59:59Z"))).toBe(1);
+    expect(daysUntilRenewal(renewal, new Date("2026-11-20T03:00:00Z"))).toBe(0);
   });
   test("email shows contract amount and period and escapes plan markup", () => {
     const html = renewalEmailMessage("Cloud VPS <script>", 126.49, 3, renewal);

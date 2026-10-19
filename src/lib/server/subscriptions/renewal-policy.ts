@@ -1,5 +1,5 @@
 export const DAY_MS = 86_400_000;
-export const RENEWAL_REMINDER_DAYS = [15, 8] as const;
+export const RENEWAL_REMINDER_DAYS = [15, 8, 1, 0] as const;
 
 export function daysUntilRenewal(date: Date, now = new Date()) {
   const civil = (value: Date) => Date.parse(`${value.toLocaleDateString("en-CA", { timeZone: "America/Recife" })}T00:00:00Z`);

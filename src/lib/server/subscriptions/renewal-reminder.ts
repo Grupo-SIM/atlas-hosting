@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { pgVpsSubscription } from "@/lib/db/schema";
+import { pgInvoice, pgVpsSubscription } from "@/lib/db/schema";
 import { sendNotificationEmail } from "@/lib/email/service";
 import { getStorageVpsPlan } from "@/lib/storage-vps-catalog";
 import { getVdsPlan } from "@/lib/vds-catalog";
@@ -38,7 +38,9 @@ export async function notifySubscriptionExpiring(
   const dayWord = daysLeft === 1 ? "dia" : "dias";
   const invoice = await ensureRenewalInvoice(sub);
   const severity = "warning";
-  const title = `Sua assinatura ${planLabel} renova em ${daysLeft} ${dayWord}`;
+  const title = daysLeft === 0
+    ? `Sua assinatura ${planLabel} renova hoje`
+    : `Sua assinatura ${planLabel} renova em ${daysLeft} ${dayWord}`;
   const plan = sub.planType === "vds" ? getVdsPlan(sub.planId) : sub.planType === "storage-vps" ? getStorageVpsPlan(sub.planId) : getCloudVpsPlan(sub.planId);
   const details = plan ? `${"cores" in plan ? plan.cores : plan.vcpu} · ${plan.ram} · ${plan.storage}` : undefined;
   const message = renewalEmailMessage(planLabel, sub.amountBrl, sub.intervalMonths, sub.nextChargeDate, details);
@@ -48,6 +50,9 @@ export async function notifySubscriptionExpiring(
     await tx.execute(sql`select id from vps_subscriptions where id = ${sub.id} for update`);
     const current = await tx.query.pgVpsSubscription.findFirst({ where: eq(pgVpsSubscription.id, sub.id) });
     if (!current || current.status !== "active" || current.nextChargeDate.getTime() !== sub.nextChargeDate.getTime() || (current.config as any)?.renewalReminderSent?.[marker]) return false;
+    const currentInvoice = await tx.query.pgInvoice.findFirst({ where: eq(pgInvoice.id, invoice.id) });
+    // Cobrança em andamento ou já paga não deve gerar pedido de pagamento.
+    if (!currentInvoice || !["pending", "failed"].includes(currentInvoice.status) || (current.config as any)?.renewalCardUncertain) return false;
     await sendNotificationEmail(
       user.email, (user.name || "Cliente").split(" ")[0], "Atlas Hosting", title, message, severity,
       `${baseUrl}/checkout/${invoice.id}?initialStep=payment`, "Pagar renovação", undefined, true,
