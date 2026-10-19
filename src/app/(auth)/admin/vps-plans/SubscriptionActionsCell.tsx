@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
+import { SendRenewalReminderButton } from "./components";
 import { createVpsRenewalInvoice } from "@/app/actions";
 import {
   AlertDialog,
@@ -55,7 +56,7 @@ export function SubscriptionActionsCell({
     });
   };
 
-  let primaryAction: React.ReactNode = null;
+  let primaryAction: ReactNode = null;
 
   if (canRenewPix) {
     primaryAction = (
@@ -153,7 +154,11 @@ export function SubscriptionActionsCell({
     </AlertDialog>
   );
 
-  if (!primaryAction && !cancelAction) {
+  const canSendReminder = status === "active" &&
+    new Date(nextChargeDate).toLocaleDateString("en-CA", { timeZone: "America/Recife" }) >
+    new Date().toLocaleDateString("en-CA", { timeZone: "America/Recife" });
+
+  if (!primaryAction && !cancelAction && !canSendReminder) {
     return <span className="text-muted-foreground text-sm">—</span>;
   }
 
@@ -161,6 +166,7 @@ export function SubscriptionActionsCell({
     <div className="flex items-center gap-2">
       {primaryAction}
       {cancelAction}
+      {canSendReminder && <SendRenewalReminderButton subscriptionId={id} />}
     </div>
   );
 }

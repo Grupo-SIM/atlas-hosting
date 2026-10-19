@@ -8,6 +8,9 @@ import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgInvoice, pgSystemConfig, pgVpsSubscription } from "@/lib/db/schema";
 import { savePaymentSettings } from "@/lib/server/payment-settings";
+import { daysUntilRenewal } from "@/lib/server/subscriptions/renewal-policy";
+import { notifySubscriptionExpiring } from "@/lib/server/subscriptions/renewal-reminder";
+import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { firstRenewalDate } from "@/lib/vps/renewal-date";
 
 export interface VpsPlanRow {
@@ -239,4 +242,30 @@ export async function backfillVpsSubscriptionsAction(): Promise<{
 
   revalidatePath("/admin/vps-plans");
   return { created, skipped };
+}
+
+export async function sendRenewalReminderAction(id: string) {
+  const admin = await getUser();
+  if (!admin?.isAdmin) return { status: "error", message: "Acesso não autorizado." } as const;
+
+  try {
+    const sub = await db.query.pgVpsSubscription.findFirst({
+      where: eq(pgVpsSubscription.id, id),
+      with: { user: true },
+    });
+    if (!sub || sub.status !== "active" || !sub.user?.email) {
+      return { status: "error", message: "Assinatura indisponível para envio de lembrete." } as const;
+    }
+    const daysLeft = daysUntilRenewal(sub.nextChargeDate);
+    if (daysLeft < 1) {
+      return { status: "error", message: "A data de renovação precisa ser futura." } as const;
+    }
+    const sent = await notifySubscriptionExpiring(sub, daysLeft, getServerPublicBaseUrl());
+    return { status: sent ? "success" : "info", message: sent
+      ? "Lembrete enviado ao cliente."
+      : "Envio ignorado: lembrete já enviado hoje ou assinatura alterada." } as const;
+  } catch (error) {
+    console.error(`[RENEWAL-EMAIL] Falha na assinatura ${id}:`, error);
+    return { status: "error", message: "Não foi possível enviar o lembrete. Tente novamente." } as const;
+  }
 }
