@@ -217,7 +217,7 @@ export async function GET(request: NextRequest) {
           process.env.PUBLIC_IP ??
           "desconhecido";
         return NextResponse.json(
-          { detectedIP: ip, error: "IP não autorizado na Namecheap" },
+          { detectedIP: ip, error: "Serviço de pesquisa de domínios indisponível" },
           { status: 403 }
         );
       }

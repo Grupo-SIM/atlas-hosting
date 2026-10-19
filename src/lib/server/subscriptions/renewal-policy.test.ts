@@ -24,5 +24,7 @@ describe("VPS renewal calendar", () => {
     expect(html).toContain("3 meses");
     expect(html).toContain("&lt;script&gt;");
     expect(html).not.toContain("<script>");
+    expect(html).toContain("Pague pelo link abaixo até o dia seguinte à data de renovação. Caso contrário, prosseguiremos com o cancelamento da VPS e consequente apagamento dos dados. Se houver cartão cadastrado, a cobrança automática será tentada na data de renovação e, se falhar, no dia seguinte.");
+    expect(html).not.toMatch(/contabo|namecheap|fornecedor|token/i);
   });
 });

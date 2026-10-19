@@ -27,7 +27,7 @@ export function DeleteDomainButton({ domainId, domainName, isExternal = false, h
         <DialogHeader>
           <DialogTitle>Apagar {domainName} do Atlas?</DialogTitle>
           <DialogDescription>
-            {hasManagedZone ? "A zona DNS e todos os registros gerenciados pelo Atlas serão apagados, junto do vínculo e das permissões no painel." : "O vínculo e as permissões do domínio serão removidos do painel. O DNS externo permanece no provedor atual."} A hospedagem e o registro no fornecedor não serão cancelados.
+            {hasManagedZone ? "A zona DNS e todos os registros gerenciados pelo Atlas serão apagados, junto do vínculo e das permissões no painel." : "O vínculo e as permissões do domínio serão removidos do painel. O DNS externo permanece no provedor atual."} A hospedagem e o registro do domínio não serão cancelados.
           </DialogDescription>
         </DialogHeader>
         {isExternal ? (

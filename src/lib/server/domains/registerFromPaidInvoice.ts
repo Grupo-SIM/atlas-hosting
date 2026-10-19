@@ -289,7 +289,7 @@ export async function registerDomainsFromPaidInvoice(
         );
         result.failed.push(DomainName);
         result.errors[DomainName] =
-          "Namecheap retornou Registered=false (verifique saldo/disponibilidade).";
+          "O registro do domínio não foi confirmado (verifique saldo/disponibilidade).";
         await notifyNamecheapActionFailureSafely(
           `registro do domínio ${DomainName}`,
           result.errors[DomainName]
@@ -320,7 +320,7 @@ export async function registerDomainsFromPaidInvoice(
           );
           result.failed.push(DomainName);
           result.errors[DomainName] =
-            `Domínio registrado na Namecheap, mas não foi possível vinculá-lo: ${reconciliationMessage}`;
+            `Domínio registrado, mas não foi possível vinculá-lo: ${reconciliationMessage}`;
           continue;
         }
       }

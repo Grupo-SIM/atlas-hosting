@@ -106,14 +106,14 @@ async function prepareDomain(
 ): Promise<PreparedDomain> {
   const registrarInfo = await dependencies.getRegistrarInfo(candidate.domain);
   if (!registrarInfo.IsOwner)
-    throw new Error("O domínio não pertence à conta Namecheap configurada.");
+    throw new Error("O domínio não pertence à conta de domínios configurada.");
   const modificationRights = registrarInfo.Modificationrights;
   if (
     modificationRights &&
     modificationRights.All !== true &&
     modificationRights.ChangeDNS !== true
   )
-    throw new Error("A Namecheap não permite alterar o DNS deste domínio.");
+    throw new Error("Não é permitido alterar o DNS deste domínio.");
   if (await dependencies.hasPublishedDsRecords(candidate.domain))
     throw new Error(
       "O domínio possui DNSSEC/registro DS publicado. Remova-o antes da migração."
@@ -121,7 +121,7 @@ async function prepareDomain(
 
   const zone = await dependencies.ensureZone(candidate.domain);
   if (zone.name_servers.length === 0)
-    throw new Error("A zona não recebeu nameservers da Cloudflare.");
+    throw new Error("A zona DNS não recebeu nameservers.");
 
   const existingRecords = await dependencies.listDnsRecords(zone.id);
   const scanStarted = existingRecords.length === 0;
@@ -186,11 +186,11 @@ async function finalizeDomain(
 
   const provisioningMessage = nameserversAlreadyMatch
     ? "Zona configurada; os nameservers já estavam corretos."
-    : "Zona configurada e nameservers enviados à Namecheap.";
+    : "Zona configurada e nameservers atualizados no registro do domínio.";
   if (nameserversAlreadyMatch && zone.status === "active")
     return {
       domain: candidate.domain,
-      message: `${provisioningMessage} Zona ativa confirmada pela Cloudflare.`,
+      message: `${provisioningMessage} Ativação da zona DNS confirmada.`,
       status: "success",
     };
   return { prepared, provisioningMessage };
@@ -261,7 +261,7 @@ async function monitorCloudflareActivation(
             });
             results.set(candidate.id, {
               domain: candidate.domain,
-              message: `${pendingDomain.provisioningMessage} Zona ativa confirmada pela Cloudflare.`,
+              message: `${pendingDomain.provisioningMessage} Ativação da zona DNS confirmada.`,
               status: "success",
             });
             pending.delete(candidate.id);
@@ -270,7 +270,7 @@ async function monitorCloudflareActivation(
 
           if (zone.status === "moved") {
             const message =
-              "A Cloudflare marcou a zona como moved após verificar a delegação.";
+              "A zona DNS foi marcada como movida após verificar a delegação.";
             await dependencies.updateDomain(candidate.id, {
               cloudflareZoneStatus: zone.status,
               connectionStatus: "error",
@@ -343,7 +343,7 @@ async function monitorCloudflareActivation(
   await Promise.all(
     [...pending.values()].map(async pendingDomain => {
       const { candidate } = pendingDomain.prepared;
-      const message = `A zona não foi ativada pela Cloudflare dentro de ${Math.floor(waitMilliseconds / 1000)} segundos.`;
+      const message = `A zona DNS não foi ativada dentro de ${Math.floor(waitMilliseconds / 1000)} segundos.`;
       try {
         await dependencies.updateDomain(candidate.id, {
           connectionStatus: "awaiting_activation",
@@ -432,7 +432,7 @@ export const defaultNamecheapCloudflareProvisioningDependencies: NamecheapCloudf
     async setNameservers(domain, nameservers) {
       const registrar = REGISTRAR_ADAPTERS.get("namecheap");
       if (!registrar)
-        throw new Error("Integração com a Namecheap indisponível.");
+        throw new Error("Integração de registro de domínios indisponível.");
       await registrar.setNameservers(domain, nameservers);
     },
     sleep: milliseconds =>

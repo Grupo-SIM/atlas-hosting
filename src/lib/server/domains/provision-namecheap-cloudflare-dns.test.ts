@@ -165,7 +165,7 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
       {
         domain: "example.com",
         message:
-          "Zona configurada e nameservers enviados à Namecheap. Zona ativa confirmada pela Cloudflare.",
+          "Zona configurada e nameservers atualizados no registro do domínio. Ativação da zona DNS confirmada.",
         status: "success",
       },
     ]);
@@ -294,7 +294,7 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
     );
 
     expect(outsideResult.message).toContain("não pertence");
-    expect(restrictedResult.message).toContain("não permite alterar");
+    expect(restrictedResult.message).toContain("Não é permitido alterar");
     expect(outside.calls.some(call => call.startsWith("nameservers:"))).toBe(
       false
     );
@@ -430,7 +430,7 @@ describe("manual Namecheap to Cloudflare provisioning", () => {
     );
 
     expect(result.status).toBe("error");
-    expect(result.message).toContain("moved");
+    expect(result.message).toContain("movida");
     expect(fake.patches.at(-1)?.patch).toEqual(
       expect.objectContaining({
         cloudflareZoneStatus: "moved",

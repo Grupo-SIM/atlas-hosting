@@ -38,7 +38,7 @@ const namecheapAdapter: RegistrarAdapter = {
       TLD: tld,
     });
     if (!response.Updated)
-      throw new Error("A Namecheap não confirmou a alteração dos nameservers.");
+      throw new Error("A alteração dos nameservers não foi confirmada.");
   },
 };
 

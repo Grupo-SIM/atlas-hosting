@@ -383,7 +383,7 @@ export async function GET(request: Request) {
               if (error instanceof Error && error.message.match(/^\d+$/)) {
                 // Check if error.message is a Namecheap error code
                 errorDetails = {
-                  message: "Erro da API Namecheap.",
+                  message: "Erro ao configurar DNS.",
                   namecheapErrorCode: error.message,
                 };
                 status = 400; // Bad request due to API constraints typically

@@ -162,4 +162,22 @@ describe("VPS plan renewal lifecycle", () => {
     expect(attempts).toBe(0);
     expect(cancellations).toHaveLength(0);
   });
+  test("missing VPS link keeps cancellation pending instead of reporting success", async () => {
+    sub.paymentMethod = "pix";
+    sub.vpsNode = null;
+    expect(await processRenewal("sub", invoice as Invoice, async () => {}, secondDay)).toBe("cancellation-error");
+    expect(sub.status).toBe("active");
+    expect(sub.config.renewalCancellationPending).toBe(true);
+    expect(sub.config.renewalCancellation).toBeUndefined();
+    expect(cancellations).toHaveLength(0);
+  });
+  test("stale invoice from an already renewed cycle cannot charge or cancel current cycle", async () => {
+    await applyRenewalPayment(invoice as Invoice, "pix");
+    const renewedDate = sub.nextChargeDate.toISOString();
+    let charges = 0;
+    expect(await processRenewal("sub", invoice as Invoice, async () => { charges++; }, secondDay)).toBe("skipped");
+    expect(sub.nextChargeDate.toISOString()).toBe(renewedDate);
+    expect(charges).toBe(0);
+    expect(cancellations).toHaveLength(0);
+  });
 });

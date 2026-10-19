@@ -47,7 +47,7 @@ export async function reconcileCloudflareActivation(
           : "awaiting_activation";
     const lastDnsError =
       zone.status === "moved"
-        ? "A zona foi movida na Cloudflare. Configure novamente o DNS do domínio."
+        ? "A zona DNS foi movida. Configure novamente o DNS do domínio."
         : null;
 
     if (connectionStatus === "awaiting_activation") {

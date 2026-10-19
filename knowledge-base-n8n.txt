@@ -315,7 +315,7 @@ Cloud VPS 18 Windows:
 ================================================================================
 12. DOMÍNIOS E DNS: PROCEDIMENTOS PELO PAINEL
 ================================================================================
-DNS gerenciado Atlas usa Cloudflare; registrador é quem mantém o registro do domínio. DNS externo permanece no provedor atual, e o Atlas mostra somente registros públicos detectáveis. DNS público não permite listar toda a zona, especialmente subdomínios desconhecidos. Hospedagem, registro do domínio e DNS são serviços distintos.
+DNS gerenciado Atlas oferece gestão de zonas DNS; registrador é quem mantém o registro do domínio. DNS externo permanece no provedor atual, e o Atlas mostra somente registros públicos detectáveis. DNS público não permite listar toda a zona, especialmente subdomínios desconhecidos. Hospedagem, registro do domínio e DNS são serviços distintos.
 
 Adicionar domínio externo e verificar posse:
 1. Acessar Domínios e adicionar o nome completo, sem URL/caminho.
@@ -329,7 +329,7 @@ Migrar para DNS gerenciado Atlas:
 3. Revisar todos os registros encontrados pelo scan. Scan automático não garante inventário completo. Complementar manualmente ou importar arquivo BIND (até 256 KiB).
 4. Conferir A/AAAA de site e subdomínios, CNAME, MX do e-mail, TXT de SPF/DKIM/DMARC e verificações, SRV/CAA quando utilizados. Preservar prioridades MX, valores completos e endereços reais. Não apagar registros desconhecidos sem entender sua finalidade. Evitar proxy em registros destinados a e-mail; seguir os valores exigidos pelo provedor.
 5. Se DNSSEC estiver ativo no registrador, remover/desativar o DS antigo antes da troca, conforme procedimento do registrador. DS antigo apontando para chaves de outra zona pode causar SERVFAIL. O Atlas não publica DS automaticamente; não prometer ativação DNSSEC pelo painel.
-6. Após concluir revisão, seguir os nameservers exibidos pelo Atlas. Para domínio externo, entrar no registrador original, remover nameservers antigos e cadastrar somente os atribuídos à zona. Não adivinhar endereços nem reutilizar nameservers de outro domínio. Para domínio registrado pelo Atlas na Namecheap, a delegação é feita pelo Atlas após revisão, quando o fluxo oferece essa ação.
+6. Após concluir revisão, seguir os nameservers exibidos pelo Atlas. Para domínio externo, entrar no registrador original, remover nameservers antigos e cadastrar somente os atribuídos à zona. Não adivinhar endereços nem reutilizar nameservers de outro domínio. Para domínio registrado pelo Atlas, a delegação é feita pelo Atlas após revisão, quando o fluxo oferece essa ação.
 7. Voltar aos detalhes e verificar a ativação. Enquanto aparecer aguardando nameservers/ativação, conferir delegação e DNSSEC. Propagação depende do registrador, TTL e cache dos resolvedores; não garantir ativação imediata ou prazo universal.
 8. Validar site e e-mail depois da troca. Manter zona antiga durante transição até confirmar que os serviços funcionam.
 
@@ -342,8 +342,8 @@ Status conectado comprova delegação da zona; não comprova configuração do s
 Excluir domínio:
 1. Em Domínios, usar Excluir e ler o modal com consequências. A ação pertence ao dono real da organização; não pode ser executada por acesso como cliente/impersonação.
 2. Para domínio externo com DNS gerenciado, preparar registros no novo DNS e trocar nameservers no registrador original ANTES de excluir. Sem isso, site e e-mail podem parar de resolver. A confirmação permite prosseguir sem comprovação da troca; responsabilidade de revisar permanece com quem confirma.
-3. Confirmar exclusão. Atlas apaga primeiro a zona Cloudflare e depois o vínculo e permissões locais. Zona já ausente conta como sucesso. Se a Cloudflare falhar, vínculo permanece e usuário pode tentar novamente. Se apenas a limpeza local falhar após apagar DNS, tentar novamente; zona não será restaurada automaticamente.
-4. Exclusão não apaga hospedagem, VPS ou registro no fornecedor; não cancela registro do domínio. Histórico financeiro e transferências permanece preservado.
+3. Confirmar exclusão. Atlas apaga primeiro a zona DNS gerenciada e depois o vínculo e permissões locais. Zona já ausente conta como sucesso. Se a exclusão da zona DNS falhar, vínculo permanece e usuário pode tentar novamente. Se apenas a limpeza local falhar após apagar DNS, tentar novamente; zona não será restaurada automaticamente.
+4. Exclusão não apaga hospedagem, VPS ou registro do domínio; não cancela registro do domínio. Histórico financeiro e transferências permanece preservado.
 
 Bloqueios de exclusão:
 Domínio comprado não pode ser excluído enquanto a vigência paga estiver válida, houver recorrência/renovação automática ativa ou renovação pendente. Renovação manual também pode ter vigência paga válida. Transferência de conta em andamento bloqueia exclusão. Resolver o motivo mostrado antes de repetir; não oferecer exclusão como modo de cancelar registro ou interromper cobrança.
@@ -370,7 +370,7 @@ Operação administrativa:
 6. Cartão renova automaticamente somente com recorrência realmente ativa. PIX, boleto e cartão sem recorrência ativa exigem renovação manual. Renovação mantém preço e período contratados; desconto de voucher da fatura inicial não se repete.
 
 Cliente:
-Abrir link, conferir plano, período e valor da fatura; escolher pagamento permitido e concluir checkout. Consultar Faturas para verificar situação. Fatura pendente/processando não comprova contratação concluída. Após confirmação, consultar Minhas Assinaturas e Hospedagem; provisionamento pode continuar em processamento até fornecedor atribuir servidor/IP. Não prometer disponibilização instantânea nem prazo fixo. Não contratar novamente para tentar acelerar pedido em processamento.
+Abrir link, conferir plano, período e valor da fatura; escolher pagamento permitido e concluir checkout. Consultar Faturas para verificar situação. Fatura pendente/processando não comprova contratação concluída. Após confirmação, consultar Minhas Assinaturas e Hospedagem; provisionamento pode continuar em processamento até a infraestrutura atribuir servidor/IP. Não prometer disponibilização instantânea nem prazo fixo. Não contratar novamente para tentar acelerar pedido em processamento.
 
 Cancelar link:
 Em Links de pagamento, cancelar link ainda disponível invalida a fatura não paga. Se pagamento já foi iniciado (PIX/boleto emitido ou operação no gateway), cancelar exige conciliação prévia: não presumir que ainda pendente significa que cliente não pode pagar. Não apagar evidência de cobrança nem prometer estorno automático. Link pago já foi utilizado; cancelá-lo não é cancelamento da assinatura.

@@ -43,3 +43,8 @@ Procedimentos do cliente e limites reais ficam em `knowledge-base-n8n.txt`; conf
 - Checkout é reutilizado dentro do ciclo. Pagamento confirmado mantém aniversário original e avança período contratado, independentemente de Pix/cartão/boleto/voucher. Reconciliação no servidor também cobre renovações Pix VPS com checkout fechado, inclusive após agendamento do cancelamento. Cobranças de cartão pendentes com ID retornado pelo gateway continuam sendo conciliadas após esse agendamento.
 - Pagamento confirmado após agendamento do cancelamento registra necessidade de retirada manual e envia email emergencial para `EMERGENCY_ALERT_EMAILS` (fallback `DOMAIN_EMAIL`), com nome e ID da instância na Contabo. API pública não oferece retirada automática de cancelamento de VPS. Falha SMTP mantém alerta pendente para nova tentativa; pagamento permanece reconhecido.
 - Cancelamento executado pela Contabo não é reversível pelo pagamento: alerta exige conferir existência da instância antes de prometer continuidade do serviço.
+
+## Comunicação da marca
+
+- Telas, emails e avisos voltados ao cliente usam a marca Atlas, sem identificar fornecedores de infraestrutura ou registro. Telas administrativas, alertas internos e identificadores técnicos das integrações podem referenciar fornecedores.
+- Lembrete de renovação informa prazo até o dia seguinte à renovação, cancelamento da VPS e consequente apagamento dos dados em caso de inadimplência, além das tentativas automáticas com cartão cadastrado na renovação e no dia seguinte.

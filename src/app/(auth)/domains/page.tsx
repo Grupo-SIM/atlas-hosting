@@ -122,7 +122,7 @@ async function recoverNamecheapDomain(domain: {
     expiryDate: Number.isNaN(expires.getTime())
       ? "Indisponível"
       : format(expires, "dd/MM/yyyy", { locale: ptBR }),
-    features: ["Dados recuperados da Namecheap"],
+    features: ["Dados do registro recuperados"],
     id: domain.id,
     isExternal: false,
     isLocked: item.IsLocked,
@@ -231,7 +231,7 @@ export default async function MyDomainsPage() {
           const d = await getNamecheapDomainInfo(domain.domain);
           const inventory = await namecheapApi.getList({ Page: 1, PageSize: 100, SearchTerm: domain.domain });
           const registration = inventory.Domains.find(item => item.Name.toLowerCase() === domain.domain.toLowerCase());
-          if (!registration) throw new Error("Registro não encontrado no inventário da Namecheap.");
+          if (!registration) throw new Error("Registro não encontrado no inventário de domínios.");
 
           return {
             ...getRegistrarDates(d.CreatedDate, d.ExpireDate),

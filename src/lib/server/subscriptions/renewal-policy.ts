@@ -13,7 +13,7 @@ export function escapeEmailHtml(value: string) {
 
 export function renewalEmailMessage(plan: string, amount: number, months: number, date: Date, details?: string) {
   const safePlan = escapeEmailHtml(plan);
-  return `Sua assinatura <strong>${safePlan}</strong> está pendente de renovação.${details ? `<br>${escapeEmailHtml(details)}` : ""}<br><br>Valor: <strong>${amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong><br>Período: <strong>${months} ${months === 1 ? "mês" : "meses"}</strong><br>Renovação: <strong>${date.toLocaleDateString("pt-BR")}</strong><br><br>Pague pelo link abaixo até o dia seguinte à data de renovação (véspera da cobrança do fornecedor). Sem pagamento confirmado, solicitaremos o cancelamento da VPS na Contabo para evitar uma nova cobrança do fornecedor. Se houver cartão com token cadastrado, a cobrança automática será tentada na data de renovação e, se falhar, no dia seguinte.`;
+  return `Sua assinatura <strong>${safePlan}</strong> está pendente de renovação.${details ? `<br>${escapeEmailHtml(details)}` : ""}<br><br>Valor: <strong>${amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong><br>Período: <strong>${months} ${months === 1 ? "mês" : "meses"}</strong><br>Renovação: <strong>${date.toLocaleDateString("pt-BR")}</strong><br><br>Pague pelo link abaixo até o dia seguinte à data de renovação. Caso contrário, prosseguiremos com o cancelamento da VPS e consequente apagamento dos dados. Se houver cartão cadastrado, a cobrança automática será tentada na data de renovação e, se falhar, no dia seguinte.`;
 }
 
 /** Uma tentativa por data civil de Recife; nunca três tentativas no mesmo dia. */
