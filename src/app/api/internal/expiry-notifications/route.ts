@@ -1,15 +1,12 @@
-import { and, eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { pgOrganizationDomains, pgVpsSubscription } from "@/lib/db/schema";
-import { ensureRenewalInvoice } from "@/lib/server/subscriptions/renewal-invoice";
-import { daysUntilRenewal, renewalEmailMessage, RENEWAL_REMINDER_DAYS } from "@/lib/server/subscriptions/renewal-policy";
+import { notifySubscriptionExpiring } from "@/lib/server/subscriptions/renewal-reminder";
+import { daysUntilRenewal, RENEWAL_REMINDER_DAYS } from "@/lib/server/subscriptions/renewal-policy";
 import { sendNotificationEmail } from "@/lib/email/service";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
-import { getStorageVpsPlan } from "@/lib/storage-vps-catalog";
-import { getVdsPlan } from "@/lib/vds-catalog";
-import { getCloudVpsPlan } from "@/lib/vps-catalog";
 
 const ADMIN_NOTIFY_EMAIL = "jbmidiadigital@gmail.com";
 
@@ -24,57 +21,6 @@ function ensureAuthorized(req: Request): boolean {
 
 function daysUntil(date: Date): number {
   return Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
-}
-
-const PLAN_TYPE_LABEL: Record<string, string> = {
-  "storage-vps": "Storage VPS",
-  vds: "Cloud VDS",
-  vps: "Cloud VPS",
-  "vps-windows": "VPS Windows",
-};
-
-function planDisplayName(planType: string, planId: string): string {
-  if (planType === "vds") return getVdsPlan(planId)?.name || planId;
-  if (planType === "storage-vps")
-    return getStorageVpsPlan(planId)?.name || planId;
-  if (planType === "vps-windows")
-    return `${getCloudVpsPlan(planId)?.name || planId} Windows`;
-  return getCloudVpsPlan(planId)?.name || planId;
-}
-
-async function notifySubscriptionExpiring(
-  sub: typeof pgVpsSubscription.$inferSelect & {
-    user: { name: string | null; email: string };
-  },
-  daysLeft: number,
-  baseUrl: string
-): Promise<void> {
-  const user = sub.user;
-  if (!user?.email) return;
-
-  const planLabel = `${PLAN_TYPE_LABEL[sub.planType] || sub.planType} — ${planDisplayName(sub.planType, sub.planId)}`;
-  const dayWord = daysLeft === 1 ? "dia" : "dias";
-  const invoice = await ensureRenewalInvoice(sub);
-  const severity = "warning";
-  const title = `Sua assinatura ${planLabel} renova em ${daysLeft} ${dayWord}`;
-  const plan = sub.planType === "vds" ? getVdsPlan(sub.planId) : sub.planType === "storage-vps" ? getStorageVpsPlan(sub.planId) : getCloudVpsPlan(sub.planId);
-  const details = plan ? `${"cores" in plan ? plan.cores : plan.vcpu} · ${plan.ram} · ${plan.storage}` : undefined;
-  const message = renewalEmailMessage(planLabel, sub.amountBrl, sub.intervalMonths, sub.nextChargeDate, details);
-
-  const marker = `${sub.nextChargeDate.toISOString()}:${daysLeft}`;
-  await db.transaction(async tx => {
-    await tx.execute(sql`select id from vps_subscriptions where id = ${sub.id} for update`);
-    const current = await tx.query.pgVpsSubscription.findFirst({ where: eq(pgVpsSubscription.id, sub.id) });
-    if (!current || current.status !== "active" || current.nextChargeDate.getTime() !== sub.nextChargeDate.getTime() || (current.config as any)?.renewalReminderSent?.[marker]) return;
-    await sendNotificationEmail(
-      user.email, (user.name || "Cliente").split(" ")[0], "Atlas Hosting", title, message, severity,
-      `${baseUrl}/checkout/${invoice.id}?initialStep=payment`, "Pagar renovação", undefined, true,
-    );
-    await tx.update(pgVpsSubscription).set({
-      config: sql`jsonb_set(${pgVpsSubscription.config}::jsonb, '{renewalReminderSent}', coalesce(${pgVpsSubscription.config}::jsonb->'renewalReminderSent', '{}'::jsonb) || jsonb_build_object(${marker}::text, true))::json`,
-    }).where(eq(pgVpsSubscription.id, sub.id));
-  });
-
 }
 
 async function notifyDomainExpiring(
@@ -136,8 +82,7 @@ export async function POST(req: Request) {
     if (!RENEWAL_REMINDER_DAYS.some(day => day === daysLeft)) continue;
     if ((sub.config as any)?.renewalReminderSent?.[`${sub.nextChargeDate.toISOString()}:${daysLeft}`]) continue;
     try {
-      await notifySubscriptionExpiring(sub as any, daysLeft, baseUrl);
-      subscriptionsNotified++;
+      if (await notifySubscriptionExpiring(sub as any, daysLeft, baseUrl)) subscriptionsNotified++;
     } catch (err) {
       console.error(
         `[EXPIRY-CRON] Falha ao notificar assinatura ${sub.id}:`,

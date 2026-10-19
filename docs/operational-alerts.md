@@ -33,3 +33,25 @@ O fluxo de renovação VPS usa os mesmos destinatários `EMERGENCY_ALERT_EMAILS`
 A pendência fica em `vps_subscriptions.config.renewalCancellation.withdrawalRequired`; `alertSentAt` indica envio SMTP aceito, não execução da retirada. Erros SMTP são retentados pelo agendador. Sem `vpsNodeId`/ID Contabo, cancelamento não é presumido: consulte logs de falha operacional e recupere o vínculo correto.
 
 Prévia local dos emails: `bun scripts/render-renewal-email.ts` gera `docs/examples/vps-renewal-15-days.html` e `vps-renewal-8-days.html`, sem enviar mensagens nem criar cobranças. Link da prévia é ilustrativo.
+
+### Envio manual de lembrete de renovação
+
+`POST /api/internal/vps-subscriptions/renewal-email` aceita JSON com `subscriptionId`
+e Bearer `CRON_SECRET`, `API_MACHINE_INTERNAL_TOKEN` ou `INTERNAL_SERVICE_TOKEN`.
+Envia somente para o titular da assinatura indicada, ativa e com cobrança futura,
+usando os dias restantes no calendário de Recife, mesmo fora dos checkpoints 15/8.
+Reutiliza/cria checkout de renovação; não executa cobrança automática.
+
+```sh
+curl -X POST 'http://localhost:3000/api/internal/vps-subscriptions/renewal-email' \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  -H 'Content-Type: application/json' \
+  -d '{"subscriptionId":"SUBSCRIPTION_ID"}'
+```
+
+Resposta: `{ subscriptionId, daysLeft, sent }`. `sent: false` indica envio ignorado
+(por exemplo, lembrete já enviado naquele dia/ciclo ou assinatura alterada durante
+processamento). Compartilha proteção contra duplicação com o cron. SMTP aceito
+não comprova entrega na caixa de entrada. Falhas de envio retornam HTTP 500 e não
+marcam lembrete como enviado. JSON inválido retorna 400; assinatura inexistente,
+404; inativa, sem destinatário ou com cobrança hoje/passada, 409.
