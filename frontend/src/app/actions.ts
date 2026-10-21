@@ -1341,13 +1341,16 @@ async function settleNonCardInvoice(
 
     if (!fulfillment.ok) return false;
 
-    after(async () => {
-      await sendWelcomePasswordEmailIfGuest(invoice, user);
-      await triggerPurchaseNotifications(invoice, user, {
-        ...billing,
-        paymentMethod: method,
-      });
-    });
+    // A conciliação também roda fora de uma requisição HTTP (sem after()).
+    await sendWelcomePasswordEmailIfGuest(invoice, user).catch(error =>
+      console.error(`${logPrefix} Falha no email da fatura ${invoice.id}:`, error)
+    );
+    await triggerPurchaseNotifications(invoice, user, {
+      ...billing,
+      paymentMethod: method,
+    }).catch(error =>
+      console.error(`${logPrefix} Falha na notificação da fatura ${invoice.id}:`, error)
+    );
 
     return true;
   }
@@ -1819,26 +1822,14 @@ async function verifySimpayPixCompleted(
   paymentId: string,
   transactionId?: string
 ): Promise<boolean> {
-  const simApi = (process.env.SIMPAY_API_URL ?? "").replace(/\/+$/, "");
-
-  if (simApi) {
-    // Versões diferentes do back-Simpay devolveram o ID da DOM em campos
-    // distintos. Consultamos ambos para reconciliar cobranças antigas também.
-    const directIds = [...new Set([transactionId, paymentId].filter(Boolean))];
-    for (const directId of directIds) {
-      try {
-        const directRes = await fetch(
-          `${simApi}/atlas/payments/pix-status/${directId}`
-        );
-        if (directRes.ok) {
-          const directData = (await directRes.json()) as { status?: string };
-          if (isApprovedPaymentStatus(directData.status)) {
-            return true;
-          }
-        }
-      } catch {
-        /* tenta o outro ID e depois o status persistido na Simpay */
-      }
+  // Mesmo host e credenciais da criação, incluindo ATLAS_SIMPAY_API_URL.
+  const directIds = [...new Set([transactionId, paymentId].filter(Boolean))];
+  for (const directId of directIds) {
+    try {
+      const remote = await simpayApi.getPixPaymentStatus(directId!);
+      if (isApprovedPaymentStatus(remote.status)) return true;
+    } catch {
+      /* tenta o outro ID e depois o status persistido na Simpay */
     }
   }
 

@@ -42,6 +42,18 @@ describe("PIX domain reconciliation candidate", () => {
     ).toBe(true);
   });
 
+  test("keeps reconciling a PIX paid one hour and fifty-four minutes later", () => {
+    const pending = invoice({
+      metadata: {
+        ...invoice().metadata,
+        pixCreatedAt: "2026-08-13T17:25:00-03:00",
+      },
+    });
+    expect(shouldReconcilePixDomainInvoice(pending, new Date("2026-08-13T19:19:00-03:00"))).toBe(true);
+    // A confirmação pode chegar depois do vencimento local da fatura.
+    expect(shouldReconcilePixDomainInvoice({ ...pending, status: "expired" }, new Date("2026-08-14T19:19:00-03:00"))).toBe(true);
+  });
+
   test("reconciles VPS renewal without an open checkout", () => {
     expect(shouldReconcilePixDomainInvoice(invoice({ type: "vps", metadata: { ...invoice().metadata, vpsId: "4", config: { duration: "1" }, isRenewal: true, subscriptionId: "sub" } }), now)).toBe(true);
   });

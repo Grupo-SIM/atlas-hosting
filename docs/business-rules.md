@@ -48,3 +48,9 @@ Procedimentos do cliente e limites reais ficam em `knowledge-base-n8n.txt`; conf
 
 - Telas, emails e avisos voltados ao cliente usam a marca Atlas, sem identificar fornecedores de infraestrutura ou registro. Telas administrativas, alertas internos e identificadores técnicos das integrações podem referenciar fornecedores.
 - Lembrete de renovação informa prazo até o dia seguinte à renovação, cancelamento da VPS e consequente apagamento dos dados em caso de inadimplência, além das tentativas automáticas com cartão cadastrado na renovação e no dia seguinte.
+
+## Pagamentos Pix
+
+- `dueDate` no Atlas corresponde à coluna `due_date`: vencimento da fatura, distinto da expiração da cobrança no gateway. Novas faturas de domínio vencem em 24 horas; a integração Atlas na SimIntPay também solicita Pix com validade de 24 horas a partir da emissão da cobrança.
+- Detecção no checkout permanece ativa durante as 24 horas do Pix, sem corte aos 15 minutos. Servidor concilia com checkout fechado e consulta o mesmo host configurado para criar a cobrança.
+- Vencimento local não descarta dinheiro recebido: confirmação do gateway continua elegível para conciliação mesmo em fatura expirada. Entrega exige confirmação no servidor e reserva em banco contra processamento paralelo.

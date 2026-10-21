@@ -309,6 +309,17 @@ class SimpayApi {
     return data as SimpayPixCreateResponse;
   }
 
+  async getPixPaymentStatus(paymentId: string): Promise<{ status: string }> {
+    const response = await fetch(
+      `${resolveSimpayBaseUrl()}/atlas/payments/pix-status/${encodeURIComponent(paymentId)}`,
+      { headers: this.headers, method: "GET" }
+    );
+    if (!response.ok) {
+      throw new Error(`Erro ao consultar status PIX (HTTP ${response.status})`);
+    }
+    return response.json();
+  }
+
   async getPaymentStatus(
     paymentId: string
   ): Promise<{ paymentId: string; status: string }> {

@@ -231,6 +231,7 @@ const ModernCheckoutForm = forwardRef<
     const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
     const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
     const [pixSession, setPixSession] = useState<{
+      expiresAt: number;
       pix_qrcode: string;
       pix_content: string;
       paymentId: string;
@@ -473,6 +474,7 @@ const ModernCheckoutForm = forwardRef<
         });
         if (res.status === "success") {
           setPixSession({
+            expiresAt: Date.now() + 24 * 60 * 60 * 1000,
             paymentId: res.paymentId,
             pix_content: res.pix_content,
             pix_qrcode: res.pix_qrcode,
@@ -1098,7 +1100,8 @@ const ModernCheckoutForm = forwardRef<
           es?.close();
           setIsVerifyingPayment(false);
         },
-        15 * 60 * 1000
+        // SimIntPay solicita 24 horas de validade para cobranças PIX Atlas.
+        Math.max(0, pixSession.expiresAt - Date.now())
       );
 
       return () => {
