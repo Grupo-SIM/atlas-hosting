@@ -25,6 +25,7 @@ import {
 // import { db } from "@/lib/db"; // Keep if plansTable is still used from DB
 // import { plansTable, Plan } from "@/lib/db/schema"; // Keep if used
 import { getUser } from "@/lib/auth";
+import { shouldRefreshDomainConnection } from "@/lib/domains/connection-state";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 import { getRegistrarDates } from "@/lib/server/domains/registrar-dates";
 import {
@@ -70,11 +71,11 @@ function getExternalDomainDnsFeature(domain: {
     return "DNS gerenciado pelo Atlas";
   }
 
-  if (
-    domain.connectionStatus === "awaiting_nameservers" ||
-    domain.connectionStatus === "awaiting_activation"
-  ) {
+  if (domain.connectionStatus === "awaiting_nameservers") {
     return "Aguardando troca de nameservers";
+  }
+  if (domain.connectionStatus === "awaiting_activation") {
+    return "Aguardando ativação do DNS";
   }
 
   return "DNS em configuração no Atlas";
@@ -182,15 +183,7 @@ export default async function MyDomainsPage() {
   const hasDomains = user.organization.domains.length > 0;
   const domainsAwaitingCloudflare = new Set(
     user.organization.domains
-      .filter(
-        domain =>
-          domain.active &&
-          domain.registrarProvider !== "namecheap" &&
-          domain.dnsMode === "cloudflare" &&
-          domain.cloudflareZoneId &&
-          (domain.connectionStatus === "awaiting_nameservers" ||
-            domain.connectionStatus === "awaiting_activation")
-      )
+      .filter(shouldRefreshDomainConnection)
       .map(domain => domain.id)
   );
 

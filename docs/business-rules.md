@@ -9,6 +9,8 @@
 - Recuperação externa exige adicionar novamente, verificar posse e recriar DNS. Não há restauração automática de registros. Recuperação de comprado expirado depende do registrador; disponibilidade, preço e prazo não são garantidos.
 - DNS externo permite consulta pública parcial. Migração exige revisar registros antes da delegação; scan não garante zona completa. DS/DNSSEC antigo deve ser resolvido antes de trocar nameservers.
 
+- Lista e detalhes acompanham automaticamente a ativação DNS tanto de domínios comprados quanto externos. Nameservers configurados no registrador e zona DNS ativa são etapas distintas: `awaiting_nameservers` pede troca; `awaiting_activation` informa ativação pendente. Apenas zona confirmada como `active` aparece conectada.
+
 ## Assinaturas, usuários e links VPS
 
 - Tabela, PDF e filtros de usuários mostram os métodos de cobrança de todas as assinaturas vigentes: cartão de crédito, PIX, boleto e voucher. Usuário com vários métodos aparece em cada filtro correspondente. Assinaturas expiradas ou canceladas não contam; sem assinatura vigente aparece como Sem assinatura.

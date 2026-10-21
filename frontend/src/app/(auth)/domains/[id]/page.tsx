@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { shouldRefreshDomainConnection } from "@/lib/domains/connection-state";
 import { pgOrganizationDomains } from "@/lib/db/schema";
 import {
   type CloudflareDnsRecord,
@@ -20,6 +21,7 @@ import {
 import { formatAtlasDnsError } from "@/lib/server/domains/cloudflare-dns";
 import { discoverPublicDnsRecords } from "@/lib/server/domains/public-dns";
 import { DnsRecordsManager } from "../../dns/components/DnsRecordManager";
+import { DomainConnectionRecovery } from "../components/DomainConnectionRecovery";
 import { DomainDnsControls } from "./DomainDnsControls";
 import { DomainDnsSetupDialog } from "./DomainDnsSetupDialog";
 
@@ -88,6 +90,9 @@ export default async function DomainDetailsPage({
 
   return (
     <div className="space-y-6 p-4 pb-16 md:p-6">
+      {isAtlasPurchasedDomain && shouldRefreshDomainConnection(domain) && (
+        <DomainConnectionRecovery domainId={domain.id} />
+      )}
       <div className="flex items-start gap-4">
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-3">
@@ -131,7 +136,12 @@ export default async function DomainDetailsPage({
               <p className="text-muted-foreground text-sm">Modo DNS</p>
               <p className="font-medium">
                 {domain.dnsMode === "cloudflare"
-                  ? "Gerenciado pelo Atlas"
+                  ? domain.connectionStatus === "connected" &&
+                    domain.cloudflareZoneStatus === "active"
+                    ? "Gerenciado pelo Atlas"
+                    : shouldRefreshDomainConnection(domain)
+                      ? "Gerenciado pelo Atlas — ativação pendente"
+                      : "DNS em configuração no Atlas"
                   : domain.dnsMode === "legacy_plesk"
                     ? "Configuração assistida"
                     : "Somente acompanhamento"}
