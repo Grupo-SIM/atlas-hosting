@@ -25,3 +25,7 @@ Para uma experiência interativa com a API, acesse a documentação Swagger:
 
 Ao adicionar novos endpoints ou modificar existentes, atualize a documentação correspondente nesta pasta.
 
+
+## Guias de desenvolvimento
+
+- [Criação de projetos no monorepo](development/project-scaffolding.md) - estrutura, workspaces, exports e cache Turbo.
