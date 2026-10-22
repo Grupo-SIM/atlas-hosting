@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import "dotenv/config";
+import "./load-env.mjs";
 import pg from "pg";
 
 /**
@@ -7,11 +7,11 @@ import pg from "pg";
  * Existe porque `drizzle-kit push` quer derrubar tabelas/colunas fora do schema
  * (drift antigo) — aqui roda só o que está no arquivo, dentro de transação.
  *
- * Uso: node scripts/apply-sql.mjs drizzle/0002_add-manual-subscriptions.sql
+ * Uso: node scripts/apply-sql.mjs frontend/drizzle/0002_add-manual-subscriptions.sql
  */
 const file = process.argv[2];
 if (!file) {
-  console.error("Informe o arquivo .sql. Ex: node scripts/apply-sql.mjs drizzle/0002_add-manual-subscriptions.sql");
+  console.error("Informe o arquivo .sql. Ex: node scripts/apply-sql.mjs frontend/drizzle/0002_add-manual-subscriptions.sql");
   process.exit(1);
 }
 

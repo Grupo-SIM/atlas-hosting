@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "app": {
+    "security": {
+      "capabilities": [
+        {
+          "identifier": "main-capability",
+          "permissions": [
+            "core:default",
+            "deep-link:default",
+            "opener:default"
+          ],
+          "remote": {
+            "urls": [
+              "https://atlashosting.com.br/*",
+              "https://www.atlashosting.com.br/*"
+            ]
+          },
+          "windows": ["main"]
+        }
+      ],
+      "csp": null
+    },
+    "windows": [],
+    "withGlobalTauri": true
+  },
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../tauri-shell"
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "targets": "all"
+  },
+  "identifier": "br.com.atlashosting.app",
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["atlas-hosting"]
+      }
+    }
+  },
+  "productName": "Atlas Hosting",
+  "version": "0.1.0"
+}

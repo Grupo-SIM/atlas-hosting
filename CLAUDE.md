@@ -9,11 +9,11 @@ Node com `pg` — e vale mesmo para mudanças aditivas (`ADD COLUMN` nullable,
 
 O fluxo correto para mudança de schema:
 
-1. Altere o schema drizzle em `src/lib/db/schema/tables/`.
-2. Escreva o `.sql` em `drizzle/` (numerado, ex. `0004_algo.sql`), no formato das
+1. Altere o schema drizzle em `frontend/src/lib/db/schema/tables/`.
+2. Escreva o `.sql` em `frontend/drizzle/` (numerado, ex. `0004_algo.sql`), no formato das
    migrations existentes — statements separadas por `--> statement-breakpoint`.
 3. Entregue o comando para o Breno rodar:
-   `node scripts/apply-sql.mjs drizzle/0004_algo.sql`
+   `node scripts/apply-sql.mjs frontend/drizzle/0004_algo.sql`
 
 Leituras (`SELECT`, `information_schema`) para conferir estado são permitidas.
 
@@ -27,7 +27,7 @@ transação, com rollback em erro.
 
 ## Verificação antes de entregar
 
-- `.\node_modules\.bin\tsc --noEmit` — precisa sair limpo.
+- `cd frontend; ..\node_modules\.bin\tsc --noEmit` — precisa sair limpo.
 - `.\node_modules\.bin\biome check --write <arquivos tocados>` — o repo tem
   warnings pré-existentes (`noExplicitAny`, CRLF); não reformate arquivos que você
   não alterou.
@@ -35,7 +35,8 @@ transação, com rollback em erro.
 
 ## Convenções
 
-- Componentes shadcn em `src/components/ui/` — reutilize em vez de recriar.
+- App Next em `frontend/` (workspace bun/turbo; shell Tauri em `frontend/src-tauri/`). `scripts/`, `docs/` e `plans/` ficam na raiz.
+- Componentes shadcn em `frontend/src/components/ui/` — reutilize em vez de recriar.
 - Textos de interface em português.
 - Máscara de dinheiro: input conta centavos da direita para a esquerda
   (digitar `8990` → `89,90`), campo visível formatado com `toLocaleString("pt-BR")`

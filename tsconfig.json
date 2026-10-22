@@ -1,44 +1,4 @@
 {
-  "compilerOptions": {
-    "allowJs": true,
-    "esModuleInterop": true,
-    "incremental": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "noEmit": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "target": "ESNext"
-  },
-  "exclude": [
-    "node_modules/**/*",
-    "src/plesk/**/*",
-    "**/*.tsxold",
-    "src/tests/**/*"
-  ],
-  "files": ["global.d.ts"],
-  "include": [
-    "global.d.ts",
-    "next-env.d.ts",
-    "next.config.ts",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    ".next/types/**/*.ts",
-    "src/app/(auth)/email/components/EmailHeader.tsxold",
-    "src/app/(auth)/email/components/EmailSidebar.tsxold",
-    ".next/dev/types/**/*.ts",
-    ".next/dev/dev/types/**/*.ts"
-  ]
+  "exclude": ["**/node_modules"],
+  "extends": "@hyoretsu/configs/ts"
 }

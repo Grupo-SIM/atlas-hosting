@@ -1,0 +1,32 @@
+assert_lefthook_installed: true
+
+commit-msg:
+  parallel: true
+  jobs:
+    - name: "Validate commit message"
+      run: bunx commitlint --edit {1}
+
+post-merge:
+  parallel: true
+  jobs:
+    - name: "Git configs"
+      run: |
+        git config core.ignorecase false
+        git config core.longpaths true
+        git config push.autoSetupRemote true
+
+    - name: "Install dependencies"
+      run: bun i
+
+pre-commit:
+  parallel: false
+  jobs:
+    - name: "Format and lint"
+      glob: "*.{css,cjs,js,jsx,md,mjs,json,jsonc,ts,tsx,yaml,yml}"
+      run: bunx @biomejs/biome check --diagnostic-level=error --files-ignore-unknown=true --no-errors-on-unmatched --write {staged_files}
+      stage_fixed: true
+
+pre-push:
+  jobs:
+    - name: "Build affected packages"
+      run: bunx turbo run build --affected

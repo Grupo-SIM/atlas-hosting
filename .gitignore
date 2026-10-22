@@ -8,13 +8,17 @@ tmp
 
 # testing
 /coverage
+frontend/coverage
 
 # next.js
 /.next/
 /out/
+frontend/.next/
+frontend/out/
 
 # production
 /build
+frontend/build
 
 # misc
 .DS_Store
@@ -36,22 +40,30 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-src/app/api/route.ts
+frontend/src/app/api/route.ts
 
 *.old.ts
 
 pnpm-lock.yaml
-drizzle/*
-!drizzle/0002_add-domain-dns-management.sql
+frontend/drizzle/*
+!frontend/drizzle/0002_add-domain-dns-management.sql
 
 php-api/
 
-src/z.docs/wp-cli/index.ts
-src/wp-cli-generator/commands/
+frontend/src/z.docs/wp-cli/index.ts
+frontend/src/wp-cli-generator/commands/
 
 # videos
-public/globe.webm
-public/*.mp4
-public/*.mov
-!public/vecteezy_powerful-server-room-in-modern-data-center-cloud-computing_7999282.mp4
+frontend/public/globe.webm
+frontend/public/*.mp4
+frontend/public/*.mov
+!frontend/public/vecteezy_powerful-server-room-in-modern-data-center-cloud-computing_7999282.mp4
 .worktrees/
+
+# Turborepo
+.turbo
+
+# Tauri
+frontend/src-tauri/target/
+frontend/src-tauri/gen/
+frontend/src-tauri/Cargo.lock.bak

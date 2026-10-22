@@ -1,18 +1,26 @@
-# nextjs
+# atlas-hosting
 
-To install dependencies:
+Monorepo bun/turbo (layout do template). O app Next.js vive em `frontend/`; o shell
+desktop/mobile é Tauri (`frontend/src-tauri/`).
+
+```
+frontend/   app Next.js 16 + Drizzle + Tauri
+scripts/    scripts operacionais (apply-sql, reprocess, DNS)
+docs/       documentação
+plans/      planos versionados
+```
+
+## Desenvolvimento
 
 ```bash
 bun install
+bun run dev            # Next em http://localhost:3000
+bun run tauri:dev      # janela Tauri apontando para o Next local
+bun run build          # next build (standalone)
 ```
 
-To run:
-
-```bash
-bun run 
-```
-
-This project was created using `bun init` in bun v1.2.13. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+Variáveis de ambiente ficam em `frontend/.env`. Detalhes do Tauri em
+[docs/tauri.md](docs/tauri.md).
 
 ## Atlas IA
 

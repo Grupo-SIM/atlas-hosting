@@ -1,6 +1,6 @@
 {
   "git.ignoreLimitWarning": true,
   "path-autocomplete.pathMappings": {
-    "@/": "${workspaceFolder}/src/"
+    "@/": "${workspaceFolder}/frontend/src/"
   }
 }

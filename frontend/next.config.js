@@ -1,3 +1,5 @@
+const path = require("node:path");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: process.env.APP_BASE_URL
@@ -25,6 +27,8 @@ const nextConfig = {
     unoptimized: true,
   },
   output: "standalone",
+  // Workspace: o root do monorepo (onde fica node_modules) entra no tracing.
+  outputFileTracingRoot: path.join(__dirname, ".."),
   serverExternalPackages: ["pg", "pg-native"],
   turbopack: {
     rules: {

@@ -1,10 +1,10 @@
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import sharp from "sharp";
 import { render } from "@react-email/render";
-import { AtlasNotificationEmail } from "../src/emails/atlas-notification";
-import { renewalEmailMessage } from "../src/lib/server/subscriptions/renewal-policy";
+import { AtlasNotificationEmail } from "../frontend/src/emails/atlas-notification";
+import { renewalEmailMessage } from "../frontend/src/lib/server/subscriptions/renewal-policy";
 
-const logo = (await sharp(await readFile("public/atlas-logo.png")).resize({ width: 240 }).png().toBuffer()).toString("base64");
+const logo = (await sharp(await readFile("frontend/public/atlas-logo.png")).resize({ width: 240 }).png().toBuffer()).toString("base64");
 await mkdir("docs/examples", { recursive: true });
 for (const days of [15, 8]) {
   const html = await render(AtlasNotificationEmail({
