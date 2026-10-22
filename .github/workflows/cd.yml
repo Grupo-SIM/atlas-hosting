@@ -7,20 +7,124 @@ on:
   workflow_dispatch:
 
 jobs:
+  detect:
+    name: Detect affected
+    runs-on: ubuntu-latest
+    outputs:
+      tasks: ${{ steps.affected.outputs.tasks }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Compute affected services
+        id: affected
+        uses: hyoretsu/gh-actions/detect-affected@main
+        with:
+          tasks: build
+          base-sha: ${{ github.event.before }}
+
   ghcr:
-    name: Build and publish Docker image
+    name: Build and publish ${{ matrix.service }} image
+    needs: detect
+    if: ${{ fromJSON(needs.detect.outputs.tasks).build[0] }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.detect.outputs.tasks).build }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-
       - name: Build and publish image
-        uses: hyoretsu/gh-actions/ghcr@main
+        uses: hyoretsu/gh-actions/containers@main
         with:
+          image: ${{ github.repository }}_${{ matrix.service }}
+          dockerfile: ${{ matrix.service }}/Dockerfile
+          build-args: |
+            NODE_ENV=production
           password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+
+  # Enable native releases when signing and platform prerequisites are ready.
+  # desktop:
+  #   name: Build & release ${{ matrix.label }} app
+  #   needs: detect
+  #   if: ${{ contains(fromJSON(needs.detect.outputs.tasks).build, 'frontend') }}
+  #   permissions:
+  #     contents: write
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       platform: [windows-latest, ubuntu-latest, macos-latest]
+  #       include:
+  #         - platform: windows-latest
+  #           label: Windows
+  #         - platform: ubuntu-latest
+  #           label: Linux
+  #         - platform: macos-latest
+  #           label: macOS
+  #   runs-on: ${{ matrix.platform }}
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - name: Build & release desktop app
+  #       uses: hyoretsu/gh-actions/tauri-build@main
+  #       with:
+  #         github-token: ${{ secrets.GITHUB_TOKEN }}
+  #         tag-name: v__VERSION__
+  #         release-name: Atlas Hosting v__VERSION__
+
+  # Android also requires initializing frontend/src-tauri/gen/android and
+  # configuring Gradle release signing with keystore.properties before enabling.
+  # android:
+  #   name: Build & release Android app
+  #   needs: detect
+  #   if: ${{ contains(fromJSON(needs.detect.outputs.tasks).build, 'frontend') }}
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: write
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - name: Build Android app (APK + AAB)
+  #       id: build
+  #       uses: hyoretsu/gh-actions/tauri-android-build@main
+  #       with:
+  #         keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+  #         keystore-password: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+  #         key-alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+  #     - name: Publish APK to GitHub release
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         tag_name: v${{ steps.build.outputs.version }}
+  #         name: Atlas Hosting v${{ steps.build.outputs.version }}
+  #         draft: false
+  #         prerelease: false
+  #         files: ${{ steps.build.outputs.apk-glob }}
+  #     - name: Upload AAB to Google Play
+  #       if: vars.ANDROID_PACKAGE_NAME != ''
+  #       uses: r0adkll/upload-google-play@v1
+  #       with:
+  #         serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+  #         packageName: ${{ vars.ANDROID_PACKAGE_NAME }}
+  #         releaseFiles: ${{ steps.build.outputs.aab-glob }}
+  #         track: production
+  #         status: completed
+
+  # iOS needs a macOS runner, Apple signing and provisioning profiles.
+  # ios:
+  #   name: Build iOS app (stub)
+  #   needs: detect
+  #   if: ${{ contains(fromJSON(needs.detect.outputs.tasks).build, 'frontend') }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: iOS build not configured
+  #       run: echo "::notice title=iOS::Configure macOS, signing and provisioning first."

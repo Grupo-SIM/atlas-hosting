@@ -1,5 +1,5 @@
 # Estágio 1: Instalação de dependências
-FROM oven/bun:latest AS deps
+FROM oven/bun:1.4.3 AS deps
 WORKDIR /usr/src/app
 
 # Copia arquivos de definição de pacotes
@@ -7,25 +7,25 @@ COPY package.json bun.lock ./
 COPY frontend/package.json frontend/package.json
 
 # Instala as dependências usando o cache do Bun de forma eficiente
-RUN bun install --frozen-lockfile
+RUN bun install --frozen-lockfile --ignore-scripts
 
 # Estágio 2: Build da aplicação
-FROM oven/bun:latest AS builder
+FROM deps AS builder
 WORKDIR /usr/src/app
 
-# Copia as dependências do estágio anterior
-COPY --from=deps /usr/src/app/node_modules ./node_modules
+# Preserva dependências da raiz e do workspace, inclusive links locais do Bun.
 COPY . .
 
 # Marca o instante deste build (invalida com COPY . . acima, então muda a cada build real)
 RUN date -u +"%Y-%m-%dT%H:%M:%SZ" > BUILD_TIME
 
 # Variáveis de ambiente de build
-ENV NODE_ENV=production
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Executa o build otimizado (usa o modo standalone configurado no frontend/next.config.js)
-RUN bun run --cwd frontend build
+RUN bunx turbo run build --filter=frontend
 
 # Estágio 3: Runner de produção (Imagem final leve e estável)
 FROM node:20-slim AS runner

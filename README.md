@@ -22,6 +22,19 @@ bun run build          # next build (standalone)
 Variáveis de ambiente ficam em `frontend/.env`. Detalhes do Tauri em
 [docs/tauri.md](docs/tauri.md).
 
+## Build e CD
+
+Docker usa o contexto da raiz: `docker build -f frontend/Dockerfile .`.
+O CD detecta workspaces afetados com script `build` via Turbo e publica uma imagem
+por serviço: `ghcr.io/jbmidia/atlas-hosting_frontend` para o frontend atual.
+Consumidores da imagem anterior `ghcr.io/jbmidia/atlas-hosting` precisam atualizar
+a referência. Execução manual e primeiro push incluem todos os serviços.
+
+Cada serviço adicionado à matriz precisa de um Dockerfile em
+`<nome-do-pacote>/Dockerfile`. Jobs Tauri desktop, Android e iOS permanecem
+comentados em `.github/workflows/cd.yml`; Android exige gerar o projeto nativo e
+configurar assinatura antes da ativação.
+
 ## Atlas IA
 
 Configure `N8N_URL` com a URL base do n8n no ambiente do servidor em execução
