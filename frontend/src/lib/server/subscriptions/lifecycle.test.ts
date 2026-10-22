@@ -162,14 +162,37 @@ describe("VPS plan renewal lifecycle", () => {
     expect(attempts).toBe(0);
     expect(cancellations).toHaveLength(0);
   });
-  test("missing VPS link keeps cancellation pending instead of reporting success", async () => {
-    sub.paymentMethod = "pix";
-    sub.vpsNode = null;
-    expect(await processRenewal("sub", invoice as Invoice, async () => {}, secondDay)).toBe("cancellation-error");
+  for (const node of [null, { externalId: null }, { externalId: "" }]) {
+    for (const method of ["pix", "credit_card"] as const) {
+      test(`${method} without provider ID skips cancellation and preserves billing`, async () => {
+        sub.paymentMethod = method;
+        sub.vpsNode = node;
+        sub.config.renewalCancellationPending = true;
+        let attempts = 0;
+        const charge = async () => { attempts++; await declined(); };
+        expect(await processRenewal("sub", invoice as Invoice, charge, secondDay)).toBe("cancellation-skipped");
+        expect(sub.status).toBe("active");
+        expect(sub.config.renewalCancellationPending).toBeUndefined();
+        expect(sub.config.renewalCancellation).toBeUndefined();
+        expect(cancellations).toHaveLength(0);
+        expect(await processRenewal("sub", invoice as Invoice, charge, secondDay)).toBe("skipped");
+        expect(attempts).toBe(method === "credit_card" ? 1 : 0);
+        await applyRenewalPayment(invoice as Invoice, method);
+        expect(sub.nextChargeDate.toISOString()).toBe("2026-12-20T21:00:00.000Z");
+        expect(alerts).toHaveLength(0);
+      });
+    }
+  }
+  test("removed provider ID suppresses old cancellation withdrawal alerts", async () => {
+    await processRenewal("sub", invoice as Invoice, declined, secondDay);
+    sub.vpsNode.externalId = null;
+    await applyRenewalPayment(invoice as Invoice, "pix");
+    await notifyPendingCancellationWithdrawals();
     expect(sub.status).toBe("active");
-    expect(sub.config.renewalCancellationPending).toBe(true);
-    expect(sub.config.renewalCancellation).toBeUndefined();
-    expect(cancellations).toHaveLength(0);
+    expect(sub.config.renewalCancellation.withdrawalRequired).toBe(false);
+    sub.config.renewalCancellation.withdrawalRequired = true;
+    await notifyPendingCancellationWithdrawals();
+    expect(alerts).toHaveLength(0);
   });
   test("stale invoice from an already renewed cycle cannot charge or cancel current cycle", async () => {
     await applyRenewalPayment(invoice as Invoice, "pix");

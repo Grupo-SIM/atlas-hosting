@@ -22,7 +22,7 @@ async function lockSubscription(tx: Transaction, id: string) {
 /** A retirada de cancelamento de instância não consta na API pública da Contabo.
  * Nunca reportar cancelamento retirado sem confirmação do fornecedor. */
 async function recordCancellationWithdrawal(tx: Transaction, sub: NonNullable<Awaited<ReturnType<typeof lockSubscription>>>, config: Record<string, any>) {
-  if (!config.renewalCancellation) return;
+  if (!sub.vpsNode?.externalId || !config.renewalCancellation) return;
   config.renewalCancellation = { ...config.renewalCancellation, withdrawalRequired: true };
   await tx.insert(pgLog).values({ userId: sub.userId, type: "hosting", severity: "danger",
     title: "Pagamento recebido: retirar cancelamento na Contabo",
@@ -122,8 +122,15 @@ export async function processRenewal(
     config.renewalLastAttemptDay = attemptDay;
     let status: typeof sub.status = "active";
     if (attemptDay === 2) {
+      // Sem ID do fornecedor, a assinatura mantém apenas o fluxo financeiro.
+      if (!sub.vpsNode?.externalId) {
+        delete config.renewalCancellationPending;
+        await tx.update(pgVpsSubscription).set({
+          config, failureCount: automatic && !alreadyAttempted ? sub.failureCount + 1 : sub.failureCount, updatedAt: now,
+        }).where(eq(pgVpsSubscription.id, sub.id));
+        return "cancellation-skipped";
+      }
       try {
-        if (!sub.vpsNode?.externalId) throw new Error(`Assinatura ${sub.id} sem VPS vinculada: cancelamento não pode ser agendado.`);
         const cancelDate = addDays(sub.nextChargeDate, 2);
         await cancelVpsOnDate(sub.vpsNode.externalId, cancelDate);
         config.renewalCancellation = { instanceId: sub.vpsNode.externalId, cycle: sub.nextChargeDate.toISOString(), cancelDate: cancelDate.toISOString(), withdrawalRequired: false };
@@ -155,7 +162,7 @@ export async function notifyPendingCancellationWithdrawals(subscriptionId?: stri
   const subs = await db.query.pgVpsSubscription.findMany({ where: subscriptionId ? eq(pgVpsSubscription.id, subscriptionId) : sql`${pgVpsSubscription.config}::jsonb->'renewalCancellation'->>'withdrawalRequired' = 'true' and ${pgVpsSubscription.config}::jsonb->'renewalCancellation'->>'alertSentAt' is null`, with: { vpsNode: true } });
   for (const sub of subs) {
     const cancellation = (sub.config as any)?.renewalCancellation;
-    if (!cancellation?.withdrawalRequired || cancellation.alertSentAt) continue;
+    if (!sub.vpsNode?.externalId || !cancellation?.withdrawalRequired || cancellation.alertSentAt) continue;
     const recipients = getEmergencyRecipients();
     const safe = escapeEmailHtml;
     const instanceId = sub.vpsNode?.externalId || cancellation.instanceId;

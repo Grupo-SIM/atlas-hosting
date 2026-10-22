@@ -30,7 +30,7 @@ Fornecedores e envio devem ser simulados. `unshare -Urn bun --no-env-file test` 
 
 O fluxo de renovação VPS usa os mesmos destinatários `EMERGENCY_ALERT_EMAILS` (lista separada por vírgulas, fallback `DOMAIN_EMAIL`). Quando uma renovação Pix ou cartão é reconhecida após agendamento de cancelamento, o email **URGENTE: desagendar cancelamento da VPS na Contabo** informa nome, ID Contabo, data agendada e assinatura Atlas. Retire o cancelamento no painel Contabo antes da data indicada. O envio não retira o cancelamento e não comprova continuidade de uma instância já removida.
 
-A pendência fica em `vps_subscriptions.config.renewalCancellation.withdrawalRequired`; `alertSentAt` indica envio SMTP aceito, não execução da retirada. Erros SMTP são retentados pelo agendador. Sem `vpsNodeId`/ID Contabo, cancelamento não é presumido: consulte logs de falha operacional e recupere o vínculo correto.
+A pendência fica em `vps_subscriptions.config.renewalCancellation.withdrawalRequired`; `alertSentAt` indica envio SMTP aceito, não execução da retirada. Erros SMTP são retentados pelo agendador. Sem `vpsNodeId` ou com `vps_nodes.external_id` nulo/vazio, cancelamento e alertas de retirada na Contabo são ignorados, sem falha operacional; cobrança e renovação continuam. Remover o ID não cancela a instância no fornecedor.
 
 Prévia local dos emails: `bun scripts/render-renewal-email.ts` gera `docs/examples/vps-renewal-15-days.html` e `vps-renewal-8-days.html`, sem enviar mensagens nem criar cobranças. Link da prévia é ilustrativo.
 
