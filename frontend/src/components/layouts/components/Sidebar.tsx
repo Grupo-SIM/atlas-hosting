@@ -24,7 +24,9 @@ export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
 
   /** A sidebar é sempre a mesma; o admin só ganha a porta de entrada do painel. */
   const filteredNavigation: NavigationItem[] = [
-    ...clientNavigation.filter(item => !isAdmin || item.showForAdmin),
+    ...clientNavigation.filter(item =>
+      item.adminOnly ? isAdmin : !isAdmin || item.showForAdmin
+    ),
     ...(isAdmin ? [adminEntryItem] : []),
   ];
 

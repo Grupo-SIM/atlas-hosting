@@ -22,7 +22,9 @@ export function MobileSidebarSheet({ isAdmin }: { isAdmin: boolean }) {
   const inAdminMode = isAdminPath(pathname);
 
   const filteredNavigation: NavigationItem[] = [
-    ...clientNavigation.filter(item => !isAdmin || item.showForAdmin),
+    ...clientNavigation.filter(item =>
+      item.adminOnly ? isAdmin : !isAdmin || item.showForAdmin
+    ),
     ...(isAdmin ? [adminEntryItem] : []),
   ];
 
