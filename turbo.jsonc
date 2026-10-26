@@ -4,19 +4,22 @@
   "tasks": {
     "build": {
       "cache": false,
+      "dependsOn": ["^build"],
       "outputLogs": "new-only",
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": ["out/**", ".next/**", "!.next/cache/**"]
     },
     "build:tauri": {
       "cache": false
     },
     "check-types": {
       "cache": false,
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "tsconfig*.json"],
       "outputLogs": "new-only"
     },
     "dev": {
       "cache": false,
+      "dependsOn": ["^build"],
       "persistent": true
     },
     "dev:tauri": {

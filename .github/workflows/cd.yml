@@ -45,7 +45,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      # Bibliotecas (ex.: packages/site-builder) têm `build` mas não são serviços.
+      - name: Check service Dockerfile
+        id: service
+        run: |
+          if [ -f "${{ matrix.service }}/Dockerfile" ]; then
+            echo "deployable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=Skipped::${{ matrix.service }} has no Dockerfile (library)"
+          fi
+
       - name: Build and publish image
+        if: steps.service.outputs.deployable == 'true'
         uses: hyoretsu/gh-actions/containers@main
         with:
           image: ${{ github.repository }}_${{ matrix.service }}
