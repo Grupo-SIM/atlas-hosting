@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "jsx": "react-jsx",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "outDir": "out",
+    "rootDir": "src",
+    "strict": true,
+    "types": ["react"]
+  },
+  "exclude": ["node_modules", "out"],
+  "extends": "@hyoretsu/configs/ts-lib",
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}
