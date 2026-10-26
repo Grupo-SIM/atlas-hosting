@@ -1,114 +1,100 @@
-import { listTemplates } from "@repo/site-builder";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { desc, eq } from "drizzle-orm";
+import { LayoutTemplate, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { pgBuilderSite } from "@/lib/db/schema";
+import { pgBuilderPublication, pgBuilderSite } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
-import { createSiteFromTemplate, deleteSite } from "./actions";
+import { Frame } from "./components/Frame";
+import { ScaledSite } from "./components/ScaledSite";
+import SiteCard, { type SiteStatus } from "./components/SiteCard";
 
 export const metadata: Metadata = {
-  description: "Crie seu site a partir de um template pronto",
+  description: "Crie e edite seus sites a partir de templates prontos",
   title: "Criador de Sites - Atlas Hosting",
 };
 
 export default async function SiteBuilderPage() {
   const user = await requireBuilderUser();
-  const templates = listTemplates();
   const mySites = await db
     .select({
+      content: pgBuilderSite.content,
+      domain: pgBuilderPublication.domain,
       id: pgBuilderSite.id,
       name: pgBuilderSite.name,
-      updatedAt: pgBuilderSite.updatedAt,
+      publicationStatus: pgBuilderPublication.status,
     })
     .from(pgBuilderSite)
+    .leftJoin(
+      pgBuilderPublication,
+      eq(pgBuilderPublication.siteId, pgBuilderSite.id)
+    )
     .where(eq(pgBuilderSite.userId, user.id))
     .orderBy(desc(pgBuilderSite.updatedAt));
 
+  const live = mySites.filter(s => s.publicationStatus === "published").length;
+  const waiting = mySites.length - live;
+
   return (
-    <div className="space-y-8 p-6">
-      <div>
-        <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
-          Criador de Sites
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Escolha um template, veja a prévia e personalize do seu jeito.
-        </p>
-      </div>
-
-      {mySites.length > 0 ? (
-        <section className="space-y-3">
-          <h2 className="font-semibold text-lg">Meus sites</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {mySites.map(site => (
-              <Card key={site.id}>
-                <CardHeader>
-                  <CardTitle>{site.name}</CardTitle>
-                  <CardDescription>
-                    Editado em{" "}
-                    {format(site.updatedAt, "dd/MM/yyyy HH:mm", {
-                      locale: ptBR,
-                    })}
-                  </CardDescription>
-                </CardHeader>
-                <CardFooter className="gap-2">
-                  <Button asChild>
-                    <Link href={`/criador-de-sites/${site.id}`}>Abrir</Link>
-                  </Button>
-                  <form action={deleteSite}>
-                    <input name="siteId" type="hidden" value={site.id} />
-                    <Button type="submit" variant="outline">
-                      Excluir
-                    </Button>
-                  </form>
-                </CardFooter>
-              </Card>
-            ))}
+    <Frame
+      crumbs={[{ label: "Sites" }]}
+      icon={<LayoutTemplate className="size-[15px]" />}
+    >
+      <div className="flex-1 overflow-auto px-5 pt-9 pb-20 md:px-10">
+        <div className="flex flex-col gap-7">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex flex-col gap-1.5">
+              <h1 className="font-medium text-[28px] tracking-[-0.02em]">
+                Meus sites
+              </h1>
+              <p className="text-[#6e6b65] text-sm">
+                {mySites.length === 0
+                  ? "Você ainda não criou nenhum site."
+                  : `${live} no ar · ${waiting} sem publicar`}
+              </p>
+            </div>
+            <Link
+              className="flex items-center gap-1.5 rounded-full bg-[#d6f34a] px-[18px] py-2.5 font-medium text-[#1d1c1a] text-sm"
+              href="/criador-de-sites/novo"
+            >
+              <Plus className="size-[15px]" />
+              Criar site
+            </Link>
           </div>
-        </section>
-      ) : null}
 
-      <section className="space-y-3">
-        <h2 className="font-semibold text-lg">Templates</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {templates.map(template => (
-            <Card className="overflow-hidden" key={template.id}>
-              <div className="flex h-40 items-center justify-center bg-[#030712]">
-                <img
-                  alt={template.name}
-                  className="max-h-24 object-contain"
-                  src={template.preview}
-                />
-              </div>
-              <CardHeader>
-                <CardTitle>{template.name}</CardTitle>
-                <CardDescription>{template.description}</CardDescription>
-              </CardHeader>
-              <CardFooter className="gap-2">
-                <Button asChild variant="outline">
-                  <Link href={`/criador-de-sites/preview/${template.id}`}>
-                    Ver prévia
-                  </Link>
-                </Button>
-                <form action={createSiteFromTemplate}>
-                  <input name="templateId" type="hidden" value={template.id} />
-                  <Button type="submit">Usar template</Button>
-                </form>
-              </CardFooter>
-            </Card>
-          ))}
+          {mySites.length > 0 ? (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-[18px]">
+              {mySites.map(site => {
+                const status: SiteStatus =
+                  site.publicationStatus === "published"
+                    ? "published"
+                    : site.publicationStatus === "failed"
+                      ? "failed"
+                      : "draft";
+                return (
+                  <SiteCard
+                    background={site.content.theme.bg ?? "#030712"}
+                    domain={site.domain}
+                    id={site.id}
+                    key={site.id}
+                    name={site.name}
+                    status={status}
+                    thumb={<ScaledSite scale={0.38} site={site.content} />}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <Link
+              className="flex flex-col items-center gap-2 rounded-[14px] border border-[#d9d6ce] border-dashed p-12 text-center text-[#6e6b65] text-sm hover:border-[#c9c5bc]"
+              href="/criador-de-sites/novo"
+            >
+              <Plus className="size-5" />
+              Escolha um template e crie seu primeiro site
+            </Link>
+          )}
         </div>
-      </section>
-    </div>
+      </div>
+    </Frame>
   );
 }

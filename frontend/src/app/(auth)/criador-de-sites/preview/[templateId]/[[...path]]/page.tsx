@@ -4,7 +4,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { requireBuilderUser } from "@/lib/site-builder/access";
-import { createSiteFromTemplate } from "../../../actions";
 
 export const metadata: Metadata = {
   title: "Prévia do template - Atlas Hosting",
@@ -38,14 +37,13 @@ export default async function TemplatePreviewPage({
         </div>
         <div className="flex gap-2">
           <Button asChild size="sm" variant="outline">
-            <Link href="/criador-de-sites">Voltar</Link>
+            <Link href="/criador-de-sites/novo">Voltar</Link>
           </Button>
-          <form action={createSiteFromTemplate}>
-            <input name="templateId" type="hidden" value={template.id} />
-            <Button size="sm" type="submit">
+          <Button asChild size="sm">
+            <Link href={`/criador-de-sites/novo/${template.id}`}>
               Usar este template
-            </Button>
-          </form>
+            </Link>
+          </Button>
         </div>
       </div>
       <SiteRenderer

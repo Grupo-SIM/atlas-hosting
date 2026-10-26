@@ -15,7 +15,11 @@ import { configureWebHostingDns } from "@/lib/server/domains/cloudflare-dns";
 import { FORBIDDEN_MESSAGE, getBuilderUser } from "@/lib/site-builder/access";
 import { assertValidDomain } from "@/lib/site-builder/caddy";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
-import { type DeployTarget, deploySite } from "@/lib/site-builder/deploySite";
+import {
+  type DeployTarget,
+  deploySite,
+  IPV4_RE,
+} from "@/lib/site-builder/deploySite";
 
 type Result<T = object> = ({ ok: true } & T) | { error: string; ok: false };
 
@@ -57,7 +61,13 @@ async function resolveTarget(
       };
     }
     return {
-      deploy: { ip: config.vmIp, keyPath: config.keyPath },
+      deploy: {
+        caddyRoot: config.caddyRoot,
+        ip: config.vmIp,
+        keyPath: config.keyPath,
+        local: config.localDeploy,
+        webRoot: config.webRoot,
+      },
       ip: config.vmIp,
       vpsNodeId: null,
     };
@@ -191,7 +201,8 @@ export async function publishSite(
         name: domain,
         proxied: false,
         ttl: 1,
-        type: "A",
+        // IP → registro A; hostname (ex.: o CNAME vps.simintermediacoes.com) → CNAME.
+        type: IPV4_RE.test(target.ip) ? "A" : "CNAME",
       });
     } else {
       await configureWebHostingDns(domain, target.ip);
@@ -221,6 +232,40 @@ export async function publishSite(
   });
   revalidatePath(`/criador-de-sites/${site.id}/publicar`);
   return { domain, ok: true };
+}
+
+/** Publica de novo no mesmo endereço e servidor da última publicação — usado pelo "Publicar agora" do editor. */
+export async function republishSite(input: {
+  password?: string;
+  siteId: string;
+}): Promise<Result<{ domain: string }>> {
+  const user = await getBuilderUser();
+  if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
+  const site = await ownedSite(input.siteId, user.id);
+  if (!site) return { error: "Site não encontrado.", ok: false };
+
+  const publication = await db.query.pgBuilderPublication.findFirst({
+    where: eq(pgBuilderPublication.siteId, site.id),
+  });
+  if (!publication) {
+    return { error: "Defina onde publicar este site primeiro.", ok: false };
+  }
+
+  const { baseDomain } = getAtlasHostingConfig();
+  const label =
+    publication.kind === "subdomain" && baseDomain
+      ? publication.domain.replace(`.${baseDomain}`, "")
+      : undefined;
+
+  return publishSite({
+    domain: publication.domain,
+    kind: publication.kind,
+    label,
+    password: input.password,
+    siteId: site.id,
+    target: publication.target,
+    vpsNodeId: publication.vpsNodeId ?? undefined,
+  });
 }
 
 async function savePublication(

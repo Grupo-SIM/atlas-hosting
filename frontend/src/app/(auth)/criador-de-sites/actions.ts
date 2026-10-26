@@ -3,7 +3,6 @@
 import { getTemplate, siteSchema } from "@repo/site-builder";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { pgBuilderSite } from "@/lib/db/schema";
 import { FORBIDDEN_MESSAGE, getBuilderUser } from "@/lib/site-builder/access";
@@ -11,25 +10,36 @@ import { getStorjUrl, uploadSiteBuilderImage } from "@/lib/storj";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
-/** Cria o site do usuário a partir de um template e abre o editor. */
-export async function createSiteFromTemplate(formData: FormData) {
+type ActionResult = { ok: true } | { error: string; ok: false };
+
+/** Cria o site do usuário a partir de um template. A tela de configuração publica e abre o editor depois. */
+export async function createSite(input: {
+  name: string;
+  templateId: string;
+}): Promise<{ ok: true; siteId: string } | { error: string; ok: false }> {
   const user = await getBuilderUser();
-  if (!user) throw new Error(FORBIDDEN_MESSAGE);
-  const template = getTemplate(String(formData.get("templateId") ?? ""));
-  if (!template) redirect("/criador-de-sites");
+  if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
+
+  const template = getTemplate(input.templateId);
+  if (!template) return { error: "Template não encontrado.", ok: false };
+
+  const name = input.name.trim();
+  if (name.length === 0 || name.length > 120) {
+    return { error: "Informe um nome de até 120 caracteres.", ok: false };
+  }
 
   const [site] = await db
     .insert(pgBuilderSite)
     .values({
-      content: template.site,
-      name: template.site.name,
+      content: { ...template.site, name },
+      name,
       templateId: template.id,
       userId: user.id,
     })
     .returning({ id: pgBuilderSite.id });
 
   revalidatePath("/criador-de-sites");
-  redirect(`/criador-de-sites/${site.id}`);
+  return { ok: true, siteId: site.id };
 }
 
 export async function deleteSite(formData: FormData) {
@@ -45,8 +55,6 @@ export async function deleteSite(formData: FormData) {
     );
   revalidatePath("/criador-de-sites");
 }
-
-type ActionResult = { ok: true } | { error: string; ok: false };
 
 /** Grava o site editado. O editor roda no navegador, então o conteúdo é revalidado aqui. */
 export async function saveSite(
