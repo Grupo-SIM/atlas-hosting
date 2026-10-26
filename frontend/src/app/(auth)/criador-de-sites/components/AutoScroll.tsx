@@ -50,6 +50,7 @@ export function AutoScroll({
     // O site cresce conforme as imagens carregam: remede.
     const observer = new ResizeObserver(start);
     observer.observe(el);
+    observer.observe(box);
     return () => {
       observer.disconnect();
       animation?.cancel();
