@@ -9,8 +9,6 @@ export interface GalleryTemplate {
   id: string;
   name: string;
   pageCount: number;
-  /** Miniatura já renderizada no servidor. */
-  preview: ReactNode;
   previewBackground: string;
   tags: string[];
   /** Miniatura menor para a grade. */
@@ -46,7 +44,6 @@ export default function TemplateGallery({
           .toLowerCase()
           .includes(q))
   );
-  const [featured, ...rest] = matches;
 
   return (
     <div className="flex flex-col gap-6">
@@ -83,84 +80,67 @@ export default function TemplateGallery({
         </div>
       </div>
 
-      {featured ? (
-        <div className="grid overflow-hidden rounded-2xl border border-[#e5e2db] bg-white md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <div
-            className="h-[340px] overflow-hidden"
-            style={{ background: featured.previewBackground }}
-          >
-            {featured.preview}
-          </div>
-          <div className="flex flex-col justify-center gap-3.5 p-7">
-            <span className="self-start rounded-full bg-[#1d1c1a] px-[9px] py-1 font-medium text-[#d6f34a] text-[11px] tracking-[0.06em]">
-              RECOMENDADO
-            </span>
-            <div className="font-medium text-2xl tracking-[-0.01em]">
-              {featured.name}
-            </div>
-            <p className="text-[#55524c] text-sm leading-[1.55]">
-              {featured.description}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {[
-                ...featured.tags,
-                `${featured.pageCount} ${featured.pageCount === 1 ? "página" : "páginas"}`,
-              ].map(t => (
-                <span
-                  className="rounded-full bg-[#f3f1ec] px-2.5 py-1 text-[#55524c] text-xs"
-                  key={t}
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-            <div className="mt-1.5 flex flex-wrap gap-2">
-              <Link
-                className="rounded-full bg-[#d6f34a] px-5 py-[11px] font-medium text-sm"
-                href={`/criador-de-sites/novo/${featured.id}`}
+      {matches.length > 0 ? (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-[18px]">
+          {matches.map(t => (
+            <div
+              className="flex flex-col overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white hover:border-[#c9c5bc] hover:shadow-[0_4px_18px_rgba(30,28,24,0.06)]"
+              key={t.id}
+            >
+              {/* O site da miniatura tem links: o link fica por cima, nunca em volta. */}
+              <div
+                className="relative aspect-[4/3] overflow-hidden border-[#ece9e2] border-b"
+                style={{ background: t.previewBackground }}
               >
-                Usar este template
-              </Link>
-              <Link
-                className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-4 py-[11px] text-sm"
-                href={`/criador-de-sites/preview/${featured.id}`}
-              >
-                <Eye className="size-[15px]" />
-                Pré-visualizar
-              </Link>
+                {t.thumb}
+                <Link
+                  aria-label={`Usar o template ${t.name}`}
+                  className="absolute inset-0"
+                  href={`/criador-de-sites/novo/${t.id}`}
+                />
+              </div>
+              <div className="flex flex-1 flex-col gap-2 px-4 py-3.5">
+                <div className="font-medium text-sm">{t.name}</div>
+                <div className="text-[#6e6b65] text-[13px] leading-[1.4]">
+                  {t.description}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    ...t.tags,
+                    `${t.pageCount} ${t.pageCount === 1 ? "página" : "páginas"}`,
+                  ].map(tagName => (
+                    <span
+                      className="rounded-full bg-[#f3f1ec] px-2 py-0.5 text-[#55524c] text-[11px]"
+                      key={tagName}
+                    >
+                      {tagName}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-auto flex flex-wrap gap-2 pt-1.5">
+                  <Link
+                    className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[13px]"
+                    href={`/criador-de-sites/novo/${t.id}`}
+                  >
+                    Usar este template
+                  </Link>
+                  <Link
+                    className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-3 py-2 text-[13px]"
+                    href={`/criador-de-sites/preview/${t.id}`}
+                  >
+                    <Eye className="size-[14px]" />
+                    Pré-visualizar
+                  </Link>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       ) : (
         <div className="p-10 text-center text-[#6e6b65] text-sm">
           Nenhum template encontrado.
         </div>
       )}
-
-      {rest.length > 0 ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-[18px]">
-          {rest.map(t => (
-            <Link
-              className="flex flex-col overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white hover:border-[#c9c5bc] hover:shadow-[0_4px_18px_rgba(30,28,24,0.06)]"
-              href={`/criador-de-sites/novo/${t.id}`}
-              key={t.id}
-            >
-              <div
-                className="aspect-[4/3] overflow-hidden border-[#ece9e2] border-b"
-                style={{ background: t.previewBackground }}
-              >
-                {t.thumb}
-              </div>
-              <div className="flex flex-col gap-1 px-4 py-3.5">
-                <div className="font-medium text-sm">{t.name}</div>
-                <div className="text-[#6e6b65] text-[13px] leading-[1.4]">
-                  {t.description}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }

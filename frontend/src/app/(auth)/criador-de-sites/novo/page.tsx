@@ -25,13 +25,6 @@ export default async function NewSitePage() {
         id: meta.id,
         name: meta.name,
         pageCount: meta.pageCount,
-        preview: (
-          <AutoScroll speed={200}>
-            <FitSite>
-              <SiteRenderer path="/" site={full.site} />
-            </FitSite>
-          </AutoScroll>
-        ),
         previewBackground: full.site.theme.bg ?? "#030712",
         tags: meta.tags,
         thumb: (

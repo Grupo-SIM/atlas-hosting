@@ -68,7 +68,7 @@ export default async function PublishSitePage({
           <p className="text-muted-foreground">{site.name}</p>
         </div>
         <Button asChild variant="outline">
-          <Link href={`/criador-de-sites/${site.id}`}>Voltar ao editor</Link>
+          <Link href="/criador-de-sites">Voltar para meus sites</Link>
         </Button>
       </div>
 

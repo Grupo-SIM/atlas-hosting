@@ -84,13 +84,18 @@ export default function SiteCard({
     <div
       className={`flex flex-col overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white ${pending ? "opacity-60" : ""}`}
     >
-      <Link
-        className="relative block h-[190px] overflow-hidden border-[#ece9e2] border-b"
-        href={`/criador-de-sites/${id}`}
+      {/* O site da miniatura tem links: o link do cartão fica por cima, nunca em volta (`<a>` dentro de `<a>` quebra o HTML). */}
+      <div
+        className="relative h-[190px] overflow-hidden border-[#ece9e2] border-b"
         style={{ background }}
       >
         {thumb}
-      </Link>
+        <Link
+          aria-label={`Editar ${name}`}
+          className="absolute inset-0"
+          href={`/criador-de-sites/${id}`}
+        />
+      </div>
       <div className="flex flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-col gap-[3px]">
