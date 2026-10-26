@@ -18,6 +18,8 @@ const WIDE_PAGES = new Set(["blogs", "categorias", "pesquisa"]);
 const page = (slug: string, title: string, blocks: Block[]): Page => ({
   blocks,
   id: `page-${slug || "home"}`,
+  prose:
+    slug === "termos-de-uso" || slug === "politica-de-privacidade" || undefined,
   slug,
   status: "published",
   title,
@@ -242,6 +244,8 @@ const site: Site = {
       }),
       block("featuredPost", {
         backgroundImage: IMG("Path-1.png"),
+        backgroundImage2: IMG("Path-2.png"),
+        backgroundImage3: IMG("Path-3.png"),
         label: "Melhor Post",
         postSlug: "as-21-opcoes-de-ia-que-voce-precisa-usar-em-2025",
         sideImage: IMG("AI-Icon-15.png"),
@@ -298,7 +302,8 @@ const site: Site = {
       block("splitSection", {
         buttonLabel: "Ver Mais →",
         buttonUrl: "/blogs/",
-        image: `${UP}/2025/04/image-3-768x419.jpeg`,
+        decoration: IMG("AI-Icon-5.png"),
+        image: IMG("Mestre-Inesquecivel.png"),
         text: "Estamos construindo uma comunidade que busca conhecimento real sobre tecnologia, inovação e o futuro digital. Um conteúdo por vez, estamos moldando novas jornadas.",
         title:
           "Milhares de Mentes Conectadas Pelo Mesmo Propósito: Aprender e Evoluir com Tecnologia",
@@ -326,6 +331,8 @@ const site: Site = {
       }),
       block("featuredPost", {
         backgroundImage: IMG("Path-1.png"),
+        backgroundImage2: IMG("Path-2.png"),
+        backgroundImage3: IMG("Path-3.png"),
         label: "Post em destaque",
         postSlug: "como-registrar-dominio-de-forma-simples-e-facil",
         sideImage: IMG("AI-Icon-15.png"),
@@ -345,6 +352,8 @@ const site: Site = {
       }),
       block("featuredPost", {
         backgroundImage: IMG("Path-1.png"),
+        backgroundImage2: IMG("Path-2.png"),
+        backgroundImage3: IMG("Path-3.png"),
         label: "Como Registrar Domínio: Dicas Simples",
         postSlug: "como-registrar-dominio-de-forma-simples-e-facil",
         sideImage: IMG("AI-Icon-15.png"),
@@ -458,6 +467,7 @@ const site: Site = {
     bg: "#030712",
     card: "#0b1437",
     fg: "#ffffff",
+    fontAccent: "'Poppins', sans-serif",
     fontBody: "'Mulish', sans-serif",
     fontHeading: "'Bai Jamjuree', sans-serif",
     muted: "#9fb0d0",

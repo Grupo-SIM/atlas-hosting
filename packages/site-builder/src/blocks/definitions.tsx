@@ -230,7 +230,12 @@ const hero = defineBlock(
       >
         <div className="sb-container">
           <h1>{p.text}</h1>
-          <LinkButton ctx={ctx} label={p.buttonLabel} url={p.buttonUrl} />
+          <LinkButton
+            ctx={ctx}
+            label={p.buttonLabel}
+            size="lg"
+            url={p.buttonUrl}
+          />
         </div>
       </section>
     ),
@@ -550,7 +555,12 @@ const cardGrid = defineBlock(
         <section className="sb-container">
           <div className="sb-row-between">
             <h2>{p.title}</h2>
-            <LinkButton ctx={ctx} label={p.buttonLabel} url={p.buttonUrl} />
+            <LinkButton
+              ctx={ctx}
+              label={p.buttonLabel}
+              size="lg"
+              url={p.buttonUrl}
+            />
           </div>
           {first ? (
             <a className="sb-card sb-feature" href={href(ctx, first.url)}>
@@ -586,6 +596,8 @@ const cardGrid = defineBlock(
 const featuredPost = defineBlock(
   z.object({
     backgroundImage: str(),
+    backgroundImage2: str(),
+    backgroundImage3: str(),
     label: str("Melhor Post"),
     postSlug: str(),
     sideImage: str(),
@@ -593,7 +605,21 @@ const featuredPost = defineBlock(
   {
     fields: [
       { key: "label", kind: "text", label: "Rótulo" },
-      { key: "backgroundImage", kind: "image", label: "Ondas ao fundo" },
+      {
+        key: "backgroundImage",
+        kind: "image",
+        label: "Ondas ao fundo (camada 1)",
+      },
+      {
+        key: "backgroundImage3",
+        kind: "image",
+        label: "Ondas ao fundo (camada 2)",
+      },
+      {
+        key: "backgroundImage2",
+        kind: "image",
+        label: "Ondas ao fundo (camada 3, na frente)",
+      },
       { key: "sideImage", kind: "image", label: "Imagem decorativa ao lado" },
       {
         key: "postSlug",
@@ -609,7 +635,15 @@ const featuredPost = defineBlock(
       if (!post) return null;
       return (
         <section className="sb-featured-wrap">
-          {p.backgroundImage ? <Img alt="" src={p.backgroundImage} /> : null}
+          {p.backgroundImage ? (
+            <Img alt="" className="w1" src={p.backgroundImage} />
+          ) : null}
+          {p.backgroundImage3 ? (
+            <Img alt="" className="w3" src={p.backgroundImage3} />
+          ) : null}
+          {p.backgroundImage2 ? (
+            <Img alt="" className="w2" src={p.backgroundImage2} />
+          ) : null}
           <div className="sb-container sb-featured-inner">
             {p.sideImage ? <Img alt="" src={p.sideImage} /> : null}
             <div className="sb-card sb-featured-post">
@@ -692,6 +726,7 @@ const splitSection = defineBlock(
   z.object({
     buttonLabel: str("Ver Mais →"),
     buttonUrl: str("#"),
+    decoration: str(),
     image: str(),
     text: str(),
     title: str("Título da seção"),
@@ -701,16 +736,29 @@ const splitSection = defineBlock(
       { key: "title", kind: "text", label: "Título" },
       { key: "text", kind: "textarea", label: "Texto" },
       { key: "image", kind: "image", label: "Imagem" },
+      {
+        key: "decoration",
+        kind: "image",
+        label: "Imagem decorativa (opcional)",
+      },
       ...linkFields(),
     ],
     group: "content",
     label: "Texto + imagem",
     render: (p, ctx) => (
       <section className="sb-container sb-split">
+        {p.decoration ? (
+          <Img alt="" className="sb-split-deco" src={p.decoration} />
+        ) : null}
         <div>
           <h2>{p.title}</h2>
           <p>{p.text}</p>
-          <LinkButton ctx={ctx} label={p.buttonLabel} url={p.buttonUrl} />
+          <LinkButton
+            ctx={ctx}
+            label={p.buttonLabel}
+            size="lg"
+            url={p.buttonUrl}
+          />
         </div>
         <Img src={p.image} />
       </section>

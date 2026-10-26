@@ -31,6 +31,7 @@ export const siteSchema: z.ZodType<Site> = z.object({
       bare: z.boolean().optional(),
       blocks: z.array(blockSchema),
       id: z.string(),
+      prose: z.boolean().optional(),
       slug,
       status,
       title: z.string().min(1),

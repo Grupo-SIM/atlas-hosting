@@ -49,6 +49,7 @@ export function SiteRenderer({
   const wide =
     route.kind === "category" ||
     (route.kind === "page" && route.page.wide === true);
+  const prose = route.kind === "page" && route.page.prose === true;
   const bare = route.kind === "page" && route.page.bare === true;
 
   const ctx: RenderContext = {
@@ -65,7 +66,12 @@ export function SiteRenderer({
 
   return (
     <div
-      className={["sb", narrow ? "sb-narrow" : "", wide ? "sb-wide" : ""]
+      className={[
+        "sb",
+        narrow ? "sb-narrow" : "",
+        wide ? "sb-wide" : "",
+        prose ? "sb-prose" : "",
+      ]
         .filter(Boolean)
         .join(" ")}
       style={themeVars(site.theme) as CSSProperties}

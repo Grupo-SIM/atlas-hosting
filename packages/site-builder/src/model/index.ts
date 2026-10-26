@@ -50,6 +50,8 @@ export interface Page {
   slug: string;
   status: PublishStatus;
   title: string;
+  /** Texto corrido (termos, políticas): coluna mais estreita no centro. */
+  prose?: boolean;
   /** Conteúdo em largura quase total (listas e arquivos), em vez da coluna centralizada. */
   wide?: boolean;
 }

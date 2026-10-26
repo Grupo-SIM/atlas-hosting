@@ -133,16 +133,23 @@ export function LinkButton({
   ctx,
   label,
   url,
+  size,
   variant = "primary",
 }: {
   ctx: RenderContext;
   label: string;
+  size?: "lg";
   url: string;
   variant?: "light" | "primary" | "wide";
 }) {
   if (!label) return null;
   return (
-    <a className={`sb-btn sb-btn-${variant}`} href={href(ctx, url)}>
+    <a
+      className={["sb-btn", `sb-btn-${variant}`, size ? `sb-btn-${size}` : ""]
+        .filter(Boolean)
+        .join(" ")}
+      href={href(ctx, url)}
+    >
       {label}
     </a>
   );

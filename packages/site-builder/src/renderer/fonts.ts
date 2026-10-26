@@ -2,6 +2,7 @@
 export const SITE_FONTS = [
   "Bai Jamjuree",
   "Mulish",
+  "Poppins",
   "Roboto",
   "Manrope",
   "DM Sans",
@@ -20,7 +21,7 @@ export function themeFont(theme: Record<string, string>): string | undefined {
 /** URL do CSS do Google Fonts para as fontes do tema; só as conhecidas, nunca texto do usuário. */
 export function fontStylesheet(theme: Record<string, string>): string | null {
   const names: string[] = [];
-  for (const key of ["fontBody", "fontHeading"]) {
+  for (const key of ["fontBody", "fontHeading", "fontAccent"]) {
     const found = SITE_FONTS.find(f => (theme[key] ?? "").includes(`'${f}'`));
     if (found && !names.includes(found)) names.push(found);
   }
