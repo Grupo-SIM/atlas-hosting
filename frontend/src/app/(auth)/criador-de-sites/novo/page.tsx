@@ -2,6 +2,7 @@ import { getTemplate, listTemplates } from "@repo/site-builder";
 import { LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
 import { requireBuilderUser } from "@/lib/site-builder/access";
+import { AutoScroll } from "../components/AutoScroll";
 import { Frame } from "../components/Frame";
 import { ScaledSite } from "../components/ScaledSite";
 import TemplateGallery, {
@@ -24,10 +25,18 @@ export default async function NewSitePage() {
         id: meta.id,
         name: meta.name,
         pageCount: meta.pageCount,
-        preview: <ScaledSite scale={0.62} site={full.site} />,
+        preview: (
+          <AutoScroll speed={110}>
+            <ScaledSite scale={0.62} site={full.site} />
+          </AutoScroll>
+        ),
         previewBackground: full.site.theme.bg ?? "#030712",
         tags: meta.tags,
-        thumb: <ScaledSite scale={0.28} site={full.site} />,
+        thumb: (
+          <AutoScroll speed={50}>
+            <ScaledSite scale={0.28} site={full.site} />
+          </AutoScroll>
+        ),
       },
     ];
   });
