@@ -7,7 +7,6 @@ import {
   pgBuilderPublication,
   pgBuilderSite,
   pgOrganizationDomains,
-  pgVpsServers,
 } from "@/lib/db/schema";
 import { cloudflareApi } from "@/lib/server/apis/cloudflare";
 import { normalizeDomainName } from "@/lib/server/domains/authorization";
@@ -15,21 +14,18 @@ import { configureWebHostingDns } from "@/lib/server/domains/cloudflare-dns";
 import { FORBIDDEN_MESSAGE, getBuilderUser } from "@/lib/site-builder/access";
 import { assertValidDomain } from "@/lib/site-builder/caddy";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
-import {
-  type DeployTarget,
-  deploySite,
-  IPV4_RE,
-} from "@/lib/site-builder/deploySite";
+import { deploySite, IPV4_RE } from "@/lib/site-builder/deploySite";
+import { takeDown } from "@/lib/site-builder/takedown";
+import { resolveTarget, sanitize } from "@/lib/site-builder/target";
 
 type Result<T = object> = ({ ok: true } & T) | { error: string; ok: false };
 
 const LABEL_RE = /^[a-z0-9](?:[a-z0-9-]{0,40}[a-z0-9])?$/;
 
-/** Mensagens de SSH podem ecoar dados sensíveis: nunca devolva a senha ao navegador. */
-function sanitize(error: unknown, secret?: string) {
-  let message = error instanceof Error ? error.message : String(error);
-  if (secret) message = message.replaceAll(secret, "***");
-  return message.slice(0, 400);
+async function currentPublication(siteId: string) {
+  return db.query.pgBuilderPublication.findFirst({
+    where: eq(pgBuilderPublication.siteId, siteId),
+  });
 }
 
 async function ownedSite(siteId: string, userId: string) {
@@ -39,62 +35,6 @@ async function ownedSite(siteId: string, userId: string) {
     .where(and(eq(pgBuilderSite.id, siteId), eq(pgBuilderSite.userId, userId)))
     .limit(1);
   return site;
-}
-
-async function resolveTarget(
-  userId: string,
-  input: {
-    password?: string;
-    target: "atlas_vm" | "user_vps";
-    vpsNodeId?: string;
-  }
-): Promise<
-  | { error: string }
-  | { deploy: DeployTarget; ip: string; vpsNodeId: string | null }
-> {
-  const config = getAtlasHostingConfig();
-
-  if (input.target === "atlas_vm") {
-    if (!(config.atlasVmEnabled && config.vmIp)) {
-      return {
-        error: "A hospedagem na VM do Atlas ainda não está disponível.",
-      };
-    }
-    return {
-      deploy: {
-        caddyRoot: config.caddyRoot,
-        ip: config.vmIp,
-        keyPath: config.keyPath,
-        local: config.localDeploy,
-        webRoot: config.webRoot,
-      },
-      ip: config.vmIp,
-      vpsNodeId: null,
-    };
-  }
-
-  const [node] = await db
-    .select()
-    .from(pgVpsServers)
-    .where(
-      and(
-        eq(pgVpsServers.id, input.vpsNodeId ?? ""),
-        eq(pgVpsServers.userId, userId)
-      )
-    )
-    .limit(1);
-  if (!node) return { error: "Servidor não encontrado na sua conta." };
-
-  return {
-    deploy: {
-      ip: node.ip,
-      // Sem senha, tenta a chave do Atlas (VPS provisionadas por nós).
-      keyPath: input.password ? undefined : config.keyPath,
-      password: input.password || undefined,
-    },
-    ip: node.ip,
-    vpsNodeId: node.id,
-  };
 }
 
 export interface PublishInput {
@@ -178,6 +118,8 @@ export async function publishSite(
     return { error: "Esse endereço já está em uso por outro site.", ok: false };
   }
 
+  const previous = await currentPublication(site.id);
+
   // 3) Servidor de destino.
   const target = await resolveTarget(user.id, input);
   if ("error" in target) return { error: target.error, ok: false };
@@ -230,8 +172,38 @@ export async function publishSite(
     target: input.target,
     vpsNodeId: target.vpsNodeId,
   });
+
+  // Mudou de endereço ou de servidor: o endereço antigo sairia do banco, mas continuaria no ar. Libera o antigo.
+  if (
+    previous &&
+    (previous.domain !== domain || previous.vpsNodeId !== target.vpsNodeId)
+  ) {
+    // A linha do banco é a mesma (um registro por site) e já foi atualizada: só limpa o servidor e o DNS antigos.
+    await takeDown(user.id, previous, input.password, { keepRecord: true });
+  }
+
   revalidatePath(`/criador-de-sites/${site.id}/publicar`);
   return { domain, ok: true };
+}
+
+/** Tira o site do ar (servidor, Caddy e DNS) e libera o endereço para outro uso. */
+export async function unpublishSite(input: {
+  password?: string;
+  siteId: string;
+}): Promise<Result> {
+  const user = await getBuilderUser();
+  if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
+  const site = await ownedSite(input.siteId, user.id);
+  if (!site) return { error: "Site não encontrado.", ok: false };
+
+  const publication = await currentPublication(site.id);
+  if (!publication) return { ok: true };
+
+  const result = await takeDown(user.id, publication, input.password);
+  if (!result.ok) return result;
+  revalidatePath(`/criador-de-sites/${site.id}/publicar`);
+  revalidatePath("/criador-de-sites");
+  return { ok: true };
 }
 
 /** Publica de novo no mesmo endereço e servidor da última publicação — usado pelo "Publicar agora" do editor. */

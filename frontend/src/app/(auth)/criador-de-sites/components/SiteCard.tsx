@@ -71,8 +71,9 @@ export default function SiteCard({
       const data = new FormData();
       data.append("siteId", id);
       try {
-        await deleteSite(data);
-        toast.success("Site excluído");
+        const result = await deleteSite(data);
+        if (result.ok) toast.success("Site excluído");
+        else toast.error(result.error);
       } catch {
         toast.error("Não foi possível excluir o site.");
       }

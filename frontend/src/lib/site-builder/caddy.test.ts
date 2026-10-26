@@ -6,6 +6,7 @@ import path from "node:path";
 import {
   assertValidDomain,
   buildDeployScript,
+  buildRemoveScript,
   buildSiteBlock,
   CADDYFILE_BASE,
   WEB_ROOT,
@@ -135,5 +136,58 @@ describe("site-builder caddy", () => {
     expect(readFileSync(caddyfile, "utf8")).toBe(
       'a.com {\n\trespond "manual"\n}\n'
     );
+  });
+});
+
+describe("buildRemoveScript", () => {
+  test("remove só o bloco e a pasta do próprio domínio", () => {
+    const script = buildRemoveScript({ domain: "a.sites.com" });
+    expect(script).toContain('b="# BEGIN atlas-site a.sites.com"');
+    expect(script).toContain('e="# END atlas-site a.sites.com"');
+    expect(script).toContain('rm -rf "/srv/www/a.sites.com"');
+    expect(script).toContain("flock 9");
+  });
+
+  test("respeita a pasta configurada e rejeita entradas perigosas", () => {
+    expect(
+      buildRemoveScript({ domain: "a.com", webRoot: "/opt/caddy/sites" })
+    ).toContain('rm -rf "/opt/caddy/sites/a.com"');
+    expect(() => buildRemoveScript({ domain: "a.com;rm -rf /" })).toThrow();
+    expect(() =>
+      buildRemoveScript({ domain: "a.com", webRoot: "/opt/../etc" })
+    ).toThrow();
+  });
+
+  test("executa: tira só o bloco do domínio e mantém o resto do Caddyfile", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "caddy-rm-"));
+    const caddyfile = path.join(dir, "Caddyfile.base");
+    const webRoot = path.join(dir, "sites").replaceAll("\\", "/");
+    writeFileSync(
+      caddyfile,
+      `(cloudflare) {\n\ttls {\n\t\tdns cloudflare x\n\t}\n}\n${buildSiteBlock("a.sites.com", false)}${buildSiteBlock("b.sites.com", false)}`
+    );
+    execFileSync("bash", [
+      "-c",
+      `mkdir -p "${webRoot}/a.sites.com" "${webRoot}/b.sites.com"`,
+    ]);
+
+    const script = buildRemoveScript({ domain: "a.sites.com" })
+      .replaceAll(WEB_ROOT, webRoot)
+      .split("\n")
+      .filter(l => !/^\s*(exec 9|flock)/.test(l))
+      .join("\n")
+      .replaceAll(CADDYFILE_BASE, caddyfile);
+    execFileSync("bash", ["-c", script], { stdio: "pipe" });
+    execFileSync("bash", ["-c", script], { stdio: "pipe" });
+
+    const result = readFileSync(caddyfile, "utf8");
+    expect(result).not.toContain("a.sites.com");
+    expect(result).toContain("b.sites.com {");
+    expect(result).toContain("(cloudflare)");
+    expect(
+      execFileSync("bash", ["-c", `ls "${webRoot}"`])
+        .toString()
+        .trim()
+    ).toBe("b.sites.com");
   });
 });

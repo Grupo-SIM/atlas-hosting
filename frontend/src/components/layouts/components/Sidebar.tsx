@@ -114,7 +114,10 @@ function NavItem({
   const goesToAdmin = item.adminModeSwitch === "enter";
   /** Entrar no admin, ou sair dele clicando em qualquer outro item da sidebar. */
   const switchesAdminMode = goesToAdmin !== inAdminMode;
-  const isActive = goesToAdmin ? inAdminMode : pathname === item.href;
+  const isActive = goesToAdmin
+    ? inAdminMode
+    : pathname === item.href ||
+      Boolean(item.match && pathname.startsWith(item.match));
 
   const handleAdminModeSwitch = (
     event: React.MouseEvent<HTMLAnchorElement>

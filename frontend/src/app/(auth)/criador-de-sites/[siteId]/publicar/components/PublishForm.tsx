@@ -2,6 +2,16 @@
 
 import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +22,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { publishSite } from "../../../publish-actions";
+import { publishSite, unpublishSite } from "../../../publish-actions";
 
 interface Props {
   atlasVmEnabled: boolean;
@@ -53,6 +63,24 @@ export default function PublishForm({
   const [password, setPassword] = useState("");
   const [pending, startTransition] = useTransition();
   const passwordId = useId();
+  const [confirmingDown, setConfirmingDown] = useState(false);
+  const [downPassword, setDownPassword] = useState("");
+
+  const takeDown = () =>
+    startTransition(async () => {
+      const result = await unpublishSite({
+        password: downPassword || undefined,
+        siteId,
+      });
+      if (result.ok) {
+        toast.success("Site tirado do ar. O endereço está livre de novo.");
+        setDownPassword("");
+        // A publicação sumiu: recarrega os dados do servidor.
+        window.location.reload();
+      } else {
+        toast.error(result.error);
+      }
+    });
 
   const canPublish =
     (kind === "subdomain" ? label.length > 0 : domain.length > 0) &&
@@ -109,9 +137,56 @@ export default function PublishForm({
                 </p>
               </>
             ) : null}
+            <Button
+              disabled={pending}
+              onClick={() => setConfirmingDown(true)}
+              size="sm"
+              variant="outline"
+            >
+              Tirar do ar
+            </Button>
           </CardContent>
         </Card>
       ) : null}
+
+      <AlertDialog onOpenChange={setConfirmingDown} open={confirmingDown}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Tirar {publication?.domain} do ar?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Os arquivos publicados e o endereço DNS serão removidos e o nome
+              fica livre para outro site. O conteúdo do site continua salvo no
+              editor e você pode publicar de novo quando quiser.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {publication?.target === "user_vps" ? (
+            <div className="space-y-2">
+              <Label htmlFor={`${passwordId}-down`}>
+                Senha do servidor (root)
+              </Label>
+              <Input
+                autoComplete="off"
+                id={`${passwordId}-down`}
+                onChange={e => setDownPassword(e.target.value)}
+                type="password"
+                value={downPassword}
+              />
+              <p className="text-muted-foreground text-xs">
+                Usada só agora; não é gravada. Pode deixar em branco se a VPS
+                foi criada pelo Atlas.
+              </p>
+            </div>
+          ) : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={takeDown}>
+              Tirar do ar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Card>
         <CardHeader>

@@ -3,7 +3,11 @@ import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { assertValidDomain, buildDeployScript } from "./caddy";
+import {
+  assertValidDomain,
+  buildDeployScript,
+  buildRemoveScript,
+} from "./caddy";
 
 const execFileAsync = promisify(execFile);
 
@@ -160,4 +164,16 @@ export async function deploySite(args: {
   } finally {
     await rm(workDir, { force: true, recursive: true }).catch(() => {});
   }
+}
+
+/** Tira o site do servidor: apaga a pasta e o bloco do Caddy. Seguro de repetir. */
+export async function removeSite(args: {
+  domain: string;
+  target: DeployTarget;
+}) {
+  const domain = assertValidDomain(args.domain);
+  await runRemoteScript(
+    args.target,
+    buildRemoveScript({ domain, webRoot: args.target.webRoot })
+  );
 }

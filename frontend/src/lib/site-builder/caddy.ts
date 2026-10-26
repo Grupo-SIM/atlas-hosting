@@ -123,3 +123,30 @@ cp -p "${CADDYFILE_BASE}" "${CADDYFILE_BASE}.atlas-bak"
 cat "$TMP" > "${CADDYFILE_BASE}"
 `;
 }
+
+/**
+ * Script remoto que tira o site do ar: tira o bloco do Caddyfile.base (com backup) e apaga a pasta do site.
+ * É idempotente — rodar de novo num site já removido não dá erro.
+ */
+export function buildRemoveScript(args: {
+  domain: string;
+  webRoot?: string;
+}): string {
+  const domain = assertValidDomain(args.domain);
+  const webRoot = assertValidRoot(args.webRoot ?? WEB_ROOT);
+  const dir = siteDir(domain, webRoot);
+  const lock = `${CADDYFILE_BASE}.atlas.lock`;
+
+  return `set -euo pipefail
+if [ -f "${CADDYFILE_BASE}" ]; then
+  exec 9>"${lock}"
+  flock 9
+  TMP="$(mktemp)"
+  trap 'rm -f "$TMP"' EXIT
+  awk -v b="${beginMarker(domain)}" -v e="${endMarker(domain)}" '$0==b{skip=1} {if(!skip)print} $0==e{skip=0}' "${CADDYFILE_BASE}" > "$TMP"
+  cp -p "${CADDYFILE_BASE}" "${CADDYFILE_BASE}.atlas-bak"
+  cat "$TMP" > "${CADDYFILE_BASE}"
+fi
+rm -rf "${dir}" "${dir}".new-* "${dir}".old-*
+`;
+}

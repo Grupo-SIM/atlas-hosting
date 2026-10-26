@@ -4,8 +4,9 @@ import { getTemplate, siteSchema } from "@repo/site-builder";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { pgBuilderSite } from "@/lib/db/schema";
+import { pgBuilderPublication, pgBuilderSite } from "@/lib/db/schema";
 import { FORBIDDEN_MESSAGE, getBuilderUser } from "@/lib/site-builder/access";
+import { takeDown } from "@/lib/site-builder/takedown";
 import { getStorjUrl, uploadSiteBuilderImage } from "@/lib/storj";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -42,9 +43,27 @@ export async function createSite(input: {
   return { ok: true, siteId: site.id };
 }
 
-export async function deleteSite(formData: FormData) {
+export async function deleteSite(formData: FormData): Promise<ActionResult> {
   const user = await getBuilderUser();
-  if (!user) throw new Error(FORBIDDEN_MESSAGE);
+  if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
+  const siteId = String(formData.get("siteId") ?? "");
+
+  // Excluir o site não pode deixá-lo no ar sem dono: tira do servidor e do DNS antes.
+  const [owned] = await db
+    .select({ id: pgBuilderSite.id })
+    .from(pgBuilderSite)
+    .where(and(eq(pgBuilderSite.id, siteId), eq(pgBuilderSite.userId, user.id)))
+    .limit(1);
+  const publication = owned
+    ? await db.query.pgBuilderPublication.findFirst({
+        where: eq(pgBuilderPublication.siteId, owned.id),
+      })
+    : undefined;
+  if (publication) {
+    const result = await takeDown(user.id, publication);
+    if (!result.ok) return result;
+  }
+
   await db
     .delete(pgBuilderSite)
     .where(
@@ -54,6 +73,7 @@ export async function deleteSite(formData: FormData) {
       )
     );
   revalidatePath("/criador-de-sites");
+  return { ok: true };
 }
 
 /** Grava o site editado. O editor roda no navegador, então o conteúdo é revalidado aqui. */
