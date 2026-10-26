@@ -1,5 +1,5 @@
 import { execFile, spawn } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -14,6 +14,14 @@ export interface DeployTarget {
   /** Senha SSH — usada só durante esta chamada, nunca gravada. */
   password?: string;
   user?: string;
+  /**
+   * O Atlas roda na própria VM que hospeda os sites: roda o script aqui mesmo (bash local), sem SSH.
+   * Exige `webRoot` e o `Caddyfile.base` montados no container com o mesmo caminho do servidor.
+   */
+  local?: boolean;
+  /** Pasta dos sites no servidor e como o Caddy a enxerga (ver `caddy.ts`). */
+  caddyRoot?: string;
+  webRoot?: string;
 }
 
 export interface StaticSiteFile {
@@ -30,12 +38,14 @@ const SSH_OPTS = [
   "ConnectTimeout=20",
 ];
 
-const IPV4_RE = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+export const IPV4_RE = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+const HOSTNAME_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
 
 function sshInvocation(target: DeployTarget) {
-  if (!IPV4_RE.test(target.ip)) throw new Error("IP do servidor inválido");
+  if (!(IPV4_RE.test(target.ip) || HOSTNAME_RE.test(target.ip)))
+    throw new Error("Endereço do servidor inválido");
   const remote = `${target.user ?? "root"}@${target.ip}`;
-  if (!/^[a-z_][a-z0-9_-]*@[0-9.]+$/i.test(remote)) {
+  if (!/^[a-z_][a-z0-9_-]*@[a-z0-9.-]+$/i.test(remote)) {
     throw new Error("Usuário SSH inválido");
   }
 
@@ -87,6 +97,10 @@ async function runLocal(
 
 /** Executa um script bash no servidor lendo-o da entrada padrão. */
 async function runRemoteScript(target: DeployTarget, script: string) {
+  if (target.local) {
+    await runLocal("bash", ["-s"], process.env, script);
+    return;
+  }
   const ssh = sshInvocation(target);
   const { args, bin } = ssh.run("ssh", [ssh.remote, "bash -s"]);
   await runLocal(bin, args, ssh.env, script);
@@ -105,7 +119,7 @@ export async function deploySite(args: {
   target: DeployTarget;
 }) {
   const domain = assertValidDomain(args.domain);
-  const ssh = sshInvocation(args.target);
+  const ssh = args.target.local ? null : sshInvocation(args.target);
   const releaseId = String(Date.now());
   const workDir = await mkdtemp(path.join(tmpdir(), "site-deploy-"));
 
@@ -125,16 +139,22 @@ export async function deploySite(args: {
     await execFileAsync("tar", ["-czf", archive, "-C", siteDir, "."]);
 
     const remoteArchive = `/tmp/atlas-site-${releaseId}.tgz`;
-    const scp = ssh.run("scp", [archive, `${ssh.remote}:${remoteArchive}`]);
-    await runLocal(scp.bin, scp.args, ssh.env);
+    if (ssh) {
+      const scp = ssh.run("scp", [archive, `${ssh.remote}:${remoteArchive}`]);
+      await runLocal(scp.bin, scp.args, ssh.env);
+    } else {
+      await copyFile(archive, remoteArchive);
+    }
 
     await runRemoteScript(
       args.target,
       buildDeployScript({
         archive: remoteArchive,
+        caddyRoot: args.target.caddyRoot,
         domain,
         includeWww: args.includeWww,
         releaseId,
+        webRoot: args.target.webRoot,
       })
     );
   } finally {

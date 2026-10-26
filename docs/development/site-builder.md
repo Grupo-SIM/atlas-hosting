@@ -11,6 +11,28 @@ Por enquanto o recurso é **só do admin**: item `adminOnly` na sidebar (`naviga
 com 404 para não-admin, e toda server action recusa quem não é admin. A regra fica em `lib/site-builder/access.ts`
 (usuário real, ignorando impersonação). Para liberar a todos, mude essa regra e o `adminOnly` do item de menu.
 
+## Fluxo e UI
+
+UI portada do protótipo "UI editor de sites" (neutros quentes, lima `#d6f34a` nas ações, roxo na seleção).
+Telas em `frontend/src/app/(auth)/criador-de-sites/`:
+
+1. `/criador-de-sites` — **Meus sites**: cartões com miniatura ao vivo (`ScaledSite`), status vindo de `builder_publications`.
+2. `/criador-de-sites/novo` — **Templates**: busca, filtros por `tags` do template, destaque + grade.
+3. `/criador-de-sites/novo/[templateId]` — **Configurar** (nome + endereço) e **progresso**. `createSite` cria o
+   registro e `publishSite` publica no endereço escolhido; "Definir depois" só cria. Os passos de progresso são
+   cronometrados enquanto a publicação (uma chamada só) roda.
+4. `/criador-de-sites/[siteId]` — **Editor**; "Revisar e publicar" salva e chama `republishSite` (mesmo endereço/servidor
+   da última publicação). Sem publicação ainda, o modal leva para `/[siteId]/publicar`, que continua existindo.
+
+O editor (`packages/site-builder/src/editor/`) tem camadas (árvore de blocos), aba Páginas (páginas, posts, categorias, menu),
+aba IA ("em breve"), canvas com desktop/tablet/celular + zoom, desfazer/refazer, autosave (1,5 s) e inspetor à direita
+(conteúdo do bloco, tipografia, caixa; sem seleção, o tema). Lista de alterações do modal fica em `localStorage` por site.
+
+- `Block.style` (allowlist em `model/style.ts`, validada no `siteSchema`) e `Block.hidden` valem para **qualquer** bloco e
+  são aplicados no contêiner do bloco; o que o bloco desenha por dentro continua definido pelo próprio bloco.
+- Ícones do editor são um subconjunto do lucide em `editor/icons.tsx` (gerado; sem dependência nova).
+- `SiteRenderer` aceita `narrow` para forçar o layout estreito no preview de celular/tablet (a media query não enxerga o quadro).
+
 ## Pacote
 
 | Entry | Uso |
@@ -60,8 +82,10 @@ gerado só de domínio validado, com backup a cada deploy.
 Variáveis de ambiente (ver `lib/site-builder/config.ts`):
 
 - `SITE_BUILDER_BASE_DOMAIN` e `SITE_BUILDER_CLOUDFLARE_ZONE` — subdomínios grátis (`<nome>.<base>`).
-- `SITE_BUILDER_ATLAS_VM_IP` — VM do Atlas que hospeda sites. **Sem ela a opção fica desligada** (a taxa de hospedagem ainda não existe).
+- `SITE_BUILDER_ATLAS_VM_HOST` (ou o nome antigo `SITE_BUILDER_ATLAS_VM_IP`) — IP **ou hostname/CNAME** (ex.: `vps.simintermediacoes.com`) da VM do Atlas que hospeda sites; com hostname o DNS do site vira CNAME. **Sem ela a opção fica desligada** (a taxa de hospedagem ainda não existe).
 - `SITE_BUILDER_SSH_KEY_PATH` — chave privada do Atlas para acessar as VMs.
+- `SITE_BUILDER_DEPLOY_MODE=local` — o Atlas roda **na própria VM** dos sites: o script de deploy roda dentro do container (bash), sem SSH/chave. Exige montar `/opt/caddy:/opt/caddy` no container.
+- `SITE_BUILDER_WEB_ROOT` / `SITE_BUILDER_CADDY_ROOT` — pasta dos sites na VM e o mesmo caminho como o container do Caddy a enxerga (ex.: `/opt/caddy/sites` e `/config/caddy/sites`; padrão `/srv/www` nos dois).
 
 Notas de segurança:
 
@@ -75,5 +99,6 @@ Notas de segurança:
 - Taxa de hospedagem na VM do Atlas (valor definido pelo admin) e cobrança.
 - Compra de domínio dentro do fluxo de publicar; despublicar (remover pasta em /srv/www e o bloco do Caddyfile.base).
 - Imagens do template spyhacker ainda apontam para `007spyhacker.com/wp-content/uploads`; copiar para o storage.
-- Edição de texto direto no canvas (hoje é pelo painel de propriedades).
+- Edição de texto direto no canvas (duplo clique) e seleção por elemento: hoje a unidade é o bloco; texto muda no painel.
+- Chat com a IA (aba "em breve") e passos de progresso reais na criação.
 - Montagem de blocos aninhados no editor só reordena/edita; não há arrastar e soltar.

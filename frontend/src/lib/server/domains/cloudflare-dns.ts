@@ -129,22 +129,24 @@ export async function getManagedCloudflareZone(domain: string) {
   return { domain: managed, zoneId: managed.cloudflareZoneId };
 }
 
-export async function configureWebHostingDns(domain: string, serverIp: string) {
+/** `target` é o IP (registro A) ou um hostname (CNAME; no apex o Cloudflare faz o "flattening"). */
+export async function configureWebHostingDns(domain: string, target: string) {
   const { zoneId } = await getManagedCloudflareZone(domain);
+  const type = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(target) ? "A" : "CNAME";
   await Promise.all([
     cloudflareApi.upsertDnsRecord(zoneId, {
-      content: serverIp,
+      content: target,
       name: domain,
       proxied: false,
       ttl: 1,
-      type: "A",
+      type,
     }),
     cloudflareApi.upsertDnsRecord(zoneId, {
-      content: serverIp,
+      content: target,
       name: `www.${domain}`,
       proxied: false,
       ttl: 1,
-      type: "A",
+      type,
     }),
   ]);
 }
