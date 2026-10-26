@@ -14,6 +14,12 @@ export type {
 export * from "./model/index.js";
 export { siteSchema } from "./model/schema.js";
 export {
+  BLOCK_STYLE_KEYS,
+  type BlockStyle,
+  type BlockStyleKey,
+} from "./model/style.js";
+export { fontStack, SITE_FONTS, themeFont } from "./renderer/fonts.js";
+export {
   isSlugTaken,
   type Route,
   resolveRoute,

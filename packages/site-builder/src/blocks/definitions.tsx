@@ -6,13 +6,15 @@ import {
   formatDate,
   href,
   Img,
+  Inline,
   LinkButton,
   PostCard,
   postPath,
+  SocialIcon,
   safeUrl,
   visiblePosts,
 } from "./helpers.js";
-import type { BlockDefinition, FieldDef } from "./types.js";
+import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
 
 const str = (d = "") => z.string().default(d);
 
@@ -39,15 +41,41 @@ const header = defineBlock(
     render: (p, ctx) => (
       <header className="sb-header sb-container">
         <a className="sb-logo" href={href(ctx, "/")}>
-          {p.logo ? <Img alt={p.logoText} src={p.logo} /> : null}
-          <strong>{p.logoText}</strong>
+          {p.logo ? (
+            <Img alt={p.logoText || ctx.site.name} src={p.logo} />
+          ) : null}
+          {p.logoText ? <strong>{p.logoText}</strong> : null}
         </a>
         <nav className="sb-nav">
-          {ctx.site.menu.map(item => (
-            <a href={href(ctx, item.href)} key={item.href + item.label}>
-              {item.label}
-            </a>
-          ))}
+          {ctx.site.menu.map(item => {
+            const subs =
+              item.dynamic === "categories"
+                ? ctx.site.categories.map(c => ({
+                    href: categoryPath(c),
+                    label: c.name,
+                  }))
+                : (item.children ?? []);
+            return (
+              <div
+                className={subs.length ? "sb-nav-item has-sub" : "sb-nav-item"}
+                key={item.href + item.label}
+              >
+                <a href={href(ctx, item.href)}>
+                  {item.label}
+                  {subs.length ? <i aria-hidden="true" /> : null}
+                </a>
+                {subs.length ? (
+                  <div className="sb-nav-sub">
+                    {subs.map(s => (
+                      <a href={href(ctx, s.href)} key={s.href + s.label}>
+                        {s.label}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </nav>
         <LinkButton ctx={ctx} label={p.buttonLabel} url={p.buttonUrl} />
       </header>
@@ -60,6 +88,7 @@ const footer = defineBlock(
   z.object({
     copyright: str("Copyright © Meu Site"),
     email: str(),
+    extraLinks: z.array(z.object({ label: str(), url: str("#") })).default([]),
     helpText: str(),
     logo: str(),
     logoText: str("Meu Site"),
@@ -80,6 +109,15 @@ const footer = defineBlock(
         kind: "list",
         label: "Redes sociais",
       },
+      {
+        itemFields: [
+          { key: "label", kind: "text", label: "Texto" },
+          { key: "url", kind: "url", label: "Link" },
+        ],
+        key: "extraLinks",
+        kind: "list",
+        label: "Links extras no menu do rodapé",
+      },
       { key: "copyright", kind: "text", label: "Copyright" },
     ],
     group: "layout",
@@ -88,14 +126,21 @@ const footer = defineBlock(
       <footer className="sb-footer">
         <div className="sb-container sb-footer-grid">
           <div className="sb-footer-brand">
-            {p.logo ? <Img alt={p.logoText} src={p.logo} /> : null}
-            <strong>{p.logoText}</strong>
+            {p.logo ? (
+              <Img alt={p.logoText || ctx.site.name} src={p.logo} />
+            ) : null}
+            {p.logoText ? <strong>{p.logoText}</strong> : null}
           </div>
           <div>
             <h4>Menu</h4>
             {ctx.site.menu.map(item => (
               <a href={href(ctx, item.href)} key={item.href + item.label}>
                 {item.label}
+              </a>
+            ))}
+            {p.extraLinks.map(l => (
+              <a href={safeUrl(l.url)} key={l.url + l.label}>
+                {l.label}
               </a>
             ))}
           </div>
@@ -106,8 +151,13 @@ const footer = defineBlock(
             <h4>Redes Sociais</h4>
             <div className="sb-socials">
               {p.socials.map(s => (
-                <a href={safeUrl(s.url)} key={s.label + s.url}>
-                  {s.label}
+                <a
+                  aria-label={s.label}
+                  href={safeUrl(s.url)}
+                  key={s.label + s.url}
+                  title={s.label}
+                >
+                  <SocialIcon label={s.label} />
                 </a>
               ))}
             </div>
@@ -194,11 +244,13 @@ const heading = defineBlock(
     level: z.enum(["h1", "h2", "h3"]).default("h2"),
     subtitle: str(),
     text: str("Título"),
+    watermark: str(),
   }),
   {
     fields: [
       { key: "text", kind: "text", label: "Título" },
       { key: "subtitle", kind: "text", label: "Subtítulo" },
+      { key: "watermark", kind: "text", label: "Texto grande ao fundo" },
       {
         key: "level",
         kind: "select",
@@ -225,6 +277,11 @@ const heading = defineBlock(
       const Tag = p.level;
       return (
         <div className={`sb-container sb-heading sb-align-${p.align}`}>
+          {p.watermark ? (
+            <span aria-hidden="true" className="sb-watermark">
+              {p.watermark}
+            </span>
+          ) : null}
           <Tag>{p.text}</Tag>
           {p.subtitle ? <p className="sb-sub">{p.subtitle}</p> : null}
         </div>
@@ -239,7 +296,8 @@ const text = defineBlock(z.object({ text: str("Escreva seu texto aqui.") }), {
     {
       key: "text",
       kind: "textarea",
-      label: "Texto (linha em branco separa parágrafos)",
+      label:
+        "Texto (linha em branco separa parágrafos; **negrito**, *itálico*, [texto](link))",
     },
   ],
   group: "content",
@@ -247,7 +305,9 @@ const text = defineBlock(z.object({ text: str("Escreva seu texto aqui.") }), {
   render: p => (
     <div className="sb-container sb-text">
       {p.text.split(/\n{2,}/).map(para => (
-        <p key={para}>{para}</p>
+        <p key={para}>
+          <Inline text={para} />
+        </p>
       ))}
     </div>
   ),
@@ -270,14 +330,34 @@ const image = defineBlock(z.object({ alt: str(), src: str() }), {
 });
 
 const button = defineBlock(
-  z.object({ buttonLabel: str("Clique aqui"), buttonUrl: str("#") }),
+  z.object({
+    buttonLabel: str("Clique aqui"),
+    buttonUrl: str("#"),
+    variant: z.enum(["primary", "wide"]).default("primary"),
+  }),
   {
-    fields: linkFields(),
+    fields: [
+      ...linkFields(),
+      {
+        key: "variant",
+        kind: "select",
+        label: "Aparência",
+        options: [
+          { label: "Padrão", value: "primary" },
+          { label: "Largo (link na bio)", value: "wide" },
+        ],
+      },
+    ],
     group: "content",
     label: "Botão",
     render: (p, ctx) => (
       <div className="sb-container sb-align-center">
-        <LinkButton ctx={ctx} label={p.buttonLabel} url={p.buttonUrl} />
+        <LinkButton
+          ctx={ctx}
+          label={p.buttonLabel}
+          url={p.buttonUrl}
+          variant={p.variant}
+        />
       </div>
     ),
     type: "button",
@@ -329,7 +409,7 @@ const categoryGrid = defineBlock(
   z.object({
     buttonLabel: str(),
     buttonUrl: str("/categorias/"),
-    images: z.array(z.object({ src: str() })).default([]),
+    images: z.array(z.object({ src: str(), text: str() })).default([]),
     limit: z.coerce.number().default(0),
     subtitle: str(),
     title: str("Categorias"),
@@ -339,10 +419,13 @@ const categoryGrid = defineBlock(
       { key: "title", kind: "text", label: "Título" },
       { key: "subtitle", kind: "text", label: "Subtítulo" },
       {
-        itemFields: [{ key: "src", kind: "image", label: "Imagem" }],
+        itemFields: [
+          { key: "src", kind: "image", label: "Imagem" },
+          { key: "text", kind: "textarea", label: "Descrição" },
+        ],
         key: "images",
         kind: "list",
-        label: "Imagens dos cards (na ordem das categorias)",
+        label: "Imagens e textos dos cards (na ordem das categorias)",
       },
       { key: "limit", kind: "number", label: "Máx. de cards (0 = todos)" },
       ...linkFields(),
@@ -361,12 +444,18 @@ const categoryGrid = defineBlock(
           <div className="sb-grid sb-grid-3">
             {cats.map((c, i) => (
               <a
-                className="sb-card sb-cat-card"
+                className={`sb-card sb-cat-card${p.images[i]?.src ? "" : "plain"}`}
                 href={href(ctx, categoryPath(c))}
                 key={c.id}
               >
-                <span>{c.name}</span>
-                <Img src={p.images[i]?.src} />
+                <span className="sb-cat-head">
+                  <span>{c.name}</span>
+                  <b aria-hidden="true">↗</b>
+                </span>
+                {p.images[i]?.src ? <Img src={p.images[i]?.src} /> : null}
+                {p.images[i]?.text ? (
+                  <small className="sb-cat-text">{p.images[i]?.text}</small>
+                ) : null}
               </a>
             ))}
           </div>
@@ -382,6 +471,7 @@ const categoryGrid = defineBlock(
 
 const stats = defineBlock(
   z.object({
+    backgroundImage: str(),
     items: z
       .array(z.object({ label: str(), suffix: str(), value: str() }))
       .default([]),
@@ -390,6 +480,7 @@ const stats = defineBlock(
   {
     fields: [
       { key: "title", kind: "text", label: "Título" },
+      { key: "backgroundImage", kind: "image", label: "Imagem de fundo" },
       {
         itemFields: [
           { key: "value", kind: "text", label: "Número" },
@@ -404,7 +495,8 @@ const stats = defineBlock(
     group: "content",
     label: "Contadores",
     render: p => (
-      <section className="sb-container sb-align-center">
+      <section className="sb-container sb-align-center sb-stats-wrap">
+        {p.backgroundImage ? <Img alt="" src={p.backgroundImage} /> : null}
         {p.title ? <h2>{p.title}</h2> : null}
         <div className="sb-stats">
           {p.items.map(i => (
@@ -492,10 +584,17 @@ const cardGrid = defineBlock(
 );
 
 const featuredPost = defineBlock(
-  z.object({ label: str("Melhor Post"), postSlug: str() }),
+  z.object({
+    backgroundImage: str(),
+    label: str("Melhor Post"),
+    postSlug: str(),
+    sideImage: str(),
+  }),
   {
     fields: [
       { key: "label", kind: "text", label: "Rótulo" },
+      { key: "backgroundImage", kind: "image", label: "Ondas ao fundo" },
+      { key: "sideImage", kind: "image", label: "Imagem decorativa ao lado" },
       {
         key: "postSlug",
         kind: "text",
@@ -509,17 +608,24 @@ const featuredPost = defineBlock(
       const post = posts.find(x => x.slug === p.postSlug) ?? posts[0];
       if (!post) return null;
       return (
-        <section className="sb-container">
-          <div className="sb-card sb-featured-post">
-            <h3>{p.label}</h3>
-            <Img src={post.coverImage} />
-            <p>{post.title}</p>
-            <LinkButton
-              ctx={ctx}
-              label="Ver Mais"
-              url={postPath(post)}
-              variant="light"
-            />
+        <section className="sb-featured-wrap">
+          {p.backgroundImage ? <Img alt="" src={p.backgroundImage} /> : null}
+          <div className="sb-container sb-featured-inner">
+            {p.sideImage ? <Img alt="" src={p.sideImage} /> : null}
+            <div className="sb-card sb-featured-post">
+              <h3>
+                {p.label}
+                <i />
+              </h3>
+              <Img src={post.coverImage} />
+              <p>{post.title}</p>
+              <LinkButton
+                ctx={ctx}
+                label="Ver Mais"
+                url={postPath(post)}
+                variant="light"
+              />
+            </div>
           </div>
         </section>
       );
@@ -626,14 +732,26 @@ function filterPosts(
   );
 }
 
+const CAROUSEL_JS = `(function(){document.querySelectorAll('.sb-mag-main').forEach(function(box){if(box.dataset.ready)return;box.dataset.ready='1';var t=box.querySelector('.sb-mag-track'),d=box.querySelectorAll('.sb-mag-dots button');if(!t||d.length<2)return;function cur(){return Math.round(t.scrollLeft/t.clientWidth)}function mark(){var i=cur();d.forEach(function(b,j){b.className=j===i?'on':''})}function go(i){t.scrollTo({left:i*t.clientWidth,behavior:'smooth'})}d.forEach(function(b,j){b.onclick=function(){go(j)}});t.addEventListener('scroll',mark,{passive:true});mark();setInterval(function(){if(box.matches(':hover'))return;go((cur()+1)%d.length)},5000)})})();`;
+
 const postExplorer = defineBlock(
   z.object({
+    layout: z.enum(["grid", "magazine"]).default("grid"),
     limit: z.coerce.number().default(6),
     title: str("Todos os conteúdos"),
   }),
   {
     fields: [
       { key: "title", kind: "text", label: "Título" },
+      {
+        key: "layout",
+        kind: "select",
+        label: "Aparência",
+        options: [
+          { label: "Grade de cards", value: "grid" },
+          { label: "Destaque + lista", value: "magazine" },
+        ],
+      },
       { key: "limit", kind: "number", label: "Quantidade de posts" },
     ],
     group: "blog",
@@ -645,12 +763,99 @@ const postExplorer = defineBlock(
         ctx.query,
         cat?.id
       ).slice(0, p.limit);
+      if (p.layout === "magazine") {
+        const slides = posts.slice(0, 3);
+        const side = posts.slice(3, 6);
+        const catName = (post: (typeof posts)[number]) =>
+          categoryOf(ctx.site, post)?.name ?? "";
+        return (
+          // biome-ignore lint/correctness/useUniqueElementIds: âncora fixa (#conteudos) usada pelo botão do hero
+          <section className="sb-container" id="conteudos">
+            <h2 className="sb-align-center">{p.title}</h2>
+            <form
+              action={href(ctx, "/pesquisa/")}
+              className="sb-mag"
+              method="get"
+            >
+              <div className="sb-mag-search">
+                <input
+                  defaultValue={ctx.query.q ?? ""}
+                  name="q"
+                  placeholder="Digite aqui..."
+                  type="search"
+                />
+                <button className="sb-btn sb-btn-primary" type="submit">
+                  Pesquisar
+                </button>
+              </div>
+              <div className="sb-mag-cats">
+                <strong>Categorias</strong>
+                <select defaultValue={ctx.query.category ?? ""} name="category">
+                  <option value="">Selecionar categoria</option>
+                  {ctx.site.categories.map(c => (
+                    <option key={c.id} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {slides.length ? (
+                <div className="sb-mag-main">
+                  <div className="sb-mag-track">
+                    {slides.map(post => (
+                      <a
+                        className="sb-mag-slide"
+                        href={href(ctx, postPath(post))}
+                        key={post.id}
+                      >
+                        <Img alt={post.title} src={post.coverImage} />
+                        <small>{catName(post)}</small>
+                        <h3>{post.title}</h3>
+                        <p>{post.excerpt}</p>
+                      </a>
+                    ))}
+                  </div>
+                  {slides.length > 1 ? (
+                    <div className="sb-mag-dots">
+                      {slides.map((post, i) => (
+                        <button
+                          aria-label={`Notícia ${i + 1}`}
+                          className={i === 0 ? "on" : ""}
+                          key={post.id}
+                          type="button"
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+              <div className="sb-mag-side">
+                {side.slice(0, 3).map(post => (
+                  <a href={href(ctx, postPath(post))} key={post.id}>
+                    <Img alt={post.title} src={post.coverImage} />
+                    <span>
+                      <h3>{post.title}</h3>
+                      <em>Ver mais »</em>
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </form>
+            {posts.length === 0 ? (
+              <p className="sb-align-center">Nenhum conteúdo encontrado.</p>
+            ) : null}
+            {/* Pontos e troca automática do carrossel; script fixo, sem conteúdo do usuário. */}
+            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: script constante */}
+            <script dangerouslySetInnerHTML={{ __html: CAROUSEL_JS }} />
+          </section>
+        );
+      }
       return (
         // biome-ignore lint/correctness/useUniqueElementIds: âncora fixa (#conteudos) usada pelo botão do hero
         <section className="sb-container" id="conteudos">
           <h2 className="sb-align-center">{p.title}</h2>
           <form
-            action={href(ctx, "/blogs/")}
+            action={href(ctx, "/pesquisa/")}
             className="sb-filter"
             method="get"
           >
@@ -690,12 +895,22 @@ const postExplorer = defineBlock(
 const postList = defineBlock(
   z.object({
     limit: z.coerce.number().default(6),
+    nextUrl: str(),
+    offset: z.coerce.number().default(0),
+    prevUrl: str(),
     title: str("Mais conteúdos como esse:"),
   }),
   {
     fields: [
       { key: "title", kind: "text", label: "Título" },
       { key: "limit", kind: "number", label: "Quantidade" },
+      {
+        key: "offset",
+        kind: "number",
+        label: "Pular os primeiros (paginação)",
+      },
+      { key: "prevUrl", kind: "url", label: "Link da página anterior" },
+      { key: "nextUrl", kind: "url", label: "Link da próxima página" },
     ],
     group: "blog",
     label: "Lista de posts (relacionados / categoria)",
@@ -704,17 +919,37 @@ const postList = defineBlock(
         x => x.id !== ctx.current.post?.id
       );
       const posts = filterPosts(all, ctx.query, ctx.current.category?.id).slice(
-        0,
-        p.limit
+        p.offset,
+        p.offset + p.limit
       );
       return (
         <section className="sb-container">
           {p.title ? <h2>{p.title}</h2> : null}
           <div className="sb-grid sb-grid-3">
             {posts.map(post => (
-              <PostCard ctx={ctx} key={post.id} post={post} />
+              <PostCard compact ctx={ctx} key={post.id} post={post} />
             ))}
           </div>
+          {p.prevUrl || p.nextUrl ? (
+            <nav className="sb-pager">
+              {p.prevUrl ? (
+                <a
+                  className="sb-btn sb-btn-primary"
+                  href={href(ctx, p.prevUrl)}
+                >
+                  « Anterior
+                </a>
+              ) : null}
+              {p.nextUrl ? (
+                <a
+                  className="sb-btn sb-btn-primary"
+                  href={href(ctx, p.nextUrl)}
+                >
+                  Próxima »
+                </a>
+              ) : null}
+            </nav>
+          ) : null}
         </section>
       );
     },
@@ -722,52 +957,153 @@ const postList = defineBlock(
   }
 );
 
-const categoryHeader = defineBlock(z.object({ backLabel: str("Voltar") }), {
-  fields: [{ key: "backLabel", kind: "text", label: "Texto do voltar" }],
-  group: "blog",
-  label: "Cabeçalho de categoria",
-  render: (p, ctx) => (
-    <div className="sb-container sb-heading">
-      <a className="sb-link" href={href(ctx, "/blogs/")}>
-        ← {p.backLabel}
-      </a>
-      <h1>{ctx.current.category?.name ?? "Categoria"}</h1>
-    </div>
-  ),
-  type: "categoryHeader",
-});
-
-const postHeader = defineBlock(z.object({}), {
+const categorySearch = defineBlock(z.object({}), {
   fields: [],
   group: "blog",
-  label: "Cabeçalho do post",
-  render: (_p, ctx) => {
-    const post = ctx.current.post;
-    if (!post) return null;
-    const cat = categoryOf(ctx.site, post);
-    return (
-      <div className="sb-container sb-post-header">
-        <h1>{post.title}</h1>
-        <Img src={post.coverImage} />
-        {cat ? <span className="sb-tag">{cat.name}</span> : null}
-        <time>{formatDate(post.publishedAt)}</time>
-      </div>
-    );
-  },
-  type: "postHeader",
-});
-
-const postContent = defineBlock(z.object({}), {
-  fields: [],
-  group: "blog",
-  label: "Conteúdo do post",
+  label: "Busca da categoria",
   render: (_p, ctx) => (
-    <div className="sb-post-content">
-      {ctx.current.post ? ctx.renderBlocks(ctx.current.post.blocks) : null}
-    </div>
+    <form
+      action={href(ctx, "/pesquisa/")}
+      className="sb-container sb-mag sb-cat-search"
+      method="get"
+    >
+      <div className="sb-mag-search">
+        <input
+          defaultValue={ctx.query.q ?? ""}
+          name="q"
+          placeholder="Digite aqui..."
+          type="search"
+        />
+        <button className="sb-btn sb-btn-primary" type="submit">
+          Pesquisar
+        </button>
+      </div>
+      <div className="sb-mag-cats">
+        <strong>Categorias</strong>
+        <select defaultValue={ctx.current.category?.slug ?? ""} name="category">
+          <option value="">Selecionar categoria</option>
+          {ctx.site.categories.map(c => (
+            <option key={c.id} value={c.slug}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </form>
   ),
-  type: "postContent",
+  type: "categorySearch",
 });
+
+const categoryHeader = defineBlock(
+  z.object({
+    backLabel: str("Voltar"),
+    backUrl: str("/categorias/"),
+    title: str(),
+  }),
+  {
+    fields: [
+      {
+        key: "title",
+        kind: "text",
+        label: "Título (vazio = nome da categoria)",
+      },
+      { key: "backLabel", kind: "text", label: "Texto do voltar" },
+      { key: "backUrl", kind: "url", label: "Link do voltar" },
+    ],
+    group: "blog",
+    label: "Cabeçalho de categoria",
+    render: (p, ctx) => (
+      <div className="sb-container sb-cat-header">
+        <h1>{p.title || ctx.current.category?.name || "Categoria"}</h1>
+        <a className="sb-btn sb-btn-primary" href={href(ctx, p.backUrl)}>
+          {p.backLabel}
+        </a>
+      </div>
+    ),
+    type: "categoryHeader",
+  }
+);
+
+const SHOW_OPTIONS = [
+  { label: "Sim", value: "yes" },
+  { label: "Não", value: "no" },
+];
+
+const postHeader = defineBlock(
+  z.object({
+    showCover: z.enum(["yes", "no"]).default("yes"),
+    watermark: str(),
+  }),
+  {
+    fields: [
+      { key: "watermark", kind: "text", label: "Texto grande ao fundo" },
+      {
+        key: "showCover",
+        kind: "select",
+        label: "Mostrar imagem, categoria e data aqui",
+        options: SHOW_OPTIONS,
+      },
+    ],
+    group: "blog",
+    label: "Cabeçalho do post",
+    render: (p, ctx) => {
+      const post = ctx.current.post;
+      if (!post) return null;
+      return (
+        <div className="sb-container sb-post-header sb-heading">
+          {p.watermark ? (
+            <span aria-hidden="true" className="sb-watermark">
+              {p.watermark}
+            </span>
+          ) : null}
+          <h1>{post.title}</h1>
+          {p.showCover === "yes" ? <PostMeta ctx={ctx} /> : null}
+        </div>
+      );
+    },
+    type: "postHeader",
+  }
+);
+
+function PostMeta({ ctx }: { ctx: RenderContext }) {
+  const post = ctx.current.post;
+  if (!post) return null;
+  const cat = categoryOf(ctx.site, post);
+  return (
+    <>
+      <Img src={post.coverImage} />
+      {cat ? <span className="sb-tag">{cat.name}</span> : null}
+      <time>{formatDate(post.publishedAt)}</time>
+    </>
+  );
+}
+
+const postContent = defineBlock(
+  z.object({ showMeta: z.enum(["yes", "no"]).default("no") }),
+  {
+    fields: [
+      {
+        key: "showMeta",
+        kind: "select",
+        label: "Mostrar imagem, categoria e data antes do texto",
+        options: SHOW_OPTIONS,
+      },
+    ],
+    group: "blog",
+    label: "Conteúdo do post",
+    render: (p, ctx) => (
+      <div className="sb-post-content">
+        {p.showMeta === "yes" ? (
+          <div className="sb-post-meta">
+            <PostMeta ctx={ctx} />
+          </div>
+        ) : null}
+        {ctx.current.post ? ctx.renderBlocks(ctx.current.post.blocks) : null}
+      </div>
+    ),
+    type: "postContent",
+  }
+);
 
 const sidebarBanner = defineBlock(z.object({ image: str(), url: str("#") }), {
   fields: [
@@ -778,20 +1114,23 @@ const sidebarBanner = defineBlock(z.object({ image: str(), url: str("#") }), {
   label: "Barra lateral (busca + categorias + banner)",
   render: (p, ctx) => (
     <aside className="sb-sidebar">
-      <form action={href(ctx, "/blogs/")} className="sb-filter" method="get">
+      <form action={href(ctx, "/pesquisa/")} className="sb-filter" method="get">
         <input name="q" placeholder="Digite aqui..." type="search" />
         <button className="sb-btn sb-btn-primary" type="submit">
           Pesquisar
         </button>
       </form>
       <h4>Categorias</h4>
-      <ul>
-        {ctx.site.categories.map(c => (
-          <li key={c.id}>
-            <a href={href(ctx, categoryPath(c))}>{c.name}</a>
-          </li>
-        ))}
-      </ul>
+      <form action={href(ctx, "/pesquisa/")} method="get">
+        <select className="sb-select" name="category">
+          <option value="">Selecionar categoria</option>
+          {ctx.site.categories.map(c => (
+            <option key={c.id} value={c.slug}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </form>
       {p.image ? (
         <a href={safeUrl(p.url)}>
           <Img src={p.image} />
@@ -841,16 +1180,19 @@ const linkCards = defineBlock(
     label: "Cards de links externos",
     render: p => (
       <section className="sb-container">
-        <h2>{p.title}</h2>
-        <div className="sb-grid sb-grid-3">
+        {p.title ? <h2>{p.title}</h2> : null}
+        <div className="sb-link-cards">
           {p.items.map(i => (
             <a
-              className="sb-card sb-cat-card"
+              className="sb-card sb-link-card"
               href={safeUrl(i.url)}
               key={i.name}
             >
-              <span>{i.name}</span>
               <Img src={i.image} />
+              <span className="sb-cat-head">
+                <span>{i.name}</span>
+                <b aria-hidden="true">↗</b>
+              </span>
             </a>
           ))}
         </div>
@@ -860,7 +1202,48 @@ const linkCards = defineBlock(
   }
 );
 
+const socialIcons = defineBlock(
+  z.object({
+    items: z.array(z.object({ label: str(), url: str("#") })).default([]),
+  }),
+  {
+    fields: [
+      {
+        itemFields: [
+          {
+            key: "label",
+            kind: "text",
+            label: "Rede (Instagram, YouTube, X…)",
+          },
+          { key: "url", kind: "url", label: "Link" },
+        ],
+        key: "items",
+        kind: "list",
+        label: "Redes",
+      },
+    ],
+    group: "content",
+    label: "Ícones de redes sociais",
+    render: p => (
+      <div className="sb-container sb-social-row">
+        {p.items.map(i => (
+          <a
+            aria-label={i.label}
+            href={safeUrl(i.url)}
+            key={i.label + i.url}
+            title={i.label}
+          >
+            <SocialIcon label={i.label} />
+          </a>
+        ))}
+      </div>
+    ),
+    type: "socialIcons",
+  }
+);
+
 export const blockDefinitions: BlockDefinition[] = [
+  socialIcons,
   header,
   footer,
   whatsappFloat,
@@ -879,6 +1262,7 @@ export const blockDefinitions: BlockDefinition[] = [
   postExplorer,
   postList,
   categoryHeader,
+  categorySearch,
   postHeader,
   postContent,
   sidebarBanner,

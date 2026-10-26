@@ -1,0 +1,680 @@
+"use client";
+
+import { type ReactNode, useEffect, useRef } from "react";
+import { getBlockDefinition } from "../blocks/registry.js";
+import type { Block, Site } from "../model/index.js";
+import { fontStack, SITE_FONTS, themeFont } from "../renderer/fonts.js";
+import { themeVars } from "../renderer/styles.js";
+import { FieldInput } from "./fields.js";
+import { Icon, type IconName } from "./icons.js";
+
+type StyleValue = string | number | undefined;
+
+/** Tokens do tema aparecem como swatches; o valor gravado é a variável CSS do site. */
+const TOKEN_COLORS = [
+  "var(--sb-accent)",
+  "var(--sb-fg)",
+  "var(--sb-bg)",
+  "var(--sb-card)",
+  "var(--sb-muted)",
+];
+const BASE_COLORS = [
+  "#ffffff",
+  "#0f172a",
+  "#94a3b8",
+  "#38bdf8",
+  "#FFB800",
+  "#34d399",
+  "#f43f5e",
+];
+const TEXT_PALETTE = [...TOKEN_COLORS, ...BASE_COLORS];
+const BOX_PALETTE = [...TEXT_PALETTE, "transparent"];
+
+const THEME_SWATCHES = {
+  accent: ["#5ce1f5", "#22c55e", "#8b5cf6", "#f97316", "#e11d48", "#eab308"],
+  bg: ["#030712", "#0b1220", "#111111", "#0f1a14", "#1a1022", "#ffffff"],
+  card: ["#0b1437", "#111827", "#1c1c1c", "#13221a", "#24152f", "#f3f4f6"],
+  fg: ["#ffffff", "#e5e7eb", "#111827", "#1d1c1a"],
+  muted: ["#9fb0d0", "#94a3b8", "#6b7280", "#a8a29e"],
+} as const;
+
+const THEME_LABELS: Record<keyof typeof THEME_SWATCHES, string> = {
+  accent: "Cor principal",
+  bg: "Fundo da página",
+  card: "Superfície (cartões)",
+  fg: "Texto",
+  muted: "Texto secundário",
+};
+
+const num = (v: StyleValue) => {
+  const n = typeof v === "number" ? v : Number.parseFloat(String(v ?? ""));
+  return Number.isFinite(n) ? n : 0;
+};
+
+function Swatches({
+  active,
+  big,
+  colors,
+  onPick,
+  resolve,
+}: {
+  active?: string;
+  big?: boolean;
+  colors: readonly string[];
+  onPick: (value: string) => void;
+  resolve: (value: string) => string;
+}) {
+  return (
+    <div className={big ? "sbe-sw big" : "sbe-sw"}>
+      {colors.map(c => (
+        <button
+          className={[
+            active === c ? "on" : "",
+            c === "transparent" ? "none" : "",
+          ]
+            .join(" ")
+            .trim()}
+          key={c}
+          onClick={() => onPick(c)}
+          style={c === "transparent" ? undefined : { background: resolve(c) }}
+          title={c}
+          type="button"
+        />
+      ))}
+    </div>
+  );
+}
+
+function Seg<T extends string | number>({
+  options,
+  value,
+  onPick,
+}: {
+  onPick: (v: T) => void;
+  options: { icon?: IconName; label?: string; title?: string; value: T }[];
+  value: T | undefined;
+}) {
+  return (
+    <div className="sbe-seg mini">
+      {options.map(o => (
+        <button
+          className={value === o.value ? "on" : ""}
+          key={String(o.value)}
+          onClick={() => onPick(o.value)}
+          title={o.title}
+          type="button"
+        >
+          {o.icon ? <Icon name={o.icon} size={13} /> : o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Slider({
+  label,
+  max,
+  min = 0,
+  onChange,
+  suffix,
+  value,
+}: {
+  label: string;
+  max: number;
+  min?: number;
+  onChange: (v: number) => void;
+  suffix?: string;
+  value: number;
+}) {
+  return (
+    <div className="sbe-line">
+      <span>{label}</span>
+      <input
+        max={max}
+        min={min}
+        onChange={e => onChange(Number(e.target.value))}
+        type="range"
+        value={value}
+      />
+      {suffix ? (
+        <span style={{ flex: "none", textAlign: "right", width: 36 }}>
+          {value}
+          {suffix}
+        </span>
+      ) : (
+        <input
+          className="sbe-num"
+          onChange={e => onChange(Number(e.target.value) || 0)}
+          type="text"
+          value={value}
+        />
+      )}
+    </div>
+  );
+}
+
+function Section({ children, title }: { children: ReactNode; title: string }) {
+  return (
+    <div className="sbe-sec">
+      <h4 className="sbe-h">{title}</h4>
+      {children}
+    </div>
+  );
+}
+
+export interface FocusHint {
+  n: number;
+  value: string;
+}
+
+interface Props {
+  crumbs: { id?: string; label: string }[];
+  elLabel?: string;
+  elPath?: string;
+  onMenu: (menu: Site["menu"]) => void;
+  onAction: (action: "delete" | "down" | "duplicate" | "hide" | "up") => void;
+  onProp: (key: string, value: unknown) => void;
+  onSelect: (id: string) => void;
+  onSiteName: (name: string) => void;
+  onStyle: (patch: Record<string, StyleValue>, what: string) => void;
+  onTheme: (patch: Record<string, string>, what: string) => void;
+  onUploadImage?: (file: File) => Promise<string>;
+  focusHint?: FocusHint;
+  selected?: Block;
+  site: Site;
+}
+
+/** Painel direito: propriedades do bloco selecionado ou, sem seleção, o tema do site. */
+export function Inspector({
+  crumbs,
+  elLabel,
+  elPath,
+  focusHint,
+  onAction,
+  onMenu,
+  onProp,
+  onSelect,
+  onSiteName,
+  onStyle,
+  onTheme,
+  onUploadImage,
+  selected,
+  site,
+}: Props) {
+  const root = useRef<HTMLDivElement>(null);
+  // Clique num item do site: leva o foco ao campo que guarda aquele texto/imagem/link.
+  useEffect(() => {
+    if (!focusHint?.value) return;
+    const fields = root.current?.querySelectorAll<
+      HTMLInputElement | HTMLTextAreaElement
+    >(".sbe-field input[type=text], .sbe-field textarea");
+    const norm = (v: string) => v.replace(/\s+/g, " ").trim();
+    const want = norm(focusHint.value);
+    const hit = Array.from(fields ?? []).find(f => norm(f.value) === want);
+    if (!hit) return;
+    hit.scrollIntoView({ block: "center" });
+    hit.focus();
+    hit.select();
+  }, [focusHint?.n]);
+
+  const vars = themeVars(site.theme);
+  const resolve = (c: string) => {
+    const m = /^var\((--sb-[a-z-]+)\)$/.exec(c);
+    return m?.[1] ? (vars[m[1]] ?? c) : c;
+  };
+
+  if (!selected) {
+    return (
+      <>
+        <div className="sbe-selhead">
+          <div className="row">
+            <Icon name="palette" size={15} style={{ color: "#6a5ad8" }} />
+            <div className="name">Página inteira</div>
+            <span className="sbe-chip">Tema</span>
+          </div>
+        </div>
+        <div className="sbe-scroll">
+          <div className="sbe-pad" style={{ gap: 18, padding: 16 }}>
+            <p className="sbe-hint">
+              Clique em qualquer bloco do site para editar. Aqui você ajusta o
+              tema do site inteiro.
+            </p>
+            <div className="sbe-field">
+              <span className="sbe-h">Nome do site</span>
+              <input
+                onChange={e => onSiteName(e.target.value)}
+                type="text"
+                value={site.name}
+              />
+            </div>
+            {(
+              Object.keys(THEME_SWATCHES) as (keyof typeof THEME_SWATCHES)[]
+            ).map(key => (
+              <div
+                key={key}
+                style={{ display: "flex", flexDirection: "column", gap: 8 }}
+              >
+                <h4 className="sbe-h">{THEME_LABELS[key]}</h4>
+                <Swatches
+                  active={site.theme[key]}
+                  big
+                  colors={THEME_SWATCHES[key]}
+                  onPick={c => onTheme({ [key]: c }, THEME_LABELS[key])}
+                  resolve={c => c}
+                />
+                <input
+                  className="sbe-mono"
+                  onChange={e =>
+                    onTheme({ [key]: e.target.value }, THEME_LABELS[key])
+                  }
+                  type="text"
+                  value={site.theme[key] ?? ""}
+                />
+              </div>
+            ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <h4 className="sbe-h">Fonte</h4>
+              {SITE_FONTS.map(f => (
+                <button
+                  className="sbe-btn"
+                  key={f}
+                  onClick={() =>
+                    onTheme(
+                      { fontBody: fontStack(f), fontHeading: fontStack(f) },
+                      "Fonte"
+                    )
+                  }
+                  style={{
+                    borderColor: themeFont(site.theme) === f ? "#1d1c1a" : "",
+                    fontFamily: fontStack(f),
+                    fontSize: 14,
+                    padding: "9px 12px",
+                  }}
+                  type="button"
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  const def = getBlockDefinition(selected.type);
+  const label = def?.label ?? selected.type;
+  const st = (elPath ? selected.elStyles?.[elPath] : selected.style) ?? {};
+  const set = (prop: string, what: string) => (v: StyleValue) =>
+    onStyle({ [prop]: v }, what);
+  const strSetter = (prop: string, what: string) => (raw: string) => {
+    const v = raw.trim();
+    onStyle({ [prop]: /^\d+(\.\d+)?$/.test(v) ? Number(v) : v }, what);
+  };
+  const textPick = (c: string) => set("color", "Cor do texto")(c);
+
+  return (
+    <div ref={root} style={{ display: "contents" }}>
+      <div className="sbe-selhead">
+        <div className="row">
+          <Icon name="box" size={15} style={{ color: "#6a5ad8" }} />
+          <div className="name">{elPath ? elLabel || "Elemento" : label}</div>
+          <span className="sbe-chip">{elPath ? "Elemento" : "Bloco"}</span>
+        </div>
+        <div className="sbe-crumbs">
+          {crumbs.map(c => (
+            <button
+              disabled={!c.id}
+              key={c.id ?? c.label}
+              onClick={() => c.id && onSelect(c.id)}
+              style={{ cursor: c.id ? "pointer" : "default" }}
+              type="button"
+            >
+              {c.label}
+              <Icon name="chevron-right" size={10} />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="sbe-scroll">
+        <div className="sbe-actions">
+          {(
+            [
+              ["duplicate", "Duplicar (Ctrl+D)", "copy"],
+              [
+                "hide",
+                selected.hidden ? "Mostrar" : "Ocultar",
+                selected.hidden ? "eye" : "eye-off",
+              ],
+              ["up", "Mover para cima", "arrow-up"],
+              ["down", "Mover para baixo", "arrow-down"],
+              ["delete", "Excluir (Delete)", "trash-2"],
+            ] as const
+          ).map(([action, title, icon]) => (
+            <button
+              className={action === "delete" ? "danger" : ""}
+              key={action}
+              onClick={() => onAction(action)}
+              title={title}
+              type="button"
+            >
+              <Icon name={icon} size={14} />
+            </button>
+          ))}
+        </div>
+
+        {def && def.fields.length > 0 ? (
+          <Section title="Conteúdo">
+            {def.fields.map(field => (
+              <FieldInput
+                field={field}
+                key={field.key}
+                onChange={v => onProp(field.key, v)}
+                onUpload={onUploadImage}
+                value={selected.props[field.key] ?? def.defaults[field.key]}
+              />
+            ))}
+          </Section>
+        ) : null}
+
+        <Section title="Tamanho">
+          {(
+            [
+              ["width", "Largura", 1600],
+              ["height", "Altura", 800],
+            ] as const
+          ).map(([key, label, max]) => {
+            const v = st[key];
+            const px = typeof v === "number" ? v : Number.parseFloat(String(v));
+            return (
+              <div className="sbe-line" key={key}>
+                <span>{label}</span>
+                <input
+                  max={max}
+                  min={0}
+                  onChange={e =>
+                    onStyle({ [key]: Number(e.target.value) }, label)
+                  }
+                  type="range"
+                  value={Number.isFinite(px) ? px : 0}
+                />
+                <input
+                  className="sbe-num"
+                  onChange={e => strSetter(key, label)(e.target.value)}
+                  placeholder="auto"
+                  type="text"
+                  value={v ?? ""}
+                />
+                <button
+                  className="sbe-ibtn"
+                  disabled={v === undefined}
+                  onClick={() => onStyle({ [key]: "" }, label)}
+                  title="Automático"
+                  type="button"
+                >
+                  <Icon name="x" size={12} />
+                </button>
+              </div>
+            );
+          })}
+          <p className="sbe-hint">
+            Número = pixels; também aceita %, rem… Deixe um dos dois em auto
+            para não deformar a imagem.
+          </p>
+        </Section>
+
+        {selected.type === "header" || selected.type === "footer" ? (
+          <Section title="Menu do site">
+            <p className="sbe-hint">Vale para o cabeçalho e o rodapé.</p>
+            {site.menu.map((item, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: itens do menu não têm id
+              <div className="sbe-list-item" key={i}>
+                <label className="sbe-field">
+                  <span>Nome do link</span>
+                  <input
+                    onChange={e =>
+                      onMenu(
+                        site.menu.map((m, j) =>
+                          j === i ? { ...m, label: e.target.value } : m
+                        )
+                      )
+                    }
+                    type="text"
+                    value={item.label}
+                  />
+                </label>
+                <label className="sbe-field">
+                  <span>Endereço</span>
+                  <input
+                    onChange={e =>
+                      onMenu(
+                        site.menu.map((m, j) =>
+                          j === i ? { ...m, href: e.target.value } : m
+                        )
+                      )
+                    }
+                    type="text"
+                    value={item.href}
+                  />
+                </label>
+                <div className="sbe-row">
+                  <button
+                    onClick={() => onMenu(site.menu.filter((_, j) => j !== i))}
+                    type="button"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={() =>
+                onMenu([...site.menu, { href: "/", label: "Novo link" }])
+              }
+              type="button"
+            >
+              + Adicionar link
+            </button>
+          </Section>
+        ) : null}
+
+        <Section title="Tipografia">
+          <div className="sbe-line">
+            <span>Tamanho</span>
+            <input
+              max={96}
+              min={8}
+              onChange={e => set("fontSize", "Tamanho")(Number(e.target.value))}
+              type="range"
+              value={num(st.fontSize) || 16}
+            />
+            <input
+              className="sbe-num"
+              onChange={e =>
+                set(
+                  "fontSize",
+                  "Tamanho"
+                )(e.target.value === "" ? undefined : Number(e.target.value))
+              }
+              placeholder="auto"
+              type="text"
+              value={st.fontSize ?? ""}
+            />
+          </div>
+          <div className="sbe-field">
+            <span>Peso</span>
+            <Seg
+              onPick={v => set("fontWeight", "Peso")(v)}
+              options={[
+                { label: "Fino", value: 300 },
+                { label: "Normal", value: 400 },
+                { label: "Médio", value: 500 },
+                { label: "Negrito", value: 700 },
+                { label: "Black", value: 900 },
+              ]}
+              value={num(st.fontWeight) || undefined}
+            />
+          </div>
+          <div className="sbe-field">
+            <span>Cor do texto</span>
+            <Swatches
+              active={st.color as string | undefined}
+              colors={TEXT_PALETTE}
+              onPick={textPick}
+              resolve={resolve}
+            />
+            <input
+              className="sbe-mono"
+              onChange={e => set("color", "Cor do texto")(e.target.value)}
+              placeholder="herdar do tema"
+              type="text"
+              value={st.color ?? ""}
+            />
+          </div>
+          <div className="sbe-line">
+            <span>Alinhamento</span>
+            <div style={{ width: 110 }}>
+              <Seg
+                onPick={v => set("textAlign", "Alinhamento")(v)}
+                options={[
+                  { icon: "align-left", value: "left" },
+                  { icon: "align-center", value: "center" },
+                  { icon: "align-right", value: "right" },
+                ]}
+                value={(st.textAlign as string | undefined) ?? "left"}
+              />
+            </div>
+          </div>
+          <div className="sbe-line">
+            <span>Maiúsculas</span>
+            <button
+              className={
+                st.textTransform === "uppercase"
+                  ? "sbe-toggle on"
+                  : "sbe-toggle"
+              }
+              onClick={() =>
+                set(
+                  "textTransform",
+                  "Maiúsculas"
+                )(st.textTransform === "uppercase" ? undefined : "uppercase")
+              }
+              type="button"
+            >
+              <span />
+            </button>
+          </div>
+        </Section>
+
+        <Section title="Caixa">
+          <div className="sbe-field">
+            <span>Fundo</span>
+            <Swatches
+              active={st.background as string | undefined}
+              colors={BOX_PALETTE}
+              onPick={c => set("background", "Fundo")(c)}
+              resolve={resolve}
+            />
+            <input
+              className="sbe-mono"
+              onChange={e => set("background", "Fundo")(e.target.value)}
+              placeholder="nenhum"
+              type="text"
+              value={st.background ?? ""}
+            />
+          </div>
+          <Slider
+            label="Arredondamento"
+            max={64}
+            onChange={set("borderRadius", "Arredondamento")}
+            value={num(st.borderRadius)}
+          />
+          <div className="sbe-line">
+            <span>Espaçamento interno</span>
+            <input
+              className="sbe-sm"
+              onChange={e =>
+                strSetter("padding", "Espaçamento")(e.target.value)
+              }
+              placeholder="ex: 16 ou 8px 24px"
+              style={{ width: 120 }}
+              type="text"
+              value={st.padding ?? ""}
+            />
+          </div>
+          <div className="sbe-line">
+            <span>Margem externa</span>
+            <input
+              className="sbe-sm"
+              onChange={e => strSetter("margin", "Margem")(e.target.value)}
+              placeholder="ex: 0 0 24px"
+              style={{ width: 120 }}
+              type="text"
+              value={st.margin ?? ""}
+            />
+          </div>
+          <div className="sbe-line">
+            <span>Borda</span>
+            <input
+              className="sbe-num"
+              onChange={e => {
+                const w = Number(e.target.value) || 0;
+                onStyle(
+                  w
+                    ? {
+                        borderColor: st.borderColor ?? "rgba(255,255,255,0.2)",
+                        borderStyle: "solid",
+                        borderWidth: w,
+                      }
+                    : { borderWidth: undefined },
+                  "Borda"
+                );
+              }}
+              type="text"
+              value={st.borderWidth ?? 0}
+            />
+            <span style={{ color: "#9a968e", flex: "none" }}>px</span>
+          </div>
+          <Swatches
+            active={st.borderColor as string | undefined}
+            colors={BOX_PALETTE}
+            onPick={c =>
+              onStyle(
+                {
+                  borderColor: c,
+                  borderStyle: "solid",
+                  borderWidth: st.borderWidth || 1,
+                },
+                "Cor da borda"
+              )
+            }
+            resolve={resolve}
+          />
+          <Slider
+            label="Opacidade"
+            max={100}
+            onChange={v => set("opacity", "Opacidade")(v / 100)}
+            suffix="%"
+            value={Math.round(
+              (st.opacity === undefined ? 1 : num(st.opacity)) * 100
+            )}
+          />
+          <div className="sbe-line">
+            <span>Largura máxima</span>
+            <input
+              className="sbe-sm"
+              onChange={e =>
+                strSetter("maxWidth", "Largura máxima")(e.target.value)
+              }
+              placeholder="livre"
+              style={{ width: 80 }}
+              type="text"
+              value={st.maxWidth ?? ""}
+            />
+          </div>
+        </Section>
+      </div>
+    </div>
+  );
+}

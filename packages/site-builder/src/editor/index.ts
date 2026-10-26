@@ -1,3 +1,4 @@
+export type { PublishConfig } from "./ReviewDialog.js";
 export {
   type SaveResult,
   SiteEditor,

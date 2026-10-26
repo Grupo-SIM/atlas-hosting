@@ -2,89 +2,77 @@
 
 import {
   type MouseEvent,
-  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import {
-  getBlockDefinition,
-  listBlockDefinitions,
-} from "../blocks/registry.js";
-import type { BlockGroup } from "../blocks/types.js";
-import type { Block, Site } from "../model/index.js";
+import { getBlockDefinition } from "../blocks/registry.js";
+import type { Site } from "../model/index.js";
 import { resolveRoute } from "../renderer/routes.js";
 import { SiteRenderer } from "../renderer/SiteRenderer.js";
-import { FieldInput } from "./fields.js";
-import {
-  addCategory,
-  addPage,
-  addPost,
-  removeCategory,
-  removePage,
-  removePost,
-  renameCategory,
-  setMenu,
-  setTheme,
-  updatePage,
-  updatePost,
-} from "./site-ops.js";
+import { ConfirmDialog, type ConfirmRequest } from "./ConfirmDialog.js";
+import { ContentPanel } from "./ContentPanel.js";
+import { elementTree } from "./dom-tree.js";
+import { type FocusHint, Inspector } from "./Inspector.js";
+import { Icon } from "./icons.js";
+import { type LayerSection, LayersPanel } from "./LayersPanel.js";
+import { PagePicker, type RouteGroup } from "./PagePicker.js";
+import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
+import { setMenu, setTheme } from "./site-ops.js";
 import { editorCss } from "./styles.js";
 import {
-  allRoots,
+  ancestorsOf,
   duplicateBlock,
   findBlock,
   insertBlock,
   moveBlock,
-  type RootKey,
   removeBlock,
   rootBlocks,
   rootForRoute,
   rootLabel,
   rootOf,
+  setBlockHidden,
   updateBlockProps,
+  updateBlockStyle,
+  updateElementStyle,
 } from "./tree.js";
+import type { ChangeEntry, EditMeta, SaveResult } from "./types.js";
 
-export type SaveResult = { ok: true } | { error: string; ok: false };
+export type { SaveResult } from "./types.js";
 
 export interface SiteEditorProps {
   /** Prefixo das URLs do canvas (o editor intercepta os cliques, mas os hrefs precisam ser coerentes). */
   basePath?: string;
+  /** Para onde o X do topo leva. */
+  exitHref?: string;
   initialSite: Site;
+  onPublish?: (site: Site, password?: string) => Promise<SaveResult>;
+  onSave: (site: Site) => Promise<SaveResult>;
   /** Envia o arquivo e devolve a URL pública. Sem isso, imagens aceitam só URL. */
   onUploadImage?: (file: File) => Promise<string>;
-  onSave: (site: Site) => Promise<SaveResult>;
-  /** Conteúdo extra na barra superior (ex.: botão Publicar). `dirty` = há alterações não salvas. */
-  toolbarExtra?: (state: { dirty: boolean }) => ReactNode;
+  /** Site de origem (template) para "Restaurar original". Sem isso o botão some. */
+  originalSite?: Site;
+  /** Onde e como publicar; sem isso o botão de publicar não aparece. */
+  publish?: PublishConfig;
+  /** Identifica o site para guardar a lista de alterações pendentes no navegador. */
+  storageKey?: string;
 }
 
-type Tab =
-  | "blocos"
-  | "categorias"
-  | "estrutura"
-  | "aparencia"
-  | "menu"
-  | "paginas"
-  | "posts";
+type Device = "desktop" | "mobile" | "tablet";
+type LeftTab = "camadas" | "chat" | "paginas";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "estrutura", label: "Estrutura" },
-  { id: "blocos", label: "Blocos" },
-  { id: "paginas", label: "Páginas" },
-  { id: "posts", label: "Posts" },
-  { id: "categorias", label: "Categorias" },
-  { id: "menu", label: "Menu" },
-  { id: "aparencia", label: "Aparência" },
+const DEVICES: {
+  icon: "monitor" | "smartphone" | "tablet";
+  id: Device;
+  label: string;
+  width: number;
+}[] = [
+  { icon: "monitor", id: "desktop", label: "Desktop", width: 1280 },
+  { icon: "tablet", id: "tablet", label: "Tablet", width: 820 },
+  { icon: "smartphone", id: "mobile", label: "Celular", width: 390 },
 ];
-
-const GROUP_LABEL: Record<BlockGroup, string> = {
-  blog: "Blog",
-  content: "Conteúdo",
-  layout: "Estrutura",
-  media: "Mídia",
-};
 
 interface History {
   future: Site[];
@@ -92,12 +80,68 @@ interface History {
   present: Site;
 }
 
+const isTyping = (t: EventTarget | null) =>
+  t instanceof HTMLInputElement ||
+  t instanceof HTMLTextAreaElement ||
+  t instanceof HTMLSelectElement ||
+  (t instanceof HTMLElement && t.isContentEditable);
+
+const pageUrl = (slug: string) => (slug ? `/${slug}/` : "/");
+
+const ITEM_NAMES: Record<string, string> = {
+  A: "link",
+  BUTTON: "botão",
+  H1: "título",
+  H2: "título",
+  H3: "título",
+  H4: "título",
+  IMG: "imagem",
+  P: "texto",
+  SPAN: "texto",
+};
+const itemName = (el: HTMLElement) => ITEM_NAMES[el.tagName] ?? "área";
+
+/** Elemento "clicável" sob o ponteiro: links e botões valem como um item só. */
+function pickElement(target: HTMLElement): HTMLElement | null {
+  const block = target.closest<HTMLElement>("[data-block-id]");
+  if (!block) return null;
+  // Imagem dentro de link continua sendo a imagem (para poder redimensionar).
+  if (target instanceof HTMLImageElement) return target;
+  const wrap = target.closest<HTMLElement>("a,button");
+  return wrap && block.contains(wrap) ? wrap : target;
+}
+
+/** Caminho `nth-child` do elemento dentro do bloco; vazio quando é o próprio bloco. */
+function pathWithin(el: HTMLElement, block: HTMLElement): string {
+  const parts: number[] = [];
+  let cur: HTMLElement | null = el;
+  while (cur && cur !== block) {
+    const parent: HTMLElement | null = cur.parentElement;
+    if (!parent) return "";
+    parts.unshift(Array.prototype.indexOf.call(parent.children, cur) + 1);
+    cur = parent;
+  }
+  return parts.join(".");
+}
+
+function elementAt(block: HTMLElement, path: string): HTMLElement | null {
+  let cur: HTMLElement | null = block;
+  for (const n of path.split(".")) {
+    cur = (cur?.children[Number(n) - 1] as HTMLElement | undefined) ?? null;
+  }
+  return cur;
+}
+
 export function SiteEditor({
   basePath = "/site",
+  exitHref,
   initialSite,
+  onPublish,
   onSave,
   onUploadImage,
-  toolbarExtra,
+  originalSite,
+  publish,
+  storageKey,
 }: SiteEditorProps) {
   const [history, setHistory] = useState<History>({
     future: [],
@@ -105,102 +149,159 @@ export function SiteEditor({
     present: initialSite,
   });
   const site = history.present;
+  const siteRef = useRef(site);
+  siteRef.current = site;
   const savedRef = useRef(initialSite);
+  const onSaveRef = useRef(onSave);
+  onSaveRef.current = onSave;
   const lastEdit = useRef<{ at: number; key: string }>({ at: 0, key: "" });
 
   const [path, setPath] = useState("/");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [rootKey, setRootKey] = useState<RootKey>(() =>
-    rootForRoute(resolveRoute(initialSite, "/", "edit"))
-  );
-  const [tab, setTab] = useState<Tab>("estrutura");
-  const [status, setStatus] = useState<string>("");
-  const [saving, setSaving] = useState(false);
+  const [leftTab, setLeftTab] = useState<LeftTab>("camadas");
+  const [leftOpen, setLeftOpen] = useState(true);
+  const [device, setDevice] = useState<Device>("desktop");
+  const [availW, setAvailW] = useState(900);
+  const [saveState, setSaveState] = useState<
+    "error" | "idle" | "saved" | "saving"
+  >("idle");
+  const [saveError, setSaveError] = useState("");
+  const [review, setReview] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
+  const [toast, setToast] = useState("");
+  const [log, setLog] = useState<ChangeEntry[]>(() => {
+    if (!storageKey) return [];
+    try {
+      const raw = localStorage.getItem(`sbe-log:${storageKey}`);
+      return raw ? (JSON.parse(raw) as ChangeEntry[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const canvasRef = useRef<HTMLDivElement>(null);
+  const hoverRef = useRef<HTMLElement | null>(null);
+  const [focusHint, setFocusHint] = useState<FocusHint>({ n: 0, value: "" });
+  const [confirm, setConfirm] = useState<ConfirmRequest | null>(null);
+  const [, setDomTick] = useState(0);
+  const [elPath, setElPath] = useState("");
+  const [elName, setElName] = useState("");
+  const selBoxRef = useRef<HTMLDivElement | null>(null);
+  const hoverBoxRef = useRef<HTMLDivElement | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
 
   const route = useMemo(() => resolveRoute(site, path, "edit"), [site, path]);
   const dirty = site !== savedRef.current;
+  const mainRoot = rootForRoute(route);
 
-  /** `key` agrupa edições seguidas do mesmo campo num único passo de desfazer. */
-  const commit = useCallback((next: Site, key?: string) => {
+  const flash = useCallback((message: string) => {
+    setToast(message);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(""), 2400);
+  }, []);
+
+  // Painel esquerdo começa fechado em tela estreita.
+  useEffect(() => {
+    if (window.innerWidth < 1200) setLeftOpen(false);
+    return () => clearTimeout(toastTimer.current);
+  }, []);
+
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!(el && window.ResizeObserver)) return;
+    const ro = new ResizeObserver(() => setAvailW(el.clientWidth));
+    ro.observe(el);
+    setAvailW(el.clientWidth);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      localStorage.setItem(`sbe-log:${storageKey}`, JSON.stringify(log));
+    } catch {
+      // sem armazenamento (janela privada): a lista vale só nesta sessão.
+    }
+  }, [log, storageKey]);
+
+  /** Aplica a edição; `meta.key` agrupa edições seguidas do mesmo campo num único passo de desfazer. */
+  const edit = useCallback((next: Site, meta: EditMeta = {}) => {
     setHistory(h => {
       const now = Date.now();
       const merge =
-        key !== undefined &&
-        lastEdit.current.key === key &&
+        meta.key !== undefined &&
+        lastEdit.current.key === meta.key &&
         now - lastEdit.current.at < 1000;
-      lastEdit.current = { at: now, key: key ?? "" };
+      lastEdit.current = { at: now, key: meta.key ?? "" };
       return {
         future: [],
-        past: merge ? h.past : [...h.past.slice(-49), h.present],
+        past: merge ? h.past : [...h.past.slice(-99), h.present],
         present: next,
       };
     });
+    const { label } = meta;
+    if (label) {
+      setLog(l =>
+        l[l.length - 1]?.label === label
+          ? l
+          : [...l, { id: meta.id, kind: meta.kind ?? "Editado", label }].slice(
+              -40
+            )
+      );
+    }
   }, []);
 
-  const undo = useCallback(
-    () =>
-      setHistory(h => {
-        const prev = h.past[h.past.length - 1];
-        if (!prev) return h;
-        return {
-          future: [h.present, ...h.future],
-          past: h.past.slice(0, -1),
-          present: prev,
-        };
-      }),
-    []
-  );
-  const redo = useCallback(
-    () =>
-      setHistory(h => {
-        const [next, ...rest] = h.future;
-        if (!next) return h;
-        return { future: rest, past: [...h.past, h.present], present: next };
-      }),
-    []
-  );
+  const undo = useCallback(() => {
+    lastEdit.current = { at: 0, key: "" };
+    setHistory(h => {
+      const prev = h.past[h.past.length - 1];
+      if (!prev) return h;
+      return {
+        future: [h.present, ...h.future],
+        past: h.past.slice(0, -1),
+        present: prev,
+      };
+    });
+  }, []);
+  const redo = useCallback(() => {
+    lastEdit.current = { at: 0, key: "" };
+    setHistory(h => {
+      const [next, ...rest] = h.future;
+      if (!next) return h;
+      return { future: rest, past: [...h.past, h.present], present: next };
+    });
+  }, []);
 
-  const save = useCallback(async () => {
-    setSaving(true);
-    setStatus("Salvando...");
+  const save = useCallback(async (): Promise<boolean> => {
+    const current = siteRef.current;
+    if (current === savedRef.current) return true;
+    setSaveState("saving");
     try {
-      const result = await onSave(site);
+      const result = await onSaveRef.current(current);
       if (result.ok) {
-        savedRef.current = site;
-        setStatus("Salvo");
-      } else {
-        setStatus(result.error);
+        savedRef.current = current;
+        setSaveState("saved");
+        setSaveError("");
+        return true;
       }
+      setSaveState("error");
+      setSaveError(result.error);
     } catch {
-      setStatus("Não foi possível salvar. Tente novamente.");
-    } finally {
-      setSaving(false);
+      setSaveState("error");
+      setSaveError("Não foi possível salvar. Tente novamente.");
     }
-  }, [onSave, site]);
+    return false;
+  }, []);
 
+  // Salva sozinho um instante depois da última edição.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey)) return;
-      const k = e.key.toLowerCase();
-      if (k === "s") {
-        e.preventDefault();
-        void save();
-      } else if (
-        k === "z" &&
-        !(
-          e.target instanceof HTMLInputElement ||
-          e.target instanceof HTMLTextAreaElement
-        )
-      ) {
-        e.preventDefault();
-        if (e.shiftKey) redo();
-        else undo();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [redo, save, undo]);
+    if (!dirty) return;
+    const t = setTimeout(() => void save(), 1500);
+    return () => clearTimeout(t);
+  }, [dirty, save, site]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -209,28 +310,152 @@ export function SiteEditor({
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  // Destaque do bloco selecionado dentro do canvas.
-  useEffect(() => {
+  // Destaque do bloco (ou do elemento) selecionado dentro do canvas.
+  const paintSelection = () => {
     const root = canvasRef.current;
+    const box = selBoxRef.current;
     if (!root) return;
     for (const el of Array.from(root.querySelectorAll("[data-selected]")))
       el.removeAttribute("data-selected");
-    if (selectedId)
-      root
-        .querySelector(`[data-block-id="${selectedId}"]`)
-        ?.setAttribute("data-selected", "true");
-  });
+    const block = selectedId
+      ? root.querySelector<HTMLElement>(`[data-block-id="${selectedId}"]`)
+      : null;
+    const target = block && elPath ? elementAt(block, elPath) : null;
+    if (block && !target) block.setAttribute("data-selected", "true");
+    if (!box) return;
+    if (!target) {
+      box.style.display = "none";
+      return;
+    }
+    const r = target.getBoundingClientRect();
+    box.style.display = "block";
+    box.style.left = `${r.left}px`;
+    box.style.top = `${r.top}px`;
+    box.style.width = `${r.width}px`;
+    box.style.height = `${r.height}px`;
+  };
+  useEffect(paintSelection);
+
+  // As camadas leem o DOM do canvas; repinta depois que o site renderizou.
+  useEffect(() => setDomTick(t => t + 1), [site, path, device]);
 
   // Se o bloco selecionado foi apagado (ex.: desfazer), limpa a seleção.
   useEffect(() => {
     if (selectedId && !findBlock(site, selectedId)) setSelectedId(null);
   }, [selectedId, site]);
 
+  const selected = selectedId ? findBlock(site, selectedId) : undefined;
+  const labelOf = (type: string) => getBlockDefinition(type)?.label ?? type;
+
   const goTo = (next: string) => {
     setPath(next);
     setSelectedId(null);
-    setRootKey(rootForRoute(resolveRoute(site, next, "edit")));
   };
+
+  const select = (id: string | null) => {
+    setSelectedId(id);
+    setElPath("");
+    if (!id) return;
+    // Em páginas de blocos de cabeçalho/rodapé o canvas já mostra tudo; só garante o painel certo.
+    setLeftTab(t => (t === "chat" ? "camadas" : t));
+  };
+
+  const blockEl = (id: string) =>
+    canvasRef.current?.querySelector<HTMLElement>(`[data-block-id="${id}"]`);
+  const getElements = (id: string) => {
+    const el = blockEl(id);
+    return el ? elementTree(el) : [];
+  };
+  const selectElement = (id: string, path: string, label: string) => {
+    select(id);
+    setElPath(path);
+    setElName(label);
+    const block = blockEl(id);
+    const el = block ? elementAt(block, path) : null;
+    setFocusHint(h => ({
+      n: h.n + 1,
+      value:
+        el instanceof HTMLImageElement
+          ? (el.getAttribute("src") ?? "")
+          : (el?.textContent ?? ""),
+    }));
+  };
+
+  const addBlock = (type: string) => {
+    const key = (selectedId && rootOf(site, selectedId)) || mainRoot;
+    if (!rootBlocks(site, key)) return;
+    const res = insertBlock(site, key, type, selectedId ?? undefined);
+    edit(res.site, {
+      id: res.id,
+      kind: "Novo",
+      label: `Adicionou · ${labelOf(type)}`,
+    });
+    setSelectedId(res.id);
+  };
+
+  const blockAction = (
+    action: "delete" | "down" | "duplicate" | "hide" | "up"
+  ) => {
+    if (!selected) return;
+    const name = labelOf(selected.type);
+    if (action === "delete") {
+      edit(removeBlock(site, selected.id), {
+        kind: "Removido",
+        label: `Excluiu · ${name}`,
+      });
+      setSelectedId(null);
+    } else if (action === "duplicate") {
+      const res = duplicateBlock(site, selected.id);
+      edit(res.site, { id: res.id, kind: "Novo", label: `Duplicou · ${name}` });
+      if (res.id) setSelectedId(res.id);
+    } else if (action === "hide") {
+      toggleHidden(selected.id);
+    } else {
+      edit(moveBlock(site, selected.id, action === "up" ? -1 : 1), {
+        id: selected.id,
+        label: `${action === "up" ? "Moveu para cima" : "Moveu para baixo"} · ${name}`,
+      });
+    }
+  };
+
+  const toggleHidden = (id: string) => {
+    const block = findBlock(site, id);
+    if (!block) return;
+    edit(setBlockHidden(site, id, !block.hidden), {
+      id,
+      kind: block.hidden ? "Editado" : "Oculto",
+      label: `${block.hidden ? "Mostrou" : "Ocultou"} · ${labelOf(block.type)}`,
+    });
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.ctrlKey || e.metaKey;
+      const k = e.key.toLowerCase();
+      if (mod && k === "s") {
+        e.preventDefault();
+        void save();
+        return;
+      }
+      if (isTyping(e.target)) return;
+      if (mod && k === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+      } else if (mod && k === "d" && selectedId) {
+        e.preventDefault();
+        blockAction("duplicate");
+      } else if ((k === "delete" || k === "backspace") && selectedId) {
+        e.preventDefault();
+        blockAction("delete");
+      } else if (k === "escape") {
+        setSelectedId(null);
+        setReview(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   const onCanvasClick = (e: MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -240,741 +465,487 @@ export function SiteEditor({
       const href = anchor.getAttribute("href") ?? "";
       if (href.startsWith(basePath)) goTo(href.slice(basePath.length) || "/");
     }
-    const blockEl = target.closest<HTMLElement>("[data-block-id]");
-    if (blockEl?.dataset.blockId) {
-      const id = blockEl.dataset.blockId;
-      setSelectedId(id);
-      const key = rootOf(site, id);
-      if (key) setRootKey(key);
+    const block = target.closest<HTMLElement>("[data-block-id]");
+    select(block?.dataset.blockId ?? null);
+    const el = block ? pickElement(target) : null;
+    if (block && el) {
+      const path = pathWithin(el, block);
+      setElPath(path);
+      const text = (el.textContent ?? "").trim().slice(0, 24);
+      setElName(path ? `${itemName(el)}${text ? ` · ${text}` : ""}` : "");
+    }
+    const value =
+      el instanceof HTMLImageElement
+        ? (el.getAttribute("src") ?? "")
+        : (el?.textContent ?? "");
+    setFocusHint(h => ({ n: h.n + 1, value }));
+  };
+
+  // Contorno em overlay: o fundo dos blocos filhos cobriria um outline no próprio bloco.
+  const paintHover = () => {
+    const box = hoverBoxRef.current;
+    const el = hoverRef.current;
+    if (!box) return;
+    if (!el) {
+      box.style.display = "none";
+      return;
+    }
+    const r = el.getBoundingClientRect();
+    box.style.display = "block";
+    box.style.left = `${r.left}px`;
+    box.style.top = `${r.top}px`;
+    box.style.width = `${r.width}px`;
+    box.style.height = `${r.height}px`;
+    const label = box.firstElementChild as HTMLElement | null;
+    const type = el.closest<HTMLElement>("[data-block-id]")?.dataset.blockType;
+    if (label) label.textContent = `${type ?? ""} › ${itemName(el)}`;
+  };
+  const onCanvasOver = (e: MouseEvent<HTMLDivElement>) => {
+    const el = pickElement(e.target as HTMLElement);
+    if (el === hoverRef.current) return;
+    hoverRef.current = el;
+    paintHover();
+  };
+  const clearHover = () => {
+    hoverRef.current = null;
+    paintHover();
+  };
+
+  const doPublish = async (password?: string) => {
+    if (!onPublish) return;
+    setPublishing(true);
+    setPublishError("");
+    try {
+      if (!(await save())) {
+        setPublishError("Não foi possível salvar antes de publicar.");
+        return;
+      }
+      const result = await onPublish(siteRef.current, password);
+      if (!result.ok) {
+        setPublishError(result.error);
+        return;
+      }
+      setLog([]);
+      setReview(false);
+      flash(
+        publish?.domain ? `Publicado em ${publish.domain}` : "Site publicado"
+      );
+    } catch {
+      setPublishError("Não foi possível publicar. Tente novamente.");
+    } finally {
+      setPublishing(false);
     }
   };
 
-  const selected = selectedId ? findBlock(site, selectedId) : undefined;
-  const selectedDef = selected ? getBlockDefinition(selected.type) : undefined;
+  const restoreOriginal = () => {
+    if (!originalSite) return;
+    setConfirm({
+      confirmLabel: "Restaurar",
+      message: "Suas alterações serão desfeitas (dá para voltar com Ctrl+Z).",
+      onConfirm: () => {
+        edit(structuredClone(originalSite), {
+          kind: "Removido",
+          label: "Restaurou o site original",
+        });
+        setLog([]);
+        setSelectedId(null);
+        setPath("/");
+      },
+      title: "Restaurar o site original do template?",
+    });
+  };
+
+  // Estrutura exibida nas camadas: o que aparece no canvas.
+  const layerSections: LayerSection[] = [
+    { blocks: site.header, key: "header", label: "Cabeçalho" },
+    ...(mainRoot === "header"
+      ? []
+      : [
+          {
+            blocks: rootBlocks(site, mainRoot) ?? [],
+            key: mainRoot,
+            label: rootLabel(site, mainRoot),
+          },
+        ]),
+    { blocks: site.footer, key: "footer", label: "Rodapé" },
+  ];
+
+  const crumbs = (() => {
+    if (!selected) return [];
+    const found = ancestorsOf(site, selected.id);
+    if (!found) return [];
+    return [
+      { label: rootLabel(site, found.root) },
+      ...found.ancestors.map(b => ({ id: b.id, label: labelOf(b.type) })),
+    ];
+  })();
+
+  const dev = DEVICES.find(d => d.id === device) ?? DEVICES[0];
+  const devW = dev?.width ?? 1280;
+  const zoom = Math.max(0.05, Math.min(1, (availW - 32) / devW));
+  const wide = availW >= 620;
+
+  const pageLabel =
+    route.kind === "page"
+      ? route.page.title
+      : route.kind === "post"
+        ? route.post.title
+        : route.kind === "category"
+          ? route.category.name
+          : "Página";
+  const routeGroups: RouteGroup[] = [
+    {
+      items: site.pages.map(p => ({ label: p.title, value: pageUrl(p.slug) })),
+      label: "Páginas",
+    },
+    {
+      items: site.posts.map(p => ({ label: p.title, value: `/${p.slug}/` })),
+      label: "Posts",
+    },
+    {
+      items: site.categories.map(c => ({
+        label: c.name,
+        value: `/category/${c.slug}/`,
+      })),
+      label: "Categorias",
+    },
+  ];
+  if (!routeGroups.some(g => g.items.some(o => o.value === path)))
+    routeGroups.unshift({
+      items: [{ label: pageLabel, value: path }],
+      label: "Atual",
+    });
+
+  const changes = log.length;
+  const changesLabel = changes
+    ? `${changes} ${changes === 1 ? "alteração" : "alterações"}`
+    : "Sem alterações";
+  const pill =
+    saveState === "saving" || (dirty && saveState !== "error")
+      ? { cls: "saving", text: "Salvando…" }
+      : saveState === "error"
+        ? { cls: "error", text: "Erro ao salvar" }
+        : { cls: "", text: changesLabel };
+
   const currentPage = route.kind === "page" ? route.page : undefined;
   const currentPost = route.kind === "post" ? route.post : undefined;
-  const roots = rootBlocks(site, rootKey) ?? [];
-
-  const edit = (next: Site, key?: string) => commit(next, key);
 
   return (
     <div className="sbe">
       <style>{editorCss}</style>
 
-      <div className="sbe-bar">
-        <strong>{site.name}</strong>
-        <span className="sbe-path">{path}</span>
-        <span className="sbe-spacer" />
-        <span className="sbe-status">
-          {dirty && !saving ? "Alterações não salvas" : status}
-        </span>
-        <button
-          disabled={history.past.length === 0}
-          onClick={undo}
-          type="button"
-        >
-          Desfazer
-        </button>
-        <button
-          disabled={history.future.length === 0}
-          onClick={redo}
-          type="button"
-        >
-          Refazer
-        </button>
-        {toolbarExtra?.({ dirty })}
-        <button
-          className="sbe-primary"
-          disabled={saving || !dirty}
-          onClick={() => void save()}
-          type="button"
-        >
-          Salvar
-        </button>
-      </div>
-
-      <div className="sbe-body">
-        <aside className="sbe-left">
-          <div className="sbe-tabs">
-            {TABS.map(t => (
+      {leftOpen ? (
+        <aside className="sbe-panel-card sbe-left">
+          <div style={{ borderBottom: "1px solid var(--line2)", padding: 10 }}>
+            <div className="sbe-seg">
               <button
-                className={tab === t.id ? "active" : ""}
-                key={t.id}
-                onClick={() => setTab(t.id)}
+                className={leftTab === "camadas" ? "on" : ""}
+                onClick={() => setLeftTab("camadas")}
                 type="button"
               >
-                {t.label}
+                <Icon name="layers" size={14} />
+                Camadas
+              </button>
+              <button
+                className={leftTab === "paginas" ? "on" : ""}
+                onClick={() => setLeftTab("paginas")}
+                type="button"
+              >
+                <Icon name="file-text" size={14} />
+                Páginas
+              </button>
+              <button
+                className={leftTab === "chat" ? "on" : ""}
+                onClick={() => setLeftTab("chat")}
+                type="button"
+              >
+                <Icon name="sparkles" size={14} />
+                IA<span className="sbe-soon">BREVE</span>
+              </button>
+            </div>
+          </div>
+
+          {leftTab === "camadas" && (
+            <LayersPanel
+              elPath={elPath}
+              getElements={getElements}
+              onAdd={addBlock}
+              onSelect={select}
+              onSelectElement={selectElement}
+              onToggleHidden={toggleHidden}
+              sections={layerSections}
+              selectedId={selectedId}
+            />
+          )}
+
+          {leftTab === "paginas" && (
+            <div className="sbe-scroll">
+              <ContentPanel
+                confirm={setConfirm}
+                currentPage={currentPage}
+                currentPost={currentPost}
+                edit={edit}
+                goTo={goTo}
+                onUploadImage={onUploadImage}
+                setPath={setPath}
+                site={site}
+              />
+            </div>
+          )}
+
+          {leftTab === "chat" && (
+            <>
+              <div className="sbe-empty">
+                <div className="ico">
+                  <Icon name="sparkles" size={20} />
+                </div>
+                <span className="tag">EM BREVE</span>
+                <h4>Editar com a IA</h4>
+                <p>
+                  Em breve você poderá pedir mudanças no site conversando com a
+                  Atlas IA. Por enquanto, edite pelo painel lateral.
+                </p>
+                <button
+                  className="sbe-btn round"
+                  onClick={() => setLeftTab("camadas")}
+                  type="button"
+                >
+                  Ver camadas
+                </button>
+              </div>
+              <div className="sbe-fake-input">
+                Pergunte qualquer coisa…
+                <span>
+                  <Icon name="arrow-up" size={14} />
+                </span>
+              </div>
+            </>
+          )}
+        </aside>
+      ) : null}
+
+      <div className="sbe-center">
+        <div className="sbe-top">
+          <button
+            className="sbe-ibtn"
+            onClick={() => setLeftOpen(o => !o)}
+            title="Mostrar/ocultar painel"
+            type="button"
+          >
+            <Icon name="panel-left" size={15} />
+          </button>
+          <div className="sbe-crumb">
+            <Icon name="globe" size={14} />
+            <span>{publish?.domain ?? site.name}</span>
+            <Icon name="chevron-right" size={12} />
+            <PagePicker
+              current={pageLabel}
+              groups={routeGroups}
+              onPick={goTo}
+              value={path}
+            />
+          </div>
+          <div style={{ display: "flex", flexShrink: 0, gap: 2 }}>
+            <button
+              className="sbe-ibtn"
+              disabled={history.past.length === 0}
+              onClick={undo}
+              title="Desfazer (Ctrl+Z)"
+              type="button"
+            >
+              <Icon name="undo-2" size={15} />
+            </button>
+            <button
+              className="sbe-ibtn"
+              disabled={history.future.length === 0}
+              onClick={redo}
+              title="Refazer (Ctrl+Shift+Z)"
+              type="button"
+            >
+              <Icon name="redo-2" size={15} />
+            </button>
+          </div>
+          {wide ? (
+            <span
+              className={`sbe-pill ${pill.cls}`}
+              title={saveState === "error" ? saveError : undefined}
+            >
+              <i />
+              {pill.text}
+            </span>
+          ) : null}
+          {publish ? (
+            <button
+              className="sbe-lime"
+              onClick={() => setReview(true)}
+              title="Revisar e publicar"
+              type="button"
+            >
+              <Icon name="rocket" size={14} />
+              {availW >= 420 ? "Revisar e publicar" : "Publicar"}
+            </button>
+          ) : null}
+          {exitHref ? (
+            <a
+              className="sbe-ibtn"
+              href={exitHref}
+              style={{ marginLeft: 2 }}
+              title="Sair do editor"
+            >
+              <Icon name="x" size={16} />
+            </a>
+          ) : null}
+        </div>
+
+        <div className="sbe-bar2">
+          <div className="sbe-seg">
+            {DEVICES.map(d => (
+              <button
+                className={device === d.id ? "on" : ""}
+                key={d.id}
+                onClick={() => setDevice(d.id)}
+                title={d.label}
+                type="button"
+              >
+                <Icon name={d.icon} size={14} />
               </button>
             ))}
           </div>
+          <span className="sbe-muted">
+            {devW}px · {Math.round(zoom * 100)}%
+          </span>
+          <span className="sbe-spacer" />
+          {wide ? (
+            <span className="sbe-muted">
+              Clique para selecionar · Ctrl+Z desfaz
+            </span>
+          ) : null}
+          {originalSite ? (
+            <button
+              className="sbe-link"
+              onClick={restoreOriginal}
+              type="button"
+            >
+              Restaurar original
+            </button>
+          ) : null}
+        </div>
 
-          <div className="sbe-panel">
-            {tab === "estrutura" && (
-              <>
-                <label className="sbe-field">
-                  <span>Editando</span>
-                  <select
-                    onChange={e => setRootKey(e.target.value)}
-                    value={rootKey}
-                  >
-                    {allRoots(site).map(([key]) => (
-                      <option key={key} value={key}>
-                        {rootLabel(site, key)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <Outline
-                  blocks={roots}
-                  onSelect={id => setSelectedId(id)}
-                  selectedId={selectedId}
-                />
-              </>
-            )}
-
-            {tab === "blocos" && (
-              <>
-                <p className="sbe-hint">
-                  Inserir em <strong>{rootLabel(site, rootKey)}</strong>
-                  {selected ? ", depois do bloco selecionado" : ", no final"}.
-                </p>
-                {(Object.keys(GROUP_LABEL) as BlockGroup[]).map(group => (
-                  <div key={group}>
-                    <h4>{GROUP_LABEL[group]}</h4>
-                    {listBlockDefinitions()
-                      .filter(d => d.group === group)
-                      .map(d => (
-                        <button
-                          key={d.type}
-                          onClick={() => {
-                            const res = insertBlock(
-                              site,
-                              rootKey,
-                              d.type,
-                              selectedId ?? undefined
-                            );
-                            edit(res.site);
-                            setSelectedId(res.id);
-                          }}
-                          type="button"
-                        >
-                          + {d.label}
-                        </button>
-                      ))}
-                  </div>
-                ))}
-              </>
-            )}
-
-            {tab === "paginas" && (
-              <>
-                <NewItem
-                  label="Nova página"
-                  onCreate={title => {
-                    const res = addPage(site, title);
-                    edit(res.site);
-                    goTo(`/${res.page.slug}/`);
-                  }}
-                />
-                <ul className="sbe-items">
-                  {site.pages.map(p => (
-                    <li
-                      className={currentPage?.id === p.id ? "active" : ""}
-                      key={p.id}
-                    >
-                      <button
-                        onClick={() => goTo(p.slug ? `/${p.slug}/` : "/")}
-                        type="button"
-                      >
-                        {p.title}
-                        {p.status === "draft" ? <em> rascunho</em> : null}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                {currentPage && (
-                  <div className="sbe-box">
-                    <h4>Configurações da página</h4>
-                    <FieldInput
-                      field={{ key: "title", kind: "text", label: "Título" }}
-                      onChange={v =>
-                        edit(
-                          updatePage(site, currentPage.id, {
-                            title: String(v),
-                          }),
-                          `pt-${currentPage.id}`
-                        )
-                      }
-                      value={currentPage.title}
-                    />
-                    {currentPage.slug !== "" && (
-                      <label className="sbe-field">
-                        <span>Endereço (slug)</span>
-                        <input
-                          defaultValue={currentPage.slug}
-                          key={currentPage.id + currentPage.slug}
-                          onBlur={e => {
-                            const next = updatePage(site, currentPage.id, {
-                              slug: e.target.value,
-                            });
-                            const page = next.pages.find(
-                              p => p.id === currentPage.id
-                            );
-                            edit(next);
-                            if (page) setPath(`/${page.slug}/`);
-                          }}
-                          type="text"
-                        />
-                      </label>
-                    )}
-                    <FieldInput
-                      field={{
-                        key: "status",
-                        kind: "select",
-                        label: "Situação",
-                        options: [
-                          { label: "Publicada", value: "published" },
-                          { label: "Rascunho", value: "draft" },
-                        ],
-                      }}
-                      onChange={v =>
-                        edit(
-                          updatePage(site, currentPage.id, {
-                            status: v as "draft" | "published",
-                          })
-                        )
-                      }
-                      value={currentPage.status}
-                    />
-                    {currentPage.slug !== "" && (
-                      <div className="sbe-row">
-                        <button
-                          onClick={() => {
-                            const href = `/${currentPage.slug}/`;
-                            if (site.menu.some(m => m.href === href)) return;
-                            edit(
-                              setMenu(site, [
-                                ...site.menu,
-                                { href, label: currentPage.title },
-                              ])
-                            );
-                          }}
-                          type="button"
-                        >
-                          Adicionar ao menu
-                        </button>
-                        <button
-                          className="sbe-danger"
-                          onClick={() => {
-                            if (
-                              !window.confirm(
-                                `Excluir a página "${currentPage.title}"?`
-                              )
-                            )
-                              return;
-                            edit(removePage(site, currentPage.id));
-                            goTo("/");
-                          }}
-                          type="button"
-                        >
-                          Excluir
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-
-            {tab === "posts" && (
-              <>
-                <NewItem
-                  label="Novo post"
-                  onCreate={title => {
-                    const res = addPost(
-                      site,
-                      title,
-                      site.categories[0]?.id ?? null
-                    );
-                    edit(res.site);
-                    goTo(`/${res.post.slug}/`);
-                  }}
-                />
-                <ul className="sbe-items">
-                  {site.posts.map(p => (
-                    <li
-                      className={currentPost?.id === p.id ? "active" : ""}
-                      key={p.id}
-                    >
-                      <button onClick={() => goTo(`/${p.slug}/`)} type="button">
-                        {p.title}
-                        {p.status === "draft" ? <em> rascunho</em> : null}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                {currentPost && (
-                  <div className="sbe-box">
-                    <h4>Configurações do post</h4>
-                    <FieldInput
-                      field={{ key: "title", kind: "text", label: "Título" }}
-                      onChange={v =>
-                        edit(
-                          updatePost(site, currentPost.id, {
-                            title: String(v),
-                          }),
-                          `ot-${currentPost.id}`
-                        )
-                      }
-                      value={currentPost.title}
-                    />
-                    <label className="sbe-field">
-                      <span>Endereço (slug)</span>
-                      <input
-                        defaultValue={currentPost.slug}
-                        key={currentPost.id + currentPost.slug}
-                        onBlur={e => {
-                          const next = updatePost(site, currentPost.id, {
-                            slug: e.target.value,
-                          });
-                          const post = next.posts.find(
-                            p => p.id === currentPost.id
-                          );
-                          edit(next);
-                          if (post) setPath(`/${post.slug}/`);
-                        }}
-                        type="text"
-                      />
-                    </label>
-                    <FieldInput
-                      field={{
-                        key: "categoryId",
-                        kind: "select",
-                        label: "Categoria",
-                        options: [
-                          { label: "Sem categoria", value: "" },
-                          ...site.categories.map(c => ({
-                            label: c.name,
-                            value: c.id,
-                          })),
-                        ],
-                      }}
-                      onChange={v =>
-                        edit(
-                          updatePost(site, currentPost.id, {
-                            categoryId: v ? String(v) : null,
-                          })
-                        )
-                      }
-                      value={currentPost.categoryId ?? ""}
-                    />
-                    <FieldInput
-                      field={{
-                        key: "coverImage",
-                        kind: "image",
-                        label: "Imagem de capa",
-                      }}
-                      onChange={v =>
-                        edit(
-                          updatePost(site, currentPost.id, {
-                            coverImage: v ? String(v) : null,
-                          }),
-                          `oc-${currentPost.id}`
-                        )
-                      }
-                      onUpload={onUploadImage}
-                      value={currentPost.coverImage ?? ""}
-                    />
-                    <FieldInput
-                      field={{
-                        key: "excerpt",
-                        kind: "textarea",
-                        label: "Resumo",
-                      }}
-                      onChange={v =>
-                        edit(
-                          updatePost(site, currentPost.id, {
-                            excerpt: String(v),
-                          }),
-                          `oe-${currentPost.id}`
-                        )
-                      }
-                      value={currentPost.excerpt}
-                    />
-                    <label className="sbe-field">
-                      <span>Data de publicação</span>
-                      <input
-                        onChange={e =>
-                          edit(
-                            updatePost(site, currentPost.id, {
-                              publishedAt: e.target.value || null,
-                            })
-                          )
-                        }
-                        type="date"
-                        value={currentPost.publishedAt ?? ""}
-                      />
-                    </label>
-                    <FieldInput
-                      field={{
-                        key: "status",
-                        kind: "select",
-                        label: "Situação",
-                        options: [
-                          { label: "Publicado", value: "published" },
-                          { label: "Rascunho", value: "draft" },
-                        ],
-                      }}
-                      onChange={v =>
-                        edit(
-                          updatePost(site, currentPost.id, {
-                            status: v as "draft" | "published",
-                          })
-                        )
-                      }
-                      value={currentPost.status}
-                    />
-                    <button
-                      className="sbe-danger"
-                      onClick={() => {
-                        if (
-                          !window.confirm(
-                            `Excluir o post "${currentPost.title}"?`
-                          )
-                        )
-                          return;
-                        edit(removePost(site, currentPost.id));
-                        goTo("/blogs/");
-                      }}
-                      type="button"
-                    >
-                      Excluir post
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-
-            {tab === "categorias" && (
-              <>
-                <NewItem
-                  label="Nova categoria"
-                  onCreate={name => edit(addCategory(site, name))}
-                />
-                {site.categories.map(c => (
-                  <div className="sbe-row" key={c.id}>
-                    <input
-                      onChange={e =>
-                        edit(
-                          renameCategory(site, c.id, e.target.value),
-                          `cn-${c.id}`
-                        )
-                      }
-                      type="text"
-                      value={c.name}
-                    />
-                    <button
-                      onClick={() => goTo(`/category/${c.slug}/`)}
-                      type="button"
-                    >
-                      Ver
-                    </button>
-                    <button
-                      className="sbe-danger"
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            `Excluir a categoria "${c.name}"? Os posts ficam sem categoria.`
-                          )
-                        ) {
-                          edit(removeCategory(site, c.id));
-                        }
-                      }}
-                      type="button"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {tab === "menu" && (
-              <>
-                {site.menu.map((item, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: itens do menu não têm id
-                  <div className="sbe-box" key={i}>
-                    <FieldInput
-                      field={{ key: "label", kind: "text", label: "Texto" }}
-                      onChange={v =>
-                        edit(
-                          setMenu(
-                            site,
-                            site.menu.map((m, j) =>
-                              j === i ? { ...m, label: String(v) } : m
-                            )
-                          ),
-                          `ml-${i}`
-                        )
-                      }
-                      value={item.label}
-                    />
-                    <FieldInput
-                      field={{ key: "href", kind: "url", label: "Link" }}
-                      onChange={v =>
-                        edit(
-                          setMenu(
-                            site,
-                            site.menu.map((m, j) =>
-                              j === i ? { ...m, href: String(v) } : m
-                            )
-                          ),
-                          `mh-${i}`
-                        )
-                      }
-                      value={item.href}
-                    />
-                    <div className="sbe-row">
-                      <button
-                        disabled={i === 0}
-                        onClick={() => {
-                          const copy = [...site.menu];
-                          const [moved] = copy.splice(i, 1);
-                          if (moved) copy.splice(i - 1, 0, moved);
-                          edit(setMenu(site, copy));
-                        }}
-                        type="button"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        disabled={i === site.menu.length - 1}
-                        onClick={() => {
-                          const copy = [...site.menu];
-                          const [moved] = copy.splice(i, 1);
-                          if (moved) copy.splice(i + 1, 0, moved);
-                          edit(setMenu(site, copy));
-                        }}
-                        type="button"
-                      >
-                        ↓
-                      </button>
-                      <button
-                        className="sbe-danger"
-                        onClick={() =>
-                          edit(
-                            setMenu(
-                              site,
-                              site.menu.filter((_, j) => j !== i)
-                            )
-                          )
-                        }
-                        type="button"
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                <button
-                  onClick={() =>
-                    edit(
-                      setMenu(site, [
-                        ...site.menu,
-                        { href: "/", label: "Novo item" },
-                      ])
-                    )
-                  }
-                  type="button"
-                >
-                  + Item de menu
-                </button>
-              </>
-            )}
-
-            {tab === "aparencia" && (
-              <>
-                <FieldInput
-                  field={{ key: "name", kind: "text", label: "Nome do site" }}
-                  onChange={v =>
-                    edit({ ...site, name: String(v) || site.name }, "site-name")
-                  }
-                  value={site.name}
-                />
-                {(
-                  [
-                    ["bg", "Fundo"],
-                    ["fg", "Texto"],
-                    ["accent", "Destaque (botões, links)"],
-                    ["card", "Cartões"],
-                    ["muted", "Texto secundário"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <FieldInput
-                    field={{ key, kind: "color", label }}
-                    key={key}
-                    onChange={v =>
-                      edit(setTheme(site, { [key]: String(v) }), `theme-${key}`)
-                    }
-                    value={site.theme[key] ?? ""}
-                  />
-                ))}
-              </>
-            )}
-          </div>
-        </aside>
         <div
           className="sbe-canvas"
           onClickCapture={onCanvasClick}
+          onPointerLeave={clearHover}
+          onPointerOver={onCanvasOver}
+          onScroll={() => {
+            paintHover();
+            paintSelection();
+          }}
           onSubmitCapture={e => e.preventDefault()}
           ref={canvasRef}
         >
-          <SiteRenderer
-            basePath={basePath}
-            mode="edit"
-            path={path}
-            site={site}
-          />
+          <div className="sbe-hoverbox" ref={hoverBoxRef}>
+            <span />
+          </div>
+          <div className="sbe-selbox" ref={selBoxRef} />
+          <div
+            className="sbe-frame"
+            style={{
+              background: site.theme.bg,
+              width: devW,
+              zoom,
+            }}
+          >
+            <SiteRenderer
+              basePath={basePath}
+              mode="edit"
+              narrow={device !== "desktop"}
+              path={path}
+              site={site}
+            />
+          </div>
         </div>
 
-        <aside className="sbe-right">
-          {selected && selectedDef ? (
-            <div className="sbe-panel">
-              <h3>{selectedDef.label}</h3>
-              <div className="sbe-row">
-                <button
-                  onClick={() => edit(moveBlock(site, selected.id, -1))}
-                  type="button"
-                >
-                  ↑ Subir
-                </button>
-                <button
-                  onClick={() => edit(moveBlock(site, selected.id, 1))}
-                  type="button"
-                >
-                  ↓ Descer
-                </button>
-              </div>
-              <div className="sbe-row">
-                <button
-                  onClick={() => {
-                    const res = duplicateBlock(site, selected.id);
-                    edit(res.site);
-                    if (res.id) setSelectedId(res.id);
-                  }}
-                  type="button"
-                >
-                  Duplicar
-                </button>
-                <button
-                  className="sbe-danger"
-                  onClick={() => {
-                    edit(removeBlock(site, selected.id));
-                    setSelectedId(null);
-                  }}
-                  type="button"
-                >
-                  Excluir
-                </button>
-              </div>
-              {selectedDef.fields.length === 0 ? (
-                <p className="sbe-hint">
-                  Este bloco não tem opções — ele usa os dados do site.
-                </p>
-              ) : null}
-              {selectedDef.fields.map(field => (
-                <FieldInput
-                  field={field}
-                  key={field.key}
-                  onChange={v =>
-                    edit(
-                      updateBlockProps(site, selected.id, { [field.key]: v }),
-                      `${selected.id}-${field.key}`
-                    )
-                  }
-                  onUpload={onUploadImage}
-                  value={
-                    selected.props[field.key] ?? selectedDef.defaults[field.key]
-                  }
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="sbe-panel">
-              <p className="sbe-hint">
-                Clique em um bloco da página para editar seus textos, imagens e
-                links.
-              </p>
-            </div>
-          )}
-        </aside>
+        {confirm ? (
+          <ConfirmDialog onClose={() => setConfirm(null)} request={confirm} />
+        ) : null}
+
+        {review && publish ? (
+          <ReviewDialog
+            changes={log}
+            error={publishError}
+            onClose={() => setReview(false)}
+            onPick={id => {
+              setReview(false);
+              select(id);
+            }}
+            onPublish={pw => void doPublish(pw)}
+            publish={publish}
+            publishing={publishing}
+            subtitle={changesLabel}
+          />
+        ) : null}
       </div>
+
+      <aside className="sbe-panel-card sbe-right">
+        <Inspector
+          crumbs={crumbs}
+          elLabel={elPath ? elName : ""}
+          elPath={elPath}
+          focusHint={focusHint}
+          onAction={blockAction}
+          onMenu={menu =>
+            edit(setMenu(site, menu), {
+              key: "menu-edit",
+              label: "Menu do site",
+            })
+          }
+          onProp={(key, value) =>
+            selected &&
+            edit(updateBlockProps(site, selected.id, { [key]: value }), {
+              id: selected.id,
+              key: `${selected.id}-${key}`,
+              label: `Editou · ${labelOf(selected.type)}`,
+            })
+          }
+          onSelect={select}
+          onSiteName={name =>
+            edit(
+              { ...site, name: name || site.name },
+              { key: "site-name", label: "Nome do site" }
+            )
+          }
+          onStyle={(patch, what) =>
+            selected &&
+            edit(
+              elPath
+                ? updateElementStyle(site, selected.id, elPath, patch)
+                : updateBlockStyle(site, selected.id, patch),
+              {
+                id: selected.id,
+                key: `${selected.id}-s${elPath}-${Object.keys(patch).join()}`,
+                label: `${what} · ${labelOf(selected.type)}`,
+              }
+            )
+          }
+          onTheme={(patch, what) =>
+            edit(setTheme(site, patch), {
+              key: `theme-${Object.keys(patch).join()}`,
+              kind: "Tema",
+              label: `Tema · ${what}`,
+            })
+          }
+          onUploadImage={onUploadImage}
+          selected={selected}
+          site={site}
+        />
+      </aside>
+
+      {toast ? (
+        <div className="sbe-toast">
+          <Icon name="circle-check" size={15} />
+          {toast}
+        </div>
+      ) : null}
     </div>
-  );
-}
-
-function Outline({
-  blocks,
-  depth = 0,
-  onSelect,
-  selectedId,
-}: {
-  blocks: Block[];
-  depth?: number;
-  onSelect: (id: string) => void;
-  selectedId: string | null;
-}) {
-  return (
-    <ul className="sbe-outline">
-      {blocks.map(b => (
-        <li key={b.id} style={{ paddingLeft: depth * 12 }}>
-          <button
-            className={selectedId === b.id ? "active" : ""}
-            onClick={() => onSelect(b.id)}
-            type="button"
-          >
-            {getBlockDefinition(b.type)?.label ?? b.type}
-          </button>
-          {b.children?.length ? (
-            <Outline
-              blocks={b.children}
-              depth={depth + 1}
-              onSelect={onSelect}
-              selectedId={selectedId}
-            />
-          ) : null}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function NewItem({
-  label,
-  onCreate,
-}: {
-  label: string;
-  onCreate: (value: string) => void;
-}) {
-  const [value, setValue] = useState("");
-  return (
-    <form
-      className="sbe-row"
-      onSubmit={e => {
-        e.preventDefault();
-        const v = value.trim();
-        if (!v) return;
-        onCreate(v);
-        setValue("");
-      }}
-    >
-      <input
-        onChange={e => setValue(e.target.value)}
-        placeholder={label}
-        type="text"
-        value={value}
-      />
-      <button type="submit">+</button>
-    </form>
   );
 }

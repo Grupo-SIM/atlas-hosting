@@ -91,6 +91,33 @@ export function rootOf(site: Site, id: string): RootKey | undefined {
   return allRoots(site).find(([, blocks]) => locateIn(blocks, id))?.[0];
 }
 
+function pathIn(
+  list: Block[],
+  id: string,
+  trail: Block[]
+): Block[] | undefined {
+  for (const block of list) {
+    if (block.id === id) return trail;
+    const inner = block.children
+      ? pathIn(block.children, id, [...trail, block])
+      : undefined;
+    if (inner) return inner;
+  }
+  return undefined;
+}
+
+/** Ancestrais do bloco (do mais externo ao pai) e a raiz que o contém. */
+export function ancestorsOf(
+  site: Site,
+  id: string
+): { ancestors: Block[]; root: RootKey } | undefined {
+  for (const [key, blocks] of allRoots(site)) {
+    const ancestors = pathIn(blocks, id, []);
+    if (ancestors) return { ancestors, root: key };
+  }
+  return undefined;
+}
+
 const clone = (site: Site): Site => structuredClone(site);
 
 export function updateBlockProps(
@@ -101,6 +128,53 @@ export function updateBlockProps(
   const next = clone(site);
   const block = findBlock(next, id);
   if (block) block.props = { ...block.props, ...patch };
+  return next;
+}
+
+/** `undefined`/vazio apaga a propriedade de estilo. */
+export function updateBlockStyle(
+  site: Site,
+  id: string,
+  patch: Record<string, string | number | undefined>
+): Site {
+  const next = clone(site);
+  const block = findBlock(next, id);
+  if (!block) return site;
+  const style = { ...(block.style ?? {}) };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined || value === "") delete style[key];
+    else style[key] = value;
+  }
+  block.style = Object.keys(style).length ? style : undefined;
+  return next;
+}
+
+export function updateElementStyle(
+  site: Site,
+  id: string,
+  path: string,
+  patch: Record<string, string | number | undefined>
+): Site {
+  const next = clone(site);
+  const block = findBlock(next, id);
+  if (!block) return site;
+  const all = { ...(block.elStyles ?? {}) };
+  const style = { ...(all[path] ?? {}) };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined || value === "") delete style[key];
+    else style[key] = value;
+  }
+  if (Object.keys(style).length) all[path] = style;
+  else delete all[path];
+  block.elStyles = Object.keys(all).length ? all : undefined;
+  return next;
+}
+
+export function setBlockHidden(site: Site, id: string, hidden: boolean): Site {
+  const next = clone(site);
+  const block = findBlock(next, id);
+  if (!block) return site;
+  block.hidden = hidden || undefined;
   return next;
 }
 
@@ -127,7 +201,10 @@ function withNewIds(block: Block): Block {
   return {
     ...copy,
     children: block.children?.map(withNewIds),
+    elStyles: block.elStyles ? structuredClone(block.elStyles) : undefined,
+    hidden: block.hidden,
     props: structuredClone(block.props),
+    style: block.style ? structuredClone(block.style) : undefined,
   };
 }
 

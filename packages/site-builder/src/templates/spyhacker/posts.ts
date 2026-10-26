@@ -1,4 +1,5 @@
 import type { Block, Post } from "../../model/index.js";
+import { BODIES } from "./post-bodies.js";
 
 const UP = "https://007spyhacker.com/wp-content/uploads";
 
@@ -51,7 +52,7 @@ const seeds: Seed[] = [
     ],
     category: "guias-e-tutoriais",
     cover: `${UP}/2025/04/Que-es-un-nombre-de-dominio-y-como-se-elige.jpg`,
-    date: "2025-04-01",
+    date: "2025-04-30",
     excerpt:
       "Registrar domínio é um dos passos mais importantes para qualquer pessoa ou empresa que deseja construir presença sólida na internet.",
     slug: "como-registrar-dominio-de-forma-simples-e-facil",
@@ -185,8 +186,15 @@ export const categorySeeds = [
   ["desenvolvimento-de-sistemas", "Desenvolvimento de Sistemas"],
 ] as const;
 
+/** Corpo completo do site original; sem ele, o corpo escrito à mão ou o resumo. */
+function bodyOf(s: Seed): Block[] {
+  const full = BODIES[s.slug];
+  if (full?.length) return full.map(b => block(b.type, b.props));
+  return s.body ?? [block("text", { text: s.excerpt })];
+}
+
 export const posts: Post[] = seeds.map((s, i) => ({
-  blocks: s.body ?? [block("text", { text: s.excerpt })],
+  blocks: bodyOf(s),
   categoryId: `cat-${s.category}`,
   coverImage: s.cover,
   excerpt: s.excerpt,

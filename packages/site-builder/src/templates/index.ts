@@ -4,11 +4,13 @@ import { spyhacker } from "./spyhacker/index.js";
 const templates: SiteTemplate[] = [spyhacker];
 
 export const listTemplates = (): TemplateMeta[] =>
-  templates.map(({ description, id, name, preview }) => ({
+  templates.map(({ description, id, name, preview, site, tags }) => ({
     description,
     id,
     name,
+    pageCount: site.pages.length,
     preview,
+    tags,
   }));
 
 /** Cópia profunda — o site do usuário nunca compartilha referência com o seed. */

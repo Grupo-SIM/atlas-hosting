@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { FieldDef } from "../blocks/types.js";
+import { Icon } from "./icons.js";
 
 type Values = Record<string, unknown>;
 
@@ -17,8 +18,6 @@ export function FieldInput({
   onUpload?: (file: File) => Promise<string>;
   value: unknown;
 }) {
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState("");
   const str =
     typeof value === "string" ? value : value == null ? "" : String(value);
 
@@ -92,6 +91,17 @@ export function FieldInput({
     );
   }
 
+  if (field.kind === "image") {
+    return (
+      <ImageField
+        field={field}
+        onChange={onChange}
+        onUpload={onUpload}
+        value={str}
+      />
+    );
+  }
+
   return (
     // biome-ignore lint/a11y/noLabelWithoutControl: o controle muda conforme o tipo do campo
     <label className="sbe-field">
@@ -125,41 +135,123 @@ export function FieldInput({
       ) : (
         <input
           onChange={e => onChange(e.target.value)}
-          placeholder={
-            field.kind === "image" ? "Cole a URL da imagem" : undefined
-          }
           type="text"
           value={str}
         />
       )}
-      {field.kind === "image" && onUpload ? (
-        <input
-          accept="image/*"
-          disabled={uploading}
-          onChange={async e => {
-            const file = e.target.files?.[0];
-            e.target.value = "";
-            if (!file) return;
-            setUploading(true);
-            setUploadError("");
-            try {
-              onChange(await onUpload(file));
-            } catch (err) {
-              setUploadError(
-                err instanceof Error ? err.message : "Falha no envio"
-              );
-            } finally {
-              setUploading(false);
-            }
-          }}
-          type="file"
-        />
-      ) : null}
-      {uploading ? <small>Enviando...</small> : null}
-      {uploadError ? <small className="sbe-error">{uploadError}</small> : null}
-      {field.kind === "image" && str ? (
-        <img alt="" className="sbe-thumb" src={str} />
-      ) : null}
     </label>
+  );
+}
+
+/** Imagem: arrastar e soltar ou clicar para enviar, ou colar a URL. */
+function ImageField({
+  field,
+  onChange,
+  onUpload,
+  value,
+}: {
+  field: FieldDef;
+  onChange: (value: unknown) => void;
+  onUpload?: (file: File) => Promise<string>;
+  value: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [over, setOver] = useState(false);
+  const [error, setError] = useState("");
+  const picker = useRef<HTMLInputElement>(null);
+
+  const send = async (file: File | undefined) => {
+    if (!(file && onUpload)) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Envie um arquivo de imagem.");
+      return;
+    }
+    setUploading(true);
+    setError("");
+    try {
+      onChange(await onUpload(file));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha no envio");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="sbe-field">
+      <span>{field.label}</span>
+      {onUpload ? (
+        <>
+          {/* Com imagem: ela própria é o alvo (hover ou clique troca). Sem imagem: área de envio. */}
+          <button
+            className={[
+              value ? "sbe-imgdrop has" : "sbe-drop",
+              over ? "over" : "",
+            ].join(" ")}
+            onClick={() => picker.current?.click()}
+            onDragLeave={() => setOver(false)}
+            onDragOver={e => {
+              e.preventDefault();
+              setOver(true);
+            }}
+            onDrop={e => {
+              e.preventDefault();
+              setOver(false);
+              void send(e.dataTransfer.files[0]);
+            }}
+            type="button"
+          >
+            {value ? <img alt="" className="sbe-thumb" src={value} /> : null}
+            {value ? (
+              <span className="cover">
+                <Icon name="upload" size={18} />
+                <b>{uploading ? "Enviando..." : "Trocar imagem"}</b>
+              </span>
+            ) : (
+              <>
+                <Icon name="upload" size={20} />
+                <b>
+                  {uploading
+                    ? "Enviando..."
+                    : over
+                      ? "Solte para enviar"
+                      : "Arraste e solte aqui"}
+                </b>
+                <small>ou clique para enviar</small>
+              </>
+            )}
+          </button>
+          <input
+            accept="image/*"
+            hidden
+            onChange={e => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              void send(file);
+            }}
+            ref={picker}
+            type="file"
+          />
+        </>
+      ) : null}
+      <input
+        onChange={e => onChange(e.target.value)}
+        placeholder="ou cole a URL da imagem"
+        type="text"
+        value={value}
+      />
+      {value ? (
+        <button
+          className="sbe-btn danger"
+          onClick={() => onChange("")}
+          style={{ alignSelf: "flex-start" }}
+          type="button"
+        >
+          <Icon name="trash-2" size={13} />
+          Remover imagem
+        </button>
+      ) : null}
+      {error ? <small className="sbe-error">{error}</small> : null}
+    </div>
   );
 }

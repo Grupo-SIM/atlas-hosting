@@ -3,7 +3,9 @@ import type { Site } from "./index.js";
 import { blockSchema } from "./index.js";
 
 const status = z.enum(["draft", "published"]);
-const slug = z.string().regex(/^[a-z0-9-]*$/, "Slug inválido");
+const slug = z
+  .string()
+  .regex(/^([a-z0-9-]+(\/[a-z0-9-]+)*)?$/, "Slug inválido");
 
 /** Valida o site inteiro antes de gravar — o editor roda no navegador, então o servidor não confia nele. */
 export const siteSchema: z.ZodType<Site> = z.object({
@@ -13,15 +15,26 @@ export const siteSchema: z.ZodType<Site> = z.object({
   categoryLayout: z.array(blockSchema),
   footer: z.array(blockSchema),
   header: z.array(blockSchema),
-  menu: z.array(z.object({ href: z.string(), label: z.string() })),
+  menu: z.array(
+    z.object({
+      children: z
+        .array(z.object({ href: z.string(), label: z.string() }))
+        .optional(),
+      dynamic: z.enum(["categories"]).optional(),
+      href: z.string(),
+      label: z.string(),
+    })
+  ),
   name: z.string().min(1).max(120),
   pages: z.array(
     z.object({
+      bare: z.boolean().optional(),
       blocks: z.array(blockSchema),
       id: z.string(),
       slug,
       status,
       title: z.string().min(1),
+      wide: z.boolean().optional(),
     })
   ),
   postLayout: z.array(blockSchema),
