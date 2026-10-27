@@ -1,13 +1,8 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { eq } from "drizzle-orm";
-import {
-  ArrowDownLeft,
-  ArrowUpCircle,
-  ArrowUpRight,
-  History,
-  Plus,
-} from "lucide-react";
+import { ArrowUpCircle, ArrowUpRight, History, Plus } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,14 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgInvoice } from "@/lib/db/schema";
@@ -80,7 +67,9 @@ export default async function WalletPage() {
               </div>
               <p className="mt-2 text-muted-foreground text-sm">
                 Última transação:{" "}
-                {format(invoices[0]?.createdAt, "PPP", { locale: ptBR })}
+                {invoices[0]
+                  ? format(invoices[0].createdAt, "PPP", { locale: ptBR })
+                  : "Nenhuma transação"}
               </p>
             </div>
 
@@ -93,20 +82,8 @@ export default async function WalletPage() {
                     key={transaction.id}
                   >
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                          // transaction.type === "deposit"
-                          false
-                            ? "bg-green-500/10 text-green-500"
-                            : "bg-amber-500/10 text-amber-500"
-                        }
-                        `}
-                      >
-                        {false ? (
-                          <ArrowDownLeft className="h-4 w-4" />
-                        ) : (
-                          <ArrowUpRight className="h-4 w-4" />
-                        )}
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+                        <ArrowUpRight className="h-4 w-4" />
                       </div>
                       <div>
                         <p className="font-medium">{transaction.description}</p>
@@ -115,10 +92,7 @@ export default async function WalletPage() {
                         </p>
                       </div>
                     </div>
-                    <span
-                      className={`font-medium ${false ? "text-green-500" : ""}`}
-                    >
-                      {false ? "+" : ""}
+                    <span className="font-medium">
                       {toBrl(transaction.amount)}
                     </span>
                   </div>
@@ -140,75 +114,22 @@ export default async function WalletPage() {
                 <CardTitle>Métodos de pagamento</CardTitle>
                 <CardDescription>Gerencie seus cartões salvos</CardDescription>
               </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar cartão
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Adicionar novo cartão</DialogTitle>
-                    <DialogDescription>
-                      Adicione um novo cartão à sua carteira para pagamentos
-                      futuros
-                    </DialogDescription>
-                  </DialogHeader>
-                  {/* Card input form would go here */}
-                </DialogContent>
-              </Dialog>
+              <Button asChild className="cursor-pointer" size="sm">
+                <Link href="/settings?tab=payment">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Gerenciar cartões
+                </Link>
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* user.organization.wallet..map((card) => (
-              <div
-                key={card.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <CreditCard className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium capitalize">{card.type}</p>
-                      {card.isDefault && (
-                        <Badge
-                          variant="outline"
-                          className="bg-primary/10 text-primary"
-                        >
-                          Default
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      •••• {card.last4} • Expires {card.expiry}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={card.isDefault ? "text-primary" : ""}
-                  >
-                    {card.isDefault ? (
-                      <Star className="h-4 w-4" />
-                    ) : (
-                      <StarOff className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )) */}
+            <p className="text-muted-foreground text-sm">
+              Cadastre seu cartão e selecione qual usar em cada assinatura em{" "}
+              <Link className="underline" href="/settings?tab=payment">
+                Configurações → Pagamentos
+              </Link>
+              .
+            </p>
           </CardContent>
         </Card>
       </div>
