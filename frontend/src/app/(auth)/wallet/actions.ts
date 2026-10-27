@@ -1,13 +1,18 @@
 "use server";
 
 import axios from "axios";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { cache } from "react";
 import { auth } from "@/auth";
-import { getUser } from "@/lib/auth";
+import { getRealUser, getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { pgOrganization, pgUser, pgUserCard } from "@/lib/db/schema";
+import {
+  pgOrganization,
+  pgUser,
+  pgUserCard,
+  pgVpsSubscription,
+} from "@/lib/db/schema";
 import domApi from "@/lib/server/apis/dom";
 
 export interface AddCardData {
@@ -37,10 +42,53 @@ export interface ActionResponse {
 export async function addCard(cardData: AddCardData): Promise<ActionResponse> {
   try {
     const user = await getUser();
+    const principal = await getRealUser();
+    if (
+      principal.id !== user.id ||
+      user.organization?.ownerId !== user.id ||
+      !user.organization?.wallet
+    ) {
+      return {
+        message:
+          "Somente o titular da organização pode cadastrar cartões, fora do acesso como cliente.",
+        status: "error",
+      };
+    }
+    const number = cardData.cardNumber.replace(/\D/g, "");
+    const document = cardData.holderDocument.replace(/\D/g, "");
+    if (
+      !/^\d{13,19}$/.test(number) ||
+      !/^\d{3,4}$/.test(cardData.cardCvv) ||
+      !/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardData.cardExpiration) ||
+      ![11, 14].includes(document.length) ||
+      !cardData.holderName.trim()
+    ) {
+      return {
+        message:
+          "Confira número, validade, código de segurança e dados do titular.",
+        status: "error",
+      };
+    }
+    cardData = {
+      ...cardData,
+      billingCity: cardData.billingCity || user.billingCity || undefined,
+      billingEmail: cardData.billingEmail || user.email,
+      billingName: cardData.billingName || user.name,
+      billingNeighborhood:
+        cardData.billingNeighborhood || user.billingNeighborhood || undefined,
+      billingNumber: cardData.billingNumber || user.billingNumber || undefined,
+      billingPhone: cardData.billingPhone || user.billingPhone || undefined,
+      billingState: cardData.billingState || user.billingState || undefined,
+      billingStreet: cardData.billingStreet || user.billingStreet || undefined,
+      billingZipCode:
+        cardData.billingZipCode || user.billingZipCode || undefined,
+    };
 
     // Parse expiration date
     const [expMonth, expYear] = cardData.cardExpiration.split("/");
     const fullYear = 2000 + Number.parseInt(expYear, 10);
+    if (new Date(fullYear, Number(expMonth), 1).getTime() <= Date.now())
+      return { message: "Cartão vencido.", status: "error" };
 
     // If user doesn't have domId, create a DOM client first
     if (!user.organization?.domId) {
@@ -56,7 +104,8 @@ export async function addCard(cardData: AddCardData): Promise<ActionResponse> {
         !cardData.billingState
       ) {
         return {
-          message: "Informações de cobrança são obrigatórias",
+          message:
+            "Complete endereço e telefone em Configurações → Pessoal antes de cadastrar seu cartão.",
           status: "error",
         };
       }
@@ -123,6 +172,7 @@ export async function addCard(cardData: AddCardData): Promise<ActionResponse> {
     });
 
     revalidatePath("/settings");
+    revalidatePath("/wallet");
 
     return {
       message: "Cartão adicionado com sucesso",
@@ -168,6 +218,20 @@ export async function deleteCard(cardId: string): Promise<ActionResponse> {
       };
     }
 
+    const linkedSubscription = await db.query.pgVpsSubscription.findFirst({
+      where: and(
+        eq(pgVpsSubscription.orgId, user.organization.id),
+        sql`${pgVpsSubscription.status} in ('active', 'paused')`,
+        sql`${pgVpsSubscription.config}->>'cardToken' = ${card.cardToken}`
+      ),
+    });
+    if (linkedSubscription)
+      return {
+        message:
+          "Cartão associado a uma assinatura. Selecione outro cartão na assinatura ou procure o suporte antes de removê-lo.",
+        status: "error",
+      };
+
     // Delete the card from DOM API first
     try {
       await domApi.deleteCardToken(user.id, card.cardToken);
@@ -195,6 +259,7 @@ export async function deleteCard(cardId: string): Promise<ActionResponse> {
     }
 
     revalidatePath("/settings");
+    revalidatePath("/wallet");
 
     return {
       message: "Cartão removido com sucesso",
@@ -238,24 +303,38 @@ export async function setDefaultCard(cardId: string): Promise<ActionResponse> {
       };
     }
 
-    // Remove default from all cards
-    await db
-      .update(pgUserCard)
-      .set({ isDefault: false })
-      .where(eq(pgUserCard.walletId, user.organization.wallet.id));
+    const selected = await db.query.pgUserCard.findFirst({
+      where: and(
+        eq(pgUserCard.id, cardId),
+        eq(pgUserCard.walletId, user.organization.wallet.id)
+      ),
+    });
+    if (!selected)
+      return {
+        message: "Cartão não encontrado nesta carteira.",
+        status: "error",
+      };
 
-    // Set new default card
-    await db
-      .update(pgUserCard)
-      .set({ isDefault: true })
-      .where(
-        and(
-          eq(pgUserCard.id, cardId),
-          eq(pgUserCard.walletId, user.organization.wallet.id)
-        )
-      );
+    await db.transaction(async tx => {
+      // Remove default from all cards
+      await tx
+        .update(pgUserCard)
+        .set({ isDefault: false })
+        .where(eq(pgUserCard.walletId, user.organization.wallet.id));
 
+      // Set new default card
+      await tx
+        .update(pgUserCard)
+        .set({ isDefault: true })
+        .where(
+          and(
+            eq(pgUserCard.id, cardId),
+            eq(pgUserCard.walletId, user.organization.wallet.id)
+          )
+        );
+    });
     revalidatePath("/settings");
+    revalidatePath("/wallet");
 
     return {
       message: "Cartão padrão atualizado",

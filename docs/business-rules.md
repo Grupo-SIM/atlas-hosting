@@ -65,3 +65,9 @@ Procedimentos do cliente e limites reais ficam em `knowledge-base-n8n.txt`; conf
 - Registros antigos sem vínculo e sem ID de provisionamento exigem associação administrativa verificada. Método cartão sem token não autoriza selecionar outro cartão arbitrariamente.
 - Cadastro de assinatura e reserva pendente de provisionamento são persistidos na mesma transação. Agendador retoma reservas ainda pendentes; reserva em processamento sem ID do fornecedor exige conciliação e nunca autoriza nova compra automática. Provisionamento exige assinatura ativa persistida e não vincula instância cadastrada para outro usuário.
 
+
+## Cartões para assinaturas
+
+- Configurações → Pagamentos permite ao titular cadastrar cartão e selecionar explicitamente qual cartão usar em cada assinatura VPS ativa com método cartão. Apenas salvar ou definir cartão padrão não associa às assinaturas nem comprova pagamento.
+- Cartão precisa pertencer à carteira da organização da assinatura. Seleção é auditada, preserva vigência e permite processamento da renovação pendente após falha definitiva; não reinicia cobrança incerta ou cancelamento pendente. Assinaturas pausadas/canceladas exigem atendimento.
+- Cadastro de cartão e seleção para assinatura não são permitidos durante impersonação. Cartão vinculado a assinatura ativa/pausada não pode ser removido antes de regularizar vínculo. Tokens permanecem no servidor na nova tela; cliente recebe somente dados resumidos.

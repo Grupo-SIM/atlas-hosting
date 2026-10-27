@@ -1,10 +1,13 @@
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { type Organization, pgInvoice } from "@/lib/db/schema";
 import { OrganizationSection } from "./components/OrganizationSection";
+import { PaymentSettings } from "./components/payments";
 import { UserSection } from "./components/UserSection";
 
 export default async function SettingsPage({
@@ -42,7 +45,7 @@ export default async function SettingsPage({
       </div>
 
       <Tabs className="space-y-6" value={params.tab ?? "user"}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <Link className="block w-full" href="/settings?tab=user">
             <TabsTrigger className="pointer-events-none w-full" value="user">
               Pessoal
@@ -56,6 +59,11 @@ export default async function SettingsPage({
               Empresarial
             </TabsTrigger>
           </Link>
+          <Link className="block w-full" href="/settings?tab=payment">
+            <TabsTrigger className="pointer-events-none w-full" value="payment">
+              Pagamentos
+            </TabsTrigger>
+          </Link>
         </TabsList>
 
         {currentTab === "user" && (
@@ -67,6 +75,21 @@ export default async function SettingsPage({
         {currentTab === "organization" && (
           <TabsContent className="space-y-6" value="organization">
             <OrganizationSection user={user} />
+          </TabsContent>
+        )}
+        {currentTab === "payment" && (
+          <TabsContent value="payment">
+            <Suspense
+              fallback={
+                <div className="space-y-4">
+                  <Skeleton className="h-12 w-72" />
+                  <Skeleton className="h-96 w-full" />
+                  <Skeleton className="h-40 w-full" />
+                </div>
+              }
+            >
+              <PaymentSettings />
+            </Suspense>
           </TabsContent>
         )}
       </Tabs>
