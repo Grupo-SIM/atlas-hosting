@@ -71,3 +71,8 @@ Procedimentos do cliente e limites reais ficam em `knowledge-base-n8n.txt`; conf
 - Configurações → Pagamentos permite ao titular cadastrar cartão e selecionar explicitamente qual cartão usar em cada assinatura VPS ativa com método cartão. Apenas salvar ou definir cartão padrão não associa às assinaturas nem comprova pagamento.
 - Cartão precisa pertencer à carteira da organização da assinatura. Seleção é auditada, preserva vigência e permite processamento da renovação pendente após falha definitiva; não reinicia cobrança incerta ou cancelamento pendente. Assinaturas pausadas/canceladas exigem atendimento.
 - Cadastro de cartão e seleção para assinatura não são permitidos durante impersonação. Cartão vinculado a assinatura ativa/pausada não pode ser removido antes de regularizar vínculo. Tokens permanecem no servidor na nova tela; cliente recebe somente dados resumidos.
+
+## Email administrativo ao cliente
+
+- Lista de usuários oferece composição de email individual com assunto/mensagem editáveis e modelo para recadastro de cartão. Envio exige administrador real fora de impersonação; destinatário é resolvido no servidor, e texto é escapado antes de renderizar HTML.
+- Botão do email abre Configurações → Pagamentos. Modelo esclarece que salvar cartão não associa assinatura nem comprova pagamento. Falha SMTP não é sucesso; envio confirmado registra administrador, destinatário e assunto no histórico.

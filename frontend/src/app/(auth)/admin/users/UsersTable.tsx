@@ -31,8 +31,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useDebouncedInput } from "@/hooks/use-debounced-input";
 import { exportTableToPdf } from "@/lib/exportPdf";
 import type { UserRow } from "./actions";
+import { SendUserEmailButton } from "./components";
 import { getUserClientStatus } from "./status";
-import { BILLING_METHOD_LABELS, matchesSubscriptionFilter, subscriptionBillingLabel, type SubscriptionFilter } from "./subscription-status";
+import {
+  BILLING_METHOD_LABELS,
+  matchesSubscriptionFilter,
+  type SubscriptionFilter,
+  subscriptionBillingLabel,
+} from "./subscription-status";
 import { UserActionsCell } from "./UserActionsCell";
 
 function toBrl(value: number) {
@@ -54,7 +60,8 @@ export function UsersTable({ users }: { users: UserRow[] }) {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive" | "suspended"
   >("all");
-  const [subscriptionFilter, setSubscriptionFilter] = useState<SubscriptionFilter>("all");
+  const [subscriptionFilter, setSubscriptionFilter] =
+    useState<SubscriptionFilter>("all");
   const [dateFilter, setDateFilter] = useState<DateRangeValue>(null);
 
   const filtered = useMemo(() => {
@@ -72,7 +79,12 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         !dateFilter ||
         (createdDay >= dateFilter.from && createdDay <= dateFilter.to);
 
-      return matchesSearch && matchesStatus && matchesDate && matchesSubscriptionFilter(u, subscriptionFilter);
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesDate &&
+        matchesSubscriptionFilter(u, subscriptionFilter)
+      );
     });
   }, [users, search, statusFilter, dateFilter, subscriptionFilter]);
 
@@ -148,19 +160,26 @@ export function UsersTable({ users }: { users: UserRow[] }) {
           <FileDown className="h-4 w-4" />
           Exportar PDF
         </Button>
-        <Select value={subscriptionFilter} onValueChange={v => setSubscriptionFilter(v as SubscriptionFilter)}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Método de cobrança" /></SelectTrigger>
+        <Select
+          onValueChange={v => setSubscriptionFilter(v as SubscriptionFilter)}
+          value={subscriptionFilter}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Método de cobrança" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os métodos</SelectItem>
             {Object.entries(BILLING_METHOD_LABELS).map(([method, label]) => (
-              <SelectItem key={method} value={method}>{label}</SelectItem>
+              <SelectItem key={method} value={method}>
+                {label}
+              </SelectItem>
             ))}
             <SelectItem value="none">Sem assinatura</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="overflow-x-auto scrollbar-themed rounded-md border">
+      <div className="scrollbar-themed overflow-x-auto rounded-md border">
         <TooltipProvider delayDuration={150}>
           <Table>
             <TableHeader>
@@ -229,14 +248,23 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                     })()}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{subscriptionBillingLabel(u)}</Badge>
+                    <Badge variant="outline">
+                      {subscriptionBillingLabel(u)}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <UserActionsCell
-                      id={u.id}
-                      isAdmin={u.isAdmin}
-                      suspendedAt={u.suspendedAt}
-                    />
+                    <div className="flex items-center justify-end gap-2">
+                      <SendUserEmailButton
+                        email={u.email}
+                        id={u.id}
+                        name={u.name}
+                      />
+                      <UserActionsCell
+                        id={u.id}
+                        isAdmin={u.isAdmin}
+                        suspendedAt={u.suspendedAt}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
