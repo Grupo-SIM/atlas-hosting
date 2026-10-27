@@ -49,6 +49,7 @@ import {
   pgUser,
   pgUserCard,
   pgVpsPaymentLink,
+  pgVpsProvisioningJob,
   pgVpsSubscription,
   type User,
 } from "@/lib/db/schema";
@@ -2312,24 +2313,30 @@ async function createVpsSubscriptionIfNeeded(
     : config;
 
   try {
-    await db
-      .insert(pgVpsSubscription)
-      .values({
-        amountBrl: invoice.originalAmount ?? invoice.amount,
-        config: finalConfig,
-        failureCount: 0,
-        initialInvoiceId: invoice.id,
-        intervalMonths,
-        lastInvoiceId: invoice.id,
-        nextChargeDate,
-        orgId: user.organization.id,
-        paymentMethod: opts.paymentMethod,
-        planId: meta?.vpsId || "10",
-        planType: planType as any,
-        status: "active",
-        userId: user.id,
-      })
-      .onConflictDoNothing({ target: pgVpsSubscription.initialInvoiceId });
+    await db.transaction(async tx => {
+      await tx
+        .insert(pgVpsSubscription)
+        .values({
+          amountBrl: invoice.originalAmount ?? invoice.amount,
+          config: finalConfig,
+          failureCount: 0,
+          initialInvoiceId: invoice.id,
+          intervalMonths,
+          lastInvoiceId: invoice.id,
+          nextChargeDate,
+          orgId: user.organization.id,
+          paymentMethod: opts.paymentMethod,
+          planId: meta?.vpsId || "10",
+          planType: planType as any,
+          status: "active",
+          userId: user.id,
+        })
+        .onConflictDoNothing({ target: pgVpsSubscription.initialInvoiceId });
+      await tx
+        .insert(pgVpsProvisioningJob)
+        .values({ invoiceId: invoice.id, status: "pending" })
+        .onConflictDoNothing();
+    });
     console.log(
       `[SUBSCRIPTION] ✓ Assinatura VPS criada para fatura ${invoice.id} (${opts.paymentMethod}) — próxima cobrança: ${nextChargeDate.toISOString()}`
     );
@@ -2550,7 +2557,6 @@ export async function completeCheckout(
         expiryMonth: tokenData.expiryMonth,
         expiryYear: tokenData.expiryYear,
         last4: tokenData.last4,
-        token: tokenData.token,
       });
 
       if (!user?.organization?.wallet) {
@@ -2597,7 +2603,7 @@ export async function completeCheckout(
       };
     }
   } else {
-    console.log(`[DOM] Usando cardToken já fornecido: ${cardToken}`);
+    console.log("[DOM] Usando cartão já tokenizado.");
   }
 
   const chargeAmount =

@@ -124,6 +124,10 @@ async function linkInstanceWhenIpv4IsAvailable(
   const existingServer = await db.query.pgVpsServers.findFirst({
     where: eq(pgVpsServers.externalId, instanceId),
   });
+  if (existingServer && existingServer.userId !== invoice.userId)
+    throw new Error(
+      "Instância vinculada a outro usuário; conciliação manual obrigatória."
+    );
   const server =
     existingServer ??
     (
@@ -179,7 +183,25 @@ export async function provisionPaidVps(invoiceId: string): Promise<void> {
   };
   if (metadata.isRenewal) return;
 
-  const [reservedJob] = await db
+  const subscription = await db.query.pgVpsSubscription.findFirst({
+    where: and(
+      eq(pgVpsSubscription.userId, invoice.userId),
+      or(
+        eq(pgVpsSubscription.initialInvoiceId, invoice.id),
+        and(
+          isNull(pgVpsSubscription.initialInvoiceId),
+          eq(pgVpsSubscription.lastInvoiceId, invoice.id)
+        )
+      )
+    ),
+  });
+  if (!subscription)
+    throw new Error(
+      "Assinatura deve estar persistida antes de provisionar a VPS."
+    );
+  if (subscription.vpsNodeId || subscription.status !== "active") return;
+
+  let [reservedJob] = await db
     .insert(pgVpsProvisioningJob)
     .values({ invoiceId: invoice.id, status: "provisioning" })
     .onConflictDoNothing()
@@ -202,7 +224,23 @@ export async function provisionPaidVps(invoiceId: string): Promise<void> {
         await failProvisioning(invoice, error);
       }
     }
-    return;
+    if (
+      !existingJob?.instanceId &&
+      existingJob?.status === "pending" &&
+      subscription.status === "active"
+    ) {
+      [reservedJob] = await db
+        .update(pgVpsProvisioningJob)
+        .set({ status: "provisioning", updatedAt: new Date() })
+        .where(
+          and(
+            eq(pgVpsProvisioningJob.id, existingJob.id),
+            eq(pgVpsProvisioningJob.status, "pending")
+          )
+        )
+        .returning();
+    }
+    if (!reservedJob) return;
   }
 
   const manualExtras = hasManualExtras(config);
@@ -211,6 +249,8 @@ export async function provisionPaidVps(invoiceId: string): Promise<void> {
       "Compra VPS exige ação manual",
       `Fatura <strong>${invoice.id}</strong> inclui ${manualExtras.join(", ")}. A VPS base será provisionada; compre/entregue os extras manualmente.`,
       "warning"
+    ).catch(error =>
+      console.error("[CONTABO] Falha ao avisar sobre extras:", error)
     );
   }
 
@@ -278,7 +318,11 @@ export async function reconcileVpsInstanceLinks(): Promise<void> {
     const job = await db.query.pgVpsProvisioningJob.findFirst({
       where: eq(pgVpsProvisioningJob.invoiceId, invoiceId),
     });
-    if (!job?.instanceId) continue;
+    if (
+      !job?.instanceId &&
+      !(job?.status === "pending" && subscription.status === "active")
+    )
+      continue;
     try {
       await provisionPaidVps(invoiceId);
     } catch (error) {

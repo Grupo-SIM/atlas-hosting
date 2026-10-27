@@ -29,9 +29,9 @@ export class DomApi {
     });
   }
 
-  public async createSubscription(userId: string, invoiceId: string) {}
+  async createSubscription(userId: string, invoiceId: string) {}
 
-  public async createRecurrentPayment({
+  async createRecurrentPayment({
     card,
     planId,
     value,
@@ -183,7 +183,7 @@ export class DomApi {
     }
   }
 
-  public async createOneTimePayment({
+  async createOneTimePayment({
     card,
     value,
     description,
@@ -273,7 +273,7 @@ export class DomApi {
     }
   }
 
-  public async createClient({
+  async createClient({
     name,
     email,
     document,
@@ -391,7 +391,7 @@ export class DomApi {
   //   );
   // }
 
-  public verifyWebhookSignature(signature: string): PayloadWebhook | null {
+  verifyWebhookSignature(signature: string): PayloadWebhook | null {
     try {
       const payload = jwt.verify(signature, this.tokenApi, {
         algorithms: ["HS256"],
@@ -409,7 +409,7 @@ export class DomApi {
    * @param cardData Card information for tokenization
    * @returns Card token and metadata
    */
-  public async createCardToken(
+  async createCardToken(
     userId: string,
     cardData: {
       number: string;
@@ -468,7 +468,6 @@ export class DomApi {
       console.log("[DOM][createCardToken] Cartão tokenizado com SUCESSO:", {
         brand: this.detectCardBrand(cardData.number),
         last4: cardData.number.slice(-4),
-        token: data.token,
       });
 
       return {
@@ -499,7 +498,7 @@ export class DomApi {
    * @param userId User ID to get the organization's DOM ID
    * @param cardToken Card token to delete
    */
-  public async deleteCardToken(userId: string, cardToken: string) {
+  async deleteCardToken(userId: string, cardToken: string) {
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, userId),
       with: {
@@ -536,7 +535,7 @@ export class DomApi {
    * @param cardToken Card token to fetch information for
    * @returns Card token information
    */
-  public async getCardToken(userId: string, cardToken: string) {
+  async getCardToken(userId: string, cardToken: string) {
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, userId),
       with: {
@@ -576,7 +575,7 @@ export class DomApi {
    * @param userId User ID to get the organization's DOM ID
    * @returns Customer information from DOM API
    */
-  public async getCustomer(userId: string) {
+  async getCustomer(userId: string) {
     const user = await db.query.pgUser.findFirst({
       where: eq(pgUser.id, userId),
       with: {
@@ -621,7 +620,7 @@ export class DomApi {
    * distinta da API de assinaturas/recorrência usada no resto desta classe).
    * https://dom-pagamentos.readme.io/reference/criar-uma-transacao
    */
-  public async createBoletoTransaction({
+  async createBoletoTransaction({
     codExternal,
     value,
     description,
@@ -678,7 +677,7 @@ export class DomApi {
    * Consulta o status de uma transação avulsa (boleto/pix/cartão) via GET /transactions/{id}.
    * https://dom-pagamentos.readme.io/reference/consultar-transacao
    */
-  public async getTransaction(transactionId: string): Promise<DomTransaction> {
+  async getTransaction(transactionId: string): Promise<DomTransaction> {
     const { data } = await this.api.get<DomTransaction>(
       `transactions/${transactionId}`
     );
@@ -691,9 +690,7 @@ export class DomApi {
    * deve bater com o id da transação no corpo do webhook, senão é inválido/adulterado.
    * https://dom-pagamentos.readme.io/reference/webhook-verificacao-de-assinatura
    */
-  public verifyChargeSignature(
-    signature: string
-  ): { id: string; exp: number } | null {
+  verifyChargeSignature(signature: string): { id: string; exp: number } | null {
     try {
       return jwt.verify(signature, this.tokenApi, {
         algorithms: ["HS256"],

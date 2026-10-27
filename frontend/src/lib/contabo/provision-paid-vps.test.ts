@@ -5,6 +5,7 @@ let job: any;
 let subscriptions: any[];
 let updates: any[];
 let purchases = 0;
+let nodeOwner = "owner";
 const invoice = {
   id: "purchase",
   metadata: { config: {} },
@@ -22,8 +23,13 @@ mock.module("@/lib/db", () => ({
     query: {
       pgInvoice: { findFirst: async () => invoice },
       pgVpsProvisioningJob: { findFirst: async () => job },
-      pgVpsServers: { findFirst: async () => ({ id: "node" }) },
-      pgVpsSubscription: { findMany: async () => subscriptions },
+      pgVpsServers: {
+        findFirst: async () => ({ id: "node", userId: nodeOwner }),
+      },
+      pgVpsSubscription: {
+        findFirst: async () => subscriptions[0],
+        findMany: async () => subscriptions,
+      },
     },
     update: () => ({
       set: (value: any) => ({
@@ -51,10 +57,16 @@ beforeEach(() => {
   ip = "192.0.2.1";
   job = { instanceId: "supplier-instance", status: "created" };
   subscriptions = [
-    { id: "sub", initialInvoiceId: "purchase", lastInvoiceId: "renewal" },
+    {
+      id: "sub",
+      initialInvoiceId: "purchase",
+      lastInvoiceId: "renewal",
+      status: "active",
+    },
   ];
   updates = [];
   purchases = 0;
+  nodeOwner = "owner";
 });
 test("retries linking when IPv4 becomes available without buying another instance", async () => {
   ip = null;
@@ -79,5 +91,19 @@ test("never purchases an instance to repair a legacy subscription with no known 
   job = null;
   await reconcileVpsInstanceLinks();
   expect(updates).toHaveLength(0);
+  expect(purchases).toBe(0);
+});
+
+test("never provisions without a persisted subscription", async () => {
+  subscriptions = [];
+  await expect(provisionPaidVps("purchase")).rejects.toThrow(
+    "Assinatura deve estar persistida"
+  );
+  expect(purchases).toBe(0);
+});
+test("never links a supplier instance registered to another user", async () => {
+  nodeOwner = "different-owner";
+  await provisionPaidVps("purchase");
+  expect(updates.some(value => value.vpsNodeId)).toBe(false);
   expect(purchases).toBe(0);
 });

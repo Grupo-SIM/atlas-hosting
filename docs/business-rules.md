@@ -63,3 +63,5 @@ Procedimentos do cliente e limites reais ficam em `knowledge-base-n8n.txt`; conf
 - Vínculo com nó usa fatura inicial da assinatura, preservando associação mesmo após renovação. Associação já existente não é sobrescrita.
 - Agendador de renovação recupera vínculos pendentes quando provisionamento já possui ID da instância, inclusive após falha local ou espera pelo IPv4. Recuperação não compra outra instância nem associa máquinas apenas por coincidência de usuário.
 - Registros antigos sem vínculo e sem ID de provisionamento exigem associação administrativa verificada. Método cartão sem token não autoriza selecionar outro cartão arbitrariamente.
+- Cadastro de assinatura e reserva pendente de provisionamento são persistidos na mesma transação. Agendador retoma reservas ainda pendentes; reserva em processamento sem ID do fornecedor exige conciliação e nunca autoriza nova compra automática. Provisionamento exige assinatura ativa persistida e não vincula instância cadastrada para outro usuário.
+
