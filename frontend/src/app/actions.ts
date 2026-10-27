@@ -74,6 +74,7 @@ import { validateNamecheapFundsForPayment } from "@/lib/server/domains/namecheap
 import { renewDomainFromPaidInvoice } from "@/lib/server/domains/renewFromPaidInvoice";
 import { AppLogger } from "@/lib/server/logs";
 import { isFinalCardDecline } from "@/lib/server/payments/card-failure";
+import { checkoutDeadlineCondition } from "@/lib/server/payments/checkout-deadline";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { applyRenewalPayment } from "@/lib/server/subscriptions/lifecycle";
 import { ensureRenewalInvoice } from "@/lib/server/subscriptions/renewal-invoice";
@@ -1678,7 +1679,7 @@ export async function initiateCheckoutPix(
         eq(pgInvoice.id, invoice.id),
         eq(pgInvoice.status, "pending"),
         eq(pgInvoice.amount, invoice.amount),
-        sql`${pgInvoice.dueDate} > now()`,
+        checkoutDeadlineCondition(),
         sql`${pgInvoice.metadata}->>'simpayPaymentId' is null`,
         sql`${pgInvoice.metadata}->>'pixTransactionId' is null`,
         sql`${pgInvoice.metadata}->>'domTransactionId' is null`,
@@ -1833,7 +1834,7 @@ export async function initiateCheckoutBoleto(
         eq(pgInvoice.id, invoice.id),
         eq(pgInvoice.status, "pending"),
         eq(pgInvoice.amount, invoice.amount),
-        sql`${pgInvoice.dueDate} > now()`,
+        checkoutDeadlineCondition(),
         sql`${pgInvoice.metadata}->>'simpayPaymentId' is null`,
         sql`${pgInvoice.metadata}->>'pixTransactionId' is null`,
         sql`${pgInvoice.metadata}->>'domTransactionId' is null`,
@@ -2454,7 +2455,7 @@ export async function completeCheckout(
         eq(pgInvoice.id, invoiceId),
         eq(pgInvoice.status, "pending"),
         eq(pgInvoice.amount, invoice.amount),
-        sql`${pgInvoice.dueDate} > now()`,
+        checkoutDeadlineCondition(),
         sql`${pgInvoice.metadata}->>'simpayPaymentId' is null`,
         sql`${pgInvoice.metadata}->>'pixTransactionId' is null`,
         sql`${pgInvoice.metadata}->>'domTransactionId' is null`,
@@ -2909,7 +2910,7 @@ export async function completeCheckoutWithSavedCard(
         eq(pgInvoice.id, invoiceId),
         eq(pgInvoice.status, "pending"),
         eq(pgInvoice.amount, invoice.amount),
-        sql`${pgInvoice.dueDate} > now()`,
+        checkoutDeadlineCondition(),
         sql`${pgInvoice.metadata}->>'simpayPaymentId' is null`,
         sql`${pgInvoice.metadata}->>'pixTransactionId' is null`,
         sql`${pgInvoice.metadata}->>'domTransactionId' is null`,
