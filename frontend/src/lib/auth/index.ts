@@ -13,6 +13,7 @@ import {
   userSettings,
 } from "@/lib/db/schema";
 import type { AppLogger } from "../server/logs";
+import { resolveEffectiveUser } from "./effective-user";
 import { IMPERSONATE_COOKIE } from "./impersonation";
 import { validateSession } from "./utils";
 
@@ -106,13 +107,12 @@ export async function getUser(): Promise<User> {
   // Só ativa se o principal REAL for admin — o cookie sozinho não concede nada.
   const cookieStore = await cookies();
   const targetId = cookieStore.get(IMPERSONATE_COOKIE)?.value;
-  if (targetId && principal.isAdmin && targetId !== principal.id) {
-    const target = await loadFullUserById(targetId);
-    if (target?.organization) {
-      target.impersonatedBy = principal.id;
-      return target;
-    }
-  }
+  const effectiveUser = await resolveEffectiveUser(
+    principal,
+    targetId,
+    loadFullUserById
+  );
+  if (effectiveUser !== principal) return effectiveUser;
 
   if (!principal.organization) {
     redirect("/newuser");
@@ -141,36 +141,15 @@ export async function checkIsAuthenticated(): Promise<boolean> {
 export async function getOptionalUser(): Promise<User | null> {
   "use server";
   try {
-    const session = await auth();
-    if (session?.user?.id) {
-      const user = await db.query.pgUser.findFirst({
-        where: eq(pgUser.id, session.user.id),
-        with: {
-          domainAccess: true,
-          organization: {
-            with: {
-              domains: true,
-              members: true,
-              owner: true,
-              plan: true,
-              wallet: { with: { cards: true } },
-            },
-          },
-          referredUsers: true,
-          referrer: true,
-          sessions: true,
-          settings: true,
-        },
-      });
-      if (user?.organization) {
-        return user as User;
-      }
-    }
+    const principal = await resolvePrincipal();
+    if (!principal) return null;
 
     const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("session_token")?.value;
-    const { user } = await validateSession(sessionToken);
-    return user as User | null;
+    return await resolveEffectiveUser(
+      principal,
+      cookieStore.get(IMPERSONATE_COOKIE)?.value,
+      loadFullUserById
+    );
   } catch {
     return null;
   }
