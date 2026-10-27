@@ -39,19 +39,21 @@ export function PaymentField({
     type: secret ? "password" : "text",
     value: local,
   };
+  const masked = {
+    ...common,
+    className: inputClasses,
+    inputMode: "numeric" as const,
+    onAccept: (next: string) => setLocal(next),
+  };
   return (
     <div className="space-y-1">
       <Label htmlFor={id}>
         {label} <span className="text-destructive">*</span>
       </Label>
-      {mask ? (
-        <IMaskInput
-          {...common}
-          className={inputClasses}
-          inputMode="numeric"
-          mask={mask}
-          onAccept={(next: string) => setLocal(next)}
-        />
+      {typeof mask === "string" ? (
+        <IMaskInput {...masked} mask={mask} />
+      ) : mask ? (
+        <IMaskInput {...masked} mask={mask} />
       ) : (
         <Input
           {...common}
