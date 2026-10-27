@@ -30,18 +30,26 @@ export function SendUserEmailButton({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [subject, setSubject] = useState(
-    "Atualize seu cartão para renovação da assinatura Atlas"
-  );
-  const [message, setMessage] = useState(
-    `Olá, ${name}!\n\nPrecisamos que você cadastre novamente seu cartão no painel Atlas e o selecione para as assinaturas que deseja renovar automaticamente.\n\nAcesse Configurações → Pagamentos pelo botão abaixo, adicione seu cartão e clique em Usar este cartão na assinatura desejada. Apenas salvar o cartão não ativa a cobrança automática.\n\nEssa seleção autoriza as próximas cobranças de renovação, inclusive uma renovação pendente, conforme os prazos da assinatura. Cadastrar o cartão não confirma o pagamento de faturas anteriores nem reativa um serviço cancelado. Se houver renovação vencida ou serviço interrompido, fale com nosso suporte para regularizar.\n\nPor segurança, nunca envie número do cartão, código de segurança ou senha por email. Informe esses dados somente no painel Atlas.\n\nEquipe Atlas`
-  );
+  const defaultSubject =
+    "Atualize seu cartão para renovação da assinatura Atlas";
+  const [subject, setSubject] = useState(defaultSubject);
+  const defaultMessage = `Olá, ${name}!\n\nPrecisamos que você cadastre novamente seu cartão no painel Atlas e o selecione para as assinaturas que deseja renovar automaticamente.\n\nAcesse Configurações → Pagamentos pelo botão abaixo, adicione seu cartão e clique em Usar este cartão na assinatura desejada. Apenas salvar o cartão não ativa a cobrança automática.\n\nEssa seleção autoriza as próximas cobranças de renovação, inclusive uma renovação pendente, conforme os prazos da assinatura. Cadastrar o cartão não confirma o pagamento de faturas anteriores nem reativa um serviço cancelado. Se houver renovação vencida ou serviço interrompido, fale com nosso suporte para regularizar.\n\nPor segurança, nunca envie número do cartão, código de segurança ou senha por email. Informe esses dados somente no painel Atlas.\n\nEquipe Atlas`;
+  const [message, setMessage] = useState(defaultMessage);
   const [localSubject, changeSubject] = useDebouncedInput(subject, setSubject);
   const [localMessage, changeMessage] = useDebouncedInput(message, setMessage);
+  const discard = () => {
+    changeSubject(defaultSubject);
+    setSubject(defaultSubject);
+    changeMessage(defaultMessage);
+    setMessage(defaultMessage);
+    setOpen(false);
+  };
   return (
     <Dialog
       onOpenChange={value => {
-        if (!pending) setOpen(value);
+        if (pending) return;
+        if (value) setOpen(true);
+        else discard();
       }}
       open={open}
     >
@@ -68,6 +76,13 @@ export function SendUserEmailButton({
                 id,
                 localSubject,
                 localMessage
+              ).catch(
+                () =>
+                  ({
+                    error:
+                      "Falha de comunicação. Confira o envio antes de tentar novamente.",
+                    ok: false,
+                  }) as const
               );
               toast({
                 description: result.ok
@@ -115,7 +130,7 @@ export function SendUserEmailButton({
             <Button
               className="cursor-pointer"
               disabled={pending}
-              onClick={() => setOpen(false)}
+              onClick={discard}
               type="button"
               variant="outline"
             >
