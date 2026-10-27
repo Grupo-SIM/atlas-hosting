@@ -201,47 +201,40 @@ export async function provisionPaidVps(invoiceId: string): Promise<void> {
     );
   if (subscription.vpsNodeId || subscription.status !== "active") return;
 
-  let [reservedJob] = await db
-    .insert(pgVpsProvisioningJob)
-    .values({ invoiceId: invoice.id, status: "provisioning" })
-    .onConflictDoNothing()
-    .returning();
+  const existingJob = await db.query.pgVpsProvisioningJob.findFirst({
+    where: eq(pgVpsProvisioningJob.invoiceId, invoice.id),
+  });
+  if (!existingJob)
+    throw new Error(
+      "Provisionamento sem reserva persistida; conciliação manual obrigatória."
+    );
   const config = metadata.config ?? {};
   const planType = planTypeFromConfig(config as Record<string, unknown>);
-  if (!reservedJob) {
-    const existingJob = await db.query.pgVpsProvisioningJob.findFirst({
-      where: eq(pgVpsProvisioningJob.invoiceId, invoice.id),
-    });
-    if (existingJob?.instanceId) {
-      try {
-        await linkInstanceWhenIpv4IsAvailable(
-          invoice,
-          existingJob.instanceId,
-          config,
-          planType
-        );
-      } catch (error) {
-        await failProvisioning(invoice, error);
-      }
+  if (existingJob.instanceId) {
+    try {
+      await linkInstanceWhenIpv4IsAvailable(
+        invoice,
+        existingJob.instanceId,
+        config,
+        planType
+      );
+    } catch (error) {
+      await failProvisioning(invoice, error);
     }
-    if (
-      !existingJob?.instanceId &&
-      existingJob?.status === "pending" &&
-      subscription.status === "active"
-    ) {
-      [reservedJob] = await db
-        .update(pgVpsProvisioningJob)
-        .set({ status: "provisioning", updatedAt: new Date() })
-        .where(
-          and(
-            eq(pgVpsProvisioningJob.id, existingJob.id),
-            eq(pgVpsProvisioningJob.status, "pending")
-          )
-        )
-        .returning();
-    }
-    if (!reservedJob) return;
+    return;
   }
+  if (existingJob.status !== "pending") return;
+  const [reservedJob] = await db
+    .update(pgVpsProvisioningJob)
+    .set({ status: "provisioning", updatedAt: new Date() })
+    .where(
+      and(
+        eq(pgVpsProvisioningJob.id, existingJob.id),
+        eq(pgVpsProvisioningJob.status, "pending")
+      )
+    )
+    .returning();
+  if (!reservedJob) return;
 
   const manualExtras = hasManualExtras(config);
   if (manualExtras.length) {

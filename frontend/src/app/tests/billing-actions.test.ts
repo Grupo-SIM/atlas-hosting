@@ -128,14 +128,18 @@ const db: any = {
       }
       if (table === pgVpsSubscription) {
         return {
-          onConflictDoNothing: async () => {
-            if (
-              !subscriptions.some(
-                s => s.initialInvoiceId === data.initialInvoiceId
+          onConflictDoNothing: () => ({
+            returning: async () => {
+              if (
+                subscriptions.some(
+                  s => s.initialInvoiceId === data.initialInvoiceId
+                )
               )
-            )
+                return [];
               subscriptions.push(data);
-          },
+              return [{ id: "sub" }];
+            },
+          }),
         };
       }
       if (table === pgVpsProvisioningJob)

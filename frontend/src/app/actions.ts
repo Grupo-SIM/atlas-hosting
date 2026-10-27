@@ -2314,7 +2314,7 @@ async function createVpsSubscriptionIfNeeded(
 
   try {
     await db.transaction(async tx => {
-      await tx
+      const inserted = await tx
         .insert(pgVpsSubscription)
         .values({
           amountBrl: invoice.originalAmount ?? invoice.amount,
@@ -2331,7 +2331,9 @@ async function createVpsSubscriptionIfNeeded(
           status: "active",
           userId: user.id,
         })
-        .onConflictDoNothing({ target: pgVpsSubscription.initialInvoiceId });
+        .onConflictDoNothing({ target: pgVpsSubscription.initialInvoiceId })
+        .returning({ id: pgVpsSubscription.id });
+      if (!inserted.length) return;
       await tx
         .insert(pgVpsProvisioningJob)
         .values({ invoiceId: invoice.id, status: "pending" })

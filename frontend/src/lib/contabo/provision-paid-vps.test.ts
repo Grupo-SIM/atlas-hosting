@@ -8,7 +8,7 @@ let purchases = 0;
 let nodeOwner = "owner";
 const invoice = {
   id: "purchase",
-  metadata: { config: {} },
+  metadata: { config: {}, vpsId: "6" },
   status: "paid",
   type: "vps",
   userId: "owner",
@@ -33,14 +33,26 @@ mock.module("@/lib/db", () => ({
     },
     update: () => ({
       set: (value: any) => ({
-        where: async () => {
-          updates.push(value);
-        },
+        where: () => ({
+          returning: async () => {
+            if (job?.status !== "pending") return [];
+            updates.push(value);
+            job.status = "provisioning";
+            return [{ id: "job" }];
+          },
+          then: (resolve: (value: unknown) => unknown) => {
+            updates.push(value);
+            return Promise.resolve([]).then(resolve);
+          },
+        }),
       }),
     }),
   },
 }));
 mock.module("./getVps", () => ({ getContaboInstanceIpv4: async () => ip }));
+mock.module("./createSecret", () => ({
+  createContaboPasswordSecret: async () => 1,
+}));
 mock.module("./createVps", () => ({
   createVps: async () => {
     purchases++;
@@ -106,4 +118,21 @@ test("never links a supplier instance registered to another user", async () => {
   await provisionPaidVps("purchase");
   expect(updates.some(value => value.vpsNodeId)).toBe(false);
   expect(purchases).toBe(0);
+});
+
+test("legacy subscription without supplier reservation cannot trigger a new purchase", async () => {
+  job = null;
+  await expect(provisionPaidVps("purchase")).rejects.toThrow(
+    "Provisionamento sem reserva persistida"
+  );
+  expect(purchases).toBe(0);
+});
+
+test("resumes a committed pending reservation but never retries an uncertain supplier purchase", async () => {
+  job = { id: "job", instanceId: null, status: "pending" };
+  await reconcileVpsInstanceLinks();
+  expect(purchases).toBe(1);
+  expect(job.status).toBe("provisioning");
+  await reconcileVpsInstanceLinks();
+  expect(purchases).toBe(1);
 });
