@@ -6,6 +6,8 @@ let sub: any;
 let processing: any;
 let updated: any;
 const user = {
+  billingDocument: "52998224725",
+  billingPhone: "11987654321",
   id: "owner",
   organization: { id: "org", ownerId: "owner", wallet: { id: "wallet" } },
 };
@@ -86,4 +88,15 @@ test("expired cards and paused subscriptions cannot enable automatic charges", a
   sub.status = "paused";
   expect((await associateSubscriptionCard("sub", "card")).ok).toBe(false);
   expect(updated).toBeNull();
+});
+
+test("missing payer details cannot silently enable a renewal that the gateway cannot process", async () => {
+  const previous = user.billingDocument;
+  user.billingDocument = "";
+  try {
+    expect((await associateSubscriptionCard("sub", "card")).ok).toBe(false);
+    expect(updated).toBeNull();
+  } finally {
+    user.billingDocument = previous;
+  }
 });

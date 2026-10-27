@@ -27,6 +27,14 @@ export async function associateSubscriptionCard(
         "Ação exclusiva do titular da organização, fora do acesso como cliente.",
       ok: false,
     };
+  const document = user.billingDocument?.replace(/\D/g, "") || "";
+  const phone = user.billingPhone?.replace(/\D/g, "") || "";
+  if (![11, 14].includes(document.length) || phone.length < 10)
+    return {
+      error:
+        "Complete CPF/CNPJ e telefone em Configurações → Pessoal antes de autorizar renovação automática.",
+      ok: false,
+    };
   try {
     await db.transaction(async tx => {
       await tx.execute(
@@ -82,15 +90,13 @@ export async function associateSubscriptionCard(
         .update(pgVpsSubscription)
         .set({ config, updatedAt: new Date() })
         .where(eq(pgVpsSubscription.id, sub.id));
-      await tx
-        .insert(pgLog)
-        .values({
-          description: `Titular selecionou cartão ${card.brand} final ${card.last4} para renovação automática da assinatura ${sub.id}.`,
-          severity: "info",
-          title: "Cartão associado à assinatura",
-          type: "account",
-          userId: user.id,
-        });
+      await tx.insert(pgLog).values({
+        description: `Titular selecionou cartão ${card.brand} final ${card.last4} para renovação automática da assinatura ${sub.id}.`,
+        severity: "info",
+        title: "Cartão associado à assinatura",
+        type: "account",
+        userId: user.id,
+      });
     });
     revalidatePath("/settings");
     return { ok: true };

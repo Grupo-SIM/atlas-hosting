@@ -23,7 +23,7 @@ export function PaymentField({
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
-  mask?: string;
+  mask?: string | { mask: string }[];
   secret?: boolean;
   disabled?: boolean;
 }) {
