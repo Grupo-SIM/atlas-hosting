@@ -1,4 +1,4 @@
-import { getTemplate } from "@repo/site-builder";
+import { getTemplate, SiteRenderer } from "@repo/site-builder";
 import { and, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -6,7 +6,8 @@ import { db } from "@/lib/db";
 import { pgOrganizationDomains, pgVpsServers } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
-import { ScaledSite } from "../../components/ScaledSite";
+import { AutoScroll } from "../../components/AutoScroll";
+import { FitSite } from "../../components/FitSite";
 import ConfigureForm from "./components/ConfigureForm";
 
 export const metadata: Metadata = {
@@ -53,7 +54,13 @@ export default async function ConfigureSitePage({
       baseDomain={config.subdomainEnabled ? config.baseDomain : null}
       defaultName={template.site.name}
       domains={domains.map(d => d.domain)}
-      preview={<ScaledSite scale={0.72} site={template.site} />}
+      preview={
+        <AutoScroll speed={120}>
+          <FitSite>
+            <SiteRenderer path="/" site={template.site} />
+          </FitSite>
+        </AutoScroll>
+      }
       previewBackground={template.site.theme.bg ?? "#030712"}
       servers={servers}
       templateId={template.id}

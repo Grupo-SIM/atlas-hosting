@@ -1,3 +1,4 @@
+import { SiteRenderer } from "@repo/site-builder";
 import { desc, eq } from "drizzle-orm";
 import { LayoutTemplate, Plus } from "lucide-react";
 import type { Metadata } from "next";
@@ -5,8 +6,8 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { pgBuilderPublication, pgBuilderSite } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
+import { FitSite } from "./components/FitSite";
 import { Frame } from "./components/Frame";
-import { ScaledSite } from "./components/ScaledSite";
 import SiteCard, { type SiteStatus } from "./components/SiteCard";
 
 export const metadata: Metadata = {
@@ -79,7 +80,11 @@ export default async function SiteBuilderPage() {
                     key={site.id}
                     name={site.name}
                     status={status}
-                    thumb={<ScaledSite scale={0.38} site={site.content} />}
+                    thumb={
+                      <FitSite>
+                        <SiteRenderer path="/" site={site.content} />
+                      </FitSite>
+                    }
                   />
                 );
               })}
