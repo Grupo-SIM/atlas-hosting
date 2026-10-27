@@ -45,11 +45,18 @@ test("direct PIX lookup uses the same Atlas override as payment creation", async
     requestedUrl = String(url);
     return Response.json({ status: "PAID" });
   }) as typeof fetch;
-  expect(await simpayApi.getPixPaymentStatus("payment/id")).toEqual({ status: "PAID" });
-  expect(requestedUrl).toBe("https://atlas-gateway.example/atlas/payments/pix-status/payment%2Fid");
+  expect(await simpayApi.getPixPaymentStatus("payment/id")).toEqual({
+    status: "PAID",
+  });
+  expect(requestedUrl).toBe(
+    "https://atlas-gateway.example/atlas/payments/pix-status/payment%2Fid"
+  );
 });
 
 test("direct PIX lookup rejects gateway errors", async () => {
-  globalThis.fetch = (async () => new Response("unavailable", { status: 503 })) as typeof fetch;
-  await expect(simpayApi.getPixPaymentStatus("payment")).rejects.toThrow("HTTP 503");
+  globalThis.fetch = (async () =>
+    new Response("unavailable", { status: 503 })) as unknown as typeof fetch;
+  await expect(simpayApi.getPixPaymentStatus("payment")).rejects.toThrow(
+    "HTTP 503"
+  );
 });

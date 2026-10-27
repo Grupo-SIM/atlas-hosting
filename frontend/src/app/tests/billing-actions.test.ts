@@ -359,9 +359,8 @@ const cardPayload = () =>
 function prepareCardInvoice() {
   invoice = { ...zeroInvoice(), amount: 90, originalAmount: 123.45 };
   process.env.SIMPAY_API_URL = "https://simulated.invalid";
-  spyOn(globalThis, "fetch").mockImplementation(
-    async () => Response.json({ masterCcRate: 0 }) as any
-  );
+  spyOn(globalThis, "fetch").mockImplementation((async () =>
+    Response.json({ masterCcRate: 0 })) as unknown as typeof fetch);
 }
 
 test("card timeout retains payment claim and reservation until reconciliation", async () => {
