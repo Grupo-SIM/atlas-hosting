@@ -102,6 +102,9 @@ export function AddPaymentCard() {
           disabled={pending}
           label="CPF ou CNPJ do titular"
           mask={[{ mask: "000.000.000-00" }, { mask: "00.000.000/0000-00" }]}
+          name="holderDocument"
+          onChange={set("holderDocument")}
+          placeholder="000.000.000-00"
           value={form.holderDocument}
         />
       </div>
