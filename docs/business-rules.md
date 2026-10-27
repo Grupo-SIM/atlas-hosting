@@ -56,3 +56,10 @@ Procedimentos do cliente e limites reais ficam em `knowledge-base-n8n.txt`; conf
 - `dueDate` no Atlas corresponde à coluna `due_date`: vencimento da fatura, distinto da expiração da cobrança no gateway. Novas faturas de domínio vencem em 24 horas; a integração Atlas na SimIntPay também solicita Pix com validade de 24 horas a partir da emissão da cobrança.
 - Detecção no checkout permanece ativa durante as 24 horas do Pix, sem corte aos 15 minutos. Servidor concilia com checkout fechado e consulta o mesmo host configurado para criar a cobrança.
 - Vencimento local não descarta dinheiro recebido: confirmação do gateway continua elegível para conciliação mesmo em fatura expirada. Entrega exige confirmação no servidor e reserva em banco contra processamento paralelo.
+
+## Integridade do cadastro VPS
+
+- Checkout com cartão persiste assinatura e token antes de responder ao cliente; falha de cadastro interrompe entrega, sem prosseguir para comprar uma instância sem assinatura. Emails e avisos executam depois dessa persistência.
+- Vínculo com nó usa fatura inicial da assinatura, preservando associação mesmo após renovação. Associação já existente não é sobrescrita.
+- Agendador de renovação recupera vínculos pendentes quando provisionamento já possui ID da instância, inclusive após falha local ou espera pelo IPv4. Recuperação não compra outra instância nem associa máquinas apenas por coincidência de usuário.
+- Registros antigos sem vínculo e sem ID de provisionamento exigem associação administrativa verificada. Método cartão sem token não autoriza selecionar outro cartão arbitrariamente.

@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   type Invoice,
@@ -9,16 +9,19 @@ import {
   pgVpsServers,
   pgVpsSubscription,
 } from "@/lib/db/schema";
-import { deliverEmergencyAlert, getEmergencyRecipients } from "@/lib/server/emergency-alerts";
 import { sendNotificationEmail } from "@/lib/email/service";
+import {
+  deliverEmergencyAlert,
+  getEmergencyRecipients,
+} from "@/lib/server/emergency-alerts";
 import { createContaboPasswordSecret } from "./createSecret";
 import { createVps } from "./createVps";
 import { getContaboInstanceIpv4 } from "./getVps";
-import { completeProvisioningConfiguration } from "./link-configuration";
 import { resolveContaboImageId } from "./image-id";
+import { completeProvisioningConfiguration } from "./link-configuration";
 import {
-  buildContaboInstanceRequest,
   type AtlasVpsConfiguration,
+  buildContaboInstanceRequest,
 } from "./provisioning";
 
 type VpsPlanType = "vps" | "vds" | "storage-vps" | "vps-windows";
@@ -43,17 +46,23 @@ async function notifyAdmin(
 ): Promise<void> {
   const recipients = getEmergencyRecipients();
   if (!recipients.length) {
-    console.error(`[CONTABO] EMERGENCY_ALERT_EMAILS/DOMAIN_EMAIL ausentes; alerta não enviado: ${title}`);
+    console.error(
+      `[CONTABO] EMERGENCY_ALERT_EMAILS/DOMAIN_EMAIL ausentes; alerta não enviado: ${title}`
+    );
     return;
   }
-  await deliverEmergencyAlert(recipient => sendNotificationEmail(
-    recipient,
-    "Admin",
-    "Atlas Hosting",
-    title,
-    message,
-    severity
-  ), recipients);
+  await deliverEmergencyAlert(
+    recipient =>
+      sendNotificationEmail(
+        recipient,
+        "Admin",
+        "Atlas Hosting",
+        title,
+        message,
+        severity
+      ),
+    recipients
+  );
 }
 
 function planTypeFromConfig(config: Record<string, unknown>): VpsPlanType {
@@ -139,7 +148,14 @@ async function linkInstanceWhenIpv4IsAvailable(
     .set({ updatedAt: new Date(), vpsNodeId: server.id })
     .where(
       and(
-        eq(pgVpsSubscription.lastInvoiceId, invoice.id),
+        or(
+          eq(pgVpsSubscription.initialInvoiceId, invoice.id),
+          and(
+            isNull(pgVpsSubscription.initialInvoiceId),
+            eq(pgVpsSubscription.lastInvoiceId, invoice.id)
+          )
+        ),
+        isNull(pgVpsSubscription.vpsNodeId),
         eq(pgVpsSubscription.userId, invoice.userId)
       )
     );
@@ -174,7 +190,7 @@ export async function provisionPaidVps(invoiceId: string): Promise<void> {
     const existingJob = await db.query.pgVpsProvisioningJob.findFirst({
       where: eq(pgVpsProvisioningJob.invoiceId, invoice.id),
     });
-    if (existingJob?.instanceId && existingJob.status === "created") {
+    if (existingJob?.instanceId) {
       try {
         await linkInstanceWhenIpv4IsAvailable(
           invoice,
@@ -202,7 +218,10 @@ export async function provisionPaidVps(invoiceId: string): Promise<void> {
     const resolvedConfig = completeProvisioningConfiguration(config, planType);
     Object.assign(config, resolvedConfig);
     // Covers older direct-link invoices. Save before calling supplier so retries reuse credentials.
-    await db.update(pgInvoice).set({ metadata: { ...invoice.metadata, config } as Invoice["metadata"] }).where(eq(pgInvoice.id, invoice.id));
+    await db
+      .update(pgInvoice)
+      .set({ metadata: { ...invoice.metadata, config } as Invoice["metadata"] })
+      .where(eq(pgInvoice.id, invoice.id));
     const password = resolvedConfig.password;
 
     const secretId = await createContaboPasswordSecret(
@@ -220,7 +239,8 @@ export async function provisionPaidVps(invoiceId: string): Promise<void> {
       })
     );
     const instanceId = response.data[0]?.instanceId;
-    if (!instanceId) throw new Error("Contabo não retornou o instanceId criado.");
+    if (!instanceId)
+      throw new Error("Contabo não retornou o instanceId criado.");
 
     await db
       .update(pgVpsProvisioningJob)
@@ -238,7 +258,34 @@ export async function provisionPaidVps(invoiceId: string): Promise<void> {
       planType
     );
   } catch (error) {
-    console.error(`[CONTABO] Provisionamento falhou para fatura ${invoice.id}:`, error);
+    console.error(
+      `[CONTABO] Provisionamento falhou para fatura ${invoice.id}:`,
+      error
+    );
     await failProvisioning(invoice, error);
+  }
+}
+
+/** Only recover known supplier instances. Never repeat an uncertain purchase. */
+export async function reconcileVpsInstanceLinks(): Promise<void> {
+  const subscriptions = await db.query.pgVpsSubscription.findMany({
+    where: isNull(pgVpsSubscription.vpsNodeId),
+  });
+  for (const subscription of subscriptions) {
+    const invoiceId =
+      subscription.initialInvoiceId ?? subscription.lastInvoiceId;
+    if (!invoiceId) continue;
+    const job = await db.query.pgVpsProvisioningJob.findFirst({
+      where: eq(pgVpsProvisioningJob.invoiceId, invoiceId),
+    });
+    if (!job?.instanceId) continue;
+    try {
+      await provisionPaidVps(invoiceId);
+    } catch (error) {
+      console.error(
+        `[CONTABO] Falha ao recuperar vínculo da assinatura ${subscription.id}:`,
+        error
+      );
+    }
   }
 }
