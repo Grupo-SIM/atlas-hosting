@@ -303,11 +303,9 @@ export async function setDefaultCard(cardId: string): Promise<ActionResponse> {
       };
     }
 
+    const walletId = user.organization.wallet.id;
     const selected = await db.query.pgUserCard.findFirst({
-      where: and(
-        eq(pgUserCard.id, cardId),
-        eq(pgUserCard.walletId, user.organization.wallet.id)
-      ),
+      where: and(eq(pgUserCard.id, cardId), eq(pgUserCard.walletId, walletId)),
     });
     if (!selected)
       return {
@@ -320,17 +318,14 @@ export async function setDefaultCard(cardId: string): Promise<ActionResponse> {
       await tx
         .update(pgUserCard)
         .set({ isDefault: false })
-        .where(eq(pgUserCard.walletId, user.organization.wallet.id));
+        .where(eq(pgUserCard.walletId, walletId));
 
       // Set new default card
       await tx
         .update(pgUserCard)
         .set({ isDefault: true })
         .where(
-          and(
-            eq(pgUserCard.id, cardId),
-            eq(pgUserCard.walletId, user.organization.wallet.id)
-          )
+          and(eq(pgUserCard.id, cardId), eq(pgUserCard.walletId, walletId))
         );
     });
     revalidatePath("/settings");

@@ -27,6 +27,7 @@ export async function associateSubscriptionCard(
         "Ação exclusiva do titular da organização, fora do acesso como cliente.",
       ok: false,
     };
+  const walletId = user.organization.wallet.id;
   const document = user.billingDocument?.replace(/\D/g, "") || "";
   const phone = user.billingPhone?.replace(/\D/g, "") || "";
   if (![11, 14].includes(document.length) || phone.length < 10)
@@ -50,7 +51,7 @@ export async function associateSubscriptionCard(
       const card = await tx.query.pgUserCard.findFirst({
         where: and(
           eq(pgUserCard.id, cardId),
-          eq(pgUserCard.walletId, user.organization.wallet.id)
+          eq(pgUserCard.walletId, walletId)
         ),
       });
       if (
