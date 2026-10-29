@@ -2,7 +2,15 @@
 
 import { type ReactNode, useEffect, useRef } from "react";
 import { getBlockDefinition } from "../blocks/registry.js";
-import type { Block, Site } from "../model/index.js";
+import {
+  type Block,
+  ENTER_EFFECTS,
+  ENTER_LABELS,
+  type Fx,
+  HOVER_EFFECTS,
+  HOVER_LABELS,
+  type Site,
+} from "../model/index.js";
 import { fontStack, SITE_FONTS, themeFont } from "../renderer/fonts.js";
 import { themeVars } from "../renderer/styles.js";
 import { FieldInput } from "./fields.js";
@@ -173,6 +181,7 @@ interface Props {
   elPath?: string;
   onMenu: (menu: Site["menu"]) => void;
   onAction: (action: "delete" | "down" | "duplicate" | "hide" | "up") => void;
+  onFx: (patch: Partial<Record<keyof Fx, Fx[keyof Fx]>>, what: string) => void;
   onProp: (key: string, value: unknown) => void;
   onSelect: (id: string) => void;
   onSiteName: (name: string) => void;
@@ -191,6 +200,7 @@ export function Inspector({
   elPath,
   focusHint,
   onAction,
+  onFx,
   onMenu,
   onProp,
   onSelect,
@@ -311,6 +321,7 @@ export function Inspector({
     const v = raw.trim();
     onStyle({ [prop]: /^\d+(\.\d+)?$/.test(v) ? Number(v) : v }, what);
   };
+  const fx: Fx = selected.fx?.[elPath ?? ""] ?? {};
   const textPick = (c: string) => set("color", "Cor do texto")(c);
 
   return (
@@ -565,6 +576,116 @@ export function Inspector({
               <span />
             </button>
           </div>
+        </Section>
+
+        <Section title="Efeitos">
+          <div className="sbe-field">
+            <span>Entrada (ao rolar até aqui)</span>
+            <select
+              onChange={e =>
+                onFx(
+                  { enter: (e.target.value || undefined) as Fx["enter"] },
+                  "Efeito de entrada"
+                )
+              }
+              value={fx.enter ?? ""}
+            >
+              <option value="">Nenhum</option>
+              {ENTER_EFFECTS.map(k => (
+                <option key={k} value={k}>
+                  {ENTER_LABELS[k]}
+                </option>
+              ))}
+            </select>
+          </div>
+          {fx.enter ? (
+            <Slider
+              label="Atraso (ms)"
+              max={2000}
+              onChange={v => onFx({ delay: v }, "Atraso do efeito")}
+              value={fx.delay ?? 0}
+            />
+          ) : null}
+          <div className="sbe-field">
+            <span>Ao passar o mouse</span>
+            <select
+              onChange={e =>
+                onFx(
+                  { hover: (e.target.value || undefined) as Fx["hover"] },
+                  "Efeito de hover"
+                )
+              }
+              value={fx.hover ?? ""}
+            >
+              <option value="">Nenhum</option>
+              {HOVER_EFFECTS.map(k => (
+                <option key={k} value={k}>
+                  {HOVER_LABELS[k]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Slider
+            label="Parallax"
+            max={10}
+            min={-10}
+            onChange={v => onFx({ parallax: v }, "Parallax")}
+            value={fx.parallax ?? 0}
+          />
+          <div className="sbe-line">
+            <span>Contar números de 0 até o valor</span>
+            <button
+              className={fx.count ? "sbe-toggle on" : "sbe-toggle"}
+              onClick={() =>
+                onFx({ count: fx.count ? undefined : true }, "Contador")
+              }
+              type="button"
+            >
+              <span />
+            </button>
+          </div>
+          {fx.enter || fx.hover || fx.parallax || fx.count ? (
+            <>
+              <div className="sbe-line">
+                <span>Aplicar a cada item de dentro</span>
+                <button
+                  className={fx.each ? "sbe-toggle on" : "sbe-toggle"}
+                  onClick={() =>
+                    onFx(
+                      { each: fx.each ? undefined : true },
+                      "Efeito por item"
+                    )
+                  }
+                  type="button"
+                >
+                  <span />
+                </button>
+              </div>
+              <button
+                className="sbe-btn"
+                onClick={() =>
+                  onFx(
+                    {
+                      count: undefined,
+                      delay: undefined,
+                      each: undefined,
+                      enter: undefined,
+                      hover: undefined,
+                      parallax: undefined,
+                    },
+                    "Remover efeitos"
+                  )
+                }
+                type="button"
+              >
+                Remover efeitos
+              </button>
+            </>
+          ) : null}
+          <p className="sbe-hint">
+            Entrada, parallax e contador aparecem na prévia e no site publicado;
+            no editor o conteúdo fica parado para facilitar a edição.
+          </p>
         </Section>
 
         <Section title="Caixa">

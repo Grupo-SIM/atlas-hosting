@@ -10,8 +10,9 @@ let seq = 0;
 const block = (
   type: string,
   props: Record<string, unknown>,
-  children?: Block[]
-): Block => ({ children, id: `seed-${seq++}`, props, type });
+  children?: Block[],
+  fx?: Block["fx"]
+): Block => ({ children, fx, id: `seed-${seq++}`, props, type });
 
 const WIDE_PAGES = new Set(["blogs", "categorias", "pesquisa"]);
 
@@ -89,23 +90,31 @@ const site: Site = {
     block("postList", { limit: 12, title: "" }),
   ],
   footer: [
-    block("footer", {
-      copyright: "Copyright © 007SpyHacker",
-      email: "0007spyhacker@gmail.com",
-      extraLinks: [{ label: "Marketplace", url: `${MARKET}/` }],
-      helpText: "AJUDE: Fundação Afif Arão",
-      logo: IMG("007spyhackerjacques.png"),
-      logoText: "",
-      socials: [
-        { label: "Instagram", url: "#" },
-        { label: "YouTube", url: "#" },
-        { label: "X", url: "#" },
-        { label: "Facebook", url: "#" },
-        { label: "Threads", url: "#" },
-        { label: "Video", url: "#" },
-        { label: "TikTok", url: "#" },
-      ],
-    }),
+    block(
+      "footer",
+      {
+        copyright: "Copyright © 007SpyHacker",
+        email: "0007spyhacker@gmail.com",
+        extraLinks: [{ label: "Marketplace", url: `${MARKET}/` }],
+        helpText: "AJUDE: Fundação Afif Arão",
+        logo: IMG("007spyhackerjacques.png"),
+        logoText: "",
+        socials: [
+          { label: "Instagram", url: "#" },
+          { label: "YouTube", url: "#" },
+          { label: "X", url: "#" },
+          { label: "Facebook", url: "#" },
+          { label: "Threads", url: "#" },
+          { label: "Video", url: "#" },
+          { label: "TikTok", url: "#" },
+        ],
+      },
+      undefined,
+      {
+        // Ícones das redes pulsam no hover.
+        "1.1.3.5": { each: true, hover: "pop" },
+      }
+    ),
     // Opcional: nasce desativado; o cliente liga pelo olho nas camadas.
     {
       ...block("whatsappFloat", {
@@ -134,14 +143,23 @@ const site: Site = {
   name: "007SpyHacker",
   pages: [
     page("", "Início", [
-      block("hero", {
-        backgroundImage: IMG(
-          "artificial-intelligence-concept-2023-11-27-05-07-22-utc-2.jpg"
-        ),
-        buttonLabel: "Explorar Conteúdos →",
-        buttonUrl: "#conteudos",
-        text: "Conheça as soluções tecnológicas que já estão otimizando negócios, carreiras e projetos pelo mundo. Tudo explicado de forma simples e direta.",
-      }),
+      block(
+        "hero",
+        {
+          backgroundImage: IMG(
+            "artificial-intelligence-concept-2023-11-27-05-07-22-utc-2.jpg"
+          ),
+          buttonLabel: "Explorar Conteúdos →",
+          buttonUrl: "#conteudos",
+          text: "Conheça as soluções tecnológicas que já estão otimizando negócios, carreiras e projetos pelo mundo. Tudo explicado de forma simples e direta.",
+        },
+        undefined,
+        {
+          // Fundo com parallax; botão entra com zoom (atraso 100 ms) e encolhe no hover.
+          "": { parallax: -2 },
+          "1.1.2": { delay: 100, enter: "zoomIn", hover: "shrink" },
+        }
+      ),
       block("videoGrid", {
         title: "Últimas novidades:",
         videos: [
@@ -197,19 +215,27 @@ const site: Site = {
         text: "A tecnologia não é o futuro, é o agora!",
         watermark: "Mentes Conectadas",
       }),
-      block("stats", {
-        backgroundImage: IMG("3d-rendering-planet-earth-1-1.png"),
-        items: [
-          {
-            label: "Anos de Experiência com Tecnologia",
-            suffix: "+",
-            value: "14",
-          },
-          { label: "Gratuito", suffix: "%", value: "100" },
-          { label: "Satisfação nos Conteúdos", suffix: "%", value: "98" },
-        ],
-        title: "",
-      }),
+      block(
+        "stats",
+        {
+          backgroundImage: IMG("3d-rendering-planet-earth-1-1.png"),
+          items: [
+            {
+              label: "Anos de Experiência com Tecnologia",
+              suffix: "+",
+              value: "14",
+            },
+            { label: "Gratuito", suffix: "%", value: "100" },
+            { label: "Satisfação nos Conteúdos", suffix: "%", value: "98" },
+          ],
+          title: "",
+        },
+        undefined,
+        {
+          // Os três números sobem de 0 ao valor, com a faixa subindo suave.
+          "1.2": { count: true, delay: 100, enter: "fadeInUp" },
+        }
+      ),
       block("cardGrid", {
         buttonLabel: "Todos os Produtos →",
         buttonUrl: `${MARKET}/produtos/`,
@@ -242,14 +268,25 @@ const site: Site = {
         ],
         title: "Ferramentas & Soluções",
       }),
-      block("featuredPost", {
-        backgroundImage: IMG("Path-1.png"),
-        backgroundImage2: IMG("Path-2.png"),
-        backgroundImage3: IMG("Path-3.png"),
-        label: "Melhor Post",
-        postSlug: "as-21-opcoes-de-ia-que-voce-precisa-usar-em-2025",
-        sideImage: IMG("AI-Icon-15.png"),
-      }),
+      block(
+        "featuredPost",
+        {
+          backgroundImage: IMG("Path-1.png"),
+          backgroundImage2: IMG("Path-2.png"),
+          backgroundImage3: IMG("Path-3.png"),
+          label: "Melhor Post",
+          postSlug: "as-21-opcoes-de-ia-que-voce-precisa-usar-em-2025",
+          sideImage: IMG("AI-Icon-15.png"),
+        },
+        undefined,
+        {
+          // Ondas em parallax, ícone lateral desliza e o cartão entra pela esquerda.
+          "1.1": { parallax: 3 },
+          "1.3": { parallax: -3 },
+          "1.4.1": { parallax: -4 },
+          "1.4.2": { enter: "fadeInLeft" },
+        }
+      ),
       block("testimonials", {
         items: [
           {
@@ -299,15 +336,25 @@ const site: Site = {
           "Quem acompanha o blog sabe: aqui o conteúdo vai além da teoria.",
         title: "O que dizem sobre o 007 SpyHacker",
       }),
-      block("splitSection", {
-        buttonLabel: "Ver Mais →",
-        buttonUrl: "/blogs/",
-        decoration: IMG("AI-Icon-5.png"),
-        image: IMG("Mestre-Inesquecivel.png"),
-        text: "Estamos construindo uma comunidade que busca conhecimento real sobre tecnologia, inovação e o futuro digital. Um conteúdo por vez, estamos moldando novas jornadas.",
-        title:
-          "Milhares de Mentes Conectadas Pelo Mesmo Propósito: Aprender e Evoluir com Tecnologia",
-      }),
+      block(
+        "splitSection",
+        {
+          buttonLabel: "Ver Mais →",
+          buttonUrl: "/blogs/",
+          decoration: IMG("AI-Icon-5.png"),
+          image: IMG("Mestre-Inesquecivel.png"),
+          text: "Estamos construindo uma comunidade que busca conhecimento real sobre tecnologia, inovação e o futuro digital. Um conteúdo por vez, estamos moldando novas jornadas.",
+          title:
+            "Milhares de Mentes Conectadas Pelo Mesmo Propósito: Aprender e Evoluir com Tecnologia",
+        },
+        undefined,
+        {
+          "1.1": { parallax: -3 },
+          "1.2": { enter: "fadeInLeft" },
+          "1.2.3": { hover: "shrink" },
+          "1.3": { parallax: 2 },
+        }
+      ),
       block("postExplorer", {
         layout: "magazine",
         limit: 6,

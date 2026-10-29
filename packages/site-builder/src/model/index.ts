@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { type Fx, fxMapSchema } from "./fx.js";
 import { ELEMENT_PATH, isValidStyle } from "./style.js";
 
 /** Nó da árvore de blocos de uma página. `props` é validado pelo schema do tipo. */
@@ -16,6 +17,7 @@ export const blockSchema: z.ZodType<Block> = z.lazy(() =>
         "Caminho inválido"
       )
       .optional(),
+    fx: fxMapSchema.optional(),
     hidden: z.boolean().optional(),
     id: z.string(),
     props: z.record(z.unknown()),
@@ -31,6 +33,8 @@ export interface Block {
   children?: Block[];
   /** Estilos por elemento interno do bloco, indexados por caminho `nth-child` (ver `ELEMENT_PATH`). */
   elStyles?: Record<string, Record<string, string | number>>;
+  /** Efeitos (entrada, hover, parallax, contador) por item: chave `""` = bloco, senão caminho do elemento. */
+  fx?: Record<string, Fx>;
   /** Oculto no site publicado e no preview; continua listado nas camadas do editor. */
   hidden?: boolean;
   id: string;
@@ -113,3 +117,13 @@ export interface TemplateMeta {
 export interface SiteTemplate extends Omit<TemplateMeta, "pageCount"> {
   site: Site;
 }
+
+export {
+  ENTER_EFFECTS,
+  ENTER_LABELS,
+  type EnterEffect,
+  type Fx,
+  HOVER_EFFECTS,
+  HOVER_LABELS,
+  type HoverEffect,
+} from "./fx.js";

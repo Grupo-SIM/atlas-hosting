@@ -34,6 +34,7 @@ import {
   rootLabel,
   rootOf,
   setBlockHidden,
+  updateBlockFx,
   updateBlockProps,
   updateBlockStyle,
   updateElementStyle,
@@ -893,6 +894,14 @@ export function SiteEditor({
           elPath={elPath}
           focusHint={focusHint}
           onAction={blockAction}
+          onFx={(patch, what) =>
+            selected &&
+            edit(updateBlockFx(site, selected.id, elPath, patch), {
+              id: selected.id,
+              key: `${selected.id}-fx${elPath}-${Object.keys(patch).join()}`,
+              label: `${what} · ${labelOf(selected.type)}`,
+            })
+          }
           onMenu={menu =>
             edit(setMenu(site, menu), {
               key: "menu-edit",

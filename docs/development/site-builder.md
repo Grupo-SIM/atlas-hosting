@@ -30,6 +30,10 @@ aba IA ("em breve"), canvas com desktop/tablet/celular + zoom, desfazer/refazer,
 
 - `Block.style` (allowlist em `model/style.ts`, validada no `siteSchema`) e `Block.hidden` valem para **qualquer** bloco e
   são aplicados no contêiner do bloco; o que o bloco desenha por dentro continua definido pelo próprio bloco.
+- `Block.fx` (`model/fx.ts`) guarda efeitos por item: chave `""` = o bloco, senão o caminho `nth-child` do elemento (mesmo de `elStyles`).
+  Entrada ao rolar (`fadeIn*`, `zoomIn` + atraso), hover (`pop`, `grow`, `shrink`), parallax (−10..10), contador e `each` (aplica a cada filho).
+  O CSS é gerado por `fxCss`; entrada/parallax/contador dependem do script `renderer/fx-runtime.ts` (inline no HTML publicado, `FxRuntime` na prévia).
+  O estado inicial da entrada só vale com `.sb-js`, que o script põe na raiz — no editor (`mode="edit"`) e sem JS o conteúdo aparece parado.
 - Ícones do editor são um subconjunto do lucide em `editor/icons.tsx` (gerado; sem dependência nova).
 - `SiteRenderer` aceita `narrow` para forçar o layout estreito no preview de celular/tablet (a media query não enxerga o quadro).
 

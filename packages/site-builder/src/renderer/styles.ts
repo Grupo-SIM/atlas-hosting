@@ -200,4 +200,7 @@ export const siteCss = `
 .sb-narrow .sb-split,.sb-narrow .sb-two-cols,.sb-narrow .sb-footer-grid{grid-template-columns:1fr}
 .sb-narrow .sb-featured-inner{flex-direction:column;gap:24px}
 .sb-narrow .sb-float{position:sticky;margin-left:auto;width:max-content}
+@keyframes sb-fx-pop{50%{scale:1.2}}
+[data-sb-par]{translate:0 var(--sb-py,0px);will-change:translate}
+[data-sb-par=bg]{translate:none;background-position-y:calc(50% + var(--sb-py,0px))}
 `;

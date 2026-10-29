@@ -1,5 +1,6 @@
 import { createBlock } from "../blocks/registry.js";
-import type { Block, Site } from "../model/index.js";
+import { cleanFx } from "../model/fx.js";
+import type { Block, Fx, Site } from "../model/index.js";
 import type { Route } from "../renderer/routes.js";
 
 /**
@@ -170,6 +171,29 @@ export function updateElementStyle(
   return next;
 }
 
+/** Mescla `patch` nos efeitos do item (`path` vazio = bloco); `undefined` apaga o campo. */
+export function updateBlockFx(
+  site: Site,
+  id: string,
+  path: string,
+  patch: Partial<Record<keyof Fx, Fx[keyof Fx]>>
+): Site {
+  const next = clone(site);
+  const block = findBlock(next, id);
+  if (!block) return site;
+  const all = { ...(block.fx ?? {}) };
+  const fx: Record<string, unknown> = { ...(all[path] ?? {}) };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined || value === false || value === 0) delete fx[key];
+    else fx[key] = value;
+  }
+  const cleaned = cleanFx(fx as Fx);
+  if (cleaned) all[path] = cleaned;
+  else delete all[path];
+  block.fx = Object.keys(all).length ? all : undefined;
+  return next;
+}
+
 export function setBlockHidden(site: Site, id: string, hidden: boolean): Site {
   const next = clone(site);
   const block = findBlock(next, id);
@@ -202,6 +226,7 @@ function withNewIds(block: Block): Block {
     ...copy,
     children: block.children?.map(withNewIds),
     elStyles: block.elStyles ? structuredClone(block.elStyles) : undefined,
+    fx: block.fx ? structuredClone(block.fx) : undefined,
     hidden: block.hidden,
     props: structuredClone(block.props),
     style: block.style ? structuredClone(block.style) : undefined,

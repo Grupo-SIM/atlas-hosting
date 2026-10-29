@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import { prerender } from "react-dom/static";
 import type { Site } from "../model/index.js";
+import { FX_RUNTIME } from "../renderer/fx-runtime.js";
 import { SiteRenderer } from "../renderer/SiteRenderer.js";
 import { themeVars } from "../renderer/styles.js";
 
@@ -29,7 +30,7 @@ const filterScript = `(function(){var p=new URLSearchParams(location.search);var
  */
 async function render(path: string, site: Site): Promise<string> {
   const { prelude } = await prerender(
-    createElement(SiteRenderer, { path, site })
+    createElement(SiteRenderer, { path, site, skipFxRuntime: true })
   );
   return new Response(prelude).text();
 }
@@ -59,6 +60,7 @@ async function document(
     "<body>",
     body,
     `<script>${filterScript}</script>`,
+    `<script>${FX_RUNTIME};window.sbFx()</script>`,
     "</body>",
     "</html>",
   ].join("");

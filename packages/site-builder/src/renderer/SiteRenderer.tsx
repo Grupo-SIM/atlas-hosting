@@ -1,8 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 import { getBlockDefinition } from "../blocks/registry.js";
 import type { RenderContext } from "../blocks/types.js";
+import { fxCss, fxRuntimeData } from "../model/fx.js";
 import type { Block, Site } from "../model/index.js";
 import { cleanStyle, elementStylesCss } from "../model/style.js";
+import { FxRuntime } from "./FxRuntime.js";
 import { fontStylesheet } from "./fonts.js";
 import { type Route, resolveRoute } from "./routes.js";
 import { siteCss, themeVars } from "./styles.js";
@@ -11,6 +13,8 @@ export interface SiteRendererProps {
   /** Prefixo das URLs internas; vazio quando o site roda na raiz do domínio. */
   basePath?: string;
   mode?: "edit" | "view";
+  /** O HTML publicado liga os efeitos com um script inline; aí o componente cliente não é necessário. */
+  skipFxRuntime?: boolean;
   /** Força o layout de tela estreita (preview de celular/tablet no editor, onde a media query não enxerga o quadro). */
   narrow?: boolean;
   /** Caminho dentro do site (`/`, `/blogs/`…). */
@@ -39,6 +43,7 @@ export function SiteRenderer({
   path,
   query = {},
   site,
+  skipFxRuntime = false,
 }: SiteRendererProps) {
   const route = resolveRoute(site, path, mode);
   const fonts = fontStylesheet(site.theme);
@@ -94,6 +99,7 @@ export function SiteRenderer({
         )}
       </main>
       {bare ? null : renderBlocks(site.footer, ctx)}
+      {mode === "view" && !skipFxRuntime ? <FxRuntime /> : null}
     </div>
   );
 }
@@ -112,11 +118,14 @@ function renderBlocks(blocks: Block[], ctx: RenderContext): ReactNode {
     const children = (block.children ?? []).map(child =>
       renderBlocks([child], ctx)
     );
+    const fxData = fxRuntimeData(block.fx);
+    const fxStyles = fxCss(block.id, block.fx);
     return (
       <div
         className="sb-block"
         data-block-id={block.id}
         data-block-type={block.type}
+        data-fx={fxData.length ? JSON.stringify(fxData) : undefined}
         key={block.id}
         style={cleanStyle(block.style) as CSSProperties | undefined}
       >
@@ -124,6 +133,7 @@ function renderBlocks(blocks: Block[], ctx: RenderContext): ReactNode {
         {block.elStyles ? (
           <style>{elementStylesCss(block.id, block.elStyles)}</style>
         ) : null}
+        {fxStyles ? <style>{fxStyles}</style> : null}
       </div>
     );
   });
