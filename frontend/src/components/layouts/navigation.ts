@@ -2,6 +2,7 @@ import {
   FileText,
   Globe,
   LayoutDashboard,
+  LayoutTemplate,
   type LucideIcon,
   Package,
   Server,
@@ -15,11 +16,15 @@ export interface NavigationItem {
   href: string;
   icon: LucideIcon;
   name: string;
+  /** Item só existe para admin (e some do cliente). */
+  adminOnly?: boolean;
   /** Item aparece pro admin mesmo na navegação de cliente. */
   showForAdmin?: boolean;
   disabled?: boolean;
   /** Alterna o tema cinza/preto do modo admin com a transição circular. */
   adminModeSwitch?: "enter" | "exit";
+  /** Prefixo que mantém o item ativo em rotas internas (ex.: o editor), além do `href`. */
+  match?: string;
 }
 
 /** Sidebar padrão — o que todo cliente vê. */
@@ -30,6 +35,13 @@ export const clientNavigation: NavigationItem[] = [
   { href: "/minhas-assinaturas", icon: Package, name: "Minhas Assinaturas" },
   { href: "/domains", icon: Globe, name: "Domínios", showForAdmin: true },
   { href: "/billing", icon: FileText, name: "Faturas", showForAdmin: true },
+  {
+    adminOnly: true,
+    href: "/criador-de-sites/novo",
+    icon: LayoutTemplate,
+    match: "/criador-de-sites",
+    name: "Criador de Sites",
+  },
   { href: "/affiliate", icon: Users, name: "Afiliados" },
   { href: "/vouchers", icon: Ticket, name: "Vouchers" },
 ];

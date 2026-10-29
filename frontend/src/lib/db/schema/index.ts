@@ -10,6 +10,7 @@ export * from "./tables/next-charge-backup";
 export * from "./tables/organization";
 export * from "./tables/plan";
 export * from "./tables/session";
+export * from "./tables/site-builder";
 export * from "./tables/system";
 export * from "./tables/tokens";
 export * from "./tables/user";

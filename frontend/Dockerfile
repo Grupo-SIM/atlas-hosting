@@ -5,6 +5,7 @@ WORKDIR /usr/src/app
 # Copia arquivos de definição de pacotes
 COPY package.json bun.lock ./
 COPY frontend/package.json frontend/package.json
+COPY packages/site-builder/package.json packages/site-builder/package.json
 
 # Instala as dependências usando o cache do Bun de forma eficiente
 RUN bun install --frozen-lockfile --ignore-scripts
@@ -38,6 +39,11 @@ ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Criador de Sites: o deploy dos sites usa ssh/scp (com sshpass para VPS de cliente) e tar.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssh-client sshpass \
+  && rm -rf /var/lib/apt/lists/*
 
 # Copia apenas o necessário para rodar a aplicação (Modo Standalone)
 # O standalone do Next.js contém apenas os arquivos necessários para rodar sem node_modules gigantes

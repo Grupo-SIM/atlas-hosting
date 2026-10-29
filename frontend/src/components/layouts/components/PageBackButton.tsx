@@ -56,7 +56,13 @@ export function PageBackButton() {
     writeStack(stack);
   }, [fullPath, pathname]);
 
-  if (!pathname || pathname === HOME) return null;
+  // O Criador de Sites tem navegação própria (migalhas e X) e ocupa a área inteira.
+  if (
+    !pathname ||
+    pathname === HOME ||
+    pathname.startsWith("/criador-de-sites")
+  )
+    return null;
 
   const handleBack = () => {
     const stack = readStack();

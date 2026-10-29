@@ -24,7 +24,9 @@ export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
 
   /** A sidebar é sempre a mesma; o admin só ganha a porta de entrada do painel. */
   const filteredNavigation: NavigationItem[] = [
-    ...clientNavigation.filter(item => !isAdmin || item.showForAdmin),
+    ...clientNavigation.filter(item =>
+      item.adminOnly ? isAdmin : !isAdmin || item.showForAdmin
+    ),
     ...(isAdmin ? [adminEntryItem] : []),
   ];
 
@@ -112,7 +114,10 @@ function NavItem({
   const goesToAdmin = item.adminModeSwitch === "enter";
   /** Entrar no admin, ou sair dele clicando em qualquer outro item da sidebar. */
   const switchesAdminMode = goesToAdmin !== inAdminMode;
-  const isActive = goesToAdmin ? inAdminMode : pathname === item.href;
+  const isActive = goesToAdmin
+    ? inAdminMode
+    : pathname === item.href ||
+      Boolean(item.match && pathname.startsWith(item.match));
 
   const handleAdminModeSwitch = (
     event: React.MouseEvent<HTMLAnchorElement>

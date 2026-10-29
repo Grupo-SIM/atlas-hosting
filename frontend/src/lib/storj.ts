@@ -76,3 +76,30 @@ export async function deleteFile(key: string) {
     console.error("Erro ao deletar arquivo no Storj:", error);
   }
 }
+
+/** Imagem de site do Criador de Sites: reduz para no máximo 1600px de largura e grava em WebP. */
+export async function uploadSiteBuilderImage(file: Buffer | ArrayBuffer) {
+  if (!ACCESS_KEY_ID || !SECRET_ACCESS_KEY || !BUCKET || !ENDPOINT) {
+    throw new Error("Configurações do Storj incompletas no .env");
+  }
+
+  const buffer = file instanceof ArrayBuffer ? Buffer.from(file) : file;
+  const processedBuffer = await sharp(buffer)
+    .resize({ width: 1600, withoutEnlargement: true })
+    .webp({ quality: 82 })
+    .toBuffer();
+
+  const key = `site-builder/${uuidv4()}.webp`;
+  const upload = new Upload({
+    client: s3Client,
+    params: {
+      Body: processedBuffer,
+      Bucket: BUCKET,
+      ContentType: "image/webp",
+      Key: key,
+    },
+  });
+
+  await upload.done();
+  return key;
+}
