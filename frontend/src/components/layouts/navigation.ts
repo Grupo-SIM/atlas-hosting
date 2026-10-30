@@ -37,7 +37,7 @@ export const clientNavigation: NavigationItem[] = [
   { href: "/billing", icon: FileText, name: "Faturas", showForAdmin: true },
   {
     adminOnly: true,
-    href: "/criador-de-sites/novo",
+    href: "/criador-de-sites",
     icon: LayoutTemplate,
     match: "/criador-de-sites",
     name: "Criador de Sites",
