@@ -133,7 +133,8 @@ export const siteCss = `
 .sb-testimonial figcaption span{display:block;font-size:14px;color:var(--sb-muted)}
 .sb-avatar{width:56px;height:56px;min-height:0!important;border-radius:50%;object-fit:cover}
 .sb-split{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,479px);gap:32px;align-items:center;min-height:556px}
-.sb-split-deco{position:absolute;left:30%;bottom:0;width:min(502px,38%);height:auto;pointer-events:none}
+.sb-split-deco{position:absolute;z-index:0;left:30%;bottom:0;width:min(502px,38%);height:auto;pointer-events:none}
+.sb-split>div{position:relative;z-index:1}
 .sb-split>img:not(.sb-split-deco){width:min(479px,100%);margin-left:auto}
 .sb-filter{display:flex;gap:8px;margin-block:16px;flex-wrap:wrap}
 .sb-filter input,.sb-filter select{background:#0a1230;color:inherit;border:1px solid #1c2c66;border-radius:6px;padding:10px 12px;font-family:inherit}

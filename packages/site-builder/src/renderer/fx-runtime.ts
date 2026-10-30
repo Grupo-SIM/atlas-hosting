@@ -17,12 +17,12 @@ return n||null;
 }
 function textNodes(el){
 var out=[],w=document.createTreeWalker(el,4),n;
-while((n=w.nextNode())){var m=/^s*(d[d.,]*)s*$/.exec(n.nodeValue||"");if(m)out.push({node:n,txt:m[1]})}
+while((n=w.nextNode())){var m=/^\\s*(\\d[\\d.,]*)\\s*$/.exec(n.nodeValue||"");if(m)out.push({node:n,txt:m[1]})}
 return out;
 }
 function prep(el){
 var items=textNodes(el).map(function(t){
-var end=parseInt(t.txt.replace(/D/g,""),10);
+var end=parseInt(t.txt.replace(/\\D/g,""),10);
 return {node:t.node,end:end,fmt:/[.,]/.test(t.txt),orig:t.node.nodeValue};
 }).filter(function(i){return isFinite(i.end)});
 el.__sbc=items;
