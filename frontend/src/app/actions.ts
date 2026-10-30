@@ -1694,6 +1694,7 @@ export async function initiateCheckoutPix(
       status: "error",
     };
 
+  let providerPaymentCreated = false;
   try {
     const pixRes = await simpayApi.createPixPayment({
       description: atlasSimpayInvoiceDescription(
@@ -1710,9 +1711,11 @@ export async function initiateCheckoutPix(
 
     const paymentId = pixRes.paymentId ?? pixRes.id ?? "";
     if (!paymentId) {
+      await revertInvoiceToPending(invoice.id);
       return { message: "Resposta PIX sem identificador.", status: "error" };
     }
 
+    providerPaymentCreated = true;
     const mergedMeta: DomainRegisterInvoiceOptions = {
       ...(invoice.metadata as DomainRegisterInvoiceOptions),
       pixCheckout: billing,
@@ -1738,6 +1741,7 @@ export async function initiateCheckoutPix(
     };
   } catch (err) {
     console.error("[CHECKOUT-PIX] initiate:", err);
+    if (!providerPaymentCreated) await revertInvoiceToPending(invoice.id);
     return {
       message:
         "Não foi possível gerar o PIX no momento. Tente novamente em instantes.",
@@ -1849,6 +1853,7 @@ export async function initiateCheckoutBoleto(
       status: "error",
     };
 
+  let providerPaymentCreated = false;
   try {
     const tx = await domApi.createBoletoTransaction({
       codExternal: invoice.id,
@@ -1875,6 +1880,7 @@ export async function initiateCheckoutBoleto(
       value: invoice.amount + BOLETO_FEE,
     });
 
+    providerPaymentCreated = true;
     if (!tx.boleto_url || !tx.boleto_digitable_line) {
       return {
         message: "Boleto criado sem os dados de pagamento. Tente novamente.",
@@ -1903,6 +1909,7 @@ export async function initiateCheckoutBoleto(
     };
   } catch (err) {
     console.error("[CHECKOUT-BOLETO] initiate:", err);
+    if (!providerPaymentCreated) await revertInvoiceToPending(invoice.id);
     return {
       message:
         "Não foi possível gerar o boleto no momento. Tente novamente em instantes.",
