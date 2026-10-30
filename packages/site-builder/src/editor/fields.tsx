@@ -2,7 +2,13 @@
 
 import { useRef, useState } from "react";
 import type { FieldDef } from "../blocks/types.js";
+import { isYouTubeChannelId, type YouTubeChannel } from "../blocks/youtube.js";
 import { Icon } from "./icons.js";
+
+/** Confere o canal no YouTube e devolve o ID `UC…` e o nome. Lança `Error` com mensagem para a pessoa. */
+export type ResolveChannel = (
+  input: string
+) => Promise<{ id: string; name: string }>;
 
 type Values = Record<string, unknown>;
 
@@ -10,11 +16,13 @@ type Values = Record<string, unknown>;
 export function FieldInput({
   field,
   onChange,
+  onResolveChannel,
   onUpload,
   value,
 }: {
   field: FieldDef;
   onChange: (value: unknown) => void;
+  onResolveChannel?: ResolveChannel;
   onUpload?: (file: File) => Promise<string>;
   value: unknown;
 }) {
@@ -31,15 +39,20 @@ export function FieldInput({
         {items.map((item, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: itens da lista não têm id estável
           <div className="sbe-list-item" key={index}>
-            {itemFields.map(f => (
-              <FieldInput
-                field={f}
-                key={f.key}
-                onChange={v => update(index, f.key, v)}
-                onUpload={onUpload}
-                value={item[f.key]}
-              />
-            ))}
+            {itemFields
+              .filter(
+                f => !f.showWhen || item[f.showWhen.key] === f.showWhen.equals
+              )
+              .map(f => (
+                <FieldInput
+                  field={f}
+                  key={f.key}
+                  onChange={v => update(index, f.key, v)}
+                  onResolveChannel={onResolveChannel}
+                  onUpload={onUpload}
+                  value={item[f.key]}
+                />
+              ))}
             <div className="sbe-row">
               <button
                 disabled={index === 0}
@@ -79,7 +92,16 @@ export function FieldInput({
             onChange([
               ...items,
               Object.fromEntries(
-                itemFields.map(f => [f.key, f.kind === "number" ? 0 : ""])
+                itemFields.map(f => [
+                  f.key,
+                  f.kind === "number"
+                    ? 0
+                    : f.kind === "youtubeChannel"
+                      ? { id: "", input: "", name: "" }
+                      : f.kind === "select"
+                        ? (f.options?.[0]?.value ?? "")
+                        : "",
+                ])
               ),
             ])
           }
@@ -88,6 +110,25 @@ export function FieldInput({
           + Adicionar item
         </button>
       </div>
+    );
+  }
+
+  if (field.kind === "youtubeChannel") {
+    const channel =
+      value && typeof value === "object"
+        ? (value as Partial<YouTubeChannel>)
+        : {};
+    return (
+      <ChannelField
+        field={field}
+        onChange={onChange}
+        onResolve={onResolveChannel}
+        value={{
+          id: channel.id ?? "",
+          input: channel.input ?? "",
+          name: channel.name ?? "",
+        }}
+      />
     );
   }
 
@@ -250,6 +291,87 @@ function ImageField({
           <Icon name="trash-2" size={13} />
           Remover imagem
         </button>
+      ) : null}
+      {error ? <small className="sbe-error">{error}</small> : null}
+    </div>
+  );
+}
+
+/** Canal do YouTube: cola o link, @usuario ou ID e o editor confere e mostra o nome do canal. */
+function ChannelField({
+  field,
+  onChange,
+  onResolve,
+  value,
+}: {
+  field: FieldDef;
+  onChange: (value: unknown) => void;
+  onResolve?: ResolveChannel;
+  value: YouTubeChannel;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const resolve = async (raw: string) => {
+    const input = raw.trim();
+    if (!input) return;
+    setBusy(true);
+    setError("");
+    try {
+      if (onResolve) {
+        const found = await onResolve(input);
+        onChange({ id: found.id, input, name: found.name });
+      } else if (isYouTubeChannelId(input)) {
+        onChange({ id: input, input, name: "" });
+      } else {
+        throw new Error("Cole o ID do canal (começa com UC).");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não achei esse canal.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="sbe-field">
+      <span>{field.label}</span>
+      <div className="sbe-row">
+        <input
+          onChange={e => {
+            setError("");
+            onChange({ id: "", input: e.target.value, name: "" });
+          }}
+          onKeyDown={e => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            void resolve(value.input);
+          }}
+          onPaste={e => {
+            const text = e.clipboardData.getData("text");
+            if (!text.trim()) return;
+            e.preventDefault();
+            onChange({ id: "", input: text.trim(), name: "" });
+            void resolve(text);
+          }}
+          placeholder="Cole o link do canal ou @usuario"
+          style={{ flex: 1 }}
+          type="text"
+          value={value.input}
+        />
+        <button
+          className="sbe-btn"
+          disabled={busy || !value.input.trim()}
+          onClick={() => void resolve(value.input)}
+          type="button"
+        >
+          {busy ? "Buscando..." : "Buscar"}
+        </button>
+      </div>
+      {value.id ? (
+        <small className="sbe-chan-ok">
+          ✓ {value.name || "Canal encontrado"}
+        </small>
       ) : null}
       {error ? <small className="sbe-error">{error}</small> : null}
     </div>

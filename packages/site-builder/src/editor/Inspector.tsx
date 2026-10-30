@@ -13,7 +13,7 @@ import {
 } from "../model/index.js";
 import { fontStack, SITE_FONTS, themeFont } from "../renderer/fonts.js";
 import { themeVars } from "../renderer/styles.js";
-import { FieldInput } from "./fields.js";
+import { FieldInput, type ResolveChannel } from "./fields.js";
 import { Icon, type IconName } from "./icons.js";
 
 type StyleValue = string | number | undefined;
@@ -187,6 +187,7 @@ interface Props {
   onSiteName: (name: string) => void;
   onStyle: (patch: Record<string, StyleValue>, what: string) => void;
   onTheme: (patch: Record<string, string>, what: string) => void;
+  onResolveChannel?: ResolveChannel;
   onUploadImage?: (file: File) => Promise<string>;
   focusHint?: FocusHint;
   selected?: Block;
@@ -207,6 +208,7 @@ export function Inspector({
   onSiteName,
   onStyle,
   onTheme,
+  onResolveChannel,
   onUploadImage,
   selected,
   site,
@@ -382,6 +384,7 @@ export function Inspector({
                 field={field}
                 key={field.key}
                 onChange={v => onProp(field.key, v)}
+                onResolveChannel={onResolveChannel}
                 onUpload={onUploadImage}
                 value={selected.props[field.key] ?? def.defaults[field.key]}
               />

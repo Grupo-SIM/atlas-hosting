@@ -11,6 +11,7 @@ export type {
   FieldKind,
   RenderContext,
 } from "./blocks/types.js";
+export { isYouTubeChannelId } from "./blocks/youtube.js";
 export * from "./model/index.js";
 export { siteSchema } from "./model/schema.js";
 export {

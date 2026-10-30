@@ -131,6 +131,7 @@ export const editorCss = `
 .sbe-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#55524c}
 .sbe-field small{color:var(--mute)}
 .sbe-error{color:var(--danger)!important}
+.sbe-chan-ok{color:#1f7a3d!important;font-weight:600}
 .sbe-list{display:flex;flex-direction:column;gap:8px}
 .sbe-list-item{border:1px dashed #cfcbc2;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px}
 .sbe-drop{border:1.5px dashed #cfcbc2;background:#fff;border-radius:12px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;cursor:pointer;color:var(--violet)}

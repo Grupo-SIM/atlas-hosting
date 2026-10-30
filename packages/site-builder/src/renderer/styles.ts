@@ -90,6 +90,9 @@ export const siteCss = `
 .sb-cat-card img,.sb-cat-card .sb-img-empty{width:100%;height:200px;object-fit:contain;min-height:0;margin:auto 0}
 .sb-cat-text{color:var(--sb-accent);text-align:right;font-size:18px;line-height:1.4;font-family:var(--sb-font-accent,var(--sb-font-body))}
 .sb-video{width:100%;aspect-ratio:16/9;border:0;border-radius:8px}
+.sb-channel-video{margin:0;min-width:0}
+.sb-channel-video figcaption{margin-top:8px;font-size:15px;color:var(--sb-muted)}
+.sb-channel-empty{display:flex;align-items:center;justify-content:center;aspect-ratio:16/9;border:1px dashed currentColor;border-radius:8px;opacity:.5;font-size:15px}
 .sb-stats{display:flex;justify-content:space-around;gap:24px;flex-wrap:wrap;background:linear-gradient(180deg,rgba(22,40,101,.85),rgba(5,10,28,.2));border-radius:12px;padding:24px}
 .sb-stats strong{display:block;font-size:clamp(2.5rem,4.2vw,3.75rem);font-family:var(--sb-font-heading);line-height:1}
 .sb-stats small{font-size:clamp(1.5rem,2.2vw,2rem);margin-left:4px}

@@ -15,6 +15,7 @@ import { SiteRenderer } from "../renderer/SiteRenderer.js";
 import { ConfirmDialog, type ConfirmRequest } from "./ConfirmDialog.js";
 import { ContentPanel } from "./ContentPanel.js";
 import { elementTree } from "./dom-tree.js";
+import type { ResolveChannel } from "./fields.js";
 import { type FocusHint, Inspector } from "./Inspector.js";
 import { Icon } from "./icons.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
@@ -50,6 +51,8 @@ export interface SiteEditorProps {
   exitHref?: string;
   initialSite: Site;
   onPublish?: (site: Site, password?: string) => Promise<SaveResult>;
+  /** Confere um canal do YouTube (link, @usuario ou ID). Sem isso, o campo aceita só o ID `UC…`. */
+  onResolveChannel?: ResolveChannel;
   onSave: (site: Site) => Promise<SaveResult>;
   /** Envia o arquivo e devolve a URL pública. Sem isso, imagens aceitam só URL. */
   onUploadImage?: (file: File) => Promise<string>;
@@ -138,6 +141,7 @@ export function SiteEditor({
   exitHref,
   initialSite,
   onPublish,
+  onResolveChannel,
   onSave,
   onUploadImage,
   originalSite,
@@ -916,6 +920,7 @@ export function SiteEditor({
               label: `Editou · ${labelOf(selected.type)}`,
             })
           }
+          onResolveChannel={onResolveChannel}
           onSelect={select}
           onSiteName={name =>
             edit(

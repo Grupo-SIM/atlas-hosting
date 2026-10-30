@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { pgBuilderPublication, pgBuilderSite } from "@/lib/db/schema";
 import { FORBIDDEN_MESSAGE, getBuilderUser } from "@/lib/site-builder/access";
 import { takeDown } from "@/lib/site-builder/takedown";
+import { resolveYoutubeChannel as lookupYoutubeChannel } from "@/lib/site-builder/youtube";
 import { getStorjUrl, uploadSiteBuilderImage } from "@/lib/storj";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -132,5 +133,30 @@ export async function uploadSiteImage(
   } catch (error) {
     console.error("Erro no upload de imagem do Criador de Sites:", error);
     return { error: "Não foi possível enviar a imagem.", ok: false };
+  }
+}
+
+/** Confere um canal do YouTube (link, @usuario ou ID) para o campo "Canal" do editor. */
+export async function resolveYoutubeChannel(
+  input: string
+): Promise<
+  { id: string; name: string; ok: true } | { error: string; ok: false }
+> {
+  if (!(await getBuilderUser())) {
+    return { error: FORBIDDEN_MESSAGE, ok: false };
+  }
+  if (typeof input !== "string" || input.length > 300) {
+    return {
+      error: "Cole o link do canal, o @usuario ou o ID (UC…).",
+      ok: false,
+    };
+  }
+  try {
+    return { ...(await lookupYoutubeChannel(input)), ok: true };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Não achei esse canal.",
+      ok: false,
+    };
   }
 }

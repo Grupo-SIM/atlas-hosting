@@ -15,6 +15,7 @@ import {
   visiblePosts,
 } from "./helpers.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
+import { latestVideoEmbed, videoEmbed } from "./youtube.js";
 
 const str = (d = "") => z.string().default(d);
 
@@ -407,6 +408,99 @@ const videoGrid = defineBlock(
       </section>
     ),
     type: "videoGrid",
+  }
+);
+
+const channelVideos = defineBlock(
+  z.object({
+    items: z
+      .array(
+        z.object({
+          channel: z
+            .object({ id: str(), input: str(), name: str() })
+            .default({}),
+          mode: z.enum(["latest", "specific"]).default("latest"),
+          title: str(),
+          video: str(),
+        })
+      )
+      .default([]),
+    title: str("Vídeos dos canais"),
+  }),
+  {
+    fields: [
+      { key: "title", kind: "text", label: "Título da seção" },
+      {
+        itemFields: [
+          { key: "channel", kind: "youtubeChannel", label: "Canal" },
+          {
+            key: "mode",
+            kind: "select",
+            label: "O que mostrar",
+            options: [
+              { label: "Sempre o último vídeo do canal", value: "latest" },
+              { label: "Um vídeo específico", value: "specific" },
+            ],
+          },
+          {
+            key: "video",
+            kind: "text",
+            label: "Link do vídeo",
+            showWhen: { equals: "specific", key: "mode" },
+          },
+          { key: "title", kind: "text", label: "Título (opcional)" },
+        ],
+        key: "items",
+        kind: "list",
+        label: "Canais",
+      },
+    ],
+    group: "media",
+    label: "Vídeos de canais",
+    render: (p, ctx) => {
+      const players = p.items.flatMap((item, i) => {
+        const src =
+          item.mode === "specific"
+            ? videoEmbed(item.video)
+            : latestVideoEmbed(item.channel.id);
+        const title =
+          item.title || item.channel.name || item.channel.input || "Vídeo";
+        if (src)
+          return [
+            // biome-ignore lint/suspicious/noArrayIndexKey: itens da lista não têm id estável
+            <figure className="sb-channel-video" key={`${i}-${src}`}>
+              <iframe
+                allowFullScreen
+                className="sb-video"
+                loading="lazy"
+                src={src}
+                title={title}
+              />
+              {item.title || item.channel.name ? (
+                <figcaption>{item.title || item.channel.name}</figcaption>
+              ) : null}
+            </figure>,
+          ];
+        // No site publicado, item incompleto some; no editor mostra o que falta.
+        return ctx.mode === "edit"
+          ? [
+              // biome-ignore lint/suspicious/noArrayIndexKey: itens da lista não têm id estável
+              <div className="sb-channel-video sb-channel-empty" key={i}>
+                {item.mode === "specific"
+                  ? "Cole o link do vídeo"
+                  : "Escolha o canal"}
+              </div>,
+            ]
+          : [];
+      });
+      return (
+        <section className="sb-container">
+          {p.title ? <h2>{p.title}</h2> : null}
+          <div className="sb-grid sb-grid-3">{players}</div>
+        </section>
+      );
+    },
+    type: "channelVideos",
   }
 );
 
@@ -1301,6 +1395,7 @@ export const blockDefinitions: BlockDefinition[] = [
   image,
   button,
   videoGrid,
+  channelVideos,
   categoryGrid,
   stats,
   cardGrid,

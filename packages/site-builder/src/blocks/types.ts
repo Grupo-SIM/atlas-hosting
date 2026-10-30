@@ -21,7 +21,8 @@ export type FieldKind =
   | "select"
   | "text"
   | "textarea"
-  | "url";
+  | "url"
+  | "youtubeChannel";
 
 /** Descreve como o painel de propriedades edita cada prop do bloco. */
 export interface FieldDef {
@@ -30,6 +31,8 @@ export interface FieldDef {
   kind: FieldKind;
   label: string;
   options?: { label: string; value: string }[];
+  /** Só mostra o campo (dentro de um item de lista) quando o campo `key` do item vale `equals`. */
+  showWhen?: { equals: string; key: string };
 }
 
 export type BlockGroup = "blog" | "content" | "layout" | "media";

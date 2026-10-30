@@ -2,7 +2,11 @@
 
 import type { Site } from "@repo/site-builder";
 import { SiteEditor } from "@repo/site-builder/editor";
-import { saveSite, uploadSiteImage } from "../../actions";
+import {
+  resolveYoutubeChannel,
+  saveSite,
+  uploadSiteImage,
+} from "../../actions";
 import { republishSite } from "../../publish-actions";
 
 export default function SiteEditorClient({
@@ -26,6 +30,11 @@ export default function SiteEditorClient({
       exitHref="/criador-de-sites"
       initialSite={initialSite}
       onPublish={(_site, password) => republishSite({ password, siteId })}
+      onResolveChannel={async input => {
+        const result = await resolveYoutubeChannel(input);
+        if (!result.ok) throw new Error(result.error);
+        return { id: result.id, name: result.name };
+      }}
       onSave={site => saveSite(siteId, site)}
       onUploadImage={async file => {
         const data = new FormData();
