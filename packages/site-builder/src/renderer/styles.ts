@@ -133,8 +133,9 @@ export const siteCss = `
 .sb-testimonial figcaption span{display:block;font-size:14px;color:var(--sb-muted)}
 .sb-avatar{width:56px;height:56px;min-height:0!important;border-radius:50%;object-fit:cover}
 .sb-split{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,479px);gap:32px;align-items:center;min-height:556px}
-.sb-split-deco{position:absolute;z-index:0;left:30%;bottom:0;width:min(502px,38%);height:auto;pointer-events:none}
+.sb-split-deco{position:absolute;z-index:0;left:40%;bottom:-24px;width:min(250px,18%);height:auto;opacity:.55;pointer-events:none}
 .sb-split>div{position:relative;z-index:1}
+.sb-split>div>p{max-width:520px;margin-bottom:44px}
 .sb-split>img:not(.sb-split-deco){width:min(479px,100%);margin-left:auto}
 .sb-filter{display:flex;gap:8px;margin-block:16px;flex-wrap:wrap}
 .sb-filter input,.sb-filter select{background:#0a1230;color:inherit;border:1px solid #1c2c66;border-radius:6px;padding:10px 12px;font-family:inherit}
@@ -166,10 +167,10 @@ export const siteCss = `
 .sb-footer-bottom a{margin-left:12px}
 .sb-float{position:fixed;right:16px;bottom:16px;background:#22c55e;color:#fff!important;font-weight:700;font-size:.75rem;border-radius:999px;padding:10px 16px;z-index:50}
 .sb-mag{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px 32px;align-items:start;margin-top:20px}
-.sb-mag-search{display:flex;gap:6px}
+.sb-mag-search{display:flex;gap:6px;align-self:end}
 .sb-mag-search input{flex:1;min-width:0;background:#0a1230;color:inherit;border:1px solid #1c2c66;border-radius:6px;padding:10px 12px;font-family:inherit}
-.sb-mag-cats{display:flex;flex-direction:column;gap:6px}
-.sb-mag-cats select{background:#fff;color:#111;border:0;border-radius:4px;padding:8px;font-family:inherit}
+.sb-mag-cats{display:flex;flex-direction:column;gap:6px;align-self:end}
+.sb-mag-cats select{background:#fff;color:#111;border:0;border-radius:6px;padding:10px 8px;font-family:inherit}
 .sb-mag-main{min-width:0}
 .sb-mag-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
 .sb-mag-track::-webkit-scrollbar{display:none}
