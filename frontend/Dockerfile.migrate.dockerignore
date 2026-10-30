@@ -1,0 +1,5 @@
+# Contexto mínimo da imagem de migrations (BuildKit usa este arquivo no lugar do .dockerignore raiz).
+*
+!frontend/package.json
+!frontend/scripts/migrate.ts
+!frontend/drizzle/

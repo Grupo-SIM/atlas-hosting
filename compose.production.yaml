@@ -1,0 +1,27 @@
+name: atlas-hosting-production
+x-after-migrate: &after-migrate
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+services:
+  migrate:
+    image: ${MIGRATE_IMAGE:-ghcr.io/grupo-sim/atlas-hosting_migrate:latest}
+    env_file: .env
+    init: true
+    networks: [externa]
+    restart: "no"
+    working_dir: /app/frontend
+    command: ["bun", "run", "migrate:deploy"]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  frontend:
+    <<: *after-migrate
+    image: ${FRONTEND_IMAGE:-ghcr.io/grupo-sim/atlas-hosting_frontend:latest}
+    env_file: .env
+    init: true
+    networks: [externa]
+    restart: unless-stopped
+    ports: ["127.0.0.1:3000:3000"]
+networks:
+  externa:
+    external: true

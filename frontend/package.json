@@ -9,6 +9,7 @@
     "check-types": "tsc --noEmit",
     "lint": "next lint",
     "db:push": "drizzle-kit push",
+    "migrate:deploy": "bun scripts/migrate.ts",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",

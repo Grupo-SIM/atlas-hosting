@@ -10,3 +10,4 @@ Find development guides under `docs/development/` and read those applicable to t
 change. Keep guide discovery links here when adding new development guides.
 
 - [Criador de Sites](docs/development/site-builder.md) — `packages/site-builder`, templates, editor e publicação.
+- [Migrations no deploy](docs/development/migrations.md) — serviço `migrate` do `compose.production.yaml`, runner de `frontend/drizzle` e baseline.

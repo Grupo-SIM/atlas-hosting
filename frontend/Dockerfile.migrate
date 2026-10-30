@@ -1,0 +1,13 @@
+# Imagem de execução única que aplica frontend/drizzle antes do app subir.
+# Usa Bun.SQL (embutido): não instala dependências.
+FROM oven/bun:1.4.3
+
+WORKDIR /app/frontend
+
+COPY frontend/package.json ./package.json
+COPY frontend/scripts/migrate.ts ./scripts/migrate.ts
+COPY frontend/drizzle ./drizzle
+
+USER bun
+
+CMD ["bun", "run", "migrate:deploy"]

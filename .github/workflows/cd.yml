@@ -66,6 +66,16 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
 
+      # Imagem de migrations (Bun + SQL de frontend/drizzle), executada antes do app no deploy.
+      - name: Build and publish migrate image
+        if: steps.service.outputs.deployable == 'true' && matrix.service == 'frontend'
+        uses: hyoretsu/gh-actions/containers@main
+        with:
+          image: ${{ github.repository }}_migrate
+          dockerfile: frontend/Dockerfile.migrate
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+
   # Enable native releases when signing and platform prerequisites are ready.
   # desktop:
   #   name: Build & release ${{ matrix.label }} app
