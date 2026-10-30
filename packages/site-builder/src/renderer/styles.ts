@@ -21,7 +21,7 @@ export function themeVars(
 }
 
 export const siteCss = `
-.sb{position:relative;background:var(--sb-bg);color:var(--sb-fg);font-family:var(--sb-font-body);font-size:18px;line-height:1.4;min-height:100%}
+.sb{position:relative;overflow-x:clip;background:var(--sb-bg);color:var(--sb-fg);font-family:var(--sb-font-body);font-size:18px;line-height:1.4;min-height:100%}
 .sb *{box-sizing:border-box}
 .sb a{color:inherit;text-decoration:none}
 .sb h1,.sb h2,.sb h3,.sb h4{font-family:var(--sb-font-heading);font-weight:600;line-height:1.05;margin:0 0 .4em}
