@@ -52,6 +52,8 @@ aba IA ("em breve"), canvas com desktop/tablet/celular + zoom, desfazer/refazer,
 - Rotas (estilo WordPress): `/category/:slug`, depois página (`/:slug`, home = slug vazio), depois post (`/:slug`).
   Páginas, posts e o prefixo `category` dividem o mesmo espaço de URLs (`isSlugTaken`).
 - Template = dado em `src/templates/<id>/`, registrado em `src/templates/index.ts`. `getTemplate` devolve cópia profunda.
+  Lista atual: `blog-viagens` (genérico, imagens Unsplash). `spyhacker` fica em `legacyTemplates`: some da tela de escolha, mas
+  `getTemplate` ainda o resolve — sites criados com ele usam o original para "restaurar" no editor.
 - `react-dom/static` (e não `react-dom/server`) renderiza o HTML estático: o Next recusa `react-dom/server` em código do app router.
 - Links digitados pelo usuário passam por `safeUrl` (bloqueia `javascript:`/`data:`). Use-o em todo `href` novo vindo de props.
 
@@ -102,7 +104,7 @@ Notas de segurança:
 
 - Taxa de hospedagem na VM do Atlas (valor definido pelo admin) e cobrança.
 - Compra de domínio dentro do fluxo de publicar; despublicar (remover pasta em /srv/www e o bloco do Caddyfile.base).
-- Imagens do template spyhacker ainda apontam para `007spyhacker.com/wp-content/uploads`; copiar para o storage.
+- Imagens do template spyhacker ainda apontam para `007spyhacker.com/wp-content/uploads`; as do `blog-viagens` apontam para `images.unsplash.com`. Copiar ambas para o storage.
 - Edição de texto direto no canvas (duplo clique) e seleção por elemento: hoje a unidade é o bloco; texto muda no painel.
 - Chat com a IA (aba "em breve") e passos de progresso reais na criação.
 - Montagem de blocos aninhados no editor só reordena/edita; não há arrastar e soltar.

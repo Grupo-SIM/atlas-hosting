@@ -1,7 +1,15 @@
 import type { SiteTemplate, TemplateMeta } from "../model/index.js";
+import { blogViagens } from "./blog-viagens/index.js";
 import { spyhacker } from "./spyhacker/index.js";
 
-const templates: SiteTemplate[] = [spyhacker];
+/** Aparecem na tela de escolha de template. */
+const templates: SiteTemplate[] = [blogViagens];
+
+/**
+ * Fora da lista, mas ainda resolvidos por `getTemplate`: sites já criados guardam o
+ * `templateId` e o editor usa o template original para "restaurar".
+ */
+const legacyTemplates: SiteTemplate[] = [spyhacker];
 
 export const listTemplates = (): TemplateMeta[] =>
   templates.map(({ description, id, name, preview, site, tags }) => ({
@@ -15,6 +23,6 @@ export const listTemplates = (): TemplateMeta[] =>
 
 /** Cópia profunda — o site do usuário nunca compartilha referência com o seed. */
 export function getTemplate(id: string): SiteTemplate | undefined {
-  const found = templates.find(t => t.id === id);
+  const found = [...templates, ...legacyTemplates].find(t => t.id === id);
   return found ? structuredClone(found) : undefined;
 }
