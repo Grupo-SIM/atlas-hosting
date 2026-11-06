@@ -6,8 +6,8 @@ const nextConfig = {
     ? [process.env.APP_BASE_URL.replace(/https?:\/\//, "")]
     : [],
   experimental: {
-    // Criador de Sites: upload de imagens (até 8 MB) e save do site inteiro passam por server actions.
-    serverActions: { bodySizeLimit: "10mb" },
+    // Criador de Sites: upload de imagens (imagens até 8 MB, vídeos de anúncio até 25 MB) e save do site inteiro passam por server actions.
+    serverActions: { bodySizeLimit: "30mb" },
     useCache: false,
     workerThreads: false,
   },

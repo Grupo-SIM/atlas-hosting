@@ -17,25 +17,37 @@ import { ConfirmDialog, type ConfirmRequest } from "./ConfirmDialog.js";
 import { ContentPanel } from "./ContentPanel.js";
 import { elementTree } from "./dom-tree.js";
 import type { ResolveChannel } from "./fields.js";
+import {
+  collectSnapLines,
+  formatTranslate,
+  parseTranslate,
+  type SnapLines,
+  snap,
+} from "./free-move.js";
 import { type FocusHint, Inspector } from "./Inspector.js";
 import { Icon } from "./icons.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
 import { PagePicker, type RouteGroup } from "./PagePicker.js";
 import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
-import { setMenu, setTheme } from "./site-ops.js";
+import { setMenu, setTheme, withAdBlocks } from "./site-ops.js";
+import { startSort } from "./sort-drag.js";
 import { editorCss } from "./styles.js";
 import {
   ancestorsOf,
+  type DropTarget,
   duplicateBlock,
   findBlock,
   insertBlock,
+  insertBlockAt,
   moveBlock,
+  moveBlockTo,
   removeBlock,
   rootBlocks,
   rootForRoute,
   rootLabel,
   rootOf,
   setBlockHidden,
+  setElementOrders,
   updateBlockFx,
   updateBlockProps,
   updateBlockStyle,
@@ -198,6 +210,11 @@ export function SiteEditor({
   const [elName, setElName] = useState("");
   const selBoxRef = useRef<HTMLDivElement | null>(null);
   const hoverBoxRef = useRef<HTMLDivElement | null>(null);
+  const guideVRef = useRef<HTMLDivElement | null>(null);
+  const guideHRef = useRef<HTMLDivElement | null>(null);
+  const justDragged = useRef(false);
+  /** Como arrastar no canvas: trocar de lugar (item ou bloco) ou deslocar livremente. */
+  const [dragMode, setDragMode] = useState<"block" | "free" | "item">("item");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   );
@@ -402,6 +419,40 @@ export function SiteEditor({
     setSelectedId(res.id);
   };
 
+  /** Arrastar e soltar nas camadas: mover um bloco existente. */
+  const moveTo = (id: string, target: DropTarget) => {
+    const next = moveBlockTo(site, id, target);
+    if (next === site) return;
+    const block = findBlock(site, id);
+    edit(next, {
+      id,
+      label: `Moveu · ${labelOf(block?.type ?? "")}`,
+    });
+    setSelectedId(id);
+  };
+
+  /** Arrastar da lista "Adicionar bloco" direto para um ponto das camadas. */
+  const insertAt = (type: string, target: DropTarget) => {
+    const res = insertBlockAt(site, type, target);
+    if (res.site === site) return;
+    edit(res.site, {
+      id: res.id,
+      kind: "Novo",
+      label: `Adicionou · ${labelOf(type)}`,
+    });
+    setSelectedId(res.id);
+  };
+
+  /** Liga/desliga os anúncios; ao ligar, garante o bloco de anúncio em cada página. */
+  const setAds = (on: boolean) => {
+    const themed = setTheme(site, { ads: on ? "on" : "off" });
+    edit(on ? withAdBlocks(themed) : themed, {
+      key: "theme-ads",
+      kind: "Tema",
+      label: "Tema · Anúncios",
+    });
+  };
+
   const blockAction = (
     action: "delete" | "down" | "duplicate" | "hide" | "up"
   ) => {
@@ -457,6 +508,17 @@ export function SiteEditor({
       } else if ((k === "delete" || k === "backspace") && selectedId) {
         e.preventDefault();
         blockAction("delete");
+      } else if (
+        selectedId &&
+        device === "desktop" &&
+        ["arrowleft", "arrowright", "arrowup", "arrowdown"].includes(k)
+      ) {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        nudge(
+          k === "arrowleft" ? -step : k === "arrowright" ? step : 0,
+          k === "arrowup" ? -step : k === "arrowdown" ? step : 0
+        );
       } else if (k === "escape") {
         setSelectedId(null);
         setReview(false);
@@ -466,7 +528,22 @@ export function SiteEditor({
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  // Site que já estava com anúncios ligados: cria os blocos de anúncio que faltam (uma vez, ao abrir).
+  useEffect(() => {
+    const first = siteRef.current;
+    if (first.theme.ads !== "on") return;
+    const next = withAdBlocks(first);
+    if (next !== first) {
+      edit(next, { key: "theme-ads", kind: "Tema", label: "Tema · Anúncios" });
+    }
+  }, []);
+
   const onCanvasClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (justDragged.current) {
+      justDragged.current = false;
+      e.preventDefault();
+      return;
+    }
     const target = e.target as HTMLElement;
     const anchor = target.closest("a");
     if (anchor) {
@@ -496,6 +573,319 @@ export function SiteEditor({
     setFocusHint(h => ({ n: h.n + 1, value }));
   };
 
+  const showGuides = (gx?: number, gy?: number) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    const v = guideVRef.current;
+    const h = guideHRef.current;
+    if (!(rect && v && h)) return;
+    if (gx === undefined) v.style.display = "none";
+    else {
+      v.style.display = "block";
+      v.style.left = `${gx}px`;
+      v.style.top = `${rect.top}px`;
+      v.style.height = `${rect.height}px`;
+    }
+    if (gy === undefined) h.style.display = "none";
+    else {
+      h.style.display = "block";
+      h.style.top = `${gy}px`;
+      h.style.left = `${rect.left}px`;
+      h.style.width = `${rect.width}px`;
+    }
+  };
+
+  /** Grava o deslocamento (bloco ou elemento) e, em texto em linha, garante que o `translate` valha. */
+  const commitOffset = (
+    blockId: string,
+    elP: string,
+    x: number,
+    y: number,
+    inline: boolean,
+    key: string
+  ) => {
+    const block = findBlock(siteRef.current, blockId);
+    if (!block) return;
+    const zero = x === 0 && y === 0;
+    const patch = {
+      ...(inline && !zero ? { display: "inline-block" } : {}),
+      translate: zero ? undefined : formatTranslate({ x, y }),
+    };
+    edit(
+      elP
+        ? updateElementStyle(siteRef.current, blockId, elP, patch)
+        : updateBlockStyle(siteRef.current, blockId, patch),
+      { id: blockId, key, label: `Moveu · ${labelOf(block.type)}` }
+    );
+  };
+
+  /**
+   * Mover qualquer item livremente: segure e arraste. Dentro do item já selecionado arrasta ele;
+   * senão, o item sob o ponteiro. Encaixa nas bordas/centros vizinhos (Alt desliga), Shift trava
+   * o eixo. O deslocamento aparece ao vivo no DOM e só vai para o site quando solta.
+   */
+  const startFreeMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || device !== "desktop" || e.ctrlKey || e.metaKey)
+      return;
+    const target = e.target as HTMLElement;
+    if (target.closest(".sb-header .sb-logo, .sb-header .sb-logo-img")) return;
+    const picked = pickElement(target);
+    const pickedBlock = picked?.closest<HTMLElement>("[data-block-id]");
+    if (!(picked && pickedBlock)) return;
+
+    const selBlock = selectedId ? blockEl(selectedId) : null;
+    const selEl = selBlock
+      ? elPath
+        ? elementAt(selBlock, elPath)
+        : selBlock
+      : null;
+    const useSel = Boolean(selBlock && selEl?.contains(target));
+    const node = useSel && selBlock ? selBlock : pickedBlock;
+    const el = useSel && selEl ? selEl : picked;
+    const blockId = node.dataset.blockId;
+    if (!blockId) return;
+    const elP = useSel ? elPath : pathWithin(el, node);
+    const block = findBlock(siteRef.current, blockId);
+    if (!block) return;
+
+    const base = parseTranslate(
+      elP ? block.elStyles?.[elP]?.translate : block.style?.translate
+    );
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const frame = node.closest<HTMLElement>(".sbe-frame");
+    let started = false;
+    let inline = false;
+    let rect: DOMRect | null = null;
+    let lines: SnapLines | null = null;
+    let off = { ...base };
+
+    const move = (ev: globalThis.PointerEvent) => {
+      let dx = ev.clientX - startX;
+      let dy = ev.clientY - startY;
+      if (!started) {
+        if (Math.hypot(dx, dy) < 4) return;
+        started = true;
+        rect = el.getBoundingClientRect();
+        lines = frame ? collectSnapLines(frame, node, el) : null;
+        inline = getComputedStyle(el).display === "inline";
+        if (inline)
+          el.style.setProperty("display", "inline-block", "important");
+        document.body.style.cursor = "grabbing";
+        document.body.style.userSelect = "none";
+        setSelectedId(blockId);
+        setElPath(elP);
+        const text = (el.textContent ?? "").trim().slice(0, 24);
+        setElName(elP ? `${itemName(el)}${text ? ` · ${text}` : ""}` : "");
+      }
+      if (ev.shiftKey) {
+        if (Math.abs(dx) > Math.abs(dy)) dy = 0;
+        else dx = 0;
+      }
+      let gx: number | undefined;
+      let gy: number | undefined;
+      if (lines && rect && !ev.altKey) {
+        const s = snap(rect, dx, dy, lines);
+        dx = s.dx;
+        dy = s.dy;
+        gx = s.gx;
+        gy = s.gy;
+      }
+      off = { x: base.x + dx / zoom, y: base.y + dy / zoom };
+      el.style.setProperty("translate", formatTranslate(off), "important");
+      showGuides(gx, gy);
+      paintSelection();
+    };
+
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      if (!started) return;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      showGuides();
+      el.style.removeProperty("translate");
+      if (inline) el.style.removeProperty("display");
+      justDragged.current = true;
+      setTimeout(() => {
+        justDragged.current = false;
+      }, 0);
+      commitOffset(
+        blockId,
+        elP,
+        Math.round(off.x),
+        Math.round(off.y),
+        inline,
+        `move:${blockId}:${elP}`
+      );
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+
+  /**
+   * Reordenar arrastando: o item acompanha o mouse e, ao passar sobre um irmão, os dois trocam de
+   * lugar ao vivo. "Item" move o componente sob o ponteiro (sobe até achar um nível com irmãos);
+   * "Bloco" move o bloco inteiro. Shift inverte o modo só nesse arrasto.
+   */
+  const startSortMove = (
+    e: PointerEvent<HTMLDivElement>,
+    wantBlock: boolean
+  ) => {
+    if (e.button !== 0 || e.ctrlKey || e.metaKey) return;
+    const target = e.target as HTMLElement;
+    if (target.closest(".sb-header .sb-logo, .sb-header .sb-logo-img")) return;
+    const picked = pickElement(target);
+    const pickedBlock = picked?.closest<HTMLElement>("[data-block-id]");
+    if (!(picked && pickedBlock)) return;
+
+    const selBlock = selectedId ? blockEl(selectedId) : null;
+    const selEl = selBlock
+      ? elPath
+        ? elementAt(selBlock, elPath)
+        : selBlock
+      : null;
+    const useSel = Boolean(selBlock && selEl?.contains(target));
+    const node = useSel && selBlock ? selBlock : pickedBlock;
+    let el: HTMLElement = useSel && selEl ? selEl : picked;
+    const blockId = node.dataset.blockId;
+    if (!blockId) return;
+
+    const isItem = (c: Element) =>
+      !["STYLE", "SCRIPT", "LINK"].includes(c.tagName);
+    const siblingsOf = (x: HTMLElement) =>
+      Array.from(x.parentElement?.children ?? []).filter(
+        isItem
+      ) as HTMLElement[];
+
+    let block = wantBlock;
+    if (!block) {
+      // Sobe até um nível que tenha irmãos para trocar; sem nenhum, move o bloco todo.
+      while (el !== node && siblingsOf(el).length < 2 && el.parentElement)
+        el = el.parentElement;
+      if (el === node) block = true;
+    }
+
+    let items: HTMLElement[];
+    let parent: HTMLElement | null;
+    if (block) {
+      el = node;
+      parent = node.parentElement;
+      if (!parent || parent.classList.contains("sb")) return;
+      items = Array.from(parent.children).filter(
+        c => (c as HTMLElement).dataset.blockId
+      ) as HTMLElement[];
+      if (items.length < 2) return;
+    } else {
+      parent = el.parentElement;
+      if (!parent) return;
+      items = siblingsOf(el);
+    }
+
+    // Ordem visual de hoje (CSS `order` salvo, senão a do DOM).
+    const orderOf = (x: HTMLElement) =>
+      Number.parseInt(getComputedStyle(x).order, 10) || 0;
+    items = items
+      .map((x, i) => ({ i, o: orderOf(x), x }))
+      .sort((a, b) => a.o - b.o || a.i - b.i)
+      .map(v => v.x);
+    const startOrder = items.slice();
+
+    const elP = block ? "" : pathWithin(el, node);
+    const model = findBlock(siteRef.current, blockId);
+    if (!model) return;
+    const base = parseTranslate(
+      elP ? model.elStyles?.[elP]?.translate : model.style?.translate
+    );
+    const parentPath = block ? "" : pathWithin(parent, node);
+
+    startSort({
+      base,
+      el,
+      items,
+      onDrop: (finalOrder, converted) => {
+        justDragged.current = true;
+        setTimeout(() => {
+          justDragged.current = false;
+        }, 0);
+        const same = finalOrder.every((x, i) => x === startOrder[i]);
+        if (same) return;
+        if (block) {
+          const at = finalOrder.indexOf(el);
+          const next = finalOrder[at + 1];
+          const prev = finalOrder[at - 1];
+          const ref = next ?? prev;
+          if (!ref?.dataset.blockId) return;
+          const moved = moveBlockTo(siteRef.current, blockId, {
+            id: ref.dataset.blockId,
+            place: next ? "before" : "after",
+          });
+          if (moved === siteRef.current) return;
+          edit(moved, {
+            id: blockId,
+            label: `Moveu · ${labelOf(model.type)}`,
+          });
+          return;
+        }
+        edit(
+          setElementOrders(
+            siteRef.current,
+            blockId,
+            finalOrder.map((x, k) => ({ order: k, path: pathWithin(x, node) })),
+            converted
+              ? {
+                  patch: { display: "flex", flexDirection: "column" },
+                  path: parentPath,
+                }
+              : undefined
+          ),
+          { id: blockId, label: `Reordenou · ${labelOf(model.type)}` }
+        );
+      },
+      onStart: () => {
+        setSelectedId(blockId);
+        setElPath(elP);
+        const text = (el.textContent ?? "").trim().slice(0, 24);
+        setElName(elP ? `${itemName(el)}${text ? ` · ${text}` : ""}` : "");
+      },
+      parent,
+      parentIsReactStyled: !block && parent === node,
+      scroller: canvasRef.current,
+      startX: e.clientX,
+      startY: e.clientY,
+      zoom,
+    });
+  };
+
+  const onMovePointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (dragMode === "free") startFreeMove(e);
+    else startSortMove(e, (dragMode === "block") !== e.shiftKey);
+  };
+
+  /** Setas do teclado empurram o item selecionado (Shift = 10 px). */
+  const nudge = (dx: number, dy: number) => {
+    if (!selectedId) return;
+    const block = findBlock(site, selectedId);
+    const node = blockEl(selectedId);
+    if (!(block && node)) return;
+    const target = elPath ? elementAt(node, elPath) : node;
+    const base = parseTranslate(
+      elPath ? block.elStyles?.[elPath]?.translate : block.style?.translate
+    );
+    const inline = target
+      ? getComputedStyle(target).display === "inline"
+      : false;
+    commitOffset(
+      selectedId,
+      elPath,
+      base.x + dx,
+      base.y + dy,
+      inline,
+      `nudge:${selectedId}:${elPath}`
+    );
+  };
+
   /** Arrastar a logo do cabeçalho na horizontal: grava `logoX` (% da largura da barra). */
   const onLogoPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
@@ -507,17 +897,23 @@ export function SiteEditor({
     const id = bar?.closest<HTMLElement>("[data-block-id]")?.dataset.blockId;
     if (!(logo && bar && id)) return;
     e.preventDefault();
-    const bw = bar.getBoundingClientRect().width;
     const startRect = logo.getBoundingClientRect();
-    if (!bw) return;
     const grab = e.clientX - (startRect.left + startRect.width / 2);
-    const half = (startRect.width / 2 / bw) * 100;
+    // A posição é em % da área de conteúdo (a barra menos o recuo lateral), não da tela inteira.
+    const area = () => {
+      const b = bar.getBoundingClientRect();
+      const scale = bar.offsetWidth ? b.width / bar.offsetWidth : 1;
+      const pad = Number.parseFloat(getComputedStyle(bar).paddingLeft) * scale;
+      return { left: b.left + pad, width: b.width - 2 * pad };
+    };
+    if (area().width <= 0) return;
+    const half = (startRect.width / 2 / area().width) * 100;
     let pct = Number.NaN;
     const move = (ev: globalThis.PointerEvent) => {
-      const b = bar.getBoundingClientRect();
-      const raw = ((ev.clientX - grab - b.left) / b.width) * 100;
+      const a = area();
+      const raw = ((ev.clientX - grab - a.left) / a.width) * 100;
       pct = Math.round(Math.min(100 - half, Math.max(half, raw)) * 10) / 10;
-      bar.style.setProperty(imgItem ? "--sb-ix" : "--sb-lx", `${pct}%`);
+      bar.style.setProperty(imgItem ? "--sb-ix" : "--sb-lx", String(pct / 100));
     };
     const up = () => {
       window.removeEventListener("pointermove", move);
@@ -622,6 +1018,15 @@ export function SiteEditor({
             label: rootLabel(site, mainRoot),
           },
         ]),
+    ...(mainRoot.startsWith("post:")
+      ? [
+          {
+            blocks: site.postLayout,
+            key: "postLayout",
+            label: "Layout dos posts",
+          },
+        ]
+      : []),
     { blocks: site.footer, key: "footer", label: "Rodapé" },
   ];
 
@@ -725,6 +1130,8 @@ export function SiteEditor({
               elPath={elPath}
               getElements={getElements}
               onAdd={addBlock}
+              onInsert={insertAt}
+              onMove={moveTo}
               onSelect={select}
               onSelectElement={selectElement}
               onToggleHidden={toggleHidden}
@@ -820,6 +1227,35 @@ export function SiteEditor({
               <Icon name="redo-2" size={15} />
             </button>
           </div>
+          <div
+            className="sbe-seg mini"
+            title="Como arrastar no canvas (Shift inverte Item/Bloco)"
+          >
+            {(
+              [
+                ["item", "Item"],
+                ["block", "Bloco"],
+                ["free", "Livre"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                className={dragMode === value ? "on" : ""}
+                key={value}
+                onClick={() => setDragMode(value)}
+                type="button"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <button
+            className={site.theme.ads === "on" ? "sbe-lime" : "sbe-btn"}
+            onClick={() => setAds(site.theme.ads !== "on")}
+            title="Mostrar ou esconder os espaços de anúncio"
+            type="button"
+          >
+            Anúncios {site.theme.ads === "on" ? "ligados" : "desligados"}
+          </button>
           {wide ? (
             <span
               className={`sbe-pill ${pill.cls}`}
@@ -886,10 +1322,15 @@ export function SiteEditor({
           ) : null}
         </div>
 
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: o canvas recebe clique, hover e arrasto dos itens */}
         <div
           className="sbe-canvas"
           onClickCapture={onCanvasClick}
-          onPointerDownCapture={onLogoPointerDown}
+          onDragStart={e => e.preventDefault()}
+          onPointerDownCapture={e => {
+            onLogoPointerDown(e);
+            onMovePointerDown(e);
+          }}
           onPointerLeave={clearHover}
           onPointerOver={onCanvasOver}
           onScroll={() => {
@@ -903,6 +1344,8 @@ export function SiteEditor({
             <span />
           </div>
           <div className="sbe-selbox" ref={selBoxRef} />
+          <div className="sbe-guide v" ref={guideVRef} />
+          <div className="sbe-guide h" ref={guideHRef} />
           <div
             className="sbe-frame"
             style={{
@@ -1009,13 +1452,17 @@ export function SiteEditor({
               }
             )
           }
-          onTheme={(patch, what) =>
+          onTheme={(patch, what) => {
+            if (patch.ads !== undefined) {
+              setAds(patch.ads === "on");
+              return;
+            }
             edit(setTheme(site, patch), {
               key: `theme-${Object.keys(patch).join()}`,
               kind: "Tema",
               label: `Tema · ${what}`,
-            })
-          }
+            });
+          }}
           onUploadFont={onUploadFont}
           onUploadImage={onUploadImage}
           selected={selected}

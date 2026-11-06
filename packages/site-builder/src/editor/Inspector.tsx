@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { adItemFields, globalAds } from "../blocks/ads.js";
 import { getBlockDefinition } from "../blocks/registry.js";
 import {
   type Block,
@@ -19,6 +20,7 @@ import {
 } from "../renderer/fonts.js";
 import { themeVars } from "../renderer/styles.js";
 import { FieldInput, type ResolveChannel } from "./fields.js";
+import { formatTranslate, parseTranslate } from "./free-move.js";
 import { Icon, type IconName } from "./icons.js";
 
 type StyleValue = string | number | undefined;
@@ -367,6 +369,85 @@ export function Inspector({
               onUpload={onUploadImage}
               value={site.theme.favicon ?? ""}
             />
+            <div className="sbe-line">
+              <span>Anúncios no site</span>
+              <button
+                className={
+                  site.theme.ads === "on" ? "sbe-toggle on" : "sbe-toggle"
+                }
+                onClick={() =>
+                  onTheme(
+                    { ads: site.theme.ads === "on" ? "off" : "on" },
+                    "Anúncios"
+                  )
+                }
+                type="button"
+              >
+                <span />
+              </button>
+            </div>
+            <p className="sbe-hint">
+              Liga os espaços de anúncio do template. Depois clique num espaço
+              para enviar imagens ou vídeos, ou configure abaixo os anúncios que
+              valem para o site inteiro.
+            </p>
+            {site.theme.ads === "on"
+              ? (["banner", "side"] as const).map(kind => {
+                  const all = globalAds(site.theme);
+                  const cfg = all[kind];
+                  const save = (patch: Partial<typeof cfg>) =>
+                    onTheme(
+                      {
+                        adsConfig: JSON.stringify({
+                          ...all,
+                          [kind]: { ...cfg, ...patch },
+                        }),
+                      },
+                      "Anúncios do site"
+                    );
+                  return (
+                    <div
+                      key={kind}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
+                      }}
+                    >
+                      <h4 className="sbe-h">
+                        {kind === "banner"
+                          ? "Anúncios do site — faixa larga (topo)"
+                          : "Anúncios do site — coluna lateral"}
+                      </h4>
+                      <FieldInput
+                        field={{
+                          itemFields: adItemFields,
+                          key: "items",
+                          kind: "list",
+                          label: "Imagens e vídeos",
+                        }}
+                        onChange={v => save({ items: v as typeof cfg.items })}
+                        onUpload={onUploadImage}
+                        value={cfg.items}
+                      />
+                      <FieldInput
+                        field={{ key: "link", kind: "url", label: "Link" }}
+                        onChange={v => save({ link: String(v ?? "") })}
+                        value={cfg.link}
+                      />
+                      <FieldInput
+                        field={{
+                          key: "seconds",
+                          kind: "number",
+                          label: "Segundos por imagem",
+                        }}
+                        onChange={v => save({ seconds: Number(v) || 6 })}
+                        value={cfg.seconds}
+                      />
+                    </div>
+                  );
+                })
+              : null}
             {(
               Object.keys(THEME_SWATCHES) as (keyof typeof THEME_SWATCHES)[]
             ).map(key => (
@@ -600,6 +681,50 @@ export function Inspector({
             </button>
           </Section>
         ) : null}
+
+        <Section title="Posição">
+          {(["x", "y"] as const).map(axis => {
+            const pos = parseTranslate(st.translate);
+            return (
+              <div className="sbe-line" key={axis}>
+                <span>
+                  {axis === "x" ? "Mover na horizontal" : "Mover na vertical"}
+                </span>
+                <input
+                  className="sbe-num"
+                  onChange={e => {
+                    const n = Number(e.target.value.replace(",", "."));
+                    if (!Number.isFinite(n)) return;
+                    const next = { ...pos, [axis]: n };
+                    set(
+                      "translate",
+                      "Posição"
+                    )(
+                      next.x === 0 && next.y === 0
+                        ? undefined
+                        : formatTranslate(next)
+                    );
+                  }}
+                  type="text"
+                  value={pos[axis]}
+                />
+              </div>
+            );
+          })}
+          <p className="sbe-hint">
+            Arraste o item no canvas (Shift = um eixo só, Alt = sem encaixe) ou
+            use as setas do teclado (Shift = 10 px). Só vale em tela larga.
+          </p>
+          {st.translate ? (
+            <button
+              className="sbe-btn"
+              onClick={() => set("translate", "Posição")(undefined)}
+              type="button"
+            >
+              Voltar ao lugar original
+            </button>
+          ) : null}
+        </Section>
 
         <Section title="Tipografia">
           <FontPicker

@@ -132,10 +132,11 @@ export function FieldInput({
     );
   }
 
-  if (field.kind === "image") {
+  if (field.kind === "image" || field.kind === "media") {
     return (
       <ImageField
         field={field}
+        media={field.kind === "media"}
         onChange={onChange}
         onUpload={onUpload}
         value={str}
@@ -187,11 +188,14 @@ export function FieldInput({
 /** Imagem: arrastar e soltar ou clicar para enviar, ou colar a URL. */
 function ImageField({
   field,
+  media = false,
   onChange,
   onUpload,
   value,
 }: {
   field: FieldDef;
+  /** Aceita também vídeo (anúncios). */
+  media?: boolean;
   onChange: (value: unknown) => void;
   onUpload?: (file: File) => Promise<string>;
   value: string;
@@ -203,8 +207,15 @@ function ImageField({
 
   const send = async (file: File | undefined) => {
     if (!(file && onUpload)) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Envie um arquivo de imagem.");
+    if (
+      !(
+        file.type.startsWith("image/") ||
+        (media && file.type.startsWith("video/"))
+      )
+    ) {
+      setError(
+        media ? "Envie uma imagem ou um vídeo." : "Envie um arquivo de imagem."
+      );
       return;
     }
     setUploading(true);
@@ -242,11 +253,28 @@ function ImageField({
             }}
             type="button"
           >
-            {value ? <img alt="" className="sbe-thumb" src={value} /> : null}
+            {value &&
+            media &&
+            /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(value) ? (
+              <video
+                className="sbe-thumb"
+                muted
+                preload="metadata"
+                src={value}
+              />
+            ) : value ? (
+              <img alt="" className="sbe-thumb" src={value} />
+            ) : null}
             {value ? (
               <span className="cover">
                 <Icon name="upload" size={18} />
-                <b>{uploading ? "Enviando..." : "Trocar imagem"}</b>
+                <b>
+                  {uploading
+                    ? "Enviando..."
+                    : media
+                      ? "Trocar mídia"
+                      : "Trocar imagem"}
+                </b>
               </span>
             ) : (
               <>
@@ -263,7 +291,7 @@ function ImageField({
             )}
           </button>
           <input
-            accept="image/*"
+            accept={media ? "image/*,video/*" : "image/*"}
             hidden
             onChange={e => {
               const file = e.target.files?.[0];
@@ -277,7 +305,9 @@ function ImageField({
       ) : null}
       <input
         onChange={e => onChange(e.target.value)}
-        placeholder="ou cole a URL da imagem"
+        placeholder={
+          media ? "ou cole a URL da imagem/vídeo" : "ou cole a URL da imagem"
+        }
         type="text"
         value={value}
       />
@@ -289,7 +319,7 @@ function ImageField({
           type="button"
         >
           <Icon name="trash-2" size={13} />
-          Remover imagem
+          {media ? "Remover mídia" : "Remover imagem"}
         </button>
       ) : null}
       {error ? <small className="sbe-error">{error}</small> : null}

@@ -91,6 +91,7 @@ const legalBlocks = (items: LegalItem[]): Block[] =>
 const legal = (title: string) => {
   const termos = title === "Termos de Uso";
   return page(termos ? "termos-de-uso" : "politica-de-privacidade", title, [
+    block("adSlot", { size: "banner" }),
     block("heading", {
       align: "left",
       level: "h1",
@@ -108,6 +109,7 @@ const site: Site = {
     slug,
   })),
   categoryLayout: [
+    block("adSlot", { size: "banner" }),
     block("catSlider", { limit: 6 }),
     block("catChips", { title: "Veja também" }),
     block("shortVideos", { items: SHORTS, title: "Vídeos curtos" }),
@@ -163,6 +165,7 @@ const site: Site = {
   name: NAME,
   pages: [
     page("", "Início", [
+      block("adSlot", { size: "banner" }),
       block("newsFront", { relatedCount: 3 }),
       block("newsFeed", { limit: 3, popularTitle: "Mais lidas", skip: 6 }),
       block("shortVideos", {
@@ -178,6 +181,7 @@ const site: Site = {
       }),
     ]),
     page("portal", "Portal", [
+      block("adSlot", { size: "banner" }),
       block("hubFront", {}),
       block("hubSections", {
         columns: [
@@ -207,6 +211,7 @@ const site: Site = {
     ]),
     page("esporte", "Esporte", [
       skin("ge"),
+      block("adSlot", { size: "banner" }),
       block("scoreStrip", {}),
       block("mosaic", { categorySlug: "esporte" }),
       block("shortVideos", { items: SHORTS, title: "Vídeos curtos" }),
@@ -214,6 +219,7 @@ const site: Site = {
     ]),
     page("entretenimento", "Entretenimento", [
       skin("gshow"),
+      block("adSlot", { size: "banner" }),
       block("catSlider", { categorySlug: "cultura", limit: 6 }),
       block("catChips", { title: "Veja também" }),
       block("shortVideos", { items: SHORTS, title: "Vídeos curtos" }),
@@ -221,6 +227,7 @@ const site: Site = {
     ]),
     page("receitas", "Receitas", [
       skin("receitas"),
+      block("adSlot", { size: "banner" }),
       block("mosaic", { categorySlug: "saude" }),
       block("roundChips", { title: "Navegue por categoria" }),
       block("newsFeed", { limit: 3, skip: 0 }),
@@ -233,6 +240,7 @@ const site: Site = {
     ]),
     page("lifestyle", "Lifestyle", [
       skin("gnt"),
+      block("adSlot", { size: "banner" }),
       block("hubFront", {}),
       block("hubSections", {
         columns: [
@@ -247,6 +255,7 @@ const site: Site = {
     ]),
     page("tv", "TV", [
       skin("redeglobo"),
+      block("adSlot", { size: "banner" }),
       block("tvHero", {}),
       block("roundChips", { title: "Atalhos" }),
       block("newsFeed", { limit: 3, skip: 0 }),
@@ -259,6 +268,7 @@ const site: Site = {
       }),
     ]),
     page("editorias", "Editorias", [
+      block("adSlot", { size: "banner" }),
       block("heading", {
         align: "left",
         level: "h1",
@@ -275,6 +285,7 @@ const site: Site = {
       }),
     ]),
     page("pesquisa", "Resultado da Pesquisa", [
+      block("adSlot", { size: "banner" }),
       block("categorySearch", {}),
       block("categoryHeader", {
         backLabel: "Início",
@@ -296,11 +307,13 @@ const site: Site = {
     legal("Política de Privacidade"),
   ],
   postLayout: [
+    block("adSlot", { size: "banner" }),
     block("postHeader", { showCover: "no", watermark: "" }),
     block("twoColumns", {}, [
       block("postContent", { showMeta: "yes" }),
       block("sidebarBanner", { image: "", url: "/" }),
     ]),
+    block("adSlot", { size: "banner" }),
     block("postList", { limit: 4, title: "Leia também" }),
   ],
   posts,

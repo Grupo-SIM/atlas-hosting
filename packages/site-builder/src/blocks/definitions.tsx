@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { z } from "zod";
 import { cssUrl } from "../renderer/central.js";
+import { AdBox, adBlocks, adItemFields, adItemsSchema } from "./ads.js";
 import { centralBlocks, Eyebrow } from "./central.js";
 import { defineBlock } from "./define.js";
 import {
@@ -141,8 +142,8 @@ const header = defineBlock(
             {
               "--sb-hh": `${p.height}px`,
               "--sb-hs": p.height / 77,
-              "--sb-ix": `${p.imgX}%`,
-              "--sb-lx": `${p.logoX}%`,
+              "--sb-ix": p.imgX / 100,
+              "--sb-lx": p.logoX / 100,
               "--sb-menu-bg": p.menuBg,
             } as CSSProperties
           }
@@ -1513,6 +1514,9 @@ const newsFront = defineBlock(
 
 const newsFeed = defineBlock(
   z.object({
+    adItems: adItemsSchema,
+    adLink: str(),
+    adSeconds: z.coerce.number().min(2).max(60).default(6).catch(6),
     fromCategory: z.enum(["yes", "no"]).default("no"),
     limit: z.coerce.number().default(8),
     moreLabel: str(),
@@ -1538,6 +1542,19 @@ const newsFeed = defineBlock(
         options: SHOW_OPTIONS,
       },
       { key: "popularTitle", kind: "text", label: "Título da coluna lateral" },
+      {
+        itemFields: adItemFields,
+        key: "adItems",
+        kind: "list",
+        label:
+          "Anúncio abaixo da coluna lateral (imagens/vídeos; só com Anúncios ligados)",
+      },
+      { key: "adLink", kind: "url", label: "Anúncio lateral — link" },
+      {
+        key: "adSeconds",
+        kind: "number",
+        label: "Anúncio lateral — segundos por imagem",
+      },
       {
         key: "moreLabel",
         kind: "text",
@@ -1594,16 +1611,26 @@ const newsFeed = defineBlock(
             })}
           </div>
           {p.showSide === "yes" ? (
-            <aside className="sb-news-side">
-              <h4>{p.popularTitle}</h4>
-              <ol>
-                {popular.map(post => (
-                  <li key={post.id}>
-                    <a href={href(ctx, postPath(post))}>{post.title}</a>
-                  </li>
-                ))}
-              </ol>
-            </aside>
+            <div className="sb-news-sidecol">
+              <aside className="sb-news-side">
+                <h4>{p.popularTitle}</h4>
+                <ol>
+                  {popular.map(post => (
+                    <li key={post.id}>
+                      <a href={href(ctx, postPath(post))}>{post.title}</a>
+                    </li>
+                  ))}
+                </ol>
+              </aside>
+              <AdBox
+                ctx={ctx}
+                items={p.adItems}
+                label="Publicidade"
+                link={p.adLink}
+                seconds={p.adSeconds}
+                size="side"
+              />
+            </div>
           ) : null}
           {p.moreLabel && extra.length > 0 ? (
             <button
@@ -2217,6 +2244,7 @@ export const blockDefinitions: BlockDefinition[] = [
   shortVideos,
   ...portalHubBlocks,
   ...centralBlocks,
+  ...adBlocks,
   newsSection,
   categoryHeader,
   categorySearch,

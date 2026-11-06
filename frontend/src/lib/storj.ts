@@ -135,3 +135,33 @@ export async function uploadSiteBuilderFont(
   await upload.done();
   return key;
 }
+
+const VIDEO_TYPES: Record<string, string> = {
+  mp4: "video/mp4",
+  webm: "video/webm",
+};
+
+/** Vídeo de anúncio do Criador de Sites (arquivo cru). Devolve a chave no bucket; a extensão fica na chave. */
+export async function uploadSiteBuilderVideo(
+  file: Buffer | ArrayBuffer,
+  ext: keyof typeof VIDEO_TYPES
+) {
+  if (!ACCESS_KEY_ID || !SECRET_ACCESS_KEY || !BUCKET || !ENDPOINT) {
+    throw new Error("Configurações do Storj incompletas no .env");
+  }
+
+  const body = file instanceof ArrayBuffer ? Buffer.from(file) : file;
+  const key = `site-builder/ads/${uuidv4()}.${ext}`;
+  const upload = new Upload({
+    client: s3Client,
+    params: {
+      Body: body,
+      Bucket: BUCKET,
+      ContentType: VIDEO_TYPES[ext],
+      Key: key,
+    },
+  });
+
+  await upload.done();
+  return key;
+}
