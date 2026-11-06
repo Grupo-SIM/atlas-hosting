@@ -141,7 +141,7 @@ const site: Site = {
             text: "Hábitos e reflexões para viver a viagem com mais leveza.",
           },
           {
-            src: img("1507525428034-b723cf961d3e", 800),
+            src: img("1488646953014-85cb44e25828", 800),
             text: "Bagagem, tecnologia e itens que realmente valem o espaço.",
           },
         ],
@@ -311,7 +311,7 @@ const site: Site = {
     block("twoColumns", {}, [
       block("postContent", { showMeta: "yes" }),
       block("sidebarBanner", {
-        image: img("1469854523086-cc02fe5d8800", 800),
+        image: img("1500530855697-b586d89ba3ee", 800),
         url: "/categorias/",
       }),
     ]),
@@ -326,7 +326,10 @@ const site: Site = {
     fontAccent: "'Poppins', sans-serif",
     fontBody: "'DM Sans', sans-serif",
     fontHeading: "'Lora', sans-serif",
+    footerBg: "#1b2430",
+    linksBg: HERO,
     muted: "#6b7280",
+    variant: "journal",
   },
 };
 

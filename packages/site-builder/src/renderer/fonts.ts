@@ -1,3 +1,5 @@
+import { isSpy, SPY_EXTRA_FONTS } from "./spyhacker.js";
+
 /** Fontes oferecidas no tema (Google Fonts). O valor vai direto para `fontHeading`/`fontBody`. */
 export const SITE_FONTS = [
   "Bai Jamjuree",
@@ -26,8 +28,12 @@ export function fontStylesheet(theme: Record<string, string>): string | null {
     if (found && !names.includes(found)) names.push(found);
   }
   if (names.length === 0) return null;
+  // A variante spyhacker usa fontes extras em alguns blocos (fixas, nunca texto do usuário).
+  if (isSpy(theme))
+    for (const extra of SPY_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
   const families = names
-    .map(n => `family=${n.replaceAll(" ", "+")}:wght@400;500;700`)
+    .map(n => `family=${n.replaceAll(" ", "+")}:wght@300;400;500;600;700`)
     .join("&");
   return `https://fonts.googleapis.com/css2?${families}&display=swap`;
 }

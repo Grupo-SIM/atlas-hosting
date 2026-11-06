@@ -52,8 +52,15 @@ aba IA ("em breve"), canvas com desktop/tablet/celular + zoom, desfazer/refazer,
 - Rotas (estilo WordPress): `/category/:slug`, depois página (`/:slug`, home = slug vazio), depois post (`/:slug`).
   Páginas, posts e o prefixo `category` dividem o mesmo espaço de URLs (`isSlugTaken`).
 - Template = dado em `src/templates/<id>/`, registrado em `src/templates/index.ts`. `getTemplate` devolve cópia profunda.
-  Lista atual: `blog-viagens` (genérico, imagens Unsplash). `spyhacker` fica em `legacyTemplates`: some da tela de escolha, mas
+  Lista atual: `blog-viagens` (genérico, imagens Unsplash) e `portal-noticias` (portal estilo G1: variante `portal` em
+  `renderer/portal.ts` + blocos `newsFront`/`newsFeed`/`shortVideos`, header com `topLinks`/`featuredLabel`, e página `/portal/` (vitrine) com blocos `hub*` em `blocks/portal-hub.tsx`; páginas de seção `/esporte/`, `/entretenimento/`, `/receitas/`, `/lifestyle/`, `/tv/` que trocam a cor da marca via bloco `skinBar` (CSS `:has(.sb-skin[data-skin])` em `portal.ts`); textos legais reaproveitados do blog). `spyhacker` fica em `legacyTemplates`: some da tela de escolha, mas
   `getTemplate` ainda o resolve — sites criados com ele usam o original para "restaurar" no editor.
+- Variante `spyhacker` (`theme.variant = "spyhacker"`, CSS em `renderer/spyhacker.ts`, escopo `.sb-sh`): medidas copiadas
+  do 007spyhacker.com (Elementor) para cabeçalho/menu, `/categorias/`, `/category/:slug`, posts e rodapé. Os dados do
+  template (categorias, capas, datas, títulos, resumos) vêm da API do WordPress do site original. Blocos com props para isso:
+  `categoryGrid.items` (ordem/rótulo dos cards), `featuredPost.showImage`/`buttonLabel`, `postList.cardStyle`/`includeCurrent`,
+  `postShare` e `postNav`. No celular o menu vira gaveta lateral (checkbox `#sb-burger` + label `.sb-burger-backdrop`
+  para fechar), com fundo em `header.menuBg` (só `#rrggbb`, vira a var `--sb-menu-bg`). Sites sem a variante não mudam.
 - `react-dom/static` (e não `react-dom/server`) renderiza o HTML estático: o Next recusa `react-dom/server` em código do app router.
 - Links digitados pelo usuário passam por `safeUrl` (bloqueia `javascript:`/`data:`). Use-o em todo `href` novo vindo de props.
 

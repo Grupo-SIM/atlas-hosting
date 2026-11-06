@@ -3,6 +3,7 @@
 import { Eye, Search } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useMemo, useState } from "react";
+import UseTemplateButton from "./UseTemplateButton";
 
 export interface GalleryTemplate {
   description: string;
@@ -93,10 +94,11 @@ export default function TemplateGallery({
                 style={{ background: t.previewBackground }}
               >
                 {t.thumb}
-                <Link
-                  aria-label={`Usar o template ${t.name}`}
+                <UseTemplateButton
+                  ariaLabel={`Usar o template ${t.name}`}
                   className="absolute inset-0"
-                  href={`/criador-de-sites/novo/${t.id}`}
+                  templateId={t.id}
+                  templateName={t.name}
                 />
               </div>
               <div className="flex flex-1 flex-col gap-2 px-4 py-3.5">
@@ -118,12 +120,13 @@ export default function TemplateGallery({
                   ))}
                 </div>
                 <div className="mt-auto flex flex-wrap gap-2 pt-1.5">
-                  <Link
-                    className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[13px]"
-                    href={`/criador-de-sites/novo/${t.id}`}
+                  <UseTemplateButton
+                    className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[13px] disabled:opacity-60"
+                    templateId={t.id}
+                    templateName={t.name}
                   >
                     Usar este template
-                  </Link>
+                  </UseTemplateButton>
                   <Link
                     className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-3 py-2 text-[13px]"
                     href={`/criador-de-sites/preview/${t.id}`}

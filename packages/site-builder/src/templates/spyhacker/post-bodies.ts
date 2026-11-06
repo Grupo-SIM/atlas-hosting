@@ -2036,7 +2036,7 @@ export const BODIES: Record<string, BodyBlock[]> = {
     {
       props: {
         align: "left",
-        level: "h3",
+        level: "h4",
         subtitle: "",
         text: "Veja como usar o Solucionador de Problemas com IA:",
       },
@@ -2079,7 +2079,7 @@ export const BODIES: Record<string, BodyBlock[]> = {
     {
       props: {
         align: "left",
-        level: "h3",
+        level: "h4",
         subtitle: "",
         text: "Como desativar plugins pelo hPanel:",
       },
@@ -2135,7 +2135,7 @@ export const BODIES: Record<string, BodyBlock[]> = {
     {
       props: {
         align: "left",
-        level: "h3",
+        level: "h4",
         subtitle: "",
         text: "Como alterar o tema pelo painel do WordPress",
       },
@@ -2150,7 +2150,7 @@ export const BODIES: Record<string, BodyBlock[]> = {
     {
       props: {
         align: "left",
-        level: "h3",
+        level: "h4",
         subtitle: "",
         text: "Para fazer isso, siga os passos:",
       },
@@ -2165,7 +2165,7 @@ export const BODIES: Record<string, BodyBlock[]> = {
     {
       props: {
         align: "left",
-        level: "h3",
+        level: "h4",
         subtitle: "",
         text: "Como mudar o tema via phpMyAdmin",
       },

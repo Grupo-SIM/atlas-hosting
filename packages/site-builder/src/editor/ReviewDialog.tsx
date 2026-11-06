@@ -9,8 +9,10 @@ export interface PublishConfig {
   askPassword?: boolean;
   /** Endereço atual do site; `null` quando ainda não foi publicado. */
   domain: string | null;
-  /** Para onde ir definir o endereço quando ainda não há publicação. */
-  setupHref: string;
+  /** Abre a configuração de endereço/servidor (modal do app) quando ainda não há publicação. */
+  onSetup?: () => void;
+  /** Alternativa à `onSetup`: para onde ir definir o endereço. */
+  setupHref?: string;
 }
 
 interface Props {
@@ -128,6 +130,15 @@ export function ReviewDialog({
             >
               <Icon name="rocket" size={14} />
               {publishing ? "Publicando..." : "Publicar agora"}
+            </button>
+          ) : publish.onSetup ? (
+            <button
+              className="sbe-btn round sbe-lime"
+              onClick={publish.onSetup}
+              type="button"
+            >
+              <Icon name="rocket" size={14} />
+              Definir endereço e publicar
             </button>
           ) : (
             <a

@@ -6,7 +6,10 @@ import type { Block, Site } from "../model/index.js";
 import { cleanStyle, elementStylesCss } from "../model/style.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { fontStylesheet } from "./fonts.js";
+import { isJournal, journalCss, journalVars } from "./journal.js";
+import { isPortal, portalCss, portalVars } from "./portal.js";
 import { type Route, resolveRoute } from "./routes.js";
+import { isSpy, spyCss } from "./spyhacker.js";
 import { siteCss, themeVars } from "./styles.js";
 
 export interface SiteRendererProps {
@@ -56,6 +59,9 @@ export function SiteRenderer({
     (route.kind === "page" && route.page.wide === true);
   const prose = route.kind === "page" && route.page.prose === true;
   const bare = route.kind === "page" && route.page.bare === true;
+  const journal = isJournal(site.theme);
+  const portal = isPortal(site.theme);
+  const spy = isSpy(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -76,12 +82,30 @@ export function SiteRenderer({
         narrow ? "sb-narrow" : "",
         wide ? "sb-wide" : "",
         prose ? "sb-prose" : "",
+        journal ? "sb-j" : "",
+        journal && bare ? "sb-bare" : "",
+        portal ? "sb-pt" : "",
+        spy ? "sb-sh" : "",
       ]
         .filter(Boolean)
         .join(" ")}
-      style={themeVars(site.theme) as CSSProperties}
+      style={
+        {
+          ...themeVars(site.theme),
+          ...(journal ? journalVars(site.theme) : {}),
+          ...(portal ? portalVars(site.theme) : {}),
+        } as CSSProperties
+      }
     >
-      <style>{siteCss}</style>
+      <style>
+        {journal
+          ? siteCss + journalCss
+          : portal
+            ? siteCss + portalCss
+            : spy
+              ? siteCss + spyCss
+              : siteCss}
+      </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}
       <main>

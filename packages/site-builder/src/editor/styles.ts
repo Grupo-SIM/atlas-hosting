@@ -58,7 +58,7 @@ export const editorCss = `
 .sbe-spacer{flex:1}
 
 .sbe-canvas{flex:1;overflow:auto;background:#f3f1ec;padding:16px;min-height:0}
-.sbe-frame{position:relative;isolation:isolate;margin:0 auto;border-radius:10px;overflow:clip;box-shadow:0 0 0 1px var(--field),0 10px 30px rgba(30,28,24,.08)}
+.sbe-frame{position:relative;isolation:isolate;contain:layout;margin:0 auto;border-radius:10px;overflow:clip;box-shadow:0 0 0 1px var(--field),0 10px 30px rgba(30,28,24,.08)}
 .sbe-canvas .sb-block{cursor:default}
 .sbe-frame .sb-block[data-block-type=whatsappFloat]{position:sticky;bottom:0;height:0;z-index:4}
 .sbe-frame .sb-float{position:absolute}

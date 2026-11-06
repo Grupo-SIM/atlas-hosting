@@ -884,7 +884,24 @@ export function SiteEditor({
               select(id);
             }}
             onPublish={pw => void doPublish(pw)}
-            publish={publish}
+            publish={{
+              ...publish,
+              // Salva antes de abrir a configuração: ela publica o que está gravado.
+              onSetup: publish.onSetup
+                ? () => {
+                    void save().then(ok => {
+                      if (!ok) {
+                        setPublishError(
+                          "Não foi possível salvar antes de publicar."
+                        );
+                        return;
+                      }
+                      setReview(false);
+                      publish.onSetup?.();
+                    });
+                  }
+                : undefined,
+            }}
             publishing={publishing}
             subtitle={changesLabel}
           />

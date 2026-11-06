@@ -259,6 +259,16 @@ export function Inspector({
                 value={site.name}
               />
             </div>
+            <FieldInput
+              field={{
+                key: "favicon",
+                kind: "image",
+                label: "Favicon (ícone da aba no site publicado)",
+              }}
+              onChange={v => onTheme({ favicon: String(v ?? "") }, "Favicon")}
+              onUpload={onUploadImage}
+              value={site.theme.favicon ?? ""}
+            />
             {(
               Object.keys(THEME_SWATCHES) as (keyof typeof THEME_SWATCHES)[]
             ).map(key => (

@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { prerender } from "react-dom/static";
 import type { Site } from "../model/index.js";
 import { FX_RUNTIME } from "../renderer/fx-runtime.js";
+import { NAV_RUNTIME } from "../renderer/nav-runtime.js";
 import { SiteRenderer } from "../renderer/SiteRenderer.js";
 import { themeVars } from "../renderer/styles.js";
 
@@ -43,6 +44,11 @@ async function document(
 ): Promise<string> {
   const body = await render(path, site);
   const bg = themeVars(site.theme)["--sb-bg"];
+  // Favicon do usuário (guardado no tema); só URL http(s), caminho do site ou imagem embutida.
+  const favicon = site.theme.favicon?.trim() ?? "";
+  const faviconTag = /^(https?:\/\/|\/|data:image\/)/.test(favicon)
+    ? `<link rel="icon" href="${escapeHtml(favicon)}">`
+    : "";
   const pageTitle =
     title && title !== site.name ? `${title} — ${site.name}` : site.name;
   return [
@@ -52,6 +58,7 @@ async function document(
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     `<title>${escapeHtml(pageTitle)}</title>`,
+    faviconTag,
     description
       ? `<meta name="description" content="${escapeHtml(description)}">`
       : "",
@@ -61,6 +68,7 @@ async function document(
     body,
     `<script>${filterScript}</script>`,
     `<script>${FX_RUNTIME};window.sbFx()</script>`,
+    `<script>${NAV_RUNTIME}</script>`,
     "</body>",
     "</html>",
   ].join("");

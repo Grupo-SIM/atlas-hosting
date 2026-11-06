@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=DM+Sans:wght@400;500;600&family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#faf7f2;color:#1f2937;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#c4553a;text-decoration:none}
+a:hover{color:#1f2937}
+h1,h2,h3,h4,p{margin:0}
+input,select,button{font-family:inherit}
+</style>
+</helmet>
+
+<div style="position:relative;overflow-x:clip;background:#faf7f2;color:#1f2937;font-size:17px;line-height:1.55;min-height:100vh">
+
+  <sc-if value="{{ showChrome }}" hint-placeholder-val="{{ true }}">
+  <header data-screen-label="Header" style="position:absolute;top:0;left:0;right:0;z-index:20">
+    <div style="width:min(1280px,100% - 48px);margin-inline:auto;padding-top:28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <a href="#" onClick="{{ goHome }}" style="{{ logoStyle }}">Meu Diário</a>
+      <nav style="{{ navStyle }}">
+        <div style="position:relative" onMouseEnter="{{ openMenu }}" onMouseLeave="{{ closeMenu }}">
+          <a href="#" onClick="{{ goCategorias }}" style="{{ navLinkStyle }}">
+            Categorias
+            <span style="width:0;height:0;border:4px solid transparent;border-top-color:currentColor;border-bottom:0;margin-top:2px;opacity:.8"></span>
+          </a>
+          <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);padding-top:12px;z-index:30">
+              <div style="min-width:240px;padding:8px;background:#fff;border-radius:16px;box-shadow:0 20px 50px rgba(31,41,55,.18);display:flex;flex-direction:column">
+                <sc-for list="{{ categories }}" as="c" hint-placeholder-count="6">
+                  <a href="#" onClick="{{ c.go }}" style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-radius:10px;color:#1f2937;font-size:15px;font-weight:500" style-hover="background:#faf1ea;color:#c4553a">{{ c.name }}<span style="color:#e76f51;font-size:13px">→</span></a>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </nav>
+      <a href="#" onClick="{{ goLinks }}" style="{{ ctaStyle }}" style-hover="background:#e76f51;color:#fff">Fale comigo</a>
+    </div>
+  </header>
+  </sc-if>
+
+  <!-- ================= INÍCIO ================= -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <section data-screen-label="Início · Hero" style="position:relative;min-height:max(100vh,680px);display:flex;align-items:flex-end;background-image:url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=2000&amp;q=80&amp;auto=format&amp;fit=crop');background-size:cover;background-position:center">
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(17,24,39,.55) 0%,rgba(17,24,39,.1) 35%,rgba(17,24,39,.55) 75%,rgba(17,24,39,.8) 100%)"></div>
+    <div style="position:relative;width:min(1280px,100% - 48px);margin-inline:auto;padding-block:0 120px">
+      <h1 style="max-width:860px;font-family:'Lora',serif;font-weight:600;font-size:clamp(2.4rem,5vw,4.25rem);line-height:1.08;letter-spacing:-.015em;color:#fff;text-wrap:balance">Histórias, roteiros e dicas para você viajar melhor, gastando menos e vivendo mais cada lugar.</h1>
+      <div style="display:flex;margin-top:36px">
+        <a href="#conteudos" onClick="{{ toConteudos }}" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:999px;background:#e76f51;color:#fff;font-family:'Poppins',sans-serif;font-weight:600;font-size:17px;box-shadow:0 10px 30px rgba(231,111,81,.35)" style-hover="background:#fff;color:#1f2937">Ler os roteiros →</a>
+      </div>
+    </div>
+  </section>
+
+  <div style="width:min(1280px,100% - 48px);margin-inline:auto;padding-top:112px">
+    <h2 style="font-family:'Lora',serif;font-weight:600;font-size:clamp(2.2rem,4vw,3.5rem);line-height:1.08;letter-spacing:-.015em">Do planejamento à estrada</h2>
+    <p style="margin-top:14px;color:#6b7280;font-size:19px">Escolha um tema e comece a planejar a próxima viagem.</p>
+  </div>
+
+  <section style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:40px 24px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:24px">
+      <sc-for list="{{ categories }}" as="c" hint-placeholder-count="6">
+        <a href="#" onClick="{{ c.go }}" style="display:flex;flex-direction:column;gap:18px;color:#1f2937" style-hover="color:#1f2937">
+          <div style="position:relative;aspect-ratio:4/3;border-radius:20px;overflow:hidden;background:#ece5da">
+            <img src="{{ c.src }}" alt="{{ c.name }}" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.2,.7,.2,1)" style-hover="transform:scale(1.06)">
+            <span style="position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;background:#fff;color:#e76f51;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600">↗</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;padding-inline:4px">
+            <h3 style="font-family:'Lora',serif;font-weight:600;font-size:26px;line-height:1.15">{{ c.name }}</h3>
+            <p style="color:#6b7280;font-size:16px;line-height:1.5;text-wrap:pretty">{{ c.text }}</p>
+          </div>
+        </a>
+      </sc-for>
+    </div>
+    <div style="display:flex;justify-content:center;margin-top:48px">
+      <a href="#" onClick="{{ goCategorias }}" style="padding:14px 28px;border-radius:999px;border:1.5px solid #1f2937;color:#1f2937;font-family:'Poppins',sans-serif;font-weight:600;font-size:15px" style-hover="background:#1f2937;color:#fff">Ver todas as categorias</a>
+    </div>
+  </section>
+
+  <div style="position:relative;width:min(1280px,100% - 48px);margin-inline:auto;padding-top:120px;text-align:center">
+    <sc-if value="{{ showWatermark }}" hint-placeholder-val="{{ true }}">
+      <span aria-hidden="true" style="position:absolute;left:50%;top:40px;transform:translateX(-50%);font-family:'Lora',serif;font-weight:700;font-size:clamp(5rem,14vw,12rem);line-height:1;white-space:nowrap;color:transparent;-webkit-text-stroke:1.5px rgba(31,41,55,.09);pointer-events:none;user-select:none">Explore</span>
+    </sc-if>
+    <h2 style="position:relative;font-family:'Lora',serif;font-weight:600;font-size:clamp(2.2rem,4vw,3.5rem);line-height:1.08;letter-spacing:-.015em;text-wrap:balance">Viajar é a melhor forma de aprender</h2>
+  </div>
+
+  <section style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:48px 32px">
+    <div style="position:relative;border-radius:28px;overflow:hidden;min-height:460px;display:flex;align-items:flex-end;background-image:url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=2000&amp;q=80&amp;auto=format&amp;fit=crop');background-size:cover;background-position:center">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(17,24,39,0) 20%,rgba(17,24,39,.78) 100%)"></div>
+      <div style="position:relative;width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));padding:40px 24px">
+        <sc-for list="{{ stats }}" as="s" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px;color:#fff;text-align:center">
+            <strong style="font-family:'Lora',serif;font-weight:600;font-size:clamp(3rem,6vw,5rem);line-height:1;letter-spacing:-.02em">{{ s.value }}<span style="color:#f4a48d;font-size:.6em;margin-left:2px">{{ s.suffix }}</span></strong>
+            <span style="font-family:'Poppins',sans-serif;font-size:14px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#fff">{{ s.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:72px">
+    <a href="#" onClick="{{ homeFeatured.go }}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));background:#fff;border-radius:28px;overflow:hidden;color:#1f2937;box-shadow:0 1px 0 rgba(31,41,55,.06),0 24px 60px -30px rgba(31,41,55,.25)" style-hover="color:#1f2937">
+      <div style="min-height:420px;background:#ece5da;overflow:hidden">
+        <img src="{{ homeFeatured.cover }}" alt="{{ homeFeatured.title }}" style="width:100%;height:100%;object-fit:cover;display:block">
+      </div>
+      <div style="display:flex;flex-direction:column;justify-content:center;gap:24px;padding:clamp(32px,5vw,64px)">
+        <h3 style="display:flex;align-items:center;gap:14px;font-family:'Poppins',sans-serif;font-weight:600;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#c4553a">Melhor Post<span style="flex:1;height:1px;background:#f0d5cb"></span></h3>
+        <p style="font-family:'Lora',serif;font-weight:600;font-size:clamp(1.9rem,3vw,2.75rem);line-height:1.12;letter-spacing:-.01em;text-wrap:balance">{{ homeFeatured.title }}</p>
+        <div style="display:flex">
+          <span style="padding:13px 26px;border-radius:999px;background:#1f2937;color:#fff;font-family:'Poppins',sans-serif;font-weight:600;font-size:15px">Ver Mais</span>
+        </div>
+      </div>
+    </a>
+  </section>
+
+  <section style="background:#f3ede4;padding-block:104px">
+    <div style="width:min(1280px,100% - 48px);margin-inline:auto">
+      <div style="text-align:center;max-width:720px;margin-inline:auto">
+        <h2 style="font-family:'Lora',serif;font-weight:600;font-size:clamp(2.2rem,4vw,3.5rem);line-height:1.08;letter-spacing:-.015em">O que dizem os leitores</h2>
+        <p style="margin-top:14px;color:#6b7280;font-size:19px">Quem acompanha sabe: aqui o conteúdo sai do papel.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:20px;margin-top:56px">
+        <sc-for list="{{ testimonials }}" as="t" hint-placeholder-count="4">
+          <figure style="margin:0;display:flex;flex-direction:column;justify-content:space-between;gap:32px;padding:32px;background:#fff;border-radius:22px">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <span style="font-family:'Lora',serif;font-size:56px;line-height:.6;color:#e76f51;height:28px">“</span>
+              <blockquote style="margin:0;font-family:'Lora',serif;font-style:italic;font-weight:500;font-size:18px;line-height:1.5;color:#1f2937;text-wrap:pretty">{{ t.quote }}</blockquote>
+            </div>
+            <figcaption style="display:flex;align-items:center;gap:12px;padding-top:20px;border-top:1px solid #efe8de">
+              <img src="{{ t.avatar }}" alt="{{ t.name }}" style="width:48px;height:48px;border-radius:50%;object-fit:cover">
+              <div style="display:flex;flex-direction:column">
+                <strong style="font-weight:600;font-size:16px">{{ t.name }}</strong>
+                <span style="font-size:14px;color:#6b7280">{{ t.role }}</span>
+              </div>
+            </figcaption>
+          </figure>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:120px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:clamp(40px,6vw,96px);align-items:center">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <h2 style="font-family:'Lora',serif;font-weight:600;font-size:clamp(2.2rem,4vw,3.5rem);line-height:1.08;letter-spacing:-.015em;text-wrap:balance">Uma comunidade de pessoas curiosas pelo mundo</h2>
+      <p style="max-width:520px;color:#4b5563;font-size:19px;line-height:1.6;text-wrap:pretty">Um espaço para quem gosta de planejar, explorar e compartilhar. Cada texto nasce de uma experiência real e é escrito para ajudar você a ir mais longe.</p>
+      <div style="display:flex;margin-top:8px">
+        <a href="#" onClick="{{ goCategorias }}" style="padding:15px 30px;border-radius:999px;background:#e76f51;color:#fff;font-family:'Poppins',sans-serif;font-weight:600;font-size:16px" style-hover="background:#1f2937;color:#fff">Ver Mais →</a>
+      </div>
+    </div>
+    <div style="aspect-ratio:4/5;max-height:620px;border-radius:28px;overflow:hidden;background:#ece5da">
+      <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&amp;q=80&amp;auto=format&amp;fit=crop" alt="" style="width:100%;height:100%;object-fit:cover;display:block">
+    </div>
+  </section>
+
+  <section id="conteudos" ref="{{ conteudosRef }}" style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:24px 112px">
+    <h2 style="text-align:center;font-family:'Lora',serif;font-weight:600;font-size:clamp(2.2rem,4vw,3.5rem);line-height:1.08;letter-spacing:-.015em">Todos os conteúdos</h2>
+    <form onSubmit="{{ onSearch }}" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:40px;padding:10px;background:#fff;border-radius:999px;box-shadow:0 1px 0 rgba(31,41,55,.06),0 16px 40px -24px rgba(31,41,55,.25)">
+      <input type="search" value="{{ q }}" onChange="{{ onQ }}" placeholder="Digite aqui..." style="flex:1 1 260px;min-width:0;border:0;outline:none;background:transparent;padding:12px 20px;font-size:16px;color:#1f2937">
+      <div style="display:flex;align-items:center;gap:10px;padding-left:16px;border-left:1px solid #efe8de">
+        <strong style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b7280">Categorias</strong>
+        <select value="{{ cat }}" onChange="{{ onCat }}" style="border:0;outline:none;background:#faf7f2;border-radius:999px;padding:11px 16px;font-size:15px;color:#1f2937;cursor:pointer">
+          <option value="">Selecionar categoria</option>
+          <sc-for list="{{ categories }}" as="c" hint-placeholder-count="6">
+            <option value="{{ c.slug }}">{{ c.name }}</option>
+          </sc-for>
+        </select>
+      </div>
+      <button type="submit" style="border:0;border-radius:999px;padding:12px 28px;background:#1f2937;color:#fff;font-family:'Poppins',sans-serif;font-weight:600;font-size:15px;cursor:pointer" style-hover="background:#e76f51">Pesquisar</button>
+    </form>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:48px;margin-top:48px;align-items:start">
+      <div style="min-width:0" onMouseEnter="{{ pause }}" onMouseLeave="{{ resume }}">
+        <div style="overflow:hidden;border-radius:22px">
+          <div style="{{ trackStyle }}">
+            <sc-for list="{{ slides }}" as="p" hint-placeholder-count="3">
+              <a href="#" onClick="{{ p.go }}" style="flex:0 0 100%;min-width:0;display:flex;flex-direction:column;gap:12px;color:#1f2937" style-hover="color:#1f2937">
+                <div style="aspect-ratio:16/10;border-radius:22px;overflow:hidden;background:#ece5da">
+                  <img src="{{ p.cover }}" alt="{{ p.title }}" style="width:100%;height:100%;object-fit:cover;display:block">
+                </div>
+                <small style="margin-top:8px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#c4553a">{{ p.catName }}</small>
+                <h3 style="font-family:'Lora',serif;font-weight:600;font-size:clamp(1.75rem,2.6vw,2.4rem);line-height:1.12;letter-spacing:-.01em">{{ p.title }}</h3>
+                <p style="color:#6b7280;font-size:17px;text-wrap:pretty">{{ p.excerpt }}</p>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:20px">
+          <sc-for list="{{ dots }}" as="d" hint-placeholder-count="3">
+            <sc-if value="{{ d.on }}" hint-placeholder-val="{{ false }}">
+              <button type="button" aria-label="Notícia" onClick="{{ d.go }}" style="width:28px;height:8px;padding:0;border:0;border-radius:999px;background:#e76f51;cursor:pointer"></button>
+            </sc-if>
+            <sc-if value="{{ d.off }}" hint-placeholder-val="{{ true }}">
+              <button type="button" aria-label="Notícia" onClick="{{ d.go }}" style="width:8px;height:8px;padding:0;border:0;border-radius:999px;background:#d9cfc2;cursor:pointer"></button>
+            </sc-if>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ side }}" as="p" hint-placeholder-count="3">
+          <a href="#" onClick="{{ p.go }}" style="display:flex;gap:20px;align-items:center;padding-block:22px;border-bottom:1px solid #e8e0d4;color:#1f2937" style-hover="color:#c4553a">
+            <div style="width:150px;flex:none;aspect-ratio:1/1;border-radius:16px;overflow:hidden;background:#ece5da">
+              <img src="{{ p.cover }}" alt="{{ p.title }}" style="width:100%;height:100%;object-fit:cover;display:block">
+            </div>
+            <span style="display:flex;flex-direction:column;gap:10px;min-width:0">
+              <small style="font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6b7280">{{ p.catName }}</small>
+              <h3 style="font-family:'Lora',serif;font-weight:600;font-size:clamp(1.3rem,1.8vw,1.6rem);line-height:1.2;text-wrap:balance">{{ p.title }}</h3>
+              <em style="font-style:normal;font-family:'Poppins',sans-serif;font-weight:600;font-size:14px;color:#c4553a">Ver mais »</em>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+  </sc-if>
+
+  <!-- ================= CATEGORIAS ================= -->
+  <sc-if value="{{ isCategorias }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Categorias" style="width:min(1280px,100% - 48px);margin-inline:auto;padding-top:168px">
+    <h1 style="font-family:'Lora',serif;font-weight:600;font-size:clamp(2.6rem,5vw,4.25rem);line-height:1.05;letter-spacing:-.02em">Categorias</h1>
+    <p style="margin-top:14px;color:#6b7280;font-size:19px">Escolha sobre o que você quer ler hoje...</p>
+  </div>
+  <section style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:48px 24px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:16px">
+      <sc-for list="{{ categories }}" as="c" hint-placeholder-count="6">
+        <a href="#" onClick="{{ c.go }}" style="display:flex;flex-direction:column;justify-content:space-between;gap:48px;min-height:200px;padding:28px 28px 24px;background:#fff;border-radius:22px;border:1px solid #efe8de;color:#1f2937;transition:transform .3s,box-shadow .3s" style-hover="transform:translateY(-4px);box-shadow:0 24px 50px -28px rgba(31,41,55,.3);color:#1f2937">
+          <span style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <span style="font-family:'Lora',serif;font-weight:600;font-size:30px;line-height:1.1">{{ c.name }}</span>
+            <b style="flex:none;width:40px;height:40px;border-radius:50%;background:#faf1ea;color:#e76f51;display:flex;align-items:center;justify-content:center;font-size:17px">↗</b>
+          </span>
+          <small style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#6b7280">{{ c.countLabel }}</small>
+        </a>
+      </sc-for>
+    </div>
+  </section>
+  <section style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:72px 40px">
+    <a href="#" onClick="{{ catFeatured.go }}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));background:#fff;border-radius:28px;overflow:hidden;color:#1f2937;box-shadow:0 1px 0 rgba(31,41,55,.06),0 24px 60px -30px rgba(31,41,55,.25)" style-hover="color:#1f2937">
+      <div style="min-height:420px;background:#ece5da;overflow:hidden">
+        <img src="{{ catFeatured.cover }}" alt="{{ catFeatured.title }}" style="width:100%;height:100%;object-fit:cover;display:block">
+      </div>
+      <div style="display:flex;flex-direction:column;justify-content:center;gap:24px;padding:clamp(32px,5vw,64px)">
+        <h3 style="display:flex;align-items:center;gap:14px;font-family:'Poppins',sans-serif;font-weight:600;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#c4553a">Post em destaque<span style="flex:1;height:1px;background:#f0d5cb"></span></h3>
+        <p style="font-family:'Lora',serif;font-weight:600;font-size:clamp(1.9rem,3vw,2.75rem);line-height:1.12;letter-spacing:-.01em;text-wrap:balance">{{ catFeatured.title }}</p>
+        <div style="display:flex">
+          <span style="padding:13px 26px;border-radius:999px;background:#1f2937;color:#fff;font-family:'Poppins',sans-serif;font-weight:600;font-size:15px">Ver Mais</span>
+        </div>
+      </div>
+    </a>
+  </section>
+  </sc-if>
+
+  <!-- ================= CATEGORIA / PESQUISA ================= -->
+  <sc-if value="{{ isListing }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Categoria / Pesquisa" style="width:min(1280px,100% - 48px);margin-inline:auto;padding-top:136px">
+    <form onSubmit="{{ onSearch }}" style="display:flex;flex-wrap:wrap;gap:12px;padding:10px;background:#fff;border-radius:999px;box-shadow:0 1px 0 rgba(31,41,55,.06),0 16px 40px -24px rgba(31,41,55,.25)">
+      <input type="search" value="{{ q }}" onChange="{{ onQ }}" placeholder="Digite aqui..." style="flex:1 1 260px;min-width:0;border:0;outline:none;background:transparent;padding:12px 20px;font-size:16px;color:#1f2937">
+      <div style="display:flex;align-items:center;gap:10px;padding-left:16px;border-left:1px solid #efe8de">
+        <strong style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b7280">Categorias</strong>
+        <select value="{{ listingCat }}" onChange="{{ onCatNav }}" style="border:0;outline:none;background:#faf7f2;border-radius:999px;padding:11px 16px;font-size:15px;color:#1f2937;cursor:pointer">
+          <option value="">Selecionar categoria</option>
+          <sc-for list="{{ categories }}" as="c" hint-placeholder-count="6">
+            <option value="{{ c.slug }}">{{ c.name }}</option>
+          </sc-for>
+        </select>
+      </div>
+      <button type="submit" style="border:0;border-radius:999px;padding:12px 28px;background:#1f2937;color:#fff;font-family:'Poppins',sans-serif;font-weight:600;font-size:15px;cursor:pointer" style-hover="background:#e76f51">Pesquisar</button>
+    </form>
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px;padding-top:64px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <small style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#c4553a">{{ listingCount }}</small>
+        <h1 style="font-family:'Lora',serif;font-weight:600;font-size:clamp(2.6rem,5vw,4.25rem);line-height:1.05;letter-spacing:-.02em">{{ listingTitle }}</h1>
+      </div>
+      <a href="#" onClick="{{ listingBack }}" style="padding:12px 24px;border-radius:999px;border:1.5px solid #1f2937;color:#1f2937;font-family:'Poppins',sans-serif;font-weight:600;font-size:15px" style-hover="background:#1f2937;color:#fff">← Voltar</a>
+    </div>
+  </div>
+  <section style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:40px 56px">
+    <sc-if value="{{ listingEmpty }}" hint-placeholder-val="{{ false }}">
+      <p style="padding:64px 24px;text-align:center;color:#6b7280;font-size:19px;background:#fff;border-radius:22px">Nenhum conteúdo encontrado.</p>
+    </sc-if>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:28px 24px">
+      <sc-for list="{{ listingPosts }}" as="p" hint-placeholder-count="6">
+        <article style="display:flex;flex-direction:column;gap:16px">
+          <a href="#" onClick="{{ p.go }}" style="position:relative;display:block;aspect-ratio:3/2;border-radius:20px;overflow:hidden;background:#ece5da">
+            <img src="{{ p.cover }}" alt="{{ p.title }}" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.2,.7,.2,1)" style-hover="transform:scale(1.05)">
+            <span style="position:absolute;top:14px;left:14px;padding:6px 12px;border-radius:999px;background:#fff;color:#1f2937;font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">{{ p.catName }}</span>
+          </a>
+          <div style="display:flex;flex-direction:column;gap:10px;padding-inline:4px">
+            <time style="font-size:14px;color:#6b7280">{{ p.dateLabel }}</time>
+            <h3 style="font-family:'Lora',serif;font-weight:600;font-size:24px;line-height:1.2;text-wrap:balance"><a href="#" onClick="{{ p.go }}" style="color:#1f2937" style-hover="color:#c4553a">{{ p.title }}</a></h3>
+            <a href="#" onClick="{{ p.go }}" style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;letter-spacing:.08em;color:#c4553a">LER MAIS »</a>
+          </div>
+        </article>
+      </sc-for>
+    </div>
+  </section>
+  </sc-if>
+
+  <!-- ================= POST ================= -->
+  <sc-if value="{{ isPost }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Post" style="position:relative;width:min(1280px,100% - 48px);margin-inline:auto;padding-top:clamp(160px,16vw,220px);text-align:center">
+    <span aria-hidden="true" style="position:absolute;left:50%;top:96px;transform:translateX(-50%);font-family:'Lora',serif;font-weight:700;font-size:clamp(5rem,14vw,12rem);line-height:1;white-space:nowrap;color:transparent;-webkit-text-stroke:1.5px rgba(31,41,55,.08);pointer-events:none;user-select:none">Post</span>
+    <h1 style="position:relative;max-width:960px;margin-inline:auto;font-family:'Lora',serif;font-weight:600;font-size:clamp(2.4rem,4.6vw,4rem);line-height:1.08;letter-spacing:-.02em;text-wrap:balance">{{ post.title }}</h1>
+  </div>
+  <div style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:56px;display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start">
+    <article style="flex:1 1 600px;min-width:0;display:flex;flex-direction:column">
+      <div style="aspect-ratio:16/9;border-radius:24px;overflow:hidden;background:#ece5da">
+        <img src="{{ post.cover }}" alt="{{ post.title }}" style="width:100%;height:100%;object-fit:cover;display:block">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:22px;margin-bottom:40px">
+        <a href="#" onClick="{{ post.goCat }}" style="font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:#c4553a">{{ post.catName }}</a>
+        <span style="width:4px;height:4px;border-radius:50%;background:#d9cfc2"></span>
+        <time style="font-size:15px;color:#6b7280">{{ post.dateLabel }}</time>
+      </div>
+      <div style="max-width:720px;width:100%;margin-inline:auto;display:flex;flex-direction:column;gap:18px">
+        <p style="font-family:'Lora',serif;font-size:22px;line-height:1.55;color:#1f2937;text-wrap:pretty">{{ post.intro }}</p>
+        <sc-for list="{{ post.sections }}" as="s" hint-placeholder-count="2">
+          <h2 style="margin-top:22px;font-family:'Lora',serif;font-weight:600;font-size:clamp(1.6rem,2.4vw,2.1rem);line-height:1.15;letter-spacing:-.01em">{{ s.heading }}</h2>
+          <p style="font-size:18px;line-height:1.7;color:#374151;text-wrap:pretty">{{ s.text }}</p>
+        </sc-for>
+      </div>
+    </article>
+    <aside style="flex:0 1 300px;min-width:260px;display:flex;flex-direction:column;gap:20px;position:sticky;top:24px">
+      <form onSubmit="{{ onSearch }}" style="display:flex;gap:6px;padding:6px;background:#fff;border-radius:999px;border:1px solid #efe8de">
+        <input type="search" value="{{ q }}" onChange="{{ onQ }}" placeholder="Digite aqui..." style="flex:1;min-width:0;border:0;outline:none;background:transparent;padding:10px 14px;font-size:15px;color:#1f2937">
+        <button type="submit" style="border:0;border-radius:999px;padding:10px 18px;background:#1f2937;color:#fff;font-family:'Poppins',sans-serif;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#e76f51">Pesquisar</button>
+      </form>
+      <div style="display:flex;flex-direction:column;gap:10px;padding:22px;background:#fff;border-radius:20px;border:1px solid #efe8de">
+        <h4 style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6b7280">Categorias</h4>
+        <select value="" onChange="{{ onCatNav }}" style="width:100%;border:0;outline:none;background:#faf7f2;border-radius:12px;padding:12px 14px;font-size:15px;color:#1f2937;cursor:pointer">
+          <option value="">Selecionar categoria</option>
+          <sc-for list="{{ categories }}" as="c" hint-placeholder-count="6">
+            <option value="{{ c.slug }}">{{ c.name }}</option>
+          </sc-for>
+        </select>
+      </div>
+      <a href="#" onClick="{{ goCategorias }}" style="display:block;aspect-ratio:4/5;border-radius:20px;overflow:hidden;background:#ece5da">
+        <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&amp;q=80&amp;auto=format&amp;fit=crop" alt="" style="width:100%;height:100%;object-fit:cover;display:block">
+      </a>
+    </aside>
+  </div>
+  <section style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:40px 56px;border-top:1px solid #e8e0d4">
+    <h2 style="padding-top:40px;font-family:'Lora',serif;font-weight:600;font-size:clamp(2rem,3.4vw,3rem);line-height:1.1;letter-spacing:-.015em">Mais conteúdos como esse:</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:28px 24px;margin-top:36px">
+      <sc-for list="{{ related }}" as="p" hint-placeholder-count="6">
+        <article style="display:flex;flex-direction:column;gap:16px">
+          <a href="#" onClick="{{ p.go }}" style="position:relative;display:block;aspect-ratio:3/2;border-radius:20px;overflow:hidden;background:#ece5da">
+            <img src="{{ p.cover }}" alt="{{ p.title }}" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.2,.7,.2,1)" style-hover="transform:scale(1.05)">
+            <span style="position:absolute;top:14px;left:14px;padding:6px 12px;border-radius:999px;background:#fff;color:#1f2937;font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">{{ p.catName }}</span>
+          </a>
+          <div style="display:flex;flex-direction:column;gap:10px;padding-inline:4px">
+            <time style="font-size:14px;color:#6b7280">{{ p.dateLabel }}</time>
+            <h3 style="font-family:'Lora',serif;font-weight:600;font-size:24px;line-height:1.2;text-wrap:balance"><a href="#" onClick="{{ p.go }}" style="color:#1f2937" style-hover="color:#c4553a">{{ p.title }}</a></h3>
+            <a href="#" onClick="{{ p.go }}" style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;letter-spacing:.08em;color:#c4553a">LER MAIS »</a>
+          </div>
+        </article>
+      </sc-for>
+    </div>
+  </section>
+  </sc-if>
+
+  <!-- ================= LINKS ================= -->
+  <sc-if value="{{ isLinks }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Links" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:64px 24px;background-image:linear-gradient(180deg,rgba(17,24,39,.55),rgba(17,24,39,.75)),url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=2000&amp;q=80&amp;auto=format&amp;fit=crop');background-size:cover;background-position:center">
+    <div style="width:min(440px,100%);display:flex;flex-direction:column;align-items:center;gap:28px;padding:48px 32px;border-radius:32px;background:rgba(250,247,242,.96);text-align:center;box-shadow:0 40px 80px -30px rgba(0,0,0,.5)">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <h1 style="font-family:'Lora',serif;font-weight:700;font-size:44px;line-height:1.05;letter-spacing:-.02em">Meu Diário</h1>
+        <p style="color:#6b7280;font-size:18px">Viaje melhor, com mais leveza</p>
+      </div>
+      <div style="display:flex;gap:12px">
+        <sc-for list="{{ linkSocials }}" as="s" hint-placeholder-count="3">
+          <a href="#" aria-label="{{ s.label }}" title="{{ s.label }}" style="width:48px;height:48px;border-radius:50%;background:#fff;border:1px solid #efe8de;color:#1f2937;display:flex;align-items:center;justify-content:center" style-hover="background:#e76f51;border-color:#e76f51;color:#fff">
+            <svg aria-hidden="true" fill="currentColor" width="20" height="20" viewBox="0 0 24 24"><path d="{{ s.path }}"></path></svg>
+          </a>
+        </sc-for>
+      </div>
+      <div style="width:100%;display:flex;flex-direction:column;gap:12px">
+        <a href="#" onClick="{{ goHome }}" style="display:block;padding:18px 20px;border-radius:999px;background:#1f2937;color:#fff;font-family:'Poppins',sans-serif;font-weight:600;font-size:16px" style-hover="background:#e76f51;color:#fff">Ler o blog</a>
+        <a href="#" onClick="{{ goRoteiros }}" style="display:block;padding:18px 20px;border-radius:999px;background:#1f2937;color:#fff;font-family:'Poppins',sans-serif;font-weight:600;font-size:16px" style-hover="background:#e76f51;color:#fff">Roteiros</a>
+        <a href="mailto:contato@seudominio.com" style="display:block;padding:18px 20px;border-radius:999px;background:#1f2937;color:#fff;font-family:'Poppins',sans-serif;font-weight:600;font-size:16px" style-hover="background:#e76f51;color:#fff">Fale comigo</a>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= 404 ================= -->
+  <sc-if value="{{ is404 }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="404" style="width:min(820px,100% - 48px);margin-inline:auto;min-height:80vh;padding-block:200px 80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center">
+    <h1 style="font-family:'Lora',serif;font-weight:600;font-size:clamp(2.6rem,5vw,4.25rem);line-height:1.05;letter-spacing:-.02em;text-wrap:balance">Oops! Página Não Encontrada</h1>
+    <p style="max-width:560px;color:#6b7280;font-size:19px;text-wrap:pretty">A página que você procura não existe ou foi movida. Volte ao início e continue explorando.</p>
+  </div>
+  </sc-if>
+
+  <!-- ================= TERMOS / PRIVACIDADE ================= -->
+  <sc-if value="{{ isLegal }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Legal" style="position:relative;width:min(860px,100% - 48px);margin-inline:auto;padding-block:clamp(170px,16vw,230px) 40px">
+    <span aria-hidden="true" style="position:absolute;left:0;top:96px;font-family:'Lora',serif;font-weight:700;font-size:clamp(5rem,12vw,10rem);line-height:1;white-space:nowrap;color:transparent;-webkit-text-stroke:1.5px rgba(31,41,55,.08);pointer-events:none;user-select:none">{{ legal.watermark }}</span>
+    <h1 style="position:relative;font-family:'Lora',serif;font-weight:600;font-size:clamp(2.6rem,5vw,4.25rem);line-height:1.05;letter-spacing:-.02em">{{ legal.title }}</h1>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:40px">
+      <sc-for list="{{ legal.items }}" as="it" hint-placeholder-count="6">
+        <sc-if value="{{ it.isH }}" hint-placeholder-val="{{ false }}">
+          <h2 style="margin-top:24px;font-family:'Lora',serif;font-weight:600;font-size:28px;line-height:1.2">{{ it.text }}</h2>
+        </sc-if>
+        <sc-if value="{{ it.isP }}" hint-placeholder-val="{{ true }}">
+          <p style="font-size:18px;line-height:1.7;color:#374151;text-wrap:pretty">{{ it.text }}</p>
+        </sc-if>
+        <sc-if value="{{ it.isLi }}" hint-placeholder-val="{{ false }}">
+          <p style="display:flex;gap:12px;font-size:18px;line-height:1.7;color:#374151"><span style="flex:none;width:6px;height:6px;margin-top:12px;border-radius:50%;background:#e76f51"></span>{{ it.text }}</p>
+        </sc-if>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= RODAPÉ ================= -->
+  <sc-if value="{{ showChrome }}" hint-placeholder-val="{{ true }}">
+  <footer data-screen-label="Rodapé" style="background:#1b2430;color:#e5e7eb;margin-top:48px">
+    <div style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:80px 48px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:40px">
+      <div style="display:flex;flex-direction:column;gap:12px;grid-column:span 2">
+        <a href="#" onClick="{{ goHome }}" style="font-family:'Lora',serif;font-weight:700;font-size:34px;color:#fff" style-hover="color:#fff">Meu Diário</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <h4 style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9ca3af">Menu</h4>
+        <a href="#" onClick="{{ goCategorias }}" style="color:#fff;font-size:17px" style-hover="color:#f4a48d">Categorias</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <h4 style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9ca3af">Fale conosco</h4>
+        <a href="mailto:contato@seudominio.com" style="color:#fff;font-size:17px" style-hover="color:#f4a48d">contato@seudominio.com</a>
+        <h4 style="margin-top:20px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9ca3af">Redes Sociais</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <sc-for list="{{ footerSocials }}" as="s" hint-placeholder-count="4">
+            <a href="#" aria-label="{{ s.label }}" title="{{ s.label }}" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.2);color:#fff;display:flex;align-items:center;justify-content:center" style-hover="background:#e76f51;border-color:#e76f51;color:#fff">
+              <svg aria-hidden="true" fill="currentColor" width="16" height="16" viewBox="0 0 24 24"><path d="{{ s.path }}"></path></svg>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    <div style="width:min(1280px,100% - 48px);margin-inline:auto;padding-block:24px;border-top:1px solid rgba(255,255,255,.1);display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:15px;color:#9ca3af">
+      <span>Copyright © Meu Diário</span>
+      <span style="display:flex;gap:20px">
+        <a href="#" onClick="{{ goTermos }}" style="color:#9ca3af" style-hover="color:#fff">Termos de Uso</a>
+        <a href="#" onClick="{{ goPrivacidade }}" style="color:#9ca3af" style-hover="color:#fff">Política de Privacidade</a>
+      </span>
+    </div>
+  </footer>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startPage&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Início&quot;,&quot;Categorias&quot;,&quot;Categoria (Roteiros)&quot;,&quot;Post&quot;,&quot;Links&quot;,&quot;Pesquisa&quot;,&quot;404&quot;,&quot;Termos de Uso&quot;,&quot;Política de Privacidade&quot;],&quot;default&quot;:&quot;Início&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Navegação&quot;},&quot;autoplay&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Comportamento&quot;},&quot;showWatermark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Visual&quot;}}">
+const U = (id, w) => `https://images.unsplash.com/photo-${id}?w=${w}&q=80&auto=format&fit=crop`;
+const CATS = [
+  ["destinos", "Destinos", "1501785888041-af3ef285b470", "Lugares para conhecer, de cidades históricas a refúgios de natureza."],
+  ["roteiros", "Roteiros", "1476514525535-07fb3b4ae5f1", "Roteiros prontos, por dias e por estilo de viagem."],
+  ["dicas", "Dicas de Viagem", "1488646953014-85cb44e25828", "Dicas práticas para organizar, economizar e evitar imprevistos."],
+  ["gastronomia", "Gastronomia", "1414235077428-338989a2e8c0", "Onde e como comer bem, longe das armadilhas para turistas."],
+  ["estilo-de-vida", "Estilo de Vida", "1506905925346-21bda4d32df4", "Hábitos e reflexões para viver a viagem com mais leveza."],
+  ["equipamentos", "Equipamentos", "1507525428034-b723cf961d3e", "Bagagem, tecnologia e itens que realmente valem o espaço."],
+].map(([slug, name, id, text]) => ({ slug, name, text, src: U(id, 800) }));
+const catName = s => (CATS.find(c => c.slug === s) || {}).name || "";
+
+const SEEDS = [
+  ["roteiros","1469474968028-56623f02e42e","2026-03-02","roteiro-de-fim-de-semana-sem-correria","Roteiro de Fim de Semana Sem Correria","Um roteiro enxuto para quem tem poucos dias e quer aproveitar cada hora da viagem.","Poucos dias não significam uma viagem corrida. Com um roteiro bem pensado, dá para conhecer o essencial de um destino e ainda sobrar tempo para o improviso.",[["Escolha um tema para a viagem","Gastronomia, natureza ou história: definir um fio condutor ajuda a cortar o que não importa e a decidir mais rápido."],["Agrupe os passeios por região","Passar o dia todo em trânsito é o erro mais comum. Reúna os pontos próximos no mesmo dia e deixe uma manhã livre."]]],
+  ["destinos","1501785888041-af3ef285b470","2026-03-18","destinos-de-natureza-para-desacelerar","Destinos de Natureza Para Desacelerar","Lagos, montanhas e trilhas leves: destinos de natureza para desacelerar sem gastar muito.","Nem toda grande viagem precisa de avião. Alguns dos melhores cenários estão a poucas horas de estrada e cabem em qualquer orçamento.",[["Quando ir","Fora da alta temporada o preço da hospedagem cai e as trilhas ficam vazias. Vale checar a previsão do tempo antes de fechar."],["O que levar","Roupas em camadas, calçado fechado e uma garrafa reutilizável resolvem a maior parte dos imprevistos."]]],
+  ["dicas","1488646953014-85cb44e25828","2026-04-05","checklist-antes-de-viajar","Checklist Antes de Viajar","Checklist simples para organizar documentos, reservas e pagamentos antes de sair de casa.","Metade do estresse de uma viagem vem de detalhes que poderiam ter sido resolvidos uma semana antes. Este checklist cobre o básico.",[["Documentos e seguros","Confira a validade do passaporte ou documento de identidade, guarde cópias digitais e avalie um seguro-viagem."],["Reservas em um só lugar","Crie uma pasta com vouchers, endereços e telefones. Funciona até sem internet se você baixar os arquivos antes."]]],
+  ["gastronomia","1414235077428-338989a2e8c0","2026-04-20","como-comer-bem-como-um-morador-local","Como Comer Bem Como um Morador Local","Como encontrar restaurantes locais de verdade e fugir das armadilhas para turistas.","Comer bem em viagem raramente depende de sorte. Alguns hábitos simples levam você aos lugares que os moradores realmente frequentam.",[["Fuja do cardápio em cinco idiomas","Quanto mais traduções na porta, maior a chance de o lugar existir só para turistas. Procure cardápios curtos e simples."],["Pergunte a quem mora ali","O recepcionista, o motorista e o dono da padaria costumam ter as melhores indicações, e quase sempre de graça."]]],
+  ["estilo-de-vida","1455390582262-044cdead277a","2026-05-04","trabalhar-viajando-o-que-realmente-funciona","Trabalhar Viajando: O Que Realmente Funciona","Trabalhar de qualquer lugar parece sonho, mas exige rotina. Veja o que realmente funciona.","Trabalho remoto e viagem combinam, desde que você proteja seus horários e escolha bem onde vai ficar.",[["Internet vem primeiro","Teste a conexão antes de reservar: peça uma captura de velocidade ao anfitrião e tenha um plano B com dados móveis."],["Rotina fixa, cenário variável","Manter horário de trabalho e de descanso evita que a viagem vire um expediente sem fim."]]],
+  ["equipamentos","1507525428034-b723cf961d3e","2026-05-19","mala-de-mao-ou-mochila-como-escolher","Mala de Mão ou Mochila: Como Escolher","Mala de mão, mochila ou carrinho? Um guia direto para escolher a bagagem certa.","A bagagem ideal depende do tipo de viagem, não do tamanho da sua vontade de levar coisas. Veja como decidir.",[["Mala de mão","Evita filas, extravio e taxas. Para até uma semana, costuma ser suficiente se você repetir peças."],["Mochila","Melhor para trilhas e deslocamentos longos a pé. Escolha uma com bom suporte nas costas e cintos ajustáveis."]]],
+  ["destinos","1469854523086-cc02fe5d8800","2026-06-02","praias-tranquilas-longe-da-multidao","Praias Tranquilas Longe da Multidão","Praias tranquilas para quem prefere ouvir o mar a disputar espaço na areia.","Existem litorais inteiros fora do circuito principal. Com um pouco de pesquisa, você encontra água limpa, preços justos e silêncio.",[["Pesquise pelo acesso","Praias de difícil acesso costumam ser as mais vazias. Veja se há estrada de terra, barco ou trilha antes de ir."],["Respeite o lugar","Leve o lixo de volta e evite produtos que agridam o ambiente. Quanto menos impacto, mais tempo o lugar continua assim."]]],
+  ["roteiros","1476514525535-07fb3b4ae5f1","2026-06-21","road-trip-planejamento-passo-a-passo","Road Trip: Planejamento Passo a Passo","Road trip bem planejada: trajeto, paradas e orçamento sem surpresas no meio da estrada.","Viajar de carro dá liberdade, mas pede organização. Planeje o trajeto em etapas e deixe folga para o que aparecer no caminho.",[["Divida em etapas","Evite mais de quatro ou cinco horas de direção por dia. O cansaço acumulado estraga a viagem e é perigoso."],["Orçamento de estrada","Some combustível, pedágios, alimentação e uma reserva de 15% para imprevistos."]]],
+  ["dicas","1522202176988-66273c2fd55f","2026-07-08","viajar-em-grupo-sem-brigar","Viajar em Grupo Sem Brigar","Viajar em grupo é mais divertido quando as regras estão claras desde o início.","Amigos que se dão bem no dia a dia nem sempre combinam em viagem. Alinhar expectativas antes evita a maior parte dos atritos.",[["Converse sobre dinheiro","Defina como serão divididas as despesas comuns. Um aplicativo de contas compartilhadas resolve o resto."],["Tempo separado também vale","Um passeio por conta própria de vez em quando renova a energia do grupo."]]],
+  ["estilo-de-vida","1506905925346-21bda4d32df4","2026-07-26","habitos-para-viajar-com-mais-leveza","Hábitos Para Viajar Com Mais Leveza","Pequenos hábitos que tornam suas viagens mais leves, mais baratas e mais conscientes.","Viajar melhor não significa viajar mais. Pequenas escolhas mudam a experiência e o impacto que você deixa pelo caminho.",[["Fique mais tempo em menos lugares","Conhecer um destino com calma rende memórias mais fortes do que cinco cidades em cinco dias."],["Compre local","Hospedagem familiar, mercados e guias da região mantêm o dinheiro na comunidade que recebe você."]]],
+  ["equipamentos","1517248135467-4c7edcad34c4","2026-08-12","itens-pequenos-que-salvam-a-viagem","Itens Pequenos Que Salvam a Viagem","Itens pequenos que ocupam pouco espaço e salvam a viagem quando algo dá errado.","Alguns objetos custam pouco, cabem em qualquer mala e resolvem problemas que poderiam estragar o dia.",[["Carregador portátil","Mapas, passagens e fotos dependem da bateria. Um power bank é o item mais útil da lista."],["Kit de primeiros socorros","Curativos, analgésico e remédio para o estômago ocupam o espaço de uma mão e evitam correria atrás de farmácia."]]],
+  ["gastronomia","1544005313-94ddf0286df2","2026-08-30","mercados-e-feiras-como-porta-de-entrada","Mercados e Feiras Como Porta de Entrada","Feiras e mercados são a melhor porta de entrada para a cultura de qualquer lugar.","Quer entender uma cidade rápido? Comece pelo mercado. É ali que estão os ingredientes, as conversas e os sabores do dia a dia.",[["Vá cedo","De manhã os produtos estão frescos e os vendedores têm tempo para explicar o que cada coisa é."],["Experimente sem medo","Peça porções pequenas e prove o que não conhece. A melhor refeição da viagem pode estar numa barraca."]]],
+  ["dicas","1500530855697-b586d89ba3ee","2026-09-14","como-viajar-gastando-menos","Como Viajar Gastando Menos","Como encontrar passagens e hospedagens mais baratas sem abrir mão do conforto.","Economizar em viagem é questão de flexibilidade e antecedência. Veja estratégias que funcionam na prática.",[["Flexibilize as datas","Sair no meio da semana ou em baixa temporada pode cortar o preço pela metade."],["Compare antes de fechar","Pesquise em mais de um site e confira se o valor final inclui taxas. O mais barato na vitrine nem sempre é o mais barato na conta."]]],
+];
+const fmt = iso => new Date(iso).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const POSTS = SEEDS.map(([category, id, date, slug, title, excerpt, intro, sections]) => ({
+  category, slug, title, excerpt, intro, date, cover: U(id, 1200), catName: catName(category), dateLabel: fmt(date),
+  sections: sections.map(([heading, text]) => ({ heading, text })),
+})).sort((a, b) => b.date.localeCompare(a.date));
+
+const TESTI = [
+  ["1494790108377-be9c29b29330", "Camila Duarte", "Segui o roteiro de fim de semana e foi a viagem mais tranquila que já fiz. Tudo muito claro e direto.", "Leitora"],
+  ["1507003211169-0a1dd7228f2d", "Rafael Moreira", "As dicas de economia me fizeram cortar quase um terço do orçamento da última viagem.", "Leitor"],
+  ["1438761681033-6461ffad8d80", "Patrícia Lemos", "Adoro o jeito simples de explicar. Já indiquei o blog para toda a família.", "Leitora"],
+  ["1500648767791-00dcc994a43e", "Diego Santana", "O checklist antes de viajar virou item obrigatório aqui em casa.", "Leitor"],
+].map(([id, name, quote, role]) => ({ avatar: U(id, 200), name, quote, role }));
+
+const ICON = {
+  Instagram: "M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077",
+  YouTube: "M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z",
+  Facebook: "M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z",
+  TikTok: "M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.030-2.02-1.19-3.440-3.370-3.650-5.710-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z",
+};
+const soc = labels => labels.map(label => ({ label, path: ICON[label] }));
+
+const LEGAL = {
+  termos: { title: "Termos de Uso", watermark: "Termos", items: [
+    ["p","Bem-vindo ao Meu Diário. Ao acessar este site, você concorda com as regras descritas abaixo. Se não concordar com algum ponto, pedimos que não utilize o site."],
+    ["h","1. Uso do site"],["p","O conteúdo é oferecido para fins informativos. Você se compromete a usar o site de forma lícita e respeitosa, sem tentar prejudicar seu funcionamento ou o acesso de outras pessoas."],
+    ["h","2. Propriedade intelectual"],["p","Textos, imagens, logotipos e demais materiais são protegidos por direitos autorais. A reprodução depende de autorização prévia, salvo nos casos permitidos em lei."],
+    ["h","3. Links e conteúdo de terceiros"],["p","O site pode conter links para páginas de terceiros. Não controlamos esses conteúdos e não nos responsabilizamos por eles."],
+    ["h","4. Limitação de responsabilidade"],["p","Buscamos manter as informações corretas e atualizadas, mas não garantimos que estejam livres de erros. Preços, horários e condições de viagem mudam: confirme sempre nas fontes oficiais."],
+    ["h","5. Alterações"],["p","Estes termos podem ser atualizados a qualquer momento. A versão vigente é sempre a publicada nesta página."]]},
+  privacidade: { title: "Política de Privacidade", watermark: "Privacidade", items: [
+    ["p","Esta política explica como o Meu Diário trata os dados de quem visita o site, em conformidade com a Lei Geral de Proteção de Dados (LGPD)."],
+    ["h","1. Dados que coletamos"],["li","Dados informados por você, como nome e e-mail, quando entra em contato."],["li","Dados de navegação, como páginas visitadas, tipo de dispositivo e navegador."],
+    ["h","2. Como usamos os dados"],["p","Usamos as informações para responder mensagens, melhorar o conteúdo e entender como o site é utilizado. Não vendemos seus dados."],
+    ["h","3. Compartilhamento"],["p","Os dados só são compartilhados com prestadores de serviço necessários ao funcionamento do site ou quando houver obrigação legal."],
+    ["h","4. Seus direitos"],["p","Você pode solicitar acesso, correção ou exclusão dos seus dados a qualquer momento pelo e-mail de contato informado no rodapé."],
+    ["h","5. Cookies"],["p","Podemos usar cookies para lembrar preferências e medir o uso do site. Você pode bloquear cookies nas configurações do navegador."]]},
+};
+
+const START = {
+  "Início": ["home"], "Categorias": ["categorias"], "Categoria (Roteiros)": ["category", "roteiros"],
+  "Post": ["post", "roteiro-de-fim-de-semana-sem-correria"], "Links": ["links"], "Pesquisa": ["pesquisa"],
+  "404": ["404"], "Termos de Uso": ["termos"], "Política de Privacidade": ["privacidade"],
+};
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const [page, slug] = START[props.startPage] || ["home"];
+    this.state = { page, slug, menuOpen: false, slide: 0, paused: false, q: "", cat: "", sq: "", scat: "" };
+    this.conteudosRef = React.createRef();
+  }
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      if ((this.props.autoplay ?? true) && !this.state.paused && this.state.page === "home")
+        this.setState(s => ({ slide: (s.slide + 1) % 3 }));
+    }, 5000);
+  }
+  componentDidUpdate(prev) {
+    if (prev.startPage !== this.props.startPage) {
+      const [page, slug] = START[this.props.startPage] || ["home"];
+      this.go(page, slug);
+    }
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  go(page, slug, extra) {
+    this.setState({ page, slug, menuOpen: false, ...(extra || {}) });
+    window.scrollTo(0, 0);
+    if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+  }
+  nav(page, slug) { return e => { e && e.preventDefault(); this.go(page, slug); }; }
+  postItem(p) { return { ...p, go: this.nav("post", p.slug), goCat: this.nav("category", p.category) }; }
+  renderVals() {
+    const s = this.state, page = s.page;
+    const onHero = page === "home";
+    const categories = CATS.map(c => {
+      const n = POSTS.filter(p => p.category === c.slug).length;
+      return { ...c, go: this.nav("category", c.slug), countLabel: `${n} ${n === 1 ? "conteúdo" : "conteúdos"}` };
+    });
+    const posts = POSTS.map(p => this.postItem(p));
+    const find = slug => posts.find(p => p.slug === slug) || posts[0];
+
+    let listingPosts = [], listingTitle = "", listingCat = "", listingBack = this.nav("categorias");
+    if (page === "category") {
+      listingPosts = posts.filter(p => p.category === s.slug).slice(0, 12);
+      listingTitle = catName(s.slug) || "Categoria";
+      listingCat = s.slug;
+    } else if (page === "pesquisa") {
+      const q = s.sq.trim().toLowerCase();
+      listingPosts = posts.filter(p => (!s.scat || p.category === s.scat) && (!q || `${p.title} ${p.excerpt}`.toLowerCase().includes(q))).slice(0, 100);
+      listingTitle = "Resultado da Pesquisa:";
+      listingCat = s.scat;
+      listingBack = this.nav("home");
+    }
+    const post = page === "post" ? find(s.slug) : posts[0];
+    const lg = LEGAL[page] || LEGAL.termos;
+
+    return {
+      showChrome: page !== "links",
+      isHome: page === "home", isCategorias: page === "categorias", isListing: page === "category" || page === "pesquisa",
+      isPost: page === "post", isLinks: page === "links", is404: page === "404", isLegal: page === "termos" || page === "privacidade",
+      logoStyle: { fontFamily: "'Lora',serif", fontWeight: 700, fontSize: 26, letterSpacing: "-.01em", color: onHero ? "#fff" : "#1f2937" },
+      navStyle: { display: "flex", gap: 4, padding: 5, borderRadius: 999, background: onHero ? "rgba(255,255,255,.12)" : "#fff", border: onHero ? "1px solid rgba(255,255,255,.22)" : "1px solid #efe8de", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" },
+      navLinkStyle: { display: "flex", alignItems: "center", gap: 8, padding: "9px 18px", borderRadius: 999, color: onHero ? "#fff" : "#1f2937", fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 500, letterSpacing: ".02em", background: page === "categorias" || page === "category" ? (onHero ? "rgba(255,255,255,.14)" : "#faf1ea") : "transparent" },
+      ctaStyle: { padding: "11px 22px", borderRadius: 999, background: onHero ? "#fff" : "#1f2937", color: onHero ? "#1f2937" : "#fff", fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 600 },
+      menuOpen: s.menuOpen,
+      openMenu: () => this.setState({ menuOpen: true }),
+      closeMenu: () => this.setState({ menuOpen: false }),
+      goHome: this.nav("home"), goCategorias: this.nav("categorias"), goLinks: this.nav("links"),
+      goTermos: this.nav("termos"), goPrivacidade: this.nav("privacidade"), goRoteiros: this.nav("category", "roteiros"),
+      toConteudos: e => { e.preventDefault(); const el = this.conteudosRef.current; if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 24, behavior: "smooth" }); },
+      conteudosRef: this.conteudosRef,
+      showWatermark: this.props.showWatermark ?? true,
+      categories,
+      stats: [
+        { label: "Anos viajando", suffix: "+", value: "10" },
+        { label: "Destinos visitados", suffix: "+", value: "40" },
+        { label: "Leitores satisfeitos", suffix: "%", value: "98" },
+      ],
+      homeFeatured: find("roteiro-de-fim-de-semana-sem-correria"),
+      catFeatured: find("checklist-antes-de-viajar"),
+      testimonials: TESTI,
+      slides: posts.slice(0, 3),
+      side: posts.slice(3, 6),
+      trackStyle: { display: "flex", transform: `translateX(-${s.slide * 100}%)`, transition: "transform .7s cubic-bezier(.65,0,.35,1)" },
+      dots: [0, 1, 2].map(i => ({ on: i === s.slide, off: i !== s.slide, go: () => this.setState({ slide: i }) })),
+      pause: () => this.setState({ paused: true }),
+      resume: () => this.setState({ paused: false }),
+      q: s.q, cat: s.cat,
+      onQ: e => this.setState({ q: e.target.value }),
+      onCat: e => this.setState({ cat: e.target.value }),
+      onCatNav: e => { const v = e.target.value; if (v) this.go("category", v, { cat: v }); },
+      onSearch: e => { e.preventDefault(); this.go("pesquisa", null, { sq: s.q, scat: page === "category" ? s.slug : s.cat }); },
+      listingPosts, listingTitle, listingCat, listingBack,
+      listingEmpty: listingPosts.length === 0,
+      listingCount: `${listingPosts.length} ${listingPosts.length === 1 ? "conteúdo" : "conteúdos"}`,
+      post,
+      related: posts.filter(p => p.slug !== post.slug).slice(0, 6),
+      legal: { ...lg, items: lg.items.map(([k, text]) => ({ text, isH: k === "h", isP: k === "p", isLi: k === "li" })) },
+      footerSocials: soc(["Instagram", "YouTube", "Facebook", "TikTok"]),
+      linkSocials: soc(["Instagram", "YouTube", "Facebook"]),
+    };
+  }
+}
+</script>
+</body>
+</html>

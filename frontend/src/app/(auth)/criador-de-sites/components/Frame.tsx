@@ -10,7 +10,7 @@ interface Props {
   /** Mostra o X de sair para este endereço. */
   closeHref?: string;
   icon?: ReactNode;
-  step?: 1 | 2 | 3 | 4;
+  step?: 1 | 2 | 3;
 }
 
 /** Cartão das telas do Criador de Sites: barra de 52px com migalhas, passos e fechar. */

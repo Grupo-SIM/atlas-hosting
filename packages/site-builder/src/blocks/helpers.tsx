@@ -39,6 +39,49 @@ export function formatDate(iso: string | null): string {
   });
 }
 
+const MONTHS = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
+
+/** Data no formato do WordPress em pt-BR ("outubro 28, 2025"). */
+export function wpDate(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+
+/**
+ * Resumo cortado como no plugin de posts do WordPress: até `max` caracteres do HTML (aspas
+ * e travessões tipográficos contam como a entidade, `&#8220;` = 7, e o espaço fixo como `&nbsp;`),
+ * sem cortar palavra, com "...".
+ */
+export function excerptCut(text: string, max = 200): string {
+  const clean = text.trim();
+  let size = 0;
+  let end = 0;
+  for (const ch of clean) {
+    size += "“”‘’–—…".includes(ch) ? 7 : ch === " " ? 6 : ch.length;
+    if (size > max) break;
+    end += ch.length;
+  }
+  if (end >= clean.length) return clean;
+  const cut = clean.slice(0, end);
+  const space = clean[end] === " " ? cut.length : cut.lastIndexOf(" ");
+  return `${cut.slice(0, space > 0 ? space : cut.length).trimEnd()}...`;
+}
+
 const BRAND_PATHS: Record<string, string> = {
   facebook:
     "M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z",
@@ -89,25 +132,34 @@ export function SocialIcon({ label }: { label: string }) {
   return <>{label.slice(0, 1).toUpperCase()}</>;
 }
 
-/** Texto com **negrito**, *itálico* e [link](url); o resto é texto puro (nunca HTML). */
+/** Texto com ***negrito itálico***, **negrito**, *itálico* e [link](url); o resto é texto puro (nunca HTML). */
 export function Inline({ text }: { text: string }) {
   const parts: ReactNode[] = [];
-  const re = /\*\*(.+?)\*\*|\*(.+?)\*|\[([^\]]+)\]\(([^)\s]+)\)/g;
+  const re =
+    /\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|\*(.+?)\*|\[([^\]]+)\]\(([^)\s]+)\)/g;
   let last = 0;
   let key = 0;
   for (let m = re.exec(text); m; m = re.exec(text)) {
     if (m.index > last) parts.push(text.slice(last, m.index));
-    if (m[1] !== undefined) parts.push(<strong key={key++}>{m[1]}</strong>);
-    else if (m[2] !== undefined) parts.push(<em key={key++}>{m[2]}</em>);
+    if (m[1] !== undefined)
+      parts.push(
+        <strong key={key++}>
+          <em>{m[1]}</em>
+        </strong>
+      );
+    else if (m[2] !== undefined)
+      parts.push(<strong key={key++}>{m[2]}</strong>);
+    else if (m[3] !== undefined) parts.push(<em key={key++}>{m[3]}</em>);
     else
       parts.push(
         <a
           className="sb-inline-link"
-          href={safeUrl(m[4] ?? "#")}
+          href={safeUrl(m[5] ?? "#")}
           key={key++}
           rel="noopener"
         >
-          {m[3]}
+          {/* O texto do link pode ter negrito/itálico; link dentro de link não casa aqui. */}
+          <Inline text={m[4] ?? ""} />
         </a>
       );
     last = m.index + m[0].length;
@@ -201,6 +253,40 @@ export function PostCard({
           {compact ? "LER MAIS »" : "Ler mais »"}
         </a>
       </div>
+    </article>
+  );
+}
+
+/** Card de "posts relacionados": imagem, título, começo do resumo e botão. */
+export function ExcerptCard({
+  buttonLabel,
+  ctx,
+  post,
+}: {
+  buttonLabel: string;
+  ctx: RenderContext;
+  post: Post;
+}) {
+  const category = categoryOf(ctx.site, post);
+  const url = href(ctx, postPath(post));
+  return (
+    <article
+      className="sb-post-card sb-excerpt-card"
+      data-category={category?.slug ?? ""}
+      data-search={searchText(post)}
+    >
+      <a className="sb-post-thumb" href={url}>
+        <Img alt={post.title} src={post.coverImage} />
+      </a>
+      <h3>
+        <a href={url}>{post.title}</a>
+      </h3>
+      <p>{excerptCut(post.excerpt)}</p>
+      {buttonLabel ? (
+        <a className="sb-excerpt-btn" href={url}>
+          {buttonLabel}
+        </a>
+      ) : null}
     </article>
   );
 }

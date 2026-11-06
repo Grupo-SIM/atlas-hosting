@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { requireBuilderUser } from "@/lib/site-builder/access";
+import UseTemplateButton from "../../../novo/components/UseTemplateButton";
 
 export const metadata: Metadata = {
   title: "Prévia do template - Atlas Hosting",
@@ -39,11 +40,13 @@ export default async function TemplatePreviewPage({
           <Button asChild size="sm" variant="outline">
             <Link href="/criador-de-sites/novo">Voltar</Link>
           </Button>
-          <Button asChild size="sm">
-            <Link href={`/criador-de-sites/novo/${template.id}`}>
-              Usar este template
-            </Link>
-          </Button>
+          <UseTemplateButton
+            className="h-8 rounded-md bg-primary px-3 text-primary-foreground text-sm disabled:opacity-60"
+            templateId={template.id}
+            templateName={template.name}
+          >
+            Usar este template
+          </UseTemplateButton>
         </div>
       </div>
       <SiteRenderer

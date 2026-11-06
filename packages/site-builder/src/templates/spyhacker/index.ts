@@ -78,6 +78,42 @@ const BLOGS = [
 
 const IMG = (file: string) => `${UP}/2025/04/${file}`;
 
+/** Menu "Categorias" do WordPress: ordem e rótulos próprios (não seguem o nome da categoria). */
+const MENU_CATEGORIES: [slug: string, label: string][] = [
+  ["ferramentas-e-softwares", "Ferramentas & Softwares"],
+  ["inteligencia-artificial", "Inteligência Artificial"],
+  ["guias-e-tutoriais", "Guias e Tutoriais"],
+  ["analise-e-dados", "Análise & Dados"],
+  ["automacoes-de-processos", "Automações de Processos"],
+  ["novidades-e-tendencias", "Novidades & Tendências"],
+  ["desenvolvimento-de-sistemas", "Desenvolvimento de Sistemas"],
+  ["desenvolvimento-de-sites", "Desenvolvimento de Sites"],
+  ["ideias-para-monetizacao", "Ideias para Monetização"],
+];
+
+const MENU_BLOGS = [
+  { href: "https://marketingraiz.com/", label: "Marketing Raiz" },
+  { href: "https://centraldomarketing.com/", label: "Central do Marketing" },
+  { href: "https://seguidoresemalta.com/", label: "Seguidores em Alta" },
+  { href: "https://www.renovada12.com.br/blog/", label: "Renovada" },
+  { href: "https://zyrionbrazil.com/", label: "Zyrion Brazil" },
+];
+
+/** Cards da página /categorias/ (rótulos da página original, diferentes dos nomes das categorias). */
+const CATEGORY_CARDS: [category: string, label: string][] = [
+  ["inteligencia-artificial", "Inteligência Artificial"],
+  ["analise-e-dados", "Análises & Dados"],
+  ["automacoes-de-processos", "Automação de Processos"],
+  ["ferramentas-e-softwares", "Ferramentas & Softwares"],
+  ["novidades-e-tendencias", "Novidades & Tendências"],
+  ["guias-e-tutoriais", "Guias & Tutoriais"],
+  ["desenvolvimento-de-sites", "Desenvolvimento de Sites"],
+  ["ideias-para-monetizacao", "Ideias para monetização"],
+  ["desenvolvimento-de-sistemas", "Desenvolvimento de Sistemas"],
+];
+const cards = (list: [string, string][]) =>
+  list.map(([category, label]) => ({ category, label }));
+
 const site: Site = {
   categories: categorySeeds.map(([slug, name]) => ({
     id: `cat-${slug}`,
@@ -87,7 +123,11 @@ const site: Site = {
   categoryLayout: [
     block("categorySearch", {}),
     block("categoryHeader", { backLabel: "Voltar" }),
-    block("postList", { limit: 12, title: "" }),
+    block("postList", {
+      emptyText: "Parece que não encontramos o que você procura.",
+      limit: 12,
+      title: "",
+    }),
   ],
   footer: [
     block(
@@ -115,14 +155,10 @@ const site: Site = {
         "1.1.3.5": { each: true, hover: "pop" },
       }
     ),
-    // Opcional: nasce desativado; o cliente liga pelo olho nas camadas.
-    {
-      ...block("whatsappFloat", {
-        label: "Entre nas nossas comunidades",
-        url: WHATSAPP,
-      }),
-      hidden: true,
-    },
+    block("whatsappFloat", {
+      label: "Entre nas nossas comunidades",
+      url: WHATSAPP,
+    }),
   ],
   header: [
     block("header", {
@@ -133,12 +169,15 @@ const site: Site = {
     }),
   ],
   menu: [
-    { dynamic: "categories", href: "/categorias/", label: "Categorias" },
     {
-      children: BLOGS.map(b => ({ href: b.url, label: b.name })),
-      href: "/blogs/",
-      label: "Blogs",
+      children: MENU_CATEGORIES.map(([slug, label]) => ({
+        href: `/category/${slug}/`,
+        label,
+      })),
+      href: "/categorias/",
+      label: "Categorias",
     },
+    { children: MENU_BLOGS, href: "/blogs/", label: "Blogs" },
   ],
   name: "007SpyHacker",
   pages: [
@@ -204,6 +243,7 @@ const site: Site = {
             text: "Conteúdos didáticos para quem quer aprender na prática e colocar a mão na massa com tecnologia.",
           },
         ],
+        items: cards(CATEGORY_CARDS.slice(0, 6)),
         limit: 6,
         subtitle: "",
         title: "",
@@ -367,11 +407,13 @@ const site: Site = {
         level: "h1",
         subtitle: "Escolha sobre qual nicho você quer saber mais...",
         text: "Categorias",
+        watermark: "Categorias",
       }),
       block("categoryGrid", {
         buttonLabel: "",
         buttonUrl: "",
         images: [],
+        items: cards(CATEGORY_CARDS),
         limit: 0,
         subtitle: "",
         title: "",
@@ -380,8 +422,10 @@ const site: Site = {
         backgroundImage: IMG("Path-1.png"),
         backgroundImage2: IMG("Path-2.png"),
         backgroundImage3: IMG("Path-3.png"),
-        label: "Post em destaque",
+        buttonLabel: "Acessar Post",
+        label: "",
         postSlug: "como-registrar-dominio-de-forma-simples-e-facil",
+        showImage: "no",
         sideImage: IMG("AI-Icon-15.png"),
       }),
     ]),
@@ -506,18 +550,28 @@ const site: Site = {
         url: `${MARKET}/insta-fan-fortune/`,
       }),
     ]),
-    block("postList", { limit: 6, title: "Mais conteúdos como esse:" }),
+    block("postShare", { label: "Compartilhar este Post:" }),
+    block("postNav", { nextLabel: "Próximo", prevLabel: "Anterior" }),
+    block("postList", {
+      buttonLabel: "Acessar",
+      cardStyle: "excerpt",
+      includeCurrent: "yes",
+      limit: 6,
+      title: "Mais conteúdos como esse:",
+    }),
   ],
   posts,
   theme: {
-    accent: "#5ce1f5",
-    bg: "#030712",
-    card: "#0b1437",
+    accent: "#5dd7f2",
+    bg: "#00060b",
+    card: "#162865",
     fg: "#ffffff",
     fontAccent: "'Poppins', sans-serif",
     fontBody: "'Mulish', sans-serif",
     fontHeading: "'Bai Jamjuree', sans-serif",
     muted: "#9fb0d0",
+    // Liga o CSS medido do 007spyhacker.com (renderer/spyhacker.ts).
+    variant: "spyhacker",
   },
 };
 

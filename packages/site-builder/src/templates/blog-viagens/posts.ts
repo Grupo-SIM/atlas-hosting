@@ -130,7 +130,7 @@ const seeds: Seed[] = [
   },
   {
     category: "equipamentos",
-    cover: img("1507525428034-b723cf961d3e"),
+    cover: img("1469854523086-cc02fe5d8800"),
     date: "2026-05-19",
     excerpt:
       "Mala de mão, mochila ou carrinho? Um guia direto para escolher a bagagem certa.",
@@ -151,7 +151,7 @@ const seeds: Seed[] = [
   },
   {
     category: "destinos",
-    cover: img("1469854523086-cc02fe5d8800"),
+    cover: img("1507525428034-b723cf961d3e"),
     date: "2026-06-02",
     excerpt:
       "Praias tranquilas para quem prefere ouvir o mar a disputar espaço na areia.",
@@ -235,7 +235,7 @@ const seeds: Seed[] = [
   },
   {
     category: "equipamentos",
-    cover: img("1517248135467-4c7edcad34c4"),
+    cover: img("1488646953014-85cb44e25828"),
     date: "2026-08-12",
     excerpt:
       "Itens pequenos que ocupam pouco espaço e salvam a viagem quando algo dá errado.",
@@ -256,7 +256,7 @@ const seeds: Seed[] = [
   },
   {
     category: "gastronomia",
-    cover: img("1544005313-94ddf0286df2"),
+    cover: img("1414235077428-338989a2e8c0"),
     date: "2026-08-30",
     excerpt:
       "Feiras e mercados são a melhor porta de entrada para a cultura de qualquer lugar.",

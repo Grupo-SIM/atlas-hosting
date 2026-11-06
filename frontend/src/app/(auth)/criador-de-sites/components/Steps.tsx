@@ -1,7 +1,7 @@
-const LABELS = ["Template", "Configurar", "Editar", "Publicar"];
+const LABELS = ["Template", "Editar", "Publicar"];
 
-/** Passos do fluxo de criação (1 = Template … 4 = Publicar). */
-export function Steps({ current }: { current: 1 | 2 | 3 | 4 }) {
+/** Passos do fluxo de criação (1 = Template … 3 = Publicar). */
+export function Steps({ current }: { current: 1 | 2 | 3 }) {
   return (
     <ol className="hidden items-center gap-1.5 text-xs md:flex">
       {LABELS.map((label, i) => {
