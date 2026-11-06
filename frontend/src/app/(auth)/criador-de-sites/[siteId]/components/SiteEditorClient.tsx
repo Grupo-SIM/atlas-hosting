@@ -8,6 +8,7 @@ import {
   saveSite,
   uploadSiteFont,
   uploadSiteImage,
+  uploadSiteVideo,
 } from "../../actions";
 import { republishSite } from "../../publish-actions";
 import PublishSetupModal, {
@@ -58,7 +59,10 @@ export default function SiteEditorClient({
         onUploadImage={async file => {
           const data = new FormData();
           data.append("file", file);
-          const result = await uploadSiteImage(data);
+          // Anúncios aceitam vídeo: o mesmo campo de envio escolhe a ação pelo tipo do arquivo.
+          const result = file.type.startsWith("video/")
+            ? await uploadSiteVideo(data)
+            : await uploadSiteImage(data);
           if (!result.ok) throw new Error(result.error);
           return result.url;
         }}

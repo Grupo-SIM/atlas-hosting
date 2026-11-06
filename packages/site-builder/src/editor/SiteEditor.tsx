@@ -826,6 +826,23 @@ export function SiteEditor({
               <Icon name="redo-2" size={15} />
             </button>
           </div>
+          <button
+            className={site.theme.ads === "on" ? "sbe-lime" : "sbe-btn"}
+            onClick={() =>
+              edit(
+                setTheme(site, { ads: site.theme.ads === "on" ? "off" : "on" }),
+                {
+                  key: "theme-ads",
+                  kind: "Tema",
+                  label: "Tema · Anúncios",
+                }
+              )
+            }
+            title="Mostrar ou esconder os espaços de anúncio"
+            type="button"
+          >
+            Anúncios {site.theme.ads === "on" ? "ligados" : "desligados"}
+          </button>
           {wide ? (
             <span
               className={`sbe-pill ${pill.cls}`}

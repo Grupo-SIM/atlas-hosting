@@ -61,6 +61,11 @@ aba IA ("em breve"), canvas com desktop/tablet/celular + zoom, desfazer/refazer,
   `categoryGrid.items` (ordem/rótulo dos cards), `featuredPost.showImage`/`buttonLabel`, `postList.cardStyle`/`includeCurrent`,
   `postShare` e `postNav`. No celular o menu vira gaveta lateral (checkbox `#sb-burger` + label `.sb-burger-backdrop`
   para fechar), com fundo em `header.menuBg` (só `#rrggbb`, vira a var `--sb-menu-bg`). Sites sem a variante não mudam.
+- Anúncios: botão "Anúncios" na barra do editor (e no painel do tema) liga `theme.ads = "on"`; desligado, nenhum espaço aparece.
+  Bloco `adSlot` (`blocks/ads.tsx`, formato faixa/lateral/quadrado) e o `newsFeed` (prop `adItems`, abaixo de "Mais lidas") usam o
+  `AdBox`: lista de imagens/vídeos que passam sozinhos, sem botões (rotação em `fx-runtime.ts`; imagem por N segundos, vídeo até o
+  fim, mudo). Espaço sem mídia própria usa os anúncios do site inteiro (`theme.adsConfig`, JSON `{banner, side}`, editado no painel do tema); sem nenhum, some no site e aparece tracejado no editor. O template Portal tem a faixa em todas as páginas (exceto 404) e no layout de post/categoria. O campo `media` do painel aceita imagem ou vídeo; o
+  vídeo (MP4/WebM, até 25 MB) vai por `uploadSiteVideo` e o tipo é lido pela extensão da URL. `serverActions.bodySizeLimit` = 30 MB.
 - `react-dom/static` (e não `react-dom/server`) renderiza o HTML estático: o Next recusa `react-dom/server` em código do app router.
 - Links digitados pelo usuário passam por `safeUrl` (bloqueia `javascript:`/`data:`). Use-o em todo `href` novo vindo de props.
 

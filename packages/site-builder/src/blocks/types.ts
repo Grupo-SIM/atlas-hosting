@@ -17,6 +17,7 @@ export type FieldKind =
   | "color"
   | "image"
   | "list"
+  | "media"
   | "number"
   | "select"
   | "text"
