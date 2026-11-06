@@ -41,7 +41,14 @@ const header = defineBlock(
     featuredUrl: str("#"),
     /** Altura da barra em px (estilo Portal); logo, busca e botão escalam junto. 77 = padrão. */
     height: z.coerce.number().min(36).max(140).default(77).catch(77),
+    /** Posição da imagem da logo quando solta do nome (`logoLayout: "split"`), em % da largura. */
+    imgX: z.coerce.number().min(0).max(100).default(40).catch(40),
     logo: str(),
+    /** `split` = imagem e nome são dois itens, cada um com a sua posição (estilo Portal). */
+    logoLayout: z
+      .enum(["together", "split"])
+      .default("together")
+      .catch("together"),
     logoText: str("Meu Site"),
     /** Posição horizontal da logo na barra, em % da largura (estilo Portal). Arrastar no editor. */
     logoX: z.coerce.number().min(0).max(100).default(50).catch(50),
@@ -59,10 +66,24 @@ const header = defineBlock(
       { key: "logo", kind: "image", label: "Logo" },
       { key: "logoText", kind: "text", label: "Nome ao lado do logo" },
       {
+        key: "logoLayout",
+        kind: "select",
+        label: "Logo e nome (estilo Portal)",
+        options: [
+          { label: "Juntos (arrastam juntos)", value: "together" },
+          { label: "Separados (arraste cada um)", value: "split" },
+        ],
+      },
+      {
         key: "logoX",
         kind: "number",
         label:
-          "Posição da logo em % (0 = esquerda, 50 = centro; ou arraste no canvas)",
+          "Posição do nome/logo em % (0 = esquerda, 50 = centro; ou arraste no canvas)",
+      },
+      {
+        key: "imgX",
+        kind: "number",
+        label: "Posição da imagem da logo em % (só com logo e nome separados)",
       },
       { key: "searchLabel", kind: "text", label: "Texto da busca" },
       {
@@ -118,6 +139,7 @@ const header = defineBlock(
             {
               "--sb-hh": `${p.height}px`,
               "--sb-hs": p.height / 77,
+              "--sb-ix": `${p.imgX}%`,
               "--sb-lx": `${p.logoX}%`,
               "--sb-menu-bg": p.menuBg,
             } as CSSProperties
@@ -135,8 +157,13 @@ const header = defineBlock(
             <i />
             <i />
           </label>
+          {p.logoLayout === "split" && p.logo ? (
+            <a className="sb-logo-img" href={href(ctx, "/")}>
+              <Img alt={p.logoText || ctx.site.name} src={p.logo} />
+            </a>
+          ) : null}
           <a className="sb-logo" href={href(ctx, "/")}>
-            {p.logo ? (
+            {p.logo && p.logoLayout !== "split" ? (
               <Img alt={p.logoText || ctx.site.name} src={p.logo} />
             ) : null}
             {p.logoText ? <strong>{p.logoText}</strong> : null}

@@ -500,8 +500,9 @@ export function SiteEditor({
   const onLogoPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     const logo = (e.target as HTMLElement).closest<HTMLElement>(
-      ".sb-header .sb-logo"
+      ".sb-header .sb-logo, .sb-header .sb-logo-img"
     );
+    const imgItem = logo?.classList.contains("sb-logo-img") ?? false;
     const bar = logo?.closest<HTMLElement>(".sb-header");
     const id = bar?.closest<HTMLElement>("[data-block-id]")?.dataset.blockId;
     if (!(logo && bar && id)) return;
@@ -516,17 +517,18 @@ export function SiteEditor({
       const b = bar.getBoundingClientRect();
       const raw = ((ev.clientX - grab - b.left) / b.width) * 100;
       pct = Math.round(Math.min(100 - half, Math.max(half, raw)) * 10) / 10;
-      bar.style.setProperty("--sb-lx", `${pct}%`);
+      bar.style.setProperty(imgItem ? "--sb-ix" : "--sb-lx", `${pct}%`);
     };
     const up = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
       if (Number.isNaN(pct)) return;
-      edit(updateBlockProps(siteRef.current, id, { logoX: pct }), {
+      const prop = imgItem ? "imgX" : "logoX";
+      edit(updateBlockProps(siteRef.current, id, { [prop]: pct }), {
         id,
-        key: `logoX:${id}`,
-        label: "Moveu a logo",
+        key: `${prop}:${id}`,
+        label: imgItem ? "Moveu a logo" : "Moveu o nome",
       });
     };
     window.addEventListener("pointermove", move);
