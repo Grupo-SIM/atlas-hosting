@@ -114,7 +114,7 @@ function pickElement(target: HTMLElement): HTMLElement | null {
   if (!block) return null;
   // Imagem dentro de link continua sendo a imagem (para poder redimensionar).
   if (target instanceof HTMLImageElement) return target;
-  const wrap = target.closest<HTMLElement>("a,button");
+  const wrap = target.closest<HTMLElement>("a,button,.sb-header-search");
   return wrap && block.contains(wrap) ? wrap : target;
 }
 
