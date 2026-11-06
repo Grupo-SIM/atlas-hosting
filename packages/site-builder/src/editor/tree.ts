@@ -1,6 +1,11 @@
 import { createBlock } from "../blocks/registry.js";
 import { cleanFx } from "../model/fx.js";
-import type { Block, Fx, Site } from "../model/index.js";
+import {
+  BLOCK_ANCHOR,
+  type Block,
+  type Fx,
+  type Site,
+} from "../model/index.js";
 import type { Route } from "../renderer/routes.js";
 
 /**
@@ -199,6 +204,16 @@ export function setBlockHidden(site: Site, id: string, hidden: boolean): Site {
   const block = findBlock(next, id);
   if (!block) return site;
   block.hidden = hidden || undefined;
+  return next;
+}
+
+/** Âncora vazia ou inválida remove o `id` do bloco. */
+export function setBlockAnchor(site: Site, id: string, anchor: string): Site {
+  const next = clone(site);
+  const block = findBlock(next, id);
+  if (!block) return site;
+  const value = anchor.trim();
+  block.anchor = BLOCK_ANCHOR.test(value) ? value : undefined;
   return next;
 }
 

@@ -46,6 +46,7 @@ import {
   rootForRoute,
   rootLabel,
   rootOf,
+  setBlockAnchor,
   setBlockHidden,
   setElementOrders,
   updateBlockFx,
@@ -551,6 +552,12 @@ export function SiteEditor({
       // Clique comum só seleciona para editar; Ctrl/Cmd + clique abre o link.
       if (e.ctrlKey || e.metaKey) {
         const href = anchor.getAttribute("href") ?? "";
+        if (href.length > 1 && href.startsWith("#")) {
+          target.ownerDocument
+            .getElementById(href.slice(1))
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
         if (href.startsWith(basePath)) {
           goTo(href.slice(basePath.length) || "/");
           return;
@@ -1409,6 +1416,13 @@ export function SiteEditor({
           elPath={elPath}
           focusHint={focusHint}
           onAction={blockAction}
+          onAnchor={anchor =>
+            selected &&
+            edit(setBlockAnchor(site, selected.id, anchor), {
+              id: selected.id,
+              label: `Âncora · ${labelOf(selected.type)}`,
+            })
+          }
           onFx={(patch, what) =>
             selected &&
             edit(updateBlockFx(site, selected.id, elPath, patch), {

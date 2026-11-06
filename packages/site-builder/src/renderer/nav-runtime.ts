@@ -5,10 +5,10 @@
  * Mesmo esquema do `FX_RUNTIME`: inline no HTML publicado e injetado pelo `FxRuntime` na prévia.
  */
 export const NAV_RUNTIME = `(function(){
-if(window.__sbNav===3)return;
+if(window.__sbNav===4)return;
 if(window.__sbNavOff)window.__sbNavOff();
-window.__sbNav=3;
-var off=null;
+window.__sbNav=4;
+var off=null,shown=location.pathname+location.search;
 function rebind(){
 if(!window.sbFx)return;
 if(off)off();
@@ -23,6 +23,7 @@ var d=new DOMParser().parseFromString(h,"text/html");
 var n=d.querySelector(".sb"),o=document.querySelector(".sb");
 if(!n||!o)throw 0;
 if(push)history.pushState(null,"",u);
+shown=location.pathname+location.search;
 document.title=d.title;
 o.replaceWith(n);
 n.querySelectorAll("script").forEach(function(s){
@@ -187,6 +188,8 @@ swap(path,true);
 }
 function onPop(){
 if(window.next&&window.next.router)return;
+// link #ancora também dispara popstate: só troca a página se o caminho mudou
+if(location.pathname+location.search===shown)return;
 swap(location.pathname+location.search,false);
 }
 document.addEventListener("keydown",onKey);

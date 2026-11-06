@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { adItemFields, globalAds } from "../blocks/ads.js";
 import { getBlockDefinition } from "../blocks/registry.js";
 import {
+  BLOCK_ANCHOR,
   type Block,
   ENTER_EFFECTS,
   ENTER_LABELS,
@@ -279,6 +280,7 @@ interface Props {
   elPath?: string;
   onMenu: (menu: Site["menu"]) => void;
   onAction: (action: "delete" | "down" | "duplicate" | "hide" | "up") => void;
+  onAnchor: (anchor: string) => void;
   onFx: (patch: Partial<Record<keyof Fx, Fx[keyof Fx]>>, what: string) => void;
   onProp: (key: string, value: unknown) => void;
   onSelect: (id: string) => void;
@@ -293,6 +295,41 @@ interface Props {
   site: Site;
 }
 
+/**
+ * Nome do bloco para links `#nome` (ex.: botão "Saber mais" com link `#sabermais`). Grava ao sair do
+ * campo; o que não for válido (`BLOCK_ANCHOR`) é avisado e não é salvo.
+ */
+function AnchorInput({
+  onCommit,
+  value,
+}: {
+  onCommit: (anchor: string) => void;
+  value: string;
+}) {
+  const [draft, setDraft] = useState(value);
+  const clean = draft.trim();
+  const ok = clean === "" || BLOCK_ANCHOR.test(clean);
+  return (
+    <label className="sbe-field">
+      <span>Nome para links (#)</span>
+      <input
+        onBlur={() => ok && clean !== value && onCommit(clean)}
+        onChange={e => setDraft(e.target.value)}
+        placeholder="ex.: sabermais"
+        type="text"
+        value={draft}
+      />
+      <small>
+        {ok
+          ? clean
+            ? `Links para #${clean} rolam até este bloco.`
+            : "Vazio = sem âncora."
+          : "Use letras, números, - ou _, começando com letra."}
+      </small>
+    </label>
+  );
+}
+
 /** Painel direito: propriedades do bloco selecionado ou, sem seleção, o tema do site. */
 export function Inspector({
   crumbs,
@@ -300,6 +337,7 @@ export function Inspector({
   elPath,
   focusHint,
   onAction,
+  onAnchor,
   onFx,
   onMenu,
   onProp,
@@ -580,6 +618,14 @@ export function Inspector({
             ))}
           </Section>
         ) : null}
+
+        <Section title="Âncora">
+          <AnchorInput
+            key={selected.id}
+            onCommit={onAnchor}
+            value={selected.anchor ?? ""}
+          />
+        </Section>
 
         <Section title="Tamanho">
           {(

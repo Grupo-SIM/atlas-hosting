@@ -2,9 +2,13 @@ import { z } from "zod";
 import { type Fx, fxMapSchema } from "./fx.js";
 import { ELEMENT_PATH, isValidStyle } from "./style.js";
 
+/** Âncora de bloco (`id` no HTML, alvo de links `#nome`): letra inicial, depois letras, números, `-` e `_`. */
+export const BLOCK_ANCHOR = /^[A-Za-z][\w-]{0,59}$/;
+
 /** Nó da árvore de blocos de uma página. `props` é validado pelo schema do tipo. */
 export const blockSchema: z.ZodType<Block> = z.lazy(() =>
   z.object({
+    anchor: z.string().regex(BLOCK_ANCHOR).optional(),
     children: z.array(blockSchema).optional(),
     elStyles: z
       .record(
@@ -30,6 +34,8 @@ export const blockSchema: z.ZodType<Block> = z.lazy(() =>
 );
 
 export interface Block {
+  /** `id` do bloco no HTML, para links `#ancora` (ver `BLOCK_ANCHOR`). Não é copiado ao duplicar. */
+  anchor?: string;
   children?: Block[];
   /** Estilos por elemento interno do bloco, indexados por caminho `nth-child` (ver `ELEMENT_PATH`). */
   elStyles?: Record<string, Record<string, string | number>>;

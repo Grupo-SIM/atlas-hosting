@@ -21,7 +21,7 @@ export function FxRuntime() {
       document.body.appendChild(script);
       script.remove();
     }
-    if (window.__sbNav !== 3) {
+    if (window.__sbNav !== 4) {
       const script = document.createElement("script");
       script.textContent = NAV_RUNTIME;
       document.body.appendChild(script);

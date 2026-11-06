@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { getBlockDefinition } from "../blocks/registry.js";
 import type { RenderContext } from "../blocks/types.js";
 import { fxCss, fxRuntimeData } from "../model/fx.js";
-import type { Block, Site } from "../model/index.js";
+import { BLOCK_ANCHOR, type Block, type Site } from "../model/index.js";
 import {
   cleanStyle,
   elementStylesCss,
@@ -164,6 +164,11 @@ function renderBlocks(blocks: Block[], ctx: RenderContext): ReactNode {
         data-block-id={block.id}
         data-block-type={block.type}
         data-fx={fxData.length ? JSON.stringify(fxData) : undefined}
+        id={
+          block.anchor && BLOCK_ANCHOR.test(block.anchor)
+            ? block.anchor
+            : undefined
+        }
         key={block.id}
         style={blockStyle as CSSProperties}
       >
