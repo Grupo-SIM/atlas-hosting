@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   resolveYoutubeChannel,
   saveSite,
+  uploadSiteFont,
   uploadSiteImage,
 } from "../../actions";
 import { republishSite } from "../../publish-actions";
@@ -47,6 +48,13 @@ export default function SiteEditorClient({
           return { id: result.id, name: result.name };
         }}
         onSave={site => saveSite(siteId, site)}
+        onUploadFont={async file => {
+          const data = new FormData();
+          data.append("file", file);
+          const result = await uploadSiteFont(data);
+          if (!result.ok) throw new Error(result.error);
+          return { name: result.name, url: result.url };
+        }}
         onUploadImage={async file => {
           const data = new FormData();
           data.append("file", file);

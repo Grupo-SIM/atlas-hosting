@@ -76,7 +76,8 @@ ${S} .sb-link{color:var(--j-accent-dk)!important;font-family:var(--sb-font-accen
 
 /* cabeçalho */
 ${S} .sb-header.sb-container{width:min(1280px,100% - 48px);padding:28px 0 0}
-${S} .sb-logo strong{font-family:var(--sb-font-heading);font-weight:700;font-size:26px;letter-spacing:-.01em}
+${S} .sb-logo{font-family:var(--sb-font-heading);font-weight:700;font-size:26px;letter-spacing:-.01em}
+${S} .sb-logo strong{font:inherit;letter-spacing:inherit}
 ${S} .sb-logo img{height:48px}
 ${S} .sb-nav{gap:4px;padding:5px;border-radius:999px;background:var(--sb-card);border:1px solid var(--j-line);color:var(--sb-fg);font-family:var(--sb-font-accent);font-size:14px;font-weight:500;letter-spacing:.02em;text-transform:none;backdrop-filter:blur(12px)}
 ${S} .sb-nav-item>a{padding:9px 18px;border-radius:999px;gap:8px}

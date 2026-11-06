@@ -9,6 +9,7 @@ export const BLOCK_STYLE_KEYS = [
   "color",
   "display",
   "flexDirection",
+  "fontFamily",
   "fontSize",
   "fontWeight",
   "gap",
@@ -77,6 +78,17 @@ export function elementStylesCss(
       })
       .join(";");
     css += `[data-block-id="${id}"]${selector}{${decls}}`;
+    if (style.fontFamily)
+      css += fontFamilyCss(`[data-block-id="${id}"]${selector} *`, style);
   }
   return css;
+}
+
+/** A fonte escolhida vale também para os filhos, que costumam ter `font-family` próprio. */
+export function fontFamilyCss(
+  selector: string,
+  style: BlockStyle | undefined
+): string {
+  const family = style?.fontFamily;
+  return family ? `${selector}{font-family:${family}!important}` : "";
 }

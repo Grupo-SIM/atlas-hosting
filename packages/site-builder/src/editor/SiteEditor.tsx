@@ -57,6 +57,8 @@ export interface SiteEditorProps {
   onSave: (site: Site) => Promise<SaveResult>;
   /** Envia o arquivo e devolve a URL pública. Sem isso, imagens aceitam só URL. */
   onUploadImage?: (file: File) => Promise<string>;
+  /** Envia um arquivo de fonte e devolve nome + URL pública. Sem isso, só as fontes da lista. */
+  onUploadFont?: (file: File) => Promise<{ name: string; url: string }>;
   /** Site de origem (template) para "Restaurar original". Sem isso o botão some. */
   originalSite?: Site;
   /** Onde e como publicar; sem isso o botão de publicar não aparece. */
@@ -112,7 +114,7 @@ function pickElement(target: HTMLElement): HTMLElement | null {
   if (!block) return null;
   // Imagem dentro de link continua sendo a imagem (para poder redimensionar).
   if (target instanceof HTMLImageElement) return target;
-  const wrap = target.closest<HTMLElement>("a,button");
+  const wrap = target.closest<HTMLElement>("a,button,.sb-header-search");
   return wrap && block.contains(wrap) ? wrap : target;
 }
 
@@ -145,6 +147,7 @@ export function SiteEditor({
   onResolveChannel,
   onSave,
   onUploadImage,
+  onUploadFont,
   originalSite,
   publish,
   storageKey,
@@ -468,8 +471,14 @@ export function SiteEditor({
     const anchor = target.closest("a");
     if (anchor) {
       e.preventDefault();
-      const href = anchor.getAttribute("href") ?? "";
-      if (href.startsWith(basePath)) goTo(href.slice(basePath.length) || "/");
+      // Clique comum só seleciona para editar; Ctrl/Cmd + clique abre o link.
+      if (e.ctrlKey || e.metaKey) {
+        const href = anchor.getAttribute("href") ?? "";
+        if (href.startsWith(basePath)) {
+          goTo(href.slice(basePath.length) || "/");
+          return;
+        }
+      }
     }
     const block = target.closest<HTMLElement>("[data-block-id]");
     select(block?.dataset.blockId ?? null);
@@ -491,8 +500,9 @@ export function SiteEditor({
   const onLogoPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     const logo = (e.target as HTMLElement).closest<HTMLElement>(
-      ".sb-header .sb-logo"
+      ".sb-header .sb-logo, .sb-header .sb-logo-img"
     );
+    const imgItem = logo?.classList.contains("sb-logo-img") ?? false;
     const bar = logo?.closest<HTMLElement>(".sb-header");
     const id = bar?.closest<HTMLElement>("[data-block-id]")?.dataset.blockId;
     if (!(logo && bar && id)) return;
@@ -507,17 +517,18 @@ export function SiteEditor({
       const b = bar.getBoundingClientRect();
       const raw = ((ev.clientX - grab - b.left) / b.width) * 100;
       pct = Math.round(Math.min(100 - half, Math.max(half, raw)) * 10) / 10;
-      bar.style.setProperty("--sb-lx", `${pct}%`);
+      bar.style.setProperty(imgItem ? "--sb-ix" : "--sb-lx", `${pct}%`);
     };
     const up = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
       if (Number.isNaN(pct)) return;
-      edit(updateBlockProps(siteRef.current, id, { logoX: pct }), {
+      const prop = imgItem ? "imgX" : "logoX";
+      edit(updateBlockProps(siteRef.current, id, { [prop]: pct }), {
         id,
-        key: `logoX:${id}`,
-        label: "Moveu a logo",
+        key: `${prop}:${id}`,
+        label: imgItem ? "Moveu a logo" : "Moveu o nome",
       });
     };
     window.addEventListener("pointermove", move);
@@ -861,7 +872,7 @@ export function SiteEditor({
           <span className="sbe-spacer" />
           {wide ? (
             <span className="sbe-muted">
-              Clique para selecionar · Ctrl+Z desfaz
+              Clique para selecionar · Ctrl+clique abre links · Ctrl+Z desfaz
             </span>
           ) : null}
           {originalSite ? (
@@ -1005,6 +1016,7 @@ export function SiteEditor({
               label: `Tema · ${what}`,
             })
           }
+          onUploadFont={onUploadFont}
           onUploadImage={onUploadImage}
           selected={selected}
           site={site}

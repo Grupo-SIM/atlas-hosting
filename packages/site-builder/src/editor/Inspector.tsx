@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { getBlockDefinition } from "../blocks/registry.js";
 import {
   type Block,
@@ -11,7 +11,12 @@ import {
   HOVER_LABELS,
   type Site,
 } from "../model/index.js";
-import { fontStack, SITE_FONTS, themeFont } from "../renderer/fonts.js";
+import {
+  customFonts,
+  fontStack,
+  SITE_FONTS,
+  themeFont,
+} from "../renderer/fonts.js";
 import { themeVars } from "../renderer/styles.js";
 import { FieldInput, type ResolveChannel } from "./fields.js";
 import { Icon, type IconName } from "./icons.js";
@@ -89,6 +94,97 @@ function Swatches({
           type="button"
         />
       ))}
+    </div>
+  );
+}
+
+const fontLabel = (v: string) => /^'([^']+)'/.exec(v)?.[1] ?? v;
+
+/** Fonte do texto: lista do Google Fonts, fontes enviadas pelo usuário e envio de arquivo novo. */
+function FontPicker({
+  custom,
+  onPick,
+  onTheme,
+  onUploadFont,
+  value,
+}: {
+  custom: { name: string; url: string }[];
+  onPick: (v: string | undefined) => void;
+  onTheme: (patch: Record<string, string>, what: string) => void;
+  onUploadFont?: (file: File) => Promise<{ name: string; url: string }>;
+  value: string | undefined;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const known = value
+    ? [...SITE_FONTS, ...custom.map(c => c.name)].some(
+        f => fontLabel(value) === f
+      )
+    : true;
+
+  const upload = async (file: File | undefined) => {
+    if (!(file && onUploadFont)) return;
+    setBusy(true);
+    setError("");
+    try {
+      const { name, url } = await onUploadFont(file);
+      const next = [
+        ...custom.filter(c => c.name !== name),
+        { name, url },
+      ].slice(-20);
+      onTheme({ fontFiles: JSON.stringify(next) }, `Fonte ${name}`);
+      onPick(fontStack(name));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível enviar.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="sbe-field">
+      <span>Fonte</span>
+      <select
+        onChange={e => onPick(e.target.value || undefined)}
+        value={value ?? ""}
+      >
+        <option value="">Herdar do tema</option>
+        {!known && value ? (
+          <option value={value}>{fontLabel(value)}</option>
+        ) : null}
+        {custom.length ? (
+          <optgroup label="Minhas fontes">
+            {custom.map(c => (
+              <option key={c.name} value={fontStack(c.name)}>
+                {c.name}
+              </option>
+            ))}
+          </optgroup>
+        ) : null}
+        <optgroup label="Google Fonts">
+          {SITE_FONTS.map(f => (
+            <option key={f} value={fontStack(f)}>
+              {f}
+            </option>
+          ))}
+        </optgroup>
+      </select>
+      {onUploadFont ? (
+        <label className="sbe-btn" style={{ cursor: "pointer" }}>
+          {busy ? "Enviando..." : "+ Enviar arquivo de fonte"}
+          <input
+            accept=".woff2,.woff,.ttf,.otf"
+            disabled={busy}
+            hidden
+            onChange={e => {
+              void upload(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+            type="file"
+          />
+        </label>
+      ) : null}
+      {error ? <p className="sbe-hint">{error}</p> : null}
     </div>
   );
 }
@@ -189,6 +285,7 @@ interface Props {
   onTheme: (patch: Record<string, string>, what: string) => void;
   onResolveChannel?: ResolveChannel;
   onUploadImage?: (file: File) => Promise<string>;
+  onUploadFont?: (file: File) => Promise<{ name: string; url: string }>;
   focusHint?: FocusHint;
   selected?: Block;
   site: Site;
@@ -210,6 +307,7 @@ export function Inspector({
   onTheme,
   onResolveChannel,
   onUploadImage,
+  onUploadFont,
   selected,
   site,
 }: Props) {
@@ -504,6 +602,13 @@ export function Inspector({
         ) : null}
 
         <Section title="Tipografia">
+          <FontPicker
+            custom={customFonts(site.theme)}
+            onPick={v => set("fontFamily", "Fonte")(v)}
+            onTheme={onTheme}
+            onUploadFont={onUploadFont}
+            value={st.fontFamily as string | undefined}
+          />
           <div className="sbe-line">
             <span>Tamanho</span>
             <input
