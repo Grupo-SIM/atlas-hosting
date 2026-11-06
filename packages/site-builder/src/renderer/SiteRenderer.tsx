@@ -98,14 +98,14 @@ export function SiteRenderer({
       }
     >
       <style>
-        {fontFaceCss(customFonts(site.theme))}
-        {journal
-          ? siteCss + journalCss
-          : portal
-            ? siteCss + portalCss
-            : spy
-              ? siteCss + spyCss
-              : siteCss}
+        {fontFaceCss(customFonts(site.theme)) +
+          (journal
+            ? siteCss + journalCss
+            : portal
+              ? siteCss + portalCss
+              : spy
+                ? siteCss + spyCss
+                : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}
