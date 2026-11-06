@@ -1075,6 +1075,8 @@ export function SiteEditor({
     return [
       { label: rootLabel(site, found.root) },
       ...found.ancestors.map(b => ({ id: b.id, label: labelOf(b.type) })),
+      // Com um elemento selecionado, o próprio bloco vira um passo clicável para voltar a editá-lo inteiro.
+      ...(elPath ? [{ id: selected.id, label: labelOf(selected.type) }] : []),
     ];
   })();
 
