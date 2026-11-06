@@ -471,8 +471,14 @@ export function SiteEditor({
     const anchor = target.closest("a");
     if (anchor) {
       e.preventDefault();
-      const href = anchor.getAttribute("href") ?? "";
-      if (href.startsWith(basePath)) goTo(href.slice(basePath.length) || "/");
+      // Clique comum só seleciona para editar; Ctrl/Cmd + clique abre o link.
+      if (e.ctrlKey || e.metaKey) {
+        const href = anchor.getAttribute("href") ?? "";
+        if (href.startsWith(basePath)) {
+          goTo(href.slice(basePath.length) || "/");
+          return;
+        }
+      }
     }
     const block = target.closest<HTMLElement>("[data-block-id]");
     select(block?.dataset.blockId ?? null);
@@ -864,7 +870,7 @@ export function SiteEditor({
           <span className="sbe-spacer" />
           {wide ? (
             <span className="sbe-muted">
-              Clique para selecionar · Ctrl+Z desfaz
+              Clique para selecionar · Ctrl+clique abre links · Ctrl+Z desfaz
             </span>
           ) : null}
           {originalSite ? (
