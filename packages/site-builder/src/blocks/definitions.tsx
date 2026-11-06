@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 import { z } from "zod";
+import { cssUrl } from "../renderer/central.js";
+import { centralBlocks, Eyebrow } from "./central.js";
 import { defineBlock } from "./define.js";
 import {
   categoryOf,
@@ -395,6 +397,7 @@ const hero = defineBlock(
 const heading = defineBlock(
   z.object({
     align: z.enum(["left", "center"]).default("left"),
+    eyebrow: str(),
     level: z.enum(["h1", "h2", "h3", "h4"]).default("h2"),
     subtitle: str(),
     text: str("Título"),
@@ -404,6 +407,11 @@ const heading = defineBlock(
     fields: [
       { key: "text", kind: "text", label: "Título" },
       { key: "subtitle", kind: "text", label: "Subtítulo" },
+      {
+        key: "eyebrow",
+        kind: "text",
+        label: "Rótulo pequeno acima do título (tema Central)",
+      },
       { key: "watermark", kind: "text", label: "Texto grande ao fundo" },
       {
         key: "level",
@@ -437,6 +445,7 @@ const heading = defineBlock(
               {p.watermark}
             </span>
           ) : null}
+          <Eyebrow text={p.eyebrow} />
           <Tag>{p.text}</Tag>
           {p.subtitle ? <p className="sb-sub">{p.subtitle}</p> : null}
         </div>
@@ -1260,7 +1269,9 @@ const postExplorer = defineBlock(
 const postList = defineBlock(
   z.object({
     buttonLabel: str("Acessar"),
-    cardStyle: z.enum(["compact", "excerpt"]).default("compact"),
+    cardStyle: z
+      .enum(["compact", "excerpt", "grid", "archive"])
+      .default("compact"),
     emptyText: str(),
     includeCurrent: z.enum(["yes", "no"]).default("no"),
     limit: z.coerce.number().default(6),
@@ -1296,6 +1307,15 @@ const postList = defineBlock(
         options: [
           { label: "Imagem + categoria + título", value: "compact" },
           { label: "Imagem + título + resumo + botão", value: "excerpt" },
+          {
+            label: "Grade: imagem, título, categoria e resumo (tema Central)",
+            value: "grid",
+          },
+          {
+            label:
+              "Arquivo: imagem com etiqueta, título, resumo e Ler mais (tema Central)",
+            value: "archive",
+          },
         ],
       },
       {
@@ -1345,6 +1365,13 @@ const postList = defineBlock(
                   ctx={ctx}
                   key={post.id}
                   post={post}
+                />
+              ) : p.cardStyle === "grid" || p.cardStyle === "archive" ? (
+                <PostCard
+                  ctx={ctx}
+                  key={post.id}
+                  post={post}
+                  variant={p.cardStyle}
                 />
               ) : (
                 <PostCard compact ctx={ctx} key={post.id} post={post} />
@@ -1787,11 +1814,17 @@ const categoryHeader = defineBlock(
 
 const postHeader = defineBlock(
   z.object({
+    backgroundImage: str(),
     showCover: z.enum(["yes", "no"]).default("yes"),
     watermark: str(),
   }),
   {
     fields: [
+      {
+        key: "backgroundImage",
+        kind: "image",
+        label: "Imagem de fundo do título (tema Central)",
+      },
       { key: "watermark", kind: "text", label: "Texto grande ao fundo" },
       {
         key: "showCover",
@@ -1806,7 +1839,14 @@ const postHeader = defineBlock(
       const post = ctx.current.post;
       if (!post) return null;
       return (
-        <div className="sb-container sb-post-header sb-heading">
+        <div
+          className="sb-container sb-post-header sb-heading"
+          style={
+            p.backgroundImage
+              ? ({ "--ct-img": cssUrl(p.backgroundImage) } as CSSProperties)
+              : undefined
+          }
+        >
           {p.watermark ? (
             <span aria-hidden="true" className="sb-watermark">
               {p.watermark}
@@ -1825,12 +1865,16 @@ function PostMeta({ ctx }: { ctx: RenderContext }) {
   const post = ctx.current.post;
   if (!post) return null;
   const cat = categoryOf(ctx.site, post);
+  const variant = ctx.site.theme.variant;
   return (
     <>
       <Img src={post.coverImage} />
       {cat ? <span className="sb-tag">{cat.name}</span> : null}
+      {variant === "central" ? (
+        <h2 className="sb-ct-post-title">{post.title}</h2>
+      ) : null}
       <time>
-        {ctx.site.theme.variant === "spyhacker"
+        {variant === "spyhacker" || variant === "central"
           ? wpDate(post.publishedAt)
           : formatDate(post.publishedAt)}
       </time>
@@ -2145,6 +2189,7 @@ export const blockDefinitions: BlockDefinition[] = [
   newsFeed,
   shortVideos,
   ...portalHubBlocks,
+  ...centralBlocks,
   newsSection,
   categoryHeader,
   categorySearch,

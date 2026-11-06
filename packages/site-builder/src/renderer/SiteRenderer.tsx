@@ -4,6 +4,7 @@ import type { RenderContext } from "../blocks/types.js";
 import { fxCss, fxRuntimeData } from "../model/fx.js";
 import type { Block, Site } from "../model/index.js";
 import { cleanStyle, elementStylesCss } from "../model/style.js";
+import { centralCss, centralVars, isCentral } from "./central.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { fontStylesheet } from "./fonts.js";
 import { isJournal, journalCss, journalVars } from "./journal.js";
@@ -62,6 +63,7 @@ export function SiteRenderer({
   const journal = isJournal(site.theme);
   const portal = isPortal(site.theme);
   const spy = isSpy(site.theme);
+  const central = isCentral(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -83,9 +85,10 @@ export function SiteRenderer({
         wide ? "sb-wide" : "",
         prose ? "sb-prose" : "",
         journal ? "sb-j" : "",
-        journal && bare ? "sb-bare" : "",
+        (journal || central) && bare ? "sb-bare" : "",
         portal ? "sb-pt" : "",
         spy ? "sb-sh" : "",
+        central ? "sb-ct" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -94,6 +97,7 @@ export function SiteRenderer({
           ...themeVars(site.theme),
           ...(journal ? journalVars(site.theme) : {}),
           ...(portal ? portalVars(site.theme) : {}),
+          ...(central ? centralVars(site.theme) : {}),
         } as CSSProperties
       }
     >
@@ -104,7 +108,9 @@ export function SiteRenderer({
             ? siteCss + portalCss
             : spy
               ? siteCss + spyCss
-              : siteCss}
+              : central
+                ? siteCss + centralCss
+                : siteCss}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}

@@ -1,16 +1,22 @@
+import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
 import { isSpy, SPY_EXTRA_FONTS } from "./spyhacker.js";
 
 /** Fontes oferecidas no tema (Google Fonts). O valor vai direto para `fontHeading`/`fontBody`. */
 export const SITE_FONTS = [
   "Bai Jamjuree",
+  "Content",
   "Mulish",
   "Poppins",
+  "Red Hat Text",
   "Roboto",
   "Manrope",
   "DM Sans",
   "Space Grotesk",
   "Lora",
 ] as const;
+
+/** Pesos que o Google Fonts oferece quando não são os padrões (pedir um peso inexistente derruba o CSS inteiro). */
+const FONT_WEIGHTS: Record<string, string> = { Content: "400;700" };
 
 export const fontStack = (name: string) => `'${name}', sans-serif`;
 
@@ -32,8 +38,15 @@ export function fontStylesheet(theme: Record<string, string>): string | null {
   if (isSpy(theme))
     for (const extra of SPY_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
+  // A variante central usa Poppins/Roboto nos posts e nos botões (fixas, nunca texto do usuário).
+  if (isCentral(theme))
+    for (const extra of CENTRAL_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
   const families = names
-    .map(n => `family=${n.replaceAll(" ", "+")}:wght@300;400;500;600;700`)
+    .map(
+      n =>
+        `family=${n.replaceAll(" ", "+")}:wght@${FONT_WEIGHTS[n] ?? "300;400;500;600;700"}`
+    )
     .join("&");
   return `https://fonts.googleapis.com/css2?${families}&display=swap`;
 }

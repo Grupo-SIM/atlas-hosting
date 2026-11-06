@@ -217,16 +217,59 @@ function searchText(post: Post): string {
     .slice(0, 20000);
 }
 
+const FOLDER_ICON = (
+  <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M3 5a2 2 0 0 1 2-2h4.2a2 2 0 0 1 1.5.7L12 5h7a2 2 0 0 1 2 2v1H3zm0 5h18.5l-1.7 8.2A2 2 0 0 1 17.9 20H5a2 2 0 0 1-2-2z" />
+  </svg>
+);
+
 export function PostCard({
   compact,
   ctx,
   post,
+  variant,
 }: {
   compact?: boolean;
   ctx: RenderContext;
   post: Post;
+  /** `grid` e `archive` são os cards do tema Central; sem `variant` vale `compact`. */
+  variant?: "archive" | "grid";
 }) {
   const category = categoryOf(ctx.site, post);
+  if (variant) {
+    const url = href(ctx, postPath(post));
+    return (
+      <article
+        className={`sb-card sb-post-card ${variant}`}
+        data-category={category?.slug ?? ""}
+        data-search={searchText(post)}
+      >
+        <a className="sb-post-thumb" href={url}>
+          <Img alt={post.title} src={post.coverImage} />
+          {variant === "archive" && category ? (
+            <span className="sb-tag">{category.name}</span>
+          ) : null}
+        </a>
+        <div className="sb-card-body">
+          <h3>
+            <a href={url}>{post.title}</a>
+          </h3>
+          {variant === "grid" && category ? (
+            <p className="sb-ct-cat">
+              {FOLDER_ICON}
+              <a href={href(ctx, categoryPath(category))}>{category.name}</a>
+            </p>
+          ) : null}
+          <p className="ex">{excerptCut(post.excerpt, 200)}</p>
+          {variant === "archive" ? (
+            <a className="sb-link" href={url}>
+              Leia mais »
+            </a>
+          ) : null}
+        </div>
+      </article>
+    );
+  }
   return (
     <article
       className={
