@@ -53,6 +53,17 @@ export function globalAds(theme: Record<string, string>): {
   };
 }
 
+/** A página já tem um bloco de anúncio (em qualquer nível)? */
+export function hasAdSlot(
+  blocks: { children?: unknown[]; type: string }[]
+): boolean {
+  return blocks.some(
+    b =>
+      b.type === "adSlot" ||
+      hasAdSlot((b.children ?? []) as { children?: unknown[]; type: string }[])
+  );
+}
+
 const SAFE_SRC = /^(https?:\/\/|\/)/i;
 
 /**
