@@ -3,7 +3,12 @@ import { getBlockDefinition } from "../blocks/registry.js";
 import type { RenderContext } from "../blocks/types.js";
 import { fxCss, fxRuntimeData } from "../model/fx.js";
 import type { Block, Site } from "../model/index.js";
-import { cleanStyle, elementStylesCss, fontFamilyCss } from "../model/style.js";
+import {
+  cleanStyle,
+  elementStylesCss,
+  fontFamilyCss,
+  translateCss,
+} from "../model/style.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { customFonts, fontFaceCss, fontStylesheet } from "./fonts.js";
 import { isJournal, journalCss, journalVars } from "./journal.js";
@@ -145,6 +150,8 @@ function renderBlocks(blocks: Block[], ctx: RenderContext): ReactNode {
     );
     const fxData = fxRuntimeData(block.fx);
     const fxStyles = fxCss(block.id, block.fx);
+    const { translate: blockShift, ...blockStyle } =
+      cleanStyle(block.style) ?? {};
     return (
       <div
         className="sb-block"
@@ -152,13 +159,21 @@ function renderBlocks(blocks: Block[], ctx: RenderContext): ReactNode {
         data-block-type={block.type}
         data-fx={fxData.length ? JSON.stringify(fxData) : undefined}
         key={block.id}
-        style={cleanStyle(block.style) as CSSProperties | undefined}
+        style={blockStyle as CSSProperties}
       >
         {def.render(block.props, ctx, children)}
         {block.elStyles ? (
           <style>{elementStylesCss(block.id, block.elStyles)}</style>
         ) : null}
         {fxStyles ? <style>{fxStyles}</style> : null}
+        {blockShift ? (
+          <style>
+            {translateCss(
+              `[data-block-id="${block.id.replace(/["<>]/g, "")}"]`,
+              blockShift
+            )}
+          </style>
+        ) : null}
         {block.style?.fontFamily ? (
           <style>
             {fontFamilyCss(

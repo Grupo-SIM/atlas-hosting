@@ -20,6 +20,7 @@ export const BLOCK_STYLE_KEYS = [
   "padding",
   "textAlign",
   "textTransform",
+  "translate",
   "width",
 ] as const;
 
@@ -70,6 +71,7 @@ export function elementStylesCss(
       .map(n => `>:nth-child(${Number(n)})`)
       .join("");
     const decls = Object.entries(style)
+      .filter(([k]) => k !== "translate")
       .map(([k, v]) => {
         const prop = k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`);
         const value =
@@ -77,7 +79,8 @@ export function elementStylesCss(
         return `${prop}:${value}!important`;
       })
       .join(";");
-    css += `[data-block-id="${id}"]${selector}{${decls}}`;
+    if (decls) css += `[data-block-id="${id}"]${selector}{${decls}}`;
+    css += translateCss(`[data-block-id="${id}"]${selector}`, style.translate);
     if (style.fontFamily)
       css += fontFamilyCss(`[data-block-id="${id}"]${selector} *`, style);
   }
@@ -91,4 +94,18 @@ export function fontFamilyCss(
 ): string {
   const family = style?.fontFamily;
   return family ? `${selector}{font-family:${family}!important}` : "";
+}
+
+const TRANSLATE_VALUE = /^-?\d+(\.\d+)?px -?\d+(\.\d+)?px$/;
+
+/**
+ * Deslocamento livre (`translate: Xpx Ypx`). Só vale em tela larga: no celular/tablet o item volta
+ * ao lugar, senão ele sairia da tela. `.sb-narrow` é o preview estreito do editor.
+ */
+export function translateCss(
+  selector: string,
+  value: string | number | undefined
+): string {
+  if (typeof value !== "string" || !TRANSLATE_VALUE.test(value)) return "";
+  return `@media (min-width:861px){${selector}{translate:${value}!important}}.sb-narrow ${selector}{translate:none!important}`;
 }

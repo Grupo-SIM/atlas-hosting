@@ -17,6 +17,13 @@ import { ConfirmDialog, type ConfirmRequest } from "./ConfirmDialog.js";
 import { ContentPanel } from "./ContentPanel.js";
 import { elementTree } from "./dom-tree.js";
 import type { ResolveChannel } from "./fields.js";
+import {
+  collectSnapLines,
+  formatTranslate,
+  parseTranslate,
+  type SnapLines,
+  snap,
+} from "./free-move.js";
 import { type FocusHint, Inspector } from "./Inspector.js";
 import { Icon } from "./icons.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
@@ -201,6 +208,9 @@ export function SiteEditor({
   const [elName, setElName] = useState("");
   const selBoxRef = useRef<HTMLDivElement | null>(null);
   const hoverBoxRef = useRef<HTMLDivElement | null>(null);
+  const guideVRef = useRef<HTMLDivElement | null>(null);
+  const guideHRef = useRef<HTMLDivElement | null>(null);
+  const justDragged = useRef(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   );
@@ -494,6 +504,17 @@ export function SiteEditor({
       } else if ((k === "delete" || k === "backspace") && selectedId) {
         e.preventDefault();
         blockAction("delete");
+      } else if (
+        selectedId &&
+        device === "desktop" &&
+        ["arrowleft", "arrowright", "arrowup", "arrowdown"].includes(k)
+      ) {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        nudge(
+          k === "arrowleft" ? -step : k === "arrowright" ? step : 0,
+          k === "arrowup" ? -step : k === "arrowdown" ? step : 0
+        );
       } else if (k === "escape") {
         setSelectedId(null);
         setReview(false);
@@ -514,6 +535,11 @@ export function SiteEditor({
   }, []);
 
   const onCanvasClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (justDragged.current) {
+      justDragged.current = false;
+      e.preventDefault();
+      return;
+    }
     const target = e.target as HTMLElement;
     const anchor = target.closest("a");
     if (anchor) {
@@ -541,6 +567,180 @@ export function SiteEditor({
         ? (el.getAttribute("src") ?? "")
         : (el?.textContent ?? "");
     setFocusHint(h => ({ n: h.n + 1, value }));
+  };
+
+  const showGuides = (gx?: number, gy?: number) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    const v = guideVRef.current;
+    const h = guideHRef.current;
+    if (!(rect && v && h)) return;
+    if (gx === undefined) v.style.display = "none";
+    else {
+      v.style.display = "block";
+      v.style.left = `${gx}px`;
+      v.style.top = `${rect.top}px`;
+      v.style.height = `${rect.height}px`;
+    }
+    if (gy === undefined) h.style.display = "none";
+    else {
+      h.style.display = "block";
+      h.style.top = `${gy}px`;
+      h.style.left = `${rect.left}px`;
+      h.style.width = `${rect.width}px`;
+    }
+  };
+
+  /** Grava o deslocamento (bloco ou elemento) e, em texto em linha, garante que o `translate` valha. */
+  const commitOffset = (
+    blockId: string,
+    elP: string,
+    x: number,
+    y: number,
+    inline: boolean,
+    key: string
+  ) => {
+    const block = findBlock(siteRef.current, blockId);
+    if (!block) return;
+    const zero = x === 0 && y === 0;
+    const patch = {
+      ...(inline && !zero ? { display: "inline-block" } : {}),
+      translate: zero ? undefined : formatTranslate({ x, y }),
+    };
+    edit(
+      elP
+        ? updateElementStyle(siteRef.current, blockId, elP, patch)
+        : updateBlockStyle(siteRef.current, blockId, patch),
+      { id: blockId, key, label: `Moveu · ${labelOf(block.type)}` }
+    );
+  };
+
+  /**
+   * Mover qualquer item livremente: segure e arraste. Dentro do item já selecionado arrasta ele;
+   * senão, o item sob o ponteiro. Encaixa nas bordas/centros vizinhos (Alt desliga), Shift trava
+   * o eixo. O deslocamento aparece ao vivo no DOM e só vai para o site quando solta.
+   */
+  const onMovePointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || device !== "desktop" || e.ctrlKey || e.metaKey)
+      return;
+    const target = e.target as HTMLElement;
+    if (target.closest(".sb-header .sb-logo, .sb-header .sb-logo-img")) return;
+    const picked = pickElement(target);
+    const pickedBlock = picked?.closest<HTMLElement>("[data-block-id]");
+    if (!(picked && pickedBlock)) return;
+
+    const selBlock = selectedId ? blockEl(selectedId) : null;
+    const selEl = selBlock
+      ? elPath
+        ? elementAt(selBlock, elPath)
+        : selBlock
+      : null;
+    const useSel = Boolean(selBlock && selEl?.contains(target));
+    const node = useSel && selBlock ? selBlock : pickedBlock;
+    const el = useSel && selEl ? selEl : picked;
+    const blockId = node.dataset.blockId;
+    if (!blockId) return;
+    const elP = useSel ? elPath : pathWithin(el, node);
+    const block = findBlock(siteRef.current, blockId);
+    if (!block) return;
+
+    const base = parseTranslate(
+      elP ? block.elStyles?.[elP]?.translate : block.style?.translate
+    );
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const frame = node.closest<HTMLElement>(".sbe-frame");
+    let started = false;
+    let inline = false;
+    let rect: DOMRect | null = null;
+    let lines: SnapLines | null = null;
+    let off = { ...base };
+
+    const move = (ev: globalThis.PointerEvent) => {
+      let dx = ev.clientX - startX;
+      let dy = ev.clientY - startY;
+      if (!started) {
+        if (Math.hypot(dx, dy) < 4) return;
+        started = true;
+        rect = el.getBoundingClientRect();
+        lines = frame ? collectSnapLines(frame, node, el) : null;
+        inline = getComputedStyle(el).display === "inline";
+        if (inline)
+          el.style.setProperty("display", "inline-block", "important");
+        document.body.style.cursor = "grabbing";
+        document.body.style.userSelect = "none";
+        setSelectedId(blockId);
+        setElPath(elP);
+        const text = (el.textContent ?? "").trim().slice(0, 24);
+        setElName(elP ? `${itemName(el)}${text ? ` · ${text}` : ""}` : "");
+      }
+      if (ev.shiftKey) {
+        if (Math.abs(dx) > Math.abs(dy)) dy = 0;
+        else dx = 0;
+      }
+      let gx: number | undefined;
+      let gy: number | undefined;
+      if (lines && rect && !ev.altKey) {
+        const s = snap(rect, dx, dy, lines);
+        dx = s.dx;
+        dy = s.dy;
+        gx = s.gx;
+        gy = s.gy;
+      }
+      off = { x: base.x + dx / zoom, y: base.y + dy / zoom };
+      el.style.setProperty("translate", formatTranslate(off), "important");
+      showGuides(gx, gy);
+      paintSelection();
+    };
+
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      if (!started) return;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      showGuides();
+      el.style.removeProperty("translate");
+      if (inline) el.style.removeProperty("display");
+      justDragged.current = true;
+      setTimeout(() => {
+        justDragged.current = false;
+      }, 0);
+      commitOffset(
+        blockId,
+        elP,
+        Math.round(off.x),
+        Math.round(off.y),
+        inline,
+        `move:${blockId}:${elP}`
+      );
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+
+  /** Setas do teclado empurram o item selecionado (Shift = 10 px). */
+  const nudge = (dx: number, dy: number) => {
+    if (!selectedId) return;
+    const block = findBlock(site, selectedId);
+    const node = blockEl(selectedId);
+    if (!(block && node)) return;
+    const target = elPath ? elementAt(node, elPath) : node;
+    const base = parseTranslate(
+      elPath ? block.elStyles?.[elPath]?.translate : block.style?.translate
+    );
+    const inline = target
+      ? getComputedStyle(target).display === "inline"
+      : false;
+    commitOffset(
+      selectedId,
+      elPath,
+      base.x + dx,
+      base.y + dy,
+      inline,
+      `nudge:${selectedId}:${elPath}`
+    );
   };
 
   /** Arrastar a logo do cabeçalho na horizontal: grava `logoX` (% da largura da barra). */
@@ -958,10 +1158,15 @@ export function SiteEditor({
           ) : null}
         </div>
 
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: o canvas recebe clique, hover e arrasto dos itens */}
         <div
           className="sbe-canvas"
           onClickCapture={onCanvasClick}
-          onPointerDownCapture={onLogoPointerDown}
+          onDragStart={e => e.preventDefault()}
+          onPointerDownCapture={e => {
+            onLogoPointerDown(e);
+            onMovePointerDown(e);
+          }}
           onPointerLeave={clearHover}
           onPointerOver={onCanvasOver}
           onScroll={() => {
@@ -975,6 +1180,8 @@ export function SiteEditor({
             <span />
           </div>
           <div className="sbe-selbox" ref={selBoxRef} />
+          <div className="sbe-guide v" ref={guideVRef} />
+          <div className="sbe-guide h" ref={guideHRef} />
           <div
             className="sbe-frame"
             style={{

@@ -20,6 +20,7 @@ import {
 } from "../renderer/fonts.js";
 import { themeVars } from "../renderer/styles.js";
 import { FieldInput, type ResolveChannel } from "./fields.js";
+import { formatTranslate, parseTranslate } from "./free-move.js";
 import { Icon, type IconName } from "./icons.js";
 
 type StyleValue = string | number | undefined;
@@ -680,6 +681,50 @@ export function Inspector({
             </button>
           </Section>
         ) : null}
+
+        <Section title="Posição">
+          {(["x", "y"] as const).map(axis => {
+            const pos = parseTranslate(st.translate);
+            return (
+              <div className="sbe-line" key={axis}>
+                <span>
+                  {axis === "x" ? "Mover na horizontal" : "Mover na vertical"}
+                </span>
+                <input
+                  className="sbe-num"
+                  onChange={e => {
+                    const n = Number(e.target.value.replace(",", "."));
+                    if (!Number.isFinite(n)) return;
+                    const next = { ...pos, [axis]: n };
+                    set(
+                      "translate",
+                      "Posição"
+                    )(
+                      next.x === 0 && next.y === 0
+                        ? undefined
+                        : formatTranslate(next)
+                    );
+                  }}
+                  type="text"
+                  value={pos[axis]}
+                />
+              </div>
+            );
+          })}
+          <p className="sbe-hint">
+            Arraste o item no canvas (Shift = um eixo só, Alt = sem encaixe) ou
+            use as setas do teclado (Shift = 10 px). Só vale em tela larga.
+          </p>
+          {st.translate ? (
+            <button
+              className="sbe-btn"
+              onClick={() => set("translate", "Posição")(undefined)}
+              type="button"
+            >
+              Voltar ao lugar original
+            </button>
+          ) : null}
+        </Section>
 
         <Section title="Tipografia">
           <FontPicker

@@ -63,6 +63,10 @@ export const editorCss = `
 .sbe-frame .sb-block[data-block-type=whatsappFloat]{position:sticky;bottom:0;height:0;z-index:4}
 .sbe-frame .sb-float{position:absolute}
 .sbe-canvas .sb-header .sb-logo,.sbe-canvas .sb-header .sb-logo-img{cursor:grab;touch-action:none;user-select:none}
+.sbe-canvas img{-webkit-user-drag:none;user-select:none}
+.sbe-guide{display:none;position:fixed;z-index:6;pointer-events:none;background:#ff3d8b}
+.sbe-guide.v{width:1px}
+.sbe-guide.h{height:1px}
 .sbe-hoverbox{display:none;position:fixed;z-index:5;pointer-events:none;box-sizing:border-box;border:2px solid #8b7ff0;background:rgba(139,127,240,.08)}
 .sbe-hoverbox span{position:absolute;left:-2px;top:-20px;background:#8b7ff0;color:#fff;font-size:11px;line-height:18px;padding:0 6px;border-radius:4px 4px 0 0;white-space:nowrap}
 .sbe-canvas .sb-block[data-selected]{outline:2px solid var(--violet);outline-offset:-2px}
