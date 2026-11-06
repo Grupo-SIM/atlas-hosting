@@ -3,9 +3,9 @@ import { getBlockDefinition } from "../blocks/registry.js";
 import type { RenderContext } from "../blocks/types.js";
 import { fxCss, fxRuntimeData } from "../model/fx.js";
 import type { Block, Site } from "../model/index.js";
-import { cleanStyle, elementStylesCss } from "../model/style.js";
+import { cleanStyle, elementStylesCss, fontFamilyCss } from "../model/style.js";
 import { FxRuntime } from "./FxRuntime.js";
-import { fontStylesheet } from "./fonts.js";
+import { customFonts, fontFaceCss, fontStylesheet } from "./fonts.js";
 import { isJournal, journalCss, journalVars } from "./journal.js";
 import { isPortal, portalCss, portalVars } from "./portal.js";
 import { type Route, resolveRoute } from "./routes.js";
@@ -49,7 +49,7 @@ export function SiteRenderer({
   skipFxRuntime = false,
 }: SiteRendererProps) {
   const route = resolveRoute(site, path, mode);
-  const fonts = fontStylesheet(site.theme);
+  const fonts = fontStylesheet(site);
   const notFoundPage =
     route.kind === "notFound"
       ? site.pages.find(p => p.slug === "404")
@@ -98,6 +98,7 @@ export function SiteRenderer({
       }
     >
       <style>
+        {fontFaceCss(customFonts(site.theme))}
         {journal
           ? siteCss + journalCss
           : portal
@@ -158,6 +159,14 @@ function renderBlocks(blocks: Block[], ctx: RenderContext): ReactNode {
           <style>{elementStylesCss(block.id, block.elStyles)}</style>
         ) : null}
         {fxStyles ? <style>{fxStyles}</style> : null}
+        {block.style?.fontFamily ? (
+          <style>
+            {fontFamilyCss(
+              `[data-block-id="${block.id.replace(/["<>]/g, "")}"] *`,
+              cleanStyle(block.style)
+            )}
+          </style>
+        ) : null}
       </div>
     );
   });

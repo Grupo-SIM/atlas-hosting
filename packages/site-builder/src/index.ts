@@ -19,7 +19,13 @@ export {
   type BlockStyle,
   type BlockStyleKey,
 } from "./model/style.js";
-export { fontStack, SITE_FONTS, themeFont } from "./renderer/fonts.js";
+export {
+  customFonts,
+  type FontFile,
+  fontStack,
+  SITE_FONTS,
+  themeFont,
+} from "./renderer/fonts.js";
 export {
   isSlugTaken,
   type Route,

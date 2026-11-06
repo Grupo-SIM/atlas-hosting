@@ -57,6 +57,8 @@ export interface SiteEditorProps {
   onSave: (site: Site) => Promise<SaveResult>;
   /** Envia o arquivo e devolve a URL pública. Sem isso, imagens aceitam só URL. */
   onUploadImage?: (file: File) => Promise<string>;
+  /** Envia um arquivo de fonte e devolve nome + URL pública. Sem isso, só as fontes da lista. */
+  onUploadFont?: (file: File) => Promise<{ name: string; url: string }>;
   /** Site de origem (template) para "Restaurar original". Sem isso o botão some. */
   originalSite?: Site;
   /** Onde e como publicar; sem isso o botão de publicar não aparece. */
@@ -145,6 +147,7 @@ export function SiteEditor({
   onResolveChannel,
   onSave,
   onUploadImage,
+  onUploadFont,
   originalSite,
   publish,
   storageKey,
@@ -1005,6 +1008,7 @@ export function SiteEditor({
               label: `Tema · ${what}`,
             })
           }
+          onUploadFont={onUploadFont}
           onUploadImage={onUploadImage}
           selected={selected}
           site={site}

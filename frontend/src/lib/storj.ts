@@ -103,3 +103,35 @@ export async function uploadSiteBuilderImage(file: Buffer | ArrayBuffer) {
   await upload.done();
   return key;
 }
+
+const FONT_TYPES: Record<string, string> = {
+  otf: "font/otf",
+  ttf: "font/ttf",
+  woff: "font/woff",
+  woff2: "font/woff2",
+};
+
+/** Fonte de site do Criador de Sites (arquivo cru, sem processamento). Devolve a chave no bucket. */
+export async function uploadSiteBuilderFont(
+  file: Buffer | ArrayBuffer,
+  ext: keyof typeof FONT_TYPES
+) {
+  if (!ACCESS_KEY_ID || !SECRET_ACCESS_KEY || !BUCKET || !ENDPOINT) {
+    throw new Error("Configurações do Storj incompletas no .env");
+  }
+
+  const body = file instanceof ArrayBuffer ? Buffer.from(file) : file;
+  const key = `site-builder/fonts/${uuidv4()}.${ext}`;
+  const upload = new Upload({
+    client: s3Client,
+    params: {
+      Body: body,
+      Bucket: BUCKET,
+      ContentType: FONT_TYPES[ext],
+      Key: key,
+    },
+  });
+
+  await upload.done();
+  return key;
+}
