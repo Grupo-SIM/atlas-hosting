@@ -26,11 +26,19 @@ export function centralVars(
   };
 }
 
-/** `url("...")` seguro para usar em `background`; valor suspeito vira `none`. */
-export const cssUrl = (url: string | undefined): string =>
-  url && !/["\\\n\r;{}<>]/.test(url) && !/^\s*(javascript|vbscript):/i.test(url)
-    ? `url("${url}")`
-    : "none";
+/** Cabeçalho de imagem `data:` (`data:image/svg+xml;utf8,`, `;charset=utf-8,`, `;base64,`): o `;` dele é legítimo. */
+const DATA_IMAGE_HEAD =
+  /^data:image\/[a-z0-9.+-]+(?:;[a-z0-9-]+(?:=[a-z0-9-]+)?)*,/i;
+
+/**
+ * `url("...")` seguro para usar em `background`; valor suspeito vira `none`. Só o cabeçalho de uma
+ * imagem `data:` pode ter `;` (sites criados antes guardaram a textura como `data:image/svg+xml;utf8,…`).
+ */
+export const cssUrl = (url: string | undefined): string => {
+  if (!url || /^\s*(javascript|vbscript):/i.test(url)) return "none";
+  const body = url.replace(DATA_IMAGE_HEAD, "");
+  return /["\\\n\r;{}<>]/.test(body) ? "none" : `url("${url}")`;
+};
 
 const S = ".sb-ct";
 

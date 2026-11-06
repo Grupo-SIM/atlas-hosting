@@ -254,4 +254,16 @@ describe("cssUrl", () => {
     expect(cssUrl("javascript:alert(1)")).toBe("none");
     expect(cssUrl("")).toBe("none");
   });
+
+  test("aceita o cabeçalho de imagem data: (sites antigos guardaram a textura com ;utf8)", () => {
+    const old = "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D'x'%2F%3E";
+    expect(cssUrl(old)).toBe(`url("${old}")`);
+    expect(cssUrl("data:image/png;base64,iVBORw0KGgo=")).toBe(
+      'url("data:image/png;base64,iVBORw0KGgo=")'
+    );
+    // o `;` só vale no cabeçalho; fora dele, ou em data: que não é imagem, continua recusado
+    expect(cssUrl("data:image/svg+xml;utf8,a;b")).toBe("none");
+    expect(cssUrl('data:image/svg+xml;utf8,x");color:red')).toBe("none");
+    expect(cssUrl("data:text/html;base64,PHNjcmlwdD4=")).toBe("none");
+  });
 });
