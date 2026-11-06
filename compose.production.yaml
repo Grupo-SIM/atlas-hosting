@@ -22,6 +22,21 @@ services:
     networks: [externa]
     restart: unless-stopped
     ports: ["127.0.0.1:3000:3000"]
+  # Atlas IA do Criador de Sites: guarda o login Claude de cada usuário (assinatura dele) e roda o
+  # Claude Code. Fica de propósito SEM `env_file: .env` (não pode enxergar banco, chaves nem segredos do
+  # app) e sem chave de API: só o token abaixo. O volume guarda os logins; não use `down -v`.
+  claude-worker:
+    image: ${CLAUDE_WORKER_IMAGE:-ghcr.io/grupo-sim/atlas-hosting_claude-worker:latest}
+    environment:
+      CLAUDE_WORKER_TOKEN: ${CLAUDE_WORKER_TOKEN:-}
+    init: true
+    networks: [externa]
+    restart: unless-stopped
+    volumes: [claude-state:/state/claude]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
 networks:
   externa:
     external: true
+volumes:
+  claude-state:

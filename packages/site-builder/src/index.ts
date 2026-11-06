@@ -1,4 +1,14 @@
 export {
+  AI_TOOLS,
+  type AiContext,
+  type AiToolDef,
+  AiToolError,
+  type AiToolOutcome,
+  buildAiSystemPrompt,
+  EDITOR_GUIDE,
+  runAiTool,
+} from "./ai/index.js";
+export {
   createBlock,
   getBlockDefinition,
   listBlockDefinitions,

@@ -23,6 +23,7 @@ export function defineBlock<S extends z.ZodTypeAny>(
         children
       );
     },
+    schema,
     type: spec.type,
   };
 }
