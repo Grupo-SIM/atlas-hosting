@@ -416,6 +416,28 @@ export function SiteEditor({
     }));
   };
 
+  /** Rola o canvas, com animação, até o bloco (ou elemento) clicado nas camadas. */
+  const revealInCanvas = (id: string, path = "") => {
+    requestAnimationFrame(() => {
+      const canvas = canvasRef.current;
+      const block = blockEl(id);
+      const target = block && path ? elementAt(block, path) : block;
+      if (!(canvas && target)) return;
+      const c = canvas.getBoundingClientRect();
+      const r = target.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) return;
+      // Centraliza o que cabe na tela; o que é maior que a tela fica com o topo à vista.
+      const gap = Math.max(24, (c.height - r.height) / 2);
+      const top = canvas.scrollTop + (r.top - c.top) - gap;
+      canvas.scrollTo({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        top: Math.max(0, top),
+      });
+    });
+  };
+
   const addBlock = (type: string) => {
     const key = (selectedId && rootOf(site, selectedId)) || mainRoot;
     if (!rootBlocks(site, key)) return;
@@ -1151,8 +1173,14 @@ export function SiteEditor({
               onAdd={addBlock}
               onInsert={insertAt}
               onMove={moveTo}
-              onSelect={select}
-              onSelectElement={selectElement}
+              onSelect={id => {
+                select(id);
+                revealInCanvas(id);
+              }}
+              onSelectElement={(id, elementPath, label) => {
+                selectElement(id, elementPath, label);
+                revealInCanvas(id, elementPath);
+              }}
               onToggleHidden={toggleHidden}
               sections={layerSections}
               selectedId={selectedId}
