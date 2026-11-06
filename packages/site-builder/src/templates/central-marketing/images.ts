@@ -43,22 +43,35 @@ export const AVATARS = [
  */
 const svgData = (svg: string) => encodeURIComponent(svg);
 
-/** Textura escura de triângulos verdes (placeholder gerado, sem foto): fundo dos cartões e selos. */
+/**
+ * Textura escura com estilhaços verdes desfocados em camadas (placeholder gerado, sem foto), no
+ * espírito da imagem do original: fundo dos selos e dos cartões de categoria com imagem.
+ * Cada estilhaço: [x, y, tamanho, giro em graus, opacidade, camada de desfoque 0–2].
+ */
+const SHARDS: [number, number, number, number, number, 0 | 1 | 2][] = [
+  [40, 40, 70, 20, 0.55, 2],
+  [130, 210, 90, 200, 0.5, 2],
+  [330, 60, 80, 130, 0.45, 2],
+  [370, 250, 75, 300, 0.5, 2],
+  [210, 30, 40, 250, 0.6, 1],
+  [70, 150, 35, 80, 0.55, 1],
+  [270, 170, 45, 330, 0.6, 1],
+  [180, 270, 30, 40, 0.5, 1],
+  [390, 150, 35, 170, 0.5, 1],
+  [110, 90, 18, 300, 0.85, 0],
+  [250, 110, 14, 60, 0.8, 0],
+  [310, 230, 16, 190, 0.85, 0],
+  [20, 250, 15, 110, 0.75, 0],
+  [160, 150, 12, 10, 0.7, 0],
+  [360, 120, 12, 240, 0.7, 0],
+];
+
 const texture = () => {
-  const tri = (pts: string, op: number) =>
-    `<polygon points='${pts}' fill='#11e44f' fill-opacity='${op}'/>`;
+  const blur = ["", " filter='url(#m)'", " filter='url(#b)'"];
+  const shard = ([x, y, r, rot, op, layer]: (typeof SHARDS)[number]) =>
+    `<polygon points='0,${-r} ${r * 0.45},${r * 0.6} ${-r * 0.3},${r * 0.35}' transform='translate(${x} ${y}) rotate(${rot})' fill='#11e44f' fill-opacity='${op}'${blur[layer]}/>`;
   return `data:image/svg+xml,${svgData(
-    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' preserveAspectRatio='xMidYMid slice'><rect width='400' height='300' fill='#0a1a10'/>${[
-      tri("0,0 140,0 60,120", 0.34),
-      tri("140,0 300,0 220,90", 0.16),
-      tri("300,0 400,0 400,140", 0.28),
-      tri("60,120 220,90 150,230", 0.2),
-      tri("0,120 60,120 0,260", 0.3),
-      tri("220,90 400,140 300,250", 0.14),
-      tri("150,230 300,250 190,300", 0.3),
-      tri("300,250 400,140 400,300", 0.22),
-      tri("0,260 150,230 60,300", 0.18),
-    ].join("")}</svg>`
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' preserveAspectRatio='xMidYMid slice'><defs><filter id='b' x='-50%' y='-50%' width='200%' height='200%'><feGaussianBlur stdDeviation='9'/></filter><filter id='m' x='-50%' y='-50%' width='200%' height='200%'><feGaussianBlur stdDeviation='3'/></filter></defs><rect width='400' height='300' fill='#030604'/>${SHARDS.map(shard).join("")}</svg>`
   )}`;
 };
 

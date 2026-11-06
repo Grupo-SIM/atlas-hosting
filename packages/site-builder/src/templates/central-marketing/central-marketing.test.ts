@@ -18,6 +18,11 @@ const template = getTemplate("central-marketing");
 if (!template) throw new Error("template central-marketing não registrado");
 const { site } = template;
 
+/** O export das 69 rotas é caro: os testes compartilham uma execução só. */
+let exported: ReturnType<typeof exportSiteToStatic> | undefined;
+const exportOnce = () => (exported ??= exportSiteToStatic(site));
+const EXPORT_TIMEOUT = 120_000;
+
 const allBlocks = (blocks: Block[]): Block[] =>
   blocks.flatMap(b => [b, ...allBlocks(b.children ?? [])]);
 
@@ -82,65 +87,81 @@ describe("template central-marketing", () => {
     expect(footer).toBe(BRAND.name);
   });
 
-  test("exportSiteToStatic gera HTML para todas as rotas", async () => {
-    const files = await exportSiteToStatic(site);
-    const expected =
-      site.pages.filter(p => p.status === "published").length +
-      site.posts.filter(p => p.status === "published").length +
-      site.categories.length +
-      1; // 404.html
-    expect(files).toHaveLength(expected);
-    const paths = new Set(files.map(f => f.path));
-    expect(paths.size).toBe(files.length);
-    for (const f of files) {
-      expect(f.content.startsWith("<!doctype html>")).toBe(true);
-      expect(f.content).toContain("sb-ct");
-      expect(f.content).not.toContain("Bloco desconhecido");
-      expect(f.content).not.toContain("undefined");
-      expect(f.content).not.toContain("[object Object]");
-    }
-    expect(paths.has("index.html")).toBe(true);
-    expect(paths.has("404.html")).toBe(true);
-    expect(paths.has("category/copy/index.html")).toBe(true);
-  }, 120_000);
+  test(
+    "exportSiteToStatic gera HTML para todas as rotas",
+    async () => {
+      const files = await exportOnce();
+      const expected =
+        site.pages.filter(p => p.status === "published").length +
+        site.posts.filter(p => p.status === "published").length +
+        site.categories.length +
+        1; // 404.html
+      expect(files).toHaveLength(expected);
+      const paths = new Set(files.map(f => f.path));
+      expect(paths.size).toBe(files.length);
+      for (const f of files) {
+        expect(f.content.startsWith("<!doctype html>")).toBe(true);
+        expect(f.content).toContain("sb-ct");
+        expect(f.content).not.toContain("Bloco desconhecido");
+        expect(f.content).not.toContain("undefined");
+        expect(f.content).not.toContain("[object Object]");
+      }
+      expect(paths.has("index.html")).toBe(true);
+      expect(paths.has("404.html")).toBe(true);
+      expect(paths.has("category/copy/index.html")).toBe(true);
+    },
+    EXPORT_TIMEOUT
+  );
 
-  test("home publicada traz o carrossel de logos em CSS puro (sem autoplay no editor)", async () => {
-    const files = await exportSiteToStatic(site);
-    const home = files.find(f => f.path === "index.html")?.content ?? "";
-    expect(home).toContain("sb-ct-marquee-track");
-    expect(home).toContain('class="sb-ct-marquee"');
-    expect(home).not.toContain('class="sb-ct-marquee is-static"');
-    expect(home).toContain("sb-ct-hero");
-    expect(home).toContain("Red+Hat+Text");
-    expect(home).toContain("family=Content:wght@400;700");
-    // um logo por vez, como o original (para e desliza)
-    expect(home).toContain("--ct-anim:sb-ct-step10");
-    expect(home).toContain(logoStepKeyframes(10));
-  });
+  test(
+    "home publicada traz o carrossel de logos em CSS puro (sem autoplay no editor)",
+    async () => {
+      const files = await exportOnce();
+      const home = files.find(f => f.path === "index.html")?.content ?? "";
+      expect(home).toContain("sb-ct-marquee-track");
+      expect(home).toContain('class="sb-ct-marquee"');
+      expect(home).not.toContain('class="sb-ct-marquee is-static"');
+      expect(home).toContain("sb-ct-hero");
+      expect(home).toContain("Red+Hat+Text");
+      expect(home).toContain("family=Content:wght@400;700");
+      // um logo por vez, como o original (para e desliza)
+      expect(home).toContain("--ct-anim:sb-ct-step10");
+      expect(home).toContain(logoStepKeyframes(10));
+    },
+    EXPORT_TIMEOUT
+  );
 
-  test("botão de play do hero abre o vídeo em popup (e cai no link sem JS)", async () => {
-    const files = await exportSiteToStatic(site);
-    const home = files.find(f => f.path === "index.html")?.content ?? "";
-    expect(home).toContain('class="sb-ct-play"');
-    expect(home).toContain(
-      'data-sb-video="https://www.youtube-nocookie.com/embed/2z39bEyVSoI"'
-    );
-    expect(home).toContain(
-      'href="https://www.youtube.com/watch?v=2z39bEyVSoI"'
-    );
-    expect(home).toContain("a[data-sb-video]");
-    // o script vai como string: um escape errado quebra tudo sem erro de tipo
-    expect(() => new Function(NAV_RUNTIME)).not.toThrow();
-  });
+  test(
+    "botão de play do hero abre o vídeo em popup (e cai no link sem JS)",
+    async () => {
+      const files = await exportOnce();
+      const home = files.find(f => f.path === "index.html")?.content ?? "";
+      expect(home).toContain('class="sb-ct-play"');
+      expect(home).toContain(
+        'data-sb-video="https://www.youtube-nocookie.com/embed/2z39bEyVSoI"'
+      );
+      expect(home).toContain(
+        'href="https://www.youtube.com/watch?v=2z39bEyVSoI"'
+      );
+      expect(home).toContain("a[data-sb-video]");
+      // o script vai como string: um escape errado quebra tudo sem erro de tipo
+      expect(() => new Function(NAV_RUNTIME)).not.toThrow();
+    },
+    EXPORT_TIMEOUT
+  );
 
-  test("no modo edição o carrossel fica parado", async () => {
-    const { prelude } = await prerender(
-      createElement(SiteRenderer, { mode: "edit", path: "/", site })
-    );
-    const html = await new Response(prelude).text();
-    expect(html).toContain('class="sb-ct-marquee is-static"');
-    expect(html).not.toContain("@keyframes sb-ct-step");
-  });
+  test(
+    "no modo edição o carrossel fica parado",
+    async () => {
+      const { prelude } = await prerender(
+        createElement(SiteRenderer, { mode: "edit", path: "/", site })
+      );
+      const html = await new Response(prelude).text();
+      expect(html).toContain('class="sb-ct-marquee is-static"');
+      expect(html).not.toContain("@keyframes sb-ct-step");
+    },
+    EXPORT_TIMEOUT
+  );
 });
 
 describe("estender fx: stagger", () => {
@@ -158,23 +179,33 @@ describe("estender fx: stagger", () => {
 });
 
 describe("âncora de bloco", () => {
-  test("o Saber Mais da home rola até a seção de categorias (#sabermais)", async () => {
-    const files = await exportSiteToStatic(site);
-    const home = files.find(f => f.path === "index.html")?.content ?? "";
-    expect(home).toContain('href="#sabermais"');
-    expect(home).toMatch(/<div class="sb-block"[^>]*id="sabermais"/);
-    expect(home.match(/id="sabermais"/g)).toHaveLength(1);
-  });
+  test(
+    "o Saber Mais da home rola até a seção de categorias (#sabermais)",
+    async () => {
+      const files = await exportOnce();
+      const home = files.find(f => f.path === "index.html")?.content ?? "";
+      expect(home).toContain('href="#sabermais"');
+      expect(home).toMatch(/<div class="sb-block"[^>]*id="sabermais"/);
+      expect(home.match(/id="sabermais"/g)).toHaveLength(1);
+    },
+    EXPORT_TIMEOUT
+  );
 
-  test("selo em camadas: textura de fundo chega ao CSS (cssUrl não recusa) e texto acima do destaque", async () => {
-    const files = await exportSiteToStatic(site);
-    const home = files.find(f => f.path === "index.html")?.content ?? "";
-    expect(home).toContain("--ct-img:url(&quot;data:image/svg+xml,");
-    expect(home).toContain(
-      '<span class="kick">Crescimento</span><strong>rápido</strong>'
-    );
-    expect(home).toContain('class="foot"');
-  });
+  test(
+    "selo em camadas: textura de fundo chega ao CSS (cssUrl não recusa) e texto acima do destaque",
+    async () => {
+      const files = await exportOnce();
+      const home = files.find(f => f.path === "index.html")?.content ?? "";
+      expect(home).toContain("--ct-img:url(&quot;data:image/svg+xml,");
+      expect(home).toContain(
+        '<span class="kick">Crescimento</span><strong>rápido</strong>'
+      );
+      expect(home).toContain('class="foot"');
+      // cartões de categoria: 2º, 4º, 6º e 8º com imagem de fundo (como no original)
+      expect(home.match(/class="item has-img"/g)).toHaveLength(4);
+    },
+    EXPORT_TIMEOUT
+  );
 
   test("só aceita nomes simples (vira id no HTML)", () => {
     const b = { id: "x", props: {}, type: "heading" };

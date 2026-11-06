@@ -250,9 +250,17 @@ ${S} .sb-ct-fg p{margin:0}
 ${S} .sb-ct-fg .more{display:inline-block;margin-top:16px;color:var(--sb-accent);font-size:14px;font-weight:700;letter-spacing:1px;text-transform:capitalize}
 ${S} .sb-ct-fg .ic{display:flex}
 ${S} .v-simple .item{display:flex;align-items:center;justify-content:center;min-height:171px;padding:0 33px}
-${S} .v-icon .item{display:flex;flex-direction:column;align-items:center;min-height:327px;padding:32px 33px 36px;background:var(--ct-img,none) center/cover no-repeat}
-${S} .v-icon .item .ic{align-items:center;justify-content:center;width:84px;height:84px;border-radius:50%;background:var(--sb-accent);color:#121212}
-${S} .v-icon .item .ic svg{width:40px;height:40px}
+${S} .v-icon .item{isolation:isolate;display:flex;flex-direction:column;align-items:center;min-height:327px;padding:32px 33px 36px;overflow:hidden;transition:border-color .4s}
+${S} .v-icon .item.has-img{background:linear-gradient(rgba(0,0,0,.19),rgba(0,0,0,.19)),var(--ct-img,none) center/cover no-repeat}
+/* hover do original: o cartão inteiro fica verde (cobrindo a imagem), textos escuros, círculo escuro com ícone branco */
+${S} .v-icon .item::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--sb-accent);opacity:0;transition:opacity .4s}
+${S} .v-icon .item h3,${S} .v-icon .item p,${S} .v-icon .item .more{transition:color .4s}
+${S} .v-icon .item .ic{align-items:center;justify-content:center;width:84px;height:84px;border-radius:50%;background:var(--sb-accent);color:#121212;transition:background-color .4s,color .4s}
+${S} .v-icon .item .ic svg{width:44px;height:44px}
+${S} .v-icon .item:hover,${S} .v-icon .item:focus-visible{border-color:var(--sb-accent)}
+${S} .v-icon .item:hover::before,${S} .v-icon .item:focus-visible::before{opacity:1}
+${S} .v-icon .item:hover h3,${S} .v-icon .item:hover p,${S} .v-icon .item:hover .more,${S} .v-icon .item:focus-visible h3,${S} .v-icon .item:focus-visible p,${S} .v-icon .item:focus-visible .more{color:#121212}
+${S} .v-icon .item:hover .ic,${S} .v-icon .item:focus-visible .ic{background:#121212;color:#fcfcfc}
 ${S} .v-icon .item h3{margin:30px 0 10px}
 ${S} .v-numbered .item{padding:32px 33px 40px}
 ${S} .v-numbered .col{display:flex;flex-direction:column;gap:20px}

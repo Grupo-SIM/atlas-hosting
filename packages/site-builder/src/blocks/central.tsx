@@ -821,7 +821,7 @@ const featureGrid = defineBlock(
             );
             return link ? (
               <a
-                className="item"
+                className={it.image ? "item has-img" : "item"}
                 href={link}
                 key={it.title + i}
                 style={bg(it.image)}
@@ -829,7 +829,11 @@ const featureGrid = defineBlock(
                 {inner}
               </a>
             ) : (
-              <div className="item" key={it.title + i} style={bg(it.image)}>
+              <div
+                className={it.image ? "item has-img" : "item"}
+                key={it.title + i}
+                style={bg(it.image)}
+              >
                 {inner}
               </div>
             );
