@@ -15,6 +15,7 @@ export interface AiAccountStatus {
 }
 
 export interface WorkerChatInput {
+  images?: { data: string; mediaType: string }[];
   callbackToken: string;
   callbackUrl: string;
   model: string;

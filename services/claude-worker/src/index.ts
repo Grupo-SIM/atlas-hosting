@@ -31,7 +31,8 @@ if (!TOKEN) {
   process.exit(1);
 }
 
-const MAX_BODY = 2 * 1024 * 1024;
+// Cabe o texto e até 4 imagens de 5 MB em base64.
+const MAX_BODY = 40 * 1024 * 1024;
 
 async function readJson(
   req: IncomingMessage

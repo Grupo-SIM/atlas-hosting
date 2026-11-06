@@ -208,4 +208,14 @@ export const editorCss = `
 .sbe-ai-input button.stop{font-size:12px;background:var(--danger)!important}
 .sbe-ai-login{display:flex;flex-direction:column;gap:8px;width:100%;align-items:stretch;text-align:left}
 .sbe-ai-err{color:var(--danger);padding:0 12px}
+.sbe-ai-drop{display:flex;flex-direction:column;flex:1;min-height:0;position:relative}
+.sbe-ai-drop.on:after{content:"Solte a imagem aqui";position:absolute;inset:6px;border:2px dashed var(--violet);border-radius:14px;background:rgba(235,232,248,.9);color:var(--violet);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;z-index:5}
+.sbe-ai-imgs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.sbe-ai-imgs img{width:72px;height:72px;object-fit:cover;border-radius:8px}
+.sbe-ai-thumbs{display:flex;flex-wrap:wrap;gap:8px;padding:0 12px}
+.sbe-ai-thumbs div{position:relative}
+.sbe-ai-thumbs img{width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block}
+.sbe-ai-thumbs button{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%!important;border:0!important;background:var(--ink)!important;color:#fff;font-size:12px;line-height:1;padding:0!important;display:flex;align-items:center;justify-content:center}
+.sbe-ai-input button.attach{background:transparent!important;color:var(--mute)}
+.sbe-ai-input button.attach:hover:not(:disabled){color:var(--ink)}
 `;

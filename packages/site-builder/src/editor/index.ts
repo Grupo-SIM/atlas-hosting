@@ -9,6 +9,7 @@ export type {
   AiChatEvent,
   AiConfig,
   AiFailure,
+  AiImage,
   AiMessage,
   AiStatus,
 } from "./types.js";

@@ -1206,6 +1206,7 @@ export function SiteEditor({
                   })
                 }
                 onBusy={setAiBusy}
+                onUploadImage={onUploadImage}
                 storageKey={storageKey}
               />
             </div>

@@ -33,6 +33,15 @@ export interface AiFailure {
   ok: false;
 }
 
+/** Imagem anexada a uma mensagem (colada, escolhida ou arrastada). */
+export interface AiImage {
+  /** Base64 sem o prefixo `data:`. */
+  data: string;
+  mediaType: string;
+  /** URL pública, se o arquivo já foi enviado ao site (a IA pode usá-la nos blocos). */
+  url?: string;
+}
+
 export interface AiMessage {
   role: "assistant" | "user";
   text: string;
@@ -58,6 +67,8 @@ export interface AiConfig {
   chat: (
     input: {
       context: AiChatContext;
+      /** Anexos da última mensagem do usuário. */
+      images?: AiImage[];
       messages: AiMessage[];
       site: Site;
     },

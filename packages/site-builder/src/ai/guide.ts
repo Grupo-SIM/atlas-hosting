@@ -41,7 +41,7 @@ Quatro seções:
 - **Categorias**: criar, renomear, excluir (posts da categoria ficam sem categoria).
 - **Menu**: links do menu do site (nome + endereço, com subitens). Vale para cabeçalho e rodapé.
 ### Aba IA
-Este chat. Conecta a assinatura Claude do próprio usuário e edita o site a pedido.
+Este chat. Conecta a assinatura Claude do próprio usuário e edita o site a pedido. Dá para anexar imagens à mensagem (até 4, 5 MB cada, PNG/JPG/WebP/GIF): colar com Ctrl+V, clicar no clipe ao lado do campo ou arrastar e soltar no painel. A IA enxerga a imagem e, quando ela foi guardada no site, pode usá-la num bloco (ex.: "coloque esta imagem no hero").
 
 ## Painel direito (Inspetor)
 ### Com um bloco (ou elemento) selecionado
@@ -63,7 +63,7 @@ Este chat. Conecta a assinatura Claude do próprio usuário e edita o site a ped
 ## Receitas frequentes (como responder)
 - **Enviar uma fonte**: selecione um bloco com texto → painel direito → **Tipografia** → campo Fonte → **+ Enviar arquivo de fonte** (.woff2/.woff/.ttf/.otf, até 3 MB). A fonte enviada passa a aparecer em "Minhas fontes". Para usar no site inteiro, escolha-a em cada bloco (o tema só lista as fontes Google). A IA NÃO consegue enviar arquivos: o usuário precisa fazer.
 - **Trocar a fonte do site inteiro**: clique em área vazia/desmarque o bloco → painel direito (tema) → **Fonte** → escolha. A IA também pode fazer isso.
-- **Enviar imagem**: selecione o bloco → Conteúdo → campo de imagem (arrastar e soltar ou clicar), ou cole a URL. A IA só consegue usar URLs que o usuário informar; não envia arquivo.
+- **Enviar imagem**: selecione o bloco → Conteúdo → campo de imagem (arrastar e soltar ou clicar), ou cole a URL. A IA usa URLs que o usuário informar ou imagens anexadas no chat (ver aba IA); não envia outros arquivos.
 - **Anúncios**: (1) botão **Anúncios** na barra superior, ou chave "Anúncios no site" no tema, liga os espaços; isso cria um bloco "Anúncio" (faixa) no topo de cada página, que aparece nas Camadas e pode ser movido. (2) Clique no bloco Anúncio → Conteúdo: lista de imagens/vídeos (passam sozinhos), link, segundos por imagem, formato (faixa, lateral, quadrado). (3) Anúncio sem mídia própria usa os **anúncios do site inteiro**: tema → "Anúncios do site — faixa larga (topo)" e "— coluna lateral" (imagens/vídeos, link, segundos). Sem nenhuma mídia, o espaço some no site publicado e aparece tracejado no editor. Desligar o botão esconde todos.
 - **Adicionar uma página**: aba **Páginas** → seção Páginas → **Nova página**; depois adicione blocos nas Camadas. Para aparecer no menu: seção **Menu**. A IA faz tudo isso.
 - **Criar um post / categoria**: aba Páginas → Posts → Novo post (escolha a categoria) / Categorias → Nova categoria.
@@ -80,5 +80,5 @@ Este chat. Conecta a assinatura Claude do próprio usuário e edita o site a ped
 
 ## O que a IA pode e não pode fazer
 Pode: ler o site, adicionar/editar/mover/duplicar/ocultar/remover blocos, mudar estilo e efeitos, tema (cores, fonte), ligar anúncios, páginas, posts, categorias, menu e nome do site.
-Não pode: enviar arquivos (imagem, vídeo, fonte), publicar o site, mexer em domínio/servidor/DNS/cobrança, nem acessar nada fora deste editor. Nesses casos, explique ao usuário o passo a passo da tela.
+Não pode: enviar vídeo ou fonte (imagens só se o usuário anexar no chat), publicar o site, mexer em domínio/servidor/DNS/cobrança, nem acessar nada fora deste editor. Nesses casos, explique ao usuário o passo a passo da tela.
 `;

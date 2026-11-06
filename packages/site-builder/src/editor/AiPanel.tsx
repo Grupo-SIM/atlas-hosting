@@ -13,6 +13,7 @@ import type {
   AiChatContext,
   AiChatEvent,
   AiConfig,
+  AiImage,
   AiMessage,
   AiStatus,
 } from "./types.js";
@@ -34,11 +35,34 @@ interface Props {
   onApply: (site: Site, change: string | undefined, turn: string) => void;
   /** Avisa o editor que a IA está (ou deixou de estar) trabalhando, para travar edição manual. */
   onBusy: (busy: boolean) => void;
+  /** Envia o arquivo ao site e devolve a URL (a IA pode usar a imagem nos blocos). Sem isso a IA só vê o anexo. */
+  onUploadImage?: (file: File) => Promise<string>;
   /** Guarda a conversa no navegador, por site. */
   storageKey?: string;
 }
 
+const MAX_IMAGES = 4;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+
+interface Attachment extends AiImage {
+  file: File;
+  id: string;
+  /** Data URL, para a miniatura. */
+  preview: string;
+}
+
+const readAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
 interface ChatEntry extends AiMessage {
+  /** Miniaturas dos anexos (só nesta sessão: não vão para o armazenamento). */
+  images?: string[];
   changes?: string[];
   failed?: boolean;
 }
@@ -85,12 +109,16 @@ export function AiPanel({
   getSite,
   onApply,
   onBusy,
+  onUploadImage,
   storageKey,
 }: Props) {
   const [view, setView] = useState<View>({ kind: "loading" });
   const [messages, setMessages] = useState<ChatEntry[]>([]);
   const [draft, setDraft] = useState("");
   const [running, setRunning] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   const [activity, setActivity] = useState("");
   const abort = useRef<AbortController | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
@@ -133,7 +161,7 @@ export function AiPanel({
     try {
       localStorage.setItem(
         `sbe-ai:${storageKey}`,
-        JSON.stringify(messages.slice(-40))
+        JSON.stringify(messages.slice(-40).map(({ images: _, ...m }) => m))
       );
     } catch {
       // sem armazenamento: a conversa vale só nesta sessão.
@@ -178,17 +206,46 @@ export function AiPanel({
     } else setError(res?.error ?? "Não foi possível desconectar.");
   };
 
+  const addFiles = async (files: File[]) => {
+    const images = files.filter(f => IMAGE_TYPES.includes(f.type));
+    if (images.length === 0) return;
+    setError("");
+    const room = MAX_IMAGES - attachments.length;
+    if (images.length > room) {
+      setError(`No máximo ${MAX_IMAGES} imagens por mensagem.`);
+    }
+    const added: Attachment[] = [];
+    for (const file of images.slice(0, Math.max(room, 0))) {
+      if (file.size > MAX_IMAGE_BYTES) {
+        setError(`"${file.name || "imagem"}" passa de 5 MB.`);
+        continue;
+      }
+      const preview = await readAsDataUrl(file);
+      added.push({
+        data: preview.slice(preview.indexOf(",") + 1),
+        file,
+        id: `${Date.now()}-${added.length}-${file.size}`,
+        mediaType: file.type,
+        preview,
+      });
+    }
+    if (added.length) setAttachments(list => [...list, ...added]);
+  };
+
   const send = async (raw: string) => {
-    const text = raw.trim();
-    if (!text || running) return;
+    const typed = raw.trim();
+    if ((!typed && attachments.length === 0) || running) return;
+    const text = typed || "Veja a imagem anexada.";
+    const sending = attachments;
+    setAttachments([]);
     const history: ChatEntry[] = [
       ...messages.filter(m => !m.failed),
-      { role: "user", text },
+      { images: sending.map(a => a.preview), role: "user", text },
     ];
     setMessages([...history, { changes: [], role: "assistant", text: "" }]);
     setDraft("");
     setRunning(true);
-    setActivity("Pensando…");
+    setActivity(sending.length ? "Enviando imagens…" : "Pensando…");
     onBusy(true);
     const turn = `ai:${Date.now()}`;
     const controller = new AbortController();
@@ -220,9 +277,21 @@ export function AiPanel({
     };
 
     try {
+      // Guarda cada imagem no site (se der) para a IA poder usá-la em blocos; se falhar, ela ainda a vê.
+      const images: AiImage[] = await Promise.all(
+        sending.map(async ({ data, file, mediaType }) => {
+          try {
+            return { data, mediaType, url: await onUploadImage?.(file) };
+          } catch {
+            return { data, mediaType };
+          }
+        })
+      );
+      setActivity("Pensando…");
       await ai.chat(
         {
           context: getContext(),
+          images: images.length ? images : undefined,
           messages: history.map(({ role, text: t }) => ({ role, text: t })),
           site: getSite(),
         },
@@ -344,7 +413,26 @@ export function AiPanel({
   }
 
   return (
-    <>
+    // biome-ignore lint/a11y/noStaticElementInteractions: área de soltar arquivos
+    <div
+      className={dragging ? "sbe-ai-drop on" : "sbe-ai-drop"}
+      onDragLeave={e => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          setDragging(false);
+        }
+      }}
+      onDragOver={e => {
+        if (e.dataTransfer.types.includes("Files")) {
+          e.preventDefault();
+          setDragging(true);
+        }
+      }}
+      onDrop={e => {
+        e.preventDefault();
+        setDragging(false);
+        if (!running) void addFiles([...e.dataTransfer.files]);
+      }}
+    >
       <div className="sbe-ai-head">
         <span title={view.email}>
           <Icon name="circle-check" size={13} />
@@ -383,6 +471,13 @@ export function AiPanel({
             // biome-ignore lint/suspicious/noArrayIndexKey: a conversa só cresce
             key={i}
           >
+            {m.images?.length ? (
+              <div className="sbe-ai-imgs">
+                {m.images.map(src => (
+                  <img alt="Anexo" key={src.slice(-40)} src={src} />
+                ))}
+              </div>
+            ) : null}
             {m.text ? (
               <p>{m.role === "assistant" ? inline(m.text) : m.text}</p>
             ) : null}
@@ -403,6 +498,24 @@ export function AiPanel({
       </div>
 
       {error ? <p className="sbe-hint sbe-ai-err">{error}</p> : null}
+      {attachments.length ? (
+        <div className="sbe-ai-thumbs">
+          {attachments.map(a => (
+            <div key={a.id}>
+              <img alt={a.file.name || "Anexo"} src={a.preview} />
+              <button
+                onClick={() =>
+                  setAttachments(list => list.filter(x => x.id !== a.id))
+                }
+                title="Remover"
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <form
         className="sbe-ai-input"
         onSubmit={e => {
@@ -410,6 +523,26 @@ export function AiPanel({
           void send(draft);
         }}
       >
+        <input
+          accept={IMAGE_TYPES.join(",")}
+          hidden
+          multiple
+          onChange={e => {
+            void addFiles([...(e.target.files ?? [])]);
+            e.target.value = "";
+          }}
+          ref={fileInput}
+          type="file"
+        />
+        <button
+          className="attach"
+          disabled={running || attachments.length >= MAX_IMAGES}
+          onClick={() => fileInput.current?.click()}
+          title="Anexar imagem (ou cole com Ctrl+V, ou arraste para cá)"
+          type="button"
+        >
+          <Icon name="upload" size={14} />
+        </button>
         <textarea
           disabled={running}
           onChange={e => setDraft(e.target.value)}
@@ -417,6 +550,15 @@ export function AiPanel({
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               void send(draft);
+            }
+          }}
+          onPaste={e => {
+            const files = [...e.clipboardData.files].filter(f =>
+              f.type.startsWith("image/")
+            );
+            if (files.length) {
+              e.preventDefault();
+              void addFiles(files);
             }
           }}
           placeholder={
@@ -435,11 +577,15 @@ export function AiPanel({
             Parar
           </button>
         ) : (
-          <button disabled={!draft.trim()} title="Enviar" type="submit">
+          <button
+            disabled={!draft.trim() && attachments.length === 0}
+            title="Enviar"
+            type="submit"
+          >
             <Icon name="arrow-up" size={14} />
           </button>
         )}
       </form>
-    </>
+    </div>
   );
 }

@@ -179,7 +179,14 @@ export interface ChatTool {
   name: string;
 }
 
+export interface ChatImage {
+  /** Base64 sem o prefixo `data:`. */
+  data: string;
+  mediaType: string;
+}
+
 export interface ChatInput {
+  images?: ChatImage[];
   callbackToken: string;
   callbackUrl: string;
   model: string;
@@ -235,6 +242,9 @@ export async function* chat(
       "claude",
       [
         "-p",
+        // Entrada em JSON: é a única forma de mandar imagens junto com o texto.
+        "--input-format",
+        "stream-json",
         "--output-format",
         "stream-json",
         "--verbose",
@@ -266,7 +276,8 @@ export async function* chat(
     const exited = new Promise<number | null>(resolve =>
       child.once("exit", code => resolve(code))
     );
-    child.stdin.write(input.prompt);
+    child.stdin.write(`${JSON.stringify(userMessage(input))}
+`);
     child.stdin.end();
 
     const streamed = new Set<string>();
@@ -338,6 +349,29 @@ export async function* chat(
     if (proc && proc.exitCode === null) proc.kill("SIGKILL");
     await rm(dir, { force: true, recursive: true }).catch(() => undefined);
   }
+}
+
+const IMAGE_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+]);
+
+function userMessage(input: ChatInput) {
+  const images = (input.images ?? [])
+    .filter(i => IMAGE_TYPES.has(i.mediaType))
+    .map(i => ({
+      source: { data: i.data, media_type: i.mediaType, type: "base64" },
+      type: "image",
+    }));
+  return {
+    message: {
+      content: [...images, { text: input.prompt, type: "text" }],
+      role: "user",
+    },
+    type: "user",
+  };
 }
 
 function describeApiError(ev: Json): string {

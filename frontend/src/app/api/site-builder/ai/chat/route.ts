@@ -18,6 +18,61 @@ export const maxDuration = 600;
 
 const MAX_MESSAGES = 24;
 const MAX_MESSAGE_CHARS = 6000;
+const MAX_IMAGES = 4;
+/** ~5 MB de arquivo em base64. */
+const MAX_IMAGE_BASE64 = 7_000_000;
+const IMAGE_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+]);
+
+interface ChatImage {
+  data: string;
+  mediaType: string;
+  url?: string;
+}
+
+function parseImages(raw: unknown): ChatImage[] | null {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw) || raw.length > MAX_IMAGES) return null;
+  const out: ChatImage[] = [];
+  for (const item of raw) {
+    const img = item as Partial<ChatImage>;
+    if (
+      typeof img.data !== "string" ||
+      img.data.length > MAX_IMAGE_BASE64 ||
+      !/^[A-Za-z0-9+/=]+$/.test(img.data) ||
+      typeof img.mediaType !== "string" ||
+      !IMAGE_TYPES.has(img.mediaType)
+    ) {
+      return null;
+    }
+    out.push({
+      data: img.data,
+      mediaType: img.mediaType,
+      url:
+        typeof img.url === "string" && img.url.length < 500
+          ? img.url
+          : undefined,
+    });
+  }
+  return out;
+}
+
+/** Diz à IA onde cada imagem anexada foi guardada, para ela poder usá-la nos campos de imagem. */
+function imageNote(images: ChatImage[]): string {
+  if (images.length === 0) return "";
+  const urls = images
+    .map((img, i) => (img.url ? `Imagem ${i + 1}: ${img.url}` : ""))
+    .filter(Boolean);
+  const count = `${images.length} imagem(ns)`;
+  const note = urls.length
+    ? `O usuário anexou ${count}. As URLs abaixo já estão no site e podem ser usadas em campos de imagem (src, backgroundImage, logo…):\n${urls.join("\n")}`
+    : `O usuário anexou ${count} só para você ver; elas não têm URL no site.`;
+  return `\n\n[${note}]`;
+}
 
 interface ChatMessage {
   role: "assistant" | "user";
@@ -82,6 +137,7 @@ export async function POST(request: Request) {
 
   let body: {
     context?: Partial<AiContext>;
+    images?: unknown;
     messages?: unknown;
     site?: unknown;
   };
@@ -92,7 +148,8 @@ export async function POST(request: Request) {
   }
   const messages = parseMessages(body.messages);
   const site = siteSchema.safeParse(body.site);
-  if (!(messages && site.success)) {
+  const images = parseImages(body.images);
+  if (!(messages && images && site.success)) {
     return Response.json({ error: "Pedido inválido." }, { status: 400 });
   }
 
@@ -122,8 +179,9 @@ export async function POST(request: Request) {
           {
             callbackToken: token,
             callbackUrl: `${callbackBaseUrl()}/api/site-builder/ai/tool/${turnId}`,
+            images: images.map(({ data, mediaType }) => ({ data, mediaType })),
             model: "sonnet",
-            prompt: buildPrompt(messages),
+            prompt: buildPrompt(messages) + imageNote(images),
             systemPrompt: buildAiSystemPrompt({
               currentRoot: context.currentRoot,
               currentTitle: context.currentTitle,
