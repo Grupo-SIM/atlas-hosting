@@ -47,6 +47,8 @@ export type RenderFn<P> = (
 
 export interface BlockDefinition {
   defaults: Record<string, unknown>;
+  /** Schema das props: a IA valida o que grava, porque prop inválida faz o bloco voltar aos defaults ao renderizar. */
+  schema: z.ZodTypeAny;
   fields: FieldDef[];
   group: BlockGroup;
   label: string;

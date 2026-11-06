@@ -38,6 +38,7 @@ transação, com rollback em erro.
 - App Next em `frontend/` (workspace bun/turbo; shell Tauri em `frontend/src-tauri/`). `scripts/`, `docs/` e `plans/` ficam na raiz.
 - Componentes shadcn em `frontend/src/components/ui/` — reutilize em vez de recriar.
 - Textos de interface em português.
+- Recurso novo no editor de sites (botão, painel, bloco, opção de tema): atualize também `packages/site-builder/src/ai/guide.ts` (guia que a Atlas IA usa para dizer onde fica cada ferramenta) e, se a IA puder operá-lo, `src/ai/tools.ts`.
 - Máscara de dinheiro: input conta centavos da direita para a esquerda
   (digitar `8990` → `89,90`), campo visível formatado com `toLocaleString("pt-BR")`
   e input hidden com ponto decimal para o servidor.

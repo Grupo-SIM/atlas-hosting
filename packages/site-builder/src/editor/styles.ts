@@ -184,4 +184,27 @@ export const editorCss = `
 .sbe-dialog footer{padding:16px 20px 18px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .sbe-toast{position:absolute;top:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:13px;padding:10px 16px;border-radius:999px;display:flex;align-items:center;gap:8px;z-index:30}
 .sbe-toast svg{color:var(--lime)}
+
+.sbe-ailock .sbe-canvas,.sbe-ailock .sbe-right{pointer-events:none}
+.sbe-ailock .sbe-canvas{opacity:.88}
+.sbe-ai-note{margin:0 12px;padding:6px 10px;font-size:12px;color:var(--mute);display:flex;align-items:center;gap:6px}
+.sbe-ai-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line2);font-size:12px;color:var(--mute)}
+.sbe-ai-head span{display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sbe-ai-head svg{color:#2f9e5f;flex:none}
+.sbe-ai-list{display:flex;flex-direction:column;gap:10px;padding:12px}
+.sbe-ai-hello{display:flex;flex-direction:column;gap:8px}
+.sbe-ai-hello p{margin:0 0 4px;font-size:13px;color:var(--mute)}
+.sbe-ai-msg{max-width:92%;font-size:13px;line-height:1.5;padding:8px 11px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.sbe-ai-msg p{margin:0}
+.sbe-ai-msg.user{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:4px}
+.sbe-ai-msg.assistant{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+.sbe-ai-msg.failed{border-color:#e7b7ba;color:var(--danger)}
+.sbe-ai-msg ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mute)}
+.sbe-ai-msg li:before{content:"✓ ";color:#2f9e5f}
+.sbe-ai-input{margin:10px;display:flex;align-items:flex-end;gap:6px;background:#fff;border:1px solid var(--field);border-radius:14px;padding:6px 6px 6px 10px}
+.sbe-ai-input textarea{flex:1;border:0!important;background:transparent!important;resize:none;padding:4px 0!important;max-height:120px;outline:none}
+.sbe-ai-input button{flex:none;min-width:28px;height:28px;border-radius:999px!important;border:0!important;background:var(--ink)!important;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 10px!important}
+.sbe-ai-input button.stop{font-size:12px;background:var(--danger)!important}
+.sbe-ai-login{display:flex;flex-direction:column;gap:8px;width:100%;align-items:stretch;text-align:left}
+.sbe-ai-err{color:var(--danger);padding:0 12px}
 `;

@@ -25,7 +25,7 @@ Telas em `frontend/src/app/(auth)/criador-de-sites/`:
    da última publicação). Sem publicação ainda, o modal leva para `/[siteId]/publicar`, que continua existindo.
 
 O editor (`packages/site-builder/src/editor/`) tem camadas (árvore de blocos), aba Páginas (páginas, posts, categorias, menu),
-aba IA ("em breve"), canvas com desktop/tablet/celular + zoom, desfazer/refazer, autosave (1,5 s) e inspetor à direita
+aba IA (Atlas IA, veja abaixo), canvas com desktop/tablet/celular + zoom, desfazer/refazer, autosave (1,5 s) e inspetor à direita
 (conteúdo do bloco, tipografia, caixa; sem seleção, o tema). Lista de alterações do modal fica em `localStorage` por site.
 
 - `Block.style` (allowlist em `model/style.ts`, validada no `siteSchema`) e `Block.hidden` valem para **qualquer** bloco e
@@ -71,6 +71,40 @@ aba IA ("em breve"), canvas com desktop/tablet/celular + zoom, desfazer/refazer,
   vídeo (MP4/WebM, até 25 MB) vai por `uploadSiteVideo` e o tipo é lido pela extensão da URL. `serverActions.bodySizeLimit` = 30 MB.
 - `react-dom/static` (e não `react-dom/server`) renderiza o HTML estático: o Next recusa `react-dom/server` em código do app router.
 - Links digitados pelo usuário passam por `safeUrl` (bloqueia `javascript:`/`data:`). Use-o em todo `href` novo vindo de props.
+
+## Atlas IA (aba "IA")
+
+O usuário conecta a **própria assinatura Claude** (Pro/Max) e conversa para editar o site e tirar dúvidas do editor.
+Mesmo desenho do alfajuri: nenhuma chave de API do Atlas é usada.
+
+```
+navegador ── POST /api/site-builder/ai/chat (NDJSON) ──► frontend ──► claude-worker ──► claude -p
+                                                            ▲                              │ MCP (stdio)
+                                                            └── POST /api/site-builder/ai/tool/<turno> ◄── mcp-bridge
+```
+
+- **`services/claude-worker`** (fora dos workspaces; imagem própria, CD em `cd-claude-worker.yml`): um `CLAUDE_CONFIG_DIR`
+  por usuário num volume (`claude-state`), login por `claude auth login` (link + código), um `claude -p` por turno **sem
+  nenhuma ferramenta nativa** (`--tools ""`): só as do Atlas, via ponte MCP (`mcp-bridge.ts`). Remove do ambiente qualquer
+  credencial de API (venceria o login e cobraria por token) e recusa subir sem `CLAUDE_WORKER_TOKEN`. Ver o README da pasta.
+- **Ferramentas** (`packages/site-builder/src/ai/tools.ts`): `AI_TOOLS` + `runAiTool(site, nome, entrada)`, funções puras sobre o JSON
+  do `Site` (reusam `editor/tree.ts` e `site-ops.ts`). Validam props contra o schema do bloco (`BlockDefinition.schema`) e o
+  site inteiro contra `siteSchema` antes de devolver; erro vira mensagem para a IA corrigir. **Novo recurso do site = nova
+  ferramenta aqui.**
+- **Turno** (`frontend/src/lib/site-builder/ai/turns.ts`): o `/chat` recebe o site atual do navegador (inclui o que ainda
+  não salvou), guarda uma cópia de trabalho em memória e a rota `/tool/<turno>` (autorizada só pelo token do turno) aplica
+  cada ferramenta nela e avisa o navegador com `{type:"site"}`. O editor aplica com `edit(...)`, chave `ai:<turno>`:
+  **um turno inteiro = um Ctrl+Z**. Durante o turno o editor trava (`sbe-ailock`) para a edição manual não ser sobrescrita.
+- **Guia de contexto** (`packages/site-builder/src/ai/guide.ts`, `EDITOR_GUIDE`): onde fica cada ferramenta do editor, receitas
+  ("como envio uma fonte?", "como coloco anúncios?") e o que a IA pode/não pode fazer. Entra inteiro no prompt de sistema
+  (`prompt.ts`). **Ao criar ou mover qualquer recurso/botão/painel do editor, atualize este arquivo.** Os tipos de bloco não
+  ficam nele: a IA os lê pela ferramenta `tipos_de_bloco`.
+- A IA **não** envia arquivos, publica, nem mexe em domínio/servidor/DNS (o guia manda explicar o passo a passo).
+- Acesso: mesmas regras do criador (admin; `getBuilderUser`). Conversa guardada só em `localStorage` por site.
+
+Variáveis do **frontend** (`.env`): `CLAUDE_WORKER_URL` (ex. `http://claude-worker:3000`), `CLAUDE_WORKER_TOKEN` (o mesmo do
+worker), `ATLAS_AI_CALLBACK_URL` (como o worker enxerga o frontend; padrão `http://frontend:3000`). Sem as duas primeiras a aba
+mostra "Atlas IA indisponível". O worker recebe só `CLAUDE_WORKER_TOKEN` (sem `env_file`, para não ver segredos do app).
 
 ## Banco
 
@@ -121,5 +155,5 @@ Notas de segurança:
 - Compra de domínio dentro do fluxo de publicar; despublicar (remover pasta em /srv/www e o bloco do Caddyfile.base).
 - Imagens do template spyhacker ainda apontam para `007spyhacker.com/wp-content/uploads`; as do `blog-viagens` apontam para `images.unsplash.com`. Copiar ambas para o storage.
 - Edição de texto direto no canvas (duplo clique) e seleção por elemento: hoje a unidade é o bloco; texto muda no painel.
-- Chat com a IA (aba "em breve") e passos de progresso reais na criação.
+- Passos de progresso reais na criação.
 - Arrastar e soltar existe só nas camadas (blocos, inclusive aninhados, e itens da lista "Adicionar bloco"); itens soltos dentro de um bloco (ex.: um card do feed) e a troca de ordem dos itens dentro de um bloco ainda não (o canvas só desloca, não reordena).

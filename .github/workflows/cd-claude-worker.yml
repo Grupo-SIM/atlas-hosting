@@ -1,0 +1,31 @@
+name: CD claude-worker
+
+# O claude-worker (services/claude-worker) não é um workspace do monorepo, então fica fora do
+# `detect-affected` do cd.yml. Este workflow publica a imagem sempre que a pasta muda.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - services/claude-worker/**
+      - .github/workflows/cd-claude-worker.yml
+  workflow_dispatch:
+
+jobs:
+  ghcr:
+    name: Build and publish claude-worker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Build and publish image
+        uses: hyoretsu/gh-actions/containers@main
+        with:
+          image: ${{ github.repository }}_claude-worker
+          dockerfile: services/claude-worker/Dockerfile
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io

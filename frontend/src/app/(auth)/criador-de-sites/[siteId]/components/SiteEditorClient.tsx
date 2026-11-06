@@ -1,7 +1,7 @@
 "use client";
 
 import type { Site } from "@repo/site-builder";
-import { SiteEditor } from "@repo/site-builder/editor";
+import { type AiConfig, SiteEditor } from "@repo/site-builder/editor";
 import { useState } from "react";
 import {
   resolveYoutubeChannel,
@@ -10,11 +10,58 @@ import {
   uploadSiteImage,
   uploadSiteVideo,
 } from "../../actions";
+import {
+  disconnectAi,
+  finishAiLogin,
+  getAiStatus,
+  startAiLogin,
+} from "../../ai-actions";
 import { republishSite } from "../../publish-actions";
 import PublishSetupModal, {
   type PublishSetup,
   slug,
 } from "./PublishSetupModal";
+
+/** Lê o chat da IA: uma linha JSON por evento (`/api/site-builder/ai/chat`). */
+async function streamChat(
+  input: Parameters<AiConfig["chat"]>[0],
+  onEvent: Parameters<AiConfig["chat"]>[1],
+  signal: AbortSignal
+) {
+  const res = await fetch("/api/site-builder/ai/chat", {
+    body: JSON.stringify(input),
+    headers: { "content-type": "application/json" },
+    method: "POST",
+    signal,
+  });
+  if (!(res.ok && res.body)) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? "Falha ao falar com a Atlas IA.");
+  }
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += value;
+    let at = buffer.indexOf("\n");
+    while (at >= 0) {
+      const line = buffer.slice(0, at).trim();
+      buffer = buffer.slice(at + 1);
+      if (line) onEvent(JSON.parse(line));
+      at = buffer.indexOf("\n");
+    }
+  }
+}
+
+// Fora do componente: o editor refaz a checagem de conexão se esta referência mudar.
+const aiConfig: AiConfig = {
+  chat: streamChat,
+  disconnect: disconnectAi,
+  finishLogin: finishAiLogin,
+  startLogin: startAiLogin,
+  status: getAiStatus,
+};
 
 export default function SiteEditorClient({
   domain,
@@ -39,6 +86,7 @@ export default function SiteEditorClient({
   return (
     <>
       <SiteEditor
+        ai={aiConfig}
         basePath={`/criador-de-sites/${siteId}`}
         exitHref="/criador-de-sites"
         initialSite={initialSite}

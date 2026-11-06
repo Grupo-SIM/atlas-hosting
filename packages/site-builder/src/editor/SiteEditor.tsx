@@ -13,6 +13,7 @@ import { getBlockDefinition } from "../blocks/registry.js";
 import type { Site } from "../model/index.js";
 import { resolveRoute } from "../renderer/routes.js";
 import { SiteRenderer } from "../renderer/SiteRenderer.js";
+import { AiPanel } from "./AiPanel.js";
 import { ConfirmDialog, type ConfirmRequest } from "./ConfirmDialog.js";
 import { ContentPanel } from "./ContentPanel.js";
 import { elementTree } from "./dom-tree.js";
@@ -53,11 +54,13 @@ import {
   updateBlockStyle,
   updateElementStyle,
 } from "./tree.js";
-import type { ChangeEntry, EditMeta, SaveResult } from "./types.js";
+import type { AiConfig, ChangeEntry, EditMeta, SaveResult } from "./types.js";
 
 export type { SaveResult } from "./types.js";
 
 export interface SiteEditorProps {
+  /** Atlas IA (aba "IA"). Sem isso a aba continua "em breve". */
+  ai?: AiConfig;
   /** Prefixo das URLs do canvas (o editor intercepta os cliques, mas os hrefs precisam ser coerentes). */
   basePath?: string;
   /** Para onde o X do topo leva. */
@@ -152,6 +155,7 @@ function elementAt(block: HTMLElement, path: string): HTMLElement | null {
 }
 
 export function SiteEditor({
+  ai,
   basePath = "/site",
   exitHref,
   initialSite,
@@ -180,6 +184,9 @@ export function SiteEditor({
   const [path, setPath] = useState("/");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [leftTab, setLeftTab] = useState<LeftTab>("camadas");
+  // A IA edita o site por conta própria: enquanto trabalha, o usuário não edita junto (as edições se perderiam).
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiOpened, setAiOpened] = useState(false);
   const [leftOpen, setLeftOpen] = useState(true);
   const [device, setDevice] = useState<Device>("desktop");
   const [availW, setAvailW] = useState(900);
@@ -257,10 +264,11 @@ export function SiteEditor({
   const edit = useCallback((next: Site, meta: EditMeta = {}) => {
     setHistory(h => {
       const now = Date.now();
+      // Um turno da IA (`ai:<id>`) é um passo só de desfazer, por mais que demore entre uma ferramenta e outra.
       const merge =
         meta.key !== undefined &&
         lastEdit.current.key === meta.key &&
-        now - lastEdit.current.at < 1000;
+        (meta.key.startsWith("ai:") || now - lastEdit.current.at < 1000);
       lastEdit.current = { at: now, key: meta.key ?? "" };
       return {
         future: [],
@@ -492,6 +500,7 @@ export function SiteEditor({
     const onKey = (e: KeyboardEvent) => {
       const mod = e.ctrlKey || e.metaKey;
       const k = e.key.toLowerCase();
+      if (aiBusy) return;
       if (mod && k === "s") {
         e.preventDefault();
         void save();
@@ -1091,7 +1100,7 @@ export function SiteEditor({
   const currentPost = route.kind === "post" ? route.post : undefined;
 
   return (
-    <div className="sbe">
+    <div className={aiBusy ? "sbe sbe-ailock" : "sbe"}>
       <style>{editorCss}</style>
 
       {leftOpen ? (
@@ -1116,11 +1125,14 @@ export function SiteEditor({
               </button>
               <button
                 className={leftTab === "chat" ? "on" : ""}
-                onClick={() => setLeftTab("chat")}
+                onClick={() => {
+                  setLeftTab("chat");
+                  setAiOpened(true);
+                }}
                 type="button"
               >
                 <Icon name="sparkles" size={14} />
-                IA<span className="sbe-soon">BREVE</span>
+                IA{ai ? null : <span className="sbe-soon">BREVE</span>}
               </button>
             </div>
           </div>
@@ -1155,7 +1167,51 @@ export function SiteEditor({
             </div>
           )}
 
-          {leftTab === "chat" && (
+          {ai && aiOpened ? (
+            <div
+              style={{
+                display: leftTab === "chat" ? "flex" : "none",
+                flex: 1,
+                flexDirection: "column",
+                minHeight: 0,
+              }}
+            >
+              <AiPanel
+                ai={ai}
+                getContext={() => {
+                  const current = siteRef.current;
+                  const r = resolveRoute(current, path, "edit");
+                  const picked = selectedId
+                    ? findBlock(current, selectedId)
+                    : undefined;
+                  return {
+                    currentRoot: rootForRoute(r),
+                    currentTitle:
+                      r.kind === "page"
+                        ? r.page.title
+                        : r.kind === "post"
+                          ? r.post.title
+                          : undefined,
+                    selected: picked
+                      ? { id: picked.id, type: picked.type }
+                      : undefined,
+                  };
+                }}
+                getSite={() => siteRef.current}
+                onApply={(next, change, turn) =>
+                  edit(next, {
+                    key: turn,
+                    kind: "Editado",
+                    label: `IA · ${change ?? "Editou o site"}`,
+                  })
+                }
+                onBusy={setAiBusy}
+                storageKey={storageKey}
+              />
+            </div>
+          ) : null}
+
+          {!ai && leftTab === "chat" && (
             <>
               <div className="sbe-empty">
                 <div className="ico">

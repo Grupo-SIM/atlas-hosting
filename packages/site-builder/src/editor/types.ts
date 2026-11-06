@@ -1,3 +1,5 @@
+import type { Site } from "../model/index.js";
+
 export type SaveResult = { ok: true } | { error: string; ok: false };
 
 export type ChangeKind = "Editado" | "Novo" | "Oculto" | "Removido" | "Tema";
@@ -16,4 +18,59 @@ export interface EditMeta {
   key?: string;
   kind?: ChangeKind;
   label?: string;
+}
+
+// ---------- Atlas IA (aba "IA") ----------
+
+/** Conexão da assinatura Claude do usuário. */
+export type AiStatus =
+  | { available: false }
+  | { available: true; connected: false }
+  | { available: true; connected: true; email?: string; plan?: string };
+
+export interface AiFailure {
+  error: string;
+  ok: false;
+}
+
+export interface AiMessage {
+  role: "assistant" | "user";
+  text: string;
+}
+
+/** O que o editor sabe do momento, enviado à IA junto com o site. */
+export interface AiChatContext {
+  currentRoot?: string;
+  currentTitle?: string;
+  selected?: { id: string; type: string };
+}
+
+/** Evento do chat em andamento (o servidor manda um por linha). */
+export type AiChatEvent =
+  | { text: string; type: "delta" }
+  | { reading: boolean; type: "tool" }
+  | { change?: string; site: Site; type: "site" }
+  | { message: string; type: "error" }
+  | { type: "done" };
+
+/** Ligação do editor com a Atlas IA; quem hospeda o editor (o Atlas) implementa. Sem isso a aba fica "em breve". */
+export interface AiConfig {
+  chat: (
+    input: {
+      context: AiChatContext;
+      messages: AiMessage[];
+      site: Site;
+    },
+    onEvent: (event: AiChatEvent) => void,
+    signal: AbortSignal
+  ) => Promise<void>;
+  disconnect: () => Promise<{ ok: true } | AiFailure>;
+  finishLogin: (
+    loginId: string,
+    code: string
+  ) => Promise<{ email?: string; ok: true; plan?: string } | AiFailure>;
+  startLogin: () => Promise<
+    { loginId: string; ok: true; url: string } | AiFailure
+  >;
+  status: () => Promise<AiFailure | AiStatus>;
 }

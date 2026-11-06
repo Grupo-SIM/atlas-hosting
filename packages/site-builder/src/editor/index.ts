@@ -4,3 +4,11 @@ export {
   SiteEditor,
   type SiteEditorProps,
 } from "./SiteEditor.js";
+export type {
+  AiChatContext,
+  AiChatEvent,
+  AiConfig,
+  AiFailure,
+  AiMessage,
+  AiStatus,
+} from "./types.js";
