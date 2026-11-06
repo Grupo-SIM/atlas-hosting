@@ -30,6 +30,7 @@ import { type LayerSection, LayersPanel } from "./LayersPanel.js";
 import { PagePicker, type RouteGroup } from "./PagePicker.js";
 import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
 import { setMenu, setTheme, withAdBlocks } from "./site-ops.js";
+import { startSort } from "./sort-drag.js";
 import { editorCss } from "./styles.js";
 import {
   ancestorsOf,
@@ -46,6 +47,7 @@ import {
   rootLabel,
   rootOf,
   setBlockHidden,
+  setElementOrders,
   updateBlockFx,
   updateBlockProps,
   updateBlockStyle,
@@ -211,6 +213,8 @@ export function SiteEditor({
   const guideVRef = useRef<HTMLDivElement | null>(null);
   const guideHRef = useRef<HTMLDivElement | null>(null);
   const justDragged = useRef(false);
+  /** Como arrastar no canvas: trocar de lugar (item ou bloco) ou deslocar livremente. */
+  const [dragMode, setDragMode] = useState<"block" | "free" | "item">("item");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   );
@@ -619,7 +623,7 @@ export function SiteEditor({
    * senão, o item sob o ponteiro. Encaixa nas bordas/centros vizinhos (Alt desliga), Shift trava
    * o eixo. O deslocamento aparece ao vivo no DOM e só vai para o site quando solta.
    */
-  const onMovePointerDown = (e: PointerEvent<HTMLDivElement>) => {
+  const startFreeMove = (e: PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0 || device !== "desktop" || e.ctrlKey || e.metaKey)
       return;
     const target = e.target as HTMLElement;
@@ -718,6 +722,145 @@ export function SiteEditor({
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
+  };
+
+  /**
+   * Reordenar arrastando: o item acompanha o mouse e, ao passar sobre um irmão, os dois trocam de
+   * lugar ao vivo. "Item" move o componente sob o ponteiro (sobe até achar um nível com irmãos);
+   * "Bloco" move o bloco inteiro. Shift inverte o modo só nesse arrasto.
+   */
+  const startSortMove = (
+    e: PointerEvent<HTMLDivElement>,
+    wantBlock: boolean
+  ) => {
+    if (e.button !== 0 || e.ctrlKey || e.metaKey) return;
+    const target = e.target as HTMLElement;
+    if (target.closest(".sb-header .sb-logo, .sb-header .sb-logo-img")) return;
+    const picked = pickElement(target);
+    const pickedBlock = picked?.closest<HTMLElement>("[data-block-id]");
+    if (!(picked && pickedBlock)) return;
+
+    const selBlock = selectedId ? blockEl(selectedId) : null;
+    const selEl = selBlock
+      ? elPath
+        ? elementAt(selBlock, elPath)
+        : selBlock
+      : null;
+    const useSel = Boolean(selBlock && selEl?.contains(target));
+    const node = useSel && selBlock ? selBlock : pickedBlock;
+    let el: HTMLElement = useSel && selEl ? selEl : picked;
+    const blockId = node.dataset.blockId;
+    if (!blockId) return;
+
+    const isItem = (c: Element) =>
+      !["STYLE", "SCRIPT", "LINK"].includes(c.tagName);
+    const siblingsOf = (x: HTMLElement) =>
+      Array.from(x.parentElement?.children ?? []).filter(
+        isItem
+      ) as HTMLElement[];
+
+    let block = wantBlock;
+    if (!block) {
+      // Sobe até um nível que tenha irmãos para trocar; sem nenhum, move o bloco todo.
+      while (el !== node && siblingsOf(el).length < 2 && el.parentElement)
+        el = el.parentElement;
+      if (el === node) block = true;
+    }
+
+    let items: HTMLElement[];
+    let parent: HTMLElement | null;
+    if (block) {
+      el = node;
+      parent = node.parentElement;
+      if (!parent || parent.classList.contains("sb")) return;
+      items = Array.from(parent.children).filter(
+        c => (c as HTMLElement).dataset.blockId
+      ) as HTMLElement[];
+      if (items.length < 2) return;
+    } else {
+      parent = el.parentElement;
+      if (!parent) return;
+      items = siblingsOf(el);
+    }
+
+    // Ordem visual de hoje (CSS `order` salvo, senão a do DOM).
+    const orderOf = (x: HTMLElement) =>
+      Number.parseInt(getComputedStyle(x).order, 10) || 0;
+    items = items
+      .map((x, i) => ({ i, o: orderOf(x), x }))
+      .sort((a, b) => a.o - b.o || a.i - b.i)
+      .map(v => v.x);
+    const startOrder = items.slice();
+
+    const elP = block ? "" : pathWithin(el, node);
+    const model = findBlock(siteRef.current, blockId);
+    if (!model) return;
+    const base = parseTranslate(
+      elP ? model.elStyles?.[elP]?.translate : model.style?.translate
+    );
+    const parentPath = block ? "" : pathWithin(parent, node);
+
+    startSort({
+      base,
+      el,
+      items,
+      onDrop: (finalOrder, converted) => {
+        justDragged.current = true;
+        setTimeout(() => {
+          justDragged.current = false;
+        }, 0);
+        const same = finalOrder.every((x, i) => x === startOrder[i]);
+        if (same) return;
+        if (block) {
+          const at = finalOrder.indexOf(el);
+          const next = finalOrder[at + 1];
+          const prev = finalOrder[at - 1];
+          const ref = next ?? prev;
+          if (!ref?.dataset.blockId) return;
+          const moved = moveBlockTo(siteRef.current, blockId, {
+            id: ref.dataset.blockId,
+            place: next ? "before" : "after",
+          });
+          if (moved === siteRef.current) return;
+          edit(moved, {
+            id: blockId,
+            label: `Moveu · ${labelOf(model.type)}`,
+          });
+          return;
+        }
+        edit(
+          setElementOrders(
+            siteRef.current,
+            blockId,
+            finalOrder.map((x, k) => ({ order: k, path: pathWithin(x, node) })),
+            converted
+              ? {
+                  patch: { display: "flex", flexDirection: "column" },
+                  path: parentPath,
+                }
+              : undefined
+          ),
+          { id: blockId, label: `Reordenou · ${labelOf(model.type)}` }
+        );
+      },
+      onStart: () => {
+        setSelectedId(blockId);
+        setElPath(elP);
+        const text = (el.textContent ?? "").trim().slice(0, 24);
+        setElName(elP ? `${itemName(el)}${text ? ` · ${text}` : ""}` : "");
+      },
+      parent,
+      parentIsReactStyled: !block && parent === node,
+      scroller: canvasRef.current,
+      startX: e.clientX,
+      startY: e.clientY,
+      zoom,
+    });
+  };
+
+  const onMovePointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (dragMode === "free") startFreeMove(e);
+    else startSortMove(e, (dragMode === "block") !== e.shiftKey);
   };
 
   /** Setas do teclado empurram o item selecionado (Shift = 10 px). */
@@ -1083,6 +1226,27 @@ export function SiteEditor({
             >
               <Icon name="redo-2" size={15} />
             </button>
+          </div>
+          <div
+            className="sbe-seg mini"
+            title="Como arrastar no canvas (Shift inverte Item/Bloco)"
+          >
+            {(
+              [
+                ["item", "Item"],
+                ["block", "Bloco"],
+                ["free", "Livre"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                className={dragMode === value ? "on" : ""}
+                key={value}
+                onClick={() => setDragMode(value)}
+                type="button"
+              >
+                {label}
+              </button>
+            ))}
           </div>
           <button
             className={site.theme.ads === "on" ? "sbe-lime" : "sbe-btn"}

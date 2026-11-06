@@ -320,3 +320,24 @@ export function insertBlockAt(
     ? { id: block.id, site: next }
     : { id: block.id, site };
 }
+
+/**
+ * Grava a ordem dos irmãos (CSS `order`) e, se preciso, o `display:flex` do pai para a ordem valer.
+ * `parentPath` vazio = o próprio bloco.
+ */
+export function setElementOrders(
+  site: Site,
+  blockId: string,
+  orders: { order: number; path: string }[],
+  parent?: { patch: Record<string, string | number | undefined>; path: string }
+): Site {
+  let next = site;
+  for (const { order, path } of orders)
+    next = updateElementStyle(next, blockId, path, { order });
+  if (parent) {
+    next = parent.path
+      ? updateElementStyle(next, blockId, parent.path, parent.patch)
+      : updateBlockStyle(next, blockId, parent.patch);
+  }
+  return next;
+}

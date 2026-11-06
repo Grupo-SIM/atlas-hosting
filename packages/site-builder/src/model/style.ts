@@ -17,6 +17,7 @@ export const BLOCK_STYLE_KEYS = [
   "margin",
   "maxWidth",
   "opacity",
+  "order",
   "padding",
   "textAlign",
   "textTransform",
@@ -53,7 +54,7 @@ export const isValidStyle = (style: Record<string, string | number>) =>
 /** Caminho de um elemento dentro do bloco: posições `nth-child` separadas por ponto (ex.: "1.2.1"). */
 export const ELEMENT_PATH = /^\d{1,3}(\.\d{1,3}){0,11}$/;
 
-const UNITLESS = new Set(["opacity", "fontWeight"]);
+const UNITLESS = new Set(["opacity", "fontWeight", "order"]);
 
 /** CSS (com `!important`, para vencer estilos inline do bloco) dos estilos por elemento de um bloco. */
 export function elementStylesCss(
