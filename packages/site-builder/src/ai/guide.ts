@@ -45,6 +45,7 @@ Este chat. Conecta a assinatura Claude do próprio usuário e edita o site a ped
 
 ## Painel direito (Inspetor)
 ### Com um bloco (ou elemento) selecionado
+As seções do painel (Conteúdo, Tamanho, Posição, Tipografia, Efeitos, Caixa…) são dropdowns: clique no título para abrir/fechar (só o Conteúdo começa aberto).
 - Linha de ações do bloco: **Duplicar** (Ctrl+D), **Ocultar/Mostrar**, **Mover para cima/baixo**, **Excluir** (Delete).
 - **Conteúdo**: os campos do bloco (textos, links, imagens, listas). Imagem: arrastar e soltar/clicar para enviar o arquivo, ou colar a URL. Anúncios e vídeos curtos aceitam também vídeo (MP4/WebM até 25 MB).
 - **Tamanho**: largura e altura.
@@ -52,7 +53,7 @@ Este chat. Conecta a assinatura Claude do próprio usuário e edita o site a ped
 - **Tipografia**: **fonte** (Herdar do tema, Minhas fontes, Google Fonts; botão **+ Enviar arquivo de fonte** aceita .woff2/.woff/.ttf/.otf até 3 MB), tamanho, peso, cor do texto, alinhamento, maiúsculas.
 - **Efeitos**: entrada ao rolar (aparecer, subir suave, zoom…), atraso, ao passar o mouse (pulsar, crescer, encolher), parallax, contar números de 0 até o valor, "aplicar a cada item de dentro".
 - **Caixa**: fundo, arredondamento, espaçamento interno, margem externa, borda, opacidade, largura máxima.
-- Clicar num texto/imagem/botão DENTRO de um bloco seleciona só aquele elemento; o estilo vale para ele.
+- Clicar num texto/imagem/botão DENTRO de um bloco seleciona só aquele elemento: o painel mostra só o conteúdo daquele item (ex.: o campo de texto ou a imagem dele, ou os campos do card clicado) e o estilo vale para ele. Para editar o bloco todo, clique no bloco no caminho (breadcrumb) no topo do painel.
 ### Sem seleção (tema do site)
 - **Nome do site**.
 - **Favicon**: ícone da aba no site publicado (envio de imagem).
@@ -66,6 +67,7 @@ Este chat. Conecta a assinatura Claude do próprio usuário e edita o site a ped
 - **Enviar imagem**: selecione o bloco → Conteúdo → campo de imagem (arrastar e soltar ou clicar), ou cole a URL. A IA usa URLs que o usuário informar ou imagens anexadas no chat (ver aba IA); não envia outros arquivos.
 - **Anúncios**: (1) botão **Anúncios** na barra superior, ou chave "Anúncios no site" no tema, liga os espaços; isso cria um bloco "Anúncio" (faixa) no topo de cada página, que aparece nas Camadas e pode ser movido. (2) Clique no bloco Anúncio → Conteúdo: lista de imagens/vídeos (passam sozinhos), link, segundos por imagem, formato (faixa, lateral, quadrado). (3) Anúncio sem mídia própria usa os **anúncios do site inteiro**: tema → "Anúncios do site — faixa larga (topo)" e "— coluna lateral" (imagens/vídeos, link, segundos). Sem nenhuma mídia, o espaço some no site publicado e aparece tracejado no editor. Desligar o botão esconde todos.
 - **Adicionar uma página**: aba **Páginas** → seção Páginas → **Nova página**; depois adicione blocos nas Camadas. Para aparecer no menu: seção **Menu**. A IA faz tudo isso.
+- **Excluir uma página ou post**: aba Páginas → selecione a página → **Excluir**. Se ela for usada como link (menu, botões…), o editor lista onde e pergunta o que colocar no lugar: deixar sem link, levar para outra página ou outro endereço.
 - **Criar um post / categoria**: aba Páginas → Posts → Novo post (escolha a categoria) / Categorias → Nova categoria.
 - **Editar o menu**: aba Páginas → Menu.
 - **Mudar cores do site**: desmarque o bloco → painel direito → cores do tema (paleta rápida ou código hex). Para a cor de um bloco só: Inspetor → Caixa → Fundo; texto: Tipografia → Cor do texto.

@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Page, Post, Site } from "../model/index.js";
 import type { ConfirmRequest } from "./ConfirmDialog.js";
 import { FieldInput } from "./fields.js";
+import { findLinkRefs, relinkSite } from "./links.js";
 import {
   addCategory,
   addPage,
@@ -164,20 +165,45 @@ export function ContentPanel({
                   </button>
                   <button
                     className="sbe-btn danger"
-                    onClick={() =>
+                    onClick={() => {
+                      const references = findLinkRefs(site, currentPage.slug);
+                      const remove = (from: Site) => {
+                        edit(removePage(from, currentPage.id), {
+                          kind: "Removido",
+                          label: `Página · ${currentPage.title}`,
+                        });
+                        goTo("/");
+                      };
                       confirm({
                         confirmLabel: "Excluir",
-                        message: "A página sairá do site.",
-                        onConfirm: () => {
-                          edit(removePage(site, currentPage.id), {
-                            kind: "Removido",
-                            label: `Página · ${currentPage.title}`,
-                          });
-                          goTo("/");
-                        },
+                        message:
+                          references.length > 0
+                            ? `A página sairá do site, mas ela é usada como link em ${references.length} ${references.length > 1 ? "lugares" : "lugar"}:`
+                            : "A página sairá do site.",
+                        onConfirm: () => remove(site),
+                        relink:
+                          references.length > 0
+                            ? {
+                                onConfirm: href =>
+                                  remove(
+                                    relinkSite(site, currentPage.slug, href)
+                                  ),
+                                pages: site.pages
+                                  .filter(
+                                    p =>
+                                      p.id !== currentPage.id &&
+                                      p.slug !== "404"
+                                  )
+                                  .map(p => ({
+                                    href: p.slug ? `/${p.slug}/` : "/",
+                                    label: p.title,
+                                  })),
+                                references,
+                              }
+                            : undefined,
                         title: `Excluir a página "${currentPage.title}"?`,
-                      })
-                    }
+                      });
+                    }}
                     type="button"
                   >
                     Excluir
@@ -331,20 +357,39 @@ export function ContentPanel({
               />
               <button
                 className="sbe-btn danger"
-                onClick={() =>
+                onClick={() => {
+                  const references = findLinkRefs(site, currentPost.slug);
+                  const remove = (from: Site) => {
+                    edit(removePost(from, currentPost.id), {
+                      kind: "Removido",
+                      label: `Post · ${currentPost.title}`,
+                    });
+                    goTo("/blogs/");
+                  };
                   confirm({
                     confirmLabel: "Excluir",
-                    message: "O post sairá do site.",
-                    onConfirm: () => {
-                      edit(removePost(site, currentPost.id), {
-                        kind: "Removido",
-                        label: `Post · ${currentPost.title}`,
-                      });
-                      goTo("/blogs/");
-                    },
+                    message:
+                      references.length > 0
+                        ? `O post sairá do site, mas ele é usado como link em ${references.length} ${references.length > 1 ? "lugares" : "lugar"}:`
+                        : "O post sairá do site.",
+                    onConfirm: () => remove(site),
+                    relink:
+                      references.length > 0
+                        ? {
+                            onConfirm: href =>
+                              remove(relinkSite(site, currentPost.slug, href)),
+                            pages: site.pages
+                              .filter(p => p.slug !== "404")
+                              .map(p => ({
+                                href: p.slug ? `/${p.slug}/` : "/",
+                                label: p.title,
+                              })),
+                            references,
+                          }
+                        : undefined,
                     title: `Excluir o post "${currentPost.title}"?`,
-                  })
-                }
+                  });
+                }}
                 type="button"
               >
                 Excluir post
