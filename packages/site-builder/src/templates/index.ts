@@ -1,10 +1,15 @@
 import type { SiteTemplate, TemplateMeta } from "../model/index.js";
 import { blogViagens } from "./blog-viagens/index.js";
+import { centralMarketing } from "./central-marketing/index.js";
 import { portalNoticias } from "./portal-noticias/index.js";
 import { spyhacker } from "./spyhacker/index.js";
 
 /** Aparecem na tela de escolha de template. */
-const templates: SiteTemplate[] = [blogViagens, portalNoticias];
+const templates: SiteTemplate[] = [
+  blogViagens,
+  portalNoticias,
+  centralMarketing,
+];
 
 /**
  * Fora da lista, mas ainda resolvidos por `getTemplate`: sites já criados guardam o

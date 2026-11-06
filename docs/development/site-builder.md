@@ -31,7 +31,7 @@ aba IA ("em breve"), canvas com desktop/tablet/celular + zoom, desfazer/refazer,
 - `Block.style` (allowlist em `model/style.ts`, validada no `siteSchema`) e `Block.hidden` valem para **qualquer** bloco e
   são aplicados no contêiner do bloco; o que o bloco desenha por dentro continua definido pelo próprio bloco.
 - `Block.fx` (`model/fx.ts`) guarda efeitos por item: chave `""` = o bloco, senão o caminho `nth-child` do elemento (mesmo de `elStyles`).
-  Entrada ao rolar (`fadeIn*`, `zoomIn` + atraso), hover (`pop`, `grow`, `shrink`), parallax (−10..10), contador e `each` (aplica a cada filho).
+  Entrada ao rolar (`fadeIn*`, `zoomIn` + atraso), hover (`pop`, `grow`, `shrink`), parallax (−10..10), contador, `each` (aplica a cada filho) e `stagger` (com `each`, soma N ms de atraso a cada filho seguinte, até 12 — entrada em sequência).
   O CSS é gerado por `fxCss`; entrada/parallax/contador dependem do script `renderer/fx-runtime.ts` (inline no HTML publicado, `FxRuntime` na prévia).
   O estado inicial da entrada só vale com `.sb-js`, que o script põe na raiz — no editor (`mode="edit"`) e sem JS o conteúdo aparece parado.
 - Ícones do editor são um subconjunto do lucide em `editor/icons.tsx` (gerado; sem dependência nova).
@@ -52,7 +52,7 @@ aba IA ("em breve"), canvas com desktop/tablet/celular + zoom, desfazer/refazer,
 - Rotas (estilo WordPress): `/category/:slug`, depois página (`/:slug`, home = slug vazio), depois post (`/:slug`).
   Páginas, posts e o prefixo `category` dividem o mesmo espaço de URLs (`isSlugTaken`).
 - Template = dado em `src/templates/<id>/`, registrado em `src/templates/index.ts`. `getTemplate` devolve cópia profunda.
-  Lista atual: `blog-viagens` (genérico, imagens Unsplash) e `portal-noticias` (portal estilo G1: variante `portal` em
+  Lista atual: `blog-viagens` (genérico, imagens Unsplash), `central-marketing` (portal de marketing escuro com verde neon, migrado do centraldomarketing.com; ver abaixo) e `portal-noticias` (portal estilo G1: variante `portal` em
   `renderer/portal.ts` + blocos `newsFront`/`newsFeed`/`shortVideos`, header com `topLinks`/`featuredLabel`, e página `/portal/` (vitrine) com blocos `hub*` em `blocks/portal-hub.tsx`; páginas de seção `/esporte/`, `/entretenimento/`, `/receitas/`, `/lifestyle/`, `/tv/` que trocam a cor da marca via bloco `skinBar` (CSS `:has(.sb-skin[data-skin])` em `portal.ts`); textos legais reaproveitados do blog). `spyhacker` fica em `legacyTemplates`: some da tela de escolha, mas
   `getTemplate` ainda o resolve — sites criados com ele usam o original para "restaurar" no editor.
 - Variante `spyhacker` (`theme.variant = "spyhacker"`, CSS em `renderer/spyhacker.ts`, escopo `.sb-sh`): medidas copiadas
@@ -61,6 +61,8 @@ aba IA ("em breve"), canvas com desktop/tablet/celular + zoom, desfazer/refazer,
   `categoryGrid.items` (ordem/rótulo dos cards), `featuredPost.showImage`/`buttonLabel`, `postList.cardStyle`/`includeCurrent`,
   `postShare` e `postNav`. No celular o menu vira gaveta lateral (checkbox `#sb-burger` + label `.sb-burger-backdrop`
   para fechar), com fundo em `header.menuBg` (só `#rrggbb`, vira a var `--sb-menu-bg`). Sites sem a variante não mudam.
+- Variante `central` (`theme.variant = "central"`, CSS em `renderer/central.ts`, escopo `.sb-ct`, tokens extras `title` e `line`): medidas do centraldomarketing.com (Elementor). Cabeçalho com menu em gaveta lateral de 350px abaixo de 1024px (checkbox `#sb-burger`, botão "X"), breakpoints do original (tablet ≤ 1024, celular ≤ 767; no preview estreito do editor as regras valem via `.sb-narrow`), botões em pílula, cartões, banners de título, posts (Poppins) e rodapé. Blocos próprios em `blocks/central.tsx`: `ctHero`, `logoMarquee` (carrossel de logos em CSS puro — `@keyframes` + `cqw`, duplica a lista para o loop, funciona no HTML publicado sem JS; no editor fica parado e sem duplicatas), `ctSplit` (disposições `feature`/`spotlight`/`story`, selo com ícone/número/estrelas, lista com ícones, depoimentos), `featureGrid` (estilos `simple`/`icon`/`numbered`/`product`), `ctBanner` (`title`/`cta`/`error`) e `ctFooter` (colunas livres: um link por linha, `Texto | endereço`). Ícones de traço escolhidos por nome (`CENTRAL_ICON_OPTIONS`). Extensões opcionais de blocos existentes: `heading.eyebrow`, `postHeader.backgroundImage` (vira `--ct-img`), `postList.cardStyle` `grid`/`archive` (`PostCard variant`) e título + data no estilo WordPress dentro de `postContent` quando a variante é `central`. Fontes *Red Hat Text* e *Content* entram em `SITE_FONTS`; `Content` só tem os pesos 400/700 (`FONT_WEIGHTS` em `fonts.ts`, pedir peso inexistente derruba o CSS do Google Fonts). Sites sem a variante não mudam.
+- Template `central-marketing` (`templates/central-marketing/`): home de landing (hero, marquee de logos, categorias, vídeos, produtos, depoimentos, blog), `/blogs/`, `/categorias/`, `/links/` (bare), `/pesquisa/`, 404, termos e política, 44 posts e 16 categorias do WordPress original. Marca (nome, e-mail, cor, textos de rodapé) só em `brand.ts`; **todas as imagens** em `images.ts` (placeholders Unsplash + SVG gerados — as originais estão listadas em `plans/centraldomarketing-imagens.md` e não são usadas sem aprovação); textos legais parametrizados em `legal.ts`; corpos dos posts em `post-bodies.ts` (formato compacto, `{{marca}}` vira `BRAND.name`; links para os sites do dono original viraram `#`). Inventário e decisões: `plans/centraldomarketing-inventario.md`. Teste: `central-marketing.test.ts` (`bun test packages/site-builder`).
 - `react-dom/static` (e não `react-dom/server`) renderiza o HTML estático: o Next recusa `react-dom/server` em código do app router.
 - Links digitados pelo usuário passam por `safeUrl` (bloqueia `javascript:`/`data:`). Use-o em todo `href` novo vindo de props.
 
@@ -111,6 +113,7 @@ Notas de segurança:
 
 - Taxa de hospedagem na VM do Atlas (valor definido pelo admin) e cobrança.
 - Compra de domínio dentro do fluxo de publicar; despublicar (remover pasta em /srv/www e o bloco do Caddyfile.base).
+- As imagens do `central-marketing` são placeholders; trocar pelas reais (ou pelas do WordPress, se aprovadas) é editar `images.ts`/o editor. A edição de textura e logos do carrossel é feita no editor (lista de logos).
 - Imagens do template spyhacker ainda apontam para `007spyhacker.com/wp-content/uploads`; as do `blog-viagens` apontam para `images.unsplash.com`. Copiar ambas para o storage.
 - Edição de texto direto no canvas (duplo clique) e seleção por elemento: hoje a unidade é o bloco; texto muda no painel.
 - Chat com a IA (aba "em breve") e passos de progresso reais na criação.
