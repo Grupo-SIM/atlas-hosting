@@ -507,17 +507,23 @@ export function SiteEditor({
     const id = bar?.closest<HTMLElement>("[data-block-id]")?.dataset.blockId;
     if (!(logo && bar && id)) return;
     e.preventDefault();
-    const bw = bar.getBoundingClientRect().width;
     const startRect = logo.getBoundingClientRect();
-    if (!bw) return;
     const grab = e.clientX - (startRect.left + startRect.width / 2);
-    const half = (startRect.width / 2 / bw) * 100;
+    // A posição é em % da área de conteúdo (a barra menos o recuo lateral), não da tela inteira.
+    const area = () => {
+      const b = bar.getBoundingClientRect();
+      const scale = bar.offsetWidth ? b.width / bar.offsetWidth : 1;
+      const pad = Number.parseFloat(getComputedStyle(bar).paddingLeft) * scale;
+      return { left: b.left + pad, width: b.width - 2 * pad };
+    };
+    if (area().width <= 0) return;
+    const half = (startRect.width / 2 / area().width) * 100;
     let pct = Number.NaN;
     const move = (ev: globalThis.PointerEvent) => {
-      const b = bar.getBoundingClientRect();
-      const raw = ((ev.clientX - grab - b.left) / b.width) * 100;
+      const a = area();
+      const raw = ((ev.clientX - grab - a.left) / a.width) * 100;
       pct = Math.round(Math.min(100 - half, Math.max(half, raw)) * 10) / 10;
-      bar.style.setProperty(imgItem ? "--sb-ix" : "--sb-lx", `${pct}%`);
+      bar.style.setProperty(imgItem ? "--sb-ix" : "--sb-lx", String(pct / 100));
     };
     const up = () => {
       window.removeEventListener("pointermove", move);

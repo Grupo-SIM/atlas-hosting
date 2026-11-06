@@ -139,8 +139,8 @@ const header = defineBlock(
             {
               "--sb-hh": `${p.height}px`,
               "--sb-hs": p.height / 77,
-              "--sb-ix": `${p.imgX}%`,
-              "--sb-lx": `${p.logoX}%`,
+              "--sb-ix": p.imgX / 100,
+              "--sb-lx": p.logoX / 100,
               "--sb-menu-bg": p.menuBg,
             } as CSSProperties
           }
