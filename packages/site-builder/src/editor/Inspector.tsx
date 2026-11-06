@@ -674,6 +674,14 @@ export function Inspector({
                   <span />
                 </button>
               </div>
+              {fx.each && fx.enter ? (
+                <Slider
+                  label="Atraso entre itens (ms)"
+                  max={600}
+                  onChange={v => onFx({ stagger: v }, "Atraso entre itens")}
+                  value={fx.stagger ?? 0}
+                />
+              ) : null}
               <button
                 className="sbe-btn"
                 onClick={() =>
@@ -685,6 +693,7 @@ export function Inspector({
                       enter: undefined,
                       hover: undefined,
                       parallax: undefined,
+                      stagger: undefined,
                     },
                     "Remover efeitos"
                   )

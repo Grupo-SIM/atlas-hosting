@@ -46,6 +46,8 @@ export interface Fx {
   hover?: HoverEffect;
   /** Parallax na rolagem: −10..10 (0 = desligado). Positivo atrasa o item, negativo adianta. */
   parallax?: number;
+  /** Com `each`: soma esse atraso (ms) a cada filho seguinte, para os itens entrarem em sequência. */
+  stagger?: number;
 }
 
 export const fxSchema: z.ZodType<Fx> = z.object({
@@ -55,6 +57,7 @@ export const fxSchema: z.ZodType<Fx> = z.object({
   enter: z.enum(ENTER_EFFECTS).optional(),
   hover: z.enum(HOVER_EFFECTS).optional(),
   parallax: z.number().min(-10).max(10).optional(),
+  stagger: z.number().min(0).max(1000).optional(),
 });
 
 export const fxMapSchema = z
@@ -116,8 +119,8 @@ export function fxCss(
     if (!f) continue;
     const sel = targetSelector(blockId, path) + (f.each ? ">*" : "");
     const transitions: string[] = [];
+    const d = Math.round(f.delay ?? 0);
     if (f.enter) {
-      const d = Math.round(f.delay ?? 0);
       transitions.push(`opacity .8s ease ${d}ms`, `transform .8s ease ${d}ms`);
       const from = ENTER_FROM[f.enter];
       css += `@media (prefers-reduced-motion:no-preference){.sb-js ${sel}:not(.sb-in){opacity:0;${from}}}`;
@@ -129,6 +132,16 @@ export function fxCss(
     if (f.hover === "pop") css += `${sel}:hover{animation:sb-fx-pop .3s}`;
     if (transitions.length)
       css += `${sel}{transition:${transitions.join(",")}}`;
+    // Entrada em sequência: o n-ésimo filho espera `stagger` ms a mais que o anterior (até 12 itens).
+    const stagger = Math.round(f.stagger ?? 0);
+    if (f.enter && f.each && stagger > 0) {
+      const rest =
+        f.hover === "grow" || f.hover === "shrink" ? ",scale .3s ease" : "";
+      for (let n = 2; n <= 12; n++) {
+        const dn = d + (n - 1) * stagger;
+        css += `${sel.slice(0, -2)}>:nth-child(${n}){transition:opacity .8s ease ${dn}ms,transform .8s ease ${dn}ms${rest}}`;
+      }
+    }
   }
   return css;
 }
