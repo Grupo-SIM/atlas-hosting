@@ -2,6 +2,7 @@
 
 import {
   type MouseEvent,
+  type PointerEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -486,6 +487,44 @@ export function SiteEditor({
     setFocusHint(h => ({ n: h.n + 1, value }));
   };
 
+  /** Arrastar a logo do cabeçalho na horizontal: grava `logoX` (% da largura da barra). */
+  const onLogoPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const logo = (e.target as HTMLElement).closest<HTMLElement>(
+      ".sb-header .sb-logo"
+    );
+    const bar = logo?.closest<HTMLElement>(".sb-header");
+    const id = bar?.closest<HTMLElement>("[data-block-id]")?.dataset.blockId;
+    if (!(logo && bar && id)) return;
+    e.preventDefault();
+    const bw = bar.getBoundingClientRect().width;
+    const startRect = logo.getBoundingClientRect();
+    if (!bw) return;
+    const grab = e.clientX - (startRect.left + startRect.width / 2);
+    const half = (startRect.width / 2 / bw) * 100;
+    let pct = Number.NaN;
+    const move = (ev: globalThis.PointerEvent) => {
+      const b = bar.getBoundingClientRect();
+      const raw = ((ev.clientX - grab - b.left) / b.width) * 100;
+      pct = Math.round(Math.min(100 - half, Math.max(half, raw)) * 10) / 10;
+      bar.style.setProperty("--sb-lx", `${pct}%`);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      if (Number.isNaN(pct)) return;
+      edit(updateBlockProps(siteRef.current, id, { logoX: pct }), {
+        id,
+        key: `logoX:${id}`,
+        label: "Moveu a logo",
+      });
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+
   // Contorno em overlay: o fundo dos blocos filhos cobriria um outline no próprio bloco.
   const paintHover = () => {
     const box = hoverBoxRef.current;
@@ -839,6 +878,7 @@ export function SiteEditor({
         <div
           className="sbe-canvas"
           onClickCapture={onCanvasClick}
+          onPointerDownCapture={onLogoPointerDown}
           onPointerLeave={clearHover}
           onPointerOver={onCanvasOver}
           onScroll={() => {

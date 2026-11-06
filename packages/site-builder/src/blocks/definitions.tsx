@@ -39,8 +39,12 @@ const header = defineBlock(
     buttonUrl: str("#"),
     featuredLabel: str(),
     featuredUrl: str("#"),
+    /** Altura da barra em px (estilo Portal); logo, busca e botão escalam junto. 77 = padrão. */
+    height: z.coerce.number().min(36).max(140).default(77).catch(77),
     logo: str(),
     logoText: str("Meu Site"),
+    /** Posição horizontal da logo na barra, em % da largura (estilo Portal). Arrastar no editor. */
+    logoX: z.coerce.number().min(0).max(100).default(50).catch(50),
     /** Fundo do menu lateral do celular (tema 007SpyHacker). Só `#rrggbb`: vai direto para o CSS. */
     menuBg: z
       .string()
@@ -54,7 +58,19 @@ const header = defineBlock(
     fields: [
       { key: "logo", kind: "image", label: "Logo" },
       { key: "logoText", kind: "text", label: "Nome ao lado do logo" },
+      {
+        key: "logoX",
+        kind: "number",
+        label:
+          "Posição da logo em % (0 = esquerda, 50 = centro; ou arraste no canvas)",
+      },
       { key: "searchLabel", kind: "text", label: "Texto da busca" },
+      {
+        key: "height",
+        kind: "number",
+        label:
+          "Altura da barra em px (36–140; padrão 77) — letras escalam junto",
+      },
       {
         key: "menuBg",
         kind: "color",
@@ -98,7 +114,14 @@ const header = defineBlock(
               ? "sb-header sb-container sb-header-section"
               : "sb-header sb-container"
           }
-          style={{ "--sb-menu-bg": p.menuBg } as CSSProperties}
+          style={
+            {
+              "--sb-hh": `${p.height}px`,
+              "--sb-hs": p.height / 77,
+              "--sb-lx": `${p.logoX}%`,
+              "--sb-menu-bg": p.menuBg,
+            } as CSSProperties
+          }
         >
           {/* biome-ignore lint/correctness/useUniqueElementIds: o menu do celular usa o label for=id; há um só cabeçalho por página */}
           <input
