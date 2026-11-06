@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { createElement } from "react";
 import { prerender } from "react-dom/static";
+import { logoStepKeyframes } from "../../blocks/central.js";
+import { popupVideoEmbed, vimeoEmbed } from "../../blocks/youtube.js";
 import { fxCss } from "../../model/fx.js";
 import type { Block } from "../../model/index.js";
 import { siteSchema } from "../../model/schema.js";
 import { cssUrl } from "../../renderer/central.js";
+import { NAV_RUNTIME } from "../../renderer/nav-runtime.js";
 import { SiteRenderer } from "../../renderer/SiteRenderer.js";
 import { exportSiteToStatic } from "../../static/exportStatic.js";
 import { getTemplate, listTemplates } from "../index.js";
@@ -109,6 +112,24 @@ describe("template central-marketing", () => {
     expect(home).toContain("sb-ct-hero");
     expect(home).toContain("Red+Hat+Text");
     expect(home).toContain("family=Content:wght@400;700");
+    // um logo por vez, como o original (para e desliza)
+    expect(home).toContain("--ct-anim:sb-ct-step10");
+    expect(home).toContain(logoStepKeyframes(10));
+  });
+
+  test("botão de play do hero abre o vídeo em popup (e cai no link sem JS)", async () => {
+    const files = await exportSiteToStatic(site);
+    const home = files.find(f => f.path === "index.html")?.content ?? "";
+    expect(home).toContain('class="sb-ct-play"');
+    expect(home).toContain(
+      'data-sb-video="https://www.youtube-nocookie.com/embed/2z39bEyVSoI"'
+    );
+    expect(home).toContain(
+      'href="https://www.youtube.com/watch?v=2z39bEyVSoI"'
+    );
+    expect(home).toContain("a[data-sb-video]");
+    // o script vai como string: um escape errado quebra tudo sem erro de tipo
+    expect(() => new Function(NAV_RUNTIME)).not.toThrow();
   });
 
   test("no modo edição o carrossel fica parado", async () => {
@@ -117,6 +138,7 @@ describe("template central-marketing", () => {
     );
     const html = await new Response(prelude).text();
     expect(html).toContain('class="sb-ct-marquee is-static"');
+    expect(html).not.toContain("@keyframes sb-ct-step");
   });
 });
 
@@ -131,6 +153,36 @@ describe("estender fx: stagger", () => {
     expect(
       fxCss("b1", { "1.1": { enter: "fadeIn", stagger: 100 } })
     ).not.toContain("nth-child(2)");
+  });
+});
+
+describe("logoStepKeyframes", () => {
+  test("para 1/3 do tempo em cada logo e termina na metade da trilha (lista duplicada)", () => {
+    const kf = logoStepKeyframes(4);
+    expect(kf.startsWith("@keyframes sb-ct-step4{")).toBe(true);
+    expect(kf).toContain("0%,8.333%{transform:translateX(-0%)");
+    expect(kf).toContain("25%,33.333%{transform:translateX(-12.5%)");
+    expect(kf).toContain("100%{transform:translateX(-50%)}");
+  });
+});
+
+describe("popupVideoEmbed", () => {
+  test("YouTube e Vimeo viram player; outros links ficam como link", () => {
+    expect(popupVideoEmbed("https://youtu.be/dQw4w9WgXcQ")).toBe(
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"
+    );
+    expect(popupVideoEmbed("https://vimeo.com/1086587681")).toBe(
+      "https://player.vimeo.com/video/1086587681"
+    );
+    expect(vimeoEmbed("https://vimeo.com/123456789/abcdef1234")).toBe(
+      "https://player.vimeo.com/video/123456789?h=abcdef1234"
+    );
+    expect(
+      vimeoEmbed("https://player.vimeo.com/video/1086587681?h=9f8e7d6c&x=1")
+    ).toBe("https://player.vimeo.com/video/1086587681?h=9f8e7d6c");
+    expect(popupVideoEmbed("https://evil.com/vimeo.com/123456789")).toBeNull();
+    expect(popupVideoEmbed("javascript:alert(1)")).toBeNull();
+    expect(popupVideoEmbed("")).toBeNull();
   });
 });
 

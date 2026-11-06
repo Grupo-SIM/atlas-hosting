@@ -61,3 +61,26 @@ export const videoEmbed = (input: string): string | null => {
   const id = parseYouTubeVideoId(input);
   return id ? `${PLAYER}/${id}` : null;
 };
+
+const VIMEO_HOSTS = new Set(["vimeo.com", "www.vimeo.com", "player.vimeo.com"]);
+const VIMEO_PLAYER = "https://player.vimeo.com/video";
+
+/** Link do Vimeo (`vimeo.com/ID`, `vimeo.com/ID/HASH`, `player.vimeo.com/video/ID?h=…`) → player. */
+export function vimeoEmbed(input: string): string | null {
+  let url: URL;
+  try {
+    url = new URL(input.trim());
+  } catch {
+    return null;
+  }
+  if (!VIMEO_HOSTS.has(url.hostname.toLowerCase())) return null;
+  const parts = url.pathname.split("/").filter(Boolean);
+  const at = parts.findIndex(s => /^\d{6,12}$/.test(s));
+  if (at < 0) return null;
+  const hash = url.searchParams.get("h") ?? parts[at + 1] ?? "";
+  return `${VIMEO_PLAYER}/${parts[at]}${/^[0-9a-f]{6,20}$/.test(hash) ? `?h=${hash}` : ""}`;
+}
+
+/** Player para abrir num popup: YouTube (sem cookies) ou Vimeo; qualquer outro link fica só como link. */
+export const popupVideoEmbed = (input: string): string | null =>
+  input.trim() ? (videoEmbed(input) ?? vimeoEmbed(input)) : null;

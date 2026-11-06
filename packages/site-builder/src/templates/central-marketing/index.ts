@@ -235,7 +235,7 @@ const home = page("", "Início", [
       ],
       text: "Você acaba de acessar a melhor plataforma de conhecimento digital gratuito do Brasil! Se o seu objetivo é crescer no digital e aprender estratégias sem enrolação, você está no lugar certo.",
       title: "Aprenda O Que Realmente Funciona No",
-      videoUrl: "",
+      videoUrl: BRAND.heroVideo,
     },
     undefined,
     {
@@ -258,7 +258,7 @@ const home = page("", "Início", [
       "Hub",
     ].map((name, i) => ({
       alt: `${name} ${i + 1}`,
-      src: wordmark(name),
+      src: wordmark(name, i),
       url: "",
     })),
     secondsPerLogo: 1.5,

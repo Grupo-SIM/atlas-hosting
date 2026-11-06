@@ -81,8 +81,23 @@ export const logoPlaceholder = (letter: string, fill = "#11e44f") =>
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='${fill}'/><text x='32' y='45' font-family='Arial,Helvetica,sans-serif' font-size='40' font-weight='700' text-anchor='middle' fill='#121212'>${letter}</text></svg>`
   )}`;
 
-/** Logotipo de texto (placeholder do carrossel de logos): troque por logos reais no editor. */
-export const wordmark = (text: string) =>
-  `data:image/svg+xml;utf8,${encodeURIComponent(
-    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 60'><text x='110' y='38' font-family='Arial,Helvetica,sans-serif' font-size='26' font-weight='700' text-anchor='middle' fill='#fcfcfc'>${text}</text></svg>`
+/** Símbolos simples (brancos, 40×40) para os logos de exemplo. */
+const MARKS = [
+  "<circle cx='20' cy='20' r='17' fill='none' stroke='#fcfcfc' stroke-width='5'/>",
+  "<rect x='4' y='4' width='32' height='32' rx='9' fill='#fcfcfc'/><path d='M13 27V13l14 14V13' fill='none' stroke='#121212' stroke-width='4' stroke-linejoin='round'/>",
+  "<path d='M20 3 37 33H3z' fill='#fcfcfc'/>",
+  "<path d='M20 2 36 11v18L20 38 4 29V11z' fill='none' stroke='#fcfcfc' stroke-width='4'/>",
+  "<path d='M4 20a16 16 0 0 1 32 0h-9a7 7 0 0 0-14 0z M4 24h32a16 16 0 0 1-32 0z' fill='#fcfcfc'/>",
+  "<rect x='2' y='14' width='16' height='16' rx='3' fill='#fcfcfc'/><rect x='16' y='4' width='22' height='22' rx='5' fill='none' stroke='#fcfcfc' stroke-width='4'/>",
+];
+
+/**
+ * Logo de exemplo (símbolo + nome, branco) para o carrossel de logos: troque por logos reais no
+ * editor. A largura acompanha o nome para o logo ficar centralizado no espaço.
+ */
+export const wordmark = (text: string, i = 0) => {
+  const w = Math.round(58 + text.length * 15);
+  return `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} 40'>${MARKS[i % MARKS.length]}<text x='52' y='29' font-family='Arial,Helvetica,sans-serif' font-size='26' font-weight='700' fill='#fcfcfc'>${text}</text></svg>`
   )}`;
+};

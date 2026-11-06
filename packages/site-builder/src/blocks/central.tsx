@@ -11,6 +11,7 @@ import {
   safeUrl,
 } from "./helpers.js";
 import type { BlockDefinition, FieldDef } from "./types.js";
+import { popupVideoEmbed } from "./youtube.js";
 
 /**
  * Blocos da variante `central` (home de marketing escura com verde neon). Todo texto, imagem, link,
@@ -269,7 +270,8 @@ const ctHero = defineBlock(
       {
         key: "videoUrl",
         kind: "url",
-        label: "Link do vídeo (botão de play; vazio = sem botão)",
+        label:
+          "Vídeo do botão de play (YouTube ou Vimeo abre em popup; vazio = sem botão)",
       },
       {
         itemFields: [
@@ -341,6 +343,7 @@ const ctHero = defineBlock(
               <a
                 aria-label="Assistir ao vídeo"
                 className="sb-ct-play"
+                data-sb-video={popupVideoEmbed(p.videoUrl) ?? undefined}
                 href={safeUrl(p.videoUrl)}
                 rel="noopener"
                 target="_blank"
@@ -388,11 +391,26 @@ const ctHero = defineBlock(
 
 /* ───────────────────── carrossel de logos ───────────────────── */
 
+/**
+ * `@keyframes` do modo "um por vez" para `n` logos: em cada logo fica parado 1/3 do tempo e desliza
+ * nos 2/3 restantes (no original: 0,5 s parado + 1 s deslizando). A trilha tem a lista duas vezes,
+ * então andar `i/(2n)` da própria largura passa exatamente `i` logos, seja quantos forem visíveis.
+ */
+export function logoStepKeyframes(n: number): string {
+  const pct = (x: number) => `${+(x * 100).toFixed(3)}%`;
+  const at = (i: number) => `translateX(-${pct(i / (2 * n))})`;
+  let kf = "";
+  for (let i = 0; i < n; i++)
+    kf += `${pct(i / n)},${pct((i + 1 / 3) / n)}{transform:${at(i)};animation-timing-function:ease}`;
+  return `@keyframes sb-ct-step${n}{${kf}100%{transform:${at(n)}}}`;
+}
+
 const logoMarquee = defineBlock(
   z.object({
     logos: z
       .array(z.object({ alt: str(), src: str(), url: str() }))
       .default([]),
+    motion: z.enum(["step", "continuous"]).default("step").catch("step"),
     secondsPerLogo: z.coerce.number().min(0.3).max(10).default(1.5).catch(1.5),
     showDesktop: int(1, 8, 5),
     showMobile: int(1, 8, 2),
@@ -417,6 +435,15 @@ const logoMarquee = defineBlock(
       },
       { key: "showTablet", kind: "number", label: "Logos visíveis no tablet" },
       { key: "showMobile", kind: "number", label: "Logos visíveis no celular" },
+      {
+        key: "motion",
+        kind: "select",
+        label: "Movimento",
+        options: [
+          { label: "Um logo por vez (para e desliza)", value: "step" },
+          { label: "Contínuo", value: "continuous" },
+        ],
+      },
       {
         key: "secondsPerLogo",
         kind: "number",
@@ -445,11 +472,14 @@ const logoMarquee = defineBlock(
           </div>
         );
       };
+      const n = p.logos.length;
+      const step = p.motion === "step";
       return (
         <section
           className={edit ? "sb-ct-marquee is-static" : "sb-ct-marquee"}
           style={
             {
+              "--ct-anim": step ? `sb-ct-step${n}` : "sb-ct-marquee",
               "--ct-dur": `${(p.logos.length * p.secondsPerLogo).toFixed(1)}s`,
               "--ct-show-d": p.showDesktop,
               "--ct-show-m": p.showMobile,
@@ -465,6 +495,7 @@ const logoMarquee = defineBlock(
               <Logo dup key={`d${l.src}${l.alt}`} l={l} />
             ))}
           </div>
+          {step && !edit ? <style>{logoStepKeyframes(n)}</style> : null}
         </section>
       );
     },

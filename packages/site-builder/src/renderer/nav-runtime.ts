@@ -1,13 +1,13 @@
 /**
- * Navegação sem recarregar a página (e cliques do carrossel de vídeos curtos e do "Mostrar mais"): links internos do site são interceptados. Na prévia (app
+ * Navegação sem recarregar a página (e cliques do carrossel de vídeos curtos, do popup de vídeo `[data-sb-video]` e do "Mostrar mais"): links internos do site são interceptados. Na prévia (app
  * router do Next) usa `window.next.router`; no site estático busca o HTML da rota e troca só a
  * raiz `.sb`, mantendo o histórico e o título. Qualquer falha cai na navegação normal.
  * Mesmo esquema do `FX_RUNTIME`: inline no HTML publicado e injetado pelo `FxRuntime` na prévia.
  */
 export const NAV_RUNTIME = `(function(){
-if(window.__sbNav===2)return;
+if(window.__sbNav===3)return;
 if(window.__sbNavOff)window.__sbNavOff();
-window.__sbNav=2;
+window.__sbNav=3;
 var off=null;
 function rebind(){
 if(!window.sbFx)return;
@@ -83,7 +83,43 @@ reels={box:box,items:items,stage:stage,i:0,ov:document.documentElement.style.ove
 document.documentElement.style.overflow="hidden";
 showReel(items.indexOf(a));
 }
+var vpop=null;
+function closeVideo(){
+if(!vpop)return;
+vpop.box.remove();
+document.documentElement.style.overflow=vpop.ov;
+if(vpop.from&&vpop.from.focus)vpop.from.focus();
+vpop=null;
+}
+function openVideo(a){
+var src=a.getAttribute("data-sb-video")||"",root=a.closest(".sb");
+if(!root||(src.indexOf("https://www.youtube-nocookie.com/embed/")!==0&&src.indexOf("https://player.vimeo.com/video/")!==0))return false;
+closeVideo();
+var box=document.createElement("div");
+box.className="sb-vpop";
+box.setAttribute("role","dialog");
+box.setAttribute("aria-modal","true");
+box.setAttribute("aria-label",a.getAttribute("aria-label")||"Vídeo");
+var stage=document.createElement("div");
+stage.className="sb-vpop-stage";
+var x=document.createElement("button");
+x.type="button";x.className="sb-vpop-close";x.setAttribute("aria-label","Fechar");x.textContent="×";
+var f=document.createElement("iframe");
+f.src=src+(src.indexOf("?")<0?"?":"&")+"autoplay=1&playsinline=1&rel=0";
+f.allow="autoplay; encrypted-media; fullscreen; picture-in-picture";
+f.allowFullscreen=true;
+f.title=box.getAttribute("aria-label");
+stage.appendChild(x);
+stage.appendChild(f);
+box.appendChild(stage);
+root.appendChild(box);
+vpop={box:box,from:a,ov:document.documentElement.style.overflow};
+document.documentElement.style.overflow="hidden";
+requestAnimationFrame(function(){box.classList.add("on");x.focus()});
+return true;
+}
 function onKey(e){
+if(vpop&&e.key==="Escape"){closeVideo();return}
 if(!reels)return;
 if(e.key==="Escape")closeReel();
 else if(e.key==="ArrowLeft")showReel(reels.i-1);
@@ -91,6 +127,12 @@ else if(e.key==="ArrowRight")showReel(reels.i+1);
 }
 function onClick(e){
 if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+if(vpop){
+if(e.target.closest(".sb-vpop-close")||!e.target.closest(".sb-vpop-stage"))closeVideo();
+return;
+}
+var vid=e.target.closest&&e.target.closest("a[data-sb-video]");
+if(vid&&openVideo(vid)){e.preventDefault();return}
 if(reels){
 var t=e.target;
 if(t.closest(".sb-reels-prev"))showReel(reels.i-1);
@@ -155,5 +197,6 @@ document.removeEventListener("keydown",onKey);
 document.removeEventListener("click",onClick);
 window.removeEventListener("popstate",onPop);
 closeReel();
+closeVideo();
 };
 })();`;

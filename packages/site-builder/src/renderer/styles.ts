@@ -41,6 +41,13 @@ export const siteCss = `
 .sb{position:relative;overflow-x:clip;background:var(--sb-bg);color:var(--sb-fg);font-family:var(--sb-font-body);font-size:18px;line-height:1.4;min-height:100%}
 .sb *{box-sizing:border-box}
 .sb a{color:inherit;text-decoration:none}
+/* popup de vídeo (links com data-sb-video; aberto pelo nav-runtime) */
+.sb .sb-vpop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:40px 8px;background:rgba(11,11,11,.8);opacity:0;transition:opacity .15s ease-out}
+.sb .sb-vpop.on{opacity:1}
+.sb .sb-vpop-stage{position:relative;width:min(900px,100%);aspect-ratio:16/9;background:#000;box-shadow:0 0 8px rgba(0,0,0,.6)}
+.sb .sb-vpop-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.sb .sb-vpop-close{position:absolute;top:-44px;right:-6px;width:44px;height:44px;padding:0;border:0;background:none;color:#fff;font:28px/44px Arial,sans-serif;cursor:pointer;opacity:.65}
+.sb .sb-vpop-close:hover,.sb .sb-vpop-close:focus-visible{opacity:1}
 .sb h1,.sb h2,.sb h3,.sb h4{font-family:var(--sb-font-heading);font-weight:600;line-height:1.05;margin:0 0 .4em}
 .sb h1{font-size:clamp(2.5rem,4.5vw,4.0625rem)}
 .sb h2{font-size:clamp(2.25rem,4.17vw,3.75rem)}

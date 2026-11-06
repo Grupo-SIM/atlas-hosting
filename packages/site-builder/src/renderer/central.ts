@@ -162,9 +162,14 @@ ${S} .sb-ct-chips{display:flex;flex-wrap:wrap;gap:20px;max-width:911px;margin:0;
 ${S} .sb-ct-chips a{display:block;padding:8px 32px;border-radius:25px;background:rgba(18,18,18,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:var(--sb-fg);line-height:22px;transition:color .3s}
 ${S} .sb-ct-chips a:hover{color:var(--sb-accent)}
 ${S} .sb-ct-panel-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}
-${S} .sb-ct-play{display:flex;align-items:center;justify-content:center;width:80px;height:80px;border-radius:50%;background:rgba(18,18,18,.75);color:#fcfcfc;transition:color .3s}
+${S} .sb-ct-play{position:relative;isolation:isolate;display:flex;flex:none;align-items:center;justify-content:center;width:80px;height:80px;border-radius:50%;background:rgba(0,0,0,.45);color:#fcfcfc;transition:color .3s}
 ${S} .sb-ct-play:hover{color:var(--sb-accent)}
 ${S} .sb-ct-play svg{width:34px;height:34px}
+/* anel pulsando (no original: dois anéis de 15px, 3s, defasados) */
+${S} .sb-ct-play::before,${S} .sb-ct-play::after{content:"";position:absolute;inset:0;z-index:-1;border-radius:50%;color:#fcfcfc;box-shadow:0 0 0 0 currentColor;opacity:.6;animation:sb-ct-ripple 3s .9s infinite}
+${S} .sb-ct-play::after{animation-delay:.3s}
+@keyframes sb-ct-ripple{70%{box-shadow:0 0 0 15px currentColor;opacity:0}100%{box-shadow:0 0 0 0 currentColor;opacity:0}}
+@media (prefers-reduced-motion:reduce){${S} .sb-ct-play::before,${S} .sb-ct-play::after{animation:none;opacity:0}}
 ${S} .sb-ct-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 ${S} .sb-ct-hero-foot{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-top:20px}
 ${S} .sb-ct-hero-foot .sb-socials{gap:20px}
@@ -172,7 +177,7 @@ ${S} .sb-ct-hero-foot ul{display:flex;flex-wrap:wrap;justify-content:flex-end;ga
 
 /* marquee de logos */
 ${S} .sb-ct-marquee{--ct-show:var(--ct-show-d,5);container-type:inline-size;overflow:hidden;width:min(1366px,100% - 32px);margin:40px auto 0}
-${S} .sb-ct-marquee-track{display:flex;width:max-content;animation:sb-ct-marquee var(--ct-dur,15s) linear infinite}
+${S} .sb-ct-marquee-track{display:flex;width:max-content;animation:var(--ct-anim,sb-ct-marquee) var(--ct-dur,15s) linear infinite}
 ${S} .sb-ct-logo{display:flex;flex:0 0 calc(100cqw / var(--ct-show));align-items:center;justify-content:center;height:82px;padding:0 24px}
 ${S} .sb-ct-logo img{width:auto;max-width:100%;max-height:50px;object-fit:contain}
 ${S} .sb-ct-marquee.is-static{overflow-x:auto}
