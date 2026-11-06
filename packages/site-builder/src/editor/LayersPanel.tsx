@@ -9,6 +9,7 @@ import type { BlockGroup } from "../blocks/types.js";
 import type { Block } from "../model/index.js";
 import type { ElementNode } from "./dom-tree.js";
 import { Icon } from "./icons.js";
+import type { DropPlace, DropTarget } from "./tree.js";
 
 const GROUP_LABEL: Record<BlockGroup, string> = {
   blog: "Blog",
@@ -27,6 +28,8 @@ interface Props {
   elPath: string;
   getElements: (blockId: string) => ElementNode[];
   onAdd: (type: string) => void;
+  onInsert: (type: string, target: DropTarget) => void;
+  onMove: (id: string, target: DropTarget) => void;
   onSelect: (id: string) => void;
   onSelectElement: (blockId: string, path: string, label: string) => void;
   onToggleHidden: (id: string) => void;
@@ -39,6 +42,8 @@ export function LayersPanel({
   elPath,
   getElements,
   onAdd,
+  onInsert,
+  onMove,
   onSelect,
   onSelectElement,
   onToggleHidden,
@@ -47,6 +52,21 @@ export function LayersPanel({
 }: Props) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [adding, setAdding] = useState(false);
+
+  // Arrastar e soltar: `drag` = o que está sendo arrastado; `over` = linha/zona sob o ponteiro.
+  const [drag, setDrag] = useState<{ id?: string; type?: string } | null>(null);
+  const [over, setOver] = useState<{ key: string; place: DropPlace } | null>(
+    null
+  );
+  const endDrag = () => {
+    setDrag(null);
+    setOver(null);
+  };
+  const drop = (target: DropTarget) => {
+    if (drag?.id) onMove(drag.id, target);
+    else if (drag?.type) onInsert(drag.type, target);
+    endDrag();
+  };
 
   const toggle = (id: string) => setCollapsed(c => ({ ...c, [id]: !c[id] }));
 
@@ -114,8 +134,36 @@ export function LayersPanel({
               "sbe-layer",
               selectedId === b.id ? "on" : "",
               b.hidden ? "off" : "",
+              drag?.id === b.id ? "dragging" : "",
+              over?.key === b.id ? `drop-${over.place}` : "",
             ].join(" ")}
+            draggable
             onClick={() => onSelect(b.id)}
+            onDragEnd={endDrag}
+            onDragOver={e => {
+              if (!drag || drag.id === b.id) return;
+              e.preventDefault();
+              const r = e.currentTarget.getBoundingClientRect();
+              const y = (e.clientY - r.top) / r.height;
+              const place: DropPlace =
+                Array.isArray(b.children) && y > 0.3 && y < 0.7
+                  ? "inside"
+                  : y < 0.5
+                    ? "before"
+                    : "after";
+              if (over?.key !== b.id || over.place !== place)
+                setOver({ key: b.id, place });
+            }}
+            onDragStart={e => {
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData("text/plain", b.id);
+              setDrag({ id: b.id });
+            }}
+            onDrop={e => {
+              e.preventDefault();
+              if (over?.key === b.id) drop({ id: b.id, place: over.place });
+              else endDrag();
+            }}
             style={{ paddingLeft: 6 + depth * 14 }}
           >
             {kids ? (
@@ -169,7 +217,24 @@ export function LayersPanel({
       <div className="sbe-layers">
         {sections.map(section => (
           <div key={section.key}>
-            <div className="sbe-layer group">
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: título da seção também recebe blocos soltos */}
+            <div
+              className={
+                over?.key === `start:${section.key}`
+                  ? "sbe-layer group drop-after"
+                  : "sbe-layer group"
+              }
+              onDragOver={e => {
+                if (!drag) return;
+                e.preventDefault();
+                if (over?.key !== `start:${section.key}`)
+                  setOver({ key: `start:${section.key}`, place: "after" });
+              }}
+              onDrop={e => {
+                e.preventDefault();
+                drop({ end: false, root: section.key });
+              }}
+            >
               <span className="gap" />
               <span className="ico">
                 <Icon name="file" size={13} />
@@ -177,6 +242,25 @@ export function LayersPanel({
               <span className="name">{section.label}</span>
             </div>
             {rows(section.blocks, 1)}
+            {drag ? (
+              // biome-ignore lint/a11y/noStaticElementInteractions: zona para soltar no fim da seção
+              <div
+                className={
+                  over?.key === `end:${section.key}`
+                    ? "sbe-dropend over"
+                    : "sbe-dropend"
+                }
+                onDragOver={e => {
+                  e.preventDefault();
+                  if (over?.key !== `end:${section.key}`)
+                    setOver({ key: `end:${section.key}`, place: "after" });
+                }}
+                onDrop={e => {
+                  e.preventDefault();
+                  drop({ end: true, root: section.key });
+                }}
+              />
+            ) : null}
           </div>
         ))}
       </div>
@@ -199,10 +283,17 @@ export function LayersPanel({
                     .filter(d => d.group === group)
                     .map(d => (
                       <button
+                        draggable
                         key={d.type}
                         onClick={() => {
                           onAdd(d.type);
                           setAdding(false);
+                        }}
+                        onDragEnd={endDrag}
+                        onDragStart={e => {
+                          e.dataTransfer.effectAllowed = "copy";
+                          e.dataTransfer.setData("text/plain", d.type);
+                          setDrag({ type: d.type });
                         }}
                         type="button"
                       >

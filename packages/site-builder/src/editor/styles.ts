@@ -109,6 +109,12 @@ export const editorCss = `
 .sbe-layer.off{color:#b5b1a8}
 .sbe-layer.el{height:25px;font-size:12px;color:var(--mute)}
 .sbe-layer.el.on{color:#3f33a3}
+.sbe-layer.dragging{opacity:.4}
+.sbe-layer.drop-before{box-shadow:0 -2px 0 #6a5ad8}
+.sbe-layer.drop-after{box-shadow:0 2px 0 #6a5ad8}
+.sbe-layer.drop-inside{outline:2px solid #6a5ad8;outline-offset:-2px;background:var(--violet-bg)}
+.sbe-dropend{height:14px;margin:2px 6px;border-radius:6px}
+.sbe-dropend.over{box-shadow:0 2px 0 #6a5ad8;background:var(--violet-bg)}
 .sbe-layer.group{cursor:default;color:var(--mute);font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-top:6px}
 .sbe-layer.group:hover{background:transparent}
 .sbe-layer .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

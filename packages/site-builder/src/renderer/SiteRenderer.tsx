@@ -1,5 +1,4 @@
 import type { CSSProperties, ReactNode } from "react";
-import { AdBox, hasAdSlot } from "../blocks/ads.js";
 import { getBlockDefinition } from "../blocks/registry.js";
 import type { RenderContext } from "../blocks/types.js";
 import { fxCss, fxRuntimeData } from "../model/fx.js";
@@ -121,24 +120,7 @@ export function SiteRenderer({
             </a>
           </div>
         ) : (
-          <>
-            {/* Sites criados antes dos blocos de anúncio: a faixa larga entra sozinha no topo. */}
-            {!bare &&
-            ctx.site.theme.ads === "on" &&
-            !hasAdSlot(layoutFor(site, route)) ? (
-              <div className="sb-container sb-ad-wrap">
-                <AdBox
-                  ctx={ctx}
-                  items={[]}
-                  label="Publicidade"
-                  link=""
-                  seconds={6}
-                  size="banner"
-                />
-              </div>
-            ) : null}
-            {renderBlocks(layoutFor(site, route), ctx)}
-          </>
+          renderBlocks(layoutFor(site, route), ctx)
         )}
       </main>
       {bare ? null : renderBlocks(site.footer, ctx)}

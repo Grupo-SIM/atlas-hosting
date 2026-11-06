@@ -22,14 +22,17 @@ import { Icon } from "./icons.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
 import { PagePicker, type RouteGroup } from "./PagePicker.js";
 import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
-import { setMenu, setTheme } from "./site-ops.js";
+import { setMenu, setTheme, withAdBlocks } from "./site-ops.js";
 import { editorCss } from "./styles.js";
 import {
   ancestorsOf,
+  type DropTarget,
   duplicateBlock,
   findBlock,
   insertBlock,
+  insertBlockAt,
   moveBlock,
+  moveBlockTo,
   removeBlock,
   rootBlocks,
   rootForRoute,
@@ -402,6 +405,40 @@ export function SiteEditor({
     setSelectedId(res.id);
   };
 
+  /** Arrastar e soltar nas camadas: mover um bloco existente. */
+  const moveTo = (id: string, target: DropTarget) => {
+    const next = moveBlockTo(site, id, target);
+    if (next === site) return;
+    const block = findBlock(site, id);
+    edit(next, {
+      id,
+      label: `Moveu · ${labelOf(block?.type ?? "")}`,
+    });
+    setSelectedId(id);
+  };
+
+  /** Arrastar da lista "Adicionar bloco" direto para um ponto das camadas. */
+  const insertAt = (type: string, target: DropTarget) => {
+    const res = insertBlockAt(site, type, target);
+    if (res.site === site) return;
+    edit(res.site, {
+      id: res.id,
+      kind: "Novo",
+      label: `Adicionou · ${labelOf(type)}`,
+    });
+    setSelectedId(res.id);
+  };
+
+  /** Liga/desliga os anúncios; ao ligar, garante o bloco de anúncio em cada página. */
+  const setAds = (on: boolean) => {
+    const themed = setTheme(site, { ads: on ? "on" : "off" });
+    edit(on ? withAdBlocks(themed) : themed, {
+      key: "theme-ads",
+      kind: "Tema",
+      label: "Tema · Anúncios",
+    });
+  };
+
   const blockAction = (
     action: "delete" | "down" | "duplicate" | "hide" | "up"
   ) => {
@@ -465,6 +502,16 @@ export function SiteEditor({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   });
+
+  // Site que já estava com anúncios ligados: cria os blocos de anúncio que faltam (uma vez, ao abrir).
+  useEffect(() => {
+    const first = siteRef.current;
+    if (first.theme.ads !== "on") return;
+    const next = withAdBlocks(first);
+    if (next !== first) {
+      edit(next, { key: "theme-ads", kind: "Tema", label: "Tema · Anúncios" });
+    }
+  }, []);
 
   const onCanvasClick = (e: MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -628,6 +675,15 @@ export function SiteEditor({
             label: rootLabel(site, mainRoot),
           },
         ]),
+    ...(mainRoot.startsWith("post:")
+      ? [
+          {
+            blocks: site.postLayout,
+            key: "postLayout",
+            label: "Layout dos posts",
+          },
+        ]
+      : []),
     { blocks: site.footer, key: "footer", label: "Rodapé" },
   ];
 
@@ -731,6 +787,8 @@ export function SiteEditor({
               elPath={elPath}
               getElements={getElements}
               onAdd={addBlock}
+              onInsert={insertAt}
+              onMove={moveTo}
               onSelect={select}
               onSelectElement={selectElement}
               onToggleHidden={toggleHidden}
@@ -828,16 +886,7 @@ export function SiteEditor({
           </div>
           <button
             className={site.theme.ads === "on" ? "sbe-lime" : "sbe-btn"}
-            onClick={() =>
-              edit(
-                setTheme(site, { ads: site.theme.ads === "on" ? "off" : "on" }),
-                {
-                  key: "theme-ads",
-                  kind: "Tema",
-                  label: "Tema · Anúncios",
-                }
-              )
-            }
+            onClick={() => setAds(site.theme.ads !== "on")}
             title="Mostrar ou esconder os espaços de anúncio"
             type="button"
           >
@@ -1032,13 +1081,17 @@ export function SiteEditor({
               }
             )
           }
-          onTheme={(patch, what) =>
+          onTheme={(patch, what) => {
+            if (patch.ads !== undefined) {
+              setAds(patch.ads === "on");
+              return;
+            }
             edit(setTheme(site, patch), {
               key: `theme-${Object.keys(patch).join()}`,
               kind: "Tema",
               label: `Tema · ${what}`,
-            })
-          }
+            });
+          }}
           onUploadFont={onUploadFont}
           onUploadImage={onUploadImage}
           selected={selected}

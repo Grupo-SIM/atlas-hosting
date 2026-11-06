@@ -61,6 +61,7 @@ aba IA ("em breve"), canvas com desktop/tablet/celular + zoom, desfazer/refazer,
   `categoryGrid.items` (ordem/rótulo dos cards), `featuredPost.showImage`/`buttonLabel`, `postList.cardStyle`/`includeCurrent`,
   `postShare` e `postNav`. No celular o menu vira gaveta lateral (checkbox `#sb-burger` + label `.sb-burger-backdrop`
   para fechar), com fundo em `header.menuBg` (só `#rrggbb`, vira a var `--sb-menu-bg`). Sites sem a variante não mudam.
+- Camadas: arrastar um bloco reordena (antes/depois/dentro de contêiner, ou no início/fim da seção); `moveBlockTo`/`insertBlockAt` em `editor/tree.ts`. Ligar Anúncios cria um bloco `adSlot` real em cada página (`withAdBlocks`), então ele aparece e se move nas camadas.
 - Anúncios: botão "Anúncios" na barra do editor (e no painel do tema) liga `theme.ads = "on"`; desligado, nenhum espaço aparece.
   Bloco `adSlot` (`blocks/ads.tsx`, formato faixa/lateral/quadrado) e o `newsFeed` (prop `adItems`, abaixo de "Mais lidas") usam o
   `AdBox`: lista de imagens/vídeos que passam sozinhos, sem botões (rotação em `fx-runtime.ts`; imagem por N segundos, vídeo até o
@@ -119,4 +120,4 @@ Notas de segurança:
 - Imagens do template spyhacker ainda apontam para `007spyhacker.com/wp-content/uploads`; as do `blog-viagens` apontam para `images.unsplash.com`. Copiar ambas para o storage.
 - Edição de texto direto no canvas (duplo clique) e seleção por elemento: hoje a unidade é o bloco; texto muda no painel.
 - Chat com a IA (aba "em breve") e passos de progresso reais na criação.
-- Montagem de blocos aninhados no editor só reordena/edita; não há arrastar e soltar.
+- Arrastar e soltar existe só nas camadas (blocos, inclusive aninhados, e itens da lista "Adicionar bloco"); itens soltos dentro de um bloco (ex.: um card do feed) e o arrastar direto no canvas ainda não.

@@ -1,3 +1,4 @@
+import { hasAdSlot } from "../blocks/ads.js";
 import { createBlock, newBlockId } from "../blocks/registry.js";
 import type { Page, Post, Site } from "../model/index.js";
 import { isSlugTaken, slugify } from "../renderer/routes.js";
@@ -124,4 +125,27 @@ export function setTheme(site: Site, patch: Record<string, string>): Site {
   const next = clone(site);
   next.theme = { ...next.theme, ...patch };
   return next;
+}
+
+/**
+ * Garante um bloco "Anúncio" (faixa larga) no topo de cada página, nos posts e nas categorias,
+ * para que ele apareça nas camadas e possa ser arrastado. Já existindo algum, não mexe.
+ * Sem mudança, devolve o mesmo `site`.
+ */
+export function withAdBlocks(site: Site): Site {
+  const next = clone(site);
+  let changed = false;
+  const lists = [
+    next.postLayout,
+    next.categoryLayout,
+    ...next.pages.filter(p => p.slug !== "404" && !p.bare).map(p => p.blocks),
+  ];
+  for (const list of lists) {
+    if (hasAdSlot(list)) continue;
+    // Faixa colorida de seção (skinBar) tem que continuar sendo a primeira.
+    const at = list[0]?.type === "skinBar" ? 1 : 0;
+    list.splice(at, 0, createBlock("adSlot"));
+    changed = true;
+  }
+  return changed ? next : site;
 }

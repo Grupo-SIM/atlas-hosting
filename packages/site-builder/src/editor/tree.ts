@@ -262,3 +262,61 @@ export function insertBlock(
   else list.push(block);
   return { id: block.id, site: next };
 }
+
+/** Onde soltar um bloco: antes/depois/dentro de outro, ou no início/fim de uma raiz. */
+export type DropPlace = "after" | "before" | "inside";
+export type DropTarget =
+  | { id: string; place: DropPlace }
+  | { end: boolean; root: RootKey };
+
+const hasDescendant = (block: Block, id: string): boolean =>
+  (block.children ?? []).some(c => c.id === id || hasDescendant(c, id));
+
+/** Coloca `block` no destino; false se o destino não existe. */
+function place(site: Site, block: Block, target: DropTarget): boolean {
+  if ("root" in target) {
+    const list = rootBlocks(site, target.root);
+    if (!list) return false;
+    if (target.end) list.push(block);
+    else list.unshift(block);
+    return true;
+  }
+  const at = locate(site, target.id);
+  const host = at?.list[at.index];
+  if (!(at && host)) return false;
+  if (target.place === "inside") {
+    host.children = [...(host.children ?? []), block];
+  } else {
+    at.list.splice(at.index + (target.place === "after" ? 1 : 0), 0, block);
+  }
+  return true;
+}
+
+/** Arrastar e soltar: move o bloco (com tudo dentro) para o destino. Sem mudança, devolve o mesmo `site`. */
+export function moveBlockTo(site: Site, id: string, target: DropTarget): Site {
+  const next = clone(site);
+  const at = locate(next, id);
+  const moving = at?.list[at.index];
+  if (!(at && moving)) return site;
+  if (
+    "id" in target &&
+    (target.id === id || hasDescendant(moving, target.id))
+  ) {
+    return site;
+  }
+  at.list.splice(at.index, 1);
+  return place(next, moving, target) ? next : site;
+}
+
+/** Arrastar da lista "Adicionar bloco": cria o bloco direto no ponto solto. */
+export function insertBlockAt(
+  site: Site,
+  type: string,
+  target: DropTarget
+): { id: string; site: Site } {
+  const next = clone(site);
+  const block = createBlock(type);
+  return place(next, block, target)
+    ? { id: block.id, site: next }
+    : { id: block.id, site };
+}
