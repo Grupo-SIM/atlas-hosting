@@ -144,6 +144,10 @@ const ICONS: Record<string, { label: string; path: ReactNode }> = {
       <path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />
     ),
   },
+  trend: {
+    label: "Seta subindo",
+    path: <path d="m3 17 6-6 4 4 8-8M15 7h6v6" />,
+  },
   triangle: { label: "Triângulo", path: <path d="m12 3 9 16H3z" /> },
 };
 
@@ -507,8 +511,10 @@ const logoMarquee = defineBlock(
 
 const ctSplit = defineBlock(
   z.object({
+    badgeFootIcon: str(),
     badgeIcon: str(),
     badgeImage: str(),
+    badgeKicker: str(),
     badgeLabel: str(),
     badgeNote: str(),
     badgeStars: int(0, 5, 0),
@@ -574,10 +580,16 @@ const ctSplit = defineBlock(
       { key: "image", kind: "image", label: "Imagem" },
       { key: "imageAlt", kind: "text", label: "Texto alternativo da imagem" },
       ICON_FIELD("badgeIcon", "Selo sobre a imagem — ícone"),
-      { key: "badgeValue", kind: "text", label: "Selo — número" },
+      {
+        key: "badgeKicker",
+        kind: "text",
+        label: "Selo — texto acima do número",
+      },
+      { key: "badgeValue", kind: "text", label: "Selo — número ou destaque" },
       { key: "badgeStars", kind: "number", label: "Selo — estrelas (0 a 5)" },
       { key: "badgeLabel", kind: "text", label: "Selo — legenda" },
       { key: "badgeNote", kind: "text", label: "Selo — texto menor" },
+      ICON_FIELD("badgeFootIcon", "Selo — ícone embaixo"),
       { key: "badgeImage", kind: "image", label: "Selo — imagem de fundo" },
       {
         itemFields: [
@@ -595,7 +607,11 @@ const ctSplit = defineBlock(
     label: "Texto + imagem com selo",
     render: (p, ctx) => {
       const hasBadge =
-        p.badgeIcon || p.badgeValue || p.badgeLabel || p.badgeStars > 0;
+        p.badgeIcon ||
+        p.badgeKicker ||
+        p.badgeValue ||
+        p.badgeLabel ||
+        p.badgeStars > 0;
       return (
         <section className={`sb-container sb-ct-split v-${p.variant}`}>
           <div className="sb-ct-split-text">
@@ -630,6 +646,9 @@ const ctSplit = defineBlock(
                     <Icon name={p.badgeIcon} />
                   </span>
                 ) : null}
+                {p.badgeKicker ? (
+                  <span className="kick">{p.badgeKicker}</span>
+                ) : null}
                 {p.badgeValue ? <strong>{p.badgeValue}</strong> : null}
                 {p.badgeStars > 0 ? (
                   <span aria-hidden="true" className="stars">
@@ -641,6 +660,11 @@ const ctSplit = defineBlock(
                 ) : null}
                 {p.badgeLabel ? <b>{p.badgeLabel}</b> : null}
                 {p.badgeNote ? <span>{p.badgeNote}</span> : null}
+                {p.badgeFootIcon ? (
+                  <span className="foot">
+                    <Icon name={p.badgeFootIcon} />
+                  </span>
+                ) : null}
               </div>
             ) : null}
           </div>

@@ -12,6 +12,9 @@ const block = (
   fx?: Block["fx"]
 ): Block => ({ children, fx, id: `ct-${seq++}`, props, type });
 
+/** Mesmo bloco, com âncora para links `#nome` (ex.: o "Saber Mais" da home). */
+const anchored = (anchor: string, b: Block): Block => ({ ...b, anchor });
+
 const LEGAL_BRAND: LegalBrand = {
   domain: "seudominio.com",
   email: BRAND.email,
@@ -269,11 +272,13 @@ const home = page("", "Início", [
   block(
     "ctSplit",
     {
+      badgeFootIcon: "trend",
       badgeIcon: "chart",
       badgeImage: IMG.texture,
-      badgeLabel: "Crescimento rápido",
+      badgeKicker: "Crescimento",
+      badgeValue: "rápido",
       buttonLabel: "Saber Mais",
-      buttonUrl: "#",
+      buttonUrl: "#sabermais",
       eyebrow: "Mais Pesquisados",
       image: IMG.mostSearched,
       imageAlt: "Equipe trabalhando com marketing digital",
@@ -303,17 +308,20 @@ const home = page("", "Início", [
     undefined,
     { "1.1": stagger(100) }
   ),
-  block(
-    "heading",
-    {
-      align: "center",
-      eyebrow: "Categorias",
-      level: "h2",
-      subtitle: "",
-      text: "Qual nicho você quer saber mais?",
-    },
-    undefined,
-    { "1.2": { enter: "fadeInUp" } }
+  anchored(
+    "sabermais",
+    block(
+      "heading",
+      {
+        align: "center",
+        eyebrow: "Categorias",
+        level: "h2",
+        subtitle: "",
+        text: "Qual nicho você quer saber mais?",
+      },
+      undefined,
+      { "1.2": { enter: "fadeInUp" } }
+    )
   ),
   block(
     "featureGrid",

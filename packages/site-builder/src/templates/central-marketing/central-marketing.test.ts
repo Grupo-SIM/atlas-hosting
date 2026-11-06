@@ -5,6 +5,7 @@ import { logoStepKeyframes } from "../../blocks/central.js";
 import { popupVideoEmbed, vimeoEmbed } from "../../blocks/youtube.js";
 import { fxCss } from "../../model/fx.js";
 import type { Block } from "../../model/index.js";
+import { blockSchema } from "../../model/index.js";
 import { siteSchema } from "../../model/schema.js";
 import { cssUrl } from "../../renderer/central.js";
 import { NAV_RUNTIME } from "../../renderer/nav-runtime.js";
@@ -153,6 +154,35 @@ describe("estender fx: stagger", () => {
     expect(
       fxCss("b1", { "1.1": { enter: "fadeIn", stagger: 100 } })
     ).not.toContain("nth-child(2)");
+  });
+});
+
+describe("âncora de bloco", () => {
+  test("o Saber Mais da home rola até a seção de categorias (#sabermais)", async () => {
+    const files = await exportSiteToStatic(site);
+    const home = files.find(f => f.path === "index.html")?.content ?? "";
+    expect(home).toContain('href="#sabermais"');
+    expect(home).toMatch(/<div class="sb-block"[^>]*id="sabermais"/);
+    expect(home.match(/id="sabermais"/g)).toHaveLength(1);
+  });
+
+  test("selo em camadas: textura de fundo chega ao CSS (cssUrl não recusa) e texto acima do destaque", async () => {
+    const files = await exportSiteToStatic(site);
+    const home = files.find(f => f.path === "index.html")?.content ?? "";
+    expect(home).toContain("--ct-img:url(&quot;data:image/svg+xml,");
+    expect(home).toContain(
+      '<span class="kick">Crescimento</span><strong>rápido</strong>'
+    );
+    expect(home).toContain('class="foot"');
+  });
+
+  test("só aceita nomes simples (vira id no HTML)", () => {
+    const b = { id: "x", props: {}, type: "heading" };
+    expect(
+      blockSchema.safeParse({ ...b, anchor: "saber-mais_2" }).success
+    ).toBe(true);
+    for (const bad of ["1abc", 'a"b', "a b", "<x>", ""])
+      expect(blockSchema.safeParse({ ...b, anchor: bad }).success).toBe(false);
   });
 });
 

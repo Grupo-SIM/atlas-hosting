@@ -37,11 +37,17 @@ export const AVATARS = [
   "1517048676732-d65bc937f952",
 ].map(id => unsplash(id, 200));
 
+/**
+ * SVG para `data:` URI, sem `;utf8`: em fundo CSS a URL passa por `cssUrl`, que recusa `;` (com ele
+ * a textura dos selos virava `none`).
+ */
+const svgData = (svg: string) => encodeURIComponent(svg);
+
 /** Textura escura de triângulos verdes (placeholder gerado, sem foto): fundo dos cartões e selos. */
 const texture = () => {
   const tri = (pts: string, op: number) =>
     `<polygon points='${pts}' fill='#11e44f' fill-opacity='${op}'/>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(
+  return `data:image/svg+xml,${svgData(
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' preserveAspectRatio='xMidYMid slice'><rect width='400' height='300' fill='#0a1a10'/>${[
       tri("0,0 140,0 60,120", 0.34),
       tri("140,0 300,0 220,90", 0.16),
@@ -77,7 +83,7 @@ export const IMG = {
 
 /** Logo do site (placeholder SVG com a inicial, editável no cabeçalho/rodapé). */
 export const logoPlaceholder = (letter: string, fill = "#11e44f") =>
-  `data:image/svg+xml;utf8,${encodeURIComponent(
+  `data:image/svg+xml,${svgData(
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='${fill}'/><text x='32' y='45' font-family='Arial,Helvetica,sans-serif' font-size='40' font-weight='700' text-anchor='middle' fill='#121212'>${letter}</text></svg>`
   )}`;
 
@@ -97,7 +103,7 @@ const MARKS = [
  */
 export const wordmark = (text: string, i = 0) => {
   const w = Math.round(58 + text.length * 15);
-  return `data:image/svg+xml;utf8,${encodeURIComponent(
+  return `data:image/svg+xml,${svgData(
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} 40'>${MARKS[i % MARKS.length]}<text x='52' y='29' font-family='Arial,Helvetica,sans-serif' font-size='26' font-weight='700' fill='#fcfcfc'>${text}</text></svg>`
   )}`;
 };
