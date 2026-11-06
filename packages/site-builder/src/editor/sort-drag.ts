@@ -94,21 +94,50 @@ export function startSort(o: SortOptions): () => void {
     }
   };
 
+  // Troca assim que o item arrastado cobre uma fração do vizinho (vale para blocos grandes também).
+  const SWAP_OVERLAP = 0.25;
+  const BACK_DISTANCE = 28;
+  // Depois de trocar com um vizinho, ele só volta a trocar quando o ponteiro anda de volta (evita oscilar).
+  let lock: {
+    dx: number;
+    dy: number;
+    it: HTMLElement;
+    x: number;
+    y: number;
+  } | null = null;
+
   const swapIfOver = (slot: { cx: number; cy: number }) => {
+    const e = el.getBoundingClientRect();
+    const eArea = e.width * e.height;
+    let best: HTMLElement | null = null;
+    let bestFrac = 0;
+    let bestRect: DOMRect | null = null;
     for (const it of list) {
       if (it === el) continue;
       const b = it.getBoundingClientRect();
       if (b.width < 1 || b.height < 1) continue;
-      if (px < b.left || px > b.right || py < b.top || py > b.bottom) continue;
-      // Troca quando o ponteiro está mais perto do espaço do vizinho que do próprio.
-      const dT = Math.hypot(
-        px - (b.left + b.width / 2),
-        py - (b.top + b.height / 2)
-      );
-      const dE = Math.hypot(px - slot.cx, py - slot.cy);
-      if (dT < dE) reorder(it);
-      return;
+      const ix = Math.min(e.right, b.right) - Math.max(e.left, b.left);
+      const iy = Math.min(e.bottom, b.bottom) - Math.max(e.top, b.top);
+      if (ix <= 0 || iy <= 0) continue;
+      const frac = (ix * iy) / Math.min(eArea, b.width * b.height);
+      if (frac > bestFrac) {
+        best = it;
+        bestFrac = frac;
+        bestRect = b;
+      }
     }
+    if (!(best && bestRect) || bestFrac < SWAP_OVERLAP) return;
+    if (lock && lock.it === best) {
+      // Só destrava se o ponteiro andou de volta, contra o sentido da troca anterior.
+      const back = (px - lock.x) * lock.dx + (py - lock.y) * lock.dy;
+      if (back > -BACK_DISTANCE) return;
+    }
+    // Sentido em que o item andou no layout (do espaço dele até o do vizinho).
+    const vx = bestRect.left + bestRect.width / 2 - slot.cx;
+    const vy = bestRect.top + bestRect.height / 2 - slot.cy;
+    const len = Math.hypot(vx, vy) || 1;
+    lock = { dx: vx / len, dy: vy / len, it: best, x: px, y: py };
+    reorder(best);
   };
 
   const autoScroll = () => {
