@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { Site } from "../model/index.js";
 import { Icon } from "./icons.js";
 import type {
@@ -42,6 +48,26 @@ const SUGGESTIONS = [
   "Como eu envio uma fonte?",
   "Como coloco anúncios no meu site?",
 ];
+
+/** Markdown mínimo da IA: **negrito**, *itálico* e `código`. Vira elementos React (nunca HTML cru). */
+function inline(text: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  const re = /\*\*([^*]+)\*\*|`([^`]+)`|\*([^*\s][^*]*)\*/g;
+  let last = 0;
+  let match = re.exec(text);
+  while (match) {
+    if (match.index > last) out.push(text.slice(last, match.index));
+    if (match[1] !== undefined)
+      out.push(<strong key={match.index}>{match[1]}</strong>);
+    else if (match[2] !== undefined)
+      out.push(<code key={match.index}>{match[2]}</code>);
+    else out.push(<em key={match.index}>{match[3]}</em>);
+    last = match.index + match[0].length;
+    match = re.exec(text);
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
 
 const readStored = (key?: string): ChatEntry[] => {
   if (!key) return [];
@@ -357,7 +383,9 @@ export function AiPanel({
             // biome-ignore lint/suspicious/noArrayIndexKey: a conversa só cresce
             key={i}
           >
-            {m.text ? <p>{m.text}</p> : null}
+            {m.text ? (
+              <p>{m.role === "assistant" ? inline(m.text) : m.text}</p>
+            ) : null}
             {m.changes?.length ? (
               <ul>
                 {m.changes.map((c, n) => (

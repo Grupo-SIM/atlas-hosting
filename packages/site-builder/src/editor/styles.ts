@@ -196,6 +196,7 @@ export const editorCss = `
 .sbe-ai-hello p{margin:0 0 4px;font-size:13px;color:var(--mute)}
 .sbe-ai-msg{max-width:92%;font-size:13px;line-height:1.5;padding:8px 11px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere}
 .sbe-ai-msg p{margin:0}
+.sbe-ai-msg code{background:var(--chip);border-radius:4px;padding:0 4px;font-size:12px}
 .sbe-ai-msg.user{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:4px}
 .sbe-ai-msg.assistant{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
 .sbe-ai-msg.failed{border-color:#e7b7ba;color:var(--danger)}
