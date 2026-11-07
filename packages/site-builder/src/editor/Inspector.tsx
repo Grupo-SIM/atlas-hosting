@@ -1,8 +1,9 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { adItemFields, globalAds } from "../blocks/ads.js";
 import { getBlockDefinition } from "../blocks/registry.js";
+import type { FieldDef } from "../blocks/types.js";
 import {
   BLOCK_ANCHOR,
   type Block,
@@ -260,11 +261,133 @@ function Slider({
   );
 }
 
-function Section({ children, title }: { children: ReactNode; title: string }) {
+/** Seções abertas/fechadas pelo usuário: lembradas entre seleções (por escopo + título). */
+const sectionMemory = new Map<string, boolean>();
+
+/** Seção recolhível (dropdown) do painel. Só o conteúdo começa aberto. */
+function Section({
+  children,
+  defaultOpen = false,
+  scope = "block",
+  title,
+}: {
+  children: ReactNode;
+  defaultOpen?: boolean;
+  scope?: string;
+  title: string;
+}) {
+  const memo = `${scope}:${title}`;
+  const [open, setOpen] = useState(sectionMemory.get(memo) ?? defaultOpen);
   return (
-    <div className="sbe-sec">
-      <h4 className="sbe-h">{title}</h4>
-      {children}
+    <div className={open ? "sbe-sec open" : "sbe-sec closed"}>
+      <button
+        aria-expanded={open}
+        className="sbe-sec-head"
+        onClick={() => {
+          sectionMemory.set(memo, !open);
+          setOpen(!open);
+        }}
+        type="button"
+      >
+        <h4 className="sbe-h">{title}</h4>
+        <Icon name={open ? "chevron-down" : "chevron-right"} size={14} />
+      </button>
+      {open ? <div className="sbe-sec-body">{children}</div> : null}
+    </div>
+  );
+}
+
+/** Campo (ou item de lista) do bloco que mostra o texto/imagem do elemento clicado. */
+type FieldMatch =
+  | { field: FieldDef; kind: "field" }
+  | { field: FieldDef; index: number; kind: "item" };
+
+const norm = (v: unknown) =>
+  String(v ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** Acha, pelo texto/imagem que o elemento mostra, quais campos do bloco pertencem a ele. */
+function matchFields(
+  fields: FieldDef[],
+  props: Record<string, unknown>,
+  defaults: Record<string, unknown>,
+  hint: string
+): FieldMatch[] {
+  const want = norm(hint);
+  if (!want) return [];
+  const valueOf = (key: string) => props[key] ?? defaults[key];
+  const same = (v: unknown) => norm(v) === want;
+  const loose = (v: unknown) => {
+    const n = norm(v);
+    return n.length >= 3 && (want.includes(n) || n.includes(want));
+  };
+  const scan = (test: (v: unknown) => boolean): FieldMatch[] => {
+    const out: FieldMatch[] = [];
+    for (const field of fields) {
+      if (field.kind === "list") {
+        const items = valueOf(field.key);
+        if (!Array.isArray(items)) continue;
+        items.forEach((item, index) => {
+          const hit = (field.itemFields ?? []).some(
+            f =>
+              f.kind !== "list" &&
+              test((item as Record<string, unknown>)[f.key])
+          );
+          if (hit) out.push({ field, index, kind: "item" });
+        });
+      } else if (test(valueOf(field.key))) {
+        out.push({ field, kind: "field" });
+      }
+    }
+    return out;
+  };
+  const exact = scan(same);
+  return exact.length > 0 ? exact : scan(loose);
+}
+
+/** Os campos de UM item de uma lista (ex.: um card), sem mostrar a lista inteira. */
+function ItemFields({
+  index,
+  list,
+  onChange,
+  onResolveChannel,
+  onUpload,
+  value,
+}: {
+  index: number;
+  list: FieldDef;
+  onChange: (value: unknown) => void;
+  onResolveChannel?: ResolveChannel;
+  onUpload?: (file: File) => Promise<string>;
+  value: unknown;
+}) {
+  const items = Array.isArray(value)
+    ? (value as Record<string, unknown>[])
+    : [];
+  const item = items[index];
+  if (!item) return null;
+  return (
+    <div className="sbe-list-item">
+      <p className="sbe-hint">
+        {list.label}: item {index + 1}
+      </p>
+      {(list.itemFields ?? [])
+        .filter(f => !f.showWhen || item[f.showWhen.key] === f.showWhen.equals)
+        .map(f => (
+          <FieldInput
+            field={f}
+            key={f.key}
+            onChange={v =>
+              onChange(
+                items.map((it, i) => (i === index ? { ...it, [f.key]: v } : it))
+              )
+            }
+            onResolveChannel={onResolveChannel}
+            onUpload={onUpload}
+            value={item[f.key]}
+          />
+        ))}
     </div>
   );
 }
@@ -366,6 +489,21 @@ export function Inspector({
     hit.focus();
     hit.select();
   }, [focusHint?.n]);
+
+  // Campos que pertencem ao item clicado: decididos no clique (o texto muda enquanto se digita).
+  const itemDef = selected ? getBlockDefinition(selected.type) : undefined;
+  const itemMatches = useMemo(
+    () =>
+      elPath && selected && itemDef
+        ? matchFields(
+            itemDef.fields,
+            selected.props,
+            itemDef.defaults,
+            focusHint?.value ?? ""
+          )
+        : [],
+    [focusHint?.n, selected?.id, elPath]
+  );
 
   const vars = themeVars(site.theme);
   const resolve = (c: string) => {
@@ -578,34 +716,74 @@ export function Inspector({
       </div>
 
       <div className="sbe-scroll">
-        <div className="sbe-actions">
-          {(
-            [
-              ["duplicate", "Duplicar (Ctrl+D)", "copy"],
+        {elPath ? null : (
+          <div className="sbe-actions">
+            {(
               [
-                "hide",
-                selected.hidden ? "Mostrar" : "Ocultar",
-                selected.hidden ? "eye" : "eye-off",
-              ],
-              ["up", "Mover para cima", "arrow-up"],
-              ["down", "Mover para baixo", "arrow-down"],
-              ["delete", "Excluir (Delete)", "trash-2"],
-            ] as const
-          ).map(([action, title, icon]) => (
-            <button
-              className={action === "delete" ? "danger" : ""}
-              key={action}
-              onClick={() => onAction(action)}
-              title={title}
-              type="button"
-            >
-              <Icon name={icon} size={14} />
-            </button>
-          ))}
-        </div>
+                ["duplicate", "Duplicar (Ctrl+D)", "copy"],
+                [
+                  "hide",
+                  selected.hidden ? "Mostrar" : "Ocultar",
+                  selected.hidden ? "eye" : "eye-off",
+                ],
+                ["up", "Mover para cima", "arrow-up"],
+                ["down", "Mover para baixo", "arrow-down"],
+                ["delete", "Excluir (Delete)", "trash-2"],
+              ] as const
+            ).map(([action, title, icon]) => (
+              <button
+                className={action === "delete" ? "danger" : ""}
+                key={action}
+                onClick={() => onAction(action)}
+                title={title}
+                type="button"
+              >
+                <Icon name={icon} size={14} />
+              </button>
+            ))}
+          </div>
+        )}
 
-        {def && def.fields.length > 0 ? (
-          <Section title="Conteúdo">
+        {elPath ? (
+          <Section defaultOpen scope="el" title="Conteúdo do item">
+            {itemMatches.length > 0 && def ? (
+              itemMatches.map(m =>
+                m.kind === "field" ? (
+                  <FieldInput
+                    field={m.field}
+                    key={m.field.key}
+                    onChange={v => onProp(m.field.key, v)}
+                    onResolveChannel={onResolveChannel}
+                    onUpload={onUploadImage}
+                    value={
+                      selected.props[m.field.key] ?? def.defaults[m.field.key]
+                    }
+                  />
+                ) : (
+                  <ItemFields
+                    index={m.index}
+                    key={`${m.field.key}-${m.index}`}
+                    list={m.field}
+                    onChange={v => onProp(m.field.key, v)}
+                    onResolveChannel={onResolveChannel}
+                    onUpload={onUploadImage}
+                    value={
+                      selected.props[m.field.key] ?? def.defaults[m.field.key]
+                    }
+                  />
+                )
+              )
+            ) : (
+              <p className="sbe-hint">
+                {elLabel === "link" &&
+                (selected.type === "header" || selected.type === "footer")
+                  ? "Os links do menu ficam em “Menu do site”, logo abaixo."
+                  : "Este item não tem texto ou imagem próprios para editar aqui. Para o conteúdo do bloco, selecione o bloco no caminho acima."}
+              </p>
+            )}
+          </Section>
+        ) : def && def.fields.length > 0 ? (
+          <Section defaultOpen title="Conteúdo">
             {def.fields.map(field => (
               <FieldInput
                 field={field}
@@ -619,15 +797,17 @@ export function Inspector({
           </Section>
         ) : null}
 
-        <Section title="Âncora">
-          <AnchorInput
-            key={selected.id}
-            onCommit={onAnchor}
-            value={selected.anchor ?? ""}
-          />
-        </Section>
+        {elPath ? null : (
+          <Section title="Âncora">
+            <AnchorInput
+              key={selected.id}
+              onCommit={onAnchor}
+              value={selected.anchor ?? ""}
+            />
+          </Section>
+        )}
 
-        <Section title="Tamanho">
+        <Section scope={elPath ? "el" : "block"} title="Tamanho">
           {(
             [
               ["width", "Largura", 1600],
@@ -673,8 +853,13 @@ export function Inspector({
           </p>
         </Section>
 
-        {selected.type === "header" || selected.type === "footer" ? (
-          <Section title="Menu do site">
+        {(selected.type === "header" || selected.type === "footer") &&
+        (!elPath || (elLabel === "link" && itemMatches.length === 0)) ? (
+          <Section
+            defaultOpen={Boolean(elPath)}
+            scope={elPath ? "el" : "block"}
+            title="Menu do site"
+          >
             <p className="sbe-hint">Vale para o cabeçalho e o rodapé.</p>
             {site.menu.map((item, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: itens do menu não têm id
@@ -728,7 +913,7 @@ export function Inspector({
           </Section>
         ) : null}
 
-        <Section title="Posição">
+        <Section scope={elPath ? "el" : "block"} title="Posição">
           {(["x", "y"] as const).map(axis => {
             const pos = parseTranslate(st.translate);
             return (
@@ -772,102 +957,106 @@ export function Inspector({
           ) : null}
         </Section>
 
-        <Section title="Tipografia">
-          <FontPicker
-            custom={customFonts(site.theme)}
-            onPick={v => set("fontFamily", "Fonte")(v)}
-            onTheme={onTheme}
-            onUploadFont={onUploadFont}
-            value={st.fontFamily as string | undefined}
-          />
-          <div className="sbe-line">
-            <span>Tamanho</span>
-            <input
-              max={96}
-              min={8}
-              onChange={e => set("fontSize", "Tamanho")(Number(e.target.value))}
-              type="range"
-              value={num(st.fontSize) || 16}
+        {elLabel === "imagem" ? null : (
+          <Section scope={elPath ? "el" : "block"} title="Tipografia">
+            <FontPicker
+              custom={customFonts(site.theme)}
+              onPick={v => set("fontFamily", "Fonte")(v)}
+              onTheme={onTheme}
+              onUploadFont={onUploadFont}
+              value={st.fontFamily as string | undefined}
             />
-            <input
-              className="sbe-num"
-              onChange={e =>
-                set(
-                  "fontSize",
-                  "Tamanho"
-                )(e.target.value === "" ? undefined : Number(e.target.value))
-              }
-              placeholder="auto"
-              type="text"
-              value={st.fontSize ?? ""}
-            />
-          </div>
-          <div className="sbe-field">
-            <span>Peso</span>
-            <Seg
-              onPick={v => set("fontWeight", "Peso")(v)}
-              options={[
-                { label: "Fino", value: 300 },
-                { label: "Normal", value: 400 },
-                { label: "Médio", value: 500 },
-                { label: "Negrito", value: 700 },
-                { label: "Black", value: 900 },
-              ]}
-              value={num(st.fontWeight) || undefined}
-            />
-          </div>
-          <div className="sbe-field">
-            <span>Cor do texto</span>
-            <Swatches
-              active={st.color as string | undefined}
-              colors={TEXT_PALETTE}
-              onPick={textPick}
-              resolve={resolve}
-            />
-            <input
-              className="sbe-mono"
-              onChange={e => set("color", "Cor do texto")(e.target.value)}
-              placeholder="herdar do tema"
-              type="text"
-              value={st.color ?? ""}
-            />
-          </div>
-          <div className="sbe-line">
-            <span>Alinhamento</span>
-            <div style={{ width: 110 }}>
-              <Seg
-                onPick={v => set("textAlign", "Alinhamento")(v)}
-                options={[
-                  { icon: "align-left", value: "left" },
-                  { icon: "align-center", value: "center" },
-                  { icon: "align-right", value: "right" },
-                ]}
-                value={(st.textAlign as string | undefined) ?? "left"}
+            <div className="sbe-line">
+              <span>Tamanho</span>
+              <input
+                max={96}
+                min={8}
+                onChange={e =>
+                  set("fontSize", "Tamanho")(Number(e.target.value))
+                }
+                type="range"
+                value={num(st.fontSize) || 16}
+              />
+              <input
+                className="sbe-num"
+                onChange={e =>
+                  set(
+                    "fontSize",
+                    "Tamanho"
+                  )(e.target.value === "" ? undefined : Number(e.target.value))
+                }
+                placeholder="auto"
+                type="text"
+                value={st.fontSize ?? ""}
               />
             </div>
-          </div>
-          <div className="sbe-line">
-            <span>Maiúsculas</span>
-            <button
-              className={
-                st.textTransform === "uppercase"
-                  ? "sbe-toggle on"
-                  : "sbe-toggle"
-              }
-              onClick={() =>
-                set(
-                  "textTransform",
-                  "Maiúsculas"
-                )(st.textTransform === "uppercase" ? undefined : "uppercase")
-              }
-              type="button"
-            >
-              <span />
-            </button>
-          </div>
-        </Section>
+            <div className="sbe-field">
+              <span>Peso</span>
+              <Seg
+                onPick={v => set("fontWeight", "Peso")(v)}
+                options={[
+                  { label: "Fino", value: 300 },
+                  { label: "Normal", value: 400 },
+                  { label: "Médio", value: 500 },
+                  { label: "Negrito", value: 700 },
+                  { label: "Black", value: 900 },
+                ]}
+                value={num(st.fontWeight) || undefined}
+              />
+            </div>
+            <div className="sbe-field">
+              <span>Cor do texto</span>
+              <Swatches
+                active={st.color as string | undefined}
+                colors={TEXT_PALETTE}
+                onPick={textPick}
+                resolve={resolve}
+              />
+              <input
+                className="sbe-mono"
+                onChange={e => set("color", "Cor do texto")(e.target.value)}
+                placeholder="herdar do tema"
+                type="text"
+                value={st.color ?? ""}
+              />
+            </div>
+            <div className="sbe-line">
+              <span>Alinhamento</span>
+              <div style={{ width: 110 }}>
+                <Seg
+                  onPick={v => set("textAlign", "Alinhamento")(v)}
+                  options={[
+                    { icon: "align-left", value: "left" },
+                    { icon: "align-center", value: "center" },
+                    { icon: "align-right", value: "right" },
+                  ]}
+                  value={(st.textAlign as string | undefined) ?? "left"}
+                />
+              </div>
+            </div>
+            <div className="sbe-line">
+              <span>Maiúsculas</span>
+              <button
+                className={
+                  st.textTransform === "uppercase"
+                    ? "sbe-toggle on"
+                    : "sbe-toggle"
+                }
+                onClick={() =>
+                  set(
+                    "textTransform",
+                    "Maiúsculas"
+                  )(st.textTransform === "uppercase" ? undefined : "uppercase")
+                }
+                type="button"
+              >
+                <span />
+              </button>
+            </div>
+          </Section>
+        )}
 
-        <Section title="Efeitos">
+        <Section scope={elPath ? "el" : "block"} title="Efeitos">
           <div className="sbe-field">
             <span>Entrada (ao rolar até aqui)</span>
             <select
@@ -986,7 +1175,7 @@ export function Inspector({
           </p>
         </Section>
 
-        <Section title="Caixa">
+        <Section scope={elPath ? "el" : "block"} title="Caixa">
           <div className="sbe-field">
             <span>Fundo</span>
             <Swatches
