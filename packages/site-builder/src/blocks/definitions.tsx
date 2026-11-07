@@ -1783,11 +1783,24 @@ const categorySearch = defineBlock(
   z.object({
     buttonLabel: str("Pesquisar"),
     categoriesLabel: str("Categorias"),
+    layout: z.enum(["wide", "compact"]).default("wide").catch("wide"),
     placeholder: str("Digite aqui..."),
     selectLabel: str("Selecionar categoria"),
   }),
   {
     fields: [
+      {
+        key: "layout",
+        kind: "select",
+        label: "Disposição",
+        options: [
+          { label: "Busca larga, categorias ao lado", value: "wide" },
+          {
+            label: "Busca compacta à esquerda, categorias à direita",
+            value: "compact",
+          },
+        ],
+      },
       { key: "placeholder", kind: "text", label: "Texto do campo de busca" },
       { key: "buttonLabel", kind: "text", label: "Texto do botão" },
       { key: "categoriesLabel", kind: "text", label: "Título das categorias" },
@@ -1802,7 +1815,7 @@ const categorySearch = defineBlock(
     render: (p, ctx) => (
       <form
         action={href(ctx, "/pesquisa/")}
-        className="sb-container sb-mag sb-cat-search"
+        className={`sb-container sb-mag sb-cat-search${p.layout === "compact" ? "l-compact" : ""}`}
         method="get"
       >
         <div className="sb-mag-search">

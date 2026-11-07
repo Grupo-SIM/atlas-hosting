@@ -532,7 +532,7 @@ const blogs = page("blogs", "Blogs", [
     undefined,
     { "1.1.1": { enter: "fadeInUp" } }
   ),
-  block("categorySearch", {}),
+  block("categorySearch", { layout: "compact" }),
   block("linkCards", {
     items: [1, 2, 3, 4, 5].map(n => ({
       image: pool(n + 6, 800),
