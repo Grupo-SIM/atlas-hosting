@@ -47,6 +47,7 @@ Este chat. Conecta a assinatura Claude do próprio usuário e edita o site a ped
 ### Com um bloco (ou elemento) selecionado
 - Linha de ações do bloco: **Duplicar** (Ctrl+D), **Ocultar/Mostrar**, **Mover para cima/baixo**, **Excluir** (Delete).
 - **Conteúdo**: os campos do bloco (textos, links, imagens, listas). Imagem: arrastar e soltar/clicar para enviar o arquivo, ou colar a URL. Anúncios e vídeos curtos aceitam também vídeo (MP4/WebM até 25 MB).
+- **Âncora**: nome do bloco para links #nome (ex.: sabermais); um botão com link #sabermais rola até ele. Grava ao sair do campo.
 - **Tamanho**: largura e altura.
 - **Posição**: X/Y do deslocamento livre e "Voltar ao lugar original".
 - **Tipografia**: **fonte** (Herdar do tema, Minhas fontes, Google Fonts; botão **+ Enviar arquivo de fonte** aceita .woff2/.woff/.ttf/.otf até 3 MB), tamanho, peso, cor do texto, alinhamento, maiúsculas.
@@ -70,6 +71,8 @@ Este chat. Conecta a assinatura Claude do próprio usuário e edita o site a ped
 - **Editar o menu**: aba Páginas → Menu.
 - **Mudar cores do site**: desmarque o bloco → painel direito → cores do tema (paleta rápida ou código hex). Para a cor de um bloco só: Inspetor → Caixa → Fundo; texto: Tipografia → Cor do texto.
 - **Mover um item livremente**: modo **Livre** na barra superior; segure e arraste (guias rosa encaixam nas bordas; Alt desliga; Shift trava o eixo; setas empurram 1 px, Shift+setas 10 px). Valores exatos: Inspetor → **Posição**.
+- **Botão que rola até uma seção**: selecione o bloco de destino → Inspetor → **Âncora** → um nome (ex.: sabermais); no botão, coloque o link #sabermais. No editor, clique comum seleciona; **Ctrl+clique** segue o link. A IA também faz isso.
+- **Vídeo em popup no botão de play** (Hero do template Central do Marketing): bloco Hero → Conteúdo → "Vídeo do botão de play" com link do YouTube ou do Vimeo; abre sobre a página. Outro tipo de link abre em nova aba. Vídeo do Vimeo com domínio restrito pelo dono não toca fora do domínio dele.
 - **Ocultar um bloco sem apagar**: olho nas Camadas, ou ação "Ocultar" no Inspetor.
 - **Desfazer erro**: Ctrl+Z / botão desfazer (inclusive edições da IA). **Restaurar original** na barra de dispositivo volta tudo ao template.
 - **Ver como fica no celular/tablet**: barra de dispositivo (Desktop/Tablet/Celular). Mover livre só funciona no desktop.

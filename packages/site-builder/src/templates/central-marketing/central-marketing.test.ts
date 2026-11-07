@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { createElement } from "react";
 import { prerender } from "react-dom/static";
+import { runAiTool } from "../../ai/tools.js";
 import { logoStepKeyframes } from "../../blocks/central.js";
 import { popupVideoEmbed, vimeoEmbed } from "../../blocks/youtube.js";
 import { fxCss } from "../../model/fx.js";
@@ -206,6 +207,17 @@ describe("âncora de bloco", () => {
     },
     EXPORT_TIMEOUT
   );
+
+  test("a IA põe e tira âncora com ancora_bloco (e recusa nome inválido)", () => {
+    const id = site.pages[0]?.blocks[0]?.id ?? "";
+    const on = runAiTool(site, "ancora_bloco", { ancora: "#topo", id });
+    expect(on.site.pages[0]?.blocks[0]?.anchor).toBe("topo");
+    const off = runAiTool(on.site, "ancora_bloco", { ancora: "", id });
+    expect(off.site.pages[0]?.blocks[0]?.anchor).toBeUndefined();
+    expect(() =>
+      runAiTool(site, "ancora_bloco", { ancora: "1 x", id })
+    ).toThrow();
+  });
 
   test("só aceita nomes simples (vira id no HTML)", () => {
     const b = { id: "x", props: {}, type: "heading" };

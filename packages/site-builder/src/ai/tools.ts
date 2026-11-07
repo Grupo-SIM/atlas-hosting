@@ -26,6 +26,7 @@ import {
   moveBlockTo,
   removeBlock,
   rootBlocks,
+  setBlockAnchor,
   setBlockHidden,
   updateBlockFx,
   updateBlockProps,
@@ -33,7 +34,7 @@ import {
   updateElementStyle,
 } from "../editor/tree.js";
 import { ENTER_EFFECTS, HOVER_EFFECTS } from "../model/fx.js";
-import type { Block, Site } from "../model/index.js";
+import { BLOCK_ANCHOR, type Block, type Site } from "../model/index.js";
 import { siteSchema } from "../model/schema.js";
 import { BLOCK_STYLE_KEYS, cleanStyle, ELEMENT_PATH } from "../model/style.js";
 import { customFonts, fontStack, SITE_FONTS } from "../renderer/fonts.js";
@@ -185,6 +186,19 @@ export const AI_TOOLS: AiToolDef[] = [
       ["id", "oculto"]
     ),
     name: "ocultar_bloco",
+  },
+  {
+    description:
+      "Dá um nome (âncora) ao bloco para links #nome rolarem até ele (ex.: botão com link #sabermais). Vazio remove. Letras, números, - e _, começando com letra.",
+    inputSchema: obj(
+      "",
+      {
+        ancora: str("Nome da âncora, sem #. Vazio remove."),
+        id: str("Id do bloco."),
+      },
+      ["id", "ancora"]
+    ),
+    name: "ancora_bloco",
   },
   {
     description:
@@ -357,6 +371,7 @@ const short = (v: unknown): unknown => {
 
 function outline(block: Block): unknown {
   return {
+    anchor: block.anchor,
     children: block.children?.length ? block.children.map(outline) : undefined,
     hidden: block.hidden || undefined,
     id: block.id,
@@ -659,6 +674,22 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
       return done(
         setBlockHidden(site, id, hide),
         `${hide ? "Ocultou" : "Mostrou"} ${label(block.type)}`
+      );
+    }
+
+    case "ancora_bloco": {
+      const id = text(input, "id");
+      const block = mustBlock(site, id);
+      const name = text(input, "ancora", false).replace(/^#/, "");
+      if (name && !BLOCK_ANCHOR.test(name))
+        throw new ToolError(
+          "Âncora inválida: use letras, números, - ou _, começando com letra."
+        );
+      return done(
+        setBlockAnchor(site, id, name),
+        name
+          ? `Âncora #${name} em ${label(block.type)}`
+          : `Removeu a âncora de ${label(block.type)}`
       );
     }
 
