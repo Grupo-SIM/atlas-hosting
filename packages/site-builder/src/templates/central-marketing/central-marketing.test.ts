@@ -40,9 +40,11 @@ describe("template central-marketing", () => {
     expect(parsed.success).toBe(true);
   });
 
-  test("tem o conteúdo do original: 44 posts, 16 categorias, páginas e layouts", () => {
-    expect(site.posts).toHaveLength(44);
-    expect(site.categories).toHaveLength(16);
+  test("tem conteúdo próprio: 16 posts, 12 categorias, páginas e layouts", () => {
+    expect(site.posts).toHaveLength(16);
+    expect(site.categories).toHaveLength(12);
+    // todo post tem corpo de verdade e cai numa categoria existente
+    for (const p of site.posts) expect(p.blocks.length).toBeGreaterThan(5);
     const slugs = site.pages.map(p => p.slug);
     for (const s of [
       "",
@@ -80,6 +82,19 @@ describe("template central-marketing", () => {
     expect(JSON.stringify(site)).not.toContain("centraldomarketing.com");
   });
 
+  test("não traz textos nem a marca do site original", () => {
+    const json = JSON.stringify(site);
+    for (const original of [
+      "Central do Marketing",
+      "Marketplace",
+      "Insta Fan Fortune",
+      "Ghost Writer",
+      "Pessoas impactadas",
+      "Inbound Marketing",
+    ])
+      expect(json).not.toContain(original);
+  });
+
   test("o nome da marca vem de um lugar só (tema, cabeçalho e rodapé)", () => {
     expect(site.name).toBe(BRAND.name);
     const header = site.header[0]?.props.logoText;
@@ -109,7 +124,7 @@ describe("template central-marketing", () => {
       }
       expect(paths.has("index.html")).toBe(true);
       expect(paths.has("404.html")).toBe(true);
-      expect(paths.has("category/copy/index.html")).toBe(true);
+      expect(paths.has("category/estrategia/index.html")).toBe(true);
     },
     EXPORT_TIMEOUT
   );
@@ -139,10 +154,10 @@ describe("template central-marketing", () => {
       const home = files.find(f => f.path === "index.html")?.content ?? "";
       expect(home).toContain('class="sb-ct-play"');
       expect(home).toContain(
-        'data-sb-video="https://www.youtube-nocookie.com/embed/2z39bEyVSoI"'
+        'data-sb-video="https://www.youtube-nocookie.com/embed/4F4-jFOigYI"'
       );
       expect(home).toContain(
-        'href="https://www.youtube.com/watch?v=2z39bEyVSoI"'
+        'href="https://www.youtube.com/watch?v=4F4-jFOigYI"'
       );
       expect(home).toContain("a[data-sb-video]");
       // o script vai como string: um escape errado quebra tudo sem erro de tipo
@@ -187,7 +202,7 @@ describe("página Categorias", () => {
       const html =
         files.find(f => f.path === "categorias/index.html")?.content ?? "";
       expect(html).toContain("--cat-head-img:url(&quot;data:image/svg+xml,");
-      expect(html.match(/class="sb-card sb-cat-card"/g)?.length).toBe(16);
+      expect(html.match(/class="sb-card sb-cat-card"/g)?.length).toBe(12);
     },
     EXPORT_TIMEOUT
   );
@@ -213,7 +228,7 @@ describe("âncora de bloco", () => {
       const home = files.find(f => f.path === "index.html")?.content ?? "";
       expect(home).toContain("--ct-img:url(&quot;data:image/svg+xml,");
       expect(home).toContain(
-        '<span class="kick">Crescimento</span><strong>rápido</strong>'
+        '<span class="kick">Passo a passo</span><strong>simples</strong>'
       );
       expect(home).toContain('class="foot"');
       // cartões de categoria: 2º, 4º, 6º e 8º com imagem de fundo (como no original)

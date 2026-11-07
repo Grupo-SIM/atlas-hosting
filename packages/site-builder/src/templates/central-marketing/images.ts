@@ -78,7 +78,7 @@ const texture = () => {
 export const IMG = {
   /** Fundo do banner de título (Blogs, Categorias, Termos, Post). */
   banner: unsplash("1550751827-4bd374c3f58b", 2000),
-  /** Banner "lado invisível da tecnologia". */
+  /** Banner de chamada (newsletter). */
   ctaBanner: unsplash("1563986768609-322da13575f3", 2000),
   /** Seção "Curiosidades". */
   curiosities: unsplash("1519389950473-47ba0277781c", 1200),
