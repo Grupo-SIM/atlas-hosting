@@ -728,6 +728,7 @@ const categoryGrid = defineBlock(
   z.object({
     buttonLabel: str(),
     buttonUrl: str("/categorias/"),
+    headImage: str(),
     images: z.array(z.object({ src: str(), text: str() })).default([]),
     items: z.array(z.object({ category: str(), label: str() })).default([]),
     limit: z.coerce.number().default(0),
@@ -746,6 +747,11 @@ const categoryGrid = defineBlock(
         key: "images",
         kind: "list",
         label: "Imagens e textos dos cards (na ordem das categorias)",
+      },
+      {
+        key: "headImage",
+        kind: "image",
+        label: "Fundo da faixa do nome (opcional, todos os cards)",
       },
       {
         itemFields: [
@@ -771,7 +777,14 @@ const categoryGrid = defineBlock(
         : ctx.site.categories;
       const cats = p.limit > 0 ? chosen.slice(0, p.limit) : chosen;
       return (
-        <section className="sb-container">
+        <section
+          className="sb-container"
+          style={
+            p.headImage
+              ? ({ "--cat-head-img": cssUrl(p.headImage) } as CSSProperties)
+              : undefined
+          }
+        >
           {p.title ? <h2>{p.title}</h2> : null}
           {p.subtitle ? <p className="sb-sub">{p.subtitle}</p> : null}
           <div className="sb-grid sb-grid-3">

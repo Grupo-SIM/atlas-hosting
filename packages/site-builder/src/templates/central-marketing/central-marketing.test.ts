@@ -179,6 +179,20 @@ describe("estender fx: stagger", () => {
   });
 });
 
+describe("página Categorias", () => {
+  test(
+    "cartões com faixa de textura atrás do nome (headImage vira --cat-head-img)",
+    async () => {
+      const files = await exportOnce();
+      const html =
+        files.find(f => f.path === "categorias/index.html")?.content ?? "";
+      expect(html).toContain("--cat-head-img:url(&quot;data:image/svg+xml,");
+      expect(html.match(/class="sb-card sb-cat-card"/g)?.length).toBe(16);
+    },
+    EXPORT_TIMEOUT
+  );
+});
+
 describe("âncora de bloco", () => {
   test(
     "o Saber Mais da home rola até a seção de categorias (#sabermais)",

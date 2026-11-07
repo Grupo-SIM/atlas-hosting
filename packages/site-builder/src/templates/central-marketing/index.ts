@@ -561,6 +561,7 @@ const categorias = page("categorias", "Categorias", [
     {
       buttonLabel: "",
       buttonUrl: "",
+      headImage: IMG.texture,
       images: CATEGORY_ORDER.map((_, i) => ({ src: pool(i, 700), text: "" })),
       items: CATEGORY_ORDER.map(category => ({ category, label: "" })),
       limit: 0,

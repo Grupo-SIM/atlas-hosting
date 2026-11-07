@@ -365,14 +365,18 @@ ${S} .sb-post-card.archive p.ex{margin:0 0 14px;color:#777;font-size:14px;line-h
 ${S} .sb-post-card.archive .sb-link{display:inline-block;margin-bottom:20px;font-size:12px;line-height:22.4px;text-transform:uppercase}
 
 /* grade de categorias com foto */
-${S} .sb-cat-card{display:flex;flex-direction:column-reverse;gap:0;min-height:0;padding:0;overflow:hidden;border:1px solid var(--ct-line);border-radius:25px;transition:border-color .4s}
+${S} .sb-cat-card{display:flex;flex-direction:column-reverse;gap:0;min-height:0;padding:0;overflow:hidden;border:1px solid var(--ct-line);border-radius:25px;transition:border-color .3s}
 ${S} .sb-cat-card:hover{border-color:var(--sb-accent)}
-${S} .sb-cat-card img,${S} .sb-cat-card .sb-img-empty{width:100%;height:auto;aspect-ratio:1;margin:0;object-fit:cover}
-${S} .sb-cat-card .sb-cat-head{justify-content:center;align-items:center;min-height:123px;padding:16px;background:linear-gradient(135deg,rgba(17,228,79,.16),rgba(17,228,79,.03)),#121212;font-family:var(--sb-font-heading);font-size:24px;font-weight:600;line-height:28.8px;color:#fcfcfc;text-align:center}
+/* original: foto a 50% (cartão escuro) que acende no hover; borda verde no hover */
+${S} .sb-cat-card img,${S} .sb-cat-card .sb-img-empty{width:100%;height:auto;aspect-ratio:1;margin:0;object-fit:cover;opacity:.5;transition:opacity .5s}
+${S} .sb-cat-card:hover img,${S} .sb-cat-card:focus-visible img{opacity:1}
+${S} .sb-cat-card .sb-cat-head{justify-content:center;align-items:center;min-height:123px;padding:16px;background:linear-gradient(rgba(18,18,18,.5),rgba(18,18,18,.5)),var(--cat-head-img,linear-gradient(135deg,rgba(17,228,79,.16),rgba(17,228,79,.03))) center/cover no-repeat,#121212;font-family:var(--sb-font-heading);font-size:24px;font-weight:600;line-height:28.8px;color:#fcfcfc;text-align:center}
 ${S} .sb-cat-card .sb-cat-head svg{display:none}
+/* nome numa caixa de vidro fosco (desfoque de 10px do fundo), como no original */
+${S} .sb-cat-card .sb-cat-head>span{display:flex;align-items:center;justify-content:center;width:100%;min-height:91px;padding:16px;border-radius:25px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 ${S} .sb-cat-card .sb-cat-text{display:none}
 ${S} .sb-block[data-block-type=categoryGrid]>.sb-container{padding-top:64px}
-${S} .sb-grid:has(>.sb-cat-card){grid-template-columns:repeat(4,minmax(0,1fr));margin:0}
+${S} .sb-grid:has(>.sb-cat-card){grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin:0}
 ${S} .sb-link-cards{gap:97px 20px;margin:0}
 ${S} .sb-link-card{flex:0 0 calc((100% - 40px)/3);border:3px solid rgba(0,126,6,.55);border-radius:27px;text-align:center}
 ${S} .sb-link-card img{aspect-ratio:436/251;border-radius:25px}
