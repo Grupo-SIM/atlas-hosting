@@ -319,7 +319,7 @@ ${S} .sb-float svg{display:block;flex:none;width:40px;height:40px;padding:6px;bo
 
 /* busca, categoria e cartões de post */
 ${S} .sb-cat-search.sb-container{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 20px;margin:50px auto 0;padding:0}
-${S} .sb-mag-search{gap:0;align-self:start}
+${S} .sb-mag-search{gap:0;align-self:end}
 ${S} .sb-mag-search input{min-height:64px;padding:13px 30px;border:1px solid var(--ct-line);border-radius:15px;background:transparent;color:#fcfcfc;font-family:var(--sb-font-body);font-size:16px}
 ${S} .sb-mag-search input::placeholder{color:#777}
 ${S} .sb-mag-search .sb-btn{margin-left:8px;padding:0 24px;border:0;border-radius:12px;background:#2d2d2d;color:#fff!important;font-size:16px;line-height:16px}
