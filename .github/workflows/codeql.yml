@@ -1,12 +1,10 @@
 name: "CodeQL"
 
+# Só roda manualmente (Actions → CodeQL → Run workflow): o repo é privado e, sem GitHub Code
+# Security, o envio dos resultados é recusado e o job falha. Ao ativar o Code Security, volte
+# os gatilhos push / pull_request / schedule.
 on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-  schedule:
-    - cron: "30 4 * * 0"
+  workflow_dispatch:
 
 jobs:
   analyze:
