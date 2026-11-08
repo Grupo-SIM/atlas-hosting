@@ -64,6 +64,7 @@ export const editorCss = `
 .sbe-frame .sb-float{position:absolute}
 .sbe-canvas .sb-header .sb-logo,.sbe-canvas .sb-header .sb-logo-img{cursor:grab;touch-action:none;user-select:none}
 .sbe-canvas img{-webkit-user-drag:none;user-select:none}
+.sbe-canvas iframe{pointer-events:none}
 .sbe-guide{display:none;position:fixed;z-index:6;pointer-events:none;background:#ff3d8b}
 .sbe-guide.v{width:1px}
 .sbe-guide.h{height:1px}

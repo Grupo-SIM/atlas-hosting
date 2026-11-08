@@ -135,6 +135,19 @@ function pickElement(target: HTMLElement): HTMLElement | null {
   return wrap && block.contains(wrap) ? wrap : target;
 }
 
+/**
+ * Vídeo incorporado sob o ponteiro. No editor os iframes não recebem o mouse (senão o clique tocaria o
+ * vídeo em vez de selecionar), então o clique cai no elemento de fora e o vídeo é achado pela posição.
+ */
+function frameAt(root: HTMLElement, x: number, y: number): HTMLElement | null {
+  for (const frame of root.querySelectorAll<HTMLElement>("iframe")) {
+    const r = frame.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom)
+      return frame;
+  }
+  return null;
+}
+
 /** Caminho `nth-child` do elemento dentro do bloco; vazio quando é o próprio bloco. */
 function pathWithin(el: HTMLElement, block: HTMLElement): string {
   const parts: number[] = [];
@@ -157,15 +170,27 @@ function elementAt(block: HTMLElement, path: string): HTMLElement | null {
 }
 
 /**
- * Texto que liga o item clicado ao campo do bloco que o guarda: o `src` da imagem, o texto do item
- * ou, num link sem texto (botão só com ícone, como o play do vídeo), o `href` dele.
+ * O que liga o item clicado aos campos do bloco que o guardam: o `src` da imagem, o ID do vídeo
+ * incorporado ou o texto do item — e, num link, também o endereço (sem o `basePath` do editor), para
+ * achar o campo do link mesmo quando o texto é só para leitor de tela (o play do vídeo, ícones).
  */
-function hintOf(el: Element | null | undefined): string {
-  if (!el) return "";
-  if (el instanceof HTMLImageElement) return el.getAttribute("src") ?? "";
-  const text = el.textContent ?? "";
-  if (text.trim()) return text;
-  return el.closest("a")?.getAttribute("href") ?? "";
+function hintOf(
+  el: Element | null | undefined,
+  basePath: string
+): Omit<FocusHint, "n"> {
+  if (!el) return { value: "" };
+  if (el instanceof HTMLImageElement)
+    return { value: el.getAttribute("src") ?? "" };
+  if (el instanceof HTMLIFrameElement) {
+    const src = el.getAttribute("src") ?? "";
+    return { value: /\/(?:embed|video)\/([^/?#]+)/.exec(src)?.[1] ?? src };
+  }
+  const raw = el.closest("a")?.getAttribute("href") ?? "";
+  const href =
+    basePath && raw.startsWith(`${basePath}/`)
+      ? raw.slice(basePath.length)
+      : raw;
+  return { href: href || undefined, value: el.textContent ?? "" };
 }
 
 export function SiteEditor({
@@ -424,7 +449,7 @@ export function SiteEditor({
     setElName(label);
     const block = blockEl(id);
     const el = block ? elementAt(block, path) : null;
-    setFocusHint(h => ({ n: h.n + 1, value: hintOf(el) }));
+    setFocusHint(h => ({ n: h.n + 1, ...hintOf(el, basePath) }));
   };
 
   /** Rola o canvas, com animação, até o bloco (ou elemento) clicado nas camadas. */
@@ -616,14 +641,16 @@ export function SiteEditor({
     }
     const block = target.closest<HTMLElement>("[data-block-id]");
     select(block?.dataset.blockId ?? null);
-    const el = block ? pickElement(target) : null;
+    const el = block
+      ? pickElement(frameAt(target, e.clientX, e.clientY) ?? target)
+      : null;
     if (block && el) {
       const path = pathWithin(el, block);
       setElPath(path);
       const text = (el.textContent ?? "").trim().slice(0, 24);
       setElName(path ? `${itemName(el)}${text ? ` · ${text}` : ""}` : "");
     }
-    setFocusHint(h => ({ n: h.n + 1, value: hintOf(el) }));
+    setFocusHint(h => ({ n: h.n + 1, ...hintOf(el, basePath) }));
   };
 
   const showGuides = (gx?: number, gy?: number) => {

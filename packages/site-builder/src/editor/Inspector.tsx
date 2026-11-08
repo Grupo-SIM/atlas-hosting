@@ -313,7 +313,8 @@ function matchFields(
   fields: FieldDef[],
   props: Record<string, unknown>,
   defaults: Record<string, unknown>,
-  hint: string
+  hint: string,
+  exactOnly = false
 ): FieldMatch[] {
   const want = norm(hint);
   if (!want) return [];
@@ -344,7 +345,25 @@ function matchFields(
     return out;
   };
   const exact = scan(same);
-  return exact.length > 0 ? exact : scan(loose);
+  return exact.length > 0 || exactOnly ? exact : scan(loose);
+}
+
+/** Campos do item: os que guardam o texto/imagem dele e, num link, o que guarda o endereço. */
+function matchItem(
+  fields: FieldDef[],
+  props: Record<string, unknown>,
+  defaults: Record<string, unknown>,
+  hint: FocusHint | undefined
+): FieldMatch[] {
+  const out = matchFields(fields, props, defaults, hint?.value ?? "");
+  if (!hint?.href || hint.href === "#") return out;
+  const key = (m: FieldMatch) =>
+    m.kind === "item" ? `${m.field.key}#${m.index}` : m.field.key;
+  const seen = new Set(out.map(key));
+  for (const m of matchFields(fields, props, defaults, hint.href, true)) {
+    if (!seen.has(key(m))) out.push(m);
+  }
+  return out;
 }
 
 /** Os campos de UM item de uma lista (ex.: um card), sem mostrar a lista inteira. */
@@ -394,6 +413,8 @@ function ItemFields({
 }
 
 export interface FocusHint {
+  /** Endereço do link clicado, quando o item é (ou está dentro de) um link. */
+  href?: string;
   n: number;
   value: string;
 }
@@ -496,12 +517,7 @@ export function Inspector({
   const itemMatches = useMemo(
     () =>
       elPath && selected && itemDef
-        ? matchFields(
-            itemDef.fields,
-            selected.props,
-            itemDef.defaults,
-            focusHint?.value ?? ""
-          )
+        ? matchItem(itemDef.fields, selected.props, itemDef.defaults, focusHint)
         : [],
     [focusHint?.n, selected?.id, elPath]
   );
