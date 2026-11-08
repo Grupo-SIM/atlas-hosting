@@ -13,6 +13,7 @@ import {
   Img,
   Inline,
   LinkButton,
+  newTab,
   PostCard,
   postPath,
   SocialIcon,
@@ -20,6 +21,7 @@ import {
   visiblePosts,
   wpDate,
 } from "./helpers.js";
+import { marketplaceBlocks } from "./marketplace.js";
 import { portalHubBlocks } from "./portal-hub.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
 import { isYouTubeChannelId, latestVideoEmbed, videoEmbed } from "./youtube.js";
@@ -35,6 +37,14 @@ const linkFields = (label = "Botão"): FieldDef[] => [
   { key: "buttonLabel", kind: "text", label: `${label} — texto` },
   { key: "buttonUrl", kind: "url", label: `${label} — link` },
 ];
+
+/** Link interno do menu aponta para a rota atual? (`/blogs` = `/blogs/`; links externos e `#` nunca.) */
+const samePath = (link: string, path: string | undefined) => {
+  if (!path || !link.startsWith("/") || link.startsWith("//")) return false;
+  const norm = (s: string) =>
+    `/${s.split(/[?#]/)[0].replace(/^\/+|\/+$/g, "")}`;
+  return norm(link) === norm(path);
+};
 
 const header = defineBlock(
   z.object({
@@ -144,6 +154,8 @@ const header = defineBlock(
               "--sb-hs": p.height / 77,
               "--sb-ix": p.imgX / 100,
               "--sb-lx": p.logoX / 100,
+              // Logo também como imagem de fundo (a gaveta do menu do tema Marketplace repete a logo no topo).
+              ...(p.logo ? { "--sb-logo": cssUrl(p.logo) } : {}),
               "--sb-menu-bg": p.menuBg,
             } as CSSProperties
           }
@@ -187,7 +199,12 @@ const header = defineBlock(
                   }
                   key={item.href + item.label}
                 >
-                  <a href={href(ctx, item.href)}>
+                  <a
+                    aria-current={
+                      samePath(item.href, ctx.path) ? "page" : undefined
+                    }
+                    href={href(ctx, item.href)}
+                  >
                     {item.label}
                     {subs.length ? <i aria-hidden="true" /> : null}
                   </a>
@@ -530,16 +547,23 @@ const text = defineBlock(z.object({ text: str("Escreva seu texto aqui.") }), {
   type: "text",
 });
 
-const image = defineBlock(z.object({ alt: str(), src: str() }), {
+const image = defineBlock(z.object({ alt: str(), src: str(), url: str() }), {
   fields: [
     { key: "src", kind: "image", label: "Imagem" },
     { key: "alt", kind: "text", label: "Texto alternativo" },
+    { key: "url", kind: "url", label: "Link ao clicar (opcional)" },
   ],
   group: "media",
   label: "Imagem",
-  render: p => (
+  render: (p, ctx) => (
     <div className="sb-container sb-image">
-      <Img alt={p.alt} src={p.src} />
+      {p.url ? (
+        <a href={href(ctx, p.url)} {...newTab(p.url)}>
+          <Img alt={p.alt} src={p.src} />
+        </a>
+      ) : (
+        <Img alt={p.alt} src={p.src} />
+      )}
     </div>
   ),
   type: "image",
@@ -732,7 +756,13 @@ const categoryGrid = defineBlock(
     headImage: str(),
     images: z.array(z.object({ src: str(), text: str() })).default([]),
     items: z.array(z.object({ category: str(), label: str() })).default([]),
+    /** Onde fica o nome: faixa no topo (padrão), legenda embaixo da foto ou etiqueta sobre a foto. */
+    labelStyle: z
+      .enum(["head", "caption", "tag"])
+      .default("head")
+      .catch("head"),
     limit: z.coerce.number().default(0),
+    showCount: z.enum(["yes", "no"]).default("no").catch("no"),
     subtitle: str(),
     title: str("Categorias"),
   }),
@@ -740,6 +770,22 @@ const categoryGrid = defineBlock(
     fields: [
       { key: "title", kind: "text", label: "Título" },
       { key: "subtitle", kind: "text", label: "Subtítulo" },
+      {
+        key: "labelStyle",
+        kind: "select",
+        label: "Nome da categoria",
+        options: [
+          { label: "Faixa no topo do card", value: "head" },
+          { label: "Legenda embaixo da foto", value: "caption" },
+          { label: "Etiqueta sobre a foto", value: "tag" },
+        ],
+      },
+      {
+        key: "showCount",
+        kind: "select",
+        label: "Mostrar a quantidade de posts, ex.: (3)",
+        options: SHOW_OPTIONS,
+      },
       {
         itemFields: [
           { key: "src", kind: "image", label: "Imagem" },
@@ -777,9 +823,17 @@ const categoryGrid = defineBlock(
           })
         : ctx.site.categories;
       const cats = p.limit > 0 ? chosen.slice(0, p.limit) : chosen;
+      const posts =
+        p.showCount === "yes" ? visiblePosts(ctx.site, ctx.mode) : [];
+      const countOf = (id: string) =>
+        posts.filter(post => post.categoryId === id).length;
       return (
         <section
-          className="sb-container"
+          className={
+            p.labelStyle === "head"
+              ? "sb-container"
+              : `sb-container sb-cat-l-${p.labelStyle}`
+          }
           style={
             p.headImage
               ? ({ "--cat-head-img": cssUrl(p.headImage) } as CSSProperties)
@@ -796,7 +850,12 @@ const categoryGrid = defineBlock(
                 key={c.id}
               >
                 <span className="sb-cat-head">
-                  <span>{c.name}</span>
+                  <span>
+                    {c.name}
+                    {p.showCount === "yes" ? (
+                      <em className="sb-cat-count"> ({countOf(c.id)})</em>
+                    ) : null}
+                  </span>
                   <svg
                     aria-hidden="true"
                     fill="none"
@@ -1312,7 +1371,7 @@ const postList = defineBlock(
   z.object({
     buttonLabel: str("Acessar"),
     cardStyle: z
-      .enum(["compact", "excerpt", "grid", "archive"])
+      .enum(["compact", "excerpt", "grid", "archive", "product"])
       .default("compact"),
     emptyText: str(),
     includeCurrent: z.enum(["yes", "no"]).default("no"),
@@ -1358,12 +1417,17 @@ const postList = defineBlock(
               "Arquivo: imagem com etiqueta, título, resumo e Ler mais (tema Central)",
             value: "archive",
           },
+          {
+            label: "Produto: imagem, título e link opcional (tema Marketplace)",
+            value: "product",
+          },
         ],
       },
       {
         key: "buttonLabel",
         kind: "text",
-        label: "Texto do botão (estilo com resumo)",
+        label:
+          "Texto do botão (estilo com resumo) / do link do produto (vazio = sem link)",
       },
       {
         key: "includeCurrent",
@@ -1408,10 +1472,13 @@ const postList = defineBlock(
                   key={post.id}
                   post={post}
                 />
-              ) : p.cardStyle === "grid" || p.cardStyle === "archive" ? (
+              ) : p.cardStyle === "grid" ||
+                p.cardStyle === "archive" ||
+                p.cardStyle === "product" ? (
                 <PostCard
                   ctx={ctx}
                   key={post.id}
+                  moreLabel={p.buttonLabel}
                   post={post}
                   variant={p.cardStyle}
                 />
@@ -2271,6 +2338,7 @@ export const blockDefinitions: BlockDefinition[] = [
   shortVideos,
   ...portalHubBlocks,
   ...centralBlocks,
+  ...marketplaceBlocks,
   ...adBlocks,
   newsSection,
   categoryHeader,

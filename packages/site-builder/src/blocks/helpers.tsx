@@ -8,6 +8,12 @@ const EXTERNAL = /^(?:[a-z][a-z0-9+.-]*:|#|\/\/)/i;
 export const safeUrl = (url: string): string =>
   /^\s*(?:javascript|data|vbscript):/i.test(url) ? "#" : url;
 
+/** Link para outro site (http/https) abre em nova aba, sem dar acesso à página de origem. */
+export const newTab = (url: string) =>
+  /^https?:\/\//i.test(url.trim())
+    ? { rel: "noopener noreferrer", target: "_blank" }
+    : {};
+
 /** URLs internas ganham o `basePath`; externas, âncoras e `mailto:` passam direto. */
 export function href(ctx: RenderContext, url: string): string {
   if (!url || EXTERNAL.test(url)) return safeUrl(url) || "#";
@@ -226,16 +232,41 @@ const FOLDER_ICON = (
 export function PostCard({
   compact,
   ctx,
+  moreLabel = "",
   post,
   variant,
 }: {
   compact?: boolean;
   ctx: RenderContext;
+  /** Só `product`: texto do link abaixo do título (vazio = sem link). */
+  moreLabel?: string;
   post: Post;
-  /** `grid` e `archive` são os cards do tema Central; sem `variant` vale `compact`. */
-  variant?: "archive" | "grid";
+  /** `grid` e `archive` são os cards do tema Central, `product` o do Marketplace; sem `variant` vale `compact`. */
+  variant?: "archive" | "grid" | "product";
 }) {
   const category = categoryOf(ctx.site, post);
+  if (variant === "product") {
+    const url = href(ctx, postPath(post));
+    return (
+      <article
+        className="sb-card sb-post-card product"
+        data-category={category?.slug ?? ""}
+        data-search={searchText(post)}
+      >
+        <a className="sb-post-thumb" href={url}>
+          <Img alt={post.title} src={post.coverImage} />
+        </a>
+        <h3>
+          <a href={url}>{post.title}</a>
+        </h3>
+        {moreLabel ? (
+          <a className="sb-link" href={url}>
+            {moreLabel}
+          </a>
+        ) : null}
+      </article>
+    );
+  }
   if (variant) {
     const url = href(ctx, postPath(post));
     return (

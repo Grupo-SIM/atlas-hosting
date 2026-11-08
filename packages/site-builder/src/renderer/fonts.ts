@@ -9,6 +9,7 @@ export const SITE_FONTS = [
   "Poppins",
   "Red Hat Text",
   "Roboto",
+  "Sora",
   "Manrope",
   "DM Sans",
   "Space Grotesk",

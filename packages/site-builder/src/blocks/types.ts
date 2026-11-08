@@ -8,6 +8,8 @@ export interface RenderContext {
   /** Prefixo das URLs internas (ex.: `/criador-de-sites/preview/spyhacker`). */
   basePath: string;
   mode: "edit" | "view";
+  /** Caminho da rota atual dentro do site (`/`, `/produtos/`…), para marcar o item ativo do menu. */
+  path?: string;
   query: Record<string, string>;
   renderBlocks: (blocks: Block[]) => ReactNode;
   site: Site;

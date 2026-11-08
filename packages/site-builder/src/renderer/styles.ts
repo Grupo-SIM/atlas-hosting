@@ -262,6 +262,22 @@ ${mobileRules(".sb-narrow")}
 .sb-narrow .sb-split,.sb-narrow .sb-two-cols,.sb-narrow .sb-footer-grid{grid-template-columns:1fr}
 .sb-narrow .sb-featured-inner{flex-direction:column;gap:24px}
 .sb-narrow .sb-float{position:sticky;margin-left:auto;width:max-content}
+/* letreiro de texto (textMarquee): CSS puro, a lista vem duplicada para o laço não ter emenda */
+.sb-tmq{container-type:inline-size;overflow:hidden;width:100%;padding-block:20px}
+.sb-tmq-track{display:flex;width:max-content;color:var(--tmq-color);font-family:var(--sb-font-heading);font-weight:600;font-size:var(--tmq-d);line-height:.9;text-transform:uppercase;white-space:nowrap;animation:sb-tmq var(--tmq-dur,55s) linear infinite}
+.sb-tmq.dir-right .sb-tmq-track{animation-direction:reverse}
+.sb-tmq-track.is-still{animation:none}
+.sb-tmq-group,.sb-tmq-group>span{display:flex;flex:none;align-items:center}
+.sb-tmq-item,.sb-tmq-sep{padding-inline:20px}
+@keyframes sb-tmq{to{transform:translateX(-50%)}}
+@container (max-width:1024px){.sb-tmq-track{font-size:var(--tmq-t)}}
+@container (max-width:767px){.sb-tmq-track{font-size:var(--tmq-m)}}
+@media (prefers-reduced-motion:reduce){.sb-tmq-track{animation:none}}
+/* site incorporado (siteEmbed) */
+.sb-embed iframe{display:block;width:100%;border:0;background:#fff}
+.sb-embed-empty{display:grid;place-items:center;min-height:200px;border:1px dashed currentColor;opacity:.6}
+.sb-embed-link{margin:12px auto 0;width:min(1400px,100% - 32px);text-align:center;font-size:15px}
+.sb-embed-link a{text-decoration:underline}
 @keyframes sb-fx-pop{50%{scale:1.2}}
 @keyframes sb-fx-push{50%{scale:.8}}
 [data-sb-par],[data-sb-mouse]{translate:var(--sb-mx,0px) calc(var(--sb-py,0px) + var(--sb-my,0px));will-change:translate}

@@ -13,6 +13,11 @@ import { centralCss, centralVars, isCentral } from "./central.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { customFonts, fontFaceCss, fontStylesheet } from "./fonts.js";
 import { isJournal, journalCss, journalVars } from "./journal.js";
+import {
+  isMarketplace,
+  marketplaceCss,
+  marketplaceVars,
+} from "./marketplace.js";
 import { isPortal, portalCss, portalVars } from "./portal.js";
 import { type Route, resolveRoute } from "./routes.js";
 import { isSpy, spyCss } from "./spyhacker.js";
@@ -69,6 +74,7 @@ export function SiteRenderer({
   const portal = isPortal(site.theme);
   const spy = isSpy(site.theme);
   const central = isCentral(site.theme);
+  const market = isMarketplace(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -77,6 +83,7 @@ export function SiteRenderer({
       post: route.kind === "post" ? route.post : undefined,
     },
     mode,
+    path,
     query,
     renderBlocks: blocks => renderBlocks(blocks, ctx),
     site,
@@ -94,6 +101,7 @@ export function SiteRenderer({
         portal ? "sb-pt" : "",
         spy ? "sb-sh" : "",
         central ? "sb-ct" : "",
+        market ? "sb-mk" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -103,6 +111,7 @@ export function SiteRenderer({
           ...(journal ? journalVars(site.theme) : {}),
           ...(portal ? portalVars(site.theme) : {}),
           ...(central ? centralVars(site.theme) : {}),
+          ...(market ? marketplaceVars(site.theme) : {}),
         } as CSSProperties
       }
     >
@@ -116,7 +125,9 @@ export function SiteRenderer({
                 ? siteCss + spyCss
                 : central
                   ? siteCss + centralCss
-                  : siteCss)}
+                  : market
+                    ? siteCss + marketplaceCss
+                    : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}
