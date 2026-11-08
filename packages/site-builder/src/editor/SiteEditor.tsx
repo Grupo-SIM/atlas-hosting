@@ -30,7 +30,7 @@ import { Icon } from "./icons.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
 import { PagePicker, type RouteGroup } from "./PagePicker.js";
 import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
-import { setMenu, setTheme, withAdBlocks } from "./site-ops.js";
+import { duplicatePost, setMenu, setTheme, withAdBlocks } from "./site-ops.js";
 import { startSort } from "./sort-drag.js";
 import { editorCss } from "./styles.js";
 import {
@@ -180,24 +180,40 @@ function hintOf(
 ): Omit<FocusHint, "n"> {
   if (!el) return { value: "" };
   const repeat = isRepeated(el) || undefined;
+  // Num item repetido, o primeiro link dele aponta para o post/categoria que ele mostra.
+  const itemHref = repeat
+    ? stripBase(
+        el
+          .closest("[data-repeat-list] > *")
+          ?.querySelector("a[href]")
+          ?.getAttribute("href") ?? "",
+        basePath
+      ) || undefined
+    : undefined;
   // Espaço de anúncio: a mídia pode vir dos anúncios do site, então não dá para achar pelo `src`.
   if (el.closest(".sb-ad")) return { ad: true, value: "" };
   if (el instanceof HTMLImageElement)
-    return { repeat, value: el.getAttribute("src") ?? "" };
+    return { itemHref, repeat, value: el.getAttribute("src") ?? "" };
   if (el instanceof HTMLIFrameElement) {
     const src = el.getAttribute("src") ?? "";
     return {
+      itemHref,
       repeat,
       value: /\/(?:embed|video)\/([^/?#]+)/.exec(src)?.[1] ?? src,
     };
   }
-  const raw = el.closest("a")?.getAttribute("href") ?? "";
-  const href =
-    basePath && raw.startsWith(`${basePath}/`)
-      ? raw.slice(basePath.length)
-      : raw;
-  return { href: href || undefined, repeat, value: el.textContent ?? "" };
+  const href = stripBase(el.closest("a")?.getAttribute("href") ?? "", basePath);
+  return {
+    href: href || undefined,
+    itemHref,
+    repeat,
+    value: el.textContent ?? "",
+  };
 }
+
+/** Endereço do link sem o `basePath` do editor (o mesmo formato salvo no site). */
+const stripBase = (raw: string, basePath: string) =>
+  basePath && raw.startsWith(`${basePath}/`) ? raw.slice(basePath.length) : raw;
 
 /**
  * O item clicado está dentro de um item de lista cuja quantidade vem do campo `limit` do bloco
@@ -1572,6 +1588,19 @@ export function SiteEditor({
               label: `Âncora · ${labelOf(selected.type)}`,
             })
           }
+          onDuplicatePost={(postId, countKey, count) => {
+            if (!selected) return;
+            const copy = duplicatePost(site, postId);
+            if (!copy) return;
+            edit(
+              updateBlockProps(copy.site, selected.id, { [countKey]: count }),
+              {
+                id: selected.id,
+                key: `${selected.id}-dup-${copy.post.id}`,
+                label: `Duplicou “${copy.post.title}” · ${labelOf(selected.type)}`,
+              }
+            );
+          }}
           onFx={(patch, what) =>
             selected &&
             edit(updateBlockFx(site, selected.id, elPath, patch), {

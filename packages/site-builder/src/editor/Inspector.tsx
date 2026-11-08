@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { adItemFields, globalAds } from "../blocks/ads.js";
+import { postPath } from "../blocks/helpers.js";
 import { getBlockDefinition } from "../blocks/registry.js";
 import type { FieldDef } from "../blocks/types.js";
 import {
@@ -13,6 +14,7 @@ import {
   HOVER_EFFECTS,
   HOVER_LABELS,
   HOVER_MS,
+  type Post,
   type Site,
 } from "../model/index.js";
 import {
@@ -449,16 +451,20 @@ function ItemFields({
 }
 
 /**
- * Item repetido que vem do conteúdo do site (linhas de um feed de notícias, cards de posts): não dá
- * para duplicar o item em si, então mexe na quantidade do bloco — o novo mostra o próximo conteúdo.
+ * Item repetido que vem do conteúdo do site (linhas de um feed de notícias, cards de posts). Num post,
+ * "+1" duplica o post clicado (a cópia aparece logo abaixo dele); sem post, só aumenta a quantidade.
  */
 function RepeatCount({
   field,
+  onAdd,
   onChange,
+  post,
   value,
 }: {
   field: FieldDef;
+  onAdd: () => void;
   onChange: (value: number) => void;
+  post?: Post;
   value: number;
 }) {
   return (
@@ -467,8 +473,8 @@ function RepeatCount({
         Este item se repete — {field.label}: {value}
       </p>
       <div className="sbe-row">
-        <button onClick={() => onChange(value + 1)} type="button">
-          + Adicionar mais um
+        <button onClick={onAdd} type="button">
+          {post ? "+ Duplicar este item" : "+ Adicionar mais um"}
         </button>
         <button
           disabled={value <= 1}
@@ -479,9 +485,9 @@ function RepeatCount({
         </button>
       </div>
       <p className="sbe-hint">
-        O novo item mostra o próximo conteúdo do site (ex.: a próxima notícia
-        publicada). Se não aparecer, não há mais: crie um post em Páginas →
-        Posts.
+        {post
+          ? `Cria uma cópia de “${post.title}” logo abaixo. A cópia é um post novo: edite título, imagem e texto em Páginas → Posts.`
+          : "O novo item mostra o próximo conteúdo do site. Se não aparecer, não há mais."}
       </p>
     </div>
   );
@@ -492,7 +498,9 @@ export interface FocusHint {
   ad?: boolean;
   /** Endereço do link clicado, quando o item é (ou está dentro de) um link. */
   href?: string;
-  /** O item (ou um ancestral dele) é um de vários irmãos iguais, como linhas de feed ou cards. */
+  /** Num item repetido, o endereço do primeiro link dele (o post ou a categoria que ele mostra). */
+  itemHref?: string;
+  /** O item está numa lista cuja quantidade vem do campo `limit` do bloco (`data-repeat-list`). */
   repeat?: boolean;
   n: number;
   value: string;
@@ -514,6 +522,8 @@ interface Props {
   onResolveChannel?: ResolveChannel;
   onUploadImage?: (file: File) => Promise<string>;
   onUploadFont?: (file: File) => Promise<{ name: string; url: string }>;
+  /** Duplica o post e muda a quantidade do bloco selecionado, num passo só (um Ctrl+Z desfaz). */
+  onDuplicatePost: (postId: string, countKey: string, count: number) => void;
   focusHint?: FocusHint;
   selected?: Block;
   site: Site;
@@ -572,6 +582,7 @@ export function Inspector({
   onResolveChannel,
   onUploadImage,
   onUploadFont,
+  onDuplicatePost,
   selected,
   site,
 }: Props) {
@@ -614,7 +625,11 @@ export function Inspector({
     countField &&
     countValue > 0 &&
     !itemMatches.some(m => m.kind === "item")
-      ? { field: countField, value: countValue }
+      ? {
+          field: countField,
+          post: site.posts.find(p => postPath(p) === focusHint.itemHref),
+          value: countValue,
+        }
       : undefined;
 
   const vars = themeVars(site.theme);
@@ -861,7 +876,17 @@ export function Inspector({
             {repeatCount ? (
               <RepeatCount
                 field={repeatCount.field}
+                onAdd={() =>
+                  repeatCount.post
+                    ? onDuplicatePost(
+                        repeatCount.post.id,
+                        repeatCount.field.key,
+                        repeatCount.value + 1
+                      )
+                    : onProp(repeatCount.field.key, repeatCount.value + 1)
+                }
                 onChange={v => onProp(repeatCount.field.key, v)}
+                post={repeatCount.post}
                 value={repeatCount.value}
               />
             ) : null}

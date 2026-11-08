@@ -235,7 +235,8 @@ export function moveBlock(site: Site, id: string, delta: -1 | 1): Site {
   return next;
 }
 
-function withNewIds(block: Block): Block {
+/** Cópia do bloco (e dos filhos) com ids novos. */
+export function withNewIds(block: Block): Block {
   const copy = createBlock(block.type);
   return {
     ...copy,

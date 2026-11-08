@@ -2,6 +2,7 @@ import { hasAdSlot } from "../blocks/ads.js";
 import { createBlock, newBlockId } from "../blocks/registry.js";
 import type { Page, Post, Site } from "../model/index.js";
 import { isSlugTaken, slugify } from "../renderer/routes.js";
+import { withNewIds } from "./tree.js";
 
 const clone = (site: Site): Site => structuredClone(site);
 
@@ -83,6 +84,28 @@ export function updatePost(site: Site, id: string, patch: Partial<Post>): Site {
     post.slug = uniqueSlug(next, patch.slug || post.title, id);
   }
   return next;
+}
+
+/**
+ * Cópia do post logo depois do original: mesma data e status, então nas listas (ordenadas por data,
+ * ordenação estável) ela aparece logo abaixo dele. Slug e ids dos blocos novos.
+ */
+export function duplicatePost(
+  site: Site,
+  id: string
+): { post: Post; site: Site } | undefined {
+  const index = site.posts.findIndex(p => p.id === id);
+  const source = site.posts[index];
+  if (!source) return undefined;
+  const next = clone(site);
+  const post: Post = {
+    ...structuredClone(source),
+    blocks: source.blocks.map(withNewIds),
+    id: `post-${newBlockId()}`,
+    slug: uniqueSlug(next, source.slug || source.title),
+  };
+  next.posts.splice(index + 1, 0, post);
+  return { post, site: next };
 }
 
 export function removePost(site: Site, id: string): Site {
