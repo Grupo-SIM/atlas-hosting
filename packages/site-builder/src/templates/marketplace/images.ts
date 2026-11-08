@@ -104,6 +104,8 @@ export const IMG = {
   errorArt,
   errorBg: unsplash("1557682250-33bd709cbe85", 1600, 900),
   hero: unsplash("1535223289827-42f1e9919769", 900, 1200),
+  /** Foto que aparece no lugar da do hero ao passar o mouse (no original: homem com óculos futuristas). */
+  heroHover: unsplash("1593508512255-86ab42a8e620", 900, 1200),
   logo,
   partner: (key: keyof typeof PARTNER_PHOTOS) =>
     unsplash(PARTNER_PHOTOS[key], 800, 1080),

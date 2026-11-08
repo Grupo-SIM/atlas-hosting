@@ -192,6 +192,26 @@ describe("template marketplace", () => {
     expect(page).not.toContain('aria-hidden="true" class="sb-tmq-group"');
   });
 
+  test("hero troca a foto no hover; sem foto alternativa (ou no 404) não troca", async () => {
+    const home = await html(site, "/");
+    expect(home).toContain('class="sb-mk-hero-photo sb-mk-hero-alt"');
+    expect(home).toContain("photo-1593508512255-86ab42a8e620");
+    // texto agrupado: título, texto e botões ficam sempre nas posições 1, 2 e 3 (efeitos por caminho)
+    expect(home).toMatch(
+      /class="sb-mk-hero-text"><h1>[^<]+<\/h1><div class="sb-mk-hero-copy">/
+    );
+    const s = structuredClone(site);
+    const hero = s.pages[0]?.blocks.find(b => b.type === "mkHero");
+    if (!hero) throw new Error("sem hero");
+    hero.props.imageHover = "";
+    expect(await html(s, "/")).not.toContain(
+      'class="sb-mk-hero-photo sb-mk-hero-alt"'
+    );
+    expect(await html(site, "/404/")).not.toContain(
+      'class="sb-mk-hero-photo sb-mk-hero-alt"'
+    );
+  });
+
   test("siteEmbed só incorpora http(s)", async () => {
     const s = structuredClone(site);
     const post = s.posts[0];

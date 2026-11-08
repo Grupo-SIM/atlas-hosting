@@ -39,6 +39,7 @@ const mkHero = defineBlock(
     decorA: str(),
     decorB: str(),
     image: str(),
+    imageHover: str(),
     layout: z.enum(["hero", "error"]).default("hero").catch("hero"),
     level: z.enum(["h1", "h2"]).default("h1").catch("h1"),
     text: str(),
@@ -86,6 +87,11 @@ const mkHero = defineBlock(
       },
       { key: "button2Url", kind: "url", label: "Botão secundário — link" },
       { key: "image", kind: "image", label: "Foto (hero) ou arte (404)" },
+      {
+        key: "imageHover",
+        kind: "image",
+        label: "Foto ao passar o mouse (hero; vazio = não troca)",
+      },
       { key: "background", kind: "image", label: "Textura de fundo" },
       {
         key: "decorA",
@@ -111,12 +117,23 @@ const mkHero = defineBlock(
             <div className="sb-mk-hero-media">
               <span aria-hidden="true" className="sb-mk-hero-band" />
               <Img alt="" className="sb-mk-hero-photo" src={p.image} />
+              {/* Troca no hover (cross-fade): vem por último para não mudar os caminhos de estilo/efeito. */}
+              {p.imageHover && p.layout === "hero" ? (
+                <Img
+                  alt=""
+                  className="sb-mk-hero-photo sb-mk-hero-alt"
+                  src={p.imageHover}
+                />
+              ) : null}
             </div>
             <div className="sb-mk-hero-text">
               <Tag>{p.title}</Tag>
-              {paragraphs(p.text).map(t => (
-                <p key={t}>{t}</p>
-              ))}
+              {/* Parágrafos agrupados: título, texto e botões têm sempre a mesma posição (efeitos por caminho). */}
+              <div className="sb-mk-hero-copy">
+                {paragraphs(p.text).map(t => (
+                  <p key={t}>{t}</p>
+                ))}
+              </div>
               <div className="sb-mk-btns">
                 <LinkButton ctx={ctx} label={p.buttonLabel} url={p.buttonUrl} />
                 <LinkButton

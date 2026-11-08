@@ -262,18 +262,21 @@ const home = page("", "Marketplace", [
       decorA: IMG.decorA,
       decorB: IMG.decorB,
       image: IMG.hero,
+      imageHover: IMG.heroHover,
       layout: "hero",
       level: "h1",
       text: "Aqui temos soluções para elevar seu jogo para o próximo nível. Transforme conhecimento em resultados agora mesmo!",
       title: "Tudo o que você precisa para crescer no digital, em um só lugar",
     },
     {
-      // Faixa em gradiente aparece depois (700 ms); enfeites giram ao entrar e seguem o mouse ao contrário.
+      // Como no original: foto + faixa aparecem depois (700 ms); título desce, botões sobem, o texto fica parado;
+      // os enfeites giram ao entrar — o grande segue o mouse ao contrário, o pequeno acompanha o mouse.
       fx: {
-        "1.1.1.1": { delay: 700, enter: "fadeIn" },
-        "1.1.2": rise,
+        "1.1.1": { delay: 700, enter: "fadeIn" },
+        "1.1.2.1": { enter: "fadeInDown" },
+        "1.1.2.3": rise,
         "1.2": { enter: "rotateIn", mouse: -3 },
-        "1.3": { delay: 200, enter: "rotateIn", mouse: -3 },
+        "1.3": { delay: 200, enter: "rotateIn", mouse: 3 },
       },
     }
   ),

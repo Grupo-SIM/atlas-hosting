@@ -97,8 +97,9 @@ ${S} .sb-float{display:none}
 
 /* botões: gradiente (principal) ou contorno; "push" no hover, como o Elementor */
 ${S} .sb-btn{display:inline-block;padding:15px 35px;border:1px solid transparent;border-radius:10px;background:linear-gradient(150deg,var(--sb-accent) 5%,#f9075e 80%);color:#fff!important;font-family:var(--sb-font-heading);font-size:15px;font-weight:600;line-height:19.95px;text-align:center;transition:.3s}
-${S} .sb-btn:hover{animation:sb-fx-push .3s linear}
+${S} .sb-btn:hover{animation:sb-fx-push .3s linear;background:linear-gradient(150deg,var(--sb-accent) 0%,#f9075e 60%)}
 ${S} .sb-btn-light{border-color:var(--mk-line);background:transparent}
+${S} .sb-btn-light:hover{background:transparent}
 ${S} .sb-btn-light:hover{border-color:var(--sb-accent)}
 ${S} .sb-btn-wide{display:block;width:min(420px,100%);margin:0 auto 16px}
 ${S} .sb-link{color:#fff!important;font-family:var(--sb-font-body);font-size:12px;font-weight:700}
@@ -130,6 +131,8 @@ ${S} .sb-mk-hero-in{position:relative;z-index:1;display:grid;grid-template-colum
 ${S} .sb-mk-hero-media{position:relative;padding:14px 110px 14px 10px}
 ${S} .sb-mk-hero-band{position:absolute;inset:0 100px 0 -10px;border-radius:10px;background:linear-gradient(150deg,var(--sb-accent) 5%,#f9075e 80%);rotate:-3deg}
 ${S} .sb-mk-hero-photo{position:relative;width:100%;aspect-ratio:570/771;object-fit:cover;border-radius:10px}
+${S} .sb-mk-hero-alt{position:absolute;top:14px;left:10px;width:calc(100% - 120px);opacity:0;transition:opacity .3s ease-in-out}
+${S} .sb-mk-hero-media:hover .sb-mk-hero-alt{opacity:1}
 ${S} .sb-mk-hero-text h1,${S} .sb-mk-hero-text h2{margin:0 0 40px;font-size:45px;line-height:49.5px}
 ${S} .sb-mk-hero-text p{margin:0 0 6px;color:var(--sb-muted);font-family:var(--sb-font-heading);font-size:19px;line-height:24.7px}
 ${S} .sb-mk-btns{display:flex;flex-wrap:wrap;gap:20px;margin-top:50px}
@@ -155,6 +158,8 @@ ${S} .sb-mk-card-body h3{margin:0 0 22px;font-size:21px;line-height:27.3px}
 ${S} .sb-mk-card-body p{margin:0;color:var(--mk-soft);font-size:17px;line-height:23.8px}
 ${S} .sb-mk-pill{display:inline-flex;align-items:center;gap:20px;margin-top:22px;padding:10px 20px 10px 10px;border-radius:100px;background:#161616;color:var(--sb-muted);font-size:17px;line-height:23.8px}
 ${S} .sb-mk-pill img{width:34px;height:34px;border-radius:50%;object-fit:cover}
+${S} .sb-mk-pill span{transition:color .3s}
+${S} .sb-mk-pill:hover span{color:var(--sb-accent)}
 
 /* ranking "mais quentes" */
 ${S} .sb-mk-rank{padding-inline:10px}
@@ -172,8 +177,7 @@ ${S} .sb-cat-l-caption .sb-grid,${S} .sb-cat-l-tag .sb-grid{grid-template-column
 ${S} .sb-cat-l-caption,${S} .sb-cat-l-tag{padding-inline:20px}
 ${S} .sb-cat-l-caption .sb-cat-card,${S} .sb-cat-l-tag .sb-cat-card{min-height:0;padding:0;gap:0;border-radius:10px;background:none;overflow:visible}
 ${S} .sb-cat-card .sb-cat-head svg{display:none}
-${S} .sb-cat-l-caption .sb-cat-card img,${S} .sb-cat-l-caption .sb-cat-card .sb-img-empty{order:1;height:auto;aspect-ratio:1;margin:0;object-fit:cover;border-radius:10px;transition:opacity .3s}
-${S} .sb-cat-l-caption .sb-cat-card:hover img{opacity:.85}
+${S} .sb-cat-l-caption .sb-cat-card img,${S} .sb-cat-l-caption .sb-cat-card .sb-img-empty{order:1;height:auto;aspect-ratio:1;margin:0;object-fit:cover;border-radius:10px}
 ${S} .sb-cat-l-caption .sb-cat-head{order:2;justify-content:center;padding:20px 0 0;color:var(--mk-title);font-family:var(--sb-font-heading);font-size:14px;line-height:18.2px;text-align:center}
 ${S} .sb-cat-count{color:var(--sb-accent);font-style:normal}
 ${S} .sb-cat-l-tag .sb-grid{gap:50px 15px}
@@ -186,7 +190,8 @@ ${S} .sb-cat-l-tag .sb-cat-head{position:absolute;top:40px;left:40px;z-index:1;m
 ${S} .sb-ct-fg{padding:50px 0 110px}
 ${S} .sb-ct-fg-grid{display:grid;grid-template-columns:repeat(var(--ct-cols,4),minmax(0,1fr))}
 ${S} .sb-ct-fg .item{display:block;padding:20px}
-${S} .sb-ct-fg .ic{display:block;color:var(--mk-active)}
+${S} .sb-ct-fg .ic{display:block;width:max-content;color:var(--mk-active);transition:color .3s}
+${S} .sb-ct-fg .ic:hover{color:#d80000}
 ${S} .sb-ct-fg .ic svg{width:50px;height:50px}
 ${S} .sb-ct-fg h3{margin:0;padding:30px 0 10px;font-size:21px;line-height:27.3px}
 ${S} .sb-ct-fg p{margin:15px 0 0;color:var(--sb-muted);font-size:17px;line-height:23.8px}
@@ -222,9 +227,10 @@ ${S} form.sb-mag .sb-mag-cats select{height:43px;padding:0 15px;border:0;border-
 ${S} .sb-block[data-block-type=postList]>.sb-container{padding:50px 0 110px}
 ${S} .sb-grid-3:has(>.sb-post-card.product){gap:60px 33px;margin:0}
 ${S} .sb-post-card.product{border-radius:0;background:none;overflow:visible}
-${S} .sb-post-card.product img,${S} .sb-post-card.product .sb-img-empty{aspect-ratio:16/9;border-radius:10px;object-fit:cover;transition:opacity .3s}
-${S} .sb-post-card.product:hover img{opacity:.85}
+${S} .sb-post-card.product img,${S} .sb-post-card.product .sb-img-empty{aspect-ratio:16/9;border-radius:10px;object-fit:cover}
 ${S} .sb-post-card.product h3{margin:10px 0 0;font-size:21px;line-height:27.3px}
+${S} .sb-post-card.product h3 a,${S} .sb-post-card.product .sb-link{transition:color .3s}
+${S} .sb-post-card.product h3 a:hover,${S} .sb-post-card.product .sb-link:hover{color:var(--sb-accent)!important}
 ${S} .sb-post-card.product:has(.sb-link) h3{font-size:18px;line-height:20.7px}
 ${S} .sb-post-card.product .sb-link{display:inline-block;margin-top:5px}
 ${S} .sb-empty{color:var(--sb-muted)}
