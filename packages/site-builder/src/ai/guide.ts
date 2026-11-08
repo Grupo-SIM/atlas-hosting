@@ -52,7 +52,7 @@ As seções do painel (Conteúdo, Tamanho, Posição, Tipografia, Efeitos, Caixa
 - **Tamanho**: largura e altura.
 - **Posição**: X/Y do deslocamento livre e "Voltar ao lugar original".
 - **Tipografia**: **fonte** (Herdar do tema, Minhas fontes, Google Fonts; botão **+ Enviar arquivo de fonte** aceita .woff2/.woff/.ttf/.otf até 3 MB), tamanho, peso, cor do texto, alinhamento, maiúsculas.
-- **Efeitos**: entrada ao rolar (aparecer, subir suave, zoom…), atraso, ao passar o mouse (pulsar, crescer, encolher), parallax, contar números de 0 até o valor, "aplicar a cada item de dentro".
+- **Efeitos**: entrada ao rolar (aparecer, subir suave, zoom…), atraso, ao passar o mouse (pulsar, crescer, encolher, subir, sombra, clarear, esmaecer, girar) com "Duração do hover (ms)", parallax, contar números de 0 até o valor, "aplicar a cada item de dentro".
 - **Caixa**: fundo, arredondamento, espaçamento interno, margem externa, borda, opacidade, largura máxima.
 - Clicar num texto/imagem/botão DENTRO de um bloco seleciona só aquele elemento: o painel mostra só o conteúdo daquele item (ex.: o campo de texto ou a imagem dele, ou os campos do card clicado) e o estilo vale para ele. Para editar o bloco todo, clique no bloco no caminho (breadcrumb) no topo do painel.
 ### Sem seleção (tema do site)
@@ -74,7 +74,7 @@ As seções do painel (Conteúdo, Tamanho, Posição, Tipografia, Efeitos, Caixa
 - **Mudar cores do site**: desmarque o bloco → painel direito → cores do tema (paleta rápida ou código hex). Para a cor de um bloco só: Inspetor → Caixa → Fundo; texto: Tipografia → Cor do texto.
 - **Mover um item livremente**: modo **Livre** na barra superior; segure e arraste (guias rosa encaixam nas bordas; Alt desliga; Shift trava o eixo; setas empurram 1 px, Shift+setas 10 px). Valores exatos: Inspetor → **Posição**.
 - **Botão que rola até uma seção**: selecione o bloco de destino → Inspetor → **Âncora** → um nome (ex.: sabermais); no botão, coloque o link #sabermais. No editor, clique comum seleciona; **Ctrl+clique** segue o link. A IA também faz isso.
-- **Vídeo em popup no botão de play** (Hero do template Central do Marketing): bloco Hero → Conteúdo → "Vídeo do botão de play" com link do YouTube ou do Vimeo; abre sobre a página. Outro tipo de link abre em nova aba. Vídeo do Vimeo com domínio restrito pelo dono não toca fora do domínio dele.
+- **Vídeo em popup no botão de play** (Hero do template Pulso Digital / portal de marketing): clique no botão de play → o painel mostra "Vídeo do botão de play" (ou bloco Hero → Conteúdo); cole o link do YouTube ou do Vimeo; abre sobre a página. No editor, **Ctrl+clique** no play abre o vídeo para conferir. Os vídeos da grade "Vídeos recomendados" ficam no bloco Vídeos do YouTube → Conteúdo → Vídeos (link ou ID de cada um; adicionar/remover itens). Outro tipo de link abre em nova aba. Vídeo do Vimeo com domínio restrito pelo dono não toca fora do domínio dele.
 - **Ocultar um bloco sem apagar**: olho nas Camadas, ou ação "Ocultar" no Inspetor.
 - **Desfazer erro**: Ctrl+Z / botão desfazer (inclusive edições da IA). **Restaurar original** na barra de dispositivo volta tudo ao template.
 - **Ver como fica no celular/tablet**: barra de dispositivo (Desktop/Tablet/Celular). Mover livre só funciona no desktop.

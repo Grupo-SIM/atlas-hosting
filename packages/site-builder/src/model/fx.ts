@@ -13,7 +13,16 @@ export const ENTER_EFFECTS = [
 export type EnterEffect = (typeof ENTER_EFFECTS)[number];
 
 /** Efeito ao passar o mouse. */
-export const HOVER_EFFECTS = ["pop", "grow", "shrink"] as const;
+export const HOVER_EFFECTS = [
+  "pop",
+  "grow",
+  "shrink",
+  "lift",
+  "shadow",
+  "brighten",
+  "dim",
+  "rotate",
+] as const;
 export type HoverEffect = (typeof HOVER_EFFECTS)[number];
 
 export const ENTER_LABELS: Record<EnterEffect, string> = {
@@ -26,10 +35,18 @@ export const ENTER_LABELS: Record<EnterEffect, string> = {
 };
 
 export const HOVER_LABELS: Record<HoverEffect, string> = {
+  brighten: "Clarear",
+  dim: "Esmaecer",
   grow: "Crescer",
+  lift: "Subir",
   pop: "Pulsar",
+  rotate: "Girar",
+  shadow: "Sombra",
   shrink: "Encolher",
 };
+
+/** Duração padrão do hover (ms) e limites do controle. */
+export const HOVER_MS = { default: 300, max: 2000, min: 50 } as const;
 
 /**
  * Efeitos de um item. A chave do mapa `Block.fx` é o caminho do elemento dentro do bloco
@@ -44,6 +61,8 @@ export interface Fx {
   each?: boolean;
   enter?: EnterEffect;
   hover?: HoverEffect;
+  /** Duração do efeito de hover, em ms (padrão `HOVER_MS.default`). */
+  hoverMs?: number;
   /** Parallax na rolagem: −10..10 (0 = desligado). Positivo atrasa o item, negativo adianta. */
   parallax?: number;
   /** Com `each`: soma esse atraso (ms) a cada filho seguinte, para os itens entrarem em sequência. */
@@ -56,6 +75,7 @@ export const fxSchema: z.ZodType<Fx> = z.object({
   each: z.boolean().optional(),
   enter: z.enum(ENTER_EFFECTS).optional(),
   hover: z.enum(HOVER_EFFECTS).optional(),
+  hoverMs: z.number().min(HOVER_MS.min).max(HOVER_MS.max).optional(),
   parallax: z.number().min(-10).max(10).optional(),
   stagger: z.number().min(0).max(1000).optional(),
 });
@@ -87,9 +107,18 @@ const ENTER_FROM: Record<EnterEffect, string> = {
   zoomIn: "transform:scale(.6)",
 };
 
-const HOVER_REST: Partial<Record<HoverEffect, string>> = {
-  grow: "scale:1.08",
-  shrink: "scale:.9",
+/**
+ * Hover que é transição: propriedade animada e o valor sob o mouse. Propriedades próprias (`scale`,
+ * `translate`, `rotate`) para não brigar com o `transform` do próprio item. `pop` é animação.
+ */
+const HOVER_TO: Record<Exclude<HoverEffect, "pop">, [string, string]> = {
+  brighten: ["filter", "brightness(1.15)"],
+  dim: ["opacity", ".7"],
+  grow: ["scale", "1.08"],
+  lift: ["translate", "0 -6px"],
+  rotate: ["rotate", "3deg"],
+  shadow: ["box-shadow", "0 14px 32px rgba(0,0,0,.28)"],
+  shrink: ["scale", ".9"],
 };
 
 function targetSelector(blockId: string, path: string): string {
@@ -125,18 +154,20 @@ export function fxCss(
       const from = ENTER_FROM[f.enter];
       css += `@media (prefers-reduced-motion:no-preference){.sb-js ${sel}:not(.sb-in){opacity:0;${from}}}`;
     }
-    if (f.hover === "grow" || f.hover === "shrink") {
-      transitions.push("scale .3s ease");
-      css += `${sel}:hover{${HOVER_REST[f.hover]}}`;
+    const ms = Math.round(f.hoverMs ?? HOVER_MS.default);
+    const hoverTo = f.hover && f.hover !== "pop" ? HOVER_TO[f.hover] : null;
+    const hoverTransition = hoverTo ? `${hoverTo[0]} ${ms}ms ease` : "";
+    if (hoverTo) {
+      transitions.push(hoverTransition);
+      css += `${sel}:hover{${hoverTo[0]}:${hoverTo[1]}}`;
     }
-    if (f.hover === "pop") css += `${sel}:hover{animation:sb-fx-pop .3s}`;
+    if (f.hover === "pop") css += `${sel}:hover{animation:sb-fx-pop ${ms}ms}`;
     if (transitions.length)
       css += `${sel}{transition:${transitions.join(",")}}`;
     // Entrada em sequência: o n-ésimo filho espera `stagger` ms a mais que o anterior (até 12 itens).
     const stagger = Math.round(f.stagger ?? 0);
     if (f.enter && f.each && stagger > 0) {
-      const rest =
-        f.hover === "grow" || f.hover === "shrink" ? ",scale .3s ease" : "";
+      const rest = hoverTransition ? `,${hoverTransition}` : "";
       for (let n = 2; n <= 12; n++) {
         const dn = d + (n - 1) * stagger;
         css += `${sel.slice(0, -2)}>:nth-child(${n}){transition:opacity .8s ease ${dn}ms,transform .8s ease ${dn}ms${rest}}`;

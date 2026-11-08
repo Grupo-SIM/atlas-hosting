@@ -172,6 +172,11 @@ export const editorCss = `
 .sbe-scrim{position:absolute;inset:0;background:rgba(29,28,26,.28);display:flex;align-items:flex-start;justify-content:flex-end;padding:52px 12px 12px;z-index:50}
 .sbe-modal{position:fixed;inset:0;background:rgba(29,28,26,.4);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
 .sbe-confirm{width:420px;max-height:none}
+.sbe-vpop{background:rgba(11,11,11,.8);padding:56px 12px 16px}
+.sbe-vpop-stage{position:relative;width:min(900px,100%);aspect-ratio:16/9;background:#000;box-shadow:0 0 8px rgba(0,0,0,.6)}
+.sbe-vpop-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.sbe-vpop-close{position:absolute;top:-44px;right:-6px;width:44px;height:44px;padding:0;border:0;background:none;color:#fff;font:28px/44px Arial,sans-serif;cursor:pointer;opacity:.7}
+.sbe-vpop-close:hover,.sbe-vpop-close:focus-visible{opacity:1}
 .sbe-relink{padding:4px 20px 0;display:flex;flex-direction:column;gap:12px}
 .sbe-relink ul{margin:0;padding:10px 12px 10px 28px;background:#f3f1ec;border-radius:10px;font-size:12px;color:#55524c;display:flex;flex-direction:column;gap:3px}
 .sbe-dialog{width:400px;max-width:100%;max-height:100%;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 50px rgba(30,28,24,.18);display:flex;flex-direction:column;overflow:hidden}

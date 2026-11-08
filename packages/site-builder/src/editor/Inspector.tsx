@@ -12,6 +12,7 @@ import {
   type Fx,
   HOVER_EFFECTS,
   HOVER_LABELS,
+  HOVER_MS,
   type Site,
 } from "../model/index.js";
 import {
@@ -1103,6 +1104,25 @@ export function Inspector({
               ))}
             </select>
           </div>
+          {fx.hover ? (
+            <Slider
+              label="Duração do hover (ms)"
+              max={HOVER_MS.max}
+              min={HOVER_MS.min}
+              onChange={v =>
+                onFx(
+                  {
+                    hoverMs: Math.min(
+                      HOVER_MS.max,
+                      Math.max(HOVER_MS.min, Math.round(v))
+                    ),
+                  },
+                  "Duração do hover"
+                )
+              }
+              value={fx.hoverMs ?? HOVER_MS.default}
+            />
+          ) : null}
           <Slider
             label="Parallax"
             max={10}
@@ -1157,6 +1177,7 @@ export function Inspector({
                       each: undefined,
                       enter: undefined,
                       hover: undefined,
+                      hoverMs: undefined,
                       parallax: undefined,
                       stagger: undefined,
                     },

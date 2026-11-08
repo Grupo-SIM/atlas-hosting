@@ -33,7 +33,7 @@ import {
   updateBlockStyle,
   updateElementStyle,
 } from "../editor/tree.js";
-import { ENTER_EFFECTS, HOVER_EFFECTS } from "../model/fx.js";
+import { ENTER_EFFECTS, HOVER_EFFECTS, HOVER_MS } from "../model/fx.js";
 import { BLOCK_ANCHOR, type Block, type Site } from "../model/index.js";
 import { siteSchema } from "../model/schema.js";
 import { BLOCK_STYLE_KEYS, cleanStyle, ELEMENT_PATH } from "../model/style.js";
@@ -214,6 +214,9 @@ export const AI_TOOLS: AiToolDef[] = [
         hover: oneOf(
           `Ao passar o mouse: ${HOVER_EFFECTS.join(", ")}.`,
           HOVER_EFFECTS
+        ),
+        hover_ms: num(
+          `Duração do hover em ms (${HOVER_MS.min}-${HOVER_MS.max}; padrão ${HOVER_MS.default}).`
         ),
         id: str("Id do bloco."),
         parallax: num("-10 a 10 (0 desliga)."),
@@ -706,6 +709,7 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
         contar: "count",
         entrada: "enter",
         hover: "hover",
+        hover_ms: "hoverMs",
         parallax: "parallax",
       } as const;
       for (const [param, key] of Object.entries(map)) {
@@ -727,6 +731,16 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
       ) {
         throw new ToolError(
           `Hover inválido. Use: ${HOVER_EFFECTS.join(", ")}.`
+        );
+      }
+      if (
+        patch.hoverMs !== undefined &&
+        (typeof patch.hoverMs !== "number" ||
+          patch.hoverMs < HOVER_MS.min ||
+          patch.hoverMs > HOVER_MS.max)
+      ) {
+        throw new ToolError(
+          `hover_ms deve ser um número de ${HOVER_MS.min} a ${HOVER_MS.max}.`
         );
       }
       return done(

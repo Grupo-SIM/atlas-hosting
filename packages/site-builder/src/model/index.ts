@@ -131,5 +131,6 @@ export {
   type Fx,
   HOVER_EFFECTS,
   HOVER_LABELS,
+  HOVER_MS,
   type HoverEffect,
 } from "./fx.js";

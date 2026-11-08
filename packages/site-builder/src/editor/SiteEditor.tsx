@@ -56,6 +56,7 @@ import {
   updateElementStyle,
 } from "./tree.js";
 import type { AiConfig, ChangeEntry, EditMeta, SaveResult } from "./types.js";
+import { VideoPopup } from "./VideoPopup.js";
 
 export type { SaveResult } from "./types.js";
 
@@ -155,6 +156,18 @@ function elementAt(block: HTMLElement, path: string): HTMLElement | null {
   return cur;
 }
 
+/**
+ * Texto que liga o item clicado ao campo do bloco que o guarda: o `src` da imagem, o texto do item
+ * ou, num link sem texto (botão só com ícone, como o play do vídeo), o `href` dele.
+ */
+function hintOf(el: Element | null | undefined): string {
+  if (!el) return "";
+  if (el instanceof HTMLImageElement) return el.getAttribute("src") ?? "";
+  const text = el.textContent ?? "";
+  if (text.trim()) return text;
+  return el.closest("a")?.getAttribute("href") ?? "";
+}
+
 export function SiteEditor({
   ai,
   basePath = "/site",
@@ -213,6 +226,10 @@ export function SiteEditor({
   const hoverRef = useRef<HTMLElement | null>(null);
   const [focusHint, setFocusHint] = useState<FocusHint>({ n: 0, value: "" });
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null);
+  /** Vídeo de um botão com popup aberto por Ctrl/Cmd + clique no canvas. */
+  const [video, setVideo] = useState<{ label: string; src: string } | null>(
+    null
+  );
   const [, setDomTick] = useState(0);
   const [elPath, setElPath] = useState("");
   const [elName, setElName] = useState("");
@@ -407,13 +424,7 @@ export function SiteEditor({
     setElName(label);
     const block = blockEl(id);
     const el = block ? elementAt(block, path) : null;
-    setFocusHint(h => ({
-      n: h.n + 1,
-      value:
-        el instanceof HTMLImageElement
-          ? (el.getAttribute("src") ?? "")
-          : (el?.textContent ?? ""),
-    }));
+    setFocusHint(h => ({ n: h.n + 1, value: hintOf(el) }));
   };
 
   /** Rola o canvas, com animação, até o bloco (ou elemento) clicado nas camadas. */
@@ -582,6 +593,14 @@ export function SiteEditor({
       e.preventDefault();
       // Clique comum só seleciona para editar; Ctrl/Cmd + clique abre o link.
       if (e.ctrlKey || e.metaKey) {
+        const popup = anchor.getAttribute("data-sb-video");
+        if (popup) {
+          setVideo({
+            label: anchor.getAttribute("aria-label") || "Vídeo",
+            src: popup,
+          });
+          return;
+        }
         const href = anchor.getAttribute("href") ?? "";
         if (href.length > 1 && href.startsWith("#")) {
           target.ownerDocument
@@ -604,11 +623,7 @@ export function SiteEditor({
       const text = (el.textContent ?? "").trim().slice(0, 24);
       setElName(path ? `${itemName(el)}${text ? ` · ${text}` : ""}` : "");
     }
-    const value =
-      el instanceof HTMLImageElement
-        ? (el.getAttribute("src") ?? "")
-        : (el?.textContent ?? "");
-    setFocusHint(h => ({ n: h.n + 1, value }));
+    setFocusHint(h => ({ n: h.n + 1, value: hintOf(el) }));
   };
 
   const showGuides = (gx?: number, gy?: number) => {
@@ -1457,6 +1472,14 @@ export function SiteEditor({
             />
           </div>
         </div>
+
+        {video ? (
+          <VideoPopup
+            label={video.label}
+            onClose={() => setVideo(null)}
+            src={video.src}
+          />
+        ) : null}
 
         {confirm ? (
           <ConfirmDialog onClose={() => setConfirm(null)} request={confirm} />
