@@ -179,6 +179,8 @@ function hintOf(
   basePath: string
 ): Omit<FocusHint, "n"> {
   if (!el) return { value: "" };
+  // Espaço de anúncio: a mídia pode vir dos anúncios do site, então não dá para achar pelo `src`.
+  if (el.closest(".sb-ad")) return { ad: true, value: "" };
   if (el instanceof HTMLImageElement)
     return { value: el.getAttribute("src") ?? "" };
   if (el instanceof HTMLIFrameElement) {

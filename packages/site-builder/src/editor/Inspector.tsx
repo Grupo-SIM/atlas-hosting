@@ -355,6 +355,7 @@ function matchItem(
   defaults: Record<string, unknown>,
   hint: FocusHint | undefined
 ): FieldMatch[] {
+  if (hint?.ad) return adFields(fields);
   const out = matchFields(fields, props, defaults, hint?.value ?? "");
   if (!hint?.href || hint.href === "#") return out;
   const key = (m: FieldMatch) =>
@@ -364,6 +365,21 @@ function matchItem(
     if (!seen.has(key(m))) out.push(m);
   }
   return out;
+}
+
+/**
+ * Campos do anúncio do bloco: no bloco "Anúncio" são todos; nos blocos com anúncio embutido (ex.:
+ * coluna lateral do feed), a lista de mídia (`adItemFields`) e os campos `adXxx` que a acompanham.
+ */
+function adFields(fields: FieldDef[]): FieldMatch[] {
+  const isAdSlot = fields.some(
+    f => f.key === "items" && f.itemFields === adItemFields
+  );
+  return fields
+    .filter(
+      f => isAdSlot || f.itemFields === adItemFields || /^ad[A-Z]/.test(f.key)
+    )
+    .map(field => ({ field, kind: "field" as const }));
 }
 
 /** Os campos de UM item de uma lista (ex.: um card), sem mostrar a lista inteira. */
@@ -413,6 +429,8 @@ function ItemFields({
 }
 
 export interface FocusHint {
+  /** O item clicado está dentro de um espaço de anúncio: mostra os campos do anúncio do bloco. */
+  ad?: boolean;
   /** Endereço do link clicado, quando o item é (ou está dentro de) um link. */
   href?: string;
   n: number;
