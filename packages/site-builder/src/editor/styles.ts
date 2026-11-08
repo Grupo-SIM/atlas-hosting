@@ -151,6 +151,8 @@ export const editorCss = `
 .sbe-error{color:var(--danger)!important}
 .sbe-chan-ok{color:#1f7a3d!important;font-weight:600}
 .sbe-list{display:flex;flex-direction:column;gap:8px}
+.sbe-replicate{margin:10px 16px 0;padding:10px;border:1px solid var(--violet);border-radius:10px;background:rgba(106,90,216,.06);display:flex;flex-direction:column;gap:8px}
+.sbe-replicate button{display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 10px;border:0;border-radius:8px;background:var(--violet);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer}
 .sbe-list-item{border:1px dashed #cfcbc2;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px}
 .sbe-drop{border:1.5px dashed #cfcbc2;background:#fff;border-radius:12px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;cursor:pointer;color:var(--violet)}
 .sbe-drop.over{border-color:var(--violet);background:#f3f0fe}

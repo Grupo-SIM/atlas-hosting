@@ -522,6 +522,8 @@ interface Props {
   onResolveChannel?: ResolveChannel;
   onUploadImage?: (file: File) => Promise<string>;
   onUploadFont?: (file: File) => Promise<{ name: string; url: string }>;
+  /** Alteração neste bloco de post que pode ir para os outros posts: mostra o botão de replicar. */
+  onReplicate?: { run: () => void; targets: number };
   /** Duplica o post e muda a quantidade do bloco selecionado, num passo só (um Ctrl+Z desfaz). */
   onDuplicatePost: (postId: string, countKey: string, count: number) => void;
   focusHint?: FocusHint;
@@ -583,6 +585,7 @@ export function Inspector({
   onUploadImage,
   onUploadFont,
   onDuplicatePost,
+  onReplicate,
   selected,
   site,
 }: Props) {
@@ -843,6 +846,17 @@ export function Inspector({
       </div>
 
       <div className="sbe-scroll">
+        {onReplicate ? (
+          <div className="sbe-replicate">
+            <p className="sbe-hint">
+              Você alterou a aparência deste bloco neste post.
+            </p>
+            <button onClick={onReplicate.run} type="button">
+              <Icon name="copy" size={13} />
+              Replicar nos outros posts ({onReplicate.targets})
+            </button>
+          </div>
+        ) : null}
         {elPath ? null : (
           <div className="sbe-actions">
             {(

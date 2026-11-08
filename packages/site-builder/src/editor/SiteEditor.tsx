@@ -459,48 +459,60 @@ export function SiteEditor({
   const selected = selectedId ? findBlock(site, selectedId) : undefined;
   const labelOf = (type: string) => getBlockDefinition(type)?.label ?? type;
 
-  // Bloco de um post: guarda como estava ao ser selecionado. Ao sair dele (outro bloco ou outra
-  // página), se mudou algo de aparência/opção, pergunta se replica para o mesmo bloco dos outros posts.
-  const replicaWatch = useRef<{
+  // Bloco de um post: guarda como estava ao ser selecionado. Se mudou algo de aparência/opção, o
+  // painel mostra "Replicar nos outros posts" e, ao sair do bloco (outro bloco, outra página ou
+  // "Revisar e publicar"), pergunta se aplica o mesmo no bloco equivalente dos outros posts.
+  interface ReplicaWatch {
     before: Block;
     id: string;
     path: number[];
     postId: string;
-  } | null>(null);
+  }
+  const replicaWatch = useRef<ReplicaWatch | null>(null);
+  const replicaFor = (w: ReplicaWatch | null, current: Site) => {
+    if (!w || !current.posts.some(p => p.id === w.postId)) return undefined;
+    const after = findBlock(current, w.id);
+    const replica = after ? diffBlock(w.before, after) : undefined;
+    if (!after || !replica) return undefined;
+    const targets = replicaTargets(current, w.postId, w.before.type, w.path);
+    return targets > 0 ? { after, replica, targets, watch: w } : undefined;
+  };
+  const askReplica = (pending: NonNullable<ReturnType<typeof replicaFor>>) => {
+    const { after, replica, targets, watch } = pending;
+    // Perguntou uma vez: a partir daqui o "antes" é o estado atual (aceitando ou não).
+    if (replicaWatch.current === watch)
+      replicaWatch.current = { ...watch, before: structuredClone(after) };
+    const label = labelOf(watch.before.type);
+    const plural = targets === 1 ? "outro post" : "outros posts";
+    setConfirm({
+      confirmLabel: "Replicar",
+      message: `Você alterou ${describeReplica(watch.before.type, replica)} no bloco “${label}” deste post. Aplicar o mesmo no bloco equivalente de ${targets} ${plural}? Textos, imagens e links de cada post não mudam.`,
+      onConfirm: () =>
+        edit(
+          applyReplica(
+            siteRef.current,
+            watch.postId,
+            watch.before.type,
+            watch.path,
+            replica
+          ),
+          {
+            kind: "Editado",
+            label: `Replicou para ${targets} ${targets === 1 ? "post" : "posts"} · ${label}`,
+          }
+        ),
+      title: "Replicar para os outros posts?",
+    });
+  };
+  const pendingReplica =
+    replicaWatch.current?.id === selectedId
+      ? replicaFor(replicaWatch.current, site)
+      : undefined;
   useEffect(() => {
     const current = siteRef.current;
-    const prev = replicaWatch.current;
+    const pending = replicaFor(replicaWatch.current, current);
     replicaWatch.current = null;
-    if (prev) {
-      const post = current.posts.find(p => p.id === prev.postId);
-      const after = post ? findBlock(current, prev.id) : undefined;
-      const replica = after ? diffBlock(prev.before, after) : undefined;
-      const targets = replica
-        ? replicaTargets(current, prev.postId, prev.before.type, prev.path)
-        : 0;
-      if (replica && targets > 0) {
-        const label = labelOf(prev.before.type);
-        setConfirm({
-          confirmLabel: "Replicar",
-          message: `Você alterou ${describeReplica(prev.before.type, replica)} no bloco “${label}” deste post. Aplicar o mesmo no bloco equivalente de ${targets} ${targets === 1 ? "outro post" : "outros posts"}? Textos, imagens e links de cada post não mudam.`,
-          onConfirm: () =>
-            edit(
-              applyReplica(
-                siteRef.current,
-                prev.postId,
-                prev.before.type,
-                prev.path,
-                replica
-              ),
-              {
-                kind: "Editado",
-                label: `Replicou para ${targets} ${targets === 1 ? "post" : "posts"} · ${label}`,
-              }
-            ),
-          title: "Replicar para os outros posts?",
-        });
-      }
-    }
+    if (pending) askReplica(pending);
     if (!selectedId) return;
     const where = ancestorsOf(current, selectedId);
     if (!where?.root.startsWith("post:")) return;
@@ -1498,7 +1510,10 @@ export function SiteEditor({
           {publish ? (
             <button
               className="sbe-lime"
-              onClick={() => setReview(true)}
+              onClick={() =>
+                // Alteração replicável pendente: pergunta antes; o próximo clique já abre a revisão.
+                pendingReplica ? askReplica(pendingReplica) : setReview(true)
+              }
               title="Revisar e publicar"
               type="button"
             >
@@ -1688,6 +1703,14 @@ export function SiteEditor({
               key: `${selected.id}-${key}`,
               label: `Editou · ${labelOf(selected.type)}`,
             })
+          }
+          onReplicate={
+            pendingReplica
+              ? {
+                  run: () => askReplica(pendingReplica),
+                  targets: pendingReplica.targets,
+                }
+              : undefined
           }
           onResolveChannel={onResolveChannel}
           onSelect={select}
