@@ -86,7 +86,19 @@ export function AdBox({
   seconds: number;
   size: "banner" | "side" | "square";
 }) {
-  if (!adsEnabled(ctx)) return null;
+  if (!adsEnabled(ctx)) {
+    // No editor, explica por que o espaço está vazio; no site publicado, não ocupa lugar.
+    return ctx.mode === "edit" ? (
+      <div className={`sb-ad sb-ad-${size}`}>
+        <div className="sb-ad-box">
+          <div className="sb-ad-ph">
+            Anúncios desligados — ligue o botão "Anúncios" no topo do editor
+            para mostrar este espaço
+          </div>
+        </div>
+      </div>
+    ) : null;
+  }
   // Sem mídia própria, usa a do site inteiro (faixa larga = banner; lateral e quadrado = coluna).
   const own = items.filter(i => SAFE_SRC.test(i.src));
   const shared = globalAds(ctx.site.theme)[
