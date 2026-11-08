@@ -86,11 +86,17 @@ const mkHero = defineBlock(
         label: "Botão secundário — texto (vazio = sem botão)",
       },
       { key: "button2Url", kind: "url", label: "Botão secundário — link" },
-      { key: "image", kind: "image", label: "Foto (hero) ou arte (404)" },
+      {
+        key: "image",
+        kind: "image",
+        label: "Foto (hero) ou arte (404)",
+        related: ["imageHover"],
+      },
       {
         key: "imageHover",
         kind: "image",
         label: "Foto ao passar o mouse (hero; vazio = não troca)",
+        related: ["image"],
       },
       { key: "background", kind: "image", label: "Textura de fundo" },
       {
