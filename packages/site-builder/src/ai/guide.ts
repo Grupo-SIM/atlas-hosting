@@ -49,7 +49,7 @@ As seções do painel (Conteúdo, Tamanho, Posição, Tipografia, Efeitos, Caixa
 - Linha de ações do bloco: **Duplicar** (Ctrl+D), **Ocultar/Mostrar**, **Mover para cima/baixo**, **Excluir** (Delete).
 - **Conteúdo**: os campos do bloco (textos, links, imagens, listas). Imagem: arrastar e soltar/clicar para enviar o arquivo, ou colar a URL. Anúncios e vídeos curtos aceitam também vídeo (MP4/WebM até 25 MB).
 - **Âncora**: nome do bloco para links #nome (ex.: sabermais); um botão com link #sabermais rola até ele. Grava ao sair do campo.
-- **Tamanho**: largura e altura.
+- **Tamanho**: largura e altura. No bloco a altura é mínima: se o conteúdo crescer, o bloco cresce junto e empurra os de baixo.
 - **Posição**: X/Y do deslocamento livre e "Voltar ao lugar original".
 - **Tipografia**: **fonte** (Herdar do tema, Minhas fontes, Google Fonts; botão **+ Enviar arquivo de fonte** aceita .woff2/.woff/.ttf/.otf até 3 MB), tamanho, peso, cor do texto, alinhamento, maiúsculas.
 - **Efeitos**: entrada ao rolar (aparecer, subir suave, zoom, girar ao entrar…), atraso, ao passar o mouse (pulsar, empurrar, crescer, encolher, subir, sombra, clarear, esmaecer, girar) com "Duração do hover (ms)", parallax, "Seguir o mouse" (−10 a 10; negativo vai ao contrário do ponteiro; só no computador), contar números de 0 até o valor, "aplicar a cada item de dentro".

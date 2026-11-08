@@ -167,8 +167,16 @@ function renderBlocks(blocks: Block[], ctx: RenderContext): ReactNode {
     );
     const fxData = fxRuntimeData(block.fx);
     const fxStyles = fxCss(block.id, block.fx);
-    const { translate: blockShift, ...blockStyle } =
-      cleanStyle(block.style) ?? {};
+    const {
+      translate: blockShift,
+      height: blockHeight,
+      ...blockStyle
+    } = cleanStyle(block.style) ?? {};
+    // Altura do bloco é mínima: se um elemento de dentro crescer, o bloco cresce junto e empurra os
+    // de baixo, em vez de o conteúdo vazar por cima do bloco seguinte.
+    if (blockHeight !== undefined) {
+      (blockStyle as CSSProperties).minHeight = blockHeight;
+    }
     return (
       <div
         className="sb-block"
