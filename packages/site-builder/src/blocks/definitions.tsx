@@ -500,15 +500,21 @@ const heading = defineBlock(
   }
 );
 
-/** Parágrafos seguidos que começam com "• " viram uma lista (sem o marcador no texto). */
+/**
+ * Parágrafos seguidos que começam com "• " viram uma lista (sem o marcador no texto). Dentro de um
+ * parágrafo, cada linha com "• " é um item; linha sem marcador continua o item anterior.
+ */
 function groupBullets(paras: string[]): (string | string[])[] {
   const out: (string | string[])[] = [];
   for (const para of paras) {
     if (para.startsWith("• ")) {
       const last = out.at(-1);
-      const item = para.slice(2);
-      if (Array.isArray(last)) last.push(item);
-      else out.push([item]);
+      const items: string[] = Array.isArray(last) ? last : [];
+      if (items !== last) out.push(items);
+      for (const line of para.split("\n").map(l => l.trimEnd())) {
+        if (line.startsWith("• ")) items.push(line.slice(2));
+        else if (items.length) items[items.length - 1] += ` ${line.trim()}`;
+      }
     } else out.push(para);
   }
   return out;

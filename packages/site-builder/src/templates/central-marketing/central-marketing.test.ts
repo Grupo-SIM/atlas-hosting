@@ -8,7 +8,7 @@ import { fxCss } from "../../model/fx.js";
 import type { Block } from "../../model/index.js";
 import { blockSchema } from "../../model/index.js";
 import { siteSchema } from "../../model/schema.js";
-import { cssUrl } from "../../renderer/central.js";
+import { centralCss, cssUrl } from "../../renderer/central.js";
 import { NAV_RUNTIME } from "../../renderer/nav-runtime.js";
 import { SiteRenderer } from "../../renderer/SiteRenderer.js";
 import { exportSiteToStatic } from "../../static/exportStatic.js";
@@ -206,6 +206,36 @@ describe("página Categorias", () => {
     },
     EXPORT_TIMEOUT
   );
+});
+
+describe("responsividade e conteúdo", () => {
+  test(
+    "busca compacta do Blogs tem a classe certa e listas com • viram itens separados",
+    async () => {
+      const files = await exportOnce();
+      const blogs =
+        files.find(f => f.path === "blogs/index.html")?.content ?? "";
+      expect(blogs).toContain(
+        'class="sb-container sb-mag sb-cat-search l-compact"'
+      );
+      const post =
+        files.find(f => f.path === "plano-de-marketing-de-90-dias/index.html")
+          ?.content ?? "";
+      expect(post).toContain(
+        "<li>“Melhorar as redes sociais” — vago, impossível de avaliar.</li><li>"
+      );
+      expect(post).not.toMatch(/<li>[^<]*• /);
+    },
+    EXPORT_TIMEOUT
+  );
+
+  test("no celular os cartões de ícone e de material ficam em uma coluna", () => {
+    const css = centralCss;
+    const mobile = css.slice(css.indexOf("max-width:767px"));
+    expect(mobile).toContain(
+      ".sb-ct-fg.v-product .sb-ct-fg-grid{grid-template-columns:minmax(0,1fr)}"
+    );
+  });
 });
 
 describe("âncora de bloco", () => {
