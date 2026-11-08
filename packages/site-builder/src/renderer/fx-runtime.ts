@@ -1,14 +1,18 @@
 /**
- * Script dos efeitos (entrada ao rolar, parallax, contador). É uma string porque roda de duas formas:
- * inline no HTML publicado e injetado pelo `FxRuntime` na prévia. Define `window.sbFx()`, que liga os
- * efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo.
+ * Script dos efeitos (entrada ao rolar, parallax, seguir o mouse, contador). É uma string porque roda de
+ * duas formas: inline no HTML publicado e injetado pelo `FxRuntime` na prévia. Define `window.sbFx()`, que
+ * liga os efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo.
+ * Ao mudar o script, suba `FX_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
+export const FX_VERSION = 2;
+
 export const FX_RUNTIME = `(function(){
-if(window.sbFx)return;
+if(window.sbFx&&window.__sbFxV===${FX_VERSION})return;
+window.__sbFxV=${FX_VERSION};
 window.sbFx=function(){
 var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 document.querySelectorAll(".sb").forEach(function(r){r.classList.add("sb-js")});
-var par=[],counted=[],off=[];
+var par=[],mice=[],counted=[],off=[];
 function resolve(blk,p){
 if(!p)return blk;
 var n=blk,ix=p.split(".");
@@ -71,6 +75,10 @@ if(f.s&&!reduce){
 t.setAttribute("data-sb-par",getComputedStyle(t).backgroundImage!=="none"?"bg":"el");
 par.push({el:t,s:f.s});
 }
+if(f.m&&!reduce){
+t.setAttribute("data-sb-mouse","1");
+mice.push({el:t,m:f.m,x:0,y:0});
+}
 if(!io){if(f.e)t.classList.add("sb-in");return}
 if(f.c){prep(t)}
 if(f.e||f.c)io.observe(t);
@@ -95,6 +103,32 @@ window.addEventListener("scroll",onScroll,{passive:true});
 window.addEventListener("resize",onScroll);
 off.push(function(){window.removeEventListener("scroll",onScroll);window.removeEventListener("resize",onScroll)});
 frame();
+}
+/* seguir o mouse: alvo = distância do ponteiro ao centro da tela (-1..1) x força x 6px, com suavização */
+if(mice.length){
+var tx=0,ty=0,raf=0;
+function glide(){
+raf=0;
+var moving=false;
+mice.forEach(function(p){
+var gx=tx*p.m*6,gy=ty*p.m*6;
+p.x+=(gx-p.x)*0.12;p.y+=(gy-p.y)*0.12;
+if(Math.abs(gx-p.x)>0.2||Math.abs(gy-p.y)>0.2)moving=true;
+p.el.style.setProperty("--sb-mx",p.x.toFixed(1)+"px");
+p.el.style.setProperty("--sb-my",p.y.toFixed(1)+"px");
+});
+if(moving)raf=requestAnimationFrame(glide);
+}
+function onMove(e){
+tx=(e.clientX/window.innerWidth-0.5)*2;ty=(e.clientY/window.innerHeight-0.5)*2;
+if(!raf)raf=requestAnimationFrame(glide);
+}
+window.addEventListener("mousemove",onMove,{passive:true});
+off.push(function(){
+window.removeEventListener("mousemove",onMove);
+if(raf)cancelAnimationFrame(raf);
+mice.forEach(function(p){p.el.removeAttribute("data-sb-mouse");p.el.style.removeProperty("--sb-mx");p.el.style.removeProperty("--sb-my")});
+});
 }
 document.querySelectorAll(".sb-ad[data-ads]").forEach(function(ad){
 if(ad.getAttribute("data-ad-ready"))return;

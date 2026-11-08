@@ -1146,6 +1146,13 @@ export function Inspector({
             onChange={v => onFx({ parallax: v }, "Parallax")}
             value={fx.parallax ?? 0}
           />
+          <Slider
+            label="Seguir o mouse (negativo = ao contrário)"
+            max={10}
+            min={-10}
+            onChange={v => onFx({ mouse: v || undefined }, "Seguir o mouse")}
+            value={fx.mouse ?? 0}
+          />
           <div className="sbe-line">
             <span>Contar números de 0 até o valor</span>
             <button
@@ -1158,7 +1165,7 @@ export function Inspector({
               <span />
             </button>
           </div>
-          {fx.enter || fx.hover || fx.parallax || fx.count ? (
+          {fx.enter || fx.hover || fx.parallax || fx.mouse || fx.count ? (
             <>
               <div className="sbe-line">
                 <span>Aplicar a cada item de dentro</span>
@@ -1194,6 +1201,7 @@ export function Inspector({
                       enter: undefined,
                       hover: undefined,
                       hoverMs: undefined,
+                      mouse: undefined,
                       parallax: undefined,
                       stagger: undefined,
                     },
@@ -1207,8 +1215,9 @@ export function Inspector({
             </>
           ) : null}
           <p className="sbe-hint">
-            Entrada, parallax e contador aparecem na prévia e no site publicado;
-            no editor o conteúdo fica parado para facilitar a edição.
+            Entrada, parallax, seguir o mouse e contador aparecem na prévia e no
+            site publicado; no editor o conteúdo fica parado para facilitar a
+            edição.
           </p>
         </Section>
 

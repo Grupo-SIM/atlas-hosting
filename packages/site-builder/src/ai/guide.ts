@@ -52,7 +52,7 @@ As seções do painel (Conteúdo, Tamanho, Posição, Tipografia, Efeitos, Caixa
 - **Tamanho**: largura e altura.
 - **Posição**: X/Y do deslocamento livre e "Voltar ao lugar original".
 - **Tipografia**: **fonte** (Herdar do tema, Minhas fontes, Google Fonts; botão **+ Enviar arquivo de fonte** aceita .woff2/.woff/.ttf/.otf até 3 MB), tamanho, peso, cor do texto, alinhamento, maiúsculas.
-- **Efeitos**: entrada ao rolar (aparecer, subir suave, zoom…), atraso, ao passar o mouse (pulsar, crescer, encolher, subir, sombra, clarear, esmaecer, girar) com "Duração do hover (ms)", parallax, contar números de 0 até o valor, "aplicar a cada item de dentro".
+- **Efeitos**: entrada ao rolar (aparecer, subir suave, zoom, girar ao entrar…), atraso, ao passar o mouse (pulsar, empurrar, crescer, encolher, subir, sombra, clarear, esmaecer, girar) com "Duração do hover (ms)", parallax, "Seguir o mouse" (−10 a 10; negativo vai ao contrário do ponteiro; só no computador), contar números de 0 até o valor, "aplicar a cada item de dentro".
 - **Caixa**: fundo, arredondamento, espaçamento interno, margem externa, borda, opacidade, largura máxima.
 - Clicar num texto/imagem/botão DENTRO de um bloco seleciona só aquele elemento: o painel mostra só o conteúdo daquele item (ex.: o campo de texto ou a imagem dele, ou os campos do card clicado) e o estilo vale para ele. Para editar o bloco todo, clique no bloco no caminho (breadcrumb) no topo do painel.
 ### Sem seleção (tema do site)

@@ -202,7 +202,7 @@ export const AI_TOOLS: AiToolDef[] = [
   },
   {
     description:
-      "Efeitos de animação de um bloco/elemento: entrada ao rolar, atraso, hover, parallax, contador. Só as chaves enviadas mudam; null apaga.",
+      "Efeitos de animação de um bloco/elemento: entrada ao rolar, atraso, hover, parallax, seguir o mouse, contador. Só as chaves enviadas mudam; null apaga.",
     inputSchema: obj(
       "",
       {
@@ -219,6 +219,9 @@ export const AI_TOOLS: AiToolDef[] = [
           `Duração do hover em ms (${HOVER_MS.min}-${HOVER_MS.max}; padrão ${HOVER_MS.default}).`
         ),
         id: str("Id do bloco."),
+        mouse: num(
+          "Seguir o mouse: -10 a 10 (0 desliga; negativo vai ao contrário do ponteiro)."
+        ),
         parallax: num("-10 a 10 (0 desliga)."),
       },
       ["id"]
@@ -710,6 +713,7 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
         entrada: "enter",
         hover: "hover",
         hover_ms: "hoverMs",
+        mouse: "mouse",
         parallax: "parallax",
       } as const;
       for (const [param, key] of Object.entries(map)) {
@@ -743,6 +747,15 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
           `hover_ms deve ser um número de ${HOVER_MS.min} a ${HOVER_MS.max}.`
         );
       }
+      if (
+        patch.mouse !== undefined &&
+        (typeof patch.mouse !== "number" ||
+          patch.mouse < -10 ||
+          patch.mouse > 10)
+      ) {
+        throw new ToolError("mouse deve ser um número de -10 a 10.");
+      }
+      if (patch.mouse === 0) patch.mouse = undefined;
       return done(
         updateBlockFx(site, id, path, patch as never),
         `Ajustou efeitos de ${label(block.type)}`
