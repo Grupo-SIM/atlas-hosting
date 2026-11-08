@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { getBlockDefinition } from "../blocks/registry.js";
-import type { Site } from "../model/index.js";
+import type { Block, Site } from "../model/index.js";
 import { resolveRoute } from "../renderer/routes.js";
 import { SiteRenderer } from "../renderer/SiteRenderer.js";
 import { AiPanel } from "./AiPanel.js";
@@ -30,6 +30,13 @@ import { Icon } from "./icons.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
 import { PagePicker, type RouteGroup } from "./PagePicker.js";
 import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
+import {
+  applyReplica,
+  blockPath,
+  describeReplica,
+  diffBlock,
+  replicaTargets,
+} from "./replicate.js";
 import { duplicatePost, setMenu, setTheme, withAdBlocks } from "./site-ops.js";
 import { startSort } from "./sort-drag.js";
 import { editorCss } from "./styles.js";
@@ -451,6 +458,65 @@ export function SiteEditor({
 
   const selected = selectedId ? findBlock(site, selectedId) : undefined;
   const labelOf = (type: string) => getBlockDefinition(type)?.label ?? type;
+
+  // Bloco de um post: guarda como estava ao ser selecionado. Ao sair dele (outro bloco ou outra
+  // página), se mudou algo de aparência/opção, pergunta se replica para o mesmo bloco dos outros posts.
+  const replicaWatch = useRef<{
+    before: Block;
+    id: string;
+    path: number[];
+    postId: string;
+  } | null>(null);
+  useEffect(() => {
+    const current = siteRef.current;
+    const prev = replicaWatch.current;
+    replicaWatch.current = null;
+    if (prev) {
+      const post = current.posts.find(p => p.id === prev.postId);
+      const after = post ? findBlock(current, prev.id) : undefined;
+      const replica = after ? diffBlock(prev.before, after) : undefined;
+      const targets = replica
+        ? replicaTargets(current, prev.postId, prev.before.type, prev.path)
+        : 0;
+      if (replica && targets > 0) {
+        const label = labelOf(prev.before.type);
+        setConfirm({
+          confirmLabel: "Replicar",
+          message: `Você alterou ${describeReplica(prev.before.type, replica)} no bloco “${label}” deste post. Aplicar o mesmo no bloco equivalente de ${targets} ${targets === 1 ? "outro post" : "outros posts"}? Textos, imagens e links de cada post não mudam.`,
+          onConfirm: () =>
+            edit(
+              applyReplica(
+                siteRef.current,
+                prev.postId,
+                prev.before.type,
+                prev.path,
+                replica
+              ),
+              {
+                kind: "Editado",
+                label: `Replicou para ${targets} ${targets === 1 ? "post" : "posts"} · ${label}`,
+              }
+            ),
+          title: "Replicar para os outros posts?",
+        });
+      }
+    }
+    if (!selectedId) return;
+    const where = ancestorsOf(current, selectedId);
+    if (!where?.root.startsWith("post:")) return;
+    const postId = where.root.slice(5);
+    const post = current.posts.find(p => p.id === postId);
+    const block = findBlock(current, selectedId);
+    const at = post ? blockPath(post.blocks, selectedId) : undefined;
+    if (block && at) {
+      replicaWatch.current = {
+        before: structuredClone(block),
+        id: selectedId,
+        path: at,
+        postId,
+      };
+    }
+  }, [selectedId, path]);
 
   const goTo = (next: string) => {
     setPath(next);
