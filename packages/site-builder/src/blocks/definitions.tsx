@@ -594,7 +594,8 @@ const videoGrid = defineBlock(
           {
             key: "youtubeId",
             kind: "text",
-            label: "Link ou ID do vídeo (ou ID do canal para o último vídeo)",
+            label:
+              "Link do vídeo no YouTube (ex.: https://www.youtube.com/watch?v=…; um ID de canal mostra o último vídeo dele)",
           },
         ],
         key: "videos",

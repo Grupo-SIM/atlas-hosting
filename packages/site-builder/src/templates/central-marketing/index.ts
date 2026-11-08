@@ -95,7 +95,10 @@ const VIDEOS = [
   "RXVf14EKbqU",
   "c3vZBmSrALI",
   "OJaf-oLVZgs",
-].map(youtubeId => ({ title: "", youtubeId }));
+].map(id => ({
+  title: "",
+  youtubeId: `https://www.youtube.com/watch?v=${id}`,
+}));
 
 /** Ordem dos cartões na página /categorias/. */
 const CATEGORY_ORDER = [
