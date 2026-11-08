@@ -132,7 +132,7 @@ ${S} .sb-mk-hero-media{position:relative;padding:14px 110px 14px 10px}
 ${S} .sb-mk-hero-band{position:absolute;inset:0 100px 0 -10px;border-radius:10px;background:linear-gradient(150deg,var(--sb-accent) 5%,#f9075e 80%);rotate:-3deg}
 ${S} .sb-mk-hero-photo{position:relative;width:100%;aspect-ratio:570/771;object-fit:cover;border-radius:10px}
 ${S} .sb-mk-hero-alt{position:absolute;top:14px;left:10px;width:calc(100% - 120px);opacity:0;transition:opacity .3s ease-in-out}
-${S} .sb-mk-hero-media:hover .sb-mk-hero-alt{opacity:1}
+${S} .sb-mk-hero-alt:hover{opacity:1}
 ${S} .sb-mk-hero-text h1,${S} .sb-mk-hero-text h2{margin:0 0 40px;font-size:45px;line-height:49.5px}
 ${S} .sb-mk-hero-text p{margin:0 0 6px;color:var(--sb-muted);font-family:var(--sb-font-heading);font-size:19px;line-height:24.7px}
 ${S} .sb-mk-btns{display:flex;flex-wrap:wrap;gap:20px;margin-top:50px}

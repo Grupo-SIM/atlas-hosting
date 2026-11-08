@@ -196,6 +196,9 @@ describe("template marketplace", () => {
     const home = await html(site, "/");
     expect(home).toContain('class="sb-mk-hero-photo sb-mk-hero-alt"');
     expect(home).toContain("photo-1593508512255-86ab42a8e620");
+    // só a foto dispara a troca: a mídia tem 110px vazios à direita e a faixa atrás
+    expect(home).toContain(".sb-mk-hero-alt:hover{opacity:1}");
+    expect(home).not.toContain(".sb-mk-hero-media:hover");
     // texto agrupado: título, texto e botões ficam sempre nas posições 1, 2 e 3 (efeitos por caminho)
     expect(home).toMatch(
       /class="sb-mk-hero-text"><h1>[^<]+<\/h1><div class="sb-mk-hero-copy">/
