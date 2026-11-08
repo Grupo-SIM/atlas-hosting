@@ -424,6 +424,65 @@ function ItemFields({
             value={item[f.key]}
           />
         ))}
+      <div className="sbe-row">
+        <button
+          onClick={() =>
+            onChange([
+              ...items.slice(0, index + 1),
+              structuredClone(item),
+              ...items.slice(index + 1),
+            ])
+          }
+          type="button"
+        >
+          Duplicar
+        </button>
+        <button
+          onClick={() => onChange(items.filter((_, i) => i !== index))}
+          type="button"
+        >
+          Remover
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Item repetido que vem do conteúdo do site (linhas de um feed de notícias, cards de posts): não dá
+ * para duplicar o item em si, então mexe na quantidade do bloco — o novo mostra o próximo conteúdo.
+ */
+function RepeatCount({
+  field,
+  onChange,
+  value,
+}: {
+  field: FieldDef;
+  onChange: (value: number) => void;
+  value: number;
+}) {
+  return (
+    <div className="sbe-list-item">
+      <p className="sbe-hint">
+        Este item se repete — {field.label}: {value}
+      </p>
+      <div className="sbe-row">
+        <button onClick={() => onChange(value + 1)} type="button">
+          + Adicionar mais um
+        </button>
+        <button
+          disabled={value <= 1}
+          onClick={() => onChange(value - 1)}
+          type="button"
+        >
+          − Um a menos
+        </button>
+      </div>
+      <p className="sbe-hint">
+        O novo item mostra o próximo conteúdo do site (ex.: a próxima notícia
+        publicada). Se não aparecer, não há mais: crie um post em Páginas →
+        Posts.
+      </p>
     </div>
   );
 }
@@ -433,6 +492,8 @@ export interface FocusHint {
   ad?: boolean;
   /** Endereço do link clicado, quando o item é (ou está dentro de) um link. */
   href?: string;
+  /** O item (ou um ancestral dele) é um de vários irmãos iguais, como linhas de feed ou cards. */
+  repeat?: boolean;
   n: number;
   value: string;
 }
@@ -539,6 +600,22 @@ export function Inspector({
         : [],
     [focusHint?.n, selected?.id, elPath]
   );
+
+  // Item repetido que não vem de uma lista do bloco: oferece mudar a quantidade (campo `limit`).
+  const countField = itemDef?.fields.find(
+    f => f.key === "limit" && f.kind === "number"
+  );
+  const countValue = Number(
+    selected?.props.limit ?? itemDef?.defaults.limit ?? 0
+  );
+  const repeatCount =
+    elPath &&
+    focusHint?.repeat &&
+    countField &&
+    countValue > 0 &&
+    !itemMatches.some(m => m.kind === "item")
+      ? { field: countField, value: countValue }
+      : undefined;
 
   const vars = themeVars(site.theme);
   const resolve = (c: string) => {
@@ -781,6 +858,13 @@ export function Inspector({
 
         {elPath ? (
           <Section defaultOpen scope="el" title="Conteúdo do item">
+            {repeatCount ? (
+              <RepeatCount
+                field={repeatCount.field}
+                onChange={v => onProp(repeatCount.field.key, v)}
+                value={repeatCount.value}
+              />
+            ) : null}
             {itemMatches.length > 0 && def ? (
               itemMatches.map(m =>
                 m.kind === "field" ? (
@@ -808,7 +892,7 @@ export function Inspector({
                   />
                 )
               )
-            ) : (
+            ) : repeatCount ? null : (
               <p className="sbe-hint">
                 {elLabel === "link" &&
                 (selected.type === "header" || selected.type === "footer")

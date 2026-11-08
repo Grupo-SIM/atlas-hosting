@@ -179,21 +179,31 @@ function hintOf(
   basePath: string
 ): Omit<FocusHint, "n"> {
   if (!el) return { value: "" };
+  const repeat = isRepeated(el) || undefined;
   // Espaço de anúncio: a mídia pode vir dos anúncios do site, então não dá para achar pelo `src`.
   if (el.closest(".sb-ad")) return { ad: true, value: "" };
   if (el instanceof HTMLImageElement)
-    return { value: el.getAttribute("src") ?? "" };
+    return { repeat, value: el.getAttribute("src") ?? "" };
   if (el instanceof HTMLIFrameElement) {
     const src = el.getAttribute("src") ?? "";
-    return { value: /\/(?:embed|video)\/([^/?#]+)/.exec(src)?.[1] ?? src };
+    return {
+      repeat,
+      value: /\/(?:embed|video)\/([^/?#]+)/.exec(src)?.[1] ?? src,
+    };
   }
   const raw = el.closest("a")?.getAttribute("href") ?? "";
   const href =
     basePath && raw.startsWith(`${basePath}/`)
       ? raw.slice(basePath.length)
       : raw;
-  return { href: href || undefined, value: el.textContent ?? "" };
+  return { href: href || undefined, repeat, value: el.textContent ?? "" };
 }
+
+/**
+ * O item clicado está dentro de um item de lista cuja quantidade vem do campo `limit` do bloco
+ * (linhas de um feed, cards de posts): os blocos marcam esse contêiner com `data-repeat-list`.
+ */
+const isRepeated = (el: Element) => !!el.closest("[data-repeat-list] > *");
 
 export function SiteEditor({
   ai,

@@ -842,7 +842,7 @@ const categoryGrid = defineBlock(
         >
           {p.title ? <h2>{p.title}</h2> : null}
           {p.subtitle ? <p className="sb-sub">{p.subtitle}</p> : null}
-          <div className="sb-grid sb-grid-3">
+          <div className="sb-grid sb-grid-3" data-repeat-list="">
             {cats.map((c, i) => (
               <a
                 className={`sb-card sb-cat-card${p.images[i]?.src ? "" : "plain"}`}
@@ -1352,7 +1352,7 @@ const postExplorer = defineBlock(
               Pesquisar
             </button>
           </form>
-          <div className="sb-grid sb-grid-3">
+          <div className="sb-grid sb-grid-3" data-repeat-list="">
             {posts.map(post => (
               <PostCard ctx={ctx} key={post.id} post={post} />
             ))}
@@ -1463,6 +1463,7 @@ const postList = defineBlock(
                 ? "sb-grid sb-grid-3 sb-related"
                 : "sb-grid sb-grid-3"
             }
+            data-repeat-list=""
           >
             {posts.map(post =>
               p.cardStyle === "excerpt" ? (
@@ -1659,7 +1660,7 @@ const newsFeed = defineBlock(
       if (feed.length === 0) return null;
       return (
         <section className="sb-container sb-news-feedwrap">
-          <div className="sb-news-feed">
+          <div className="sb-news-feed" data-repeat-list="">
             {[...feed, ...extra].map((post, i) => {
               const cat = categoryOf(ctx.site, post);
               return (
@@ -1762,7 +1763,7 @@ const newsSection = defineBlock(
           <h2 className="sb-news-title">
             <a href={cat ? href(ctx, categoryPath(cat)) : "#"}>{p.title}</a>
           </h2>
-          <div className="sb-news-cards">
+          <div className="sb-news-cards" data-repeat-list="">
             {posts.map(post => (
               <a
                 className="sb-news-card"

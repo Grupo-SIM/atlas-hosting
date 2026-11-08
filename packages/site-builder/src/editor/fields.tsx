@@ -79,6 +79,18 @@ export function FieldInput({
                 ↓
               </button>
               <button
+                onClick={() =>
+                  onChange([
+                    ...items.slice(0, index + 1),
+                    structuredClone(item),
+                    ...items.slice(index + 1),
+                  ])
+                }
+                type="button"
+              >
+                Duplicar
+              </button>
+              <button
                 onClick={() => onChange(items.filter((_, i) => i !== index))}
                 type="button"
               >
