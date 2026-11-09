@@ -13,6 +13,7 @@
     "commit": "git add . && bun committier ai",
     "dev": "turbo dev",
     "domain:reprocess": "bun scripts/reprocess-domain-invoice.ts",
+    "site:seed": "bun scripts/seed-template-site.ts",
     "format": "bun format:biome .",
     "format:biome": "bunx biome check --diagnostic-level=error --write",
     "prepare": "lefthook install || true",
