@@ -12,14 +12,15 @@ import {
 } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { shouldRefreshDomainConnection } from "@/lib/domains/connection-state";
 import { pgOrganizationDomains } from "@/lib/db/schema";
+import { shouldRefreshDomainConnection } from "@/lib/domains/connection-state";
 import {
   type CloudflareDnsRecord,
   cloudflareApi,
 } from "@/lib/server/apis/cloudflare";
 import { formatAtlasDnsError } from "@/lib/server/domains/cloudflare-dns";
 import { discoverPublicDnsRecords } from "@/lib/server/domains/public-dns";
+import { syncPendingCloudflareZones } from "@/lib/server/domains/sync-pending-cloudflare-zones";
 import { DnsRecordsManager } from "../../dns/components/DnsRecordManager";
 import { DomainConnectionRecovery } from "../components/DomainConnectionRecovery";
 import { DomainDnsControls } from "./DomainDnsControls";
@@ -47,13 +48,21 @@ export default async function DomainDetailsPage({
   const { id } = await params;
   const { setup } = await searchParams;
   const user = await getUser();
-  const domain = await db.query.pgOrganizationDomains.findFirst({
-    where: and(
-      eq(pgOrganizationDomains.id, id),
-      eq(pgOrganizationDomains.organizationId, user.organization.id)
-    ),
-  });
+  const findDomain = () =>
+    db.query.pgOrganizationDomains.findFirst({
+      where: and(
+        eq(pgOrganizationDomains.id, id),
+        eq(pgOrganizationDomains.organizationId, user.organization.id)
+      ),
+    });
+  let domain = await findDomain();
   if (!domain) notFound();
+  if (
+    shouldRefreshDomainConnection(domain) &&
+    (await syncPendingCloudflareZones([domain]))
+  ) {
+    domain = (await findDomain()) ?? domain;
+  }
   const isAtlasPurchasedDomain = domain.registrarProvider === "namecheap";
 
   let records: CloudflareDnsRecord[] = [];

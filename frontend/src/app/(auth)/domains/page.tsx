@@ -28,6 +28,7 @@ import { getUser } from "@/lib/auth";
 import { shouldRefreshDomainConnection } from "@/lib/domains/connection-state";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 import { getRegistrarDates } from "@/lib/server/domains/registrar-dates";
+import { syncPendingCloudflareZones } from "@/lib/server/domains/sync-pending-cloudflare-zones";
 import {
   createDomainVerificationRecord,
   type DomainVerificationRecord,
@@ -160,7 +161,14 @@ function externalDomainFallback(domain: {
   };
 }
 export default async function MyDomainsPage() {
-  const user = await getUser();
+  let user = await getUser();
+  if (
+    await syncPendingCloudflareZones(
+      user.organization.domains.filter(shouldRefreshDomainConnection)
+    )
+  ) {
+    user = await getUser();
+  }
   const domainTransfers = await getDomainTransfersForUser(user.id);
   const pendingDomains = user.organization.domains.filter(
     domain => !domain.active
@@ -205,9 +213,7 @@ export default async function MyDomainsPage() {
             return {
               autoRenew: false,
               expiryDate: "Externo",
-              features: [
-                getExternalDomainDnsFeature(domain),
-              ],
+              features: [getExternalDomainDnsFeature(domain)],
               id: domain.id,
               isExternal: true,
               isLocked: false,
@@ -222,9 +228,18 @@ export default async function MyDomainsPage() {
             } as ProcessedDomain;
           }
           const d = await getNamecheapDomainInfo(domain.domain);
-          const inventory = await namecheapApi.getList({ Page: 1, PageSize: 100, SearchTerm: domain.domain });
-          const registration = inventory.Domains.find(item => item.Name.toLowerCase() === domain.domain.toLowerCase());
-          if (!registration) throw new Error("Registro não encontrado no inventário de domínios.");
+          const inventory = await namecheapApi.getList({
+            Page: 1,
+            PageSize: 100,
+            SearchTerm: domain.domain,
+          });
+          const registration = inventory.Domains.find(
+            item => item.Name.toLowerCase() === domain.domain.toLowerCase()
+          );
+          if (!registration)
+            throw new Error(
+              "Registro não encontrado no inventário de domínios."
+            );
 
           return {
             ...getRegistrarDates(d.CreatedDate, d.ExpireDate),
@@ -274,18 +289,19 @@ export default async function MyDomainsPage() {
 
     const domains = domainsRaw.map((processed, index) => {
       const domain = dbDomains[index];
-      if (domain.dnsMode !== "cloudflare") return { ...processed, hasManagedZone: !!domain.cloudflareZoneId };
+      if (domain.dnsMode !== "cloudflare")
+        return { ...processed, hasManagedZone: !!domain.cloudflareZoneId };
       const dnsFeature = getExternalDomainDnsFeature(domain);
 
       return {
         ...processed,
-        hasManagedZone: !!domain.cloudflareZoneId,
         features: [
           dnsFeature,
           ...processed.features.filter(
             feature => feature !== "DNS Management" && feature !== dnsFeature
           ),
         ],
+        hasManagedZone: !!domain.cloudflareZoneId,
         usesOurDNS:
           domain.connectionStatus === "connected" &&
           domain.cloudflareZoneStatus === "active",
@@ -321,8 +337,8 @@ export default async function MyDomainsPage() {
   }
 
   const sortedDomains = [
-    ...pendingDomains.map(domain => ({ kind: "pending" as const, domain })),
-    ...processedDomains.map(domain => ({ kind: "processed" as const, domain })),
+    ...pendingDomains.map(domain => ({ domain, kind: "pending" as const })),
+    ...processedDomains.map(domain => ({ domain, kind: "processed" as const })),
   ].sort((a, b) =>
     (a.kind === "pending" ? a.domain.domain : a.domain.name).localeCompare(
       b.kind === "pending" ? b.domain.domain : b.domain.name,
@@ -514,206 +530,241 @@ export default async function MyDomainsPage() {
             {!hasDomains ? (
               <NoDomains />
             ) : (
-              <DomainList domainIds={user.organization.domains.map(domain => domain.id)}>
-              <Table>
-                <TableHeader className="bg-muted/50">
-                  <TableRow>
-                    <TableHead className="font-semibold">
-                      Nome do Domínio
-                    </TableHead>
-                    <TableHead className="hidden text-center font-semibold md:table-cell">
-                      Data de Registro
-                    </TableHead>
-                    <TableHead className="text-center font-semibold">
-                      Data de Expiração
-                    </TableHead>
-                    <TableHead className="hidden font-semibold lg:table-cell">
-                      Renovação
-                    </TableHead>
-                    <TableHead className="text-right font-semibold">
-                      Ações
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedDomains.map(item => {
-                    if (item.kind === "pending") {
-                      const domain = item.domain;
-                      const verification = verificationRecords[domain.id];
+              <DomainList
+                domainIds={user.organization.domains.map(domain => domain.id)}
+              >
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow>
+                      <TableHead className="font-semibold">
+                        Nome do Domínio
+                      </TableHead>
+                      <TableHead className="hidden text-center font-semibold md:table-cell">
+                        Data de Registro
+                      </TableHead>
+                      <TableHead className="text-center font-semibold">
+                        Data de Expiração
+                      </TableHead>
+                      <TableHead className="hidden font-semibold lg:table-cell">
+                        Renovação
+                      </TableHead>
+                      <TableHead className="text-right font-semibold">
+                        Ações
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedDomains.map(item => {
+                      if (item.kind === "pending") {
+                        const domain = item.domain;
+                        const verification = verificationRecords[domain.id];
 
-                      return (
-                      <DomainTableRow
-                        domainId={domain.id}
-                        className="transition-colors hover:bg-muted/50"
-                        key={domain.id}
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Badge
-                              className="h-2 w-2 rounded-full border-yellow-500 bg-yellow-500 p-0"
-                              variant="outline"
-                            />
-                            <div>
-                              <p className="font-medium">{domain.domain}</p>
-                              <Badge
-                                className="mt-1 border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400"
-                                variant="outline"
-                              >
-                                <Clock className="mr-1 h-3 w-3" />
-                                Aguardando verificação
-                              </Badge>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden text-center md:table-cell">
-                          <span className="font-medium">
-                            {format(domain.createdAt, "dd/MM/yyyy", {
-                              locale: ptBR,
-                            })}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center text-muted-foreground">
-                          —
-                        </TableCell>
-                        <TableCell className="hidden text-muted-foreground lg:table-cell">
-                          —
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                          {verification ? (
-                            <PendingDomainInstructionsDialog
-                              domain={domain.domain}
-                              host={verification.host}
-                              value={verification.value}
-                            />
-                          ) : (
-                            <Button disabled={true} size="sm" variant="outline">
-                              Instruções indisponíveis
-                            </Button>
-                          )}
-                          {user.id === user.organization.ownerId && !user.impersonatedBy && (
-                            <DeleteDomainButton domainId={domain.id} domainName={domain.domain} isExternal={domain.registrarProvider !== "namecheap"} hasManagedZone={!!domain.cloudflareZoneId} />
-                          )}
-                          </div>
-                        </TableCell>
-                      </DomainTableRow>
-                      );
-                    }
-
-                    const domain = item.domain;
-                    return (
-                    <DomainTableRow
-                      domainId={domain.id}
-                      className="transition-colors hover:bg-muted/50"
-                      key={domain.id}
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center">
-                            <Badge
-                              className={cn(
-                                "mr-3 h-2 w-2 rounded-full p-0",
-                                domain.status === "active"
-                                  ? "border-green-500 bg-green-500"
-                                  : domain.status === "expired"
-                                    ? "border-red-500 bg-red-500"
-                                    : "border-gray-500 bg-gray-500"
-                              )}
-                              variant="outline"
-                            />
-                            <div>
-                              <p className="font-medium">{domain.name}</p>
-                              {domainsAwaitingCloudflare.has(domain.id) && (
-                                <DomainConnectionRecovery domainId={domain.id} />
-                              )}
-                              <div className="mt-1 flex flex-wrap items-center gap-1">
-                                {domain.features.slice(0, 2).map(feature => (
+                        return (
+                          <DomainTableRow
+                            className="transition-colors hover:bg-muted/50"
+                            domainId={domain.id}
+                            key={domain.id}
+                          >
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Badge
+                                  className="h-2 w-2 rounded-full border-yellow-500 bg-yellow-500 p-0"
+                                  variant="outline"
+                                />
+                                <div>
+                                  <p className="font-medium">{domain.domain}</p>
                                   <Badge
-                                    className="text-xs"
-                                    key={feature}
-                                    variant="secondary"
+                                    className="mt-1 border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400"
+                                    variant="outline"
                                   >
-                                    {feature}
+                                    <Clock className="mr-1 h-3 w-3" />
+                                    Aguardando verificação
                                   </Badge>
-                                ))}
-                                {domain.features.length > 2 && (
-                                  <Badge className="text-xs" variant="outline">
-                                    +{domain.features.length - 2}
-                                  </Badge>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden text-center md:table-cell">
+                              <span className="font-medium">
+                                {format(domain.createdAt, "dd/MM/yyyy", {
+                                  locale: ptBR,
+                                })}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-center text-muted-foreground">
+                              —
+                            </TableCell>
+                            <TableCell className="hidden text-muted-foreground lg:table-cell">
+                              —
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                {verification ? (
+                                  <PendingDomainInstructionsDialog
+                                    domain={domain.domain}
+                                    host={verification.host}
+                                    value={verification.value}
+                                  />
+                                ) : (
+                                  <Button
+                                    disabled={true}
+                                    size="sm"
+                                    variant="outline"
+                                  >
+                                    Instruções indisponíveis
+                                  </Button>
                                 )}
-                                {domain.status === "unknown" && (
-                                  <DomainSyncRetryButton />
-                                )}
+                                {user.id === user.organization.ownerId &&
+                                  !user.impersonatedBy && (
+                                    <DeleteDomainButton
+                                      domainId={domain.id}
+                                      domainName={domain.domain}
+                                      hasManagedZone={!!domain.cloudflareZoneId}
+                                      isExternal={
+                                        domain.registrarProvider !== "namecheap"
+                                      }
+                                    />
+                                  )}
+                              </div>
+                            </TableCell>
+                          </DomainTableRow>
+                        );
+                      }
+
+                      const domain = item.domain;
+                      return (
+                        <DomainTableRow
+                          className="transition-colors hover:bg-muted/50"
+                          domainId={domain.id}
+                          key={domain.id}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center">
+                                <Badge
+                                  className={cn(
+                                    "mr-3 h-2 w-2 rounded-full p-0",
+                                    domain.status === "active"
+                                      ? "border-green-500 bg-green-500"
+                                      : domain.status === "expired"
+                                        ? "border-red-500 bg-red-500"
+                                        : "border-gray-500 bg-gray-500"
+                                  )}
+                                  variant="outline"
+                                />
+                                <div>
+                                  <p className="font-medium">{domain.name}</p>
+                                  {domainsAwaitingCloudflare.has(domain.id) && (
+                                    <DomainConnectionRecovery
+                                      domainId={domain.id}
+                                    />
+                                  )}
+                                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                                    {domain.features
+                                      .slice(0, 2)
+                                      .map(feature => (
+                                        <Badge
+                                          className="text-xs"
+                                          key={feature}
+                                          variant="secondary"
+                                        >
+                                          {feature}
+                                        </Badge>
+                                      ))}
+                                    {domain.features.length > 2 && (
+                                      <Badge
+                                        className="text-xs"
+                                        variant="outline"
+                                      >
+                                        +{domain.features.length - 2}
+                                      </Badge>
+                                    )}
+                                    {domain.status === "unknown" && (
+                                      <DomainSyncRetryButton />
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden text-center md:table-cell">
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {domain.registrationDate}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="font-medium">
-                            {domain.isExternal ? "—" : domain.expiryDate}
-                          </span>
-                          {domain.status === "expired" && (
-                            <Badge className="text-xs" variant="destructive">
-                              Expirado
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <div className="flex flex-wrap gap-1">
-                          {domain.isExternal ? (
-                            <Badge variant="outline">No registrador</Badge>
-                          ) : domain.status === "unknown" ? (
-                            <span className="text-muted-foreground text-sm">—</span>
-                          ) : domain.autoRenew ? (
-                            <Badge
-                              className="border-[#01FC8D]/30 bg-[#01FC8D]/10 text-[#00b363] dark:text-[#01FC8D]"
-                              variant="outline"
-                            >
-                              <RefreshCw className="mr-1 h-3 w-3" />
-                              Renovação automática
-                            </Badge>
-                          ) : (
-                            <Badge
-                              className="border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
-                              variant="outline"
-                            >
-                              Renovação manual
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="w-12 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                        <DomainActionsMenu
-                          canTransfer={
-                            user.id === user.organization.ownerId &&
-                            !user.impersonatedBy
-                          }
-                          domainId={domain.id}
-                          domainName={domain.name}
-                          canRenew={!domain.isExternal && domain.status !== "unknown"}
-                          key={`actions-${domain.id}`}
-                        />
-                        {user.id === user.organization.ownerId && !user.impersonatedBy && (
-                          <DeleteDomainButton domainId={domain.id} domainName={domain.name} isExternal={domain.isExternal} hasManagedZone={domain.hasManagedZone} />
-                        )}
-                        </div>
-                      </TableCell>
-                    </DomainTableRow>
-                  );
-                  })}
-                </TableBody>
-              </Table>
+                          </TableCell>
+                          <TableCell className="hidden text-center md:table-cell">
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {domain.registrationDate}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="font-medium">
+                                {domain.isExternal ? "—" : domain.expiryDate}
+                              </span>
+                              {domain.status === "expired" && (
+                                <Badge
+                                  className="text-xs"
+                                  variant="destructive"
+                                >
+                                  Expirado
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <div className="flex flex-wrap gap-1">
+                              {domain.isExternal ? (
+                                <Badge variant="outline">No registrador</Badge>
+                              ) : domain.status === "unknown" ? (
+                                <span className="text-muted-foreground text-sm">
+                                  —
+                                </span>
+                              ) : domain.autoRenew ? (
+                                <Badge
+                                  className="border-[#01FC8D]/30 bg-[#01FC8D]/10 text-[#00b363] dark:text-[#01FC8D]"
+                                  variant="outline"
+                                >
+                                  <RefreshCw className="mr-1 h-3 w-3" />
+                                  Renovação automática
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  className="border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
+                                  variant="outline"
+                                >
+                                  Renovação manual
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="w-12 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <DomainActionsMenu
+                                canRenew={
+                                  !domain.isExternal &&
+                                  domain.status !== "unknown"
+                                }
+                                canTransfer={
+                                  user.id === user.organization.ownerId &&
+                                  !user.impersonatedBy
+                                }
+                                domainId={domain.id}
+                                domainName={domain.name}
+                                key={`actions-${domain.id}`}
+                              />
+                              {user.id === user.organization.ownerId &&
+                                !user.impersonatedBy && (
+                                  <DeleteDomainButton
+                                    domainId={domain.id}
+                                    domainName={domain.name}
+                                    hasManagedZone={domain.hasManagedZone}
+                                    isExternal={domain.isExternal}
+                                  />
+                                )}
+                            </div>
+                          </TableCell>
+                        </DomainTableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </DomainList>
             )}
           </div>

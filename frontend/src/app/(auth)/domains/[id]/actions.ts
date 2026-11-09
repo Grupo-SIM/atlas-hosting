@@ -173,6 +173,7 @@ export async function refreshCloudflareConnection(
       observedNameservers
     );
     revalidatePath(`/domains/${id}`);
+    revalidatePath("/domains");
     if (zone.status === "active") {
       return {
         message: "Nameservers confirmados. O DNS do Atlas está ativo.",
