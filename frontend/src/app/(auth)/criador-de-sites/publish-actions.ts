@@ -62,7 +62,9 @@ export async function unpublishSite(input: {
   const publication = await currentPublication(site.id);
   if (!publication) return { ok: true };
 
-  const result = await takeDown(user.id, publication, input.password);
+  const result = await takeDown(user.id, publication, input.password, {
+    detachOnSshFailure: true,
+  });
   if (!result.ok) return result;
   revalidatePath(`/criador-de-sites/${site.id}/publicar`);
   revalidatePath("/criador-de-sites");

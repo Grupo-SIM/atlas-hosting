@@ -5,6 +5,7 @@ import { cloudflareApi } from "@/lib/server/apis/cloudflare";
 import { getManagedCloudflareZone } from "@/lib/server/domains/cloudflare-dns";
 import { getAtlasHostingConfig } from "./config";
 import { removeSite } from "./deploySite";
+import { canDetachWithoutSsh } from "./takedown-policy";
 import { resolveTarget, sanitize } from "./target";
 
 /**
@@ -18,8 +19,8 @@ export async function takeDown(
   userId: string,
   publication: BuilderPublication,
   password?: string,
-  options: { keepRecord?: boolean } = {}
-): Promise<{ ok: true } | { error: string; ok: false }> {
+  options: { detachOnSshFailure?: boolean; keepRecord?: boolean } = {}
+): Promise<{ detached?: boolean; ok: true } | { error: string; ok: false }> {
   try {
     const target = await resolveTarget(
       userId,
@@ -36,10 +37,25 @@ export async function takeDown(
     await removeSite({ domain: publication.domain, target: target.deploy });
     await removeDns(publication);
   } catch (error) {
-    return {
-      error: `Não foi possível tirar do ar: ${sanitize(error, password)}`,
-      ok: false,
-    };
+    if (!(options.detachOnSshFailure && canDetachWithoutSsh(error))) {
+      return {
+        error: `Não foi possível tirar do ar: ${sanitize(error, password)}`,
+        ok: false,
+      };
+    }
+    try {
+      await removeDns(publication);
+    } catch (dnsError) {
+      return {
+        error: `Não foi possível tirar do ar: ${sanitize(dnsError, password)}`,
+        ok: false,
+      };
+    }
+    if (options.keepRecord) return { detached: true, ok: true };
+    await db
+      .delete(pgBuilderPublication)
+      .where(eq(pgBuilderPublication.id, publication.id));
+    return { detached: true, ok: true };
   }
 
   if (options.keepRecord) return { ok: true };
