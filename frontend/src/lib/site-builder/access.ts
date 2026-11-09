@@ -16,10 +16,17 @@ export function canAccessSiteBuilder(
   );
 }
 
-/** Administradores e a conta autorizada não pagam hospedagem na VM do Atlas. */
+/**
+ * Administradores e a conta autorizada não pagam hospedagem na VM do Atlas.
+ * `SITE_BUILDER_HOSTING_FREE=true` (variável de ambiente, configurável no Komodo)
+ * isenta todo mundo — liga/desliga a gratuidade geral sem precisar de deploy.
+ */
 export function hasComplimentaryAtlasHosting(
   user: Pick<User, "email" | "isAdmin">
 ): boolean {
+  if (process.env.SITE_BUILDER_HOSTING_FREE?.trim().toLowerCase() === "true") {
+    return true;
+  }
   return canAccessSiteBuilder(user);
 }
 

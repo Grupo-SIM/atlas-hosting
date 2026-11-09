@@ -48,4 +48,23 @@ describe("hasComplimentaryAtlasHosting", () => {
       })
     ).toBe(false);
   });
+
+  test("SITE_BUILDER_HOSTING_FREE=true isenta todo mundo", () => {
+    const original = process.env.SITE_BUILDER_HOSTING_FREE;
+    process.env.SITE_BUILDER_HOSTING_FREE = "true";
+    try {
+      expect(
+        hasComplimentaryAtlasHosting({
+          email: "cliente@example.com",
+          isAdmin: false,
+        })
+      ).toBe(true);
+    } finally {
+      if (original === undefined) {
+        delete process.env.SITE_BUILDER_HOSTING_FREE;
+      } else {
+        process.env.SITE_BUILDER_HOSTING_FREE = original;
+      }
+    }
+  });
 });
