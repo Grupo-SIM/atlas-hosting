@@ -12,6 +12,9 @@
  * - SITE_BUILDER_WEB_ROOT: pasta dos sites na VM (padrão `/srv/www`)
  * - SITE_BUILDER_CADDY_ROOT: a mesma pasta como o container do Caddy a enxerga (padrão = WEB_ROOT).
  *   Ex.: WEB_ROOT=/opt/caddy/sites e CADDY_ROOT=/config/caddy/sites quando o Caddy monta /opt/caddy em /config/caddy.
+ * - SITE_BUILDER_HOSTING_MONTHLY_BRL: mensalidade da hospedagem na VM do Atlas (ex.: `29.90`). Ausente ou <= 0
+ *   deixa a opção paga desligada — o cliente só publica na VPS dele.
+ * - SITE_BUILDER_HOSTING_GRACE_DAYS: dias de atraso antes de suspender o site (padrão 5).
  */
 export function getAtlasHostingConfig() {
   const baseDomain = process.env.SITE_BUILDER_BASE_DOMAIN?.trim().toLowerCase();
@@ -23,10 +26,23 @@ export function getAtlasHostingConfig() {
   )
     ?.trim()
     .toLowerCase();
+  const monthlyBrl = Number.parseFloat(
+    process.env.SITE_BUILDER_HOSTING_MONTHLY_BRL?.replace(",", ".") ?? ""
+  );
+  const graceDays = Number.parseInt(
+    process.env.SITE_BUILDER_HOSTING_GRACE_DAYS ?? "",
+    10
+  );
   return {
     atlasVmEnabled: Boolean(vmIp),
     baseDomain: baseDomain || null,
     caddyRoot: process.env.SITE_BUILDER_CADDY_ROOT?.trim() || undefined,
+    /** Dias que o site continua no ar depois de uma cobrança falhar. */
+    hostingGraceDays:
+      Number.isFinite(graceDays) && graceDays >= 0 ? graceDays : 5,
+    /** `null` = hospedagem paga na VM do Atlas desligada. */
+    hostingMonthlyBrl:
+      Number.isFinite(monthlyBrl) && monthlyBrl > 0 ? monthlyBrl : null,
     keyPath: process.env.SITE_BUILDER_SSH_KEY_PATH?.trim() || undefined,
     localDeploy:
       process.env.SITE_BUILDER_DEPLOY_MODE?.trim().toLowerCase() === "local",

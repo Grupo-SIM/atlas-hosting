@@ -5,13 +5,14 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import {
+  pgBuilderHostingSubscription,
   pgBuilderPublication,
   pgBuilderSite,
   pgOrganizationDomains,
-  pgVpsServers,
 } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
+import { listPublishTargets } from "@/lib/site-builder/eligibility";
 import PublishForm from "./components/PublishForm";
 
 export const metadata: Metadata = {
@@ -34,7 +35,7 @@ export default async function PublishSitePage({
   if (!site) notFound();
 
   const config = getAtlasHostingConfig();
-  const [publication, domains, servers] = await Promise.all([
+  const [publication, domains, targets, hosting] = await Promise.all([
     db.query.pgBuilderPublication.findFirst({
       where: eq(pgBuilderPublication.siteId, site.id),
     }),
@@ -50,14 +51,11 @@ export default async function PublishSitePage({
             )
           )
       : Promise.resolve([]),
-    db
-      .select({
-        id: pgVpsServers.id,
-        ip: pgVpsServers.ip,
-        name: pgVpsServers.name,
-      })
-      .from(pgVpsServers)
-      .where(eq(pgVpsServers.userId, user.id)),
+    // Só VPS contratadas no Atlas e com assinatura em dia podem receber o site.
+    listPublishTargets(user.id),
+    db.query.pgBuilderHostingSubscription.findFirst({
+      where: eq(pgBuilderHostingSubscription.siteId, site.id),
+    }),
   ]);
 
   return (
@@ -73,9 +71,16 @@ export default async function PublishSitePage({
       </div>
 
       <PublishForm
-        atlasVmEnabled={config.atlasVmEnabled}
+        atlasVmMonthlyBrl={
+          targets.atlasVm.enabled ? targets.atlasVm.monthlyBrl : null
+        }
         baseDomain={config.subdomainEnabled ? config.baseDomain : null}
         domains={domains.map(d => d.domain)}
+        hosting={
+          hosting
+            ? { amountBrl: hosting.amountBrl, status: hosting.status }
+            : null
+        }
         publication={
           publication
             ? {
@@ -87,7 +92,7 @@ export default async function PublishSitePage({
               }
             : null
         }
-        servers={servers}
+        servers={targets.vpsNodes}
         siteId={site.id}
       />
     </div>

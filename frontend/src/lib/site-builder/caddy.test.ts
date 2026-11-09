@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
@@ -17,6 +23,20 @@ const base = {
   domain: "a.com",
   includeWww: true,
   releaseId: "1700000000",
+};
+
+const toWslPath = (windowsPath: string) =>
+  windowsPath
+    .replace(
+      /^([a-z]):[\\/]/i,
+      (_match, drive: string) => `/mnt/${drive.toLowerCase()}/`
+    )
+    .replaceAll("\\", "/");
+
+const runBashScript = (dir: string, name: string, script: string) => {
+  const scriptPath = path.join(dir, name);
+  writeFileSync(scriptPath, script);
+  execFileSync("bash", [toWslPath(scriptPath)], { stdio: "pipe" });
 };
 
 describe("site-builder caddy", () => {
@@ -101,8 +121,8 @@ describe("site-builder caddy", () => {
             )
         )
         .join("\n")
-        .replaceAll(CADDYFILE_BASE, caddyfile);
-      execFileSync("bash", ["-c", caddyOnly], { stdio: "pipe" });
+        .replaceAll(CADDYFILE_BASE, toWslPath(caddyfile));
+      runBashScript(dir, "deploy.sh", caddyOnly);
     };
 
     run(true);
@@ -129,10 +149,8 @@ describe("site-builder caddy", () => {
         l => !/^(mkdir -p|rm -rf|tar |chmod|\[ ! -d|mv |exec 9|flock)/.test(l)
       )
       .join("\n")
-      .replaceAll(CADDYFILE_BASE, caddyfile);
-    expect(() =>
-      execFileSync("bash", ["-c", script], { stdio: "pipe" })
-    ).toThrow();
+      .replaceAll(CADDYFILE_BASE, toWslPath(caddyfile));
+    expect(() => runBashScript(dir, "conflict.sh", script)).toThrow();
     expect(readFileSync(caddyfile, "utf8")).toBe(
       'a.com {\n\trespond "manual"\n}\n'
     );
@@ -161,33 +179,28 @@ describe("buildRemoveScript", () => {
   test("executa: tira só o bloco do domínio e mantém o resto do Caddyfile", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "caddy-rm-"));
     const caddyfile = path.join(dir, "Caddyfile.base");
-    const webRoot = path.join(dir, "sites").replaceAll("\\", "/");
+    const nodeWebRoot = path.join(dir, "sites");
+    const webRoot = toWslPath(nodeWebRoot);
     writeFileSync(
       caddyfile,
       `(cloudflare) {\n\ttls {\n\t\tdns cloudflare x\n\t}\n}\n${buildSiteBlock("a.sites.com", false)}${buildSiteBlock("b.sites.com", false)}`
     );
-    execFileSync("bash", [
-      "-c",
-      `mkdir -p "${webRoot}/a.sites.com" "${webRoot}/b.sites.com"`,
-    ]);
+    mkdirSync(path.join(nodeWebRoot, "a.sites.com"), { recursive: true });
+    mkdirSync(path.join(nodeWebRoot, "b.sites.com"), { recursive: true });
 
     const script = buildRemoveScript({ domain: "a.sites.com" })
       .replaceAll(WEB_ROOT, webRoot)
       .split("\n")
       .filter(l => !/^\s*(exec 9|flock)/.test(l))
       .join("\n")
-      .replaceAll(CADDYFILE_BASE, caddyfile);
-    execFileSync("bash", ["-c", script], { stdio: "pipe" });
-    execFileSync("bash", ["-c", script], { stdio: "pipe" });
+      .replaceAll(CADDYFILE_BASE, toWslPath(caddyfile));
+    runBashScript(dir, "remove.sh", script);
+    runBashScript(dir, "remove.sh", script);
 
     const result = readFileSync(caddyfile, "utf8");
     expect(result).not.toContain("a.sites.com");
     expect(result).toContain("b.sites.com {");
     expect(result).toContain("(cloudflare)");
-    expect(
-      execFileSync("bash", ["-c", `ls "${webRoot}"`])
-        .toString()
-        .trim()
-    ).toBe("b.sites.com");
+    expect(readdirSync(nodeWebRoot)).toEqual(["b.sites.com"]);
   });
 });

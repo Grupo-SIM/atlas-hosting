@@ -71,7 +71,9 @@ export default async function SiteBuilderPage() {
                     ? "published"
                     : site.publicationStatus === "failed"
                       ? "failed"
-                      : "draft";
+                      : site.publicationStatus === "suspended"
+                        ? "suspended"
+                        : "draft";
                 return (
                   <SiteCard
                     background={site.content.theme.bg ?? "#030712"}

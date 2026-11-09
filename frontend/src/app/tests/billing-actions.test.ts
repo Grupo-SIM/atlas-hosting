@@ -100,6 +100,9 @@ mock.module("@/lib/server/apis/simpay", () => ({
       };
     },
     createPixPayment: forbiddenGateway,
+    getPixPaymentStatus: actualSimpay.default.getPixPaymentStatus.bind(
+      actualSimpay.default
+    ),
   },
 }));
 

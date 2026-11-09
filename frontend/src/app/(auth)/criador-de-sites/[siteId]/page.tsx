@@ -7,10 +7,10 @@ import {
   pgBuilderPublication,
   pgBuilderSite,
   pgOrganizationDomains,
-  pgVpsServers,
 } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
+import { listPublishTargets } from "@/lib/site-builder/eligibility";
 import SiteEditorClient from "./components/SiteEditorClient";
 
 export const metadata: Metadata = {
@@ -33,7 +33,7 @@ export default async function SiteEditorPage({
   if (!site) notFound();
 
   const config = getAtlasHostingConfig();
-  const [publication, domains, servers] = await Promise.all([
+  const [publication, domains, targets] = await Promise.all([
     db.query.pgBuilderPublication.findFirst({
       where: eq(pgBuilderPublication.siteId, site.id),
     }),
@@ -49,14 +49,8 @@ export default async function SiteEditorPage({
             )
           )
       : Promise.resolve([]),
-    db
-      .select({
-        id: pgVpsServers.id,
-        ip: pgVpsServers.ip,
-        name: pgVpsServers.name,
-      })
-      .from(pgVpsServers)
-      .where(eq(pgVpsServers.userId, user.id)),
+    // Só VPS contratadas no Atlas e com assinatura em dia podem receber o site.
+    listPublishTargets(user.id),
   ]);
   const original = site.templateId ? getTemplate(site.templateId) : undefined;
 
@@ -66,10 +60,12 @@ export default async function SiteEditorPage({
       initialSite={site.content}
       originalSite={original?.site}
       publishSetup={{
-        atlasVmEnabled: config.atlasVmEnabled,
+        atlasVmMonthlyBrl: targets.atlasVm.enabled
+          ? targets.atlasVm.monthlyBrl
+          : null,
         baseDomain: config.subdomainEnabled ? config.baseDomain : null,
         domains: domains.map(d => d.domain),
-        servers,
+        servers: targets.vpsNodes,
       }}
       publishWithPassword={publication?.target === "user_vps"}
       siteId={site.id}

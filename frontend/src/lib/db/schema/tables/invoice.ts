@@ -21,22 +21,23 @@ export const defaultDomainRegisterOptions: DomainRegisterInvoiceOptions = {
 
 export const pgInvoice = pgTable("invoices", {
   amount: doublePrecision("amount").notNull(),
-  originalAmount: doublePrecision("original_amount"),
-  voucherConsumed: boolean("voucher_consumed").notNull().default(false),
-  voucherDiscount: integer("voucher_discount").notNull().default(0),
-  voucherId: uuid("voucher_id").references(() => pgVoucher.id),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   currency: text("currency").default("BRL").notNull(), // Added currency, defaulting to BRL
   description: text("description"), // Added description, optional
   dueDate: timestamp("due_date", { mode: "date" }).notNull(),
   id: uuid("id").primaryKey().defaultRandom(),
   metadata: json("metadata")
-    .$type<DomainRegisterInvoiceOptions | VpsInvoiceOptions>()
+    .$type<
+      | DomainRegisterInvoiceOptions
+      | SitePublishInvoiceOptions
+      | VpsInvoiceOptions
+    >()
     .default(defaultDomainRegisterOptions)
     .notNull(),
   orgId: uuid("org_id")
     .notNull()
     .references(() => pgOrganization.id),
+  originalAmount: doublePrecision("original_amount"),
   reference: text("reference").notNull(),
   status: text("status", {
     enum: ["pending", "paid", "failed", "processing", "expired"],
@@ -46,6 +47,9 @@ export const pgInvoice = pgTable("invoices", {
   userId: uuid("user_id")
     .notNull()
     .references(() => pgUser.id),
+  voucherConsumed: boolean("voucher_consumed").notNull().default(false),
+  voucherDiscount: integer("voucher_discount").notNull().default(0),
+  voucherId: uuid("voucher_id").references(() => pgVoucher.id),
 });
 
 export const invoiceRelations = relations(pgInvoice, ({ one }) => ({
@@ -133,6 +137,34 @@ export interface DomainRenewInvoiceOptions {
   guestCheckout?: boolean;
   guestPassword?: string;
   isRenewal?: boolean;
+}
+
+/**
+ * Publicação paga de um site do Criador de Sites. Quando o cliente compra o
+ * domínio no mesmo pedido, a fatura continua sendo `type: "domain"` — assim o
+ * registro na Namecheap segue pelo `fulfillDomainInvoice` de sempre — e este
+ * bloco diz o que publicar depois que o pagamento é confirmado. Sem domínio
+ * novo (subdomínio grátis ou domínio que o cliente já tem) a fatura cobre só a
+ * taxa de hospedagem e sai como `type: "subscription"`.
+ */
+export interface SitePublishInvoiceOptions
+  extends DomainRegisterInvoiceOptions {
+  siteHosting: SiteHostingInvoiceData;
+}
+
+export interface SiteHostingInvoiceData {
+  /** Endereço escolhido: domínio completo (`kind: "domain"`). */
+  domain?: string;
+  /** Mensalidade da VM do Atlas congelada no momento do pedido; ausente = VPS do próprio cliente. */
+  hostingAmountBrl?: number;
+  kind: "domain" | "subdomain";
+  /** Parte antes do domínio base do Atlas (`kind: "subdomain"`). */
+  label?: string;
+  /** Preço do domínio comprado neste pedido, quando houver. */
+  domainAmountBrl?: number;
+  siteId: string;
+  target: "atlas_vm" | "user_vps";
+  vpsNodeId?: string;
 }
 
 export interface VpsInvoiceOptions {

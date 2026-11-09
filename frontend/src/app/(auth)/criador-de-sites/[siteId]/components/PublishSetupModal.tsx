@@ -1,8 +1,14 @@
 "use client";
 
-import { Check, CircleCheck, ExternalLink, Loader } from "lucide-react";
+import {
+  Check,
+  CircleCheck,
+  CreditCard,
+  ExternalLink,
+  Loader,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,15 +16,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { publishSite } from "../../publish-actions";
+import {
+  getPublishJobStatus,
+  startPublishCheckout,
+} from "../../publish-checkout-actions";
+import DomainSearchPicker, {
+  brl,
+  type DomainOffer,
+} from "./DomainSearchPicker";
 
-type Mode = "own" | "sub";
+type Mode = "buy" | "own" | "sub";
 
 export interface PublishSetup {
-  atlasVmEnabled: boolean;
+  /** Preço mensal da hospedagem na VM do Atlas; `null` = opção desligada. */
+  atlasVmMonthlyBrl: number | null;
   /** Domínio base dos subdomínios grátis; `null` quando ainda não está configurado. */
   baseDomain: string | null;
   domains: string[];
+  /** Só VPS contratadas no Atlas e com assinatura em dia. */
   servers: { id: string; ip: string; name: string }[];
 }
 
@@ -41,9 +56,13 @@ export const slug = (value: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 42);
 
-/** Modal central de endereço e servidor: aparece só na hora de publicar. */
+/**
+ * Modal central de endereço e servidor. Também vende o domínio e a hospedagem
+ * na VM do Atlas: quando há algo a pagar, o site sobe só depois do pagamento
+ * confirmado e esta tela acompanha a entrega.
+ */
 export default function PublishSetupModal({
-  atlasVmEnabled,
+  atlasVmMonthlyBrl,
   baseDomain,
   defaultLabel,
   domains,
@@ -53,41 +72,81 @@ export default function PublishSetupModal({
   siteId,
 }: Props) {
   const router = useRouter();
+  const atlasVmEnabled = atlasVmMonthlyBrl !== null;
   const canHost = atlasVmEnabled || servers.length > 0;
+
   const modes: { id: Mode; label: string }[] = [
-    ...(baseDomain && canHost
-      ? [{ id: "sub" as const, label: "Endereço grátis" }]
-      : []),
-    ...(domains.length > 0 && canHost
+    ...(baseDomain ? [{ id: "sub" as const, label: "Endereço grátis" }] : []),
+    ...(domains.length > 0
       ? [{ id: "own" as const, label: "Meu domínio" }]
       : []),
+    { id: "buy" as const, label: "Comprar domínio" },
   ];
 
-  const [mode, setMode] = useState<Mode>(modes[0]?.id ?? "sub");
+  const [mode, setMode] = useState<Mode>(modes[0]?.id ?? "buy");
   const [label, setLabel] = useState(defaultLabel);
   const [ownDomain, setOwnDomain] = useState(domains[0] ?? "");
+  const [offer, setOffer] = useState<DomainOffer | null>(null);
+  const [target, setTarget] = useState<"atlas_vm" | "user_vps">(
+    servers.length > 0 ? "user_vps" : "atlas_vm"
+  );
   const [vpsNodeId, setVpsNodeId] = useState(servers[0]?.id ?? "");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [publishedDomain, setPublishedDomain] = useState<string | null>(null);
+  const [waitingPayment, setWaitingPayment] = useState(false);
 
-  const target = atlasVmEnabled ? "atlas_vm" : "user_vps";
   const fullDomain =
     mode === "sub" && baseDomain
       ? `${label || "seu-site"}.${baseDomain}`
-      : ownDomain;
+      : mode === "buy"
+        ? (offer?.domain ?? "")
+        : ownDomain;
+
+  // Hospedagem na VM do Atlas é mensal; a primeira mensalidade entra no pedido.
+  const hostingPrice = target === "atlas_vm" ? atlasVmMonthlyBrl : null;
+  const domainPrice = mode === "buy" ? (offer?.priceBrl ?? null) : null;
+  const total = (hostingPrice ?? 0) + (domainPrice ?? 0);
+
   const canPublish =
-    modes.length > 0 &&
-    (mode === "sub" ? label.length > 0 : ownDomain.length > 0) &&
-    (target === "atlas_vm" || vpsNodeId.length > 0);
+    canHost &&
+    (mode === "sub"
+      ? label.length > 0
+      : mode === "buy"
+        ? Boolean(offer)
+        : ownDomain.length > 0) &&
+    (target === "atlas_vm" ? atlasVmEnabled : vpsNodeId.length > 0);
+
+  // Volta do checkout: acompanha a entrega até o site subir.
+  useEffect(() => {
+    if (!waitingPayment) return;
+    const timer = setInterval(async () => {
+      const status = await getPublishJobStatus(siteId);
+      if (!status.ok) return;
+      if (status.publishedDomain) {
+        setWaitingPayment(false);
+        setPublishedDomain(status.publishedDomain);
+        router.refresh();
+        return;
+      }
+      if (status.job?.status === "failed") {
+        setWaitingPayment(false);
+        setError(
+          status.job.error ??
+            "O pagamento foi confirmado, mas a publicação falhou. Fale com o suporte."
+        );
+      }
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [router, siteId, waitingPayment]);
 
   const submit = async () => {
     setPending(true);
     setError(null);
-    const result = await publishSite({
-      domain: ownDomain,
-      kind: mode === "sub" ? "subdomain" : "domain",
+    const result = await startPublishCheckout({
+      domain: mode === "buy" ? offer?.domain : ownDomain,
+      kind: mode === "sub" ? "subdomain" : mode === "buy" ? "buy" : "domain",
       label,
       password: target === "user_vps" ? password : undefined,
       siteId,
@@ -99,9 +158,16 @@ export default function PublishSetupModal({
       setError(result.error);
       return;
     }
-    setPublishedDomain(result.domain);
-    // O editor recebe o endereço novo e passa a publicar direto nele.
-    router.refresh();
+    if (result.published) {
+      setPublishedDomain(result.domain);
+      router.refresh();
+      return;
+    }
+    if (result.checkoutUrl) {
+      // O site sobe sozinho quando o pagamento é confirmado.
+      setWaitingPayment(true);
+      window.open(result.checkoutUrl, "_blank", "noopener");
+    }
   };
 
   return (
@@ -146,6 +212,32 @@ export default function PublishSetupModal({
               </button>
             </div>
           </div>
+        ) : waitingPayment ? (
+          <div className="flex flex-col items-start gap-4">
+            <div className="flex size-11 items-center justify-center rounded-full bg-[#f1efea]">
+              <Loader className="size-[22px] animate-spin" />
+            </div>
+            <DialogHeader className="gap-1.5 text-left">
+              <DialogTitle className="font-medium text-2xl tracking-[-0.02em]">
+                Aguardando o pagamento
+              </DialogTitle>
+              <DialogDescription>
+                Abrimos o checkout em outra aba. Assim que o pagamento for
+                confirmado, publicamos o site automaticamente — esta tela avisa
+                quando ele estiver no ar. Pode fechar e voltar depois.
+              </DialogDescription>
+            </DialogHeader>
+            {error ? (
+              <p className="text-[13px] text-destructive">{error}</p>
+            ) : null}
+            <button
+              className="rounded-full border border-[#e0ddd5] bg-white px-4 py-[11px] text-sm"
+              onClick={() => onOpenChange(false)}
+              type="button"
+            >
+              Fechar
+            </button>
+          </div>
         ) : (
           <>
             <DialogHeader className="gap-1.5 text-left">
@@ -153,17 +245,11 @@ export default function PublishSetupModal({
                 Publicar seu site
               </DialogTitle>
               <DialogDescription>
-                Escolha o endereço. Você pode trocar depois.
+                Escolha o endereço e onde ele vai ficar hospedado.
               </DialogDescription>
             </DialogHeader>
 
-            {modes.length === 0 ? (
-              <p className="text-[#6e6b65] text-sm">
-                {canHost
-                  ? "Você não tem domínios com DNS no Atlas e os subdomínios grátis não estão disponíveis."
-                  : "Para publicar você precisa de uma VPS na conta ou do servidor do Atlas."}
-              </p>
-            ) : (
+            {canHost ? (
               <div className="flex min-w-0 flex-col gap-4">
                 <div className="flex min-w-0 flex-col gap-2">
                   <span className="font-medium text-[13px]">Endereço</span>
@@ -213,43 +299,117 @@ export default function PublishSetupModal({
                       ))}
                     </select>
                   ) : null}
-                  <p className="flex items-center gap-1.5 text-xs">
-                    <CircleCheck className="size-[13px] text-[#1f7a4d]" />
-                    <span className="text-[#1f7a4d]">
-                      {mode === "sub"
-                        ? "Você pode conectar um domínio próprio depois."
-                        : "O DNS é configurado automaticamente pelo Atlas."}
-                    </span>
-                  </p>
+                  {mode === "buy" ? (
+                    <DomainSearchPicker
+                      fieldClassName={field}
+                      onSelect={setOffer}
+                      selected={offer}
+                    />
+                  ) : null}
+                  {mode === "buy" ? null : (
+                    <p className="flex items-center gap-1.5 text-xs">
+                      <CircleCheck className="size-[13px] text-[#1f7a4d]" />
+                      <span className="text-[#1f7a4d]">
+                        {mode === "sub"
+                          ? "Você pode conectar um domínio próprio depois."
+                          : "O DNS é configurado automaticamente pelo Atlas."}
+                      </span>
+                    </p>
+                  )}
                 </div>
 
-                {atlasVmEnabled ? null : (
-                  <div className="flex flex-col gap-2">
-                    <span className="font-medium text-[13px]">Servidor</span>
-                    <select
-                      className={field}
-                      onChange={e => setVpsNodeId(e.target.value)}
-                      value={vpsNodeId}
-                    >
-                      {servers.map(s => (
-                        <option key={s.id} value={s.id}>
-                          {s.name} ({s.ip})
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      autoComplete="off"
-                      className={field}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="Senha root (opcional em VPS criada pelo Atlas)"
-                      type="password"
-                      value={password}
-                    />
+                <div className="flex flex-col gap-2">
+                  <span className="font-medium text-[13px]">Servidor</span>
+                  <select
+                    className={field}
+                    onChange={e =>
+                      setTarget(e.target.value as "atlas_vm" | "user_vps")
+                    }
+                    value={target}
+                  >
+                    {servers.length > 0 ? (
+                      <option value="user_vps">
+                        Minha VPS do Atlas (sem custo extra)
+                      </option>
+                    ) : null}
+                    {atlasVmEnabled ? (
+                      <option value="atlas_vm">
+                        Hospedagem do Atlas — {brl(atlasVmMonthlyBrl)}/mês
+                      </option>
+                    ) : null}
+                  </select>
+
+                  {target === "user_vps" ? (
+                    <>
+                      <select
+                        className={field}
+                        onChange={e => setVpsNodeId(e.target.value)}
+                        value={vpsNodeId}
+                      >
+                        {servers.map(s => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} ({s.ip})
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        autoComplete="off"
+                        className={field}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="Senha root (opcional em VPS criada pelo Atlas)"
+                        type="password"
+                        value={password}
+                      />
+                      <p className="text-[#6e6b65] text-xs">
+                        Usada só para enviar os arquivos agora. Não é gravada.
+                      </p>
+                    </>
+                  ) : (
                     <p className="text-[#6e6b65] text-xs">
-                      Usada só para enviar os arquivos agora. Não é gravada.
+                      Nós cuidamos do servidor, do HTTPS e das atualizações.
+                      Cobrança mensal, cancela quando quiser.
+                    </p>
+                  )}
+
+                  {servers.length === 0 ? (
+                    <p className="text-[#6e6b65] text-xs">
+                      Você não tem VPS contratada no Atlas. Pode publicar na
+                      hospedagem do Atlas acima ou{" "}
+                      <a className="underline" href="/vps">
+                        contratar uma VPS
+                      </a>
+                      .
+                    </p>
+                  ) : null}
+                </div>
+
+                {total > 0 ? (
+                  <div className="flex flex-col gap-1.5 rounded-[10px] border border-[#e0ddd5] bg-white p-3.5 text-sm">
+                    {domainPrice !== null && offer ? (
+                      <div className="flex justify-between gap-3">
+                        <span className="min-w-0 truncate text-[#6e6b65]">
+                          Registro de {offer.domain} (1 ano)
+                        </span>
+                        <span>{brl(domainPrice)}</span>
+                      </div>
+                    ) : null}
+                    {hostingPrice !== null ? (
+                      <div className="flex justify-between gap-3">
+                        <span className="text-[#6e6b65]">
+                          Hospedagem (1º mês)
+                        </span>
+                        <span>{brl(hostingPrice)}</span>
+                      </div>
+                    ) : null}
+                    <div className="mt-1 flex justify-between gap-3 border-[#ece9e2] border-t pt-2 font-medium">
+                      <span>Total agora</span>
+                      <span>{brl(total)}</span>
+                    </div>
+                    <p className="text-[#6e6b65] text-xs">
+                      O site é publicado assim que o pagamento for confirmado.
                     </p>
                   </div>
-                )}
+                ) : null}
 
                 {error ? (
                   <p className="text-[13px] text-destructive">{error}</p>
@@ -276,12 +436,27 @@ export default function PublishSetupModal({
                     >
                       {pending ? (
                         <Loader className="size-[15px] animate-spin" />
+                      ) : total > 0 ? (
+                        <CreditCard className="size-[15px]" />
                       ) : null}
-                      {pending ? "Publicando..." : "Publicar"}
+                      {pending
+                        ? "Enviando..."
+                        : total > 0
+                          ? `Pagar ${brl(total)}`
+                          : "Publicar"}
                     </button>
                   </div>
                 </div>
               </div>
+            ) : (
+              <p className="text-[#6e6b65] text-sm">
+                Para publicar você precisa de uma VPS contratada no Atlas ou da
+                hospedagem do Atlas, que ainda não está disponível.{" "}
+                <a className="underline" href="/vps">
+                  Ver planos de VPS
+                </a>
+                .
+              </p>
             )}
           </>
         )}

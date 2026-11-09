@@ -122,13 +122,18 @@ mostra "Atlas IA indisponível". O worker recebe só `CLAUDE_WORKER_TOKEN` (sem 
 
 - `builder_sites` (`0010_site_builder.sql`): um registro por site, conteúdo inteiro em `content jsonb`.
 - `builder_publications` (`0011_site_builder_publications.sql`): domínio + servidor de cada site.
-- O banco é produção. Quem aplica é o Breno: `node scripts/apply-sql.mjs frontend/drizzle/0010_site_builder.sql` e depois a `0011`.
+- `builder_hosting_subscriptions` e `builder_publish_jobs` (`0012_site_hosting.sql`): assinatura mensal da hospedagem do Atlas e reserva idempotente da publicação que aguarda pagamento. A migration também adiciona `suspended_at` à publicação.
+- O banco é produção. Quem aplica é o Breno: `node scripts/apply-sql.mjs frontend/drizzle/0010_site_builder.sql`, depois a `0011` e, para este fluxo, `node scripts/apply-sql.mjs frontend/drizzle/0012_site_hosting.sql`.
 
 ## Publicação
 
-`publishSite` (`publish-actions.ts`): valida dono do site e do domínio → `exportSiteToStatic` →
+`startPublishCheckout` (`publish-checkout-actions.ts`): o usuário escolhe endereço (domínio já gerenciado, subdomínio grátis ou domínio novo pesquisado com preço real) e o destino. A VPS própria só aparece quando foi contratada no Atlas e está em dia; a VM do Atlas só aparece com host e mensalidade configurados. Se não houver cobrança, chama `runPublish` imediatamente. Caso haja registro de domínio e/ou primeiro mês de hospedagem, cria uma única fatura e um `builder_publish_jobs`: o checkout paga primeiro e `fulfillSitePublishInvoice` registra o domínio, entrega uma vez só e ativa a assinatura de hospedagem.
+
+`runPublish` valida dono do site e do domínio → `exportSiteToStatic` →
 `deploySite` (`lib/site-builder/deploySite.ts`, mesmo padrão SSH/SCP do `setupSentinela`, com `execFile`
 para rodar no Node do container) → DNS A no Cloudflare → grava `builder_publications`.
+
+O scheduler verifica as assinaturas a cada 15 minutos: emite/cobra a renovação mensal, abre a carência configurada em caso de falha e substitui temporariamente o site por uma página de suspensão depois dela. Ao pagar, o site é republicado automaticamente. A senha SSH de uma VPS do usuário só existe na publicação sem cobrança; uma entrega pós-checkout usa a chave do Atlas e nunca persiste essa senha.
 
 Premissa: as VPS rodam **caddy-docker-proxy** com `/srv/www` visível ao container no mesmo caminho e o
 Caddyfile base em `/opt/caddy/Caddyfile.base`. Para cada site o script remoto (`lib/site-builder/caddy.ts`):
@@ -149,7 +154,9 @@ gerado só de domínio validado, com backup a cada deploy.
 Variáveis de ambiente (ver `lib/site-builder/config.ts`):
 
 - `SITE_BUILDER_BASE_DOMAIN` e `SITE_BUILDER_CLOUDFLARE_ZONE` — subdomínios grátis (`<nome>.<base>`).
-- `SITE_BUILDER_ATLAS_VM_HOST` (ou o nome antigo `SITE_BUILDER_ATLAS_VM_IP`) — IP **ou hostname/CNAME** (ex.: `vps.simintermediacoes.com`) da VM do Atlas que hospeda sites; com hostname o DNS do site vira CNAME. **Sem ela a opção fica desligada** (a taxa de hospedagem ainda não existe).
+- `SITE_BUILDER_ATLAS_VM_HOST` (ou o nome antigo `SITE_BUILDER_ATLAS_VM_IP`) — IP **ou hostname/CNAME** (ex.: `vps.simintermediacoes.com`) da VM do Atlas que hospeda sites; com hostname o DNS do site vira CNAME. Sem ela, a hospedagem do Atlas fica desligada.
+- `SITE_BUILDER_HOSTING_MONTHLY_BRL` — mensalidade em reais da hospedagem do Atlas (aceita `29.90` ou `29,90`). Junto do host, habilita essa opção e cobra o primeiro mês no checkout.
+- `SITE_BUILDER_HOSTING_GRACE_DAYS` — dias após uma cobrança mensal falhar antes de suspender o site (padrão: `5`).
 - `SITE_BUILDER_SSH_KEY_PATH` — chave privada do Atlas para acessar as VMs.
 - `SITE_BUILDER_DEPLOY_MODE=local` — o Atlas roda **na própria VM** dos sites: o script de deploy roda dentro do container (bash), sem SSH/chave. Exige montar `/opt/caddy:/opt/caddy` no container.
 - `SITE_BUILDER_WEB_ROOT` / `SITE_BUILDER_CADDY_ROOT` — pasta dos sites na VM e o mesmo caminho como o container do Caddy a enxerga (ex.: `/opt/caddy/sites` e `/config/caddy/sites`; padrão `/srv/www` nos dois).
@@ -163,8 +170,7 @@ Notas de segurança:
 
 ## Pendências conhecidas
 
-- Taxa de hospedagem na VM do Atlas (valor definido pelo admin) e cobrança.
-- Compra de domínio dentro do fluxo de publicar; despublicar (remover pasta em /srv/www e o bloco do Caddyfile.base).
+- Despublicar (remover pasta em /srv/www e o bloco do Caddyfile.base).
 - As imagens do `marketplace` são placeholders; as originais (lista em `plans/marketplace-imagens.md`) só entram depois de aprovadas e copiadas para o storage (trocar em `images.ts`).
 - As imagens do `central-marketing` são placeholders; trocar pelas reais (ou pelas do WordPress, se aprovadas) é editar `images.ts`/o editor. A edição de textura e logos do carrossel é feita no editor (lista de logos).
 - Imagens do template spyhacker ainda apontam para `007spyhacker.com/wp-content/uploads`; as do `blog-viagens` apontam para `images.unsplash.com`. Copiar ambas para o storage.

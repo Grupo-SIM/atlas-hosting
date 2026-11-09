@@ -124,6 +124,106 @@ cat "$TMP" > "${CADDYFILE_BASE}"
 `;
 }
 
+/** Pasta com a página de suspensão, uma por servidor (fora das pastas de site). */
+export const SUSPENDED_DIR_NAME = "__atlas_suspenso__";
+
+export const suspendedDir = (root: string = WEB_ROOT) =>
+  `${assertValidRoot(root)}/${SUSPENDED_DIR_NAME}`;
+
+/**
+ * Página servida enquanto a hospedagem está suspensa. Fica num heredoc com
+ * delimitador citado, então nada aqui é expandido pelo shell — mas, por
+ * garantia, o conteúdo é fixo e não recebe dado de usuário.
+ */
+export const SUSPENDED_PAGE = `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Site temporariamente indisponível</title>
+<style>
+:root{color-scheme:light dark}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f6f6f6;color:#131313;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px}
+main{max-width:30rem;text-align:center}
+h1{font-size:1.5rem;margin:0 0 .75rem}
+p{margin:0;line-height:1.6;color:#555}
+@media (prefers-color-scheme:dark){body{background:#131313;color:#f6f6f6}p{color:#bbb}}
+</style>
+</head>
+<body>
+<main>
+<h1>Site temporariamente indisponível</h1>
+<p>A hospedagem deste endereço está suspensa. Se você é o responsável pelo site, regularize a fatura em aberto no painel do Atlas para colocá-lo no ar novamente.</p>
+</main>
+</body>
+</html>
+`;
+
+/**
+ * Bloco que substitui o do site enquanto a hospedagem está suspensa: mesmos
+ * hosts, mas servindo a página de suspensão. Os arquivos do site continuam em
+ * `/srv/www/<dominio>` e o DNS não é tocado, então republicar volta tudo.
+ */
+export function buildSuspendedBlock(
+  domain: string,
+  includeWww: boolean,
+  caddyRoot: string = WEB_ROOT
+): string {
+  const hosts = includeWww ? `${domain}, www.${domain}` : domain;
+  return `${beginMarker(domain)}
+${hosts} {
+	root * ${suspendedDir(caddyRoot)}
+	encode gzip
+
+	handle {
+		rewrite * /index.html
+		file_server
+	}
+}
+${endMarker(domain)}
+`;
+}
+
+/**
+ * Script remoto que suspende o site: cria a página de suspensão (uma vez por
+ * servidor) e troca **apenas** o bloco deste domínio no Caddyfile.base. Não
+ * apaga nada do site. Seguro de repetir.
+ */
+export function buildSuspendScript(args: {
+  caddyRoot?: string;
+  domain: string;
+  includeWww: boolean;
+  webRoot?: string;
+}): string {
+  const webRoot = assertValidRoot(args.webRoot ?? WEB_ROOT);
+  const caddyRoot = assertValidRoot(args.caddyRoot ?? webRoot);
+  const domain = assertValidDomain(args.domain);
+  const dir = suspendedDir(webRoot);
+  const lock = `${CADDYFILE_BASE}.atlas.lock`;
+
+  return `set -euo pipefail
+[ -f "${CADDYFILE_BASE}" ] || { echo "${CADDYFILE_BASE} não encontrado neste servidor" >&2; exit 1; }
+mkdir -p "${dir}"
+cat > "${dir}/index.html" <<'ATLAS_SUSPENDED_PAGE'
+${SUSPENDED_PAGE}ATLAS_SUSPENDED_PAGE
+chmod -R a+rX "${dir}"
+exec 9>"${lock}"
+flock 9
+TMP="$(mktemp)"
+trap 'rm -f "$TMP"' EXIT
+awk -v b="${beginMarker(domain)}" -v e="${endMarker(domain)}" '$0==b{skip=1} {if(!skip)print} $0==e{skip=0}' "${CADDYFILE_BASE}" > "$TMP"
+if grep -Eq '${conflictPattern(domain)}' "$TMP"; then
+  echo "${domain} já está configurado no ${CADDYFILE_BASE} fora do Atlas" >&2
+  exit 1
+fi
+[ -z "$(tail -c1 "$TMP")" ] || echo >> "$TMP"
+cat >> "$TMP" <<'ATLAS_SITE_BLOCK'
+${buildSuspendedBlock(domain, args.includeWww, caddyRoot)}ATLAS_SITE_BLOCK
+cp -p "${CADDYFILE_BASE}" "${CADDYFILE_BASE}.atlas-bak"
+cat "$TMP" > "${CADDYFILE_BASE}"
+`;
+}
+
 /**
  * Script remoto que tira o site do ar: tira o bloco do Caddyfile.base (com backup) e apaga a pasta do site.
  * É idempotente — rodar de novo num site já removido não dá erro.

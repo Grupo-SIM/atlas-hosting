@@ -71,6 +71,10 @@ import {
   missingContactFields,
 } from "@/lib/server/domains/checkoutFulfillment";
 import { validateNamecheapFundsForPayment } from "@/lib/server/domains/namecheap-balance-alert";
+import {
+  getDomainProfitFee,
+  quoteDomainRegistration,
+} from "@/lib/server/domains/pricing";
 import { renewDomainFromPaidInvoice } from "@/lib/server/domains/renewFromPaidInvoice";
 import { AppLogger } from "@/lib/server/logs";
 import { isFinalCardDecline } from "@/lib/server/payments/card-failure";
@@ -78,6 +82,7 @@ import { checkoutDeadlineCondition } from "@/lib/server/payments/checkout-deadli
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { applyRenewalPayment } from "@/lib/server/subscriptions/lifecycle";
 import { ensureRenewalInvoice } from "@/lib/server/subscriptions/renewal-invoice";
+import { fulfillSitePublishInvoice } from "@/lib/site-builder/fulfillPublish";
 import { getStorageVpsMonthlyEuro } from "@/lib/storage-vps-catalog";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
 import { getVdsMonthlyEuro } from "@/lib/vds-catalog";
@@ -649,38 +654,6 @@ export async function createPlanInvoice(
   };
 }
 
-/** Helper to calculate the domain profit fee (markup) */
-const getDomainProfitFee = async (): Promise<number> => {
-  const feeEnabled = process.env.DOMAIN_FEE_ENABLED !== "false";
-  if (!feeEnabled) return 1;
-
-  try {
-    const envFeeValue =
-      process.env.DOMAIN_PROFIT_FEE || process.env.NAMESILO_PROFIT_FEE;
-    const envFee = envFeeValue ? Number.parseFloat(envFeeValue) : undefined;
-
-    let finalFeePercent: number;
-
-    if (envFee !== undefined) {
-      // Normalize: 0.2 -> 20, 1.2 -> 20, 20 -> 20
-      if (envFee > 0 && envFee < 1) {
-        finalFeePercent = envFee * 100;
-      } else if (envFee >= 1 && envFee < 5) {
-        finalFeePercent = (envFee - 1) * 100;
-      } else {
-        finalFeePercent = envFee;
-      }
-    } else {
-      const dbConfig = await db.query.pgSystemConfig.findFirst();
-      finalFeePercent = dbConfig?.domainFee ?? 30;
-    }
-
-    return 1 + finalFeePercent / 100;
-  } catch {
-    return 1.2;
-  }
-};
-
 export async function createDomainInvoice(
   data: (DomainPageParams & { guestInfo?: GuestInfo }) | FormData
 ) {
@@ -734,134 +707,26 @@ export async function createDomainInvoice(
   );
 
   try {
-    console.log(`[NAMECHEAP] Verificando disponibilidade de: ${domain}`);
-    const namecheapResult = await namecheapApi
-      .check({
-        DomainList: domain,
-      })
-      .then(r => r.Results[0]);
+    // Disponibilidade e preco vem do mesmo lugar que a tela de publicar usa.
+    const quote = await quoteDomainRegistration({ domain, years: yearStr });
 
-    console.log("[NAMECHEAP] Resultado da verificação:", {
-      available: namecheapResult.Available,
-      domain: namecheapResult.Domain,
-      isPremium: namecheapResult.IsPremiumName,
-      premiumPrice: namecheapResult.PremiumRegistrationPrice || "N/A",
+    console.log("[NAMECHEAP] Resultado da verificacao:", {
+      available: quote.available,
+      domain,
+      isPremium: quote.isPremium,
+      priceBrl: quote.priceBrl,
     });
 
-    const isAvailable = namecheapResult.Available;
-
-    if (!isAvailable) {
+    if (!quote.available) {
       console.warn(
-        `[INVOICE] Domínio ${domain} não está disponível. Fatura não criada.`
+        `[INVOICE] Dominio ${domain} nao esta disponivel. Fatura nao criada.`
       );
       return { error: "Domínio não está disponível para registro." };
     }
 
-    const fee = await getDomainProfitFee();
-
-    let priceInBrl = 0;
-    let namecheapCostBrl = 0;
-    let namecheapCostUsd = 0;
-
-    // Se for premium, usamos o preço premium retornado no check
-    if (
-      namecheapResult.IsPremiumName &&
-      (namecheapResult.PremiumRegistrationPrice ?? 0) > 0
-    ) {
-      const basePriceUSD = namecheapResult.PremiumRegistrationPrice ?? 0;
-      console.log(`[INVOICE] Usando PREÇO PREMIUM: $${basePriceUSD}`);
-      const baseUsdAsBrl = await currencyConversion.convert({
-        amount: basePriceUSD,
-        from: "usd",
-        to: "brl",
-      });
-      const targetYears = Number.parseInt(yearStr, 10);
-      const fixedFee = Number(process.env.DOMAIN_FIXED_FEE) || 4;
-      namecheapCostUsd = basePriceUSD * targetYears;
-      namecheapCostBrl = baseUsdAsBrl * targetYears;
-      priceInBrl = baseUsdAsBrl * fee + fixedFee * targetYears;
-    } else {
-      const tld = domain.split(".").pop() as string;
-      console.log(`[NAMECHEAP] Buscando preços para TLD: .${tld}`);
-
-      // Buscamos o preço de 1 ano e o de renovação
-      const pricing = await db.query.pgDomainPricingCache.findFirst({
-        where: eq(pgDomainPricingCache.tld, tld),
-      });
-
-      let p1USD = 0;
-      let renewUSD = 0;
-      const allPricesUSD: Record<number, number> = {};
-
-      if (pricing) {
-        p1USD = pricing.price ?? 0;
-        renewUSD = pricing.renew ?? p1USD * 1.1;
-      } else {
-        const pricingData = await namecheapApi.getPricing(tld);
-        const categories = pricingData?.ProductType?.Categories || [];
-
-        const regCat = categories.find(
-          c => c.Name.toUpperCase() === "REGISTER"
-        );
-        const renewCat = categories.find(c => c.Name.toUpperCase() === "RENEW");
-
-        const products = regCat?.Products || [];
-        const prod = products.find(
-          (p: any) => p.Name.toLowerCase() === tld.toLowerCase()
-        );
-
-        if (prod) {
-          prod.Prices.forEach((p: any) => {
-            if (
-              p.DurationType === "YEAR" &&
-              p.Duration >= 1 &&
-              p.Duration <= 10
-            ) {
-              allPricesUSD[p.Duration] = p.YourPrice ?? p.Price ?? 0;
-            }
-          });
-        }
-
-        p1USD = allPricesUSD[1] || 0;
-
-        const get1YearPrice = (cat: any) => {
-          const products = cat?.Products || [];
-          const prod = products.find(
-            (p: any) => p.Name.toLowerCase() === tld.toLowerCase()
-          );
-          const priceDetail = prod?.Prices.find(
-            (p: any) => p.Duration === 1 && p.DurationType === "YEAR"
-          );
-          return priceDetail?.YourPrice ?? priceDetail?.Price ?? 0;
-        };
-        renewUSD = get1YearPrice(renewCat) || p1USD * 1.2;
-      }
-
-      // Cálculo final baseado na tabela ou na renovação
-      const targetYears = Number.parseInt(yearStr, 10);
-      let totalUSD = 0;
-
-      if (allPricesUSD[targetYears]) {
-        totalUSD = allPricesUSD[targetYears];
-      } else {
-        totalUSD = p1USD + renewUSD * (targetYears - 1);
-      }
-
-      const baseUsdAsBrl = await currencyConversion.convert({
-        amount: totalUSD,
-        from: "usd",
-        to: "brl",
-      });
-      namecheapCostUsd = totalUSD;
-      const envFixedFee = process.env.DOMAIN_FIXED_FEE;
-      const fixedFee = envFixedFee !== undefined ? Number(envFixedFee) : 4;
-      namecheapCostBrl = baseUsdAsBrl;
-      priceInBrl = baseUsdAsBrl * fee + fixedFee * targetYears;
-    }
-
-    if (whoisguard === "on") {
-      // Whoisguard sem custo
-    }
+    const priceInBrl = quote.priceBrl;
+    const namecheapCostBrl = quote.namecheapCostBrl;
+    const namecheapCostUsd = quote.namecheapCostUsd;
 
     const [newInvoice] = await db
       .insert(pgInvoice)
@@ -1342,6 +1207,11 @@ async function settleNonCardInvoice(
 
     if (!fulfillment.ok) return false;
 
+    // Domínio registrado: se o pedido veio do Criador de Sites, publica o site.
+    await fulfillSitePublishInvoice(invoice.id).catch(error =>
+      console.error("[PUBLICAR] Falha na entrega da publicação:", error)
+    );
+
     // A conciliação também roda fora de uma requisição HTTP (sem after()).
     await sendWelcomePasswordEmailIfGuest(invoice, user).catch(error =>
       console.error(
@@ -1397,6 +1267,10 @@ async function settleNonCardInvoice(
     if (!(invoice.metadata as any).isRenewal)
       await handleVpsNonCardPaid(invoice, user, method);
     await provisionPaidVps(invoice.id);
+    // Publicação de site do Criador de Sites: entrega após o pagamento.
+    await fulfillSitePublishInvoice(invoice.id).catch(error =>
+      console.error("[PUBLICAR] Falha na entrega da publicação:", error)
+    );
     await triggerPurchaseNotifications(
       invoice,
       user,
@@ -1469,6 +1343,10 @@ async function fulfillCheckoutAfterPixPaid(
     if (!(invoice.metadata as any).isRenewal)
       await handleVpsNonCardPaid(invoice, user, "pix");
     await provisionPaidVps(invoice.id);
+    // Publicação de site do Criador de Sites: entrega após o pagamento.
+    await fulfillSitePublishInvoice(invoice.id).catch(error =>
+      console.error("[PUBLICAR] Falha na entrega da publicação:", error)
+    );
     await triggerPurchaseNotifications(
       invoice,
       user,
@@ -2730,6 +2608,11 @@ export async function completeCheckout(
       return { message: fulfillment.message ?? "", status: "error" };
     }
 
+    // Domínio registrado: se o pedido veio do Criador de Sites, publica o site.
+    await fulfillSitePublishInvoice(invoiceId).catch(error =>
+      console.error("[PUBLICAR] Falha na entrega da publicação:", error)
+    );
+
     console.log(
       `[CHECKOUT] ✓ Fatura ${invoiceId} marcada como PAGA. Redirecionando para /payment/success.`
     );
@@ -2787,6 +2670,10 @@ export async function completeCheckout(
   });
   after(async () => {
     await provisionPaidVps(invoice.id);
+    // Publicação de site do Criador de Sites: entrega após o pagamento.
+    await fulfillSitePublishInvoice(invoice.id).catch(error =>
+      console.error("[PUBLICAR] Falha na entrega da publicação:", error)
+    );
     await sendWelcomePasswordEmailIfGuest(invoice, user as any).catch(error =>
       console.error("Falha no email de boas-vindas:", error)
     );
@@ -3118,6 +3005,11 @@ export async function completeCheckoutWithSavedCard(
       return { message: fulfillment.message ?? "", status: "error" };
     }
 
+    // Domínio registrado: se o pedido veio do Criador de Sites, publica o site.
+    await fulfillSitePublishInvoice(invoiceId).catch(error =>
+      console.error("[PUBLICAR] Falha na entrega da publicação:", error)
+    );
+
     console.log(`[CHECKOUT-SAVED] ✓ Fatura ${invoiceId} marcada como PAGA.`);
     return { message: paymentSuccessUrl(invoiceId), status: "success" };
   }
@@ -3178,6 +3070,10 @@ export async function completeCheckoutWithSavedCard(
   });
   after(async () => {
     await provisionPaidVps(invoice.id);
+    // Publicação de site do Criador de Sites: entrega após o pagamento.
+    await fulfillSitePublishInvoice(invoice.id).catch(error =>
+      console.error("[PUBLICAR] Falha na entrega da publicação:", error)
+    );
     await triggerPurchaseNotifications(invoice, user, {
       ...values,
       paymentMethod: "credit_card",

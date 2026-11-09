@@ -1,9 +1,9 @@
 import { Client } from "pg";
 
-type ScheduledJob = {
+interface ScheduledJob {
   name: string;
   run: () => Promise<void>;
-};
+}
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
 const THIRTY_SECONDS = 30 * 1000;
@@ -33,7 +33,11 @@ async function invokeInternalGet(path: string): Promise<void> {
   const handler = await (async () => {
     switch (path.split("?")[0]) {
       case "/api/internal/vps-subscriptions/renew":
-        return (await import("@/app/api/internal/vps-subscriptions/renew/route"))
+        return (
+          await import("@/app/api/internal/vps-subscriptions/renew/route")
+        ).GET;
+      case "/api/internal/site-hosting/renew":
+        return (await import("@/app/api/internal/site-hosting/renew/route"))
           .GET;
       case "/api/internal/expiry-notifications":
         return (await import("@/app/api/internal/expiry-notifications/route"))
@@ -86,9 +90,11 @@ async function withPostgresLock(
     await run();
     console.info(`[SCHEDULER] ${name}: concluído.`);
   } finally {
-    await client.end().catch(error =>
-      console.error(`[SCHEDULER] ${name}: falha ao encerrar lock:`, error)
-    );
+    await client
+      .end()
+      .catch(error =>
+        console.error(`[SCHEDULER] ${name}: falha ao encerrar lock:`, error)
+      );
   }
 }
 
@@ -101,7 +107,8 @@ function runJob(job: ScheduledJob) {
 export function millisecondsUntilUtcHour(now: Date, hour: number) {
   const target = new Date(now);
   target.setUTCHours(hour, 0, 0, 0);
-  if (target.getTime() <= now.getTime()) target.setUTCDate(target.getUTCDate() + 1);
+  if (target.getTime() <= now.getTime())
+    target.setUTCDate(target.getUTCDate() + 1);
   return target.getTime() - now.getTime();
 }
 
@@ -112,10 +119,13 @@ function scheduleEvery(job: ScheduledJob, milliseconds: number) {
 
 function scheduleDailyAtUtcHour(job: ScheduledJob, hour: number) {
   const scheduleNext = () => {
-    setTimeout(() => {
-      runJob(job);
-      scheduleNext();
-    }, millisecondsUntilUtcHour(new Date(), hour));
+    setTimeout(
+      () => {
+        runJob(job);
+        scheduleNext();
+      },
+      millisecondsUntilUtcHour(new Date(), hour)
+    );
   };
   scheduleNext();
 }
@@ -129,13 +139,20 @@ export function startInternalScheduler() {
     name: "vps-renewal",
     run: () => invokeInternalGet("/api/internal/vps-subscriptions/renew"),
   };
+  const siteHostingRenewal: ScheduledJob = {
+    name: "site-hosting-renewal",
+    run: () => invokeInternalGet("/api/internal/site-hosting/renew"),
+  };
   const expiryNotifications: ScheduledJob = {
     name: "expiry-notifications",
     run: () => invokeInternalGet("/api/internal/expiry-notifications"),
   };
   const subscriptionReminders: ScheduledJob = {
     name: "vps-expiry-notifications",
-    run: () => invokeInternalGet("/api/internal/expiry-notifications?subscriptionsOnly=true"),
+    run: () =>
+      invokeInternalGet(
+        "/api/internal/expiry-notifications?subscriptionsOnly=true"
+      ),
   };
   const pixReconciliation: ScheduledJob = {
     name: "pix-reconciliation",
@@ -145,7 +162,8 @@ export function startInternalScheduler() {
         invokeInternalGet("/api/internal/namecheap-verification"),
       ]);
       const rejected = results.find(
-        (result): result is PromiseRejectedResult => result.status === "rejected"
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected"
       );
       if (rejected) throw rejected.reason;
     },
@@ -162,6 +180,7 @@ export function startInternalScheduler() {
   scheduleEvery(cloudflareActivation, FIFTEEN_MINUTES);
   scheduleEvery(vpsRenewal, FIFTEEN_MINUTES);
   scheduleEvery(subscriptionReminders, FIFTEEN_MINUTES);
+  scheduleEvery(siteHostingRenewal, FIFTEEN_MINUTES);
   // Checkpoints VPS persistidos; domínios mantêm execução diária.
   scheduleDailyAtUtcHour(expiryNotifications, 12);
   console.info("[SCHEDULER] Agendadores internos iniciados.");

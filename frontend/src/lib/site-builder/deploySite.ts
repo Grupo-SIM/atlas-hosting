@@ -7,6 +7,7 @@ import {
   assertValidDomain,
   buildDeployScript,
   buildRemoveScript,
+  buildSuspendScript,
 } from "./caddy";
 
 const execFileAsync = promisify(execFile);
@@ -164,6 +165,29 @@ export async function deploySite(args: {
   } finally {
     await rm(workDir, { force: true, recursive: true }).catch(() => {});
   }
+}
+
+/**
+ * Suspende o site por falta de pagamento: o endereço passa a servir a página de
+ * suspensão. Os arquivos do site e o DNS ficam intactos, então republicar
+ * (`runPublish`) devolve o site ao ar. Seguro de repetir.
+ */
+export async function suspendSite(args: {
+  domain: string;
+  /** `true` para domínio próprio (atende também `www.`). */
+  includeWww: boolean;
+  target: DeployTarget;
+}) {
+  const domain = assertValidDomain(args.domain);
+  await runRemoteScript(
+    args.target,
+    buildSuspendScript({
+      caddyRoot: args.target.caddyRoot,
+      domain,
+      includeWww: args.includeWww,
+      webRoot: args.target.webRoot,
+    })
+  );
 }
 
 /** Tira o site do servidor: apaga a pasta e o bloco do Caddy. Seguro de repetir. */

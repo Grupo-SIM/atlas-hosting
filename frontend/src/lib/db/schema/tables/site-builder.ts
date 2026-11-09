@@ -56,7 +56,11 @@ export const pgBuilderPublication = pgTable(
     siteId: uuid("site_id")
       .notNull()
       .references(() => pgBuilderSite.id, { onDelete: "cascade" }),
-    status: text("status", { enum: ["failed", "published"] }).notNull(),
+    status: text("status", {
+      enum: ["failed", "published", "suspended"],
+    }).notNull(),
+    /** Quando a hospedagem foi suspensa por falta de pagamento (arquivos e DNS ficam). */
+    suspendedAt: timestamp("suspended_at", { mode: "date" }),
     /** `atlas_vm` = servidor do Atlas; `user_vps` = VPS do próprio usuário. */
     target: text("target", { enum: ["atlas_vm", "user_vps"] }).notNull(),
     updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),

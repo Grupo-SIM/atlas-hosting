@@ -21,11 +21,16 @@ export async function takeDown(
   options: { keepRecord?: boolean } = {}
 ): Promise<{ ok: true } | { error: string; ok: false }> {
   try {
-    const target = await resolveTarget(userId, {
-      password,
-      target: publication.target,
-      vpsNodeId: publication.vpsNodeId ?? undefined,
-    });
+    const target = await resolveTarget(
+      userId,
+      {
+        password,
+        target: publication.target,
+        vpsNodeId: publication.vpsNodeId ?? undefined,
+      },
+      // Tirar do ar vale mesmo quando a assinatura da VPS já acabou.
+      { allowIneligible: true }
+    );
     if ("error" in target) return { error: target.error, ok: false };
 
     await removeSite({ domain: publication.domain, target: target.deploy });

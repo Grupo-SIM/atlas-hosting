@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { deleteSite } from "../actions";
 
-export type SiteStatus = "draft" | "failed" | "published";
+export type SiteStatus = "draft" | "failed" | "published" | "suspended";
 
 const STATUS: Record<SiteStatus, { dot: string; label: string; pill: string }> =
   {
@@ -40,6 +40,11 @@ const STATUS: Record<SiteStatus, { dot: string; label: string; pill: string }> =
       dot: "bg-[#22a06b]",
       label: "No ar",
       pill: "bg-[#e6f5ec] text-[#1f7a4d]",
+    },
+    suspended: {
+      dot: "bg-[#d97706]",
+      label: "Suspenso",
+      pill: "bg-[#fdf1e0] text-[#92550c]",
     },
   };
 

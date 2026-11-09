@@ -1,0 +1,259 @@
+import { and, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import {
+  pgBuilderHostingSubscription,
+  pgBuilderPublication,
+  pgBuilderSite,
+  pgOrganizationDomains,
+} from "@/lib/db/schema";
+import { cloudflareApi } from "@/lib/server/apis/cloudflare";
+import { normalizeDomainName } from "@/lib/server/domains/authorization";
+import { configureWebHostingDns } from "@/lib/server/domains/cloudflare-dns";
+import { assertValidDomain } from "./caddy";
+import { getAtlasHostingConfig } from "./config";
+import { deploySite, IPV4_RE } from "./deploySite";
+import { takeDown } from "./takedown";
+import { resolveTarget, sanitize } from "./target";
+
+export type PublishResult =
+  | { domain: string; ok: true }
+  | { error: string; ok: false };
+
+export const LABEL_RE = /^[a-z0-9](?:[a-z0-9-]{0,40}[a-z0-9])?$/;
+
+export interface PublishInput {
+  /** Domínio já na conta (kind = "domain"). */
+  domain?: string;
+  kind: "domain" | "subdomain";
+  /** Parte antes do domínio base do Atlas (kind = "subdomain"). */
+  label?: string;
+  /** Senha SSH da VPS do usuário — usada só nesta chamada, nunca gravada. */
+  password?: string;
+  siteId: string;
+  target: "atlas_vm" | "user_vps";
+  vpsNodeId?: string;
+}
+
+export async function ownedSite(siteId: string, userId: string) {
+  const [site] = await db
+    .select()
+    .from(pgBuilderSite)
+    .where(and(eq(pgBuilderSite.id, siteId), eq(pgBuilderSite.userId, userId)))
+    .limit(1);
+  return site;
+}
+
+export async function currentPublication(siteId: string) {
+  return db.query.pgBuilderPublication.findFirst({
+    where: eq(pgBuilderPublication.siteId, siteId),
+  });
+}
+
+/**
+ * Publica o site de fato: valida endereço e servidor, gera o HTML estático,
+ * envia para o servidor (pasta + bloco no Caddy), aponta o DNS e grava
+ * `builder_publications`.
+ *
+ * Fica fora das server actions porque dois caminhos usam o mesmo corpo: o
+ * publicar direto (VPS do cliente, sem cobrança) e a entrega depois do
+ * pagamento (`fulfillSitePublishInvoice`). Autenticação é de quem chama.
+ */
+export async function runPublish(
+  user: { id: string; organizationId?: string | null },
+  input: PublishInput,
+  options: {
+    /**
+     * Pula a conferência da assinatura de hospedagem. Só o fulfillment usa,
+     * porque ele acabou de criar a assinatura na mesma transação de entrega.
+     */
+    skipHostingCheck?: boolean;
+  } = {}
+): Promise<PublishResult> {
+  const site = await ownedSite(input.siteId, user.id);
+  if (!site) return { error: "Site não encontrado.", ok: false };
+
+  const config = getAtlasHostingConfig();
+
+  // 1) Domínio: subdomínio grátis do Atlas ou domínio da organização com DNS no Atlas.
+  let domain: string;
+  let zoneId: string | undefined;
+  try {
+    if (input.kind === "subdomain") {
+      const label = (input.label ?? "").trim().toLowerCase();
+      if (
+        !(config.subdomainEnabled && config.baseDomain && config.zoneDomain)
+      ) {
+        return {
+          error: "Subdomínios grátis ainda não estão disponíveis.",
+          ok: false,
+        };
+      }
+      if (!LABEL_RE.test(label)) {
+        return {
+          error:
+            "Use só letras minúsculas, números e hífen (até 42 caracteres).",
+          ok: false,
+        };
+      }
+      domain = assertValidDomain(`${label}.${config.baseDomain}`);
+      const zone = await cloudflareApi.findZone(config.zoneDomain);
+      if (!zone)
+        return { error: "Zona DNS do Atlas não encontrada.", ok: false };
+      zoneId = zone.id;
+    } else {
+      domain = assertValidDomain(normalizeDomainName(input.domain ?? ""));
+      const owned = user.organizationId
+        ? await db.query.pgOrganizationDomains.findFirst({
+            where: and(
+              eq(pgOrganizationDomains.organizationId, user.organizationId),
+              eq(pgOrganizationDomains.domain, domain),
+              eq(pgOrganizationDomains.active, true),
+              eq(pgOrganizationDomains.dnsMode, "cloudflare")
+            ),
+          })
+        : undefined;
+      if (!owned) {
+        return {
+          error:
+            "Esse domínio não está na sua conta com DNS gerenciado pelo Atlas.",
+          ok: false,
+        };
+      }
+    }
+  } catch (error) {
+    return { error: sanitize(error), ok: false };
+  }
+
+  // 2) O domínio não pode pertencer a outro site.
+  const taken = await db.query.pgBuilderPublication.findFirst({
+    where: eq(pgBuilderPublication.domain, domain),
+  });
+  if (taken && taken.siteId !== site.id) {
+    return { error: "Esse endereço já está em uso por outro site.", ok: false };
+  }
+
+  // 3) Hospedagem na VM do Atlas é paga: exige assinatura em dia deste site.
+  if (
+    input.target === "atlas_vm" &&
+    config.hostingMonthlyBrl !== null &&
+    !options.skipHostingCheck
+  ) {
+    const hosting = await db.query.pgBuilderHostingSubscription.findFirst({
+      where: eq(pgBuilderHostingSubscription.siteId, site.id),
+    });
+    if (!hosting || hosting.status === "cancelled") {
+      return {
+        error:
+          "A hospedagem na VM do Atlas é paga: finalize o pedido para publicar aqui.",
+        ok: false,
+      };
+    }
+    if (hosting.status === "suspended") {
+      return {
+        error:
+          "A hospedagem deste site está suspensa por falta de pagamento. Pague a fatura em aberto para publicar de novo.",
+        ok: false,
+      };
+    }
+  }
+
+  const previous = await currentPublication(site.id);
+
+  // 4) Servidor de destino.
+  const target = await resolveTarget(user.id, input);
+  if ("error" in target) return { error: target.error, ok: false };
+
+  const includeWww = input.kind === "domain";
+
+  try {
+    // 5) Gera o HTML estático e envia. Só o conteúdo salvo é publicado.
+    const { exportSiteToStatic } = await import("@repo/site-builder/static");
+    await deploySite({
+      domain,
+      files: await exportSiteToStatic(site.content),
+      includeWww,
+      target: target.deploy,
+    });
+
+    // 6) Aponta o DNS depois do site já estar servindo.
+    if (input.kind === "subdomain" && zoneId) {
+      await cloudflareApi.upsertDnsRecord(zoneId, {
+        content: target.ip,
+        name: domain,
+        proxied: false,
+        ttl: 1,
+        // IP → registro A; hostname (ex.: o CNAME vps.simintermediacoes.com) → CNAME.
+        type: IPV4_RE.test(target.ip) ? "A" : "CNAME",
+      });
+    } else {
+      await configureWebHostingDns(domain, target.ip);
+    }
+  } catch (error) {
+    const message = sanitize(error, input.password);
+    await savePublication(site.id, {
+      domain,
+      ip: target.ip,
+      kind: input.kind,
+      lastError: message,
+      status: "failed",
+      target: input.target,
+      vpsNodeId: target.vpsNodeId,
+    });
+    return { error: `Falha ao publicar: ${message}`, ok: false };
+  }
+
+  await savePublication(site.id, {
+    domain,
+    ip: target.ip,
+    kind: input.kind,
+    lastError: null,
+    status: "published",
+    target: input.target,
+    vpsNodeId: target.vpsNodeId,
+  });
+
+  // Mudou de endereço ou de servidor: o endereço antigo sairia do banco, mas continuaria no ar. Libera o antigo.
+  if (
+    previous &&
+    (previous.domain !== domain || previous.vpsNodeId !== target.vpsNodeId)
+  ) {
+    // A linha do banco é a mesma (um registro por site) e já foi atualizada: só limpa o servidor e o DNS antigos.
+    await takeDown(user.id, previous, input.password, { keepRecord: true });
+  }
+
+  return { domain, ok: true };
+}
+
+export async function savePublication(
+  siteId: string,
+  data: {
+    domain: string;
+    ip: string;
+    kind: "domain" | "subdomain";
+    lastError: string | null;
+    status: "failed" | "published" | "suspended";
+    target: "atlas_vm" | "user_vps";
+    vpsNodeId: string | null;
+  }
+) {
+  const now = new Date();
+  const values = {
+    domain: data.domain,
+    kind: data.kind,
+    lastError: data.lastError,
+    publishedAt: data.status === "published" ? now : null,
+    serverIp: data.ip,
+    status: data.status,
+    suspendedAt: data.status === "suspended" ? now : null,
+    target: data.target,
+    updatedAt: now,
+    vpsNodeId: data.vpsNodeId,
+  };
+  await db
+    .insert(pgBuilderPublication)
+    .values({ ...values, siteId })
+    .onConflictDoUpdate({
+      set: values,
+      target: pgBuilderPublication.siteId,
+    });
+}
