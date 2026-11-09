@@ -72,3 +72,33 @@ Pass the server-computed flag and label the Atlas hosting option as free; exclud
 
 Run: `cd frontend; ..\node_modules\.bin\tsc --noEmit` and Task 1 tests.
 Expected: PASS and exit code 0.
+
+### Task 3: Modal de publicação do editor
+
+**Files:**
+- Create: `frontend/src/app/(auth)/criador-de-sites/[siteId]/components/publish-pricing.ts`
+- Test: `frontend/src/app/(auth)/criador-de-sites/[siteId]/components/publish-pricing.test.ts`
+- Modify: `frontend/src/app/(auth)/criador-de-sites/[siteId]/components/PublishSetupModal.tsx`
+- Modify: `frontend/src/app/(auth)/criador-de-sites/[siteId]/components/SiteEditorClient.tsx`
+- Modify: `frontend/src/app/(auth)/criador-de-sites/[siteId]/page.tsx`
+
+**Interfaces:**
+- Produces: `atlasHostingPrice({ target, atlasVmMonthlyBrl, complimentaryAtlasHosting, hostingPaid }): number | null`.
+
+- [x] **Step 1: Write the failing test**
+
+Verify that the editor modal calculates no Atlas VM price for an exempt account and still returns the monthly price for a regular account.
+
+- [x] **Step 2: Run test to verify it fails**
+
+Run: `bun test frontend/src/app/(auth)/criador-de-sites/[siteId]/components/publish-pricing.test.ts`
+Expected: FAIL because the shared pricing helper does not exist.
+
+- [x] **Step 3: Pass the server-computed exemption into the editor modal**
+
+Use the shared helper for the modal total and present the selected Atlas hosting as free for the exempt account.
+
+- [x] **Step 4: Run focused tests and type-check**
+
+Run: `bun test frontend/src/app/(auth)/criador-de-sites/[siteId]/components/publish-pricing.test.ts` and `cd frontend; ..\\node_modules\\.bin\\tsc --noEmit`
+Expected: PASS and exit code 0.

@@ -8,7 +8,10 @@ import {
   pgBuilderSite,
   pgOrganizationDomains,
 } from "@/lib/db/schema";
-import { requireBuilderUser } from "@/lib/site-builder/access";
+import {
+  hasComplimentaryAtlasHosting,
+  requireBuilderUser,
+} from "@/lib/site-builder/access";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
 import { listPublishTargets } from "@/lib/site-builder/eligibility";
 import SiteEditorClient from "./components/SiteEditorClient";
@@ -64,6 +67,7 @@ export default async function SiteEditorPage({
           ? targets.atlasVm.monthlyBrl
           : null,
         baseDomain: config.subdomainEnabled ? config.baseDomain : null,
+        complimentaryAtlasHosting: hasComplimentaryAtlasHosting(user),
         domains: domains.map(d => d.domain),
         servers: targets.vpsNodes,
       }}

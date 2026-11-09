@@ -24,4 +24,4 @@ Manter gratuita a publicação na VM do Atlas para administradores e `brenohslim
 
 ## Design
 
-`access.ts` exportará um predicado de hospedagem gratuita para admins e o e-mail autorizado. O checkout não adicionará `hostingAmountBrl` para esse público e chamará a publicação com a verificação de assinatura dispensada. A ação de publicação direta aplicará a mesma dispensa. A tela de publicação receberá uma flag para trocar a etiqueta e o cálculo do primeiro mês por “gratuita”.
+`access.ts` exportará um predicado de hospedagem gratuita para admins e o e-mail autorizado. O checkout não adicionará `hostingAmountBrl` para esse público e chamará a publicação com a verificação de assinatura dispensada. A ação de publicação direta aplicará a mesma dispensa. As duas entradas de publicação — a tela própria e o modal do editor — receberão a flag e usarão o mesmo cálculo de preço para trocar a etiqueta e o primeiro mês por “gratuita”.

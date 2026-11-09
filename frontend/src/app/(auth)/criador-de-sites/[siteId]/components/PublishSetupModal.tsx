@@ -24,6 +24,7 @@ import DomainSearchPicker, {
   brl,
   type DomainOffer,
 } from "./DomainSearchPicker";
+import { atlasHostingPrice } from "./publish-pricing";
 
 type Mode = "buy" | "own" | "sub";
 
@@ -32,6 +33,8 @@ export interface PublishSetup {
   atlasVmMonthlyBrl: number | null;
   /** Domínio base dos subdomínios grátis; `null` quando ainda não está configurado. */
   baseDomain: string | null;
+  /** Admins e a conta autorizada não pagam hospedagem na VM do Atlas. */
+  complimentaryAtlasHosting: boolean;
   domains: string[];
   /** Só VPS contratadas no Atlas e com assinatura em dia. */
   servers: { id: string; ip: string; name: string }[];
@@ -64,6 +67,7 @@ export const slug = (value: string) =>
 export default function PublishSetupModal({
   atlasVmMonthlyBrl,
   baseDomain,
+  complimentaryAtlasHosting,
   defaultLabel,
   domains,
   onOpenChange,
@@ -104,8 +108,13 @@ export default function PublishSetupModal({
         ? (offer?.domain ?? "")
         : ownDomain;
 
-  // Hospedagem na VM do Atlas é mensal; a primeira mensalidade entra no pedido.
-  const hostingPrice = target === "atlas_vm" ? atlasVmMonthlyBrl : null;
+  // Hospedagem na VM do Atlas é mensal; contas isentas não pagam o primeiro mês.
+  const hostingPrice = atlasHostingPrice({
+    atlasVmMonthlyBrl,
+    complimentaryAtlasHosting,
+    hostingPaid: false,
+    target,
+  });
   const domainPrice = mode === "buy" ? (offer?.priceBrl ?? null) : null;
   const total = (hostingPrice ?? 0) + (domainPrice ?? 0);
 
@@ -334,7 +343,10 @@ export default function PublishSetupModal({
                     ) : null}
                     {atlasVmEnabled ? (
                       <option value="atlas_vm">
-                        Hospedagem do Atlas — {brl(atlasVmMonthlyBrl)}/mês
+                        Hospedagem do Atlas —{" "}
+                        {complimentaryAtlasHosting
+                          ? "gratuita"
+                          : `${brl(atlasVmMonthlyBrl)}/mês`}
                       </option>
                     ) : null}
                   </select>
@@ -366,8 +378,9 @@ export default function PublishSetupModal({
                     </>
                   ) : (
                     <p className="text-[#6e6b65] text-xs">
-                      Nós cuidamos do servidor, do HTTPS e das atualizações.
-                      Cobrança mensal, cancela quando quiser.
+                      {complimentaryAtlasHosting
+                        ? "Nós cuidamos do servidor, do HTTPS e das atualizações sem cobrança para sua conta."
+                        : "Nós cuidamos do servidor, do HTTPS e das atualizações. Cobrança mensal, cancela quando quiser."}
                     </p>
                   )}
 
