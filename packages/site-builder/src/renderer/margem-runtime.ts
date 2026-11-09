@@ -11,7 +11,7 @@
  * câmera e sem entradas; o túnel continua respondendo ao scroll.
  * Ao mudar o script, suba `MG_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const MG_VERSION = 1;
+export const MG_VERSION = 2;
 
 export const MARGEM_RUNTIME = `(function(){
 if(window.sbMargem&&window.__sbMgV===${MG_VERSION})return;
@@ -23,23 +23,39 @@ var reduce=mm("(prefers-reduced-motion: reduce)"),fine=mm("(pointer: fine)");
 function clamp(v,a,b){return v<a?a:v>b?b:v}
 function sstep(a,b,x){var t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)}
 function on(t,e,f,o){t.addEventListener(e,f,o);off.push(function(){t.removeEventListener(e,f,o)})}
-function vh(){return window.innerHeight}
 function arr(l){return Array.prototype.slice.call(l)}
 /* só o site que é a página: miniaturas (escaladas) ficam estáticas */
 function isLive(r){var w=r.offsetWidth;if(!w)return false;var k=r.getBoundingClientRect().width/w;return k>0.98&&k<1.02}
 var roots=arr(document.querySelectorAll(".sb")).filter(function(r){return r.querySelector("[data-mg]")&&isLive(r)});
 if(!roots.length)return function(){};
+/*
+ * Área visível. No site publicado é a janela. Na prévia do app o site rola dentro de um contêiner
+ * (main com overflow) e tem barras fixas acima (sticky): a altura útil e o topo das seções presas
+ * vão para --mg-vh/--mg-top, e as posições passam a contar a partir do topo dessa área (VT).
+ */
+function scrollerOf(el){for(var p=el.parentElement;p&&p!==document.body&&p!==document.documentElement;p=p.parentElement){var o=getComputedStyle(p).overflowY;if((o==="auto"||o==="scroll")&&p.scrollHeight>p.clientHeight)return p}return null}
+function stickyAbove(el,sc){var h=0;for(var n=el;n&&n!==sc;n=n.parentElement)for(var s=n.previousElementSibling;s;s=s.previousElementSibling)if(getComputedStyle(s).position==="sticky")h+=s.offsetHeight;return h}
+var scroller=scrollerOf(roots[0]),VT=0,VH=window.innerHeight;
+function measure(){
+if(!scroller){VT=0;VH=window.innerHeight;return}
+var top=stickyAbove(roots[0],scroller);
+VT=scroller.getBoundingClientRect().top+top;VH=Math.max(240,scroller.clientHeight-top);
+roots.forEach(function(r){r.style.setProperty("--mg-top",top+"px");r.style.setProperty("--mg-vh",VH+"px")});
+}
+measure();
+if(scroller)off.push(function(){roots.forEach(function(r){r.style.removeProperty("--mg-top");r.style.removeProperty("--mg-vh")})});
+function vh(){return VH}
 var queued=false;
 function tick(){queued=false;subs.forEach(function(f){f()})}
 function req(){if(!queued){queued=true;requestAnimationFrame(tick)}}
 on(document,"scroll",req,{capture:true,passive:true});
-on(window,"resize",function(){resizers.forEach(function(f){f()});req()});
+on(window,"resize",function(){measure();resizers.forEach(function(f){f()});req()});
 
 /* ── navegação: some ao rolar para baixo (depois de meia tela), volta ao subir, com véu ── */
 K.nav=function(el){
 var root=el.closest(".sb"),last=null;
 subs.push(function(){
-var y=-root.getBoundingClientRect().top,h=vh();
+var y=VT-root.getBoundingClientRect().top,h=vh();
 if(last===null){last=y;return}
 var d=y-last;
 if(Math.abs(d)<4)return;
@@ -231,7 +247,7 @@ if(inView||dirty){draw(S,maxPull);overlay(S,T?tt/T:0)}
 dirty=false;
 if(moving)kick();
 }
-function progress(){var r=sec.getBoundingClientRect(),span=r.height-stage.offsetHeight;inView=r.bottom>0&&r.top<vh();return span>0?clamp(-r.top/span,0,1):0}
+function progress(){var r=sec.getBoundingClientRect(),t=r.top-VT,span=r.height-stage.offsetHeight;inView=t+r.height>0&&t<vh();return span>0?clamp(-t/span,0,1):0}
 sec.classList.add("mg-live");
 build();
 target=tt=progress()*T;
@@ -283,7 +299,7 @@ draw();
 function draw(){
 var r=sec.getBoundingClientRect(),H=vh();
 items.forEach(function(it){
-var ys=r.top+it.y,k=reduce?(ys<H*0.9?1:0):clamp((H*0.85-ys)/(H*0.3),0,1);
+var ys=r.top-VT+it.y,k=reduce?(ys<H*0.9?1:0):clamp((H*0.85-ys)/(H*0.3),0,1);
 it.p.style.strokeDashoffset=String(it.len*(1-k));
 it.n.classList.toggle("is-on",k>=0.98);
 });
@@ -303,7 +319,7 @@ if(n<2||!stage||!view||!strip)return;
 sec.classList.add("mg-live");
 var cur=-1;
 function upd(){
-var r=sec.getBoundingClientRect(),span=r.height-stage.offsetHeight,p=span>0?clamp(-r.top/span,0,1):0;
+var r=sec.getBoundingClientRect(),span=r.height-stage.offsetHeight,p=span>0?clamp((VT-r.top)/span,0,1):0;
 var pos=p*(n-1),act=Math.round(pos),fw=frames[0].offsetWidth,sw=fw*n,w=view.clientWidth;
 var x=sw<=w?(w-sw)/2:clamp(w/2-(pos+0.5)*fw,w-sw,0);
 strip.style.transform="translate3d("+x.toFixed(1)+"px,0,0)";
@@ -370,8 +386,8 @@ if(reduce)return;
 var imgs=arr(sec.querySelectorAll(".mg-float img"));
 function upd(){
 var r=sec.getBoundingClientRect(),H=vh();
-if(r.bottom<-200||r.top>H+200)return;
-var c=clamp((r.top+r.height/2-H/2)/(H/2+r.height/2),-1,1);
+if(r.bottom-VT<-200||r.top-VT>H+200)return;
+var c=clamp((r.top-VT+r.height/2-H/2)/(H/2+r.height/2),-1,1);
 imgs.forEach(function(im){var d=Number(im.getAttribute("data-depth"))||0;im.style.setProperty("--mg-py",(c*160*d).toFixed(1)+"px")});
 }
 upd();subs.push(upd);
@@ -383,7 +399,7 @@ K.footer=function(sec){
 if(reduce)return;
 var m=sec.querySelector(".mg-foot-mark");
 if(!m)return;
-function upd(){var r=m.getBoundingClientRect(),H=vh(),k=clamp((H-r.top)/(r.height*1.05),0,1);m.style.setProperty("--mg-rise",((1-k)*60).toFixed(2)+"%")}
+function upd(){var r=m.getBoundingClientRect(),H=vh(),k=clamp((H-(r.top-VT))/(r.height*1.05),0,1);m.style.setProperty("--mg-rise",((1-k)*60).toFixed(2)+"%")}
 upd();subs.push(upd);
 off.push(function(){m.style.removeProperty("--mg-rise")});
 };
@@ -399,8 +415,7 @@ try{f(el,root)}catch(e){if(window.console)console.error(e)}
 });
 
 /* ── scroll suave (roda do mouse) e âncoras: só quando a página rola a janela ── */
-function scrollsSelf(el){for(var p=el.parentElement;p&&p!==document.body&&p!==document.documentElement;p=p.parentElement){var o=getComputedStyle(p).overflowY;if((o==="auto"||o==="scroll")&&p.scrollHeight>p.clientHeight)return true}return false}
-if(!reduce&&fine&&!window.__sbMgSmooth&&!scrollsSelf(roots[0])){
+if(!reduce&&fine&&!window.__sbMgSmooth&&!scroller){
 window.__sbMgSmooth=1;
 var cur=window.scrollY,tgt=cur,anim=false,sraf=0;
 var maxY=function(){return document.documentElement.scrollHeight-window.innerHeight};

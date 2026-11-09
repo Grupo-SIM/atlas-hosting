@@ -105,13 +105,13 @@ ${S} img.mg-mark{object-fit:contain;object-position:left bottom}
 ${S} .mg-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* navegação: fixa em todas as seções (sticky de altura zero, então fica por cima do conteúdo) */
-${S} .sb-block[data-block-type=mgNav]{position:sticky;top:var(--sb-sticky-top,0px);z-index:60;height:0}
+${S} .sb-block[data-block-type=mgNav]{position:sticky;top:calc(var(--sb-sticky-top,0px) + var(--mg-top,0px));z-index:60;height:0}
 ${S} .mg-nav-wrap{position:relative;container-type:inline-size}
-${S} .mg-nav{position:absolute;inset:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px var(--mg-gut);pointer-events:none;transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+${S} .mg-nav{position:absolute;inset:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px var(--mg-gut);pointer-events:none;transition:transform .45s cubic-bezier(.2,.7,.2,1),opacity .3s}
 ${S} .mg-nav>*{pointer-events:auto}
 ${S} .mg-nav::before{content:"";position:absolute;inset:0 0 -40px;z-index:-1;background:linear-gradient(var(--sb-bg) 40%,transparent);opacity:0;transition:opacity .3s;pointer-events:none}
 ${S} .mg-nav-wrap.mg-veil .mg-nav::before{opacity:1}
-${S} .mg-nav-wrap.mg-hide .mg-nav{transform:translateY(-110%)}
+${S} .mg-nav-wrap.mg-hide .mg-nav{transform:translateY(-110%);opacity:0;visibility:hidden;transition:transform .45s cubic-bezier(.2,.7,.2,1),opacity .3s,visibility 0s linear .45s}
 ${S} .mg-nav-logo{display:block;width:104px;color:var(--sb-fg)}
 ${S} .mg-pills{display:flex;gap:6px;margin:0;padding:0;list-style:none}
 
@@ -119,7 +119,7 @@ ${S} .mg-pills{display:flex;gap:6px;margin:0;padding:0;list-style:none}
 ${S} .mg-tunnel{position:relative;container-type:inline-size}
 ${S} .mg-stage{position:relative}
 ${S} .mg-canvas{display:none}
-${S} .mg-hero,${S} .mg-collage{height:100svh;min-height:520px}
+${S} .mg-hero,${S} .mg-collage{height:var(--mg-vh,100svh);min-height:520px}
 ${S} .mg-hero{position:relative;overflow:hidden}
 ${S} .mg-collage{position:absolute;inset:0 0 auto;overflow:hidden;pointer-events:none}
 ${S} .mg-collage img{position:absolute;width:calc(var(--w) * 1cqw);height:auto;object-fit:cover;border-radius:2px}
@@ -153,8 +153,8 @@ ${S} .mg-end-title{font-size:clamp(32px,4cqw,72px);line-height:1;letter-spacing:
 ${S} .mg-progress{display:none}
 
 /* túnel vivo (runtime + WebGL): seção presa por N telas, câmera no canvas, textos por cima */
-${S} .mg-tunnel.mg-live{height:calc((var(--mg-screens) + 1) * 100svh)}
-${S} .mg-live .mg-stage{position:sticky;top:0;height:100svh;overflow:hidden}
+${S} .mg-tunnel.mg-live{height:calc((var(--mg-screens) + 1) * var(--mg-vh,100svh))}
+${S} .mg-live .mg-stage{position:sticky;top:var(--mg-top,0px);height:var(--mg-vh,100svh);overflow:hidden}
 ${S} .mg-live .mg-canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
 ${S} .mg-live .mg-collage{display:none}
 ${S} .mg-live .mg-hero{position:absolute;inset:0;height:auto;min-height:0;pointer-events:none}
@@ -222,8 +222,8 @@ ${S} .mg-method:not(.mg-live) .mg-step:last-child{transform:none}
 ${S} .mg-caps{display:none;font-size:14px}
 ${S} .mg-caps span{grid-area:1/1}
 ${S} .mg-method:not(.mg-live) .mg-caps span:not(.is-on){visibility:hidden}
-${S} .mg-method.mg-live{height:calc((var(--mg-screens) + 1) * 100svh)}
-${S} .mg-live .mg-method-stage{position:sticky;top:0;height:100svh;justify-content:center;gap:clamp(16px,3svh,36px);padding-block:clamp(56px,8svh,100px) clamp(12px,3svh,32px)}
+${S} .mg-method.mg-live{height:calc((var(--mg-screens) + 1) * var(--mg-vh,100svh))}
+${S} .mg-live .mg-method-stage{position:sticky;top:var(--mg-top,0px);height:var(--mg-vh,100svh);justify-content:center;gap:clamp(16px,3svh,36px);padding-block:clamp(56px,8svh,100px) clamp(12px,3svh,32px)}
 ${S} .mg-live .mg-strip{width:max-content;will-change:transform}
 ${S} .mg-live .mg-frame{flex:none;width:auto;height:clamp(220px,60svh,760px);opacity:.72;transition:opacity .4s}
 ${S} .mg-live .mg-frame.is-on{opacity:1}
