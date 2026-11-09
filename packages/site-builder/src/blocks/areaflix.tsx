@@ -546,7 +546,7 @@ const afFaq = defineBlock(
     group: "content",
     label: "Perguntas frequentes (ÁreaFlix)",
     render: (p, ctx) => {
-      const group = `sb-af-faq-${ctx.path.length}`;
+      const group = `sb-af-faq-${ctx.path?.length ?? 0}`;
       return (
         <section className="sb-af-faq">
           <div className="sb-af-wrap sb-af-faq-in">
