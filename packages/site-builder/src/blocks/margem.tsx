@@ -1,4 +1,4 @@
-import { type CSSProperties, Fragment, useId } from "react";
+import { type CSSProperties, Fragment } from "react";
 import { z } from "zod";
 import { defineBlock } from "./define.js";
 import { href, newTab } from "./helpers.js";
@@ -695,8 +695,18 @@ const indexSchema = z.object({
 
 type IndexProps = z.infer<typeof indexSchema>;
 
+/** Hash curto e determinístico (FNV-1a) — dá nome estável ao grupo de radios sem depender de `useId`, que quebra na exportação estática (SSR fora do render tree do React). */
+function shortHash(input: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36);
+}
+
 function IndexTable({ ctx, p }: { ctx: RenderContext; p: IndexProps }) {
-  const name = `mg-f${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  const name = `mg-f${shortHash(JSON.stringify(p))}`;
   const filters = p.filters.slice(0, MG_MAX_FILTERS);
   const filterOf = (value: string) =>
     filters.findIndex(f => f.value && f.value === value) + 1;
