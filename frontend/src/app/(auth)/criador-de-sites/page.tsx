@@ -3,6 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { LayoutTemplate, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { pgBuilderPublication, pgBuilderSite } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
@@ -32,6 +33,8 @@ export default async function SiteBuilderPage() {
     )
     .where(eq(pgBuilderSite.userId, user.id))
     .orderBy(desc(pgBuilderSite.updatedAt));
+
+  if (mySites.length === 0) redirect("/criador-de-sites/novo");
 
   const live = mySites.filter(s => s.publicationStatus === "published").length;
   const waiting = mySites.length - live;
