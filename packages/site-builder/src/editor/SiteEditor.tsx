@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type CSSProperties,
   type MouseEvent,
   type PointerEvent,
   useCallback,
@@ -1593,11 +1594,17 @@ export function SiteEditor({
           <div className="sbe-guide h" ref={guideHRef} />
           <div
             className="sbe-frame"
-            style={{
-              background: site.theme.bg,
-              width: devW,
-              zoom,
-            }}
+            style={
+              {
+                // Cabeçalho fixo (sticky) dos temas gruda na borda do padding de 16px do canvas, deixando
+                // uma fresta por onde a página aparece ao rolar; este deslocamento o leva ao topo visível,
+                // como no site publicado. Dividido pelo zoom porque o frame é escalado.
+                "--sb-sticky-top": `${-16 / zoom}px`,
+                background: site.theme.bg,
+                width: devW,
+                zoom,
+              } as CSSProperties
+            }
           >
             <SiteRenderer
               basePath={basePath}

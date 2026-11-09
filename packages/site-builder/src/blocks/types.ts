@@ -34,6 +34,8 @@ export interface FieldDef {
   kind: FieldKind;
   label: string;
   options?: { label: string; value: string }[];
+  /** Clicar no elemento deste campo também abre estes campos no painel (ex.: a foto do hover junto da foto). */
+  related?: string[];
   /** Só mostra o campo (dentro de um item de lista) quando o campo `key` do item vale `equals`. */
   showWhen?: { equals: string; key: string };
 }

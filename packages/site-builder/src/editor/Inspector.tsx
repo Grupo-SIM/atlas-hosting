@@ -351,7 +351,7 @@ function matchFields(
 }
 
 /** Campos do item: os que guardam o texto/imagem dele e, num link, o que guarda o endereço. */
-function matchItem(
+export function matchItem(
   fields: FieldDef[],
   props: Record<string, unknown>,
   defaults: Record<string, unknown>,
@@ -359,14 +359,38 @@ function matchItem(
 ): FieldMatch[] {
   if (hint?.ad) return adFields(fields);
   const out = matchFields(fields, props, defaults, hint?.value ?? "");
-  if (!hint?.href || hint.href === "#") return out;
   const key = (m: FieldMatch) =>
     m.kind === "item" ? `${m.field.key}#${m.index}` : m.field.key;
   const seen = new Set(out.map(key));
-  for (const m of matchFields(fields, props, defaults, hint.href, true)) {
-    if (!seen.has(key(m))) out.push(m);
+  if (hint?.href && hint.href !== "#") {
+    for (const m of matchFields(fields, props, defaults, hint.href, true)) {
+      if (!seen.has(key(m))) out.push(m);
+    }
   }
-  return out;
+  return withRelated(fields, out, seen);
+}
+
+/**
+ * Junta os campos `related` dos campos achados (ex.: clicar na foto do hero abre também a foto do
+ * hover, que fica vazia ou escondida até passar o mouse). O grupo segue a ordem da definição.
+ */
+function withRelated(
+  fields: FieldDef[],
+  matches: FieldMatch[],
+  seen: Set<string>
+): FieldMatch[] {
+  const order = (f: FieldDef) => fields.indexOf(f);
+  return matches.flatMap(m => {
+    if (m.kind !== "field" || !m.field.related) return [m];
+    const extra = m.field.related
+      .filter(k => !seen.has(k))
+      .map(k => fields.find(f => f.key === k))
+      .filter((f): f is FieldDef => Boolean(f));
+    for (const f of extra) seen.add(f.key);
+    return [m.field, ...extra]
+      .sort((a, b) => order(a) - order(b))
+      .map(field => ({ field, kind: "field" as const }));
+  });
 }
 
 /**

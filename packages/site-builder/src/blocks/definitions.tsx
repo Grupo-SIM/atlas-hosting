@@ -502,15 +502,30 @@ const heading = defineBlock(
   }
 );
 
-/** Parágrafos seguidos que começam com "• " viram uma lista (sem o marcador no texto). */
+/**
+ * Parágrafos seguidos que começam com "• " viram uma lista (sem o marcador no texto). Dentro de um
+ * parágrafo, cada linha com "• " é um item; linha sem marcador continua o item anterior.
+ */
+/**
+ * Classe da busca da categoria. Fica fora do JSX porque a regra `useSortedClasses` do Biome, no
+ * `--write`, tira o espaço de `" l-compact"` dentro do `className` e cola as duas classes.
+ */
+const catSearchClass = (layout: string) =>
+  ["sb-container sb-mag sb-cat-search", layout === "compact" && "l-compact"]
+    .filter(Boolean)
+    .join(" ");
+
 function groupBullets(paras: string[]): (string | string[])[] {
   const out: (string | string[])[] = [];
   for (const para of paras) {
     if (para.startsWith("• ")) {
       const last = out.at(-1);
-      const item = para.slice(2);
-      if (Array.isArray(last)) last.push(item);
-      else out.push([item]);
+      const items: string[] = Array.isArray(last) ? last : [];
+      if (items !== last) out.push(items);
+      for (const line of para.split("\n").map(l => l.trimEnd())) {
+        if (line.startsWith("• ")) items.push(line.slice(2));
+        else if (items.length) items[items.length - 1] += ` ${line.trim()}`;
+      }
     } else out.push(para);
   }
   return out;
@@ -1899,7 +1914,7 @@ const categorySearch = defineBlock(
     render: (p, ctx) => (
       <form
         action={href(ctx, "/pesquisa/")}
-        className={`sb-container sb-mag sb-cat-search${p.layout === "compact" ? "l-compact" : ""}`}
+        className={catSearchClass(p.layout)}
         method="get"
       >
         <div className="sb-mag-search">
