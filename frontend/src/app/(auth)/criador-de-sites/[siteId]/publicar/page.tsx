@@ -78,7 +78,7 @@ export default async function PublishSitePage({
           targets.atlasVm.enabled ? targets.atlasVm.monthlyBrl : null
         }
         baseDomain={config.subdomainEnabled ? config.baseDomain : null}
-        complimentaryAtlasHosting={hasComplimentaryAtlasHosting(user)}
+        complimentaryAtlasHosting={hasComplimentaryAtlasHosting()}
         domains={domains.map(d => d.domain)}
         hosting={
           hosting

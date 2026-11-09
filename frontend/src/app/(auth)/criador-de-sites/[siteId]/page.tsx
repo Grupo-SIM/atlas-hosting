@@ -67,7 +67,7 @@ export default async function SiteEditorPage({
           ? targets.atlasVm.monthlyBrl
           : null,
         baseDomain: config.subdomainEnabled ? config.baseDomain : null,
-        complimentaryAtlasHosting: hasComplimentaryAtlasHosting(user),
+        complimentaryAtlasHosting: hasComplimentaryAtlasHosting(),
         domains: domains.map(d => d.domain),
         servers: targets.vpsNodes,
       }}

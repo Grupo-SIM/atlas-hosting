@@ -39,7 +39,7 @@ export async function publishSite(
     input,
     {
       skipHostingCheck:
-        input.target === "atlas_vm" && hasComplimentaryAtlasHosting(user),
+        input.target === "atlas_vm" && hasComplimentaryAtlasHosting(),
     }
   );
   if (!result.ok) return result;

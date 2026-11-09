@@ -200,7 +200,7 @@ export async function startPublishCheckout(
 
   // 3) Servidor: VM do Atlas (paga) ou VPS do cliente (precisa ser nossa e em dia).
   let hostingAmountBrl: number | undefined;
-  const complimentaryAtlasHosting = hasComplimentaryAtlasHosting(user);
+  const complimentaryAtlasHosting = hasComplimentaryAtlasHosting();
   if (input.target === "atlas_vm") {
     if (!targets.atlasVm.enabled || !targets.atlasVm.monthlyBrl) {
       return {

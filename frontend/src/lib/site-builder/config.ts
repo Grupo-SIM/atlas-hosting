@@ -15,9 +15,8 @@
  * - SITE_BUILDER_HOSTING_MONTHLY_BRL: mensalidade da hospedagem na VM do Atlas (ex.: `29.90`). Ausente ou <= 0
  *   deixa a opção paga desligada — o cliente só publica na VPS dele.
  * - SITE_BUILDER_HOSTING_GRACE_DAYS: dias de atraso antes de suspender o site (padrão 5).
- * - SITE_BUILDER_HOSTING_FREE=true: isenta todo mundo da mensalidade da VM do Atlas
- *   (ver `hasComplimentaryAtlasHosting` em `access.ts`). Ausente ou != "true" mantém a
- *   regra normal (grátis só pra admin e para `brenohslima@gmail.com`).
+ * - SITE_BUILDER_HOSTING_FREE=true: isenta todo mundo (inclusive admins) da mensalidade da VM
+ *   do Atlas (ver `hasComplimentaryAtlasHosting` em `access.ts`). Ausente ou != "true" cobra todos.
  */
 export function getAtlasHostingConfig() {
   const baseDomain = process.env.SITE_BUILDER_BASE_DOMAIN?.trim().toLowerCase();

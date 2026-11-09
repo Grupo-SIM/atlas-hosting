@@ -24,47 +24,40 @@ describe("canAccessSiteBuilder", () => {
   });
 });
 
+function withFreeFlag(value: string | undefined, fn: () => void) {
+  const original = process.env.SITE_BUILDER_HOSTING_FREE;
+  if (value === undefined) {
+    delete process.env.SITE_BUILDER_HOSTING_FREE;
+  } else {
+    process.env.SITE_BUILDER_HOSTING_FREE = value;
+  }
+  try {
+    fn();
+  } finally {
+    if (original === undefined) {
+      delete process.env.SITE_BUILDER_HOSTING_FREE;
+    } else {
+      process.env.SITE_BUILDER_HOSTING_FREE = original;
+    }
+  }
+}
+
 describe("hasComplimentaryAtlasHosting", () => {
-  test("isenta admins e brenohslima@gmail.com", () => {
-    expect(
-      hasComplimentaryAtlasHosting({
-        email: "admin@example.com",
-        isAdmin: true,
-      })
-    ).toBe(true);
-    expect(
-      hasComplimentaryAtlasHosting({
-        email: "BrenoHSLima@Gmail.com",
-        isAdmin: false,
-      })
-    ).toBe(true);
+  test("cobra todos (inclusive admin) sem a flag", () => {
+    withFreeFlag(undefined, () => {
+      expect(hasComplimentaryAtlasHosting()).toBe(false);
+    });
   });
 
-  test("mantém a cobrança para outros usuários", () => {
-    expect(
-      hasComplimentaryAtlasHosting({
-        email: "cliente@example.com",
-        isAdmin: false,
-      })
-    ).toBe(false);
+  test("cobra todos com SITE_BUILDER_HOSTING_FREE=false", () => {
+    withFreeFlag("false", () => {
+      expect(hasComplimentaryAtlasHosting()).toBe(false);
+    });
   });
 
   test("SITE_BUILDER_HOSTING_FREE=true isenta todo mundo", () => {
-    const original = process.env.SITE_BUILDER_HOSTING_FREE;
-    process.env.SITE_BUILDER_HOSTING_FREE = "true";
-    try {
-      expect(
-        hasComplimentaryAtlasHosting({
-          email: "cliente@example.com",
-          isAdmin: false,
-        })
-      ).toBe(true);
-    } finally {
-      if (original === undefined) {
-        delete process.env.SITE_BUILDER_HOSTING_FREE;
-      } else {
-        process.env.SITE_BUILDER_HOSTING_FREE = original;
-      }
-    }
+    withFreeFlag(" TRUE ", () => {
+      expect(hasComplimentaryAtlasHosting()).toBe(true);
+    });
   });
 });
