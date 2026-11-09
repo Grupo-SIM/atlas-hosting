@@ -128,6 +128,13 @@ describe("template margem", () => {
     expect(() => new Function(MARGEM_RUNTIME)).not.toThrow();
   });
 
+  test("desligar o runtime não destrói o WebGL (o StrictMode do dev monta, desmonta e monta de novo)", () => {
+    // `loseContext()` no desmonte faz o `getContext` da segunda montagem devolver o contexto perdido
+    // e o túnel cai na versão estática na prévia do `next dev`.
+    expect(MARGEM_RUNTIME).not.toContain(".loseContext()");
+    expect(MARGEM_RUNTIME).toContain("isContextLost()");
+  });
+
   test("outros templates não levam o runtime do Margem", async () => {
     const other = getTemplate("blog-viagens");
     if (!other) throw new Error("blog-viagens sumiu");

@@ -11,7 +11,7 @@
  * câmera e sem entradas; o túnel continua respondendo ao scroll.
  * Ao mudar o script, suba `MG_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const MG_VERSION = 2;
+export const MG_VERSION = 3;
 
 export const MARGEM_RUNTIME = `(function(){
 if(window.sbMargem&&window.__sbMgV===${MG_VERSION})return;
@@ -76,6 +76,8 @@ var caseEls=arr(sec.querySelectorAll(".mg-case")),n=caseEls.length;
 if(!stage||!cv||(!wall.length&&!n))return;
 var gl=null;
 try{gl=cv.getContext("webgl",{alpha:false,antialias:true})}catch(e){}
+/* contexto perdido (ex.: outra montagem o descartou): canvas novo no mesmo lugar */
+if(gl&&gl.isContextLost()){var nc=document.createElement("canvas");nc.className=cv.className;cv.parentNode.insertBefore(nc,cv);cv.style.display="none";var oc=cv;off.push(function(){nc.remove();oc.style.display=""});cv=nc;gl=null;try{gl=cv.getContext("webgl",{alpha:false,antialias:true})}catch(e){}}
 if(!gl)return;
 function sh(type,src){var s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);return gl.getShaderParameter(s,gl.COMPILE_STATUS)?s:null}
 var vs=sh(gl.VERTEX_SHADER,"attribute vec2 p;uniform mat4 uP;uniform mat4 uMV;varying vec2 vUv;varying float vD;void main(){vUv=p+0.5;vec4 m=uMV*vec4(p,0.0,1.0);vD=-m.z;gl_Position=uP*m;}");
@@ -260,7 +262,6 @@ dead=true;if(raf)cancelAnimationFrame(raf);
 sec.classList.remove("mg-live","mg-portrait");stage.style.removeProperty("--mg-below");
 heroEls.concat(endEl?[endEl]:[]).forEach(function(e){e.style.opacity="";e.style.translate=""});
 caseEls.forEach(function(el){el.classList.remove("is-on");arr(el.querySelectorAll(".mg-case-txt,.mg-case-txt>*")).forEach(function(e){e.style.opacity="";e.style.translate="";e.style.removeProperty("--m")})});
-var lose=gl.getExtension("WEBGL_lose_context");if(lose)lose.loseContext();
 });
 };
 
