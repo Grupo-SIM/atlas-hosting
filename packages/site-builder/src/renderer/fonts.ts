@@ -10,6 +10,7 @@ export const SITE_FONTS = [
   "Red Hat Text",
   "Roboto",
   "Sora",
+  "Plus Jakarta Sans",
   "Manrope",
   "DM Sans",
   "Space Grotesk",
@@ -39,7 +40,10 @@ export const SITE_FONTS = [
 ] as const;
 
 /** Pesos que o Google Fonts oferece quando não são os padrões (pedir um peso inexistente derruba o CSS inteiro). */
-const FONT_WEIGHTS: Record<string, string> = { Content: "400;700" };
+const FONT_WEIGHTS: Record<string, string> = {
+  Content: "400;700",
+  "Plus Jakarta Sans": "300;400;500;600;700",
+};
 
 export const fontStack = (name: string) => `'${name}', sans-serif`;
 
