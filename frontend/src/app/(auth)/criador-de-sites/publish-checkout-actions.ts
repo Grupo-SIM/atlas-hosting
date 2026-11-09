@@ -33,16 +33,19 @@ import { LABEL_RE, ownedSite, runPublish } from "@/lib/site-builder/runPublish";
 type Result<T = object> = ({ ok: true } & T) | { error: string; ok: false };
 
 /** TLDs sugeridos na busca dentro do fluxo de publicar. */
-const SUGGESTED_TLDS = [
-  ".com",
-  ".com.br",
-  ".net",
-  ".org",
-  ".io",
-  ".dev",
-  ".app",
-  ".site",
-];
+const SUGGESTED_TLDS = [".com", ".net", ".org", ".io", ".dev", ".app", ".site"];
+
+/** Domínios que a integração de registro do fluxo de publicação consegue cotar. */
+export function publishDomainCandidates(clean: string): string[] {
+  const name = (clean.includes(".") ? clean.split(".")[0] : clean).replace(
+    /[^a-z0-9-]/g,
+    ""
+  );
+  const wanted = clean.includes(".") ? [clean] : [];
+  return [
+    ...new Set([...wanted, ...SUGGESTED_TLDS.map(tld => `${name}${tld}`)]),
+  ];
+}
 
 export interface PublishCheckoutInput {
   /** Domínio da conta (`kind: "domain"`) ou domínio a comprar (`kind: "buy"`). */
@@ -91,7 +94,7 @@ export async function searchDomainsForPublish(
   }
 
   const wanted = clean.includes(".") ? [clean] : [];
-  const domains = [...wanted, ...SUGGESTED_TLDS.map(tld => `${name}${tld}`)];
+  const domains = publishDomainCandidates(clean);
 
   try {
     const results = await quoteDomainList({ domains });
