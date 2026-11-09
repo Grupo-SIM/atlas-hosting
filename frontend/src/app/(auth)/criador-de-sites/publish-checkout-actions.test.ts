@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { publishDomainCandidates } from "./publish-checkout-actions";
+import { publishDomainCandidates } from "./publish-domain-candidates";
 
 test("does not send unsupported Brazilian TLDs to the Namecheap publish lookup", () => {
   expect(publishDomainCandidates("tyzz")).toEqual([
