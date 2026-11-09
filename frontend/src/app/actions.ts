@@ -1036,7 +1036,14 @@ function atlasSimpayInvoiceDescription(
   invoiceType: Invoice["type"]
 ): string {
   const productType = invoiceType === "domain" ? "DOMAIN" : "HOSTING";
-  return `${productType} ${reference.trim()}`;
+  // VPS-REN-<uuid>-<ISO>: mantém só o início do UUID e a data do ciclo.
+  const renewal = reference
+    .trim()
+    .match(/^VPS-REN-([0-9a-f]{8})[0-9a-f-]*?-(\d{4}-\d{2}-\d{2})T[\d:.]+Z$/i);
+  const short = renewal
+    ? `VPS-REN-${renewal[1]}-${renewal[2]}`
+    : reference.trim();
+  return `${productType} ${short}`;
 }
 
 /**
