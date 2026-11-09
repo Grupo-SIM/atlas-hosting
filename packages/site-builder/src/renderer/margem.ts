@@ -174,6 +174,13 @@ ${S} .mg-live .mg-end.is-on{visibility:visible}
 ${S} .mg-live .mg-progress{position:absolute;inset:auto 0 0;display:block;height:1px;background:color-mix(in srgb,var(--sb-fg) 10%,transparent)}
 ${S} .mg-progress i{display:block;height:100%;background:var(--sb-fg);transform:scaleX(var(--p,0));transform-origin:left}
 
+/* miniatura (galeria de templates, "Meus sites"): o site reduzido rola por transform, sem scroll —
+   sem sticky (o runtime simula o pin com translate) e túnel/método mais curtos para caberem na passada */
+${S}.mg-thumb .mg-live .mg-stage,${S}.mg-thumb .mg-live .mg-method-stage{position:relative;top:auto}
+${S}.mg-thumb .sb-block[data-block-type=mgNav]{position:relative;top:auto}
+${S}.mg-thumb .mg-tunnel{--mg-screens:6!important}
+${S}.mg-thumb .mg-method{--mg-screens:1.6!important}
+
 /* manifesto com marginália */
 ${S} .mg-man{position:relative;container-type:inline-size;display:grid;grid-template-columns:minmax(0,1fr) 27%;padding:clamp(88px,10cqw,180px) 0}
 ${S} .mg-man-col{padding:0 clamp(24px,4cqw,72px) 0 var(--mg-gut);border-right:1px solid var(--sb-fg)}

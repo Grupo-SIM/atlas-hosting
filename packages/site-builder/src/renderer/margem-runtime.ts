@@ -11,7 +11,7 @@
  * câmera e sem entradas; o túnel continua respondendo ao scroll.
  * Ao mudar o script, suba `MG_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const MG_VERSION = 3;
+export const MG_VERSION = 4;
 
 export const MARGEM_RUNTIME = `(function(){
 if(window.sbMargem&&window.__sbMgV===${MG_VERSION})return;
@@ -24,38 +24,75 @@ function clamp(v,a,b){return v<a?a:v>b?b:v}
 function sstep(a,b,x){var t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)}
 function on(t,e,f,o){t.addEventListener(e,f,o);off.push(function(){t.removeEventListener(e,f,o)})}
 function arr(l){return Array.prototype.slice.call(l)}
-/* só o site que é a página: miniaturas (escaladas) ficam estáticas */
-function isLive(r){var w=r.offsetWidth;if(!w)return false;var k=r.getBoundingClientRect().width/w;return k>0.98&&k<1.02}
-var roots=arr(document.querySelectorAll(".sb")).filter(function(r){return r.querySelector("[data-mg]")&&isLive(r)});
-if(!roots.length)return function(){};
 /*
- * Área visível. No site publicado é a janela. Na prévia do app o site rola dentro de um contêiner
- * (main com overflow) e tem barras fixas acima (sticky): a altura útil e o topo das seções presas
- * vão para --mg-vh/--mg-top, e as posições passam a contar a partir do topo dessa área (VT).
+ * Área visível de cada site (V). Página: a janela; na prévia do app, o contêiner que rola (main com
+ * overflow) menos as barras sticky acima do site — altura e topo vão para --mg-vh/--mg-top.
+ * Miniatura (site reduzido por transform:scale dentro de uma caixa recortada, que rola por animação
+ * de transform, sem evento de scroll): a caixa é a "tela", em px do site (altura ÷ escala); as posições
+ * são lidas a cada quadro e os pins são simulados com translate (classe mg-thumb na raiz).
+ * Todas as posições passam por pos(V, el): px do site a partir do topo da área visível.
  */
+function scaleOf(r){var w=r.offsetWidth;return w?r.getBoundingClientRect().width/w:0}
 function scrollerOf(el){for(var p=el.parentElement;p&&p!==document.body&&p!==document.documentElement;p=p.parentElement){var o=getComputedStyle(p).overflowY;if((o==="auto"||o==="scroll")&&p.scrollHeight>p.clientHeight)return p}return null}
 function stickyAbove(el,sc){var h=0;for(var n=el;n&&n!==sc;n=n.parentElement)for(var s=n.previousElementSibling;s;s=s.previousElementSibling)if(getComputedStyle(s).position==="sticky")h+=s.offsetHeight;return h}
-var scroller=scrollerOf(roots[0]),VT=0,VH=window.innerHeight;
-function measure(){
-if(!scroller){VT=0;VH=window.innerHeight;return}
-var top=stickyAbove(roots[0],scroller);
-VT=scroller.getBoundingClientRect().top+top;VH=Math.max(240,scroller.clientHeight-top);
-roots.forEach(function(r){r.style.setProperty("--mg-top",top+"px");r.style.setProperty("--mg-vh",VH+"px")});
+function clipBox(el){for(var p=el.parentElement;p&&p!==document.body;p=p.parentElement){var o=getComputedStyle(p).overflowY;if(o==="hidden"||o==="clip")return p}return null}
+function pageView(r){
+var sc=scrollerOf(r),V={root:r,s:1,thumb:false,sc:sc,T:0,H:window.innerHeight};
+V.measure=function(){
+if(!sc){V.T=0;V.H=window.innerHeight;return}
+var top=stickyAbove(r,sc);
+V.T=sc.getBoundingClientRect().top+top;V.H=Math.max(240,sc.clientHeight-top);
+r.style.setProperty("--mg-top",top+"px");r.style.setProperty("--mg-vh",V.H+"px");
+};
+V.t=function(){return V.T};V.h=function(){return V.H};
+if(sc)off.push(function(){r.style.removeProperty("--mg-top");r.style.removeProperty("--mg-vh")});
+return V;
 }
-measure();
-if(scroller)off.push(function(){roots.forEach(function(r){r.style.removeProperty("--mg-top");r.style.removeProperty("--mg-vh")})});
-function vh(){return VH}
+function thumbView(r,b,s){
+var V={root:r,s:s,thumb:true,box:b,H:960};
+V.measure=function(){V.s=scaleOf(r)||V.s;V.H=b.clientHeight/V.s;r.style.setProperty("--mg-vh",V.H.toFixed(1)+"px")};
+V.t=function(){return b.getBoundingClientRect().top};V.h=function(){return V.H};
+r.classList.add("mg-thumb");
+off.push(function(){r.classList.remove("mg-thumb");r.style.removeProperty("--mg-vh")});
+return V;
+}
+var views=[];
+arr(document.querySelectorAll(".sb")).forEach(function(r){
+if(!r.querySelector("[data-mg]"))return;
+var s=scaleOf(r);
+if(!s)return;
+if(s>0.98&&s<1.02){views.push(pageView(r));return}
+var b=clipBox(r);
+if(b&&s<0.98)views.push(thumbView(r,b,s));
+});
+if(!views.length)return function(){};
+views.forEach(function(V){V.measure()});
+function pos(V,el){var r=el.getBoundingClientRect();return{top:(r.top-V.t())/V.s,height:r.height/V.s}}
 var queued=false;
 function tick(){queued=false;subs.forEach(function(f){f()})}
 function req(){if(!queued){queued=true;requestAnimationFrame(tick)}}
 on(document,"scroll",req,{capture:true,passive:true});
-on(window,"resize",function(){measure();resizers.forEach(function(f){f()});req()});
+on(window,"resize",function(){views.forEach(function(V){V.measure()});resizers.forEach(function(f){f()});req()});
+/* miniaturas: lê a posição a cada quadro, só enquanto alguma aparece na tela */
+var thumbs=views.filter(function(V){return V.thumb});
+if(thumbs.length){
+var shown=0,lraf=0;
+var loop=function(){lraf=0;if(!shown)return;tick();lraf=requestAnimationFrame(loop)};
+if("IntersectionObserver" in window){
+var vis=new Set();
+var tio=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)vis.add(e.target);else vis.delete(e.target)});shown=vis.size;if(shown&&!lraf)lraf=requestAnimationFrame(loop)});
+thumbs.forEach(function(V){tio.observe(V.box)});
+off.push(function(){tio.disconnect()});
+}else{shown=1;lraf=requestAnimationFrame(loop)}
+off.push(function(){shown=0;if(lraf)cancelAnimationFrame(lraf)});
+}
 
 /* ── navegação: some ao rolar para baixo (depois de meia tela), volta ao subir, com véu ── */
-K.nav=function(el){
-var root=el.closest(".sb"),last=null;
+K.nav=function(el,root,V){
+if(V.thumb)return;
+var last=null;
 subs.push(function(){
-var y=VT-root.getBoundingClientRect().top,h=vh();
+var y=(V.t()-root.getBoundingClientRect().top)/V.s,h=V.h();
 if(last===null){last=y;return}
 var d=y-last;
 if(Math.abs(d)<4)return;
@@ -67,7 +104,7 @@ off.push(function(){el.classList.remove("mg-hide","mg-veil")});
 };
 
 /* ── hero + túnel (WebGL) ── */
-K.tunnel=function(sec,root){
+K.tunnel=function(sec,root,V){
 var data;try{data=JSON.parse(sec.getAttribute("data-mg-wall")||"{}")}catch(e){return}
 var wall=(data.wall||[]).filter(function(w){return w&&w.s});
 var caseSrc=data.cases||[];
@@ -133,9 +170,9 @@ var count=Math.round(78*(3.5-zEnd)/99.5);
 if(wall.length)for(var i=0;i<count;i++){
 var a=i*2.39996+(R()-0.5)*0.5,rad=3.5+R()*2.1,hh=1.05+R()*1.15,ph=wall[i%wall.length];
 if(i<10&&Math.cos(a)<0&&Math.sin(a)<0)a+=Math.PI/2;
-planes.push({a:a,r:rad,z:3.5-i/(count-1)*(3.5-zEnd),h:hh,w:hh*clamp(Number(ph.r)||1,0.2,5),tex:tex(ph.s,512)});
+planes.push({a:a,r:rad,z:3.5-i/(count-1)*(3.5-zEnd),h:hh,w:hh*clamp(Number(ph.r)||1,0.2,5),tex:tex(ph.s,V.thumb?256:512)});
 }
-var hls=caseEls.map(function(_,k){return{a:0.9+k*2.39996,r:4.4,z:-14-k*19,tex:caseSrc[k]?tex(caseSrc[k],2048):{t:null}}});
+var hls=caseEls.map(function(_,k){return{a:0.9+k*2.39996,r:4.4,z:-14-k*19,tex:caseSrc[k]?tex(caseSrc[k],V.thumb?1024:2048):{t:null}}});
 /* matrizes (coluna-maior) */
 function persp(fov,asp,nr,fr){var f=1/Math.tan(fov*Math.PI/360),d=nr-fr;return new Float32Array([f/asp,0,0,0,0,f,0,0,0,0,(fr+nr)/d,-1,0,0,2*fr*nr/d,0])}
 function look(ex,ey,ez,tx,ty,tz){
@@ -204,31 +241,31 @@ if(endEl){endEl.classList.toggle("is-on",S.end>0);endEl.style.opacity=String(S.e
 if(bar)bar.style.setProperty("--p",p.toFixed(4));
 }
 var tt=0,target=0,mx=0,my=0,cx=0,cy=0,inView=true,list=[];
-function push(V,tx,ex,ey,ez,x,y,z,rx,ry,w,h,mul,bias){
+function push(VM,tx,ex,ey,ez,x,y,z,rx,ry,w,h,mul,bias){
 var d=Math.hypot(x-ex,y-ey,z-ez),op=sstep(0.4,2.2,d)*mul;
 if(op<0.004)return;
-var mv=mvOf(V,x,y,z,rx,ry,w,h);
+var mv=mvOf(VM,x,y,z,rx,ry,w,h);
 if(mv[14]>0)return;
 var b=d<6?(6-d)*0.45:d>22?Math.min(3,(d-22)*0.12):0;
 list.push({mv:mv,op:op,b:b*bias,t:tx});
 }
 function draw(S,maxPull){
-var W=cv.clientWidth,H=cv.clientHeight,dpr=Math.min(2,window.devicePixelRatio||1);
+var W=cv.clientWidth,H=cv.clientHeight,dpr=V.thumb?clamp((window.devicePixelRatio||1)*V.s*1.5,0.25,1):Math.min(2,window.devicePixelRatio||1);
 var bw=Math.max(1,Math.round(W*dpr)),bh=Math.max(1,Math.round(H*dpr));
 if(cv.width!==bw||cv.height!==bh){cv.width=bw;cv.height=bh}
 gl.viewport(0,0,bw,bh);gl.clearColor(bg[0],bg[1],bg[2],1);gl.clear(gl.COLOR_BUFFER_BIT);
-var ex=cx,ey=cy,ez=S.z,V=look(ex,ey,ez,cx*0.3,cy*0.3,ez-12);
+var ex=cx,ey=cy,ez=S.z,VM=look(ex,ey,ez,cx*0.3,cy*0.3,ez-12);
 gl.uniformMatrix4fv(uP,false,persp(fov,W/Math.max(1,H),0.05,140));
 gl.uniform3f(uF,bg[0],bg[1],bg[2]);gl.uniform2f(uR,9,44);
 var kx=portrait?0.72:1.45,ky=portrait?1.55:1;list=[];
 planes.forEach(function(p){
 if(!p.tex.t)return;
-push(V,p.tex.t,ex,ey,ez,Math.cos(p.a)*p.r*kx,Math.sin(p.a)*p.r*ky,p.z,Math.sin(p.a)*0.28,-Math.cos(p.a)*0.32,p.w,p.h,1-maxPull*0.88,1);
+push(VM,p.tex.t,ex,ey,ez,Math.cos(p.a)*p.r*kx,Math.sin(p.a)*p.r*ky,p.z,Math.sin(p.a)*0.28,-Math.cos(p.a)*0.32,p.w,p.h,1-maxPull*0.88,1);
 });
 hls.forEach(function(h,i){
 if(!h.tex.t)return;
 var s=sstep(0,1,S.pull[i]),sc=0.36+0.64*s,oth=maxPull>S.pull[i]?maxPull:0;
-push(V,h.tex.t,ex,ey,ez,Math.cos(h.a)*h.r*kx*(1-s),Math.sin(h.a)*h.r*ky*(1-s),h.z,Math.sin(h.a)*0.28*(1-s),-Math.cos(h.a)*0.32*(1-s),6*sc,4*sc,1-oth*0.88,1-s);
+push(VM,h.tex.t,ex,ey,ez,Math.cos(h.a)*h.r*kx*(1-s),Math.sin(h.a)*h.r*ky*(1-s),h.z,Math.sin(h.a)*0.28*(1-s),-Math.cos(h.a)*0.32*(1-s),6*sc,4*sc,1-oth*0.88,1-s);
 });
 list.sort(function(a,b){return a.mv[14]-b.mv[14]});
 list.forEach(function(o){
@@ -249,24 +286,24 @@ if(inView||dirty){draw(S,maxPull);overlay(S,T?tt/T:0)}
 dirty=false;
 if(moving)kick();
 }
-function progress(){var r=sec.getBoundingClientRect(),t=r.top-VT,span=r.height-stage.offsetHeight;inView=t+r.height>0&&t<vh();return span>0?clamp(-t/span,0,1):0}
+function progress(){var r=pos(V,sec),span=r.height-stage.offsetHeight;inView=r.top+r.height>0&&r.top<V.h();if(V.thumb)stage.style.translate="0 "+clamp(-r.top,0,Math.max(0,span)).toFixed(1)+"px";return span>0?clamp(-r.top/span,0,1):0}
 sec.classList.add("mg-live");
 build();
 target=tt=progress()*T;
-subs.push(function(){target=progress()*T;kick()});
+subs.push(function(){var nt=progress()*T;if(Math.abs(nt-target)>1e-6){target=nt;kick()}});
 resizers.push(function(){build();target=progress()*T;dirty=true;kick()});
-if(fine&&!reduce)on(window,"pointermove",function(e){mx=(e.clientX/window.innerWidth-0.5)*2;my=-(e.clientY/window.innerHeight-0.5)*2;if(inView)kick()},{passive:true});
+if(fine&&!reduce&&!V.thumb)on(window,"pointermove",function(e){mx=(e.clientX/window.innerWidth-0.5)*2;my=-(e.clientY/window.innerHeight-0.5)*2;if(inView)kick()},{passive:true});
 dirty=true;kick();
 off.push(function(){
 dead=true;if(raf)cancelAnimationFrame(raf);
-sec.classList.remove("mg-live","mg-portrait");stage.style.removeProperty("--mg-below");
+sec.classList.remove("mg-live","mg-portrait");stage.style.removeProperty("--mg-below");stage.style.translate="";
 heroEls.concat(endEl?[endEl]:[]).forEach(function(e){e.style.opacity="";e.style.translate=""});
 caseEls.forEach(function(el){el.classList.remove("is-on");arr(el.querySelectorAll(".mg-case-txt,.mg-case-txt>*")).forEach(function(e){e.style.opacity="";e.style.translate="";e.style.removeProperty("--m")})});
 });
 };
 
 /* ── manifesto: palavras em sequência, notas na margem ligadas por fios ── */
-K.manifesto=function(sec){
+K.manifesto=function(sec,root,V){
 var words=arr(sec.querySelectorAll(".mg-w")),notes=arr(sec.querySelectorAll(".mg-note"));
 var svg=sec.querySelector(".mg-threads"),margin=sec.querySelector(".mg-margin"),txt=sec.querySelector(".mg-man-text");
 if(!reduce&&"IntersectionObserver" in window&&txt){
@@ -298,9 +335,9 @@ items.push({n:note,p:p,len:len,y:y});
 draw();
 }
 function draw(){
-var r=sec.getBoundingClientRect(),H=vh();
+var r=pos(V,sec),H=V.h();
 items.forEach(function(it){
-var ys=r.top-VT+it.y,k=reduce?(ys<H*0.9?1:0):clamp((H*0.85-ys)/(H*0.3),0,1);
+var ys=r.top+it.y,k=reduce?(ys<H*0.9?1:0):clamp((H*0.85-ys)/(H*0.3),0,1);
 it.p.style.strokeDashoffset=String(it.len*(1-k));
 it.n.classList.toggle("is-on",k>=0.98);
 });
@@ -312,7 +349,7 @@ off.push(function(){svg.innerHTML="";sec.classList.remove("mg-live");notes.forEa
 };
 
 /* ── método: a tira desliza com o scroll, o quadro ativo passa pelo centro ── */
-K.method=function(sec){
+K.method=function(sec,root,V){
 var stage=sec.querySelector(".mg-method-stage"),view=sec.querySelector(".mg-strip-view"),strip=sec.querySelector(".mg-strip"),line=sec.querySelector(".mg-ruler-line");
 var frames=arr(sec.querySelectorAll(".mg-frame")),steps=arr(sec.querySelectorAll(".mg-step")),caps=arr(sec.querySelectorAll(".mg-caps span"));
 var n=frames.length;
@@ -320,7 +357,8 @@ if(n<2||!stage||!view||!strip)return;
 sec.classList.add("mg-live");
 var cur=-1;
 function upd(){
-var r=sec.getBoundingClientRect(),span=r.height-stage.offsetHeight,p=span>0?clamp((VT-r.top)/span,0,1):0;
+var r=pos(V,sec),span=r.height-stage.offsetHeight,p=span>0?clamp(-r.top/span,0,1):0;
+if(V.thumb)stage.style.translate="0 "+clamp(-r.top,0,Math.max(0,span)).toFixed(1)+"px";
 var pos=p*(n-1),act=Math.round(pos),fw=frames[0].offsetWidth,sw=fw*n,w=view.clientWidth;
 var x=sw<=w?(w-sw)/2:clamp(w/2-(pos+0.5)*fw,w-sw,0);
 strip.style.transform="translate3d("+x.toFixed(1)+"px,0,0)";
@@ -332,11 +370,12 @@ cur=act;
 }
 upd();
 subs.push(upd);resizers.push(upd);
-off.push(function(){sec.classList.remove("mg-live");strip.style.transform="";if(line)line.style.removeProperty("--p")});
+off.push(function(){sec.classList.remove("mg-live");strip.style.transform="";stage.style.translate="";if(line)line.style.removeProperty("--p")});
 };
 
 /* ── índice: a foto do projeto segue o cursor (só com mouse) ── */
-K.index=function(sec){
+K.index=function(sec,root,V){
+if(V.thumb)return;
 var box=sec.querySelector(".mg-follow"),img=box&&box.querySelector("img"),rows=arr(sec.querySelectorAll(".mg-row-in")),list=sec.querySelector(".mg-rows");
 if(!box||!img||!list)return;
 if("IntersectionObserver" in window){
@@ -382,13 +421,13 @@ off.push(function(){hide();if(raf)cancelAnimationFrame(raf);box.style.transform=
 };
 
 /* ── depoimento: fotos andam com o scroll na proporção da profundidade ── */
-K.quote=function(sec){
+K.quote=function(sec,root,V){
 if(reduce)return;
 var imgs=arr(sec.querySelectorAll(".mg-float img"));
 function upd(){
-var r=sec.getBoundingClientRect(),H=vh();
-if(r.bottom-VT<-200||r.top-VT>H+200)return;
-var c=clamp((r.top-VT+r.height/2-H/2)/(H/2+r.height/2),-1,1);
+var r=pos(V,sec),H=V.h();
+if(r.top+r.height<-200||r.top>H+200)return;
+var c=clamp((r.top+r.height/2-H/2)/(H/2+r.height/2),-1,1);
 imgs.forEach(function(im){var d=Number(im.getAttribute("data-depth"))||0;im.style.setProperty("--mg-py",(c*160*d).toFixed(1)+"px")});
 }
 upd();subs.push(upd);
@@ -396,27 +435,29 @@ off.push(function(){imgs.forEach(function(im){im.style.removeProperty("--mg-py")
 };
 
 /* ── rodapé: wordmark de borda a borda sobe por baixo ── */
-K.footer=function(sec){
+K.footer=function(sec,root,V){
 if(reduce)return;
 var m=sec.querySelector(".mg-foot-mark");
 if(!m)return;
-function upd(){var r=m.getBoundingClientRect(),H=vh(),k=clamp((H-(r.top-VT))/(r.height*1.05),0,1);m.style.setProperty("--mg-rise",((1-k)*60).toFixed(2)+"%")}
+function upd(){var r=pos(V,m),H=V.h(),k=clamp((H-r.top)/(r.height*1.05),0,1);m.style.setProperty("--mg-rise",((1-k)*60).toFixed(2)+"%")}
 upd();subs.push(upd);
 off.push(function(){m.style.removeProperty("--mg-rise")});
 };
 
-roots.forEach(function(root){
+views.forEach(function(V){
+var root=V.root;
 root.querySelectorAll("[data-mg]").forEach(function(el){
 if(el.__mg)return;
 var f=K[el.getAttribute("data-mg")];
 if(!f)return;
 el.__mg=1;off.push(function(){el.__mg=0});
-try{f(el,root)}catch(e){if(window.console)console.error(e)}
+try{f(el,root,V)}catch(e){if(window.console)console.error(e)}
 });
 });
 
 /* ── scroll suave (roda do mouse) e âncoras: só quando a página rola a janela ── */
-if(!reduce&&fine&&!window.__sbMgSmooth&&!scroller){
+var pv=views.filter(function(V){return !V.thumb})[0];
+if(!reduce&&fine&&!window.__sbMgSmooth&&pv&&!pv.sc){
 window.__sbMgSmooth=1;
 var cur=window.scrollY,tgt=cur,anim=false,sraf=0;
 var maxY=function(){return document.documentElement.scrollHeight-window.innerHeight};
