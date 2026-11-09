@@ -21,6 +21,7 @@ import {
   visiblePosts,
   wpDate,
 } from "./helpers.js";
+import { margemBlocks } from "./margem.js";
 import { marketplaceBlocks } from "./marketplace.js";
 import { portalHubBlocks } from "./portal-hub.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
@@ -2355,6 +2356,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...portalHubBlocks,
   ...centralBlocks,
   ...marketplaceBlocks,
+  ...margemBlocks,
   ...adBlocks,
   newsSection,
   categoryHeader,

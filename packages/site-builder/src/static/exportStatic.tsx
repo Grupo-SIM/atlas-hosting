@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { prerender } from "react-dom/static";
 import type { Site } from "../model/index.js";
 import { FX_RUNTIME } from "../renderer/fx-runtime.js";
+import { MARGEM_RUNTIME } from "../renderer/margem-runtime.js";
 import { NAV_RUNTIME } from "../renderer/nav-runtime.js";
 import { SiteRenderer } from "../renderer/SiteRenderer.js";
 import { themeVars } from "../renderer/styles.js";
@@ -69,6 +70,10 @@ async function document(
     `<script>${filterScript}</script>`,
     `<script>${FX_RUNTIME};window.sbFx()</script>`,
     `<script>${NAV_RUNTIME}</script>`,
+    // Movimento dos blocos do template Margem: só nas páginas que têm um deles.
+    body.includes(" data-mg=")
+      ? `<script>${MARGEM_RUNTIME};window.sbMargem()</script>`
+      : "",
     "</body>",
     "</html>",
   ].join("");

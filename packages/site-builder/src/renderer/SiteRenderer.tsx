@@ -13,6 +13,7 @@ import { centralCss, centralVars, isCentral } from "./central.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { customFonts, fontFaceCss, fontStylesheet } from "./fonts.js";
 import { isJournal, journalCss, journalVars } from "./journal.js";
+import { isMargem, margemCss, margemVars } from "./margem.js";
 import {
   isMarketplace,
   marketplaceCss,
@@ -75,6 +76,7 @@ export function SiteRenderer({
   const spy = isSpy(site.theme);
   const central = isCentral(site.theme);
   const market = isMarketplace(site.theme);
+  const margem = isMargem(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -102,6 +104,7 @@ export function SiteRenderer({
         spy ? "sb-sh" : "",
         central ? "sb-ct" : "",
         market ? "sb-mk" : "",
+        margem ? "sb-mg" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -112,6 +115,7 @@ export function SiteRenderer({
           ...(portal ? portalVars(site.theme) : {}),
           ...(central ? centralVars(site.theme) : {}),
           ...(market ? marketplaceVars(site.theme) : {}),
+          ...(margem ? margemVars(site.theme) : {}),
         } as CSSProperties
       }
     >
@@ -127,7 +131,9 @@ export function SiteRenderer({
                   ? siteCss + centralCss
                   : market
                     ? siteCss + marketplaceCss
-                    : siteCss)}
+                    : margem
+                      ? siteCss + margemCss
+                      : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}
