@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { z } from "zod";
 import { cssUrl } from "../renderer/central.js";
 import { AdBox, adBlocks, adItemFields, adItemsSchema } from "./ads.js";
+import { areaflixBlocks } from "./areaflix.js";
 import { centralBlocks, Eyebrow } from "./central.js";
 import { defineBlock } from "./define.js";
 import {
@@ -23,6 +24,7 @@ import {
 } from "./helpers.js";
 import { margemBlocks } from "./margem.js";
 import { marketplaceBlocks } from "./marketplace.js";
+import { patrimonialBlocks } from "./patrimonial.js";
 import { portalHubBlocks } from "./portal-hub.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
 import { isYouTubeChannelId, latestVideoEmbed, videoEmbed } from "./youtube.js";
@@ -2357,6 +2359,8 @@ export const blockDefinitions: BlockDefinition[] = [
   ...centralBlocks,
   ...marketplaceBlocks,
   ...margemBlocks,
+  ...patrimonialBlocks,
+  ...areaflixBlocks,
   ...adBlocks,
   newsSection,
   categoryHeader,

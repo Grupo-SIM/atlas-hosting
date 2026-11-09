@@ -1,6 +1,8 @@
 import type { SiteTemplate, TemplateMeta } from "../model/index.js";
+import { areaflix } from "./areaflix/index.js";
 import { blogViagens } from "./blog-viagens/index.js";
 import { centralMarketing } from "./central-marketing/index.js";
+import { controlePatrimonial } from "./controle-patrimonial/index.js";
 import { margem } from "./margem/index.js";
 import { marketplace } from "./marketplace/index.js";
 import { portalNoticias } from "./portal-noticias/index.js";
@@ -13,6 +15,8 @@ const templates: SiteTemplate[] = [
   centralMarketing,
   marketplace,
   margem,
+  areaflix,
+  controlePatrimonial,
 ];
 
 /**
