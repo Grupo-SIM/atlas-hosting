@@ -37,6 +37,8 @@ interface Props {
   atlasVmMonthlyBrl: number | null;
   /** Domínio base dos subdomínios grátis; `null` quando o Atlas ainda não configurou. */
   baseDomain: string | null;
+  /** Admins e a conta autorizada não pagam hospedagem na VM do Atlas. */
+  complimentaryAtlasHosting: boolean;
   domains: string[];
   /** Assinatura da hospedagem deste site, quando existe. */
   hosting: {
@@ -61,6 +63,7 @@ const selectClass =
 export default function PublishForm({
   atlasVmMonthlyBrl,
   baseDomain,
+  complimentaryAtlasHosting,
   domains,
   hosting,
   publication,
@@ -88,7 +91,9 @@ export default function PublishForm({
   // Hospedagem já paga: republicar não cobra de novo.
   const hostingPaid = Boolean(hosting && hosting.status !== "cancelled");
   const hostingPrice =
-    target === "atlas_vm" && !hostingPaid ? atlasVmMonthlyBrl : null;
+    target === "atlas_vm" && !hostingPaid && !complimentaryAtlasHosting
+      ? atlasVmMonthlyBrl
+      : null;
   const domainPrice = kind === "buy" ? (offer?.priceBrl ?? null) : null;
   const total = (hostingPrice ?? 0) + (domainPrice ?? 0);
 
@@ -349,7 +354,10 @@ export default function PublishForm({
               ) : null}
               {atlasVmEnabled ? (
                 <option value="atlas_vm">
-                  Hospedagem do Atlas — {brl(atlasVmMonthlyBrl)}/mês
+                  Hospedagem do Atlas —{" "}
+                  {complimentaryAtlasHosting
+                    ? "gratuita"
+                    : `${brl(atlasVmMonthlyBrl)}/mês`}
                 </option>
               ) : null}
             </select>
@@ -390,8 +398,9 @@ export default function PublishForm({
               )
             ) : (
               <p className="text-muted-foreground text-xs">
-                Nós cuidamos do servidor e do HTTPS. Cobrança mensal por site,
-                cancela quando quiser.
+                {complimentaryAtlasHosting
+                  ? "Nós cuidamos do servidor e do HTTPS sem cobrança para sua conta."
+                  : "Nós cuidamos do servidor e do HTTPS. Cobrança mensal por site, cancela quando quiser."}
               </p>
             )}
           </div>

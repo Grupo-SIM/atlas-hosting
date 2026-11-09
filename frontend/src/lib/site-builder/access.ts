@@ -16,6 +16,13 @@ export function canAccessSiteBuilder(
   );
 }
 
+/** Administradores e a conta autorizada não pagam hospedagem na VM do Atlas. */
+export function hasComplimentaryAtlasHosting(
+  user: Pick<User, "email" | "isAdmin">
+): boolean {
+  return canAccessSiteBuilder(user);
+}
+
 /**
  * Este é o único ponto que decide o acesso ao Criador de Sites.
  * Para abrir o recurso a todos, troque a regra aqui e o `builderOnly` em `navigation.ts`.

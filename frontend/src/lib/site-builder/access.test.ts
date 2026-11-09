@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { canAccessSiteBuilder } from "./access";
+import { canAccessSiteBuilder, hasComplimentaryAtlasHosting } from "./access";
 
 describe("canAccessSiteBuilder", () => {
   test("autoriza administradores", () => {
@@ -20,6 +20,32 @@ describe("canAccessSiteBuilder", () => {
   test("recusa usuários comuns", () => {
     expect(
       canAccessSiteBuilder({ email: "cliente@example.com", isAdmin: false })
+    ).toBe(false);
+  });
+});
+
+describe("hasComplimentaryAtlasHosting", () => {
+  test("isenta admins e brenohslima@gmail.com", () => {
+    expect(
+      hasComplimentaryAtlasHosting({
+        email: "admin@example.com",
+        isAdmin: true,
+      })
+    ).toBe(true);
+    expect(
+      hasComplimentaryAtlasHosting({
+        email: "BrenoHSLima@Gmail.com",
+        isAdmin: false,
+      })
+    ).toBe(true);
+  });
+
+  test("mantém a cobrança para outros usuários", () => {
+    expect(
+      hasComplimentaryAtlasHosting({
+        email: "cliente@example.com",
+        isAdmin: false,
+      })
     ).toBe(false);
   });
 });

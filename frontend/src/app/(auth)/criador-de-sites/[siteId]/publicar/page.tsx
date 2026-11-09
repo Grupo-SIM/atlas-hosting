@@ -10,7 +10,10 @@ import {
   pgBuilderSite,
   pgOrganizationDomains,
 } from "@/lib/db/schema";
-import { requireBuilderUser } from "@/lib/site-builder/access";
+import {
+  hasComplimentaryAtlasHosting,
+  requireBuilderUser,
+} from "@/lib/site-builder/access";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
 import { listPublishTargets } from "@/lib/site-builder/eligibility";
 import PublishForm from "./components/PublishForm";
@@ -75,6 +78,7 @@ export default async function PublishSitePage({
           targets.atlasVm.enabled ? targets.atlasVm.monthlyBrl : null
         }
         baseDomain={config.subdomainEnabled ? config.baseDomain : null}
+        complimentaryAtlasHosting={hasComplimentaryAtlasHosting(user)}
         domains={domains.map(d => d.domain)}
         hosting={
           hosting

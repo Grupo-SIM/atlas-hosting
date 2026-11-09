@@ -16,7 +16,11 @@ import {
   type DomainQuote,
   quoteDomainList,
 } from "@/lib/server/domains/pricing";
-import { FORBIDDEN_MESSAGE, getBuilderUser } from "@/lib/site-builder/access";
+import {
+  FORBIDDEN_MESSAGE,
+  getBuilderUser,
+  hasComplimentaryAtlasHosting,
+} from "@/lib/site-builder/access";
 import { assertValidDomain } from "@/lib/site-builder/caddy";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
 import {
@@ -207,6 +211,7 @@ export async function startPublishCheckout(
 
   // 3) Servidor: VM do Atlas (paga) ou VPS do cliente (precisa ser nossa e em dia).
   let hostingAmountBrl: number | undefined;
+  const complimentaryAtlasHosting = hasComplimentaryAtlasHosting(user);
   if (input.target === "atlas_vm") {
     if (!targets.atlasVm.enabled || !targets.atlasVm.monthlyBrl) {
       return {
@@ -219,7 +224,7 @@ export async function startPublishCheckout(
     });
     // Já paga: republicar não cobra de novo.
     hostingAmountBrl =
-      existing && existing.status !== "cancelled"
+      complimentaryAtlasHosting || (existing && existing.status !== "cancelled")
         ? undefined
         : targets.atlasVm.monthlyBrl;
   } else {
@@ -242,6 +247,10 @@ export async function startPublishCheckout(
         siteId: site.id,
         target: input.target,
         vpsNodeId: input.vpsNodeId,
+      },
+      {
+        skipHostingCheck:
+          input.target === "atlas_vm" && complimentaryAtlasHosting,
       }
     );
     if (!result.ok) return result;

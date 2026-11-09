@@ -4,7 +4,11 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { pgBuilderPublication } from "@/lib/db/schema";
-import { FORBIDDEN_MESSAGE, getBuilderUser } from "@/lib/site-builder/access";
+import {
+  FORBIDDEN_MESSAGE,
+  getBuilderUser,
+  hasComplimentaryAtlasHosting,
+} from "@/lib/site-builder/access";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
 import {
   currentPublication,
@@ -32,7 +36,11 @@ export async function publishSite(
 
   const result = await runPublish(
     { id: user.id, organizationId: user.organization?.id },
-    input
+    input,
+    {
+      skipHostingCheck:
+        input.target === "atlas_vm" && hasComplimentaryAtlasHosting(user),
+    }
   );
   if (!result.ok) return result;
 
