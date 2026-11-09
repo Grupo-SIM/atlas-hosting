@@ -22,10 +22,16 @@ import { ThemeToggleSlot } from "./ThemeToggleSlot";
 
 export default async function Topbar({
   children,
+  canAccessSiteBuilder,
   className,
   isAdmin,
   ...props
-}: PropsWithChildren<HTMLAttributes<HTMLHeadElement> & { isAdmin?: boolean }>) {
+}: PropsWithChildren<
+  HTMLAttributes<HTMLHeadElement> & {
+    canAccessSiteBuilder?: boolean;
+    isAdmin?: boolean;
+  }
+>) {
   const user = await getUser();
 
   return (
@@ -36,7 +42,10 @@ export default async function Topbar({
       )}
       {...props}
     >
-      <MobileSidebarSheet isAdmin={isAdmin ?? false} />
+      <MobileSidebarSheet
+        canAccessSiteBuilder={canAccessSiteBuilder}
+        isAdmin={isAdmin ?? false}
+      />
       <div className="flex flex-1 items-center justify-end gap-3">
         {children}
         <ThemeToggleSlot />

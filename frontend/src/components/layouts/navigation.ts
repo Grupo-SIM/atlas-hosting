@@ -18,6 +18,8 @@ export interface NavigationItem {
   name: string;
   /** Item só existe para admin (e some do cliente). */
   adminOnly?: boolean;
+  /** Item só existe para usuários autorizados a usar o Criador de Sites. */
+  builderOnly?: boolean;
   /** Item aparece pro admin mesmo na navegação de cliente. */
   showForAdmin?: boolean;
   disabled?: boolean;
@@ -36,7 +38,7 @@ export const clientNavigation: NavigationItem[] = [
   { href: "/domains", icon: Globe, name: "Domínios", showForAdmin: true },
   { href: "/billing", icon: FileText, name: "Faturas", showForAdmin: true },
   {
-    adminOnly: true,
+    builderOnly: true,
     href: "/criador-de-sites",
     icon: LayoutTemplate,
     match: "/criador-de-sites",
@@ -45,6 +47,20 @@ export const clientNavigation: NavigationItem[] = [
   { href: "/affiliate", icon: Users, name: "Afiliados" },
   { href: "/vouchers", icon: Ticket, name: "Vouchers" },
 ];
+
+export function getClientNavigation({
+  canAccessSiteBuilder,
+  isAdmin,
+}: {
+  canAccessSiteBuilder: boolean;
+  isAdmin: boolean;
+}): NavigationItem[] {
+  return clientNavigation.filter(item => {
+    if (item.adminOnly) return isAdmin;
+    if (item.builderOnly) return canAccessSiteBuilder || isAdmin;
+    return !isAdmin || item.showForAdmin;
+  });
+}
 
 /** Porta de entrada do modo admin — substitui os antigos itens soltos de admin. */
 export const adminEntryItem: NavigationItem = {

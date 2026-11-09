@@ -11,20 +11,24 @@ import { cn } from "@/lib/utils";
 import { isAdminPath, playAdminThemeTransition } from "../admin-mode";
 import {
   adminEntryItem,
-  clientNavigation,
+  getClientNavigation,
   type NavigationItem,
 } from "../navigation";
 
-export function MobileSidebarSheet({ isAdmin }: { isAdmin: boolean }) {
+export function MobileSidebarSheet({
+  canAccessSiteBuilder = false,
+  isAdmin,
+}: {
+  canAccessSiteBuilder?: boolean;
+  isAdmin: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const inAdminMode = isAdminPath(pathname);
 
   const filteredNavigation: NavigationItem[] = [
-    ...clientNavigation.filter(item =>
-      item.adminOnly ? isAdmin : !isAdmin || item.showForAdmin
-    ),
+    ...getClientNavigation({ canAccessSiteBuilder, isAdmin }),
     ...(isAdmin ? [adminEntryItem] : []),
   ];
 

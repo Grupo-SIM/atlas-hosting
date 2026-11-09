@@ -3,16 +3,27 @@ import { getRealUser } from "@/lib/auth";
 import type { User } from "@/lib/db/schema";
 
 export const FORBIDDEN_MESSAGE =
-  "Recurso disponível apenas para administradores.";
+  "Recurso disponível apenas para usuários autorizados.";
+
+const SITE_BUILDER_ALLOWED_EMAIL = "brenohslima@gmail.com";
+
+export function canAccessSiteBuilder(
+  user: Pick<User, "email" | "isAdmin">
+): boolean {
+  return (
+    user.isAdmin ||
+    user.email.trim().toLowerCase() === SITE_BUILDER_ALLOWED_EMAIL
+  );
+}
 
 /**
- * Por enquanto o Criador de Sites é exclusivo do admin. Este é o único ponto que decide isso:
- * para abrir o recurso a todos, troque a regra aqui (e o `adminOnly` do item em `navigation.ts`).
+ * Este é o único ponto que decide o acesso ao Criador de Sites.
+ * Para abrir o recurso a todos, troque a regra aqui e o `builderOnly` em `navigation.ts`.
  * Usa o usuário REAL (como as demais telas de admin), então impersonar um cliente não muda o dono dos sites.
  */
 export async function getBuilderUser(): Promise<User | null> {
   const user = await getRealUser();
-  return user.isAdmin ? user : null;
+  return canAccessSiteBuilder(user) ? user : null;
 }
 
 /** Para páginas: quem não é admin vê 404, como se a rota não existisse. */

@@ -15,18 +15,22 @@ import {
 import { isAdminPath, playAdminThemeTransition } from "../admin-mode";
 import {
   adminEntryItem,
-  clientNavigation,
+  getClientNavigation,
   type NavigationItem,
 } from "../navigation";
 
-export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
+export default function Sidebar({
+  canAccessSiteBuilder = false,
+  isAdmin,
+}: {
+  canAccessSiteBuilder?: boolean;
+  isAdmin: boolean;
+}) {
   const [isCompact, setIsCompact] = useState(true);
 
   /** A sidebar é sempre a mesma; o admin só ganha a porta de entrada do painel. */
   const filteredNavigation: NavigationItem[] = [
-    ...clientNavigation.filter(item =>
-      item.adminOnly ? isAdmin : !isAdmin || item.showForAdmin
-    ),
+    ...getClientNavigation({ canAccessSiteBuilder, isAdmin }),
     ...(isAdmin ? [adminEntryItem] : []),
   ];
 
