@@ -22,6 +22,7 @@ import {
   visiblePosts,
   wpDate,
 } from "./helpers.js";
+import { margemBlocks } from "./margem.js";
 import { marketplaceBlocks } from "./marketplace.js";
 import { patrimonialBlocks } from "./patrimonial.js";
 import { portalHubBlocks } from "./portal-hub.js";
@@ -2357,6 +2358,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...portalHubBlocks,
   ...centralBlocks,
   ...marketplaceBlocks,
+  ...margemBlocks,
   ...patrimonialBlocks,
   ...areaflixBlocks,
   ...adBlocks,

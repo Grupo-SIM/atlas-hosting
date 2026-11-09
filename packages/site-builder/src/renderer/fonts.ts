@@ -10,6 +10,7 @@ export const SITE_FONTS = [
   "Red Hat Text",
   "Roboto",
   "Sora",
+  "Geist",
   "Plus Jakarta Sans",
   "Manrope",
   "DM Sans",

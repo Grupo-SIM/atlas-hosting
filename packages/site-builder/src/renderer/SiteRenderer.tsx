@@ -14,6 +14,7 @@ import { centralCss, centralVars, isCentral } from "./central.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { customFonts, fontFaceCss, fontStylesheet } from "./fonts.js";
 import { isJournal, journalCss, journalVars } from "./journal.js";
+import { isMargem, margemCss, margemVars } from "./margem.js";
 import {
   isMarketplace,
   marketplaceCss,
@@ -81,6 +82,7 @@ export function SiteRenderer({
   const spy = isSpy(site.theme);
   const central = isCentral(site.theme);
   const market = isMarketplace(site.theme);
+  const margem = isMargem(site.theme);
   const patrimonial = isPatrimonial(site.theme);
   const areaflix = isAreaflix(site.theme);
 
@@ -110,6 +112,7 @@ export function SiteRenderer({
         spy ? "sb-sh" : "",
         central ? "sb-ct" : "",
         market ? "sb-mk" : "",
+        margem ? "sb-mg" : "",
         patrimonial ? "sb-cp" : "",
         areaflix ? "sb-af" : "",
       ]
@@ -122,6 +125,7 @@ export function SiteRenderer({
           ...(portal ? portalVars(site.theme) : {}),
           ...(central ? centralVars(site.theme) : {}),
           ...(market ? marketplaceVars(site.theme) : {}),
+          ...(margem ? margemVars(site.theme) : {}),
           ...(patrimonial ? patrimonialVars(site.theme) : {}),
           ...(areaflix ? areaflixVars(site.theme) : {}),
         } as CSSProperties
@@ -139,11 +143,13 @@ export function SiteRenderer({
                   ? siteCss + centralCss
                   : market
                     ? siteCss + marketplaceCss
-                    : areaflix
-                      ? siteCss + areaflixCss
-                      : patrimonial
-                        ? siteCss + patrimonialCss
-                        : siteCss)}
+                    : margem
+                      ? siteCss + margemCss
+                      : areaflix
+                        ? siteCss + areaflixCss
+                        : patrimonial
+                          ? siteCss + patrimonialCss
+                          : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}
