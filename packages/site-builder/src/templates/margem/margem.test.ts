@@ -128,6 +128,32 @@ describe("template margem", () => {
     expect(() => new Function(MARGEM_RUNTIME)).not.toThrow();
   });
 
+  test("o runtime não redeclara os nomes de fora (uma variável local com o mesmo nome derruba o bloco em silêncio)", () => {
+    for (const name of [
+      "pos",
+      "clamp",
+      "sstep",
+      "on",
+      "arr",
+      "req",
+      "tick",
+      "subs",
+      "resizers",
+      "off",
+      "views",
+      "thumbs",
+      "reduce",
+      "fine",
+      "mm",
+    ]) {
+      const found =
+        MARGEM_RUNTIME.match(
+          new RegExp(`(?:var |,)${name}=|function ${name}\\(`, "g")
+        ) ?? [];
+      expect(found.length, name).toBe(1);
+    }
+  });
+
   test("desligar o runtime não destrói o WebGL (o StrictMode do dev monta, desmonta e monta de novo)", () => {
     // `loseContext()` no desmonte faz o `getContext` da segunda montagem devolver o contexto perdido
     // e o túnel cai na versão estática na prévia do `next dev`.

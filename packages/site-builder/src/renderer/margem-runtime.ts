@@ -11,7 +11,7 @@
  * câmera e sem entradas; o túnel continua respondendo ao scroll.
  * Ao mudar o script, suba `MG_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const MG_VERSION = 4;
+export const MG_VERSION = 5;
 
 export const MARGEM_RUNTIME = `(function(){
 if(window.sbMargem&&window.__sbMgV===${MG_VERSION})return;
@@ -50,7 +50,7 @@ return V;
 }
 function thumbView(r,b,s){
 var V={root:r,s:s,thumb:true,box:b,H:960};
-V.measure=function(){V.s=scaleOf(r)||V.s;V.H=b.clientHeight/V.s;r.style.setProperty("--mg-vh",V.H.toFixed(1)+"px")};
+V.measure=function(){V.s=scaleOf(r)||V.s;var h=b.clientHeight/V.s;if(Math.abs(h-V.H)>0.5||!V.set){V.H=h;V.set=1;r.style.setProperty("--mg-vh",h.toFixed(1)+"px")}};
 V.t=function(){return b.getBoundingClientRect().top};V.h=function(){return V.H};
 r.classList.add("mg-thumb");
 off.push(function(){r.classList.remove("mg-thumb");r.style.removeProperty("--mg-vh")});
@@ -77,7 +77,8 @@ on(window,"resize",function(){views.forEach(function(V){V.measure()});resizers.f
 var thumbs=views.filter(function(V){return V.thumb});
 if(thumbs.length){
 var shown=0,lraf=0;
-var loop=function(){lraf=0;if(!shown)return;tick();lraf=requestAnimationFrame(loop)};
+/* o FitSite começa com escala provisória e reescala quando o cartão muda de largura (sem resize da janela): remede a cada quadro e refaz túnel/método se a altura mudou */
+var loop=function(){lraf=0;if(!shown)return;var ch=false;thumbs.forEach(function(V){var o=V.H;V.measure();if(Math.abs(V.H-o)>0.5)ch=true});if(ch)resizers.forEach(function(f){f()});tick();lraf=requestAnimationFrame(loop)};
 if("IntersectionObserver" in window){
 var vis=new Set();
 var tio=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)vis.add(e.target);else vis.delete(e.target)});shown=vis.size;if(shown&&!lraf)lraf=requestAnimationFrame(loop)});
@@ -359,8 +360,8 @@ var cur=-1;
 function upd(){
 var r=pos(V,sec),span=r.height-stage.offsetHeight,p=span>0?clamp(-r.top/span,0,1):0;
 if(V.thumb)stage.style.translate="0 "+clamp(-r.top,0,Math.max(0,span)).toFixed(1)+"px";
-var pos=p*(n-1),act=Math.round(pos),fw=frames[0].offsetWidth,sw=fw*n,w=view.clientWidth;
-var x=sw<=w?(w-sw)/2:clamp(w/2-(pos+0.5)*fw,w-sw,0);
+var at=p*(n-1),act=Math.round(at),fw=frames[0].offsetWidth,sw=fw*n,w=view.clientWidth;
+var x=sw<=w?(w-sw)/2:clamp(w/2-(at+0.5)*fw,w-sw,0);
 strip.style.transform="translate3d("+x.toFixed(1)+"px,0,0)";
 if(line)line.style.setProperty("--p",p.toFixed(4));
 if(act!==cur){

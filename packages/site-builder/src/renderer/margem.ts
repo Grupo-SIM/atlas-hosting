@@ -230,9 +230,9 @@ ${S} .mg-caps{display:none;font-size:14px}
 ${S} .mg-caps span{grid-area:1/1}
 ${S} .mg-method:not(.mg-live) .mg-caps span:not(.is-on){visibility:hidden}
 ${S} .mg-method.mg-live{height:calc((var(--mg-screens) + 1) * var(--mg-vh,100svh))}
-${S} .mg-live .mg-method-stage{position:sticky;top:var(--mg-top,0px);height:var(--mg-vh,100svh);justify-content:center;gap:clamp(16px,3svh,36px);padding-block:clamp(56px,8svh,100px) clamp(12px,3svh,32px)}
+${S} .mg-live .mg-method-stage{position:sticky;top:var(--mg-top,0px);height:var(--mg-vh,100svh);justify-content:center;gap:clamp(16px,calc(var(--mg-vh,100svh) * .03),36px);padding-block:clamp(56px,calc(var(--mg-vh,100svh) * .08),100px) clamp(12px,calc(var(--mg-vh,100svh) * .03),32px)}
 ${S} .mg-live .mg-strip{width:max-content;will-change:transform}
-${S} .mg-live .mg-frame{flex:none;width:auto;height:clamp(220px,60svh,760px);opacity:.72;transition:opacity .4s}
+${S} .mg-live .mg-frame{flex:none;width:auto;height:clamp(220px,calc(var(--mg-vh,100svh) * .6),760px);opacity:.72;transition:opacity .4s}
 ${S} .mg-live .mg-frame.is-on{opacity:1}
 ${S} .mg-live .mg-step{color:var(--sb-muted)}
 ${S} .mg-live .mg-step.is-on{color:var(--sb-fg)}
@@ -270,7 +270,7 @@ ${S} .mg-follow img{display:block;width:100%;height:100%;object-fit:cover}
 ${S} .mg-follow.is-on{opacity:1;scale:1}
 
 /* depoimento com fotos em profundidade */
-${S} .mg-quote{position:relative;container-type:inline-size;display:grid;place-items:center;min-height:max(110svh,640px);padding:clamp(88px,10cqw,160px) var(--mg-gut);overflow:hidden}
+${S} .mg-quote{position:relative;container-type:inline-size;display:grid;place-items:center;min-height:max(calc(var(--mg-vh,100svh) * 1.1),640px);padding:clamp(88px,10cqw,160px) var(--mg-gut);overflow:hidden}
 ${S} .mg-float{position:absolute;inset:0;pointer-events:none}
 ${S} .mg-float img{position:absolute;left:calc(var(--x) * 1%);top:calc(var(--y) * 1%);z-index:calc(var(--d) * 10);width:calc(var(--s) * 1cqw);height:auto;border-radius:2px;opacity:calc(.45 + var(--d) * .55);filter:blur(calc((1 - var(--d)) * 6px));translate:-50% calc(-50% + var(--mg-py,0px))}
 ${S} .mg-quote-in{position:relative;z-index:20;max-width:min(30em,100%);margin:0;text-align:center}
