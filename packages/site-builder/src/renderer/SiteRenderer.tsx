@@ -36,6 +36,7 @@ import {
   patrimonialVars,
 } from "./patrimonial.js";
 import { isPortal, portalCss, portalVars } from "./portal.js";
+import { isPresets, presetsCss, presetsVars } from "./presets.js";
 import { isRaiz, raizCss, raizVars } from "./raiz.js";
 import { isResolvit, resolvitCss, resolvitVars } from "./resolvit.js";
 import { type Route, resolveRoute } from "./routes.js";
@@ -111,6 +112,7 @@ export function SiteRenderer({
   const pagatg = isPagaTg(site.theme);
   const outrolado = isOutroLado(site.theme);
   const habilidades = isHabilidades(site.theme);
+  const presets = isPresets(site.theme);
   const seopack = isSeopack(site.theme);
   const atlas = isAtlas(site.theme);
 
@@ -153,6 +155,7 @@ export function SiteRenderer({
         pagatg ? "sb-pg" : "",
         outrolado ? "sb-ol" : "",
         habilidades ? "sb-hc" : "",
+        presets ? "sb-p7" : "",
         seopack ? "sb-sp" : "",
         atlas ? "sb-at" : "",
       ]
@@ -178,6 +181,7 @@ export function SiteRenderer({
           ...(pagatg ? pagatgVars(site.theme) : {}),
           ...(outrolado ? outroladoVars(site.theme) : {}),
           ...(habilidades ? habilidadesVars(site.theme) : {}),
+          ...(presets ? presetsVars(site.theme) : {}),
           ...(seopack ? seopackVars(site.theme) : {}),
           ...(atlas ? atlasVars(site.theme) : {}),
         } as CSSProperties
@@ -191,41 +195,43 @@ export function SiteRenderer({
               ? siteCss + resolvitCss
               : seopack
                 ? siteCss + seopackCss
-                : habilidades
-                  ? siteCss + habilidadesCss
-                  : outrolado
-                    ? siteCss + outroladoCss
-                    : pagatg
-                      ? siteCss + pagatgCss
-                      : sim
-                        ? siteCss + simCss
-                        : holofote
-                          ? siteCss + holofoteCss
-                          : raiz
-                            ? siteCss + raizCss
-                            : zyrion
-                              ? siteCss + zyrionCss
-                              : journal
-                                ? siteCss + journalCss
-                                : portal
-                                  ? siteCss + portalCss
-                                  : spy
-                                    ? siteCss + spyCss
-                                    : central
-                                      ? siteCss + centralCss
-                                      : market
-                                        ? siteCss + marketplaceCss
-                                        : margem
-                                          ? siteCss + margemCss
-                                          : seguidores
-                                            ? siteCss + seguidoresCss
-                                            : areaflix
-                                              ? siteCss + areaflixCss
-                                              : patrimonial
-                                                ? siteCss + patrimonialCss
-                                                : motorista
-                                                  ? siteCss + motoristaCss
-                                                  : siteCss)}
+                : presets
+                  ? siteCss + presetsCss
+                  : habilidades
+                    ? siteCss + habilidadesCss
+                    : outrolado
+                      ? siteCss + outroladoCss
+                      : pagatg
+                        ? siteCss + pagatgCss
+                        : sim
+                          ? siteCss + simCss
+                          : holofote
+                            ? siteCss + holofoteCss
+                            : raiz
+                              ? siteCss + raizCss
+                              : zyrion
+                                ? siteCss + zyrionCss
+                                : journal
+                                  ? siteCss + journalCss
+                                  : portal
+                                    ? siteCss + portalCss
+                                    : spy
+                                      ? siteCss + spyCss
+                                      : central
+                                        ? siteCss + centralCss
+                                        : market
+                                          ? siteCss + marketplaceCss
+                                          : margem
+                                            ? siteCss + margemCss
+                                            : seguidores
+                                              ? siteCss + seguidoresCss
+                                              : areaflix
+                                                ? siteCss + areaflixCss
+                                                : patrimonial
+                                                  ? siteCss + patrimonialCss
+                                                  : motorista
+                                                    ? siteCss + motoristaCss
+                                                    : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}

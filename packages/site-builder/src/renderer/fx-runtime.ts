@@ -4,7 +4,7 @@
  * liga os efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo.
  * Ao mudar o script, suba `FX_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const FX_VERSION = 12;
+export const FX_VERSION = 13;
 
 export const FX_RUNTIME = `(function(){
 if(window.sbFx&&window.__sbFxV===${FX_VERSION})return;
@@ -582,6 +582,32 @@ document.addEventListener("scroll",upd,{capture:true,passive:true});
 b.addEventListener("click",click);
 upd();
 off.push(function(){cancelAnimationFrame(raf);document.removeEventListener("scroll",upd,{capture:true});b.removeEventListener("click",click);b.removeAttribute("data-top-ready");b.classList.remove("on")});
+});
+document.querySelectorAll("[data-p7-cmp]").forEach(function(c){
+if(c.getAttribute("data-cmp-ready"))return;
+c.setAttribute("data-cmp-ready","1");
+var drag=false,h=c.querySelector(".p7-cmp-h");
+function set(p){p=Math.max(0,Math.min(1,p));c.style.setProperty("--p7-pos",(p*100).toFixed(2)+"%");if(h)h.setAttribute("aria-valuenow",String(Math.round(p*100)))}
+function at(e){var r=c.getBoundingClientRect();if(r.width)set((e.clientX-r.left)/r.width)}
+function down(e){drag=true;c.classList.add("is-drag");try{c.setPointerCapture(e.pointerId)}catch(x){}at(e)}
+function move(e){if(drag)at(e)}
+function up(e){drag=false;c.classList.remove("is-drag");try{c.releasePointerCapture(e.pointerId)}catch(x){}}
+function key(e){var v=Number(h&&h.getAttribute("aria-valuenow"));if(isNaN(v))v=50;if(e.key==="ArrowLeft"){set((v-5)/100);e.preventDefault()}else if(e.key==="ArrowRight"){set((v+5)/100);e.preventDefault()}}
+c.addEventListener("pointerdown",down);c.addEventListener("pointermove",move);c.addEventListener("pointerup",up);c.addEventListener("pointercancel",up);
+if(h)h.addEventListener("keydown",key);
+off.push(function(){c.removeEventListener("pointerdown",down);c.removeEventListener("pointermove",move);c.removeEventListener("pointerup",up);c.removeEventListener("pointercancel",up);if(h)h.removeEventListener("keydown",key);c.removeAttribute("data-cmp-ready");c.classList.remove("is-drag");c.style.removeProperty("--p7-pos")});
+});
+document.querySelectorAll("[data-p7-cd]").forEach(function(c){
+if(c.getAttribute("data-cd-ready"))return;
+var end=Number(c.getAttribute("data-p7-cd"))*1000;
+if(!end)return;
+c.setAttribute("data-cd-ready","1");
+var hs=c.querySelector("[data-u=h]"),ms=c.querySelector("[data-u=m]"),ss=c.querySelector("[data-u=s]");
+function pad(n){return n<10?"0"+n:String(n)}
+function tick(){var t=Math.max(0,Math.floor((end-Date.now())/1000));if(hs)hs.textContent=pad(Math.floor(t/3600)%24);if(ms)ms.textContent=pad(Math.floor(t/60)%60);if(ss)ss.textContent=pad(t%60)}
+tick();
+var iv=setInterval(tick,1000);
+off.push(function(){clearInterval(iv);c.removeAttribute("data-cd-ready")});
 });
 return function(){off.forEach(function(f){f()})};
 };

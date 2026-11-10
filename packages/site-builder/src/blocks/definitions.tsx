@@ -34,6 +34,7 @@ import { outroladoBlocks } from "./outrolado.js";
 import { pagatgBlocks } from "./pagatg.js";
 import { patrimonialBlocks } from "./patrimonial.js";
 import { portalHubBlocks } from "./portal-hub.js";
+import { presetsBlocks } from "./presets.js";
 import { raizBlocks } from "./raiz.js";
 import { resolvitBlocks } from "./resolvit.js";
 import { scrollTopBlocks } from "./scroll-top.js";
@@ -2444,6 +2445,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...outroladoBlocks,
   ...ebookBlocks,
   ...habilidadesBlocks,
+  ...presetsBlocks,
   ...atlasBlocks,
   ...adBlocks,
   ...scrollTopBlocks,

@@ -3,6 +3,7 @@ import { HABILIDADES_EXTRA_FONTS, isHabilidades } from "./habilidades.js";
 import { isMotorista, MOTORISTA_EXTRA_FONTS } from "./motorista.js";
 import { isOutroLado, OUTROLADO_EXTRA_FONTS } from "./outrolado.js";
 import { isPagaTg, PAGATG_EXTRA_FONTS } from "./pagatg.js";
+import { isPresets, PRESETS_EXTRA_FONTS } from "./presets.js";
 import { isRaiz, RAIZ_EXTRA_FONTS } from "./raiz.js";
 import { isSeguidores, SEGUIDORES_EXTRA_FONTS } from "./seguidores.js";
 import { isSim, SIM_EXTRA_FONTS } from "./sim.js";
@@ -164,6 +165,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isHabilidades(theme))
     for (const extra of HABILIDADES_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isPresets(theme))
+    for (const extra of PRESETS_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   if (isPagaTg(theme))
     for (const extra of PAGATG_EXTRA_FONTS)
