@@ -307,6 +307,8 @@ ${mobileRules(".sb-narrow")}
 @keyframes sb-fx-bounceIn{0%{opacity:0;scale:.3}20%{scale:1.1}40%{scale:.9}60%{opacity:1;scale:1.03}80%{scale:.97}100%{opacity:1;scale:1}}
 @keyframes sb-fx-bounceInLeft{0%{opacity:0;translate:-100vw 0;scale:3 1}60%{opacity:1;translate:25px 0;scale:1 1}75%{translate:-10px 0}90%{translate:5px 0}100%{opacity:1;translate:0 0;scale:1 1}}
 @keyframes sb-fx-bounceInRight{0%{opacity:0;translate:100vw 0;scale:3 1}60%{opacity:1;translate:-25px 0;scale:1 1}75%{translate:10px 0}90%{translate:-5px 0}100%{opacity:1;translate:0 0;scale:1 1}}
+@keyframes sb-fx-pulse-loop{from{scale:1}to{scale:1.1}}
+@keyframes sb-fx-hover-pulse{25%{scale:1.1}75%{scale:.9}}
 @keyframes sb-fx-pop{50%{scale:1.2}}
 @keyframes sb-fx-push{50%{scale:.8}}
 @keyframes sb-fx-hang-sink{100%{translate:0 8px}}

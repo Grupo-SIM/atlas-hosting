@@ -232,6 +232,9 @@ export const AI_TOOLS: AiToolDef[] = [
           `Duração do hover em ms (${HOVER_MS.min}-${HOVER_MS.max}; padrão ${HOVER_MS.default}).`
         ),
         id: str("Id do bloco."),
+        repetir: bool(
+          "Com entrada pulse: pulsa sem parar (como o botão de oferta de algumas landings)."
+        ),
         mouse: num(
           "Seguir o mouse: -10 a 10 (0 desliga; negativo vai ao contrário do ponteiro)."
         ),
@@ -728,6 +731,7 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
         entrada_tablet: "enterTablet",
         hover: "hover",
         hover_ms: "hoverMs",
+        repetir: "loop",
         mouse: "mouse",
         parallax: "parallax",
       } as const;

@@ -34,6 +34,7 @@ export const HOVER_EFFECTS = [
   "rotate",
   "push",
   "hang",
+  "pulse",
 ] as const;
 export type HoverEffect = (typeof HOVER_EFFECTS)[number];
 
@@ -59,6 +60,7 @@ export const HOVER_LABELS: Record<HoverEffect, string> = {
   hang: "Balançar",
   lift: "Subir",
   pop: "Pulsar",
+  pulse: "Pulsar sem parar",
   push: "Empurrar",
   rotate: "Girar",
   shadow: "Sombra",
@@ -87,6 +89,11 @@ export interface Fx {
   /** Duração da entrada, em ms (padrão 800). O Elementor usa 1250. */
   enterMs?: number;
   hover?: HoverEffect;
+  /**
+   * Com `enter: "pulse"`: pulsa sem parar (escala 1 → 1,1 em 0,7 s, `alternate infinite`, como o `.pulse` do Elementor),
+   * começando assim que a página carrega, sem esperar entrar na tela. Sem efeito com outras entradas.
+   */
+  loop?: boolean;
   /** Duração do efeito de hover, em ms (padrão `HOVER_MS.default`). */
   hoverMs?: number;
   /** Segue o mouse: −10..10 (0 = desligado). Positivo acompanha o ponteiro, negativo vai ao contrário. */
@@ -107,6 +114,7 @@ export const fxSchema: z.ZodType<Fx> = z.object({
   enterTablet: z.enum(ENTER_SCREEN_VALUES).optional(),
   hover: z.enum(HOVER_EFFECTS).optional(),
   hoverMs: z.number().min(HOVER_MS.min).max(HOVER_MS.max).optional(),
+  loop: z.boolean().optional(),
   mouse: z.number().min(-10).max(10).optional(),
   parallax: z.number().min(-10).max(10).optional(),
   stagger: z.number().min(0).max(1000).optional(),
@@ -177,7 +185,7 @@ const ENTER_FROM: Record<Exclude<EnterEffect, AnimatedEnter>, string> = {
  * `translate`, `rotate`) para não brigar com o `transform` do próprio item. `pop` é animação.
  */
 const HOVER_TO: Record<
-  Exclude<HoverEffect, "pop" | "push" | "hang">,
+  Exclude<HoverEffect, "pop" | "push" | "hang" | "pulse">,
   [string, string]
 > = {
   brighten: ["filter", "brightness(1.15)"],
@@ -226,7 +234,10 @@ export function fxCss(
     const enterCss = (eff: EnterEffect, mq: string): string => {
       const media = `@media (${NO_MOTION})${mq ? ` and ${mq}` : ""}`;
       let out = "";
-      if (isAnimated(eff)) {
+      if (eff === "pulse" && f.loop) {
+        // Pulso infinito: não espera `.sb-in` e roda enquanto a página estiver aberta.
+        out += `${media}{.sb-js ${sel}{animation:sb-fx-pulse-loop .7s ease-in-out ${d}ms infinite alternate}}`;
+      } else if (isAnimated(eff)) {
         const anim = ANIMATED[eff].replace("{d}", String(d));
         if (eff !== "pulse")
           out += `${media}{.sb-js ${sel}:not(.sb-in){opacity:0}}`;
@@ -271,7 +282,11 @@ export function fxCss(
     }
     const ms = Math.round(f.hoverMs ?? HOVER_MS.default);
     const hoverTo =
-      f.hover && f.hover !== "pop" && f.hover !== "push" && f.hover !== "hang"
+      f.hover &&
+      f.hover !== "pop" &&
+      f.hover !== "push" &&
+      f.hover !== "hang" &&
+      f.hover !== "pulse"
         ? HOVER_TO[f.hover]
         : null;
     const hoverTransition = hoverTo ? `${hoverTo[0]} ${ms}ms ease` : "";
@@ -285,6 +300,9 @@ export function fxCss(
     // `hang` (Elementor): afunda 8px em .3s e depois balança sem parar, com .3s de atraso.
     if (f.hover === "hang")
       css += `@media (prefers-reduced-motion:no-preference){${sel}:hover{animation:sb-fx-hang-sink .3s ease-out 1 forwards,sb-fx-hang 1.5s ease-in-out .3s infinite alternate}}`;
+    // `pulse` (Elementor `elementor-animation-pulse`): 1 → 1,1 → 0,9 em 1 s, sem parar, enquanto o mouse está em cima.
+    if (f.hover === "pulse")
+      css += `@media (prefers-reduced-motion:no-preference){${sel}:hover{animation:sb-fx-hover-pulse 1s linear infinite}}`;
     if (transitions.length)
       css += `${sel}{transition:${transitions.join(",")}}`;
     if (transitionEffect && stagger > 0) {

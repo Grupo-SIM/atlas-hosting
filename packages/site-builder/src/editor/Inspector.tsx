@@ -1350,6 +1350,20 @@ export function Inspector({
             onChange={v => onFx({ mouse: v || undefined }, "Seguir o mouse")}
             value={fx.mouse ?? 0}
           />
+          {fx.enter === "pulse" ? (
+            <div className="sbe-line">
+              <span>Pulsar sem parar</span>
+              <button
+                className={fx.loop ? "sbe-toggle on" : "sbe-toggle"}
+                onClick={() =>
+                  onFx({ loop: fx.loop ? undefined : true }, "Pulso em loop")
+                }
+                type="button"
+              >
+                <span />
+              </button>
+            </div>
+          ) : null}
           <div className="sbe-line">
             <span>Contar números de 0 até o valor</span>
             <button
