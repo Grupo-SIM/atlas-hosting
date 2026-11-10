@@ -44,6 +44,7 @@ import { seopackBlocks } from "./seopack.js";
 import { simBlocks } from "./sim.js";
 import { simPageBlocks } from "./sim-pages.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
+import { gatilhosBlocks } from "./gatilhos.js";
 import { vslmilionarioBlocks } from "./vslmilionario.js";
 import { isYouTubeChannelId, latestVideoEmbed, videoEmbed } from "./youtube.js";
 import { zyrionBlocks } from "./zyrion.js";
@@ -2450,6 +2451,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...presetsBlocks,
   ...instafanBlocks,
   ...vslmilionarioBlocks,
+  ...gatilhosBlocks,
   ...atlasBlocks,
   ...adBlocks,
   ...scrollTopBlocks,

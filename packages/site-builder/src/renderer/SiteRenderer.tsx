@@ -51,6 +51,7 @@ import {
   vslmilionarioCss,
   vslmilionarioVars,
 } from "./vslmilionario.js";
+import { gatilhosCss, gatilhosVars, isGatilhos } from "./gatilhos.js";
 import { isZyrion, zyrionCss, zyrionVars } from "./zyrion.js";
 
 export interface SiteRendererProps {
@@ -123,6 +124,7 @@ export function SiteRenderer({
   const seopack = isSeopack(site.theme);
   const atlas = isAtlas(site.theme);
   const vslmilionario = isVslMilionario(site.theme);
+  const gatilhos = isGatilhos(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -168,6 +170,7 @@ export function SiteRenderer({
         seopack ? "sb-sp" : "",
         atlas ? "sb-at" : "",
         vslmilionario ? "sb-vm" : "",
+        gatilhos ? "sb-gm" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -196,6 +199,7 @@ export function SiteRenderer({
           ...(seopack ? seopackVars(site.theme) : {}),
           ...(atlas ? atlasVars(site.theme) : {}),
           ...(vslmilionario ? vslmilionarioVars(site.theme) : {}),
+          ...(gatilhos ? gatilhosVars(site.theme) : {}),
         } as CSSProperties
       }
     >
@@ -203,7 +207,9 @@ export function SiteRenderer({
         {fontFaceCss(customFonts(site.theme)) +
           (atlas
             ? siteCss + atlasCss
-            : resolvit
+            : gatilhos
+              ? siteCss + gatilhosCss
+              : resolvit
               ? siteCss + resolvitCss
               : seopack
                 ? siteCss + seopackCss
