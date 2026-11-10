@@ -262,6 +262,12 @@ ${mobileRules(".sb-narrow")}
 .sb-narrow .sb-split,.sb-narrow .sb-two-cols,.sb-narrow .sb-footer-grid{grid-template-columns:1fr}
 .sb-narrow .sb-featured-inner{flex-direction:column;gap:24px}
 .sb-narrow .sb-float{position:sticky;margin-left:auto;width:max-content}
+/* botão flutuante "pílula" (whatsappFloat layout=pill): ícone + texto; até 600px vira círculo e o texto sobe para fora dele */
+.sb .sb-float.sb-float-pill{position:fixed;right:20px;bottom:20px;z-index:9999;display:flex;align-items:center;margin:0;width:auto;padding:10px 16px;border-radius:40px;background:var(--fl-bg,#25d366);box-shadow:0 4px 8px rgba(0,0,0,.2);font-family:'Inter',sans-serif;font-size:14px;font-weight:700;line-height:1.2;transition:background .3s}
+.sb .sb-float.sb-float-pill:hover{background:var(--fl-hover,#1ebe5d)}
+.sb .sb-float.sb-float-pill svg{display:block;flex:none;width:44px;height:47px;margin-right:7px}
+.sb .sb-float.sb-float-pill .sb-float-note{display:none}
+@media (max-width:600px){.sb .sb-float.sb-float-pill{width:48px;height:48px;padding:12px;justify-content:center;border-radius:50%}.sb .sb-float.sb-float-pill svg{width:24px;height:24px;margin:0}.sb .sb-float.sb-float-pill .sb-float-text{display:none}.sb .sb-float.sb-float-pill .sb-float-note{display:block;position:fixed;right:20px;bottom:78px;font-size:12px;font-weight:600;line-height:1.1;text-align:right;color:var(--fl-bg,#25d366)}}
 /* letreiro de texto (textMarquee): CSS puro, a lista vem duplicada para o laço não ter emenda */
 .sb-tmq{container-type:inline-size;overflow:hidden;width:100%;padding-block:20px}
 .sb-tmq-track{display:flex;width:max-content;color:var(--tmq-color);font-family:var(--sb-font-heading);font-weight:600;font-size:var(--tmq-d);line-height:.9;text-transform:uppercase;white-space:nowrap;animation:sb-tmq var(--tmq-dur,55s) linear infinite}

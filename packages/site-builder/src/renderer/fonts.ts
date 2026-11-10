@@ -1,4 +1,5 @@
 import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
+import { isRaiz, RAIZ_EXTRA_FONTS } from "./raiz.js";
 import { isSeguidores, SEGUIDORES_EXTRA_FONTS } from "./seguidores.js";
 import { isSpy, SPY_EXTRA_FONTS } from "./spyhacker.js";
 
@@ -116,6 +117,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isSeguidores(theme))
     for (const extra of SEGUIDORES_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isRaiz(theme))
+    for (const extra of RAIZ_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   const families = names
     .map(
