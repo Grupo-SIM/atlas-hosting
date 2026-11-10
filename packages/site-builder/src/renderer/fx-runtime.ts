@@ -4,7 +4,7 @@
  * liga os efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo.
  * Ao mudar o script, suba `FX_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const FX_VERSION = 9;
+export const FX_VERSION = 10;
 
 export const FX_RUNTIME = `(function(){
 if(window.sbFx&&window.__sbFxV===${FX_VERSION})return;
@@ -239,6 +239,59 @@ track.addEventListener("click",function(e){if(moved){e.preventDefault();e.stopPr
 play();
 off.push(function(){stop();ac.abort();clones.forEach(function(c){c.remove()});track.style.transition="";track.style.transform="";track.style.cursor="";cur=0;mark()});
 });
+/* SIM: carrossel em laço ([data-si-car]) e Esc fecha o menu lateral (#sb-burger) */
+document.querySelectorAll("[data-si-car]").forEach(function(box){
+if(box.getAttribute("data-si-ready"))return;
+box.setAttribute("data-si-ready","1");
+var view=box.querySelector(".si-car-view"),track=box.querySelector(".si-car-track"),dotsEl=box.querySelector(".si-car-dots");
+var orig=Array.prototype.slice.call(track.children),n=orig.length;
+var pb=box.querySelector(".si-car-arrow.prev"),nb=box.querySelector(".si-car-arrow.next");
+var speed=Number(box.getAttribute("data-speed"))||500,delay=Number(box.getAttribute("data-delay"))||5000;
+var pause=box.getAttribute("data-pause")!=="0",max=Number(box.getAttribute("data-max"))||1;
+var ac=new AbortController(),opt={signal:ac.signal};
+var cur=0,t=null,clones=[],pv=1,stat=false,dots=[],hov=false;
+function pvNow(){return Math.max(1,parseInt(getComputedStyle(box).getPropertyValue("--si-pv"),10)||1)}
+function step(){return orig.length>1?orig[1].offsetLeft-orig[0].offsetLeft:orig[0].offsetWidth}
+function place(px,anim){track.style.transition=anim?"transform "+speed+"ms ease":"none";track.style.transform="translate3d("+px+"px,0,0)"}
+function mark(){dots.forEach(function(d,k){d.classList.toggle("on",k===cur%n)})}
+function go(i,anim){cur=i;place(-i*step(),anim);mark()}
+function wrap(){if(cur>=n){go(cur-n,false);track.offsetHeight}}
+function stop(){clearTimeout(t);t=null}
+function play(){stop();if(reduce||stat)return;t=setTimeout(function(){wrap();go(cur+1,true);play()},delay+speed)}
+function build(){
+clones.forEach(function(c){c.remove()});clones=[];
+pv=pvNow();stat=n<=pv;
+box.classList.toggle("is-static",stat);
+if(stat){track.style.transform="";stop();return}
+clones=orig.slice(0,Math.min(n,max)).map(function(s){var c=s.cloneNode(true);c.setAttribute("aria-hidden","true");track.appendChild(c);return c});
+if(dotsEl&&box.getAttribute("data-dots")&&!dots.length){
+for(var k=0;k<n;k++){(function(k){var b=document.createElement("button");b.type="button";b.setAttribute("aria-label","Slide "+(k+1));b.addEventListener("click",function(){wrap();go(k,true);play()},opt);dotsEl.appendChild(b);dots.push(b)})(k)}
+}
+go(cur%n,false);
+}
+build();
+track.addEventListener("transitionend",function(e){if(e.target===track)wrap()},opt);
+if(nb)nb.addEventListener("click",function(){wrap();go(cur+1,true);play()},opt);
+if(pb)pb.addEventListener("click",function(){if(cur===0){go(n,false);track.offsetHeight}go(cur-1,true);play()},opt);
+if(pause){box.addEventListener("mouseenter",function(){hov=true;stop()},opt);box.addEventListener("mouseleave",function(){hov=false;play()},opt)}
+window.addEventListener("resize",function(){if(pvNow()!==pv||stat)build();else go(cur,false)},opt);
+var sx=null,dx=0,moved=false;
+track.addEventListener("dragstart",function(e){e.preventDefault()},opt);
+track.addEventListener("pointerdown",function(e){if(stat)return;wrap();sx=e.clientX;dx=0;moved=false;stop()},opt);
+window.addEventListener("pointermove",function(e){if(sx===null)return;dx=e.clientX-sx;if(Math.abs(dx)>5)moved=true;place(-cur*step()+dx,false)},opt);
+function release(){if(sx===null)return;sx=null;if(dx<-40)go(cur+1,true);else if(dx>40){if(cur===0){go(n,false);track.offsetHeight}go(cur-1,true)}else go(cur,true);if(!hov)play()}
+window.addEventListener("pointerup",release,opt);
+window.addEventListener("pointercancel",release,opt);
+track.addEventListener("click",function(e){if(moved){e.preventDefault();e.stopPropagation();moved=false}},{capture:true,signal:ac.signal});
+play();
+off.push(function(){stop();ac.abort();clones.forEach(function(c){c.remove()});dots.forEach(function(d){d.remove()});box.removeAttribute("data-si-ready");box.classList.remove("is-static");track.style.transition="";track.style.transform=""});
+});
+var siBurger=document.getElementById("sb-burger");
+if(siBurger&&document.querySelector(".si-drawer")){
+var siKey=function(e){if(e.key==="Escape")siBurger.checked=false};
+document.addEventListener("keydown",siKey);
+off.push(function(){document.removeEventListener("keydown",siKey)});
+}
 /* Lottie: o player (lottie_light) só é baixado quando a página tem [data-sb-lottie] */
 var lots=document.querySelectorAll("[data-sb-lottie]");
 if(lots.length&&!reduce){

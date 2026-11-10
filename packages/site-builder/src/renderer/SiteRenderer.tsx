@@ -31,6 +31,7 @@ import { isPortal, portalCss, portalVars } from "./portal.js";
 import { isRaiz, raizCss, raizVars } from "./raiz.js";
 import { type Route, resolveRoute } from "./routes.js";
 import { isSeguidores, seguidoresCss, seguidoresVars } from "./seguidores.js";
+import { isSim, simCss, simVars } from "./sim.js";
 import { isSpy, spyCss } from "./spyhacker.js";
 import { siteCss, themeVars } from "./styles.js";
 import { isZyrion, zyrionCss, zyrionVars } from "./zyrion.js";
@@ -95,6 +96,7 @@ export function SiteRenderer({
   const seguidores = isSeguidores(site.theme);
   const raiz = isRaiz(site.theme);
   const holofote = isHolofote(site.theme);
+  const sim = isSim(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -130,6 +132,7 @@ export function SiteRenderer({
         seguidores ? "sb-sg" : "",
         raiz ? "sb-mr" : "",
         holofote ? "sb-hf" : "",
+        sim ? "sb-si" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -148,38 +151,41 @@ export function SiteRenderer({
           ...(seguidores ? seguidoresVars(site.theme) : {}),
           ...(raiz ? raizVars(site.theme) : {}),
           ...(holofote ? holofoteVars(site.theme) : {}),
+          ...(sim ? simVars(site.theme) : {}),
         } as CSSProperties
       }
     >
       <style>
         {fontFaceCss(customFonts(site.theme)) +
-          (holofote
-            ? siteCss + holofoteCss
-            : raiz
-              ? siteCss + raizCss
-              : zyrion
-                ? siteCss + zyrionCss
-                : journal
-                  ? siteCss + journalCss
-                  : portal
-                    ? siteCss + portalCss
-                    : spy
-                      ? siteCss + spyCss
-                      : central
-                        ? siteCss + centralCss
-                        : market
-                          ? siteCss + marketplaceCss
-                          : margem
-                            ? siteCss + margemCss
-                            : seguidores
-                              ? siteCss + seguidoresCss
-                              : areaflix
-                                ? siteCss + areaflixCss
-                                : patrimonial
-                                  ? siteCss + patrimonialCss
-                                  : motorista
-                                    ? siteCss + motoristaCss
-                                    : siteCss)}
+          (sim
+            ? siteCss + simCss
+            : holofote
+              ? siteCss + holofoteCss
+              : raiz
+                ? siteCss + raizCss
+                : zyrion
+                  ? siteCss + zyrionCss
+                  : journal
+                    ? siteCss + journalCss
+                    : portal
+                      ? siteCss + portalCss
+                      : spy
+                        ? siteCss + spyCss
+                        : central
+                          ? siteCss + centralCss
+                          : market
+                            ? siteCss + marketplaceCss
+                            : margem
+                              ? siteCss + margemCss
+                              : seguidores
+                                ? siteCss + seguidoresCss
+                                : areaflix
+                                  ? siteCss + areaflixCss
+                                  : patrimonial
+                                    ? siteCss + patrimonialCss
+                                    : motorista
+                                      ? siteCss + motoristaCss
+                                      : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}

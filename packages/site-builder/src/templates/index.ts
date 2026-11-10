@@ -10,6 +10,7 @@ import { marketingRaiz } from "./marketing-raiz/index.js";
 import { marketplace } from "./marketplace/index.js";
 import { portalNoticias } from "./portal-noticias/index.js";
 import { seguidoresEmAlta } from "./seguidores-em-alta/index.js";
+import { simIntermediacoes } from "./sim-intermediacoes/index.js";
 import { spyhacker } from "./spyhacker/index.js";
 import { zyrion } from "./zyrion/index.js";
 
@@ -25,6 +26,7 @@ const templates: SiteTemplate[] = [
   areaflix,
   controlePatrimonial,
   controleMotorista,
+  simIntermediacoes,
   zyrion,
   holofote,
 ];

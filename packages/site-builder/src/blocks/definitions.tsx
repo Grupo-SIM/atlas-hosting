@@ -32,6 +32,8 @@ import { portalHubBlocks } from "./portal-hub.js";
 import { raizBlocks } from "./raiz.js";
 import { scrollTopBlocks } from "./scroll-top.js";
 import { seguidoresBlocks } from "./seguidores.js";
+import { simBlocks } from "./sim.js";
+import { simPageBlocks } from "./sim-pages.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
 import { isYouTubeChannelId, latestVideoEmbed, videoEmbed } from "./youtube.js";
 import { zyrionBlocks } from "./zyrion.js";
@@ -2427,6 +2429,8 @@ export const blockDefinitions: BlockDefinition[] = [
   ...holofotePageBlocks,
   ...seguidoresBlocks,
   ...raizBlocks,
+  ...simBlocks,
+  ...simPageBlocks,
   ...adBlocks,
   ...scrollTopBlocks,
   newsSection,

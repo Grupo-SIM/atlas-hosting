@@ -2,10 +2,12 @@ import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
 import { isMotorista, MOTORISTA_EXTRA_FONTS } from "./motorista.js";
 import { isRaiz, RAIZ_EXTRA_FONTS } from "./raiz.js";
 import { isSeguidores, SEGUIDORES_EXTRA_FONTS } from "./seguidores.js";
+import { isSim, SIM_EXTRA_FONTS } from "./sim.js";
 import { isSpy, SPY_EXTRA_FONTS } from "./spyhacker.js";
 
 /** Fontes oferecidas no tema (Google Fonts). O valor vai direto para `fontHeading`/`fontBody`. */
 export const SITE_FONTS = [
+  "Anek Devanagari",
   "Bai Jamjuree",
   "Content",
   "Mulish",
@@ -46,6 +48,7 @@ export const SITE_FONTS = [
 
 /** Pesos que o Google Fonts oferece quando não são os padrões (pedir um peso inexistente derruba o CSS inteiro). */
 const FONT_WEIGHTS: Record<string, string> = {
+  "Anek Devanagari": "300;400;500;600;700",
   Content: "400;700",
   "Plus Jakarta Sans": "300;400;500;600;700",
   Rajdhani: "300;400;500;600;700",
@@ -126,6 +129,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isRaiz(theme))
     for (const extra of RAIZ_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isSim(theme))
+    for (const extra of SIM_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   const families = names
     .map(
