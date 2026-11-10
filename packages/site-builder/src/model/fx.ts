@@ -64,6 +64,8 @@ export interface Fx {
   /** Aplica o efeito a cada filho direto (cartões, ícones…), não ao item inteiro. */
   each?: boolean;
   enter?: EnterEffect;
+  /** Duração da entrada, em ms (padrão 800). O Elementor usa 1250. */
+  enterMs?: number;
   hover?: HoverEffect;
   /** Duração do efeito de hover, em ms (padrão `HOVER_MS.default`). */
   hoverMs?: number;
@@ -80,6 +82,7 @@ export const fxSchema: z.ZodType<Fx> = z.object({
   delay: z.number().min(0).max(3000).optional(),
   each: z.boolean().optional(),
   enter: z.enum(ENTER_EFFECTS).optional(),
+  enterMs: z.number().min(200).max(3000).optional(),
   hover: z.enum(HOVER_EFFECTS).optional(),
   hoverMs: z.number().min(HOVER_MS.min).max(HOVER_MS.max).optional(),
   mouse: z.number().min(-10).max(10).optional(),
@@ -165,8 +168,12 @@ export function fxCss(
     const sel = targetSelector(blockId, path) + (f.each ? ">*" : "");
     const transitions: string[] = [];
     const d = Math.round(f.delay ?? 0);
+    const em = f.enterMs ? `${Math.round(f.enterMs)}ms` : ".8s";
     if (f.enter) {
-      transitions.push(`opacity .8s ease ${d}ms`, `transform .8s ease ${d}ms`);
+      transitions.push(
+        `opacity ${em} ease ${d}ms`,
+        `transform ${em} ease ${d}ms`
+      );
       const from = ENTER_FROM[f.enter];
       css += `@media (prefers-reduced-motion:no-preference){.sb-js ${sel}:not(.sb-in){opacity:0;${from}}}`;
     }
@@ -191,7 +198,7 @@ export function fxCss(
       const rest = hoverTransition ? `,${hoverTransition}` : "";
       for (let n = 2; n <= 12; n++) {
         const dn = d + (n - 1) * stagger;
-        css += `${sel.slice(0, -2)}>:nth-child(${n}){transition:opacity .8s ease ${dn}ms,transform .8s ease ${dn}ms${rest}}`;
+        css += `${sel.slice(0, -2)}>:nth-child(${n}){transition:opacity ${em} ease ${dn}ms,transform ${em} ease ${dn}ms${rest}}`;
       }
     }
   }

@@ -7,6 +7,7 @@ import { margem } from "./margem/index.js";
 import { marketplace } from "./marketplace/index.js";
 import { portalNoticias } from "./portal-noticias/index.js";
 import { spyhacker } from "./spyhacker/index.js";
+import { zyrion } from "./zyrion/index.js";
 
 /** Aparecem na tela de escolha de template. */
 const templates: SiteTemplate[] = [
@@ -17,6 +18,7 @@ const templates: SiteTemplate[] = [
   margem,
   areaflix,
   controlePatrimonial,
+  zyrion,
 ];
 
 /**

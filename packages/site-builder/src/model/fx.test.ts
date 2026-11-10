@@ -81,3 +81,26 @@ describe("hover", () => {
     expect(css).toContain(",box-shadow 450ms ease}");
   });
 });
+
+describe("duração e atraso da entrada", () => {
+  test("enterMs troca a duração padrão (.8s) e vale também na sequência", () => {
+    const base = fxCss("b1", { "": { delay: 200, enter: "fadeInUp" } });
+    expect(base).toContain("opacity .8s ease 200ms");
+    const css = fxCss("b1", {
+      "": {
+        delay: 100,
+        each: true,
+        enter: "fadeInLeft",
+        enterMs: 1250,
+        stagger: 100,
+      },
+    });
+    expect(css).toContain(
+      "opacity 1250ms ease 100ms,transform 1250ms ease 100ms"
+    );
+    expect(css).toContain(
+      ">:nth-child(3){transition:opacity 1250ms ease 300ms"
+    );
+    expect(cleanFx({ enter: "fadeIn", enterMs: 100 })).toBeUndefined();
+  });
+});

@@ -29,6 +29,7 @@ import { isPortal, portalCss, portalVars } from "./portal.js";
 import { type Route, resolveRoute } from "./routes.js";
 import { isSpy, spyCss } from "./spyhacker.js";
 import { siteCss, themeVars } from "./styles.js";
+import { isZyrion, zyrionCss, zyrionVars } from "./zyrion.js";
 
 export interface SiteRendererProps {
   /** Prefixo das URLs internas; vazio quando o site roda na raiz do domínio. */
@@ -85,6 +86,7 @@ export function SiteRenderer({
   const margem = isMargem(site.theme);
   const patrimonial = isPatrimonial(site.theme);
   const areaflix = isAreaflix(site.theme);
+  const zyrion = isZyrion(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -115,6 +117,7 @@ export function SiteRenderer({
         margem ? "sb-mg" : "",
         patrimonial ? "sb-cp" : "",
         areaflix ? "sb-af" : "",
+        zyrion ? "sb-zy" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -128,28 +131,31 @@ export function SiteRenderer({
           ...(margem ? margemVars(site.theme) : {}),
           ...(patrimonial ? patrimonialVars(site.theme) : {}),
           ...(areaflix ? areaflixVars(site.theme) : {}),
+          ...(zyrion ? zyrionVars(site.theme) : {}),
         } as CSSProperties
       }
     >
       <style>
         {fontFaceCss(customFonts(site.theme)) +
-          (journal
-            ? siteCss + journalCss
-            : portal
-              ? siteCss + portalCss
-              : spy
-                ? siteCss + spyCss
-                : central
-                  ? siteCss + centralCss
-                  : market
-                    ? siteCss + marketplaceCss
-                    : margem
-                      ? siteCss + margemCss
-                      : areaflix
-                        ? siteCss + areaflixCss
-                        : patrimonial
-                          ? siteCss + patrimonialCss
-                          : siteCss)}
+          (zyrion
+            ? siteCss + zyrionCss
+            : journal
+              ? siteCss + journalCss
+              : portal
+                ? siteCss + portalCss
+                : spy
+                  ? siteCss + spyCss
+                  : central
+                    ? siteCss + centralCss
+                    : market
+                      ? siteCss + marketplaceCss
+                      : margem
+                        ? siteCss + margemCss
+                        : areaflix
+                          ? siteCss + areaflixCss
+                          : patrimonial
+                            ? siteCss + patrimonialCss
+                            : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}

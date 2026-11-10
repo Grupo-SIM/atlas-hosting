@@ -5,9 +5,9 @@
  * Mesmo esquema do `FX_RUNTIME`: inline no HTML publicado e injetado pelo `FxRuntime` na prévia.
  */
 export const NAV_RUNTIME = `(function(){
-if(window.__sbNav===4)return;
+if(window.__sbNav===5)return;
 if(window.__sbNavOff)window.__sbNavOff();
-window.__sbNav=4;
+window.__sbNav=5;
 var off=null,shown=location.pathname+location.search;
 function rebind(){
 if(!window.sbFx)return;
@@ -158,8 +158,18 @@ return;
 var share=e.target.closest&&e.target.closest("[data-share]");
 if(share){
 e.preventDefault();
-var su={facebook:"https://www.facebook.com/sharer/sharer.php?u=",twitter:"https://twitter.com/intent/tweet?url=",linkedin:"https://www.linkedin.com/shareArticle?mini=true&url="}[share.getAttribute("data-share")];
+var su={facebook:"https://www.facebook.com/sharer/sharer.php?u=",twitter:"https://twitter.com/intent/tweet?url=",whatsapp:"https://api.whatsapp.com/send?text=",telegram:"https://t.me/share/url?url=",linkedin:"https://www.linkedin.com/shareArticle?mini=true&url="}[share.getAttribute("data-share")];
 if(su)window.open(su+encodeURIComponent(location.href),"_blank","noopener,width=600,height=500");
+return;
+}
+var zm=e.target.closest&&e.target.closest(".zy-more[data-step]");
+if(zm){
+var zw=zm.closest("[data-zy-archive]"),zs=Number(zm.getAttribute("data-step"))||6;
+if(zw){
+var zr=zw.querySelectorAll(".zy-card[hidden]");
+for(var q=0;q<zs&&q<zr.length;q++)zr[q].removeAttribute("hidden");
+if(zr.length<=zs)zm.remove();
+}
 return;
 }
 var more=e.target.closest&&e.target.closest(".sb-news-more[data-step]");

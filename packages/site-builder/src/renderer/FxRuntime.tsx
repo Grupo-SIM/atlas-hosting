@@ -27,7 +27,7 @@ const inject = (code: string) => {
 export function FxRuntime() {
   useEffect(() => {
     if (!window.sbFx || window.__sbFxV !== FX_VERSION) inject(FX_RUNTIME);
-    if (window.__sbNav !== 4) inject(NAV_RUNTIME);
+    if (window.__sbNav !== 5) inject(NAV_RUNTIME);
     const offFx = window.sbFx?.();
     // Movimento do template Margem: só carrega quando a página tem um bloco dele.
     let offMg: (() => void) | undefined;

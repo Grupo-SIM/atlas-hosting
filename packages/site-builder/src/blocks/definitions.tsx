@@ -28,6 +28,9 @@ import { patrimonialBlocks } from "./patrimonial.js";
 import { portalHubBlocks } from "./portal-hub.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
 import { isYouTubeChannelId, latestVideoEmbed, videoEmbed } from "./youtube.js";
+import { zyrionBlocks } from "./zyrion.js";
+import { zyrionHomeBlocks } from "./zyrion-home.js";
+import { zyrionPageBlocks } from "./zyrion-pages.js";
 
 const str = (d = "") => z.string().default(d);
 
@@ -2361,6 +2364,9 @@ export const blockDefinitions: BlockDefinition[] = [
   ...margemBlocks,
   ...patrimonialBlocks,
   ...areaflixBlocks,
+  ...zyrionBlocks,
+  ...zyrionHomeBlocks,
+  ...zyrionPageBlocks,
   ...adBlocks,
   newsSection,
   categoryHeader,
