@@ -1,5 +1,8 @@
 import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
+import { HABILIDADES_EXTRA_FONTS, isHabilidades } from "./habilidades.js";
 import { isMotorista, MOTORISTA_EXTRA_FONTS } from "./motorista.js";
+import { isOutroLado, OUTROLADO_EXTRA_FONTS } from "./outrolado.js";
+import { isPagaTg, PAGATG_EXTRA_FONTS } from "./pagatg.js";
 import { isRaiz, RAIZ_EXTRA_FONTS } from "./raiz.js";
 import { isSeguidores, SEGUIDORES_EXTRA_FONTS } from "./seguidores.js";
 import { isSim, SIM_EXTRA_FONTS } from "./sim.js";
@@ -9,6 +12,7 @@ import { isSpy, SPY_EXTRA_FONTS } from "./spyhacker.js";
 export const SITE_FONTS = [
   "Anek Devanagari",
   "Bai Jamjuree",
+  "Be Vietnam Pro",
   "Content",
   "Mulish",
   "Poppins",
@@ -49,7 +53,12 @@ export const SITE_FONTS = [
 /** Pesos que o Google Fonts oferece quando não são os padrões (pedir um peso inexistente derruba o CSS inteiro). */
 const FONT_WEIGHTS: Record<string, string> = {
   "Anek Devanagari": "300;400;500;600;700",
+  Anybody: "400;900",
+  "Be Vietnam Pro": "300;400;500;600;700;800;900",
+  "Cherry Cream Soda": "400",
   Content: "400;700",
+  Electrolize: "400",
+  Montserrat: "400;500;600;700;800;900",
   "Plus Jakarta Sans": "300;400;500;600;700",
   Rajdhani: "300;400;500;600;700",
 };
@@ -132,6 +141,15 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isSim(theme))
     for (const extra of SIM_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isOutroLado(theme))
+    for (const extra of OUTROLADO_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isHabilidades(theme))
+    for (const extra of HABILIDADES_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isPagaTg(theme))
+    for (const extra of PAGATG_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   const families = names
     .map(

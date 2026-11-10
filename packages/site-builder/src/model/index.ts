@@ -127,7 +127,9 @@ export interface SiteTemplate extends Omit<TemplateMeta, "pageCount"> {
 export {
   ENTER_EFFECTS,
   ENTER_LABELS,
+  ENTER_SCREEN_VALUES,
   type EnterEffect,
+  type EnterScreen,
   type Fx,
   HOVER_EFFECTS,
   HOVER_LABELS,

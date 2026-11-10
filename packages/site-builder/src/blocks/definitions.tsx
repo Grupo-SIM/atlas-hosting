@@ -5,6 +5,8 @@ import { AdBox, adBlocks, adItemFields, adItemsSchema } from "./ads.js";
 import { areaflixBlocks } from "./areaflix.js";
 import { centralBlocks, Eyebrow } from "./central.js";
 import { defineBlock } from "./define.js";
+import { ebookBlocks } from "./ebook.js";
+import { habilidadesBlocks } from "./habilidades.js";
 import {
   categoryOf,
   categoryPath,
@@ -27,6 +29,8 @@ import { holofotePageBlocks } from "./holofote-pages.js";
 import { margemBlocks } from "./margem.js";
 import { marketplaceBlocks } from "./marketplace.js";
 import { motoristaBlocks } from "./motorista.js";
+import { outroladoBlocks } from "./outrolado.js";
+import { pagatgBlocks } from "./pagatg.js";
 import { patrimonialBlocks } from "./patrimonial.js";
 import { portalHubBlocks } from "./portal-hub.js";
 import { raizBlocks } from "./raiz.js";
@@ -2431,6 +2435,10 @@ export const blockDefinitions: BlockDefinition[] = [
   ...raizBlocks,
   ...simBlocks,
   ...simPageBlocks,
+  ...pagatgBlocks,
+  ...outroladoBlocks,
+  ...ebookBlocks,
+  ...habilidadesBlocks,
   ...adBlocks,
   ...scrollTopBlocks,
   newsSection,

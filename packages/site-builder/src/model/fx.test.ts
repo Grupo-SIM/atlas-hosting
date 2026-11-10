@@ -14,6 +14,7 @@ describe("entrada", () => {
   test("todo tipo de entrada tem rótulo e estado inicial com .sb-js", () => {
     for (const enter of ENTER_EFFECTS) {
       expect(ENTER_LABELS[enter]).toBeTruthy();
+      if (enter === "pulse") continue;
       expect(fxCss("b1", { "": { enter } })).toContain(
         '.sb-js [data-block-id="b1"]:not(.sb-in){'
       );
@@ -25,6 +26,20 @@ describe("entrada", () => {
     expect(fxCss("b1", { "": { enter: "rotateIn" } })).toContain(
       "transform:rotate(-200deg)"
     );
+  });
+});
+
+describe("pulse", () => {
+  test("é uma animação única ao entrar (sem estado inicial escondido) e respeita reduced-motion", () => {
+    const css = fxCss("b1", { "": { delay: 200, enter: "pulse" } });
+    expect(css).toContain(
+      '@media (prefers-reduced-motion:no-preference){.sb-js [data-block-id="b1"].sb-in{animation:sb-fx-pulse 1s ease-in-out 200ms both}}'
+    );
+    expect(css).not.toContain("opacity:0");
+    expect(css).not.toContain(":not(.sb-in)");
+    expect(fxRuntimeData({ "": { enter: "pulse" } })).toEqual([
+      { e: 1, p: "" },
+    ]);
   });
 });
 
@@ -129,5 +144,57 @@ describe("slideInUp e hang (efeitos do Elementor)", () => {
     );
     expect(css).toContain("prefers-reduced-motion:no-preference");
     expect(HOVER_LABELS.hang).toBe("Balançar");
+  });
+});
+
+describe("bounce", () => {
+  test("bounceIn/Left/Right ficam invisíveis até entrar e animam com `backwards`", () => {
+    for (const enter of [
+      "bounceIn",
+      "bounceInLeft",
+      "bounceInRight",
+    ] as const) {
+      const css = fxCss("b1", { "": { delay: 100, enter } });
+      expect(css).toContain(
+        '@media (prefers-reduced-motion:no-preference){.sb-js [data-block-id="b1"]:not(.sb-in){opacity:0}}'
+      );
+      expect(css).toContain(`animation:sb-fx-${enter} 1s`);
+      expect(css).toContain("100ms backwards");
+    }
+  });
+});
+
+describe("entrada por tela", () => {
+  test("sem enterTablet/enterMobile o CSS é o de sempre (sem media query de largura)", () => {
+    expect(fxCss("b1", { "": { enter: "fadeIn" } })).not.toContain("width");
+  });
+
+  test("só no celular: nada no computador e no tablet", () => {
+    const css = fxCss("b1", { "": { enterMobile: "fadeIn" } });
+    expect(css).toContain("and (max-width:767px)");
+    expect(css).not.toContain("min-width");
+    expect(fxRuntimeData({ "": { enterMobile: "fadeIn" } })).toEqual([
+      { e: 1, p: "" },
+    ]);
+  });
+
+  test("tablet herda o computador, celular herda o tablet, e `none` desliga", () => {
+    const css = fxCss("b1", {
+      "": { enter: "bounceIn", enterTablet: "bounceInLeft" },
+    });
+    expect(css).toContain("(min-width:1025px)");
+    expect(css).toContain("(min-width:768px) and (max-width:1024px)");
+    expect(css).toContain("(max-width:767px)");
+    expect(css).toContain("sb-fx-bounceIn 1s");
+    expect(css.match(/sb-fx-bounceInLeft 1s/g)?.length).toBe(2);
+    const off = fxCss("b1", { "": { enter: "fadeIn", enterMobile: "none" } });
+    expect(off).toContain("(min-width:1025px)");
+    expect(off).toContain("(min-width:768px) and (max-width:1024px)");
+    expect(off).not.toContain("(max-width:767px)");
+  });
+
+  test("`none` sozinho não conta como efeito", () => {
+    expect(cleanFx({ enterMobile: "none" })).toBeUndefined();
+    expect(cleanFx({ enterMobile: "pulse" })).toEqual({ enterMobile: "pulse" });
   });
 });

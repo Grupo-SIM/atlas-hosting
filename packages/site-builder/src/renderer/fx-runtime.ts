@@ -4,7 +4,7 @@
  * liga os efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo.
  * Ao mudar o script, suba `FX_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const FX_VERSION = 10;
+export const FX_VERSION = 12;
 
 export const FX_RUNTIME = `(function(){
 if(window.sbFx&&window.__sbFxV===${FX_VERSION})return;
@@ -287,11 +287,32 @@ play();
 off.push(function(){stop();ac.abort();clones.forEach(function(c){c.remove()});dots.forEach(function(d){d.remove()});box.removeAttribute("data-si-ready");box.classList.remove("is-static");track.style.transition="";track.style.transform=""});
 });
 var siBurger=document.getElementById("sb-burger");
-if(siBurger&&document.querySelector(".si-drawer")){
+if(siBurger&&document.querySelector(".si-drawer,.pg-drop")){
 var siKey=function(e){if(e.key==="Escape")siBurger.checked=false};
 document.addEventListener("keydown",siKey);
 off.push(function(){document.removeEventListener("keydown",siKey)});
 }
+/* PagaTG: o menu suspenso fecha ao clicar num item (âncora da própria página não recarrega) */
+document.querySelectorAll(".pg-drop a").forEach(function(a){
+var pgClose=function(){var b=document.getElementById("sb-burger");if(b)b.checked=false};
+a.addEventListener("click",pgClose);
+off.push(function(){a.removeEventListener("click",pgClose)});
+});
+/* O Outro Lado da Internet: a capa do vídeo vira o player no mesmo lugar, com autoplay */
+document.querySelectorAll("[data-ol-video]").forEach(function(a){
+var go=function(e){
+var src=a.getAttribute("data-ol-video")||"";
+if(!/^https:\\/\\/(player\\.vimeo\\.com\\/video\\/|www\\.youtube-nocookie\\.com\\/embed\\/)/.test(src))return;
+e.preventDefault();
+var f=document.createElement("iframe");
+f.src=src+(src.indexOf("?")<0?"?":"&")+"autoplay=1";
+f.allow="autoplay; fullscreen; picture-in-picture";f.allowFullscreen=true;f.title="Vídeo";
+a.parentNode.replaceChild(f,a);
+off.push(function(){if(f.parentNode)f.parentNode.replaceChild(a,f)});
+};
+a.addEventListener("click",go);
+off.push(function(){a.removeEventListener("click",go)});
+});
 /* Lottie: o player (lottie_light) só é baixado quando a página tem [data-sb-lottie] */
 var lots=document.querySelectorAll("[data-sb-lottie]");
 if(lots.length&&!reduce){

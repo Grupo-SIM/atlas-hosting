@@ -13,6 +13,11 @@ import { areaflixCss, areaflixVars, isAreaflix } from "./areaflix.js";
 import { centralCss, centralVars, isCentral } from "./central.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { customFonts, fontFaceCss, fontStylesheet } from "./fonts.js";
+import {
+  habilidadesCss,
+  habilidadesVars,
+  isHabilidades,
+} from "./habilidades.js";
 import { holofoteCss, holofoteVars, isHolofote } from "./holofote.js";
 import { isJournal, journalCss, journalVars } from "./journal.js";
 import { isMargem, margemCss, margemVars } from "./margem.js";
@@ -22,6 +27,8 @@ import {
   marketplaceVars,
 } from "./marketplace.js";
 import { isMotorista, motoristaCss, motoristaVars } from "./motorista.js";
+import { isOutroLado, outroladoCss, outroladoVars } from "./outrolado.js";
+import { isPagaTg, pagatgCss, pagatgVars } from "./pagatg.js";
 import {
   isPatrimonial,
   patrimonialCss,
@@ -97,6 +104,9 @@ export function SiteRenderer({
   const raiz = isRaiz(site.theme);
   const holofote = isHolofote(site.theme);
   const sim = isSim(site.theme);
+  const pagatg = isPagaTg(site.theme);
+  const outrolado = isOutroLado(site.theme);
+  const habilidades = isHabilidades(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -133,6 +143,9 @@ export function SiteRenderer({
         raiz ? "sb-mr" : "",
         holofote ? "sb-hf" : "",
         sim ? "sb-si" : "",
+        pagatg ? "sb-pg" : "",
+        outrolado ? "sb-ol" : "",
+        habilidades ? "sb-hc" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -152,40 +165,49 @@ export function SiteRenderer({
           ...(raiz ? raizVars(site.theme) : {}),
           ...(holofote ? holofoteVars(site.theme) : {}),
           ...(sim ? simVars(site.theme) : {}),
+          ...(pagatg ? pagatgVars(site.theme) : {}),
+          ...(outrolado ? outroladoVars(site.theme) : {}),
+          ...(habilidades ? habilidadesVars(site.theme) : {}),
         } as CSSProperties
       }
     >
       <style>
         {fontFaceCss(customFonts(site.theme)) +
-          (sim
-            ? siteCss + simCss
-            : holofote
-              ? siteCss + holofoteCss
-              : raiz
-                ? siteCss + raizCss
-                : zyrion
-                  ? siteCss + zyrionCss
-                  : journal
-                    ? siteCss + journalCss
-                    : portal
-                      ? siteCss + portalCss
-                      : spy
-                        ? siteCss + spyCss
-                        : central
-                          ? siteCss + centralCss
-                          : market
-                            ? siteCss + marketplaceCss
-                            : margem
-                              ? siteCss + margemCss
-                              : seguidores
-                                ? siteCss + seguidoresCss
-                                : areaflix
-                                  ? siteCss + areaflixCss
-                                  : patrimonial
-                                    ? siteCss + patrimonialCss
-                                    : motorista
-                                      ? siteCss + motoristaCss
-                                      : siteCss)}
+          (habilidades
+            ? siteCss + habilidadesCss
+            : outrolado
+              ? siteCss + outroladoCss
+              : pagatg
+                ? siteCss + pagatgCss
+                : sim
+                  ? siteCss + simCss
+                  : holofote
+                    ? siteCss + holofoteCss
+                    : raiz
+                      ? siteCss + raizCss
+                      : zyrion
+                        ? siteCss + zyrionCss
+                        : journal
+                          ? siteCss + journalCss
+                          : portal
+                            ? siteCss + portalCss
+                            : spy
+                              ? siteCss + spyCss
+                              : central
+                                ? siteCss + centralCss
+                                : market
+                                  ? siteCss + marketplaceCss
+                                  : margem
+                                    ? siteCss + margemCss
+                                    : seguidores
+                                      ? siteCss + seguidoresCss
+                                      : areaflix
+                                        ? siteCss + areaflixCss
+                                        : patrimonial
+                                          ? siteCss + patrimonialCss
+                                          : motorista
+                                            ? siteCss + motoristaCss
+                                            : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}

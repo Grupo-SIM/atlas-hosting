@@ -10,6 +10,7 @@ import {
   type Block,
   ENTER_EFFECTS,
   ENTER_LABELS,
+  type EnterScreen,
   type Fx,
   HOVER_EFFECTS,
   HOVER_LABELS,
@@ -1258,7 +1259,38 @@ export function Inspector({
               ))}
             </select>
           </div>
-          {fx.enter ? (
+          {(
+            [
+              ["enterTablet", "Efeito no tablet (768–1024px)"],
+              ["enterMobile", "Efeito no celular (até 767px)"],
+            ] as const
+          ).map(([key, label]) => (
+            <div className="sbe-field" key={key}>
+              <span>{label}</span>
+              <select
+                onChange={e =>
+                  onFx(
+                    { [key]: (e.target.value || undefined) as EnterScreen },
+                    label
+                  )
+                }
+                value={fx[key] ?? ""}
+              >
+                <option value="">
+                  {key === "enterMobile"
+                    ? "Igual ao tablet"
+                    : "Igual ao computador"}
+                </option>
+                <option value="none">Nenhum nesta tela</option>
+                {ENTER_EFFECTS.map(k => (
+                  <option key={k} value={k}>
+                    {ENTER_LABELS[k]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+          {fx.enter || fx.enterTablet || fx.enterMobile ? (
             <Slider
               label="Atraso (ms)"
               max={2000}
@@ -1330,7 +1362,13 @@ export function Inspector({
               <span />
             </button>
           </div>
-          {fx.enter || fx.hover || fx.parallax || fx.mouse || fx.count ? (
+          {fx.enter ||
+          fx.enterTablet ||
+          fx.enterMobile ||
+          fx.hover ||
+          fx.parallax ||
+          fx.mouse ||
+          fx.count ? (
             <>
               <div className="sbe-line">
                 <span>Aplicar a cada item de dentro</span>
@@ -1347,7 +1385,7 @@ export function Inspector({
                   <span />
                 </button>
               </div>
-              {fx.each && fx.enter ? (
+              {fx.each && (fx.enter || fx.enterTablet || fx.enterMobile) ? (
                 <Slider
                   label="Atraso entre itens (ms)"
                   max={600}
@@ -1364,6 +1402,8 @@ export function Inspector({
                       delay: undefined,
                       each: undefined,
                       enter: undefined,
+                      enterMobile: undefined,
+                      enterTablet: undefined,
                       hover: undefined,
                       hoverMs: undefined,
                       mouse: undefined,

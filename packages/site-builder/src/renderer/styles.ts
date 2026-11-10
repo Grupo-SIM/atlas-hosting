@@ -1,3 +1,5 @@
+import { ebookCss } from "./ebook.js";
+
 /** Tokens de tema → variáveis CSS. Valores vêm do usuário, então só passam sem `;{}<`. */
 const safe = (v: string | undefined, fallback: string) =>
   v && !/[;{}<>]/.test(v) ? v : fallback;
@@ -291,10 +293,25 @@ ${mobileRules(".sb-narrow")}
 .sb-top.on{bottom:var(--top-b,60px);opacity:1;visibility:visible}
 .sb-top.is-edit{position:relative;bottom:auto;margin:12px 15px 12px auto;transition:background-color .3s ease}
 @media (prefers-reduced-motion:reduce){.sb-top{transition:background-color .3s ease}}
+/* divisor de forma (ShapeDivider): faixa na base da seção, atrás do conteúdo (padrão do Elementor), girada 180° para o preenchimento ficar embaixo */
+.sb-shape{position:absolute;left:0;bottom:-1px;z-index:0;width:100%;height:var(--sh-d,0px);overflow:hidden;line-height:0;pointer-events:none}
+.sb-shape svg{position:relative;left:50%;display:block;width:var(--sw-d,100%);height:100%;transform:translateX(-50%) rotate(180deg);fill:var(--shc,#000)}
+@media (max-width:1024px){.sb-shape{height:var(--sh-t,var(--sh-d))}.sb-shape svg{width:var(--sw-t,100%)}}
+@media (max-width:767px){.sb-shape{height:var(--sh-m,var(--sh-t,var(--sh-d)))}.sb-shape svg{width:var(--sw-m,var(--sw-t,100%))}}
+.sb-narrow .sb-shape{height:var(--sh-t,var(--sh-d))}.sb-narrow .sb-shape svg{width:var(--sw-t,100%)}
+.sb-narrow .sb-shape{height:var(--sh-m,var(--sh-t,var(--sh-d)))}.sb-narrow .sb-shape svg{width:var(--sw-m,var(--sw-t,100%))}
+/* vídeo de fundo (YouTube mudo em laço) cobrindo a seção; no editor só aparece o pôster */
+.sb-bgvideo{position:absolute;inset:0;overflow:hidden;container-type:size;pointer-events:none;background:var(--bgv-poster,none) center/cover no-repeat}
+.sb-bgvideo iframe{position:absolute;top:50%;left:50%;width:max(100cqw,177.78cqh);height:max(100cqh,56.25cqw);border:0;transform:translate(-50%,-50%);pointer-events:none}
+@keyframes sb-fx-pulse{0%{scale:1}50%{scale:1.05}100%{scale:1}}
+@keyframes sb-fx-bounceIn{0%{opacity:0;scale:.3}20%{scale:1.1}40%{scale:.9}60%{opacity:1;scale:1.03}80%{scale:.97}100%{opacity:1;scale:1}}
+@keyframes sb-fx-bounceInLeft{0%{opacity:0;translate:-100vw 0;scale:3 1}60%{opacity:1;translate:25px 0;scale:1 1}75%{translate:-10px 0}90%{translate:5px 0}100%{opacity:1;translate:0 0;scale:1 1}}
+@keyframes sb-fx-bounceInRight{0%{opacity:0;translate:100vw 0;scale:3 1}60%{opacity:1;translate:-25px 0;scale:1 1}75%{translate:10px 0}90%{translate:-5px 0}100%{opacity:1;translate:0 0;scale:1 1}}
 @keyframes sb-fx-pop{50%{scale:1.2}}
 @keyframes sb-fx-push{50%{scale:.8}}
 @keyframes sb-fx-hang-sink{100%{translate:0 8px}}
 @keyframes sb-fx-hang{0%{translate:0 8px}50%{translate:0 4px}100%{translate:0 8px}}
 [data-sb-par],[data-sb-mouse]{translate:var(--sb-mx,0px) calc(var(--sb-py,0px) + var(--sb-my,0px));will-change:translate}
 [data-sb-par=bg]{translate:var(--sb-mx,0px) var(--sb-my,0px);background-position-y:calc(50% + var(--sb-py,0px))}
+${ebookCss}
 `;

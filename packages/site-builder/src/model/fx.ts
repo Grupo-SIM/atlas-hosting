@@ -11,8 +11,16 @@ export const ENTER_EFFECTS = [
   "zoomIn",
   "rotateIn",
   "slideInUp",
+  "pulse",
+  "bounceIn",
+  "bounceInLeft",
+  "bounceInRight",
 ] as const;
 export type EnterEffect = (typeof ENTER_EFFECTS)[number];
+
+/** Entrada de uma tela específica: um efeito, ou `"none"` para desligar nela. */
+export const ENTER_SCREEN_VALUES = ["none", ...ENTER_EFFECTS] as const;
+export type EnterScreen = (typeof ENTER_SCREEN_VALUES)[number];
 
 /** Efeito ao passar o mouse. */
 export const HOVER_EFFECTS = [
@@ -30,11 +38,15 @@ export const HOVER_EFFECTS = [
 export type HoverEffect = (typeof HOVER_EFFECTS)[number];
 
 export const ENTER_LABELS: Record<EnterEffect, string> = {
+  bounceIn: "Quicar",
+  bounceInLeft: "Quicar da esquerda",
+  bounceInRight: "Quicar da direita",
   fadeIn: "Aparecer",
   fadeInDown: "Descer suave",
   fadeInLeft: "Vir da esquerda",
   fadeInRight: "Vir da direita",
   fadeInUp: "Subir suave",
+  pulse: "Pulsar",
   rotateIn: "Girar ao entrar",
   slideInUp: "Deslizar de baixo",
   zoomIn: "Zoom",
@@ -68,6 +80,10 @@ export interface Fx {
   /** Aplica o efeito a cada filho direto (cartões, ícones…), não ao item inteiro. */
   each?: boolean;
   enter?: EnterEffect;
+  /** Entrada só no celular (≤ 767px); vazio herda a do tablet e, na falta dela, a do computador. `"none"` desliga. */
+  enterMobile?: EnterScreen;
+  /** Entrada no tablet (768–1024px); vazio herda a do computador. `"none"` desliga. */
+  enterTablet?: EnterScreen;
   /** Duração da entrada, em ms (padrão 800). O Elementor usa 1250. */
   enterMs?: number;
   hover?: HoverEffect;
@@ -86,7 +102,9 @@ export const fxSchema: z.ZodType<Fx> = z.object({
   delay: z.number().min(0).max(3000).optional(),
   each: z.boolean().optional(),
   enter: z.enum(ENTER_EFFECTS).optional(),
+  enterMobile: z.enum(ENTER_SCREEN_VALUES).optional(),
   enterMs: z.number().min(200).max(3000).optional(),
+  enterTablet: z.enum(ENTER_SCREEN_VALUES).optional(),
   hover: z.enum(HOVER_EFFECTS).optional(),
   hoverMs: z.number().min(HOVER_MS.min).max(HOVER_MS.max).optional(),
   mouse: z.number().min(-10).max(10).optional(),
@@ -101,9 +119,14 @@ export const fxMapSchema = z
     "Caminho inválido"
   );
 
+const isOn = (e: EnterScreen | undefined): e is EnterEffect =>
+  !!e && e !== "none";
+
 export const hasFx = (fx: Fx | undefined): fx is Fx =>
   !!fx &&
   (!!fx.enter ||
+    isOn(fx.enterTablet) ||
+    isOn(fx.enterMobile) ||
     !!fx.hover ||
     !!fx.count ||
     (fx.parallax ?? 0) !== 0 ||
@@ -118,10 +141,27 @@ export function cleanFx(fx: Fx | undefined): Fx | undefined {
 }
 
 /**
- * Estado inicial de cada entrada (declarações completas). `slideInUp` não tem fade: só desliza de baixo
+ * Entradas feitas só de `@keyframes` (em `styles.ts`): `pulse` não esconde nada; as `bounce*` ficam invisíveis até
+ * entrar (`opacity:0`) e usam as propriedades `scale`/`translate` (como o resto), com `backwards` para o item
+ * voltar ao estilo natural no fim, sem prender nenhum valor.
+ */
+type AnimatedEnter = "pulse" | "bounceIn" | "bounceInLeft" | "bounceInRight";
+const ANIMATED: Record<AnimatedEnter, string> = {
+  bounceIn: "sb-fx-bounceIn 1s cubic-bezier(.215,.61,.355,1) {d}ms backwards",
+  bounceInLeft:
+    "sb-fx-bounceInLeft 1s cubic-bezier(.215,.61,.355,1) {d}ms backwards",
+  bounceInRight:
+    "sb-fx-bounceInRight 1s cubic-bezier(.215,.61,.355,1) {d}ms backwards",
+  pulse: "sb-fx-pulse 1s ease-in-out {d}ms both",
+};
+const isAnimated = (e: EnterEffect): e is AnimatedEnter => e in ANIMATED;
+
+/**
+ * Estado inicial de cada entrada (declarações completas). `pulse` (animate.css) não tem estado inicial: o item
+ * já está visível e só pulsa uma vez (1 → 1,05 → 1 em 1 s) quando entra na tela. `slideInUp` não tem fade: só desliza de baixo
  * (100% da altura do próprio item) e fica invisível até começar, como no Elementor.
  */
-const ENTER_FROM: Record<EnterEffect, string> = {
+const ENTER_FROM: Record<Exclude<EnterEffect, AnimatedEnter>, string> = {
   fadeIn: "opacity:0",
   fadeInDown: "opacity:0;transform:translateY(-40px)",
   fadeInLeft: "opacity:0;transform:translateX(-60px)",
@@ -178,12 +218,56 @@ export function fxCss(
     const transitions: string[] = [];
     const d = Math.round(f.delay ?? 0);
     const em = f.enterMs ? `${Math.round(f.enterMs)}ms` : ".8s";
-    if (f.enter) {
-      if (f.enter !== "slideInUp")
+    const stagger = f.each ? Math.round(f.stagger ?? 0) : 0;
+    const NO_MOTION = "prefers-reduced-motion:no-preference";
+    const parent = sel.slice(0, -2);
+    let transitionEffect: EnterEffect | undefined;
+    /** CSS da entrada `eff`; `mq` restringe a uma faixa de tela (vazio = todas). */
+    const enterCss = (eff: EnterEffect, mq: string): string => {
+      const media = `@media (${NO_MOTION})${mq ? ` and ${mq}` : ""}`;
+      let out = "";
+      if (isAnimated(eff)) {
+        const anim = ANIMATED[eff].replace("{d}", String(d));
+        if (eff !== "pulse")
+          out += `${media}{.sb-js ${sel}:not(.sb-in){opacity:0}}`;
+        out += `${media}{.sb-js ${sel}.sb-in{animation:${anim}}}`;
+        // Entrada em sequência: o n-ésimo filho espera `stagger` ms a mais que o anterior (até 12 itens).
+        if (stagger > 0)
+          for (let n = 2; n <= 12; n++)
+            out += `${media}{.sb-js ${parent}>:nth-child(${n}).sb-in{animation-delay:${d + (n - 1) * stagger}ms}}`;
+      } else {
+        transitionEffect ??= eff;
+        out += `${media}{.sb-js ${sel}:not(.sb-in){${ENTER_FROM[eff]}}}`;
+      }
+      return out;
+    };
+    const tablet = isOn(f.enterTablet)
+      ? f.enterTablet
+      : f.enterTablet === "none"
+        ? undefined
+        : f.enter;
+    const mobile = isOn(f.enterMobile)
+      ? f.enterMobile
+      : f.enterMobile === "none"
+        ? undefined
+        : f.enterTablet
+          ? tablet
+          : f.enter;
+    if (f.enterTablet === undefined && f.enterMobile === undefined) {
+      // Sem valores por tela: a mesma entrada em todas (caminho original, sem media query de largura).
+      if (f.enter) css += enterCss(f.enter, "");
+    } else {
+      const screens: [EnterEffect | undefined, string][] = [
+        [f.enter, "(min-width:1025px)"],
+        [tablet, "(min-width:768px) and (max-width:1024px)"],
+        [mobile, "(max-width:767px)"],
+      ];
+      for (const [eff, mq] of screens) if (eff) css += enterCss(eff, mq);
+    }
+    if (transitionEffect) {
+      if (transitionEffect !== "slideInUp")
         transitions.push(`opacity ${em} ease ${d}ms`);
       transitions.push(`transform ${em} ease ${d}ms`);
-      const from = ENTER_FROM[f.enter];
-      css += `@media (prefers-reduced-motion:no-preference){.sb-js ${sel}:not(.sb-in){${from}}}`;
     }
     const ms = Math.round(f.hoverMs ?? HOVER_MS.default);
     const hoverTo =
@@ -203,14 +287,13 @@ export function fxCss(
       css += `@media (prefers-reduced-motion:no-preference){${sel}:hover{animation:sb-fx-hang-sink .3s ease-out 1 forwards,sb-fx-hang 1.5s ease-in-out .3s infinite alternate}}`;
     if (transitions.length)
       css += `${sel}{transition:${transitions.join(",")}}`;
-    // Entrada em sequência: o n-ésimo filho espera `stagger` ms a mais que o anterior (até 12 itens).
-    const stagger = Math.round(f.stagger ?? 0);
-    if (f.enter && f.each && stagger > 0) {
+    if (transitionEffect && stagger > 0) {
       const rest = hoverTransition ? `,${hoverTransition}` : "";
-      const fade = f.enter === "slideInUp" ? "" : `opacity ${em} ease {}ms,`;
+      const fade =
+        transitionEffect === "slideInUp" ? "" : `opacity ${em} ease {}ms,`;
       for (let n = 2; n <= 12; n++) {
         const dn = d + (n - 1) * stagger;
-        css += `${sel.slice(0, -2)}>:nth-child(${n}){transition:${fade.replace("{}", String(dn))}transform ${em} ease ${dn}ms${rest}}`;
+        css += `${parent}>:nth-child(${n}){transition:${fade.replace("{}", String(dn))}transform ${em} ease ${dn}ms${rest}}`;
       }
     }
   }
@@ -236,7 +319,7 @@ export function fxRuntimeData(
     const f = path === "" || ELEMENT_PATH.test(path) ? cleanFx(raw) : undefined;
     if (!f) continue;
     const entry: FxRuntimeEntry = { p: path };
-    if (f.enter) entry.e = 1;
+    if (f.enter || isOn(f.enterTablet) || isOn(f.enterMobile)) entry.e = 1;
     if (f.count) entry.c = 1;
     if (f.parallax) entry.s = f.parallax;
     if (f.mouse) entry.m = f.mouse;

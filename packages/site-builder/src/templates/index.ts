@@ -4,10 +4,13 @@ import { blogViagens } from "./blog-viagens/index.js";
 import { centralMarketing } from "./central-marketing/index.js";
 import { controleMotorista } from "./controle-motorista/index.js";
 import { controlePatrimonial } from "./controle-patrimonial/index.js";
+import { habilidadesComunicacao } from "./habilidades-comunicacao/index.js";
 import { holofote } from "./holofote/index.js";
 import { margem } from "./margem/index.js";
 import { marketingRaiz } from "./marketing-raiz/index.js";
 import { marketplace } from "./marketplace/index.js";
+import { outroLadoInternet } from "./outro-lado-internet/index.js";
+import { pagatg } from "./pagatg/index.js";
 import { portalNoticias } from "./portal-noticias/index.js";
 import { seguidoresEmAlta } from "./seguidores-em-alta/index.js";
 import { simIntermediacoes } from "./sim-intermediacoes/index.js";
@@ -27,6 +30,9 @@ const templates: SiteTemplate[] = [
   controlePatrimonial,
   controleMotorista,
   simIntermediacoes,
+  pagatg,
+  outroLadoInternet,
+  habilidadesComunicacao,
   zyrion,
   holofote,
 ];

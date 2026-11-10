@@ -33,7 +33,12 @@ import {
   updateBlockStyle,
   updateElementStyle,
 } from "../editor/tree.js";
-import { ENTER_EFFECTS, HOVER_EFFECTS, HOVER_MS } from "../model/fx.js";
+import {
+  ENTER_EFFECTS,
+  ENTER_SCREEN_VALUES,
+  HOVER_EFFECTS,
+  HOVER_MS,
+} from "../model/fx.js";
 import { BLOCK_ANCHOR, type Block, type Site } from "../model/index.js";
 import { siteSchema } from "../model/schema.js";
 import { BLOCK_STYLE_KEYS, cleanStyle, ELEMENT_PATH } from "../model/style.js";
@@ -211,6 +216,14 @@ export const AI_TOOLS: AiToolDef[] = [
         caminho: str("Elemento interno (nth-child). Vazio = o bloco."),
         contar: bool("Conta os números de 0 até o valor."),
         entrada: oneOf(`Entrada: ${ENTER_EFFECTS.join(", ")}.`, ENTER_EFFECTS),
+        entrada_celular: oneOf(
+          `Entrada só no celular (até 767px; vazio herda a do tablet): none ou ${ENTER_EFFECTS.join(", ")}.`,
+          ENTER_SCREEN_VALUES
+        ),
+        entrada_tablet: oneOf(
+          `Entrada no tablet (768–1024px; vazio herda a do computador): none ou ${ENTER_EFFECTS.join(", ")}.`,
+          ENTER_SCREEN_VALUES
+        ),
         hover: oneOf(
           `Ao passar o mouse: ${HOVER_EFFECTS.join(", ")}.`,
           HOVER_EFFECTS
@@ -711,6 +724,8 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
         cada: "each",
         contar: "count",
         entrada: "enter",
+        entrada_celular: "enterMobile",
+        entrada_tablet: "enterTablet",
         hover: "hover",
         hover_ms: "hoverMs",
         mouse: "mouse",
@@ -728,6 +743,15 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
         throw new ToolError(
           `Entrada inválida. Use: ${ENTER_EFFECTS.join(", ")}.`
         );
+      }
+      for (const k of ["enterTablet", "enterMobile"] as const) {
+        if (
+          patch[k] &&
+          !(ENTER_SCREEN_VALUES as readonly string[]).includes(String(patch[k]))
+        )
+          throw new ToolError(
+            `Entrada por tela inválida. Use: ${ENTER_SCREEN_VALUES.join(", ")}.`
+          );
       }
       if (
         patch.hover &&

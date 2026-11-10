@@ -94,3 +94,14 @@ export function inlineVideoEmbed(input: string): string | null {
   if (!embed?.startsWith("https://player.vimeo.com")) return embed;
   return `${embed}${embed.includes("?") ? "&" : "?"}autopause=0&title=0&portrait=0&byline=0`;
 }
+
+/**
+ * Player de vídeo de fundo (como o "vídeo de fundo" do Elementor): mudo, em laço, sem controles e sem cookies.
+ * `loop=1` só funciona no YouTube com `playlist=<mesmo id>`.
+ */
+export function backgroundVideoEmbed(input: string): string | null {
+  const id = parseYouTubeVideoId(input);
+  return id
+    ? `${PLAYER}/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1&modestbranding=1&rel=0`
+    : null;
+}
