@@ -4,6 +4,7 @@ import { pgVpsServers } from "@/lib/db/schema";
 import { getAtlasHostingConfig } from "./config";
 import type { DeployTarget } from "./deploySite";
 import { assertEligibleVpsNode } from "./eligibility";
+import { publishLogger } from "./publishLog";
 
 /** Mensagens de SSH podem ecoar dados sensíveis: nunca devolva a senha ao navegador. */
 export function sanitize(error: unknown, secret?: string) {
@@ -32,9 +33,14 @@ export async function resolveTarget(
   | { deploy: DeployTarget; ip: string; vpsNodeId: string | null }
 > {
   const config = getAtlasHostingConfig();
+  const log = publishLogger(input.target);
 
   if (input.target === "atlas_vm") {
     if (!(config.atlasVmEnabled && config.vmIp)) {
+      log.error("VM do Atlas não está configurada", {
+        atlasVmEnabled: config.atlasVmEnabled,
+        temVmIp: Boolean(config.vmIp),
+      });
       return {
         error: "A hospedagem na VM do Atlas ainda não está disponível.",
       };
@@ -51,6 +57,13 @@ export async function resolveTarget(
       vpsNodeId: null,
     };
   }
+
+  log.info("Resolvendo a VPS do usuário", {
+    allowIneligible: Boolean(options.allowIneligible),
+    passwordProvided: Boolean(input.password),
+    userId,
+    vpsNodeId: input.vpsNodeId,
+  });
 
   let node: { id: string; ip: string } | undefined;
   if (options.allowIneligible) {
@@ -70,7 +83,21 @@ export async function resolveTarget(
     if ("error" in eligible) return { error: eligible.error };
     node = eligible;
   }
-  if (!node) return { error: "Servidor não encontrado na sua conta." };
+  if (!node) {
+    log.warn("VPS não encontrada na conta do usuário", {
+      userId,
+      vpsNodeId: input.vpsNodeId,
+    });
+    return { error: "Servidor não encontrado na sua conta." };
+  }
+
+  if (!(input.password || config.keyPath)) {
+    // Sem senha e sem chave do Atlas o SSH vai falhar na autenticação.
+    log.warn("VPS sem senha informada e sem chave do Atlas configurada", {
+      ip: node.ip,
+      vpsNodeId: node.id,
+    });
+  }
 
   return {
     deploy: {

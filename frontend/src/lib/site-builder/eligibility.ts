@@ -2,6 +2,7 @@ import { and, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { pgVpsServers, pgVpsSubscription } from "@/lib/db/schema";
 import { getAtlasHostingConfig } from "./config";
+import { publishLogger } from "./publishLog";
 
 export interface EligibleVpsNode {
   id: string;
@@ -76,10 +77,25 @@ export async function assertEligibleVpsNode(
   userId: string,
   vpsNodeId: string | undefined
 ): Promise<EligibleVpsNode | { error: string }> {
-  if (!vpsNodeId) return { error: "Escolha em qual servidor publicar." };
+  const log = publishLogger("user_vps");
+  if (!vpsNodeId) {
+    log.warn("Nenhum servidor foi escolhido para publicar", { userId });
+    return { error: "Escolha em qual servidor publicar." };
+  }
   const nodes = await listEligibleVpsNodes(userId);
   const node = nodes.find(item => item.id === vpsNodeId);
-  if (node) return node;
+  if (node) {
+    log.info("VPS elegível", { ip: node.ip, nome: node.name, vpsNodeId });
+    return node;
+  }
+  log.warn(
+    "VPS recusada: não é do usuário ou a assinatura não está ativa (active)",
+    {
+      elegiveisDoUsuario: nodes.map(item => item.id),
+      userId,
+      vpsNodeId,
+    }
+  );
   return {
     error:
       "Esse servidor não está disponível: ele precisa ser uma VPS contratada no Atlas com a assinatura em dia.",

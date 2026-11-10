@@ -3,6 +3,7 @@ import { z } from "zod";
 import { cssUrl } from "../renderer/central.js";
 import { AdBox, adBlocks, adItemFields, adItemsSchema } from "./ads.js";
 import { areaflixBlocks } from "./areaflix.js";
+import { atlasBlocks } from "./atlas.js";
 import { centralBlocks, Eyebrow } from "./central.js";
 import { defineBlock } from "./define.js";
 import { ebookBlocks } from "./ebook.js";
@@ -34,8 +35,10 @@ import { pagatgBlocks } from "./pagatg.js";
 import { patrimonialBlocks } from "./patrimonial.js";
 import { portalHubBlocks } from "./portal-hub.js";
 import { raizBlocks } from "./raiz.js";
+import { resolvitBlocks } from "./resolvit.js";
 import { scrollTopBlocks } from "./scroll-top.js";
 import { seguidoresBlocks } from "./seguidores.js";
+import { seopackBlocks } from "./seopack.js";
 import { simBlocks } from "./sim.js";
 import { simPageBlocks } from "./sim-pages.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
@@ -2426,6 +2429,8 @@ export const blockDefinitions: BlockDefinition[] = [
   ...patrimonialBlocks,
   ...motoristaBlocks,
   ...areaflixBlocks,
+  ...seopackBlocks,
+  ...resolvitBlocks,
   ...zyrionBlocks,
   ...zyrionHomeBlocks,
   ...zyrionPageBlocks,
@@ -2439,6 +2444,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...outroladoBlocks,
   ...ebookBlocks,
   ...habilidadesBlocks,
+  ...atlasBlocks,
   ...adBlocks,
   ...scrollTopBlocks,
   newsSection,

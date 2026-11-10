@@ -9,6 +9,8 @@ export interface PublishConfig {
   askPassword?: boolean;
   /** Endereço atual do site; `null` quando ainda não foi publicado. */
   domain: string | null;
+  /** Se o endereço já abre; o app confere e o editor só mostra. Ausente = sem indicador. */
+  liveStatus?: "checking" | "live" | "no_dns" | "no_site";
   /** Abre a configuração de endereço/servidor (modal do app) quando ainda não há publicação. */
   onSetup?: () => void;
   /** Alternativa à `onSetup`: para onde ir definir o endereço. */

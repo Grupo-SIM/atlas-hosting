@@ -10,6 +10,7 @@ import {
   translateCss,
 } from "../model/style.js";
 import { areaflixCss, areaflixVars, isAreaflix } from "./areaflix.js";
+import { atlasCss, atlasVars, isAtlas } from "./atlas.js";
 import { centralCss, centralVars, isCentral } from "./central.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { customFonts, fontFaceCss, fontStylesheet } from "./fonts.js";
@@ -36,8 +37,10 @@ import {
 } from "./patrimonial.js";
 import { isPortal, portalCss, portalVars } from "./portal.js";
 import { isRaiz, raizCss, raizVars } from "./raiz.js";
+import { isResolvit, resolvitCss, resolvitVars } from "./resolvit.js";
 import { type Route, resolveRoute } from "./routes.js";
 import { isSeguidores, seguidoresCss, seguidoresVars } from "./seguidores.js";
+import { isSeopack, seopackCss, seopackVars } from "./seopack.js";
 import { isSim, simCss, simVars } from "./sim.js";
 import { isSpy, spyCss } from "./spyhacker.js";
 import { siteCss, themeVars } from "./styles.js";
@@ -99,6 +102,7 @@ export function SiteRenderer({
   const patrimonial = isPatrimonial(site.theme);
   const motorista = isMotorista(site.theme);
   const areaflix = isAreaflix(site.theme);
+  const resolvit = isResolvit(site.theme);
   const zyrion = isZyrion(site.theme);
   const seguidores = isSeguidores(site.theme);
   const raiz = isRaiz(site.theme);
@@ -107,6 +111,8 @@ export function SiteRenderer({
   const pagatg = isPagaTg(site.theme);
   const outrolado = isOutroLado(site.theme);
   const habilidades = isHabilidades(site.theme);
+  const seopack = isSeopack(site.theme);
+  const atlas = isAtlas(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -138,6 +144,7 @@ export function SiteRenderer({
         patrimonial ? "sb-cp" : "",
         motorista ? "sb-cm" : "",
         areaflix ? "sb-af" : "",
+        resolvit ? "sb-rv" : "",
         zyrion ? "sb-zy" : "",
         seguidores ? "sb-sg" : "",
         raiz ? "sb-mr" : "",
@@ -146,6 +153,8 @@ export function SiteRenderer({
         pagatg ? "sb-pg" : "",
         outrolado ? "sb-ol" : "",
         habilidades ? "sb-hc" : "",
+        seopack ? "sb-sp" : "",
+        atlas ? "sb-at" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -160,6 +169,7 @@ export function SiteRenderer({
           ...(patrimonial ? patrimonialVars(site.theme) : {}),
           ...(motorista ? motoristaVars(site.theme) : {}),
           ...(areaflix ? areaflixVars(site.theme) : {}),
+          ...(resolvit ? resolvitVars(site.theme) : {}),
           ...(zyrion ? zyrionVars(site.theme) : {}),
           ...(seguidores ? seguidoresVars(site.theme) : {}),
           ...(raiz ? raizVars(site.theme) : {}),
@@ -168,46 +178,54 @@ export function SiteRenderer({
           ...(pagatg ? pagatgVars(site.theme) : {}),
           ...(outrolado ? outroladoVars(site.theme) : {}),
           ...(habilidades ? habilidadesVars(site.theme) : {}),
+          ...(seopack ? seopackVars(site.theme) : {}),
+          ...(atlas ? atlasVars(site.theme) : {}),
         } as CSSProperties
       }
     >
       <style>
         {fontFaceCss(customFonts(site.theme)) +
-          (habilidades
-            ? siteCss + habilidadesCss
-            : outrolado
-              ? siteCss + outroladoCss
-              : pagatg
-                ? siteCss + pagatgCss
-                : sim
-                  ? siteCss + simCss
-                  : holofote
-                    ? siteCss + holofoteCss
-                    : raiz
-                      ? siteCss + raizCss
-                      : zyrion
-                        ? siteCss + zyrionCss
-                        : journal
-                          ? siteCss + journalCss
-                          : portal
-                            ? siteCss + portalCss
-                            : spy
-                              ? siteCss + spyCss
-                              : central
-                                ? siteCss + centralCss
-                                : market
-                                  ? siteCss + marketplaceCss
-                                  : margem
-                                    ? siteCss + margemCss
-                                    : seguidores
-                                      ? siteCss + seguidoresCss
-                                      : areaflix
-                                        ? siteCss + areaflixCss
-                                        : patrimonial
-                                          ? siteCss + patrimonialCss
-                                          : motorista
-                                            ? siteCss + motoristaCss
-                                            : siteCss)}
+          (atlas
+            ? siteCss + atlasCss
+            : resolvit
+              ? siteCss + resolvitCss
+              : seopack
+                ? siteCss + seopackCss
+                : habilidades
+                  ? siteCss + habilidadesCss
+                  : outrolado
+                    ? siteCss + outroladoCss
+                    : pagatg
+                      ? siteCss + pagatgCss
+                      : sim
+                        ? siteCss + simCss
+                        : holofote
+                          ? siteCss + holofoteCss
+                          : raiz
+                            ? siteCss + raizCss
+                            : zyrion
+                              ? siteCss + zyrionCss
+                              : journal
+                                ? siteCss + journalCss
+                                : portal
+                                  ? siteCss + portalCss
+                                  : spy
+                                    ? siteCss + spyCss
+                                    : central
+                                      ? siteCss + centralCss
+                                      : market
+                                        ? siteCss + marketplaceCss
+                                        : margem
+                                          ? siteCss + margemCss
+                                          : seguidores
+                                            ? siteCss + seguidoresCss
+                                            : areaflix
+                                              ? siteCss + areaflixCss
+                                              : patrimonial
+                                                ? siteCss + patrimonialCss
+                                                : motorista
+                                                  ? siteCss + motoristaCss
+                                                  : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}
@@ -231,11 +249,18 @@ export function SiteRenderer({
   );
 }
 
+/**
+ * Tipos de bloco retirados de propósito. Sites criados antes da remoção ainda guardam o bloco nos dados;
+ * em vez de "Bloco desconhecido" no editor, ele simplesmente não aparece (e some do site publicado).
+ */
+const REMOVED_BLOCK_TYPES = new Set(["atChat"]);
+
 function renderBlocks(blocks: Block[], ctx: RenderContext): ReactNode {
   return blocks.map(block => {
     if (block.hidden) return null;
     const def = getBlockDefinition(block.type);
     if (!def) {
+      if (REMOVED_BLOCK_TYPES.has(block.type)) return null;
       return ctx.mode === "edit" ? (
         <div className="sb-container" key={block.id}>
           Bloco desconhecido: {block.type}

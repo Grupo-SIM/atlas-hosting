@@ -95,6 +95,26 @@ export interface SiteEditorProps {
 type Device = "desktop" | "mobile" | "tablet";
 type LeftTab = "camadas" | "chat" | "paginas";
 
+/** Indicador "o endereço já abre?" ao lado do salvamento. */
+const LIVE_PILL = {
+  checking: {
+    cls: "idle",
+    hint: "verificando se o site já abre",
+    text: "Verificando…",
+  },
+  live: { cls: "live", hint: "o site está no ar", text: "No ar" },
+  no_dns: {
+    cls: "wait",
+    hint: "o DNS ainda está propagando; pode levar de minutos a algumas horas",
+    text: "Aguardando DNS",
+  },
+  no_site: {
+    cls: "wait",
+    hint: "o DNS já aponta para o servidor; o HTTPS está sendo ativado",
+    text: "Ativando HTTPS",
+  },
+} as const;
+
 const DEVICES: {
   icon: "monitor" | "smartphone" | "tablet";
   id: Device;
@@ -1499,6 +1519,15 @@ export function SiteEditor({
           >
             Anúncios {site.theme.ads === "on" ? "ligados" : "desligados"}
           </button>
+          {wide && publish?.domain && publish.liveStatus ? (
+            <span
+              className={`sbe-pill ${LIVE_PILL[publish.liveStatus].cls}`}
+              title={`${publish.domain} — ${LIVE_PILL[publish.liveStatus].hint}`}
+            >
+              <i />
+              {LIVE_PILL[publish.liveStatus].text}
+            </span>
+          ) : null}
           {wide ? (
             <span
               className={`sbe-pill ${pill.cls}`}

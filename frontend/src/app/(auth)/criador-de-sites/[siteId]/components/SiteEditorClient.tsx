@@ -16,6 +16,7 @@ import {
   getAiStatus,
   startAiLogin,
 } from "../../ai-actions";
+import { useSiteLive } from "../../components/useSiteLive";
 import { republishSite } from "../../publish-actions";
 import PublishSetupModal, {
   type PublishSetup,
@@ -82,6 +83,8 @@ export default function SiteEditorClient({
   siteId: string;
 }) {
   const [setupOpen, setSetupOpen] = useState(false);
+  // Só consulta depois de publicado; a primeira publicação recarrega a página.
+  const live = useSiteLive(siteId, !!domain);
 
   return (
     <>
@@ -118,6 +121,7 @@ export default function SiteEditorClient({
         publish={{
           askPassword: publishWithPassword,
           domain,
+          liveStatus: live ?? undefined,
           onSetup: () => setSetupOpen(true),
         }}
         storageKey={siteId}

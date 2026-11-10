@@ -12,6 +12,7 @@ import { configureWebHostingDns } from "@/lib/server/domains/cloudflare-dns";
 import { assertValidDomain } from "./caddy";
 import { getAtlasHostingConfig } from "./config";
 import { deploySite, IPV4_RE } from "./deploySite";
+import { describeError, publishLogger } from "./publishLog";
 import { takeDown } from "./takedown";
 import { resolveTarget, sanitize } from "./target";
 
@@ -69,8 +70,24 @@ export async function runPublish(
     skipHostingCheck?: boolean;
   } = {}
 ): Promise<PublishResult> {
+  const log = publishLogger(input.target);
+  const startedAt = Date.now();
+  // A senha SSH nunca é logada: só se ela veio ou não.
+  const logCtx = {
+    domain: input.domain ?? input.label,
+    kind: input.kind,
+    passwordProvided: Boolean(input.password),
+    siteId: input.siteId,
+    userId: user.id,
+    vpsNodeId: input.vpsNodeId,
+  };
+  log.info("Publicação iniciada", logCtx);
+
   const site = await ownedSite(input.siteId, user.id);
-  if (!site) return { error: "Site não encontrado.", ok: false };
+  if (!site) {
+    log.warn("Recusado: site não encontrado ou de outro usuário", logCtx);
+    return { error: "Site não encontrado.", ok: false };
+  }
 
   const config = getAtlasHostingConfig();
 
@@ -83,12 +100,18 @@ export async function runPublish(
       if (
         !(config.subdomainEnabled && config.baseDomain && config.zoneDomain)
       ) {
+        log.warn("Recusado: subdomínios grátis não configurados", {
+          baseDomain: config.baseDomain,
+          subdomainEnabled: config.subdomainEnabled,
+          zoneDomain: config.zoneDomain,
+        });
         return {
           error: "Subdomínios grátis ainda não estão disponíveis.",
           ok: false,
         };
       }
       if (!LABEL_RE.test(label)) {
+        log.warn("Recusado: nome do subdomínio inválido", { label });
         return {
           error:
             "Use só letras minúsculas, números e hífen (até 42 caracteres).",
@@ -97,8 +120,12 @@ export async function runPublish(
       }
       domain = assertValidDomain(`${label}.${config.baseDomain}`);
       const zone = await cloudflareApi.findZone(config.zoneDomain);
-      if (!zone)
+      if (!zone) {
+        log.error("Zona DNS do Atlas não encontrada no Cloudflare", {
+          zoneDomain: config.zoneDomain,
+        });
         return { error: "Zona DNS do Atlas não encontrada.", ok: false };
+      }
       zoneId = zone.id;
     } else {
       domain = assertValidDomain(normalizeDomainName(input.domain ?? ""));
@@ -113,14 +140,26 @@ export async function runPublish(
           })
         : undefined;
       if (!owned) {
+        log.warn(
+          "Recusado: domínio não está na conta com DNS gerenciado pelo Atlas",
+          { domain, organizationId: user.organizationId }
+        );
         return {
           error:
             "Esse domínio não está na sua conta com DNS gerenciado pelo Atlas.",
           ok: false,
         };
       }
+      log.info("Domínio validado na conta", {
+        cloudflareZoneId: owned.cloudflareZoneId,
+        domain,
+      });
     }
   } catch (error) {
+    log.error("Falha ao validar o domínio", {
+      domain: input.domain ?? input.label,
+      erro: describeError(error),
+    });
     return { error: sanitize(error), ok: false };
   }
 
@@ -129,6 +168,10 @@ export async function runPublish(
     where: eq(pgBuilderPublication.domain, domain),
   });
   if (taken && taken.siteId !== site.id) {
+    log.warn("Recusado: domínio já usado por outro site", {
+      domain,
+      siteDonoDoDominio: taken.siteId,
+    });
     return { error: "Esse endereço já está em uso por outro site.", ok: false };
   }
 
@@ -142,6 +185,10 @@ export async function runPublish(
       where: eq(pgBuilderHostingSubscription.siteId, site.id),
     });
     if (!hosting || hosting.status === "cancelled") {
+      log.warn("Recusado: sem assinatura de hospedagem ativa", {
+        domain,
+        hostingStatus: hosting?.status ?? "sem assinatura",
+      });
       return {
         error:
           "A hospedagem na VM do Atlas é paga: finalize o pedido para publicar aqui.",
@@ -149,6 +196,9 @@ export async function runPublish(
       };
     }
     if (hosting.status === "suspended") {
+      log.warn("Recusado: hospedagem suspensa por falta de pagamento", {
+        domain,
+      });
       return {
         error:
           "A hospedagem deste site está suspensa por falta de pagamento. Pague a fatura em aberto para publicar de novo.",
@@ -161,18 +211,46 @@ export async function runPublish(
 
   // 4) Servidor de destino.
   const target = await resolveTarget(user.id, input);
-  if ("error" in target) return { error: target.error, ok: false };
+  if ("error" in target) {
+    log.warn("Recusado: servidor de destino indisponível", {
+      domain,
+      motivo: target.error,
+      vpsNodeId: input.vpsNodeId,
+    });
+    return { error: target.error, ok: false };
+  }
+  log.info("Servidor de destino resolvido", {
+    autenticacao: target.deploy.local
+      ? "local"
+      : target.deploy.password
+        ? "senha"
+        : target.deploy.keyPath
+          ? "chave do Atlas"
+          : "nenhuma",
+    domain,
+    ip: target.ip,
+    vpsNodeId: target.vpsNodeId,
+  });
 
   const includeWww = input.kind === "domain";
 
   try {
     // 5) Gera o HTML estático e envia. Só o conteúdo salvo é publicado.
     const { exportSiteToStatic } = await import("@repo/site-builder/static");
+    const files = await exportSiteToStatic(site.content);
+    log.info("HTML estático gerado", { arquivos: files.length, domain });
+    const deployStartedAt = Date.now();
     await deploySite({
       domain,
-      files: await exportSiteToStatic(site.content),
+      files,
       includeWww,
+      logTag: input.target,
       target: target.deploy,
+    });
+    log.info("Site enviado ao servidor", {
+      domain,
+      ip: target.ip,
+      ms: Date.now() - deployStartedAt,
     });
 
     // 6) Aponta o DNS depois do site já estar servindo.
@@ -185,11 +263,23 @@ export async function runPublish(
         // IP → registro A; hostname (ex.: o CNAME vps.simintermediacoes.com) → CNAME.
         type: IPV4_RE.test(target.ip) ? "A" : "CNAME",
       });
+      log.info("DNS do subdomínio apontado", { domain, ip: target.ip });
     } else {
       await configureWebHostingDns(domain, target.ip);
+      log.info("DNS do domínio apontado (raiz e www)", {
+        domain,
+        ip: target.ip,
+      });
     }
   } catch (error) {
     const message = sanitize(error, input.password);
+    log.error("Falha ao publicar", {
+      domain,
+      erro: describeError(error, [input.password]),
+      ip: target.ip,
+      ms: Date.now() - startedAt,
+      vpsNodeId: target.vpsNodeId,
+    });
     await savePublication(site.id, {
       domain,
       ip: target.ip,
@@ -202,6 +292,7 @@ export async function runPublish(
     return { error: `Falha ao publicar: ${message}`, ok: false };
   }
 
+  log.info("Gravando a publicação no banco", { domain, siteId: site.id });
   await savePublication(site.id, {
     domain,
     ip: target.ip,
@@ -218,9 +309,28 @@ export async function runPublish(
     (previous.domain !== domain || previous.vpsNodeId !== target.vpsNodeId)
   ) {
     // A linha do banco é a mesma (um registro por site) e já foi atualizada: só limpa o servidor e o DNS antigos.
-    await takeDown(user.id, previous, input.password, { keepRecord: true });
+    log.info("Endereço ou servidor mudou: limpando a publicação antiga", {
+      dominioAntigo: previous.domain,
+      dominioNovo: domain,
+      servidorAntigo: previous.vpsNodeId,
+      servidorNovo: target.vpsNodeId,
+    });
+    const cleanup = await takeDown(user.id, previous, input.password, {
+      keepRecord: true,
+    });
+    if (!cleanup.ok) {
+      log.error("Não foi possível limpar a publicação antiga", {
+        dominioAntigo: previous.domain,
+        erro: cleanup.error,
+      });
+    }
   }
 
+  log.info("Publicação concluída", {
+    domain,
+    ms: Date.now() - startedAt,
+    siteId: site.id,
+  });
   return { domain, ok: true };
 }
 

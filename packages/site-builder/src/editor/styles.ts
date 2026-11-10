@@ -48,6 +48,10 @@ export const editorCss = `
 .sbe-pill i{width:7px;height:7px;border-radius:50%;background:#8b5cf6;display:block}
 .sbe-pill.saving i{background:#d99a1e}
 .sbe-pill.error i{background:var(--danger)}
+.sbe-pill.live i{background:#22a06b}
+.sbe-pill.wait i{background:#d99a1e;animation:sbe-pulse 1.2s ease-in-out infinite}
+.sbe-pill.idle i{background:#9a968e;animation:sbe-pulse 1.2s ease-in-out infinite}
+@keyframes sbe-pulse{50%{opacity:.35}}
 .sbe-lime{display:flex;flex-shrink:0;align-items:center;gap:6px;background:var(--lime)!important;border:0!important;border-radius:999px!important;padding:7px 14px;font-size:13px;font-weight:500;color:var(--ink)}
 .sbe-bar2{min-height:40px;flex-shrink:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:4px 12px;border-bottom:1px solid var(--line2);white-space:nowrap}
 .sbe-bar2 .sbe-seg{padding:2px;border-radius:8px}

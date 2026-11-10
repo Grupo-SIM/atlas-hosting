@@ -1,5 +1,6 @@
 import type { SiteTemplate, TemplateMeta } from "../model/index.js";
 import { areaflix } from "./areaflix/index.js";
+import { atlasHosting } from "./atlas-hosting/index.js";
 import { blogViagens } from "./blog-viagens/index.js";
 import { centralMarketing } from "./central-marketing/index.js";
 import { controleMotorista } from "./controle-motorista/index.js";
@@ -12,7 +13,9 @@ import { marketplace } from "./marketplace/index.js";
 import { outroLadoInternet } from "./outro-lado-internet/index.js";
 import { pagatg } from "./pagatg/index.js";
 import { portalNoticias } from "./portal-noticias/index.js";
+import { resolvit } from "./resolvit/index.js";
 import { seguidoresEmAlta } from "./seguidores-em-alta/index.js";
+import { seopack } from "./seopack/index.js";
 import { simIntermediacoes } from "./sim-intermediacoes/index.js";
 import { spyhacker } from "./spyhacker/index.js";
 import { zyrion } from "./zyrion/index.js";
@@ -27,14 +30,17 @@ const templates: SiteTemplate[] = [
   marketingRaiz,
   margem,
   areaflix,
+  resolvit,
   controlePatrimonial,
   controleMotorista,
   simIntermediacoes,
   pagatg,
   outroLadoInternet,
   habilidadesComunicacao,
+  seopack,
   zyrion,
   holofote,
+  atlasHosting,
 ];
 
 /**

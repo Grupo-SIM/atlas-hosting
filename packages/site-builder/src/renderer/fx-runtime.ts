@@ -155,11 +155,11 @@ show(0);
 off.push(function(){clearTimeout(t)});
 });
 /* carrossel de depoimentos: as setas ficam no NAV_RUNTIME; aqui passa sozinho, para no hover e liga as bolinhas */
-document.querySelectorAll(".sb-af-car,.sg-car").forEach(function(c){
+document.querySelectorAll(".sb-af-car,.sb-rv-car,.sg-car").forEach(function(c){
 if(c.getAttribute("data-car-ready"))return;
 c.setAttribute("data-car-ready","1");
 off.push(function(){c.removeAttribute("data-car-ready")});
-var tr=c.querySelector(".sb-cslider-track"),ds=Array.prototype.slice.call(c.querySelectorAll(".sb-af-dots button,.sg-dots button")),hov=false;
+var tr=c.querySelector(".sb-cslider-track"),ds=Array.prototype.slice.call(c.querySelectorAll(".sb-af-dots button,.sb-rv-dots button,.sg-dots button")),hov=false;
 if(!tr||!tr.children.length)return;
 function step(){return tr.children[0].getBoundingClientRect().width+(parseFloat(getComputedStyle(tr).columnGap)||10)}
 function max(){return tr.scrollWidth-tr.clientWidth}
@@ -239,6 +239,9 @@ track.addEventListener("click",function(e){if(moved){e.preventDefault();e.stopPr
 play();
 off.push(function(){stop();ac.abort();clones.forEach(function(c){c.remove()});track.style.transition="";track.style.transform="";track.style.cursor="";cur=0;mark()});
 });
+/* Atlas: o cabeçalho vira pílula ao rolar a página */
+var atHead=document.querySelector(".at-head");
+if(atHead){var atOn=function(){atHead.classList.toggle("is-scrolled",window.scrollY>24)};window.addEventListener("scroll",atOn,{passive:true});atOn();off.push(function(){window.removeEventListener("scroll",atOn);atHead.classList.remove("is-scrolled")})}
 /* SIM: carrossel em laço ([data-si-car]) e Esc fecha o menu lateral (#sb-burger) */
 document.querySelectorAll("[data-si-car]").forEach(function(box){
 if(box.getAttribute("data-si-ready"))return;

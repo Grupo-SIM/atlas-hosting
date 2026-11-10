@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { deleteSite } from "../actions";
+import { useSiteLive } from "./useSiteLive";
 
 export type SiteStatus = "draft" | "failed" | "published" | "suspended";
 
@@ -48,6 +49,28 @@ const STATUS: Record<SiteStatus, { dot: string; label: string; pill: string }> =
     },
   };
 
+/** Publicado, mas o endereço ainda não abre. */
+const WAITING: Record<
+  "checking" | "no_dns" | "no_site",
+  { dot: string; label: string; pill: string }
+> = {
+  checking: {
+    dot: "bg-[#9a968e] animate-pulse",
+    label: "Verificando…",
+    pill: "bg-[#efece6] text-[#6e6b65]",
+  },
+  no_dns: {
+    dot: "bg-[#d97706] animate-pulse",
+    label: "Aguardando DNS",
+    pill: "bg-[#fdf1e0] text-[#92550c]",
+  },
+  no_site: {
+    dot: "bg-[#d97706] animate-pulse",
+    label: "Ativando HTTPS",
+    pill: "bg-[#fdf1e0] text-[#92550c]",
+  },
+};
+
 interface Props {
   background: string;
   domain: string | null;
@@ -67,7 +90,12 @@ export default function SiteCard({
   thumb,
 }: Props) {
   const [pending, startTransition] = useTransition();
-  const state = STATUS[status];
+  const live = useSiteLive(id, status === "published" && !!domain);
+  // "Publicado" só vira "No ar" quando o endereço realmente abre.
+  const state =
+    status === "published" && live && live !== "live"
+      ? WAITING[live]
+      : STATUS[status];
 
   const [confirming, setConfirming] = useState(false);
 

@@ -5,6 +5,7 @@ import { cloudflareApi } from "@/lib/server/apis/cloudflare";
 import { getManagedCloudflareZone } from "@/lib/server/domains/cloudflare-dns";
 import { getAtlasHostingConfig } from "./config";
 import { removeSite } from "./deploySite";
+import { describeError, explainDeployError, publishLogger } from "./publishLog";
 import { canDetachWithoutSsh } from "./takedown-policy";
 import { resolveTarget, sanitize } from "./target";
 
@@ -21,6 +22,17 @@ export async function takeDown(
   password?: string,
   options: { detachOnSshFailure?: boolean; keepRecord?: boolean } = {}
 ): Promise<{ detached?: boolean; ok: true } | { error: string; ok: false }> {
+  const log = publishLogger(publication.target);
+  const ctx = {
+    detachOnSshFailure: Boolean(options.detachOnSshFailure),
+    domain: publication.domain,
+    keepRecord: Boolean(options.keepRecord),
+    passwordProvided: Boolean(password),
+    serverIp: publication.serverIp,
+    siteId: publication.siteId,
+    vpsNodeId: publication.vpsNodeId,
+  };
+  log.info("Tirando do ar", ctx);
   try {
     const target = await resolveTarget(
       userId,
@@ -32,20 +44,43 @@ export async function takeDown(
       // Tirar do ar vale mesmo quando a assinatura da VPS já acabou.
       { allowIneligible: true }
     );
-    if ("error" in target) return { error: target.error, ok: false };
+    if ("error" in target) {
+      log.warn("Não foi possível resolver o servidor para tirar do ar", {
+        ...ctx,
+        motivo: target.error,
+      });
+      return { error: target.error, ok: false };
+    }
 
     await removeSite({ domain: publication.domain, target: target.deploy });
+    log.info("Site removido do servidor", { domain: publication.domain });
     await removeDns(publication);
+    log.info("Registros DNS do Atlas removidos", {
+      domain: publication.domain,
+    });
   } catch (error) {
+    log.error("Falha ao tirar do ar", {
+      ...ctx,
+      dica: explainDeployError(error),
+      erro: describeError(error, [password]),
+    });
     if (!(options.detachOnSshFailure && canDetachWithoutSsh(error))) {
       return {
         error: `Não foi possível tirar do ar: ${sanitize(error, password)}`,
         ok: false,
       };
     }
+    log.warn(
+      "SSH recusado: desvinculando o domínio sem limpar a VPS (os arquivos continuam lá)",
+      ctx
+    );
     try {
       await removeDns(publication);
     } catch (dnsError) {
+      log.error("Falha ao remover o DNS ao desvincular", {
+        ...ctx,
+        erro: describeError(dnsError, [password]),
+      });
       return {
         error: `Não foi possível tirar do ar: ${sanitize(dnsError, password)}`,
         ok: false,
@@ -55,6 +90,7 @@ export async function takeDown(
     await db
       .delete(pgBuilderPublication)
       .where(eq(pgBuilderPublication.id, publication.id));
+    log.info("Publicação desvinculada (sem limpar a VPS)", ctx);
     return { detached: true, ok: true };
   }
 
@@ -62,6 +98,7 @@ export async function takeDown(
   await db
     .delete(pgBuilderPublication)
     .where(eq(pgBuilderPublication.id, publication.id));
+  log.info("Publicação removida do banco", ctx);
   return { ok: true };
 }
 

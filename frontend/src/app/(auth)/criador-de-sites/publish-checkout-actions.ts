@@ -28,6 +28,7 @@ import {
   listPublishTargets,
   type PublishTargets,
 } from "@/lib/site-builder/eligibility";
+import { describeError, publishLogger } from "@/lib/site-builder/publishLog";
 import { LABEL_RE, ownedSite, runPublish } from "@/lib/site-builder/runPublish";
 import { publishDomainCandidates } from "./publish-domain-candidates";
 
@@ -119,14 +120,35 @@ export async function startPublishCheckout(
     published?: boolean;
   }>
 > {
+  const log = publishLogger(input.target);
   const user = await getBuilderUser();
-  if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
+  if (!user) {
+    log.warn("Pedido recusado: sem acesso ao Criador de Sites", {
+      siteId: input.siteId,
+    });
+    return { error: FORBIDDEN_MESSAGE, ok: false };
+  }
   if (!user.organization) {
+    log.warn("Pedido recusado: conta sem organização", { userId: user.id });
     return { error: "Sua conta não tem organização.", ok: false };
   }
 
   const site = await ownedSite(input.siteId, user.id);
-  if (!site) return { error: "Site não encontrado.", ok: false };
+  if (!site) {
+    log.warn("Pedido recusado: site não encontrado", {
+      siteId: input.siteId,
+      userId: user.id,
+    });
+    return { error: "Site não encontrado.", ok: false };
+  }
+  log.info("Pedido de publicação iniciado", {
+    domain: input.domain ?? input.label,
+    kind: input.kind,
+    passwordProvided: Boolean(input.password),
+    siteId: site.id,
+    userId: user.id,
+    vpsNodeId: input.vpsNodeId,
+  });
 
   const config = getAtlasHostingConfig();
   const targets = await listPublishTargets(user.id);
@@ -138,12 +160,14 @@ export async function startPublishCheckout(
     if (input.kind === "subdomain") {
       const label = (input.label ?? "").trim().toLowerCase();
       if (!(config.subdomainEnabled && config.baseDomain)) {
+        log.warn("Pedido recusado: subdomínios grátis não configurados");
         return {
           error: "Subdomínios grátis ainda não estão disponíveis.",
           ok: false,
         };
       }
       if (!LABEL_RE.test(label)) {
+        log.warn("Pedido recusado: nome do subdomínio inválido", { label });
         return {
           error:
             "Use só letras minúsculas, números e hífen (até 42 caracteres).",
@@ -154,7 +178,11 @@ export async function startPublishCheckout(
     } else {
       domain = assertValidDomain(normalizeDomainName(input.domain ?? ""));
     }
-  } catch {
+  } catch (error) {
+    log.warn("Pedido recusado: endereço inválido", {
+      domain: input.domain ?? input.label,
+      erro: describeError(error),
+    });
     return { error: "Endereço inválido.", ok: false };
   }
 
@@ -168,6 +196,10 @@ export async function startPublishCheckout(
       ),
     });
     if (!owned) {
+      log.warn("Pedido recusado: domínio não está na conta com DNS no Atlas", {
+        domain,
+        organizationId: user.organization.id,
+      });
       return {
         error:
           "Esse domínio não está na sua conta com DNS gerenciado pelo Atlas.",
@@ -182,6 +214,9 @@ export async function startPublishCheckout(
       years: input.years,
     });
     if (!quote?.available) {
+      log.warn("Pedido recusado: domínio indisponível para registro", {
+        domain,
+      });
       return {
         error: "Esse domínio não está mais disponível para registro.",
         ok: false,
@@ -195,6 +230,10 @@ export async function startPublishCheckout(
     where: eq(pgBuilderPublication.domain, domain),
   });
   if (taken && taken.siteId !== site.id) {
+    log.warn("Pedido recusado: endereço já usado por outro site", {
+      domain,
+      siteDonoDoDominio: taken.siteId,
+    });
     return { error: "Esse endereço já está em uso por outro site.", ok: false };
   }
 
@@ -203,6 +242,10 @@ export async function startPublishCheckout(
   const complimentaryAtlasHosting = hasComplimentaryAtlasHosting();
   if (input.target === "atlas_vm") {
     if (!targets.atlasVm.enabled || !targets.atlasVm.monthlyBrl) {
+      log.warn("Pedido recusado: VM do Atlas indisponível", {
+        enabled: targets.atlasVm.enabled,
+        monthlyBrl: targets.atlasVm.monthlyBrl,
+      });
       return {
         error: "A hospedagem na VM do Atlas não está disponível agora.",
         ok: false,
@@ -218,11 +261,30 @@ export async function startPublishCheckout(
         : targets.atlasVm.monthlyBrl;
   } else {
     const eligible = await assertEligibleVpsNode(user.id, input.vpsNodeId);
-    if ("error" in eligible) return { error: eligible.error, ok: false };
+    if ("error" in eligible) {
+      log.warn("Pedido recusado: VPS não elegível", {
+        motivo: eligible.error,
+        vpsNodeId: input.vpsNodeId,
+      });
+      return { error: eligible.error, ok: false };
+    }
   }
 
   const publishKind = input.kind === "subdomain" ? "subdomain" : "domain";
   const total = (domainQuote?.priceBrl ?? 0) + (hostingAmountBrl ?? 0);
+  log.info("Pedido validado", {
+    domain,
+    hostingAmountBrl,
+    publicaAgora: total <= 0,
+    totalBrl: total,
+  });
+  if (input.target === "user_vps" && total > 0 && input.password) {
+    // A senha SSH nunca é gravada; a entrega depois do pagamento roda sem ela.
+    log.warn(
+      "Senha SSH informada, mas há cobrança: a entrega pós-pagamento NÃO terá a senha e tentará só a chave do Atlas na VPS",
+      { domain, vpsNodeId: input.vpsNodeId }
+    );
+  }
 
   // 4) Nada a cobrar: publica agora, como sempre foi.
   if (total <= 0) {
@@ -315,6 +377,12 @@ export async function startPublishCheckout(
       return invoice.id;
     });
 
+    log.info("Fatura de publicação criada, aguardando pagamento", {
+      domain,
+      invoiceId,
+      totalBrl: total,
+      vpsNodeId: siteHosting.vpsNodeId,
+    });
     return {
       checkoutUrl: `/checkout/${invoiceId}`,
       domain,
@@ -322,7 +390,10 @@ export async function startPublishCheckout(
       ok: true,
     };
   } catch (error) {
-    console.error("[PUBLICAR] Falha ao criar o pedido:", error);
+    log.error("Falha ao criar o pedido", {
+      domain,
+      erro: describeError(error),
+    });
     return {
       error: "Não foi possível criar o pedido. Tente de novo.",
       ok: false,

@@ -66,9 +66,25 @@ const FONT_WEIGHTS: Record<string, string> = {
 export const fontStack = (name: string) => `'${name}', sans-serif`;
 
 /** Nome da fonte do tema, se for uma das conhecidas. */
+/**
+ * O valor da fonte do tema cita a família com ou sem aspas (`'Raleway', sans-serif` ou só `Raleway`).
+ * Sites criados com a forma sem aspas também precisam baixar a fonte do Google Fonts.
+ */
+export function usesFont(value: string | undefined, name: string): boolean {
+  const v = value ?? "";
+  const i = v.indexOf(name);
+  if (i < 0) return false;
+  const before = v[i - 1];
+  const after = v[i + name.length];
+  // antes: início, espaço, aspas ou vírgula; depois: fim, aspas ou vírgula (um espaço seguiria outra palavra, ex. "Roboto Slab")
+  const edge = (c: string | undefined, re: RegExp) =>
+    c === undefined || re.test(c);
+  return edge(before, /[\s'",]/) && edge(after, /['",]/);
+}
+
 export function themeFont(theme: Record<string, string>): string | undefined {
   const raw = theme.fontBody ?? theme.fontHeading ?? "";
-  return SITE_FONTS.find(f => raw.includes(`'${f}'`));
+  return SITE_FONTS.find(f => usesFont(raw, f));
 }
 
 /** Fonte enviada pelo usuário (arquivo no storage); vira `@font-face` com o nome dado. */
@@ -115,7 +131,7 @@ export function fontStylesheet(site: {
   const theme = site.theme;
   const names: string[] = [];
   for (const key of ["fontBody", "fontHeading", "fontAccent"]) {
-    const found = SITE_FONTS.find(f => (theme[key] ?? "").includes(`'${f}'`));
+    const found = SITE_FONTS.find(f => usesFont(theme[key], f));
     if (found && !names.includes(found)) names.push(found);
   }
   const json = JSON.stringify(site);
