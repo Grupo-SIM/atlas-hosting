@@ -3,6 +3,7 @@ import { z } from "zod";
 import { cssUrl } from "../renderer/central.js";
 import { AdBox, adBlocks, adItemFields, adItemsSchema } from "./ads.js";
 import { areaflixBlocks } from "./areaflix.js";
+import { atlasBlocks } from "./atlas.js";
 import { centralBlocks, Eyebrow } from "./central.js";
 import { defineBlock } from "./define.js";
 import {
@@ -2435,6 +2436,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...raizBlocks,
   ...simBlocks,
   ...simPageBlocks,
+  ...atlasBlocks,
   ...adBlocks,
   ...scrollTopBlocks,
   newsSection,

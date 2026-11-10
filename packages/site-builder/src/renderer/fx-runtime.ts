@@ -4,7 +4,7 @@
  * liga os efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo.
  * Ao mudar o script, suba `FX_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const FX_VERSION = 10;
+export const FX_VERSION = 11;
 
 export const FX_RUNTIME = `(function(){
 if(window.sbFx&&window.__sbFxV===${FX_VERSION})return;
@@ -239,6 +239,9 @@ track.addEventListener("click",function(e){if(moved){e.preventDefault();e.stopPr
 play();
 off.push(function(){stop();ac.abort();clones.forEach(function(c){c.remove()});track.style.transition="";track.style.transform="";track.style.cursor="";cur=0;mark()});
 });
+/* Atlas: o cabeçalho vira pílula ao rolar a página */
+var atHead=document.querySelector(".at-head");
+if(atHead){var atOn=function(){atHead.classList.toggle("is-scrolled",window.scrollY>24)};window.addEventListener("scroll",atOn,{passive:true});atOn();off.push(function(){window.removeEventListener("scroll",atOn);atHead.classList.remove("is-scrolled")})}
 /* SIM: carrossel em laço ([data-si-car]) e Esc fecha o menu lateral (#sb-burger) */
 document.querySelectorAll("[data-si-car]").forEach(function(box){
 if(box.getAttribute("data-si-ready"))return;

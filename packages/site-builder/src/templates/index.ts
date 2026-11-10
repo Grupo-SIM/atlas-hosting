@@ -1,5 +1,6 @@
 import type { SiteTemplate, TemplateMeta } from "../model/index.js";
 import { areaflix } from "./areaflix/index.js";
+import { atlasHosting } from "./atlas-hosting/index.js";
 import { blogViagens } from "./blog-viagens/index.js";
 import { centralMarketing } from "./central-marketing/index.js";
 import { controleMotorista } from "./controle-motorista/index.js";
@@ -33,6 +34,7 @@ const templates: SiteTemplate[] = [
   seopack,
   zyrion,
   holofote,
+  atlasHosting,
 ];
 
 /**

@@ -10,6 +10,7 @@ import {
   translateCss,
 } from "../model/style.js";
 import { areaflixCss, areaflixVars, isAreaflix } from "./areaflix.js";
+import { atlasCss, atlasVars, isAtlas } from "./atlas.js";
 import { centralCss, centralVars, isCentral } from "./central.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { customFonts, fontFaceCss, fontStylesheet } from "./fonts.js";
@@ -32,7 +33,7 @@ import { isRaiz, raizCss, raizVars } from "./raiz.js";
 import { isResolvit, resolvitCss, resolvitVars } from "./resolvit.js";
 import { type Route, resolveRoute } from "./routes.js";
 import { isSeguidores, seguidoresCss, seguidoresVars } from "./seguidores.js";
-import { isSeopack, seopackVars } from "./seopack.js";
+import { isSeopack, seopackCss, seopackVars } from "./seopack.js";
 import { isSim, simCss, simVars } from "./sim.js";
 import { isSpy, spyCss } from "./spyhacker.js";
 import { siteCss, themeVars } from "./styles.js";
@@ -101,6 +102,7 @@ export function SiteRenderer({
   const holofote = isHolofote(site.theme);
   const sim = isSim(site.theme);
   const seopack = isSeopack(site.theme);
+  const atlas = isAtlas(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -139,6 +141,7 @@ export function SiteRenderer({
         holofote ? "sb-hf" : "",
         sim ? "sb-si" : "",
         seopack ? "sb-sp" : "",
+        atlas ? "sb-at" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -160,42 +163,47 @@ export function SiteRenderer({
           ...(holofote ? holofoteVars(site.theme) : {}),
           ...(sim ? simVars(site.theme) : {}),
           ...(seopack ? seopackVars(site.theme) : {}),
+          ...(atlas ? atlasVars(site.theme) : {}),
         } as CSSProperties
       }
     >
       <style>
         {fontFaceCss(customFonts(site.theme)) +
-          (resolvit
-            ? siteCss + resolvitCss
-            : sim
-              ? siteCss + simCss
-              : holofote
-                ? siteCss + holofoteCss
-                : raiz
-                  ? siteCss + raizCss
-                  : zyrion
-                    ? siteCss + zyrionCss
-                    : journal
-                      ? siteCss + journalCss
-                      : portal
-                        ? siteCss + portalCss
-                        : spy
-                          ? siteCss + spyCss
-                          : central
-                            ? siteCss + centralCss
-                            : market
-                              ? siteCss + marketplaceCss
-                              : margem
-                                ? siteCss + margemCss
-                                : seguidores
-                                  ? siteCss + seguidoresCss
-                                  : areaflix
-                                    ? siteCss + areaflixCss
-                                    : patrimonial
-                                      ? siteCss + patrimonialCss
-                                      : motorista
-                                        ? siteCss + motoristaCss
-                                        : siteCss)}
+          (atlas
+            ? siteCss + atlasCss
+            : resolvit
+              ? siteCss + resolvitCss
+              : seopack
+                ? siteCss + seopackCss
+                : sim
+                  ? siteCss + simCss
+                  : holofote
+                    ? siteCss + holofoteCss
+                    : raiz
+                      ? siteCss + raizCss
+                      : zyrion
+                        ? siteCss + zyrionCss
+                        : journal
+                          ? siteCss + journalCss
+                          : portal
+                            ? siteCss + portalCss
+                            : spy
+                              ? siteCss + spyCss
+                              : central
+                                ? siteCss + centralCss
+                                : market
+                                  ? siteCss + marketplaceCss
+                                  : margem
+                                    ? siteCss + margemCss
+                                    : seguidores
+                                      ? siteCss + seguidoresCss
+                                      : areaflix
+                                        ? siteCss + areaflixCss
+                                        : patrimonial
+                                          ? siteCss + patrimonialCss
+                                          : motorista
+                                            ? siteCss + motoristaCss
+                                            : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}
