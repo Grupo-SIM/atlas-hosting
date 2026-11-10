@@ -27,6 +27,7 @@ import {
 } from "./helpers.js";
 import { holofoteBlocks } from "./holofote.js";
 import { holofotePageBlocks } from "./holofote-pages.js";
+import { instafanBlocks } from "./instafan.js";
 import { margemBlocks } from "./margem.js";
 import { marketplaceBlocks } from "./marketplace.js";
 import { motoristaBlocks } from "./motorista.js";
@@ -2446,6 +2447,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...ebookBlocks,
   ...habilidadesBlocks,
   ...presetsBlocks,
+  ...instafanBlocks,
   ...atlasBlocks,
   ...adBlocks,
   ...scrollTopBlocks,

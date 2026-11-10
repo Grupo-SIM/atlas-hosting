@@ -1,5 +1,6 @@
 import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
 import { HABILIDADES_EXTRA_FONTS, isHabilidades } from "./habilidades.js";
+import { INSTAFAN_EXTRA_FONTS, isInstafan } from "./instafan.js";
 import { isMotorista, MOTORISTA_EXTRA_FONTS } from "./motorista.js";
 import { isOutroLado, OUTROLADO_EXTRA_FONTS } from "./outrolado.js";
 import { isPagaTg, PAGATG_EXTRA_FONTS } from "./pagatg.js";
@@ -59,7 +60,7 @@ const FONT_WEIGHTS: Record<string, string> = {
   "Cherry Cream Soda": "400",
   Content: "400;700",
   Electrolize: "400",
-  Montserrat: "400;500;600;700;800;900",
+  Montserrat: "300;400;500;600;700;800;900",
   "Plus Jakarta Sans": "300;400;500;600;700",
   Rajdhani: "300;400;500;600;700",
   Raleway: "200;300;400;500;600;700;800;900",
@@ -165,6 +166,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isHabilidades(theme))
     for (const extra of HABILIDADES_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isInstafan(theme))
+    for (const extra of INSTAFAN_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   if (isPresets(theme))
     for (const extra of PRESETS_EXTRA_FONTS)

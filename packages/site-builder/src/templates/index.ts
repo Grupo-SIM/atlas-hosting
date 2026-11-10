@@ -7,6 +7,7 @@ import { controleMotorista } from "./controle-motorista/index.js";
 import { controlePatrimonial } from "./controle-patrimonial/index.js";
 import { habilidadesComunicacao } from "./habilidades-comunicacao/index.js";
 import { holofote } from "./holofote/index.js";
+import { instafanFortune } from "./instafan-fortune/index.js";
 import { margem } from "./margem/index.js";
 import { marketingRaiz } from "./marketing-raiz/index.js";
 import { marketplace } from "./marketplace/index.js";
@@ -39,6 +40,7 @@ const templates: SiteTemplate[] = [
   outroLadoInternet,
   habilidadesComunicacao,
   presets757,
+  instafanFortune,
   seopack,
   zyrion,
   holofote,
