@@ -29,8 +29,10 @@ import {
 } from "./patrimonial.js";
 import { isPortal, portalCss, portalVars } from "./portal.js";
 import { isRaiz, raizCss, raizVars } from "./raiz.js";
+import { isResolvit, resolvitCss, resolvitVars } from "./resolvit.js";
 import { type Route, resolveRoute } from "./routes.js";
 import { isSeguidores, seguidoresCss, seguidoresVars } from "./seguidores.js";
+import { isSeopack, seopackVars } from "./seopack.js";
 import { isSim, simCss, simVars } from "./sim.js";
 import { isSpy, spyCss } from "./spyhacker.js";
 import { siteCss, themeVars } from "./styles.js";
@@ -92,11 +94,13 @@ export function SiteRenderer({
   const patrimonial = isPatrimonial(site.theme);
   const motorista = isMotorista(site.theme);
   const areaflix = isAreaflix(site.theme);
+  const resolvit = isResolvit(site.theme);
   const zyrion = isZyrion(site.theme);
   const seguidores = isSeguidores(site.theme);
   const raiz = isRaiz(site.theme);
   const holofote = isHolofote(site.theme);
   const sim = isSim(site.theme);
+  const seopack = isSeopack(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -128,11 +132,13 @@ export function SiteRenderer({
         patrimonial ? "sb-cp" : "",
         motorista ? "sb-cm" : "",
         areaflix ? "sb-af" : "",
+        resolvit ? "sb-rv" : "",
         zyrion ? "sb-zy" : "",
         seguidores ? "sb-sg" : "",
         raiz ? "sb-mr" : "",
         holofote ? "sb-hf" : "",
         sim ? "sb-si" : "",
+        seopack ? "sb-sp" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -147,45 +153,49 @@ export function SiteRenderer({
           ...(patrimonial ? patrimonialVars(site.theme) : {}),
           ...(motorista ? motoristaVars(site.theme) : {}),
           ...(areaflix ? areaflixVars(site.theme) : {}),
+          ...(resolvit ? resolvitVars(site.theme) : {}),
           ...(zyrion ? zyrionVars(site.theme) : {}),
           ...(seguidores ? seguidoresVars(site.theme) : {}),
           ...(raiz ? raizVars(site.theme) : {}),
           ...(holofote ? holofoteVars(site.theme) : {}),
           ...(sim ? simVars(site.theme) : {}),
+          ...(seopack ? seopackVars(site.theme) : {}),
         } as CSSProperties
       }
     >
       <style>
         {fontFaceCss(customFonts(site.theme)) +
-          (sim
-            ? siteCss + simCss
-            : holofote
-              ? siteCss + holofoteCss
-              : raiz
-                ? siteCss + raizCss
-                : zyrion
-                  ? siteCss + zyrionCss
-                  : journal
-                    ? siteCss + journalCss
-                    : portal
-                      ? siteCss + portalCss
-                      : spy
-                        ? siteCss + spyCss
-                        : central
-                          ? siteCss + centralCss
-                          : market
-                            ? siteCss + marketplaceCss
-                            : margem
-                              ? siteCss + margemCss
-                              : seguidores
-                                ? siteCss + seguidoresCss
-                                : areaflix
-                                  ? siteCss + areaflixCss
-                                  : patrimonial
-                                    ? siteCss + patrimonialCss
-                                    : motorista
-                                      ? siteCss + motoristaCss
-                                      : siteCss)}
+          (resolvit
+            ? siteCss + resolvitCss
+            : sim
+              ? siteCss + simCss
+              : holofote
+                ? siteCss + holofoteCss
+                : raiz
+                  ? siteCss + raizCss
+                  : zyrion
+                    ? siteCss + zyrionCss
+                    : journal
+                      ? siteCss + journalCss
+                      : portal
+                        ? siteCss + portalCss
+                        : spy
+                          ? siteCss + spyCss
+                          : central
+                            ? siteCss + centralCss
+                            : market
+                              ? siteCss + marketplaceCss
+                              : margem
+                                ? siteCss + margemCss
+                                : seguidores
+                                  ? siteCss + seguidoresCss
+                                  : areaflix
+                                    ? siteCss + areaflixCss
+                                    : patrimonial
+                                      ? siteCss + patrimonialCss
+                                      : motorista
+                                        ? siteCss + motoristaCss
+                                        : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}

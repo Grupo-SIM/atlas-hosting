@@ -9,7 +9,9 @@ import { margem } from "./margem/index.js";
 import { marketingRaiz } from "./marketing-raiz/index.js";
 import { marketplace } from "./marketplace/index.js";
 import { portalNoticias } from "./portal-noticias/index.js";
+import { resolvit } from "./resolvit/index.js";
 import { seguidoresEmAlta } from "./seguidores-em-alta/index.js";
+import { seopack } from "./seopack/index.js";
 import { simIntermediacoes } from "./sim-intermediacoes/index.js";
 import { spyhacker } from "./spyhacker/index.js";
 import { zyrion } from "./zyrion/index.js";
@@ -24,9 +26,11 @@ const templates: SiteTemplate[] = [
   marketingRaiz,
   margem,
   areaflix,
+  resolvit,
   controlePatrimonial,
   controleMotorista,
   simIntermediacoes,
+  seopack,
   zyrion,
   holofote,
 ];

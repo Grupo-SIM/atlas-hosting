@@ -30,8 +30,10 @@ import { motoristaBlocks } from "./motorista.js";
 import { patrimonialBlocks } from "./patrimonial.js";
 import { portalHubBlocks } from "./portal-hub.js";
 import { raizBlocks } from "./raiz.js";
+import { resolvitBlocks } from "./resolvit.js";
 import { scrollTopBlocks } from "./scroll-top.js";
 import { seguidoresBlocks } from "./seguidores.js";
+import { seopackBlocks } from "./seopack.js";
 import { simBlocks } from "./sim.js";
 import { simPageBlocks } from "./sim-pages.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
@@ -2422,6 +2424,8 @@ export const blockDefinitions: BlockDefinition[] = [
   ...patrimonialBlocks,
   ...motoristaBlocks,
   ...areaflixBlocks,
+  ...seopackBlocks,
+  ...resolvitBlocks,
   ...zyrionBlocks,
   ...zyrionHomeBlocks,
   ...zyrionPageBlocks,

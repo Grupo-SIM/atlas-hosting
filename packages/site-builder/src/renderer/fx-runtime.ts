@@ -155,11 +155,11 @@ show(0);
 off.push(function(){clearTimeout(t)});
 });
 /* carrossel de depoimentos: as setas ficam no NAV_RUNTIME; aqui passa sozinho, para no hover e liga as bolinhas */
-document.querySelectorAll(".sb-af-car,.sg-car").forEach(function(c){
+document.querySelectorAll(".sb-af-car,.sb-rv-car,.sg-car").forEach(function(c){
 if(c.getAttribute("data-car-ready"))return;
 c.setAttribute("data-car-ready","1");
 off.push(function(){c.removeAttribute("data-car-ready")});
-var tr=c.querySelector(".sb-cslider-track"),ds=Array.prototype.slice.call(c.querySelectorAll(".sb-af-dots button,.sg-dots button")),hov=false;
+var tr=c.querySelector(".sb-cslider-track"),ds=Array.prototype.slice.call(c.querySelectorAll(".sb-af-dots button,.sb-rv-dots button,.sg-dots button")),hov=false;
 if(!tr||!tr.children.length)return;
 function step(){return tr.children[0].getBoundingClientRect().width+(parseFloat(getComputedStyle(tr).columnGap)||10)}
 function max(){return tr.scrollWidth-tr.clientWidth}
