@@ -22,6 +22,8 @@ import {
   visiblePosts,
   wpDate,
 } from "./helpers.js";
+import { holofoteBlocks } from "./holofote.js";
+import { holofotePageBlocks } from "./holofote-pages.js";
 import { margemBlocks } from "./margem.js";
 import { marketplaceBlocks } from "./marketplace.js";
 import { patrimonialBlocks } from "./patrimonial.js";
@@ -2418,6 +2420,8 @@ export const blockDefinitions: BlockDefinition[] = [
   ...zyrionBlocks,
   ...zyrionHomeBlocks,
   ...zyrionPageBlocks,
+  ...holofoteBlocks,
+  ...holofotePageBlocks,
   ...seguidoresBlocks,
   ...raizBlocks,
   ...adBlocks,

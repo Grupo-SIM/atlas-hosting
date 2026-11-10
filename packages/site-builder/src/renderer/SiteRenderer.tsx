@@ -13,6 +13,7 @@ import { areaflixCss, areaflixVars, isAreaflix } from "./areaflix.js";
 import { centralCss, centralVars, isCentral } from "./central.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { customFonts, fontFaceCss, fontStylesheet } from "./fonts.js";
+import { holofoteCss, holofoteVars, isHolofote } from "./holofote.js";
 import { isJournal, journalCss, journalVars } from "./journal.js";
 import { isMargem, margemCss, margemVars } from "./margem.js";
 import {
@@ -91,6 +92,7 @@ export function SiteRenderer({
   const zyrion = isZyrion(site.theme);
   const seguidores = isSeguidores(site.theme);
   const raiz = isRaiz(site.theme);
+  const holofote = isHolofote(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -124,6 +126,7 @@ export function SiteRenderer({
         zyrion ? "sb-zy" : "",
         seguidores ? "sb-sg" : "",
         raiz ? "sb-mr" : "",
+        holofote ? "sb-hf" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -140,34 +143,37 @@ export function SiteRenderer({
           ...(zyrion ? zyrionVars(site.theme) : {}),
           ...(seguidores ? seguidoresVars(site.theme) : {}),
           ...(raiz ? raizVars(site.theme) : {}),
+          ...(holofote ? holofoteVars(site.theme) : {}),
         } as CSSProperties
       }
     >
       <style>
         {fontFaceCss(customFonts(site.theme)) +
-          (raiz
-            ? siteCss + raizCss
-            : zyrion
-              ? siteCss + zyrionCss
-              : journal
-                ? siteCss + journalCss
-                : portal
-                  ? siteCss + portalCss
-                  : spy
-                    ? siteCss + spyCss
-                    : central
-                      ? siteCss + centralCss
-                      : market
-                        ? siteCss + marketplaceCss
-                        : margem
-                          ? siteCss + margemCss
-                          : seguidores
-                            ? siteCss + seguidoresCss
-                            : areaflix
-                              ? siteCss + areaflixCss
-                              : patrimonial
-                                ? siteCss + patrimonialCss
-                                : siteCss)}
+          (holofote
+            ? siteCss + holofoteCss
+            : raiz
+              ? siteCss + raizCss
+              : zyrion
+                ? siteCss + zyrionCss
+                : journal
+                  ? siteCss + journalCss
+                  : portal
+                    ? siteCss + portalCss
+                    : spy
+                      ? siteCss + spyCss
+                      : central
+                        ? siteCss + centralCss
+                        : market
+                          ? siteCss + marketplaceCss
+                          : margem
+                            ? siteCss + margemCss
+                            : seguidores
+                              ? siteCss + seguidoresCss
+                              : areaflix
+                                ? siteCss + areaflixCss
+                                : patrimonial
+                                  ? siteCss + patrimonialCss
+                                  : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}

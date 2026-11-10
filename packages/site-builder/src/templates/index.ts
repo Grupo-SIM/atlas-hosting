@@ -3,6 +3,7 @@ import { areaflix } from "./areaflix/index.js";
 import { blogViagens } from "./blog-viagens/index.js";
 import { centralMarketing } from "./central-marketing/index.js";
 import { controlePatrimonial } from "./controle-patrimonial/index.js";
+import { holofote } from "./holofote/index.js";
 import { margem } from "./margem/index.js";
 import { marketingRaiz } from "./marketing-raiz/index.js";
 import { marketplace } from "./marketplace/index.js";
@@ -23,6 +24,7 @@ const templates: SiteTemplate[] = [
   areaflix,
   controlePatrimonial,
   zyrion,
+  holofote,
 ];
 
 /**

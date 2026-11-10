@@ -4,7 +4,7 @@
  * liga os efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo.
  * Ao mudar o script, suba `FX_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const FX_VERSION = 7;
+export const FX_VERSION = 8;
 
 export const FX_RUNTIME = `(function(){
 if(window.sbFx&&window.__sbFxV===${FX_VERSION})return;
@@ -301,6 +301,19 @@ if(u)location.href=u;
 }
 document.addEventListener("change",selNav);
 off.push(function(){document.removeEventListener("change",selNav)});
+/* Holofote: data relativa dos cartões ("há 10 horas"); o HTML estático leva a data absoluta */
+document.querySelectorAll("[data-hf-ago]").forEach(function(el){
+var t=Date.parse(el.getAttribute("datetime")||"");
+if(isNaN(t))return;
+var s=(Date.now()-t)/1000,n,u;
+if(s<0)return;
+if(s<3600){n=Math.max(1,Math.floor(s/60));u=n===1?"minuto":"minutos"}
+else if(s<86400){n=Math.floor(s/3600);u=n===1?"hora":"horas"}
+else if(s<604800){n=Math.floor(s/86400);u=n===1?"dia":"dias"}
+else if(s<2592000){n=Math.floor(s/604800);u=n===1?"semana":"semanas"}
+else{n=Math.floor(s/2592000);u=n===1?"mês":"meses"}
+el.textContent="há "+n+" "+u;
+});
 /* Zyrion: data de hoje, slider do destaque, carrossel das seções, busca em tela cheia */
 document.querySelectorAll("[data-sb-today]").forEach(function(el){
 try{el.textContent=new Intl.DateTimeFormat("pt-BR",{day:"numeric",month:"long",year:"numeric"}).format(new Date())}catch(x){}
