@@ -297,7 +297,7 @@ const spAbout = defineBlock(
             <h2>{p.title}</h2>
             <div className="sp-about-text">{paragraphs(p.text)}</div>
             <Btn
-              className="sp-btn"
+              className="sp-btn sp-ben-btn"
               ctx={ctx}
               label={p.buttonLabel}
               url={p.buttonUrl}

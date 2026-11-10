@@ -61,6 +61,7 @@ const FONT_WEIGHTS: Record<string, string> = {
   Montserrat: "400;500;600;700;800;900",
   "Plus Jakarta Sans": "300;400;500;600;700",
   Rajdhani: "300;400;500;600;700",
+  Raleway: "200;300;400;500;600;700;800;900",
 };
 
 export const fontStack = (name: string) => `'${name}', sans-serif`;

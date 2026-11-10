@@ -308,7 +308,7 @@ const home: Page = {
         ],
         pill: "Depoimentos",
         seconds: 6,
-        text: "Empreendedores, freelancers e agências já estão acelerando seus resultados com a SEOPACK. Aqui você vê, com suas próprias palavras, o impacto que ter acesso às ferramentas certas pode gerar.\nNada melhor do que ouvir de quem já testou — e aprovou.",
+        text: "Empreendedores, freelancers e agências já estão acelerando seus resultados com a SEOPACK. Aqui você vê, com suas próprias palavras, o impacto que ter acesso às ferramentas certas pode gerar. **Nada melhor do que ouvir de quem já testou — e aprovou.**",
         title: "O que dizem nossos clientes",
       },
       { fx: fade() }

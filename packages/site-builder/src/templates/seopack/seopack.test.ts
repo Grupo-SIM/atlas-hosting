@@ -68,5 +68,15 @@ describe("template seopack", () => {
     const home = files.find(f => f.path === "index.html")?.content ?? "";
     expect(home).toContain("fonts.googleapis.com");
     expect(home).toContain("Raleway");
+    // o original usa Raleway ExtraLight (200) nos selos, no menu e nos títulos dos cartões
+    expect(home).toMatch(/family=Raleway:wght@200;/);
+  });
+
+  test("cabeçalho de custo x benefício, planos, depoimentos e FAQ em duas colunas", async () => {
+    const files = await exportSiteToStatic(site);
+    const home = files.find(f => f.path === "index.html")?.content ?? "";
+    expect(home).toContain("grid-template-columns:29.659% minmax(0,1fr)");
+    // o texto dos depoimentos é um parágrafo só, com o trecho final em negrito
+    expect(home).toContain("pode gerar. <strong>Nada melhor do que ouvir");
   });
 });
