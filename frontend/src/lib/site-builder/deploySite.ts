@@ -9,6 +9,13 @@ import {
   buildRemoveScript,
   buildSuspendScript,
 } from "./caddy";
+import {
+  describeError,
+  explainDeployError,
+  type PublishTargetTag,
+  publishLogger,
+  redact,
+} from "./publishLog";
 
 const execFileAsync = promisify(execFile);
 
@@ -100,15 +107,53 @@ async function runLocal(
   });
 }
 
+type Log = ReturnType<typeof publishLogger>;
+
+/** Roda uma etapa do deploy registrando início, fim, duração e, se falhar, o motivo. */
+async function stage<T>(
+  log: Log,
+  name: string,
+  target: DeployTarget,
+  data: Record<string, unknown>,
+  fn: () => Promise<T>
+): Promise<T> {
+  const startedAt = Date.now();
+  log.info(`Deploy, etapa "${name}": iniciando`, data);
+  try {
+    const result = await fn();
+    log.info(`Deploy, etapa "${name}": ok`, { ms: Date.now() - startedAt });
+    return result;
+  } catch (error) {
+    const stderr = (error as { stderr?: string })?.stderr;
+    log.error(`Deploy, etapa "${name}": FALHOU`, {
+      ...data,
+      dica: explainDeployError(error),
+      erro: describeError(error, [target.password]),
+      ms: Date.now() - startedAt,
+      stderr: stderr
+        ? redact(stderr, [target.password]).slice(-800)
+        : undefined,
+    });
+    throw error;
+  }
+}
+
 /** Executa um script bash no servidor lendo-o da entrada padrão. */
-async function runRemoteScript(target: DeployTarget, script: string) {
+async function runRemoteScript(
+  target: DeployTarget,
+  script: string,
+  log: Log = publishLogger("-")
+) {
   if (target.local) {
     await runLocal("bash", ["-s"], process.env, script);
     return;
   }
   const ssh = sshInvocation(target);
   const { args, bin } = ssh.run("ssh", [ssh.remote, "bash -s"]);
-  await runLocal(bin, args, ssh.env, script);
+  const { stderr, stdout } = await runLocal(bin, args, ssh.env, script);
+  // Saída do script (Caddy, container, validação): só o final, sem segredos.
+  const out = redact(`${stdout}${stderr}`.trim(), [target.password]);
+  if (out) log.info("Saída do script remoto", { saida: out.slice(-600) });
 }
 
 /**
@@ -121,46 +166,80 @@ export async function deploySite(args: {
   files: StaticSiteFile[];
   /** `true` para domínio próprio (atende também `www.`). */
   includeWww: boolean;
+  /** Só rotula os logs (`atlas_vm` ou `user_vps`). */
+  logTag?: PublishTargetTag;
   target: DeployTarget;
 }) {
+  const log = publishLogger(args.logTag ?? "-");
   const domain = assertValidDomain(args.domain);
-  const ssh = args.target.local ? null : sshInvocation(args.target);
+  const via = args.target.local
+    ? "bash local"
+    : `ssh ${args.target.user ?? "root"}@${args.target.ip}`;
+  const base = {
+    arquivos: args.files.length,
+    domain,
+    metodo: via,
+    usaSenha: Boolean(args.target.password),
+  };
+  const ssh = args.target.local
+    ? null
+    : await stage(log, "validar destino SSH", args.target, base, async () =>
+        sshInvocation(args.target)
+      );
   const releaseId = String(Date.now());
   const workDir = await mkdtemp(path.join(tmpdir(), "site-deploy-"));
 
   try {
     const siteDir = path.join(workDir, "site");
-    for (const file of args.files) {
-      const dest = path.join(siteDir, file.path);
-      // Defesa extra: caminhos vêm de slugs validados, mas nunca escapam da pasta do site.
-      if (!dest.startsWith(`${siteDir}${path.sep}`)) {
-        throw new Error(`Caminho inválido: ${file.path}`);
+    await stage(log, "gravar arquivos do site", args.target, base, async () => {
+      for (const file of args.files) {
+        const dest = path.join(siteDir, file.path);
+        // Defesa extra: caminhos vêm de slugs validados, mas nunca escapam da pasta do site.
+        if (!dest.startsWith(`${siteDir}${path.sep}`)) {
+          throw new Error(`Caminho inválido: ${file.path}`);
+        }
+        await mkdir(path.dirname(dest), { recursive: true });
+        await writeFile(dest, file.content, "utf8");
       }
-      await mkdir(path.dirname(dest), { recursive: true });
-      await writeFile(dest, file.content, "utf8");
-    }
+    });
 
     const archive = path.join(workDir, "site.tgz");
-    await execFileAsync("tar", ["-czf", archive, "-C", siteDir, "."]);
+    await stage(log, "empacotar (tar)", args.target, base, () =>
+      execFileAsync("tar", ["-czf", archive, "-C", siteDir, "."])
+    );
 
     const remoteArchive = `/tmp/atlas-site-${releaseId}.tgz`;
-    if (ssh) {
-      const scp = ssh.run("scp", [archive, `${ssh.remote}:${remoteArchive}`]);
-      await runLocal(scp.bin, scp.args, ssh.env);
-    } else {
-      await copyFile(archive, remoteArchive);
-    }
-
-    await runRemoteScript(
+    await stage(
+      log,
+      ssh ? "enviar pacote (scp)" : "copiar pacote (local)",
       args.target,
-      buildDeployScript({
-        archive: remoteArchive,
-        caddyRoot: args.target.caddyRoot,
-        domain,
-        includeWww: args.includeWww,
-        releaseId,
-        webRoot: args.target.webRoot,
-      })
+      { ...base, destino: remoteArchive },
+      async () => {
+        if (ssh) {
+          const scp = ssh.run("scp", [
+            archive,
+            `${ssh.remote}:${remoteArchive}`,
+          ]);
+          await runLocal(scp.bin, scp.args, ssh.env);
+        } else {
+          await copyFile(archive, remoteArchive);
+        }
+      }
+    );
+
+    await stage(log, "rodar script de deploy", args.target, base, () =>
+      runRemoteScript(
+        args.target,
+        buildDeployScript({
+          archive: remoteArchive,
+          caddyRoot: args.target.caddyRoot,
+          domain,
+          includeWww: args.includeWww,
+          releaseId,
+          webRoot: args.target.webRoot,
+        }),
+        log
+      )
     );
   } finally {
     await rm(workDir, { force: true, recursive: true }).catch(() => {});

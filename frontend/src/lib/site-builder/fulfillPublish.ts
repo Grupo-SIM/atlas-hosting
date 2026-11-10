@@ -14,6 +14,7 @@ import {
   applySiteHostingRenewal,
   type SiteHostingRenewalMetadata,
 } from "@/lib/server/site-hosting/renewal";
+import { publishLogger } from "./publishLog";
 import { runPublish } from "./runPublish";
 import { sanitize } from "./target";
 
@@ -77,6 +78,14 @@ export async function fulfillSitePublishInvoice(
   if (!job) return { ok: true, reason: "já entregue ou em andamento" };
 
   const payload = job.payload as BuilderPublishJobPayload;
+  publishLogger(payload.target).info("Entrega pós-pagamento iniciada", {
+    domain: payload.domain,
+    invoiceId: invoice.id,
+    // A senha SSH não é guardada: na VPS do usuário só a chave do Atlas é tentada.
+    passwordProvided: false,
+    siteId: job.siteId,
+    vpsNodeId: payload.vpsNodeId,
+  });
 
   try {
     // 1) Hospedagem paga na VM do Atlas: assinatura mensal deste site.

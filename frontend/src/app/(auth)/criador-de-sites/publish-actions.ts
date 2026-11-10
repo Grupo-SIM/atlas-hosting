@@ -10,6 +10,7 @@ import {
   hasComplimentaryAtlasHosting,
 } from "@/lib/site-builder/access";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
+import { publishLogger } from "@/lib/site-builder/publishLog";
 import {
   currentPublication,
   ownedSite,
@@ -32,7 +33,15 @@ export async function publishSite(
   input: PublishInput
 ): Promise<Result<{ domain: string }>> {
   const user = await getBuilderUser();
-  if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
+  if (!user) {
+    publishLogger(input.target).warn(
+      "publishSite recusado: sem acesso ao Criador de Sites",
+      {
+        siteId: input.siteId,
+      }
+    );
+    return { error: FORBIDDEN_MESSAGE, ok: false };
+  }
 
   const result = await runPublish(
     { id: user.id, organizationId: user.organization?.id },
@@ -85,8 +94,20 @@ export async function republishSite(input: {
     where: eq(pgBuilderPublication.siteId, site.id),
   });
   if (!publication) {
+    publishLogger("-").warn(
+      "Republicar recusado: o site ainda não tem publicação",
+      {
+        siteId: site.id,
+      }
+    );
     return { error: "Defina onde publicar este site primeiro.", ok: false };
   }
+  publishLogger(publication.target).info("Republicando no mesmo endereço", {
+    domain: publication.domain,
+    passwordProvided: Boolean(input.password),
+    siteId: site.id,
+    vpsNodeId: publication.vpsNodeId,
+  });
 
   const { baseDomain } = getAtlasHostingConfig();
   const label =

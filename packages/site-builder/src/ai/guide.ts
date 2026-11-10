@@ -25,6 +25,7 @@ Três áreas lado a lado:
 - **Item | Bloco | Livre**: modo de arrastar no canvas. Item reordena o elemento sob o mouse entre os irmãos; Bloco reordena o bloco inteiro; Livre desloca sem trocar de lugar (só em tela larga). Shift inverte Item/Bloco.
 - **Anúncios ligados/desligados**: liga ou desliga os espaços de anúncio do site (detalhes em "Anúncios").
 - **Indicador de salvamento**: o site salva sozinho (autosave ~1,5 s depois de editar).
+- **Indicador "No ar"** (ao lado do salvamento, depois de publicado): confere sozinho se o endereço já abre. Mostra "Verificando…", "Aguardando DNS" (domínio novo ainda propagando, de minutos a algumas horas) ou "Ativando HTTPS" (DNS pronto, certificado sendo emitido) até virar "No ar". O mesmo selo aparece no cartão do site em "Meus sites".
 - **Revisar e publicar** (foguete): abre a lista de alterações desde a última publicação e publica. Sem endereço ainda, pede nome e servidor (modal de publicação).
 - **X** (canto direito): sai do editor.
 
