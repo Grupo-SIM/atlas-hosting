@@ -262,17 +262,17 @@ ${S} .sp-ben-btn{align-self:flex-start}
 ${S} .sp-plans{padding:120px 0}
 ${S} .sp-price-grid{display:flex;gap:20px;margin-top:60px}
 ${S} .sp-text-pr{display:flex;flex-direction:column;gap:20px;padding-right:70px}
-${S} .sp-plan{flex:1;min-width:0;margin:30px 0;padding:30px;border:1px solid var(--sp-line);border-radius:30px;transition:box-shadow .3s}
-${S} .sp-plan.pop{--sp-ov:.4}
+${S} .sp-plan{flex:1 1 0;min-width:0;margin:30px 0;padding:24px 16px;border:1px solid var(--sp-line);border-radius:30px;transition:box-shadow .3s}
+${S} .sp-plan.pop{--sp-ov:.4;flex:1.25 1 0}
 ${S} .sp-plan:hover{box-shadow:0 -27px 59px -7px rgba(137,50,248,.33)}
 ${S} .sp-plan-label{margin-bottom:-5px;text-align:center;font-size:1.5em;font-weight:300}
 ${S} .sp-plan-in{--sp-ov:.34;display:flex;flex-direction:column;gap:16px;padding:30px 20px;border:solid var(--sp-edge);border-width:2px 0 0;border-radius:30px 30px 0 0;background-image:linear-gradient(180deg,#8932f81c 0%,var(--sb-bg) 100%)}
 ${S} .sp-plan-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
 ${S} .sp-plan-name{font-size:1.5em;font-weight:300}
 ${S} .sp-plan-desc{font-size:1em}
-${S} .sp-price-row{display:flex;align-items:flex-end;gap:0}
-${S} .sp-price-cur{margin:0 10px 10px 0;color:var(--sb-accent);font-family:var(--sb-font-heading);font-size:2.8em;font-weight:300;line-height:1.2}
-${S} .sp-price-val{color:#fff;font-family:var(--sb-font-heading);font-size:4.1em;font-weight:500;line-height:66px}
+${S} .sp-price-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:0}
+${S} .sp-price-cur{margin:0 10px 10px 0;color:var(--sb-accent);font-family:var(--sb-font-heading);font-size:clamp(1.5em,2vw,2.8em);font-weight:300;line-height:1.2}
+${S} .sp-price-val{color:#fff;font-family:var(--sb-font-heading);font-size:clamp(2.2em,3vw,4.1em);font-weight:500;line-height:66px}
 ${S} .sp-price-per{margin:0 0 6px 10px;font-size:1em}
 ${S} .sp-plan-list{display:flex;flex-direction:column;margin:20px 0;padding:0;list-style:none}
 ${S} .sp-plan-list li{display:flex;align-items:center;gap:8px;padding:15px 0;color:var(--sb-muted)}
@@ -312,6 +312,8 @@ ${S} .sp-foot{position:relative;padding:20px;border-top:1px solid var(--sp-edge)
 ${S} .sp-foot::before{content:"";position:absolute;inset:0;background:var(--sb-bg);opacity:.46}
 ${S} .sp-foot p{position:relative}
 
+/* recuo lateral: o contêiner de 1300px centraliza, mas abaixo disso o conteúdo encostava nas bordas */
+${S} .sp-head,${S} .sp-hero,${S} .sp-about,${S} .sp-tools,${S} .sp-trust,${S} .sp-ben,${S} .sp-plans,${S} .sp-testi,${S} .sp-faq{padding-left:30px;padding-right:30px}
 @media (max-width:1024px){${tablet(S)}}
 @media (max-width:767px){${mobile(S)}}
 @media (prefers-reduced-motion:reduce){${S} .sp-hero-title b{animation:none}}

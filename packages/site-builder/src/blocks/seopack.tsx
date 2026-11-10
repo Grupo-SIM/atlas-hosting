@@ -11,6 +11,10 @@ import type { BlockDefinition, RenderContext } from "./types.js";
  * dos filhos descrita no comentário de cada bloco.
  */
 const str = (d = "") => z.string().default(d);
+
+/** Junta nomes de classe com espaço (evita colar "sp-plan" + "pop" em "sp-planpop"). */
+const cls = (...names: (string | false | undefined)[]) =>
+  names.filter(Boolean).join(" ");
 const num = (min: number, max: number, d: number) =>
   z.coerce.number().min(min).max(max).default(d).catch(d);
 
@@ -26,7 +30,7 @@ function rich(text: string): ReactNode {
   return parts.map((part, i) => {
     const key = `${i}-${part.slice(0, 8)}`;
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-      return <strong key={key}>{part.slice(2, -2)}</strong>;
+      return <strong key={key}>{rich(part.slice(2, -2))}</strong>;
     }
     if (part.startsWith("__") && part.endsWith("__") && part.length > 4) {
       return <u key={key}>{part.slice(2, -2)}</u>;
@@ -51,9 +55,7 @@ const CHECK = (
 );
 
 const Ic = ({ big, dark }: { big?: boolean; dark?: boolean }) => (
-  <span className={`sp-ic${big ? "big" : ""}${dark ? "dark" : ""}`}>
-    {ARROW}
-  </span>
+  <span className={cls("sp-ic", big && "big", dark && "dark")}>{ARROW}</span>
 );
 
 function Btn({
@@ -309,7 +311,10 @@ const spAbout = defineBlock(
             <div className="sp-about-cards">
               {p.cards.map((c, i) => (
                 <div
-                  className={`sp-about-card sp-grid-bg${i % 2 === 1 ? "top" : ""}`}
+                  className={cls(
+                    "sp-about-card sp-grid-bg",
+                    i % 2 === 1 && "top"
+                  )}
                   key={`${c.title}-${i}`}
                 >
                   <Ic dark={i % 2 === 1} />
@@ -636,7 +641,7 @@ const spPlans = defineBlock(
               <div className="sp-price-grid">
                 {p.plans.map((plan, i) => (
                   <div
-                    className={`sp-plan${plan.featured === "yes" ? "pop" : ""}`}
+                    className={cls("sp-plan", plan.featured === "yes" && "pop")}
                     key={`${plan.label}-${i}`}
                   >
                     <h3 className="sp-plan-label">{plan.label}</h3>
@@ -644,7 +649,10 @@ const spPlans = defineBlock(
                       <div className="sp-plan-head">
                         <Ic />
                         <span
-                          className={`sp-tag${plan.featured === "yes" ? "alt" : ""}`}
+                          className={cls(
+                            "sp-tag",
+                            plan.featured === "yes" && "alt"
+                          )}
                         >
                           {plan.days}
                         </span>
@@ -740,7 +748,10 @@ const spTestimonials = defineBlock(
                     <div className="sp-testi-cols">
                       {cols.map((col, c) => (
                         <div
-                          className={`sp-testi-col sp-grid-bg${c === 1 ? "b" : ""}`}
+                          className={cls(
+                            "sp-testi-col sp-grid-bg",
+                            c === 1 && "b"
+                          )}
                           key={`col-${c}`}
                         >
                           <div

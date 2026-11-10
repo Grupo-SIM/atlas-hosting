@@ -51,4 +51,22 @@ describe("template seopack", () => {
     expect(home).toContain('id="planos"');
     expect(home).not.toContain("moonify");
   });
+
+  test("classes com modificador separadas por espaço e marcação aninhada", async () => {
+    const files = await exportSiteToStatic(site);
+    const home = files.find(f => f.path === "index.html")?.content ?? "";
+    // o plano destaque precisa da classe `pop` (antes saía `sp-planpop` e perdia o estilo)
+    expect(home).toContain('class="sp-plan pop"');
+    expect(home).not.toMatch(/sp-planpop|sp-tagalt|sp-icbig/);
+    // `__sublinhado__` dentro de `**negrito**` vira <u>, não texto cru
+    expect(home).not.toContain("__precisa__");
+    expect(home).toContain("<u>precisa</u>");
+  });
+
+  test("fontes do tema são carregadas do Google Fonts", async () => {
+    const files = await exportSiteToStatic(site);
+    const home = files.find(f => f.path === "index.html")?.content ?? "";
+    expect(home).toContain("fonts.googleapis.com");
+    expect(home).toContain("Raleway");
+  });
 });
