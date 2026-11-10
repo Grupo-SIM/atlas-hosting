@@ -9,6 +9,7 @@ import { isRaiz, RAIZ_EXTRA_FONTS } from "./raiz.js";
 import { isSeguidores, SEGUIDORES_EXTRA_FONTS } from "./seguidores.js";
 import { isSim, SIM_EXTRA_FONTS } from "./sim.js";
 import { isSpy, SPY_EXTRA_FONTS } from "./spyhacker.js";
+import { isVslMilionario, VSLMILIONARIO_EXTRA_FONTS } from "./vslmilionario.js";
 
 /** Fontes oferecidas no tema (Google Fonts). O valor vai direto para `fontHeading`/`fontBody`. */
 export const SITE_FONTS = [
@@ -169,6 +170,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isInstafan(theme))
     for (const extra of INSTAFAN_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isVslMilionario(theme))
+    for (const extra of VSLMILIONARIO_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   if (isPresets(theme))
     for (const extra of PRESETS_EXTRA_FONTS)

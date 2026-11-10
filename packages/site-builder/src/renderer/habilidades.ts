@@ -47,16 +47,16 @@ const tablet = (x: string) => `
 ${x} .hc-sec{background-image:var(--hc-bg,none);min-height:var(--hc-h-t,var(--hc-h,0px))}
 ${x} .hc-bar-l img{width:45%}
 ${x} .hc-buy{margin-right:-100px}
-${x} .hc-hero-row{width:100%;min-height:353px}
-${x} .hc-hero-text{width:61%;margin:0;padding:0 20px}
+${x} .hc-hero-row{width:100%;min-height:461px}
+${x} .hc-hero-text{width:61%;margin:47px 0 0 20px;padding:0 20px}
 ${x} .hc-hero-title{font-size:39px;line-height:1.1}
 ${x} .hc-hero-sub{margin-top:0;font-size:20px}
 ${x} .hc-ben-in{margin-top:50px}
 ${x} .hc-ben-h{font-size:31px;line-height:1}
 ${x} .hc-ben-sub{font-size:16px}
 ${x} .hc-ben-rows{gap:20px}
-${x} .hc-ben-row,${x} .hc-ben-row.r0,${x} .hc-ben-row.r1{display:flex;flex-direction:column;gap:20px;width:90%;margin:0 auto}
-${x} .hc-ben-card{flex-direction:column;min-height:0;padding:20px 15px;gap:10px}
+${x} .hc-ben-row,${x} .hc-ben-row.r0,${x} .hc-ben-row.r1{display:flex;flex-direction:column;gap:20px;width:calc((100% - 20px)*.9);margin:0 auto}
+${x} .hc-ben-card{flex-direction:column;min-height:0;padding:14px 15px;gap:6px}
 ${x} .hc-ben-t{margin:0;padding:0}
 ${x} .hc-chap-grid{width:100%;padding:0 20px}
 ${x} .hc-chap-l{font-size:var(--hc-label-t,12px);letter-spacing:4px}
@@ -71,22 +71,23 @@ ${x} .hc-bonus-list li{flex-direction:column;align-items:center;text-align:cente
 const mobile = (x: string) => `
 ${x} .hc-sec{background-image:var(--hc-bg-m,var(--hc-bg,none));min-height:var(--hc-h-m,var(--hc-h-t,var(--hc-h,0px)))}
 ${x} .hc-hero{max-width:500px;margin-inline:auto}
-${x} .hc-bar{flex-direction:column;justify-content:center;min-height:164px}
+${x} .hc-bar{flex-direction:column;justify-content:flex-start;min-height:164px}
 ${x} .hc-bar-l{flex:none;width:100%}
 ${x} .hc-bar-r{display:none}
-${x} .hc-hero-row{margin-top:-85px;min-height:469px}
-${x} .hc-hero-text{width:100%;padding:0 20px}
+${x} .hc-hero-row{align-items:flex-start;margin-top:-85px;min-height:506px}
+${x} .hc-hero-text{width:299px;max-width:100%;margin:60px 0 0 22px;padding:0}
+${x} .hc-hero-sub{margin-top:20px}
 ${x} .hc-hero-title{font-size:32px;line-height:1.3}
-${x} .hc-pill{padding:20px 50px;font-size:17px}
+${x} .hc-pill{margin-left:0;padding:20px 50px;font-size:17px}
 ${x} .hc-ben{padding-bottom:76px}
 ${x} .hc-ben-in{width:90%;padding-inline:0}
 ${x} .hc-ben-h{margin:18px 0;font-size:23px}
 ${x} .hc-ben-sub{margin-top:26px;font-size:20px}
-${x} .hc-chap-grid{grid-template-columns:minmax(0,500px);justify-content:center;padding:40px 20px;gap:5px}
+${x} .hc-chap-grid{grid-template-columns:minmax(0,500px);justify-content:center;padding:0 30px;gap:5px}
 ${x} .hc-chap-card{width:100%}
 ${x} .hc-chap-t,${x} .hc-chap-d,${x} .hc-chap-l{max-width:300px;margin-inline:auto;width:100%}
 ${x} .hc-chap-t{letter-spacing:.9px;line-height:1.6}
-${x} .hc-chap-l{font-size:13px}
+${x} .hc-chap-l{margin-top:12px;padding-bottom:16px;font-size:13px}
 ${x} .hc-bonus-h{font-size:39px;text-align:center}
 ${x} .hc-bonus-t{font-size:22px;line-height:1.6}
 ${x} .hc-support-h{font-size:26px}

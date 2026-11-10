@@ -181,7 +181,7 @@ const home = [
     label: "CAPÍTULO",
     minHeight: 1100,
     minHeightMobile: 0,
-    minHeightTablet: 0,
+    minHeightTablet: 1100,
     tabletLabelSize: 12,
   }),
   block(

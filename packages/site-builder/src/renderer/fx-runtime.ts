@@ -4,11 +4,19 @@
  * liga os efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo.
  * Ao mudar o script, suba `FX_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const FX_VERSION = 13;
+export const FX_VERSION = 14;
+
+/**
+ * Formatação do contador (`data-sb-count`): `dec` casas decimais (o valor do HTML é "4.9" → 1 casa, ou `data-decimals`),
+ * `sep` separa os milhares e `dsep` é o separador decimal (padrão ".", como o original do `vsl-milionario`; "," com
+ * `data-dsep`). Fica em string própria para o teste rodar a mesma função que vai no navegador.
+ */
+export const COUNT_FMT_JS = String.raw`function sbCountFmt(n,dec,sep,dsep){var t=dec?Number(n).toFixed(dec):String(n);var i=t.split(".");var a=i[0];if(sep)a=a.replace(/\B(?=(\d{3})+(?!\d))/g,sep);return dec?a+dsep+i[1]:a}`;
 
 export const FX_RUNTIME = `(function(){
 if(window.sbFx&&window.__sbFxV===${FX_VERSION})return;
 window.__sbFxV=${FX_VERSION};
+${COUNT_FMT_JS}
 window.sbFx=function(){
 var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 document.querySelectorAll(".sb").forEach(function(r){r.classList.add("sb-js")});
@@ -183,7 +191,9 @@ if(el.getAttribute("data-cnt-ready"))return;
 el.setAttribute("data-cnt-ready","1");
 var orig=el.textContent,end=Number(el.getAttribute("data-sb-count"))||0,ms=Number(el.getAttribute("data-ms"))||2000;
 var pre=el.getAttribute("data-prefix")||"",suf=el.getAttribute("data-suffix")||"",sep=el.getAttribute("data-sep")||"";
-function fmt(n){var t=String(n);if(sep)t=t.replace(/\\B(?=(\\d{3})+(?!\\d))/g,sep);return pre+t+suf}
+var dec=el.getAttribute("data-decimals"),dsep=el.getAttribute("data-dsep")||".";
+if(dec===null){var dm=String(el.getAttribute("data-sb-count")).split(".")[1];dec=dm?dm.length:0}dec=Math.min(6,Math.max(0,Number(dec)||0));
+function fmt(n){return pre+sbCountFmt(n,dec,sep,dsep)+suf}
 off.push(function(){el.removeAttribute("data-cnt-ready");el.__sbn=null;el.textContent=orig});
 if(!io)return;
 el.textContent=fmt(0);
@@ -192,7 +202,7 @@ var t0=null;
 function step(t){
 if(t0===null)t0=t;
 var k=Math.min(1,(t-t0)/ms);
-el.textContent=fmt(Math.round(end*k));
+el.textContent=fmt(dec?end*k:Math.round(end*k));
 if(k<1)requestAnimationFrame(step);
 }
 requestAnimationFrame(step);
@@ -215,7 +225,7 @@ function mark(){dots.forEach(function(d,k){d.classList.toggle("on",k===cur%n)})}
 function go(i,anim){cur=i;place(-i*gap(),anim);mark()}
 function wrap(){if(cur>=n){go(cur-n,false);track.offsetHeight}}
 function stop(){clearTimeout(t);t=null}
-function play(){stop();if(reduce)return;t=setTimeout(function(){wrap();go(cur+1,true);play()},delay+speed)}
+function play(){stop();if(reduce)return;t=setTimeout(function(){wrap();go(cur+by(),true);play()},delay+speed)}
 track.addEventListener("transitionend",wrap,opt);
 dots.forEach(function(d,k){d.addEventListener("click",function(){wrap();go(k,true);play()},opt)});
 box.addEventListener("mouseenter",stop,opt);
@@ -250,17 +260,18 @@ var view=box.querySelector(".si-car-view"),track=box.querySelector(".si-car-trac
 var orig=Array.prototype.slice.call(track.children),n=orig.length;
 var pb=box.querySelector(".si-car-arrow.prev"),nb=box.querySelector(".si-car-arrow.next");
 var speed=Number(box.getAttribute("data-speed"))||500,delay=Number(box.getAttribute("data-delay"))||5000;
-var pause=box.getAttribute("data-pause")!=="0",max=Number(box.getAttribute("data-max"))||1;
+var pause=box.getAttribute("data-pause")!=="0",max=Number(box.getAttribute("data-max"))||1,page=box.getAttribute("data-adv")==="page";
 var ac=new AbortController(),opt={signal:ac.signal};
 var cur=0,t=null,clones=[],pv=1,stat=false,dots=[],hov=false;
 function pvNow(){return Math.max(1,parseInt(getComputedStyle(box).getPropertyValue("--si-pv"),10)||1)}
+function by(){return page?Math.max(1,pv):1}
 function step(){return orig.length>1?orig[1].offsetLeft-orig[0].offsetLeft:orig[0].offsetWidth}
 function place(px,anim){track.style.transition=anim?"transform "+speed+"ms ease":"none";track.style.transform="translate3d("+px+"px,0,0)"}
 function mark(){dots.forEach(function(d,k){d.classList.toggle("on",k===cur%n)})}
 function go(i,anim){cur=i;place(-i*step(),anim);mark()}
 function wrap(){if(cur>=n){go(cur-n,false);track.offsetHeight}}
 function stop(){clearTimeout(t);t=null}
-function play(){stop();if(reduce||stat)return;t=setTimeout(function(){wrap();go(cur+1,true);play()},delay+speed)}
+function play(){stop();if(reduce||stat)return;t=setTimeout(function(){wrap();go(cur+by(),true);play()},delay+speed)}
 function build(){
 clones.forEach(function(c){c.remove()});clones=[];
 pv=pvNow();stat=n<=pv;
@@ -274,15 +285,15 @@ go(cur%n,false);
 }
 build();
 track.addEventListener("transitionend",function(e){if(e.target===track)wrap()},opt);
-if(nb)nb.addEventListener("click",function(){wrap();go(cur+1,true);play()},opt);
-if(pb)pb.addEventListener("click",function(){if(cur===0){go(n,false);track.offsetHeight}go(cur-1,true);play()},opt);
+if(nb)nb.addEventListener("click",function(){wrap();go(cur+by(),true);play()},opt);
+if(pb)pb.addEventListener("click",function(){if(cur<by()){go(cur+n,false);track.offsetHeight}go(cur-by(),true);play()},opt);
 if(pause){box.addEventListener("mouseenter",function(){hov=true;stop()},opt);box.addEventListener("mouseleave",function(){hov=false;play()},opt)}
 window.addEventListener("resize",function(){if(pvNow()!==pv||stat)build();else go(cur,false)},opt);
 var sx=null,dx=0,moved=false;
 track.addEventListener("dragstart",function(e){e.preventDefault()},opt);
 track.addEventListener("pointerdown",function(e){if(stat)return;wrap();sx=e.clientX;dx=0;moved=false;stop()},opt);
 window.addEventListener("pointermove",function(e){if(sx===null)return;dx=e.clientX-sx;if(Math.abs(dx)>5)moved=true;place(-cur*step()+dx,false)},opt);
-function release(){if(sx===null)return;sx=null;if(dx<-40)go(cur+1,true);else if(dx>40){if(cur===0){go(n,false);track.offsetHeight}go(cur-1,true)}else go(cur,true);if(!hov)play()}
+function release(){if(sx===null)return;sx=null;if(dx<-40)go(cur+by(),true);else if(dx>40){if(cur<by()){go(cur+n,false);track.offsetHeight}go(cur-by(),true)}else go(cur,true);if(!hov)play()}
 window.addEventListener("pointerup",release,opt);
 window.addEventListener("pointercancel",release,opt);
 track.addEventListener("click",function(e){if(moved){e.preventDefault();e.stopPropagation();moved=false}},{capture:true,signal:ac.signal});

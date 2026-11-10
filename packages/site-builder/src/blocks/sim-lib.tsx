@@ -272,6 +272,7 @@ export interface CarProps {
  * as setas, as bolinhas e o arrastar; sem JS (e no editor) vira uma faixa rolável parada.
  */
 export function SiCar({
+  advance = "one",
   arrows = "outside",
   className = "",
   dots = false,
@@ -279,6 +280,8 @@ export function SiCar({
   p,
   pause = true,
 }: {
+  /** `page` = cada passo avança uma tela inteira (N itens por vez); `one` = um item. */
+  advance?: "one" | "page";
   arrows?: "inside" | "none" | "outside";
   className?: string;
   dots?: boolean;
@@ -289,6 +292,7 @@ export function SiCar({
   return (
     <div
       className={`si-car ${arrows !== "none" ? `arrows-${arrows}` : ""} ${className}`.trim()}
+      data-adv={advance === "page" ? "page" : undefined}
       data-delay={p.delay}
       data-dots={dots ? "1" : undefined}
       data-max={Math.max(p.perView, p.perViewTablet, p.perViewMobile)}

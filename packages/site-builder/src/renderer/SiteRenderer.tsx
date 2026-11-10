@@ -46,6 +46,11 @@ import { isSeopack, seopackCss, seopackVars } from "./seopack.js";
 import { isSim, simCss, simVars } from "./sim.js";
 import { isSpy, spyCss } from "./spyhacker.js";
 import { siteCss, themeVars } from "./styles.js";
+import {
+  isVslMilionario,
+  vslmilionarioCss,
+  vslmilionarioVars,
+} from "./vslmilionario.js";
 import { isZyrion, zyrionCss, zyrionVars } from "./zyrion.js";
 
 export interface SiteRendererProps {
@@ -117,6 +122,7 @@ export function SiteRenderer({
   const instafan = isInstafan(site.theme);
   const seopack = isSeopack(site.theme);
   const atlas = isAtlas(site.theme);
+  const vslmilionario = isVslMilionario(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -161,6 +167,7 @@ export function SiteRenderer({
         instafan ? "sb-if" : "",
         seopack ? "sb-sp" : "",
         atlas ? "sb-at" : "",
+        vslmilionario ? "sb-vm" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -188,6 +195,7 @@ export function SiteRenderer({
           ...(instafan ? instafanVars(site.theme) : {}),
           ...(seopack ? seopackVars(site.theme) : {}),
           ...(atlas ? atlasVars(site.theme) : {}),
+          ...(vslmilionario ? vslmilionarioVars(site.theme) : {}),
         } as CSSProperties
       }
     >
@@ -237,7 +245,10 @@ export function SiteRenderer({
                                                     ? siteCss + patrimonialCss
                                                     : motorista
                                                       ? siteCss + motoristaCss
-                                                      : siteCss)}
+                                                      : vslmilionario
+                                                        ? siteCss +
+                                                          vslmilionarioCss
+                                                        : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}
