@@ -15,8 +15,12 @@ describe("entrada", () => {
     for (const enter of ENTER_EFFECTS) {
       expect(ENTER_LABELS[enter]).toBeTruthy();
       expect(fxCss("b1", { "": { enter } })).toContain(
-        '.sb-js [data-block-id="b1"]:not(.sb-in){opacity:0'
+        '.sb-js [data-block-id="b1"]:not(.sb-in){'
       );
+      if (enter !== "slideInUp")
+        expect(fxCss("b1", { "": { enter } })).toContain(
+          ":not(.sb-in){opacity:0"
+        );
     }
     expect(fxCss("b1", { "": { enter: "rotateIn" } })).toContain(
       "transform:rotate(-200deg)"
@@ -102,5 +106,28 @@ describe("duração e atraso da entrada", () => {
       ">:nth-child(3){transition:opacity 1250ms ease 300ms"
     );
     expect(cleanFx({ enter: "fadeIn", enterMs: 100 })).toBeUndefined();
+  });
+});
+
+describe("slideInUp e hang (efeitos do Elementor)", () => {
+  test("slideInUp desliza de baixo, sem fade", () => {
+    const css = fxCss("b1", {
+      "": { delay: 50, enter: "slideInUp", enterMs: 1250 },
+    });
+    expect(css).toContain("visibility:hidden;transform:translate3d(0,100%,0)");
+    expect(css).not.toContain("opacity");
+    expect(css).toContain("transition:transform 1250ms ease 50ms");
+    expect(
+      fxCss("b1", { "": { each: true, enter: "slideInUp", stagger: 80 } })
+    ).not.toContain("opacity");
+  });
+
+  test("hang afunda 8px (.3s) e balança (1.5s, infinito, alternado, com .3s de atraso)", () => {
+    const css = fxCss("b1", { "": { hover: "hang" } });
+    expect(css).toContain(
+      "animation:sb-fx-hang-sink .3s ease-out 1 forwards,sb-fx-hang 1.5s ease-in-out .3s infinite alternate"
+    );
+    expect(css).toContain("prefers-reduced-motion:no-preference");
+    expect(HOVER_LABELS.hang).toBe("Balançar");
   });
 });

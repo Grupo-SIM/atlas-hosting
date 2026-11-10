@@ -84,3 +84,13 @@ export function vimeoEmbed(input: string): string | null {
 /** Player para abrir num popup: YouTube (sem cookies) ou Vimeo; qualquer outro link fica só como link. */
 export const popupVideoEmbed = (input: string): string | null =>
   input.trim() ? (videoEmbed(input) ?? vimeoEmbed(input)) : null;
+
+/**
+ * Player para incorporar na página (`iframe`): como `popupVideoEmbed`, mas o Vimeo sai sem título, autor nem
+ * pausa automática (`autopause=0&title=0&portrait=0&byline=0`), como o widget de vídeo do Elementor.
+ */
+export function inlineVideoEmbed(input: string): string | null {
+  const embed = popupVideoEmbed(input);
+  if (!embed?.startsWith("https://player.vimeo.com")) return embed;
+  return `${embed}${embed.includes("?") ? "&" : "?"}autopause=0&title=0&portrait=0&byline=0`;
+}

@@ -1,4 +1,5 @@
 import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
+import { isMotorista, MOTORISTA_EXTRA_FONTS } from "./motorista.js";
 import { isRaiz, RAIZ_EXTRA_FONTS } from "./raiz.js";
 import { isSeguidores, SEGUIDORES_EXTRA_FONTS } from "./seguidores.js";
 import { isSpy, SPY_EXTRA_FONTS } from "./spyhacker.js";
@@ -9,6 +10,7 @@ export const SITE_FONTS = [
   "Content",
   "Mulish",
   "Poppins",
+  "Rajdhani",
   "Red Hat Text",
   "Roboto",
   "Sora",
@@ -46,6 +48,7 @@ export const SITE_FONTS = [
 const FONT_WEIGHTS: Record<string, string> = {
   Content: "400;700",
   "Plus Jakarta Sans": "300;400;500;600;700",
+  Rajdhani: "300;400;500;600;700",
 };
 
 export const fontStack = (name: string) => `'${name}', sans-serif`;
@@ -117,6 +120,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isSeguidores(theme))
     for (const extra of SEGUIDORES_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isMotorista(theme))
+    for (const extra of MOTORISTA_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   if (isRaiz(theme))
     for (const extra of RAIZ_EXTRA_FONTS)

@@ -21,6 +21,7 @@ import {
   marketplaceCss,
   marketplaceVars,
 } from "./marketplace.js";
+import { isMotorista, motoristaCss, motoristaVars } from "./motorista.js";
 import {
   isPatrimonial,
   patrimonialCss,
@@ -88,6 +89,7 @@ export function SiteRenderer({
   const market = isMarketplace(site.theme);
   const margem = isMargem(site.theme);
   const patrimonial = isPatrimonial(site.theme);
+  const motorista = isMotorista(site.theme);
   const areaflix = isAreaflix(site.theme);
   const zyrion = isZyrion(site.theme);
   const seguidores = isSeguidores(site.theme);
@@ -122,6 +124,7 @@ export function SiteRenderer({
         market ? "sb-mk" : "",
         margem ? "sb-mg" : "",
         patrimonial ? "sb-cp" : "",
+        motorista ? "sb-cm" : "",
         areaflix ? "sb-af" : "",
         zyrion ? "sb-zy" : "",
         seguidores ? "sb-sg" : "",
@@ -139,6 +142,7 @@ export function SiteRenderer({
           ...(market ? marketplaceVars(site.theme) : {}),
           ...(margem ? margemVars(site.theme) : {}),
           ...(patrimonial ? patrimonialVars(site.theme) : {}),
+          ...(motorista ? motoristaVars(site.theme) : {}),
           ...(areaflix ? areaflixVars(site.theme) : {}),
           ...(zyrion ? zyrionVars(site.theme) : {}),
           ...(seguidores ? seguidoresVars(site.theme) : {}),
@@ -173,7 +177,9 @@ export function SiteRenderer({
                                 ? siteCss + areaflixCss
                                 : patrimonial
                                   ? siteCss + patrimonialCss
-                                  : siteCss)}
+                                  : motorista
+                                    ? siteCss + motoristaCss
+                                    : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}

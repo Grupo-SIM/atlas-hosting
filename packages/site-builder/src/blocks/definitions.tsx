@@ -26,9 +26,11 @@ import { holofoteBlocks } from "./holofote.js";
 import { holofotePageBlocks } from "./holofote-pages.js";
 import { margemBlocks } from "./margem.js";
 import { marketplaceBlocks } from "./marketplace.js";
+import { motoristaBlocks } from "./motorista.js";
 import { patrimonialBlocks } from "./patrimonial.js";
 import { portalHubBlocks } from "./portal-hub.js";
 import { raizBlocks } from "./raiz.js";
+import { scrollTopBlocks } from "./scroll-top.js";
 import { seguidoresBlocks } from "./seguidores.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
 import { isYouTubeChannelId, latestVideoEmbed, videoEmbed } from "./youtube.js";
@@ -2416,6 +2418,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...marketplaceBlocks,
   ...margemBlocks,
   ...patrimonialBlocks,
+  ...motoristaBlocks,
   ...areaflixBlocks,
   ...zyrionBlocks,
   ...zyrionHomeBlocks,
@@ -2425,6 +2428,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...seguidoresBlocks,
   ...raizBlocks,
   ...adBlocks,
+  ...scrollTopBlocks,
   newsSection,
   categoryHeader,
   categorySearch,

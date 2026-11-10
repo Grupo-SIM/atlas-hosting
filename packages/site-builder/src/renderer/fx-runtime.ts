@@ -4,7 +4,7 @@
  * liga os efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo.
  * Ao mudar o script, suba `FX_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const FX_VERSION = 8;
+export const FX_VERSION = 9;
 
 export const FX_RUNTIME = `(function(){
 if(window.sbFx&&window.__sbFxV===${FX_VERSION})return;
@@ -202,7 +202,7 @@ io.observe(el);
 document.querySelectorAll("[data-sb-slider]").forEach(function(box){
 if(box.getAttribute("data-sl-ready"))return;
 box.setAttribute("data-sl-ready","1");
-var track=box.querySelector(".cp-slider-track"),dots=Array.prototype.slice.call(box.querySelectorAll(".cp-dot"));
+var track=box.querySelector(".cp-slider-track,.cm-track"),dots=Array.prototype.slice.call(box.querySelectorAll(".cp-dot,.cm-dot"));
 var orig=Array.prototype.slice.call(track.children),n=orig.length;
 off.push(function(){box.removeAttribute("data-sl-ready")});
 if(n<2)return;
@@ -476,6 +476,35 @@ fl.removeAttribute("data-mr-ready");
 sc.forEach(function(s){s.classList.remove("show","vis")});
 fl.querySelectorAll(".mr-bar").forEach(function(b){b.classList.remove("done");var f=b.querySelector(".mr-bar-fill");if(f){f.style.width="";f.textContent=(b.getAttribute("data-start")||"5")+"%"}});
 });
+});
+/* Voltar ao topo (scrollTop): aparece depois de data-at px de rolagem; clique rola até o topo (easeInOutExpo, 1000ms) */
+document.querySelectorAll("[data-sb-top]").forEach(function(b){
+if(b.getAttribute("data-top-ready"))return;
+b.setAttribute("data-top-ready","1");
+var at=Number(b.getAttribute("data-at")),src=null,raf=0;
+if(!isFinite(at))at=200;
+function pos(t){return t&&t!==document&&typeof t.scrollTop==="number"?t.scrollTop:(window.pageYOffset||0)}
+function upd(e){if(e&&e.target&&e.target!==document&&typeof e.target.scrollTop==="number")src=e.target;b.classList.toggle("on",pos(e&&e.target)>at)}
+function ease(k){return k===0?0:k===1?1:k<0.5?Math.pow(2,20*k-10)/2:(2-Math.pow(2,-20*k+10))/2}
+function to(y){if(src)src.scrollTop=y;else window.scrollTo(0,y)}
+function click(e){
+e.preventDefault();
+cancelAnimationFrame(raf);
+var from=src?src.scrollTop:(window.pageYOffset||0);
+if(reduce||from<=0){to(0);return}
+var t0=null;
+function step(t){
+if(t0===null)t0=t;
+var k=Math.min(1,(t-t0)/1000);
+to(from*(1-ease(k)));
+if(k<1)raf=requestAnimationFrame(step);
+}
+raf=requestAnimationFrame(step);
+}
+document.addEventListener("scroll",upd,{capture:true,passive:true});
+b.addEventListener("click",click);
+upd();
+off.push(function(){cancelAnimationFrame(raf);document.removeEventListener("scroll",upd,{capture:true});b.removeEventListener("click",click);b.removeAttribute("data-top-ready");b.classList.remove("on")});
 });
 return function(){off.forEach(function(f){f()})};
 };

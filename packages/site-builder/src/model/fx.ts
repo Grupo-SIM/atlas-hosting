@@ -10,6 +10,7 @@ export const ENTER_EFFECTS = [
   "fadeInRight",
   "zoomIn",
   "rotateIn",
+  "slideInUp",
 ] as const;
 export type EnterEffect = (typeof ENTER_EFFECTS)[number];
 
@@ -24,6 +25,7 @@ export const HOVER_EFFECTS = [
   "dim",
   "rotate",
   "push",
+  "hang",
 ] as const;
 export type HoverEffect = (typeof HOVER_EFFECTS)[number];
 
@@ -34,6 +36,7 @@ export const ENTER_LABELS: Record<EnterEffect, string> = {
   fadeInRight: "Vir da direita",
   fadeInUp: "Subir suave",
   rotateIn: "Girar ao entrar",
+  slideInUp: "Deslizar de baixo",
   zoomIn: "Zoom",
 };
 
@@ -41,6 +44,7 @@ export const HOVER_LABELS: Record<HoverEffect, string> = {
   brighten: "Clarear",
   dim: "Esmaecer",
   grow: "Crescer",
+  hang: "Balançar",
   lift: "Subir",
   pop: "Pulsar",
   push: "Empurrar",
@@ -113,14 +117,19 @@ export function cleanFx(fx: Fx | undefined): Fx | undefined {
   return hasFx(out) ? out : undefined;
 }
 
+/**
+ * Estado inicial de cada entrada (declarações completas). `slideInUp` não tem fade: só desliza de baixo
+ * (100% da altura do próprio item) e fica invisível até começar, como no Elementor.
+ */
 const ENTER_FROM: Record<EnterEffect, string> = {
-  fadeIn: "",
-  fadeInDown: "transform:translateY(-40px)",
-  fadeInLeft: "transform:translateX(-60px)",
-  fadeInRight: "transform:translateX(60px)",
-  fadeInUp: "transform:translateY(40px)",
-  rotateIn: "transform:rotate(-200deg)",
-  zoomIn: "transform:scale(.6)",
+  fadeIn: "opacity:0",
+  fadeInDown: "opacity:0;transform:translateY(-40px)",
+  fadeInLeft: "opacity:0;transform:translateX(-60px)",
+  fadeInRight: "opacity:0;transform:translateX(60px)",
+  fadeInUp: "opacity:0;transform:translateY(40px)",
+  rotateIn: "opacity:0;transform:rotate(-200deg)",
+  slideInUp: "visibility:hidden;transform:translate3d(0,100%,0)",
+  zoomIn: "opacity:0;transform:scale(.6)",
 };
 
 /**
@@ -128,7 +137,7 @@ const ENTER_FROM: Record<EnterEffect, string> = {
  * `translate`, `rotate`) para não brigar com o `transform` do próprio item. `pop` é animação.
  */
 const HOVER_TO: Record<
-  Exclude<HoverEffect, "pop" | "push">,
+  Exclude<HoverEffect, "pop" | "push" | "hang">,
   [string, string]
 > = {
   brighten: ["filter", "brightness(1.15)"],
@@ -170,16 +179,15 @@ export function fxCss(
     const d = Math.round(f.delay ?? 0);
     const em = f.enterMs ? `${Math.round(f.enterMs)}ms` : ".8s";
     if (f.enter) {
-      transitions.push(
-        `opacity ${em} ease ${d}ms`,
-        `transform ${em} ease ${d}ms`
-      );
+      if (f.enter !== "slideInUp")
+        transitions.push(`opacity ${em} ease ${d}ms`);
+      transitions.push(`transform ${em} ease ${d}ms`);
       const from = ENTER_FROM[f.enter];
-      css += `@media (prefers-reduced-motion:no-preference){.sb-js ${sel}:not(.sb-in){opacity:0;${from}}}`;
+      css += `@media (prefers-reduced-motion:no-preference){.sb-js ${sel}:not(.sb-in){${from}}}`;
     }
     const ms = Math.round(f.hoverMs ?? HOVER_MS.default);
     const hoverTo =
-      f.hover && f.hover !== "pop" && f.hover !== "push"
+      f.hover && f.hover !== "pop" && f.hover !== "push" && f.hover !== "hang"
         ? HOVER_TO[f.hover]
         : null;
     const hoverTransition = hoverTo ? `${hoverTo[0]} ${ms}ms ease` : "";
@@ -190,15 +198,19 @@ export function fxCss(
     // `pop` e `push` são animações (sobe/desce e volta), não transições.
     if (f.hover === "pop" || f.hover === "push")
       css += `${sel}:hover{animation:sb-fx-${f.hover} ${ms}ms}`;
+    // `hang` (Elementor): afunda 8px em .3s e depois balança sem parar, com .3s de atraso.
+    if (f.hover === "hang")
+      css += `@media (prefers-reduced-motion:no-preference){${sel}:hover{animation:sb-fx-hang-sink .3s ease-out 1 forwards,sb-fx-hang 1.5s ease-in-out .3s infinite alternate}}`;
     if (transitions.length)
       css += `${sel}{transition:${transitions.join(",")}}`;
     // Entrada em sequência: o n-ésimo filho espera `stagger` ms a mais que o anterior (até 12 itens).
     const stagger = Math.round(f.stagger ?? 0);
     if (f.enter && f.each && stagger > 0) {
       const rest = hoverTransition ? `,${hoverTransition}` : "";
+      const fade = f.enter === "slideInUp" ? "" : `opacity ${em} ease {}ms,`;
       for (let n = 2; n <= 12; n++) {
         const dn = d + (n - 1) * stagger;
-        css += `${sel.slice(0, -2)}>:nth-child(${n}){transition:opacity ${em} ease ${dn}ms,transform ${em} ease ${dn}ms${rest}}`;
+        css += `${sel.slice(0, -2)}>:nth-child(${n}){transition:${fade.replace("{}", String(dn))}transform ${em} ease ${dn}ms${rest}}`;
       }
     }
   }

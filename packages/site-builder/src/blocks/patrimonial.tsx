@@ -4,7 +4,7 @@ import { cssUrl } from "../renderer/central.js";
 import { defineBlock } from "./define.js";
 import { href, Img } from "./helpers.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
-import { popupVideoEmbed } from "./youtube.js";
+import { inlineVideoEmbed } from "./youtube.js";
 
 /**
  * Blocos do tema Controle Patrimonial. Todo texto, imagem, link e item é prop editável; o visual vem de
@@ -618,10 +618,7 @@ const cpVideo = defineBlock(z.object({ title: str(), videoUrl: str() }), {
   group: "media",
   label: "Vídeo incorporado (Controle Patrimonial)",
   render: p => {
-    const embed = popupVideoEmbed(p.videoUrl);
-    const src = embed?.startsWith("https://player.vimeo.com")
-      ? `${embed}${embed.includes("?") ? "&" : "?"}autopause=0&title=0&portrait=0&byline=0`
-      : embed;
+    const src = inlineVideoEmbed(p.videoUrl);
     return (
       <section className="cp-wrap cp-video">
         {p.title ? <h2 className="cp-video-title">{p.title}</h2> : null}
