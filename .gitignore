@@ -68,3 +68,6 @@ frontend/public/*.mov
 frontend/src-tauri/target/
 frontend/src-tauri/gen/
 frontend/src-tauri/Cargo.lock.bak
+
+# prompts de migracao (uso local)
+plans/*-prompt.md
