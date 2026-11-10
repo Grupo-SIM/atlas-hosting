@@ -179,24 +179,7 @@ ${S} .at-depo-card img{width:48px;height:48px;border:2px solid rgba(255,255,255,
 ${S} .at-depo-card b{display:block;font-size:15px}
 ${S} .at-depo-card small{color:#94a3b8;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 
-/* chat */
-${S} .at-chat{position:relative;overflow:hidden;padding:128px 0}
-${S} .at-chat-in{display:flex;align-items:center;gap:80px}
-${S} .at-chat-copy{flex:1}
-${S} .at-chat-copy h2{margin-bottom:24px;font-family:var(--sb-font-heading);font-size:3.5rem;font-weight:900;line-height:1.1;letter-spacing:-.02em}
-${S} .at-chat-copy p{max-width:32rem;margin-bottom:40px;font-size:1.25rem;font-weight:500;line-height:1.6}
-${S} .at-chat-copy li{display:flex;align-items:center;gap:12px;margin-bottom:16px;font-size:16px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
-${S} .at-chat-copy li::before{content:"";width:8px;height:8px;border-radius:50%;background:#00a3ff}
-${S} .at-chat-win{display:flex;flex:1;flex-direction:column;max-width:480px;min-height:620px;margin-left:auto;overflow:hidden;border-radius:40px;background:#fff;color:#0f172a;box-shadow:0 30px 60px rgba(0,0,0,.5)}
-${S} .at-chat-top{padding:20px 24px;border-bottom:1px solid #f1f5f9}
-${S} .at-chat-top b{display:block;font-size:18px}
-${S} .at-chat-top small{color:#00a3ff;font-size:14px}
-${S} .at-chat-msgs{display:flex;flex:1;flex-direction:column;align-items:flex-start;gap:10px;padding:20px}
 ${S} .at-bubble{max-width:80%;padding:12px 16px;border-radius:20px;background:#f1f5f9;font-size:16px}
-${S} .at-chat-input{display:flex;align-items:center;justify-content:space-between;margin:0 20px 16px;padding:8px 8px 8px 24px;border:1px solid #e2e8f0;border-radius:999px;background:#f8fafc;color:#94a3b8;min-height:48px}
-${S} .at-chat-input i{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#00a3ff}
-${S} .at-chat-input svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2}
-${S} .at-chat-cta{margin:0 20px 24px;padding:12px;border-radius:12px;background:#00a3ff;color:#fff;font-size:14px;font-weight:900;letter-spacing:.1em;text-align:center;text-transform:uppercase}
 
 /* rodapé */
 ${S} .at-foot{position:relative;z-index:20;padding:32px 32px 24px}
@@ -272,9 +255,6 @@ ${S} .at-spec{flex-direction:column;gap:4px;padding:12px 24px}
 @media (max-width:1023px){
 ${S} .at-plan{flex:0 0 45%}
 ${S} .at-stat-grid{grid-template-columns:repeat(2,1fr)}
-${S} .at-chat-in{flex-direction:column;gap:48px;text-align:center}
-${S} .at-chat-copy li{justify-content:center}
-${S} .at-chat-win{margin-inline:auto;width:100%}
 ${S} .at-foot-grid{grid-template-columns:1fr 1fr}
 }
 @media (max-width:767px){
@@ -303,8 +283,6 @@ ${S} .at-plan{flex:0 0 100%}
 ${S} .at-depo-box{padding:64px 24px;border-radius:32px}
 ${S} .at-depo-box .at-head-text h2{font-size:1.9rem}
 ${S} .at-depo-grid{grid-template-columns:1fr}
-${S} .at-chat{padding:80px 0}
-${S} .at-chat-copy h2{font-size:2.5rem}
 ${S} .at-foot-grid{grid-template-columns:1fr;text-align:center}
 ${S} .at-foot-col{align-items:center}
 ${S} .at-foot-col ul{display:inline-block;text-align:left}

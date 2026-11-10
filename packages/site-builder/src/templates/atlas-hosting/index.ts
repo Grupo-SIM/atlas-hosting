@@ -4,7 +4,7 @@ import type { Block, Site, SiteTemplate } from "../../model/index.js";
  * Template "Atlas Hosting": cópia de atlashosting.com.br (home, VPS em nuvem, Cloud VDS, VPS de armazenamento,
  * VPS Windows, termos e privacidade) com a variante `atlas`. Textos e links vêm do original; os preços são os
  * valores em reais de hoje (o original converte do euro na hora). Imagens, vídeo e o JSON do mapa seguem
- * hospedados no Atlas. O chat real (n8n) não existe no template: o cartão do suporte leva ao site do Atlas.
+ * hospedados no Atlas.
  */
 const ATLAS = "https://atlashosting.com.br";
 const IMG = {
@@ -491,19 +491,6 @@ const home = [
     },
     "testimonials"
   ),
-  block("atChat", {
-    badge: "● SUPORTE ONLINE AGORA",
-    botGreeting: "Olá! 👋\nSou o Atlas, como posso te ajudar?",
-    botName: "Atlas IA",
-    botSubtitle: "Suporte 24/7",
-    buttonLabel: "Conversar agora",
-    buttonUrl: ATLAS,
-    highlight: "Converse com nossa IA.",
-    perks: "Resposta em segundos\nDisponível 24/7\nSem espera em filas",
-    placeholder: "Digite sua pergunta...",
-    text: "Tire suas dúvidas sobre planos, domínios e cashback em tempo real com o assistente inteligente Atlas.",
-    title: "Ficou com alguma dúvida?",
-  }),
 ];
 
 const productPage = (
@@ -806,7 +793,7 @@ const site: Site = {
 
 export const atlasHosting: SiteTemplate = {
   description:
-    "Site institucional de hospedagem em tema escuro com azul-céu: topo com busca de domínio e vídeo, números com contador e mapa animado, planos com chave de backup, depoimentos, suporte com chat e páginas de VPS em nuvem, Cloud VDS, armazenamento, VPS Windows, termos e privacidade. Cópia do Atlas Hosting.",
+    "Site institucional de hospedagem em tema escuro com azul-céu: topo com busca de domínio e vídeo, números com contador e mapa animado, planos com chave de backup, depoimentos e páginas de VPS em nuvem, Cloud VDS, armazenamento, VPS Windows, termos e privacidade. Cópia do Atlas Hosting.",
   id: "atlas-hosting",
   name: "Atlas Hosting — Hospedagem de Servidores",
   preview: IMG.pattern,

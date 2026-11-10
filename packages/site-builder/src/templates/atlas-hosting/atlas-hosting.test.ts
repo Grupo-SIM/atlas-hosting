@@ -74,7 +74,6 @@ describe("template atlas-hosting", () => {
       "Performance Garantida,",
       "Potência dedicada para tirar seus projetos do papel.",
       "Feedback &amp; Avaliações",
-      "Converse com nossa IA.",
       "Júlia Alba",
     ])
       expect(home).toContain(t);

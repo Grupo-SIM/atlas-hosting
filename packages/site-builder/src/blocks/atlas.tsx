@@ -719,95 +719,6 @@ const atTestimonials = defineBlock(
   }
 );
 
-/* ───────────────────────── chat ───────────────────────── */
-
-const atChat = defineBlock(
-  z.object({
-    badge: str("● SUPORTE ONLINE AGORA"),
-    botGreeting: str(),
-    botName: str("Atlas IA"),
-    botSubtitle: str("Suporte 24/7"),
-    buttonLabel: str(),
-    buttonUrl: str(),
-    highlight: str(),
-    perks: str(),
-    placeholder: str("Digite sua pergunta..."),
-    text: str(),
-    title: str(),
-  }),
-  {
-    fields: [
-      { key: "badge", kind: "text", label: "Selo" },
-      titleField,
-      {
-        key: "highlight",
-        kind: "text",
-        label: "Segunda linha do título (destaque)",
-      },
-      textField,
-      { key: "perks", kind: "textarea", label: "Vantagens (uma por linha)" },
-      { key: "botName", kind: "text", label: "Nome do assistente" },
-      { key: "botSubtitle", kind: "text", label: "Subtítulo do assistente" },
-      {
-        key: "botGreeting",
-        kind: "textarea",
-        label: "Mensagens do assistente (uma por linha)",
-      },
-      { key: "placeholder", kind: "text", label: "Texto do campo de mensagem" },
-      ...button("button", "botão (abre o chat real)"),
-    ],
-    group: "content",
-    label: "Suporte com chat (Atlas Hosting)",
-    render: (p, ctx) => (
-      <section className="at-chat">
-        <div className="at-wrap at-chat-in">
-          <div className="at-chat-copy">
-            <span className="at-pill">{p.badge}</span>
-            <h2>
-              {p.title}
-              <br />
-              <em>{p.highlight}</em>
-            </h2>
-            <p>{p.text}</p>
-            <ul>
-              {lines(p.perks).map((l, i) => (
-                <li key={l + i}>{l}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="at-chat-win">
-            <div className="at-chat-top">
-              <b>{p.botName}</b>
-              <small>{p.botSubtitle}</small>
-            </div>
-            <div className="at-chat-msgs">
-              {lines(p.botGreeting).map((l, i) => (
-                <div className="at-bubble" key={l + i}>
-                  {l}
-                </div>
-              ))}
-            </div>
-            <a className="at-chat-input" href={href(ctx, p.buttonUrl)}>
-              <span>{p.placeholder}</span>
-              <i>
-                <svg aria-hidden="true" viewBox="0 0 24 24">
-                  <path d="m22 2-7 20-4-9-9-4zM22 2 11 13" />
-                </svg>
-              </i>
-            </a>
-            {p.buttonLabel ? (
-              <a className="at-chat-cta" href={href(ctx, p.buttonUrl)}>
-                {p.buttonLabel}
-              </a>
-            ) : null}
-          </div>
-        </div>
-      </section>
-    ),
-    type: "atChat",
-  }
-);
-
 /* ───────────────────────── rodapé ───────────────────────── */
 
 const atFooter = defineBlock(
@@ -1177,7 +1088,6 @@ export const atlasBlocks: BlockDefinition[] = [
   atStats,
   atPlans,
   atTestimonials,
-  atChat,
   atFooter,
   atPageHero,
   atBenefits,
