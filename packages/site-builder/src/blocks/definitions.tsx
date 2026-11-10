@@ -26,6 +26,7 @@ import { margemBlocks } from "./margem.js";
 import { marketplaceBlocks } from "./marketplace.js";
 import { patrimonialBlocks } from "./patrimonial.js";
 import { portalHubBlocks } from "./portal-hub.js";
+import { seguidoresBlocks } from "./seguidores.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
 import { isYouTubeChannelId, latestVideoEmbed, videoEmbed } from "./youtube.js";
 import { zyrionBlocks } from "./zyrion.js";
@@ -2367,6 +2368,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...zyrionBlocks,
   ...zyrionHomeBlocks,
   ...zyrionPageBlocks,
+  ...seguidoresBlocks,
   ...adBlocks,
   newsSection,
   categoryHeader,

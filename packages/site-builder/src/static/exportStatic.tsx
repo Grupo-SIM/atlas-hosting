@@ -24,7 +24,7 @@ const escapeHtml = (value: string) =>
  * O site estático não tem servidor, então a busca/filtro (`?q=` e `?category=`) roda no
  * navegador: esconde os cards que não batem e preenche os campos do formulário.
  */
-const filterScript = `(function(){var p=new URLSearchParams(location.search);var q=(p.get("q")||"").toLowerCase();var c=p.get("category")||"";if(!q&&!c)return;document.querySelectorAll(".sb-filter input[name=q],.sb-mag input[name=q]").forEach(function(i){i.value=p.get("q")||""});document.querySelectorAll(".sb-filter select[name=category],.sb-mag select[name=category],.sb-sidebar select[name=category]").forEach(function(s){s.value=c});document.querySelectorAll(".sb-post-card").forEach(function(el){var t=(el.getAttribute("data-search")||"").toLowerCase();var k=el.getAttribute("data-category")||"";if((q&&t.indexOf(q)<0)||(c&&k!==c))el.style.display="none"})})();`;
+const filterScript = `(function(){var p=new URLSearchParams(location.search);var q=(p.get("q")||"").toLowerCase();var c=p.get("category")||"";if(!q&&!c)return;document.querySelectorAll(".sb-filter input[name=q],.sb-mag input[name=q],.sg-search input[name=q],.sg-side input[name=q]").forEach(function(i){i.value=p.get("q")||""});document.querySelectorAll(".sb-filter select[name=category],.sb-mag select[name=category],.sb-sidebar select[name=category],.sg-search select[name=category],.sg-side select[name=category]").forEach(function(s){s.value=c});document.querySelectorAll(".sb-post-card").forEach(function(el){var t=(el.getAttribute("data-search")||"").toLowerCase();var k=el.getAttribute("data-category")||"";if((q&&t.indexOf(q)<0)||(c&&k!==c))el.style.display="none"})})();`;
 
 /**
  * `react-dom/static` em vez de `react-dom/server`: o Next recusa importar o segundo em código

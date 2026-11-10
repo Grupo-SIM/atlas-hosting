@@ -27,6 +27,7 @@ import {
 } from "./patrimonial.js";
 import { isPortal, portalCss, portalVars } from "./portal.js";
 import { type Route, resolveRoute } from "./routes.js";
+import { isSeguidores, seguidoresCss, seguidoresVars } from "./seguidores.js";
 import { isSpy, spyCss } from "./spyhacker.js";
 import { siteCss, themeVars } from "./styles.js";
 import { isZyrion, zyrionCss, zyrionVars } from "./zyrion.js";
@@ -87,6 +88,7 @@ export function SiteRenderer({
   const patrimonial = isPatrimonial(site.theme);
   const areaflix = isAreaflix(site.theme);
   const zyrion = isZyrion(site.theme);
+  const seguidores = isSeguidores(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -118,6 +120,7 @@ export function SiteRenderer({
         patrimonial ? "sb-cp" : "",
         areaflix ? "sb-af" : "",
         zyrion ? "sb-zy" : "",
+        seguidores ? "sb-sg" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -132,6 +135,7 @@ export function SiteRenderer({
           ...(patrimonial ? patrimonialVars(site.theme) : {}),
           ...(areaflix ? areaflixVars(site.theme) : {}),
           ...(zyrion ? zyrionVars(site.theme) : {}),
+          ...(seguidores ? seguidoresVars(site.theme) : {}),
         } as CSSProperties
       }
     >
@@ -151,11 +155,13 @@ export function SiteRenderer({
                       ? siteCss + marketplaceCss
                       : margem
                         ? siteCss + margemCss
-                        : areaflix
-                          ? siteCss + areaflixCss
-                          : patrimonial
-                            ? siteCss + patrimonialCss
-                            : siteCss)}
+                        : seguidores
+                          ? siteCss + seguidoresCss
+                          : areaflix
+                            ? siteCss + areaflixCss
+                            : patrimonial
+                              ? siteCss + patrimonialCss
+                              : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}

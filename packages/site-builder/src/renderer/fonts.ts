@@ -1,4 +1,5 @@
 import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
+import { isSeguidores, SEGUIDORES_EXTRA_FONTS } from "./seguidores.js";
 import { isSpy, SPY_EXTRA_FONTS } from "./spyhacker.js";
 
 /** Fontes oferecidas no tema (Google Fonts). O valor vai direto para `fontHeading`/`fontBody`. */
@@ -112,6 +113,9 @@ export function fontStylesheet(site: {
   // A variante central usa Poppins/Roboto nos posts e nos botões (fixas, nunca texto do usuário).
   if (isCentral(theme))
     for (const extra of CENTRAL_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isSeguidores(theme))
+    for (const extra of SEGUIDORES_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   const families = names
     .map(

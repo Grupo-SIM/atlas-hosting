@@ -4,7 +4,7 @@
  * liga os efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo.
  * Ao mudar o script, suba `FX_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const FX_VERSION = 5;
+export const FX_VERSION = 6;
 
 export const FX_RUNTIME = `(function(){
 if(window.sbFx&&window.__sbFxV===${FX_VERSION})return;
@@ -155,13 +155,13 @@ show(0);
 off.push(function(){clearTimeout(t)});
 });
 /* carrossel de depoimentos: as setas ficam no NAV_RUNTIME; aqui passa sozinho, para no hover e liga as bolinhas */
-document.querySelectorAll(".sb-af-car").forEach(function(c){
+document.querySelectorAll(".sb-af-car,.sg-car").forEach(function(c){
 if(c.getAttribute("data-car-ready"))return;
 c.setAttribute("data-car-ready","1");
 off.push(function(){c.removeAttribute("data-car-ready")});
-var tr=c.querySelector(".sb-cslider-track"),ds=Array.prototype.slice.call(c.querySelectorAll(".sb-af-dots button")),hov=false;
+var tr=c.querySelector(".sb-cslider-track"),ds=Array.prototype.slice.call(c.querySelectorAll(".sb-af-dots button,.sg-dots button")),hov=false;
 if(!tr||!tr.children.length)return;
-function step(){return tr.children[0].getBoundingClientRect().width+10}
+function step(){return tr.children[0].getBoundingClientRect().width+(parseFloat(getComputedStyle(tr).columnGap)||10)}
 function max(){return tr.scrollWidth-tr.clientWidth}
 function mark(){var m=tr.scrollLeft>=max()-4?ds.length-1:Math.round(tr.scrollLeft/step());ds.forEach(function(d,k){d.classList.toggle("on",k===m)})}
 function dot(e){var k=ds.indexOf(e.target);if(k>=0)tr.scrollTo({left:k*step(),behavior:"smooth"})}
@@ -182,15 +182,17 @@ document.querySelectorAll("[data-sb-count]").forEach(function(el){
 if(el.getAttribute("data-cnt-ready"))return;
 el.setAttribute("data-cnt-ready","1");
 var orig=el.textContent,end=Number(el.getAttribute("data-sb-count"))||0,ms=Number(el.getAttribute("data-ms"))||2000;
+var pre=el.getAttribute("data-prefix")||"",suf=el.getAttribute("data-suffix")||"",sep=el.getAttribute("data-sep")||"";
+function fmt(n){var t=String(n);if(sep)t=t.replace(/\\B(?=(\\d{3})+(?!\\d))/g,sep);return pre+t+suf}
 off.push(function(){el.removeAttribute("data-cnt-ready");el.__sbn=null;el.textContent=orig});
 if(!io)return;
-el.textContent="0";
+el.textContent=fmt(0);
 el.__sbn=function(){
 var t0=null;
 function step(t){
 if(t0===null)t0=t;
 var k=Math.min(1,(t-t0)/ms);
-el.textContent=String(Math.round(end*k));
+el.textContent=fmt(Math.round(end*k));
 if(k<1)requestAnimationFrame(step);
 }
 requestAnimationFrame(step);
@@ -237,6 +239,68 @@ track.addEventListener("click",function(e){if(moved){e.preventDefault();e.stopPr
 play();
 off.push(function(){stop();ac.abort();clones.forEach(function(c){c.remove()});track.style.transition="";track.style.transform="";track.style.cursor="";cur=0;mark()});
 });
+/* Lottie: o player (lottie_light) só é baixado quando a página tem [data-sb-lottie] */
+var lots=document.querySelectorAll("[data-sb-lottie]");
+if(lots.length&&!reduce){
+var anims=[];
+off.push(function(){anims.forEach(function(a){try{a.destroy()}catch(e){}});anims=[]});
+var startLot=function(){
+lots.forEach(function(el){
+if(el.getAttribute("data-lot-ready")||!window.lottie)return;
+el.setAttribute("data-lot-ready","1");
+var url=el.getAttribute("data-sb-lottie")||"";
+if(!/^(https?:\\/\\/|\\/)/.test(url))return;
+try{anims.push(window.lottie.loadAnimation({container:el,renderer:"svg",loop:el.getAttribute("data-loop")!=="no",autoplay:el.getAttribute("data-autoplay")!=="no",path:url}));var a=anims[anims.length-1];a.setSpeed(Number(el.getAttribute("data-speed"))||1)}catch(e){}
+});
+};
+off.push(function(){lots.forEach(function(el){el.removeAttribute("data-lot-ready");el.textContent=""})});
+if(window.lottie)startLot();
+else{
+var ls=document.getElementById("sb-lottie-js");
+if(!ls){ls=document.createElement("script");ls.id="sb-lottie-js";ls.async=true;ls.src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie_light.min.js";document.head.appendChild(ls)}
+ls.addEventListener("load",startLot);
+}
+}
+/* Seguidores em Alta: cabeçalho transparente -> branco após 60px; some ao descer e volta ao subir */
+document.querySelectorAll(".sg-head").forEach(function(h){
+var last=0,ticking=false;
+function y(e){var t=e&&e.target;return t&&t!==document&&typeof t.scrollTop==="number"?t.scrollTop:(window.pageYOffset||0)}
+function upd(e){
+ticking=false;
+var v=y(e),open=h.querySelector(".sb-burger-input");
+h.classList.toggle("is-scrolled",v>60);
+if(v>60&&v>last&&!(open&&open.checked))h.classList.add("is-hidden");
+else if(v<last||v<=60)h.classList.remove("is-hidden");
+last=v;
+}
+function on(e){if(!ticking){ticking=true;requestAnimationFrame(function(){upd(e)})}}
+document.addEventListener("scroll",on,{capture:true,passive:true});
+off.push(function(){document.removeEventListener("scroll",on,{capture:true});h.classList.remove("is-scrolled","is-hidden")});
+});
+/* Seguidores em Alta: "carregar mais" nas listas (sem JS aparece tudo) */
+document.querySelectorAll(".sg-grid-wrap[data-step]").forEach(function(w){
+var step=Number(w.getAttribute("data-step"))||6,btn=w.querySelector(".sg-more");
+function hid(){return Array.prototype.filter.call(w.querySelectorAll("[data-sg-hide]"),function(c){return c.style.display!=="none"})}
+function shown(){return Array.prototype.filter.call(w.querySelectorAll(".sb-post-card:not([data-sg-hide])"),function(c){return c.style.display!=="none"}).length}
+function reveal(){
+var h=hid();
+for(var i=0;i<step&&i<h.length;i++)h[i].removeAttribute("data-sg-hide");
+if(btn&&!hid().length)btn.hidden=true;
+}
+function click(e){if(e.target.closest(".sg-more"))reveal()}
+w.addEventListener("click",click);
+var t=setTimeout(function(){if(shown()<step)reveal();if(btn)btn.hidden=!hid().length},0);
+off.push(function(){clearTimeout(t);w.removeEventListener("click",click);if(btn)btn.hidden=false});
+});
+/* Seguidores em Alta: o seletor de categoria navega direto */
+function selNav(e){
+var s=e.target;
+if(!s||!s.matches||!s.matches(".sg-search select,.sg-side-cats select")||!s.value)return;
+var o=s.options[s.selectedIndex],u=o&&o.getAttribute("data-href");
+if(u)location.href=u;
+}
+document.addEventListener("change",selNav);
+off.push(function(){document.removeEventListener("change",selNav)});
 /* Zyrion: data de hoje, slider do destaque, carrossel das seções, busca em tela cheia */
 document.querySelectorAll("[data-sb-today]").forEach(function(el){
 try{el.textContent=new Intl.DateTimeFormat("pt-BR",{day:"numeric",month:"long",year:"numeric"}).format(new Date())}catch(x){}
@@ -287,119 +351,6 @@ document.addEventListener("keydown",zyKey);
 zySearch.addEventListener("change",zyChg);
 off.push(function(){document.removeEventListener("keydown",zyKey);zySearch.removeEventListener("change",zyChg)});
 }
-/* Marketing Raiz: paginação numerada da grade (sem JS aparece tudo) */
-document.querySelectorAll("[data-mr-pages]").forEach(function(w){
-var per=Number(w.getAttribute("data-mr-pages"))||10,pager=w.querySelector(".mr-pager");
-if(!pager||w.getAttribute("data-mr-ready"))return;
-w.setAttribute("data-mr-ready","1");
-var cur=1;
-function cards(){return Array.prototype.filter.call(w.querySelectorAll(".mr-card"),function(c){return c.style.display!=="none"})}
-function show(n){
-var list=cards(),pages=Math.max(1,Math.ceil(list.length/per));
-cur=Math.min(Math.max(1,n),pages);
-list.forEach(function(c,i){if(Math.floor(i/per)+1===cur)c.removeAttribute("data-mr-hide");else c.setAttribute("data-mr-hide","")});
-Array.prototype.forEach.call(pager.children,function(b,k){b.hidden=k>=pages;b.classList.toggle("on",k+1===cur)});
-}
-function click(e){
-var b=e.target.closest&&e.target.closest("[data-mr-go]");
-if(!b)return;
-show(Number(b.getAttribute("data-mr-go")));
-try{w.scrollIntoView({behavior:"smooth",block:"start"})}catch(x){}
-}
-pager.addEventListener("click",click);
-show(1);
-off.push(function(){
-w.removeAttribute("data-mr-ready");
-pager.removeEventListener("click",click);
-w.querySelectorAll("[data-mr-hide]").forEach(function(c){c.removeAttribute("data-mr-hide")});
-Array.prototype.forEach.call(pager.children,function(b,k){b.hidden=false;b.classList.toggle("on",k===0)});
-});
-});
-/* Marketing Raiz: carrossel de mídia com miniaturas (efeito slide, autoplay, laço, pausa no hover, setas) */
-document.querySelectorAll("[data-mr-media]").forEach(function(box){
-if(box.getAttribute("data-mr-ready"))return;
-box.setAttribute("data-mr-ready","1");
-var track=box.querySelector(".mr-media-track"),th=Array.prototype.slice.call(box.querySelectorAll(".mr-thumb-btn")),n=track?track.children.length:0;
-off.push(function(){box.removeAttribute("data-mr-ready")});
-if(n<2)return;
-var sec=(Number(box.getAttribute("data-mr-media"))||5)*1000,speed=Number(box.getAttribute("data-speed"))||500;
-var cur=0,t=null,ac=new AbortController(),o={signal:ac.signal};
-track.style.transition="transform "+speed+"ms ease";
-function go(i){cur=(i+n)%n;track.style.transform="translate3d("+(-cur*100)+"%,0,0)";th.forEach(function(b,k){b.classList.toggle("on",k===cur)})}
-function stop(){clearTimeout(t);t=null}
-function play(){stop();if(reduce)return;t=setTimeout(function(){go(cur+1);play()},sec)}
-th.forEach(function(b,k){b.addEventListener("click",function(){go(k);play()},o)});
-box.querySelectorAll(".mr-arrows button").forEach(function(b,k){b.addEventListener("click",function(){go(cur+(k===0?-1:1));play()},o)});
-box.addEventListener("mouseenter",stop,o);
-box.addEventListener("mouseleave",play,o);
-go(0);
-play();
-off.push(function(){stop();ac.abort();track.style.transition="";track.style.transform="";th.forEach(function(b,k){b.classList.toggle("on",k===0)})});
-});
-/* Marketing Raiz: botão que aparece depois de N segundos (e então pulsa) */
-document.querySelectorAll("[data-mr-delay]").forEach(function(el){
-if(el.getAttribute("data-mr-ready"))return;
-el.setAttribute("data-mr-ready","1");
-var t=setTimeout(function(){el.classList.add("on")},(Number(el.getAttribute("data-mr-delay"))||0)*1000);
-off.push(function(){clearTimeout(t);el.classList.remove("on");el.removeAttribute("data-mr-ready")});
-});
-/* Marketing Raiz: telas do funil e do quiz (fade de ~600 ms entre telas; a tela "analisando" roda a barra e avança sozinha) */
-document.querySelectorAll("[data-mr-flow]").forEach(function(fl){
-if(fl.getAttribute("data-mr-ready"))return;
-fl.setAttribute("data-mr-ready","1");
-var sc=Array.prototype.filter.call(fl.children,function(c){return c.classList.contains("mr-step")});
-if(!sc.length)return;
-var cur=0,busy=false,timers=[],iv=null;
-function clear(){timers.forEach(clearTimeout);timers=[];if(iv){clearInterval(iv);iv=null}}
-function bar(b,i){
-var fill=b.querySelector(".mr-bar-fill"),v=Number(b.getAttribute("data-start"));
-if(!isFinite(v))v=5;
-var st=Number(b.getAttribute("data-step"))||3.7,ms=Number(b.getAttribute("data-interval"))||250;
-b.classList.remove("done");
-function paint(){var w=Math.min(100,v);fill.style.width=w+"%";fill.textContent=(Math.round(w*10)/10)+"%"}
-paint();
-iv=setInterval(function(){
-v+=st;
-if(v>=100){
-v=100;clearInterval(iv);iv=null;paint();b.classList.add("done");
-timers.push(setTimeout(function(){go(i+1)},2000));
-return;
-}
-paint();
-},ms);
-}
-function enter(i){
-var s=sc[i];
-s.classList.add("show");
-void s.offsetHeight;
-s.classList.add("vis");
-busy=false;
-var b=s.querySelector(".mr-bar");
-if(b)bar(b,i);
-}
-function go(i){
-if(i>=sc.length)return;
-busy=true;
-var from=sc[cur];
-clear();
-from.classList.remove("vis");
-timers.push(setTimeout(function(){from.classList.remove("show");cur=i;enter(i)},600));
-}
-function click(e){
-var b=e.target.closest&&e.target.closest("[data-mr-next]");
-if(!b||!fl.contains(b)||busy)return;
-go(cur+1);
-}
-fl.addEventListener("click",click);
-enter(0);
-off.push(function(){
-clear();
-fl.removeEventListener("click",click);
-fl.removeAttribute("data-mr-ready");
-sc.forEach(function(s){s.classList.remove("show","vis")});
-fl.querySelectorAll(".mr-bar").forEach(function(b){b.classList.remove("done");var f=b.querySelector(".mr-bar-fill");if(f){f.style.width="";f.textContent=(b.getAttribute("data-start")||"5")+"%"}});
-});
-});
 return function(){off.forEach(function(f){f()})};
 };
 })();`;

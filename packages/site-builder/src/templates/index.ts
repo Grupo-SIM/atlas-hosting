@@ -6,6 +6,7 @@ import { controlePatrimonial } from "./controle-patrimonial/index.js";
 import { margem } from "./margem/index.js";
 import { marketplace } from "./marketplace/index.js";
 import { portalNoticias } from "./portal-noticias/index.js";
+import { seguidoresEmAlta } from "./seguidores-em-alta/index.js";
 import { spyhacker } from "./spyhacker/index.js";
 import { zyrion } from "./zyrion/index.js";
 
@@ -15,6 +16,7 @@ const templates: SiteTemplate[] = [
   portalNoticias,
   centralMarketing,
   marketplace,
+  seguidoresEmAlta,
   margem,
   areaflix,
   controlePatrimonial,
