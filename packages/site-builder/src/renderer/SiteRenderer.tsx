@@ -227,11 +227,18 @@ export function SiteRenderer({
   );
 }
 
+/**
+ * Tipos de bloco retirados de propósito. Sites criados antes da remoção ainda guardam o bloco nos dados;
+ * em vez de "Bloco desconhecido" no editor, ele simplesmente não aparece (e some do site publicado).
+ */
+const REMOVED_BLOCK_TYPES = new Set(["atChat"]);
+
 function renderBlocks(blocks: Block[], ctx: RenderContext): ReactNode {
   return blocks.map(block => {
     if (block.hidden) return null;
     const def = getBlockDefinition(block.type);
     if (!def) {
+      if (REMOVED_BLOCK_TYPES.has(block.type)) return null;
       return ctx.mode === "edit" ? (
         <div className="sb-container" key={block.id}>
           Bloco desconhecido: {block.type}

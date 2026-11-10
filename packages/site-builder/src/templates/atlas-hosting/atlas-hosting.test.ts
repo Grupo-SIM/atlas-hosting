@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
+import { renderToStaticMarkup } from "react-dom/server";
 import { getBlockDefinition } from "../../blocks/registry.js";
 import type { Block } from "../../model/index.js";
 import { siteSchema } from "../../model/schema.js";
+import { SiteRenderer } from "../../renderer/SiteRenderer.js";
 import { exportSiteToStatic } from "../../static/exportStatic.js";
 import { getTemplate, listTemplates } from "../index.js";
 
@@ -111,6 +113,23 @@ describe("template atlas-hosting", () => {
     for (const f of files.filter(f => f.path.endsWith(".html"))) {
       expect(f.content).not.toContain("undefined");
       expect(f.content).not.toContain("Bloco desconhecido");
+    }
+  });
+
+  test("site criado antes da remoção do chat não mostra bloco desconhecido", () => {
+    const old = structuredClone(site);
+    const home = old.pages.find(p => p.slug === "");
+    home?.blocks.splice(4, 0, {
+      id: "legacy-chat",
+      props: { title: "Ficou com alguma dúvida?" },
+      type: "atChat",
+    });
+    for (const mode of ["edit", "view"] as const) {
+      const out = renderToStaticMarkup(
+        SiteRenderer({ mode, path: "/", site: old, skipFxRuntime: true })
+      );
+      expect(out).not.toContain("Bloco desconhecido");
+      expect(out).not.toContain("Ficou com alguma dúvida?");
     }
   });
 });

@@ -144,7 +144,7 @@ ${S} .at-plan-top s{color:#f43f5e;opacity:.7}
 ${S} .at-tag{position:absolute;top:10px;left:32px;padding:4px 12px;border-radius:999px;background:#0ea5e9;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
 ${S} .at-price{display:flex;align-items:baseline;gap:4px;white-space:nowrap}
 ${S} .at-price-cur{font-size:18px;font-weight:700}
-${S} .at-price-main{font-size:clamp(40px,3.4vw,56px);font-weight:900;line-height:1}
+${S} .at-price-main{font-size:48px;font-weight:900;line-height:1}
 ${S} .at-price-cents{font-size:28px;font-weight:900}
 ${S} .at-price-per{margin-left:6px;font-size:16px;opacity:.4}
 ${S} .at-plan .at-price-bk,${S} .at-plan .at-plan-btn-bk{display:none}

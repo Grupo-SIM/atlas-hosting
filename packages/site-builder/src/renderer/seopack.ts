@@ -271,8 +271,8 @@ ${S} .sp-plan-head{display:flex;justify-content:space-between;align-items:center
 ${S} .sp-plan-name{font-size:1.5em;font-weight:300}
 ${S} .sp-plan-desc{font-size:1em}
 ${S} .sp-price-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:0}
-${S} .sp-price-cur{margin:0 10px 10px 0;color:var(--sb-accent);font-family:var(--sb-font-heading);font-size:clamp(1.5em,2vw,2.8em);font-weight:300;line-height:1.2}
-${S} .sp-price-val{color:#fff;font-family:var(--sb-font-heading);font-size:clamp(2.2em,3vw,4.1em);font-weight:500;line-height:66px}
+${S} .sp-price-cur{margin:0 10px 10px 0;color:var(--sb-accent);font-family:var(--sb-font-heading);font-size:1.8em;font-weight:300;line-height:1.2}
+${S} .sp-price-val{color:#fff;font-family:var(--sb-font-heading);font-size:2.6em;font-weight:500;line-height:66px}
 ${S} .sp-price-per{margin:0 0 6px 10px;font-size:1em}
 ${S} .sp-plan-list{display:flex;flex-direction:column;margin:20px 0;padding:0;list-style:none}
 ${S} .sp-plan-list li{display:flex;align-items:center;gap:8px;padding:15px 0;color:var(--sb-muted)}
