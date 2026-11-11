@@ -26,7 +26,8 @@ async function redirectToLogin(): Promise<Error> {
   const pathname = headersList.get("x-pathname") || headersList.get("referer");
 
   try {
-    if (pathname && pathname !== "/login") {
+    // Padrão de rota (`/criador-de-sites/[siteId]`) não é endereço: voltar para ele quebra a página.
+    if (pathname && pathname !== "/login" && !/\[|%5B/i.test(pathname)) {
       redirect(`/login?redirect=${encodeURIComponent(pathname)}`);
     } else {
       redirect("/login");

@@ -27,6 +27,13 @@ export default async function SiteEditorPage({
 }) {
   const user = await requireBuilderUser();
   const { siteId } = await params;
+  // O id é uuid no banco: outro valor (ex.: "[siteId]" literal) derrubaria a página com erro do Postgres.
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      siteId
+    )
+  )
+    notFound();
 
   const [site] = await db
     .select()
