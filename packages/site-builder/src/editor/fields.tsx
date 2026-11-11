@@ -2,7 +2,12 @@
 
 import { useRef, useState } from "react";
 import type { FieldDef } from "../blocks/types.js";
-import { isYouTubeChannelId, type YouTubeChannel } from "../blocks/youtube.js";
+import {
+  isVideoFile,
+  isYouTubeChannelId,
+  parseMediaSource,
+  type YouTubeChannel,
+} from "../blocks/youtube.js";
 import { Icon } from "./icons.js";
 
 /** Confere o canal no YouTube e devolve o ID `UC…` e o nome. Lança `Error` com mensagem para a pessoa. */
@@ -148,7 +153,7 @@ export function FieldInput({
     return (
       <ImageField
         field={field}
-        media={field.kind === "media"}
+        media={field.kind === "media" || field.key !== "favicon"}
         onChange={onChange}
         onUpload={onUpload}
         value={str}
@@ -265,15 +270,27 @@ function ImageField({
             }}
             type="button"
           >
-            {value &&
-            media &&
-            /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(value) ? (
+            {value && media && isVideoFile(value) ? (
               <video
                 className="sbe-thumb"
                 muted
                 preload="metadata"
                 src={value}
               />
+            ) : value && media && parseMediaSource(value) ? (
+              <span
+                className="sbe-thumb"
+                style={{
+                  alignItems: "center",
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                {(() => {
+                  const m = parseMediaSource(value);
+                  return m?.kind === "embed" ? `Vídeo do ${m.title}` : "Vídeo";
+                })()}
+              </span>
             ) : value ? (
               <img alt="" className="sbe-thumb" src={value} />
             ) : null}
@@ -318,7 +335,9 @@ function ImageField({
       <input
         onChange={e => onChange(e.target.value)}
         placeholder={
-          media ? "ou cole a URL da imagem/vídeo" : "ou cole a URL da imagem"
+          media
+            ? "ou cole a URL da imagem/vídeo (ou link do Instagram, TikTok, YouTube…)"
+            : "ou cole a URL da imagem"
         }
         type="text"
         value={value}

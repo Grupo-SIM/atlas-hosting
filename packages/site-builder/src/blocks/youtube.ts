@@ -105,3 +105,91 @@ export function backgroundVideoEmbed(input: string): string | null {
     ? `${PLAYER}/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1&modestbranding=1&rel=0`
     : null;
 }
+
+/** Mídia de um campo de imagem: arquivo de vídeo, ou link de rede social/YouTube/Vimeo que vira player. */
+export type MediaSource =
+  | { kind: "file"; src: string }
+  | { kind: "embed"; ratio: string; src: string; title: string };
+
+const VIDEO_FILE = /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i;
+export const isVideoFile = (url: string) => VIDEO_FILE.test(url.trim());
+
+const hostOf = (u: URL) =>
+  u.hostname.toLowerCase().replace(/^(www|m|mobile)\./, "");
+
+/**
+ * Reconhece o que não é imagem num campo de imagem: vídeo enviado (`.mp4`…), YouTube, Vimeo, Instagram
+ * (post, reel, tv), TikTok, Facebook (vídeo, reel, `fb.watch`) e X/Twitter. Imagem comum devolve `null`.
+ */
+export function parseMediaSource(input: string): MediaSource | null {
+  const value = input.trim();
+  if (!value) return null;
+  if (isVideoFile(value)) return { kind: "file", src: value };
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  if (!/^https?:$/.test(url.protocol)) return null;
+  const h = hostOf(url);
+  const parts = url.pathname.split("/").filter(Boolean);
+
+  if (h === "instagram.com" || h === "instagr.am") {
+    // /p/ID, /reel/ID, /tv/ID e /usuario/p/ID
+    const at = parts.findIndex(s => ["p", "reel", "reels", "tv"].includes(s));
+    const id = at >= 0 ? parts[at + 1] : undefined;
+    if (!id) return null;
+    const kind = parts[at] === "reels" ? "reel" : parts[at];
+    return {
+      kind: "embed",
+      ratio: kind === "p" ? "4/5" : "9/16",
+      src: `https://www.instagram.com/${kind}/${encodeURIComponent(id)}/embed/`,
+      title: "Instagram",
+    };
+  }
+  if (h === "tiktok.com") {
+    const at = parts.indexOf("video");
+    const id = at >= 0 ? parts[at + 1] : undefined;
+    if (!(id && /^\d+$/.test(id))) return null;
+    return {
+      kind: "embed",
+      ratio: "9/16",
+      src: `https://www.tiktok.com/embed/v2/${id}`,
+      title: "TikTok",
+    };
+  }
+  if (h === "facebook.com" || h === "fb.watch" || h === "fb.com") {
+    const isVideo =
+      h === "fb.watch" ||
+      url.searchParams.has("v") ||
+      parts.some(s => ["videos", "reel", "watch", "share"].includes(s));
+    if (!isVideo) return null;
+    return {
+      kind: "embed",
+      ratio: "16/9",
+      src: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(value)}&show_text=false`,
+      title: "Facebook",
+    };
+  }
+  if (h === "x.com" || h === "twitter.com") {
+    const at = parts.indexOf("status");
+    const id = at >= 0 ? parts[at + 1] : undefined;
+    if (!(id && /^\d+$/.test(id))) return null;
+    return {
+      kind: "embed",
+      ratio: "4/5",
+      src: `https://platform.twitter.com/embed/Tweet.html?id=${id}`,
+      title: "X",
+    };
+  }
+  const player = inlineVideoEmbed(value);
+  if (player)
+    return {
+      kind: "embed",
+      ratio: url.pathname.startsWith("/shorts/") ? "9/16" : "16/9",
+      src: player,
+      title: player.includes("vimeo") ? "Vimeo" : "YouTube",
+    };
+  return null;
+}

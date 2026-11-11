@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Category, Post, Site } from "../model/index.js";
 import type { RenderContext } from "./types.js";
+import { parseMediaSource } from "./youtube.js";
 
 const EXTERNAL = /^(?:[a-z][a-z0-9+.-]*:|#|\/\/)/i;
 
@@ -184,6 +185,32 @@ export function Img({
   src: string | null | undefined;
 }) {
   if (!src) return <div className={`sb-img-empty ${className ?? ""}`} />;
+  const media = parseMediaSource(src);
+  if (media?.kind === "file")
+    return (
+      <video
+        autoPlay
+        className={className}
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        src={media.src}
+      />
+    );
+  if (media?.kind === "embed")
+    return (
+      <iframe
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen
+        className={`sb-media-embed ${className ?? ""}`}
+        loading="lazy"
+        referrerPolicy="strict-origin-when-cross-origin"
+        src={media.src}
+        style={{ aspectRatio: media.ratio }}
+        title={alt || media.title}
+      />
+    );
   return <img alt={alt} className={className} loading="lazy" src={src} />;
 }
 

@@ -57,6 +57,8 @@ export const siteCss = `
 .sb h4{font-size:1.5rem}
 .sb p{margin:0 0 1em}
 .sb img{max-width:100%;display:block}
+.sb video{max-width:100%;display:block}
+.sb .sb-media-embed{display:block;width:100%;max-width:100%;height:auto;border:0;background:#000}
 .sb-block{position:relative}
 .sb-container{width:min(1400px,100% - 32px);margin-inline:auto;padding-block:56px}
 .sb-align-center{text-align:center}
