@@ -13,6 +13,7 @@ import { areaflixCss, areaflixVars, isAreaflix } from "./areaflix.js";
 import { atlasCss, atlasVars, isAtlas } from "./atlas.js";
 import { centralCss, centralVars, isCentral } from "./central.js";
 import { corteCss, corteVars, isCorte } from "./corte.js";
+import { diarioCss, diarioVars, isDiario } from "./diario.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { customFonts, fontFaceCss, fontStylesheet } from "./fonts.js";
 import { gatilhosCss, gatilhosVars, isGatilhos } from "./gatilhos.js";
@@ -130,6 +131,7 @@ export function SiteRenderer({
   const gatilhos = isGatilhos(site.theme);
   const corte = isCorte(site.theme);
   const viralpack = isViralpack(site.theme);
+  const diario = isDiario(site.theme);
   const grana = isGrana(site.theme);
 
   const ctx: RenderContext = {
@@ -179,6 +181,7 @@ export function SiteRenderer({
         gatilhos ? "sb-gm" : "",
         corte ? "sb-ac" : "",
         viralpack ? "sb-vp" : "",
+        diario ? "sb-dd" : "",
         grana ? "sb-gh" : "",
       ]
         .filter(Boolean)
@@ -211,6 +214,7 @@ export function SiteRenderer({
           ...(gatilhos ? gatilhosVars(site.theme) : {}),
           ...(corte ? corteVars(site.theme) : {}),
           ...(viralpack ? viralpackVars(site.theme) : {}),
+          ...(diario ? diarioVars(site.theme) : {}),
           ...(grana ? granaVars(site.theme) : {}),
         } as CSSProperties
       }
@@ -219,64 +223,66 @@ export function SiteRenderer({
         {fontFaceCss(customFonts(site.theme)) +
           (atlas
             ? siteCss + atlasCss
-            : grana
-              ? siteCss + granaCss
-              : viralpack
-                ? siteCss + viralpackCss
-                : corte
-                  ? siteCss + corteCss
-                  : gatilhos
-                    ? siteCss + gatilhosCss
-                    : resolvit
-                      ? siteCss + resolvitCss
-                      : seopack
-                        ? siteCss + seopackCss
-                        : instafan
-                          ? siteCss + instafanCss
-                          : presets
-                            ? siteCss + presetsCss
-                            : habilidades
-                              ? siteCss + habilidadesCss
-                              : outrolado
-                                ? siteCss + outroladoCss
-                                : pagatg
-                                  ? siteCss + pagatgCss
-                                  : sim
-                                    ? siteCss + simCss
-                                    : holofote
-                                      ? siteCss + holofoteCss
-                                      : raiz
-                                        ? siteCss + raizCss
-                                        : zyrion
-                                          ? siteCss + zyrionCss
-                                          : journal
-                                            ? siteCss + journalCss
-                                            : portal
-                                              ? siteCss + portalCss
-                                              : spy
-                                                ? siteCss + spyCss
-                                                : central
-                                                  ? siteCss + centralCss
-                                                  : market
-                                                    ? siteCss + marketplaceCss
-                                                    : margem
-                                                      ? siteCss + margemCss
-                                                      : seguidores
-                                                        ? siteCss +
-                                                          seguidoresCss
-                                                        : areaflix
+            : diario
+              ? siteCss + diarioCss
+              : grana
+                ? siteCss + granaCss
+                : viralpack
+                  ? siteCss + viralpackCss
+                  : corte
+                    ? siteCss + corteCss
+                    : gatilhos
+                      ? siteCss + gatilhosCss
+                      : resolvit
+                        ? siteCss + resolvitCss
+                        : seopack
+                          ? siteCss + seopackCss
+                          : instafan
+                            ? siteCss + instafanCss
+                            : presets
+                              ? siteCss + presetsCss
+                              : habilidades
+                                ? siteCss + habilidadesCss
+                                : outrolado
+                                  ? siteCss + outroladoCss
+                                  : pagatg
+                                    ? siteCss + pagatgCss
+                                    : sim
+                                      ? siteCss + simCss
+                                      : holofote
+                                        ? siteCss + holofoteCss
+                                        : raiz
+                                          ? siteCss + raizCss
+                                          : zyrion
+                                            ? siteCss + zyrionCss
+                                            : journal
+                                              ? siteCss + journalCss
+                                              : portal
+                                                ? siteCss + portalCss
+                                                : spy
+                                                  ? siteCss + spyCss
+                                                  : central
+                                                    ? siteCss + centralCss
+                                                    : market
+                                                      ? siteCss + marketplaceCss
+                                                      : margem
+                                                        ? siteCss + margemCss
+                                                        : seguidores
                                                           ? siteCss +
-                                                            areaflixCss
-                                                          : patrimonial
+                                                            seguidoresCss
+                                                          : areaflix
                                                             ? siteCss +
-                                                              patrimonialCss
-                                                            : motorista
+                                                              areaflixCss
+                                                            : patrimonial
                                                               ? siteCss +
-                                                                motoristaCss
-                                                              : vslmilionario
+                                                                patrimonialCss
+                                                              : motorista
                                                                 ? siteCss +
-                                                                  vslmilionarioCss
-                                                                : siteCss)}
+                                                                  motoristaCss
+                                                                : vslmilionario
+                                                                  ? siteCss +
+                                                                    vslmilionarioCss
+                                                                  : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}

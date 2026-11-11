@@ -7,6 +7,8 @@ import { atlasBlocks } from "./atlas.js";
 import { centralBlocks, Eyebrow } from "./central.js";
 import { corteBlocks } from "./corte.js";
 import { defineBlock } from "./define.js";
+import { diarioBlocks } from "./diario.js";
+import { diarioPageBlocks } from "./diario-pages.js";
 import { ebookBlocks } from "./ebook.js";
 import { gatilhosBlocks } from "./gatilhos.js";
 import { granaBlocks } from "./grana.js";
@@ -2442,6 +2444,8 @@ export const blockDefinitions: BlockDefinition[] = [
   ...zyrionHomeBlocks,
   ...zyrionPageBlocks,
   ...holofoteBlocks,
+  ...diarioBlocks,
+  ...diarioPageBlocks,
   ...holofotePageBlocks,
   ...seguidoresBlocks,
   ...raizBlocks,

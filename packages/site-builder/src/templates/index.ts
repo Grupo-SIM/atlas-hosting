@@ -6,6 +6,7 @@ import { blogViagens } from "./blog-viagens/index.js";
 import { centralMarketing } from "./central-marketing/index.js";
 import { controleMotorista } from "./controle-motorista/index.js";
 import { controlePatrimonial } from "./controle-patrimonial/index.js";
+import { diarioAberto } from "./diario-aberto/index.js";
 import { gatilhosMentais } from "./gatilhos-mentais/index.js";
 import { granaNaHora } from "./grana-na-hora/index.js";
 import { habilidadesComunicacao } from "./habilidades-comunicacao/index.js";
@@ -54,6 +55,7 @@ const templates: SiteTemplate[] = [
   seopack,
   zyrion,
   holofote,
+  diarioAberto,
   atlasHosting,
 ];
 

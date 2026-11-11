@@ -1,5 +1,6 @@
 import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
 import { CORTE_EXTRA_FONTS, isCorte } from "./corte.js";
+import { DIARIO_EXTRA_FONTS, isDiario } from "./diario.js";
 import { GATILHOS_EXTRA_FONTS, isGatilhos } from "./gatilhos.js";
 import { GRANA_EXTRA_FONTS, isGrana } from "./grana.js";
 import { HABILIDADES_EXTRA_FONTS, isHabilidades } from "./habilidades.js";
@@ -32,6 +33,7 @@ export const SITE_FONTS = [
   "Manrope",
   "DM Sans",
   "Space Grotesk",
+  "Lora",
   "Inter",
   "Montserrat",
   "Orbitron",
@@ -81,7 +83,11 @@ const FONT_WEIGHTS: Record<string, string> = {
  * Sem entrada aqui a URL é a de sempre (só `wght`), então as fontes dos outros templates não mudam.
  * O Google exige as tuplas em ordem crescente (`0,…` antes de `1,…`).
  */
-export const FONT_ITALIC: Record<string, string> = {};
+export const FONT_ITALIC: Record<string, string> = {
+  // Lora só tem 400–700; o corpo do post e o copyright do Diário Aberto usam o itálico de verdade.
+  Lora: "0,400;0,500;0,600;0,700;1,400",
+  "Noto Serif Display": "1,300",
+};
 
 export const fontStack = (name: string) => `'${name}', sans-serif`;
 
@@ -207,6 +213,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isPagaTg(theme))
     for (const extra of PAGATG_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isDiario(theme))
+    for (const extra of DIARIO_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   const families = names
     .map(n => {
