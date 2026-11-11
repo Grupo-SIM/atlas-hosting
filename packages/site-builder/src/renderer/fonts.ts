@@ -1,4 +1,5 @@
 import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
+import { CORTE_EXTRA_FONTS, isCorte } from "./corte.js";
 import { GATILHOS_EXTRA_FONTS, isGatilhos } from "./gatilhos.js";
 import { HABILIDADES_EXTRA_FONTS, isHabilidades } from "./habilidades.js";
 import { INSTAFAN_EXTRA_FONTS, isInstafan } from "./instafan.js";
@@ -29,7 +30,6 @@ export const SITE_FONTS = [
   "Manrope",
   "DM Sans",
   "Space Grotesk",
-  "Lora",
   "Inter",
   "Montserrat",
   "Orbitron",
@@ -63,12 +63,23 @@ const FONT_WEIGHTS: Record<string, string> = {
   "Cherry Cream Soda": "400",
   Content: "400;700",
   Electrolize: "400",
+  Hind: "300;400;500;600;700",
   Montserrat: "300;400;500;600;700;800;900",
   Orbitron: "400;500;600;700;800;900",
+  "Playfair Display": "400;500;600;700;800;900",
   "Plus Jakarta Sans": "300;400;500;600;700",
   Rajdhani: "300;400;500;600;700",
   Raleway: "200;300;400;500;600;700;800;900",
+  // O Google não tem Titillium Web 500 (nem 400 no pedido do original): pedir peso inexistente derruba o CSS inteiro.
+  "Titillium Web": "200;300",
 };
+
+/**
+ * Fontes que precisam de itálico: pares `ital,wght` (`0` = reta, `1` = itálica) pedidos no lugar da lista de pesos.
+ * Sem entrada aqui a URL é a de sempre (só `wght`), então as fontes dos outros templates não mudam.
+ * O Google exige as tuplas em ordem crescente (`0,…` antes de `1,…`).
+ */
+export const FONT_ITALIC: Record<string, string> = {};
 
 export const fontStack = (name: string) => `'${name}', sans-serif`;
 
@@ -174,6 +185,9 @@ export function fontStylesheet(site: {
   if (isInstafan(theme))
     for (const extra of INSTAFAN_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
+  if (isCorte(theme))
+    for (const extra of CORTE_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
   if (isGatilhos(theme))
     for (const extra of GATILHOS_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
@@ -187,10 +201,13 @@ export function fontStylesheet(site: {
     for (const extra of PAGATG_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   const families = names
-    .map(
-      n =>
-        `family=${n.replaceAll(" ", "+")}:wght@${FONT_WEIGHTS[n] ?? "300;400;500;600;700;900"}`
-    )
+    .map(n => {
+      const family = n.replaceAll(" ", "+");
+      const italic = FONT_ITALIC[n];
+      return italic
+        ? `family=${family}:ital,wght@${italic}`
+        : `family=${family}:wght@${FONT_WEIGHTS[n] ?? "300;400;500;600;700;900"}`;
+    })
     .join("&");
   return `https://fonts.googleapis.com/css2?${families}&display=swap`;
 }

@@ -5,8 +5,10 @@ import { AdBox, adBlocks, adItemFields, adItemsSchema } from "./ads.js";
 import { areaflixBlocks } from "./areaflix.js";
 import { atlasBlocks } from "./atlas.js";
 import { centralBlocks, Eyebrow } from "./central.js";
+import { corteBlocks } from "./corte.js";
 import { defineBlock } from "./define.js";
 import { ebookBlocks } from "./ebook.js";
+import { gatilhosBlocks } from "./gatilhos.js";
 import { habilidadesBlocks } from "./habilidades.js";
 import {
   categoryOf,
@@ -44,7 +46,6 @@ import { seopackBlocks } from "./seopack.js";
 import { simBlocks } from "./sim.js";
 import { simPageBlocks } from "./sim-pages.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
-import { gatilhosBlocks } from "./gatilhos.js";
 import { vslmilionarioBlocks } from "./vslmilionario.js";
 import { isYouTubeChannelId, latestVideoEmbed, videoEmbed } from "./youtube.js";
 import { zyrionBlocks } from "./zyrion.js";
@@ -2452,6 +2453,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...instafanBlocks,
   ...vslmilionarioBlocks,
   ...gatilhosBlocks,
+  ...corteBlocks,
   ...atlasBlocks,
   ...adBlocks,
   ...scrollTopBlocks,

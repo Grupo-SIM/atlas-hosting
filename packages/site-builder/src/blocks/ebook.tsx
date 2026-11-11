@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { z } from "zod";
 import { cssUrl } from "../renderer/central.js";
 import { defineBlock } from "./define.js";
@@ -26,6 +26,21 @@ import type { BlockDefinition } from "./types.js";
  *   lista 6, botão 7).
  * - `ebookFaq`: `columns` (1|2, a lista se divide ao meio), `itemStyle: "cards"` (cartão com borda, raio e degradê, seta
  *   para baixo/cima), `iconSide` (esquerda|direita), `eyebrow` (sobretítulo) e `headingFont`.
+ * - Página "Academia do Corte": `ebookOffer` → `ribbon`/`ribbonColor` (fita "MELHOR ESCOLHA", **último** filho do cartão,
+ *   absoluta, não desloca os caminhos de `fx`), `cashColor`, `titleSize`, `fromSize`, `glowColor`, `cardBgTo` (degradê
+ *   vertical), `bulletsStyle: "plain"` + `bulletIcon: "square"` (lista à esquerda sem divisórias) e `buttonStyle:
+ *   "solid"` (botão claro, `buttonText`, `buttonGlow`); `ebookFaq` → `titleColor`, `openColor` e **negrito simples**
+ *   nas respostas (`**texto**`).
+ * - Página "Viral Pack": `ebookOffer` → `variant: "texture"` (cartão com imagem de fundo `cardImage` + véu preto `cardVeil`, raio 5px,
+ *   preço em `priceSize`) e `buttonStyle: "outline"` (contorno 1px na cor `buttonFrom`; no hover borda e texto em
+ *   `buttonText` e fundo `buttonGlow`); `ebookFaq` → `layout: "split"` (título + `intro` à esquerda, lista à direita; só
+ *   nesse modo o conteúdo ganha `div.eb-faq-split` > `div.eb-faq-side` + lista) e `itemStyle: "solid"` (cartões cheios
+ *   `cardColor`, abertos em `openColor`, texto `cardText`, seta que vira para cima); `ebookFooter` → `padTop`/`padBottom`.
+ * - Página "Consultoria Financeira": `ebookFaq` → `itemStyle: "boxed"` (só a **pergunta** é uma caixa — fundo `cardColor`, borda
+ *   `lineColor`, que vira `openLine` quando aberta —, com o ícone +/− de sempre; a resposta fica **fora** da caixa, logo
+ *   abaixo, sem fundo; o `details` ganha `eb-boxed`) e `openLine`. Nenhuma outra opção nova; `ebookOffer` e `ebookFooter`
+ *   são usados só com props que já existiam (o `ebookOffer` "glow" com `airy`, o rodapé em `fontFamily`/`fontSize`).
+ * - O **título** do `ebookFaq` aceita `*trecho*` (vira `<em>`) e quebra de linha; sem eles o HTML é o de sempre.
  * - `ebookFooter`: `veilColor`/`veilOpacity` (véu radial transparente → cor, por cima do fundo), `divider` (linha de largura total acima do texto), `bgImage` (imagem de fundo no topo), `roomy`
  *   (espaçamento 3em/2em do Elementor) e `fontSize`.
  */
@@ -43,6 +58,38 @@ const cls = (...names: (string | false | undefined)[]) =>
 const safeColor = (v: string, d: string) => (COLOR.test(v) ? v : d);
 const safeFont = (v: string, d: string) => (FONT.test(v) ? v : d);
 
+/** Negrito simples nas respostas: `**texto**` vira `<strong>`. Sem marcação, devolve o texto como veio. */
+function richText(text: string): ReactNode {
+  if (!text.includes("**")) return text;
+  return (
+    text
+      .split("**")
+      // biome-ignore lint/suspicious/noArrayIndexKey: a posição é a identidade do trecho
+      .map((t, i) => (i % 2 ? <strong key={i}>{t}</strong> : t))
+  );
+}
+
+/**
+ * Título com `*trecho*` em `<em>` e `\n` como quebra de linha (o CSS da variante decide o que o `em` muda). Sem nenhum dos
+ * dois, devolve o texto como veio, então o HTML dos títulos comuns não muda.
+ */
+function titleNodes(text: string): ReactNode {
+  if (!(text.includes("*") || text.includes("\n"))) return text;
+  return text.split("\n").map((line, l) => (
+    // biome-ignore lint/suspicious/noArrayIndexKey: a posição é a identidade da linha
+    <span key={l} style={{ display: "block" }}>
+      {line.split(/(\*[^*\n]+\*)/).map((t, i) =>
+        // biome-ignore lint/suspicious/noArrayIndexKey: a posição é a identidade do trecho
+        i % 2 ? <em key={i}>{t.slice(1, -1)}</em> : t
+      )}
+    </span>
+  ));
+}
+
+/** Fundo do cartão "textura": véu preto (`veil`%) por cima da imagem, cobrindo o cartão. */
+const cardTexture = (image: string, veil: number) =>
+  `linear-gradient(rgba(0,0,0,${veil / 100}), rgba(0,0,0,${veil / 100}))${image ? `, ${cssUrl(image)} center / cover no-repeat` : ""}`;
+
 /* ───────────────────────── oferta ───────────────────────── */
 
 const ebookOffer = defineBlock(
@@ -50,16 +97,28 @@ const ebookOffer = defineBlock(
     accent: color("#DE41FF"),
     airy: yesNo("no"),
     borderColor: color("#FFFFFF2B"),
+    bulletIcon: z.enum(["circle", "square"]).default("circle").catch("circle"),
     bullets: str(),
+    bulletsStyle: z.enum(["lines", "plain"]).default("lines").catch("lines"),
     buttonFrom: color("#DE41FF"),
+    buttonGlow: color(""),
     buttonLabel: str("ADQUIRIR AGORA"),
     buttonShape: z.enum(["rect", "pill"]).default("rect").catch("rect"),
+    buttonStyle: z
+      .enum(["gradient", "solid", "outline"])
+      .default("gradient")
+      .catch("gradient"),
+    buttonText: color("#000000"),
     buttonTo: color("#023131"),
     buttonUrl: str(),
     cardBg: color("rgba(0,0,0,.5)"),
+    cardBgTo: color(""),
+    cardImage: str(),
     cardTitle: str("OFERTA ESPECIAL"),
+    cardVeil: int(0, 100, 30),
     cashback: str("100% de cashback instantaneamente!"),
     cashbackStyle: z.enum(["text", "marker"]).default("text").catch("text"),
+    cashColor: color(""),
     cashSize: int(0, 80, 0),
     discount: str(),
     dividerColor: color("#F8F8F8"),
@@ -67,19 +126,25 @@ const ebookOffer = defineBlock(
     from: str("R$37,00"),
     fromInline: yesNo("no"),
     fromLabel: str("DE"),
+    fromSize: int(0, 80, 0),
+    glowColor: color(""),
     padBottom: int(0, 400, 0),
     padBottomMobile: int(0, 400, 0),
     padBottomTablet: int(0, 400, 0),
     price: str("R$24,90"),
     priceLabel: str("POR APENAS"),
+    priceSize: int(0, 200, 0),
     pullUp: int(0, 400, 0),
+    ribbon: str(),
+    ribbonColor: color("#FF0000"),
     sectionBg: color(""),
     sectionImage: str(),
     stamps: str(),
     textColor: color("#FFFFFF"),
     titleColor: color(""),
     titleFont: font(""),
-    variant: z.enum(["glow", "light"]).default("glow").catch("glow"),
+    titleSize: int(0, 100, 0),
+    variant: z.enum(["glow", "light", "texture"]).default("glow").catch("glow"),
     veilFrom: color(""),
     veilTo: color(""),
   }),
@@ -124,7 +189,23 @@ const ebookOffer = defineBlock(
         options: [
           { label: "Escuro com brilho", value: "glow" },
           { label: "Claro com borda fina", value: "light" },
+          { label: "Com imagem de fundo (textura)", value: "texture" },
         ],
+      },
+      {
+        key: "cardImage",
+        kind: "image",
+        label: "Estilo textura: imagem de fundo do cartão",
+      },
+      {
+        key: "cardVeil",
+        kind: "number",
+        label: "Estilo textura: véu preto sobre a imagem (%)",
+      },
+      {
+        key: "priceSize",
+        kind: "number",
+        label: "Tamanho do preço (px, 0 = padrão)",
       },
       {
         key: "fromInline",
@@ -140,6 +221,74 @@ const ebookOffer = defineBlock(
         key: "bullets",
         kind: "textarea",
         label: "Lista com check (um item por linha)",
+      },
+      {
+        key: "bulletsStyle",
+        kind: "select",
+        label: "Estilo da lista",
+        options: [
+          { label: "Centralizada, com divisórias", value: "lines" },
+          { label: "À esquerda, sem divisórias", value: "plain" },
+        ],
+      },
+      {
+        key: "bulletIcon",
+        kind: "select",
+        label: "Ícone da lista",
+        options: [
+          { label: "Círculo com check", value: "circle" },
+          { label: "Quadrado com check", value: "square" },
+        ],
+      },
+      { key: "ribbon", kind: "text", label: "Fita no topo (vazio = sem fita)" },
+      { key: "ribbonColor", kind: "color", label: "Cor da fita" },
+      {
+        key: "cashColor",
+        kind: "color",
+        label: "Cor da frase de destaque (vazio = a de destaque)",
+      },
+      {
+        key: "titleSize",
+        kind: "number",
+        label: "Tamanho do título do cartão (px, 0 = padrão)",
+      },
+      {
+        key: "fromSize",
+        kind: "number",
+        label: "Tamanho do 'de/por' (px, 0 = padrão)",
+      },
+      {
+        key: "glowColor",
+        kind: "color",
+        label: "Cor do brilho interno (vazio = a de destaque)",
+      },
+      {
+        key: "cardBgTo",
+        kind: "color",
+        label: "Fundo do cartão: cor da base (degradê vertical; vazio = sem)",
+      },
+      {
+        key: "buttonStyle",
+        kind: "select",
+        label: "Estilo do botão",
+        options: [
+          { label: "Degradê (padrão)", value: "gradient" },
+          { label: "Sólido claro (cor de cima + texto)", value: "solid" },
+          {
+            label: "Contorno (cor de cima = borda e texto)",
+            value: "outline",
+          },
+        ],
+      },
+      {
+        key: "buttonText",
+        kind: "color",
+        label: "Botão sólido: cor do texto · contorno: cor no hover",
+      },
+      {
+        key: "buttonGlow",
+        kind: "color",
+        label: "Botão sólido: cor do brilho · contorno: fundo no hover",
       },
       {
         key: "buttonShape",
@@ -242,8 +391,13 @@ const ebookOffer = defineBlock(
             "eb-offer",
             `eb-cash-${p.cashbackStyle}`,
             p.variant === "light" && "eb-light",
+            p.variant === "texture" && "eb-texture",
             hasSec && "has-sec",
-            p.airy === "yes" && "eb-airy"
+            p.airy === "yes" && "eb-airy",
+            p.bulletsStyle === "plain" && "eb-list-plain",
+            p.buttonStyle === "solid" && "eb-btn-solid",
+            p.buttonStyle === "outline" && "eb-btn-outline",
+            p.ribbon && "eb-has-ribbon"
           )}
           style={
             {
@@ -266,6 +420,36 @@ const ebookOffer = defineBlock(
                 ? { "--eb-title-color": safeColor(p.titleColor, "#FFFFFF") }
                 : {}),
               ...(p.cashSize ? { "--eb-cash-fs": `${p.cashSize}px` } : {}),
+              ...(p.cashColor
+                ? { "--eb-cash-color": safeColor(p.cashColor, "#FFFFFF") }
+                : {}),
+              ...(p.titleSize ? { "--eb-title-fs": `${p.titleSize}px` } : {}),
+              ...(p.fromSize ? { "--eb-from-fs": `${p.fromSize}px` } : {}),
+              ...(p.glowColor
+                ? { "--eb-glow": safeColor(p.glowColor, "#FFFFFF") }
+                : {}),
+              ...(p.cardBgTo
+                ? {
+                    "--eb-card": `linear-gradient(180deg, ${safeColor(p.cardBg, "#000000")} 0%, ${safeColor(p.cardBgTo, "#000000")} 100%)`,
+                  }
+                : {}),
+              ...(p.variant === "texture"
+                ? {
+                    "--eb-card": cardTexture(p.cardImage, p.cardVeil),
+                  }
+                : {}),
+              ...(p.priceSize ? { "--eb-price-fs": `${p.priceSize}px` } : {}),
+              ...(p.buttonStyle === "solid" || p.buttonStyle === "outline"
+                ? {
+                    "--eb-btn-fg": safeColor(p.buttonText, "#000000"),
+                    ...(p.buttonGlow
+                      ? { "--eb-btn-glow": safeColor(p.buttonGlow, "#FFFFFF") }
+                      : {}),
+                  }
+                : {}),
+              ...(p.ribbon
+                ? { "--eb-ribbon": safeColor(p.ribbonColor, "#FF0000") }
+                : {}),
               ...(hasSec
                 ? {
                     "--eb-pb": `${p.padBottom}px`,
@@ -316,7 +500,11 @@ const ebookOffer = defineBlock(
                       className="eb-check"
                       viewBox="0 0 24 24"
                     >
-                      <circle cx="12" cy="12" r="10" />
+                      {p.bulletIcon === "square" ? (
+                        <rect height="18" rx="2" width="18" x="3" y="3" />
+                      ) : (
+                        <circle cx="12" cy="12" r="10" />
+                      )}
                       <path d="m8 12.5 2.8 2.8L16 9.5" />
                     </svg>
                     <span>{t}</span>
@@ -339,6 +527,7 @@ const ebookOffer = defineBlock(
                 src={p.stamps}
               />
             ) : null}
+            {p.ribbon ? <span className="eb-ribbon">{p.ribbon}</span> : null}
           </div>
         </section>
       );
@@ -354,31 +543,45 @@ const ebookFaq = defineBlock(
     accent: color("#DE41FF"),
     answerColor: color("#B8BDC2"),
     bg: color("#0B0B0B"),
+    cardColor: color(""),
+    cardText: color(""),
     columns: z.coerce.number().int().min(1).max(2).default(1).catch(1),
     eyebrow: str(),
     fontFamily: font("'Roboto', sans-serif"),
     headingFont: font(""),
     iconSide: z.enum(["left", "right"]).default("left").catch("left"),
-    itemStyle: z.enum(["lines", "cards"]).default("lines").catch("lines"),
+    intro: str(),
+    itemStyle: z
+      .enum(["lines", "cards", "solid", "boxed"])
+      .default("lines")
+      .catch("lines"),
     items: z
       .array(z.object({ answer: str(), question: str() }))
       .default([])
       .catch([]),
+    layout: z.enum(["stack", "split"]).default("stack").catch("stack"),
     lineColor: color("#D5D8DC"),
     minHeight: int(0, 3000, 600),
     minHeightMobile: int(0, 3000, 553),
     minHeightTablet: int(0, 3000, 370),
+    openColor: color(""),
     openFirst: yesNo("yes"),
+    openLine: color(""),
     padBottom: int(0, 300, 0),
     padTop: int(0, 300, 0),
     textColor: color("#FCFCFC"),
     title: str("DÚVIDAS FREQUENTES"),
+    titleColor: color(""),
     titleSize: int(0, 100, 0),
   }),
   {
     fields: [
       { key: "eyebrow", kind: "text", label: "Sobretítulo (opcional)" },
-      { key: "title", kind: "text", label: "Título" },
+      {
+        key: "title",
+        kind: "textarea",
+        label: "Título (*itálico* e quebra de linha opcionais)",
+      },
       {
         key: "columns",
         kind: "select",
@@ -395,7 +598,41 @@ const ebookFaq = defineBlock(
         options: [
           { label: "Linhas (+/−)", value: "lines" },
           { label: "Cartões com seta", value: "cards" },
+          { label: "Cartões cheios com seta (cor própria)", value: "solid" },
+          {
+            label: "Caixas só na pergunta, resposta solta embaixo (+/−)",
+            value: "boxed",
+          },
         ],
+      },
+      {
+        key: "layout",
+        kind: "select",
+        label: "Disposição",
+        options: [
+          { label: "Título em cima, lista embaixo", value: "stack" },
+          { label: "Título e texto ao lado da lista", value: "split" },
+        ],
+      },
+      {
+        key: "intro",
+        kind: "textarea",
+        label: "Texto abaixo do título (opcional)",
+      },
+      {
+        key: "cardColor",
+        kind: "color",
+        label: "Cartões cheios e caixas: cor de fundo da pergunta",
+      },
+      {
+        key: "openLine",
+        kind: "color",
+        label: "Caixas: cor da borda da pergunta aberta",
+      },
+      {
+        key: "cardText",
+        kind: "color",
+        label: "Cartões cheios: cor do texto da pergunta",
       },
       {
         key: "iconSide",
@@ -418,7 +655,11 @@ const ebookFaq = defineBlock(
       {
         itemFields: [
           { key: "question", kind: "text", label: "Pergunta" },
-          { key: "answer", kind: "textarea", label: "Resposta" },
+          {
+            key: "answer",
+            kind: "textarea",
+            label: "Resposta (**texto** = negrito)",
+          },
         ],
         key: "items",
         kind: "list",
@@ -430,6 +671,16 @@ const ebookFaq = defineBlock(
         label: "Cor de destaque (título e ícone)",
       },
       { key: "textColor", kind: "color", label: "Cor das perguntas" },
+      {
+        key: "titleColor",
+        kind: "color",
+        label: "Cor do título (vazio = a de destaque)",
+      },
+      {
+        key: "openColor",
+        kind: "color",
+        label: "Cor da pergunta aberta (vazio = a de destaque)",
+      },
       { key: "answerColor", kind: "color", label: "Cor das respostas" },
       { key: "lineColor", kind: "color", label: "Cor das bordas" },
       { key: "bg", kind: "color", label: "Cor de fundo" },
@@ -473,18 +724,71 @@ const ebookFaq = defineBlock(
     group: "content",
     label: "Perguntas frequentes de e-book",
     render: p => {
-      const cards = p.itemStyle === "cards";
+      const solid = p.itemStyle === "solid";
+      const boxed = p.itemStyle === "boxed";
+      const cards = p.itemStyle === "cards" || solid;
+      const split = p.layout === "split";
       const half = Math.ceil(p.items.length / 2);
       const cols =
         p.columns === 2
           ? [p.items.slice(0, half), p.items.slice(half)]
           : [p.items];
-      const title = <h2 className="eb-faq-h">{p.title}</h2>;
+      const title = <h2 className="eb-faq-h">{titleNodes(p.title)}</h2>;
+      const intro = p.intro ? <p className="eb-faq-intro">{p.intro}</p> : null;
+      const list = (
+        <div className={cls("eb-faq-list", p.columns === 2 && "eb-cols")}>
+          {cols.map((items, c) => {
+            const rows = items.map((it, i) => (
+              <details
+                className="eb-faq-item"
+                // biome-ignore lint/suspicious/noArrayIndexKey: pergunta + posição identificam o item
+                key={it.question + i}
+                name={p.columns === 2 ? `sb-eb-faq-${c}` : "sb-eb-faq"}
+                open={i === 0 && p.openFirst === "yes"}
+              >
+                <summary>
+                  {cards ? (
+                    <svg
+                      aria-hidden="true"
+                      className="eb-faq-chev"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  ) : (
+                    <svg
+                      aria-hidden="true"
+                      className="eb-faq-ic"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M5 12h14" />
+                      <path className="v" d="M12 5v14" />
+                    </svg>
+                  )}
+                  <span>{it.question}</span>
+                </summary>
+                <div className="eb-faq-a">{richText(it.answer)}</div>
+              </details>
+            ));
+            return p.columns === 2 ? (
+              // biome-ignore lint/suspicious/noArrayIndexKey: a coluna é identificada pela posição
+              <div className="eb-faq-col" key={c}>
+                {rows}
+              </div>
+            ) : (
+              rows
+            );
+          })}
+        </div>
+      );
       return (
         <section
           className={cls(
             "eb-faq",
             cards && "eb-cards",
+            solid && "eb-solid",
+            boxed && "eb-boxed",
+            split && "eb-split",
             p.iconSide === "right" && "eb-icon-right"
           )}
           style={
@@ -502,62 +806,48 @@ const ebookFaq = defineBlock(
                 ? { "--eb-title-font": safeFont(p.headingFont, "inherit") }
                 : {}),
               ...(p.titleSize ? { "--eb-h-fs": `${p.titleSize}px` } : {}),
+              ...(p.titleColor
+                ? { "--eb-faq-title": safeColor(p.titleColor, "#FFFFFF") }
+                : {}),
+              ...(p.openColor
+                ? { "--eb-open": safeColor(p.openColor, "#FFFFFF") }
+                : {}),
+              ...((solid || boxed) && p.cardColor
+                ? { "--eb-card-bg": safeColor(p.cardColor, "#FFA33E") }
+                : {}),
+              ...(boxed && p.openLine
+                ? { "--eb-open-line": safeColor(p.openLine, "#0EE6FF36") }
+                : {}),
+              ...(solid && p.cardText
+                ? { "--eb-card-fg": safeColor(p.cardText, "#111111") }
+                : {}),
               ...(p.padTop ? { "--eb-pt": `${p.padTop}px` } : {}),
               ...(p.padBottom ? { "--eb-pbm": `${p.padBottom}px` } : {}),
             } as CSSProperties
           }
         >
-          {p.eyebrow ? (
-            <div className="eb-faq-head">
-              <span className="eb-faq-eyebrow">{p.eyebrow}</span>
-              {title}
+          {split ? (
+            <div className="eb-faq-split">
+              <div className="eb-faq-side">
+                {title}
+                {intro}
+              </div>
+              {list}
             </div>
           ) : (
-            title
-          )}
-          <div className={cls("eb-faq-list", p.columns === 2 && "eb-cols")}>
-            {cols.map((items, c) => {
-              const rows = items.map((it, i) => (
-                <details
-                  className="eb-faq-item"
-                  key={it.question + i}
-                  name={p.columns === 2 ? `sb-eb-faq-${c}` : "sb-eb-faq"}
-                  open={i === 0 && p.openFirst === "yes"}
-                >
-                  <summary>
-                    {cards ? (
-                      <svg
-                        aria-hidden="true"
-                        className="eb-faq-chev"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="m6 9 6 6 6-6" />
-                      </svg>
-                    ) : (
-                      <svg
-                        aria-hidden="true"
-                        className="eb-faq-ic"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M5 12h14" />
-                        <path className="v" d="M12 5v14" />
-                      </svg>
-                    )}
-                    <span>{it.question}</span>
-                  </summary>
-                  <div className="eb-faq-a">{it.answer}</div>
-                </details>
-              ));
-              return p.columns === 2 ? (
-                // biome-ignore lint/suspicious/noArrayIndexKey: a coluna é identificada pela posição
-                <div className="eb-faq-col" key={c}>
-                  {rows}
+            <>
+              {p.eyebrow ? (
+                <div className="eb-faq-head">
+                  <span className="eb-faq-eyebrow">{p.eyebrow}</span>
+                  {title}
                 </div>
               ) : (
-                rows
-              );
-            })}
-          </div>
+                title
+              )}
+              {intro}
+              {list}
+            </>
+          )}
         </section>
       );
     },
@@ -576,6 +866,8 @@ const ebookFooter = defineBlock(
     dividerColor: color("#FFFFFF2B"),
     fontFamily: font(""),
     fontSize: int(0, 40, 0),
+    padBottom: int(0, 300, 0),
+    padTop: int(0, 300, 0),
     roomy: yesNo("no"),
     textColor: color("#FFFFFF"),
     textMargin: int(0, 200, 0),
@@ -624,6 +916,16 @@ const ebookFooter = defineBlock(
       },
       { key: "dividerColor", kind: "color", label: "Cor da linha divisória" },
       {
+        key: "padTop",
+        kind: "number",
+        label: "Espaço acima do texto (px, 0 = padrão)",
+      },
+      {
+        key: "padBottom",
+        kind: "number",
+        label: "Espaço abaixo do texto (px, 0 = padrão)",
+      },
+      {
         key: "roomy",
         kind: "select",
         label: "Espaçamento",
@@ -641,7 +943,8 @@ const ebookFooter = defineBlock(
           "eb-foot",
           p.bgImage && "has-img",
           p.roomy === "yes" && "roomy",
-          p.veilColor && "has-veil"
+          p.veilColor && "has-veil",
+          (p.padTop > 0 || p.padBottom > 0) && "has-pad"
         )}
         style={
           {
@@ -658,6 +961,8 @@ const ebookFooter = defineBlock(
               ? { "--eb-ff": safeFont(p.fontFamily, "inherit") }
               : {}),
             ...(p.textMargin ? { "--eb-tm": `${p.textMargin}px` } : {}),
+            ...(p.padTop ? { "--eb-fpt": `${p.padTop}px` } : {}),
+            ...(p.padBottom ? { "--eb-fpb": `${p.padBottom}px` } : {}),
             ...(p.fontSize ? { "--eb-fs": `${p.fontSize}px` } : {}),
             ...(p.divider === "yes"
               ? { "--eb-div": safeColor(p.dividerColor, "#FFFFFF2B") }

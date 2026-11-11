@@ -1,4 +1,5 @@
 import type { SiteTemplate, TemplateMeta } from "../model/index.js";
+import { academiaDoCorte } from "./academia-do-corte/index.js";
 import { areaflix } from "./areaflix/index.js";
 import { atlasHosting } from "./atlas-hosting/index.js";
 import { blogViagens } from "./blog-viagens/index.js";
@@ -45,6 +46,7 @@ const templates: SiteTemplate[] = [
   instafanFortune,
   vslMilionario,
   gatilhosMentais,
+  academiaDoCorte,
   seopack,
   zyrion,
   holofote,
