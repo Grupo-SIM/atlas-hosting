@@ -1726,7 +1726,7 @@ const newsFeed = defineBlock(
         key: "adItems",
         kind: "list",
         label:
-          "Anúncio abaixo da coluna lateral (imagens/vídeos; só com Anúncios ligados)",
+          "Mídia só deste anúncio lateral (vazio = usa o Espaço publicitário 2, igual em todo o site; só com Anúncios ligados)",
       },
       { key: "adLink", kind: "url", label: "Anúncio lateral — link" },
       {

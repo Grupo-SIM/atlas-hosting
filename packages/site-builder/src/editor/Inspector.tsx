@@ -719,8 +719,9 @@ export function Inspector({
             </div>
             <p className="sbe-hint">
               Liga os espaços de anúncio do template. Depois clique num espaço
-              para enviar imagens ou vídeos, ou configure abaixo os anúncios que
-              valem para o site inteiro.
+              para enviar mídia só dele, ou configure abaixo o Espaço
+              publicitário 1 (faixas) e o 2 (lateral): alterar um muda todos os
+              espaços do mesmo número.
             </p>
             {site.theme.ads === "on"
               ? (["banner", "side"] as const).map(kind => {
@@ -747,8 +748,8 @@ export function Inspector({
                     >
                       <h4 className="sbe-h">
                         {kind === "banner"
-                          ? "Anúncios do site — faixa larga (topo)"
-                          : "Anúncios do site — coluna lateral"}
+                          ? "Espaço publicitário 1 — faixas largas (topo), todas as páginas"
+                          : "Espaço publicitário 2 — coluna lateral direita, todas as páginas"}
                       </h4>
                       <FieldInput
                         field={{

@@ -112,7 +112,10 @@ export function AdBox({
 
   const inner =
     media.length === 0 ? (
-      <div className="sb-ad-ph">Espaço de anúncio — envie imagem ou vídeo</div>
+      <div className="sb-ad-ph">
+        Espaço publicitário {size === "banner" ? 1 : 2} — envie a mídia em Tema
+        → Anúncios (vale para todos os espaços {size === "banner" ? "1" : "2"})
+      </div>
     ) : (
       media.map((item, i) =>
         isVideoUrl(item.src) ? (
@@ -186,7 +189,7 @@ const adSlot = defineBlock(
         key: "items",
         kind: "list",
         label:
-          "Imagens e vídeos deste espaço (vazio = usa os anúncios do site)",
+          "Mídia só deste espaço (vazio = usa o Espaço publicitário 1 se for faixa, ou o 2 se for lateral/quadrado; igual em todo o site)",
       },
       {
         key: "seconds",
