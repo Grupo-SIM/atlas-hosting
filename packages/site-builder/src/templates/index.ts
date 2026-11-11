@@ -4,6 +4,7 @@ import { areaflix } from "./areaflix/index.js";
 import { atlasHosting } from "./atlas-hosting/index.js";
 import { blogViagens } from "./blog-viagens/index.js";
 import { centralMarketing } from "./central-marketing/index.js";
+import { consultoriaFinanceira } from "./consultoria-financeira/index.js";
 import { controleMotorista } from "./controle-motorista/index.js";
 import { controlePatrimonial } from "./controle-patrimonial/index.js";
 import { diarioAberto } from "./diario-aberto/index.js";
@@ -52,6 +53,7 @@ const templates: SiteTemplate[] = [
   academiaDoCorte,
   viralPack,
   granaNaHora,
+  consultoriaFinanceira,
   seopack,
   zyrion,
   holofote,

@@ -42,3 +42,27 @@ describe("fontStylesheet", () => {
     expect(themeFont({ fontBody: "'Raleway', sans-serif" })).toBe("Raleway");
   });
 });
+
+describe("fontStylesheet: itálico por fonte", () => {
+  test("a variante consultoria pede Noto Serif Display em itálico 300 e Titillium sem o peso 500", () => {
+    const url = fontStylesheet({
+      theme: { fontBody: "'Roboto', sans-serif", variant: "consultoria" },
+    });
+    expect(url).toContain("family=Noto+Serif+Display:ital,wght@1,300");
+    expect(url).toContain("family=Titillium+Web:wght@200;300&");
+    expect(url).toContain("family=Montserrat:wght@300;400;500;600;700;800;900");
+  });
+
+  test("tema sem itálico: a URL continua só com wght", () => {
+    const url = fontStylesheet({
+      theme: {
+        fontBody: "'Roboto', sans-serif",
+        fontHeading: "'Orbitron', sans-serif",
+        variant: "gatilhos",
+      },
+    });
+    expect(url).not.toContain("ital");
+    expect(url).toContain("family=Roboto:wght@300;400;500;600;700;900");
+    expect(url).toContain("family=Orbitron:wght@400;500;600;700;800;900");
+  });
+});

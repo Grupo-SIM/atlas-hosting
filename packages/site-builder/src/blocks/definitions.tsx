@@ -5,6 +5,7 @@ import { AdBox, adBlocks, adItemFields, adItemsSchema } from "./ads.js";
 import { areaflixBlocks } from "./areaflix.js";
 import { atlasBlocks } from "./atlas.js";
 import { centralBlocks, Eyebrow } from "./central.js";
+import { consultoriaBlocks } from "./consultoria.js";
 import { corteBlocks } from "./corte.js";
 import { defineBlock } from "./define.js";
 import { diarioBlocks } from "./diario.js";
@@ -2461,6 +2462,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...gatilhosBlocks,
   ...corteBlocks,
   ...viralpackBlocks,
+  ...consultoriaBlocks,
   ...granaBlocks,
   ...atlasBlocks,
   ...adBlocks,

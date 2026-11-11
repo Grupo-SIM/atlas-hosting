@@ -1,4 +1,5 @@
 import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
+import { CONSULTORIA_EXTRA_FONTS, isConsultoria } from "./consultoria.js";
 import { CORTE_EXTRA_FONTS, isCorte } from "./corte.js";
 import { DIARIO_EXTRA_FONTS, isDiario } from "./diario.js";
 import { GATILHOS_EXTRA_FONTS, isGatilhos } from "./gatilhos.js";
@@ -216,6 +217,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isDiario(theme))
     for (const extra of DIARIO_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isConsultoria(theme))
+    for (const extra of CONSULTORIA_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   const families = names
     .map(n => {
