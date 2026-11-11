@@ -256,6 +256,9 @@ export const AI_TOOLS: AiToolDef[] = [
       cor_superficie: str("Cartões (card)."),
       cor_texto: str("Cor do texto (fg)."),
       cor_texto_secundario: str("Texto secundário (muted)."),
+      descricao: str(
+        "Descrição do site para buscadores (meta description das páginas; até 300 caracteres). Posts usam o próprio resumo."
+      ),
       favicon: str("URL do ícone."),
       fonte: str("Fonte de títulos e corpo."),
       fonte_corpo: str("Só corpo."),
@@ -511,6 +514,12 @@ function themePatch(site: Site, input: Input): Record<string, string> {
     if (!URLISH.test(favicon))
       throw new ToolError("Favicon precisa ser uma URL http(s).");
     patch.favicon = favicon;
+  }
+  const descricao = text(input, "descricao", false);
+  if (descricao) {
+    if (descricao.length > 300)
+      throw new ToolError("Descrição com até 300 caracteres.");
+    patch.seoDescription = descricao;
   }
   if (Object.keys(patch).length === 0) {
     throw new ToolError("Nenhuma mudança de tema informada.");

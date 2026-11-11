@@ -14,6 +14,7 @@ import { isRaiz, RAIZ_EXTRA_FONTS } from "./raiz.js";
 import { isSeguidores, SEGUIDORES_EXTRA_FONTS } from "./seguidores.js";
 import { isSim, SIM_EXTRA_FONTS } from "./sim.js";
 import { isSpy, SPY_EXTRA_FONTS } from "./spyhacker.js";
+import { isUniverso, UNIVERSO_EXTRA_FONTS } from "./universo.js";
 import { isViralpack, VIRALPACK_EXTRA_FONTS } from "./viralpack.js";
 import { isVslMilionario, VSLMILIONARIO_EXTRA_FONTS } from "./vslmilionario.js";
 
@@ -71,6 +72,8 @@ const FONT_WEIGHTS: Record<string, string> = {
   Hind: "300;400;500;600;700",
   Montserrat: "300;400;500;600;700;800;900",
   Orbitron: "400;500;600;700;800;900",
+  // Oswald vai de 200 a 700 no Google (o padrão pede 900 e derruba o CSS); a variante `universo` usa 400–700.
+  Oswald: "400;500;600;700",
   "Playfair Display": "400;500;600;700;800;900",
   "Plus Jakarta Sans": "300;400;500;600;700",
   Rajdhani: "300;400;500;600;700",
@@ -220,6 +223,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isConsultoria(theme))
     for (const extra of CONSULTORIA_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isUniverso(theme))
+    for (const extra of UNIVERSO_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   const families = names
     .map(n => {

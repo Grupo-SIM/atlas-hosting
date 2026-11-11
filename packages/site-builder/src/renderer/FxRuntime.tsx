@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { FX_RUNTIME, FX_VERSION } from "./fx-runtime.js";
 import { MARGEM_RUNTIME, MG_VERSION } from "./margem-runtime.js";
 import { NAV_RUNTIME } from "./nav-runtime.js";
+import { UNIVERSO_RUNTIME, UV_VERSION } from "./universo-runtime.js";
 
 declare global {
   interface Window {
@@ -11,8 +12,10 @@ declare global {
     __sbMgV?: number;
     __sbNav?: number;
     __sbNavOff?: () => void;
+    __sbUvV?: number;
     sbFx?: (root?: ParentNode) => () => void;
     sbMargem?: (root?: ParentNode) => () => void;
+    sbUniverso?: (root?: ParentNode) => () => void;
   }
 }
 
@@ -31,6 +34,11 @@ const ensureMargem = () => {
   if (!window.sbMargem || window.__sbMgV !== MG_VERSION) inject(MARGEM_RUNTIME);
 };
 
+const ensureUniverso = () => {
+  if (!window.sbUniverso || window.__sbUvV !== UV_VERSION)
+    inject(UNIVERSO_RUNTIME);
+};
+
 /** Liga os efeitos na prévia (no site publicado o mesmo script vai inline no HTML). */
 export function FxRuntime() {
   useEffect(() => {
@@ -43,9 +51,16 @@ export function FxRuntime() {
       ensureMargem();
       offMg = window.sbMargem?.();
     }
+    // Cartas do template Universo: idem, só com um bloco `data-uv`.
+    let offUv: (() => void) | undefined;
+    if (document.querySelector("[data-uv]")) {
+      ensureUniverso();
+      offUv = window.sbUniverso?.();
+    }
     return () => {
       offFx?.();
       offMg?.();
+      offUv?.();
     };
   }, []);
   return null;
@@ -64,8 +79,14 @@ export function startSiteFx(root: ParentNode): () => void {
     ensureMargem();
     offMg = window.sbMargem?.(root);
   }
+  let offUv: (() => void) | undefined;
+  if (root.querySelector("[data-uv]")) {
+    ensureUniverso();
+    offUv = window.sbUniverso?.(root);
+  }
   return () => {
     offFx?.();
     offMg?.();
+    offUv?.();
   };
 }

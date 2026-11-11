@@ -6,6 +6,7 @@ import { MARGEM_RUNTIME } from "../renderer/margem-runtime.js";
 import { NAV_RUNTIME } from "../renderer/nav-runtime.js";
 import { SiteRenderer } from "../renderer/SiteRenderer.js";
 import { themeVars } from "../renderer/styles.js";
+import { UNIVERSO_RUNTIME } from "../renderer/universo-runtime.js";
 
 export interface StaticFile {
   content: string;
@@ -50,6 +51,8 @@ async function document(
   const faviconTag = /^(https?:\/\/|\/|data:image\/)/.test(favicon)
     ? `<link rel="icon" href="${escapeHtml(favicon)}">`
     : "";
+  // Descrição do site (tema `seoDescription`) vale para as páginas; posts usam o resumo.
+  const desc = description || (site.theme.seoDescription ?? "").trim();
   const pageTitle =
     title && title !== site.name ? `${title} — ${site.name}` : site.name;
   return [
@@ -60,9 +63,7 @@ async function document(
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     `<title>${escapeHtml(pageTitle)}</title>`,
     faviconTag,
-    description
-      ? `<meta name="description" content="${escapeHtml(description)}">`
-      : "",
+    desc ? `<meta name="description" content="${escapeHtml(desc)}">` : "",
     `<style>body{margin:0;background:${bg}}</style>`,
     "</head>",
     "<body>",
@@ -73,6 +74,10 @@ async function document(
     // Movimento dos blocos do template Margem: só nas páginas que têm um deles.
     body.includes(" data-mg=")
       ? `<script>${MARGEM_RUNTIME};window.sbMargem()</script>`
+      : "",
+    // Cartas e contagem do template Universo: só nas páginas que têm um bloco dele.
+    body.includes(" data-uv=")
+      ? `<script>${UNIVERSO_RUNTIME};window.sbUniverso()</script>`
       : "",
     "</body>",
     "</html>",

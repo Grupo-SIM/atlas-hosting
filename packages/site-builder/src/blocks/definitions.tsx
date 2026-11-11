@@ -51,6 +51,7 @@ import { seopackBlocks } from "./seopack.js";
 import { simBlocks } from "./sim.js";
 import { simPageBlocks } from "./sim-pages.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
+import { universoBlocks } from "./universo.js";
 import { viralpackBlocks } from "./viralpack.js";
 import { vslmilionarioBlocks } from "./vslmilionario.js";
 import { isYouTubeChannelId, latestVideoEmbed, videoEmbed } from "./youtube.js";
@@ -2437,6 +2438,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...centralBlocks,
   ...marketplaceBlocks,
   ...margemBlocks,
+  ...universoBlocks,
   ...patrimonialBlocks,
   ...motoristaBlocks,
   ...areaflixBlocks,
