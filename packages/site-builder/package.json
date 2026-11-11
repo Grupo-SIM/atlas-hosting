@@ -11,6 +11,10 @@
       "types": "./out/editor/index.d.ts",
       "import": "./out/editor/index.js"
     },
+    "./fx": {
+      "types": "./out/renderer/FxRuntime.d.ts",
+      "import": "./out/renderer/FxRuntime.js"
+    },
     "./static": {
       "types": "./out/static/index.d.ts",
       "import": "./out/static/index.js"

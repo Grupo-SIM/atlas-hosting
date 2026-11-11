@@ -11,6 +11,7 @@ import { defineBlock } from "./define.js";
 import { diarioBlocks } from "./diario.js";
 import { diarioPageBlocks } from "./diario-pages.js";
 import { ebookBlocks } from "./ebook.js";
+import { frameProps } from "./frame.js";
 import { gatilhosBlocks } from "./gatilhos.js";
 import { granaBlocks } from "./grana.js";
 import { habilidadesBlocks } from "./habilidades.js";
@@ -724,7 +725,7 @@ const videoGrid = defineBlock(
     ],
     group: "media",
     label: "Vídeos do YouTube",
-    render: p => (
+    render: (p, ctx) => (
       <section className="sb-container">
         <h2>{p.title}</h2>
         <div className="sb-grid sb-grid-3">
@@ -739,7 +740,7 @@ const videoGrid = defineBlock(
                 className="sb-video"
                 key={v.youtubeId}
                 loading="lazy"
-                src={src}
+                {...frameProps(ctx, src)}
                 title={v.title || "Vídeo"}
               />
             ) : null;
@@ -813,7 +814,7 @@ const channelVideos = defineBlock(
                 allowFullScreen
                 className="sb-video"
                 loading="lazy"
-                src={src}
+                {...frameProps(ctx, src)}
                 title={title}
               />
               {item.title || item.channel.name ? (

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { z } from "zod";
 import { cssUrl } from "../renderer/central.js";
 import { defineBlock } from "./define.js";
+import { frameProps } from "./frame.js";
 import { href, Img } from "./helpers.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
 import { inlineVideoEmbed } from "./youtube.js";
@@ -617,7 +618,7 @@ const cpVideo = defineBlock(z.object({ title: str(), videoUrl: str() }), {
   ],
   group: "media",
   label: "Vídeo incorporado (Controle Patrimonial)",
-  render: p => {
+  render: (p, ctx) => {
     const src = inlineVideoEmbed(p.videoUrl);
     return (
       <section className="cp-wrap cp-video">
@@ -628,7 +629,7 @@ const cpVideo = defineBlock(z.object({ title: str(), videoUrl: str() }), {
               allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
               loading="lazy"
-              src={src}
+              {...frameProps(ctx, src)}
               title={p.title || "Vídeo"}
             />
           ) : null}

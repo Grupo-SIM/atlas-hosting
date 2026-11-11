@@ -13,6 +13,8 @@ export interface RenderContext {
   query: Record<string, string>;
   renderBlocks: (blocks: Block[]) => ReactNode;
   site: Site;
+  /** Miniatura (galeria de templates, "Meus sites"): iframes saem sem player (`frameProps`). */
+  thumbnail?: boolean;
 }
 
 export type FieldKind =

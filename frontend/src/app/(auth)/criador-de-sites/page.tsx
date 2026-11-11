@@ -7,8 +7,8 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { pgBuilderPublication, pgBuilderSite } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
-import { FitSite } from "./components/FitSite";
 import { Frame } from "./components/Frame";
+import { LiveThumb } from "./components/LiveThumb";
 import SiteCard, { type SiteStatus } from "./components/SiteCard";
 
 export const metadata: Metadata = {
@@ -86,9 +86,14 @@ export default async function SiteBuilderPage() {
                     name={site.name}
                     status={status}
                     thumb={
-                      <FitSite>
-                        <SiteRenderer path="/" site={site.content} />
-                      </FitSite>
+                      <LiveThumb>
+                        <SiteRenderer
+                          path="/"
+                          site={site.content}
+                          skipFxRuntime
+                          thumbnail
+                        />
+                      </LiveThumb>
                     }
                   />
                 );

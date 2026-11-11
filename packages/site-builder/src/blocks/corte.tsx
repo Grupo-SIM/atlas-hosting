@@ -296,7 +296,7 @@ const acHero = defineBlock(
           />
         </div>
         <BackgroundVideo
-          edit={ctx.mode === "edit"}
+          edit={ctx.mode === "edit" || !!ctx.thumbnail}
           poster={p.poster}
           url={p.videoUrl}
         />

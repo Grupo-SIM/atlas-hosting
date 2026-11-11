@@ -2,9 +2,8 @@ import { getTemplate, listTemplates, SiteRenderer } from "@repo/site-builder";
 import { LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
 import { requireBuilderUser } from "@/lib/site-builder/access";
-import { AutoScroll } from "../components/AutoScroll";
-import { FitSite } from "../components/FitSite";
 import { Frame } from "../components/Frame";
+import { LiveThumb } from "../components/LiveThumb";
 import TemplateGallery, {
   type GalleryTemplate,
 } from "./components/TemplateGallery";
@@ -28,11 +27,9 @@ export default async function NewSitePage() {
         previewBackground: full.site.theme.bg ?? "#030712",
         tags: meta.tags,
         thumb: (
-          <AutoScroll speed={50}>
-            <FitSite>
-              <SiteRenderer path="/" site={full.site} />
-            </FitSite>
-          </AutoScroll>
+          <LiveThumb scrollSpeed={50}>
+            <SiteRenderer path="/" site={full.site} skipFxRuntime thumbnail />
+          </LiveThumb>
         ),
       },
     ];

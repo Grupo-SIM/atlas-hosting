@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { z } from "zod";
 import { cssUrl } from "../renderer/central.js";
 import { defineBlock } from "./define.js";
+import { frameProps } from "./frame.js";
 import { href, Img } from "./helpers.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
 import { inlineVideoEmbed } from "./youtube.js";
@@ -700,7 +701,7 @@ const cmVideo = defineBlock(
     ],
     group: "media",
     label: "Vídeo com ornamento (Controle de Motorista)",
-    render: p => {
+    render: (p, ctx) => {
       const src = inlineVideoEmbed(p.videoUrl);
       return (
         <section className="cm-video">
@@ -715,7 +716,7 @@ const cmVideo = defineBlock(
                   allow="autoplay; fullscreen; picture-in-picture"
                   allowFullScreen
                   loading="lazy"
-                  src={src}
+                  {...frameProps(ctx, src)}
                   title={p.title || "Vídeo"}
                 />
               ) : null}

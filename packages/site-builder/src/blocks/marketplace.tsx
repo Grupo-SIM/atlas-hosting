@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { z } from "zod";
 import { cssUrl } from "../renderer/central.js";
 import { defineBlock } from "./define.js";
+import { frameProps } from "./frame.js";
 import { href, Img, LinkButton, newTab, safeUrl } from "./helpers.js";
 import type { BlockDefinition } from "./types.js";
 import { popupVideoEmbed } from "./youtube.js";
@@ -534,7 +535,7 @@ const siteEmbed = defineBlock(
     ],
     group: "media",
     label: "Site incorporado (iframe)",
-    render: p => {
+    render: (p, ctx) => {
       const src = embeddable(p.url);
       return (
         <section className="sb-embed">
@@ -543,8 +544,7 @@ const siteEmbed = defineBlock(
               height={p.height}
               loading="lazy"
               referrerPolicy="strict-origin-when-cross-origin"
-              src={src}
-              style={{ height: `${p.height}px` }}
+              {...frameProps(ctx, src, { height: `${p.height}px` })}
               title={p.title || "Site incorporado"}
             />
           ) : (

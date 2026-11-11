@@ -73,6 +73,8 @@ export interface SiteRendererProps {
   narrow?: boolean;
   /** Caminho dentro do site (`/`, `/blogs/`…). */
   path: string;
+  /** Miniatura reduzida (galeria, "Meus sites"): iframes de vídeo/site saem sem player. */
+  thumbnail?: boolean;
   query?: Record<string, string>;
   site: Site;
 }
@@ -98,6 +100,7 @@ export function SiteRenderer({
   query = {},
   site,
   skipFxRuntime = false,
+  thumbnail = false,
 }: SiteRendererProps) {
   const route = resolveRoute(site, path, mode);
   const fonts = fontStylesheet(site);
@@ -151,6 +154,7 @@ export function SiteRenderer({
     query,
     renderBlocks: blocks => renderBlocks(blocks, ctx),
     site,
+    thumbnail,
   };
 
   return (

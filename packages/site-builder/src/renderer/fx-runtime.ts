@@ -1,10 +1,11 @@
 /**
  * Script dos efeitos (entrada ao rolar, parallax, seguir o mouse, contador). É uma string porque roda de
  * duas formas: inline no HTML publicado e injetado pelo `FxRuntime` na prévia. Define `window.sbFx()`, que
- * liga os efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo.
+ * liga os efeitos de todos os blocos com `data-fx` e devolve a função que desliga tudo. `sbFx(raiz)` procura
+ * só dentro de `raiz` (miniaturas: `startSiteFx`, uma chamada por cartão em vez de várias varrendo a página).
  * Ao mudar o script, suba `FX_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const FX_VERSION = 17;
+export const FX_VERSION = 18;
 
 /**
  * Formatação do contador (`data-sb-count`): `dec` casas decimais (o valor do HTML é "4.9" → 1 casa, ou `data-decimals`),
@@ -25,9 +26,10 @@ if(window.sbFx&&window.__sbFxV===${FX_VERSION})return;
 window.__sbFxV=${FX_VERSION};
 ${COUNT_FMT_JS}
 ${COUNT_AT_JS}
-window.sbFx=function(){
+window.sbFx=function(root){
+var D=root||document;
 var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-document.querySelectorAll(".sb").forEach(function(r){r.classList.add("sb-js")});
+D.querySelectorAll(".sb").forEach(function(r){r.classList.add("sb-js")});
 var par=[],mice=[],counted=[],off=[];
 function resolve(blk,p){
 if(!p)return blk;
@@ -77,7 +79,7 @@ if(e.target.__sbn)e.target.__sbn();
 },{threshold:0.15});
 off.push(function(){io.disconnect()});
 }
-document.querySelectorAll("[data-fx]").forEach(function(blk){
+D.querySelectorAll("[data-fx]").forEach(function(blk){
 if(blk.getAttribute("data-fx-ready"))return;
 blk.setAttribute("data-fx-ready","1");
 off.push(function(){blk.removeAttribute("data-fx-ready")});
@@ -147,7 +149,7 @@ if(raf)cancelAnimationFrame(raf);
 mice.forEach(function(p){p.el.removeAttribute("data-sb-mouse");p.el.style.removeProperty("--sb-mx");p.el.style.removeProperty("--sb-my")});
 });
 }
-document.querySelectorAll(".sb-ad[data-ads]").forEach(function(ad){
+D.querySelectorAll(".sb-ad[data-ads]").forEach(function(ad){
 if(ad.getAttribute("data-ad-ready"))return;
 ad.setAttribute("data-ad-ready","1");
 off.push(function(){ad.removeAttribute("data-ad-ready")});
@@ -171,7 +173,7 @@ show(0);
 off.push(function(){clearTimeout(t)});
 });
 /* carrossel de depoimentos: as setas ficam no NAV_RUNTIME; aqui passa sozinho, para no hover e liga as bolinhas */
-document.querySelectorAll(".sb-af-car,.sb-rv-car,.sg-car").forEach(function(c){
+D.querySelectorAll(".sb-af-car,.sb-rv-car,.sg-car").forEach(function(c){
 if(c.getAttribute("data-car-ready"))return;
 c.setAttribute("data-car-ready","1");
 off.push(function(){c.removeAttribute("data-car-ready")});
@@ -194,7 +196,7 @@ else tr.scrollBy({left:step(),behavior:"smooth"});
 },(Number(c.getAttribute("data-sec"))||5)*1000);
 off.push(function(){clearInterval(iv);tr.removeEventListener("scroll",mark);c.removeEventListener("click",dot);c.removeEventListener("mouseenter",enter);c.removeEventListener("mouseleave",leave)});
 });
-document.querySelectorAll("[data-sb-count]").forEach(function(el){
+D.querySelectorAll("[data-sb-count]").forEach(function(el){
 if(el.getAttribute("data-cnt-ready"))return;
 el.setAttribute("data-cnt-ready","1");
 var orig=el.textContent,end=Number(el.getAttribute("data-sb-count"))||0,ms=Number(el.getAttribute("data-ms"))||2000;
@@ -217,7 +219,7 @@ requestAnimationFrame(step);
 };
 io.observe(el);
 });
-document.querySelectorAll("[data-sb-slider]").forEach(function(box){
+D.querySelectorAll("[data-sb-slider]").forEach(function(box){
 if(box.getAttribute("data-sl-ready"))return;
 box.setAttribute("data-sl-ready","1");
 var track=box.querySelector(".cp-slider-track,.cm-track"),dots=Array.prototype.slice.call(box.querySelectorAll(".cp-dot,.cm-dot"));
@@ -258,10 +260,10 @@ play();
 off.push(function(){stop();ac.abort();clones.forEach(function(c){c.remove()});track.style.transition="";track.style.transform="";track.style.cursor="";cur=0;mark()});
 });
 /* Atlas: o cabeçalho vira pílula ao rolar a página */
-var atHead=document.querySelector(".at-head");
+var atHead=D.querySelector(".at-head");
 if(atHead){var atOn=function(){atHead.classList.toggle("is-scrolled",window.scrollY>24)};window.addEventListener("scroll",atOn,{passive:true});atOn();off.push(function(){window.removeEventListener("scroll",atOn);atHead.classList.remove("is-scrolled")})}
 /* SIM: carrossel em laço ([data-si-car]) e Esc fecha o menu lateral (#sb-burger) */
-document.querySelectorAll("[data-si-car]").forEach(function(box){
+D.querySelectorAll("[data-si-car]").forEach(function(box){
 if(box.getAttribute("data-si-ready"))return;
 box.setAttribute("data-si-ready","1");
 var view=box.querySelector(".si-car-view"),track=box.querySelector(".si-car-track"),dotsEl=box.querySelector(".si-car-dots");
@@ -326,19 +328,19 @@ play();
 off.push(function(){stop();ac.abort();clones.forEach(function(c){c.remove()});dots.forEach(function(d){d.remove()});box.removeAttribute("data-si-ready");box.classList.remove("is-static");track.style.transition="";track.style.transform=""});
 });
 var siBurger=document.getElementById("sb-burger");
-if(siBurger&&document.querySelector(".si-drawer,.pg-drop")){
+if(siBurger&&D.querySelector(".si-drawer,.pg-drop")){
 var siKey=function(e){if(e.key==="Escape")siBurger.checked=false};
 document.addEventListener("keydown",siKey);
 off.push(function(){document.removeEventListener("keydown",siKey)});
 }
 /* PagaTG: o menu suspenso fecha ao clicar num item (âncora da própria página não recarrega) */
-document.querySelectorAll(".pg-drop a").forEach(function(a){
+D.querySelectorAll(".pg-drop a").forEach(function(a){
 var pgClose=function(){var b=document.getElementById("sb-burger");if(b)b.checked=false};
 a.addEventListener("click",pgClose);
 off.push(function(){a.removeEventListener("click",pgClose)});
 });
 /* O Outro Lado da Internet: a capa do vídeo vira o player no mesmo lugar, com autoplay */
-document.querySelectorAll("[data-ol-video]").forEach(function(a){
+D.querySelectorAll("[data-ol-video]").forEach(function(a){
 var go=function(e){
 var src=a.getAttribute("data-ol-video")||"";
 if(!/^https:\\/\\/(player\\.vimeo\\.com\\/video\\/|www\\.youtube-nocookie\\.com\\/embed\\/)/.test(src))return;
@@ -353,7 +355,7 @@ a.addEventListener("click",go);
 off.push(function(){a.removeEventListener("click",go)});
 });
 /* Lottie: o player (lottie_light) só é baixado quando a página tem [data-sb-lottie] */
-var lots=document.querySelectorAll("[data-sb-lottie]");
+var lots=D.querySelectorAll("[data-sb-lottie]");
 if(lots.length&&!reduce){
 var anims=[];
 off.push(function(){anims.forEach(function(a){try{a.destroy()}catch(e){}});anims=[]});
@@ -375,7 +377,7 @@ ls.addEventListener("load",startLot);
 }
 }
 /* Seguidores em Alta: cabeçalho transparente -> branco após 60px; some ao descer e volta ao subir */
-document.querySelectorAll(".sg-head").forEach(function(h){
+D.querySelectorAll(".sg-head").forEach(function(h){
 var last=0,ticking=false;
 function y(e){var t=e&&e.target;return t&&t!==document&&typeof t.scrollTop==="number"?t.scrollTop:(window.pageYOffset||0)}
 function upd(e){
@@ -391,7 +393,7 @@ document.addEventListener("scroll",on,{capture:true,passive:true});
 off.push(function(){document.removeEventListener("scroll",on,{capture:true});h.classList.remove("is-scrolled","is-hidden")});
 });
 /* Seguidores em Alta: "carregar mais" nas listas (sem JS aparece tudo) */
-document.querySelectorAll(".sg-grid-wrap[data-step]").forEach(function(w){
+D.querySelectorAll(".sg-grid-wrap[data-step]").forEach(function(w){
 var step=Number(w.getAttribute("data-step"))||6,btn=w.querySelector(".sg-more");
 function hid(){return Array.prototype.filter.call(w.querySelectorAll("[data-sg-hide]"),function(c){return c.style.display!=="none"})}
 function shown(){return Array.prototype.filter.call(w.querySelectorAll(".sb-post-card:not([data-sg-hide])"),function(c){return c.style.display!=="none"}).length}
@@ -415,7 +417,7 @@ if(u)location.href=u;
 document.addEventListener("change",selNav);
 off.push(function(){document.removeEventListener("change",selNav)});
 /* Holofote: data relativa dos cartões ("há 10 horas"); o HTML estático leva a data absoluta */
-document.querySelectorAll("[data-hf-ago]").forEach(function(el){
+D.querySelectorAll("[data-hf-ago]").forEach(function(el){
 var t=Date.parse(el.getAttribute("datetime")||"");
 if(isNaN(t))return;
 var s=(Date.now()-t)/1000,n,u;
@@ -448,7 +450,7 @@ document.addEventListener("touchstart",ddNet,{passive:true});
 document.addEventListener("submit",ddForm);
 off.push(function(){document.removeEventListener("mouseover",ddNet);document.removeEventListener("focusin",ddNet);document.removeEventListener("touchstart",ddNet);document.removeEventListener("submit",ddForm)});
 /* Zyrion: data de hoje, slider do destaque, carrossel das seções, busca em tela cheia */
-document.querySelectorAll("[data-sb-today]").forEach(function(el){
+D.querySelectorAll("[data-sb-today]").forEach(function(el){
 try{el.textContent=new Intl.DateTimeFormat("pt-BR",{day:"numeric",month:"long",year:"numeric"}).format(new Date())}catch(x){}
 });
 function zyRun(box,trackSel,opt){
@@ -487,18 +489,18 @@ track.addEventListener("click",function(e){if(moved){e.preventDefault();e.stopPr
 play();
 off.push(function(){stop();ac.abort();if(clone)clone.remove();track.style.transition="";track.style.transform="";track.style.cursor="";box.removeAttribute("data-zy-ready")});
 }
-document.querySelectorAll("[data-zy-slider]").forEach(function(b){zyRun(b,".zy-sl-track",{loop:true,speed:800,delay:5000,hover:false})});
-document.querySelectorAll("[data-zy-car]").forEach(function(b){zyRun(b,".zy-car-track",{loop:false,speed:500,delay:5000,hover:true})});
+D.querySelectorAll("[data-zy-slider]").forEach(function(b){zyRun(b,".zy-sl-track",{loop:true,speed:800,delay:5000,hover:false})});
+D.querySelectorAll("[data-zy-car]").forEach(function(b){zyRun(b,".zy-car-track",{loop:false,speed:500,delay:5000,hover:true})});
 var zySearch=document.getElementById("zy-search");
 if(zySearch){
 var zyKey=function(e){if(e.key==="Escape"&&zySearch.checked)zySearch.checked=false};
-var zyChg=function(){if(zySearch.checked){var i=document.querySelector(".zy-overlay input[type=search]");if(i)setTimeout(function(){i.focus()},60)}};
+var zyChg=function(){if(zySearch.checked){var i=D.querySelector(".zy-overlay input[type=search]");if(i)setTimeout(function(){i.focus()},60)}};
 document.addEventListener("keydown",zyKey);
 zySearch.addEventListener("change",zyChg);
 off.push(function(){document.removeEventListener("keydown",zyKey);zySearch.removeEventListener("change",zyChg)});
 }
 /* Marketing Raiz: paginação numerada da grade (sem JS aparece tudo) */
-document.querySelectorAll("[data-mr-pages]").forEach(function(w){
+D.querySelectorAll("[data-mr-pages]").forEach(function(w){
 var per=Number(w.getAttribute("data-mr-pages"))||10,pager=w.querySelector(".mr-pager");
 if(!pager||w.getAttribute("data-mr-ready"))return;
 w.setAttribute("data-mr-ready","1");
@@ -526,7 +528,7 @@ Array.prototype.forEach.call(pager.children,function(b,k){b.hidden=false;b.class
 });
 });
 /* Marketing Raiz: carrossel de mídia com miniaturas (efeito slide, autoplay, laço, pausa no hover, setas) */
-document.querySelectorAll("[data-mr-media]").forEach(function(box){
+D.querySelectorAll("[data-mr-media]").forEach(function(box){
 if(box.getAttribute("data-mr-ready"))return;
 box.setAttribute("data-mr-ready","1");
 var track=box.querySelector(".mr-media-track"),th=Array.prototype.slice.call(box.querySelectorAll(".mr-thumb-btn")),n=track?track.children.length:0;
@@ -547,14 +549,14 @@ play();
 off.push(function(){stop();ac.abort();track.style.transition="";track.style.transform="";th.forEach(function(b,k){b.classList.toggle("on",k===0)})});
 });
 /* Marketing Raiz: botão que aparece depois de N segundos (e então pulsa) */
-document.querySelectorAll("[data-mr-delay]").forEach(function(el){
+D.querySelectorAll("[data-mr-delay]").forEach(function(el){
 if(el.getAttribute("data-mr-ready"))return;
 el.setAttribute("data-mr-ready","1");
 var t=setTimeout(function(){el.classList.add("on")},(Number(el.getAttribute("data-mr-delay"))||0)*1000);
 off.push(function(){clearTimeout(t);el.classList.remove("on");el.removeAttribute("data-mr-ready")});
 });
 /* Marketing Raiz: telas do funil e do quiz (fade de ~600 ms entre telas; a tela "analisando" roda a barra e avança sozinha) */
-document.querySelectorAll("[data-mr-flow]").forEach(function(fl){
+D.querySelectorAll("[data-mr-flow]").forEach(function(fl){
 if(fl.getAttribute("data-mr-ready"))return;
 fl.setAttribute("data-mr-ready","1");
 var sc=Array.prototype.filter.call(fl.children,function(c){return c.classList.contains("mr-step")});
@@ -611,7 +613,7 @@ fl.querySelectorAll(".mr-bar").forEach(function(b){b.classList.remove("done");va
 });
 });
 /* Voltar ao topo (scrollTop): aparece depois de data-at px de rolagem; clique rola até o topo (easeInOutExpo, 1000ms) */
-document.querySelectorAll("[data-sb-top]").forEach(function(b){
+D.querySelectorAll("[data-sb-top]").forEach(function(b){
 if(b.getAttribute("data-top-ready"))return;
 b.setAttribute("data-top-ready","1");
 var at=Number(b.getAttribute("data-at")),src=null,raf=0;
@@ -639,7 +641,7 @@ b.addEventListener("click",click);
 upd();
 off.push(function(){cancelAnimationFrame(raf);document.removeEventListener("scroll",upd,{capture:true});b.removeEventListener("click",click);b.removeAttribute("data-top-ready");b.classList.remove("on")});
 });
-document.querySelectorAll("[data-p7-cmp]").forEach(function(c){
+D.querySelectorAll("[data-p7-cmp]").forEach(function(c){
 if(c.getAttribute("data-cmp-ready"))return;
 c.setAttribute("data-cmp-ready","1");
 var drag=false,h=c.querySelector(".p7-cmp-h");
@@ -653,7 +655,7 @@ c.addEventListener("pointerdown",down);c.addEventListener("pointermove",move);c.
 if(h)h.addEventListener("keydown",key);
 off.push(function(){c.removeEventListener("pointerdown",down);c.removeEventListener("pointermove",move);c.removeEventListener("pointerup",up);c.removeEventListener("pointercancel",up);if(h)h.removeEventListener("keydown",key);c.removeAttribute("data-cmp-ready");c.classList.remove("is-drag");c.style.removeProperty("--p7-pos")});
 });
-document.querySelectorAll("[data-p7-cd]").forEach(function(c){
+D.querySelectorAll("[data-p7-cd]").forEach(function(c){
 if(c.getAttribute("data-cd-ready"))return;
 var end=Number(c.getAttribute("data-p7-cd"))*1000;
 if(!end)return;
@@ -666,7 +668,7 @@ var iv=setInterval(tick,1000);
 off.push(function(){clearInterval(iv);c.removeAttribute("data-cd-ready")});
 });
 /* Palavra girando ([data-sb-rotate="flip|fade"]): troca a palavra de data-words (separadas por |) a cada data-ms; a largura acompanha a palavra. Sem JS ou com movimento reduzido fica a primeira */
-document.querySelectorAll("[data-sb-rotate]").forEach(function(box){
+D.querySelectorAll("[data-sb-rotate]").forEach(function(box){
 if(box.getAttribute("data-rot-ready"))return;
 var words=(box.getAttribute("data-words")||"").split("|").filter(Boolean),w=box.querySelector(".sb-rot-w");
 if(!w||words.length<2||reduce)return;

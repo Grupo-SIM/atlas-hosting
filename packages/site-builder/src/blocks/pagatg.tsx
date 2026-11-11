@@ -175,7 +175,7 @@ const pgHero = defineBlock(
     render: (p, ctx) => (
       <section className="pg-hero">
         <BackgroundVideo
-          edit={ctx.mode === "edit"}
+          edit={ctx.mode === "edit" || !!ctx.thumbnail}
           poster={p.poster}
           url={p.video}
         />

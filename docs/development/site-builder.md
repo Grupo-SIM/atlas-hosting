@@ -16,8 +16,16 @@ com 404 para não-admin, e toda server action recusa quem não é admin. A regra
 UI portada do protótipo "UI editor de sites" (neutros quentes, lima `#d6f34a` nas ações, roxo na seleção).
 Telas em `frontend/src/app/(auth)/criador-de-sites/`:
 
-1. `/criador-de-sites` — **Meus sites**: cartões com miniatura ao vivo (`ScaledSite`), status vindo de `builder_publications`.
-2. `/criador-de-sites/novo` — **Templates**: busca, filtros por `tags` do template, destaque + grade.
+1. `/criador-de-sites` — **Meus sites**: cartões com miniatura ao vivo (`LiveThumb`), status vindo de `builder_publications`.
+2. `/criador-de-sites/novo` — **Templates**: busca, filtros por `tags` do template, destaque + grade (miniaturas `LiveThumb` com `AutoScroll`).
+
+   **Miniaturas (`components/LiveThumb.tsx`)**: cada uma é um site inteiro (centenas de elementos, dezenas de KB de CSS
+   que valem para a página toda), então o `LiveThumb` só monta o site quando o cartão está a até uma tela da área
+   visível (um por vez, em `requestIdleCallback`) e desmonta 1,5 s depois de sair dessa faixa. O `SiteRenderer` vai com
+   `skipFxRuntime` e os efeitos ligam só dentro do cartão via `startSiteFx(raiz)` (`@repo/site-builder/fx`), que chama
+   `sbFx(raiz)`/`sbMargem(raiz)`. Não use o `FxRuntime` em grade: cada instância varre o documento inteiro (com 30
+   cartões eram 30 loops de quadro do Margem). O `AutoScroll` pausa fora da tela e, quando o site cresce (imagens
+   carregando), continua do mesmo ponto em vez de voltar ao topo.
 3. `/criador-de-sites/novo/[templateId]` — **Configurar** (nome + endereço) e **progresso**. `createSite` cria o
    registro e `publishSite` publica no endereço escolhido; "Definir depois" só cria. Os passos de progresso são
    cronometrados enquanto a publicação (uma chamada só) roda.

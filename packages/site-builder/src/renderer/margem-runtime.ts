@@ -1,7 +1,8 @@
 /**
  * Movimento do template Margem. É uma string porque roda de duas formas, como o `fx-runtime.ts`: inline no
  * HTML publicado (só nas páginas com um bloco `data-mg`) e injetado pelo `FxRuntime` na prévia. Define
- * `window.sbMargem()`, que liga cada bloco `[data-mg]` e devolve a função que desliga tudo.
+ * `window.sbMargem()`, que liga cada bloco `[data-mg]` e devolve a função que desliga tudo; `sbMargem(raiz)`
+ * procura os sites (`.sb`) só dentro de `raiz` (miniaturas, via `startSiteFx`).
  *
  * Sem dependências: o túnel é WebGL puro (planos com textura, névoa linear, profundidade de campo por viés
  * de mipmap), a "timeline com scrub" é uma lista de trechos avaliada no tempo do scroll e o pin é
@@ -11,12 +12,12 @@
  * câmera e sem entradas; o túnel continua respondendo ao scroll.
  * Ao mudar o script, suba `MG_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const MG_VERSION = 5;
+export const MG_VERSION = 6;
 
 export const MARGEM_RUNTIME = `(function(){
 if(window.sbMargem&&window.__sbMgV===${MG_VERSION})return;
 window.__sbMgV=${MG_VERSION};
-window.sbMargem=function(){
+window.sbMargem=function(root){
 var off=[],subs=[],resizers=[],K={};
 var mm=function(q){return window.matchMedia?window.matchMedia(q).matches:false};
 var reduce=mm("(prefers-reduced-motion: reduce)"),fine=mm("(pointer: fine)");
@@ -57,7 +58,7 @@ off.push(function(){r.classList.remove("mg-thumb");r.style.removeProperty("--mg-
 return V;
 }
 var views=[];
-arr(document.querySelectorAll(".sb")).forEach(function(r){
+arr((root||document).querySelectorAll(".sb")).forEach(function(r){
 if(!r.querySelector("[data-mg]"))return;
 var s=scaleOf(r);
 if(!s)return;

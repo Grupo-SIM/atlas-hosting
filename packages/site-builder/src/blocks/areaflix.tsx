@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { z } from "zod";
 import { cssUrl } from "../renderer/central.js";
 import { defineBlock } from "./define.js";
+import { frameProps } from "./frame.js";
 import { href, Img, newTab } from "./helpers.js";
 import type { BlockDefinition, RenderContext } from "./types.js";
 import { popupVideoEmbed } from "./youtube.js";
@@ -316,7 +317,7 @@ const afVideoSplit = defineBlock(
                     allow="fullscreen; picture-in-picture"
                     allowFullScreen
                     loading="lazy"
-                    src={src}
+                    {...frameProps(ctx, src)}
                     title={p.title}
                   />
                 ) : null}

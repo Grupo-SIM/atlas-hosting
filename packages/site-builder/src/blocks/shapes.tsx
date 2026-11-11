@@ -123,7 +123,7 @@ export function ShapeDivider({ p }: { p: ShapeProps }) {
   );
 }
 
-/** Vídeo do YouTube de fundo; no editor (`edit`) ou sem link válido só o pôster. */
+/** Vídeo do YouTube de fundo; no editor e na miniatura (`edit`) ou sem link válido só o pôster. */
 export function BackgroundVideo({
   edit,
   poster,

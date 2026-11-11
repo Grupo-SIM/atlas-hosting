@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Post } from "../model/index.js";
 import { cssUrl } from "../renderer/central.js";
 import { defineBlock } from "./define.js";
+import { frameProps } from "./frame.js";
 import {
   categoryOf,
   categoryPath,
@@ -1061,7 +1062,11 @@ const mrVsl = defineBlock(
               {p.subtitle ? <p>{p.subtitle}</p> : null}
               <div className="mr-video">
                 {src ? (
-                  <iframe allowFullScreen src={src} title={p.title} />
+                  <iframe
+                    allowFullScreen
+                    {...frameProps(ctx, src)}
+                    title={p.title}
+                  />
                 ) : null}
               </div>
               <div className="mr-vsl-btn" data-mr-delay={p.delaySeconds}>
