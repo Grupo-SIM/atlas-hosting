@@ -1,6 +1,7 @@
 import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
 import { CORTE_EXTRA_FONTS, isCorte } from "./corte.js";
 import { GATILHOS_EXTRA_FONTS, isGatilhos } from "./gatilhos.js";
+import { GRANA_EXTRA_FONTS, isGrana } from "./grana.js";
 import { HABILIDADES_EXTRA_FONTS, isHabilidades } from "./habilidades.js";
 import { INSTAFAN_EXTRA_FONTS, isInstafan } from "./instafan.js";
 import { isMotorista, MOTORISTA_EXTRA_FONTS } from "./motorista.js";
@@ -190,6 +191,9 @@ export function fontStylesheet(site: {
     if (isViralpack(theme))
       for (const extra of VIRALPACK_EXTRA_FONTS)
         if (!names.includes(extra)) names.push(extra);
+  if (isGrana(theme))
+    for (const extra of GRANA_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
   for (const extra of CORTE_EXTRA_FONTS)
     if (!names.includes(extra)) names.push(extra);
   if (isGatilhos(theme))

@@ -1343,6 +1343,32 @@ export function Inspector({
             onChange={v => onFx({ parallax: v }, "Parallax")}
             value={fx.parallax ?? 0}
           />
+          {fx.parallax ? (
+            <div className="sbe-line">
+              <span>Parallax só no computador</span>
+              <button
+                className={
+                  fx.parallaxScreens === "desktop"
+                    ? "sbe-toggle on"
+                    : "sbe-toggle"
+                }
+                onClick={() =>
+                  onFx(
+                    {
+                      parallaxScreens:
+                        fx.parallaxScreens === "desktop"
+                          ? undefined
+                          : "desktop",
+                    },
+                    "Parallax só no computador"
+                  )
+                }
+                type="button"
+              >
+                <span />
+              </button>
+            </div>
+          ) : null}
           <Slider
             label="Seguir o mouse (negativo = ao contrário)"
             max={10}
@@ -1422,6 +1448,7 @@ export function Inspector({
                       hoverMs: undefined,
                       mouse: undefined,
                       parallax: undefined,
+                      parallaxScreens: undefined,
                       stagger: undefined,
                     },
                     "Remover efeitos"

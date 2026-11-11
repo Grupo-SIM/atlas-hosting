@@ -9,6 +9,7 @@ import { corteBlocks } from "./corte.js";
 import { defineBlock } from "./define.js";
 import { ebookBlocks } from "./ebook.js";
 import { gatilhosBlocks } from "./gatilhos.js";
+import { granaBlocks } from "./grana.js";
 import { habilidadesBlocks } from "./habilidades.js";
 import {
   categoryOf,
@@ -2456,6 +2457,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...gatilhosBlocks,
   ...corteBlocks,
   ...viralpackBlocks,
+  ...granaBlocks,
   ...atlasBlocks,
   ...adBlocks,
   ...scrollTopBlocks,

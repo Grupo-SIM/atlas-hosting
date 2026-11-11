@@ -7,6 +7,7 @@ import { centralMarketing } from "./central-marketing/index.js";
 import { controleMotorista } from "./controle-motorista/index.js";
 import { controlePatrimonial } from "./controle-patrimonial/index.js";
 import { gatilhosMentais } from "./gatilhos-mentais/index.js";
+import { granaNaHora } from "./grana-na-hora/index.js";
 import { habilidadesComunicacao } from "./habilidades-comunicacao/index.js";
 import { holofote } from "./holofote/index.js";
 import { instafanFortune } from "./instafan-fortune/index.js";
@@ -49,6 +50,7 @@ const templates: SiteTemplate[] = [
   gatilhosMentais,
   academiaDoCorte,
   viralPack,
+  granaNaHora,
   seopack,
   zyrion,
   holofote,

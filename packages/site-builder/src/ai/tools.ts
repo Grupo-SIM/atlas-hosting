@@ -232,13 +232,17 @@ export const AI_TOOLS: AiToolDef[] = [
           `Duração do hover em ms (${HOVER_MS.min}-${HOVER_MS.max}; padrão ${HOVER_MS.default}).`
         ),
         id: str("Id do bloco."),
-        repetir: bool(
-          "Com entrada pulse: pulsa sem parar (como o botão de oferta de algumas landings)."
-        ),
         mouse: num(
           "Seguir o mouse: -10 a 10 (0 desliga; negativo vai ao contrário do ponteiro)."
         ),
         parallax: num("-10 a 10 (0 desliga)."),
+        parallax_telas: oneOf(
+          "Telas em que o parallax se move: all (padrão) ou desktop (some no tablet e no celular).",
+          ["all", "desktop"]
+        ),
+        repetir: bool(
+          "Com entrada pulse: pulsa sem parar (como o botão de oferta de algumas landings)."
+        ),
       },
       ["id"]
     ),
@@ -731,9 +735,10 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
         entrada_tablet: "enterTablet",
         hover: "hover",
         hover_ms: "hoverMs",
-        repetir: "loop",
         mouse: "mouse",
         parallax: "parallax",
+        parallax_telas: "parallaxScreens",
+        repetir: "loop",
       } as const;
       for (const [param, key] of Object.entries(map)) {
         if (!(param in input)) continue;
@@ -784,6 +789,13 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
         throw new ToolError("mouse deve ser um número de -10 a 10.");
       }
       if (patch.mouse === 0) patch.mouse = undefined;
+      if (
+        patch.parallaxScreens !== undefined &&
+        patch.parallaxScreens !== "all" &&
+        patch.parallaxScreens !== "desktop"
+      )
+        throw new ToolError("parallax_telas deve ser all ou desktop.");
+      if (patch.parallaxScreens === "all") patch.parallaxScreens = undefined;
       return done(
         updateBlockFx(site, id, path, patch as never),
         `Ajustou efeitos de ${label(block.type)}`

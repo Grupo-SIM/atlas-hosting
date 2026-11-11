@@ -279,6 +279,7 @@ export function SiCar({
   items,
   p,
   pause = true,
+  transition = "slide",
 }: {
   /** `page` = cada passo avança uma tela inteira (N itens por vez); `one` = um item. */
   advance?: "one" | "page";
@@ -288,13 +289,17 @@ export function SiCar({
   items: ReactNode[];
   p: CarProps;
   pause?: boolean;
+  /** `fade` = os slides ficam empilhados e trocam por opacidade (`data-fade`, ligado no `fx-runtime`); o padrão desliza. */
+  transition?: "fade" | "slide";
 }) {
+  const fade = transition === "fade";
   return (
     <div
       className={`si-car ${arrows !== "none" ? `arrows-${arrows}` : ""} ${className}`.trim()}
       data-adv={advance === "page" ? "page" : undefined}
       data-delay={p.delay}
       data-dots={dots ? "1" : undefined}
+      data-fade={fade ? "1" : undefined}
       data-max={Math.max(p.perView, p.perViewTablet, p.perViewMobile)}
       data-pause={pause ? "1" : "0"}
       data-si-car="1"
@@ -304,6 +309,7 @@ export function SiCar({
           "--si-d": p.perView,
           "--si-gap": `${p.gap}px`,
           "--si-m": p.perViewMobile,
+          ...(fade ? { "--si-speed": `${p.speed}ms` } : {}),
           "--si-t": p.perViewTablet,
         } as CSSProperties
       }
@@ -312,7 +318,10 @@ export function SiCar({
         <div className="si-car-track">
           {items.map((item, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: a ordem é a identidade do slide
-            <div className="si-slide" key={i}>
+            <div
+              className={fade && i === 0 ? "si-slide on" : "si-slide"}
+              key={i}
+            >
               {item}
             </div>
           ))}

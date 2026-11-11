@@ -315,5 +315,18 @@ ${mobileRules(".sb-narrow")}
 @keyframes sb-fx-hang{0%{translate:0 8px}50%{translate:0 4px}100%{translate:0 8px}}
 [data-sb-par],[data-sb-mouse]{translate:var(--sb-mx,0px) calc(var(--sb-py,0px) + var(--sb-my,0px));will-change:translate}
 [data-sb-par=bg]{translate:var(--sb-mx,0px) var(--sb-my,0px);background-position-y:calc(50% + var(--sb-py,0px))}
+/* palavra girando ([data-sb-rotate] no fx-runtime): sem JS ou com movimento reduzido fica a primeira palavra */
+.sb-rot{display:inline-block;vertical-align:bottom;white-space:nowrap;perspective:600px;transition:width .3s ease}
+.sb-rot-w{display:inline-block;transform-origin:50% 50%;transition:transform .25s ease,opacity .25s ease}
+.sb-rot-w.out{opacity:0;transform:rotateX(90deg)}
+.sb-rot-w.pre{opacity:0;transform:rotateX(-90deg)}
+.sb-rot[data-sb-rotate=fade] .sb-rot-w.out,.sb-rot[data-sb-rotate=fade] .sb-rot-w.pre{transform:none}
+@media (prefers-reduced-motion:reduce){.sb-rot,.sb-rot-w{transition:none}}
+/* carrossel em fade (SiCar transition fade): slides empilhados na mesma célula, o atual (.on) fica visível */
+.sb .si-car[data-fade] .si-car-view{overflow:hidden;scroll-snap-type:none}
+.sb .si-car[data-fade] .si-car-track{display:grid;transform:none!important;transition:none!important}
+.sb .si-car[data-fade] .si-slide{grid-area:1/1;opacity:0;visibility:hidden;transition:opacity var(--si-speed,.5s) ease,visibility 0s linear var(--si-speed,.5s)}
+.sb .si-car[data-fade] .si-slide.on{opacity:1;visibility:visible;transition:opacity var(--si-speed,.5s) ease}
+@media (prefers-reduced-motion:reduce){.sb .si-car[data-fade] .si-slide{transition:none}}
 ${ebookCss}
 `;

@@ -100,6 +100,8 @@ export interface Fx {
   mouse?: number;
   /** Parallax na rolagem: −10..10 (0 = desligado). Positivo atrasa o item, negativo adianta. */
   parallax?: number;
+  /** Telas em que o parallax se move: `"all"` (padrão) ou só `"desktop"` (acima de 1024px, como o "Motion Effects" do Elementor). */
+  parallaxScreens?: "all" | "desktop";
   /** Com `each`: soma esse atraso (ms) a cada filho seguinte, para os itens entrarem em sequência. */
   stagger?: number;
 }
@@ -117,6 +119,7 @@ export const fxSchema: z.ZodType<Fx> = z.object({
   loop: z.boolean().optional(),
   mouse: z.number().min(-10).max(10).optional(),
   parallax: z.number().min(-10).max(10).optional(),
+  parallaxScreens: z.enum(["all", "desktop"]).optional(),
   stagger: z.number().min(0).max(1000).optional(),
 });
 
@@ -226,6 +229,9 @@ export function fxCss(
     const transitions: string[] = [];
     const d = Math.round(f.delay ?? 0);
     const em = f.enterMs ? `${Math.round(f.enterMs)}ms` : ".8s";
+    // Parallax só no desktop: abaixo de 1025px o `translate` volta a zero (vence o `--sb-py` que o script grava inline).
+    if (f.parallax && f.parallaxScreens === "desktop")
+      css += `@media (max-width:1024px){${sel}{translate:none!important}}`;
     const stagger = f.each ? Math.round(f.stagger ?? 0) : 0;
     const NO_MOTION = "prefers-reduced-motion:no-preference";
     const parent = sel.slice(0, -2);
