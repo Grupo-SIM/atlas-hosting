@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getRealUser, loadFullUserById } from "@/lib/auth";
 import { IMPERSONATE_COOKIE } from "@/lib/auth/impersonation";
+import { secureCookie } from "@/lib/auth/secure-cookie";
 import { AppLogger } from "@/lib/server/logs";
 
 const MAX_AGE_SECONDS = 60 * 60 * 2; // 2h
@@ -48,7 +49,7 @@ export async function startImpersonationAction(
     maxAge: MAX_AGE_SECONDS,
     path: "/",
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: await secureCookie(),
   });
 
   redirect("/home");

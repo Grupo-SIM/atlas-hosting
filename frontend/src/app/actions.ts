@@ -30,6 +30,7 @@ import { auth, signIn, signOut } from "@/auth";
 import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
 import { recordAttribution } from "@/lib/affiliate/attribution";
 import { triggerCommissionIfApplicable } from "@/lib/affiliate/commission";
+import { secureCookie } from "@/lib/auth/secure-cookie";
 import { DEFAULT_POST_LOGIN_PATH } from "@/lib/consts/default-auth-path";
 import { provisionPaidVps } from "@/lib/contabo";
 import { completeProvisioningConfiguration } from "@/lib/contabo/link-configuration";
@@ -220,7 +221,7 @@ async function findOrCreateGuestUser(info: GuestInfo) {
       httpOnly: true,
       path: "/",
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: await secureCookie(),
     });
   }
 
@@ -290,7 +291,7 @@ export async function login(
       maxAge: 60 * 60 * 24 * 30,
       path: "/",
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: await secureCookie(),
     });
 
     // Attribution: record affiliate link click if cookie present

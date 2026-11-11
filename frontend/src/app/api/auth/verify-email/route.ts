@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { secureCookie } from "@/lib/auth/secure-cookie";
 import {
   markEmailVerificationTokenAsUsed,
   validateEmailVerificationCode,
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 30, // 30 days
       path: "/",
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: await secureCookie(),
     });
 
     return NextResponse.json({
