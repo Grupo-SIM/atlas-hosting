@@ -48,6 +48,7 @@ import { isSeopack, seopackCss, seopackVars } from "./seopack.js";
 import { isSim, simCss, simVars } from "./sim.js";
 import { isSpy, spyCss } from "./spyhacker.js";
 import { siteCss, themeVars } from "./styles.js";
+import { isViralpack, viralpackCss, viralpackVars } from "./viralpack.js";
 import {
   isVslMilionario,
   vslmilionarioCss,
@@ -127,6 +128,7 @@ export function SiteRenderer({
   const vslmilionario = isVslMilionario(site.theme);
   const gatilhos = isGatilhos(site.theme);
   const corte = isCorte(site.theme);
+  const viralpack = isViralpack(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -174,6 +176,7 @@ export function SiteRenderer({
         vslmilionario ? "sb-vm" : "",
         gatilhos ? "sb-gm" : "",
         corte ? "sb-ac" : "",
+        viralpack ? "sb-vp" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -204,6 +207,7 @@ export function SiteRenderer({
           ...(vslmilionario ? vslmilionarioVars(site.theme) : {}),
           ...(gatilhos ? gatilhosVars(site.theme) : {}),
           ...(corte ? corteVars(site.theme) : {}),
+          ...(viralpack ? viralpackVars(site.theme) : {}),
         } as CSSProperties
       }
     >
@@ -211,58 +215,60 @@ export function SiteRenderer({
         {fontFaceCss(customFonts(site.theme)) +
           (atlas
             ? siteCss + atlasCss
-            : corte
-              ? siteCss + corteCss
-              : gatilhos
-                ? siteCss + gatilhosCss
-                : resolvit
-                  ? siteCss + resolvitCss
-                  : seopack
-                    ? siteCss + seopackCss
-                    : instafan
-                      ? siteCss + instafanCss
-                      : presets
-                        ? siteCss + presetsCss
-                        : habilidades
-                          ? siteCss + habilidadesCss
-                          : outrolado
-                            ? siteCss + outroladoCss
-                            : pagatg
-                              ? siteCss + pagatgCss
-                              : sim
-                                ? siteCss + simCss
-                                : holofote
-                                  ? siteCss + holofoteCss
-                                  : raiz
-                                    ? siteCss + raizCss
-                                    : zyrion
-                                      ? siteCss + zyrionCss
-                                      : journal
-                                        ? siteCss + journalCss
-                                        : portal
-                                          ? siteCss + portalCss
-                                          : spy
-                                            ? siteCss + spyCss
-                                            : central
-                                              ? siteCss + centralCss
-                                              : market
-                                                ? siteCss + marketplaceCss
-                                                : margem
-                                                  ? siteCss + margemCss
-                                                  : seguidores
-                                                    ? siteCss + seguidoresCss
-                                                    : areaflix
-                                                      ? siteCss + areaflixCss
-                                                      : patrimonial
-                                                        ? siteCss +
-                                                          patrimonialCss
-                                                        : motorista
+            : viralpack
+              ? siteCss + viralpackCss
+              : corte
+                ? siteCss + corteCss
+                : gatilhos
+                  ? siteCss + gatilhosCss
+                  : resolvit
+                    ? siteCss + resolvitCss
+                    : seopack
+                      ? siteCss + seopackCss
+                      : instafan
+                        ? siteCss + instafanCss
+                        : presets
+                          ? siteCss + presetsCss
+                          : habilidades
+                            ? siteCss + habilidadesCss
+                            : outrolado
+                              ? siteCss + outroladoCss
+                              : pagatg
+                                ? siteCss + pagatgCss
+                                : sim
+                                  ? siteCss + simCss
+                                  : holofote
+                                    ? siteCss + holofoteCss
+                                    : raiz
+                                      ? siteCss + raizCss
+                                      : zyrion
+                                        ? siteCss + zyrionCss
+                                        : journal
+                                          ? siteCss + journalCss
+                                          : portal
+                                            ? siteCss + portalCss
+                                            : spy
+                                              ? siteCss + spyCss
+                                              : central
+                                                ? siteCss + centralCss
+                                                : market
+                                                  ? siteCss + marketplaceCss
+                                                  : margem
+                                                    ? siteCss + margemCss
+                                                    : seguidores
+                                                      ? siteCss + seguidoresCss
+                                                      : areaflix
+                                                        ? siteCss + areaflixCss
+                                                        : patrimonial
                                                           ? siteCss +
-                                                            motoristaCss
-                                                          : vslmilionario
+                                                            patrimonialCss
+                                                          : motorista
                                                             ? siteCss +
-                                                              vslmilionarioCss
-                                                            : siteCss)}
+                                                              motoristaCss
+                                                            : vslmilionario
+                                                              ? siteCss +
+                                                                vslmilionarioCss
+                                                              : siteCss)}
       </style>
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}

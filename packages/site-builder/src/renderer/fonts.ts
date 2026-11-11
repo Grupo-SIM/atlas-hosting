@@ -11,6 +11,7 @@ import { isRaiz, RAIZ_EXTRA_FONTS } from "./raiz.js";
 import { isSeguidores, SEGUIDORES_EXTRA_FONTS } from "./seguidores.js";
 import { isSim, SIM_EXTRA_FONTS } from "./sim.js";
 import { isSpy, SPY_EXTRA_FONTS } from "./spyhacker.js";
+import { isViralpack, VIRALPACK_EXTRA_FONTS } from "./viralpack.js";
 import { isVslMilionario, VSLMILIONARIO_EXTRA_FONTS } from "./vslmilionario.js";
 
 /** Fontes oferecidas no tema (Google Fonts). O valor vai direto para `fontHeading`/`fontBody`. */
@@ -186,8 +187,11 @@ export function fontStylesheet(site: {
     for (const extra of INSTAFAN_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   if (isCorte(theme))
-    for (const extra of CORTE_EXTRA_FONTS)
-      if (!names.includes(extra)) names.push(extra);
+    if (isViralpack(theme))
+      for (const extra of VIRALPACK_EXTRA_FONTS)
+        if (!names.includes(extra)) names.push(extra);
+  for (const extra of CORTE_EXTRA_FONTS)
+    if (!names.includes(extra)) names.push(extra);
   if (isGatilhos(theme))
     for (const extra of GATILHOS_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
