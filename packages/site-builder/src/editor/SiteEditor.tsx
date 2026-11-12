@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { postPath } from "../blocks/helpers.js";
 import { getBlockDefinition } from "../blocks/registry.js";
 import type { Block, Site } from "../model/index.js";
 import { resolveRoute } from "../renderer/routes.js";
@@ -38,7 +39,14 @@ import {
   diffBlock,
   replicaTargets,
 } from "./replicate.js";
-import { duplicatePost, setMenu, setTheme, withAdBlocks } from "./site-ops.js";
+import {
+  duplicatePost,
+  renameCategory,
+  setMenu,
+  setTheme,
+  updatePost,
+  withAdBlocks,
+} from "./site-ops.js";
 import { startSort } from "./sort-drag.js";
 import { editorCss } from "./styles.js";
 import {
@@ -202,11 +210,14 @@ function elementAt(block: HTMLElement, path: string): HTMLElement | null {
  * incorporado ou o texto do item — e, num link, também o endereço (sem o `basePath` do editor), para
  * achar o campo do link mesmo quando o texto é só para leitor de tela (o play do vídeo, ícones).
  */
-function hintOf(
+export function hintOf(
   el: Element | null | undefined,
-  basePath: string
+  basePath: string,
+  point?: { x: number; y: number }
 ): Omit<FocusHint, "n"> {
   if (!el) return { value: "" };
+  const levels = linkLevels(el, basePath);
+  const under = mediaUnder(el, point);
   const repeat = isRepeated(el) || undefined;
   // Num item repetido, o primeiro link dele aponta para o post/categoria que ele mostra.
   const itemHref = repeat
@@ -219,24 +230,125 @@ function hintOf(
       ) || undefined
     : undefined;
   // Espaço de anúncio: a mídia pode vir dos anúncios do site, então não dá para achar pelo `src`.
-  if (el.closest(".sb-ad")) return { ad: true, value: "" };
+  const adEl = el.closest(".sb-ad");
+  if (adEl)
+    return {
+      ad: true,
+      adKind: adEl.classList.contains("sb-ad-banner") ? "banner" : "side",
+      value: "",
+    };
   if (el instanceof HTMLImageElement)
-    return { itemHref, repeat, value: el.getAttribute("src") ?? "" };
+    return {
+      itemHref,
+      levels,
+      repeat,
+      under,
+      value: el.getAttribute("src") ?? "",
+    };
+  if (el instanceof HTMLVideoElement)
+    return {
+      itemHref,
+      levels,
+      repeat,
+      under,
+      value: el.getAttribute("src") ?? el.getAttribute("poster") ?? "",
+    };
   if (el instanceof HTMLIFrameElement) {
     const src = el.getAttribute("src") ?? "";
     return {
       itemHref,
+      levels,
       repeat,
+      under,
       value: /\/(?:embed|video)\/([^/?#]+)/.exec(src)?.[1] ?? src,
     };
   }
   const href = stripBase(el.closest("a")?.getAttribute("href") ?? "", basePath);
+  const parent = el.parentElement;
   return {
     href: href || undefined,
     itemHref,
+    levels,
+    parentText:
+      parent && !parent.classList.contains("sb-block")
+        ? (parent.textContent ?? "")
+        : undefined,
     repeat,
+    under,
     value: el.textContent ?? "",
   };
+}
+
+/**
+ * Imagens e fundos (`style="…url()"`) empilhados no ponto clicado, dentro do mesmo bloco, de cima para baixo.
+ * Uma capa por baixo de um véu, de um texto ou de uma imagem de "passar o mouse" não recebe o clique, e uma
+ * seção com imagem de fundo é só um `div`: o painel acha o campo da imagem por esta lista.
+ */
+function mediaUnder(
+  el: Element,
+  point?: { x: number; y: number }
+): string[] | undefined {
+  const block = el.closest(".sb-block");
+  if (!block) return undefined;
+  const rect = el.getBoundingClientRect();
+  const x = point?.x ?? rect.x + rect.width / 2;
+  const y = point?.y ?? rect.y + rect.height / 2;
+  const out: string[] = [];
+  const add = (u: string | null | undefined) => {
+    if (u && !out.includes(u)) out.push(u);
+  };
+  // Pela posição (não por `elementsFromPoint`): camadas decorativas têm `pointer-events:none` e ficariam de fora.
+  const hits = Array.from(block.querySelectorAll("*")).filter(n => {
+    if (n.closest(".sb-block") !== block || n instanceof SVGElement)
+      return false;
+    const r = n.getBoundingClientRect();
+    return (
+      r.width > 0 &&
+      r.height > 0 &&
+      x >= r.left &&
+      x <= r.right &&
+      y >= r.top &&
+      y <= r.bottom
+    );
+  });
+  for (const n of hits.reverse()) {
+    if (n instanceof HTMLImageElement) add(n.getAttribute("src"));
+    if (n instanceof HTMLVideoElement) {
+      add(n.getAttribute("src"));
+      add(n.getAttribute("poster"));
+    }
+    const bg = /url\(\s*["']?([^"')]+)["']?\s*\)/.exec(
+      n.getAttribute("style") ?? ""
+    );
+    add(bg?.[1]);
+  }
+  const own = block.getAttribute("style") ?? "";
+  add(/url\(\s*["']?([^"')]+)["']?\s*\)/.exec(own)?.[1]);
+  return out.length ? out : undefined;
+}
+
+/**
+ * Endereços dos links de cada contêiner acima do item (do mais próximo ao bloco), sem repetir: serve
+ * para achar o post/categoria que um card mostra mesmo quando o clique não caiu num link.
+ */
+function linkLevels(el: Element, basePath: string): string[][] {
+  const out: string[][] = [];
+  // O link em que o clique caiu vale primeiro (um card tem o do post e o da categoria).
+  const own = stripBase(el.closest("a")?.getAttribute("href") ?? "", basePath);
+  if (own && !own.startsWith("#")) out.push([own]);
+  for (
+    let node = el.parentElement;
+    node && !node.classList.contains("sb-block") && out.length < 9;
+    node = node.parentElement
+  ) {
+    const hrefs = new Set<string>();
+    for (const a of node.querySelectorAll("a[href]")) {
+      const h = stripBase(a.getAttribute("href") ?? "", basePath);
+      if (h && !h.startsWith("#")) hrefs.add(h);
+    }
+    if (hrefs.size) out.push([...hrefs]);
+  }
+  return out;
 }
 
 /** Endereço do link sem o `basePath` do editor (o mesmo formato salvo no site). */
@@ -777,7 +889,10 @@ export function SiteEditor({
       const text = (el.textContent ?? "").trim().slice(0, 24);
       setElName(path ? `${itemName(el)}${text ? ` · ${text}` : ""}` : "");
     }
-    setFocusHint(h => ({ n: h.n + 1, ...hintOf(el, basePath) }));
+    setFocusHint(h => ({
+      n: h.n + 1,
+      ...hintOf(el, basePath, { x: e.clientX, y: e.clientY }),
+    }));
   };
 
   const showGuides = (gx?: number, gy?: number) => {
@@ -1694,6 +1809,9 @@ export function SiteEditor({
       <aside className="sbe-panel-card sbe-right">
         <Inspector
           crumbs={crumbs}
+          currentPost={site.posts.find(
+            p => postPath(p).replace(/\/$/, "") === path.replace(/\/$/, "")
+          )}
           elLabel={elPath ? elName : ""}
           elPath={elPath}
           focusHint={focusHint}
@@ -1703,6 +1821,18 @@ export function SiteEditor({
             edit(setBlockAnchor(site, selected.id, anchor), {
               id: selected.id,
               label: `Âncora · ${labelOf(selected.type)}`,
+            })
+          }
+          onBlockProp={(blockId, key, value) =>
+            edit(updateBlockProps(site, blockId, { [key]: value }), {
+              key: `${blockId}-${key}`,
+              label: "Texto do post",
+            })
+          }
+          onCategory={(id, name) =>
+            edit(renameCategory(site, id, name), {
+              key: `cat-name-${id}`,
+              label: `Categoria · ${name}`,
             })
           }
           onDuplicatePost={(postId, countKey, count) => {
@@ -1730,6 +1860,13 @@ export function SiteEditor({
             edit(setMenu(site, menu), {
               key: "menu-edit",
               label: "Menu do site",
+            })
+          }
+          onOpenPath={goTo}
+          onPost={(id, patch, what) =>
+            edit(updatePost(site, id, patch), {
+              key: `post-${id}-${Object.keys(patch).join()}`,
+              label: `${what} do post · ${site.posts.find(p => p.id === id)?.title ?? ""}`,
             })
           }
           onProp={(key, value) =>

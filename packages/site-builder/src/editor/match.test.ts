@@ -30,3 +30,49 @@ describe("matchItem — campos relacionados", () => {
     ]);
   });
 });
+
+describe("matchItem — texto com marcação e listas dentro de itens", () => {
+  const fields = [
+    { key: "text", kind: "textarea", label: "Texto" },
+    {
+      itemFields: [
+        { key: "name", kind: "text", label: "Nome" },
+        {
+          itemFields: [{ key: "label", kind: "text", label: "Opção" }],
+          key: "options",
+          kind: "list",
+          label: "Opções",
+        },
+      ],
+      key: "cards",
+      kind: "list",
+      label: "Cartões",
+    },
+  ] as never;
+
+  test("acha o campo mesmo com **negrito** e [link](url) no valor", () => {
+    const m = matchItem(
+      fields,
+      { text: "Veja o **guia** e o [manual](https://x.com) agora" },
+      {},
+      { n: 1, value: "Veja o guia e o manual agora" }
+    );
+    expect(m.map(x => x.field.key)).toEqual(["text"]);
+  });
+
+  test("texto de uma opção dentro de um cartão abre o cartão", () => {
+    const m = matchItem(
+      fields,
+      {
+        cards: [
+          { name: "A", options: [] },
+          { name: "B", options: [{ label: "PAGO" }] },
+        ],
+      },
+      {},
+      { n: 1, value: "PAGO" }
+    );
+    expect(m).toHaveLength(1);
+    expect(m[0]).toMatchObject({ index: 1, kind: "item" });
+  });
+});

@@ -8,6 +8,7 @@ import type { FieldDef } from "../blocks/types.js";
 import {
   BLOCK_ANCHOR,
   type Block,
+  type Category,
   ENTER_EFFECTS,
   ENTER_LABELS,
   type EnterScreen,
@@ -25,9 +26,11 @@ import {
   themeFont,
 } from "../renderer/fonts.js";
 import { themeVars } from "../renderer/styles.js";
+import { VARIANT_TOKENS } from "../renderer/variant-tokens.js";
 import { FieldInput, type ResolveChannel } from "./fields.js";
 import { formatTranslate, parseTranslate } from "./free-move.js";
 import { Icon, type IconName } from "./icons.js";
+import { resolveSiteItem } from "./site-items.js";
 
 type StyleValue = string | number | undefined;
 
@@ -311,6 +314,34 @@ const norm = (v: unknown) =>
     .replace(/\s+/g, " ")
     .trim();
 
+/** Texto como aparece na tela: sem a marcação de negrito, link, título e lista que o bloco converte em HTML. */
+const plain = (v: unknown) =>
+  norm(
+    String(v ?? "")
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/\*|__|`|\{\{|\}\}|\[\[|\]\]/g, "")
+      .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+      .replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, "")
+  );
+
+/** Algum campo do item (inclusive de listas dentro do item, como as opções de um cartão) passa no teste. */
+function hasValue(
+  item: Record<string, unknown>,
+  fields: FieldDef[],
+  test: (v: unknown) => boolean
+): boolean {
+  return fields.some(f => {
+    const v = item?.[f.key];
+    if (f.kind !== "list") return test(v);
+    return (
+      Array.isArray(v) &&
+      v.some(sub =>
+        hasValue(sub as Record<string, unknown>, f.itemFields ?? [], test)
+      )
+    );
+  });
+}
+
 /** Acha, pelo texto/imagem que o elemento mostra, quais campos do bloco pertencem a ele. */
 function matchFields(
   fields: FieldDef[],
@@ -322,10 +353,21 @@ function matchFields(
   const want = norm(hint);
   if (!want) return [];
   const valueOf = (key: string) => props[key] ?? defaults[key];
-  const same = (v: unknown) => norm(v) === want;
+  // O texto da tela também pode trazer marcação que sobrou (ex.: `***` sem par), então compara sem ela dos dois lados.
+  const wantPlain = plain(hint);
+  const same = (v: unknown) =>
+    norm(v) === want || plain(v) === want || plain(v) === wantPlain;
   const loose = (v: unknown) => {
     const n = norm(v);
-    return n.length >= 3 && (want.includes(n) || n.includes(want));
+    const pl = plain(v);
+    return (
+      (n.length >= 3 && (want.includes(n) || n.includes(want))) ||
+      (pl.length >= 3 &&
+        (want.includes(pl) ||
+          pl.includes(want) ||
+          wantPlain.includes(pl) ||
+          pl.includes(wantPlain)))
+    );
   };
   const scan = (test: (v: unknown) => boolean): FieldMatch[] => {
     const out: FieldMatch[] = [];
@@ -334,10 +376,10 @@ function matchFields(
         const items = valueOf(field.key);
         if (!Array.isArray(items)) continue;
         items.forEach((item, index) => {
-          const hit = (field.itemFields ?? []).some(
-            f =>
-              f.kind !== "list" &&
-              test((item as Record<string, unknown>)[f.key])
+          const hit = hasValue(
+            item as Record<string, unknown>,
+            field.itemFields ?? [],
+            test
           );
           if (hit) out.push({ field, index, kind: "item" });
         });
@@ -348,7 +390,19 @@ function matchFields(
     return out;
   };
   const exact = scan(same);
-  return exact.length > 0 || exactOnly ? exact : scan(loose);
+  if (exact.length > 0 || exactOnly) return exact;
+  const near = scan(loose);
+  if (near.length > 0) return near;
+  // Contador composto ("10K+", "+420%", "1,119+"): o número, o prefixo e o sufixo são campos separados.
+  if (want.length <= 12 && /\d/.test(want)) {
+    const piece = (v: unknown) => {
+      const n = norm(v);
+      return n.length >= 1 && n.length <= 6 && want.includes(n);
+    };
+    const hits = scan(piece);
+    return hits.length <= 3 ? hits : [];
+  }
+  return near;
 }
 
 /** Campos do item: os que guardam o texto/imagem dele e, num link, o que guarda o endereço. */
@@ -359,7 +413,28 @@ export function matchItem(
   hint: FocusHint | undefined
 ): FieldMatch[] {
   if (hint?.ad) return adFields(fields);
-  const out = matchFields(fields, props, defaults, hint?.value ?? "");
+  let out = matchFields(fields, props, defaults, hint?.value ?? "");
+  // Trecho em destaque dentro de um título (<span>): o campo guarda o título inteiro, que é o texto do pai.
+  if (out.length === 0 && hint?.parentText)
+    out = matchFields(fields, props, defaults, hint.parentText);
+  // Imagens e fundos empilhados no ponto clicado (seção com imagem de fundo, véu, imagem coberta): o campo
+  // delas vale junto com o texto do item. Só entra o que bate exatamente com o valor guardado.
+  if (hint?.under) {
+    const have = new Set(
+      out.map(m =>
+        m.kind === "item" ? `${m.field.key}#${m.index}` : m.field.key
+      )
+    );
+    for (const u of hint.under) {
+      for (const m of matchFields(fields, props, defaults, u, true)) {
+        const k = m.kind === "item" ? `${m.field.key}#${m.index}` : m.field.key;
+        if (!have.has(k)) {
+          have.add(k);
+          out.push(m);
+        }
+      }
+    }
+  }
   const key = (m: FieldMatch) =>
     m.kind === "item" ? `${m.field.key}#${m.index}` : m.field.key;
   const seen = new Set(out.map(key));
@@ -511,7 +586,7 @@ function RepeatCount({
       </div>
       <p className="sbe-hint">
         {post
-          ? `Cria uma cópia de “${post.title}” logo abaixo. A cópia é um post novo: edite título, imagem e texto em Páginas → Posts.`
+          ? `Cria uma cópia de “${post.title}” logo abaixo. A cópia é um post novo: edite título, imagem e resumo aqui no painel e o texto completo no próprio post.`
           : "O novo item mostra o próximo conteúdo do site. Se não aparecer, não há mais."}
       </p>
     </div>
@@ -521,10 +596,18 @@ function RepeatCount({
 export interface FocusHint {
   /** O item clicado está dentro de um espaço de anúncio: mostra os campos do anúncio do bloco. */
   ad?: boolean;
+  /** Qual espaço publicitário global é (1 = faixas, 2 = lateral). */
+  adKind?: "banner" | "side";
   /** Endereço do link clicado, quando o item é (ou está dentro de) um link. */
   href?: string;
   /** Num item repetido, o endereço do primeiro link dele (o post ou a categoria que ele mostra). */
   itemHref?: string;
+  /** Imagens e fundos empilhados no ponto clicado (de cima para baixo): acham o campo da imagem de uma seção ou de uma capa coberta. */
+  under?: string[];
+  /** Texto do elemento pai (um trecho em destaque dentro de um título só acha o campo pelo título inteiro). */
+  parentText?: string;
+  /** Links de cada contêiner acima do item (do mais próximo ao bloco): acham o post/categoria que ele mostra. */
+  levels?: string[][];
   /** O item está numa lista cuja quantidade vem do campo `limit` do bloco (`data-repeat-list`). */
   repeat?: boolean;
   n: number;
@@ -536,6 +619,16 @@ interface Props {
   elLabel?: string;
   elPath?: string;
   onMenu: (menu: Site["menu"]) => void;
+  /** Muda uma prop de um bloco do conteúdo de um post (o corpo do post é desenhado pelo bloco do layout, sem camada própria). */
+  onBlockProp: (blockId: string, key: string, value: unknown) => void;
+  /** Post da página aberta no canvas (datas e capa do cabeçalho do post não têm link para ele). */
+  currentPost?: Post;
+  /** Muda título, capa, resumo, categoria ou data do post que o item clicado mostra. */
+  onPost: (postId: string, patch: Partial<Post>, what: string) => void;
+  /** Renomeia a categoria que o item clicado mostra. */
+  onCategory: (categoryId: string, name: string) => void;
+  /** Abre uma página/post do site no canvas (ex.: o post inteiro, para editar o texto). */
+  onOpenPath: (path: string) => void;
   onAction: (action: "delete" | "down" | "duplicate" | "hide" | "up") => void;
   onAnchor: (anchor: string) => void;
   onFx: (patch: Partial<Record<keyof Fx, Fx[keyof Fx]>>, what: string) => void;
@@ -591,6 +684,227 @@ function AnchorInput({
   );
 }
 
+/**
+ * Campos do post (e da categoria) que o item clicado mostra: o texto e a imagem dos cards vêm do post, não
+ * do bloco, então são editados aqui (mesmos campos de Páginas → Posts).
+ */
+function SiteItemFields({
+  category,
+  onCategory,
+  onOpenPath,
+  onPost,
+  onUpload,
+  post,
+  site,
+}: {
+  category?: Category;
+  onCategory: (id: string, name: string) => void;
+  onOpenPath: (path: string) => void;
+  onPost: (id: string, patch: Partial<Post>, what: string) => void;
+  onUpload?: (file: File) => Promise<string>;
+  post?: Post;
+  site: Site;
+}) {
+  return (
+    <>
+      {post ? (
+        <div className="sbe-list-item">
+          <p className="sbe-hint">
+            Post: o texto e a imagem deste item vêm do post. Editar aqui muda em
+            todos os lugares do site que mostram ele.
+          </p>
+          <FieldInput
+            field={{ key: "title", kind: "text", label: "Título do post" }}
+            onChange={v => onPost(post.id, { title: String(v) }, "Título")}
+            value={post.title}
+          />
+          <FieldInput
+            field={{
+              key: "coverImage",
+              kind: "image",
+              label: "Imagem de capa",
+            }}
+            onChange={v =>
+              onPost(post.id, { coverImage: v ? String(v) : null }, "Capa")
+            }
+            onUpload={onUpload}
+            value={post.coverImage ?? ""}
+          />
+          <FieldInput
+            field={{ key: "excerpt", kind: "textarea", label: "Resumo" }}
+            onChange={v => onPost(post.id, { excerpt: String(v) }, "Resumo")}
+            value={post.excerpt}
+          />
+          <FieldInput
+            field={{
+              key: "categoryId",
+              kind: "select",
+              label: "Categoria",
+              options: [
+                { label: "Sem categoria", value: "" },
+                ...site.categories.map(c => ({ label: c.name, value: c.id })),
+              ],
+            }}
+            onChange={v =>
+              onPost(post.id, { categoryId: v ? String(v) : null }, "Categoria")
+            }
+            value={post.categoryId ?? ""}
+          />
+          <label className="sbe-field">
+            <span>Data de publicação</span>
+            <input
+              onChange={e =>
+                onPost(post.id, { publishedAt: e.target.value || null }, "Data")
+              }
+              type="date"
+              value={post.publishedAt ?? ""}
+            />
+          </label>
+          <div className="sbe-row">
+            <button onClick={() => onOpenPath(postPath(post))} type="button">
+              Abrir o post inteiro
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {category ? (
+        <div className="sbe-list-item">
+          <p className="sbe-hint">
+            Categoria: o nome vale para o menu, os cards e a página da
+            categoria.
+          </p>
+          <FieldInput
+            field={{ key: "name", kind: "text", label: "Nome da categoria" }}
+            onChange={v => onCategory(category.id, String(v))}
+            value={category.name}
+          />
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+/** Espaço publicitário global (1 = faixas, 2 = lateral): imagens/vídeos, link e tempo; vale para todos os espaços do mesmo número. */
+function GlobalAdFields({
+  kind,
+  onTheme,
+  onUpload,
+  site,
+}: {
+  kind: "banner" | "side";
+  onTheme: (patch: Record<string, string>, what: string) => void;
+  onUpload?: (file: File) => Promise<string>;
+  site: Site;
+}) {
+  const all = globalAds(site.theme);
+  const cfg = all[kind];
+  const save = (patch: Partial<typeof cfg>) =>
+    onTheme(
+      { adsConfig: JSON.stringify({ ...all, [kind]: { ...cfg, ...patch } }) },
+      "Anúncios do site"
+    );
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <h4 className="sbe-h">
+        {kind === "banner"
+          ? "Espaço publicitário 1 — faixas largas (topo), todas as páginas"
+          : "Espaço publicitário 2 — coluna lateral direita, todas as páginas"}
+      </h4>
+      <FieldInput
+        field={{
+          itemFields: adItemFields,
+          key: "items",
+          kind: "list",
+          label: "Imagens e vídeos",
+        }}
+        onChange={v => save({ items: v as typeof cfg.items })}
+        onUpload={onUpload}
+        value={cfg.items}
+      />
+      <FieldInput
+        field={{ key: "link", kind: "url", label: "Link" }}
+        onChange={v => save({ link: String(v ?? "") })}
+        value={cfg.link}
+      />
+      <FieldInput
+        field={{ key: "seconds", kind: "number", label: "Segundos por imagem" }}
+        onChange={v => save({ seconds: Number(v) || 6 })}
+        value={cfg.seconds}
+      />
+    </div>
+  );
+}
+
+/** Cores e conteúdo do tema que só existem em certos templates (`VARIANT_TOKENS`). */
+function VariantSettings({
+  onTheme,
+  onUpload,
+  site,
+}: {
+  onTheme: (patch: Record<string, string>, what: string) => void;
+  onUpload?: (file: File) => Promise<string>;
+  site: Site;
+}) {
+  const tokens = VARIANT_TOKENS[site.theme.variant ?? ""] ?? [];
+  const colors = tokens.filter(t => t.kind === "color");
+  const content = tokens.filter(t => t.kind !== "color");
+  return (
+    <>
+      {colors.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <h4 className="sbe-h">Cores do modelo</h4>
+          <p className="sbe-hint">
+            Cores específicas deste template (fundos, bordas, títulos…). Deixe
+            vazio para voltar ao padrão.
+          </p>
+          {colors.map(tok => {
+            const value = site.theme[tok.key] ?? "";
+            const shown = value || tok.fallback;
+            return (
+              <div className="sbe-line" key={tok.key}>
+                <span>{tok.label}</span>
+                <input
+                  aria-label={tok.label}
+                  onChange={e =>
+                    onTheme({ [tok.key]: e.target.value }, tok.label)
+                  }
+                  style={{ height: 28, padding: 0, width: 36 }}
+                  type="color"
+                  value={
+                    /^#[0-9a-f]{6}/i.test(shown) ? shown.slice(0, 7) : "#000000"
+                  }
+                />
+                <input
+                  className="sbe-mono"
+                  onChange={e =>
+                    onTheme({ [tok.key]: e.target.value }, tok.label)
+                  }
+                  placeholder={tok.fallback}
+                  type="text"
+                  value={value}
+                />
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+      {content.map(tok => (
+        <FieldInput
+          field={{
+            key: tok.key,
+            kind: tok.kind === "image" ? "image" : "text",
+            label: tok.label,
+          }}
+          key={tok.key}
+          onChange={v => onTheme({ [tok.key]: String(v ?? "") }, tok.label)}
+          onUpload={onUpload}
+          value={site.theme[tok.key] ?? tok.fallback}
+        />
+      ))}
+    </>
+  );
+}
+
 /** Painel direito: propriedades do bloco selecionado ou, sem seleção, o tema do site. */
 export function Inspector({
   crumbs,
@@ -601,6 +915,11 @@ export function Inspector({
   onAnchor,
   onFx,
   onMenu,
+  onBlockProp,
+  currentPost,
+  onCategory,
+  onOpenPath,
+  onPost,
   onProp,
   onSelect,
   onSiteName,
@@ -639,6 +958,85 @@ export function Inspector({
         : [],
     [focusHint?.n, selected?.id, elPath]
   );
+
+  // Texto/imagem que vem de um post ou categoria do site (cards, destaques, listas): editados aqui mesmo.
+  const siteItem = useMemo(
+    () =>
+      elPath
+        ? resolveSiteItem(
+            site,
+            focusHint,
+            itemMatches.length === 0,
+            currentPost
+          )
+        : {},
+    [
+      focusHint?.n,
+      selected?.id,
+      elPath,
+      site.posts,
+      site.categories,
+      currentPost?.id,
+    ]
+  );
+
+  // Texto do corpo do post (parágrafos, títulos, listas): o bloco do layout o desenha sem camada própria,
+  // então o campo vem do bloco de texto do próprio post.
+  const postBlockHit = useMemo(() => {
+    if (
+      !(elPath && currentPost && focusHint?.value) ||
+      siteItem.post ||
+      siteItem.category
+    )
+      return undefined;
+    const want = plain(focusHint.value);
+    const walk = (
+      blocks: Block[]
+    ): { block: Block; matches: FieldMatch[] } | undefined => {
+      for (const b of blocks) {
+        const d = getBlockDefinition(b.type);
+        if (d) {
+          // Com campos do próprio bloco já achados, só vale o texto que está dentro de um trecho do post.
+          const inside =
+            want.length >= 8 &&
+            d.fields.some(
+              f =>
+                f.kind !== "list" &&
+                plain(b.props[f.key] ?? d.defaults[f.key]).includes(want)
+            );
+          if (inside || itemMatches.length === 0) {
+            const matches = matchItem(d.fields, b.props, d.defaults, focusHint);
+            if (matches.length > 0) return { block: b, matches };
+          }
+        }
+        const deep = walk(b.children ?? []);
+        if (deep) return deep;
+      }
+      return undefined;
+    };
+    return walk(currentPost.blocks);
+  }, [
+    focusHint?.n,
+    selected?.id,
+    elPath,
+    currentPost,
+    siteItem.post,
+    siteItem.category,
+  ]);
+
+  // O texto clicado é o nome de um item do menu (ou de um subitem): vale o painel "Menu do site".
+  const menuHit = (() => {
+    const want = (focusHint?.value ?? "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+    if (!(elPath && want)) return false;
+    return site.menu.some(m =>
+      [m.label, ...(m.children ?? []).map(c => c.label)].some(
+        l => l.replace(/\s+/g, " ").trim().toLowerCase() === want
+      )
+    );
+  })();
 
   // Item repetido que não vem de uma lista do bloco: oferece mudar a quantidade (campo `limit`).
   const countField = itemDef?.fields.find(
@@ -724,61 +1122,15 @@ export function Inspector({
               espaços do mesmo número.
             </p>
             {site.theme.ads === "on"
-              ? (["banner", "side"] as const).map(kind => {
-                  const all = globalAds(site.theme);
-                  const cfg = all[kind];
-                  const save = (patch: Partial<typeof cfg>) =>
-                    onTheme(
-                      {
-                        adsConfig: JSON.stringify({
-                          ...all,
-                          [kind]: { ...cfg, ...patch },
-                        }),
-                      },
-                      "Anúncios do site"
-                    );
-                  return (
-                    <div
-                      key={kind}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                      }}
-                    >
-                      <h4 className="sbe-h">
-                        {kind === "banner"
-                          ? "Espaço publicitário 1 — faixas largas (topo), todas as páginas"
-                          : "Espaço publicitário 2 — coluna lateral direita, todas as páginas"}
-                      </h4>
-                      <FieldInput
-                        field={{
-                          itemFields: adItemFields,
-                          key: "items",
-                          kind: "list",
-                          label: "Imagens e vídeos",
-                        }}
-                        onChange={v => save({ items: v as typeof cfg.items })}
-                        onUpload={onUploadImage}
-                        value={cfg.items}
-                      />
-                      <FieldInput
-                        field={{ key: "link", kind: "url", label: "Link" }}
-                        onChange={v => save({ link: String(v ?? "") })}
-                        value={cfg.link}
-                      />
-                      <FieldInput
-                        field={{
-                          key: "seconds",
-                          kind: "number",
-                          label: "Segundos por imagem",
-                        }}
-                        onChange={v => save({ seconds: Number(v) || 6 })}
-                        value={cfg.seconds}
-                      />
-                    </div>
-                  );
-                })
+              ? (["banner", "side"] as const).map(kind => (
+                  <GlobalAdFields
+                    key={kind}
+                    kind={kind}
+                    onTheme={onTheme}
+                    onUpload={onUploadImage}
+                    site={site}
+                  />
+                ))
               : null}
             {(
               Object.keys(THEME_SWATCHES) as (keyof typeof THEME_SWATCHES)[]
@@ -805,6 +1157,25 @@ export function Inspector({
                 />
               </div>
             ))}
+            <VariantSettings
+              onTheme={onTheme}
+              onUpload={onUploadImage}
+              site={site}
+            />
+            <FieldInput
+              field={{
+                key: "seoDescription",
+                kind: "textarea",
+                label: "Descrição do site (aparece no Google)",
+              }}
+              onChange={v =>
+                onTheme(
+                  { seoDescription: String(v ?? "") },
+                  "Descrição do site"
+                )
+              }
+              value={site.theme.seoDescription ?? ""}
+            />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <h4 className="sbe-h">Fonte</h4>
               {SITE_FONTS.map(f => (
@@ -930,7 +1301,34 @@ export function Inspector({
                 value={repeatCount.value}
               />
             ) : null}
-            {itemMatches.length > 0 && def ? (
+            {postBlockHit ? (
+              <div className="sbe-list-item">
+                <p className="sbe-hint">
+                  Texto do post: este trecho faz parte do conteúdo do post
+                  aberto.
+                </p>
+                {postBlockHit.matches.map(m =>
+                  m.kind === "field" ? (
+                    <FieldInput
+                      field={m.field}
+                      key={m.field.key}
+                      onChange={v =>
+                        onBlockProp(postBlockHit.block.id, m.field.key, v)
+                      }
+                      onResolveChannel={onResolveChannel}
+                      onUpload={onUploadImage}
+                      value={
+                        postBlockHit.block.props[m.field.key] ??
+                        getBlockDefinition(postBlockHit.block.type)?.defaults[
+                          m.field.key
+                        ]
+                      }
+                    />
+                  ) : null
+                )}
+              </div>
+            ) : null}
+            {itemMatches.length > 0 && def && !postBlockHit ? (
               itemMatches.map(m =>
                 m.kind === "field" ? (
                   <FieldInput
@@ -957,14 +1355,39 @@ export function Inspector({
                   />
                 )
               )
-            ) : repeatCount ? null : (
+            ) : repeatCount ||
+              siteItem.post ||
+              siteItem.category ||
+              postBlockHit ? null : (
               <p className="sbe-hint">
-                {elLabel === "link" &&
-                (selected.type === "header" || selected.type === "footer")
+                {menuHit ||
+                (elLabel === "link" &&
+                  (selected.type === "header" || selected.type === "footer"))
                   ? "Os links do menu ficam em “Menu do site”, logo abaixo."
-                  : "Este item não tem texto ou imagem próprios para editar aqui. Para o conteúdo do bloco, selecione o bloco no caminho acima."}
+                  : focusHint?.ad
+                    ? "Este espaço usa o anúncio global do site (vale para todos os espaços do mesmo número). Edite as imagens e o link logo abaixo."
+                    : "Este item não tem texto ou imagem próprios para editar aqui. Para o conteúdo do bloco, selecione o bloco no caminho acima."}
               </p>
             )}
+            {siteItem.post || siteItem.category ? (
+              <SiteItemFields
+                category={siteItem.category}
+                onCategory={onCategory}
+                onOpenPath={onOpenPath}
+                onPost={onPost}
+                onUpload={onUploadImage}
+                post={siteItem.post}
+                site={site}
+              />
+            ) : null}
+            {focusHint?.ad && focusHint.adKind && itemMatches.length === 0 ? (
+              <GlobalAdFields
+                kind={focusHint.adKind}
+                onTheme={onTheme}
+                onUpload={onUploadImage}
+                site={site}
+              />
+            ) : null}
           </Section>
         ) : def && def.fields.length > 0 ? (
           <Section defaultOpen title="Conteúdo">
@@ -1037,8 +1460,11 @@ export function Inspector({
           </p>
         </Section>
 
-        {(selected.type === "header" || selected.type === "footer") &&
-        (!elPath || (elLabel === "link" && itemMatches.length === 0)) ? (
+        {(selected.type === "header" ||
+          selected.type === "footer" ||
+          (elPath && menuHit)) &&
+        (!elPath ||
+          ((elLabel === "link" || menuHit) && itemMatches.length === 0)) ? (
           <Section
             defaultOpen={Boolean(elPath)}
             scope={elPath ? "el" : "block"}
@@ -1485,6 +1911,34 @@ export function Inspector({
               value={st.background ?? ""}
             />
           </div>
+          {(
+            [
+              ["hoverBackground", "Fundo ao passar o mouse", TEXT_PALETTE],
+              ["hoverColor", "Cor do texto ao passar o mouse", TEXT_PALETTE],
+              [
+                "hoverBorderColor",
+                "Cor da borda ao passar o mouse",
+                TEXT_PALETTE,
+              ],
+            ] as const
+          ).map(([key, label, colors]) => (
+            <div className="sbe-field" key={key}>
+              <span>{label}</span>
+              <Swatches
+                active={st[key] as string | undefined}
+                colors={colors}
+                onPick={c => set(key, label)(c)}
+                resolve={resolve}
+              />
+              <input
+                className="sbe-mono"
+                onChange={e => set(key, label)(e.target.value)}
+                placeholder="sem mudança"
+                type="text"
+                value={st[key] ?? ""}
+              />
+            </div>
+          ))}
           <Slider
             label="Arredondamento"
             max={64}
