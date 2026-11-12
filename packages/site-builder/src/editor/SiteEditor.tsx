@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type { AdKey } from "../blocks/ads.js";
 import { postPath } from "../blocks/helpers.js";
 import { getBlockDefinition } from "../blocks/registry.js";
 import type { Block, Site } from "../model/index.js";
