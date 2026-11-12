@@ -7,6 +7,7 @@ import {
   cleanStyle,
   elementStylesCss,
   fontFamilyCss,
+  hoverCss,
   translateCss,
 } from "../model/style.js";
 import { areaflixCss, areaflixVars, isAreaflix } from "./areaflix.js";
@@ -354,8 +355,18 @@ function renderBlocks(blocks: Block[], ctx: RenderContext): ReactNode {
     const {
       translate: blockShift,
       height: blockHeight,
+      hoverBackground,
+      hoverBorderColor,
+      hoverColor,
       ...blockStyle
     } = cleanStyle(block.style) ?? {};
+    const blockHover = hoverCss(
+      `[data-block-id="${block.id.replace(/["<>]/g, "")}"]`,
+      { hoverBackground, hoverBorderColor, hoverColor } as Record<
+        string,
+        string | number
+      >
+    );
     // Altura do bloco é mínima: se um elemento de dentro crescer, o bloco cresce junto e empurra os
     // de baixo, em vez de o conteúdo vazar por cima do bloco seguinte.
     if (blockHeight !== undefined) {
@@ -380,6 +391,7 @@ function renderBlocks(blocks: Block[], ctx: RenderContext): ReactNode {
           <style>{elementStylesCss(block.id, block.elStyles)}</style>
         ) : null}
         {fxStyles ? <style>{fxStyles}</style> : null}
+        {blockHover ? <style>{blockHover}</style> : null}
         {blockShift ? (
           <style>
             {translateCss(

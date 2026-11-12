@@ -14,6 +14,9 @@ export const BLOCK_STYLE_KEYS = [
   "fontWeight",
   "gap",
   "height",
+  "hoverBackground",
+  "hoverBorderColor",
+  "hoverColor",
   "margin",
   "maxWidth",
   "opacity",
@@ -56,6 +59,38 @@ export const ELEMENT_PATH = /^\d{1,3}(\.\d{1,3}){0,11}$/;
 
 const UNITLESS = new Set(["opacity", "fontWeight", "order"]);
 
+/** Cores "ao passar o mouse": viram uma regra `:hover`, nunca estilo inline. */
+export const HOVER_STYLE_PROPS = {
+  hoverBackground: "background",
+  hoverBorderColor: "border-color",
+  hoverColor: "color",
+} as const;
+
+const isHoverKey = (k: string): k is keyof typeof HOVER_STYLE_PROPS =>
+  k in HOVER_STYLE_PROPS;
+
+/** Regra `:hover` com as cores de hover do estilo (vazio se não houver nenhuma). */
+export function hoverCss(
+  selector: string,
+  style: Record<string, string | number> | undefined
+): string {
+  if (!style) return "";
+  const decls = Object.entries(style)
+    .filter(
+      ([k, v]) =>
+        isHoverKey(k) &&
+        v !== undefined &&
+        v !== null &&
+        String(v).trim() !== ""
+    )
+    .map(
+      ([k, v]) =>
+        `${HOVER_STYLE_PROPS[k as keyof typeof HOVER_STYLE_PROPS]}:${v}!important`
+    )
+    .join(";");
+  return decls ? `${selector}:hover{${decls}}` : "";
+}
+
 /** CSS (com `!important`, para vencer estilos inline do bloco) dos estilos por elemento de um bloco. */
 export function elementStylesCss(
   blockId: string,
@@ -72,7 +107,7 @@ export function elementStylesCss(
       .map(n => `>:nth-child(${Number(n)})`)
       .join("");
     const decls = Object.entries(style)
-      .filter(([k]) => k !== "translate")
+      .filter(([k]) => k !== "translate" && !isHoverKey(k))
       .map(([k, v]) => {
         const prop = k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`);
         const value =
@@ -81,6 +116,7 @@ export function elementStylesCss(
       })
       .join(";");
     if (decls) css += `[data-block-id="${id}"]${selector}{${decls}}`;
+    css += hoverCss(`[data-block-id="${id}"]${selector}`, style);
     css += translateCss(`[data-block-id="${id}"]${selector}`, style.translate);
     if (style.fontFamily)
       css += fontFamilyCss(`[data-block-id="${id}"]${selector} *`, style);
