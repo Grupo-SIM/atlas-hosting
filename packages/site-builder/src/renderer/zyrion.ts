@@ -40,6 +40,7 @@ const tablet = (x: string) => `
 ${x} .zy-top .zy-in{padding:0 40px}
 ${x} .zy-bar .zy-in{padding:16px 40px;gap:32px}
 ${x} .zy-logo{display:flex;align-items:center;justify-content:center;flex:0 0 48%;min-height:70px}
+${x} .zy-logo img{width:47%}
 ${x} .zy-right{flex:0 0 47%;justify-content:flex-end}
 ${x} .zy-nav-toggle{display:flex;order:1;width:36px;height:36px;padding:6px;box-sizing:border-box}
 ${x} .zy-search-btn{order:2}
@@ -184,8 +185,8 @@ ${S} .zy-social a:hover{color:#fff;transform:scale(1.1)}
 ${S} .zy-social svg{width:13px;height:13px}
 ${S} .zy-bar{position:relative;background:#fff;box-shadow:0 3px 16px rgba(15,24,63,.08)}
 ${S} .zy-bar .zy-in{display:flex;align-items:center;padding:20px 0;gap:32px}
-${S} .zy-logo{flex:0 0 11.932%}
-${S} .zy-logo img{width:47%;height:auto;display:block}
+${S} .zy-logo{display:flex;align-items:center;flex:0 0 190px;min-height:64px}
+${S} .zy-logo img{width:100%;height:auto;display:block}
 ${S} .zy-right{flex:1;display:flex;align-items:center;justify-content:space-evenly;gap:32px}
 ${S} .zy-nav{display:flex;flex:1;justify-content:flex-end}
 ${S} .zy-nav a{padding:12px;margin:0 2px;color:var(--zy-text);font:700 12px/1.2 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.2px;text-decoration:none;transition:color .3s}
