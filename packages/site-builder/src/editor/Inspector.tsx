@@ -1,7 +1,13 @@
 "use client";
 
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { adItemFields, globalAds } from "../blocks/ads.js";
+import {
+  AD_KEYS,
+  AD_TITLES,
+  type AdKey,
+  adItemFields,
+  globalAds,
+} from "../blocks/ads.js";
 import { postPath } from "../blocks/helpers.js";
 import { getBlockDefinition } from "../blocks/registry.js";
 import type { FieldDef } from "../blocks/types.js";
@@ -597,7 +603,7 @@ export interface FocusHint {
   /** O item clicado está dentro de um espaço de anúncio: mostra os campos do anúncio do bloco. */
   ad?: boolean;
   /** Qual espaço publicitário global é (1 = faixas, 2 = lateral). */
-  adKind?: "banner" | "side";
+  adKind?: AdKey;
   /** Endereço do link clicado, quando o item é (ou está dentro de) um link. */
   href?: string;
   /** Num item repetido, o endereço do primeiro link dele (o post ou a categoria que ele mostra). */
@@ -791,7 +797,7 @@ function GlobalAdFields({
   onUpload,
   site,
 }: {
-  kind: "banner" | "side";
+  kind: AdKey;
   onTheme: (patch: Record<string, string>, what: string) => void;
   onUpload?: (file: File) => Promise<string>;
   site: Site;
@@ -805,11 +811,7 @@ function GlobalAdFields({
     );
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <h4 className="sbe-h">
-        {kind === "banner"
-          ? "Espaço publicitário 1 — faixas largas (topo), todas as páginas"
-          : "Espaço publicitário 2 — coluna lateral direita, todas as páginas"}
-      </h4>
+      <h4 className="sbe-h">{AD_TITLES[kind]}</h4>
       <FieldInput
         field={{
           itemFields: adItemFields,
@@ -1118,11 +1120,11 @@ export function Inspector({
             <p className="sbe-hint">
               Liga os espaços de anúncio do template. Depois clique num espaço
               para enviar mídia só dele, ou configure abaixo o Espaço
-              publicitário 1 (faixas) e o 2 (lateral): alterar um muda todos os
-              espaços do mesmo número.
+              publicitário 1 (faixas) e os 2, 3 e 4 (coluna lateral): alterar um
+              muda todos os espaços do mesmo número.
             </p>
             {site.theme.ads === "on"
-              ? (["banner", "side"] as const).map(kind => (
+              ? AD_KEYS.map(kind => (
                   <GlobalAdFields
                     key={kind}
                     kind={kind}

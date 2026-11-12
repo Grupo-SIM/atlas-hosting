@@ -1736,6 +1736,7 @@ const newsFeed = defineBlock(
     moreUrl: str("#"),
     popularTitle: str("Mais lidas"),
     showSide: z.enum(["yes", "no"]).default("yes"),
+    sideAds: z.enum(["1", "2", "3"]).default("1").catch("1"),
     skip: z.coerce.number().default(5),
   }),
   {
@@ -1761,11 +1762,22 @@ const newsFeed = defineBlock(
       },
       { key: "popularTitle", kind: "text", label: "Título da coluna lateral" },
       {
+        key: "sideAds",
+        kind: "select",
+        label:
+          "Anúncios na coluna lateral (Espaços publicitários 2, 3 e 4; cada um igual em todas as páginas)",
+        options: [
+          { label: "1 anúncio (Espaço 2)", value: "1" },
+          { label: "2 anúncios (Espaços 2 e 3)", value: "2" },
+          { label: "3 anúncios (Espaços 2, 3 e 4)", value: "3" },
+        ],
+      },
+      {
         itemFields: adItemFields,
         key: "adItems",
         kind: "list",
         label:
-          "Mídia só deste anúncio lateral (vazio = usa o Espaço publicitário 2, igual em todo o site; só com Anúncios ligados)",
+          "Mídia só do 1º anúncio lateral (vazio = usa o Espaço publicitário 2; no portal de notícias esta lista é ignorada)",
       },
       { key: "adLink", kind: "url", label: "Anúncio lateral — link" },
       {
@@ -1840,14 +1852,20 @@ const newsFeed = defineBlock(
                   ))}
                 </ol>
               </aside>
-              <AdBox
-                ctx={ctx}
-                items={p.adItems}
-                label="Publicidade"
-                link={p.adLink}
-                seconds={p.adSeconds}
-                size="side"
-              />
+              {(["side", "side2", "side3"] as const)
+                .slice(0, Number(p.sideAds))
+                .map((slot, n) => (
+                  <AdBox
+                    ctx={ctx}
+                    items={n === 0 ? p.adItems : []}
+                    key={slot}
+                    label="Publicidade"
+                    link={n === 0 ? p.adLink : ""}
+                    seconds={p.adSeconds}
+                    size="side"
+                    slot={slot}
+                  />
+                ))}
             </div>
           ) : null}
           {p.moreLabel && extra.length > 0 ? (

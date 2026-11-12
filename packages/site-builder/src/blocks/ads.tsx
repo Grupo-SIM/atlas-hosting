@@ -32,11 +32,23 @@ const adConfigSchema = z
   })
   .catch({ items: [], link: "", seconds: 6 });
 
+/** Espaços publicitários do site: 1 = faixas do topo, 2/3/4 = anúncios empilhados na coluna lateral. */
+export const AD_KEYS = ["banner", "side", "side2", "side3"] as const;
+export type AdKey = (typeof AD_KEYS)[number];
+export const adNumber = (key: AdKey) => AD_KEYS.indexOf(key) + 1;
+export const AD_TITLES: Record<AdKey, string> = {
+  banner: "Espaço publicitário 1 — faixas largas (topo), todas as páginas",
+  side: "Espaço publicitário 2 — coluna lateral direita, todas as páginas",
+  side2:
+    "Espaço publicitário 3 — 2º anúncio da coluna lateral, todas as páginas",
+  side3:
+    "Espaço publicitário 4 — 3º anúncio da coluna lateral, todas as páginas",
+};
+
 /** Anúncios do site inteiro (`theme.adsConfig`, JSON): valem para todo espaço que não tem mídia própria. */
-export function globalAds(theme: Record<string, string>): {
-  banner: AdConfig;
-  side: AdConfig;
-} {
+export function globalAds(
+  theme: Record<string, string>
+): Record<AdKey, AdConfig> {
   let raw: unknown = {};
   try {
     raw = JSON.parse(theme.adsConfig || "{}");
@@ -50,6 +62,8 @@ export function globalAds(theme: Record<string, string>): {
   return {
     banner: adConfigSchema.parse(obj.banner),
     side: adConfigSchema.parse(obj.side),
+    side2: adConfigSchema.parse(obj.side2),
+    side3: adConfigSchema.parse(obj.side3),
   };
 }
 
@@ -78,6 +92,7 @@ export function AdBox({
   link,
   seconds,
   size,
+  slot,
 }: {
   ctx: RenderContext;
   items: { src: string }[];
@@ -85,11 +100,14 @@ export function AdBox({
   link: string;
   seconds: number;
   size: "banner" | "side" | "square";
+  /** Espaço publicitário do site (vazio: faixa = 1, lateral/quadrado = 2). */
+  slot?: AdKey;
 }) {
+  const key: AdKey = slot ?? (size === "banner" ? "banner" : "side");
   if (!adsEnabled(ctx)) {
     // No editor, explica por que o espaço está vazio; no site publicado, não ocupa lugar.
     return ctx.mode === "edit" ? (
-      <div className={`sb-ad sb-ad-${size}`}>
+      <div className={`sb-ad sb-ad-${size}`} data-ad-key={key}>
         <div className="sb-ad-box">
           <div className="sb-ad-ph">
             Anúncios desligados — ligue o botão "Anúncios" no topo do editor
@@ -100,10 +118,10 @@ export function AdBox({
     ) : null;
   }
   // Sem mídia própria, usa a do site inteiro (faixa larga = banner; lateral e quadrado = coluna).
-  const own = items.filter(i => SAFE_SRC.test(i.src));
-  const shared = globalAds(ctx.site.theme)[
-    size === "banner" ? "banner" : "side"
-  ];
+  // No portal de notícias só vale o espaço numerado: a mesma mídia em todas as páginas.
+  const numbered = ctx.site.theme.variant === "portal";
+  const own = numbered ? [] : items.filter(i => SAFE_SRC.test(i.src));
+  const shared = globalAds(ctx.site.theme)[key];
   const useOwn = own.length > 0;
   const media = (useOwn ? own : shared.items).filter(i => SAFE_SRC.test(i.src));
   const linkUrl = useOwn ? link : shared.link;
@@ -113,8 +131,8 @@ export function AdBox({
   const inner =
     media.length === 0 ? (
       <div className="sb-ad-ph">
-        Espaço publicitário {size === "banner" ? 1 : 2} — envie a mídia em Tema
-        → Anúncios (vale para todos os espaços {size === "banner" ? "1" : "2"})
+        Espaço publicitário {adNumber(key)} — envie a mídia em Tema → Anúncios
+        (vale para todos os espaços {adNumber(key)})
       </div>
     ) : (
       media.map((item, i) =>
@@ -145,6 +163,7 @@ export function AdBox({
   return (
     <div
       className={`sb-ad sb-ad-${size}`}
+      data-ad-key={key}
       data-ads=""
       data-sec={Math.max(2, secs)}
     >
@@ -180,16 +199,29 @@ const adSlot = defineBlock(
       .enum(["banner", "side", "square"])
       .default("banner")
       .catch("banner"),
+    slot: z.enum(["auto", "1", "2", "3", "4"]).default("auto").catch("auto"),
   }),
   {
     fields: [
       { key: "size", kind: "select", label: "Formato", options: SIZE_OPTIONS },
       {
+        key: "slot",
+        kind: "select",
+        label: "Espaço publicitário (mesma mídia em todas as páginas)",
+        options: [
+          { label: "Automático (faixa = 1, lateral = 2)", value: "auto" },
+          { label: "Espaço publicitário 1", value: "1" },
+          { label: "Espaço publicitário 2", value: "2" },
+          { label: "Espaço publicitário 3", value: "3" },
+          { label: "Espaço publicitário 4", value: "4" },
+        ],
+      },
+      {
         itemFields: adItemFields,
         key: "items",
         kind: "list",
         label:
-          "Mídia só deste espaço (vazio = usa o Espaço publicitário 1 se for faixa, ou o 2 se for lateral/quadrado; igual em todo o site)",
+          "Mídia só deste espaço (vazio = usa o Espaço publicitário escolhido acima; no portal de notícias esta lista é ignorada)",
       },
       {
         key: "seconds",
@@ -210,6 +242,7 @@ const adSlot = defineBlock(
           link={p.link}
           seconds={p.seconds}
           size={p.size}
+          slot={p.slot === "auto" ? undefined : AD_KEYS[Number(p.slot) - 1]}
         />
       </div>
     ),

@@ -234,7 +234,9 @@ export function hintOf(
   if (adEl)
     return {
       ad: true,
-      adKind: adEl.classList.contains("sb-ad-banner") ? "banner" : "side",
+      adKind:
+        (adEl.getAttribute("data-ad-key") as AdKey | null) ??
+        (adEl.classList.contains("sb-ad-banner") ? "banner" : "side"),
       value: "",
     };
   if (el instanceof HTMLImageElement)
