@@ -134,7 +134,7 @@ const zyArchive = defineBlock(
           <div className="zy-in zy-pad">
             <div
               className="zy-grid zy-arch-grid"
-              style={{ "--zy-cols": p.cols } as CSSProperties}
+              style={{ "--zy-cols-d": p.cols } as CSSProperties}
             >
               {list.map((post, i) => (
                 <ZyCard
@@ -607,13 +607,13 @@ const zyCommunity = defineBlock(
               <h2>{p.title}</h2>
               {p.intro ? <p>{p.intro}</p> : null}
               <h3>{p.benefitsTitle}</h3>
-              <ul className="zy-comm-list">
+              <ol className="zy-comm-list">
                 {p.benefits.map(b => (
                   <li key={b.title}>
                     <strong>{b.title}</strong> {b.text}
                   </li>
                 ))}
-              </ul>
+              </ol>
               <h3 className="zy-comm-join">
                 {`${p.joinTitle} ${p.brand}`.trim()}
               </h3>
@@ -622,6 +622,12 @@ const zyCommunity = defineBlock(
             <div className="zy-comm-r">
               <Img alt="" src={p.tallBanner} />
             </div>
+          </div>
+          <div className="zy-price-t">
+            <h3 className="zy-comm-join">
+              {`${p.joinTitle} ${p.brand}`.trim()}
+            </h3>
+            {price}
           </div>
           {p.others.length ? (
             <div className="zy-comm-others">

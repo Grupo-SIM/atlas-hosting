@@ -71,7 +71,14 @@ const ad = (
 ) =>
   block(
     "adSlot",
-    { items: [{ src }], label: "Publicidade", link: "#", seconds: 6, size },
+    {
+      items: [{ src }],
+      // O original não rotula as faixas; só os quadrados da coluna levam "Publicidade".
+      label: size === "banner" ? "" : "Publicidade",
+      link: "#",
+      seconds: 6,
+      size,
+    },
     { style, ...extra }
   );
 
@@ -452,7 +459,7 @@ const sidebar = () =>
                 limit: 6,
                 mediaGap: 16,
                 offset: 0,
-                ratio: 0.8,
+                ratio: 1.25,
                 showAuthor: "no",
                 showDate: "yes",
                 thumb: 26,
@@ -520,7 +527,7 @@ const notFound = page("404", "Página não encontrada", [
 
 const comunidade = page("comunidade", "Comunidade", [
   block("zyCommunity", {
-    banner: ADS.bannerCommunity,
+    banner: photo(PHOTO_IDS[40] as string, 700, 1206),
     benefits: BRAND.community.benefits.map(([title, text]) => ({
       text,
       title,

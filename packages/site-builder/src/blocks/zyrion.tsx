@@ -386,7 +386,7 @@ const zyFooter = defineBlock(
                     {
                       "--zy-gap": "16px",
                       "--zy-mgap": "16px",
-                      "--zy-ratio": 0.8,
+                      "--zy-ratio": 1.25,
                       "--zy-thumb": "18%",
                     } as CSSProperties
                   }

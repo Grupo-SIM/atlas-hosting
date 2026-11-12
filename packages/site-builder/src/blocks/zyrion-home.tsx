@@ -19,6 +19,7 @@ import {
   ZyCard,
   ZyList,
   zyAuthor,
+  zyAvatar,
   zyPosts,
 } from "./zyrion-lib.js";
 
@@ -148,7 +149,7 @@ const zyHero = defineBlock(
                   colsMobile: 1,
                   colsTablet: 2,
                   dark: "yes",
-                  ratio: 0.8,
+                  ratio: 1.25,
                   showAuthor: "no",
                 }}
                 posts={list}
@@ -313,6 +314,19 @@ const UserIcon = () => (
     <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
   </svg>
 );
+const BookmarkIcon = () => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    height="12"
+    stroke="currentColor"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    width="12"
+  >
+    <path d="M6 3h12v18l-6-4-6 4z" />
+  </svg>
+);
 const ClockIcon = () => (
   <svg
     aria-hidden="true"
@@ -344,12 +358,25 @@ function OverlayCard({
       href={href(ctx, postPath(post))}
       style={{ "--zy-bg": cssUrl(post.coverImage ?? "") } as CSSProperties}
     >
-      {cat ? <span className="zy-ov-badge">{cat.name}</span> : <span />}
+      {cat ? (
+        <span className="zy-ov-badge">
+          <BookmarkIcon /> {cat.name}
+        </span>
+      ) : (
+        <span />
+      )}
       <span className="zy-ov-text">
         <strong>{post.title}</strong>
         <span className="zy-ov-meta">
           <span>
-            <UserIcon /> {zyAuthor(ctx)}
+            {zyAvatar(ctx) ? (
+              <span className="zy-ov-av">
+                <Img alt="" src={zyAvatar(ctx)} />
+              </span>
+            ) : (
+              <UserIcon />
+            )}{" "}
+            {zyAuthor(ctx)}
           </span>
           <span>
             <ClockIcon /> {wpDate(post.publishedAt)}
@@ -391,12 +418,12 @@ const zyOverlayGrid = defineBlock(
     render: (p, ctx) => (
       <section className="zy-sec zy-dark-sec" data-zy="overlayGrid">
         <div className="zy-in zy-pad">
-          <div className="zy-div dark">
+          <div className="zy-div dark center thin">
             <h2>{p.title}</h2>
           </div>
           <div
             className="zy-ov-grid"
-            style={{ "--zy-cols": p.cols } as CSSProperties}
+            style={{ "--zy-cols-d": p.cols } as CSSProperties}
           >
             {zyPosts(ctx, p.categorySlug, p.offset, p.limit, true).map(
               (post, i) => (
@@ -466,7 +493,7 @@ const zyCards = defineBlock(
         <div
           className="zy-grid zy-cards-grid"
           style={
-            { "--zy-cols": p.cols, "--zy-gap": `${p.gap}px` } as CSSProperties
+            { "--zy-cols-d": p.cols, "--zy-gap": `${p.gap}px` } as CSSProperties
           }
         >
           {zyPosts(ctx, p.categorySlug, p.offset, p.limit, true).map(post => (

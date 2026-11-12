@@ -38,7 +38,7 @@ export const BRAND = {
       "Cancele quando quiser",
     ],
     intro:
-      "Mais do que ler notícias, na comunidade **Nova Pauta** você ajuda a escolher os assuntos, recebe conteúdo antes e ganha vantagens exclusivas.",
+      "Mais do que ler notícias, na comunidade Nova Pauta você ajuda a escolher os assuntos, recebe conteúdo antes e ganha vantagens exclusivas.",
     planName: "Member",
     price: "2,00",
   },
