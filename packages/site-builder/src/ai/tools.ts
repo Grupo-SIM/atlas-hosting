@@ -43,6 +43,7 @@ import { BLOCK_ANCHOR, type Block, type Site } from "../model/index.js";
 import { siteSchema } from "../model/schema.js";
 import { BLOCK_STYLE_KEYS, cleanStyle, ELEMENT_PATH } from "../model/style.js";
 import { customFonts, fontStack, SITE_FONTS } from "../renderer/fonts.js";
+import { VARIANT_TOKENS } from "../renderer/variant-tokens.js";
 
 /** Definição de ferramenta no formato MCP (nome, descrição e JSON Schema da entrada). */
 export interface AiToolDef {
@@ -263,6 +264,9 @@ export const AI_TOOLS: AiToolDef[] = [
       fonte: str("Fonte de títulos e corpo."),
       fonte_corpo: str("Só corpo."),
       fonte_titulos: str("Só títulos."),
+      modelo: obj(
+        'Cores e conteúdo extras do template (chave → valor): o painel "Página inteira" lista as chaves do template aberto em "Cores do modelo" (ex.: no Zyrion dark, line, title, soft, meta, zyAuthor, zyAvatar). Cores aceitam hex; vazio volta ao padrão.'
+      ),
     }),
     name: "editar_tema",
   },
@@ -514,6 +518,25 @@ function themePatch(site: Site, input: Input): Record<string, string> {
     if (!URLISH.test(favicon))
       throw new ToolError("Favicon precisa ser uma URL http(s).");
     patch.favicon = favicon;
+  }
+  const modelo = input.modelo;
+  if (modelo && typeof modelo === "object" && !Array.isArray(modelo)) {
+    const tokens = VARIANT_TOKENS[site.theme.variant ?? ""] ?? [];
+    for (const [key, raw] of Object.entries(modelo)) {
+      const tok = tokens.find(t => t.key === key);
+      if (!tok) {
+        throw new ToolError(
+          `"${key}" não é uma cor/conteúdo deste template. Opções: ${tokens.map(t => t.key).join(", ") || "nenhuma"}.`
+        );
+      }
+      const v = String(raw ?? "").trim();
+      if (tok.kind === "color" && v && !CSS_COLOR.test(v))
+        throw new ToolError(`Cor inválida em ${key}: ${v}`);
+      if (tok.kind === "image" && v && !URLISH.test(v))
+        throw new ToolError(`${key} precisa ser uma URL de imagem.`);
+      if (v.length > 300) throw new ToolError(`${key} é longo demais.`);
+      patch[key] = v;
+    }
   }
   const descricao = text(input, "descricao", false);
   if (descricao) {
