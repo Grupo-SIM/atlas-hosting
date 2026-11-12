@@ -169,6 +169,7 @@ const zyTrending = defineBlock(
   z.object({
     categorySlug: str(),
     largeCount: int(1, 6, 2),
+    readMore: str("Ler mais »"),
     smallCount: int(1, 12, 4),
     title: str("Em alta"),
   }),
@@ -176,6 +177,7 @@ const zyTrending = defineBlock(
     fields: [
       { key: "title", kind: "text", label: "Título do divisor" },
       CAT,
+      { key: "readMore", kind: "text", label: "Texto do link “ler mais”" },
       {
         key: "largeCount",
         kind: "number",
@@ -207,7 +209,13 @@ const zyTrending = defineBlock(
             <div className="zy-trend-row">
               <div className="zy-grid zy-trend-l">
                 {big.map(post => (
-                  <ZyCard ctx={ctx} key={post.id} post={post} variant="large" />
+                  <ZyCard
+                    ctx={ctx}
+                    key={post.id}
+                    post={post}
+                    readMore={p.readMore}
+                    variant="large"
+                  />
                 ))}
               </div>
               <div className="zy-grid zy-trend-r">
@@ -452,6 +460,7 @@ const zyCards = defineBlock(
     gap: int(0, 80, 28),
     limit: int(1, 24, 6),
     offset: int(0, 200, 0),
+    readMore: str("Ler mais »"),
     title: str("Esportes"),
     variant: z
       .enum(["plain", "large", "small"])
@@ -468,6 +477,7 @@ const zyCards = defineBlock(
       CAT,
       { key: "limit", kind: "number", label: "Quantidade de posts" },
       { key: "offset", kind: "number", label: "Pular os primeiros N posts" },
+      { key: "readMore", kind: "text", label: "Texto do link “ler mais”" },
       { key: "cols", kind: "number", label: "Colunas (celular 1)" },
       { key: "gap", kind: "number", label: "Espaço entre cartões (px)" },
       {
@@ -497,7 +507,13 @@ const zyCards = defineBlock(
           }
         >
           {zyPosts(ctx, p.categorySlug, p.offset, p.limit, true).map(post => (
-            <ZyCard ctx={ctx} key={post.id} post={post} variant={p.variant} />
+            <ZyCard
+              ctx={ctx}
+              key={post.id}
+              post={post}
+              readMore={p.readMore}
+              variant={p.variant}
+            />
           ))}
         </div>
       </div>

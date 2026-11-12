@@ -65,9 +65,11 @@ const ShareRow = ({ label }: { label: string }) => (
 const hfPostHead = defineBlock(
   z.object({
     authors: str("Redação Holofote\nLetícia Prado\nMarcelo Dantas"),
+    publishedLabel: str("Publicado em"),
     shareLabel: str("Compartilhe:"),
     showImage: flag("yes"),
     showUpdated: flag("yes"),
+    updatedLabel: str("Atualizado em"),
   }),
   {
     fields: [
@@ -77,6 +79,8 @@ const hfPostHead = defineBlock(
         label: "Autores (um por linha; cada post usa um deles)",
       },
       { key: "shareLabel", kind: "text", label: 'Texto "Compartilhe:"' },
+      { key: "publishedLabel", kind: "text", label: 'Texto "Publicado em"' },
+      { key: "updatedLabel", kind: "text", label: 'Texto "Atualizado em"' },
       {
         key: "showUpdated",
         kind: "select",
@@ -113,9 +117,13 @@ const hfPostHead = defineBlock(
           <div className="hf-pmeta">
             <div>
               <strong>{pickAuthor(p.authors, post.slug)}</strong>
-              <span>- Publicado em {brDateTime(post.publishedAt)}</span>
+              <span>
+                - {p.publishedLabel} {brDateTime(post.publishedAt)}
+              </span>
               {p.showUpdated === "yes" ? (
-                <span>Atualizado em {brDateTime(updated)}</span>
+                <span>
+                  {p.updatedLabel} {brDateTime(updated)}
+                </span>
               ) : null}
             </div>
             <ShareRow label={p.shareLabel} />
@@ -413,9 +421,17 @@ const hfSidebar = defineBlock(
 const hfResultsHead = defineBlock(
   z.object({
     mode: z.enum(["search", "tag"]).default("search").catch("search"),
+    searchLabel: str("Resultados para:"),
+    tagLabel: str("Resultados para Tag:"),
   }),
   {
     fields: [
+      {
+        key: "searchLabel",
+        kind: "text",
+        label: "Texto antes do termo da busca",
+      },
+      { key: "tagLabel", kind: "text", label: "Texto antes do nome da tag" },
       {
         key: "mode",
         kind: "select",
@@ -430,9 +446,7 @@ const hfResultsHead = defineBlock(
     label: "Título dos resultados (Holofote)",
     render: (p, ctx) => (
       <h1 className="hf-rhead" data-hf="resultsHead">
-        <span>
-          {p.mode === "tag" ? "Resultados para Tag:" : "Resultados para:"}
-        </span>{" "}
+        <span>{p.mode === "tag" ? p.tagLabel : p.searchLabel}</span>{" "}
         <b data-hf-q>{ctx.query.q ?? ""}</b>
       </h1>
     ),
@@ -526,15 +540,35 @@ const hfPageTitle = defineBlock(z.object({ text: str("Sobre") }), {
 const hfContactForm = defineBlock(
   z.object({
     actionUrl: str(),
+    buttonLabel: str("Enviar"),
     email: str(),
+    emailPlaceholder: str("E-mail"),
     fallback: str("Caso não consiga usar o formulário, envie sua pauta para:"),
     intro: str(
       "Quer falar com a gente? Tem uma pauta, ideia ou novidade? Preencha o formulário abaixo."
     ),
+    messagePlaceholder: str("Mensagem"),
+    namePlaceholder: str("Nome Completo"),
   }),
   {
     fields: [
       { key: "intro", kind: "textarea", label: "Texto de abertura" },
+      {
+        key: "namePlaceholder",
+        kind: "text",
+        label: "Campo nome — texto de exemplo",
+      },
+      {
+        key: "emailPlaceholder",
+        kind: "text",
+        label: "Campo e-mail — texto de exemplo",
+      },
+      {
+        key: "messagePlaceholder",
+        kind: "text",
+        label: "Campo mensagem — texto de exemplo",
+      },
+      { key: "buttonLabel", kind: "text", label: "Texto do botão" },
       {
         key: "actionUrl",
         kind: "url",
@@ -555,32 +589,32 @@ const hfContactForm = defineBlock(
         >
           <div className="hf-crow">
             <input
-              aria-label="Nome completo"
+              aria-label={p.namePlaceholder}
               disabled={!p.actionUrl}
               name="nome"
-              placeholder="Nome Completo"
+              placeholder={p.namePlaceholder}
               required
               type="text"
             />
             <input
-              aria-label="E-mail"
+              aria-label={p.emailPlaceholder}
               disabled={!p.actionUrl}
               name="email"
-              placeholder="E-mail"
+              placeholder={p.emailPlaceholder}
               required
               type="email"
             />
           </div>
           <textarea
-            aria-label="Mensagem"
+            aria-label={p.messagePlaceholder}
             disabled={!p.actionUrl}
             name="mensagem"
-            placeholder="Mensagem"
+            placeholder={p.messagePlaceholder}
             required
             rows={7}
           />
           <button disabled={!p.actionUrl} type="submit">
-            Enviar
+            {p.buttonLabel}
           </button>
         </form>
         {!p.actionUrl && ctx.mode === "edit" ? (

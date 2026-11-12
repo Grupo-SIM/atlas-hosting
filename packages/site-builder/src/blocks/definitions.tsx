@@ -1308,8 +1308,14 @@ const CAROUSEL_JS = `(function(){document.querySelectorAll('.sb-mag-main').forEa
 
 const postExplorer = defineBlock(
   z.object({
+    buttonLabel: str("Pesquisar"),
+    categoriesLabel: str("Categorias"),
+    emptyText: str("Nenhum conteúdo encontrado."),
     layout: z.enum(["grid", "magazine"]).default("grid"),
     limit: z.coerce.number().default(6),
+    placeholder: str("Digite aqui..."),
+    readMore: str("Ver mais »"),
+    selectLabel: str("Selecionar categoria"),
     title: str("Todos os conteúdos"),
   }),
   {
@@ -1325,6 +1331,20 @@ const postExplorer = defineBlock(
         ],
       },
       { key: "limit", kind: "number", label: "Quantidade de posts" },
+      { key: "placeholder", kind: "text", label: "Busca — texto de exemplo" },
+      { key: "buttonLabel", kind: "text", label: "Busca — texto do botão" },
+      { key: "categoriesLabel", kind: "text", label: "Rótulo das categorias" },
+      {
+        key: "selectLabel",
+        kind: "text",
+        label: "Categorias — primeira opção",
+      },
+      {
+        key: "readMore",
+        kind: "text",
+        label: "Texto do link “ver mais” (destaque + lista)",
+      },
+      { key: "emptyText", kind: "text", label: "Texto quando não há conteúdo" },
     ],
     group: "blog",
     label: "Busca + lista de posts",
@@ -1353,17 +1373,17 @@ const postExplorer = defineBlock(
                 <input
                   defaultValue={ctx.query.q ?? ""}
                   name="q"
-                  placeholder="Digite aqui..."
+                  placeholder={p.placeholder}
                   type="search"
                 />
                 <button className="sb-btn sb-btn-primary" type="submit">
-                  Pesquisar
+                  {p.buttonLabel}
                 </button>
               </div>
               <div className="sb-mag-cats">
-                <strong>Categorias</strong>
+                <strong>{p.categoriesLabel}</strong>
                 <select defaultValue={ctx.query.category ?? ""} name="category">
-                  <option value="">Selecionar categoria</option>
+                  <option value="">{p.selectLabel}</option>
                   {ctx.site.categories.map(c => (
                     <option key={c.id} value={c.slug}>
                       {c.name}
@@ -1407,14 +1427,14 @@ const postExplorer = defineBlock(
                     <Img alt={post.title} src={post.coverImage} />
                     <span>
                       <h3>{post.title}</h3>
-                      <em>Ver mais »</em>
+                      <em>{p.readMore}</em>
                     </span>
                   </a>
                 ))}
               </div>
             </form>
             {posts.length === 0 ? (
-              <p className="sb-align-center">Nenhum conteúdo encontrado.</p>
+              <p className="sb-align-center">{p.emptyText}</p>
             ) : null}
             {/* Pontos e troca automática do carrossel; script fixo, sem conteúdo do usuário. */}
             {/* biome-ignore lint/security/noDangerouslySetInnerHtml: script constante */}
@@ -1434,11 +1454,11 @@ const postExplorer = defineBlock(
             <input
               defaultValue={ctx.query.q ?? ""}
               name="q"
-              placeholder="Digite aqui..."
+              placeholder={p.placeholder}
               type="search"
             />
             <select defaultValue={ctx.query.category ?? ""} name="category">
-              <option value="">Selecionar categoria</option>
+              <option value="">{p.selectLabel}</option>
               {ctx.site.categories.map(c => (
                 <option key={c.id} value={c.slug}>
                   {c.name}
@@ -1446,7 +1466,7 @@ const postExplorer = defineBlock(
               ))}
             </select>
             <button className="sb-btn sb-btn-primary" type="submit">
-              Pesquisar
+              {p.buttonLabel}
             </button>
           </form>
           <div className="sb-grid sb-grid-3" data-repeat-list="">
@@ -1455,7 +1475,7 @@ const postExplorer = defineBlock(
             ))}
           </div>
           {posts.length === 0 ? (
-            <p className="sb-align-center">Nenhum conteúdo encontrado.</p>
+            <p className="sb-align-center">{p.emptyText}</p>
           ) : null}
         </section>
       );
@@ -1478,6 +1498,7 @@ const postList = defineBlock(
     offset: z.coerce.number().default(0),
     prevLabel: str("« Anterior"),
     prevUrl: str(),
+    readMore: str(),
     title: str("Mais conteúdos como esse:"),
   }),
   {
@@ -1525,6 +1546,11 @@ const postList = defineBlock(
         kind: "text",
         label:
           "Texto do botão (estilo com resumo) / do link do produto (vazio = sem link)",
+      },
+      {
+        key: "readMore",
+        kind: "text",
+        label: "Texto do link “ler mais” (vazio = o padrão do estilo)",
       },
       {
         key: "includeCurrent",
@@ -1578,10 +1604,17 @@ const postList = defineBlock(
                   key={post.id}
                   moreLabel={p.buttonLabel}
                   post={post}
+                  readMore={p.readMore}
                   variant={p.cardStyle}
                 />
               ) : (
-                <PostCard compact ctx={ctx} key={post.id} post={post} />
+                <PostCard
+                  compact
+                  ctx={ctx}
+                  key={post.id}
+                  post={post}
+                  readMore={p.readMore}
+                />
               )
             )}
           </div>
@@ -1697,6 +1730,7 @@ const newsFeed = defineBlock(
     adLink: str(),
     adSeconds: z.coerce.number().min(2).max(60).default(6).catch(6),
     fromCategory: z.enum(["yes", "no"]).default("no"),
+    inLabel: str("Em"),
     limit: z.coerce.number().default(8),
     moreLabel: str(),
     moreUrl: str("#"),
@@ -1714,6 +1748,11 @@ const newsFeed = defineBlock(
       },
       { key: "skip", kind: "number", label: "Pular as primeiras notícias" },
       { key: "limit", kind: "number", label: "Quantidade de notícias" },
+      {
+        key: "inLabel",
+        kind: "text",
+        label: "Palavra antes da categoria, depois da data (ex.: “Em”)",
+      },
       {
         key: "showSide",
         kind: "select",
@@ -1782,7 +1821,7 @@ const newsFeed = defineBlock(
                     <p>{post.excerpt}</p>
                     <time>
                       {shortDate(post.publishedAt)}
-                      {cat ? ` — Em ${cat.name}` : ""}
+                      {cat ? ` — ${p.inLabel} ${cat.name}` : ""}
                     </time>
                   </div>
                 </article>

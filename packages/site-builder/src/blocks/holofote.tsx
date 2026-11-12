@@ -529,8 +529,11 @@ const hfFooter = defineBlock(
   z.object({
     columns: z.array(column).default([]),
     copyright: str("Holofote"),
+    copyrightLead: str("Copyright ©"),
     note: str(),
+    rights: str("Todos os Direitos Reservados."),
     shareHint: str("Onde deseja compartilhar?"),
+    shareTitle: str("Compartilhar"),
     socials: linkList,
     socialsTitle: str("Redes sociais"),
   }),
@@ -560,6 +563,21 @@ const hfFooter = defineBlock(
         key: "note",
         kind: "text",
         label: "Texto opcional à direita da faixa inferior",
+      },
+      {
+        key: "copyrightLead",
+        kind: "text",
+        label: 'Faixa inferior — início ("Copyright ©")',
+      },
+      {
+        key: "rights",
+        kind: "text",
+        label: 'Faixa inferior — final ("Todos os Direitos Reservados.")',
+      },
+      {
+        key: "shareTitle",
+        kind: "text",
+        label: "Modal de compartilhar — título",
       },
       {
         key: "shareHint",
@@ -594,8 +612,8 @@ const hfFooter = defineBlock(
         <div className="hf-foot-bot">
           <div className="hf-in hf-foot-bot-in">
             <span>
-              Copyright © {p.copyright} {new Date().getFullYear()} - Todos os
-              Direitos Reservados.
+              {p.copyrightLead} {p.copyright} {new Date().getFullYear()} -{" "}
+              {p.rights}
             </span>
             {p.note ? <span>{p.note}</span> : null}
           </div>
@@ -619,7 +637,7 @@ const hfFooter = defineBlock(
             </button>
             {/* biome-ignore lint/correctness/useUniqueElementIds: um só modal por página; aria-labelledby aponta para ele */}
             <h5 className="hf-modal-title" id="hf-modal-title">
-              Compartilhar
+              {p.shareTitle}
             </h5>
             <p>{p.shareHint}</p>
             <div className="hf-nets">

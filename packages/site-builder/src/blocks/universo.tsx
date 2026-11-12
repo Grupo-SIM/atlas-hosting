@@ -980,6 +980,7 @@ const uvPanel = defineBlock(
     photo: str(),
     phrase: str(),
     scrollHeight: int(0, 2000, 0),
+    soonLabel: str("EM BREVE"),
     title: str(),
   }),
   {
@@ -994,6 +995,7 @@ const uvPanel = defineBlock(
         ],
       },
       { key: "banner", kind: "text", label: "Faixa do topo" },
+      { key: "soonLabel", kind: "text", label: "Selo dos itens “em breve”" },
       {
         key: "photo",
         kind: "image",
@@ -1062,7 +1064,7 @@ const uvPanel = defineBlock(
                 {it.soon === "yes" ? (
                   <span aria-disabled="true" className="uv-item is-soon">
                     {body}
-                    <span className="uv-soon">EM BREVE</span>
+                    <span className="uv-soon">{p.soonLabel}</span>
                   </span>
                 ) : (
                   <a

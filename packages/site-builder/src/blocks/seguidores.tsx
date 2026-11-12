@@ -1442,6 +1442,7 @@ const sgFooter = defineBlock(
     blogsTitle: str("Blogs"),
     company: str(),
     contactTitle: str("Contato"),
+    copyrightLead: str("Copyright ©"),
     ctaOverlay: str(),
     ctaText: str(),
     ctaTitle: str("Título da [[chamada]]"),
@@ -1493,6 +1494,11 @@ const sgFooter = defineBlock(
         key: "company",
         kind: "text",
         label: "Nome da empresa (direitos autorais)",
+      },
+      {
+        key: "copyrightLead",
+        kind: "text",
+        label: "Texto antes do ano (direitos autorais)",
       },
       {
         key: "legal",
@@ -1571,7 +1577,7 @@ const sgFooter = defineBlock(
             </div>
             <div className="sg-foot-bar">
               <span>
-                Copyright © {new Date().getFullYear()} {p.company}
+                {p.copyrightLead} {new Date().getFullYear()} {p.company}
               </span>
               <nav>
                 {linkLines(p.legal).map(l => (

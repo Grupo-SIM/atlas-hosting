@@ -94,6 +94,7 @@ const zyArchive = defineBlock(
     categorySlug: str(),
     cols: int(1, 4, 3),
     limit: int(1, 200, 100),
+    readMore: str("Ler mais »"),
     step: int(0, 60, 9),
   }),
   {
@@ -115,6 +116,7 @@ const zyArchive = defineBlock(
       },
       { key: "limit", kind: "number", label: "Máximo de posts" },
       { key: "buttonLabel", kind: "text", label: "Texto do botão" },
+      { key: "readMore", kind: "text", label: "Texto do link “ler mais”" },
     ],
     group: "blog",
     label: "Grade de arquivo com 'carregar mais'",
@@ -142,6 +144,7 @@ const zyArchive = defineBlock(
                   hidden={step > 0 && i >= step}
                   key={post.id}
                   post={post}
+                  readMore={p.readMore}
                   variant="archive"
                 />
               ))}

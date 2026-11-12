@@ -307,12 +307,14 @@ const zyFooter = defineBlock(
     brandName: str("Portal Zyrion"),
     categoriesTitle: str("Categorias"),
     contactTitle: str("Contato"),
+    copyright: str("Todos os direitos reservados."),
     ctaLabel: str("Faça parte"),
     ctaText: str("Conteúdo premium e benefícios exclusivos!"),
     ctaTitle: str("Entre para a comunidade"),
     ctaUrl: str("/comunidade/"),
     description: str(),
     email: str(),
+    emailLabel: str("E-MAIL"),
     latestCount: int(1, 6, 3),
     latestTitle: str("Últimas Notícias"),
     logo: str(),
@@ -350,8 +352,10 @@ const zyFooter = defineBlock(
         label: "Coluna 3 — links",
       },
       { key: "contactTitle", kind: "text", label: "Coluna 4 — título" },
+      { key: "emailLabel", kind: "text", label: "Rótulo acima do e-mail" },
       { key: "email", kind: "text", label: "E-mail de contato" },
       { key: "brandName", kind: "text", label: "Nome da marca (copyright)" },
+      { key: "copyright", kind: "text", label: "Texto do copyright" },
     ],
     group: "layout",
     label: "Rodapé Zyrion",
@@ -427,7 +431,7 @@ const zyFooter = defineBlock(
                 <h3>{p.contactTitle}</h3>
                 <ul>
                   <li>
-                    <strong>E-MAIL</strong>
+                    <strong>{p.emailLabel}</strong>
                     <br />
                     <a href={`mailto:${p.email}`}>{p.email}</a>
                   </li>
@@ -437,8 +441,7 @@ const zyFooter = defineBlock(
           </div>
           <div className="zy-copy">
             <div className="zy-in">
-              © {new Date().getFullYear()} {p.brandName}. Todos os direitos
-              reservados.
+              © {new Date().getFullYear()} {p.brandName}. {p.copyright}
             </div>
           </div>
         </footer>

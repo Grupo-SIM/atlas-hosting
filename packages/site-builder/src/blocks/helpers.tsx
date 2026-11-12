@@ -261,10 +261,13 @@ export function PostCard({
   ctx,
   moreLabel = "",
   post,
+  readMore = "",
   variant,
 }: {
   compact?: boolean;
   ctx: RenderContext;
+  /** Texto do link "ler mais" dos cards com resumo (vazio = o padrão de cada estilo). */
+  readMore?: string;
   /** Só `product`: texto do link abaixo do título (vazio = sem link). */
   moreLabel?: string;
   post: Post;
@@ -321,7 +324,7 @@ export function PostCard({
           <p className="ex">{excerptCut(post.excerpt, 200)}</p>
           {variant === "archive" ? (
             <a className="sb-link" href={url}>
-              Leia mais »
+              {readMore || "Leia mais »"}
             </a>
           ) : null}
         </div>
@@ -351,7 +354,7 @@ export function PostCard({
         </h3>
         {compact ? null : <p>{post.excerpt}</p>}
         <a className="sb-link" href={href(ctx, postPath(post))}>
-          {compact ? "LER MAIS »" : "Ler mais »"}
+          {readMore || (compact ? "LER MAIS »" : "Ler mais »")}
         </a>
       </div>
     </article>

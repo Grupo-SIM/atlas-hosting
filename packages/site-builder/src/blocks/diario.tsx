@@ -656,6 +656,7 @@ const ddFooter = defineBlock(
     links: str(),
     logo: str(),
     logoText: str("Diário Aberto"),
+    rights: str("Todos os direitos reservados."),
     socials: linkList,
   }),
   {
@@ -672,6 +673,11 @@ const ddFooter = defineBlock(
         key: "copyright",
         kind: "text",
         label: "Nome no copyright (© ano nome)",
+      },
+      {
+        key: "rights",
+        kind: "text",
+        label: "Texto depois do nome no copyright",
       },
     ],
     group: "layout",
@@ -702,8 +708,7 @@ const ddFooter = defineBlock(
           </div>
           <div className="dd-foot-copy">
             <p>
-              © {new Date().getFullYear()} {p.copyright}. Todos os direitos
-              reservados.
+              © {new Date().getFullYear()} {p.copyright}. {p.rights}
             </p>
           </div>
         </footer>

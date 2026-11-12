@@ -105,6 +105,7 @@ const hubFront = defineBlock(z.object({}), {
 const hubSections = defineBlock(
   z.object({
     columns: z.array(columnSchema).default([]),
+    rolouLabel: str("Mais notícias"),
     rolouTitle: str("Rolou no fim de semana: você viu?"),
     rolouUrl: str("/editorias/"),
   }),
@@ -115,7 +116,8 @@ const hubSections = defineBlock(
         kind: "text",
         label: "Título da faixa de destaques",
       },
-      { key: "rolouUrl", kind: "url", label: "Botão “Mais notícias” — link" },
+      { key: "rolouLabel", kind: "text", label: "Botão da faixa — texto" },
+      { key: "rolouUrl", kind: "url", label: "Botão da faixa — link" },
       {
         itemFields: [...COLUMN_FIELDS],
         key: "columns",
@@ -133,7 +135,7 @@ const hubSections = defineBlock(
           <div className="sb-hub-title sb-hub-title-grey">
             <h2>{p.rolouTitle}</h2>
             <a className="sb-hub-pill" href={href(ctx, p.rolouUrl)}>
-              Mais notícias
+              {p.rolouLabel}
             </a>
           </div>
           <div className="sb-hub-rolou">

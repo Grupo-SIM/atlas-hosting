@@ -430,10 +430,14 @@ const atPlans = defineBlock(
     footerUrl: str(),
     guarantees: str(),
     items: z.array(planItem).default([]),
+    offLabel: str("Desativado"),
+    onLabel: str("Ativado"),
     period: str("24 meses"),
+    perMonth: str("/mês"),
     popularLabel: str("Mais vendido"),
     rowLabels: str(),
     showHeading: yesNo("yes"),
+    specsLabel: str("Especificações"),
     subtitle: str(),
     title: str(),
   }),
@@ -454,6 +458,18 @@ const atPlans = defineBlock(
         options: YES_NO,
       },
       { key: "backupLabel", kind: "text", label: "Texto da chave de backup" },
+      { key: "onLabel", kind: "text", label: "Chave ligada — texto" },
+      { key: "offLabel", kind: "text", label: "Chave desligada — texto" },
+      {
+        key: "specsLabel",
+        kind: "text",
+        label: "Título da coluna de especificações",
+      },
+      {
+        key: "perMonth",
+        kind: "text",
+        label: "Texto depois do preço (ex.: /mês)",
+      },
       { key: "currency", kind: "text", label: "Símbolo da moeda" },
       { key: "period", kind: "text", label: "Texto do período" },
       { key: "popularLabel", kind: "text", label: "Selo do plano destaque" },
@@ -525,15 +541,15 @@ const atPlans = defineBlock(
                 <span className="at-switch" />
                 <span>
                   <b>{p.backupLabel}</b>
-                  <small className="at-on">Ativado</small>
-                  <small className="at-off">Desativado</small>
+                  <small className="at-on">{p.onLabel}</small>
+                  <small className="at-off">{p.offLabel}</small>
                 </span>
               </label>
             ) : null}
             <div className="at-plan-row">
               <div className="at-spec-col">
                 <div className="at-spec-head">
-                  <b>Especificações</b>
+                  <b>{p.specsLabel}</b>
                   {p.backupToggle === "yes" ? (
                     <label
                       className="at-bk-desk"
@@ -542,8 +558,8 @@ const atPlans = defineBlock(
                       <span className="at-bk-desk-title">{p.backupLabel}</span>
                       <span className="at-bk-desk-row">
                         <span className="at-switch" />
-                        <small className="at-on">Ativado</small>
-                        <small className="at-off">Desativado</small>
+                        <small className="at-on">{p.onLabel}</small>
+                        <small className="at-off">{p.offLabel}</small>
                       </span>
                     </label>
                   ) : null}
@@ -576,7 +592,7 @@ const atPlans = defineBlock(
                           <span className="at-price-cur">{p.currency}</span>
                           <span className="at-price-main">{it.price},</span>
                           <span className="at-price-cents">{it.cents}</span>
-                          <span className="at-price-per">/mês</span>
+                          <span className="at-price-per">{p.perMonth}</span>
                         </div>
                         {it.backupPrice ? (
                           <div className="at-price at-price-bk">
@@ -587,7 +603,7 @@ const atPlans = defineBlock(
                             <span className="at-price-cents">
                               {it.backupPrice.split(",")[1]}
                             </span>
-                            <span className="at-price-per">/mês</span>
+                            <span className="at-price-per">{p.perMonth}</span>
                           </div>
                         ) : null}
                         <p className="at-period">{p.period}</p>

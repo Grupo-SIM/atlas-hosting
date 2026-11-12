@@ -774,11 +774,18 @@ const p7Access = defineBlock(
     endsAt: str("2026-12-10T10:20:00Z"),
     sub: str("Promoção acaba em:"),
     title: str("Garanta Seu Acesso!"),
+    units: str("H, Min, Seg"),
   }),
   {
     fields: [
       { key: "title", kind: "text", label: "Título (contorno roxo)" },
       { key: "sub", kind: "text", label: "Frase acima do contador" },
+      {
+        key: "units",
+        kind: "text",
+        label:
+          "Nomes do contador (horas, minutos, segundos, separados por vírgula)",
+      },
       {
         key: "endsAt",
         kind: "text",
@@ -797,7 +804,7 @@ const p7Access = defineBlock(
             <Countdown
               className="xl"
               endsAt={p.endsAt}
-              labels={["H", "Min", "Seg"]}
+              labels={unitLabels(p.units)}
             />
           </div>
           <Btn
@@ -822,6 +829,12 @@ const CHECK = (
   </svg>
 );
 
+/** "H, Min, Seg" → as três legendas do contador (o que faltar usa o padrão). */
+const unitLabels = (raw: string): [string, string, string] => {
+  const [h, m, sec] = raw.split(",").map(x => x.trim());
+  return [h || "H", m || "Min", sec || "Seg"];
+};
+
 const p7Price = defineBlock(
   z.object({
     buyLabel: str("ADQUIRIR AGORA"),
@@ -842,6 +855,7 @@ const p7Price = defineBlock(
     priceLabelBefore: str("de"),
     promoTitle: str("Promoção por tempo {{limitado!}}"),
     title: str("ACESSO VITALÍCIO"),
+    units: str("H, Min, Seg"),
   }),
   {
     fields: [
@@ -853,6 +867,12 @@ const p7Price = defineBlock(
       { key: "features", kind: "textarea", label: "Vantagens (uma por linha)" },
       { key: "note", kind: "textarea", label: "Frase do cartão" },
       { key: "buyLabel", kind: "text", label: "Texto do botão de compra" },
+      {
+        key: "units",
+        kind: "text",
+        label:
+          "Nomes do contador (horas, minutos, segundos, separados por vírgula)",
+      },
       { key: "buyUrl", kind: "url", label: "Link do botão de compra" },
       {
         key: "buyStyle",
@@ -921,7 +941,7 @@ const p7Price = defineBlock(
             <Countdown
               className="sm"
               endsAt={p.endsAt}
-              labels={["H", "Min", "Seg"]}
+              labels={unitLabels(p.units)}
             />
             <div className="p7-cb-wrap">
               <div className="p7-cb">

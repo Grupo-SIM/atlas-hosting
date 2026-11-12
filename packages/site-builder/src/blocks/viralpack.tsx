@@ -193,7 +193,7 @@ const mosaicHero = defineBlock(
                   >
                     {row.map((t, i) => (
                       <img
-                        alt=""
+                        alt={t.alt}
                         className={
                           t.shape === "landscape" ? "mh-tile l" : "mh-tile"
                         }

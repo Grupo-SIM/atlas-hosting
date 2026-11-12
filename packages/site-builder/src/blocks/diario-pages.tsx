@@ -547,13 +547,37 @@ const ddContactForm = defineBlock(
     actionUrl: str(),
     button: str("ENVIAR"),
     email: str(),
+    emailPlaceholder: str("Seu e-mail"),
+    emailPrefix: str("Ou escreva para"),
     intro: str("Quer falar comigo? Escreva uma mensagem: eu leio todas."),
+    messagePlaceholder: str("Sua mensagem"),
+    namePlaceholder: str("Seu nome"),
     success: str("Mensagem recebida! Obrigada por escrever."),
   }),
   {
     fields: [
       { key: "intro", kind: "textarea", label: "Texto de abertura" },
+      {
+        key: "namePlaceholder",
+        kind: "text",
+        label: "Campo nome — texto de exemplo",
+      },
+      {
+        key: "emailPlaceholder",
+        kind: "text",
+        label: "Campo e-mail — texto de exemplo",
+      },
+      {
+        key: "messagePlaceholder",
+        kind: "text",
+        label: "Campo mensagem — texto de exemplo",
+      },
       { key: "button", kind: "text", label: "Texto do botão" },
+      {
+        key: "emailPrefix",
+        kind: "text",
+        label: "Texto antes do e-mail (abaixo do formulário)",
+      },
       { key: "success", kind: "text", label: "Mensagem de sucesso" },
       {
         key: "actionUrl",
@@ -578,23 +602,23 @@ const ddContactForm = defineBlock(
           method="post"
         >
           <input
-            aria-label="Nome"
+            aria-label={p.namePlaceholder}
             name="nome"
-            placeholder="Seu nome"
+            placeholder={p.namePlaceholder}
             required
             type="text"
           />
           <input
             aria-label="E-mail"
             name="email"
-            placeholder="Seu e-mail"
+            placeholder={p.emailPlaceholder}
             required
             type="email"
           />
           <textarea
             aria-label="Mensagem"
             name="mensagem"
-            placeholder="Sua mensagem"
+            placeholder={p.messagePlaceholder}
             required
             rows={7}
           />
@@ -613,7 +637,7 @@ const ddContactForm = defineBlock(
         ) : null}
         {p.email ? (
           <p className="dd-cfall">
-            Ou escreva para <a href={`mailto:${p.email}`}>{p.email}</a>
+            {p.emailPrefix} <a href={`mailto:${p.email}`}>{p.email}</a>
           </p>
         ) : null}
       </div>

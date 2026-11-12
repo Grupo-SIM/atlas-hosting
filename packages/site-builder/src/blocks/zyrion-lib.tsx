@@ -144,11 +144,14 @@ export function ZyCard({
   ctx,
   hidden,
   post,
+  readMore = "Ler mais »",
   variant,
 }: {
   ctx: RenderContext;
   hidden?: boolean;
   post: Post;
+  /** Texto do link "ler mais" dos cartões com resumo. */
+  readMore?: string;
   variant: "archive" | "large" | "plain" | "small";
 }) {
   const cat = categoryOf(ctx.site, post);
@@ -189,7 +192,7 @@ export function ZyCard({
         {full ? <p>{post.excerpt}</p> : null}
         {full ? (
           <a className="zy-more-link" href={link}>
-            Ler mais »
+            {readMore}
           </a>
         ) : null}
       </div>

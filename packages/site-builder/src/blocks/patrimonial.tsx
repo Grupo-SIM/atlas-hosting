@@ -455,6 +455,7 @@ const cpAbout = defineBlock(
           </div>
         </div>
         <div className="cp-about-text">
+          {p.eyebrow ? <h2 className="cp-eyebrow">{p.eyebrow}</h2> : null}
           {p.title ? <h2 className="cp-eyebrow">{p.title}</h2> : null}
           <h3 className="cp-h3">{p.subtitle}</h3>
           <p>{p.text}</p>

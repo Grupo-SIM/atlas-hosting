@@ -26,7 +26,7 @@ const card = (image: string, title: string, text: string) => ({
   image: `${ORIGIN}/2025/04/${image}`,
   text,
   title,
-  url: "/single-service",
+  url: "#oferta",
 });
 
 const testimonial = (image: string, name: string, quote: string) => ({
