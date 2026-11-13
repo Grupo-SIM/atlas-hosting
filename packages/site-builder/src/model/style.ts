@@ -12,6 +12,7 @@ export const BLOCK_STYLE_KEYS = [
   "fontFamily",
   "fontSize",
   "fontWeight",
+  "frame",
   "gap",
   "height",
   "hoverBackground",
@@ -107,7 +108,7 @@ export function elementStylesCss(
       .map(n => `>:nth-child(${Number(n)})`)
       .join("");
     const decls = Object.entries(style)
-      .filter(([k]) => k !== "translate" && !isHoverKey(k))
+      .filter(([k]) => k !== "translate" && k !== "frame" && !isHoverKey(k))
       .map(([k, v]) => {
         const prop = k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`);
         const value =
@@ -118,6 +119,11 @@ export function elementStylesCss(
     if (decls) css += `[data-block-id="${id}"]${selector}{${decls}}`;
     css += hoverCss(`[data-block-id="${id}"]${selector}`, style);
     css += translateCss(`[data-block-id="${id}"]${selector}`, style.translate);
+    css += frameCss(
+      `[data-block-id="${id}"]${selector}`,
+      `[data-block-id="${id}"]${selector.split(">:nth-child").slice(0, -1).join(">:nth-child")}`,
+      style.frame
+    );
     if (style.fontFamily)
       css += fontFamilyCss(`[data-block-id="${id}"]${selector} *`, style);
   }
@@ -145,4 +151,65 @@ export function translateCss(
 ): string {
   if (typeof value !== "string" || !TRANSLATE_VALUE.test(value)) return "";
   return `@media (min-width:861px){${selector}{translate:${value}!important}}.sb-narrow ${selector}{translate:none!important}`;
+}
+
+/**
+ * Enquadramento de imagem: zoom e posição dentro da moldura. Guardado como `"zoom x y"` (ex.: `"1.5 -20 10"`):
+ * zoom de 1 a 4 e x/y de -100 a 100 (% do quanto a foto pode andar para cada lado; positivo empurra a foto
+ * para a direita/baixo). O zoom é `scale` dentro da moldura, que passa a cortar o que sobra (`overflow:hidden`).
+ */
+export interface Frame {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export const FRAME_ZOOM_MAX = 4;
+const clamp = (n: number, lo: number, hi: number) =>
+  Math.min(hi, Math.max(lo, Number.isFinite(n) ? n : 0));
+
+export function parseFrame(value: unknown): Frame {
+  const [z, x, y] = String(value ?? "")
+    .trim()
+    .split(/\s+/)
+    .map(Number);
+  return {
+    x: clamp(x ?? 0, -100, 100),
+    y: clamp(y ?? 0, -100, 100),
+    z: clamp(z ?? 1, 1, FRAME_ZOOM_MAX) || 1,
+  };
+}
+
+export const isDefaultFrame = (f: Frame) => f.z <= 1 && f.x === 0 && f.y === 0;
+
+export const formatFrame = (f: Frame): string =>
+  `${Math.round(clamp(f.z, 1, FRAME_ZOOM_MAX) * 100) / 100} ${Math.round(clamp(f.x, -100, 100))} ${Math.round(clamp(f.y, -100, 100))}`;
+
+/** Declarações CSS (sem `!important`) do enquadramento, como pares propriedade/valor. */
+export function frameDecls(f: Frame): Record<string, string> {
+  const shift = (f.z - 1) / 2;
+  return {
+    "object-fit": "cover",
+    "object-position": `${50 - f.x / 2}% ${50 - f.y / 2}%`,
+    transform:
+      f.z > 1
+        ? `translate(${(f.x * shift).toFixed(2)}%,${(f.y * shift).toFixed(2)}%) scale(${f.z})`
+        : "none",
+  };
+}
+
+const FRAME_VALUE = /^\d+(\.\d+)? -?\d+ -?\d+$/;
+
+export function frameCss(
+  selector: string,
+  parentSelector: string,
+  value: string | number | undefined
+): string {
+  if (typeof value !== "string" || !FRAME_VALUE.test(value.trim())) return "";
+  const f = parseFrame(value);
+  if (isDefaultFrame(f)) return "";
+  const decls = Object.entries(frameDecls(f))
+    .map(([k, v]) => `${k}:${v}!important`)
+    .join(";");
+  return `${selector}{${decls}}${f.z > 1 ? `${parentSelector}{overflow:hidden!important}` : ""}`;
 }

@@ -14,6 +14,14 @@ import type { AdKey } from "../blocks/ads.js";
 import { postPath } from "../blocks/helpers.js";
 import { getBlockDefinition } from "../blocks/registry.js";
 import type { Block, Site } from "../model/index.js";
+import {
+  FRAME_ZOOM_MAX,
+  type Frame,
+  formatFrame,
+  frameDecls,
+  isDefaultFrame,
+  parseFrame,
+} from "../model/style.js";
 import { resolveRoute } from "../renderer/routes.js";
 import { SiteRenderer } from "../renderer/SiteRenderer.js";
 import { AiPanel } from "./AiPanel.js";
@@ -183,6 +191,30 @@ function frameAt(root: HTMLElement, x: number, y: number): HTMLElement | null {
       return frame;
   }
   return null;
+}
+
+/**
+ * Imagem sob o ponteiro, mesmo quando ela não recebe o mouse (anúncios têm `pointer-events:none`) ou
+ * está coberta por um véu: procura pela posição, preferindo a menor (a mais específica).
+ */
+function imageAt(
+  root: HTMLElement,
+  x: number,
+  y: number
+): HTMLImageElement | null {
+  let best: HTMLImageElement | null = null;
+  let bestArea = Number.POSITIVE_INFINITY;
+  for (const img of root.querySelectorAll("img")) {
+    const r = img.getBoundingClientRect();
+    if (x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
+    if (getComputedStyle(img).visibility === "hidden") continue;
+    const area = r.width * r.height;
+    if (area > 0 && area < bestArea) {
+      best = img;
+      bestArea = area;
+    }
+  }
+  return best;
 }
 
 /** Caminho `nth-child` do elemento dentro do bloco; vazio quando é o próprio bloco. */
@@ -429,6 +461,12 @@ export function SiteEditor({
   const [, setDomTick] = useState(0);
   const [elPath, setElPath] = useState("");
   const [elName, setElName] = useState("");
+  /** Enquadrando uma imagem (dois cliques): arrastar move a foto, a roda do mouse dá zoom. */
+  const [framing, setFraming] = useState<{
+    blockId: string;
+    path: string;
+  } | null>(null);
+  const frameLive = useRef<Frame>({ x: 0, y: 0, z: 1 });
   const selBoxRef = useRef<HTMLDivElement | null>(null);
   const hoverBoxRef = useRef<HTMLDivElement | null>(null);
   const guideVRef = useRef<HTMLDivElement | null>(null);
@@ -830,6 +868,7 @@ export function SiteEditor({
           k === "arrowup" ? -step : k === "arrowdown" ? step : 0
         );
       } else if (k === "escape") {
+        setFraming(null);
         setSelectedId(null);
         setReview(false);
       }
@@ -1181,6 +1220,144 @@ export function SiteEditor({
       startY: e.clientY,
       zoom,
     });
+  };
+
+  const frameImg = () => {
+    const node = framing ? blockEl(framing.blockId) : null;
+    const el = node && framing ? elementAt(node, framing.path) : null;
+    return el instanceof HTMLImageElement ? el : null;
+  };
+
+  /** Mostra o enquadramento ao vivo no DOM (sem gravar): a moldura passa a cortar o que sobra. */
+  const paintFrame = (img: HTMLImageElement, f: Frame) => {
+    for (const [k, v] of Object.entries(frameDecls(f)))
+      img.style.setProperty(k, v, "important");
+    if (img.parentElement)
+      img.parentElement.style.setProperty(
+        "overflow",
+        f.z > 1 ? "hidden" : "",
+        "important"
+      );
+    paintSelection();
+  };
+
+  const clearPaintedFrame = (img: HTMLImageElement) => {
+    for (const k of Object.keys(frameDecls({ x: 0, y: 0, z: 1 })))
+      img.style.removeProperty(k);
+    img.parentElement?.style.removeProperty("overflow");
+  };
+
+  const commitFrame = (f: Frame) => {
+    if (!framing) return;
+    const block = findBlock(siteRef.current, framing.blockId);
+    if (!block) return;
+    frameLive.current = f;
+    edit(
+      updateElementStyle(siteRef.current, framing.blockId, framing.path, {
+        frame: isDefaultFrame(f) ? undefined : formatFrame(f),
+      }),
+      {
+        id: framing.blockId,
+        key: `frame:${framing.blockId}:${framing.path}`,
+        label: `Enquadrou · ${labelOf(block.type)}`,
+      }
+    );
+  };
+
+  const currentFrame = (): Frame => {
+    const block = framing ? findBlock(siteRef.current, framing.blockId) : null;
+    return parseFrame(
+      framing ? block?.elStyles?.[framing.path]?.frame : undefined
+    );
+  };
+
+  const zoomFrame = (delta: number) => {
+    const f = currentFrame();
+    const z = Math.min(FRAME_ZOOM_MAX, Math.max(1, f.z + delta));
+    commitFrame({ ...f, z: Math.round(z * 100) / 100 });
+  };
+
+  /** Arrastar a foto dentro da moldura: acompanha o ponteiro e grava ao soltar. */
+  const startFramePan = (e: PointerEvent<HTMLDivElement>) => {
+    const img = frameImg();
+    if (!img) return;
+    e.preventDefault();
+    const f0 = currentFrame();
+    const w = img.offsetWidth || 1;
+    const h = img.offsetHeight || 1;
+    const nw = img.naturalWidth || w;
+    const nh = img.naturalHeight || h;
+    const fit = Math.max(w / nw, h / nh);
+    // Quanto a foto anda (px) por unidade de x/y: parte do corte (`object-position`) + parte do zoom.
+    const sensX = (w * (f0.z - 1) + f0.z * Math.max(0, nw * fit - w)) / 200;
+    const sensY = (h * (f0.z - 1) + f0.z * Math.max(0, nh * fit - h)) / 200;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let moved = false;
+    let cur = f0;
+    const move = (ev: globalThis.PointerEvent) => {
+      const dx = (ev.clientX - startX) / zoom;
+      const dy = (ev.clientY - startY) / zoom;
+      if (!moved && Math.hypot(dx, dy) < 3) return;
+      moved = true;
+      document.body.style.cursor = "grabbing";
+      cur = {
+        ...f0,
+        x: sensX > 0.01 ? Math.max(-100, Math.min(100, f0.x + dx / sensX)) : 0,
+        y: sensY > 0.01 ? Math.max(-100, Math.min(100, f0.y + dy / sensY)) : 0,
+      };
+      paintFrame(img, cur);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      document.body.style.cursor = "";
+      if (!moved) return;
+      clearPaintedFrame(img);
+      justDragged.current = true;
+      setTimeout(() => {
+        justDragged.current = false;
+      }, 0);
+      commitFrame(cur);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+
+  /** Roda do mouse sobre a imagem enquadrada = zoom (precisa de listener não passivo). */
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!(framing && canvas)) return;
+    const onWheel = (ev: WheelEvent) => {
+      const img = frameImg();
+      if (
+        !(
+          img &&
+          imageAt(img.parentElement ?? img, ev.clientX, ev.clientY) === img
+        )
+      )
+        return;
+      ev.preventDefault();
+      zoomFrame(-ev.deltaY * 0.003);
+    };
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    return () => canvas.removeEventListener("wheel", onWheel);
+  });
+
+  const onCanvasDoubleClick = (e: MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const block = target.closest<HTMLElement>("[data-block-id]");
+    const el = block ? imageAt(block, e.clientX, e.clientY) : null;
+    if (!(block?.dataset.blockId && el)) return;
+    const path = pathWithin(el, block);
+    if (!path) return;
+    e.preventDefault();
+    select(block.dataset.blockId);
+    setElPath(path);
+    setElName("imagem");
+    setFraming({ blockId: block.dataset.blockId, path });
   };
 
   const onMovePointerDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -1717,10 +1894,22 @@ export function SiteEditor({
 
         {/* biome-ignore lint/a11y/noStaticElementInteractions: o canvas recebe clique, hover e arrasto dos itens */}
         <div
-          className="sbe-canvas"
+          className={framing ? "sbe-canvas framing" : "sbe-canvas"}
           onClickCapture={onCanvasClick}
+          onDoubleClickCapture={onCanvasDoubleClick}
           onDragStart={e => e.preventDefault()}
           onPointerDownCapture={e => {
+            if (framing && e.button === 0) {
+              const img = frameImg();
+              if (
+                img &&
+                imageAt(img.parentElement ?? img, e.clientX, e.clientY) === img
+              ) {
+                startFramePan(e);
+                return;
+              }
+              setFraming(null);
+            }
             onLogoPointerDown(e);
             onMovePointerDown(e);
           }}
@@ -1762,6 +1951,40 @@ export function SiteEditor({
             />
           </div>
         </div>
+
+        {framing
+          ? (() => {
+              const rect = canvasRef.current?.getBoundingClientRect();
+              return (
+                <div
+                  className="sbe-framebar"
+                  style={{
+                    left: rect ? rect.left + rect.width / 2 : "50%",
+                    top: rect ? rect.top + 12 : 12,
+                  }}
+                >
+                  <span>
+                    Enquadrando: arraste a foto · roda do mouse = zoom
+                  </span>
+                  <button onClick={() => zoomFrame(-0.25)} type="button">
+                    −
+                  </button>
+                  <button onClick={() => zoomFrame(0.25)} type="button">
+                    +
+                  </button>
+                  <button
+                    onClick={() => commitFrame({ x: 0, y: 0, z: 1 })}
+                    type="button"
+                  >
+                    Restaurar
+                  </button>
+                  <button onClick={() => setFraming(null)} type="button">
+                    Concluir
+                  </button>
+                </div>
+              );
+            })()
+          : null}
 
         {video ? (
           <VideoPopup

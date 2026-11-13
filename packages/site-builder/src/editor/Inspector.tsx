@@ -26,11 +26,19 @@ import {
   type Site,
 } from "../model/index.js";
 import {
+  FRAME_ZOOM_MAX,
+  type Frame,
+  formatFrame,
+  isDefaultFrame,
+  parseFrame,
+} from "../model/style.js";
+import {
   customFonts,
   fontStack,
   SITE_FONTS,
   themeFont,
 } from "../renderer/fonts.js";
+
 import { themeVars } from "../renderer/styles.js";
 import { VARIANT_TOKENS } from "../renderer/variant-tokens.js";
 import { FieldInput, type ResolveChannel } from "./fields.js";
@@ -1641,6 +1649,63 @@ export function Inspector({
           ) : null}
         </Section>
 
+        {elPath && elLabel === "imagem" ? (
+          <Section defaultOpen scope="el" title="Enquadrar imagem">
+            {(() => {
+              const f = parseFrame(st.frame);
+              const save = (patch: Partial<Frame>) => {
+                const next = { ...f, ...patch };
+                onStyle(
+                  {
+                    frame: isDefaultFrame(next) ? undefined : formatFrame(next),
+                  },
+                  "Enquadramento"
+                );
+              };
+              return (
+                <>
+                  <p className="sbe-hint">
+                    Dica: dê dois cliques na imagem para arrastá-la e usar a
+                    roda do mouse para o zoom, direto no canvas.
+                  </p>
+                  <Slider
+                    label="Zoom"
+                    max={FRAME_ZOOM_MAX * 100}
+                    min={100}
+                    onChange={v => save({ z: v / 100 })}
+                    suffix="%"
+                    value={Math.round(f.z * 100)}
+                  />
+                  <Slider
+                    label="Horizontal"
+                    max={100}
+                    min={-100}
+                    onChange={v => save({ x: v })}
+                    value={f.x}
+                  />
+                  <Slider
+                    label="Vertical"
+                    max={100}
+                    min={-100}
+                    onChange={v => save({ y: v })}
+                    value={f.y}
+                  />
+                  {isDefaultFrame(f) ? null : (
+                    <button
+                      className="sbe-btn"
+                      onClick={() =>
+                        onStyle({ frame: undefined }, "Enquadramento")
+                      }
+                      type="button"
+                    >
+                      Restaurar enquadramento
+                    </button>
+                  )}
+                </>
+              );
+            })()}
+          </Section>
+        ) : null}
         {elLabel === "imagem" ? null : (
           <Section scope={elPath ? "el" : "block"} title="Tipografia">
             <FontPicker
