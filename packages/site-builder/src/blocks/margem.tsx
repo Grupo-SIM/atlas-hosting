@@ -32,6 +32,14 @@ const linkProps = (ctx: RenderContext, url: string) => ({
   ...newTab(url),
 });
 
+/**
+ * Só no editor: diz de qual campo (`chave` ou `chave.N`, ver `FocusHint.field`) é o elemento, para o clique
+ * abrir o campo certo mesmo sem texto (wordmark em SVG) ou com a mesma foto em vários itens. Fora do editor
+ * o HTML não muda.
+ */
+const field = (ctx: RenderContext, spec: string) =>
+  ctx.mode === "edit" ? { "data-sb-field": spec } : {};
+
 /* ───────────────────────── wordmark ───────────────────────── */
 
 /**
@@ -39,14 +47,17 @@ const linkProps = (ctx: RenderContext, url: string) => ({
  * segundo "m" mais largo. Proporção altura/largura 0,214 (viewBox 500 × 107).
  */
 export function MargemWordmark({
+  attrs,
   className,
   label,
 }: {
+  attrs?: Record<string, string>;
   className?: string;
   label?: string;
 }) {
   return (
     <svg
+      {...attrs}
       aria-hidden={label ? undefined : true}
       aria-label={label || undefined}
       className={className}
@@ -71,19 +82,21 @@ export function MargemWordmark({
 
 /** Logo do bloco: imagem enviada pelo usuário ou, sem ela, o wordmark desenhado. */
 function Logo({
+  attrs,
   className,
   label,
   logo,
 }: {
+  attrs?: Record<string, string>;
   className?: string;
   label: string;
   logo: string;
 }) {
   const src = imgSrc(logo);
   return src ? (
-    <img alt={label} className={className} src={src} />
+    <img {...attrs} alt={label} className={className} src={src} />
   ) : (
-    <MargemWordmark className={className} label={label} />
+    <MargemWordmark attrs={attrs} className={className} label={label} />
   );
 }
 
@@ -128,13 +141,21 @@ const mgNav = defineBlock(
     render: (p, ctx) => (
       <div className="mg-nav-wrap" data-mg="nav">
         <nav aria-label="Principal" className="mg-nav">
-          <a className="mg-nav-logo" href={href(ctx, p.logoUrl)}>
+          <a
+            className="mg-nav-logo"
+            href={href(ctx, p.logoUrl)}
+            {...field(ctx, "logo logoUrl")}
+          >
             <Logo className="mg-mark" label={p.brandName} logo={p.logo} />
           </a>
           <ul className="mg-pills">
             {p.links.map((l, i) => (
               <li key={`${l.label}-${i}`}>
-                <a className="mg-pill" {...linkProps(ctx, l.url)}>
+                <a
+                  className="mg-pill"
+                  {...linkProps(ctx, l.url)}
+                  {...field(ctx, `links.${i}`)}
+                >
                   {l.label}
                 </a>
               </li>
@@ -250,14 +271,17 @@ const mgTunnel = defineBlock(
     group: "content",
     label: "Hero com túnel de projetos (Margem)",
     render: (p, ctx) => {
-      const wall = p.wall
-        .map(w => ({ r: w.ratio, s: imgSrc(w.image) }))
-        .filter(w => w.s);
+      const wallAll = p.wall.map((w, n) => ({
+        n,
+        r: w.ratio,
+        s: imgSrc(w.image),
+      }));
+      const wall = wallAll.filter(w => w.s).map(({ r, s }) => ({ r, s }));
       const cases = p.cases.map(c => imgSrc(c.image));
       const total = pad2(p.cases.length);
       return (
         <section
-          className="mg-tunnel"
+          className={ctx.mode === "edit" ? "mg-tunnel is-edit" : "mg-tunnel"}
           data-mg="tunnel"
           data-mg-wall={JSON.stringify({ cases, wall })}
           style={{ "--mg-screens": p.screens } as CSSProperties}
@@ -265,15 +289,19 @@ const mgTunnel = defineBlock(
           <div className="mg-stage">
             <canvas className="mg-canvas" />
             <div aria-hidden="true" className="mg-collage">
-              {wall.slice(0, 9).map((w, i) => (
-                <img
-                  alt=""
-                  key={`${w.s}-${i}`}
-                  loading="lazy"
-                  src={w.s}
-                  style={{ aspectRatio: String(w.r) }}
-                />
-              ))}
+              {wallAll
+                .filter(w => w.s)
+                .slice(0, 9)
+                .map(w => (
+                  <img
+                    alt=""
+                    key={`${w.s}-${w.n}`}
+                    loading="lazy"
+                    src={w.s}
+                    style={{ aspectRatio: String(w.r) }}
+                    {...field(ctx, `wall.${w.n}`)}
+                  />
+                ))}
             </div>
             <div className="mg-hero">
               <h1 className="mg-hero-line">
@@ -285,7 +313,12 @@ const mgTunnel = defineBlock(
                   ))}
               </h1>
               <div className="mg-hero-mark">
-                <Logo className="mg-mark" label={p.brandName} logo={p.logo} />
+                <Logo
+                  attrs={field(ctx, "logo")}
+                  className="mg-mark"
+                  label={p.brandName}
+                  logo={p.logo}
+                />
               </div>
               <div className="mg-hero-labels">
                 <span className="mg-chip">{p.hint}</span>
@@ -301,9 +334,13 @@ const mgTunnel = defineBlock(
                       className="mg-case-img"
                       loading="lazy"
                       src={cases[i]}
+                      {...field(ctx, `cases.${i}`)}
                     />
                   ) : (
-                    <div className="mg-case-img sb-img-empty" />
+                    <div
+                      className="mg-case-img sb-img-empty"
+                      {...field(ctx, `cases.${i}`)}
+                    />
                   )}
                   <div className="mg-case-txt">
                     <span className="mg-case-n">
@@ -425,7 +462,7 @@ const mgManifesto = defineBlock(
     ],
     group: "content",
     label: "Manifesto com notas na margem (Margem)",
-    render: p => {
+    render: (p, ctx) => {
       let i = 0;
       const words = p.text
         .split(/\s+/)
@@ -448,6 +485,7 @@ const mgManifesto = defineBlock(
                         className="mg-inph"
                         loading="lazy"
                         src={src}
+                        {...field(ctx, `photos.${Number(m[2]) - 1}`)}
                         style={{
                           objectPosition: photo.focus.replace(/[;{}<>]/g, ""),
                         }}
@@ -593,7 +631,7 @@ const mgMethod = defineBlock(
     ],
     group: "content",
     label: "Método em tira de filme (Margem)",
-    render: p => {
+    render: (p, ctx) => {
       const n = p.frames.length;
       return (
         <section
@@ -616,6 +654,7 @@ const mgMethod = defineBlock(
                     <figure
                       className={i === 0 ? "mg-frame is-on" : "mg-frame"}
                       key={`${f.label}-${i}`}
+                      {...field(ctx, `frames.${i}`)}
                     >
                       {f.kind === "grid" ? (
                         <ConstructionMark
@@ -716,7 +755,10 @@ function IndexTable({ ctx, p }: { ctx: RenderContext; p: IndexProps }) {
       : p.rows.filter(r => filterOf(r.filter) === k).length;
   const groups = [p.allLabel, ...filters.map(f => f.label)];
   return (
-    <section className="mg-ix" data-mg="index">
+    <section
+      className={ctx.mode === "edit" ? "mg-ix is-edit" : "mg-ix"}
+      data-mg="index"
+    >
       <div className="mg-ix-head">
         <h2 className="mg-ix-title">{p.title}</h2>
         <fieldset className="mg-filters">
@@ -744,9 +786,20 @@ function IndexTable({ ctx, p }: { ctx: RenderContext; p: IndexProps }) {
               <span className="mg-r-d">{r.discipline}</span>
               <span className="mg-r-t">{r.city}</span>
               {src ? (
-                <img alt="" className="mg-r-thumb" loading="lazy" src={src} />
+                <img
+                  alt=""
+                  className="mg-r-thumb"
+                  loading="lazy"
+                  src={src}
+                  title={
+                    ctx.mode === "edit"
+                      ? "Foto que aparece ao passar o mouse na linha"
+                      : undefined
+                  }
+                  {...field(ctx, `rows.${i}`)}
+                />
               ) : (
-                <span className="mg-r-thumb" />
+                <span className="mg-r-thumb" {...field(ctx, `rows.${i}`)} />
               )}
             </>
           );
@@ -888,8 +941,11 @@ const mgQuote = defineBlock(
     ],
     group: "content",
     label: "Depoimento com fotos em profundidade (Margem)",
-    render: p => (
-      <section className="mg-quote" data-mg="quote">
+    render: (p, ctx) => (
+      <section
+        className={ctx.mode === "edit" ? "mg-quote is-edit" : "mg-quote"}
+        data-mg="quote"
+      >
         <div aria-hidden="true" className="mg-float">
           {p.photos.map((f, i) => {
             const src = imgSrc(f.image);
@@ -900,6 +956,7 @@ const mgQuote = defineBlock(
                 key={`${src}-${i}`}
                 loading="lazy"
                 src={src}
+                {...field(ctx, `photos.${i}`)}
                 style={
                   {
                     "--d": f.depth,
@@ -1003,7 +1060,12 @@ const mgFooter = defineBlock(
           </ul>
         </div>
         <div className="mg-foot-mark">
-          <Logo className="mg-mark" label={p.brandName} logo={p.logo} />
+          <Logo
+            attrs={field(ctx, "logo")}
+            className="mg-mark"
+            label={p.brandName}
+            logo={p.logo}
+          />
         </div>
       </footer>
     ),

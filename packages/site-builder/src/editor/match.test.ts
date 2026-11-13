@@ -76,3 +76,33 @@ describe("matchItem — texto com marcação e listas dentro de itens", () => {
     expect(m[0]).toMatchObject({ index: 1, kind: "item" });
   });
 });
+
+describe("matchItem — campo declarado pelo bloco (data-sb-field)", () => {
+  const fields = [
+    { key: "logo", kind: "image", label: "Logo" },
+    { key: "logoUrl", kind: "url", label: "Link do logo" },
+    {
+      itemFields: [{ key: "image", kind: "image", label: "Foto" }],
+      key: "wall",
+      kind: "list",
+      label: "Paredes",
+    },
+  ] as const;
+  const props = { logo: "", wall: [{ image: "/a.jpg" }, { image: "/a.jpg" }] };
+  const run = (field: string) =>
+    matchItem([...fields], props, {}, { field, n: 1, value: "" }).map(m =>
+      m.kind === "item" ? `${m.field.key}#${m.index}` : m.field.key
+    );
+
+  test("logo desenhado (sem texto nem src) abre o campo do logo e o link", () => {
+    expect(run("logo logoUrl")).toEqual(["logo", "logoUrl"]);
+  });
+
+  test("mesma foto em dois itens: vale o índice, não o src", () => {
+    expect(run("wall.1")).toEqual(["wall#1"]);
+  });
+
+  test("campo ou índice que não existe é ignorado", () => {
+    expect(run("nada wall.9")).toEqual([]);
+  });
+});

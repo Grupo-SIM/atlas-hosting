@@ -252,6 +252,9 @@ export function hintOf(
   const levels = linkLevels(el, basePath);
   const under = mediaUnder(el, point);
   const repeat = isRepeated(el) || undefined;
+  // O bloco diz de qual campo é o elemento (logo em SVG, imagem repetida): vale mais que casar pelo texto.
+  const field =
+    el.closest("[data-sb-field]")?.getAttribute("data-sb-field") || undefined;
   // Num item repetido, o primeiro link dele aponta para o post/categoria que ele mostra.
   const itemHref = repeat
     ? stripBase(
@@ -274,6 +277,7 @@ export function hintOf(
     };
   if (el instanceof HTMLImageElement)
     return {
+      field,
       itemHref,
       levels,
       repeat,
@@ -282,6 +286,7 @@ export function hintOf(
     };
   if (el instanceof HTMLVideoElement)
     return {
+      field,
       itemHref,
       levels,
       repeat,
@@ -291,6 +296,7 @@ export function hintOf(
   if (el instanceof HTMLIFrameElement) {
     const src = el.getAttribute("src") ?? "";
     return {
+      field,
       itemHref,
       levels,
       repeat,
@@ -301,6 +307,7 @@ export function hintOf(
   const href = stripBase(el.closest("a")?.getAttribute("href") ?? "", basePath);
   const parent = el.parentElement;
   return {
+    field,
     href: href || undefined,
     itemHref,
     levels,

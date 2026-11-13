@@ -123,6 +123,10 @@ ${S} .mg-hero,${S} .mg-collage{height:var(--mg-vh,100svh);min-height:520px}
 ${S} .mg-hero{position:relative;overflow:hidden}
 ${S} .mg-collage{position:absolute;inset:0 0 auto;overflow:hidden;pointer-events:none}
 ${S} .mg-collage img{position:absolute;width:calc(var(--w) * 1cqw);height:auto;object-fit:cover;border-radius:2px}
+/* editor: a colagem e as fotos flutuantes recebem o clique (no site são decoração); o hero deixa passar e só o texto e o logo dele pegam o mouse */
+${S} .mg-tunnel.is-edit .mg-hero{pointer-events:none}
+${S} .mg-tunnel.is-edit .mg-hero>*{pointer-events:auto}
+${S} .mg-tunnel.is-edit .mg-collage img,${S} .mg-quote.is-edit .mg-float img{pointer-events:auto;cursor:pointer}
 ${S} .mg-collage img:nth-child(1){--w:11;left:6%;top:13%}
 ${S} .mg-collage img:nth-child(2){--w:7;left:24%;top:5%;opacity:.5;filter:blur(1.5px)}
 ${S} .mg-collage img:nth-child(3){--w:13;right:7%;top:10%}
@@ -262,6 +266,9 @@ ${S} .mg-row-in:hover::before,${S} .mg-row-in:focus-visible::before{transform:sc
 ${S} .mg-r-c{font-size:clamp(26px,2.9cqw,46px);line-height:1.05;letter-spacing:-.045em}
 ${S} .mg-r-t{text-align:right}
 ${S} .mg-r-thumb{display:none}
+/* editor: a foto de cada linha (no site ela só aparece seguindo o cursor) fica à vista, para clicar e trocar; :where mantém a especificidade baixa e as regras de celular (que já mostram a foto) vencem */
+${S} :where(.mg-ix.is-edit) .mg-row-in{grid-template-columns:9% 30% minmax(0,1fr) 12% 48px;column-gap:12px;align-items:center}
+${S} :where(.mg-ix.is-edit) .mg-r-thumb{display:block;justify-self:end;width:48px;height:60px;object-fit:cover;border-radius:2px;cursor:pointer}
 ${S} .mg-count{margin-top:18px;color:var(--sb-muted);font-size:13px;text-align:right}
 ${S} .mg-cnt{display:none}
 ${filterRules}

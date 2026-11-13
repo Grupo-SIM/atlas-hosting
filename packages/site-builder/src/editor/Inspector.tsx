@@ -421,6 +421,29 @@ function matchFields(
   return near;
 }
 
+/** Resolve `data-sb-field` ("logo", "wall.3", "logo logoUrl") nos campos do bloco; o que não existe é ignorado. */
+function declaredFields(
+  fields: FieldDef[],
+  props: Record<string, unknown>,
+  spec: string
+): FieldMatch[] {
+  const out: FieldMatch[] = [];
+  for (const part of spec.split(/\s+/).filter(Boolean)) {
+    const [key, at] = part.split(".");
+    const field = fields.find(f => f.key === key);
+    if (!field) continue;
+    if (at === undefined) {
+      out.push({ field, kind: "field" });
+      continue;
+    }
+    const index = Number(at);
+    const items = props[key];
+    if (Number.isInteger(index) && Array.isArray(items) && index < items.length)
+      out.push({ field, index, kind: "item" });
+  }
+  return out;
+}
+
 /** Campos do item: os que guardam o texto/imagem dele e, num link, o que guarda o endereço. */
 export function matchItem(
   fields: FieldDef[],
@@ -429,6 +452,8 @@ export function matchItem(
   hint: FocusHint | undefined
 ): FieldMatch[] {
   if (hint?.ad) return adFields(fields);
+  const forced = hint?.field ? declaredFields(fields, props, hint.field) : [];
+  if (forced.length > 0) return forced;
   let out = matchFields(fields, props, defaults, hint?.value ?? "");
   // Trecho em destaque dentro de um título (<span>): o campo guarda o título inteiro, que é o texto do pai.
   if (out.length === 0 && hint?.parentText)
@@ -612,6 +637,12 @@ function RepeatCount({
 export interface FocusHint {
   /** O item clicado está dentro de um espaço de anúncio: mostra os campos do anúncio do bloco. */
   ad?: boolean;
+  /**
+   * Campos que o próprio bloco aponta (`data-sb-field` no HTML): `chave` (campo do bloco) ou `chave.N` (item N,
+   * a partir de 0, de uma lista), separados por espaço. Serve para o que não tem texto nem `src` para achar o
+   * campo, como o logo desenhado em SVG, ou quando a mesma imagem aparece em mais de um item.
+   */
+  field?: string;
   /** Qual espaço publicitário global é (1 = faixas, 2 = lateral). */
   adKind?: AdKey;
   /** Endereço do link clicado, quando o item é (ou está dentro de) um link. */

@@ -168,3 +168,21 @@ describe("template margem", () => {
     expect(files.some(f => f.content.includes("sbMargem"))).toBe(false);
   }, 60_000);
 });
+
+describe("template margem — clique no editor", () => {
+  test("no editor, logos, colagem, fotos e linhas do índice apontam o campo deles", async () => {
+    const edit = await html(site, "/", "edit");
+    expect(edit).toContain('data-sb-field="logo"');
+    expect(edit).toContain('data-sb-field="logo logoUrl"');
+    expect(edit).toContain('data-sb-field="wall.0"');
+    expect(edit).toContain('data-sb-field="cases.0"');
+    expect(edit).toContain('data-sb-field="rows.0"');
+    expect(edit).toContain('class="mg-ix is-edit"');
+  });
+
+  test("no site publicado o HTML não ganha marcas do editor", async () => {
+    const view = await html(site, "/");
+    expect(view).not.toContain("data-sb-field");
+    expect(view).not.toContain('class="mg-ix is-edit"');
+  });
+});
