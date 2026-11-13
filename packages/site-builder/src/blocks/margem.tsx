@@ -37,7 +37,10 @@ const linkProps = (ctx: RenderContext, url: string) => ({
  * abrir o campo certo mesmo sem texto (wordmark em SVG) ou com a mesma foto em vários itens. Fora do editor
  * o HTML não muda.
  */
-const field = (ctx: RenderContext, spec: string) =>
+interface EditAttrs {
+  "data-sb-field"?: string;
+}
+const field = (ctx: RenderContext, spec: string): EditAttrs =>
   ctx.mode === "edit" ? { "data-sb-field": spec } : {};
 
 /* ───────────────────────── wordmark ───────────────────────── */
@@ -51,7 +54,7 @@ export function MargemWordmark({
   className,
   label,
 }: {
-  attrs?: Record<string, string>;
+  attrs?: EditAttrs;
   className?: string;
   label?: string;
 }) {
@@ -87,7 +90,7 @@ function Logo({
   label,
   logo,
 }: {
-  attrs?: Record<string, string>;
+  attrs?: EditAttrs;
   className?: string;
   label: string;
   logo: string;
