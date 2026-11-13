@@ -112,7 +112,11 @@ const site: Site = {
     block("adSlot", { size: "banner" }),
     block("catSlider", { limit: 6 }),
     block("catChips", { title: "Veja também" }),
-    block("shortVideos", { items: SHORTS, title: "Vídeos curtos" }),
+    block("shortVideos", {
+      items: SHORTS,
+      sideAd: "side2",
+      title: "Vídeos curtos",
+    }),
     block("newsFeed", {
       fromCategory: "yes",
       limit: 20,
@@ -167,7 +171,13 @@ const site: Site = {
     page("", "Início", [
       block("adSlot", { size: "banner" }),
       block("newsFront", { relatedCount: 3 }),
-      block("newsFeed", { limit: 3, popularTitle: "Mais lidas", skip: 6 }),
+      block("newsFeed", {
+        limit: 3,
+        popularTitle: "Mais lidas",
+        sideAds: "3",
+        sideFlow: "yes",
+        skip: 6,
+      }),
       block("shortVideos", {
         items: SHORTS,
         title: "Vídeos curtos",

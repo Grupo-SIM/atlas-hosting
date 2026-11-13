@@ -76,6 +76,10 @@ export const siteCss = `
 .sb-ad-item.on{opacity:1}
 .sb-ad-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;font-size:14px;opacity:.6;border:2px dashed currentColor;border-radius:8px}
 .sb-news-sidecol{display:flex;flex-direction:column;gap:16px;min-width:0}
+.sb-news-sidecol[data-ads="2"] .sb-ad-side .sb-ad-box{aspect-ratio:1}
+.sb-news-sidecol[data-ads="3"] .sb-ad-side .sb-ad-box{aspect-ratio:300/250}
+.sb-news-sidecol .sb-ad{padding-block:0}
+.sb-ad-more{border:2px dashed rgba(127,127,127,.5);border-radius:8px;padding:12px;text-align:center;font-size:13px;line-height:1.35;opacity:.75}
 .sb-btn{display:inline-block;border:0;border-radius:6px;padding:10px 22px;font-weight:600;font-size:16px;cursor:pointer;font-family:var(--sb-font-heading)}
 .sb-btn-lg{font-size:24px;padding:14px 26px}
 .sb-btn-primary{background:linear-gradient(90deg,#5ce1f5,#b6f0ff);color:#04101f!important}

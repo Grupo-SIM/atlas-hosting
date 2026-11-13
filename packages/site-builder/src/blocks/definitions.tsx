@@ -1,7 +1,13 @@
 import type { CSSProperties } from "react";
 import { z } from "zod";
 import { cssUrl } from "../renderer/central.js";
-import { AdBox, adBlocks, adItemFields, adItemsSchema } from "./ads.js";
+import {
+  AdBox,
+  adBlocks,
+  adItemFields,
+  adItemsSchema,
+  adsEnabled,
+} from "./ads.js";
 import { areaflixBlocks } from "./areaflix.js";
 import { atlasBlocks } from "./atlas.js";
 import { centralBlocks, Eyebrow } from "./central.js";
@@ -1736,7 +1742,12 @@ const newsFeed = defineBlock(
     moreUrl: str("#"),
     popularTitle: str("Mais lidas"),
     showSide: z.enum(["yes", "no"]).default("yes"),
+    sideAd: z
+      .enum(["none", "side", "side2", "side3"])
+      .default("none")
+      .catch("none"),
     sideAds: z.enum(["1", "2", "3"]).default("1").catch("1"),
+    sideFlow: z.enum(["yes", "no"]).default("no").catch("no"),
     skip: z.coerce.number().default(5),
   }),
   {
@@ -1761,6 +1772,25 @@ const newsFeed = defineBlock(
         options: SHOW_OPTIONS,
       },
       { key: "popularTitle", kind: "text", label: "Título da coluna lateral" },
+      {
+        key: "sideAd",
+        kind: "select",
+        label:
+          "Sem coluna lateral: anúncio no lugar dela (só com Anúncios ligados)",
+        options: [
+          { label: "Nenhum", value: "none" },
+          { label: "Espaço publicitário 2 (300×250)", value: "side" },
+          { label: "Espaço publicitário 3 (300×250)", value: "side2" },
+          { label: "Espaço publicitário 4 (300×250)", value: "side3" },
+        ],
+      },
+      {
+        key: "sideFlow",
+        kind: "select",
+        label:
+          "Coluna lateral continua ao lado dos blocos de baixo (aproveita o espaço vazio ao lado dos vídeos curtos)",
+        options: SHOW_OPTIONS,
+      },
       {
         key: "sideAds",
         kind: "select",
@@ -1841,7 +1871,11 @@ const newsFeed = defineBlock(
             })}
           </div>
           {p.showSide === "yes" ? (
-            <div className="sb-news-sidecol">
+            <div
+              className="sb-news-sidecol"
+              data-ads={p.sideAds}
+              data-flow={p.sideFlow === "yes" ? "" : undefined}
+            >
               <aside className="sb-news-side">
                 <h4>{p.popularTitle}</h4>
                 <ol>
@@ -1866,6 +1900,26 @@ const newsFeed = defineBlock(
                     slot={slot}
                   />
                 ))}
+              {ctx.mode === "edit" && adsEnabled(ctx) && p.sideAds !== "3" ? (
+                <div className="sb-ad-more">
+                  ＋ Quer mais um anúncio nesta coluna? Selecione este bloco e
+                  mude “Anúncios na coluna lateral” (até 3). Este aviso só
+                  aparece no editor.
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {p.showSide === "no" && p.sideAd !== "none" && adsEnabled(ctx) ? (
+            <div className="sb-news-sidecol">
+              <AdBox
+                ctx={ctx}
+                items={[]}
+                label="Publicidade"
+                link=""
+                seconds={6}
+                size="square"
+                slot={p.sideAd}
+              />
             </div>
           ) : null}
           {p.moreLabel && extra.length > 0 ? (
@@ -1953,11 +2007,27 @@ const shortVideos = defineBlock(
         })
       )
       .default([]),
+    sideAd: z
+      .enum(["none", "side", "side2", "side3"])
+      .default("none")
+      .catch("none"),
     title: str("Vídeos curtos"),
   }),
   {
     fields: [
       { key: "title", kind: "text", label: "Título" },
+      {
+        key: "sideAd",
+        kind: "select",
+        label:
+          "Anúncio ao lado, na coluna direita vazia (só com Anúncios ligados)",
+        options: [
+          { label: "Nenhum", value: "none" },
+          { label: "Espaço publicitário 2 (300×250)", value: "side" },
+          { label: "Espaço publicitário 3 (300×250)", value: "side2" },
+          { label: "Espaço publicitário 4 (300×250)", value: "side3" },
+        ],
+      },
       {
         itemFields: [
           { key: "image", kind: "image", label: "Imagem (vertical)" },
@@ -1979,35 +2049,56 @@ const shortVideos = defineBlock(
     label: "Vídeos curtos (carrossel vertical)",
     render: (p, ctx) => {
       if (p.items.length === 0) return null;
+      const ad =
+        p.sideAd !== "none" && adsEnabled(ctx) ? (
+          <AdBox
+            ctx={ctx}
+            items={[]}
+            label="Publicidade"
+            link=""
+            seconds={6}
+            size="square"
+            slot={p.sideAd}
+          />
+        ) : null;
       return (
-        <section className="sb-container sb-shorts">
-          <div className="sb-shorts-head">
-            <h2>{p.title}</h2>
-            <div className="sb-shorts-nav">
-              <button aria-label="Anterior" type="button">
-                ‹
-              </button>
-              <button aria-label="Próximo" type="button">
-                ›
-              </button>
+        <section
+          className={
+            ad
+              ? "sb-container sb-shorts sb-shorts-ad"
+              : "sb-container sb-shorts"
+          }
+        >
+          <div className="sb-shorts-main">
+            <div className="sb-shorts-head">
+              <h2>{p.title}</h2>
+              <div className="sb-shorts-nav">
+                <button aria-label="Anterior" type="button">
+                  ‹
+                </button>
+                <button aria-label="Próximo" type="button">
+                  ›
+                </button>
+              </div>
+            </div>
+            <div className="sb-shorts-track">
+              {p.items.map(item => (
+                <a
+                  className="sb-short"
+                  data-reel={videoEmbed(item.video) ?? ""}
+                  data-title={item.title}
+                  href={href(ctx, item.url)}
+                  key={item.title + item.url}
+                >
+                  <Img alt="" src={item.image} />
+                  <span className="sb-short-time">{item.duration}</span>
+                  <span aria-hidden="true" className="sb-short-play" />
+                  <strong>{item.title}</strong>
+                </a>
+              ))}
             </div>
           </div>
-          <div className="sb-shorts-track">
-            {p.items.map(item => (
-              <a
-                className="sb-short"
-                data-reel={videoEmbed(item.video) ?? ""}
-                data-title={item.title}
-                href={href(ctx, item.url)}
-                key={item.title + item.url}
-              >
-                <Img alt="" src={item.image} />
-                <span className="sb-short-time">{item.duration}</span>
-                <span aria-hidden="true" className="sb-short-play" />
-                <strong>{item.title}</strong>
-              </a>
-            ))}
-          </div>
+          {ad}
         </section>
       );
     },

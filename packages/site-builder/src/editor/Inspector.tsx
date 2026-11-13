@@ -810,8 +810,14 @@ function blockAdKeys(type: string, props: Record<string, unknown>): AdKey[] {
           : "banner",
     ];
   }
-  if (type === "newsFeed" && props.showSide !== "no")
-    return AD_KEYS.slice(1, 1 + Number(props.sideAds ?? 1)) as AdKey[];
+  const side = AD_KEYS.find(k => k === props.sideAd);
+  if (type === "shortVideos") return side ? [side] : [];
+  if (type === "newsFeed")
+    return props.showSide === "no"
+      ? side
+        ? [side]
+        : []
+      : (AD_KEYS.slice(1, 1 + Number(props.sideAds ?? 1)) as AdKey[]);
   return [];
 }
 
@@ -1416,6 +1422,25 @@ export function Inspector({
                 site={site}
               />
             ) : null}
+            {focusHint?.ad &&
+            selected.type === "newsFeed" &&
+            focusHint.adKind !== "banner"
+              ? (() => {
+                  const field = getBlockDefinition("newsFeed")?.fields.find(
+                    f => f.key === "sideAds"
+                  );
+                  return field ? (
+                    <FieldInput
+                      field={{
+                        ...field,
+                        label: "Quantos anúncios nesta coluna lateral?",
+                      }}
+                      onChange={v => onProp("sideAds", v)}
+                      value={selected.props.sideAds ?? "1"}
+                    />
+                  ) : null;
+                })()
+              : null}
             {focusHint?.ad && focusHint.adKind && itemMatches.length === 0 ? (
               <GlobalAdFields
                 kind={focusHint.adKind}
