@@ -35,6 +35,24 @@ const adConfigSchema = z
 /** Espaços publicitários do site: 1 = faixas do topo, 2/3/4 = anúncios empilhados na coluna lateral. */
 export const AD_KEYS = ["banner", "side", "side2", "side3"] as const;
 export type AdKey = (typeof AD_KEYS)[number];
+/**
+ * Quantos anúncios a coluna lateral mostra. No portal é uma escolha do site inteiro (`theme.adsSide`),
+ * para valer igual em todas as páginas; nos outros temas, a do bloco.
+ */
+export const sideAdCount = (
+  theme: Record<string, string>,
+  own: string | number
+): 1 | 2 | 3 => {
+  const raw = theme.variant === "portal" ? (theme.adsSide ?? "1") : String(own);
+  return raw === "3" ? 3 : raw === "2" ? 2 : 1;
+};
+
+export const SIDE_COUNT_OPTIONS = [
+  { label: "1 anúncio (Espaço 2)", value: "1" },
+  { label: "2 anúncios (Espaços 2 e 3)", value: "2" },
+  { label: "3 anúncios (Espaços 2, 3 e 4)", value: "3" },
+];
+
 export const adNumber = (key: AdKey) => AD_KEYS.indexOf(key) + 1;
 export const AD_TITLES: Record<AdKey, string> = {
   banner: "Espaço publicitário 1 — faixas largas (topo), todas as páginas",

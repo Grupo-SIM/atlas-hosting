@@ -7,6 +7,8 @@ import {
   type AdKey,
   adItemFields,
   globalAds,
+  SIDE_COUNT_OPTIONS,
+  sideAdCount,
 } from "../blocks/ads.js";
 import { postPath } from "../blocks/helpers.js";
 import { getBlockDefinition } from "../blocks/registry.js";
@@ -801,13 +803,17 @@ function SiteItemFields({
 /** Campos de mídia própria dos blocos de anúncio (ignorados no portal, onde vale o espaço numerado). */
 const OWN_AD_FIELDS: Record<string, Set<string>> = {
   adSlot: new Set(["items", "link", "seconds"]),
-  newsFeed: new Set(["adItems", "adLink", "adSeconds"]),
+  newsFeed: new Set(["adItems", "adLink", "adSeconds", "sideAds"]),
 };
 const isOwnAdField = (type: string, key: string) =>
   OWN_AD_FIELDS[type]?.has(key) ?? false;
 
 /** Espaços publicitários que um bloco mostra (para editar a mídia global dele no painel do bloco). */
-function blockAdKeys(type: string, props: Record<string, unknown>): AdKey[] {
+function blockAdKeys(
+  type: string,
+  props: Record<string, unknown>,
+  sideCount: number
+): AdKey[] {
   if (type === "adSlot") {
     const slot = String(props.slot ?? "auto");
     return [
@@ -825,8 +831,30 @@ function blockAdKeys(type: string, props: Record<string, unknown>): AdKey[] {
       ? side
         ? [side]
         : []
-      : (AD_KEYS.slice(1, 1 + Number(props.sideAds ?? 1)) as AdKey[]);
+      : (AD_KEYS.slice(1, 1 + sideCount) as AdKey[]);
   return [];
+}
+/** Quantos anúncios a coluna lateral mostra: uma escolha do site inteiro, igual em todas as páginas. */
+function SideCountField({
+  onTheme,
+  site,
+}: {
+  onTheme: (patch: Record<string, string>, what: string) => void;
+  site: Site;
+}) {
+  return (
+    <FieldInput
+      field={{
+        key: "adsSide",
+        kind: "select",
+        label:
+          "Quantos anúncios na coluna lateral? (vale para todas as páginas)",
+        options: SIDE_COUNT_OPTIONS,
+      }}
+      onChange={v => onTheme({ adsSide: String(v) }, "Anúncios da lateral")}
+      value={String(sideAdCount(site.theme, 1))}
+    />
+  );
 }
 
 /** Espaço publicitário global (1 = faixas, 2 = lateral): imagens/vídeos, link e tempo; vale para todos os espaços do mesmo número. */
@@ -1170,6 +1198,9 @@ export function Inspector({
               para enviar mídia só dele, ou configure abaixo o Espaço
               publicitário 1 (faixas) e os 2, 3 e 4 (coluna lateral): alterar um
               muda todos os espaços do mesmo número.
+              {site.theme.ads === "on" && site.theme.variant === "portal" ? (
+                <SideCountField onTheme={onTheme} site={site} />
+              ) : null}
             </p>
             {site.theme.ads === "on"
               ? AD_KEYS.map(kind => (
@@ -1432,23 +1463,9 @@ export function Inspector({
             ) : null}
             {focusHint?.ad &&
             selected.type === "newsFeed" &&
-            focusHint.adKind !== "banner"
-              ? (() => {
-                  const field = getBlockDefinition("newsFeed")?.fields.find(
-                    f => f.key === "sideAds"
-                  );
-                  return field ? (
-                    <FieldInput
-                      field={{
-                        ...field,
-                        label: "Quantos anúncios nesta coluna lateral?",
-                      }}
-                      onChange={v => onProp("sideAds", v)}
-                      value={selected.props.sideAds ?? "1"}
-                    />
-                  ) : null;
-                })()
-              : null}
+            focusHint.adKind !== "banner" ? (
+              <SideCountField onTheme={onTheme} site={site} />
+            ) : null}
             {focusHint?.ad && focusHint.adKind && itemMatches.length === 0 ? (
               <GlobalAdFields
                 kind={focusHint.adKind}
@@ -1472,8 +1489,15 @@ export function Inspector({
                   value={selected.props[field.key] ?? def.defaults[field.key]}
                 />
               ))}
+            {numberedAds && selected.type === "newsFeed" ? (
+              <SideCountField onTheme={onTheme} site={site} />
+            ) : null}
             {numberedAds
-              ? blockAdKeys(selected.type, selected.props).map(kind => (
+              ? blockAdKeys(
+                  selected.type,
+                  selected.props,
+                  sideAdCount(site.theme, 1)
+                ).map(kind => (
                   <GlobalAdFields
                     key={kind}
                     kind={kind}
@@ -1731,6 +1755,7 @@ export function Inspector({
                 onChange={e =>
                   set(
                     "fontSize",
+
                     "Tamanho"
                   )(e.target.value === "" ? undefined : Number(e.target.value))
                 }

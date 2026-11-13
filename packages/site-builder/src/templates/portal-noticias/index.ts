@@ -112,11 +112,7 @@ const site: Site = {
     block("adSlot", { size: "banner" }),
     block("catSlider", { limit: 6 }),
     block("catChips", { title: "Veja também" }),
-    block("shortVideos", {
-      items: SHORTS,
-      sideAd: "side2",
-      title: "Vídeos curtos",
-    }),
+    block("shortVideos", { items: SHORTS, title: "Vídeos curtos" }),
     block("newsFeed", {
       fromCategory: "yes",
       limit: 20,
@@ -174,7 +170,6 @@ const site: Site = {
       block("newsFeed", {
         limit: 3,
         popularTitle: "Mais lidas",
-        sideAds: "3",
         sideFlow: "yes",
         skip: 6,
       }),
@@ -261,7 +256,12 @@ const site: Site = {
         rolouTitle: "Em alta no lifestyle",
         rolouUrl: "/editorias/",
       }),
-      block("shortVideos", { items: SHORTS, title: "Em vídeo" }),
+      block("adSlot", { size: "banner" }),
+      block("shortVideos", {
+        items: SHORTS,
+        sideAd: "side",
+        title: "Em vídeo",
+      }),
     ]),
     page("tv", "TV", [
       skin("redeglobo"),
@@ -329,6 +329,7 @@ const site: Site = {
   posts,
   theme: {
     accent: "#c4170c",
+    adsSide: "3",
     bg: "#f9f9f9",
     card: "#ffffff",
     fg: "#22252b",

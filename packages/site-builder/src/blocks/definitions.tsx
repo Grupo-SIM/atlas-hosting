@@ -7,6 +7,7 @@ import {
   adItemFields,
   adItemsSchema,
   adsEnabled,
+  sideAdCount,
 } from "./ads.js";
 import { areaflixBlocks } from "./areaflix.js";
 import { atlasBlocks } from "./atlas.js";
@@ -1831,10 +1832,22 @@ const newsFeed = defineBlock(
           !ctx.current.category ||
           x.categoryId === ctx.current.category.id
       );
-      const feed = all.slice(p.skip, p.skip + p.limit);
+      // No portal, a coluna lateral com anúncios fica mais alta que poucas notícias: o feed mostra o
+      // mínimo de linhas para acompanhá-la (senão sobra um buraco ao lado). Com a coluna "continuando"
+      // sobre os blocos de baixo (`sideFlow`), ela não segura a altura e nada muda.
+      const minRows =
+        ctx.site.theme.variant === "portal" &&
+        p.showSide === "yes" &&
+        p.sideFlow !== "yes" &&
+        adsEnabled(ctx)
+          ? ([0, 4, 4, 5] as const)[sideAdCount(ctx.site.theme, p.sideAds)]
+          : 0;
+      const limit = Math.max(p.limit, minRows);
+      const feed = all.slice(p.skip, p.skip + limit);
       // Com botão no fim, o resto da lista já vem no HTML, escondido, e o botão revela aos poucos.
-      const extra = p.moreLabel ? all.slice(p.skip + p.limit) : [];
+      const extra = p.moreLabel ? all.slice(p.skip + limit) : [];
       const popular = all.slice(0, 5);
+      const sideCount = sideAdCount(ctx.site.theme, p.sideAds);
       if (feed.length === 0) return null;
       return (
         <section className="sb-container sb-news-feedwrap">
@@ -1873,7 +1886,7 @@ const newsFeed = defineBlock(
           {p.showSide === "yes" ? (
             <div
               className="sb-news-sidecol"
-              data-ads={p.sideAds}
+              data-ads={String(sideCount)}
               data-flow={p.sideFlow === "yes" ? "" : undefined}
             >
               <aside className="sb-news-side">
@@ -1887,7 +1900,7 @@ const newsFeed = defineBlock(
                 </ol>
               </aside>
               {(["side", "side2", "side3"] as const)
-                .slice(0, Number(p.sideAds))
+                .slice(0, sideCount)
                 .map((slot, n) => (
                   <AdBox
                     ctx={ctx}
@@ -1900,11 +1913,11 @@ const newsFeed = defineBlock(
                     slot={slot}
                   />
                 ))}
-              {ctx.mode === "edit" && adsEnabled(ctx) && p.sideAds !== "3" ? (
+              {ctx.mode === "edit" && adsEnabled(ctx) && sideCount < 3 ? (
                 <div className="sb-ad-more">
-                  ＋ Quer mais um anúncio nesta coluna? Selecione este bloco e
-                  mude “Anúncios na coluna lateral” (até 3). Este aviso só
-                  aparece no editor.
+                  ＋ Quer mais anúncios nesta coluna? Clique em um anúncio acima
+                  e escolha quantos (até 3). Vale para todas as páginas. Este
+                  aviso só aparece no editor.
                 </div>
               ) : null}
             </div>
@@ -1925,7 +1938,7 @@ const newsFeed = defineBlock(
           {p.moreLabel && extra.length > 0 ? (
             <button
               className="sb-news-more"
-              data-step={Math.max(1, p.limit)}
+              data-step={Math.max(1, limit)}
               type="button"
             >
               {p.moreLabel}
