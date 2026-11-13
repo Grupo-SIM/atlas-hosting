@@ -790,6 +790,31 @@ function SiteItemFields({
   );
 }
 
+/** Campos de mídia própria dos blocos de anúncio (ignorados no portal, onde vale o espaço numerado). */
+const OWN_AD_FIELDS: Record<string, Set<string>> = {
+  adSlot: new Set(["items", "link", "seconds"]),
+  newsFeed: new Set(["adItems", "adLink", "adSeconds"]),
+};
+const isOwnAdField = (type: string, key: string) =>
+  OWN_AD_FIELDS[type]?.has(key) ?? false;
+
+/** Espaços publicitários que um bloco mostra (para editar a mídia global dele no painel do bloco). */
+function blockAdKeys(type: string, props: Record<string, unknown>): AdKey[] {
+  if (type === "adSlot") {
+    const slot = String(props.slot ?? "auto");
+    return [
+      /^[1-4]$/.test(slot)
+        ? AD_KEYS[Number(slot) - 1]
+        : props.size === "side" || props.size === "square"
+          ? "side"
+          : "banner",
+    ];
+  }
+  if (type === "newsFeed" && props.showSide !== "no")
+    return AD_KEYS.slice(1, 1 + Number(props.sideAds ?? 1)) as AdKey[];
+  return [];
+}
+
 /** Espaço publicitário global (1 = faixas, 2 = lateral): imagens/vídeos, link e tempo; vale para todos os espaços do mesmo número. */
 function GlobalAdFields({
   kind,
@@ -953,10 +978,19 @@ export function Inspector({
 
   // Campos que pertencem ao item clicado: decididos no clique (o texto muda enquanto se digita).
   const itemDef = selected ? getBlockDefinition(selected.type) : undefined;
+  // No portal só vale o espaço numerado: a mídia própria do bloco é ignorada, então nem aparece aqui.
+  const numberedAds = site.theme.variant === "portal";
   const itemMatches = useMemo(
     () =>
       elPath && selected && itemDef
-        ? matchItem(itemDef.fields, selected.props, itemDef.defaults, focusHint)
+        ? matchItem(
+            numberedAds
+              ? itemDef.fields.filter(f => !isOwnAdField(itemDef.type, f.key))
+              : itemDef.fields,
+            selected.props,
+            itemDef.defaults,
+            focusHint
+          )
         : [],
     [focusHint?.n, selected?.id, elPath]
   );
@@ -1393,16 +1427,29 @@ export function Inspector({
           </Section>
         ) : def && def.fields.length > 0 ? (
           <Section defaultOpen title="Conteúdo">
-            {def.fields.map(field => (
-              <FieldInput
-                field={field}
-                key={field.key}
-                onChange={v => onProp(field.key, v)}
-                onResolveChannel={onResolveChannel}
-                onUpload={onUploadImage}
-                value={selected.props[field.key] ?? def.defaults[field.key]}
-              />
-            ))}
+            {def.fields
+              .filter(f => !(numberedAds && isOwnAdField(selected.type, f.key)))
+              .map(field => (
+                <FieldInput
+                  field={field}
+                  key={field.key}
+                  onChange={v => onProp(field.key, v)}
+                  onResolveChannel={onResolveChannel}
+                  onUpload={onUploadImage}
+                  value={selected.props[field.key] ?? def.defaults[field.key]}
+                />
+              ))}
+            {numberedAds
+              ? blockAdKeys(selected.type, selected.props).map(kind => (
+                  <GlobalAdFields
+                    key={kind}
+                    kind={kind}
+                    onTheme={onTheme}
+                    onUpload={onUploadImage}
+                    site={site}
+                  />
+                ))
+              : null}
           </Section>
         ) : null}
 
