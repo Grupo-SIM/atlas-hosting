@@ -88,6 +88,14 @@ export async function runPublish(
     log.warn("Recusado: site não encontrado ou de outro usuário", logCtx);
     return { error: "Site não encontrado.", ok: false };
   }
+  if (site.exclusivityBlockedAt) {
+    log.warn("Recusado: site bloqueado pela exclusividade do template", logCtx);
+    return {
+      error:
+        "Este site foi bloqueado porque o template agora é exclusivo de outro usuário.",
+      ok: false,
+    };
+  }
 
   const config = getAtlasHostingConfig();
 

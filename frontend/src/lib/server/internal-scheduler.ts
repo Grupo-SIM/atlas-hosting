@@ -39,6 +39,9 @@ async function invokeInternalGet(path: string): Promise<void> {
       case "/api/internal/site-hosting/renew":
         return (await import("@/app/api/internal/site-hosting/renew/route"))
           .GET;
+      case "/api/internal/template-exclusivity":
+        return (await import("@/app/api/internal/template-exclusivity/route"))
+          .GET;
       case "/api/internal/expiry-notifications":
         return (await import("@/app/api/internal/expiry-notifications/route"))
           .GET;
@@ -143,6 +146,10 @@ export function startInternalScheduler() {
     name: "site-hosting-renewal",
     run: () => invokeInternalGet("/api/internal/site-hosting/renew"),
   };
+  const templateExclusivity: ScheduledJob = {
+    name: "template-exclusivity",
+    run: () => invokeInternalGet("/api/internal/template-exclusivity"),
+  };
   const expiryNotifications: ScheduledJob = {
     name: "expiry-notifications",
     run: () => invokeInternalGet("/api/internal/expiry-notifications"),
@@ -181,6 +188,7 @@ export function startInternalScheduler() {
   scheduleEvery(vpsRenewal, FIFTEEN_MINUTES);
   scheduleEvery(subscriptionReminders, FIFTEEN_MINUTES);
   scheduleEvery(siteHostingRenewal, FIFTEEN_MINUTES);
+  scheduleEvery(templateExclusivity, FIFTEEN_MINUTES);
   // Checkpoints VPS persistidos; domínios mantêm execução diária.
   scheduleDailyAtUtcHour(expiryNotifications, 12);
   console.info("[SCHEDULER] Agendadores internos iniciados.");

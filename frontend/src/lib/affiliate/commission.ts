@@ -15,6 +15,9 @@ export async function triggerCommissionIfApplicable(
   // Skip renewals: explicit flag or domain renew metadata type
   if (meta?.isRenewal === true || meta?.type === "renew") return;
 
+  // Exclusividade de template (compra, renovação ou revenda) nunca gera comissão.
+  if (meta?.templateExclusivity) return;
+
   const attribution = await getActiveAttribution(invoice.userId);
   if (!attribution) return;
 

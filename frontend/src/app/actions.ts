@@ -84,6 +84,7 @@ import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { applyRenewalPayment } from "@/lib/server/subscriptions/lifecycle";
 import { ensureRenewalInvoice } from "@/lib/server/subscriptions/renewal-invoice";
 import { fulfillSitePublishInvoice } from "@/lib/site-builder/fulfillPublish";
+import { rememberExclusivityCard } from "@/lib/template-exclusivity/purchase";
 import { getStorageVpsMonthlyEuro } from "@/lib/storage-vps-catalog";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
 import { getVdsMonthlyEuro } from "@/lib/vds-catalog";
@@ -2676,6 +2677,10 @@ export async function completeCheckout(
     cardToken,
     paymentMethod: "credit_card",
   });
+  // Exclusividade de template: guarda o cartão para a próxima anuidade.
+  await rememberExclusivityCard(invoice as Invoice, cardToken).catch(error =>
+    console.error("[EXCLUSIVIDADE] Falha ao guardar o cartão:", error)
+  );
   after(async () => {
     await provisionPaidVps(invoice.id);
     // Publicação de site do Criador de Sites: entrega após o pagamento.
@@ -3076,6 +3081,10 @@ export async function completeCheckoutWithSavedCard(
     cardToken,
     paymentMethod: "credit_card",
   });
+  // Exclusividade de template: guarda o cartão para a próxima anuidade.
+  await rememberExclusivityCard(invoice as Invoice, cardToken).catch(error =>
+    console.error("[EXCLUSIVIDADE] Falha ao guardar o cartão:", error)
+  );
   after(async () => {
     await provisionPaidVps(invoice.id);
     // Publicação de site do Criador de Sites: entrega após o pagamento.

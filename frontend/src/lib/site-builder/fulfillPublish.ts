@@ -14,6 +14,7 @@ import {
   applySiteHostingRenewal,
   type SiteHostingRenewalMetadata,
 } from "@/lib/server/site-hosting/renewal";
+import { isExclusivityInvoice } from "@/lib/template-exclusivity/shared";
 import { publishLogger } from "./publishLog";
 import { runPublish } from "./runPublish";
 import { sanitize } from "./target";
@@ -48,6 +49,15 @@ export async function fulfillSitePublishInvoice(
     where: eq(pgInvoice.id, invoiceId),
   });
   if (!invoice) return { ok: false, reason: "fatura não encontrada" };
+
+  // Exclusividade de template (compra, renovação ou revenda): mesmo ponto de
+  // entrega, chamado por todos os caminhos de fatura paga.
+  if (isExclusivityInvoice(invoice)) {
+    const { fulfillExclusivityInvoice } = await import(
+      "@/lib/template-exclusivity/purchase"
+    );
+    return fulfillExclusivityInvoice(invoice.id);
+  }
 
   // Renovação mensal da hospedagem: avança o ciclo e, se estava suspenso, volta ao ar.
   const meta = invoice.metadata as unknown as SiteHostingRenewalMetadata;

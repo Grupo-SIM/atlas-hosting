@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getUser } from "@/lib/auth";
 import { LogoutButton } from "./LogoutButton";
 import { MobileSidebarSheet } from "./MobileSidebarSheet";
+import { NotificationBell } from "./NotificationBell";
 import { ThemeToggleSlot } from "./ThemeToggleSlot";
 
 export default async function Topbar({
@@ -49,6 +50,7 @@ export default async function Topbar({
       <div className="flex flex-1 items-center justify-end gap-3">
         {children}
         <ThemeToggleSlot />
+        <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger asChild={true}>
             <Button

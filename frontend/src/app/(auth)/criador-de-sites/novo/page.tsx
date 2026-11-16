@@ -7,6 +7,10 @@ import {
 import { LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
 import { requireBuilderUser } from "@/lib/site-builder/access";
+import {
+  getResaleConfig,
+  getTemplateExclusivityMap,
+} from "@/lib/template-exclusivity/status";
 import { Frame } from "../components/Frame";
 import { StaticThumb } from "../components/StaticThumb";
 import TemplateGallery, {
@@ -18,7 +22,11 @@ export const metadata: Metadata = {
 };
 
 export default async function NewSitePage() {
-  await requireBuilderUser();
+  const user = await requireBuilderUser();
+  const [exclusivity, resale] = await Promise.all([
+    getTemplateExclusivityMap(user.id),
+    getResaleConfig(),
+  ]);
 
   const templates: GalleryTemplate[] = listTemplates().flatMap(meta => {
     const full = getTemplate(meta.id);
@@ -26,6 +34,9 @@ export default async function NewSitePage() {
     return [
       {
         description: meta.description,
+        exclusivity: exclusivity[meta.id]
+          ? { ...exclusivity[meta.id], feePercent: resale.feePercent }
+          : undefined,
         id: meta.id,
         name: meta.name,
         pageCount: meta.pageCount,

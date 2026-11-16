@@ -4,6 +4,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { requireBuilderUser } from "@/lib/site-builder/access";
+import { blocksOthers } from "@/lib/template-exclusivity/rules";
+import {
+  getResaleConfig,
+  getTemplateState,
+} from "@/lib/template-exclusivity/status";
+import { ExclusivityAction } from "../../../exclusividades/components/ExclusivityControls";
 import UseTemplateButton from "../../../novo/components/UseTemplateButton";
 
 export const metadata: Metadata = {
@@ -17,10 +23,15 @@ export default async function TemplatePreviewPage({
   params: Promise<{ path?: string[]; templateId: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireBuilderUser();
+  const user = await requireBuilderUser();
   const { path = [], templateId } = await params;
   const template = getTemplate(templateId);
   if (!template) notFound();
+  const [state, resale] = await Promise.all([
+    getTemplateState(template.id, user.id),
+    getResaleConfig(),
+  ]);
+  const locked = blocksOthers(state);
 
   const raw = await searchParams;
   const query = Object.fromEntries(
@@ -40,13 +51,21 @@ export default async function TemplatePreviewPage({
           <Button asChild size="sm" variant="outline">
             <Link href="/criador-de-sites/novo">Voltar</Link>
           </Button>
-          <UseTemplateButton
-            className="h-8 rounded-md bg-primary px-3 text-primary-foreground text-sm disabled:opacity-60"
+          <ExclusivityAction
+            className="flex h-8 items-center gap-1.5 rounded-md border px-3 text-sm disabled:opacity-60"
+            state={{ ...state, feePercent: resale.feePercent }}
             templateId={template.id}
             templateName={template.name}
-          >
-            Usar este template
-          </UseTemplateButton>
+          />
+          {!locked && (
+            <UseTemplateButton
+              className="h-8 rounded-md bg-primary px-3 text-primary-foreground text-sm disabled:opacity-60"
+              templateId={template.id}
+              templateName={template.name}
+            >
+              Usar este template
+            </UseTemplateButton>
+          )}
         </div>
       </div>
       <SiteRenderer

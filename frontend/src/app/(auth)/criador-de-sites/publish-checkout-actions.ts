@@ -30,6 +30,7 @@ import {
 } from "@/lib/site-builder/eligibility";
 import { describeError, publishLogger } from "@/lib/site-builder/publishLog";
 import { LABEL_RE, ownedSite, runPublish } from "@/lib/site-builder/runPublish";
+import { BLOCKED_SITE_MESSAGE } from "@/lib/template-exclusivity/status";
 import { publishDomainCandidates } from "./publish-domain-candidates";
 
 type Result<T = object> = ({ ok: true } & T) | { error: string; ok: false };
@@ -140,6 +141,12 @@ export async function startPublishCheckout(
       userId: user.id,
     });
     return { error: "Site não encontrado.", ok: false };
+  }
+  if (site.exclusivityBlockedAt) {
+    log.warn("Pedido recusado: site bloqueado pela exclusividade do template", {
+      siteId: site.id,
+    });
+    return { error: BLOCKED_SITE_MESSAGE, ok: false };
   }
   log.info("Pedido de publicação iniciado", {
     domain: input.domain ?? input.label,

@@ -10,6 +10,7 @@ import {
   ShoppingCart,
   Ticket,
   Users,
+  Wallet,
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -45,6 +46,7 @@ export const clientNavigation: NavigationItem[] = [
     name: "Criador de Sites",
   },
   { href: "/affiliate", icon: Users, name: "Afiliados" },
+  { href: "/carteira", icon: Wallet, name: "Carteira" },
   { href: "/vouchers", icon: Ticket, name: "Vouchers" },
 ];
 

@@ -265,3 +265,17 @@ Notas de segurança:
 - Edição de texto direto no canvas (duplo clique) e seleção por elemento: hoje a unidade é o bloco; texto muda no painel.
 - Passos de progresso reais na criação.
 - Arrastar e soltar existe só nas camadas (blocos, inclusive aninhados, e itens da lista "Adicionar bloco"); itens soltos dentro de um bloco (ex.: um card do feed) e a troca de ordem dos itens dentro de um bloco ainda não (o canvas só desloca, não reordena).
+
+## Exclusividade de templates e revenda
+
+Regras de negócio (decididas com o Breno):
+
+- O admin escolhe em `/admin/exclusividade` quais templates aceitam exclusividade e o preço anual de cada um (`template_exclusivity_settings`). Templates sem exclusividade ficam livres para todos.
+- A compra cria uma reserva de 24h (`template_exclusivities.status = reserved`) e uma fatura `type: "subscription"` com `metadata.templateExclusivity`. O índice único parcial garante um único dono "vivo" por template.
+- Ao ativar, os sites de **outros** usuários com o template ganham 7 dias (`builder_sites.exclusivity_deadline_at`) e são avisados por notificação + e-mail. Vencido o prazo, o site sai do ar (`takeDown`, libera o endereço), a hospedagem paga é cancelada e o site fica bloqueado (`exclusivity_blocked_at`; editor, `saveSite`, `runPublish` e `startPublishCheckout` recusam). O conteúdo não é apagado.
+- Revenda: o dono define o valor mínimo de venda (≥ piso `system_config.template_resale_min_price_brl`, padrão R$100). Comprador e dono negociam por propostas/contrapropostas (`template_proposals` + `template_proposal_events`), sem ver o nome um do outro. Proposta sem resposta expira em 7 dias; depois do aceite o comprador tem 48h para pagar.
+- O comprador paga **valor fechado + taxa do Atlas** (`system_config.template_resale_fee_percent`, padrão 10%, congelada em `template_proposals.fee_percent` no aceite). O vendedor recebe o valor fechado na carteira (`wallet_entries`), e o comprador começa um ciclo novo de 12 meses. O site do vendedor segue a regra dos 7 dias.
+- Anuidade: fatura 15 dias antes do vencimento, lembretes em 15/7/1 dias e cobrança automática no cartão salvo (o token vem de `rememberExclusivityCard` no checkout). Sem pagamento: 7 dias de carência e depois `expired`. Aí o template volta a ser público, as propostas são canceladas e os sites bloqueados são liberados (sem republicar). O site do ex-dono continua no ar.
+- Exclusividade nunca gera comissão de afiliado.
+
+Código: `frontend/src/lib/template-exclusivity/` (`rules.ts` é puro e testado). Entrega pós-pagamento pelo desvio no início de `fulfillSitePublishInvoice`. Ciclo de vida no job `template-exclusivity` do `internal-scheduler.ts` (a cada 15 min, rota `/api/internal/template-exclusivity`). Notificações in-app ficam em `notifications` (`lib/notifications/inbox.ts`, sino no `Topbar`). A carteira única (`lib/wallet/balance.ts`, página `/carteira`) soma comissões e vendas e usa o saque Simpay do afiliado.

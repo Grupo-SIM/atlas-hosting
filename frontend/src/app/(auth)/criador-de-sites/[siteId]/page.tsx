@@ -1,6 +1,9 @@
 import { getTemplate } from "@repo/site-builder";
+import { format } from "date-fns";
 import { and, eq } from "drizzle-orm";
+import { Lock, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import {
@@ -14,6 +17,8 @@ import {
 } from "@/lib/site-builder/access";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
 import { listPublishTargets } from "@/lib/site-builder/eligibility";
+import { templateName } from "@/lib/template-exclusivity/names";
+import { Frame } from "../components/Frame";
 import SiteEditorClient from "./components/SiteEditorClient";
 
 export const metadata: Metadata = {
@@ -42,6 +47,47 @@ export default async function SiteEditorPage({
     .limit(1);
   if (!site) notFound();
 
+  // Template ficou exclusivo de outra pessoa e o prazo acabou: sem editor.
+  if (site.exclusivityBlockedAt) {
+    return (
+      <Frame
+        closeHref="/criador-de-sites"
+        crumbs={[
+          { href: "/criador-de-sites", label: "Sites" },
+          { label: site.name },
+        ]}
+        icon={<Lock className="size-[15px]" />}
+      >
+        <div className="flex flex-1 items-center justify-center px-5 py-16">
+          <div className="flex max-w-md flex-col items-center gap-4 text-center">
+            <Lock className="size-8 text-[#92550c]" />
+            <h1 className="font-medium text-2xl">Site bloqueado</h1>
+            <p className="text-[#6e6b65] text-sm">
+              O template "{templateName(site.templateId)}" agora é exclusivo de
+              outro usuário. Este site saiu do ar e não pode mais ser editado nem
+              publicado. O conteúdo continua guardado e volta a funcionar se o
+              template deixar de ser exclusivo.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Link
+                className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[13px]"
+                href="/criador-de-sites/novo"
+              >
+                Criar um site novo
+              </Link>
+              <Link
+                className="rounded-full border border-[#e0ddd5] bg-white px-4 py-2 text-[13px]"
+                href={`/criador-de-sites/preview/${site.templateId}`}
+              >
+                Fazer proposta pelo template
+              </Link>
+            </div>
+          </div>
+        </div>
+      </Frame>
+    );
+  }
+
   const config = getAtlasHostingConfig();
   const [publication, domains, targets] = await Promise.all([
     db.query.pgBuilderPublication.findFirst({
@@ -65,6 +111,19 @@ export default async function SiteEditorPage({
   const original = site.templateId ? getTemplate(site.templateId) : undefined;
 
   return (
+    <>
+      {site.exclusivityDeadlineAt && (
+        <div className="fixed bottom-4 left-4 z-50 flex max-w-sm items-start gap-2 rounded-xl border border-[#f1d3a6] bg-[#fdf1e0] px-4 py-3 text-[#92550c] text-[13px] shadow-lg">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+          <span>
+            O template deste site ficou exclusivo de outro usuário. Ele sai do ar
+            em {format(site.exclusivityDeadlineAt, "dd/MM/yyyy 'às' HH:mm")}.{" "}
+            <Link className="underline" href="/criador-de-sites/novo">
+              Criar um site novo
+            </Link>
+          </span>
+        </div>
+      )}
     <SiteEditorClient
       domain={publication?.domain ?? null}
       initialSite={site.content}
@@ -81,5 +140,6 @@ export default async function SiteEditorPage({
       publishWithPassword={publication?.target === "user_vps"}
       siteId={site.id}
     />
+    </>
   );
 }
