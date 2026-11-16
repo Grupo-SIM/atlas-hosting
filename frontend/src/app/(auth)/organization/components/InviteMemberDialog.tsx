@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getUser } from "@/lib/auth";
 import { createUserForOrganization } from "@/lib/auth/utils";
 import MemberPasswordInput from "./MemberPasswordInput";
 
@@ -34,6 +35,15 @@ export function InviteMemberDialog({
 }: InviteMemberDialogProps) {
   async function addMemberToOrg(formData: FormData) {
     "use server";
+
+    // Server Actions são POSTs públicos: só o proprietário da organização pode criar membros.
+    const user = await getUser();
+    if (
+      user.organizationId !== orgId ||
+      user.organization?.ownerId !== user.id
+    ) {
+      throw new Error("Apenas o proprietário pode convidar membros.");
+    }
 
     const fullName = formData.get("fullName") as string;
     const email = formData.get("email") as string;

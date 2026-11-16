@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -19,8 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { requireAdminPage } from "@/lib/auth/admin";
 import { db } from "@/lib/db";
 import {
   pgAffiliateCommission,
@@ -39,6 +40,7 @@ function toBrl(value: number) {
 }
 
 export default async function AdminAffiliatesPage() {
+  await requireAdminPage();
   // Buscar usuários que indicaram alguém ou tem código de afiliado.
   // Sem join com faturas: ele multiplicava o afiliado por cada fatura do indicado
   // e inflava a contagem (3 indicados com 8 faturas viravam "10 indicações").
@@ -100,7 +102,9 @@ export default async function AdminAffiliatesPage() {
     pendingRows.map(r => [r.userId, Number(r.total ?? 0)])
   );
 
-  const commissionsByUser = new Map(commissionRows.map(row => [row.userId, row]));
+  const commissionsByUser = new Map(
+    commissionRows.map(row => [row.userId, row])
+  );
   const report = affiliates.map(affiliate => {
     const commission = commissionsByUser.get(affiliate.id);
     const pending = pendingByUser.get(affiliate.id) ?? 0;
@@ -122,7 +126,14 @@ export default async function AdminAffiliatesPage() {
       salesCount: total.salesCount + row.salesCount,
       salesTotal: total.salesTotal + row.salesTotal,
     }),
-    { balance: 0, commissionTotal: 0, pending: 0, referrals: 0, salesCount: 0, salesTotal: 0 }
+    {
+      balance: 0,
+      commissionTotal: 0,
+      pending: 0,
+      referrals: 0,
+      salesCount: 0,
+      salesTotal: 0,
+    }
   );
 
   return (
@@ -149,13 +160,18 @@ export default async function AdminAffiliatesPage() {
         {[
           { label: "Total de indicações", value: String(totals.referrals) },
           { label: "Vendas comissionadas", value: toBrl(totals.salesTotal) },
-          { label: "Comissões acumuladas", value: toBrl(totals.commissionTotal) },
+          {
+            label: "Comissões acumuladas",
+            value: toBrl(totals.commissionTotal),
+          },
           { label: "Saldo disponível", value: toBrl(totals.balance) },
           { label: "Saques pendentes", value: toBrl(totals.pending) },
         ].map(stat => (
           <Card key={stat.label}>
             <CardHeader className="pb-2">
-              <CardTitle className="font-medium text-sm">{stat.label}</CardTitle>
+              <CardTitle className="font-medium text-sm">
+                {stat.label}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="font-bold text-2xl">{stat.value}</div>
@@ -171,7 +187,9 @@ export default async function AdminAffiliatesPage() {
             <AffiliateReportButton rows={report} />
           </div>
           <CardDescription>
-            Histórico completo de indicações e vendas que geraram comissão. Comissões canceladas não entram nos totais; saldo disponível desconta saques pendentes.
+            Histórico completo de indicações e vendas que geraram comissão.
+            Comissões canceladas não entram nos totais; saldo disponível
+            desconta saques pendentes.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -221,10 +239,13 @@ export default async function AdminAffiliatesPage() {
                         <TableCell>
                           <div>{toBrl(affiliate.salesTotal)}</div>
                           <div className="text-muted-foreground text-xs">
-                            {affiliate.salesCount} {affiliate.salesCount === 1 ? "venda" : "vendas"}
+                            {affiliate.salesCount}{" "}
+                            {affiliate.salesCount === 1 ? "venda" : "vendas"}
                           </div>
                         </TableCell>
-                        <TableCell>{toBrl(affiliate.commissionTotal)}</TableCell>
+                        <TableCell>
+                          {toBrl(affiliate.commissionTotal)}
+                        </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
                             <span

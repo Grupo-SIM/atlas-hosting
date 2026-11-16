@@ -170,36 +170,6 @@ export const swaggerConfig = {
         tags: ["Admin"],
       },
     },
-    "/api/admin/promote": {
-      post: {
-        description:
-          "Promove um usuário ao cargo de Administrador pelo e-mail. Requer ser Admin ou usar o Secret Key.",
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: {
-                properties: {
-                  email: {
-                    description: "E-mail do usuário a ser promovido",
-                    type: "string",
-                  },
-                },
-                required: ["email"],
-                type: "object",
-              },
-            },
-          },
-          required: true,
-        },
-        responses: {
-          200: { description: "Usuário promovido com sucesso" },
-          403: { description: "Não autorizado" },
-          404: { description: "Usuário não encontrado" },
-        },
-        summary: "Promover usuário para Admin",
-        tags: ["Admin"],
-      },
-    },
     "/api/auth": {
       get: {
         description: "Retorna informações sobre a sessão atual",
@@ -1258,96 +1228,6 @@ export const swaggerConfig = {
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         summary: "Deletar Instância WordPress",
         tags: ["Sites"],
-      },
-    },
-    "/api/vps/fix-token": {
-      post: {
-        description:
-          "Atualiza o token de autenticação de um servidor VPS no banco de dados. Informe o IP do VPS e o novo token desejado.",
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: {
-                properties: {
-                  ip: {
-                    description: "IP do servidor VPS",
-                    example: "192.168.1.100",
-                    type: "string",
-                  },
-                  newToken: {
-                    description: "Novo token que o bot Sentinel vai utilizar",
-                    example: "atlas_abc123def456...",
-                    type: "string",
-                  },
-                },
-                required: ["vpsId", "newToken"],
-                type: "object",
-              },
-            },
-          },
-          required: true,
-        },
-        responses: {
-          200: {
-            content: {
-              "application/json": {
-                schema: {
-                  properties: {
-                    match: {
-                      description: "true se a gravação foi confirmada",
-                      type: "boolean",
-                    },
-                    newToken: {
-                      description: "Token novo aplicado",
-                      type: "string",
-                    },
-                    oldToken: {
-                      description: "Token anterior",
-                      type: "string",
-                    },
-                    success: { example: true, type: "boolean" },
-                    vpsIp: {
-                      description: "IP do servidor",
-                      type: "string",
-                    },
-                    vpsName: {
-                      description: "Nome do servidor",
-                      type: "string",
-                    },
-                  },
-                  type: "object",
-                },
-              },
-            },
-            description: "Token atualizado com sucesso",
-          },
-          400: {
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-              },
-            },
-            description: "Campos obrigatórios faltando",
-          },
-          404: {
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-              },
-            },
-            description: "VPS não encontrado",
-          },
-          500: {
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-              },
-            },
-            description: "Erro interno",
-          },
-        },
-        summary: "Atualizar token de um servidor VPS",
-        tags: ["VPS"],
       },
     },
     "/api/vps/telemetry": {

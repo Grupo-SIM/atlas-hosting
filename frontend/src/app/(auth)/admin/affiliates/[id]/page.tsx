@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -18,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { requireAdminPage } from "@/lib/auth/admin";
 import { db } from "@/lib/db";
 import { pgAffiliateCommission, pgInvoice, pgUser } from "@/lib/db/schema";
 import { AffiliateSalesTable } from "./components";
@@ -35,6 +36,7 @@ interface PageProps {
 }
 
 export default async function AffiliateDetailsPage({ params }: PageProps) {
+  await requireAdminPage();
   const { id } = await params;
 
   const affiliate = await db.query.pgUser.findFirst({
@@ -95,7 +97,10 @@ export default async function AffiliateDetailsPage({ params }: PageProps) {
   }
 
   const activeCommissions = commissions.filter(c => c.status !== "cancelled");
-  const salesTotal = activeCommissions.reduce((sum, c) => sum + c.grossAmount, 0);
+  const salesTotal = activeCommissions.reduce(
+    (sum, c) => sum + c.grossAmount,
+    0
+  );
   const commissionTotal = activeCommissions.reduce(
     (sum, c) => sum + c.commissionAmount,
     0

@@ -1,7 +1,7 @@
 "use server";
 
 import { hash, verify } from "@node-rs/argon2";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getUser } from "@/lib/auth";
 import { createUserForOrganization } from "@/lib/auth/utils"; // Assuming this utility exists
@@ -173,7 +173,10 @@ export async function removeMemberFromOrganizationAction(
         // Consider if deletedAt should be set if they are fully removed from the platform
         // deletedAt: new Date(),
       })
-      .where(eq(pgUser.id, memberId));
+      // Só quem é da organização: sem isto o proprietário alterava qualquer usuário da plataforma pelo id.
+      .where(
+        and(eq(pgUser.id, memberId), eq(pgUser.organizationId, organizationId))
+      );
 
     revalidatePath("/settings");
 
@@ -214,7 +217,9 @@ export async function updateMemberRoleAction(
         organizationRole: newRole as "admin" | "developer" | "member",
         updatedAt: new Date(),
       })
-      .where(eq(pgUser.id, memberId));
+      .where(
+        and(eq(pgUser.id, memberId), eq(pgUser.organizationId, organizationId))
+      );
 
     revalidatePath("/settings");
     return {

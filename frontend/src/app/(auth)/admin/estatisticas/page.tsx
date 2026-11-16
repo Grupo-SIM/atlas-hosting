@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth/admin";
 import { db } from "@/lib/db";
 import { type Plan, pgPlan } from "@/lib/db/schema";
 import { DomainStats } from "../components/DomainStats";
@@ -11,6 +12,7 @@ interface AdminPageProps {
 }
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
+  await requireAdminPage();
   const resolvedSearchParams = await searchParams;
 
   // Fetch initial plans data on the server

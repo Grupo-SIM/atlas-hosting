@@ -2,6 +2,7 @@
 
 import type { LoginFormInputs } from "@/components/auth/LoginForm";
 import type { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
+import { isAdminRequest } from "@/lib/auth/admin";
 import { getOptionalUser, getRealUser, getUser } from "@/lib/auth/index";
 import {
   authenticateUser,
@@ -84,8 +85,8 @@ import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { applyRenewalPayment } from "@/lib/server/subscriptions/lifecycle";
 import { ensureRenewalInvoice } from "@/lib/server/subscriptions/renewal-invoice";
 import { fulfillSitePublishInvoice } from "@/lib/site-builder/fulfillPublish";
-import { rememberExclusivityCard } from "@/lib/template-exclusivity/purchase";
 import { getStorageVpsMonthlyEuro } from "@/lib/storage-vps-catalog";
+import { rememberExclusivityCard } from "@/lib/template-exclusivity/purchase";
 import { isValidCNPJ, isValidCPF } from "@/lib/utils";
 import { getVdsMonthlyEuro } from "@/lib/vds-catalog";
 import { firstRenewalDate } from "@/lib/vps/renewal-date";
@@ -518,6 +519,9 @@ export async function createPlan(
   prevState: unknown,
   input: Omit<Plan, "id" | "createdAt" | "updatedAt">
 ): Promise<ActionResponse> {
+  if (!(await isAdminRequest())) {
+    return { message: "Acesso restrito a administradores.", status: "error" };
+  }
   try {
     const [plan] = await db // Destructure to get the first element
       .insert(pgPlan)
@@ -551,6 +555,9 @@ export async function updatePlan(
   id: string,
   values: Partial<Omit<Plan, "id" | "createdAt" | "updatedAt">>
 ): Promise<ActionResponse> {
+  if (!(await isAdminRequest())) {
+    return { message: "Acesso restrito a administradores.", status: "error" };
+  }
   try {
     const [plan] = await db // Destructure to get the first element
       .update(pgPlan)

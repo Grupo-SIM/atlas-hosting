@@ -1,10 +1,24 @@
 "use server";
 
+import { getUser } from "@/lib/auth/index";
 import type {
   DbQueryOptions,
   DbTablesOptions,
 } from "@/lib/server/apis/plesk/wp-toolkit/wp-cli"; // Assuming these types are exported
 import WpCliApi from "@/lib/server/apis/plesk/wp-toolkit/wp-cli";
+import { getUserWordPressSites } from "@/lib/server/utils";
+
+/**
+ * Server Actions são POSTs públicos: sem isto, qualquer chamada com um `instanceId` qualquer rodava SQL e WP-CLI
+ * na instância de outro cliente. Só vale a instância de um site WordPress da organização de quem chama.
+ */
+async function authorizeInstance(instanceId: number): Promise<void> {
+  const user = await getUser();
+  const sites = await getUserWordPressSites(user);
+  if (!sites.some(site => Number(site.instanceId) === Number(instanceId))) {
+    throw new Error("Não autorizado.");
+  }
+}
 
 // Define a more specific type for table row data if possible, for now, keep it generic
 export type TableRowData = Record<string, unknown>;
@@ -26,6 +40,7 @@ export async function getDbTablesAction(
   instanceId: number,
   options?: DbTablesOptions
 ): Promise<string[]> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
     const tablesString = await wpCli.db.tables(options);
@@ -55,6 +70,7 @@ export async function getDbTableDataAction(
   instanceId: number,
   tableName: string
 ): Promise<TableDataResult> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
     const result: TableDataResult = { columns: [], rows: [] };
@@ -179,6 +195,7 @@ export async function runDbQueryAction(
   sql: string,
   options?: DbQueryOptions
 ): Promise<string> {
+  await authorizeInstance(instanceId);
   // Return type is now always string
   try {
     const wpCli = new WpCliApi(instanceId);
@@ -225,6 +242,7 @@ export async function updateTableRowAction(
   oldRowData: TableRowData,
   newRowData: TableRowData
 ): Promise<{ success: boolean; message: string }> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
     const setClauses = Object.keys(newRowData)
@@ -299,6 +317,7 @@ export async function insertTableRowAction(
   tableName: string,
   newRowData: TableRowData
 ): Promise<{ success: boolean; message: string; insertId?: string | number }> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
     const columns = Object.keys(newRowData)
@@ -346,6 +365,7 @@ export async function deleteTableRowAction(
   primaryKeyColumns: TableColumn[],
   rowDataToDelete: TableRowData
 ): Promise<{ success: boolean; message: string }> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
     let whereClauses = "";
@@ -446,6 +466,7 @@ export async function getTableSchemaAction(
   instanceId: number,
   tableName: string
 ): Promise<TableSchema> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
 
@@ -583,6 +604,7 @@ export async function addColumnAction(
   isNullable = true,
   defaultValue?: string
 ): Promise<{ success: boolean; message: string }> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
 
@@ -619,6 +641,7 @@ export async function dropColumnAction(
   tableName: string,
   columnName: string
 ): Promise<{ success: boolean; message: string }> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
     const sql = `ALTER TABLE \`${tableName}\` DROP COLUMN \`${columnName}\``;
@@ -644,6 +667,7 @@ export async function dropTableAction(
   instanceId: number,
   tableName: string
 ): Promise<{ success: boolean; message: string }> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
     const sql = `DROP TABLE \`${tableName}\``;
@@ -668,6 +692,7 @@ export async function dropTableAction(
 export async function getDatabaseInfoAction(
   instanceId: number
 ): Promise<DatabaseInfo> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
 
@@ -753,6 +778,7 @@ export async function bulkDeleteRowsAction(
   primaryKeyColumns: TableColumn[],
   rowsToDelete: TableRowData[]
 ): Promise<{ success: boolean; message: string; deletedCount: number }> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
     let deletedCount = 0;
@@ -810,6 +836,7 @@ export async function exportTableDataAction(
   tableName: string,
   format: "csv" | "json" = "csv"
 ): Promise<{ success: boolean; data?: string; message: string }> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
     const result = await getDbTableDataAction(instanceId, tableName);
@@ -884,6 +911,7 @@ export async function createTableAction(
     defaultValue?: string;
   }>
 ): Promise<{ success: boolean; message: string }> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
 
@@ -941,6 +969,7 @@ export async function getDatabaseStatsAction(instanceId: number): Promise<{
   };
   message: string;
 }> {
+  await authorizeInstance(instanceId);
   try {
     const wpCli = new WpCliApi(instanceId);
 

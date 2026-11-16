@@ -12,9 +12,11 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; // Added Label import
+import { requireAdminPage } from "@/lib/auth/admin";
 import type { Plan } from "@/lib/db/schema"; // Added Plan type
 
-export default function NewPlanPage() {
+export default async function NewPlanPage() {
+  await requireAdminPage();
   async function handleCreatePlan(formData: FormData) {
     "use server";
     const name = formData.get("name") as string;
