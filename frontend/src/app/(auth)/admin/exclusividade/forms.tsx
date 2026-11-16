@@ -9,7 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { atlasFee, buyerTotal, formatBrl } from "@/lib/template-exclusivity/rules";
+import {
+  atlasFee,
+  buyerTotal,
+  formatBrl,
+} from "@/lib/template-exclusivity/rules";
 import { saveResaleSettings, saveTemplateExclusivities } from "./actions";
 
 /* ------------------------------------------------------------------ Revenda */
@@ -69,7 +73,7 @@ export function ResaleSettingsForm(props: {
                 }
                 value={fee}
               />
-              <span className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-3 text-muted-foreground text-sm">
+              <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground text-sm">
                 %
               </span>
             </div>
@@ -120,7 +124,9 @@ function SimLine({
   value: string;
 }) {
   return (
-    <div className={`flex justify-between gap-4 ${strong ? "font-medium" : ""}`}>
+    <div
+      className={`flex justify-between gap-4 ${strong ? "font-medium" : ""}`}
+    >
       <span className={strong ? "" : "text-muted-foreground"}>{label}</span>
       <span>{value}</span>
     </div>
@@ -145,6 +151,8 @@ export interface AdminTemplateRow {
     sub: string;
   } | null;
   swatch: string;
+  /** Miniatura pré-gerada do site (4:3); `null` cai na cor de fundo do tema. */
+  thumb: { h: number; src: string; w: number } | null;
 }
 
 type Filter = "all" | "enabled" | "owned" | "free";
@@ -156,16 +164,22 @@ const FILTERS: { label: string; value: Filter }[] = [
   { label: "Livres", value: "free" },
 ];
 
-const PILL: Record<AdminOwnerStatus | "available" | "off", { className: string; label: string }> = {
+const PILL: Record<
+  AdminOwnerStatus | "available" | "off",
+  { className: string; label: string }
+> = {
   active: {
     className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
     label: "Ativa",
   },
   available: {
-    className: "bg-foreground/[0.08] text-foreground",
+    className: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
     label: "À venda",
   },
-  off: { className: "text-muted-foreground", label: "Livre para todos" },
+  off: {
+    className: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+    label: "Livre para todos",
+  },
   past_due: {
     className: "bg-red-500/15 text-red-700 dark:text-red-300",
     label: "Em atraso",
@@ -193,7 +207,10 @@ export function TemplatesTable({ rows }: { rows: AdminTemplateRow[] }) {
   useEffect(() => setDraft({}), [rows]);
 
   const current = (row: AdminTemplateRow) =>
-    draft[row.id] ?? { annualPriceBrl: row.annualPriceBrl, enabled: row.enabled };
+    draft[row.id] ?? {
+      annualPriceBrl: row.annualPriceBrl,
+      enabled: row.enabled,
+    };
 
   const isDirty = (row: AdminTemplateRow) => {
     const value = draft[row.id];
@@ -207,7 +224,8 @@ export function TemplatesTable({ rows }: { rows: AdminTemplateRow[] }) {
   const patch = (
     row: AdminTemplateRow,
     change: Partial<{ annualPriceBrl: number; enabled: boolean }>
-  ) => setDraft(prev => ({ ...prev, [row.id]: { ...current(row), ...change } }));
+  ) =>
+    setDraft(prev => ({ ...prev, [row.id]: { ...current(row), ...change } }));
 
   const counts: Record<Filter, number> = {
     all: rows.length,
@@ -296,7 +314,9 @@ export function TemplatesTable({ rows }: { rows: AdminTemplateRow[] }) {
 
         <div className="overflow-x-auto">
           <div className="min-w-[960px]">
-            <div className={`${GRID} border-b px-5 py-2.5 text-muted-foreground text-xs`}>
+            <div
+              className={`${GRID} border-b px-5 py-2.5 text-muted-foreground text-xs`}
+            >
               <span>Template</span>
               <span>Status</span>
               <span>Preço anual</span>
@@ -309,7 +329,14 @@ export function TemplatesTable({ rows }: { rows: AdminTemplateRow[] }) {
               const dirty = isDirty(row);
               // Com dono (ou reserva), a exclusividade ligada não pode ser desligada.
               const locked = Boolean(row.owner) && row.enabled;
-              const pill = PILL[row.owner ? row.owner.status : value.enabled ? "available" : "off"];
+              const pill =
+                PILL[
+                  row.owner
+                    ? row.owner.status
+                    : value.enabled
+                      ? "available"
+                      : "off"
+                ];
               const initials = row.owner
                 ? row.owner.name
                     .split(/\s+/)
@@ -326,9 +353,22 @@ export function TemplatesTable({ rows }: { rows: AdminTemplateRow[] }) {
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <span
-                      className="h-[33px] w-11 shrink-0 rounded-[5px] border"
+                      className="relative h-[42px] w-14 shrink-0 overflow-hidden rounded-[5px] border"
                       style={{ background: row.swatch }}
-                    />
+                    >
+                      {row.thumb && (
+                        // biome-ignore lint/performance/noImgElement: miniatura estática pré-gerada
+                        <img
+                          alt={row.name}
+                          className="absolute inset-0 size-full object-cover object-top"
+                          decoding="async"
+                          height={row.thumb.h}
+                          loading="lazy"
+                          src={row.thumb.src}
+                          width={row.thumb.w}
+                        />
+                      )}
+                    </span>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 font-medium">
                         <span className="truncate">{row.name}</span>
@@ -374,11 +414,15 @@ export function TemplatesTable({ rows }: { rows: AdminTemplateRow[] }) {
                             : "Ligar exclusividade"
                       }
                     />
-                    <div className={`w-[150px] ${value.enabled ? "" : "opacity-40"}`}>
+                    <div
+                      className={`w-[150px] ${value.enabled ? "" : "opacity-40"}`}
+                    >
                       <MoneyInput
                         className="h-[34px] text-[13px]"
                         disabled={!value.enabled}
-                        onChange={price => patch(row, { annualPriceBrl: price })}
+                        onChange={price =>
+                          patch(row, { annualPriceBrl: price })
+                        }
                         value={value.annualPriceBrl}
                       />
                     </div>
@@ -392,7 +436,10 @@ export function TemplatesTable({ rows }: { rows: AdminTemplateRow[] }) {
                           {initials || "?"}
                         </span>
                         <div className="min-w-0">
-                          <div className="truncate text-[13px]" title={row.owner.email}>
+                          <div
+                            className="truncate text-[13px]"
+                            title={row.owner.email}
+                          >
                             {row.owner.name || row.owner.email}
                           </div>
                           <div
@@ -407,7 +454,10 @@ export function TemplatesTable({ rows }: { rows: AdminTemplateRow[] }) {
                         </div>
                       </div>
                     ) : (
-                      <span className="text-[13px] text-muted-foreground">Sem dono</span>
+                      <span className="inline-flex items-center gap-1.5 text-[13px] text-teal-600 dark:text-teal-300">
+                        <span className="size-1.5 rounded-full bg-current" />
+                        Sem dono
+                      </span>
                     )}
                   </div>
 
@@ -440,10 +490,12 @@ export function TemplatesTable({ rows }: { rows: AdminTemplateRow[] }) {
       </div>
 
       {dirtyRows.length > 0 && (
-        <div className="-translate-x-1/2 fixed bottom-5 left-1/2 z-50 flex items-center gap-4 whitespace-nowrap rounded-[10px] bg-foreground py-2.5 pr-2.5 pl-[18px] text-background text-sm shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
+        <div className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 whitespace-nowrap rounded-[10px] bg-foreground py-2.5 pr-2.5 pl-[18px] text-background text-sm shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
           <span>
             {dirtyRows.length}{" "}
-            {dirtyRows.length === 1 ? "template alterado" : "templates alterados"}
+            {dirtyRows.length === 1
+              ? "template alterado"
+              : "templates alterados"}
           </span>
           <button
             className="h-[34px] rounded-md border border-background/25 px-3 text-[13px] disabled:opacity-60"

@@ -13,6 +13,7 @@ import {
   pgUser,
 } from "@/lib/db/schema";
 import { hasAreaAccess } from "@/lib/permissions/access";
+import { templateThumb } from "@/lib/site-builder/template-thumbs";
 import { formatBrl } from "@/lib/template-exclusivity/rules";
 import { getResaleConfig } from "@/lib/template-exclusivity/status";
 import {
@@ -112,6 +113,7 @@ export default async function AdminExclusivityPage() {
           }
         : null,
       swatch: getTemplate(template.id)?.site.theme.bg ?? "#27272a",
+      thumb: templateThumb(template.id),
     };
   });
 
@@ -124,7 +126,9 @@ export default async function AdminExclusivityPage() {
   // Receita anual: o que a próxima renovação de cada dono vai cobrar
   // (preço atual do admin; sem preço, o valor pago).
   const annualRevenue = owned.reduce((total, item) => {
-    const price = settings.find(s => s.templateId === item.templateId)?.annualPriceBrl;
+    const price = settings.find(
+      s => s.templateId === item.templateId
+    )?.annualPriceBrl;
     return total + (price && price > 0 ? price : item.paidAmountBrl);
   }, 0);
   const liveIds = new Set(
@@ -145,8 +149,16 @@ export default async function AdminExclusivityPage() {
       suffix: pastDue ? `· ${pastDue} em atraso` : "",
       value: String(owned.length),
     },
-    { label: "Receita anual ativa", suffix: "", value: formatBrl(annualRevenue) },
-    { label: "Negociações abertas", suffix: "", value: String(openNegotiations) },
+    {
+      label: "Receita anual ativa",
+      suffix: "",
+      value: formatBrl(annualRevenue),
+    },
+    {
+      label: "Negociações abertas",
+      suffix: "",
+      value: String(openNegotiations),
+    },
   ];
 
   return (
