@@ -186,3 +186,20 @@ describe("template margem — clique no editor", () => {
     expect(view).not.toContain('class="mg-ix is-edit"');
   });
 });
+
+describe("template margem — frase do hero", () => {
+  test("a frase é um texto só (sem <span> por linha) e o textContent bate com o campo", async () => {
+    const page = await html(site, "/", "edit");
+    const h1 =
+      /<h1 class="mg-hero-line">([\s\S]*?)<\/h1>/.exec(page)?.[1] ?? "";
+    expect(h1).not.toContain("<span");
+    expect(h1).toContain("<br/>");
+    const tunnel = site.pages[0]?.blocks.find(b => b.type === "mgTunnel");
+    const props = (tunnel?.props ?? {}) as { lines?: string };
+    const lines = String(props.lines ?? "");
+    const text = h1.replace(/<br\/>/g, "").replace(/<!-- -->/g, "");
+    expect(text.replace(/\s+/g, " ").trim()).toBe(
+      lines.replace(/\s+/g, " ").trim()
+    );
+  });
+});

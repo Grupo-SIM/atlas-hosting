@@ -28,6 +28,8 @@ mock.module("@/lib/site-builder/access", () => ({
 const { default: SiteBuilderPage } = await import("./page");
 
 test("redireciona à galeria de templates quando não há sites", async () => {
-  await expect(SiteBuilderPage()).rejects.toThrow("redirect");
+  await expect(
+    SiteBuilderPage({ searchParams: Promise.resolve({}) })
+  ).rejects.toThrow("redirect");
   expect(redirect).toHaveBeenCalledWith("/criador-de-sites/novo");
 });

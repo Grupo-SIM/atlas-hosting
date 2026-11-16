@@ -10,6 +10,7 @@ import { pgBuilderPublication, pgBuilderSite } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
 import { Frame } from "./components/Frame";
 import SiteCard, { type SiteStatus } from "./components/SiteCard";
+import SiteFilter, { parseSiteFilter } from "./components/SiteFilter";
 import { StaticThumb } from "./components/StaticThumb";
 
 export const metadata: Metadata = {
@@ -17,8 +18,13 @@ export const metadata: Metadata = {
   title: "Criador de Sites - Atlas Hosting",
 };
 
-export default async function SiteBuilderPage() {
+export default async function SiteBuilderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   const user = await requireBuilderUser();
+  const filter = parseSiteFilter((await searchParams).status);
   const mySites = await db
     .select({
       blockedAt: pgBuilderSite.exclusivityBlockedAt,
@@ -41,6 +47,13 @@ export default async function SiteBuilderPage() {
 
   const live = mySites.filter(s => s.publicationStatus === "published").length;
   const waiting = mySites.length - live;
+  const visibleSites = mySites.filter(s =>
+    filter === "todos"
+      ? true
+      : filter === "no-ar"
+        ? s.publicationStatus === "published"
+        : s.publicationStatus !== "published"
+  );
 
   return (
     <Frame
@@ -78,9 +91,18 @@ export default async function SiteBuilderPage() {
             </div>
           </div>
 
-          {mySites.length > 0 ? (
+          <SiteFilter
+            active={filter}
+            counts={{
+              "nao-publicado": waiting,
+              "no-ar": live,
+              todos: mySites.length,
+            }}
+          />
+
+          {visibleSites.length > 0 ? (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-[18px]">
-              {mySites.map(site => {
+              {visibleSites.map(site => {
                 const status: SiteStatus =
                   site.publicationStatus === "published"
                     ? "published"
@@ -119,13 +141,18 @@ export default async function SiteBuilderPage() {
               })}
             </div>
           ) : (
-            <Link
-              className="flex flex-col items-center gap-2 rounded-[14px] border border-[#d9d6ce] border-dashed p-12 text-center text-[#6e6b65] text-sm hover:border-[#c9c5bc]"
-              href="/criador-de-sites/novo"
-            >
-              <Plus className="size-5" />
-              Escolha um template e crie seu primeiro site
-            </Link>
+            <div className="flex flex-col items-center gap-2 rounded-[14px] border border-[#d9d6ce] border-dashed p-12 text-center text-[#6e6b65] text-sm">
+              {filter === "no-ar"
+                ? "Nenhum site no ar ainda."
+                : "Nenhum site em desenvolvimento: todos já foram publicados."}
+              <Link
+                className="text-[#1d1c1a] underline"
+                href="/criador-de-sites"
+                replace
+              >
+                Ver todos os sites
+              </Link>
+            </div>
           )}
         </div>
       </div>

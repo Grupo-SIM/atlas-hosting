@@ -281,6 +281,7 @@ const mgTunnel = defineBlock(
       }));
       const wall = wallAll.filter(w => w.s).map(({ r, s }) => ({ r, s }));
       const cases = p.cases.map(c => imgSrc(c.image));
+      const heroLines = p.lines.split("\n").filter(Boolean);
       const total = pad2(p.cases.length);
       return (
         <section
@@ -307,13 +308,20 @@ const mgTunnel = defineBlock(
                 ))}
             </div>
             <div className="mg-hero">
+              {/* Texto contínuo com <br>, não um <span> por linha: o editor seleciona (e casa com o campo `lines`)
+                  o título inteiro. O "\n" antes do <br> mantém o `textContent` igual ao do campo. */}
               <h1 className="mg-hero-line">
-                {p.lines
-                  .split("\n")
-                  .filter(Boolean)
-                  .map((l, i) => (
-                    <span key={`${l}-${i}`}>{l}</span>
-                  ))}
+                {heroLines.map((l, i) => (
+                  <Fragment key={`${l}-${i}`}>
+                    {l}
+                    {i < heroLines.length - 1 ? (
+                      <>
+                        {"\n"}
+                        <br />
+                      </>
+                    ) : null}
+                  </Fragment>
+                ))}
               </h1>
               <div className="mg-hero-mark">
                 <Logo
