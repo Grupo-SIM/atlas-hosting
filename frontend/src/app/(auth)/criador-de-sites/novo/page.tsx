@@ -8,7 +8,7 @@ import { LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
 import { requireBuilderUser } from "@/lib/site-builder/access";
 import { Frame } from "../components/Frame";
-import { LiveThumb } from "../components/LiveThumb";
+import { StaticThumb } from "../components/StaticThumb";
 import TemplateGallery, {
   type GalleryTemplate,
 } from "./components/TemplateGallery";
@@ -32,14 +32,14 @@ export default async function NewSitePage() {
         previewBackground: full.site.theme.bg ?? "#030712",
         tags: meta.tags,
         thumb: (
-          <LiveThumb>
+          <StaticThumb>
             <SiteRenderer
               path="/"
               site={thumbnailSite(full.site)}
               skipFxRuntime
               thumbnail
             />
-          </LiveThumb>
+          </StaticThumb>
         ),
       },
     ];

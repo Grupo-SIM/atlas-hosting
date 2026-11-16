@@ -8,8 +8,8 @@ import { db } from "@/lib/db";
 import { pgBuilderPublication, pgBuilderSite } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
 import { Frame } from "./components/Frame";
-import { LiveThumb } from "./components/LiveThumb";
 import SiteCard, { type SiteStatus } from "./components/SiteCard";
+import { StaticThumb } from "./components/StaticThumb";
 
 export const metadata: Metadata = {
   description: "Crie e edite seus sites a partir de templates prontos",
@@ -86,14 +86,14 @@ export default async function SiteBuilderPage() {
                     name={site.name}
                     status={status}
                     thumb={
-                      <LiveThumb>
+                      <StaticThumb>
                         <SiteRenderer
                           path="/"
                           site={thumbnailSite(site.content)}
                           skipFxRuntime
                           thumbnail
                         />
-                      </LiveThumb>
+                      </StaticThumb>
                     }
                   />
                 );

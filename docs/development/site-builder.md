@@ -16,20 +16,18 @@ com 404 para não-admin, e toda server action recusa quem não é admin. A regra
 UI portada do protótipo "UI editor de sites" (neutros quentes, lima `#d6f34a` nas ações, roxo na seleção).
 Telas em `frontend/src/app/(auth)/criador-de-sites/`:
 
-1. `/criador-de-sites` — **Meus sites**: cartões com miniatura ao vivo (`LiveThumb`), status vindo de `builder_publications`.
-2. `/criador-de-sites/novo` — **Templates**: busca, filtros por `tags` do template, destaque + grade (miniaturas `LiveThumb`, paradas no topo do site).
+1. `/criador-de-sites` — **Meus sites**: cartões com miniatura estática (`StaticThumb`), status vindo de `builder_publications`.
+2. `/criador-de-sites/novo` — **Templates**: busca, filtros por `tags` do template, destaque + grade (miniaturas `StaticThumb`, paradas).
 
-   **Miniaturas (`components/LiveThumb.tsx`)**: cada uma é um site inteiro (centenas de elementos, dezenas de KB de CSS
-   que valem para a página toda), então o `LiveThumb` só monta o site quando o cartão está a até meia tela da área
-   visível (um por vez, em `requestIdleCallback`) e desmonta 1,5 s depois de sair dessa faixa. **Sem rolagem automática:**
-   a miniatura é só o topo do site. Por isso as telas passam o site por `thumbnailSite()` (`renderer/thumbnail.ts`): só a
-   página inicial, com o cabeçalho e os 4 primeiros blocos, sem rodapé — o resto ficava abaixo da área do cartão e só
-   servia para baixar imagens, fontes e HTML. Com `thumbnail`, vídeos de fundo (`atlas`, `ads`, `universo`) não têm `src`
-   nem autoplay, e iframes ficam sem `src` (`frameProps`). Os links dos cartões usam `prefetch={false}` (um prefetch por
-   cartão visível). O `SiteRenderer` vai com
-   `skipFxRuntime` e os efeitos ligam só dentro do cartão via `startSiteFx(raiz)` (`@repo/site-builder/fx`), que chama
-   `sbFx(raiz)`/`sbMargem(raiz)`. Não use o `FxRuntime` em grade: cada instância varre o documento inteiro (com 30
-   cartões eram 30 loops de quadro do Margem).
+   **Miniaturas (`components/StaticThumb.tsx`)**: estáticas. Cada cartão mostra o topo do site reduzido à largura do
+   cartão (`FitSite`), **sem rolagem, sem efeitos e sem montagem por visibilidade**: tudo vem no HTML da página, como um
+   site sem JavaScript (o `SiteRenderer` vai com `skipFxRuntime` e `thumbnail`, então nenhum script liga `sbFx`,
+   `sbMargem` ou `sbUniverso`; sem eles o Margem aparece como hero estático e o Universo como lista). A classe
+   `sb-thumb-static` (`globals.css`) zera as animações e transições do CSS do site. Para não baixar o que ninguém vê, as
+   telas passam o site por `thumbnailSite()` (`renderer/thumbnail.ts`): só a página inicial, com o cabeçalho e os 4
+   primeiros blocos, sem rodapé. Com `thumbnail`, vídeos de fundo (`atlas`, `ads`, `universo`) não têm `src` nem
+   autoplay, e iframes ficam sem `src` (`frameProps`). Os links dos cartões usam `prefetch={false}`. `startSiteFx`
+   (`@repo/site-builder/fx`) continua exportado, mas a galeria não o usa.
 3. `/criador-de-sites/novo/[templateId]` — **Configurar** (nome + endereço) e **progresso**. `createSite` cria o
    registro e `publishSite` publica no endereço escolhido; "Definir depois" só cria. Os passos de progresso são
    cronometrados enquanto a publicação (uma chamada só) roda.
