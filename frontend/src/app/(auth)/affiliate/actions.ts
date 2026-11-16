@@ -1,12 +1,13 @@
 "use server";
 
-import { and, eq, sum } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgAffiliateCommission, pgWithdrawalRequests } from "@/lib/db/schema";
 import simpayApi from "@/lib/server/apis/simpay";
+import { getWalletBalance } from "@/lib/wallet/balance";
 
 function getMinWithdrawal() {
   return Number(process.env.AFFILIATE_MIN_WITHDRAWAL) || 100;
@@ -26,33 +27,9 @@ export async function getAffiliateBalance(userId: string): Promise<{
     return { available: 0, pendingWithdrawals: 0 };
   }
 
-  const [commissionsRow] = await db
-    .select({ total: sum(pgAffiliateCommission.commissionAmount) })
-    .from(pgAffiliateCommission)
-    .where(
-      and(
-        eq(pgAffiliateCommission.affiliateUserId, userId),
-        eq(pgAffiliateCommission.status, "available")
-      )
-    );
-
-  const [pendingRow] = await db
-    .select({ total: sum(pgWithdrawalRequests.amount) })
-    .from(pgWithdrawalRequests)
-    .where(
-      and(
-        eq(pgWithdrawalRequests.userId, userId),
-        eq(pgWithdrawalRequests.status, "pending")
-      )
-    );
-
-  const totalAvailableCommissions = Number(commissionsRow?.total ?? 0);
-  const pendingWithdrawals = Number(pendingRow?.total ?? 0);
-
-  return {
-    available: Math.max(0, totalAvailableCommissions - pendingWithdrawals),
-    pendingWithdrawals,
-  };
+  // Saldo da carteira única do Atlas (comissões + vendas de exclusividade).
+  const { available, pendingWithdrawals } = await getWalletBalance(userId);
+  return { available, pendingWithdrawals };
 }
 
 export async function requestWithdrawal(
@@ -122,6 +99,7 @@ export async function requestWithdrawal(
   });
 
   revalidatePath("/affiliate");
+  revalidatePath("/carteira");
   return { success: true };
 }
 
@@ -162,6 +140,7 @@ export async function cancelLocalWithdrawal(
     .where(eq(pgWithdrawalRequests.id, withdrawalId));
 
   revalidatePath("/affiliate");
+  revalidatePath("/carteira");
   return { success: true };
 }
 
@@ -232,6 +211,7 @@ export async function syncWithdrawalStatus(
     }
 
     revalidatePath("/affiliate");
+  revalidatePath("/carteira");
   } catch (err) {
     console.error("[WITHDRAWAL-SYNC] Erro ao verificar status:", err);
   }

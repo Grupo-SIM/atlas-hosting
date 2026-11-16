@@ -25,6 +25,14 @@ export const pgSystemConfig = pgTable("system_config", {
   referrerCommission: doublePrecision("referrer_commission")
     .notNull()
     .default(0.1),
+  // Revenda de exclusividade de template: taxa do Atlas (%) cobrada por cima do
+  // valor fechado e o menor valor mínimo de venda que o dono pode definir.
+  templateResaleFeePercent: doublePrecision("template_resale_fee_percent")
+    .notNull()
+    .default(10),
+  templateResaleMinPriceBrl: doublePrecision("template_resale_min_price_brl")
+    .notNull()
+    .default(100),
   withdrawalFee: doublePrecision("withdrawal_fee").notNull().default(2.0),
 });
 

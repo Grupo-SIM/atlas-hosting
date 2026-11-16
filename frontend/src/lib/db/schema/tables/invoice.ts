@@ -30,6 +30,7 @@ export const pgInvoice = pgTable("invoices", {
     .$type<
       | DomainRegisterInvoiceOptions
       | SitePublishInvoiceOptions
+      | TemplateExclusivityInvoiceOptions
       | VpsInvoiceOptions
     >()
     .default(defaultDomainRegisterOptions)
@@ -165,6 +166,25 @@ export interface SiteHostingInvoiceData {
   siteId: string;
   target: "atlas_vm" | "user_vps";
   vpsNodeId?: string;
+}
+
+/**
+ * Fatura de exclusividade de template: primeira compra, renovação anual ou
+ * revenda (comprador paga o valor fechado + a taxa do Atlas).
+ */
+export interface TemplateExclusivityInvoiceOptions
+  extends DomainRegisterInvoiceOptions {
+  templateExclusivity: TemplateExclusivityInvoiceData;
+}
+
+export interface TemplateExclusivityInvoiceData {
+  kind: "purchase" | "renewal" | "resale";
+  exclusivityId: string;
+  templateId: string;
+  /** Revenda: negociação que originou a fatura. */
+  proposalId?: string;
+  /** Renovação: ISO do `expires_at` que esta fatura cobre. */
+  renewalCycle?: string;
 }
 
 export interface VpsInvoiceOptions {

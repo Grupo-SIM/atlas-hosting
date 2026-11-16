@@ -74,6 +74,8 @@ const WAITING: Record<
 interface Props {
   background: string;
   domain: string | null;
+  /** Aviso de exclusividade do template (prazo para sair do ar ou bloqueio). */
+  exclusivityNotice?: string | null;
   id: string;
   name: string;
   status: SiteStatus;
@@ -84,6 +86,7 @@ interface Props {
 export default function SiteCard({
   background,
   domain,
+  exclusivityNotice,
   id,
   name,
   status,
@@ -145,6 +148,11 @@ export default function SiteCard({
             {state.label}
           </span>
         </div>
+        {exclusivityNotice ? (
+          <p className="rounded-lg bg-[#fdf1e0] px-3 py-2 text-[#92550c] text-[12px] leading-[1.4]">
+            {exclusivityNotice}
+          </p>
+        ) : null}
         <div className="flex gap-2">
           <Link
             className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1d1c1a] px-3 py-[9px] text-[13px] text-white"

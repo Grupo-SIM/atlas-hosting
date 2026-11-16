@@ -3,7 +3,13 @@ import { db } from "@/lib/db";
 import { pgSystemConfig } from "@/lib/db/schema";
 
 type PaymentSettings = Partial<
-  Pick<typeof pgSystemConfig.$inferInsert, "pixAllowAllDurations" | "boletoEnabled">
+  Pick<
+    typeof pgSystemConfig.$inferInsert,
+    | "pixAllowAllDurations"
+    | "boletoEnabled"
+    | "templateResaleFeePercent"
+    | "templateResaleMinPriceBrl"
+  >
 >;
 
 export async function savePaymentSettings(settings: PaymentSettings) {

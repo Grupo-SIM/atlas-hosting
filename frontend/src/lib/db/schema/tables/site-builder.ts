@@ -21,6 +21,12 @@ export const pgBuilderSite = pgTable(
   {
     content: jsonb("content").$type<Site>().notNull(),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    /** Quando o site foi bloqueado porque outra pessoa tem a exclusividade do template. */
+    exclusivityBlockedAt: timestamp("exclusivity_blocked_at", { mode: "date" }),
+    /** Prazo para o site sair do ar por causa da exclusividade de outra pessoa. */
+    exclusivityDeadlineAt: timestamp("exclusivity_deadline_at", {
+      mode: "date",
+    }),
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
     templateId: text("template_id").notNull(),

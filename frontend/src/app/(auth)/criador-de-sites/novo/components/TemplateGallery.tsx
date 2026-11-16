@@ -3,10 +3,17 @@
 import { Eye, Search } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useMemo, useState } from "react";
+import {
+  ExclusivityAction,
+  ExclusivityBadge,
+  type ExclusivityView,
+} from "../../exclusividades/components/ExclusivityControls";
 import UseTemplateButton from "./UseTemplateButton";
 
 export interface GalleryTemplate {
   description: string;
+  /** Estado da exclusividade para quem está vendo (ausente = template livre). */
+  exclusivity?: ExclusivityView;
   id: string;
   name: string;
   pageCount: number;
@@ -53,7 +60,12 @@ export default function TemplateGallery({
           Escolha um ponto de partida
         </h1>
         <p className="text-[#6e6b65] text-sm">
-          Tudo pode ser alterado depois, direto no editor.
+          Tudo pode ser alterado depois, direto no editor. Alguns templates
+          podem ser só seus:{" "}
+          <Link className="underline" href="/criador-de-sites/exclusividades">
+            minhas exclusividades e propostas
+          </Link>
+          .
         </p>
       </div>
 
@@ -83,7 +95,11 @@ export default function TemplateGallery({
 
       {matches.length > 0 ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-[18px]">
-          {matches.map(t => (
+          {matches.map(t => {
+            const locked =
+              t.exclusivity?.kind === "owned_by_other" ||
+              t.exclusivity?.kind === "reserved";
+            return (
             <div
               className="flex flex-col overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white hover:border-[#c9c5bc] hover:shadow-[0_4px_18px_rgba(30,28,24,0.06)]"
               key={t.id}
@@ -94,12 +110,15 @@ export default function TemplateGallery({
                 style={{ background: t.previewBackground }}
               >
                 {t.thumb}
-                <UseTemplateButton
-                  ariaLabel={`Usar o template ${t.name}`}
-                  className="absolute inset-0"
-                  templateId={t.id}
-                  templateName={t.name}
-                />
+                <ExclusivityBadge state={t.exclusivity} />
+                {!locked && (
+                  <UseTemplateButton
+                    ariaLabel={`Usar o template ${t.name}`}
+                    className="absolute inset-0"
+                    templateId={t.id}
+                    templateName={t.name}
+                  />
+                )}
               </div>
               <div className="flex flex-1 flex-col gap-2 px-4 py-3.5">
                 <div className="font-medium text-sm">{t.name}</div>
@@ -120,13 +139,15 @@ export default function TemplateGallery({
                   ))}
                 </div>
                 <div className="mt-auto flex flex-wrap gap-2 pt-1.5">
-                  <UseTemplateButton
-                    className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[13px] disabled:opacity-60"
-                    templateId={t.id}
-                    templateName={t.name}
-                  >
-                    Usar este template
-                  </UseTemplateButton>
+                  {!locked && (
+                    <UseTemplateButton
+                      className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[13px] disabled:opacity-60"
+                      templateId={t.id}
+                      templateName={t.name}
+                    >
+                      Usar este template
+                    </UseTemplateButton>
+                  )}
                   <Link
                     className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-3 py-2 text-[13px]"
                     href={`/criador-de-sites/preview/${t.id}`}
@@ -135,10 +156,17 @@ export default function TemplateGallery({
                     <Eye className="size-[14px]" />
                     Pré-visualizar
                   </Link>
+                  <ExclusivityAction
+                    className="flex items-center gap-1.5 rounded-full border border-[#1d1c1a] bg-white px-3 py-2 text-[13px] disabled:opacity-60"
+                    state={t.exclusivity}
+                    templateId={t.id}
+                    templateName={t.name}
+                  />
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="p-10 text-center text-[#6e6b65] text-sm">

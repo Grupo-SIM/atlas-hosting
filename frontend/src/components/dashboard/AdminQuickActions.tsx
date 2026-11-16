@@ -1,4 +1,4 @@
-import { Globe, Server, Ticket, Users } from "lucide-react";
+import { Crown, Globe, Server, Ticket, Users } from "lucide-react";
 import { MotionDiv } from "./MotionDiv";
 import {
   containerVariants,
@@ -53,6 +53,15 @@ export function AdminQuickActions() {
             pattern="dots"
             subtitle="Assinaturas VPS e links de pagamento"
             title="Planos VPS"
+          />
+
+          <QuickActionCard
+            gradient="from-stone-500 to-stone-700"
+            href="/admin/exclusividade"
+            Icon={Crown}
+            pattern="waves"
+            subtitle="Templates com exclusividade, preços e revendas"
+            title="Exclusividade de templates"
           />
         </div>
       </MotionDiv>

@@ -1,6 +1,7 @@
 import { SiteRenderer, thumbnailSite } from "@repo/site-builder";
+import { format } from "date-fns";
 import { desc, eq } from "drizzle-orm";
-import { LayoutTemplate, Plus } from "lucide-react";
+import { Crown, LayoutTemplate, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -21,6 +22,8 @@ export default async function SiteBuilderPage() {
   const mySites = await db
     .select({
       content: pgBuilderSite.content,
+      blockedAt: pgBuilderSite.exclusivityBlockedAt,
+      deadlineAt: pgBuilderSite.exclusivityDeadlineAt,
       domain: pgBuilderPublication.domain,
       id: pgBuilderSite.id,
       name: pgBuilderSite.name,
@@ -57,13 +60,22 @@ export default async function SiteBuilderPage() {
                   : `${live} no ar · ${waiting} sem publicar`}
               </p>
             </div>
-            <Link
-              className="flex items-center gap-1.5 rounded-full bg-[#d6f34a] px-[18px] py-2.5 font-medium text-[#1d1c1a] text-sm"
-              href="/criador-de-sites/novo"
-            >
-              <Plus className="size-[15px]" />
-              Criar site
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-[18px] py-2.5 text-[#1d1c1a] text-sm"
+                href="/criador-de-sites/exclusividades"
+              >
+                <Crown className="size-[15px]" />
+                Exclusividades
+              </Link>
+              <Link
+                className="flex items-center gap-1.5 rounded-full bg-[#d6f34a] px-[18px] py-2.5 font-medium text-[#1d1c1a] text-sm"
+                href="/criador-de-sites/novo"
+              >
+                <Plus className="size-[15px]" />
+                Criar site
+              </Link>
+            </div>
           </div>
 
           {mySites.length > 0 ? (
@@ -81,6 +93,13 @@ export default async function SiteBuilderPage() {
                   <SiteCard
                     background={site.content.theme.bg ?? "#030712"}
                     domain={site.domain}
+                    exclusivityNotice={
+                      site.blockedAt
+                        ? "Bloqueado: o template é exclusivo de outro usuário. Crie um site novo com outro template."
+                        : site.deadlineAt
+                          ? `O template ficou exclusivo de outro usuário: este site sai do ar em ${format(site.deadlineAt, "dd/MM/yyyy")}.`
+                          : null
+                    }
                     id={site.id}
                     key={site.id}
                     name={site.name}
