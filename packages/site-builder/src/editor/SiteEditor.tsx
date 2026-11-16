@@ -481,7 +481,9 @@ export function SiteEditor({
   const guideHRef = useRef<HTMLDivElement | null>(null);
   const justDragged = useRef(false);
   /** Como arrastar no canvas: trocar de lugar (item ou bloco) ou deslocar livremente. */
-  const [dragMode, setDragMode] = useState<"block" | "free" | "item">("item");
+  // Modo de arrastar fixo em "free" (movimento livre). O seletor Item | Bloco | Livre da barra está comentado mais
+  // abaixo; para trazê-lo de volta, troque esta linha por `const [dragMode, setDragMode] = useState(...)` e descomente.
+  const [dragMode] = useState<"block" | "free" | "item">("free");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   );
@@ -1381,7 +1383,8 @@ export function SiteEditor({
   };
 
   const onMovePointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    if (dragMode === "free") startFreeMove(e);
+    // O movimento livre só existe em tela larga; no tablet e no celular o arrasto reordena (Item), como antes.
+    if (dragMode === "free" && device === "desktop") startFreeMove(e);
     else startSortMove(e, (dragMode === "block") !== e.shiftKey);
   };
 
@@ -1805,6 +1808,8 @@ export function SiteEditor({
               <Icon name="redo-2" size={15} />
             </button>
           </div>
+          {/* Seletor de modo de arrastar (Item | Bloco | Livre), desativado: o arrasto é sempre livre.
+             Para reativar, descomente este bloco e o `setDragMode` na declaração de `dragMode`.
           <div
             className="sbe-seg mini"
             title="Como arrastar no canvas (Shift inverte Item/Bloco)"
@@ -1826,6 +1831,7 @@ export function SiteEditor({
               </button>
             ))}
           </div>
+          */}
           <button
             className={site.theme.ads === "on" ? "sbe-lime" : "sbe-btn"}
             onClick={() => setAds(site.theme.ads !== "on")}

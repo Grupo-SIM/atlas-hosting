@@ -22,7 +22,7 @@ Três áreas lado a lado:
 ## Barra superior (centro)
 - **Endereço do site > seletor de página**: troca a página, post ou categoria exibida no canvas.
 - **Desfazer / Refazer**: setas (Ctrl+Z, Ctrl+Shift+Z). Cada resposta da IA vira um único passo de desfazer.
-- **Item | Bloco | Livre**: modo de arrastar no canvas. Item reordena o elemento sob o mouse entre os irmãos; Bloco reordena o bloco inteiro; Livre desloca sem trocar de lugar (só em tela larga). Shift inverte Item/Bloco.
+- **Arrastar no canvas**: no computador (tela larga) arrastar move o item **livremente**, sem trocar de lugar com os vizinhos (encaixa nas bordas e centros; Alt desliga o encaixe, Shift trava o eixo; a posição aparece em Posição, X/Y). No tablet e no celular arrastar reordena o item entre os irmãos. Para reordenar blocos use a aba Camadas (arrastar) ou os botões de subir/descer. O seletor Item | Bloco | Livre foi retirado da barra.
 - **Anúncios ligados/desligados**: liga ou desliga os espaços de anúncio do site (detalhes em "Anúncios").
 - **Indicador de salvamento**: o site salva sozinho (autosave ~1,5 s depois de editar).
 - **Indicador "No ar"** (ao lado do salvamento, depois de publicado): confere sozinho se o endereço já abre. Mostra "Verificando…", "Aguardando DNS" (domínio novo ainda propagando, de minutos a algumas horas) ou "Ativando HTTPS" (DNS pronto, certificado sendo emitido) até virar "No ar". O mesmo selo aparece no cartão do site em "Meus sites".
