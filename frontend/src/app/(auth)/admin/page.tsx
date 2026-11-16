@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminQuickActions } from "@/components/dashboard/AdminQuickActions";
 import { getUser } from "@/lib/auth";
+import { hasAnyAdminArea, viewableAdminAreas } from "@/lib/permissions/access";
 
 export const metadata: Metadata = { title: "Administração — Atlas Hosting" };
 
@@ -11,7 +12,8 @@ export const metadata: Metadata = { title: "Administração — Atlas Hosting" }
  */
 export default async function AdminDashboardPage() {
   const user = await getUser();
-  if (!user?.isAdmin) redirect("/home");
+  if (!(await hasAnyAdminArea(user))) redirect("/home");
+  const allowed = await viewableAdminAreas(user);
 
   return (
     <div className="space-y-8 p-6 pb-16">
@@ -27,7 +29,7 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      <AdminQuickActions />
+      <AdminQuickActions allowed={allowed} />
     </div>
   );
 }

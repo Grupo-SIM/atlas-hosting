@@ -11,6 +11,7 @@ import {
   type PaymentLinkEffectiveStatus,
   paymentLinkEffectiveStatus,
 } from "@/lib/payment-links/status";
+import { hasAreaAccess } from "@/lib/permissions/access";
 import {
   findSellablePlan,
   type SellableProductType,
@@ -35,7 +36,8 @@ export interface PaymentLinkRow {
 
 export async function getVpsPaymentLinksAction(): Promise<PaymentLinkRow[]> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "view")))
+    redirect("/home");
 
   const links = await db.query.pgVpsPaymentLink.findMany({
     limit: 200,
@@ -71,7 +73,8 @@ export async function searchCustomersAction(): Promise<
   { id: string; name: string; email: string }[]
 > {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "view")))
+    redirect("/home");
 
   const users = await db.query.pgUser.findMany({
     columns: { email: true, id: true, name: true },
@@ -110,7 +113,8 @@ export async function createVpsPaymentLinkAction(
   formData: FormData
 ): Promise<void> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "edit")))
+    redirect("/home");
 
   const productType = String(
     formData.get("productType") || ""
@@ -167,99 +171,137 @@ export async function updateVpsPaymentLinkCustomerAction(
   linkedUserId: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "edit")))
+    redirect("/home");
 
-  return db.transaction(async (tx): Promise<{ ok: true } | { ok: false; error: string }> => {
-    await tx.execute(sql`SELECT id FROM vps_payment_links WHERE id = ${id} FOR UPDATE`);
-  const link = await tx.query.pgVpsPaymentLink.findFirst({
-    where: eq(pgVpsPaymentLink.id, id),
-    with: { resultingInvoice: { columns: { id: true, status: true, metadata: true } } },
-  });
-  if (!link) return { error: "Link não encontrado.", ok: false };
+  return db.transaction(
+    async (tx): Promise<{ ok: true } | { ok: false; error: string }> => {
+      await tx.execute(
+        sql`SELECT id FROM vps_payment_links WHERE id = ${id} FOR UPDATE`
+      );
+      const link = await tx.query.pgVpsPaymentLink.findFirst({
+        where: eq(pgVpsPaymentLink.id, id),
+        with: {
+          resultingInvoice: {
+            columns: { id: true, metadata: true, status: true },
+          },
+        },
+      });
+      if (!link) return { error: "Link não encontrado.", ok: false };
 
-  if (link.resultingInvoiceId) await tx.execute(sql`SELECT id FROM invoices WHERE id = ${link.resultingInvoiceId} FOR UPDATE`);
-  const currentInvoice = link.resultingInvoiceId ? await tx.query.pgInvoice.findFirst({ where: eq(pgInvoice.id, link.resultingInvoiceId) }) : null;
-  const invoice = currentInvoice as {
-    id: string;
-    status: string;
-  } | null;
-  try { assertPaymentLinkEditable(currentInvoice); } catch (error) {
-    return { ok: false, error: (error as Error).message };
-  }
-  const status = paymentLinkEffectiveStatus(link.status, invoice?.status);
-  if (status !== "pending") {
-    return {
-      error:
-        "Só dá pra trocar o cliente de um link que ainda está aguardando pagamento.",
-      ok: false,
-    };
-  }
+      if (link.resultingInvoiceId)
+        await tx.execute(
+          sql`SELECT id FROM invoices WHERE id = ${link.resultingInvoiceId} FOR UPDATE`
+        );
+      const currentInvoice = link.resultingInvoiceId
+        ? await tx.query.pgInvoice.findFirst({
+            where: eq(pgInvoice.id, link.resultingInvoiceId),
+          })
+        : null;
+      const invoice = currentInvoice as {
+        id: string;
+        status: string;
+      } | null;
+      try {
+        assertPaymentLinkEditable(currentInvoice);
+      } catch (error) {
+        return { error: (error as Error).message, ok: false };
+      }
+      const status = paymentLinkEffectiveStatus(link.status, invoice?.status);
+      if (status !== "pending") {
+        return {
+          error:
+            "Só dá pra trocar o cliente de um link que ainda está aguardando pagamento.",
+          ok: false,
+        };
+      }
 
-  let linkedOrgId: string | null;
-  let resolvedLinkedUserId: string | null;
-  try {
-    ({ linkedOrgId, resolvedLinkedUserId } =
-      await resolveLinkedCustomer(linkedUserId));
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Cliente inválido.",
-      ok: false,
-    };
-  }
-  if (resolvedLinkedUserId === link.linkedUserId) return { ok: true };
+      let linkedOrgId: string | null;
+      let resolvedLinkedUserId: string | null;
+      try {
+        ({ linkedOrgId, resolvedLinkedUserId } =
+          await resolveLinkedCustomer(linkedUserId));
+      } catch (error) {
+        return {
+          error: error instanceof Error ? error.message : "Cliente inválido.",
+          ok: false,
+        };
+      }
+      if (resolvedLinkedUserId === link.linkedUserId) return { ok: true };
 
-  if (invoice?.status === "pending") {
-    if (resolvedLinkedUserId && linkedOrgId) {
+      if (invoice?.status === "pending") {
+        if (resolvedLinkedUserId && linkedOrgId) {
+          await tx
+            .update(pgInvoice)
+            .set({
+              // A voucher belongs to the original payer; transferring the invoice releases it.
+              amount: sql`coalesce(${pgInvoice.originalAmount}, ${pgInvoice.amount})`,
+              orgId: linkedOrgId,
+              originalAmount: null,
+              updatedAt: new Date(),
+              userId: resolvedLinkedUserId,
+              voucherDiscount: 0,
+              voucherId: null,
+            })
+            .where(eq(pgInvoice.id, invoice.id));
+        } else {
+          await tx
+            .update(pgInvoice)
+            .set({ status: "expired", updatedAt: new Date() })
+            .where(eq(pgInvoice.id, invoice.id));
+        }
+      }
+
       await tx
-        .update(pgInvoice)
+        .update(pgVpsPaymentLink)
         .set({
-          // A voucher belongs to the original payer; transferring the invoice releases it.
-          amount: sql`coalesce(${pgInvoice.originalAmount}, ${pgInvoice.amount})`,
-          originalAmount: null,
-          voucherId: null,
-          voucherDiscount: 0,
-          orgId: linkedOrgId,
-          updatedAt: new Date(),
-          userId: resolvedLinkedUserId,
+          linkedOrgId,
+          linkedUserId: resolvedLinkedUserId,
+          // Link genérico com fatura expirada precisa gerar uma nova na próxima visita.
+          resultingInvoiceId:
+            invoice && !resolvedLinkedUserId ? null : link.resultingInvoiceId,
         })
-        .where(eq(pgInvoice.id, invoice.id));
-    } else {
-      await tx
-        .update(pgInvoice)
-        .set({ status: "expired", updatedAt: new Date() })
-        .where(eq(pgInvoice.id, invoice.id));
+        .where(eq(pgVpsPaymentLink.id, id));
+
+      revalidatePath("/admin/vps-plans/payment-links");
+      return { ok: true };
     }
-  }
-
-  await tx
-    .update(pgVpsPaymentLink)
-    .set({
-      linkedOrgId,
-      linkedUserId: resolvedLinkedUserId,
-      // Link genérico com fatura expirada precisa gerar uma nova na próxima visita.
-      resultingInvoiceId:
-        invoice && !resolvedLinkedUserId ? null : link.resultingInvoiceId,
-    })
-    .where(eq(pgVpsPaymentLink.id, id));
-
-  revalidatePath("/admin/vps-plans/payment-links");
-  return { ok: true };
-  });
+  );
 }
 
 export async function cancelVpsPaymentLinkAction(id: string): Promise<void> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "edit")))
+    redirect("/home");
 
   await db.transaction(async tx => {
-    await tx.execute(sql`SELECT id FROM vps_payment_links WHERE id = ${id} FOR UPDATE`);
-    const link = await tx.query.pgVpsPaymentLink.findFirst({ where: eq(pgVpsPaymentLink.id, id), with: { resultingInvoice: true } });
+    await tx.execute(
+      sql`SELECT id FROM vps_payment_links WHERE id = ${id} FOR UPDATE`
+    );
+    const link = await tx.query.pgVpsPaymentLink.findFirst({
+      where: eq(pgVpsPaymentLink.id, id),
+      with: { resultingInvoice: true },
+    });
     if (!link) throw new Error("Link não encontrado.");
-    if (link.resultingInvoiceId) await tx.execute(sql`SELECT id FROM invoices WHERE id = ${link.resultingInvoiceId} FOR UPDATE`);
-    const invoice = link.resultingInvoiceId ? await tx.query.pgInvoice.findFirst({ where: eq(pgInvoice.id, link.resultingInvoiceId) }) : null;
+    if (link.resultingInvoiceId)
+      await tx.execute(
+        sql`SELECT id FROM invoices WHERE id = ${link.resultingInvoiceId} FOR UPDATE`
+      );
+    const invoice = link.resultingInvoiceId
+      ? await tx.query.pgInvoice.findFirst({
+          where: eq(pgInvoice.id, link.resultingInvoiceId),
+        })
+      : null;
     assertPaymentLinkEditable(invoice);
-    if (invoice && ["pending", "failed"].includes(invoice.status)) await tx.update(pgInvoice).set({ status: "expired", updatedAt: new Date() }).where(eq(pgInvoice.id, invoice.id));
-    await tx.update(pgVpsPaymentLink).set({ status: "cancelled" }).where(eq(pgVpsPaymentLink.id, id));
+    if (invoice && ["pending", "failed"].includes(invoice.status))
+      await tx
+        .update(pgInvoice)
+        .set({ status: "expired", updatedAt: new Date() })
+        .where(eq(pgInvoice.id, invoice.id));
+    await tx
+      .update(pgVpsPaymentLink)
+      .set({ status: "cancelled" })
+      .where(eq(pgVpsPaymentLink.id, id));
   });
 
   revalidatePath("/admin/vps-plans/payment-links");
@@ -271,10 +313,19 @@ export async function cancelVpsPaymentLinkAction(id: string): Promise<void> {
  */
 export async function deleteVpsPaymentLinkAction(id: string): Promise<void> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "edit")))
+    redirect("/home");
 
-  const link = await db.query.pgVpsPaymentLink.findFirst({ where: eq(pgVpsPaymentLink.id, id), with: { resultingInvoice: true } });
-  if (link && link.status !== "cancelled" && link.resultingInvoice?.status !== "paid") await cancelVpsPaymentLinkAction(id);
+  const link = await db.query.pgVpsPaymentLink.findFirst({
+    where: eq(pgVpsPaymentLink.id, id),
+    with: { resultingInvoice: true },
+  });
+  if (
+    link &&
+    link.status !== "cancelled" &&
+    link.resultingInvoice?.status !== "paid"
+  )
+    await cancelVpsPaymentLinkAction(id);
   await db.delete(pgVpsPaymentLink).where(eq(pgVpsPaymentLink.id, id));
 
   revalidatePath("/admin/vps-plans/payment-links");

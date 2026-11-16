@@ -13,6 +13,7 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
+import { hasAreaAccess } from "@/lib/permissions/access";
 import {
   getBoletoEnabledAction,
   getPixAllowAllDurationsAction,
@@ -29,7 +30,8 @@ const FIFTEEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000;
 
 export default async function AdminVpsPlansPage() {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "view")))
+    redirect("/home");
 
   const plans = await getVpsPlanSubscriptionsAction();
   const pixAllowAllDurations = await getPixAllowAllDurationsAction();

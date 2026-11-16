@@ -7,6 +7,7 @@ import { PageBackButton } from "@/components/layouts/components/PageBackButton";
 import Sidebar from "@/components/layouts/components/Sidebar";
 import Topbar from "@/components/layouts/components/Topbar";
 import { getUser } from "@/lib/auth";
+import { hasAnyAdminArea } from "@/lib/permissions/access";
 import { canAccessSiteBuilder } from "@/lib/site-builder/access";
 import { RenewalPendingBanner } from "./components";
 
@@ -25,6 +26,8 @@ export default async function AuthLayout({
 }) {
   const user = await getUser();
   if (!user) redirect("/login");
+  // Usuário de equipe com alguma área de administração (admin completo já tem o botão por `isAdmin`).
+  const hasAdminAreas = !user.isAdmin && (await hasAnyAdminArea(user));
 
   return (
     <div className="flex max-h-screen min-h-screen overflow-hidden bg-background">
@@ -38,12 +41,14 @@ export default async function AuthLayout({
       <AdminThemeSync />
       <Sidebar
         canAccessSiteBuilder={canAccessSiteBuilder(user)}
+        hasAdminAreas={hasAdminAreas}
         isAdmin={user.isAdmin || false}
       />
       <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
         <ImpersonationBanner />
         <Topbar
           canAccessSiteBuilder={canAccessSiteBuilder(user)}
+          hasAdminAreas={hasAdminAreas}
           isAdmin={user.isAdmin || false}
         />
 

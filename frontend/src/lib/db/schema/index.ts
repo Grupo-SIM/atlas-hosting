@@ -18,6 +18,7 @@ export * from "./tables/template-exclusivity";
 export * from "./tables/template-override";
 export * from "./tables/tokens";
 export * from "./tables/user";
+export * from "./tables/user-access";
 export * from "./tables/voucher";
 export * from "./tables/vps";
 export * from "./tables/vps-payment-link";

@@ -10,9 +10,12 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUser } from "@/lib/auth";
+import { hasAreaAccess } from "@/lib/permissions/access";
 import { toBrl } from "@/lib/utils";
 import { getAllUsersWithBalanceAction } from "./actions";
 import { getUserClientStatus } from "./status";
+import { TeamManager } from "./TeamManager";
+import { listTeamUsers } from "./team-actions";
 import { UsersTable } from "./UsersTable";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +23,11 @@ export const metadata: Metadata = { title: "Usuários — Admin" };
 
 export default async function AdminUsersPage() {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_users", "view"))) redirect("/home");
 
   const users = await getAllUsersWithBalanceAction();
+  // Só aparece para quem edita Usuários (admin completo ou usuário de equipe com esse acesso).
+  const team = await listTeamUsers();
 
   const statuses = users.map(getUserClientStatus);
   const active = statuses.filter(s => s === "active").length;
@@ -46,6 +51,8 @@ export default async function AdminUsersPage() {
           </span>
         </div>
       </div>
+
+      {team ? <TeamManager levels={team.levels} rows={team.rows} /> : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
         <Card>

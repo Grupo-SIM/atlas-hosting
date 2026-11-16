@@ -21,9 +21,12 @@ import {
 
 export default function Sidebar({
   canAccessSiteBuilder = false,
+  hasAdminAreas = false,
   isAdmin,
 }: {
   canAccessSiteBuilder?: boolean;
+  /** Usuário de equipe com acesso a alguma área de administração: mostra o botão do painel, sem virar admin. */
+  hasAdminAreas?: boolean;
   isAdmin: boolean;
 }) {
   const [isCompact, setIsCompact] = useState(true);
@@ -31,7 +34,7 @@ export default function Sidebar({
   /** A sidebar é sempre a mesma; o admin só ganha a porta de entrada do painel. */
   const filteredNavigation: NavigationItem[] = [
     ...getClientNavigation({ canAccessSiteBuilder, isAdmin }),
-    ...(isAdmin ? [adminEntryItem] : []),
+    ...(isAdmin || hasAdminAreas ? [adminEntryItem] : []),
   ];
 
   return (

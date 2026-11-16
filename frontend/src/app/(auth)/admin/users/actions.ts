@@ -5,13 +5,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { classifySubscriptions, type BillingMethod } from "./subscription-status";
 import {
   pgAffiliateCommission,
   pgOrganizationDomains,
   pgUser,
   pgVpsSubscription,
 } from "@/lib/db/schema";
+import { hasAreaAccess } from "@/lib/permissions/access";
+import {
+  type BillingMethod,
+  classifySubscriptions,
+} from "./subscription-status";
 
 export interface UserRow {
   id: string;
@@ -31,7 +35,7 @@ export interface UserRow {
 
 export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_users", "view"))) redirect("/home");
 
   const [users, commissionTotals, activeSubscriptions, activeDomains] =
     await Promise.all([
@@ -49,9 +53,9 @@ export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
       db
         .select({
           createdAt: pgVpsSubscription.createdAt,
+          nextChargeDate: pgVpsSubscription.nextChargeDate,
           paymentMethod: pgVpsSubscription.paymentMethod,
           status: pgVpsSubscription.status,
-          nextChargeDate: pgVpsSubscription.nextChargeDate,
           userId: pgVpsSubscription.userId,
         })
         .from(pgVpsSubscription)
@@ -94,7 +98,7 @@ export async function getAllUsersWithBalanceAction(): Promise<UserRow[]> {
 
 export async function suspendUserAction(id: string): Promise<void> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_users", "edit"))) redirect("/home");
   if (admin.id === id) return;
 
   const target = await db.query.pgUser.findFirst({
@@ -113,7 +117,7 @@ export async function suspendUserAction(id: string): Promise<void> {
 
 export async function reactivateUserAction(id: string): Promise<void> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_users", "edit"))) redirect("/home");
 
   await db
     .update(pgUser)

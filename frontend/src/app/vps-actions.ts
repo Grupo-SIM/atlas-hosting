@@ -11,6 +11,7 @@ import {
   pgVpsServers,
   pgVpsSubscription,
 } from "@/lib/db/schema";
+import { hasAreaAccess } from "@/lib/permissions/access";
 
 /**
  * Registra uma nova VPS manualmente para um usuário.
@@ -21,12 +22,12 @@ export async function registerVpsAction(
   name: string,
   ip: string,
   os?: string,
-  vpsSubscriptionId?: string,
+  vpsSubscriptionId?: string
 ) {
   const admin = await getUser();
-  if (!admin?.isAdmin)
+  if (!(await hasAreaAccess(admin, "admin_vps", "edit")))
     throw new Error(
-      "Não autorizado. Apenas administradores podem registrar novas VPS.",
+      "Não autorizado. Apenas administradores podem registrar novas VPS."
     );
 
   let targetUserId = userIdOrEmail;
@@ -43,19 +44,19 @@ export async function registerVpsAction(
       columns: { id: true },
       where: and(
         eq(pgVpsSubscription.id, vpsSubscriptionId),
-        eq(pgVpsSubscription.userId, targetUserId),
+        eq(pgVpsSubscription.userId, targetUserId)
       ),
     });
 
     if (!subscription)
       throw new Error(
-        "Assinatura VPS não encontrada ou não pertence ao usuário selecionado.",
+        "Assinatura VPS não encontrada ou não pertence ao usuário selecionado."
       );
   }
 
   const token = `atlas_${randomBytes(24).toString("hex")}`;
 
-  await db.transaction(async (tx) => {
+  await db.transaction(async tx => {
     const [vpsNode] = await tx
       .insert(pgVpsServers)
       .values({
@@ -111,7 +112,7 @@ export async function getVpsMetricsAction(vpsId: string, limit = 20) {
  */
 export async function refreshVpsDataAction(vpsId?: string) {
   console.log(
-    `[VPS-Action] refreshVpsDataAction called, vpsId=${vpsId ?? "NONE"}`,
+    `[VPS-Action] refreshVpsDataAction called, vpsId=${vpsId ?? "NONE"}`
   );
 
   if (vpsId) {
@@ -128,7 +129,7 @@ export async function refreshVpsDataAction(vpsId?: string) {
       where: eq(pgVpsServers.id, vpsId),
     });
     console.log(
-      `[VPS-Action] DB confirm: forceRefresh=${check?.forceRefresh} for vpsId=${vpsId}`,
+      `[VPS-Action] DB confirm: forceRefresh=${check?.forceRefresh} for vpsId=${vpsId}`
     );
   }
 
@@ -142,7 +143,8 @@ export async function refreshVpsDataAction(vpsId?: string) {
  */
 export async function getAllVpsServersAction() {
   const admin = await getUser();
-  if (!admin?.isAdmin) throw new Error("Não autorizado.");
+  if (!(await hasAreaAccess(admin, "admin_vps", "view")))
+    throw new Error("Não autorizado.");
 
   return await db.query.pgVpsServers.findMany({
     orderBy: [desc(pgVpsServers.createdAt)],
@@ -157,7 +159,8 @@ export async function getAllVpsServersAction() {
  */
 export async function getAllUsersAction() {
   const admin = await getUser();
-  if (!admin?.isAdmin) throw new Error("Não autorizado.");
+  if (!(await hasAreaAccess(admin, "admin_vps", "view")))
+    throw new Error("Não autorizado.");
 
   return await db.query.pgUser.findMany({
     columns: {
@@ -171,14 +174,15 @@ export async function getAllUsersAction() {
 
 export async function getVpsSubscriptionsForUserAction(userId: string) {
   const admin = await getUser();
-  if (!admin?.isAdmin) throw new Error("Não autorizado.");
+  if (!(await hasAreaAccess(admin, "admin_vps", "view")))
+    throw new Error("Não autorizado.");
 
   return await db.query.pgVpsSubscription.findMany({
     columns: {
+      createdAt: true,
       id: true,
       planId: true,
       planType: true,
-      createdAt: true,
       status: true,
       vpsNodeId: true,
     },
@@ -192,7 +196,8 @@ export async function getVpsSubscriptionsForUserAction(userId: string) {
  */
 export async function deleteVpsAction(vpsId: string) {
   const admin = await getUser();
-  if (!admin?.isAdmin) throw new Error("Não autorizado.");
+  if (!(await hasAreaAccess(admin, "admin_vps", "edit")))
+    throw new Error("Não autorizado.");
 
   await db.delete(pgVpsServers).where(eq(pgVpsServers.id, vpsId));
 

@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getUser } from "@/lib/auth";
+import { hasAreaAccess } from "@/lib/permissions/access";
 import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { SELLABLE_VPS_PLANS } from "@/lib/vps-sellable-plans";
 import {
@@ -41,7 +42,8 @@ const STATUS_LABEL: Record<
 
 export default async function VpsPaymentLinksPage() {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "view")))
+    redirect("/home");
 
   const [links, customers] = await Promise.all([
     getVpsPaymentLinksAction(),
@@ -57,7 +59,11 @@ export default async function VpsPaymentLinksPage() {
           Links de Pagamento
         </h2>
         <p className="text-muted-foreground">
-          Selecione um plano e defina preço e período contratados. Criar link não cobra; checkout gera fatura. Pagamento confirmado cria assinatura e inicia provisionamento, acompanhados em Planos VPS e Usuários. Cartão com recorrência ativa renova automaticamente; PIX e boleto exigem pagamento manual.
+          Selecione um plano e defina preço e período contratados. Criar link
+          não cobra; checkout gera fatura. Pagamento confirmado cria assinatura
+          e inicia provisionamento, acompanhados em Planos VPS e Usuários.
+          Cartão com recorrência ativa renova automaticamente; PIX e boleto
+          exigem pagamento manual.
         </p>
       </div>
 

@@ -6,11 +6,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { pgInvoice, pgSystemConfig, pgVpsSubscription } from "@/lib/db/schema";
+import { pgInvoice, pgVpsSubscription } from "@/lib/db/schema";
+import { hasAreaAccess } from "@/lib/permissions/access";
 import { savePaymentSettings } from "@/lib/server/payment-settings";
+import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { daysUntilRenewal } from "@/lib/server/subscriptions/renewal-policy";
 import { notifySubscriptionExpiring } from "@/lib/server/subscriptions/renewal-reminder";
-import { getServerPublicBaseUrl } from "@/lib/server/public-base-url";
 import { firstRenewalDate } from "@/lib/vps/renewal-date";
 
 export interface VpsPlanRow {
@@ -31,7 +32,8 @@ export interface VpsPlanRow {
 
 export async function getVpsPlanSubscriptionsAction(): Promise<VpsPlanRow[]> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "view")))
+    redirect("/home");
 
   const subs = await db.query.pgVpsSubscription.findMany({
     orderBy: [desc(pgVpsSubscription.createdAt)],
@@ -64,7 +66,8 @@ export async function getVpsPlanSubscriptionsAction(): Promise<VpsPlanRow[]> {
 
 export async function suspendVpsSubscriptionAction(id: string): Promise<void> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "edit")))
+    redirect("/home");
 
   await db
     .update(pgVpsSubscription)
@@ -78,7 +81,8 @@ export async function reactivateVpsSubscriptionAction(
   id: string
 ): Promise<void> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "edit")))
+    redirect("/home");
 
   const sub = await db.query.pgVpsSubscription.findFirst({
     where: eq(pgVpsSubscription.id, id),
@@ -108,7 +112,8 @@ export async function reactivateVpsSubscriptionAction(
 
 export async function cancelVpsSubscriptionAction(id: string): Promise<void> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "edit")))
+    redirect("/home");
 
   await db
     .update(pgVpsSubscription)
@@ -124,7 +129,8 @@ export async function cancelVpsSubscriptionAction(id: string): Promise<void> {
 
 export async function getPixAllowAllDurationsAction(): Promise<boolean> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "view")))
+    redirect("/home");
 
   const config = await db.query.pgSystemConfig.findFirst();
   return config?.pixAllowAllDurations ?? false;
@@ -134,7 +140,8 @@ export async function setPixAllowAllDurationsAction(
   enabled: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const admin = await getUser();
-  if (!admin?.isAdmin) return { ok: false, error: "Acesso restrito a administradores." };
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "edit")))
+    return { error: "Acesso restrito a administradores.", ok: false };
 
   try {
     await savePaymentSettings({ pixAllowAllDurations: enabled });
@@ -142,21 +149,25 @@ export async function setPixAllowAllDurationsAction(
     return { ok: true };
   } catch (error) {
     console.error("[payment-settings] PIX save failed", error);
-    return { ok: false, error: "Erro ao salvar configuração de PIX." };
+    return { error: "Erro ao salvar configuração de PIX.", ok: false };
   }
 }
 
 export async function getBoletoEnabledAction(): Promise<boolean> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "view")))
+    redirect("/home");
 
   const config = await db.query.pgSystemConfig.findFirst();
   return config?.boletoEnabled ?? false;
 }
 
-export async function setBoletoEnabledAction(enabled: boolean): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function setBoletoEnabledAction(
+  enabled: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const admin = await getUser();
-  if (!admin?.isAdmin) return { ok: false, error: "Acesso restrito a administradores." };
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "edit")))
+    return { error: "Acesso restrito a administradores.", ok: false };
 
   try {
     await savePaymentSettings({ boletoEnabled: enabled });
@@ -164,7 +175,7 @@ export async function setBoletoEnabledAction(enabled: boolean): Promise<{ ok: tr
     return { ok: true };
   } catch (error) {
     console.error("[payment-settings] Boleto save failed", error);
-    return { ok: false, error: "Erro ao salvar configuração de boleto." };
+    return { error: "Erro ao salvar configuração de boleto.", ok: false };
   }
 }
 
@@ -173,11 +184,12 @@ export async function backfillVpsSubscriptionsAction(): Promise<{
   skipped: number;
 }> {
   const admin = await getUser();
-  if (!admin?.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "edit")))
+    redirect("/home");
 
   // IDs de faturas que já têm subscription vinculada
   const existingSubs = await db.query.pgVpsSubscription.findMany({
-    columns: { lastInvoiceId: true, initialInvoiceId: true },
+    columns: { initialInvoiceId: true, lastInvoiceId: true },
   });
   const linkedInvoiceIds = existingSubs
     .flatMap(s => [s.lastInvoiceId, s.initialInvoiceId])
@@ -203,7 +215,10 @@ export async function backfillVpsSubscriptionsAction(): Promise<{
 
   for (const inv of invoices) {
     const meta = inv.metadata as any;
-    if (meta?.isRenewal) { skipped++; continue; }
+    if (meta?.isRenewal) {
+      skipped++;
+      continue;
+    }
     const config = meta?.config || {};
     const intervalMonths = Number.parseInt(config.duration || "1", 10);
     const planType =
@@ -221,20 +236,28 @@ export async function backfillVpsSubscriptionsAction(): Promise<{
     );
 
     try {
-      await db.insert(pgVpsSubscription).values({
-        amountBrl: inv.originalAmount ?? inv.amount,
-        initialInvoiceId: inv.id,
-        config,
-        failureCount: 0,
-        intervalMonths,
-        lastInvoiceId: inv.id,
-        nextChargeDate,
-        orgId: inv.orgId,
-        planId: meta?.vpsId || "10",
-        planType: planType as any,
-        status: "active",
-        userId: inv.userId,
-      }).onConflictDoNothing({ target: pgVpsSubscription.initialInvoiceId }).returning({ id: pgVpsSubscription.id }).then(rows => { if (rows.length) created++; else skipped++; });
+      await db
+        .insert(pgVpsSubscription)
+        .values({
+          amountBrl: inv.originalAmount ?? inv.amount,
+          config,
+          failureCount: 0,
+          initialInvoiceId: inv.id,
+          intervalMonths,
+          lastInvoiceId: inv.id,
+          nextChargeDate,
+          orgId: inv.orgId,
+          planId: meta?.vpsId || "10",
+          planType: planType as any,
+          status: "active",
+          userId: inv.userId,
+        })
+        .onConflictDoNothing({ target: pgVpsSubscription.initialInvoiceId })
+        .returning({ id: pgVpsSubscription.id })
+        .then(rows => {
+          if (rows.length) created++;
+          else skipped++;
+        });
     } catch {
       skipped++;
     }
@@ -246,7 +269,8 @@ export async function backfillVpsSubscriptionsAction(): Promise<{
 
 export async function sendRenewalReminderAction(id: string) {
   const admin = await getUser();
-  if (!admin?.isAdmin) return { status: "error", message: "Acesso não autorizado." } as const;
+  if (!(await hasAreaAccess(admin, "admin_vps_plans", "edit")))
+    return { message: "Acesso não autorizado.", status: "error" } as const;
 
   try {
     const sub = await db.query.pgVpsSubscription.findFirst({
@@ -254,18 +278,35 @@ export async function sendRenewalReminderAction(id: string) {
       with: { user: true },
     });
     if (!sub || sub.status !== "active" || !sub.user?.email) {
-      return { status: "error", message: "Assinatura indisponível para envio de lembrete." } as const;
+      return {
+        message: "Assinatura indisponível para envio de lembrete.",
+        status: "error",
+      } as const;
     }
     const daysLeft = daysUntilRenewal(sub.nextChargeDate);
     if (daysLeft < 1) {
-      return { status: "error", message: "A data de renovação precisa ser futura." } as const;
+      return {
+        message: "A data de renovação precisa ser futura.",
+        status: "error",
+      } as const;
     }
-    const sent = await notifySubscriptionExpiring(sub, daysLeft, getServerPublicBaseUrl(), { allowResend: true });
-    return { status: sent ? "success" : "info", message: sent
-      ? "Lembrete enviado ao cliente."
-      : "Envio ignorado: assinatura alterada ou pagamento já realizado/em processamento." } as const;
+    const sent = await notifySubscriptionExpiring(
+      sub,
+      daysLeft,
+      getServerPublicBaseUrl(),
+      { allowResend: true }
+    );
+    return {
+      message: sent
+        ? "Lembrete enviado ao cliente."
+        : "Envio ignorado: assinatura alterada ou pagamento já realizado/em processamento.",
+      status: sent ? "success" : "info",
+    } as const;
   } catch (error) {
     console.error(`[RENEWAL-EMAIL] Falha na assinatura ${id}:`, error);
-    return { status: "error", message: "Não foi possível enviar o lembrete. Tente novamente." } as const;
+    return {
+      message: "Não foi possível enviar o lembrete. Tente novamente.",
+      status: "error",
+    } as const;
   }
 }

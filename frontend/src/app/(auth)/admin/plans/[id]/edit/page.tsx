@@ -13,9 +13,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; // Added Label
-import { requireAdminPage } from "@/lib/auth/admin";
 import { db } from "@/lib/db";
 import { type Plan, pgPlan } from "@/lib/db/schema"; // Ensured Plan type is imported
+import { requireAreaPage } from "@/lib/permissions/access";
 
 interface EditPlanPageProps {
   params: Promise<{ id: string }>;
@@ -24,7 +24,7 @@ interface EditPlanPageProps {
 export default async function EditPlanPage({
   params: _params,
 }: EditPlanPageProps) {
-  await requireAdminPage();
+  await requireAreaPage("admin_plans", "view");
   const params = await _params;
 
   const plan = await db.query.pgPlan.findFirst({

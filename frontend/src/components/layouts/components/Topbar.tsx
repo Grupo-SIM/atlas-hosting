@@ -25,11 +25,13 @@ export default async function Topbar({
   children,
   canAccessSiteBuilder,
   className,
+  hasAdminAreas,
   isAdmin,
   ...props
 }: PropsWithChildren<
   HTMLAttributes<HTMLHeadElement> & {
     canAccessSiteBuilder?: boolean;
+    hasAdminAreas?: boolean;
     isAdmin?: boolean;
   }
 >) {
@@ -45,6 +47,7 @@ export default async function Topbar({
     >
       <MobileSidebarSheet
         canAccessSiteBuilder={canAccessSiteBuilder}
+        hasAdminAreas={hasAdminAreas}
         isAdmin={isAdmin ?? false}
       />
       <div className="flex flex-1 items-center justify-end gap-3">

@@ -19,9 +19,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { requireAdminPage } from "@/lib/auth/admin";
 import { db } from "@/lib/db";
 import { pgAffiliateCommission, pgInvoice, pgUser } from "@/lib/db/schema";
+import { requireAreaPage } from "@/lib/permissions/access";
 import { AffiliateSalesTable } from "./components";
 import { toBrl } from "./components/format-money";
 import {
@@ -36,7 +36,7 @@ interface PageProps {
 }
 
 export default async function AffiliateDetailsPage({ params }: PageProps) {
-  await requireAdminPage();
+  await requireAreaPage("admin_affiliates", "view");
   const { id } = await params;
 
   const affiliate = await db.query.pgUser.findFirst({

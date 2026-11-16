@@ -13,6 +13,7 @@ import AdminDeleteVpsButton from "@/components/vps/AdminDeleteVpsButton";
 import AdminVpsAddForm from "@/components/vps/AdminVpsAddForm";
 import CopyTokenButton from "@/components/vps/CopyTokenButton";
 import { getUser } from "@/lib/auth";
+import { hasAreaAccess } from "@/lib/permissions/access";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ export default async function AdminVpsPage() {
   const admin = await getUser();
 
   // Segurança extra em nível de servidor
-  if (!admin?.isAdmin) {
+  if (!(await hasAreaAccess(admin, "admin_vps", "view"))) {
     redirect("/home");
   }
 

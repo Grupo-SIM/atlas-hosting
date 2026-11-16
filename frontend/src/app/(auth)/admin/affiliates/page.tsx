@@ -21,13 +21,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { requireAdminPage } from "@/lib/auth/admin";
 import { db } from "@/lib/db";
 import {
   pgAffiliateCommission,
   pgUser,
   pgWithdrawalRequests,
 } from "@/lib/db/schema";
+import { requireAreaPage } from "@/lib/permissions/access";
 
 import { AffiliateReportButton } from "./components";
 
@@ -40,7 +40,7 @@ function toBrl(value: number) {
 }
 
 export default async function AdminAffiliatesPage() {
-  await requireAdminPage();
+  await requireAreaPage("admin_affiliates", "view");
   // Buscar usuários que indicaram alguém ou tem código de afiliado.
   // Sem join com faturas: ele multiplicava o afiliado por cada fatura do indicado
   // e inflava a contagem (3 indicados com 8 faturas viravam "10 indicações").

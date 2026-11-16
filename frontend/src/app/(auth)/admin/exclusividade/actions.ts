@@ -10,6 +10,7 @@ import {
   pgTemplateExclusivity,
   pgTemplateExclusivitySetting,
 } from "@/lib/db/schema";
+import { hasAreaAccess } from "@/lib/permissions/access";
 import { savePaymentSettings } from "@/lib/server/payment-settings";
 import { round2 } from "@/lib/template-exclusivity/rules";
 
@@ -19,7 +20,7 @@ const PATH = "/admin/exclusividade";
 
 async function assertAdmin(): Promise<boolean> {
   const user = await getRealUser();
-  return Boolean(user.isAdmin);
+  return hasAreaAccess(user, "admin_exclusivity", "edit");
 }
 
 /** Liga/desliga a exclusividade de um template e define o preço anual. */
@@ -99,7 +100,10 @@ export async function saveResaleSettings(input: {
     return { error: "A taxa precisa estar entre 0% e 100%.", ok: false };
   }
   if (!(Number.isFinite(min) && min > 0)) {
-    return { error: "Informe um valor mínimo de venda maior que zero.", ok: false };
+    return {
+      error: "Informe um valor mínimo de venda maior que zero.",
+      ok: false,
+    };
   }
   await savePaymentSettings({
     templateResaleFeePercent: round2(fee),

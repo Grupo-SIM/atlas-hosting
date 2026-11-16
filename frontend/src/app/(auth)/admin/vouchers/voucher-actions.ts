@@ -5,10 +5,12 @@ import { revalidatePath } from "next/cache";
 import { getRealUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pgInvoice, pgVoucher } from "@/lib/db/schema";
+import { hasAreaAccess } from "@/lib/permissions/access";
 
 export async function toggleVoucher(id: string, currentActive: boolean) {
   const user = await getRealUser();
-  if (!user.isAdmin) throw new Error("Acesso restrito a administradores.");
+  if (!(await hasAreaAccess(user, "admin_vouchers", "edit")))
+    throw new Error("Acesso restrito a administradores.");
   await db
     .update(pgVoucher)
     .set({ active: !currentActive })
@@ -19,9 +21,16 @@ export async function toggleVoucher(id: string, currentActive: boolean) {
 
 export async function deleteVoucher(id: string) {
   const user = await getRealUser();
-  if (!user.isAdmin) throw new Error("Acesso restrito a administradores.");
-  const association = await db.query.pgInvoice.findFirst({ where: eq(pgInvoice.voucherId, id), columns: { id: true } });
-  if (association) throw new Error("Voucher possui histórico ou reserva em fatura. Desative para impedir novas aplicações.");
+  if (!(await hasAreaAccess(user, "admin_vouchers", "edit")))
+    throw new Error("Acesso restrito a administradores.");
+  const association = await db.query.pgInvoice.findFirst({
+    columns: { id: true },
+    where: eq(pgInvoice.voucherId, id),
+  });
+  if (association)
+    throw new Error(
+      "Voucher possui histórico ou reserva em fatura. Desative para impedir novas aplicações."
+    );
   await db.delete(pgVoucher).where(eq(pgVoucher.id, id));
 
   revalidatePath("/admin/vouchers");

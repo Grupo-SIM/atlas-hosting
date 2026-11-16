@@ -28,6 +28,7 @@ import {
   pgTemplateProposal,
   pgUser,
 } from "@/lib/db/schema";
+import { hasAreaAccess } from "@/lib/permissions/access";
 import { formatBrl } from "@/lib/template-exclusivity/rules";
 import { getResaleConfig } from "@/lib/template-exclusivity/status";
 import { ResaleSettingsForm, TemplateSettingRow } from "./forms";
@@ -44,7 +45,8 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function AdminExclusivityPage() {
   const admin = await getRealUser();
-  if (!admin.isAdmin) redirect("/home");
+  if (!(await hasAreaAccess(admin, "admin_exclusivity", "view")))
+    redirect("/home");
 
   const [settings, live, openProposals, resale] = await Promise.all([
     db.select().from(pgTemplateExclusivitySetting),
@@ -124,7 +126,9 @@ export default async function AdminExclusivityPage() {
             </TableHeader>
             <TableBody>
               {templates.map(template => {
-                const setting = settings.find(s => s.templateId === template.id);
+                const setting = settings.find(
+                  s => s.templateId === template.id
+                );
                 const owner = live.find(row => row.templateId === template.id);
                 const ownerUser = owner
                   ? owners.find(user => user.id === owner.ownerUserId)
@@ -179,7 +183,9 @@ export default async function AdminExclusivityPage() {
                       {negotiations.length === 0
                         ? "—"
                         : `${negotiations.length} aberta(s)${
-                            negotiations.some(p => p.status === "awaiting_payment")
+                            negotiations.some(
+                              p => p.status === "awaiting_payment"
+                            )
                               ? " · 1 aguardando pagamento"
                               : ""
                           }`}

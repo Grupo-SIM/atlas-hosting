@@ -2,7 +2,6 @@
 
 import type { LoginFormInputs } from "@/components/auth/LoginForm";
 import type { CheckoutFormInputs } from "@/components/checkout/CheckoutForm";
-import { isAdminRequest } from "@/lib/auth/admin";
 import { getOptionalUser, getRealUser, getUser } from "@/lib/auth/index";
 import {
   authenticateUser,
@@ -12,6 +11,7 @@ import {
   generateSessionToken,
   resignupUnverifiedUser,
 } from "@/lib/auth/utils";
+import { requireAreaAction } from "@/lib/permissions/access";
 
 export async function checkIsLoggedIn(): Promise<boolean> {
   const user = await getOptionalUser();
@@ -519,7 +519,7 @@ export async function createPlan(
   prevState: unknown,
   input: Omit<Plan, "id" | "createdAt" | "updatedAt">
 ): Promise<ActionResponse> {
-  if (!(await isAdminRequest())) {
+  if (!(await requireAreaAction("admin_plans", "edit"))) {
     return { message: "Acesso restrito a administradores.", status: "error" };
   }
   try {
@@ -555,7 +555,7 @@ export async function updatePlan(
   id: string,
   values: Partial<Omit<Plan, "id" | "createdAt" | "updatedAt">>
 ): Promise<ActionResponse> {
-  if (!(await isAdminRequest())) {
+  if (!(await requireAreaAction("admin_plans", "edit"))) {
     return { message: "Acesso restrito a administradores.", status: "error" };
   }
   try {
