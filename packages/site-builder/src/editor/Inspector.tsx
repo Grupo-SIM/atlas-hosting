@@ -1696,6 +1696,67 @@ export function Inspector({
           </Section>
         )}
 
+        {(selected.type === "header" ||
+          selected.type === "footer" ||
+          (elPath && menuHit)) &&
+        (!elPath ||
+          ((elLabel === "link" || menuHit) &&
+            !itemMatches.some(m => m.kind === "item"))) ? (
+          <Section
+            defaultOpen={Boolean(elPath)}
+            scope={elPath ? "el" : "block"}
+            title="Menu do site"
+          >
+            <p className="sbe-hint">
+              Mudar aqui vale para o cabeçalho e o rodapé.
+            </p>
+            {selected.type === "footer" && elPath ? (
+              <div className="sbe-list-item">
+                <p className="sbe-hint">
+                  Quer um link diferente só no rodapé, sem mexer no menu do
+                  cabeçalho? Personalize: o rodapé ganha a própria lista de
+                  links, e cada um passa a ter nome e endereço seus.
+                </p>
+                <button
+                  onClick={() =>
+                    onProp(
+                      "menuLinks",
+                      site.menu.map(m => ({ label: m.label, url: m.href }))
+                    )
+                  }
+                  type="button"
+                >
+                  Personalizar os links do rodapé
+                </button>
+              </div>
+            ) : null}
+            {menuActive.length > 0 ? (
+              <>
+                <h4 className="sbe-h">Este link</h4>
+                {menuActive.map(i =>
+                  renderMenuItem(site.menu[i] as MenuItem, i)
+                )}
+                <details className="sbe-more">
+                  <summary>Todos os links do menu</summary>
+                  {site.menu.map((item, i) =>
+                    menuActive.includes(i) ? null : renderMenuItem(item, i)
+                  )}
+                </details>
+              </>
+            ) : (
+              site.menu.map((item, i) => renderMenuItem(item, i))
+            )}
+            <button
+              onClick={() =>
+                onMenu([...site.menu, { href: "/", label: "Novo link" }])
+              }
+              type="button"
+            >
+              + Adicionar link
+            </button>
+          </Section>
+        ) : null}
+
         <Section defaultOpen scope={elPath ? "el" : "block"} title="Cores">
           <ColorRow
             colors={BOX_PALETTE}
@@ -1772,66 +1833,6 @@ export function Inspector({
             para não deformar a imagem.
           </p>
         </Section>
-
-        {(selected.type === "header" ||
-          selected.type === "footer" ||
-          (elPath && menuHit)) &&
-        (!elPath ||
-          ((elLabel === "link" || menuHit) && itemMatches.length === 0)) ? (
-          <Section
-            defaultOpen={Boolean(elPath)}
-            scope={elPath ? "el" : "block"}
-            title="Menu do site"
-          >
-            <p className="sbe-hint">
-              Mudar aqui vale para o cabeçalho e o rodapé.
-            </p>
-            {selected.type === "footer" && elPath ? (
-              <div className="sbe-list-item">
-                <p className="sbe-hint">
-                  Quer um link diferente só no rodapé, sem mexer no menu do
-                  cabeçalho? Personalize: o rodapé ganha a própria lista de
-                  links, e cada um passa a ter nome e endereço seus.
-                </p>
-                <button
-                  onClick={() =>
-                    onProp(
-                      "menuLinks",
-                      site.menu.map(m => ({ label: m.label, url: m.href }))
-                    )
-                  }
-                  type="button"
-                >
-                  Personalizar os links do rodapé
-                </button>
-              </div>
-            ) : null}
-            {menuActive.length > 0 ? (
-              <>
-                <h4 className="sbe-h">Este link</h4>
-                {menuActive.map(i =>
-                  renderMenuItem(site.menu[i] as MenuItem, i)
-                )}
-                <details className="sbe-more">
-                  <summary>Todos os links do menu</summary>
-                  {site.menu.map((item, i) =>
-                    menuActive.includes(i) ? null : renderMenuItem(item, i)
-                  )}
-                </details>
-              </>
-            ) : (
-              site.menu.map((item, i) => renderMenuItem(item, i))
-            )}
-            <button
-              onClick={() =>
-                onMenu([...site.menu, { href: "/", label: "Novo link" }])
-              }
-              type="button"
-            >
-              + Adicionar link
-            </button>
-          </Section>
-        ) : null}
 
         <Section scope={elPath ? "el" : "block"} title="Posição">
           {(["x", "y"] as const).map(axis => {

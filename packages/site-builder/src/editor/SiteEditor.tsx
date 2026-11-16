@@ -313,7 +313,7 @@ export function hintOf(
     itemHref,
     levels,
     parentText:
-      parent && !parent.classList.contains("sb-block")
+      parent && !parent.classList.contains("sb-block") && el.tagName !== "A"
         ? (parent.textContent ?? "")
         : undefined,
     repeat,
