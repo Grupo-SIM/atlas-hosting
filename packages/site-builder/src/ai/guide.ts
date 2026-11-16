@@ -40,7 +40,7 @@ Quatro seções:
 - **Páginas**: nova página, e para cada uma título, endereço (slug), status (rascunho/publicado) e excluir. A home não pode ser excluída nem mudar de endereço.
 - **Posts**: novo post; título, slug, categoria, resumo, imagem de capa, data de publicação, status.
 - **Categorias**: criar, renomear, excluir (posts da categoria ficam sem categoria).
-- **Menu**: links do menu do site (nome + endereço, com subitens). Vale para cabeçalho e rodapé.
+- **Menu**: links do menu do site (nome + endereço, com subitens). Vale para cabeçalho e rodapé. **Clicar num link do menu** (cabeçalho ou rodapé) abre o painel "Menu do site" com **aquele link em primeiro lugar** (nome e endereço editáveis) e os demais recolhidos. No **Rodapé**, o botão **"Personalizar os links do rodapé"** cria uma lista só do rodapé (campo "Links do menu só do rodapé"): daí cada link do rodapé tem nome e endereço próprios, sem mexer no cabeçalho. O rodapé também tem "Links de baixo" (ao lado do copyright; vazio = Termos de Uso e Política de Privacidade do site), "Links extras no menu do rodapé" e "Redes sociais", cada um com seu endereço.
 ### Aba IA
 Este chat. Conecta a assinatura Claude do próprio usuário e edita o site a pedido. Dá para anexar imagens à mensagem (até 4, 5 MB cada, PNG/JPG/WebP/GIF): colar com Ctrl+V, clicar no clipe ao lado do campo ou arrastar e soltar no painel. A IA enxerga a imagem e, quando ela foi guardada no site, pode usá-la num bloco (ex.: "coloque esta imagem no hero").
 

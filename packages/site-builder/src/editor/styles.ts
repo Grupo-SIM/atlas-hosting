@@ -99,6 +99,8 @@ export const editorCss = `
 .sbe-num{width:44px!important;height:28px;padding:0 6px!important;font-size:12px;text-align:center}
 .sbe-sm{height:28px;padding:0 8px!important;font-size:12px}
 .sbe-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;height:30px;padding:0 10px!important}
+.sbe-more{margin-top:4px}
+.sbe-more>summary{cursor:pointer;font-size:12px;color:#55524c;padding:6px 0}
 .sbe-colorrow{display:flex;align-items:center;gap:8px}
 .sbe-colorrow input[type=color]{flex:none;width:36px;height:30px;padding:0!important;border:1px solid rgba(0,0,0,.18)!important;border-radius:8px;background:none;cursor:pointer}
 .sbe-colorrow .sbe-mono{flex:1;min-width:0}

@@ -304,8 +304,12 @@ const footer = defineBlock(
     email: str(),
     extraLinks: z.array(z.object({ label: str(), url: str("#") })).default([]),
     helpText: str(),
+    /** Links de baixo (ao lado do copyright). Vazio = Termos de Uso e Política de Privacidade do site. */
+    legalLinks: z.array(z.object({ label: str(), url: str("#") })).default([]),
     logo: str(),
     logoText: str("Meu Site"),
+    /** Links da coluna do menu só neste rodapé. Vazio = o mesmo menu do cabeçalho (`site.menu`). */
+    menuLinks: z.array(z.object({ label: str(), url: str("#") })).default([]),
     menuTitle: str("Menu"),
     socials: z.array(z.object({ label: str(), url: str("#") })).default([]),
     socialsTitle: str("Redes Sociais"),
@@ -337,6 +341,25 @@ const footer = defineBlock(
         kind: "list",
         label: "Links extras no menu do rodapé",
       },
+      {
+        itemFields: [
+          { key: "label", kind: "text", label: "Texto" },
+          { key: "url", kind: "url", label: "Link" },
+        ],
+        key: "menuLinks",
+        kind: "list",
+        label: "Links do menu só do rodapé (vazio = o mesmo menu do cabeçalho)",
+      },
+      {
+        itemFields: [
+          { key: "label", kind: "text", label: "Texto" },
+          { key: "url", kind: "url", label: "Link" },
+        ],
+        key: "legalLinks",
+        kind: "list",
+        label:
+          "Links de baixo (vazio = Termos de Uso e Política de Privacidade)",
+      },
       { key: "copyright", kind: "text", label: "Copyright" },
     ],
     group: "layout",
@@ -352,8 +375,19 @@ const footer = defineBlock(
           </div>
           <div>
             {p.menuTitle ? <h4>{p.menuTitle}</h4> : null}
-            {ctx.site.menu.map(item => (
-              <a href={href(ctx, item.href)} key={item.href + item.label}>
+            {(p.menuLinks.length
+              ? p.menuLinks.map(l => ({
+                  href: l.url,
+                  label: l.label,
+                  tab: newTab(l.url),
+                }))
+              : ctx.site.menu.map(m => ({ ...m, tab: {} }))
+            ).map(item => (
+              <a
+                href={href(ctx, item.href)}
+                key={item.href + item.label}
+                {...item.tab}
+              >
                 {item.label}
               </a>
             ))}
@@ -396,15 +430,27 @@ const footer = defineBlock(
         <div className="sb-container sb-footer-bottom">
           <span>{p.copyright}</span>
           <span>
-            {ctx.site.pages
-              .filter(pg =>
-                ["termos-de-uso", "politica-de-privacidade"].includes(pg.slug)
-              )
-              .map(pg => (
-                <a href={href(ctx, `/${pg.slug}/`)} key={pg.id}>
-                  {pg.title}
-                </a>
-              ))}
+            {p.legalLinks.length
+              ? p.legalLinks.map(l => (
+                  <a
+                    href={href(ctx, l.url)}
+                    key={l.url + l.label}
+                    {...newTab(l.url)}
+                  >
+                    {l.label}
+                  </a>
+                ))
+              : ctx.site.pages
+                  .filter(pg =>
+                    ["termos-de-uso", "politica-de-privacidade"].includes(
+                      pg.slug
+                    )
+                  )
+                  .map(pg => (
+                    <a href={href(ctx, `/${pg.slug}/`)} key={pg.id}>
+                      {pg.title}
+                    </a>
+                  ))}
           </span>
         </div>
       </footer>

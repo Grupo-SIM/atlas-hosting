@@ -24,6 +24,7 @@ import {
   HOVER_EFFECTS,
   HOVER_LABELS,
   HOVER_MS,
+  type MenuItem,
   type Post,
   type Site,
 } from "../model/index.js";
@@ -1238,6 +1239,17 @@ export function Inspector({
     );
   })();
 
+  // Quais itens do menu são o link clicado (pelo nome; o endereço desempata quando há nomes repetidos).
+  const menuActive = (() => {
+    if (!(elPath && menuHit)) return [] as number[];
+    const want = norm(focusHint?.value);
+    const byName = site.menu.flatMap((m, i) =>
+      norm(m.label) === want ? [i] : []
+    );
+    const exact = byName.filter(i => site.menu[i]?.href === focusHint?.href);
+    return exact.length ? exact : byName;
+  })();
+
   // Item repetido que não vem de uma lista do bloco: oferece mudar a quantidade (campo `limit`).
   const countField = itemDef?.fields.find(
     f => f.key === "limit" && f.kind === "number"
@@ -1420,6 +1432,48 @@ export function Inspector({
   };
   const fx: Fx = selected.fx?.[elPath ?? ""] ?? {};
   const textPick = (c: string) => set("color", "Cor do texto")(c);
+
+  const renderMenuItem = (item: MenuItem, i: number) => (
+    // biome-ignore lint/suspicious/noArrayIndexKey: itens do menu não têm id
+    <div className="sbe-list-item" key={i}>
+      <label className="sbe-field">
+        <span>Nome do link</span>
+        <input
+          onChange={e =>
+            onMenu(
+              site.menu.map((m, j) =>
+                j === i ? { ...m, label: e.target.value } : m
+              )
+            )
+          }
+          type="text"
+          value={item.label}
+        />
+      </label>
+      <label className="sbe-field">
+        <span>Endereço</span>
+        <input
+          onChange={e =>
+            onMenu(
+              site.menu.map((m, j) =>
+                j === i ? { ...m, href: e.target.value } : m
+              )
+            )
+          }
+          type="text"
+          value={item.href}
+        />
+      </label>
+      <div className="sbe-row">
+        <button
+          onClick={() => onMenu(site.menu.filter((_, j) => j !== i))}
+          type="button"
+        >
+          Remover
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div ref={root} style={{ display: "contents" }}>
@@ -1729,48 +1783,45 @@ export function Inspector({
             scope={elPath ? "el" : "block"}
             title="Menu do site"
           >
-            <p className="sbe-hint">Vale para o cabeçalho e o rodapé.</p>
-            {site.menu.map((item, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: itens do menu não têm id
-              <div className="sbe-list-item" key={i}>
-                <label className="sbe-field">
-                  <span>Nome do link</span>
-                  <input
-                    onChange={e =>
-                      onMenu(
-                        site.menu.map((m, j) =>
-                          j === i ? { ...m, label: e.target.value } : m
-                        )
-                      )
-                    }
-                    type="text"
-                    value={item.label}
-                  />
-                </label>
-                <label className="sbe-field">
-                  <span>Endereço</span>
-                  <input
-                    onChange={e =>
-                      onMenu(
-                        site.menu.map((m, j) =>
-                          j === i ? { ...m, href: e.target.value } : m
-                        )
-                      )
-                    }
-                    type="text"
-                    value={item.href}
-                  />
-                </label>
-                <div className="sbe-row">
-                  <button
-                    onClick={() => onMenu(site.menu.filter((_, j) => j !== i))}
-                    type="button"
-                  >
-                    Remover
-                  </button>
-                </div>
+            <p className="sbe-hint">
+              Mudar aqui vale para o cabeçalho e o rodapé.
+            </p>
+            {selected.type === "footer" && elPath ? (
+              <div className="sbe-list-item">
+                <p className="sbe-hint">
+                  Quer um link diferente só no rodapé, sem mexer no menu do
+                  cabeçalho? Personalize: o rodapé ganha a própria lista de
+                  links, e cada um passa a ter nome e endereço seus.
+                </p>
+                <button
+                  onClick={() =>
+                    onProp(
+                      "menuLinks",
+                      site.menu.map(m => ({ label: m.label, url: m.href }))
+                    )
+                  }
+                  type="button"
+                >
+                  Personalizar os links do rodapé
+                </button>
               </div>
-            ))}
+            ) : null}
+            {menuActive.length > 0 ? (
+              <>
+                <h4 className="sbe-h">Este link</h4>
+                {menuActive.map(i =>
+                  renderMenuItem(site.menu[i] as MenuItem, i)
+                )}
+                <details className="sbe-more">
+                  <summary>Todos os links do menu</summary>
+                  {site.menu.map((item, i) =>
+                    menuActive.includes(i) ? null : renderMenuItem(item, i)
+                  )}
+                </details>
+              </>
+            ) : (
+              site.menu.map((item, i) => renderMenuItem(item, i))
+            )}
             <button
               onClick={() =>
                 onMenu([...site.menu, { href: "/", label: "Novo link" }])

@@ -5,6 +5,16 @@ em `packages/site-builder`; o Atlas só tem as telas e a infraestrutura (banco, 
 DNS, deploy) em `frontend/src/app/(auth)/criador-de-sites/` e `frontend/src/lib/site-builder/`.
 Leia também [o guia de scaffolding](project-scaffolding.md) antes de mexer em exports ou Turbo.
 
+## Links do menu e do rodapé
+
+O menu do site (`site.menu`) alimenta o cabeçalho e o rodapé. Clicar num link do menu abre "Menu do site" com **aquele** item em
+primeiro lugar (`menuActive` no `Inspector`: casa pelo nome, o endereço desempata nomes repetidos) e os outros recolhidos.
+O bloco `footer` (`blocks/definitions.tsx`) tem listas próprias: `menuLinks` (coluna do menu; vazia = usa `site.menu`),
+`legalLinks` (links de baixo; vazia = páginas `termos-de-uso` e `politica-de-privacidade`), `extraLinks` e `socials`. O botão
+**Personalizar os links do rodapé** copia `site.menu` para `menuLinks`; a partir daí clicar num link do rodapé abre o item da
+lista (nome + endereço), pelo `matchItem` de sempre. Links externos de `menuLinks`/`legalLinks` abrem em nova aba.
+Sem `menuLinks`/`legalLinks` o HTML do rodapé é o mesmo de antes.
+
 ## Cores do item no painel
 
 Seção **Cores** (aberta por padrão no `Inspector`) para qualquer bloco/item selecionado: mostra de cara o fundo e a cor do texto
