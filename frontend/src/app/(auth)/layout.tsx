@@ -7,7 +7,7 @@ import { PageBackButton } from "@/components/layouts/components/PageBackButton";
 import Sidebar from "@/components/layouts/components/Sidebar";
 import Topbar from "@/components/layouts/components/Topbar";
 import { getUser } from "@/lib/auth";
-import { hasAnyAdminArea } from "@/lib/permissions/access";
+import { hasAnyAdminArea, hasAreaAccess } from "@/lib/permissions/access";
 import { canAccessSiteBuilder } from "@/lib/site-builder/access";
 import { RenewalPendingBanner } from "./components";
 
@@ -28,6 +28,10 @@ export default async function AuthLayout({
   if (!user) redirect("/login");
   // Usuário de equipe com alguma área de administração (admin completo já tem o botão por `isAdmin`).
   const hasAdminAreas = !user.isAdmin && (await hasAnyAdminArea(user));
+  // Quem o master liberou para editar templates também vê o Criador de Sites no menu.
+  const showBuilder =
+    canAccessSiteBuilder(user) ||
+    (await hasAreaAccess(user, "admin_templates", "view"));
 
   return (
     <div className="flex max-h-screen min-h-screen overflow-hidden bg-background">
@@ -40,14 +44,14 @@ export default async function AuthLayout({
       />
       <AdminThemeSync />
       <Sidebar
-        canAccessSiteBuilder={canAccessSiteBuilder(user)}
+        canAccessSiteBuilder={showBuilder}
         hasAdminAreas={hasAdminAreas}
         isAdmin={user.isAdmin || false}
       />
       <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
         <ImpersonationBanner />
         <Topbar
-          canAccessSiteBuilder={canAccessSiteBuilder(user)}
+          canAccessSiteBuilder={showBuilder}
           hasAdminAreas={hasAdminAreas}
           isAdmin={user.isAdmin || false}
         />

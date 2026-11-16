@@ -5,7 +5,10 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { pgBuilderTemplateOverride } from "@/lib/db/schema";
-import { FORBIDDEN_MESSAGE, getMasterAdmin } from "@/lib/site-builder/access";
+import {
+  FORBIDDEN_MESSAGE,
+  getTemplateEditor,
+} from "@/lib/site-builder/access";
 
 type ActionResult = { ok: true } | { error: string; ok: false };
 
@@ -19,7 +22,7 @@ export async function saveTemplateOverride(
   templateId: string,
   content: unknown
 ): Promise<ActionResult> {
-  const user = await getMasterAdmin();
+  const user = await getTemplateEditor();
   if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
   if (!getTemplate(templateId)) {
     return { error: "Template não encontrado.", ok: false };
@@ -55,7 +58,7 @@ export async function saveTemplateOverride(
 export async function resetTemplateOverride(
   templateId: string
 ): Promise<ActionResult> {
-  const user = await getMasterAdmin();
+  const user = await getTemplateEditor();
   if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
   try {
     await db

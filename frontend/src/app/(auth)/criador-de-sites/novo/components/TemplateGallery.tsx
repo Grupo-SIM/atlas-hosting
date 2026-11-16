@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { Crown, Eye, Lock, Search } from "lucide-react";
 import Link from "next/link";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { formatBrl } from "@/lib/template-exclusivity/rules";
 import {
   BuyExclusivityButton,
@@ -50,11 +50,35 @@ function cardFrame(state?: ExclusivityView): string {
   return "border-[#e5e2db] hover:border-[#c9c5bc] hover:shadow-[0_4px_18px_rgba(30,28,24,0.06)]";
 }
 
+const DEV_KEY = "sb-dev-mode";
+
 export default function TemplateGallery({
+  devAvailable = false,
   templates,
 }: {
+  /** Admin master e quem ele liberou: mostra a chave do modo Dev (editar os templates de demonstração). */
+  devAvailable?: boolean;
   templates: GalleryTemplate[];
 }) {
+  // Modo Dev: lembra a escolha neste navegador. Começa desligado (como o cliente vê) e liga depois de ler a escolha.
+  const [dev, setDev] = useState(false);
+  useEffect(() => {
+    if (!devAvailable) return;
+    try {
+      setDev(localStorage.getItem(DEV_KEY) === "1");
+    } catch {
+      // sem acesso ao armazenamento: segue desligado
+    }
+  }, [devAvailable]);
+  const changeDev = (on: boolean) => {
+    setDev(on);
+    try {
+      localStorage.setItem(DEV_KEY, on ? "1" : "0");
+    } catch {
+      // sem acesso ao armazenamento: vale só nesta visita
+    }
+  };
+  const devOn = devAvailable && dev;
   const [search, setSearch] = useState("");
   const [tag, setTag] = useState("Todos");
   const [exclusivity, setExclusivity] = useState<ExclusivityFilter>("all");
@@ -88,6 +112,51 @@ export default function TemplateGallery({
 
   return (
     <div className="flex flex-col gap-6">
+      {devAvailable ? (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#e5e2db] bg-white px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="rounded-md bg-[#1d1c1a] px-2 py-1 font-mono text-[#d6f34a] text-[13px]">
+                {"</>"}
+              </span>
+              <div>
+                <div className="font-medium text-sm">Modo Dev</div>
+                <div className="text-[#6e6b65] text-xs">
+                  Edite os templates de demonstração desta página.
+                </div>
+              </div>
+            </div>
+            <button
+              aria-checked={devOn}
+              aria-label="Modo Dev"
+              className={`relative h-6 w-11 rounded-full transition-colors ${
+                devOn ? "bg-[#1d1c1a]" : "bg-[#d9d6ce]"
+              }`}
+              onClick={() => changeDev(!devOn)}
+              role="switch"
+              type="button"
+            >
+              <span
+                className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all ${
+                  devOn ? "left-[22px]" : "left-0.5"
+                }`}
+              />
+            </button>
+          </div>
+          {devOn ? (
+            <div
+              className="rounded-[14px] border border-[#f1d3a6] bg-[#fdf1e0] px-4 py-3 text-[#92550c] text-sm leading-[1.5]"
+              role="status"
+            >
+              <strong className="font-medium">{"</>"} Modo Dev ligado.</strong>{" "}
+              Estes são <strong>templates de demonstração</strong>: o que você
+              salvar em <em>Editar template</em> vale para todo site criado a
+              partir dele daqui para frente. Sites que já foram criados não
+              mudam. Use <em>Descartar edições</em> para voltar ao original.
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <div className="flex flex-col gap-1.5">
         <h1 className="font-medium text-[28px] tracking-[-0.02em]">
           Escolha um ponto de partida
@@ -154,7 +223,7 @@ export default function TemplateGallery({
       {matches.length > 0 ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-[18px]">
           {matches.map(t => (
-            <TemplateCard key={t.id} template={t} />
+            <TemplateCard dev={devOn} key={t.id} template={t} />
           ))}
         </div>
       ) : (
@@ -166,7 +235,14 @@ export default function TemplateGallery({
   );
 }
 
-function TemplateCard({ template: t }: { template: GalleryTemplate }) {
+function TemplateCard({
+  dev,
+  template: t,
+}: {
+  /** Modo Dev ligado: mostra "Editado" e os botões de editar o template. */
+  dev: boolean;
+  template: GalleryTemplate;
+}) {
   const state = t.exclusivity;
   const locked = state?.kind === "owned_by_other" || state?.kind === "reserved";
 
@@ -179,10 +255,14 @@ function TemplateCard({ template: t }: { template: GalleryTemplate }) {
         className="relative aspect-[4/3] overflow-hidden border-[#ece9e2] border-b"
         style={{ background: t.previewBackground }}
       >
-        <div className={locked ? "absolute inset-0 grayscale-[0.7]" : "absolute inset-0"}>
+        <div
+          className={
+            locked ? "absolute inset-0 grayscale-[0.7]" : "absolute inset-0"
+          }
+        >
           {t.thumb}
         </div>
-        {t.master?.edited ? (
+        {dev && t.master?.edited ? (
           <span className="absolute top-2.5 right-2.5 z-20 rounded-full bg-[#1d1c1a] px-2.5 py-1 text-[11px] text-white">
             Editado
           </span>
@@ -263,7 +343,7 @@ function TemplateCard({ template: t }: { template: GalleryTemplate }) {
             <Eye className="size-[14px]" />
             Pré-visualizar
           </Link>
-          {t.master ? (
+          {dev && t.master ? (
             <MasterTemplateControls
               edited={t.master.edited}
               templateId={t.id}

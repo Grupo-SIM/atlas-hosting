@@ -4,6 +4,7 @@ import {
   covers,
   GRANTABLE_AREAS,
   isGrantableArea,
+  isMasterOnlyArea,
   type Level,
   OUTSIDE_ALL_AREAS,
 } from "./catalog";
@@ -38,7 +39,9 @@ const PROFILES: AccessProfile[] = ["viewer", "editor", "admin"];
  */
 export function normalizeGrant(
   input: GrantInput,
-  actorLevels: Record<string, Level>
+  actorLevels: Record<string, Level>,
+  /** `master`: quem concede é o admin master (único que libera áreas como "Editar templates"). */
+  opts: { master?: boolean } = {}
 ): GrantResult {
   if (!PROFILES.includes(input.profile as AccessProfile)) {
     return { error: "Perfil inválido.", ok: false };
@@ -47,17 +50,33 @@ export function normalizeGrant(
   const actorHas = (area: string, needed: AreaLevel) =>
     covers(actorLevels[area] ?? "none", needed);
 
+  // Áreas que só o master concede: ninguém mais libera, nem outro admin completo.
+  if (!opts.master && input.permissions.some(p => isMasterOnlyArea(p.area))) {
+    return {
+      error: "Só o administrador master libera a edição de templates.",
+      ok: false,
+    };
+  }
+
   if (profile === "admin") {
-    if (!GRANTABLE_AREAS.every(a => actorHas(a.key, "edit"))) {
+    // Administrador = todas as áreas, menos as que só o master concede (essas valem só se ele liberar).
+    if (
+      !GRANTABLE_AREAS.filter(a => !isMasterOnlyArea(a.key)).every(a =>
+        actorHas(a.key, "edit")
+      )
+    ) {
       return {
         error:
           "Você só pode criar um Administrador se editar todas as áreas, inclusive Usuários.",
         ok: false,
       };
     }
+    const extra = input.permissions
+      .filter(p => isMasterOnlyArea(p.area) && actorHas(p.area, "edit"))
+      .map(p => ({ area: p.area, level: "edit" as AreaLevel }));
     return {
       ok: true,
-      value: { accessAll: null, permissions: [], profile },
+      value: { accessAll: null, permissions: extra, profile },
     };
   }
 
@@ -93,7 +112,9 @@ export function normalizeGrant(
     accessAll = wanted(input.accessAll);
     const missing = GRANTABLE_AREAS.filter(
       a =>
-        a.key !== OUTSIDE_ALL_AREAS && !actorHas(a.key, accessAll as AreaLevel)
+        a.key !== OUTSIDE_ALL_AREAS &&
+        !isMasterOnlyArea(a.key) &&
+        !actorHas(a.key, accessAll as AreaLevel)
     );
     if (missing.length > 0) {
       return {

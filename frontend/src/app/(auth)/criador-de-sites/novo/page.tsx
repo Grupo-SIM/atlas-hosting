@@ -6,7 +6,8 @@ import {
 } from "@repo/site-builder";
 import { LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
-import { isMasterAdmin, requireBuilderUser } from "@/lib/site-builder/access";
+import { hasAreaAccess } from "@/lib/permissions/access";
+import { requireBuilderUser } from "@/lib/site-builder/access";
 import { templateThumb } from "@/lib/site-builder/template-thumbs";
 import { getTemplateOverrides } from "@/lib/site-builder/templates";
 import {
@@ -26,7 +27,8 @@ export const metadata: Metadata = {
 
 export default async function NewSitePage() {
   const user = await requireBuilderUser();
-  const master = isMasterAdmin(user);
+  // Admin master e quem ele liberou veem a chave do modo Dev (editar os templates de demonstração).
+  const devAvailable = await hasAreaAccess(user, "admin_templates", "edit");
   const [exclusivity, resale, overrides] = await Promise.all([
     getTemplateExclusivityMap(user.id),
     getResaleConfig(),
@@ -49,7 +51,7 @@ export default async function NewSitePage() {
           ? { ...exclusivity[meta.id], feePercent: resale.feePercent }
           : undefined,
         id: meta.id,
-        master: master ? { edited: meta.id in overrides } : undefined,
+        master: devAvailable ? { edited: meta.id in overrides } : undefined,
         name: meta.name,
         pageCount: meta.pageCount,
         previewBackground: site.theme.bg ?? "#030712",
@@ -84,7 +86,7 @@ export default async function NewSitePage() {
       step={1}
     >
       <div className="flex-1 overflow-auto px-5 pt-9 pb-20 md:px-10">
-        <TemplateGallery templates={templates} />
+        <TemplateGallery devAvailable={devAvailable} templates={templates} />
       </div>
     </Frame>
   );

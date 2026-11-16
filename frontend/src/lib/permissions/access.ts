@@ -9,9 +9,12 @@ import {
   ADMIN_AREA_KEYS,
   type AreaLevel,
   covers,
+  GRANTABLE_AREAS,
+  isMasterOnlyArea,
   type Level,
   resolveLevels,
 } from "./catalog";
+import { isMasterAdmin } from "./master";
 
 export interface TeamAccess {
   accessAll: AreaLevel | null;
@@ -67,27 +70,36 @@ export const loadTeamAccess = cache(
 
 /** Admin completo (`isAdmin`) tem tudo; usuário de equipe tem o que foi liberado; o resto não tem nada. */
 export async function levelFor(
-  user: Pick<User, "id" | "isAdmin">,
+  user: Pick<User, "email" | "id" | "isAdmin">,
   area: string
 ): Promise<Level> {
-  if (user.isAdmin === true) return "edit";
+  if (user.isAdmin === true) {
+    // O que só o master concede (editar templates) nem outro admin completo tem.
+    return isMasterOnlyArea(area) && !isMasterAdmin(user) ? "none" : "edit";
+  }
   const team = await loadTeamAccess(user.id);
   return team?.levels[area] ?? "none";
 }
 
 /** Nível em todas as áreas concedíveis (admin completo = edita tudo). */
 export async function levelsFor(
-  user: Pick<User, "id" | "isAdmin">
+  user: Pick<User, "email" | "id" | "isAdmin">
 ): Promise<Record<string, Level>> {
   if (user.isAdmin === true) {
-    return Object.fromEntries(ADMIN_AREA_KEYS.map(k => [k, "edit" as Level]));
+    const master = isMasterAdmin(user);
+    return Object.fromEntries(
+      GRANTABLE_AREAS.map(a => [
+        a.key,
+        (isMasterOnlyArea(a.key) && !master ? "none" : "edit") as Level,
+      ])
+    );
   }
   const team = await loadTeamAccess(user.id);
   return team?.levels ?? {};
 }
 
 export async function hasAreaAccess(
-  user: Pick<User, "id" | "isAdmin"> | null | undefined,
+  user: Pick<User, "email" | "id" | "isAdmin"> | null | undefined,
   area: string,
   min: AreaLevel = "view"
 ): Promise<boolean> {

@@ -118,4 +118,65 @@ describe("normalizeGrant", () => {
       { area: "admin_vps", level: "edit" },
     ]);
   });
+
+  test("só o master libera Editar templates; qualquer outro é recusado", () => {
+    const ask = {
+      permissions: [{ area: "admin_templates", level: "edit" }],
+      profile: "editor",
+    };
+    expect(run(ask).ok).toBe(false);
+    const ok = normalizeGrant({ accessAll: null, ...ask }, full, {
+      master: true,
+    });
+    expect(ok.ok && ok.value.permissions).toEqual([
+      { area: "admin_templates", level: "edit" },
+    ]);
+  });
+
+  test("com Administrador, Editar templates só entra se o master pedir (e só como edita)", () => {
+    const plain = normalizeGrant(
+      { accessAll: null, permissions: [], profile: "admin" },
+      full,
+      { master: true }
+    );
+    expect(plain.ok && plain.value.permissions).toEqual([]);
+    const withTemplates = normalizeGrant(
+      {
+        accessAll: null,
+        permissions: [{ area: "admin_templates", level: "view" }],
+        profile: "admin",
+      },
+      full,
+      { master: true }
+    );
+    expect(withTemplates.ok && withTemplates.value.permissions).toEqual([
+      { area: "admin_templates", level: "edit" },
+    ]);
+    expect(
+      normalizeGrant(
+        {
+          accessAll: null,
+          permissions: [{ area: "admin_templates", level: "edit" }],
+          profile: "admin",
+        },
+        full
+      ).ok
+    ).toBe(false);
+  });
+
+  test("'todas as áreas' não exige nem concede Editar templates", () => {
+    const noTemplates = { ...limited, admin_templates: "none" as Level };
+    const levels: Record<string, Level> = Object.fromEntries(
+      GRANTABLE_AREAS.map(a => [
+        a.key,
+        a.key === "admin_templates" ? ("none" as Level) : ("edit" as Level),
+      ])
+    );
+    expect(noTemplates.admin_templates).toBe("none");
+    const r = normalizeGrant(
+      { accessAll: "edit", permissions: [], profile: "editor" },
+      levels
+    );
+    expect(r.ok && r.value.accessAll).toBe("edit");
+  });
 });

@@ -23,7 +23,6 @@ direita é **"Lateral direita · 1º/2º/3º anúncio"**. São dois grupos sem r
 fazia o 1 (topo) e o 2 (lateral) parecerem vizinhos. As chaves internas (`banner`, `side`, `side2`, `side3`, e o `slot` "1" a "4" do
 bloco Anúncio) **não mudam**, então sites salvos continuam iguais. Texto novo de anúncio: use `AD_NAMES`, nunca "Espaço N".
 
-
 ## Links do menu e do rodapé
 
 O menu do site (`site.menu`) alimenta o cabeçalho e o rodapé. Clicar num link do menu abre "Menu do site" com **aquele** item em
@@ -84,12 +83,20 @@ Telas em `frontend/src/app/(auth)/criador-de-sites/`:
    primeiros blocos, sem rodapé. Com `thumbnail`, vídeos de fundo (`atlas`, `ads`, `universo`) não têm `src` nem
    autoplay, e iframes ficam sem `src` (`frameProps`). Os links dos cartões usam `prefetch={false}`. `startSiteFx`
    (`@repo/site-builder/fx`) continua exportado, mas a galeria não o usa.
-   **Admin master (editar templates à mão):** `contatosimintermediacoes@gmail.com`, desde que também seja `isAdmin`
-   (`isMasterAdmin` em `lib/site-builder/access.ts`; o e-mail é a constante `MASTER_ADMIN_EMAIL`). Só ele vê, em cada cartão
-   de `/novo`, **Editar template** (abre o editor normal em `/criador-de-sites/templates/[templateId]`, sem publicação, com a
-   Atlas IA e "Restaurar original" = template do código), o selo **Editado** e **Descartar edições**. O que ele salva vai para
+   **Editar templates à mão (modo Dev `</>`):** quem pode é o **admin master** (`contatosimintermediacoes@gmail.com`, desde que
+   também seja `isAdmin`; `lib/permissions/master.ts`) e **quem ele liberar**, pessoa por pessoa, pela permissão **"Editar templates
+   (modo Dev)"** (área `admin_templates`, Administração → Usuários → Equipe). Ela é `MASTER_ONLY_AREAS`: só o master concede
+   (`normalizeGrant(…, { master })`), fica fora de "Todas as áreas" e do perfil Administrador, e **nem outro admin completo a tem**
+   (`levelFor`). Quem edita sem ser master não mexe nela de outra pessoa (`updateTeamUserAction` preserva as linhas). Quem a tem
+   entra no Criador de Sites (`getBuilderUser` e o menu do layout) para usar a galeria e o editor do template.
+   Em `/novo` essas pessoas veem a chave **Modo Dev `</>`** (`TemplateGallery`, escolha lembrada no navegador, começa desligada):
+   ligada, aparece o aviso de que são templates de demonstração e cada cartão ganha **Editar template**, o selo **Editado** e
+   **Descartar edições**; desligada, a galeria é a do cliente. O editor do template
+   (`/criador-de-sites/templates/[templateId]`, `requireTemplateEditor`) abre o editor normal sem publicação, com a Atlas IA,
+   "Restaurar original" = template do código e uma **faixa fixa "MODO DEV"** (prop `banner` do `SiteEditor`) dizendo que é uma
+   demonstração e o que o salvamento afeta. O que se salva vai para
    `builder_template_overrides` (uma linha por template; `saveTemplateOverride`/`resetTemplateOverride` em `template-actions.ts`,
-   ambas recusam quem não é master). A versão editada vale para **todos**: galeria, prévia, `createSite` e o "Restaurar
+   ambas recusam quem não pode editar template). A versão editada vale para **todos**: galeria, prévia, `createSite` e o "Restaurar
    original" do editor de sites passam por `getEffectiveTemplate`/`getTemplateOverrides` (`lib/site-builder/templates.ts`).
    Sites já criados não mudam (cada um tem a própria cópia). Se a tabela não existir ou a versão guardada for inválida, o
    template do código vale e o erro só vai para o log — a galeria nunca cai. Migration: `frontend/drizzle/0014_template_overrides.sql`

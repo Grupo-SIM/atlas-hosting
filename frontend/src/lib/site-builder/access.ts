@@ -7,16 +7,10 @@ export const FORBIDDEN_MESSAGE =
 
 const SITE_BUILDER_ALLOWED_EMAIL = "brenohslima@gmail.com";
 
-/** Admin master do Criador de Sites: pode editar os templates à mão (a versão editada vale para sites novos). */
-const MASTER_ADMIN_EMAIL = "contatosimintermediacoes@gmail.com";
+import { hasAreaAccess } from "@/lib/permissions/access";
+import { isMasterAdmin } from "@/lib/permissions/master";
 
-/** Precisa ser admin **e** ter este e-mail: perder um dos dois tira o poder de editar templates. */
-export function isMasterAdmin(user: Pick<User, "email" | "isAdmin">): boolean {
-  return (
-    user.isAdmin === true &&
-    user.email.trim().toLowerCase() === MASTER_ADMIN_EMAIL
-  );
-}
+export { isMasterAdmin };
 
 export function canAccessSiteBuilder(
   user: Pick<User, "email" | "isAdmin">
@@ -43,7 +37,9 @@ export function hasComplimentaryAtlasHosting(): boolean {
  */
 export async function getBuilderUser(): Promise<User | null> {
   const user = await getRealUser();
-  return canAccessSiteBuilder(user) ? user : null;
+  if (canAccessSiteBuilder(user)) return user;
+  // Quem o admin master liberou para editar templates entra no Criador de Sites (galeria e editor do template).
+  return (await hasAreaAccess(user, "admin_templates", "view")) ? user : null;
 }
 
 /** Para páginas: quem não é admin vê 404, como se a rota não existisse. */
@@ -53,15 +49,18 @@ export async function requireBuilderUser(): Promise<User> {
   return user;
 }
 
-/** Usuário real se for o admin master; `null` para os demais. */
-export async function getMasterAdmin(): Promise<User | null> {
+/**
+ * Quem pode editar os templates de demonstração (modo Dev): o admin master e quem ele liberou (permissão "Editar
+ * templates"). Usuário real, ignora impersonação; `null` para os demais.
+ */
+export async function getTemplateEditor(): Promise<User | null> {
   const user = await getRealUser();
-  return isMasterAdmin(user) ? user : null;
+  return (await hasAreaAccess(user, "admin_templates", "edit")) ? user : null;
 }
 
-/** Para páginas do editor de templates: quem não é o master vê 404. */
-export async function requireMasterAdmin(): Promise<User> {
-  const user = await getMasterAdmin();
+/** Para a página do editor de templates: quem não pode editar vê 404. */
+export async function requireTemplateEditor(): Promise<User> {
+  const user = await getTemplateEditor();
   if (!user) notFound();
   return user;
 }

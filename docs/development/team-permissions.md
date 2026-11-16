@@ -20,6 +20,13 @@ inclusive Usuários e cria outros). Tela: `frontend/src/app/(auth)/admin/users/T
   `frontend/drizzle/0015_user_access.sql`. A tabela `users` **não muda**: nenhuma consulta de usuário depende destas
   tabelas, e se elas não existirem o usuário de equipe fica sem acesso (silenciosamente) e o resto do sistema segue.
 
+## Áreas que só o master concede
+
+`admin_templates` ("Editar templates (modo Dev)") está em `MASTER_ONLY_AREAS` (`lib/permissions/catalog.ts`): só o admin master
+(`lib/permissions/master.ts`) concede, uma pessoa por vez; não entra em "Todas as áreas" nem no perfil Administrador; outro admin
+completo também não a tem. Não tem página em `/admin` (fica fora de `ADMIN_AREA_KEYS`): o acesso é a chave Modo Dev em Criador de
+Sites → Novo site. Detalhes em `docs/development/site-builder.md`.
+
 ## Regras que não podem quebrar
 
 - **Server Actions são POSTs públicos.** A checagem de área vai dentro da própria ação (`hasAreaAccess(user, área, 'edit')`),

@@ -194,6 +194,9 @@ export const editorCss = `
 .sbe-fake-input span{width:28px;height:28px;border-radius:50%;background:#dcd9d1;color:#fff;display:flex;align-items:center;justify-content:center}
 
 .sbe-scrim{position:absolute;inset:0;background:rgba(29,28,26,.28);display:flex;align-items:flex-start;justify-content:flex-end;padding:52px 12px 12px;z-index:50}
+.sbe-banner{flex-shrink:0;padding:8px 14px;background:#fdf1e0;border-bottom:1px solid #f1d3a6;color:#92550c;font-size:12px;line-height:1.45}
+.sbe-banner b{font-weight:600}
+.sbe-banner code{font-family:'JetBrains Mono',ui-monospace,monospace;background:#1d1c1a;color:#d6f34a;border-radius:4px;padding:1px 5px;font-size:11px;margin-right:4px}
 .sbe-modal{position:fixed;inset:0;background:rgba(29,28,26,.4);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
 .sbe-confirm{width:420px;max-height:none}
 .sbe-adprev{width:760px;max-height:calc(100vh - 32px)}

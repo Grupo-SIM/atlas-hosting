@@ -4,6 +4,7 @@ import {
   type CSSProperties,
   type MouseEvent,
   type PointerEvent,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -108,6 +109,8 @@ export interface SiteEditorProps {
   publish?: PublishConfig;
   /** Identifica o site para guardar a lista de alterações pendentes no navegador. */
   storageKey?: string;
+  /** Faixa fixa no topo da área central (ex.: aviso de modo Dev ao editar um template de demonstração). */
+  banner?: ReactNode;
 }
 
 type Device = "desktop" | "mobile" | "tablet";
@@ -419,6 +422,7 @@ export function SiteEditor({
   originalSite,
   publish,
   storageKey,
+  banner,
 }: SiteEditorProps) {
   const [history, setHistory] = useState<History>({
     future: [],
@@ -1770,6 +1774,7 @@ export function SiteEditor({
       ) : null}
 
       <div className="sbe-center">
+        {banner ? <div className="sbe-banner">{banner}</div> : null}
         <div className="sbe-top">
           <button
             className="sbe-ibtn"

@@ -16,8 +16,14 @@ import {
   userSettings,
 } from "@/lib/db/schema";
 import { levelsFor } from "@/lib/permissions/access";
-import { type AreaLevel, covers, type Level } from "@/lib/permissions/catalog";
+import {
+  type AreaLevel,
+  covers,
+  isMasterOnlyArea,
+  type Level,
+} from "@/lib/permissions/catalog";
 import { type GrantInput, normalizeGrant } from "@/lib/permissions/grant";
+import { isMasterAdmin } from "@/lib/permissions/master";
 
 type Result = { error: string; ok: false } | { ok: true };
 
@@ -39,11 +45,18 @@ async function actorContext(): Promise<{
   actor: User;
   full: boolean;
   levels: Record<string, Level>;
+  /** Admin master: único que libera áreas como "Editar templates". */
+  master: boolean;
 } | null> {
   const actor = await getRealUser();
   const levels = await levelsFor(actor);
   if (!covers(levels.admin_users ?? "none", "edit")) return null;
-  return { actor, full: actor.isAdmin === true, levels };
+  return {
+    actor,
+    full: actor.isAdmin === true,
+    levels,
+    master: isMasterAdmin(actor),
+  };
 }
 
 /** O alvo é de equipe e está na árvore de quem chama (admin completo alcança qualquer um da equipe). */
@@ -91,7 +104,7 @@ export async function createTeamUserAction(
   if (!ctx) return FORBIDDEN;
   const basics = checkBasics(input, true);
   if (basics) return { error: basics, ok: false };
-  const grant = normalizeGrant(input, ctx.levels);
+  const grant = normalizeGrant(input, ctx.levels, { master: ctx.master });
   if (!grant.ok) return grant;
 
   const email = input.email.trim().toLowerCase();
@@ -176,7 +189,7 @@ export async function updateTeamUserAction(
   }
   const basics = checkBasics(input, false);
   if (basics) return { error: basics, ok: false };
-  const grant = normalizeGrant(input, ctx.levels);
+  const grant = normalizeGrant(input, ctx.levels, { master: ctx.master });
   if (!grant.ok) return grant;
 
   const password = input.password ? await hash(input.password) : null;
@@ -198,17 +211,31 @@ export async function updateTeamUserAction(
           updatedAt: new Date(),
         })
         .where(eq(pgUserAccess.userId, userId));
+      // Quem edita e não é o master não mexe no que só o master libera (editar templates): essas linhas ficam como estão.
+      const kept = ctx.master
+        ? []
+        : (
+            await tx
+              .select({
+                area: pgUserAreaPermission.area,
+                level: pgUserAreaPermission.level,
+              })
+              .from(pgUserAreaPermission)
+              .where(eq(pgUserAreaPermission.userId, userId))
+          ).filter(r => isMasterOnlyArea(r.area));
       await tx
         .delete(pgUserAreaPermission)
         .where(eq(pgUserAreaPermission.userId, userId));
-      if (grant.value.permissions.length > 0) {
-        await tx.insert(pgUserAreaPermission).values(
-          grant.value.permissions.map(p => ({
-            area: p.area,
-            level: p.level,
-            userId,
-          }))
-        );
+      const rows = [
+        ...grant.value.permissions.filter(
+          p => ctx.master || !isMasterOnlyArea(p.area)
+        ),
+        ...kept,
+      ];
+      if (rows.length > 0) {
+        await tx
+          .insert(pgUserAreaPermission)
+          .values(rows.map(p => ({ area: p.area, level: p.level, userId })));
       }
     });
     if (password) await invalidateAllSessions(userId);

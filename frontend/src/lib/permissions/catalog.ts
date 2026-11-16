@@ -97,6 +97,14 @@ export const AREA_GROUPS: AreaGroup[] = [
         key: "admin_exclusivity",
         label: "Exclusividade de templates",
       },
+      {
+        available: true,
+        description:
+          "Editar os templates de demonstração (chave </> Modo Dev em Criador de Sites → Novo site). O que for salvo vale para todo site criado depois. Só o admin master libera, e fica fora de “todas as áreas” e do perfil Administrador.",
+        key: "admin_templates",
+        label: "Editar templates (modo Dev)",
+        sensitive: true,
+      },
     ],
     key: "plataforma",
     label: "Plataforma",
@@ -123,14 +131,27 @@ export type AreaKey = string;
 /** Área que nunca entra em "todas as áreas": só se concede à parte. */
 export const OUTSIDE_ALL_AREAS = "admin_users";
 
+/**
+ * Áreas que **só o admin master concede**, uma a uma: ficam fora de "todas as áreas" e do perfil Administrador, e
+ * nem outro admin completo as tem (o master as libera pessoa por pessoa).
+ */
+export const MASTER_ONLY_AREAS: readonly string[] = ["admin_templates"];
+export const isMasterOnlyArea = (key: string): boolean =>
+  MASTER_ONLY_AREAS.includes(key);
+
 export const areaDef = (key: string): AreaDef | undefined =>
   ALL_AREAS.find(a => a.key === key);
 
 export const isGrantableArea = (key: string): boolean =>
   GRANTABLE_AREAS.some(a => a.key === key);
 
-/** Áreas de administração (as que mostram o painel /admin para quem tem ao menos uma). */
-export const ADMIN_AREA_KEYS = GRANTABLE_AREAS.map(a => a.key);
+/**
+ * Áreas que têm página em /admin (as que mostram o painel /admin para quem tem ao menos uma). Editar templates não
+ * tem página de administração: o acesso é pela galeria em Criador de Sites.
+ */
+export const ADMIN_AREA_KEYS = GRANTABLE_AREAS.filter(
+  a => a.key !== "admin_templates"
+).map(a => a.key);
 
 /** Qual área protege cada rota de administração (prefixo mais longo vence). */
 export const ADMIN_ROUTE_AREAS: { area: string; prefix: string }[] = [
@@ -172,19 +193,21 @@ export function resolveLevels(input: {
 }): Record<string, Level> {
   const levels: Record<string, Level> = {};
   for (const area of GRANTABLE_AREAS) {
+    const masterOnly = isMasterOnlyArea(area.key);
     if (input.profile === "admin") {
-      levels[area.key] = "edit";
+      levels[area.key] = masterOnly ? "none" : "edit";
       continue;
     }
     levels[area.key] =
-      input.accessAll && area.key !== OUTSIDE_ALL_AREAS
+      input.accessAll && area.key !== OUTSIDE_ALL_AREAS && !masterOnly
         ? input.accessAll
         : "none";
   }
-  if (input.profile !== "admin") {
-    for (const p of input.permissions) {
-      if (isGrantableArea(p.area)) levels[p.area] = p.level;
-    }
+  for (const p of input.permissions) {
+    if (!isGrantableArea(p.area)) continue;
+    // Administrador tem tudo, menos o que só o master libera: essas áreas valem só pela permissão dada à pessoa.
+    if (input.profile === "admin" && !isMasterOnlyArea(p.area)) continue;
+    levels[p.area] = p.level;
   }
   return levels;
 }

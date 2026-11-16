@@ -1,7 +1,7 @@
 import { getTemplate } from "@repo/site-builder";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { requireMasterAdmin } from "@/lib/site-builder/access";
+import { requireTemplateEditor } from "@/lib/site-builder/access";
 import { getTemplateOverrides } from "@/lib/site-builder/templates";
 import TemplateEditorClient from "./components/TemplateEditorClient";
 
@@ -15,7 +15,7 @@ export default async function TemplateEditorPage({
 }: {
   params: Promise<{ templateId: string }>;
 }) {
-  await requireMasterAdmin();
+  await requireTemplateEditor();
   const { templateId } = await params;
   const template = getTemplate(templateId);
   if (!template) notFound();
@@ -26,6 +26,7 @@ export default async function TemplateEditorPage({
       initialSite={override ?? template.site}
       originalSite={template.site}
       templateId={template.id}
+      templateName={template.name}
     />
   );
 }

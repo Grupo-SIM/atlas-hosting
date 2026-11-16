@@ -16,15 +16,27 @@ export default function TemplateEditorClient({
   initialSite,
   originalSite,
   templateId,
+  templateName,
 }: {
   initialSite: Site;
   /** Template do código, para "Restaurar original". */
   originalSite: Site;
   templateId: string;
+  templateName: string;
 }) {
   return (
     <SiteEditor
       ai={aiConfig}
+      banner={
+        <>
+          <code>{"</>"}</code>
+          <b>MODO DEV</b> · Você está editando o template{" "}
+          <b>“{templateName}”</b>, que é uma <b>demonstração</b>. O que você
+          salvar vale para todo site criado a partir dele daqui para frente;
+          sites que já foram criados não mudam. “Restaurar original” volta ao
+          template do código.
+        </>
+      }
       basePath={`/criador-de-sites/templates/${templateId}`}
       exitHref="/criador-de-sites/novo"
       initialSite={initialSite}

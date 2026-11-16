@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import {
+  ADMIN_AREA_KEYS,
   areaForAdminPath,
   covers,
   GRANTABLE_AREAS,
   isGrantableArea,
+  isMasterOnlyArea,
   OUTSIDE_ALL_AREAS,
   resolveLevels,
 } from "./catalog";
@@ -66,13 +68,44 @@ describe("resolveLevels", () => {
     expect(l.admin_vps).toBe("edit");
   });
 
-  test("Administrador edita tudo, inclusive Usuários, e ignora permissões soltas", () => {
+  test("Administrador edita tudo, inclusive Usuários, menos o que só o master libera, e ignora permissões soltas", () => {
     const l = resolveLevels({
       accessAll: null,
       permissions: [{ area: "admin_vps", level: "view" }],
       profile: "admin",
     });
-    expect(GRANTABLE_AREAS.every(a => l[a.key] === "edit")).toBe(true);
+    for (const a of GRANTABLE_AREAS) {
+      expect(l[a.key]).toBe(isMasterOnlyArea(a.key) ? "none" : "edit");
+    }
+    expect(l.admin_users).toBe("edit");
+  });
+
+  test("Editar templates fica fora de 'todas as áreas' e do Administrador: só vale se for liberada", () => {
+    const all = resolveLevels({
+      accessAll: "edit",
+      permissions: [],
+      profile: "editor",
+    });
+    expect(all.admin_templates).toBe("none");
+    const admin = resolveLevels({
+      accessAll: null,
+      permissions: [],
+      profile: "admin",
+    });
+    expect(admin.admin_templates).toBe("none");
+    const given = resolveLevels({
+      accessAll: null,
+      permissions: [{ area: "admin_templates", level: "edit" }],
+      profile: "admin",
+    });
+    expect(given.admin_templates).toBe("edit");
+    expect(given.admin_vps).toBe("edit");
+  });
+
+  test("Editar templates não conta como área do painel /admin", () => {
+    expect(ADMIN_AREA_KEYS).not.toContain("admin_templates");
+    expect(isMasterOnlyArea("admin_templates")).toBe(true);
+    expect(isMasterOnlyArea("admin_vps")).toBe(false);
   });
 
   test("área inventada nas permissões é ignorada", () => {

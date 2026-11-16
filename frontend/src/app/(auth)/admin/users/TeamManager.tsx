@@ -43,6 +43,7 @@ import {
   type AreaLevel,
   covers,
   GRANTABLE_AREAS,
+  isMasterOnlyArea,
   type Level,
   OUTSIDE_ALL_AREAS,
   PROFILE_LABELS,
@@ -82,13 +83,18 @@ function randomPassword(): string {
 }
 
 function summary(row: TeamUserRow): string {
-  if (row.profile === "admin") return "Todas as áreas, inclusive Usuários";
+  const templates = row.permissions.some(p => p.area === "admin_templates")
+    ? " + Editar templates"
+    : "";
+  if (row.profile === "admin") {
+    return `Todas as áreas, inclusive Usuários${templates}`;
+  }
   const n = row.permissions.length;
   if (row.accessAll) {
     const extra = row.permissions.some(p => p.area === OUTSIDE_ALL_AREAS)
       ? " + Usuários"
       : "";
-    return `Todas as áreas (${row.accessAll === "edit" ? "edita" : "visualiza"})${extra}`;
+    return `Todas as áreas (${row.accessAll === "edit" ? "edita" : "visualiza"})${extra}${templates}`;
   }
   return `${n} ${n === 1 ? "área" : "áreas"}`;
 }
@@ -125,40 +131,48 @@ function TeamUserDialog({
 
   const actorCovers = (area: string, needed: AreaLevel) =>
     covers(levels[area] ?? "none", needed);
-  const canAdminProfile = GRANTABLE_AREAS.every(a =>
-    actorCovers(a.key, "edit")
-  );
+  // Administrador = todas as áreas, menos as que só o master libera (Editar templates).
+  const canAdminProfile = GRANTABLE_AREAS.filter(
+    a => !isMasterOnlyArea(a.key)
+  ).every(a => actorCovers(a.key, "edit"));
   const profileLevel: AreaLevel = profile === "editor" ? "edit" : "view";
-  const canAll = GRANTABLE_AREAS.filter(a => a.key !== OUTSIDE_ALL_AREAS).every(
-    a => actorCovers(a.key, profileLevel)
-  );
+  const canAll = GRANTABLE_AREAS.filter(
+    a => a.key !== OUTSIDE_ALL_AREAS && !isMasterOnlyArea(a.key)
+  ).every(a => actorCovers(a.key, profileLevel));
 
   /** O que a pessoa tem em cada área, já aplicando perfil e "todas as áreas". */
   const effective = useMemo(() => {
     const out: Selected = {};
     for (const a of GRANTABLE_AREAS) {
-      if (profile === "admin") out[a.key] = "edit";
-      else if (all && a.key !== OUTSIDE_ALL_AREAS) out[a.key] = profileLevel;
-      else out[a.key] = selected[a.key];
+      const masterOnly = isMasterOnlyArea(a.key);
+      if (profile === "admin" && !masterOnly) out[a.key] = "edit";
+      else if (all && a.key !== OUTSIDE_ALL_AREAS && !masterOnly)
+        out[a.key] = profileLevel;
+      else
+        out[a.key] = masterOnly && selected[a.key] ? "edit" : selected[a.key];
     }
     return out;
   }, [profile, all, selected, profileLevel]);
 
   const locked = (areaKey: string) =>
-    profile === "admin" || (all && areaKey !== OUTSIDE_ALL_AREAS);
+    !isMasterOnlyArea(areaKey) &&
+    (profile === "admin" || (all && areaKey !== OUTSIDE_ALL_AREAS));
 
   const setArea = (key: string, level: AreaLevel | undefined) =>
     setSelected(s => ({ ...s, [key]: level }));
 
+  // O que só o master libera (editar templates) é "edita" ou nada: não existe só visualizar.
   const toggleArea = (key: string, on: boolean) =>
-    setArea(key, on ? "view" : undefined);
+    setArea(key, on ? (isMasterOnlyArea(key) ? "edit" : "view") : undefined);
 
   const toggleGroup = (keys: string[], on: boolean) =>
     setSelected(s => {
       const next = { ...s };
       for (const k of keys) {
         if (!actorCovers(k, "view")) continue;
-        next[k] = on ? (next[k] ?? "view") : undefined;
+        next[k] = on
+          ? (next[k] ?? (isMasterOnlyArea(k) ? "edit" : "view"))
+          : undefined;
       }
       return next;
     });
@@ -168,7 +182,11 @@ function TeamUserDialog({
     if (next === "viewer") {
       setSelected(s =>
         Object.fromEntries(
-          Object.entries(s).map(([k, v]) => [k, v ? ("view" as const) : v])
+          // Visualizador não altera nada: editar templates não cabe nele.
+          Object.entries(s).map(([k, v]) => [
+            k,
+            v && !isMasterOnlyArea(k) ? ("view" as const) : undefined,
+          ])
         )
       );
     }
@@ -176,14 +194,14 @@ function TeamUserDialog({
   };
 
   const submit = () => {
-    const permissions =
-      profile === "admin"
-        ? []
-        : GRANTABLE_AREAS.flatMap(a => {
-            if (all && a.key !== OUTSIDE_ALL_AREAS) return [];
-            const level = selected[a.key];
-            return level ? [{ area: a.key, level }] : [];
-          });
+    const permissions = GRANTABLE_AREAS.flatMap(a => {
+      const masterOnly = isMasterOnlyArea(a.key);
+      // Administrador e "todas as áreas" já cobrem o resto; o que só o master libera vai sempre explícito.
+      if (profile === "admin" && !masterOnly) return [];
+      if (all && a.key !== OUTSIDE_ALL_AREAS && !masterOnly) return [];
+      const level = selected[a.key];
+      return level ? [{ area: a.key, level }] : [];
+    });
     startTransition(async () => {
       const input = {
         accessAll: profile !== "admin" && all ? profileLevel : null,
@@ -351,7 +369,9 @@ function TeamUserDialog({
                     {group.areas.map(area => {
                       const level = effective[area.key];
                       const blocked =
-                        !area.available || !actorCovers(area.key, "view");
+                        !area.available ||
+                        !actorCovers(area.key, "view") ||
+                        (profile === "viewer" && isMasterOnlyArea(area.key));
                       return (
                         <li
                           className={`flex items-start gap-2 px-3 py-2 ${blocked ? "opacity-50" : ""}`}
@@ -387,18 +407,19 @@ function TeamUserDialog({
                               <span className="text-muted-foreground">
                                 {level === "edit" ? "Edita" : "Visualiza"}
                               </span>
-                              {profile === "editor" && (
-                                <Switch
-                                  checked={level === "edit"}
-                                  disabled={
-                                    locked(area.key) ||
-                                    !actorCovers(area.key, "edit")
-                                  }
-                                  onCheckedChange={v =>
-                                    setArea(area.key, v ? "edit" : "view")
-                                  }
-                                />
-                              )}
+                              {profile === "editor" &&
+                                !isMasterOnlyArea(area.key) && (
+                                  <Switch
+                                    checked={level === "edit"}
+                                    disabled={
+                                      locked(area.key) ||
+                                      !actorCovers(area.key, "edit")
+                                    }
+                                    onCheckedChange={v =>
+                                      setArea(area.key, v ? "edit" : "view")
+                                    }
+                                  />
+                                )}
                             </div>
                           )}
                         </li>
