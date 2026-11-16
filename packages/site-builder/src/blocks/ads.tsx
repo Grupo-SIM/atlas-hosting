@@ -156,14 +156,14 @@ export function AdBox({
       media.map((item, i) =>
         isVideoUrl(item.src) ? (
           <video
-            autoPlay
+            autoPlay={!ctx.thumbnail}
             className={i === 0 ? "sb-ad-item on" : "sb-ad-item"}
             key={item.src}
             loop={media.length === 1}
             muted
             playsInline
-            preload="metadata"
-            src={item.src}
+            preload={ctx.thumbnail ? "none" : "metadata"}
+            src={ctx.thumbnail ? undefined : item.src}
           />
         ) : (
           <img

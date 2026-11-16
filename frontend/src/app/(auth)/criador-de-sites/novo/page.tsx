@@ -1,4 +1,9 @@
-import { getTemplate, listTemplates, SiteRenderer } from "@repo/site-builder";
+import {
+  getTemplate,
+  listTemplates,
+  SiteRenderer,
+  thumbnailSite,
+} from "@repo/site-builder";
 import { LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
 import { requireBuilderUser } from "@/lib/site-builder/access";
@@ -27,8 +32,13 @@ export default async function NewSitePage() {
         previewBackground: full.site.theme.bg ?? "#030712",
         tags: meta.tags,
         thumb: (
-          <LiveThumb scrollSpeed={50}>
-            <SiteRenderer path="/" site={full.site} skipFxRuntime thumbnail />
+          <LiveThumb>
+            <SiteRenderer
+              path="/"
+              site={thumbnailSite(full.site)}
+              skipFxRuntime
+              thumbnail
+            />
           </LiveThumb>
         ),
       },

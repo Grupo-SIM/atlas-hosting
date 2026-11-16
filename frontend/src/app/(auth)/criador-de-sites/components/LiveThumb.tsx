@@ -2,7 +2,6 @@
 
 import { startSiteFx } from "@repo/site-builder/fx";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { AutoScroll } from "./AutoScroll";
 import { FitSite } from "./FitSite";
 
 /*
@@ -65,18 +64,11 @@ const UNMOUNT_MS = 1500;
 
 /**
  * Miniatura ao vivo de um site, para grades com muitos cartões. Preenche o pai (que precisa ser `relative`)
- * e só monta o site quando o cartão está a até uma tela de distância da área visível; longe, desmonta e fica
+ * e fica parada no topo do site (sem rolagem). Só monta o site quando o cartão está a até meia tela de distância da área visível; longe, desmonta e fica
  * só a cor de fundo do cartão. Os efeitos ligam só dentro do cartão (`startSiteFx`), então o `SiteRenderer`
  * passado deve vir com `skipFxRuntime`.
  */
-export function LiveThumb({
-  children,
-  scrollSpeed,
-}: {
-  children: ReactNode;
-  /** Rola o site sozinho (`AutoScroll`) nesta velocidade; sem valor, fica parado no topo. */
-  scrollSpeed?: number;
-}) {
+export function LiveThumb({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [live, setLive] = useState(false);
 
@@ -96,7 +88,7 @@ export function LiveThumb({
           leave = setTimeout(() => setLive(false), UNMOUNT_MS);
         }
       },
-      { root: scrollParent(box), rootMargin: "100% 0px" }
+      { root: scrollParent(box), rootMargin: "50% 0px" }
     );
     observer.observe(box);
     return () => {
@@ -114,15 +106,7 @@ export function LiveThumb({
 
   return (
     <div className="absolute inset-0 overflow-hidden" ref={ref}>
-      {live ? (
-        scrollSpeed ? (
-          <AutoScroll speed={scrollSpeed}>
-            <FitSite>{children}</FitSite>
-          </AutoScroll>
-        ) : (
-          <FitSite>{children}</FitSite>
-        )
-      ) : null}
+      {live ? <FitSite>{children}</FitSite> : null}
     </div>
   );
 }

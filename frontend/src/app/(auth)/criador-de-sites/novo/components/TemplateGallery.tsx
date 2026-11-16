@@ -130,6 +130,7 @@ export default function TemplateGallery({
                   <Link
                     className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-3 py-2 text-[13px]"
                     href={`/criador-de-sites/preview/${t.id}`}
+                    prefetch={false}
                   >
                     <Eye className="size-[14px]" />
                     Pré-visualizar

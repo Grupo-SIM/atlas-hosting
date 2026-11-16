@@ -291,13 +291,13 @@ const atHero = defineBlock(
             {p.video ? (
               // biome-ignore lint/a11y/useMediaCaption: vídeo decorativo, sem áudio
               <video
-                autoPlay
+                autoPlay={!ctx.thumbnail}
                 loop
                 muted
                 playsInline
                 poster={p.poster || undefined}
-                preload="metadata"
-                src={p.video}
+                preload={ctx.thumbnail ? "none" : "metadata"}
+                src={ctx.thumbnail ? undefined : p.video}
               />
             ) : p.poster ? (
               <img alt="" src={p.poster} />

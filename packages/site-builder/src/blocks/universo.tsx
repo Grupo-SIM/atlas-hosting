@@ -731,13 +731,13 @@ const uvStage = defineBlock(
             <div className="uv-loader-art">
               {video ? (
                 <video
-                  autoPlay={!edit}
+                  autoPlay={!(edit || ctx.thumbnail)}
                   className="uv-loader-video"
                   loop
                   muted
                   playsInline
-                  preload={edit ? "metadata" : "auto"}
-                  src={video}
+                  preload={edit ? "metadata" : ctx.thumbnail ? "none" : "auto"}
+                  src={ctx.thumbnail ? undefined : video}
                 />
               ) : (
                 <Portal />

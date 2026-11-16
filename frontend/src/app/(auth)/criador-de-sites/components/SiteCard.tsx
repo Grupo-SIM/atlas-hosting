@@ -127,6 +127,7 @@ export default function SiteCard({
           aria-label={`Editar ${name}`}
           className="absolute inset-0"
           href={`/criador-de-sites/${id}`}
+          prefetch={false}
         />
       </div>
       <div className="flex flex-col gap-3 p-4">
@@ -148,6 +149,7 @@ export default function SiteCard({
           <Link
             className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1d1c1a] px-3 py-[9px] text-[13px] text-white"
             href={`/criador-de-sites/${id}`}
+            prefetch={false}
           >
             <Pencil className="size-3.5" />
             Editar site

@@ -1,4 +1,4 @@
-import { SiteRenderer } from "@repo/site-builder";
+import { SiteRenderer, thumbnailSite } from "@repo/site-builder";
 import { desc, eq } from "drizzle-orm";
 import { LayoutTemplate, Plus } from "lucide-react";
 import type { Metadata } from "next";
@@ -89,7 +89,7 @@ export default async function SiteBuilderPage() {
                       <LiveThumb>
                         <SiteRenderer
                           path="/"
-                          site={site.content}
+                          site={thumbnailSite(site.content)}
                           skipFxRuntime
                           thumbnail
                         />
