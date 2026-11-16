@@ -8,6 +8,7 @@ import {
 import { getOptionalUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { type Invoice, pgInvoice, pgPlan } from "@/lib/db/schema";
+import { isExclusivityInvoice } from "@/lib/template-exclusivity/shared";
 import CheckoutClient from "./checkout-client";
 
 export const metadata: Metadata = {
@@ -71,7 +72,11 @@ export default async function CheckoutPage({
 
   let reference = invoice.reference;
 
-  if (invoice.type === "subscription") {
+  if (isExclusivityInvoice(invoice)) {
+    // Exclusividade de template também é fatura `subscription`, mas a referência é `EXCL-<id>`, não um plano:
+    // buscar plano por ela derruba a página (plans.id é uuid). Mostra a descrição da fatura.
+    reference = invoice.description || "Exclusividade de template";
+  } else if (invoice.type === "subscription") {
     const plan = await db.query.pgPlan.findFirst({
       where: eq(pgPlan.id, reference),
     });

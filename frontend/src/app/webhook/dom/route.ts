@@ -26,6 +26,8 @@ import {
 } from "@/lib/server/dom/signature-cancellation";
 import { registerDomainsFromPaidInvoice } from "@/lib/server/domains/registerFromPaidInvoice";
 import { AppLogger } from "@/lib/server/logs";
+import { fulfillSitePublishInvoice } from "@/lib/site-builder/fulfillPublish";
+import { isExclusivityInvoice } from "@/lib/template-exclusivity/shared";
 
 // Placeholder functions for webhook actions
 async function onSignatureCreated(data: PayloadWebhook["data"]): Promise<void> {
@@ -210,6 +212,19 @@ async function onInvoicePaid(data: PayloadWebhook["data"]): Promise<void> {
 
   if (!invoice) {
     console.error("Invoice not found in the database.", invoiceId);
+    return;
+  }
+
+  // Exclusividade de template é fatura `subscription` com referência `EXCL-…`: não é plano. Marca como paga e
+  // entrega (idempotente: o pagamento pelo app e o webhook podem chegar os dois).
+  if (isExclusivityInvoice(invoice)) {
+    await db
+      .update(pgInvoice)
+      .set({ status: "paid", updatedAt: new Date() })
+      .where(eq(pgInvoice.id, invoiceId));
+    await fulfillSitePublishInvoice(invoice.id).catch(error =>
+      console.error("[EXCLUSIVIDADE] Falha na entrega pelo webhook:", error)
+    );
     return;
   }
 

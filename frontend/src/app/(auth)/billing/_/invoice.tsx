@@ -57,9 +57,17 @@ export default function InvoiceCard({
 
   const breakdownInformation = (() => {
     if (invoice.type === "subscription") {
+      const isExclusivity = Boolean(
+        (invoice.metadata as { templateExclusivity?: unknown } | null)
+          ?.templateExclusivity
+      );
       return [
         {
-          label: invoice.reference ? `Plano ${invoice.reference}` : "Plano",
+          label: isExclusivity
+            ? invoice.description || "Exclusividade de template"
+            : invoice.reference
+              ? `Plano ${invoice.reference}`
+              : "Plano",
           value: invoice.amount,
         },
       ];
