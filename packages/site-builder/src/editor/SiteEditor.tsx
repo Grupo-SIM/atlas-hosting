@@ -1833,7 +1833,8 @@ export function SiteEditor({
           </div>
           */}
           <button
-            className={site.theme.ads === "on" ? "sbe-lime" : "sbe-btn"}
+            aria-pressed={site.theme.ads === "on"}
+            className={site.theme.ads === "on" ? "sbe-ads on" : "sbe-ads off"}
             onClick={() => setAds(site.theme.ads !== "on")}
             title="Mostrar ou esconder os espaços de anúncio"
             type="button"

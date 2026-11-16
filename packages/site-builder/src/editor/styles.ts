@@ -52,6 +52,12 @@ export const editorCss = `
 .sbe-pill.wait i{background:#d99a1e;animation:sbe-pulse 1.2s ease-in-out infinite}
 .sbe-pill.idle i{background:#9a968e;animation:sbe-pulse 1.2s ease-in-out infinite}
 @keyframes sbe-pulse{50%{opacity:.35}}
+.sbe-ads{display:flex;flex-shrink:0;align-items:center;gap:8px;border-radius:999px!important;padding:7px 14px 7px 12px;font-size:13px;font-weight:500;transition:box-shadow .2s,background-color .2s,color .2s}
+.sbe-ads i{flex:none;width:9px;height:9px;border-radius:50%;transition:background-color .2s,box-shadow .2s}
+.sbe-ads.on{background:var(--lime)!important;border:0!important;color:var(--ink);box-shadow:0 0 0 2px rgba(214,243,74,.45),0 0 14px 3px rgba(214,243,74,.6)}
+.sbe-ads.on i{background:#16a34a;box-shadow:0 0 0 2px rgba(22,163,74,.22),0 0 6px 1px rgba(22,163,74,.7)}
+.sbe-ads.off{background:#ecebe6!important;border:1px solid #dcdad2!important;color:#8a877f}
+.sbe-ads.off i{background:#dc2626}
 .sbe-lime{display:flex;flex-shrink:0;align-items:center;gap:6px;background:var(--lime)!important;border:0!important;border-radius:999px!important;padding:7px 14px;font-size:13px;font-weight:500;color:var(--ink)}
 .sbe-bar2{min-height:40px;flex-shrink:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:4px 12px;border-bottom:1px solid var(--line2);white-space:nowrap}
 .sbe-bar2 .sbe-seg{padding:2px;border-radius:8px}
