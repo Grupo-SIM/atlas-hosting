@@ -77,6 +77,12 @@ export interface SiteRendererProps {
   path: string;
   /** Miniatura reduzida (galeria, "Meus sites"): iframes de vídeo/site saem sem player. */
   thumbnail?: boolean;
+  /**
+   * Sem o CSS do Google Fonts nem as fontes enviadas (cai na fonte do sistema). Para miniaturas bem pequenas: o
+   * `<link rel="stylesheet">` no corpo da página bloqueia a renderização até chegar, e a 30% de escala ninguém
+   * distingue a fonte. As imagens pré-geradas da galeria de templates não usam isto (saem com a fonte certa).
+   */
+  skipFonts?: boolean;
   query?: Record<string, string>;
   site: Site;
 }
@@ -111,11 +117,12 @@ export function SiteRenderer({
   path,
   query = {},
   site,
+  skipFonts = false,
   skipFxRuntime = false,
   thumbnail = false,
 }: SiteRendererProps) {
   const route = resolveRoute(site, path, mode);
-  const fonts = fontStylesheet(site);
+  const fonts = skipFonts ? "" : fontStylesheet(site);
   const notFoundPage =
     route.kind === "notFound"
       ? site.pages.find(p => p.slug === "404")
@@ -204,7 +211,7 @@ export function SiteRenderer({
     [vslmilionario, vslmilionarioCss],
   ];
   const variantCss = variants.find(([on]) => on)?.[1] ?? "";
-  const fontFaces = fontFaceCss(customFonts(site.theme));
+  const fontFaces = skipFonts ? "" : fontFaceCss(customFonts(site.theme));
 
   return (
     <div

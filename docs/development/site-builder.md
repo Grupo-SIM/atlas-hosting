@@ -44,7 +44,13 @@ Telas em `frontend/src/app/(auth)/criador-de-sites/`:
    esquecer. (2) Em miniatura o `SiteRenderer` emite o CSS base e o da variante em `<style href precedence>`, que o React
    deduplica: o CSS vai uma vez por página, não por cartão (sites publicados e o editor não mudam). (3) Os cartões usam
    `content-visibility: auto` (o navegador não pinta o que está fora da tela, sem tirar nada do DOM). (4) `peekTemplate`
-   lê o template sem clonar o site inteiro. Para não baixar o que ninguém vê, as
+   lê o template sem clonar o site inteiro.
+
+   **"Meus sites" (`/criador-de-sites`)**: os sites são de cada usuário, então ficam ao vivo, mas (1) a consulta da página não
+   traz o `content` (só `content->'theme'->>'bg'` para a cor do cartão); (2) cada miniatura é `SiteThumb`, um componente em
+   `<Suspense>` que espera `loadThumbSites` (`lib/site-builder/thumb-sites.ts`, uma consulta só, nunca rejeita), então a
+   página sai primeiro e as miniaturas entram por streaming; (3) `skipFonts` no `SiteRenderer` tira o `<link>` do Google Fonts
+   (stylesheet no corpo bloqueia a renderização) e as fontes enviadas; (4) 3 blocos por cartão (`THUMB_BLOCKS`). Para não baixar o que ninguém vê, as
    telas passam o site por `thumbnailSite()` (`renderer/thumbnail.ts`): só a página inicial, com o cabeçalho e os 4
    primeiros blocos, sem rodapé. Com `thumbnail`, vídeos de fundo (`atlas`, `ads`, `universo`) não têm `src` nem
    autoplay, e iframes ficam sem `src` (`frameProps`). Os links dos cartões usam `prefetch={false}`. `startSiteFx`

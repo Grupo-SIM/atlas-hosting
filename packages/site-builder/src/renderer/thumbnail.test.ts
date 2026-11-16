@@ -111,3 +111,30 @@ describe("thumbnailHash", () => {
     expect(thumbnailHash(other)).toBe(thumbnailHash(site));
   });
 });
+
+describe("skipFonts", () => {
+  const render = async (skipFonts: boolean) => {
+    const site = getTemplate("margem")?.site;
+    if (!site) throw new Error("sem template");
+    const { prelude } = await prerender(
+      createElement(SiteRenderer, {
+        path: "/",
+        site: thumbnailSite(site),
+        skipFonts,
+        skipFxRuntime: true,
+        thumbnail: true,
+      })
+    );
+    return new Response(prelude).text();
+  };
+
+  test("sem skipFonts a miniatura carrega o CSS do Google Fonts", async () => {
+    expect(await render(false)).toContain("fonts.googleapis.com");
+  });
+
+  test("com skipFonts não há stylesheet de fonte (não bloqueia a renderização)", async () => {
+    const html = await render(true);
+    expect(html).not.toContain("fonts.googleapis.com");
+    expect(html).not.toContain("@font-face");
+  });
+});

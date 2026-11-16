@@ -1,6 +1,5 @@
-import { SiteRenderer, thumbnailSite } from "@repo/site-builder";
 import { format } from "date-fns";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { Crown, LayoutTemplate, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -8,10 +7,11 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { pgBuilderPublication, pgBuilderSite } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
+import { loadThumbSites } from "@/lib/site-builder/thumb-sites";
 import { Frame } from "./components/Frame";
 import SiteCard, { type SiteStatus } from "./components/SiteCard";
 import SiteFilter, { parseSiteFilter } from "./components/SiteFilter";
-import { StaticThumb } from "./components/StaticThumb";
+import { SiteThumb } from "./components/SiteThumb";
 
 export const metadata: Metadata = {
   description: "Crie e edite seus sites a partir de templates prontos",
@@ -27,8 +27,9 @@ export default async function SiteBuilderPage({
   const filter = parseSiteFilter((await searchParams).status);
   const mySites = await db
     .select({
+      // Só a cor de fundo: o conteúdo inteiro de cada site não precisa vir para desenhar o cartão.
+      background: sql<string | null>`${pgBuilderSite.content}->'theme'->>'bg'`,
       blockedAt: pgBuilderSite.exclusivityBlockedAt,
-      content: pgBuilderSite.content,
       deadlineAt: pgBuilderSite.exclusivityDeadlineAt,
       domain: pgBuilderPublication.domain,
       id: pgBuilderSite.id,
@@ -53,6 +54,12 @@ export default async function SiteBuilderPage({
       : filter === "no-ar"
         ? s.publicationStatus === "published"
         : s.publicationStatus !== "published"
+  );
+
+  // Começa agora e a página não espera: cada miniatura entra por streaming quando isto resolver.
+  const thumbContents = loadThumbSites(
+    user.id,
+    visibleSites.map(s => s.id)
   );
 
   return (
@@ -113,7 +120,7 @@ export default async function SiteBuilderPage({
                         : "draft";
                 return (
                   <SiteCard
-                    background={site.content.theme.bg ?? "#030712"}
+                    background={site.background ?? "#030712"}
                     domain={site.domain}
                     exclusivityNotice={
                       site.blockedAt
@@ -127,14 +134,7 @@ export default async function SiteBuilderPage({
                     name={site.name}
                     status={status}
                     thumb={
-                      <StaticThumb>
-                        <SiteRenderer
-                          path="/"
-                          site={thumbnailSite(site.content)}
-                          skipFxRuntime
-                          thumbnail
-                        />
-                      </StaticThumb>
+                      <SiteThumb contents={thumbContents} siteId={site.id} />
                     }
                   />
                 );
