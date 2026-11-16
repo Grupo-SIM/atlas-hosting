@@ -312,6 +312,8 @@ export function hintOf(
     href: href || undefined,
     itemHref,
     levels,
+    // Só para trecho em destaque dentro de um título; um link não casa pelo texto do pai (a coluna do menu inteira
+    // casaria com o campo "Título da coluna de menu" e escondia o campo de endereço do link).
     parentText:
       parent && !parent.classList.contains("sb-block") && el.tagName !== "A"
         ? (parent.textContent ?? "")
@@ -1839,6 +1841,7 @@ export function SiteEditor({
             title="Mostrar ou esconder os espaços de anúncio"
             type="button"
           >
+            <i aria-hidden="true" />
             Anúncios {site.theme.ads === "on" ? "ligados" : "desligados"}
           </button>
           {wide && publish?.domain && publish.liveStatus ? (
