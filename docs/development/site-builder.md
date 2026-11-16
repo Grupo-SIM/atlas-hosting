@@ -23,7 +23,19 @@ Telas em `frontend/src/app/(auth)/criador-de-sites/`:
    cartão (`FitSite`), **sem rolagem, sem efeitos e sem montagem por visibilidade**: tudo vem no HTML da página, como um
    site sem JavaScript (o `SiteRenderer` vai com `skipFxRuntime` e `thumbnail`, então nenhum script liga `sbFx`,
    `sbMargem` ou `sbUniverso`; sem eles o Margem aparece como hero estático e o Universo como lista). A classe
-   `sb-thumb-static` (`globals.css`) zera as animações e transições do CSS do site. Para não baixar o que ninguém vê, as
+   `sb-thumb-static` (`globals.css`) zera as animações e transições do CSS do site.
+
+   **Desempenho das duas telas** (medido: as 29 miniaturas ao vivo eram ~2,6 MB de HTML, 80% CSS repetido por cartão, e o
+   React ainda serializa o mesmo HTML dentro da página): (1) **`/novo` usa imagens WebP pré-geradas** (`frontend/public/template-thumbs/<id>.webp`, ~23 KB
+   cada, `loading="lazy"`, cache imutável por `?v=hash` via `headers()` do `next.config.js`) em vez de renderizar os sites;
+   `templateThumb(id)` (`lib/site-builder/template-thumbs.ts`) só devolve a imagem enquanto o hash do manifesto
+   (`template-thumbs.json`) bater com `thumbnailHash(site)`, senão a galeria volta à miniatura ao vivo (também para template
+   editado pelo master). **Mudou um template ou o visual do renderer? Rode `bun scripts/template-thumbs.mjs`** (precisa de Chrome e
+   rede; refaz só o que mudou, `--all` refaz tudo) e commite as imagens e o manifesto; `template-thumbs.test.ts` falha se
+   esquecer. (2) Em miniatura o `SiteRenderer` emite o CSS base e o da variante em `<style href precedence>`, que o React
+   deduplica: o CSS vai uma vez por página, não por cartão (sites publicados e o editor não mudam). (3) Os cartões usam
+   `content-visibility: auto` (o navegador não pinta o que está fora da tela, sem tirar nada do DOM). (4) `peekTemplate`
+   lê o template sem clonar o site inteiro. Para não baixar o que ninguém vê, as
    telas passam o site por `thumbnailSite()` (`renderer/thumbnail.ts`): só a página inicial, com o cabeçalho e os 4
    primeiros blocos, sem rodapé. Com `thumbnail`, vídeos de fundo (`atlas`, `ads`, `universo`) não têm `src` nem
    autoplay, e iframes ficam sem `src` (`frameProps`). Os links dos cartões usam `prefetch={false}`. `startSiteFx`

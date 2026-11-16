@@ -79,6 +79,14 @@ export const listTemplates = (): TemplateMeta[] =>
     tags,
   }));
 
+/**
+ * O template como está no código, **sem clonar**: só para leitura (miniaturas, cor de fundo). Não altere o que
+ * volta daqui; para criar site use `getTemplate`.
+ */
+export function peekTemplate(id: string): SiteTemplate | undefined {
+  return [...templates, ...legacyTemplates].find(t => t.id === id);
+}
+
 /** Cópia profunda — o site do usuário nunca compartilha referência com o seed. */
 export function getTemplate(id: string): SiteTemplate | undefined {
   const found = [...templates, ...legacyTemplates].find(t => t.id === id);

@@ -18,3 +18,20 @@ export function thumbnailSite(site: Site, blocks = THUMB_BLOCKS): Site {
     pages: [{ ...home, blocks: home.blocks.slice(0, blocks) }],
   };
 }
+
+/**
+ * Impressão digital do que a miniatura mostra (o site já enxuto por `thumbnailSite`). A galeria usa para saber se a
+ * imagem pré-gerada de um template ainda vale: mudou o template, o hash muda e a tela volta à miniatura ao vivo.
+ * FNV-1a em duas passadas (52 bits): serve para detectar mudança, não é criptográfico.
+ */
+export function thumbnailHash(site: Site): string {
+  const text = JSON.stringify(thumbnailSite(site));
+  let a = 0x811c9dc5;
+  let b = 0x01000193 ^ text.length;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    a = Math.imul(a ^ c, 0x01000193);
+    b = Math.imul(b + c, 0x85ebca6b) ^ (b >>> 13);
+  }
+  return `${(a >>> 0).toString(36)}${(b >>> 0).toString(36)}`;
+}

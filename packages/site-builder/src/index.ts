@@ -46,5 +46,9 @@ export {
   SiteRenderer,
   type SiteRendererProps,
 } from "./renderer/SiteRenderer.js";
-export { thumbnailSite } from "./renderer/thumbnail.js";
-export { getTemplate, listTemplates } from "./templates/index.js";
+export { thumbnailHash, thumbnailSite } from "./renderer/thumbnail.js";
+export {
+  getTemplate,
+  listTemplates,
+  peekTemplate,
+} from "./templates/index.js";

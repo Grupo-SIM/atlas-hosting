@@ -104,7 +104,7 @@ export default function TemplateGallery({
               t.exclusivity?.kind === "reserved";
             return (
               <div
-                className="flex flex-col overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white hover:border-[#c9c5bc] hover:shadow-[0_4px_18px_rgba(30,28,24,0.06)]"
+                className="flex flex-col overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white [contain-intrinsic-size:auto_470px] [content-visibility:auto] hover:border-[#c9c5bc] hover:shadow-[0_4px_18px_rgba(30,28,24,0.06)]"
                 key={t.id}
               >
                 {/* O site da miniatura tem links: o link fica por cima, nunca em volta. */}

@@ -94,6 +94,16 @@ function layoutFor(site: Site, route: Route): Block[] {
   }
 }
 
+/** Hash curto (FNV-1a) do CSS de uma variante: nome estável do `<style href>` compartilhado entre miniaturas. */
+function cssKey(css: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < css.length; i++) {
+    h ^= css.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(36);
+}
+
 export function SiteRenderer({
   basePath = "",
   mode = "view",
@@ -159,6 +169,42 @@ export function SiteRenderer({
     site,
     thumbnail,
   };
+
+  // CSS da variante do template (além do base): a primeira que valer, na mesma ordem de antes.
+  const variants: [boolean, string][] = [
+    [universo, universoCss],
+    [atlas, atlasCss],
+    [diario, diarioCss],
+    [grana, granaCss],
+    [consultoria, consultoriaCss],
+    [viralpack, viralpackCss],
+    [corte, corteCss],
+    [gatilhos, gatilhosCss],
+    [resolvit, resolvitCss],
+    [seopack, seopackCss],
+    [instafan, instafanCss],
+    [presets, presetsCss],
+    [habilidades, habilidadesCss],
+    [outrolado, outroladoCss],
+    [pagatg, pagatgCss],
+    [sim, simCss],
+    [holofote, holofoteCss],
+    [raiz, raizCss],
+    [zyrion, zyrionCss],
+    [journal, journalCss],
+    [portal, portalCss],
+    [spy, spyCss],
+    [central, centralCss],
+    [market, marketplaceCss],
+    [margem, margemCss],
+    [seguidores, seguidoresCss],
+    [areaflix, areaflixCss],
+    [patrimonial, patrimonialCss],
+    [motorista, motoristaCss],
+    [vslmilionario, vslmilionarioCss],
+  ];
+  const variantCss = variants.find(([on]) => on)?.[1] ?? "";
+  const fontFaces = fontFaceCss(customFonts(site.theme));
 
   return (
     <div
@@ -236,77 +282,23 @@ export function SiteRenderer({
         } as CSSProperties
       }
     >
-      <style>
-        {fontFaceCss(customFonts(site.theme)) +
-          (universo
-            ? siteCss + universoCss
-            : atlas
-              ? siteCss + atlasCss
-              : diario
-                ? siteCss + diarioCss
-                : grana
-                  ? siteCss + granaCss
-                  : consultoria
-                    ? siteCss + consultoriaCss
-                    : viralpack
-                      ? siteCss + viralpackCss
-                      : corte
-                        ? siteCss + corteCss
-                        : gatilhos
-                          ? siteCss + gatilhosCss
-                          : resolvit
-                            ? siteCss + resolvitCss
-                            : seopack
-                              ? siteCss + seopackCss
-                              : instafan
-                                ? siteCss + instafanCss
-                                : presets
-                                  ? siteCss + presetsCss
-                                  : habilidades
-                                    ? siteCss + habilidadesCss
-                                    : outrolado
-                                      ? siteCss + outroladoCss
-                                      : pagatg
-                                        ? siteCss + pagatgCss
-                                        : sim
-                                          ? siteCss + simCss
-                                          : holofote
-                                            ? siteCss + holofoteCss
-                                            : raiz
-                                              ? siteCss + raizCss
-                                              : zyrion
-                                                ? siteCss + zyrionCss
-                                                : journal
-                                                  ? siteCss + journalCss
-                                                  : portal
-                                                    ? siteCss + portalCss
-                                                    : spy
-                                                      ? siteCss + spyCss
-                                                      : central
-                                                        ? siteCss + centralCss
-                                                        : market
-                                                          ? siteCss +
-                                                            marketplaceCss
-                                                          : margem
-                                                            ? siteCss +
-                                                              margemCss
-                                                            : seguidores
-                                                              ? siteCss +
-                                                                seguidoresCss
-                                                              : areaflix
-                                                                ? siteCss +
-                                                                  areaflixCss
-                                                                : patrimonial
-                                                                  ? siteCss +
-                                                                    patrimonialCss
-                                                                  : motorista
-                                                                    ? siteCss +
-                                                                      motoristaCss
-                                                                    : vslmilionario
-                                                                      ? siteCss +
-                                                                        vslmilionarioCss
-                                                                      : siteCss)}
-      </style>
+      {thumbnail ? (
+        <>
+          {/* Miniatura: o CSS base e o da variante vão em <style href precedence>, que o React coloca uma vez só
+              no documento mesmo com dezenas de miniaturas (antes cada cartão carregava ~70 KB do mesmo CSS). */}
+          <style href="sb-base" precedence="sb">
+            {siteCss}
+          </style>
+          {variantCss ? (
+            <style href={`sb-v-${cssKey(variantCss)}`} precedence="sb">
+              {variantCss}
+            </style>
+          ) : null}
+          {fontFaces ? <style>{fontFaces}</style> : null}
+        </>
+      ) : (
+        <style>{fontFaces + siteCss + variantCss}</style>
+      )}
       {fonts ? <link href={fonts} rel="stylesheet" /> : null}
       {bare ? null : renderBlocks(site.header, ctx)}
       <main>

@@ -1,12 +1,13 @@
 import {
-  getTemplate,
   listTemplates,
+  peekTemplate,
   SiteRenderer,
   thumbnailSite,
 } from "@repo/site-builder";
 import { LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
 import { isMasterAdmin, requireBuilderUser } from "@/lib/site-builder/access";
+import { templateThumb } from "@/lib/site-builder/template-thumbs";
 import { getTemplateOverrides } from "@/lib/site-builder/templates";
 import {
   getResaleConfig,
@@ -17,6 +18,7 @@ import { StaticThumb } from "../components/StaticThumb";
 import TemplateGallery, {
   type GalleryTemplate,
 } from "./components/TemplateGallery";
+import { TemplateThumbImage } from "./components/TemplateThumbImage";
 
 export const metadata: Metadata = {
   title: "Novo site - Atlas Hosting",
@@ -32,10 +34,14 @@ export default async function NewSitePage() {
   ]);
 
   const templates: GalleryTemplate[] = listTemplates().flatMap(meta => {
-    const full = getTemplate(meta.id);
+    // Só leitura (sem clonar o site inteiro de cada template a cada requisição).
+    const full = peekTemplate(meta.id);
     if (!full) return [];
     // A versão editada pelo admin master vale para todos (galeria e sites novos).
-    const site = overrides[meta.id] ?? full.site;
+    const edited = overrides[meta.id];
+    const site = edited ?? full.site;
+    // Imagem pré-gerada enquanto o template não foi editado nem mudou; senão a miniatura ao vivo.
+    const image = edited ? null : templateThumb(meta.id);
     return [
       {
         description: meta.description,
@@ -48,7 +54,12 @@ export default async function NewSitePage() {
         pageCount: meta.pageCount,
         previewBackground: site.theme.bg ?? "#030712",
         tags: meta.tags,
-        thumb: (
+        thumb: image ? (
+          <TemplateThumbImage
+            alt={`Prévia do template ${meta.name}`}
+            thumb={image}
+          />
+        ) : (
           <StaticThumb>
             <SiteRenderer
               path="/"

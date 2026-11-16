@@ -118,7 +118,7 @@ export default function SiteCard({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white ${pending ? "opacity-60" : ""}`}
+      className={`flex flex-col overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white [contain-intrinsic-size:auto_420px] [content-visibility:auto] ${pending ? "opacity-60" : ""}`}
     >
       {/* O site da miniatura tem links: o link do cartão fica por cima, nunca em volta (`<a>` dentro de `<a>` quebra o HTML). */}
       <div
