@@ -46,6 +46,7 @@ import { VARIANT_TOKENS } from "../renderer/variant-tokens.js";
 import { FieldInput, type ResolveChannel } from "./fields.js";
 import { formatTranslate, parseTranslate } from "./free-move.js";
 import { Icon, type IconName } from "./icons.js";
+import type { LiveColors } from "./live-colors.js";
 import { resolveSiteItem } from "./site-items.js";
 
 type StyleValue = string | number | undefined;
@@ -288,6 +289,80 @@ function Slider({
 const sectionMemory = new Map<string, boolean>();
 
 /** Seção recolhível (dropdown) do painel. Só o conteúdo começa aberto. */
+const sameColors = (a?: LiveColors, b?: LiveColors) =>
+  a?.background === b?.background &&
+  a?.backgroundFrom === b?.backgroundFrom &&
+  a?.backgroundImage === b?.backgroundImage &&
+  a?.color === b?.color;
+
+/**
+ * Uma cor do item (fundo ou texto): mostra de cara a cor que está no canvas (`live`, a do modelo) e deixa trocar.
+ * `override` é o que o usuário definiu à mão (vazio = vale a do modelo); "Voltar ao padrão" limpa.
+ */
+function ColorRow({
+  colors,
+  label,
+  live,
+  onChange,
+  override,
+  placeholder,
+  resolve,
+}: {
+  colors: readonly string[];
+  label: string;
+  live?: string;
+  onChange: (value: string) => void;
+  override?: string;
+  placeholder: string;
+  resolve: (value: string) => string;
+}) {
+  const resolved = override ? resolve(override) : undefined;
+  const picker = /^#[0-9a-f]{6}$/i.test(resolved ?? "")
+    ? (resolved as string)
+    : /^#[0-9a-f]{6}$/i.test(live ?? "")
+      ? (live as string)
+      : "#000000";
+  return (
+    <div className="sbe-field">
+      <span>
+        {label}
+        {override ? (
+          <button
+            className="sbe-link"
+            onClick={() => onChange("")}
+            type="button"
+          >
+            Voltar ao padrão
+          </button>
+        ) : live ? (
+          <small> · cor do modelo</small>
+        ) : null}
+      </span>
+      <div className="sbe-colorrow">
+        <input
+          aria-label={`${label}: escolher cor`}
+          onChange={e => onChange(e.target.value)}
+          type="color"
+          value={picker}
+        />
+        <input
+          className="sbe-mono"
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          type="text"
+          value={override ?? live ?? ""}
+        />
+      </div>
+      <Swatches
+        active={override ?? live}
+        colors={live && !colors.includes(live) ? [live, ...colors] : colors}
+        onPick={onChange}
+        resolve={resolve}
+      />
+    </div>
+  );
+}
+
 function Section({
   children,
   defaultOpen = false,
@@ -692,6 +767,8 @@ interface Props {
   /** Duplica o post e muda a quantidade do bloco selecionado, num passo só (um Ctrl+Z desfaz). */
   onDuplicatePost: (postId: string, countKey: string, count: number) => void;
   focusHint?: FocusHint;
+  /** Lê do canvas as cores que o elemento mostra de verdade (a do modelo, não só a definida à mão). */
+  getLiveColors?: (blockId: string, elPath: string) => LiveColors | undefined;
   selected?: Block;
   site: Site;
 }
@@ -1030,10 +1107,24 @@ export function Inspector({
   onUploadFont,
   onDuplicatePost,
   onReplicate,
+  getLiveColors,
   selected,
   site,
 }: Props) {
   const root = useRef<HTMLDivElement>(null);
+  // Cores que o item selecionado mostra no canvas. Lê depois de o canvas redesenhar (uma edição acabou de mudar o estilo).
+  const [live, setLive] = useState<LiveColors | undefined>();
+  useEffect(() => {
+    if (!(selected && getLiveColors)) {
+      setLive(undefined);
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      const next = getLiveColors(selected.id, elPath ?? "");
+      setLive(prev => (sameColors(prev, next) ? prev : next));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selected, elPath, site.theme, getLiveColors]);
   // Clique num item do site: leva o foco ao campo que guarda aquele texto/imagem/link.
   useEffect(() => {
     if (!focusHint?.value) return;
@@ -1550,6 +1641,37 @@ export function Inspector({
             />
           </Section>
         )}
+
+        <Section defaultOpen scope={elPath ? "el" : "block"} title="Cores">
+          <ColorRow
+            colors={BOX_PALETTE}
+            label="Fundo"
+            live={live?.background}
+            onChange={set("background", "Fundo")}
+            override={st.background as string | undefined}
+            placeholder="sem cor de fundo"
+            resolve={resolve}
+          />
+          {live?.backgroundImage ? (
+            <p className="sbe-hint">
+              Este item tem imagem de fundo: a cor aparece por trás dela.
+            </p>
+          ) : live?.backgroundFrom === "parent" && !st.background ? (
+            <p className="sbe-hint">
+              Esta cor vem do elemento de fora. Escolher uma aqui pinta só este
+              item.
+            </p>
+          ) : null}
+          <ColorRow
+            colors={TEXT_PALETTE}
+            label="Texto"
+            live={live?.color}
+            onChange={set("color", "Cor do texto")}
+            override={st.color as string | undefined}
+            placeholder="herdar do tema"
+            resolve={resolve}
+          />
+        </Section>
 
         <Section scope={elPath ? "el" : "block"} title="Tamanho">
           {(

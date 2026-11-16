@@ -5,6 +5,15 @@ em `packages/site-builder`; o Atlas só tem as telas e a infraestrutura (banco, 
 DNS, deploy) em `frontend/src/app/(auth)/criador-de-sites/` e `frontend/src/lib/site-builder/`.
 Leia também [o guia de scaffolding](project-scaffolding.md) antes de mexer em exports ou Turbo.
 
+## Cores do item no painel
+
+Seção **Cores** (aberta por padrão no `Inspector`) para qualquer bloco/item selecionado: mostra de cara o fundo e a cor do texto
+que o canvas está **realmente** mostrando, inclusive a cor vinda do CSS do template (antes o painel só mostrava o que o usuário
+definira à mão). `SiteEditor` lê do DOM com `readLiveColors` (`editor/live-colors.ts`, passa por `getLiveColors`): o fundo é o do
+elemento; se for transparente, o do filho que o cobre (até 4 níveis) ou o do elemento de fora; `parseCssColor` entende o
+`rgb()`, `rgba()` e `color(srgb …)` (como o navegador devolve `color-mix`). Escolher uma cor grava no estilo do item (mesmas
+chaves `background`/`color` de "Caixa" e "Tipografia"); **Voltar ao padrão** limpa e volta a valer a do modelo.
+
 ## Acesso
 
 Por enquanto o recurso é **só do admin**: item `adminOnly` na sidebar (`navigation.ts`), `layout.tsx` e páginas

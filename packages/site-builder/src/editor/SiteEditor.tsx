@@ -39,6 +39,7 @@ import {
 import { type FocusHint, Inspector } from "./Inspector.js";
 import { Icon } from "./icons.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
+import { type LiveColors, readLiveColors } from "./live-colors.js";
 import { PagePicker, type RouteGroup } from "./PagePicker.js";
 import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
 import {
@@ -726,6 +727,18 @@ export function SiteEditor({
 
   const blockEl = (id: string) =>
     canvasRef.current?.querySelector<HTMLElement>(`[data-block-id="${id}"]`);
+  /** Cores que o item mostra no canvas (a do modelo inclusive): o painel mostra de cara e deixa trocar. */
+  const readColors = useCallback(
+    (blockId: string, elP: string): LiveColors | undefined => {
+      const canvas = canvasRef.current;
+      const block = canvas?.querySelector<HTMLElement>(
+        `[data-block-id="${blockId}"]`
+      );
+      const el = block && elP ? elementAt(block, elP) : block;
+      return canvas && el ? readLiveColors(el, canvas) : undefined;
+    },
+    []
+  );
   const getElements = (id: string) => {
     const el = blockEl(id);
     return el ? elementTree(el) : [];
@@ -2048,6 +2061,7 @@ export function SiteEditor({
           elLabel={elPath ? elName : ""}
           elPath={elPath}
           focusHint={focusHint}
+          getLiveColors={readColors}
           onAction={blockAction}
           onAnchor={anchor =>
             selected &&
