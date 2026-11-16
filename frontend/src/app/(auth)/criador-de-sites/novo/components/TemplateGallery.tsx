@@ -20,7 +20,7 @@ export interface GalleryTemplate {
   /** Estado da exclusividade para quem está vendo (ausente = template livre). */
   exclusivity?: ExclusivityView;
   /** Admin master: o template já foi editado à mão (mostra o selo e "Descartar edições"); ausente = não é master. */
-  master?: { edited: boolean };
+  master?: { draft: boolean; edited: boolean };
   id: string;
   name: string;
   pageCount: number;
@@ -149,10 +149,12 @@ export default function TemplateGallery({
               role="status"
             >
               <strong className="font-medium">{"</>"} Modo Dev ligado.</strong>{" "}
-              Estes são <strong>templates de demonstração</strong>: o que você
-              salvar em <em>Editar template</em> vale para todo site criado a
-              partir dele daqui para frente. Sites que já foram criados não
-              mudam. Use <em>Descartar edições</em> para voltar ao original.
+              Estes são <strong>templates de demonstração</strong>. Em{" "}
+              <em>Editar template</em> o que você mexe fica em{" "}
+              <strong>rascunho</strong> e só vira a versão que os clientes
+              recebem quando você clica em <em>Publicar no template</em>, dentro
+              do editor. Sites que já foram criados não mudam. Use{" "}
+              <em>Descartar edições</em> para voltar ao original.
             </div>
           ) : null}
         </div>
@@ -262,9 +264,18 @@ function TemplateCard({
         >
           {t.thumb}
         </div>
-        {dev && t.master?.edited ? (
-          <span className="absolute top-2.5 right-2.5 z-20 rounded-full bg-[#1d1c1a] px-2.5 py-1 text-[11px] text-white">
-            Editado
+        {dev && (t.master?.edited || t.master?.draft) ? (
+          <span className="absolute top-2.5 right-2.5 z-20 flex gap-1">
+            {t.master?.edited ? (
+              <span className="rounded-full bg-[#1d1c1a] px-2.5 py-1 text-[11px] text-white">
+                Publicado
+              </span>
+            ) : null}
+            {t.master?.draft ? (
+              <span className="rounded-full bg-[#f59e0b] px-2.5 py-1 text-[#1d1c1a] text-[11px]">
+                Rascunho
+              </span>
+            ) : null}
           </span>
         ) : null}
         {locked ? (

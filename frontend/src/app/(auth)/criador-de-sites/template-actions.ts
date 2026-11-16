@@ -1,7 +1,7 @@
 "use server";
 
 import { getTemplate, siteSchema } from "@repo/site-builder";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { pgBuilderTemplateOverride } from "@/lib/db/schema";
@@ -17,8 +17,11 @@ const refresh = (templateId: string) => {
   revalidatePath(`/criador-de-sites/preview/${templateId}`);
 };
 
-/** Grava a versão do template editada à mão. Só o admin master; sites já criados não mudam. */
-export async function saveTemplateOverride(
+/**
+ * Salva o **rascunho** do modo Dev (o editor chama sozinho a cada alteração). Clientes não veem: só
+ * `publishTemplateDraft` torna a versão fixa. Só quem pode editar templates.
+ */
+export async function saveTemplateDraft(
   templateId: string,
   content: unknown
 ): Promise<ActionResult> {
@@ -35,26 +38,96 @@ export async function saveTemplateOverride(
     };
   }
   try {
+    const draft = {
+      draftContent: parsed.data,
+      draftUpdatedAt: new Date(),
+      draftUpdatedBy: user.id,
+    };
     await db
       .insert(pgBuilderTemplateOverride)
-      .values({ content: parsed.data, templateId, updatedBy: user.id })
+      .values({ templateId, ...draft })
       .onConflictDoUpdate({
-        set: {
-          content: parsed.data,
-          updatedAt: new Date(),
-          updatedBy: user.id,
-        },
+        set: draft,
         target: pgBuilderTemplateOverride.templateId,
       });
   } catch (error) {
-    console.error("[templates] falha ao salvar a versão editada:", error);
-    return { error: "Não foi possível salvar o template.", ok: false };
+    console.error("[templates] falha ao salvar o rascunho:", error);
+    return { error: "Não foi possível salvar o rascunho.", ok: false };
+  }
+  return { ok: true };
+}
+
+/**
+ * "Publicar no template": o rascunho vira a versão fixa. A partir daqui galeria, prévia e "Usar este template" entregam
+ * esta versão (sites já criados não mudam). O rascunho é limpo.
+ */
+export async function publishTemplateDraft(
+  templateId: string
+): Promise<ActionResult> {
+  const user = await getTemplateEditor();
+  if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
+  try {
+    const published = await db.transaction(async tx => {
+      const [row] = await tx
+        .select({ draft: pgBuilderTemplateOverride.draftContent })
+        .from(pgBuilderTemplateOverride)
+        .where(eq(pgBuilderTemplateOverride.templateId, templateId))
+        .for("update");
+      const parsed = siteSchema.safeParse(row?.draft);
+      if (!parsed.success) return false;
+      await tx
+        .update(pgBuilderTemplateOverride)
+        .set({
+          content: parsed.data,
+          draftContent: null,
+          draftUpdatedAt: null,
+          draftUpdatedBy: null,
+          updatedAt: new Date(),
+          updatedBy: user.id,
+        })
+        .where(eq(pgBuilderTemplateOverride.templateId, templateId));
+      return true;
+    });
+    if (!published) {
+      return { error: "Não há alterações salvas para publicar.", ok: false };
+    }
+  } catch (error) {
+    console.error("[templates] falha ao publicar o rascunho:", error);
+    return { error: "Não foi possível publicar o template.", ok: false };
   }
   refresh(templateId);
   return { ok: true };
 }
 
-/** Descarta a versão editada: o template volta a ser o do código. Só o admin master. */
+/** Joga fora o rascunho: o editor volta a mostrar a versão fixa (ou a do código, se nunca foi publicada). */
+export async function discardTemplateDraft(
+  templateId: string
+): Promise<ActionResult> {
+  const user = await getTemplateEditor();
+  if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
+  try {
+    await db
+      .update(pgBuilderTemplateOverride)
+      .set({ draftContent: null, draftUpdatedAt: null, draftUpdatedBy: null })
+      .where(eq(pgBuilderTemplateOverride.templateId, templateId));
+    // Linha que só tinha rascunho (nunca publicada) não serve para nada: sai.
+    await db
+      .delete(pgBuilderTemplateOverride)
+      .where(
+        and(
+          eq(pgBuilderTemplateOverride.templateId, templateId),
+          isNull(pgBuilderTemplateOverride.content)
+        )
+      );
+  } catch (error) {
+    console.error("[templates] falha ao descartar o rascunho:", error);
+    return { error: "Não foi possível descartar o rascunho.", ok: false };
+  }
+  refresh(templateId);
+  return { ok: true };
+}
+
+/** "Descartar edições": apaga a versão fixa **e** o rascunho; o template volta a ser o do código. */
 export async function resetTemplateOverride(
   templateId: string
 ): Promise<ActionResult> {

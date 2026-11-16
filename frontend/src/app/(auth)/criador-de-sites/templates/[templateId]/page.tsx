@@ -2,14 +2,20 @@ import { getTemplate } from "@repo/site-builder";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireTemplateEditor } from "@/lib/site-builder/access";
-import { getTemplateOverrides } from "@/lib/site-builder/templates";
+import {
+  getTemplateDrafts,
+  getTemplateOverrides,
+} from "@/lib/site-builder/templates";
 import TemplateEditorClient from "./components/TemplateEditorClient";
 
 export const metadata: Metadata = {
   title: "Editar template - Atlas Hosting",
 };
 
-/** Editor do template em si (só o admin master). O que for salvo vale para os sites criados daqui para frente. */
+/**
+ * Editor do template em si (modo Dev; só quem pode editar templates). Abre no rascunho, se houver; senão na versão
+ * publicada; senão no template do código. Só "Publicar no template" muda o que os clientes recebem.
+ */
 export default async function TemplateEditorPage({
   params,
 }: {
@@ -19,11 +25,18 @@ export default async function TemplateEditorPage({
   const { templateId } = await params;
   const template = getTemplate(templateId);
   if (!template) notFound();
-  const override = (await getTemplateOverrides())[templateId];
+  const [overrides, drafts] = await Promise.all([
+    getTemplateOverrides(),
+    getTemplateDrafts(),
+  ]);
+  const published = overrides[templateId];
+  const draft = drafts[templateId];
 
   return (
     <TemplateEditorClient
-      initialSite={override ?? template.site}
+      hasDraft={Boolean(draft)}
+      hasPublished={Boolean(published)}
+      initialSite={draft ?? published ?? template.site}
       originalSite={template.site}
       templateId={template.id}
       templateName={template.name}

@@ -9,7 +9,10 @@ import type { Metadata } from "next";
 import { hasAreaAccess } from "@/lib/permissions/access";
 import { requireBuilderUser } from "@/lib/site-builder/access";
 import { templateThumb } from "@/lib/site-builder/template-thumbs";
-import { getTemplateOverrides } from "@/lib/site-builder/templates";
+import {
+  getTemplateDrafts,
+  getTemplateOverrides,
+} from "@/lib/site-builder/templates";
 import {
   getResaleConfig,
   getTemplateExclusivityMap,
@@ -29,10 +32,12 @@ export default async function NewSitePage() {
   const user = await requireBuilderUser();
   // Admin master e quem ele liberou veem a chave do modo Dev (editar os templates de demonstração).
   const devAvailable = await hasAreaAccess(user, "admin_templates", "edit");
-  const [exclusivity, resale, overrides] = await Promise.all([
+  const [exclusivity, resale, overrides, drafts] = await Promise.all([
     getTemplateExclusivityMap(user.id),
     getResaleConfig(),
     getTemplateOverrides(),
+    // Rascunhos do modo Dev só importam para quem edita templates.
+    devAvailable ? getTemplateDrafts() : Promise.resolve({}),
   ]);
 
   const templates: GalleryTemplate[] = listTemplates().flatMap(meta => {
@@ -51,7 +56,9 @@ export default async function NewSitePage() {
           ? { ...exclusivity[meta.id], feePercent: resale.feePercent }
           : undefined,
         id: meta.id,
-        master: devAvailable ? { edited: meta.id in overrides } : undefined,
+        master: devAvailable
+          ? { draft: meta.id in drafts, edited: meta.id in overrides }
+          : undefined,
         name: meta.name,
         pageCount: meta.pageCount,
         previewBackground: site.theme.bg ?? "#030712",

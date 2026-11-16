@@ -4,6 +4,7 @@ import {
   type SiteTemplate,
   siteSchema,
 } from "@repo/site-builder";
+import { isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { pgBuilderTemplateOverride } from "@/lib/db/schema";
 
@@ -30,10 +31,39 @@ export async function getTemplateOverrides(): Promise<Record<string, Site>> {
   }
   const out: Record<string, Site> = {};
   for (const row of rows) {
+    // Linha só com rascunho (nunca publicada): vale o template do código.
+    if (row.content == null) continue;
     const parsed = siteSchema.safeParse(row.content);
     if (parsed.success) out[row.templateId] = parsed.data;
     else
       console.error(`[templates] versão editada inválida: ${row.templateId}`);
+  }
+  return out;
+}
+
+/**
+ * Rascunhos do modo Dev por template (`draft_content`): só quem edita templates os vê. Consulta separada da dos
+ * publicados de propósito: se as colunas do rascunho ainda não existem (migration pendente), falha só aqui e os
+ * templates publicados seguem valendo.
+ */
+export async function getTemplateDrafts(): Promise<Record<string, Site>> {
+  let rows: { draft: unknown; templateId: string }[];
+  try {
+    rows = await db
+      .select({
+        draft: pgBuilderTemplateOverride.draftContent,
+        templateId: pgBuilderTemplateOverride.templateId,
+      })
+      .from(pgBuilderTemplateOverride)
+      .where(isNotNull(pgBuilderTemplateOverride.draftContent));
+  } catch (error) {
+    console.error("[templates] não foi possível ler os rascunhos:", error);
+    return {};
+  }
+  const out: Record<string, Site> = {};
+  for (const row of rows) {
+    const parsed = siteSchema.safeParse(row.draft);
+    if (parsed.success) out[row.templateId] = parsed.data;
   }
   return out;
 }

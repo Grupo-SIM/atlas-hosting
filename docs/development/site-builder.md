@@ -93,13 +93,22 @@ Telas em `frontend/src/app/(auth)/criador-de-sites/`:
    ligada, aparece o aviso de que são templates de demonstração e cada cartão ganha **Editar template**, o selo **Editado** e
    **Descartar edições**; desligada, a galeria é a do cliente. O editor do template
    (`/criador-de-sites/templates/[templateId]`, `requireTemplateEditor`) abre o editor normal sem publicação, com a Atlas IA,
-   "Restaurar original" = template do código e uma **faixa fixa "MODO DEV"** (prop `banner` do `SiteEditor`) dizendo que é uma
-   demonstração e o que o salvamento afeta. O que se salva vai para
-   `builder_template_overrides` (uma linha por template; `saveTemplateOverride`/`resetTemplateOverride` em `template-actions.ts`,
-   ambas recusam quem não pode editar template). A versão editada vale para **todos**: galeria, prévia, `createSite` e o "Restaurar
-   original" do editor de sites passam por `getEffectiveTemplate`/`getTemplateOverrides` (`lib/site-builder/templates.ts`).
+   "Restaurar original" = template do código, uma **faixa fixa "MODO DEV"** (prop `banner` do `SiteEditor`) e, **toda vez que a
+   página abre**, um **modal de entrada** (`TemplateEditorClient`, estado nunca guardado) que só fecha em "Entendi, entrar no
+   modo Dev" ou "Voltar à galeria".
+
+   **Rascunho x versão fixa** (`builder_template_overrides`): o editor **salva sozinho em rascunho** (`draft_content`,
+   `saveTemplateDraft`; nunca toca em `content`), que só quem edita templates vê. Os botões da faixa fecham o ciclo:
+   **Publicar no template** (`publishTemplateDraft`: copia o rascunho para `content`, a versão fixa, e limpa o rascunho, em
+   transação) e **Descartar rascunho** (`discardTemplateDraft`). **Descartar edições** na galeria (`resetTemplateOverride`)
+   apaga a versão fixa e o rascunho e volta ao template do código. Só `content` chega ao cliente: galeria, prévia, `createSite`
+   ("Usar este template") e o "Restaurar original" do editor de sites passam por `getEffectiveTemplate`/`getTemplateOverrides`
+   (`lib/site-builder/templates.ts`); `getTemplateDrafts` (consulta separada, tolerante a falha) é só do modo Dev e alimenta o
+   selo **Rascunho** (ao lado de **Publicado**) nos cartões. Migration: **`frontend/drizzle/0016_template_drafts.sql`** (cria a
+   tabela se faltar e acrescenta as colunas de rascunho; substitui a 0014; a pasta `frontend/drizzle` está no `.gitignore`).
+   Sem a 0016, "Usar este template" continua com o template do código e salvar rascunho avisa que não foi possível.
    Sites já criados não mudam (cada um tem a própria cópia). Se a tabela não existir ou a versão guardada for inválida, o
-   template do código vale e o erro só vai para o log — a galeria nunca cai. Migration: `frontend/drizzle/0014_template_overrides.sql`
+   template do código vale e o erro só vai para o log — a galeria nunca cai. Migration (histórico, substituída pela 0016): `frontend/drizzle/0014_template_overrides.sql`
    (a pasta `frontend/drizzle` está no `.gitignore`: o arquivo não vai no commit, então passe-o a quem aplica).
 3. `/criador-de-sites/novo/[templateId]` — **Configurar** (nome + endereço) e **progresso**. `createSite` cria o
    registro e `publishSite` publica no endereço escolhido; "Definir depois" só cria. Os passos de progresso são

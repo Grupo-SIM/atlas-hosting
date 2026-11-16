@@ -197,6 +197,11 @@ export const editorCss = `
 .sbe-banner{flex-shrink:0;padding:8px 14px;background:#fdf1e0;border-bottom:1px solid #f1d3a6;color:#92550c;font-size:12px;line-height:1.45}
 .sbe-banner b{font-weight:600}
 .sbe-banner code{font-family:'JetBrains Mono',ui-monospace,monospace;background:#1d1c1a;color:#d6f34a;border-radius:4px;padding:1px 5px;font-size:11px;margin-right:4px}
+.sbe-devbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.sbe-devbar>div:first-child{flex:1;min-width:260px}
+.sbe-devstatus{display:block;margin-top:2px;font-weight:600}
+.sbe-devactions{display:flex;gap:8px;flex-shrink:0}
+.sbe-devactions button:disabled{opacity:.45;cursor:not-allowed}
 .sbe-modal{position:fixed;inset:0;background:rgba(29,28,26,.4);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
 .sbe-confirm{width:420px;max-height:none}
 .sbe-adprev{width:760px;max-height:calc(100vh - 32px)}
