@@ -54,6 +54,48 @@ export const SIDE_COUNT_OPTIONS = [
 ];
 
 export const adNumber = (key: AdKey) => AD_KEYS.indexOf(key) + 1;
+
+export type AdSize = "banner" | "side" | "square";
+
+/** Tamanho ideal de uma mídia de anúncio e de onde vem. As proporções espelham o CSS (`renderer/styles.ts` e variantes). */
+export interface AdSpec {
+  h: number;
+  /** Frase curta sobre o que faz o tamanho mudar (quantidade de anúncios na coluna, tema). */
+  note?: string;
+  size: AdSize;
+  w: number;
+}
+
+/**
+ * Tamanho ideal da imagem de um espaço de anúncio, em pixels. A faixa larga é 970×150 (Holofote e Zyrion usam
+ * 728×90); o quadrado é 300×250; a coluna lateral **muda com a quantidade de anúncios**: 1 = 300×600, 2 = 300×300 e
+ * 3 = 300×250 (cada um dos anúncios da coluna ganha menos altura).
+ */
+export function adSpec(
+  size: AdSize,
+  theme: Record<string, string>,
+  sideCount: 1 | 2 | 3 = 1
+): AdSpec {
+  if (size === "banner") {
+    const compact = theme.variant === "holofote" || theme.variant === "zyrion";
+    return compact ? { h: 90, size, w: 728 } : { h: 150, size, w: 970 };
+  }
+  if (size === "square") return { h: 250, size, w: 300 };
+  const h = sideCount === 1 ? 600 : sideCount === 2 ? 300 : 250;
+  return {
+    h,
+    note:
+      sideCount === 1
+        ? "Com 1 anúncio na coluna lateral, ele é alto (300 × 600)."
+        : `Com ${sideCount} anúncios na coluna lateral, cada um fica menor (300 × ${h}). Se você mudar a quantidade, o tamanho ideal muda.`,
+    size,
+    w: 300,
+  };
+}
+
+/** Formato do espaço pelo número dele: o 1 é a faixa larga; 2, 3 e 4 são da coluna lateral. */
+export const adSizeOfKey = (key: AdKey): AdSize =>
+  key === "banner" ? "banner" : "side";
 export const AD_TITLES: Record<AdKey, string> = {
   banner: "Espaço publicitário 1 — faixas largas (topo), todas as páginas",
   side: "Espaço publicitário 2 — coluna lateral direita, todas as páginas",

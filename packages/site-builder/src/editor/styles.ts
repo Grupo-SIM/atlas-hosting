@@ -107,6 +107,8 @@ export const editorCss = `
 .sbe-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;height:30px;padding:0 10px!important}
 .sbe-more{margin-top:4px}
 .sbe-more>summary{cursor:pointer;font-size:12px;color:#55524c;padding:6px 0}
+.sbe-spec{display:block;margin-top:2px;font-size:11px;line-height:1.45;color:var(--mute)}
+.sbe-spec b{color:var(--ink);font-weight:500}
 .sbe-colorrow{display:flex;align-items:center;gap:8px}
 .sbe-colorrow input[type=color]{flex:none;width:36px;height:30px;padding:0!important;border:1px solid rgba(0,0,0,.18)!important;border-radius:8px;background:none;cursor:pointer}
 .sbe-colorrow .sbe-mono{flex:1;min-width:0}
@@ -194,6 +196,18 @@ export const editorCss = `
 .sbe-scrim{position:absolute;inset:0;background:rgba(29,28,26,.28);display:flex;align-items:flex-start;justify-content:flex-end;padding:52px 12px 12px;z-index:50}
 .sbe-modal{position:fixed;inset:0;background:rgba(29,28,26,.4);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
 .sbe-confirm{width:420px;max-height:none}
+.sbe-adprev{width:760px;max-height:calc(100vh - 32px)}
+.sbe-adprev-body{padding:8px 20px 4px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start;overflow:auto}
+.sbe-adprev-body h4{font-size:12px;font-weight:500;color:var(--mute);margin:0 0 8px;text-transform:none}
+.sbe-adprev-slot{position:relative;width:100%;overflow:hidden;border-radius:8px;background:#e9e7e1;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.sbe-adprev-whole{position:relative;width:100%;max-width:300px;overflow:hidden;border-radius:6px;background:#e9e7e1;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.sbe-adprev-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sbe-adprev-media.full{object-fit:fill}
+.sbe-adprev-keep{position:absolute;box-shadow:0 0 0 999px rgba(20,20,20,.58);outline:2px solid var(--lime);outline-offset:-2px}
+.sbe-adprev-cap{display:block;margin-top:6px;font-size:11px;color:var(--mute)}
+.sbe-adprev-facts{margin:8px 20px 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:12px;color:#55524c}
+.sbe-adprev-facts .warn{color:#92550c}
+@media (max-width:720px){.sbe-adprev-body{grid-template-columns:1fr}}
 .sbe-vpop{background:rgba(11,11,11,.8);padding:56px 12px 16px}
 .sbe-vpop-stage{position:relative;width:min(900px,100%);aspect-ratio:16/9;background:#000;box-shadow:0 0 8px rgba(0,0,0,.6)}
 .sbe-vpop-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}

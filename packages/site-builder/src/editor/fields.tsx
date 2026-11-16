@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { AdSpec } from "../blocks/ads.js";
 import type { FieldDef } from "../blocks/types.js";
 import {
   isVideoFile,
@@ -8,6 +9,14 @@ import {
   parseMediaSource,
   type YouTubeChannel,
 } from "../blocks/youtube.js";
+import {
+  IMAGE_FORMATS,
+  UPLOAD_LIMIT_MB,
+  uploadSizeError,
+  VIDEO_FORMATS,
+} from "../upload-limits.js";
+import { AdPreviewDialog } from "./AdPreviewDialog.js";
+import { ratioLabel } from "./ad-crop.js";
 import { Icon } from "./icons.js";
 
 /** Confere o canal no YouTube e devolve o ID `UC…` e o nome. Lança `Error` com mensagem para a pessoa. */
@@ -19,12 +28,15 @@ type Values = Record<string, unknown>;
 
 /** Campo genérico do painel de propriedades, dirigido pelo `FieldDef` do bloco. */
 export function FieldInput({
+  adSpec,
   field,
   onChange,
   onResolveChannel,
   onUpload,
   value,
 }: {
+  /** Mídia de espaço de anúncio: mostra o tamanho ideal e a prévia do corte antes de enviar. */
+  adSpec?: AdSpec;
   field: FieldDef;
   onChange: (value: unknown) => void;
   onResolveChannel?: ResolveChannel;
@@ -50,6 +62,7 @@ export function FieldInput({
               )
               .map(f => (
                 <FieldInput
+                  adSpec={adSpec}
                   field={f}
                   key={f.key}
                   onChange={v => update(index, f.key, v)}
@@ -152,6 +165,7 @@ export function FieldInput({
   if (field.kind === "image" || field.kind === "media") {
     return (
       <ImageField
+        adSpec={adSpec}
         field={field}
         media={field.kind === "media" || field.key !== "favicon"}
         onChange={onChange}
@@ -204,12 +218,15 @@ export function FieldInput({
 
 /** Imagem: arrastar e soltar ou clicar para enviar, ou colar a URL. */
 function ImageField({
+  adSpec,
   field,
   media = false,
   onChange,
   onUpload,
   value,
 }: {
+  /** Espaço de anúncio: tamanho ideal embaixo do campo e prévia do corte antes de enviar. */
+  adSpec?: AdSpec;
   field: FieldDef;
   /** Aceita também vídeo (anúncios). */
   media?: boolean;
@@ -221,6 +238,30 @@ function ImageField({
   const [over, setOver] = useState(false);
   const [error, setError] = useState("");
   const picker = useRef<HTMLInputElement>(null);
+  // Mídia de anúncio escolhida e ainda não enviada: a prévia do corte pergunta se a pessoa quer usar.
+  const [staged, setStaged] = useState<{ file: File; url: string } | null>(
+    null
+  );
+  const [viewing, setViewing] = useState(false);
+  useEffect(
+    () => () => {
+      if (staged) URL.revokeObjectURL(staged.url);
+    },
+    [staged]
+  );
+
+  const upload = async (file: File) => {
+    if (!onUpload) return;
+    setUploading(true);
+    setError("");
+    try {
+      onChange(await onUpload(file));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha no envio");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const send = async (file: File | undefined) => {
     if (!(file && onUpload)) return;
@@ -235,15 +276,22 @@ function ImageField({
       );
       return;
     }
-    setUploading(true);
-    setError("");
-    try {
-      onChange(await onUpload(file));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha no envio");
-    } finally {
-      setUploading(false);
+    // Passou do limite: avisa agora, sem gastar o envio (o servidor também recusa).
+    const tooBig = uploadSizeError(
+      file,
+      file.type.startsWith("video/") ? "video" : "image"
+    );
+    if (tooBig) {
+      setError(tooBig);
+      return;
     }
+    // Espaço de anúncio: mostra como a mídia fica cortada antes de enviar.
+    if (adSpec) {
+      setError("");
+      setStaged({ file, url: URL.createObjectURL(file) });
+      return;
+    }
+    await upload(file);
   };
 
   return (
@@ -330,6 +378,23 @@ function ImageField({
             ref={picker}
             type="file"
           />
+          <small className="sbe-spec">
+            {adSpec ? (
+              <>
+                Tamanho ideal:{" "}
+                <b>
+                  {adSpec.w} × {adSpec.h} px
+                </b>{" "}
+                ({ratioLabel(adSpec.w, adSpec.h)}).{" "}
+                {adSpec.note ? `${adSpec.note} ` : ""}O que passar das bordas é
+                cortado, a partir do centro.
+                <br />
+              </>
+            ) : null}
+            {media
+              ? `Imagens até ${UPLOAD_LIMIT_MB.image} MB (${IMAGE_FORMATS}) · vídeos até ${UPLOAD_LIMIT_MB.video} MB (${VIDEO_FORMATS}).`
+              : `Até ${UPLOAD_LIMIT_MB.image} MB · ${IMAGE_FORMATS}.`}
+          </small>
         </>
       ) : null}
       <input
@@ -343,17 +408,52 @@ function ImageField({
         value={value}
       />
       {value ? (
-        <button
-          className="sbe-btn danger"
-          onClick={() => onChange("")}
-          style={{ alignSelf: "flex-start" }}
-          type="button"
-        >
-          <Icon name="trash-2" size={13} />
-          {media ? "Remover mídia" : "Remover imagem"}
-        </button>
+        <div className="sbe-row" style={{ justifyContent: "flex-start" }}>
+          {adSpec && !parseMediaSource(value)?.kind?.startsWith("embed") ? (
+            <button
+              className="sbe-btn"
+              onClick={() => setViewing(true)}
+              type="button"
+            >
+              <Icon name="eye" size={13} />
+              Ver como fica o corte
+            </button>
+          ) : null}
+          <button
+            className="sbe-btn danger"
+            onClick={() => onChange("")}
+            type="button"
+          >
+            <Icon name="trash-2" size={13} />
+            {media ? "Remover mídia" : "Remover imagem"}
+          </button>
+        </div>
       ) : null}
       {error ? <small className="sbe-error">{error}</small> : null}
+      {adSpec && staged ? (
+        <AdPreviewDialog
+          busy={uploading}
+          fileSize={staged.file.size}
+          isVideo={staged.file.type.startsWith("video/")}
+          mode="confirm"
+          onClose={() => setStaged(null)}
+          onConfirm={async () => {
+            await upload(staged.file);
+            setStaged(null);
+          }}
+          spec={adSpec}
+          src={staged.url}
+        />
+      ) : null}
+      {adSpec && viewing && value ? (
+        <AdPreviewDialog
+          isVideo={isVideoFile(value)}
+          mode="view"
+          onClose={() => setViewing(false)}
+          spec={adSpec}
+          src={value}
+        />
+      ) : null}
     </div>
   );
 }

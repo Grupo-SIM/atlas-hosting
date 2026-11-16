@@ -52,3 +52,12 @@ export {
   listTemplates,
   peekTemplate,
 } from "./templates/index.js";
+export {
+  formatSize,
+  IMAGE_FORMATS,
+  UPLOAD_LIMIT_MB,
+  type UploadKind,
+  uploadLimitBytes,
+  uploadSizeError,
+  VIDEO_FORMATS,
+} from "./upload-limits.js";

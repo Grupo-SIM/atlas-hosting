@@ -6,6 +6,8 @@ import {
   AD_TITLES,
   type AdKey,
   adItemFields,
+  adSizeOfKey,
+  adSpec,
   globalAds,
   SIDE_COUNT_OPTIONS,
   sideAdCount,
@@ -44,6 +46,7 @@ import {
 
 import { themeVars } from "../renderer/styles.js";
 import { VARIANT_TOKENS } from "../renderer/variant-tokens.js";
+import { UPLOAD_LIMIT_MB, uploadSizeError } from "../upload-limits.js";
 import { FieldInput, type ResolveChannel } from "./fields.js";
 import { formatTranslate, parseTranslate } from "./free-move.js";
 import { Icon, type IconName } from "./icons.js";
@@ -153,6 +156,11 @@ function FontPicker({
 
   const upload = async (file: File | undefined) => {
     if (!(file && onUploadFont)) return;
+    const tooBig = uploadSizeError(file, "font");
+    if (tooBig) {
+      setError(tooBig);
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -212,6 +220,11 @@ function FontPicker({
             type="file"
           />
         </label>
+      ) : null}
+      {onUploadFont ? (
+        <small className="sbe-spec">
+          Fontes até {UPLOAD_LIMIT_MB.font} MB (.woff2, .woff, .ttf ou .otf).
+        </small>
       ) : null}
       {error ? <p className="sbe-hint">{error}</p> : null}
     </div>
@@ -989,6 +1002,11 @@ function GlobalAdFields({
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <h4 className="sbe-h">{AD_TITLES[kind]}</h4>
       <FieldInput
+        adSpec={adSpec(
+          adSizeOfKey(kind),
+          site.theme,
+          sideAdCount(site.theme, 1)
+        )}
         field={{
           itemFields: adItemFields,
           key: "items",
@@ -1269,6 +1287,23 @@ export function Inspector({
           value: countValue,
         }
       : undefined;
+
+  /** Tamanho ideal e prévia de corte para a lista de mídia de um espaço de anúncio do bloco selecionado. */
+  const adSpecFor = (field: FieldDef) => {
+    if (!selected || field.itemFields !== adItemFields) return undefined;
+    const own = selected.props.size;
+    const size =
+      selected.type === "adSlot" && (own === "side" || own === "square")
+        ? own
+        : selected.type === "adSlot"
+          ? "banner"
+          : "side";
+    const count = sideAdCount(
+      site.theme,
+      (selected.props.sideAds as string | number | undefined) ?? 1
+    );
+    return adSpec(size, site.theme, count);
+  };
 
   const vars = themeVars(site.theme);
   const resolve = (c: string) => {
@@ -1589,6 +1624,7 @@ export function Inspector({
               itemMatches.map(m =>
                 m.kind === "field" ? (
                   <FieldInput
+                    adSpec={adSpecFor(m.field)}
                     field={m.field}
                     key={m.field.key}
                     onChange={v => onProp(m.field.key, v)}
@@ -1657,6 +1693,7 @@ export function Inspector({
               .filter(f => !(numberedAds && isOwnAdField(selected.type, f.key)))
               .map(field => (
                 <FieldInput
+                  adSpec={adSpecFor(field)}
                   field={field}
                   key={field.key}
                   onChange={v => onProp(field.key, v)}

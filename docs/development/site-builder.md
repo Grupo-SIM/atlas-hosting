@@ -5,6 +5,19 @@ em `packages/site-builder`; o Atlas só tem as telas e a infraestrutura (banco, 
 DNS, deploy) em `frontend/src/app/(auth)/criador-de-sites/` e `frontend/src/lib/site-builder/`.
 Leia também [o guia de scaffolding](project-scaffolding.md) antes de mexer em exports ou Turbo.
 
+## Limites de upload e mídia de anúncio
+
+`src/upload-limits.ts` é a fonte única dos limites (`UPLOAD_LIMIT_MB`: imagem 8, vídeo 25, fonte 3). As server actions de envio
+(`criador-de-sites/actions.ts`) usam `uploadLimitBytes` e a interface usa `uploadSizeError` para barrar antes de enviar e
+mostrar o limite sob o campo (`ImageField`, fontes). Para mudar um limite, é só esse arquivo.
+
+Mídia de **anúncio**: `adSpec(size, theme, sideCount)` (`blocks/ads.tsx`) dá o tamanho ideal de cada espaço (as proporções
+espelham o CSS: banner 970×150, 728×90 em Holofote/Zyrion; quadrado 300×250; coluna lateral 300×600/300×300/300×250 conforme a
+quantidade de anúncios, `sideAdCount`). O `FieldInput` recebe `adSpec` (o `Inspector` passa nas listas `adItemFields`, em
+`GlobalAdFields` e no `adSpecFor` do bloco). Com `adSpec`, `ImageField` mostra o tamanho ideal sob o campo e, ao escolher
+um arquivo, abre `AdPreviewDialog` (`coverCrop` em `ad-crop.ts` calcula o corte do `object-fit: cover` centralizado):
+só envia ao confirmar. Se mudar uma proporção no CSS dos anúncios, ajuste `adSpec`.
+
 ## Links do menu e do rodapé
 
 O menu do site (`site.menu`) alimenta o cabeçalho e o rodapé. Clicar num link do menu abre "Menu do site" com **aquele** item em
