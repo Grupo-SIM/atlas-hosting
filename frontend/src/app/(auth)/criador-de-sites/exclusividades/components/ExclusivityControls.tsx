@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { Crown, Loader, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { MoneyInput } from "@/components/MoneyInput";
 import { Button } from "@/components/ui/button";
@@ -18,22 +18,25 @@ import {
 import { Label } from "@/components/ui/label";
 import {
   buyerTotal,
+  EVICTION_DAYS,
   formatBrl,
+  PAYMENT_WINDOW_HOURS,
+  PROPOSAL_TTL_DAYS,
   type TemplateExclusivityState,
 } from "@/lib/template-exclusivity/rules";
 import { buyExclusivity, sendProposal } from "../actions";
 
 export type ExclusivityView = TemplateExclusivityState & { feePercent: number };
 
-/** Selo curto para o card da galeria. */
+/** Selo curto que fica sobre a miniatura do template. */
 export function ExclusivityBadge({ state }: { state?: ExclusivityView }) {
   if (!state || state.kind === "public") return null;
   const base =
-    "absolute top-2.5 left-2.5 z-10 flex items-center gap-1 rounded-full px-2.5 py-1 font-medium text-[11px] shadow-sm";
+    "absolute top-2.5 left-2.5 z-10 flex items-center gap-[5px] rounded-full py-[5px] pr-2.5 pl-2 font-medium text-[11px] shadow-[0_1px_3px_rgba(0,0,0,0.12)]";
   if (state.kind === "available") {
     return (
-      <span className={`${base} bg-white text-[#1d1c1a]`}>
-        <Crown className="size-3" /> Exclusividade disponível
+      <span className={`${base} bg-[#1d1c1a] text-[#d6f34a]`}>
+        <Crown className="size-3" /> Pode ser só seu
       </span>
     );
   }
@@ -46,14 +49,157 @@ export function ExclusivityBadge({ state }: { state?: ExclusivityView }) {
   }
   return (
     <span className={`${base} bg-[#1d1c1a] text-white`}>
-      <Lock className="size-3" /> Exclusivo
+      <Lock className="size-3" />
+      {state.kind === "reserved" ? "Reservado" : "Exclusivo"}
     </span>
   );
 }
 
+/** Compra a exclusividade e leva para o checkout da anuidade. */
+export function BuyExclusivityButton({
+  children,
+  className,
+  templateId,
+}: {
+  children: ReactNode;
+  className?: string;
+  templateId: string;
+}) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      className={className}
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        const result = await buyExclusivity(templateId);
+        if (!result.ok) {
+          toast.error(result.error);
+          setBusy(false);
+          return;
+        }
+        router.push(result.checkoutUrl);
+      }}
+      type="button"
+    >
+      {busy && <Loader className="size-[13px] animate-spin" />}
+      {children}
+    </button>
+  );
+}
+
+/** Abre a proposta de compra para o dono atual do template. */
+export function ProposalButton({
+  children,
+  className,
+  feePercent,
+  minOfferBrl,
+  templateId,
+  templateName,
+}: {
+  children: ReactNode;
+  className?: string;
+  feePercent: number;
+  minOfferBrl: number;
+  templateId: string;
+  templateName: string;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button className={className} onClick={() => setOpen(true)} type="button">
+        {children}
+      </button>
+      <OfferDialog
+        feePercent={feePercent}
+        minimum={minOfferBrl}
+        onClose={() => setOpen(false)}
+        open={open}
+        templateId={templateId}
+        templateName={templateName}
+      />
+    </>
+  );
+}
+
+/** Explica como funciona a compra de um template exclusivo de outra pessoa. */
+export function ExclusivityRulesButton({
+  className,
+  feePercent,
+  minOfferBrl,
+}: {
+  className?: string;
+  feePercent: number;
+  minOfferBrl: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const example = minOfferBrl;
+  return (
+    <>
+      <button className={className} onClick={() => setOpen(true)} type="button">
+        Ver regras
+      </button>
+      <Dialog onOpenChange={setOpen} open={open}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Como funciona a proposta</DialogTitle>
+            <DialogDescription>
+              Este template é exclusivo de outro usuário. Você pode comprar a
+              exclusividade dele por uma proposta, sem trocar contato.
+            </DialogDescription>
+          </DialogHeader>
+          <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm leading-relaxed">
+            <li>
+              Ofereça a partir de <strong>{formatBrl(minOfferBrl)}</strong>, o
+              mínimo definido pelo dono.
+            </li>
+            <li>
+              O dono pode aceitar, recusar ou mandar uma contraproposta. Cada
+              lado tem {PROPOSAL_TTL_DAYS} dias para responder; sem resposta, a
+              proposta expira.
+            </li>
+            <li>
+              Aceita a proposta, você tem {PAYMENT_WINDOW_HOURS}h para pagar o
+              valor fechado + a taxa do Atlas de {feePercent}%.
+            </li>
+            <li>
+              Pago, a exclusividade passa a ser sua por 12 meses (renovação
+              anual). Os sites do dono anterior saem do ar em {EVICTION_DAYS}{" "}
+              dias.
+            </li>
+          </ol>
+          <div className="flex flex-col gap-1.5 rounded-lg border bg-muted/40 p-3 text-sm">
+            <span className="text-muted-foreground text-xs">
+              Exemplo · fechando pelo mínimo
+            </span>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Valor acordado</span>
+              <span>{formatBrl(example)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">
+                Taxa do Atlas ({feePercent}%)
+              </span>
+              <span>+ {formatBrl(buyerTotal(example, feePercent) - example)}</span>
+            </div>
+            <div className="flex justify-between border-t pt-1.5 font-medium">
+              <span>Você paga</span>
+              <span>{formatBrl(buyerTotal(example, feePercent))}</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setOpen(false)}>Entendi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 /**
- * Ações de exclusividade de um template: comprar (preço anual do admin),
- * mostrar que é seu, ou fazer proposta ao dono atual.
+ * Ações de exclusividade de um template (usado na barra da pré-visualização):
+ * comprar, mostrar que é seu, ou fazer proposta ao dono atual.
  */
 export function ExclusivityAction({
   className,
@@ -66,36 +212,14 @@ export function ExclusivityAction({
   templateId: string;
   templateName: string;
 }) {
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
-  const [offerOpen, setOfferOpen] = useState(false);
-
   if (!state || state.kind === "public") return null;
 
   if (state.kind === "available") {
     return (
-      <button
-        className={className}
-        disabled={busy}
-        onClick={async () => {
-          setBusy(true);
-          const result = await buyExclusivity(templateId);
-          if (!result.ok) {
-            toast.error(result.error);
-            setBusy(false);
-            return;
-          }
-          router.push(result.checkoutUrl);
-        }}
-        type="button"
-      >
-        {busy ? (
-          <Loader className="size-[14px] animate-spin" />
-        ) : (
-          <Crown className="size-[14px]" />
-        )}
+      <BuyExclusivityButton className={className} templateId={templateId}>
+        <Crown className="size-[14px]" />
         Exclusividade · {formatBrl(state.annualPriceBrl)}/ano
-      </button>
+      </BuyExclusivityButton>
     );
   }
 
@@ -117,20 +241,16 @@ export function ExclusivityAction({
   }
 
   return (
-    <>
-      <button className={className} onClick={() => setOfferOpen(true)} type="button">
-        <Lock className="size-[14px]" />
-        Fazer proposta · mín. {formatBrl(state.minOfferBrl)}
-      </button>
-      <OfferDialog
-        feePercent={state.feePercent}
-        minimum={state.minOfferBrl}
-        onClose={() => setOfferOpen(false)}
-        open={offerOpen}
-        templateId={templateId}
-        templateName={templateName}
-      />
-    </>
+    <ProposalButton
+      className={className}
+      feePercent={state.feePercent}
+      minOfferBrl={state.minOfferBrl}
+      templateId={templateId}
+      templateName={templateName}
+    >
+      <Lock className="size-[14px]" />
+      Fazer proposta · mín. {formatBrl(state.minOfferBrl)}
+    </ProposalButton>
   );
 }
 

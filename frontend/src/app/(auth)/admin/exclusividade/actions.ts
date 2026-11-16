@@ -1,7 +1,7 @@
 "use server";
 
 import { getTemplate } from "@repo/site-builder";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getRealUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -23,32 +23,52 @@ async function assertAdmin(): Promise<boolean> {
   return hasAreaAccess(user, "admin_exclusivity", "edit");
 }
 
-/** Liga/desliga a exclusividade de um template e define o preço anual. */
-export async function saveTemplateExclusivity(input: {
+export interface TemplateExclusivityInput {
   annualPriceBrl: number;
   enabled: boolean;
   templateId: string;
-}): Promise<Result> {
+}
+
+/**
+ * Salva de uma vez as alterações da tabela de templates: liga/desliga a
+ * exclusividade e define o preço anual. Tudo ou nada: se um template não
+ * passar na validação, nenhum é gravado.
+ */
+export async function saveTemplateExclusivities(
+  input: TemplateExclusivityInput[]
+): Promise<Result> {
   if (!(await assertAdmin())) {
     return { error: "Acesso restrito a administradores.", ok: false };
   }
-  const templateId = String(input.templateId);
-  if (!getTemplate(templateId)) {
-    return { error: "Template não encontrado.", ok: false };
-  }
-  const price = round2(Number(input.annualPriceBrl));
-  const enabled = Boolean(input.enabled);
-  if (enabled && !(Number.isFinite(price) && price > 0)) {
-    return { error: "Informe o preço anual da exclusividade.", ok: false };
+  if (!Array.isArray(input) || input.length === 0) {
+    return { error: "Nenhuma alteração para salvar.", ok: false };
   }
 
-  if (!enabled) {
-    const [owned] = await db
-      .select({ id: pgTemplateExclusivity.id })
+  const items = new Map<string, { enabled: boolean; price: number }>();
+  for (const raw of input) {
+    const templateId = String(raw?.templateId ?? "");
+    const template = getTemplate(templateId);
+    if (!template) return { error: "Template não encontrado.", ok: false };
+    const enabled = Boolean(raw.enabled);
+    const price = round2(Number(raw.annualPriceBrl));
+    const valid = Number.isFinite(price) && price > 0;
+    if (enabled && !valid) {
+      return {
+        error: `Informe o preço anual de ${template.name}.`,
+        ok: false,
+      };
+    }
+    items.set(templateId, { enabled, price: valid ? price : 0 });
+  }
+
+  const disabling = [...items].filter(([, item]) => !item.enabled).map(([id]) => id);
+  if (disabling.length > 0) {
+    const owned = await db
+      .select({ templateId: pgTemplateExclusivity.templateId })
       .from(pgTemplateExclusivity)
       .where(
         and(
-          eq(pgTemplateExclusivity.templateId, templateId),
+          inArray(pgTemplateExclusivity.templateId, disabling),
           inArray(pgTemplateExclusivity.status, [
             ...OWNED_EXCLUSIVITY_STATUSES,
             "reserved",
@@ -56,30 +76,27 @@ export async function saveTemplateExclusivity(input: {
         )
       )
       .limit(1);
-    if (owned) {
+    if (owned[0]) {
+      const name = getTemplate(owned[0].templateId)?.name ?? owned[0].templateId;
       return {
-        error:
-          "Este template tem dono (ou uma compra em andamento). Não dá para desativar agora.",
+        error: `${name} tem dono (ou uma compra em andamento): a exclusividade não pode ser desligada agora.`,
         ok: false,
       };
     }
   }
 
-  await db
-    .insert(pgTemplateExclusivitySetting)
-    .values({
-      annualPriceBrl: Number.isFinite(price) && price > 0 ? price : 0,
-      enabled,
-      templateId,
-    })
-    .onConflictDoUpdate({
-      set: {
-        annualPriceBrl: Number.isFinite(price) && price > 0 ? price : 0,
-        enabled,
-        updatedAt: new Date(),
-      },
-      target: pgTemplateExclusivitySetting.templateId,
-    });
+  const now = new Date();
+  await db.transaction(async tx => {
+    for (const [templateId, item] of items) {
+      await tx
+        .insert(pgTemplateExclusivitySetting)
+        .values({ annualPriceBrl: item.price, enabled: item.enabled, templateId })
+        .onConflictDoUpdate({
+          set: { annualPriceBrl: item.price, enabled: item.enabled, updatedAt: now },
+          target: pgTemplateExclusivitySetting.templateId,
+        });
+    }
+  });
 
   revalidatePath(PATH);
   revalidatePath("/criador-de-sites/novo");
