@@ -56,7 +56,7 @@ async function streamChat(
 }
 
 // Fora do componente: o editor refaz a checagem de conexão se esta referência mudar.
-const aiConfig: AiConfig = {
+export const aiConfig: AiConfig = {
   chat: streamChat,
   disconnect: disconnectAi,
   finishLogin: finishAiLogin,

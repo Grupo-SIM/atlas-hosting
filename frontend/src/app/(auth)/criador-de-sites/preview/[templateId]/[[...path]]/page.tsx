@@ -1,9 +1,10 @@
-import { getTemplate, SiteRenderer } from "@repo/site-builder";
+import { SiteRenderer } from "@repo/site-builder";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { requireBuilderUser } from "@/lib/site-builder/access";
+import { getEffectiveTemplate } from "@/lib/site-builder/templates";
 import { blocksOthers } from "@/lib/template-exclusivity/rules";
 import {
   getResaleConfig,
@@ -25,7 +26,7 @@ export default async function TemplatePreviewPage({
 }) {
   const user = await requireBuilderUser();
   const { path = [], templateId } = await params;
-  const template = getTemplate(templateId);
+  const template = await getEffectiveTemplate(templateId);
   if (!template) notFound();
   const [state, resale] = await Promise.all([
     getTemplateState(template.id, user.id),

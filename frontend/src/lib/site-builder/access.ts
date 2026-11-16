@@ -7,6 +7,17 @@ export const FORBIDDEN_MESSAGE =
 
 const SITE_BUILDER_ALLOWED_EMAIL = "brenohslima@gmail.com";
 
+/** Admin master do Criador de Sites: pode editar os templates à mão (a versão editada vale para sites novos). */
+const MASTER_ADMIN_EMAIL = "contatosimintermediacoes@gmail.com";
+
+/** Precisa ser admin **e** ter este e-mail: perder um dos dois tira o poder de editar templates. */
+export function isMasterAdmin(user: Pick<User, "email" | "isAdmin">): boolean {
+  return (
+    user.isAdmin === true &&
+    user.email.trim().toLowerCase() === MASTER_ADMIN_EMAIL
+  );
+}
+
 export function canAccessSiteBuilder(
   user: Pick<User, "email" | "isAdmin">
 ): boolean {
@@ -38,6 +49,19 @@ export async function getBuilderUser(): Promise<User | null> {
 /** Para páginas: quem não é admin vê 404, como se a rota não existisse. */
 export async function requireBuilderUser(): Promise<User> {
   const user = await getBuilderUser();
+  if (!user) notFound();
+  return user;
+}
+
+/** Usuário real se for o admin master; `null` para os demais. */
+export async function getMasterAdmin(): Promise<User | null> {
+  const user = await getRealUser();
+  return isMasterAdmin(user) ? user : null;
+}
+
+/** Para páginas do editor de templates: quem não é o master vê 404. */
+export async function requireMasterAdmin(): Promise<User> {
+  const user = await getMasterAdmin();
   if (!user) notFound();
   return user;
 }

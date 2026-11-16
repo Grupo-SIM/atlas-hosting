@@ -6,7 +6,8 @@ import {
 } from "@repo/site-builder";
 import { LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
-import { requireBuilderUser } from "@/lib/site-builder/access";
+import { isMasterAdmin, requireBuilderUser } from "@/lib/site-builder/access";
+import { getTemplateOverrides } from "@/lib/site-builder/templates";
 import {
   getResaleConfig,
   getTemplateExclusivityMap,
@@ -23,14 +24,18 @@ export const metadata: Metadata = {
 
 export default async function NewSitePage() {
   const user = await requireBuilderUser();
-  const [exclusivity, resale] = await Promise.all([
+  const master = isMasterAdmin(user);
+  const [exclusivity, resale, overrides] = await Promise.all([
     getTemplateExclusivityMap(user.id),
     getResaleConfig(),
+    getTemplateOverrides(),
   ]);
 
   const templates: GalleryTemplate[] = listTemplates().flatMap(meta => {
     const full = getTemplate(meta.id);
     if (!full) return [];
+    // A versão editada pelo admin master vale para todos (galeria e sites novos).
+    const site = overrides[meta.id] ?? full.site;
     return [
       {
         description: meta.description,
@@ -38,15 +43,16 @@ export default async function NewSitePage() {
           ? { ...exclusivity[meta.id], feePercent: resale.feePercent }
           : undefined,
         id: meta.id,
+        master: master ? { edited: meta.id in overrides } : undefined,
         name: meta.name,
         pageCount: meta.pageCount,
-        previewBackground: full.site.theme.bg ?? "#030712",
+        previewBackground: site.theme.bg ?? "#030712",
         tags: meta.tags,
         thumb: (
           <StaticThumb>
             <SiteRenderer
               path="/"
-              site={thumbnailSite(full.site)}
+              site={thumbnailSite(site)}
               skipFxRuntime
               thumbnail
             />

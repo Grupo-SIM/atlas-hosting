@@ -8,12 +8,15 @@ import {
   ExclusivityBadge,
   type ExclusivityView,
 } from "../../exclusividades/components/ExclusivityControls";
+import MasterTemplateControls from "./MasterTemplateControls";
 import UseTemplateButton from "./UseTemplateButton";
 
 export interface GalleryTemplate {
   description: string;
   /** Estado da exclusividade para quem está vendo (ausente = template livre). */
   exclusivity?: ExclusivityView;
+  /** Admin master: o template já foi editado à mão (mostra o selo e "Descartar edições"); ausente = não é master. */
+  master?: { edited: boolean };
   id: string;
   name: string;
   pageCount: number;
@@ -100,71 +103,83 @@ export default function TemplateGallery({
               t.exclusivity?.kind === "owned_by_other" ||
               t.exclusivity?.kind === "reserved";
             return (
-            <div
-              className="flex flex-col overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white hover:border-[#c9c5bc] hover:shadow-[0_4px_18px_rgba(30,28,24,0.06)]"
-              key={t.id}
-            >
-              {/* O site da miniatura tem links: o link fica por cima, nunca em volta. */}
               <div
-                className="relative aspect-[4/3] overflow-hidden border-[#ece9e2] border-b"
-                style={{ background: t.previewBackground }}
+                className="flex flex-col overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white hover:border-[#c9c5bc] hover:shadow-[0_4px_18px_rgba(30,28,24,0.06)]"
+                key={t.id}
               >
-                {t.thumb}
-                <ExclusivityBadge state={t.exclusivity} />
-                {!locked && (
-                  <UseTemplateButton
-                    ariaLabel={`Usar o template ${t.name}`}
-                    className="absolute inset-0"
-                    templateId={t.id}
-                    templateName={t.name}
-                  />
-                )}
-              </div>
-              <div className="flex flex-1 flex-col gap-2 px-4 py-3.5">
-                <div className="font-medium text-sm">{t.name}</div>
-                <div className="text-[#6e6b65] text-[13px] leading-[1.4]">
-                  {t.description}
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    ...t.tags,
-                    `${t.pageCount} ${t.pageCount === 1 ? "página" : "páginas"}`,
-                  ].map(tagName => (
-                    <span
-                      className="rounded-full bg-[#f3f1ec] px-2 py-0.5 text-[#55524c] text-[11px]"
-                      key={tagName}
-                    >
-                      {tagName}
+                {/* O site da miniatura tem links: o link fica por cima, nunca em volta. */}
+                <div
+                  className="relative aspect-[4/3] overflow-hidden border-[#ece9e2] border-b"
+                  style={{ background: t.previewBackground }}
+                >
+                  {t.thumb}
+                  <ExclusivityBadge state={t.exclusivity} />
+                  {t.master?.edited ? (
+                    <span className="absolute top-2 left-2 rounded-full bg-[#1d1c1a] px-2.5 py-1 text-[11px] text-white">
+                      Editado
                     </span>
-                  ))}
-                </div>
-                <div className="mt-auto flex flex-wrap gap-2 pt-1.5">
+                  ) : null}
                   {!locked && (
                     <UseTemplateButton
-                      className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[13px] disabled:opacity-60"
+                      ariaLabel={`Usar o template ${t.name}`}
+                      className="absolute inset-0"
                       templateId={t.id}
                       templateName={t.name}
-                    >
-                      Usar este template
-                    </UseTemplateButton>
+                    />
                   )}
-                  <Link
-                    className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-3 py-2 text-[13px]"
-                    href={`/criador-de-sites/preview/${t.id}`}
-                    prefetch={false}
-                  >
-                    <Eye className="size-[14px]" />
-                    Pré-visualizar
-                  </Link>
-                  <ExclusivityAction
-                    className="flex items-center gap-1.5 rounded-full border border-[#1d1c1a] bg-white px-3 py-2 text-[13px] disabled:opacity-60"
-                    state={t.exclusivity}
-                    templateId={t.id}
-                    templateName={t.name}
-                  />
+                </div>
+                <div className="flex flex-1 flex-col gap-2 px-4 py-3.5">
+                  <div className="font-medium text-sm">{t.name}</div>
+                  <div className="text-[#6e6b65] text-[13px] leading-[1.4]">
+                    {t.description}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      ...t.tags,
+                      `${t.pageCount} ${t.pageCount === 1 ? "página" : "páginas"}`,
+                    ].map(tagName => (
+                      <span
+                        className="rounded-full bg-[#f3f1ec] px-2 py-0.5 text-[#55524c] text-[11px]"
+                        key={tagName}
+                      >
+                        {tagName}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-auto flex flex-wrap gap-2 pt-1.5">
+                    {!locked && (
+                      <UseTemplateButton
+                        className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[13px] disabled:opacity-60"
+                        templateId={t.id}
+                        templateName={t.name}
+                      >
+                        Usar este template
+                      </UseTemplateButton>
+                    )}
+                    <Link
+                      className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-3 py-2 text-[13px]"
+                      href={`/criador-de-sites/preview/${t.id}`}
+                      prefetch={false}
+                    >
+                      <Eye className="size-[14px]" />
+                      Pré-visualizar
+                    </Link>
+                    <ExclusivityAction
+                      className="flex items-center gap-1.5 rounded-full border border-[#1d1c1a] bg-white px-3 py-2 text-[13px] disabled:opacity-60"
+                      state={t.exclusivity}
+                      templateId={t.id}
+                      templateName={t.name}
+                    />
+                    {t.master ? (
+                      <MasterTemplateControls
+                        edited={t.master.edited}
+                        templateId={t.id}
+                        templateName={t.name}
+                      />
+                    ) : null}
+                  </div>
                 </div>
               </div>
-            </div>
             );
           })}
         </div>

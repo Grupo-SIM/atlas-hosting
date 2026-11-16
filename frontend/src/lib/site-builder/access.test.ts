@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { canAccessSiteBuilder, hasComplimentaryAtlasHosting } from "./access";
+import {
+  canAccessSiteBuilder,
+  hasComplimentaryAtlasHosting,
+  isMasterAdmin,
+} from "./access";
 
 describe("canAccessSiteBuilder", () => {
   test("autoriza administradores", () => {
@@ -20,6 +24,35 @@ describe("canAccessSiteBuilder", () => {
   test("recusa usuários comuns", () => {
     expect(
       canAccessSiteBuilder({ email: "cliente@example.com", isAdmin: false })
+    ).toBe(false);
+  });
+});
+
+describe("isMasterAdmin", () => {
+  test("só o admin com o e-mail do master, sem diferenciar maiúsculas", () => {
+    expect(
+      isMasterAdmin({
+        email: " ContatoSimIntermediacoes@Gmail.com ",
+        isAdmin: true,
+      })
+    ).toBe(true);
+  });
+
+  test("o e-mail sem ser admin não vale", () => {
+    expect(
+      isMasterAdmin({
+        email: "contatosimintermediacoes@gmail.com",
+        isAdmin: false,
+      })
+    ).toBe(false);
+  });
+
+  test("outros admins e a conta do Breno não são master", () => {
+    expect(isMasterAdmin({ email: "admin@example.com", isAdmin: true })).toBe(
+      false
+    );
+    expect(
+      isMasterAdmin({ email: "brenohslima@gmail.com", isAdmin: true })
     ).toBe(false);
   });
 });

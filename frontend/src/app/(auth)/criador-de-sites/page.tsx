@@ -21,8 +21,8 @@ export default async function SiteBuilderPage() {
   const user = await requireBuilderUser();
   const mySites = await db
     .select({
-      content: pgBuilderSite.content,
       blockedAt: pgBuilderSite.exclusivityBlockedAt,
+      content: pgBuilderSite.content,
       deadlineAt: pgBuilderSite.exclusivityDeadlineAt,
       domain: pgBuilderPublication.domain,
       id: pgBuilderSite.id,

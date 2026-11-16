@@ -28,6 +28,16 @@ Telas em `frontend/src/app/(auth)/criador-de-sites/`:
    primeiros blocos, sem rodapé. Com `thumbnail`, vídeos de fundo (`atlas`, `ads`, `universo`) não têm `src` nem
    autoplay, e iframes ficam sem `src` (`frameProps`). Os links dos cartões usam `prefetch={false}`. `startSiteFx`
    (`@repo/site-builder/fx`) continua exportado, mas a galeria não o usa.
+   **Admin master (editar templates à mão):** `contatosimintermediacoes@gmail.com`, desde que também seja `isAdmin`
+   (`isMasterAdmin` em `lib/site-builder/access.ts`; o e-mail é a constante `MASTER_ADMIN_EMAIL`). Só ele vê, em cada cartão
+   de `/novo`, **Editar template** (abre o editor normal em `/criador-de-sites/templates/[templateId]`, sem publicação, com a
+   Atlas IA e "Restaurar original" = template do código), o selo **Editado** e **Descartar edições**. O que ele salva vai para
+   `builder_template_overrides` (uma linha por template; `saveTemplateOverride`/`resetTemplateOverride` em `template-actions.ts`,
+   ambas recusam quem não é master). A versão editada vale para **todos**: galeria, prévia, `createSite` e o "Restaurar
+   original" do editor de sites passam por `getEffectiveTemplate`/`getTemplateOverrides` (`lib/site-builder/templates.ts`).
+   Sites já criados não mudam (cada um tem a própria cópia). Se a tabela não existir ou a versão guardada for inválida, o
+   template do código vale e o erro só vai para o log — a galeria nunca cai. Migration: `frontend/drizzle/0014_template_overrides.sql`
+   (a pasta `frontend/drizzle` está no `.gitignore`: o arquivo não vai no commit, então passe-o a quem aplica).
 3. `/criador-de-sites/novo/[templateId]` — **Configurar** (nome + endereço) e **progresso**. `createSite` cria o
    registro e `publishSite` publica no endereço escolhido; "Definir depois" só cria. Os passos de progresso são
    cronometrados enquanto a publicação (uma chamada só) roda.

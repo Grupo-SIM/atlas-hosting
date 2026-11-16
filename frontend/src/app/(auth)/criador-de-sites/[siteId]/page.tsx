@@ -1,4 +1,3 @@
-import { getTemplate } from "@repo/site-builder";
 import { format } from "date-fns";
 import { and, eq } from "drizzle-orm";
 import { Lock, TriangleAlert } from "lucide-react";
@@ -17,6 +16,7 @@ import {
 } from "@/lib/site-builder/access";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
 import { listPublishTargets } from "@/lib/site-builder/eligibility";
+import { getEffectiveTemplate } from "@/lib/site-builder/templates";
 import { templateName } from "@/lib/template-exclusivity/names";
 import { Frame } from "../components/Frame";
 import SiteEditorClient from "./components/SiteEditorClient";
@@ -64,9 +64,9 @@ export default async function SiteEditorPage({
             <h1 className="font-medium text-2xl">Site bloqueado</h1>
             <p className="text-[#6e6b65] text-sm">
               O template "{templateName(site.templateId)}" agora é exclusivo de
-              outro usuário. Este site saiu do ar e não pode mais ser editado nem
-              publicado. O conteúdo continua guardado e volta a funcionar se o
-              template deixar de ser exclusivo.
+              outro usuário. Este site saiu do ar e não pode mais ser editado
+              nem publicado. O conteúdo continua guardado e volta a funcionar se
+              o template deixar de ser exclusivo.
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <Link
@@ -108,7 +108,9 @@ export default async function SiteEditorPage({
     // Só VPS contratadas no Atlas e com assinatura em dia podem receber o site.
     listPublishTargets(user.id),
   ]);
-  const original = site.templateId ? getTemplate(site.templateId) : undefined;
+  const original = site.templateId
+    ? await getEffectiveTemplate(site.templateId)
+    : undefined;
 
   return (
     <>
@@ -116,30 +118,30 @@ export default async function SiteEditorPage({
         <div className="fixed bottom-4 left-4 z-50 flex max-w-sm items-start gap-2 rounded-xl border border-[#f1d3a6] bg-[#fdf1e0] px-4 py-3 text-[#92550c] text-[13px] shadow-lg">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" />
           <span>
-            O template deste site ficou exclusivo de outro usuário. Ele sai do ar
-            em {format(site.exclusivityDeadlineAt, "dd/MM/yyyy 'às' HH:mm")}.{" "}
+            O template deste site ficou exclusivo de outro usuário. Ele sai do
+            ar em {format(site.exclusivityDeadlineAt, "dd/MM/yyyy 'às' HH:mm")}.{" "}
             <Link className="underline" href="/criador-de-sites/novo">
               Criar um site novo
             </Link>
           </span>
         </div>
       )}
-    <SiteEditorClient
-      domain={publication?.domain ?? null}
-      initialSite={site.content}
-      originalSite={original?.site}
-      publishSetup={{
-        atlasVmMonthlyBrl: targets.atlasVm.enabled
-          ? targets.atlasVm.monthlyBrl
-          : null,
-        baseDomain: config.subdomainEnabled ? config.baseDomain : null,
-        complimentaryAtlasHosting: hasComplimentaryAtlasHosting(),
-        domains: domains.map(d => d.domain),
-        servers: targets.vpsNodes,
-      }}
-      publishWithPassword={publication?.target === "user_vps"}
-      siteId={site.id}
-    />
+      <SiteEditorClient
+        domain={publication?.domain ?? null}
+        initialSite={site.content}
+        originalSite={original?.site}
+        publishSetup={{
+          atlasVmMonthlyBrl: targets.atlasVm.enabled
+            ? targets.atlasVm.monthlyBrl
+            : null,
+          baseDomain: config.subdomainEnabled ? config.baseDomain : null,
+          complimentaryAtlasHosting: hasComplimentaryAtlasHosting(),
+          domains: domains.map(d => d.domain),
+          servers: targets.vpsNodes,
+        }}
+        publishWithPassword={publication?.target === "user_vps"}
+        siteId={site.id}
+      />
     </>
   );
 }
