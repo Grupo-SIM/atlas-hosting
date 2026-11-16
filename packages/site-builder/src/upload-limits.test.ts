@@ -56,3 +56,28 @@ describe("adSpec", () => {
     expect(adSizeOfKey("side2")).toBe("side");
   });
 });
+
+describe("nomes dos anúncios", () => {
+  test("o topo e a lateral direita têm nomes que não se confundem (sem numeração corrida)", async () => {
+    const { AD_KEYS, AD_NAMES, AD_TITLES, SIDE_COUNT_OPTIONS } = await import(
+      "./blocks/ads.js"
+    );
+    expect(AD_NAMES.banner).toContain("Topo");
+    for (const k of ["side", "side2", "side3"] as const) {
+      expect(AD_NAMES[k]).toContain("Lateral direita");
+    }
+    // Ninguém mais lê "Espaço 1/2/3/4": o 1 (topo) e o 2 (lateral) pareciam vizinhos.
+    const texts = [
+      ...AD_KEYS.map(k => AD_NAMES[k]),
+      ...AD_KEYS.map(k => AD_TITLES[k]),
+      ...SIDE_COUNT_OPTIONS.map(o => o.label),
+    ];
+    for (const t of texts)
+      expect(t).not.toMatch(/Espaços? (publicitários? )?\d/);
+    expect(SIDE_COUNT_OPTIONS.map(o => o.label)).toEqual([
+      "1 anúncio na lateral direita",
+      "2 anúncios na lateral direita",
+      "3 anúncios na lateral direita",
+    ]);
+  });
+});

@@ -48,12 +48,10 @@ export const sideAdCount = (
 };
 
 export const SIDE_COUNT_OPTIONS = [
-  { label: "1 anúncio (Espaço 2)", value: "1" },
-  { label: "2 anúncios (Espaços 2 e 3)", value: "2" },
-  { label: "3 anúncios (Espaços 2, 3 e 4)", value: "3" },
+  { label: "1 anúncio na lateral direita", value: "1" },
+  { label: "2 anúncios na lateral direita", value: "2" },
+  { label: "3 anúncios na lateral direita", value: "3" },
 ];
-
-export const adNumber = (key: AdKey) => AD_KEYS.indexOf(key) + 1;
 
 export type AdSize = "banner" | "side" | "square";
 
@@ -93,16 +91,28 @@ export function adSpec(
   };
 }
 
-/** Formato do espaço pelo número dele: o 1 é a faixa larga; 2, 3 e 4 são da coluna lateral. */
+/** Formato do anúncio: o do topo é a faixa larga; os três da lateral direita são da coluna. */
 export const adSizeOfKey = (key: AdKey): AdSize =>
   key === "banner" ? "banner" : "side";
+
+/**
+ * Nome de cada anúncio do site para quem edita. São dois grupos que **não têm relação**: o do topo (faixa larga) e os
+ * da lateral direita (1º, 2º e 3º, que dividem a coluna). Os números 1 a 4 do código (`AD_KEYS`) não aparecem para a
+ * pessoa: a numeração corrida fazia parecer que o "1" e o "2" eram vizinhos.
+ */
+export const AD_NAMES: Record<AdKey, string> = {
+  banner: "Topo (faixa larga)",
+  side: "Lateral direita · 1º anúncio",
+  side2: "Lateral direita · 2º anúncio",
+  side3: "Lateral direita · 3º anúncio",
+};
+
+/** Título do bloco de campos de cada anúncio no painel do tema. */
 export const AD_TITLES: Record<AdKey, string> = {
-  banner: "Espaço publicitário 1 — faixas largas (topo), todas as páginas",
-  side: "Espaço publicitário 2 — coluna lateral direita, todas as páginas",
-  side2:
-    "Espaço publicitário 3 — 2º anúncio da coluna lateral, todas as páginas",
-  side3:
-    "Espaço publicitário 4 — 3º anúncio da coluna lateral, todas as páginas",
+  banner: "Anúncio do topo (faixa larga) — todas as páginas",
+  side: "Lateral direita, 1º anúncio — todas as páginas",
+  side2: "Lateral direita, 2º anúncio — todas as páginas",
+  side3: "Lateral direita, 3º anúncio — todas as páginas",
 };
 
 /** Anúncios do site inteiro (`theme.adsConfig`, JSON): valem para todo espaço que não tem mídia própria. */
@@ -160,7 +170,7 @@ export function AdBox({
   link: string;
   seconds: number;
   size: "banner" | "side" | "square";
-  /** Espaço publicitário do site (vazio: faixa = 1, lateral/quadrado = 2). */
+  /** Anúncio do site (vazio: faixa = topo, lateral/quadrado = 1º da lateral direita). */
   slot?: AdKey;
 }) {
   const key: AdKey = slot ?? (size === "banner" ? "banner" : "side");
@@ -191,8 +201,8 @@ export function AdBox({
   const inner =
     media.length === 0 ? (
       <div className="sb-ad-ph">
-        Espaço publicitário {adNumber(key)} — envie a mídia em Tema → Anúncios
-        (vale para todos os espaços {adNumber(key)})
+        {AD_NAMES[key]} — envie a mídia em Tema → Anúncios (vale para todos os
+        anúncios deste tipo no site)
       </div>
     ) : (
       media.map((item, i) =>
@@ -267,13 +277,17 @@ const adSlot = defineBlock(
       {
         key: "slot",
         kind: "select",
-        label: "Espaço publicitário (mesma mídia em todas as páginas)",
+        label:
+          "Qual anúncio do site este espaço mostra (mesma mídia em todas as páginas)",
         options: [
-          { label: "Automático (faixa = 1, lateral = 2)", value: "auto" },
-          { label: "Espaço publicitário 1", value: "1" },
-          { label: "Espaço publicitário 2", value: "2" },
-          { label: "Espaço publicitário 3", value: "3" },
-          { label: "Espaço publicitário 4", value: "4" },
+          {
+            label: "Automático (faixa = topo, lateral = 1º da lateral direita)",
+            value: "auto",
+          },
+          { label: AD_NAMES.banner, value: "1" },
+          { label: AD_NAMES.side, value: "2" },
+          { label: AD_NAMES.side2, value: "3" },
+          { label: AD_NAMES.side3, value: "4" },
         ],
       },
       {
@@ -281,7 +295,7 @@ const adSlot = defineBlock(
         key: "items",
         kind: "list",
         label:
-          "Mídia só deste espaço (vazio = usa o Espaço publicitário escolhido acima; no portal de notícias esta lista é ignorada)",
+          "Mídia só deste espaço (vazio = usa o anúncio do site escolhido acima; no portal de notícias esta lista é ignorada)",
       },
       {
         key: "seconds",

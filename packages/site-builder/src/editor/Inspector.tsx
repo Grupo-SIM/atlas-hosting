@@ -970,7 +970,7 @@ function SideCountField({
         key: "adsSide",
         kind: "select",
         label:
-          "Quantos anúncios na coluna lateral? (vale para todas as páginas)",
+          "Quantos anúncios na lateral direita? (vale para todas as páginas)",
         options: SIDE_COUNT_OPTIONS,
       }}
       onChange={v => onTheme({ adsSide: String(v) }, "Anúncios da lateral")}
@@ -979,7 +979,7 @@ function SideCountField({
   );
 }
 
-/** Espaço publicitário global (1 = faixas, 2 = lateral): imagens/vídeos, link e tempo; vale para todos os espaços do mesmo número. */
+/** Anúncio global do site (topo ou lateral direita 1º/2º/3º): imagens/vídeos, link e tempo; vale para todos os anúncios da mesma posição. */
 function GlobalAdFields({
   kind,
   onTheme,
@@ -1363,10 +1363,11 @@ export function Inspector({
               </button>
             </div>
             <p className="sbe-hint">
-              Liga os espaços de anúncio do template. Depois clique num espaço
-              para enviar mídia só dele, ou configure abaixo o Espaço
-              publicitário 1 (faixas) e os 2, 3 e 4 (coluna lateral): alterar um
-              muda todos os espaços do mesmo número.
+              Liga os espaços de anúncio do template. Há dois grupos que não têm
+              relação entre si: o anúncio do <b>topo</b> (faixa larga) e os
+              anúncios da <b>lateral direita</b> (1º, 2º e 3º). Depois clique
+              num espaço para enviar mídia só dele, ou configure abaixo: alterar
+              um muda todos os anúncios da mesma posição no site.
               {site.theme.ads === "on" && site.theme.variant === "portal" ? (
                 <SideCountField onTheme={onTheme} site={site} />
               ) : null}
@@ -1658,7 +1659,7 @@ export function Inspector({
                   (selected.type === "header" || selected.type === "footer"))
                   ? "Os links do menu ficam em “Menu do site”, logo abaixo."
                   : focusHint?.ad
-                    ? "Este espaço usa o anúncio global do site (vale para todos os espaços do mesmo número). Edite as imagens e o link logo abaixo."
+                    ? "Este espaço usa o anúncio global do site (vale para todos os anúncios da mesma posição). Edite as imagens e o link logo abaixo."
                     : "Este item não tem texto ou imagem próprios para editar aqui. Para o conteúdo do bloco, selecione o bloco no caminho acima."}
               </p>
             )}

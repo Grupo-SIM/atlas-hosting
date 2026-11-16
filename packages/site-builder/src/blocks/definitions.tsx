@@ -1826,9 +1826,9 @@ const newsFeed = defineBlock(
           "Sem coluna lateral: anúncio no lugar dela (só com Anúncios ligados)",
         options: [
           { label: "Nenhum", value: "none" },
-          { label: "Espaço publicitário 2 (300×250)", value: "side" },
-          { label: "Espaço publicitário 3 (300×250)", value: "side2" },
-          { label: "Espaço publicitário 4 (300×250)", value: "side3" },
+          { label: "Lateral direita · 1º anúncio (300×250)", value: "side" },
+          { label: "Lateral direita · 2º anúncio (300×250)", value: "side2" },
+          { label: "Lateral direita · 3º anúncio (300×250)", value: "side3" },
         ],
       },
       {
@@ -1842,11 +1842,11 @@ const newsFeed = defineBlock(
         key: "sideAds",
         kind: "select",
         label:
-          "Anúncios na coluna lateral (Espaços publicitários 2, 3 e 4; cada um igual em todas as páginas)",
+          "Quantos anúncios na lateral direita (cada um igual em todas as páginas)",
         options: [
-          { label: "1 anúncio (Espaço 2)", value: "1" },
-          { label: "2 anúncios (Espaços 2 e 3)", value: "2" },
-          { label: "3 anúncios (Espaços 2, 3 e 4)", value: "3" },
+          { label: "1 anúncio na lateral direita", value: "1" },
+          { label: "2 anúncios na lateral direita", value: "2" },
+          { label: "3 anúncios na lateral direita", value: "3" },
         ],
       },
       {
@@ -1854,7 +1854,7 @@ const newsFeed = defineBlock(
         key: "adItems",
         kind: "list",
         label:
-          "Mídia só do 1º anúncio lateral (vazio = usa o Espaço publicitário 2; no portal de notícias esta lista é ignorada)",
+          "Mídia só do 1º anúncio da lateral direita (vazio = usa o anúncio do site; no portal de notícias esta lista é ignorada)",
       },
       { key: "adLink", kind: "url", label: "Anúncio lateral — link" },
       {
@@ -2082,9 +2082,9 @@ const shortVideos = defineBlock(
           "Anúncio ao lado, na coluna direita vazia (só com Anúncios ligados)",
         options: [
           { label: "Nenhum", value: "none" },
-          { label: "Espaço publicitário 2 (300×250)", value: "side" },
-          { label: "Espaço publicitário 3 (300×250)", value: "side2" },
-          { label: "Espaço publicitário 4 (300×250)", value: "side3" },
+          { label: "Lateral direita · 1º anúncio (300×250)", value: "side" },
+          { label: "Lateral direita · 2º anúncio (300×250)", value: "side2" },
+          { label: "Lateral direita · 3º anúncio (300×250)", value: "side3" },
         ],
       },
       {

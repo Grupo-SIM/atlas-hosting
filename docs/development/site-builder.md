@@ -18,6 +18,12 @@ quantidade de anúncios, `sideAdCount`). O `FieldInput` recebe `adSpec` (o `Insp
 um arquivo, abre `AdPreviewDialog` (`coverCrop` em `ad-crop.ts` calcula o corte do `object-fit: cover` centralizado):
 só envia ao confirmar. Se mudar uma proporção no CSS dos anúncios, ajuste `adSpec`.
 
+**Nomes dos anúncios para o cliente** (`AD_NAMES`/`AD_TITLES` em `blocks/ads.tsx`): o topo é **"Topo (faixa larga)"** e a coluna da
+direita é **"Lateral direita · 1º/2º/3º anúncio"**. São dois grupos sem relação; a numeração "Espaço 1 a 4" saiu da tela porque
+fazia o 1 (topo) e o 2 (lateral) parecerem vizinhos. As chaves internas (`banner`, `side`, `side2`, `side3`, e o `slot` "1" a "4" do
+bloco Anúncio) **não mudam**, então sites salvos continuam iguais. Texto novo de anúncio: use `AD_NAMES`, nunca "Espaço N".
+
+
 ## Links do menu e do rodapé
 
 O menu do site (`site.menu`) alimenta o cabeçalho e o rodapé. Clicar num link do menu abre "Menu do site" com **aquele** item em
