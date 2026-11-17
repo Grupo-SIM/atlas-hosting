@@ -277,6 +277,7 @@ export function SiCar({
   className = "",
   dots = false,
   items,
+  effect,
   p,
   pause = true,
   transition = "slide",
@@ -289,16 +290,33 @@ export function SiCar({
   items: ReactNode[];
   p: CarProps;
   pause?: boolean;
+  /**
+   * `coverflow` = o slide atual no centro, reto, e os vizinhos girados em perspectiva (`data-effect`, CSS em `styles.ts`;
+   * o `fx-runtime` só troca as classes `on`/`is-prev`/`is-next`). Implica `transition="fade"` (slides empilhados).
+   * Sem a prop o HTML é o de sempre.
+   */
+  effect?: "coverflow";
   /** `fade` = os slides ficam empilhados e trocam por opacidade (`data-fade`, ligado no `fx-runtime`); o padrão desliza. */
   transition?: "fade" | "slide";
 }) {
-  const fade = transition === "fade";
+  const coverflow = effect === "coverflow";
+  const fade = transition === "fade" || coverflow;
+  const count = items.length;
+  /** Classe do slide: no coverflow o 1º é o atual e o último/2º já saem como vizinhos (vale também sem JS). */
+  const slideClass = (i: number) => {
+    if (!fade) return "si-slide";
+    if (i === 0) return "si-slide on";
+    if (coverflow && count > 2 && i === count - 1) return "si-slide is-prev";
+    if (coverflow && i === 1) return "si-slide is-next";
+    return "si-slide";
+  };
   return (
     <div
       className={`si-car ${arrows !== "none" ? `arrows-${arrows}` : ""} ${className}`.trim()}
       data-adv={advance === "page" ? "page" : undefined}
       data-delay={p.delay}
       data-dots={dots ? "1" : undefined}
+      data-effect={coverflow ? "coverflow" : undefined}
       data-fade={fade ? "1" : undefined}
       data-max={Math.max(p.perView, p.perViewTablet, p.perViewMobile)}
       data-pause={pause ? "1" : "0"}
@@ -318,10 +336,7 @@ export function SiCar({
         <div className="si-car-track">
           {items.map((item, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: a ordem é a identidade do slide
-            <div
-              className={fade && i === 0 ? "si-slide on" : "si-slide"}
-              key={i}
-            >
+            <div className={slideClass(i)} key={i}>
               {item}
             </div>
           ))}

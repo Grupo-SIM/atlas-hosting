@@ -274,7 +274,8 @@ var pause=box.getAttribute("data-pause")!=="0",max=Number(box.getAttribute("data
 if(box.getAttribute("data-fade")){
 /* transição em fade (data-fade): slides empilhados, o atual ganha .on; sem laço de clones */
 var fsl=Array.prototype.slice.call(track.children),fn=fsl.length,fcur=0,ft=null,fdots=[],fac=new AbortController(),fo={signal:fac.signal};
-function fshow(i){fcur=(i+fn)%fn;fsl.forEach(function(x,k){x.classList.toggle("on",k===fcur)});fdots.forEach(function(d,k){d.classList.toggle("on",k===fcur)})}
+var fcf=box.getAttribute("data-effect")==="coverflow";
+function fshow(i){fcur=(i+fn)%fn;fsl.forEach(function(x,k){x.classList.toggle("on",k===fcur);if(fcf){x.classList.toggle("is-prev",fn>2&&k===(fcur-1+fn)%fn);x.classList.toggle("is-next",fn>1&&k===(fcur+1)%fn)}});fdots.forEach(function(d,k){d.classList.toggle("on",k===fcur)})}
 function fstop(){clearTimeout(ft);ft=null}
 function fplay(){fstop();if(reduce||fn<2)return;ft=setTimeout(function(){fshow(fcur+1);fplay()},delay+speed)}
 if(fn>1){
@@ -285,7 +286,7 @@ if(pause){box.addEventListener("mouseenter",fstop,fo);box.addEventListener("mous
 }
 box.classList.toggle("is-static",fn<2);
 fshow(0);fplay();
-off.push(function(){fstop();fac.abort();fdots.forEach(function(d){d.remove()});box.removeAttribute("data-si-ready");box.classList.remove("is-static");fsl.forEach(function(x,k){x.classList.toggle("on",k===0)})});
+off.push(function(){fstop();fac.abort();fdots.forEach(function(d){d.remove()});box.removeAttribute("data-si-ready");box.classList.remove("is-static");fshow(0)});
 return;
 }
 var ac=new AbortController(),opt={signal:ac.signal};
