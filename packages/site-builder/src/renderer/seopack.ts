@@ -92,6 +92,8 @@ ${x} h2{font-size:1.8em}
 ${x} .sp-split{flex-direction:column}
 ${x} .sp-split>.sp-side{width:100%}
 ${x} .sp-head{padding:20px}
+${x} .sp-head-btn .sp-btn{padding:13px 20px;font-size:14px}
+${x} .sp-burger{margin-right:10px}
 ${x} .sp-logo{width:50%}
 ${x} .sp-logo img{width:75%}
 ${x} .sp-hero{padding:176px 20px 147px}
