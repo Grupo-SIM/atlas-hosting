@@ -6,9 +6,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { pgBuilderPublication, pgBuilderSite } from "@/lib/db/schema";
+import { hasAreaAccess } from "@/lib/permissions/access";
 import { requireBuilderUser } from "@/lib/site-builder/access";
+import { pendingForReviewer } from "@/lib/site-builder/delegation";
 import { loadThumbSites } from "@/lib/site-builder/thumb-sites";
+import ClientSitesModal from "./components/ClientSitesModal";
 import { Frame } from "./components/Frame";
+import PendingChanges from "./components/PendingChanges";
 import SiteCard, { type SiteStatus } from "./components/SiteCard";
 import SiteFilter, { parseSiteFilter } from "./components/SiteFilter";
 import { SiteThumb } from "./components/SiteThumb";
@@ -25,6 +29,13 @@ export default async function SiteBuilderPage({
 }) {
   const user = await requireBuilderUser();
   const filter = parseSiteFilter((await searchParams).status);
+  // Admin master e quem ele liberou veem os sites de todos os clientes; as alterações que eles propõem nos MEUS sites
+  // esperam a minha aprovação.
+  const [canBrowse, canEditClients, pending] = await Promise.all([
+    hasAreaAccess(user, "admin_templates", "view"),
+    hasAreaAccess(user, "admin_templates", "edit"),
+    pendingForReviewer(user),
+  ]);
   const mySites = await db
     .select({
       // Só a cor de fundo: o conteúdo inteiro de cada site não precisa vir para desenhar o cartão.
@@ -44,7 +55,8 @@ export default async function SiteBuilderPage({
     .where(eq(pgBuilderSite.userId, user.id))
     .orderBy(desc(pgBuilderSite.updatedAt));
 
-  if (mySites.length === 0) redirect("/criador-de-sites/novo");
+  // Quem pode ver os sites dos clientes fica nesta tela mesmo sem site próprio (o botão "Sites de clientes" está aqui).
+  if (mySites.length === 0 && !canBrowse) redirect("/criador-de-sites/novo");
 
   const live = mySites.filter(s => s.publicationStatus === "published").length;
   const waiting = mySites.length - live;
@@ -81,6 +93,7 @@ export default async function SiteBuilderPage({
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              {canBrowse ? <ClientSitesModal canEdit={canEditClients} /> : null}
               <Link
                 className="flex items-center gap-1.5 rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-[18px] py-2.5 text-[color:var(--sbx-ink)] text-sm"
                 href="/criador-de-sites/exclusividades"
@@ -97,6 +110,18 @@ export default async function SiteBuilderPage({
               </Link>
             </div>
           </div>
+
+          {pending.length > 0 ? (
+            <PendingChanges
+              items={pending.map(p => ({
+                id: p.id,
+                requesterEmail: p.requesterEmail,
+                requesterName: p.requesterName,
+                siteName: p.siteName,
+                updatedAt: p.updatedAt.toISOString(),
+              }))}
+            />
+          ) : null}
 
           <SiteFilter
             active={filter}
@@ -142,16 +167,27 @@ export default async function SiteBuilderPage({
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2 rounded-[14px] border border-[color:var(--sbx-line-strong)] border-dashed p-12 text-center text-[color:var(--sbx-mute)] text-sm">
-              {filter === "no-ar"
-                ? "Nenhum site no ar ainda."
-                : "Nenhum site em desenvolvimento: todos já foram publicados."}
-              <Link
-                className="text-[color:var(--sbx-ink)] underline"
-                href="/criador-de-sites"
-                replace
-              >
-                Ver todos os sites
-              </Link>
+              {mySites.length === 0
+                ? "Você ainda não criou nenhum site."
+                : filter === "no-ar"
+                  ? "Nenhum site no ar ainda."
+                  : "Nenhum site em desenvolvimento: todos já foram publicados."}
+              {mySites.length === 0 ? (
+                <Link
+                  className="text-[color:var(--sbx-ink)] underline"
+                  href="/criador-de-sites/novo"
+                >
+                  Criar o primeiro site
+                </Link>
+              ) : (
+                <Link
+                  className="text-[color:var(--sbx-ink)] underline"
+                  href="/criador-de-sites"
+                  replace
+                >
+                  Ver todos os sites
+                </Link>
+              )}
             </div>
           )}
         </div>

@@ -71,11 +71,16 @@ mock.module("@/lib/db", () => ({
 }));
 
 mock.module("./runPublish", () => ({
+  // Os mocks de módulo vazam entre arquivos de teste: mantém os outros exports de runPublish.
+  currentPublication: async () => undefined,
+  LABEL_RE: /^[a-z0-9](?:[a-z0-9-]{0,40}[a-z0-9])?$/,
+  ownedSite: async () => undefined,
   // biome-ignore lint/suspicious/noExplicitAny: fixtures do teste
   runPublish: async (user: any, input: any, options: any) => {
     publishCalls.push({ input, options, user });
     return publishResult;
   },
+  savePublication: async () => undefined,
 }));
 
 mock.module("@/lib/server/site-hosting/renewal", () => ({

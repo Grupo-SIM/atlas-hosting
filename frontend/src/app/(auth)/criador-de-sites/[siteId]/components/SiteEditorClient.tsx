@@ -2,7 +2,7 @@
 
 import type { Site } from "@repo/site-builder";
 import { type AiConfig, SiteEditor } from "@repo/site-builder/editor";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import {
   resolveYoutubeChannel,
   saveSite,
@@ -65,6 +65,7 @@ export const aiConfig: AiConfig = {
 };
 
 export default function SiteEditorClient({
+  banner,
   domain,
   initialSite,
   originalSite,
@@ -72,6 +73,8 @@ export default function SiteEditorClient({
   publishWithPassword,
   siteId,
 }: {
+  /** Aviso fixo no topo do editor (ex.: editando site de cliente). */
+  banner?: ReactNode;
   /** Endereço da última publicação; `null` se o site nunca foi publicado. */
   domain: string | null;
   initialSite: Site;
@@ -90,6 +93,7 @@ export default function SiteEditorClient({
     <>
       <SiteEditor
         ai={aiConfig}
+        banner={banner}
         basePath={`/criador-de-sites/${siteId}`}
         exitHref="/criador-de-sites"
         initialSite={initialSite}

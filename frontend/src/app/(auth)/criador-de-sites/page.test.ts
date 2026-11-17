@@ -4,8 +4,19 @@ const redirect = mock((_href: string): never => {
   throw new Error("redirect");
 });
 
-mock.module("next/navigation", () => ({ redirect }));
-mock.module("@/lib/auth", () => ({}));
+mock.module("next/navigation", () => ({
+  notFound: () => {
+    throw new Error("notFound");
+  },
+  redirect,
+  usePathname: () => "/",
+  useRouter: () => ({}),
+  useSearchParams: () => new URLSearchParams(),
+}));
+mock.module("@/lib/auth", () => ({
+  getRealUser: async () => ({ id: "user-1" }),
+  getUser: async () => ({ id: "user-1" }),
+}));
 mock.module("@/lib/db", () => ({
   db: {
     select: () => ({

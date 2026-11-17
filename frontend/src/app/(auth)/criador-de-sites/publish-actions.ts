@@ -10,14 +10,17 @@ import {
   hasComplimentaryAtlasHosting,
 } from "@/lib/site-builder/access";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
+import { getAdminMode, resolveSiteActor } from "@/lib/site-builder/delegation";
 import { publishLogger } from "@/lib/site-builder/publishLog";
 import {
   currentPublication,
-  ownedSite,
   type PublishInput,
   runPublish,
 } from "@/lib/site-builder/runPublish";
 import { takeDown } from "@/lib/site-builder/takedown";
+
+const NEEDS_APPROVAL =
+  "Este site é de um cliente e as suas alterações dependem de validação. Publicar fica para depois de aprovadas (ou com o dono).";
 
 type Result<T = object> = ({ ok: true } & T) | { error: string; ok: false };
 
@@ -43,8 +46,15 @@ export async function publishSite(
     return { error: FORBIDDEN_MESSAGE, ok: false };
   }
 
+  // O dono publica como sempre; um admin liberado pelo master publica como o dono (e só sem exigir aprovação).
+  const actor = await resolveSiteActor(user, input.siteId);
+  if (actor?.delegated && (await getAdminMode(user.id)) !== "auto") {
+    return { error: NEEDS_APPROVAL, ok: false };
+  }
   const result = await runPublish(
-    { id: user.id, organizationId: user.organization?.id },
+    actor
+      ? { id: actor.owner.id, organizationId: actor.owner.organizationId }
+      : { id: user.id, organizationId: user.organization?.id },
     input,
     {
       skipHostingCheck:
@@ -65,13 +75,17 @@ export async function unpublishSite(input: {
 }): Promise<Result> {
   const user = await getBuilderUser();
   if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
-  const site = await ownedSite(input.siteId, user.id);
-  if (!site) return { error: "Site não encontrado.", ok: false };
+  const actor = await resolveSiteActor(user, input.siteId);
+  if (!actor) return { error: "Site não encontrado.", ok: false };
+  if (actor.delegated && (await getAdminMode(user.id)) !== "auto") {
+    return { error: NEEDS_APPROVAL, ok: false };
+  }
+  const site = actor.site;
 
   const publication = await currentPublication(site.id);
   if (!publication) return { ok: true };
 
-  const result = await takeDown(user.id, publication, input.password, {
+  const result = await takeDown(actor.owner.id, publication, input.password, {
     detachOnSshFailure: true,
   });
   if (!result.ok) return result;
@@ -87,8 +101,9 @@ export async function republishSite(input: {
 }): Promise<Result<{ domain: string }>> {
   const user = await getBuilderUser();
   if (!user) return { error: FORBIDDEN_MESSAGE, ok: false };
-  const site = await ownedSite(input.siteId, user.id);
-  if (!site) return { error: "Site não encontrado.", ok: false };
+  const actor = await resolveSiteActor(user, input.siteId);
+  if (!actor) return { error: "Site não encontrado.", ok: false };
+  const site = actor.site;
 
   const publication = await db.query.pgBuilderPublication.findFirst({
     where: eq(pgBuilderPublication.siteId, site.id),

@@ -118,6 +118,27 @@ Telas em `frontend/src/app/(auth)/criador-de-sites/`:
    é do servidor: `createSite` e a prévia recusam o id `wp-…` para os demais, e a exclusividade (compra e admin) não aceita cópias.
    Começam iguais ao original (a miniatura reaproveita a dele) e passam a ter vida própria: o modo Dev grava em `builder_template_overrides`
    com o id `wp-…`, sem mexer no original. Nenhuma tabela nova.
+
+   **Sites de clientes (admins do master):** quem tem a permissão `admin_templates` vê, em "Meus sites", o botão **Sites de clientes**
+   (`ClientSitesModal`): pesquisa qualquer cliente por nome ou e-mail e lista os sites dele — **No ar**, **Em edição** (no ar, mas
+   editado depois da última publicação), **Não publicado** e **Falhou ao publicar** (`client-actions.ts`, `clientSiteStatus`). Nível
+   *visualizar* só lista; nível *editar* também abre o site (`Abrir`) e age **como o dono, menos excluir**: `resolveSiteActor`
+   (`lib/site-builder/delegation.ts`) decide quem pode agir sobre o site e é usado por `saveSite`, `publishSite`, `unpublishSite`,
+   `republishSite` e pela página do editor; `deleteSite`, a cobrança/checkout de publicação e a página `/publicar` continuam só do
+   dono. **Validação das alterações (como um PR):** o master escolhe, no modal "Sites de clientes", como cada admin dele é validado
+   (`builder_admin_validation`; sem linha = **automática**, o padrão): *automática* (vale na hora), *com o cliente* (o dono do site revisa)
+   ou *com o Lucas*. Falha fechada: se a tabela não existe, vale a validação do master. Nos modos com revisão, o que o admin salva vira
+   uma **proposta** (`builder_change_requests`: `draft` → `pending` → `approved` ou `changes_requested`; uma aberta por site e autor) e
+   o site real **não muda**; publicar também fica para depois de aprovada. No editor, a faixa (`ReviewBanner`) mostra o estado e tem
+   **Enviar para validação** (mensagem opcional); o revisor recebe aviso no sino e por e-mail (`notifyUser`). O revisor (o dono, ou só o
+   master na validação com o Lucas — `canReview`) vê o painel **"N alterações esperando a sua validação"** em "Meus sites"
+   (`PendingChanges`) e abre `/criador-de-sites/aprovacoes/[id]`: lista **o que mudou** (`diffSites`, em
+   `packages/site-builder/src/model/diff.ts`, agrupado por página/post/cabeçalho/rodapé/tema/menu), botões para a **pré-visualização**
+   (`/previa`, com `?v=atual` para ver o site de hoje) e a **conversa** (`builder_change_comments`) com **Aprovar e aplicar no site**,
+   **Pedir ajustes** (comentário obrigatório) e **Só comentar**; o admin autor também comenta. Aprovar copia a proposta para o site e
+   devolve ao admin as outras propostas abertas do mesmo site (partiram do conteúdo antigo). Migrations: **`0017_site_delegation.sql`**
+   (já aplicada) e **`0018_change_review.sql`** (modo por admin, status novos e comentários; remove a regra global da 0017). Ambas
+   estão no `.gitignore` (`frontend/drizzle`).
 3. `/criador-de-sites/novo/[templateId]` — **Configurar** (nome + endereço) e **progresso**. `createSite` cria o
    registro e `publishSite` publica no endereço escolhido; "Definir depois" só cria. Os passos de progresso são
    cronometrados enquanto a publicação (uma chamada só) roda.

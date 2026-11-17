@@ -5,20 +5,22 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import {
-  pgBuilderPublication,
-  pgBuilderSite,
-  pgOrganizationDomains,
-} from "@/lib/db/schema";
+import { pgBuilderPublication, pgOrganizationDomains } from "@/lib/db/schema";
 import {
   hasComplimentaryAtlasHosting,
   requireBuilderUser,
 } from "@/lib/site-builder/access";
 import { getAtlasHostingConfig } from "@/lib/site-builder/config";
+import {
+  getAdminMode,
+  openRequestFor,
+  resolveSiteActor,
+} from "@/lib/site-builder/delegation";
 import { listPublishTargets } from "@/lib/site-builder/eligibility";
 import { getEffectiveTemplate } from "@/lib/site-builder/templates";
 import { templateName } from "@/lib/template-exclusivity/names";
 import { Frame } from "../components/Frame";
+import ReviewBanner from "./components/ReviewBanner";
 import SiteEditorClient from "./components/SiteEditorClient";
 
 export const metadata: Metadata = {
@@ -40,12 +42,15 @@ export default async function SiteEditorPage({
   )
     notFound();
 
-  const [site] = await db
-    .select()
-    .from(pgBuilderSite)
-    .where(and(eq(pgBuilderSite.id, siteId), eq(pgBuilderSite.userId, user.id)))
-    .limit(1);
-  if (!site) notFound();
+  // O dono, ou um admin liberado pelo master (edita como o dono; com aprovação exigida, o que ele faz vira proposta).
+  const actor = await resolveSiteActor(user, siteId);
+  if (!actor) notFound();
+  const site = actor.site;
+  // Admin de um cliente: validação automática (padrão) edita direto; as outras guardam uma proposta que o dono ou o
+  // Lucas valida (ver `saveSite`). O editor reabre a proposta dele, não o site de verdade.
+  const mode = actor.delegated ? await getAdminMode(user.id) : "auto";
+  const review =
+    mode === "auto" ? null : await openRequestFor(site.id, user.id);
 
   // Template ficou exclusivo de outra pessoa e o prazo acabou: sem editor.
   if (site.exclusivityBlockedAt) {
@@ -93,20 +98,23 @@ export default async function SiteEditorPage({
     db.query.pgBuilderPublication.findFirst({
       where: eq(pgBuilderPublication.siteId, site.id),
     }),
-    user.organization
+    actor.owner.organizationId
       ? db
           .select({ domain: pgOrganizationDomains.domain })
           .from(pgOrganizationDomains)
           .where(
             and(
-              eq(pgOrganizationDomains.organizationId, user.organization.id),
+              eq(
+                pgOrganizationDomains.organizationId,
+                actor.owner.organizationId
+              ),
               eq(pgOrganizationDomains.active, true),
               eq(pgOrganizationDomains.dnsMode, "cloudflare")
             )
           )
       : Promise.resolve([]),
     // Só VPS contratadas no Atlas e com assinatura em dia podem receber o site.
-    listPublishTargets(user.id),
+    listPublishTargets(actor.owner.id),
   ]);
   const original = site.templateId
     ? await getEffectiveTemplate(site.templateId)
@@ -127,8 +135,29 @@ export default async function SiteEditorPage({
         </div>
       )}
       <SiteEditorClient
+        banner={
+          mode !== "auto" ? (
+            <ReviewBanner
+              mode={mode}
+              requestId={review?.id ?? null}
+              siteId={site.id}
+              state={
+                review?.status === "draft" ||
+                review?.status === "pending" ||
+                review?.status === "changes_requested"
+                  ? review.status
+                  : "none"
+              }
+            />
+          ) : actor.delegated ? (
+            <>
+              <strong>Site de cliente.</strong> Você está editando como o dono
+              (menos excluir). As alterações valem na hora.
+            </>
+          ) : undefined
+        }
         domain={publication?.domain ?? null}
-        initialSite={site.content}
+        initialSite={review?.content ?? site.content}
         originalSite={original?.site}
         publishSetup={{
           atlasVmMonthlyBrl: targets.atlasVm.enabled
