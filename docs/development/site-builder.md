@@ -104,7 +104,7 @@ Telas em `frontend/src/app/(auth)/criador-de-sites/`:
    apaga a versão fixa e o rascunho e volta ao template do código. Só `content` chega ao cliente: galeria, prévia, `createSite`
    ("Usar este template") e o "Restaurar original" do editor de sites passam por `getEffectiveTemplate`/`getTemplateOverrides`
    (`lib/site-builder/templates.ts`); `getTemplateDrafts` (consulta separada, tolerante a falha) é só do modo Dev e alimenta o
-   selo **Rascunho** (ao lado de **Publicado**) nos cartões. Migration: **`frontend/drizzle/0016_template_drafts.sql`** (cria a
+   selo **Rascunho** (ao lado de **Publicado**) nos cartões. A **prévia** (`/criador-de-sites/preview/[id]`) mostra o **rascunho** a quem edita templates, com um aviso e o link "Ver a versão que os clientes veem" (`?v=publicada`); o botão "Pré-visualizar rascunho" da faixa do editor abre essa prévia. Clientes só veem a versão publicada. Migration: **`frontend/drizzle/0016_template_drafts.sql`** (cria a
    tabela se faltar e acrescenta as colunas de rascunho; substitui a 0014; a pasta `frontend/drizzle` está no `.gitignore`).
    Sem a 0016, "Usar este template" continua com o template do código e salvar rascunho avisa que não foi possível.
    Sites já criados não mudam (cada um tem a própria cópia). Se a tabela não existir ou a versão guardada for inválida, o

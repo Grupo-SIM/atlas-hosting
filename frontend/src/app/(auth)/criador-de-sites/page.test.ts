@@ -22,7 +22,10 @@ mock.module("@/lib/db", () => ({
 mock.module("@/lib/site-builder/access", () => ({
   FORBIDDEN_MESSAGE: "",
   getBuilderUser: async () => null,
+  // Os mocks de módulo vazam entre arquivos de teste: mantém os outros exports que outros testes importam.
+  getTemplateEditor: async () => null,
   requireBuilderUser: async () => ({ id: "user-1" }),
+  requireTemplateEditor: async () => ({ id: "user-1" }),
 }));
 
 const { default: SiteBuilderPage } = await import("./page");

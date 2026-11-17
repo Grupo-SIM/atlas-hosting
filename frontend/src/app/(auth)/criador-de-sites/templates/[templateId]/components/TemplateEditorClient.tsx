@@ -88,7 +88,7 @@ export default function TemplateEditorClient({
     });
 
   const status = hasDraft
-    ? "Rascunho salvo — ainda não publicado"
+    ? "Rascunho salvo, mas NÃO publicado: os clientes ainda veem a versão anterior"
     : hasPublished
       ? "Sem alterações novas — a versão publicada é a que os clientes recebem"
       : "Sem alterações — vale o template original";
@@ -109,6 +109,15 @@ export default function TemplateEditorClient({
               <span className="sbe-devstatus">{status}</span>
             </div>
             <div className="sbe-devactions">
+              <a
+                className="sbe-btn"
+                href={`/criador-de-sites/preview/${templateId}`}
+                rel="noreferrer"
+                target="_blank"
+                title="Abre a prévia do rascunho em outra aba"
+              >
+                Pré-visualizar rascunho
+              </a>
               <button
                 className="sbe-lime"
                 disabled={!hasDraft || pending}

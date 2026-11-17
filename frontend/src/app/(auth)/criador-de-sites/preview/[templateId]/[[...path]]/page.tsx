@@ -3,8 +3,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { hasAreaAccess } from "@/lib/permissions/access";
 import { requireBuilderUser } from "@/lib/site-builder/access";
-import { getEffectiveTemplate } from "@/lib/site-builder/templates";
+import {
+  getEffectiveTemplate,
+  getTemplateDrafts,
+} from "@/lib/site-builder/templates";
 import { blocksOthers } from "@/lib/template-exclusivity/rules";
 import {
   getResaleConfig,
@@ -35,6 +39,11 @@ export default async function TemplatePreviewPage({
   const locked = blocksOthers(state);
 
   const raw = await searchParams;
+  // Modo Dev: quem edita templates vê o RASCUNHO na prévia (os clientes só veem a versão publicada). `?v=publicada`
+  // mostra a versão que os clientes recebem, para comparar.
+  const canEdit = await hasAreaAccess(user, "admin_templates", "edit");
+  const draft = canEdit ? (await getTemplateDrafts())[template.id] : undefined;
+  const showDraft = Boolean(draft) && raw.v !== "publicada";
   const query = Object.fromEntries(
     Object.entries(raw).flatMap(([k, v]) =>
       typeof v === "string" ? [[k, v]] : []
@@ -58,7 +67,7 @@ export default async function TemplatePreviewPage({
             templateId={template.id}
             templateName={template.name}
           />
-          {!locked && (
+          {!(locked || showDraft) && (
             <UseTemplateButton
               className="h-8 rounded-md bg-primary px-3 text-primary-foreground text-sm disabled:opacity-60"
               templateId={template.id}
@@ -69,11 +78,43 @@ export default async function TemplatePreviewPage({
           )}
         </div>
       </div>
+      {draft ? (
+        <div
+          className="border-[#f1d3a6] border-b bg-[#fdf1e0] px-4 py-2 text-[#92550c] text-sm"
+          role="status"
+        >
+          {showDraft ? (
+            <>
+              <strong>{"</>"} Rascunho do modo Dev.</strong> Só quem edita
+              templates vê isto: os clientes ainda recebem a versão publicada.
+              Para torná-lo fixo, abra o editor e clique em{" "}
+              <em>Publicar no template</em>.{" "}
+              <Link
+                className="underline"
+                href={`/criador-de-sites/preview/${template.id}?v=publicada`}
+              >
+                Ver a versão que os clientes veem
+              </Link>
+            </>
+          ) : (
+            <>
+              Mostrando a versão <strong>publicada</strong> (a que os clientes
+              recebem).{" "}
+              <Link
+                className="underline"
+                href={`/criador-de-sites/preview/${template.id}`}
+              >
+                Ver o rascunho do modo Dev
+              </Link>
+            </>
+          )}
+        </div>
+      ) : null}
       <SiteRenderer
         basePath={`/criador-de-sites/preview/${template.id}`}
         path={`/${path.join("/")}`}
         query={query}
-        site={template.site}
+        site={showDraft && draft ? draft : template.site}
       />
     </div>
   );
