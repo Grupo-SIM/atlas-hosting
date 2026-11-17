@@ -51,6 +51,7 @@ import { outroladoBlocks } from "./outrolado.js";
 import { pagatgBlocks } from "./pagatg.js";
 import { patrimonialBlocks } from "./patrimonial.js";
 import { portalHubBlocks } from "./portal-hub.js";
+import { pousadaBlocks } from "./pousada.js";
 import { presetsBlocks } from "./presets.js";
 import { raizBlocks } from "./raiz.js";
 import { resolvitBlocks } from "./resolvit.js";
@@ -2691,6 +2692,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...holofoteBlocks,
   ...diarioBlocks,
   ...diarioPageBlocks,
+  ...pousadaBlocks,
   ...fundacaoBlocks,
   ...fundacaoPageBlocks,
   ...holofotePageBlocks,

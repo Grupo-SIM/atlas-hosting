@@ -48,6 +48,7 @@ import {
   patrimonialVars,
 } from "./patrimonial.js";
 import { isPortal, portalCss, portalVars } from "./portal.js";
+import { isPousada, pousadaCss, pousadaVars } from "./pousada.js";
 import { isPresets, presetsCss, presetsVars } from "./presets.js";
 import { isRaiz, raizCss, raizVars } from "./raiz.js";
 import { isResolvit, resolvitCss, resolvitVars } from "./resolvit.js";
@@ -163,6 +164,7 @@ export function SiteRenderer({
   const diario = isDiario(site.theme);
   const grana = isGrana(site.theme);
   const universo = isUniverso(site.theme);
+  const pousada = isPousada(site.theme);
   const fundacao = isFundacao(site.theme);
 
   const ctx: RenderContext = {
@@ -182,6 +184,7 @@ export function SiteRenderer({
   // CSS da variante do template (além do base): a primeira que valer, na mesma ordem de antes.
   const variants: [boolean, string][] = [
     [fundacao, fundacaoCss],
+    [pousada, pousada ? pousadaCss(site.theme) : ""],
     [universo, universoCss],
     [atlas, atlasCss],
     [diario, diarioCss],
@@ -254,6 +257,7 @@ export function SiteRenderer({
         diario ? "sb-dd" : "",
         grana ? "sb-gh" : "",
         universo ? "sb-uv" : "",
+        pousada ? "sb-vv" : "",
         fundacao ? "sb-sv" : "",
       ]
         .filter(Boolean)
@@ -290,6 +294,7 @@ export function SiteRenderer({
           ...(diario ? diarioVars(site.theme) : {}),
           ...(grana ? granaVars(site.theme) : {}),
           ...(universo ? universoVars(site.theme) : {}),
+          ...(pousada ? pousadaVars(site.theme) : {}),
           ...(fundacao ? fundacaoVars(site.theme) : {}),
         } as CSSProperties
       }

@@ -10,6 +10,7 @@ import { INSTAFAN_EXTRA_FONTS, isInstafan } from "./instafan.js";
 import { isMotorista, MOTORISTA_EXTRA_FONTS } from "./motorista.js";
 import { isOutroLado, OUTROLADO_EXTRA_FONTS } from "./outrolado.js";
 import { isPagaTg, PAGATG_EXTRA_FONTS } from "./pagatg.js";
+import { isPousada, POUSADA_EXTRA_FONTS } from "./pousada.js";
 import { isPresets, PRESETS_EXTRA_FONTS } from "./presets.js";
 import { isRaiz, RAIZ_EXTRA_FONTS } from "./raiz.js";
 import { isSeguidores, SEGUIDORES_EXTRA_FONTS } from "./seguidores.js";
@@ -55,6 +56,7 @@ export const SITE_FONTS = [
   "Barlow",
   "Archivo",
   "Fira Sans",
+  "Josefin Sans",
   "Source Sans 3",
   "Libre Baskerville",
   "Cormorant Garamond",
@@ -72,6 +74,8 @@ const FONT_WEIGHTS: Record<string, string> = {
   Content: "400;700",
   Electrolize: "400",
   Hind: "300;400;500;600;700",
+  // Josefin Sans vai de 100 a 700 no Google (o padrão pede 900 e derruba o CSS); a variante `pousada` usa 400–700.
+  "Josefin Sans": "400;500;600;700",
   Montserrat: "300;400;500;600;700;800;900",
   Orbitron: "400;500;600;700;800;900",
   // Oswald vai de 200 a 700 no Google (o padrão pede 900 e derruba o CSS); a variante `universo` usa 400–700.
@@ -225,6 +229,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isConsultoria(theme))
     for (const extra of CONSULTORIA_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isPousada(theme))
+    for (const extra of POUSADA_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   if (isFundacao(theme))
     for (const extra of FUNDACAO_EXTRA_FONTS)

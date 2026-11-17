@@ -184,6 +184,49 @@ export const VARIANT_TOKENS: Record<string, VariantToken[]> = {
     t("soft", "Fundo suave", "#C8C8C8"),
   ],
   portal: [t("footerBg", "Fundo do rodapé", "#1b2430")],
+  pousada: [
+    t("blueDark", "Azul escuro (hover do botão azul)", "#2974A3"),
+    t("blue900", "Azul profundo (datas, modal)", "#184E70"),
+    t("blueGlow", "Azul do brilho dos cartões", "#35B0FC"),
+    t("green", "Verde (botões e bordas)", "#5E943E"),
+    t("green900", "Verde escuro (hover, topo, linha do tempo)", "#47702F"),
+    t("greenLight", "Verde claro (divisória da missão)", "#90F157"),
+    t("cardBlue", "Fundo dos cartões azuis", "#143346"),
+    t("cardGreen", "Fundo dos cartões verdes", "#1B330C"),
+    t("expGreen", "Fundo do cartão verde das experiências", "#254611"),
+    t("dark", "Fundo escuro (modo escuro e modal)", "#1C2428"),
+    t("sky", "Azul-céu (fim das experiências, início da missão)", "#CCE6F5"),
+    t(
+      "bookUrl",
+      "URL de reserva (vazio = WhatsApp com mensagem de reserva)",
+      "",
+      "text"
+    ),
+    t(
+      "whatsapp",
+      "WhatsApp (só números, com DDI e DDD)",
+      "5500000000000",
+      "text"
+    ),
+    t(
+      "waMessage",
+      "Mensagem padrão do WhatsApp",
+      "Olá! Gostaria de mais informações sobre a hospedagem.",
+      "text"
+    ),
+    t(
+      "contactEmail",
+      "E-mail de contato (vazio = sem ícone)",
+      "contato@exemplo.com",
+      "text"
+    ),
+    t("phone", "Telefone (vazio = sem ícone)", "", "text"),
+    t("mapAddress", "Endereço do mapa", "Chapada dos Veadeiros, GO", "text"),
+    t("darkMode", "Seguir o modo escuro do aparelho", "yes", "select", [
+      { label: "Sim", value: "yes" },
+      { label: "Não", value: "no" },
+    ]),
+  ],
   presets: [
     t("blue", "Azul", "#2575FC"),
     t("deep", "Roxo profundo", "#481888"),

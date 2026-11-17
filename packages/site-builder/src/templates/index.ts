@@ -20,6 +20,7 @@ import { marketplace } from "./marketplace/index.js";
 import { outroLadoInternet } from "./outro-lado-internet/index.js";
 import { pagatg } from "./pagatg/index.js";
 import { portalNoticias } from "./portal-noticias/index.js";
+import { pousadaVeredaViva } from "./pousada-vereda-viva/index.js";
 import { presets757 } from "./presets-757/index.js";
 import { resolvit } from "./resolvit/index.js";
 import { seguidoresEmAlta } from "./seguidores-em-alta/index.js";
@@ -60,6 +61,7 @@ const templates: SiteTemplate[] = [
   zyrion,
   holofote,
   diarioAberto,
+  pousadaVeredaViva,
   atlasHosting,
   universoLucasAcre,
   fundacaoSementeViva,
