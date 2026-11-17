@@ -41,7 +41,6 @@ import { type FocusHint, Inspector } from "./Inspector.js";
 import { Icon } from "./icons.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
 import { type LiveColors, readLiveColors } from "./live-colors.js";
-import { PagePicker, type RouteGroup } from "./PagePicker.js";
 import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
 import {
   applyReplica,
@@ -158,8 +157,6 @@ const isTyping = (t: EventTarget | null) =>
   t instanceof HTMLTextAreaElement ||
   t instanceof HTMLSelectElement ||
   (t instanceof HTMLElement && t.isContentEditable);
-
-const pageUrl = (slug: string) => (slug ? `/${slug}/` : "/");
 
 const ITEM_NAMES: Record<string, string> = {
   A: "link",
@@ -1586,28 +1583,6 @@ export function SiteEditor({
         : route.kind === "category"
           ? route.category.name
           : "Página";
-  const routeGroups: RouteGroup[] = [
-    {
-      items: site.pages.map(p => ({ label: p.title, value: pageUrl(p.slug) })),
-      label: "Páginas",
-    },
-    {
-      items: site.posts.map(p => ({ label: p.title, value: `/${p.slug}/` })),
-      label: "Posts",
-    },
-    {
-      items: site.categories.map(c => ({
-        label: c.name,
-        value: `/category/${c.slug}/`,
-      })),
-      label: "Categorias",
-    },
-  ];
-  if (!routeGroups.some(g => g.items.some(o => o.value === path)))
-    routeGroups.unshift({
-      items: [{ label: pageLabel, value: path }],
-      label: "Atual",
-    });
 
   const changes = log.length;
   const changesLabel = changes
@@ -1788,12 +1763,9 @@ export function SiteEditor({
             <Icon name="globe" size={14} />
             <span>{publish?.domain ?? site.name}</span>
             <Icon name="chevron-right" size={12} />
-            <PagePicker
-              current={pageLabel}
-              groups={routeGroups}
-              onPick={goTo}
-              value={path}
-            />
+            <strong className="sbe-where" title={pageLabel}>
+              {pageLabel}
+            </strong>
           </div>
           <div style={{ display: "flex", flexShrink: 0, gap: 2 }}>
             <button

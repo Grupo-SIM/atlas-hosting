@@ -31,17 +31,8 @@ export const editorCss = `
 .sbe-top{height:48px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 12px 0 10px;font-size:13px;color:var(--mute);white-space:nowrap}
 .sbe-crumb{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
 .sbe-crumb span{overflow:hidden;text-overflow:ellipsis}
-.sbe-pick{position:relative;min-width:0}
-.sbe-pickbtn{display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--ink);font-size:13px;max-width:220px}
-.sbe-pickbtn strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
-.sbe-pickbtn:hover,.sbe-pickbtn[aria-expanded=true]{background:#f3f1ec;border-color:var(--field)}
-.sbe-pickmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:40;min-width:240px;max-width:320px;max-height:60vh;overflow:auto;padding:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(30,28,24,.16)}
-.sbe-pickgroup{padding:8px 8px 4px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
-.sbe-pickmenu button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:7px 8px;border:0;border-radius:7px;background:transparent;font-size:13px;color:var(--ink);text-align:left;cursor:pointer}
-.sbe-pickmenu button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sbe-pickmenu button:hover{background:#f3f1ec}
-.sbe-pickmenu button.on{background:var(--violet-bg);color:#3f33a3}
-.sbe-crumb strong{color:var(--ink);font-weight:500;flex-shrink:0}
+.sbe-crumb strong{color:var(--ink);font-weight:500}
+.sbe-where{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
 .sbe-ibtn{width:30px;height:30px;flex-shrink:0;border:0;border-radius:8px;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--ink)}
 .sbe-ibtn:hover:not(:disabled){background:var(--chip)}
 .sbe-pill{display:flex;flex-shrink:0;align-items:center;gap:7px;border:1px solid var(--field);background:#fff;border-radius:999px;padding:5px 12px;font-size:12px;color:var(--ink)}
