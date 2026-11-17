@@ -43,7 +43,7 @@ const ensureUniverso = () => {
 export function FxRuntime() {
   useEffect(() => {
     ensureFx();
-    if (window.__sbNav !== 6) inject(NAV_RUNTIME);
+    if (window.__sbNav !== 7) inject(NAV_RUNTIME);
     const offFx = window.sbFx?.();
     // Movimento do template Margem: só carrega quando a página tem um bloco dele.
     let offMg: (() => void) | undefined;

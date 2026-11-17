@@ -61,7 +61,12 @@ import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
 import { universoBlocks } from "./universo.js";
 import { viralpackBlocks } from "./viralpack.js";
 import { vslmilionarioBlocks } from "./vslmilionario.js";
-import { isYouTubeChannelId, latestVideoEmbed, videoEmbed } from "./youtube.js";
+import {
+  isVideoFile,
+  isYouTubeChannelId,
+  latestVideoEmbed,
+  videoEmbed,
+} from "./youtube.js";
 import { zyrionBlocks } from "./zyrion.js";
 import { zyrionHomeBlocks } from "./zyrion-home.js";
 import { zyrionPageBlocks } from "./zyrion-pages.js";
@@ -2089,15 +2094,20 @@ const shortVideos = defineBlock(
       },
       {
         itemFields: [
-          { key: "image", kind: "image", label: "Imagem (vertical)" },
+          {
+            key: "video",
+            kind: "media",
+            label:
+              "Vídeo vertical (envie MP4/WebM, que toca no próprio cartão, ou cole um link do YouTube)",
+          },
+          {
+            key: "image",
+            kind: "image",
+            label: "Capa (vertical, aparece até o vídeo carregar)",
+          },
           { key: "title", kind: "text", label: "Título" },
           { key: "duration", kind: "text", label: "Duração (ex.: 1 min)" },
           { key: "url", kind: "url", label: "Link (se não houver vídeo)" },
-          {
-            key: "video",
-            kind: "url",
-            label: "Vídeo do YouTube (abre no centro da tela)",
-          },
         ],
         key: "items",
         kind: "list",
@@ -2141,20 +2151,42 @@ const shortVideos = defineBlock(
               </div>
             </div>
             <div className="sb-shorts-track">
-              {p.items.map(item => (
-                <a
-                  className="sb-short"
-                  data-reel={videoEmbed(item.video) ?? ""}
-                  data-title={item.title}
-                  href={href(ctx, item.url)}
-                  key={item.title + item.url}
-                >
-                  <Img alt="" src={item.image} />
-                  <span className="sb-short-time">{item.duration}</span>
-                  <span aria-hidden="true" className="sb-short-play" />
-                  <strong>{item.title}</strong>
-                </a>
-              ))}
+              {p.items.map(item => {
+                // Arquivo de vídeo toca no próprio cartão (mudo, em loop); a imagem vira a capa.
+                const file =
+                  isVideoFile(item.video) &&
+                  /^https?:\/\//i.test(item.video.trim())
+                    ? item.video.trim()
+                    : "";
+                return (
+                  <a
+                    className="sb-short"
+                    data-reel={file || (videoEmbed(item.video) ?? "")}
+                    data-title={item.title}
+                    href={href(ctx, item.url)}
+                    key={item.title + item.url}
+                  >
+                    {file ? (
+                      <video
+                        autoPlay={!ctx.thumbnail}
+                        loop
+                        muted
+                        playsInline
+                        poster={item.image || undefined}
+                        preload={ctx.thumbnail ? "none" : "metadata"}
+                        src={ctx.thumbnail ? undefined : file}
+                      />
+                    ) : (
+                      <Img alt="" src={item.image} />
+                    )}
+                    <span className="sb-short-time">{item.duration}</span>
+                    {file ? null : (
+                      <span aria-hidden="true" className="sb-short-play" />
+                    )}
+                    <strong>{item.title}</strong>
+                  </a>
+                );
+              })}
             </div>
           </div>
           {ad}

@@ -5,9 +5,9 @@
  * Mesmo esquema do `FX_RUNTIME`: inline no HTML publicado e injetado pelo `FxRuntime` na prévia.
  */
 export const NAV_RUNTIME = `(function(){
-if(window.__sbNav===6)return;
+if(window.__sbNav===7)return;
 if(window.__sbNavOff)window.__sbNavOff();
-window.__sbNav=6;
+window.__sbNav=7;
 var off=null,shown=location.pathname+location.search;
 function rebind(){
 if(!window.sbFx)return;
@@ -54,6 +54,14 @@ f.src=src+(src.indexOf("?")<0?"?":"&")+"autoplay=1&playsinline=1&rel=0";
 f.allow="autoplay; encrypted-media; picture-in-picture";
 f.allowFullscreen=true;
 st.appendChild(f);
+}else if(it.querySelector("video")){
+var vd=it.querySelector("video"),v=document.createElement("video");
+v.src=vd.getAttribute("src")||"";
+if(vd.poster)v.poster=vd.poster;
+v.controls=true;v.autoplay=true;v.loop=true;v.playsInline=true;
+st.appendChild(v);
+var pl=v.play();
+if(pl&&pl.catch)pl.catch(function(){});
 }else{
 var im=it.querySelector("img");
 if(im){var c=document.createElement("img");c.src=im.currentSrc||im.src;c.alt="";st.appendChild(c)}
