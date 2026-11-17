@@ -55,6 +55,7 @@ import { pousadaBlocks } from "./pousada.js";
 import { presetsBlocks } from "./presets.js";
 import { raizBlocks } from "./raiz.js";
 import { resolvitBlocks } from "./resolvit.js";
+import { sautBlocks } from "./saut.js";
 import { scrollTopBlocks } from "./scroll-top.js";
 import { seguidoresBlocks } from "./seguidores.js";
 import { seopackBlocks } from "./seopack.js";
@@ -2694,6 +2695,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...diarioBlocks,
   ...diarioPageBlocks,
   ...pousadaBlocks,
+  ...sautBlocks,
   ...sorveteriaBlocks,
   ...fundacaoBlocks,
   ...fundacaoPageBlocks,

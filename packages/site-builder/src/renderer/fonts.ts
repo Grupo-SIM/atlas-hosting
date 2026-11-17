@@ -13,6 +13,7 @@ import { isPagaTg, PAGATG_EXTRA_FONTS } from "./pagatg.js";
 import { isPousada, POUSADA_EXTRA_FONTS } from "./pousada.js";
 import { isPresets, PRESETS_EXTRA_FONTS } from "./presets.js";
 import { isRaiz, RAIZ_EXTRA_FONTS } from "./raiz.js";
+import { isSaut, SAUT_EXTRA_FONTS } from "./saut.js";
 import { isSeguidores, SEGUIDORES_EXTRA_FONTS } from "./seguidores.js";
 import { isSim, SIM_EXTRA_FONTS } from "./sim.js";
 import { isSorveteria, SORVETERIA_EXTRA_FONTS } from "./sorveteria.js";
@@ -60,6 +61,8 @@ export const SITE_FONTS = [
   "Josefin Sans",
   "Luckiest Guy",
   "Outfit",
+  "Inter Tight",
+  "Newsreader",
   "Source Sans 3",
   "Libre Baskerville",
   "Cormorant Garamond",
@@ -77,11 +80,14 @@ const FONT_WEIGHTS: Record<string, string> = {
   Content: "400;700",
   Electrolize: "400",
   Hind: "300;400;500;600;700",
+  // A variante `saut` usa Inter Tight 400–800 e Newsreader 500–600 (só o título do hero).
+  "Inter Tight": "400;500;600;800",
   // Josefin Sans vai de 100 a 700 no Google (o padrão pede 900 e derruba o CSS); a variante `pousada` usa 400–700.
   "Josefin Sans": "400;500;600;700",
   // Luckiest Guy só existe no peso 400 (pedir outro derruba o CSS); a variante `sorveteria` usa também Outfit 400/600/800/900.
   "Luckiest Guy": "400",
   Montserrat: "300;400;500;600;700;800;900",
+  Newsreader: "500;600",
   Orbitron: "400;500;600;700;800;900",
   // Oswald vai de 200 a 700 no Google (o padrão pede 900 e derruba o CSS); a variante `universo` usa 400–700.
   Oswald: "400;500;600;700",
@@ -238,6 +244,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isPousada(theme))
     for (const extra of POUSADA_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isSaut(theme))
+    for (const extra of SAUT_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   if (isSorveteria(theme))
     for (const extra of SORVETERIA_EXTRA_FONTS)

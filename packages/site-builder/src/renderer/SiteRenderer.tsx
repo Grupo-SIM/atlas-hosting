@@ -53,6 +53,7 @@ import { isPresets, presetsCss, presetsVars } from "./presets.js";
 import { isRaiz, raizCss, raizVars } from "./raiz.js";
 import { isResolvit, resolvitCss, resolvitVars } from "./resolvit.js";
 import { type Route, resolveRoute } from "./routes.js";
+import { isSaut, sautCss, sautVars } from "./saut.js";
 import { isSeguidores, seguidoresCss, seguidoresVars } from "./seguidores.js";
 import { isSeopack, seopackCss, seopackVars } from "./seopack.js";
 import { isSim, simCss, simVars } from "./sim.js";
@@ -166,6 +167,7 @@ export function SiteRenderer({
   const grana = isGrana(site.theme);
   const universo = isUniverso(site.theme);
   const pousada = isPousada(site.theme);
+  const saut = isSaut(site.theme);
   const sorveteria = isSorveteria(site.theme);
   const fundacao = isFundacao(site.theme);
 
@@ -187,6 +189,7 @@ export function SiteRenderer({
   const variants: [boolean, string][] = [
     [fundacao, fundacaoCss],
     [pousada, pousada ? pousadaCss(site.theme) : ""],
+    [saut, sautCss],
     [sorveteria, sorveteriaCss],
     [universo, universoCss],
     [atlas, atlasCss],
@@ -261,6 +264,7 @@ export function SiteRenderer({
         grana ? "sb-gh" : "",
         universo ? "sb-uv" : "",
         pousada ? "sb-vv" : "",
+        saut ? "sb-sa" : "",
         sorveteria ? "sb-fr" : "",
         fundacao ? "sb-sv" : "",
       ]
@@ -299,6 +303,7 @@ export function SiteRenderer({
           ...(grana ? granaVars(site.theme) : {}),
           ...(universo ? universoVars(site.theme) : {}),
           ...(pousada ? pousadaVars(site.theme) : {}),
+          ...(saut ? sautVars(site.theme) : {}),
           ...(sorveteria ? sorveteriaVars(site.theme) : {}),
           ...(fundacao ? fundacaoVars(site.theme) : {}),
         } as CSSProperties

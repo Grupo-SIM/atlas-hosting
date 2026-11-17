@@ -750,6 +750,13 @@ g.addEventListener("click",function(e){if(!box||g.classList.contains("is-static"
 show(0);
 off.push(function(){ac.abort();g.removeAttribute("data-vv-ready");g.classList.remove("is-contain");slides.forEach(function(s,k){s.classList.toggle("on",k===0)});thumbs.forEach(function(t,k){t.classList.remove("off");t.classList.toggle("on",k===0)})});
 });
+/* SAUT: a gaveta do menu fecha ao clicar num link; o ano do rodapé é o do navegador */
+D.querySelectorAll(".sa-drawer a").forEach(function(a){
+var saClose=function(){var b=document.getElementById("sb-burger");if(b)b.checked=false};
+a.addEventListener("click",saClose);
+off.push(function(){a.removeEventListener("click",saClose)});
+});
+D.querySelectorAll("[data-sa-year]").forEach(function(e){e.textContent=String(new Date().getFullYear())});
 /* Frescor: o menu em tela cheia fecha ao clicar num link; sombra do cabeçalho depois de 50px de rolagem; ano do rodapé */
 D.querySelectorAll(".fr-full a").forEach(function(a){
 var frClose=function(){var b=document.getElementById("sb-burger");if(b)b.checked=false};

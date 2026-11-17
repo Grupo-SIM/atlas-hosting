@@ -244,6 +244,35 @@ export const VARIANT_TOKENS: Record<string, VariantToken[]> = {
     t("mid", "Azul médio", "#0962ea"),
     t("soft", "Fundo suave", "#f2f7ff"),
   ],
+  saut: [
+    t("ink", "Escuro (serviços, cartão 95% e rodapé)", "#131313"),
+    t("lime", "Verde-limão (faixa, checks e redes)", "#CCFB55"),
+    t("green", "Verde (destaque dos resultados)", "#00C22A"),
+    t("orange", "Laranja (raio, escudo e %)", "#FF3C00"),
+    t("sky", "Azul-céu (pílulas e bordas)", "#DAF0FF"),
+    t("sky2", "Azul-céu claro (fundos)", "#EEF8FF"),
+    t("gray", "Cinza (cabeçalho, logos e grade)", "#F2F2F2"),
+    t("line", "Divisórias", "#E7E7E7"),
+    t("teal", "Verde-água (só o 95%)", "#2DD4A0"),
+    t(
+      "whatsappUrl",
+      "Link do WhatsApp (botões Fale com a SAUT)",
+      "https://wa.me/5500000000000",
+      "text"
+    ),
+    t(
+      "contactEmail",
+      "E-mail de contato (rodapé)",
+      "contato@exemplo.com",
+      "text"
+    ),
+    t(
+      "instagramUrl",
+      "Link do Instagram (rodapé)",
+      "https://www.instagram.com/",
+      "text"
+    ),
+  ],
   seguidores: [
     t("active", "Roxo ativo (links e botões)", "#6617ff"),
     t("blue", "Azul", "#2962ff"),

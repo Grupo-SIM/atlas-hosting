@@ -23,6 +23,7 @@ import { portalNoticias } from "./portal-noticias/index.js";
 import { pousadaVeredaViva } from "./pousada-vereda-viva/index.js";
 import { presets757 } from "./presets-757/index.js";
 import { resolvit } from "./resolvit/index.js";
+import { sautMarketing } from "./saut-marketing/index.js";
 import { seguidoresEmAlta } from "./seguidores-em-alta/index.js";
 import { seopack } from "./seopack/index.js";
 import { simIntermediacoes } from "./sim-intermediacoes/index.js";
@@ -65,6 +66,7 @@ const templates: SiteTemplate[] = [
   pousadaVeredaViva,
   atlasHosting,
   universoLucasAcre,
+  sautMarketing,
   sorveteriaFrescor,
   fundacaoSementeViva,
 ];
