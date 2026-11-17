@@ -52,7 +52,13 @@ export default async function AdminUsersPage() {
         </div>
       </div>
 
-      {team ? <TeamManager levels={team.levels} rows={team.rows} /> : null}
+      {team ? (
+        <TeamManager
+          levels={team.levels}
+          master={team.master}
+          rows={team.rows}
+        />
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
         <Card>

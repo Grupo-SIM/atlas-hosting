@@ -24,6 +24,12 @@ import {
 } from "@/lib/permissions/catalog";
 import { type GrantInput, normalizeGrant } from "@/lib/permissions/grant";
 import { isMasterAdmin } from "@/lib/permissions/master";
+import {
+  getAdminMode,
+  setAdminMode,
+  VALIDATION_MODES,
+  type ValidationMode,
+} from "@/lib/site-builder/delegation";
 
 type Result = { error: string; ok: false } | { ok: true };
 
@@ -32,6 +38,11 @@ export interface TeamUserInput extends GrantInput {
   name: string;
   /** Criar: obrigatória. Editar: vazia mantém a senha; preenchida troca e derruba as sessões. */
   password: string;
+  /**
+   * Como as alterações desta pessoa em sites de clientes são validadas (só vale com "Editar templates", e só o master
+   * muda). Ausente = não mexe no que já está.
+   */
+  validation?: ValidationMode;
 }
 
 const PATH = "/admin/users";
@@ -84,6 +95,31 @@ const FORBIDDEN: Result = {
   ok: false,
 };
 
+/**
+ * Grava o modo de validação da pessoa. Só o master, só quem tem "Editar templates" (sem essa permissão o modo não
+ * vale e volta ao padrão, automática). Devolve uma mensagem de erro, ou `null` se deu certo ou não havia o que fazer.
+ */
+async function saveValidation(
+  ctx: { actor: User; master: boolean },
+  userId: string,
+  hasTemplates: boolean,
+  validation: ValidationMode | undefined
+): Promise<string | null> {
+  if (!ctx.master || validation === undefined) return null;
+  if (!VALIDATION_MODES.includes(validation)) return "Validação inválida.";
+  try {
+    await setAdminMode(
+      userId,
+      hasTemplates ? validation : "auto",
+      ctx.actor.id
+    );
+    return null;
+  } catch (error) {
+    console.error("[equipe] falha ao salvar a validação:", error);
+    return "Os acessos foram salvos, mas não foi possível salvar como validar as alterações dele nos sites de clientes.";
+  }
+}
+
 function checkBasics(input: TeamUserInput, creating: boolean): string | null {
   const name = input.name.trim();
   if (name.length < 2 || name.length > 120)
@@ -117,6 +153,7 @@ export async function createTeamUserAction(
 
   const name = input.name.trim();
   const password = await hash(input.password);
+  let createdId = "";
   try {
     await db.transaction(async tx => {
       const [wallet] = await tx
@@ -142,6 +179,7 @@ export async function createTeamUserAction(
           updatedAt: new Date(),
         })
         .returning({ id: pgUser.id });
+      createdId = user.id;
       await tx.insert(userSettings).values({
         createdAt: new Date(),
         emailNotifications: true,
@@ -174,8 +212,14 @@ export async function createTeamUserAction(
     console.error("[equipe] falha ao criar usuário:", error);
     return { error: "Não foi possível criar o usuário.", ok: false };
   }
+  const failed = await saveValidation(
+    ctx,
+    createdId,
+    grant.value.permissions.some(p => p.area === "admin_templates"),
+    input.validation
+  );
   revalidatePath(PATH);
-  return { ok: true };
+  return failed ? { error: failed, ok: false } : { ok: true };
 }
 
 export async function updateTeamUserAction(
@@ -243,8 +287,18 @@ export async function updateTeamUserAction(
     console.error("[equipe] falha ao atualizar usuário:", error);
     return { error: "Não foi possível salvar as alterações.", ok: false };
   }
+  // Só o master muda a validação (e só ele concede "Editar templates"): para os demais isto não faz nada.
+  const hasTemplates = grant.value.permissions.some(
+    p => p.area === "admin_templates"
+  );
+  const failed = await saveValidation(
+    ctx,
+    userId,
+    hasTemplates,
+    input.validation
+  );
   revalidatePath(PATH);
-  return { ok: true };
+  return failed ? { error: failed, ok: false } : { ok: true };
 }
 
 /** Remove o acesso: derruba as sessões, tira a senha e as permissões, e suspende a conta (o histórico fica). */
@@ -289,11 +343,15 @@ export interface TeamUserRow {
   permissions: { area: string; level: AreaLevel }[];
   profile: "admin" | "editor" | "viewer";
   suspended: boolean;
+  /** Como as alterações dele em sites de clientes são validadas (só quem tem "Editar templates"). */
+  validation: ValidationMode;
 }
 
 /** Equipe visível para quem chama: admin completo vê toda; usuário de equipe vê só quem criou (e a árvore dele). */
 export async function listTeamUsers(): Promise<{
   levels: Record<string, Level>;
+  /** Quem está vendo é o admin master (único que escolhe como validar as alterações dos admins). */
+  master: boolean;
   rows: TeamUserRow[];
 } | null> {
   const ctx = await actorContext();
@@ -334,9 +392,17 @@ export async function listTeamUsers(): Promise<{
             )
           )
       : [];
+    const modes = await Promise.all(
+      visible.map(async r =>
+        perms.some(p => p.userId === r.id && p.area === "admin_templates")
+          ? await getAdminMode(r.id)
+          : ("auto" as const)
+      )
+    );
     return {
       levels: ctx.levels,
-      rows: visible.map(r => ({
+      master: ctx.master,
+      rows: visible.map((r, i) => ({
         accessAll: r.accessAll,
         email: r.email,
         id: r.id,
@@ -349,11 +415,12 @@ export async function listTeamUsers(): Promise<{
           .map(p => ({ area: p.area, level: p.level })),
         profile: r.profile,
         suspended: Boolean(r.suspendedAt),
+        validation: modes[i] ?? "auto",
       })),
     };
   } catch (error) {
     // Tabelas ainda não criadas: a tela mostra a lista vazia em vez de cair.
     console.error("[equipe] não foi possível listar a equipe:", error);
-    return { levels: ctx.levels, rows: [] };
+    return { levels: ctx.levels, master: ctx.master, rows: [] };
   }
 }

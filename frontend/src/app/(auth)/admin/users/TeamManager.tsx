@@ -36,6 +36,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
   type AccessProfile,
@@ -48,6 +55,7 @@ import {
   OUTSIDE_ALL_AREAS,
   PROFILE_LABELS,
 } from "@/lib/permissions/catalog";
+import type { ValidationMode } from "@/lib/site-builder/delegation";
 import {
   createTeamUserAction,
   removeTeamUserAction,
@@ -83,8 +91,15 @@ function randomPassword(): string {
 }
 
 function summary(row: TeamUserRow): string {
-  const templates = row.permissions.some(p => p.area === "admin_templates")
-    ? " + Editar templates"
+  const hasTemplates = row.permissions.some(p => p.area === "admin_templates");
+  const templates = hasTemplates
+    ? ` + Editar templates (${
+        row.validation === "owner"
+          ? "validação com o cliente"
+          : row.validation === "master"
+            ? "validação com o Lucas"
+            : "validação automática"
+      })`
     : "";
   if (row.profile === "admin") {
     return `Todas as áreas, inclusive Usuários${templates}`;
@@ -101,11 +116,14 @@ function summary(row: TeamUserRow): string {
 
 function TeamUserDialog({
   levels,
+  master,
   onOpenChange,
   open,
   user,
 }: {
   levels: Record<string, Level>;
+  /** Quem está logado é o admin master: só ele escolhe como validar as alterações em sites de clientes. */
+  master: boolean;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   /** Ausente = criar. */
@@ -128,6 +146,9 @@ function TeamUserDialog({
   );
   const [all, setAll] = useState(Boolean(user?.accessAll));
   const [selected, setSelected] = useState<Selected>(initialSelected);
+  const [validation, setValidation] = useState<ValidationMode>(
+    user?.validation ?? "auto"
+  );
 
   const actorCovers = (area: string, needed: AreaLevel) =>
     covers(levels[area] ?? "none", needed);
@@ -210,6 +231,7 @@ function TeamUserDialog({
         password,
         permissions,
         profile,
+        validation: master ? validation : undefined,
       };
       const result = user
         ? await updateTeamUserAction(user.id, input)
@@ -432,6 +454,39 @@ function TeamUserDialog({
           </div>
         </section>
 
+        {master && effective.admin_templates ? (
+          <section className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3">
+            <div>
+              <Label className="font-medium text-sm">
+                Validação das alterações em sites de clientes
+              </Label>
+              <p className="text-muted-foreground text-xs">
+                Quando esta pessoa edita o site de um cliente, as alterações
+                podem valer na hora ou esperar a validação de alguém: quem
+                valida vê o que mudou, a pré-visualização e pode comentar antes
+                de aprovar.
+              </p>
+            </div>
+            <Select
+              onValueChange={v => setValidation(v as ValidationMode)}
+              value={validation}
+            >
+              <SelectTrigger aria-label="Validação das alterações">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">
+                  Automática: vale na hora (padrão)
+                </SelectItem>
+                <SelectItem value="owner">
+                  Validar com o cliente (o dono do site)
+                </SelectItem>
+                <SelectItem value="master">Validar com o Lucas</SelectItem>
+              </SelectContent>
+            </Select>
+          </section>
+        ) : null}
+
         <DialogFooter>
           <Button
             disabled={pending}
@@ -452,9 +507,11 @@ function TeamUserDialog({
 /** Lista da equipe com criar, editar e remover. `levels` é o acesso de quem está logado (o teto do que pode conceder). */
 export function TeamManager({
   levels,
+  master,
   rows,
 }: {
   levels: Record<string, Level>;
+  master: boolean;
   rows: TeamUserRow[];
 }) {
   const router = useRouter();
@@ -551,6 +608,7 @@ export function TeamManager({
       {creating && (
         <TeamUserDialog
           levels={levels}
+          master={master}
           onOpenChange={o => !o && setCreating(false)}
           open
         />
@@ -559,6 +617,7 @@ export function TeamManager({
         <TeamUserDialog
           key={editing.id}
           levels={levels}
+          master={master}
           onOpenChange={o => !o && setEditing(null)}
           open
           user={editing}

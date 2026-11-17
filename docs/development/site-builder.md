@@ -125,7 +125,9 @@ Telas em `frontend/src/app/(auth)/criador-de-sites/`:
    *visualizar* só lista; nível *editar* também abre o site (`Abrir`) e age **como o dono, menos excluir**: `resolveSiteActor`
    (`lib/site-builder/delegation.ts`) decide quem pode agir sobre o site e é usado por `saveSite`, `publishSite`, `unpublishSite`,
    `republishSite` e pela página do editor; `deleteSite`, a cobrança/checkout de publicação e a página `/publicar` continuam só do
-   dono. **Validação das alterações (como um PR):** o master escolhe, no modal "Sites de clientes", como cada admin dele é validado
+   dono. **Validação das alterações (como um PR):** o master escolhe como cada admin dele é validado — **ao liberar/editar o admin em Administração → Usuários → Equipe e acessos**
+   (bloco "Validação das alterações em sites de clientes", que aparece quando "Editar templates" está marcado; `validation` em
+   `TeamUserInput`, gravado por `saveValidation` em `team-actions.ts`) e também no modal "Sites de clientes"
    (`builder_admin_validation`; sem linha = **automática**, o padrão): *automática* (vale na hora), *com o cliente* (o dono do site revisa)
    ou *com o Lucas*. Falha fechada: se a tabela não existe, vale a validação do master. Nos modos com revisão, o que o admin salva vira
    uma **proposta** (`builder_change_requests`: `draft` → `pending` → `approved` ou `changes_requested`; uma aberta por site e autor) e
