@@ -80,7 +80,7 @@ export default async function TemplatePreviewPage({
       </div>
       {draft ? (
         <div
-          className="border-[#f1d3a6] border-b bg-[#fdf1e0] px-4 py-2 text-[#92550c] text-sm"
+          className="border-[color:var(--sbx-warn-line)] border-b bg-[color:var(--sbx-warn-bg)] px-4 py-2 text-[color:var(--sbx-warn-fg)] text-sm"
           role="status"
         >
           {showDraft ? (

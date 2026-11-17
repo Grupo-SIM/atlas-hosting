@@ -33,8 +33,8 @@ export default function SiteFilter({
             aria-current={on ? "page" : undefined}
             className={`flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-[13px] ${
               on
-                ? "border-[#1d1c1a] bg-[#1d1c1a] text-white"
-                : "border-[#e0ddd5] bg-white text-[#1d1c1a] hover:border-[#c9c5bc]"
+                ? "border-[color:var(--sbx-ink)] bg-[color:var(--sbx-ink)] text-[color:var(--sbx-on-ink)]"
+                : "border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] text-[color:var(--sbx-ink)] hover:border-[color:var(--sbx-line-x)]"
             }`}
             href={
               f.value === "todos"
@@ -47,7 +47,9 @@ export default function SiteFilter({
             scroll={false}
           >
             {f.label}
-            <span className={on ? "text-white/70" : "text-[#9a968e]"}>
+            <span
+              className={on ? "text-white/70" : "text-[color:var(--sbx-faint)]"}
+            >
               {counts[f.value]}
             </span>
           </Link>

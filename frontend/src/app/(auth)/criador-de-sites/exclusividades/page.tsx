@@ -13,8 +13,8 @@ import {
   type TemplateProposal,
 } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
-import { formatBrl, minimumOffer } from "@/lib/template-exclusivity/rules";
 import { templateName } from "@/lib/template-exclusivity/names";
+import { formatBrl, minimumOffer } from "@/lib/template-exclusivity/rules";
 import { getResaleConfig } from "@/lib/template-exclusivity/status";
 import { Frame } from "../components/Frame";
 import { MinPriceForm } from "./components/MinPriceForm";
@@ -70,9 +70,9 @@ export default async function ExclusivitiesPage() {
             <h1 className="font-medium text-[28px] tracking-[-0.02em]">
               Exclusividades
             </h1>
-            <p className="text-[#6e6b65] text-sm">
-              Templates que são só seus e as negociações de compra e venda.
-              Na venda, o comprador paga o valor fechado + a taxa do Atlas (
+            <p className="text-[color:var(--sbx-mute)] text-sm">
+              Templates que são só seus e as negociações de compra e venda. Na
+              venda, o comprador paga o valor fechado + a taxa do Atlas (
               {resale.feePercent}%) e você recebe o valor fechado na sua{" "}
               <Link className="underline" href="/carteira">
                 carteira
@@ -92,33 +92,38 @@ export default async function ExclusivitiesPage() {
               </Empty>
             ) : (
               owned.map(item => {
-                const setting = settings.find(s => s.templateId === item.templateId);
+                const setting = settings.find(
+                  s => s.templateId === item.templateId
+                );
                 return (
                   <div
-                    className="flex flex-col gap-4 rounded-[14px] border border-[#e5e2db] bg-white p-5 md:flex-row md:items-start md:justify-between"
+                    className="flex flex-col gap-4 rounded-[14px] border border-[color:var(--sbx-line-b)] bg-[color:var(--sbx-card)] p-5 md:flex-row md:items-start md:justify-between"
                     key={item.id}
                   >
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 font-medium">
                         {templateName(item.templateId)}
                         {item.status === "past_due" && (
-                          <span className="rounded-full bg-[#fdecec] px-2 py-0.5 text-[#b42318] text-[11px]">
+                          <span className="rounded-full bg-[color:var(--sbx-err-bg)] px-2 py-0.5 text-[11px] text-[color:var(--sbx-err-fg)]">
                             Em atraso
                           </span>
                         )}
                       </div>
-                      <div className="text-[#6e6b65] text-[13px]">
+                      <div className="text-[13px] text-[color:var(--sbx-mute)]">
                         {item.status === "past_due" && item.graceUntil
                           ? `Venceu. Pague até ${format(item.graceUntil, "dd/MM/yyyy")} para não perder a exclusividade.`
                           : item.expiresAt
                             ? `Vale até ${format(item.expiresAt, "dd/MM/yyyy")}. Renovação: ${formatBrl(setting?.annualPriceBrl ?? item.paidAmountBrl)}/ano.`
                             : null}
                       </div>
-                      <div className="text-[#6e6b65] text-[13px]">
+                      <div className="text-[13px] text-[color:var(--sbx-mute)]">
                         Propostas a partir de{" "}
                         <strong>
                           {formatBrl(
-                            minimumOffer(item.minAskingPriceBrl, resale.minPriceBrl)
+                            minimumOffer(
+                              item.minAskingPriceBrl,
+                              resale.minPriceBrl
+                            )
                           )}
                         </strong>
                       </div>
@@ -143,13 +148,13 @@ export default async function ExclusivitiesPage() {
           <ProposalList
             empty="Nenhuma proposta recebida."
             items={received}
-            role="seller"
+            side="seller"
             title="Propostas recebidas"
           />
           <ProposalList
             empty="Você ainda não fez propostas."
             items={sent}
-            role="buyer"
+            side="buyer"
             title="Propostas enviadas"
           />
         </div>
@@ -160,7 +165,7 @@ export default async function ExclusivitiesPage() {
 
 function Empty({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[14px] border border-[#d9d6ce] border-dashed p-6 text-center text-[#6e6b65] text-sm">
+    <div className="rounded-[14px] border border-[color:var(--sbx-line-strong)] border-dashed p-6 text-center text-[color:var(--sbx-mute)] text-sm">
       {children}
     </div>
   );
@@ -169,12 +174,12 @@ function Empty({ children }: { children: ReactNode }) {
 function ProposalList({
   empty,
   items,
-  role,
+  side,
   title,
 }: {
   empty: string;
   items: TemplateProposal[];
-  role: "buyer" | "seller";
+  side: "buyer" | "seller";
   title: string;
 }) {
   return (
@@ -183,22 +188,22 @@ function ProposalList({
       {items.length === 0 ? (
         <Empty>{empty}</Empty>
       ) : (
-        <ul className="flex flex-col divide-y divide-[#ece9e2] overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white">
+        <ul className="flex flex-col divide-y divide-[color:var(--sbx-line-soft)] overflow-hidden rounded-[14px] border border-[color:var(--sbx-line-b)] bg-[color:var(--sbx-card)]">
           {items.map(item => {
-            const waitingMe =
-              item.status === "open" && item.turn === role;
-            const payNow = role === "buyer" && item.status === "awaiting_payment";
+            const waitingMe = item.status === "open" && item.turn === side;
+            const payNow =
+              side === "buyer" && item.status === "awaiting_payment";
             return (
               <li key={item.id}>
                 <Link
-                  className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-[#faf9f6]"
+                  className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-[color:var(--sbx-bg-alt)]"
                   href={`/criador-de-sites/exclusividades/propostas/${item.id}`}
                 >
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <span className="truncate font-medium text-sm">
                       {templateName(item.templateId)}
                     </span>
-                    <span className="text-[#6e6b65] text-[12px]">
+                    <span className="text-[12px] text-[color:var(--sbx-mute)]">
                       Atualizada em {format(item.updatedAt, "dd/MM/yyyy HH:mm")}
                     </span>
                   </div>
@@ -210,7 +215,7 @@ function ProposalList({
                       className={`rounded-full px-2.5 py-1 text-xs ${
                         waitingMe || payNow
                           ? "bg-[#d6f34a] text-[#1d1c1a]"
-                          : "bg-[#f3f1ec] text-[#55524c]"
+                          : "bg-[color:var(--sbx-fill-b)] text-[color:var(--sbx-mid)]"
                       }`}
                     >
                       {waitingMe

@@ -69,12 +69,18 @@ export function ProposalActions({
     router.refresh();
   };
 
-  if (role === "buyer" && proposal.status === "awaiting_payment" && checkoutUrl) {
+  if (
+    role === "buyer" &&
+    proposal.status === "awaiting_payment" &&
+    checkoutUrl
+  ) {
     return (
-      <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-[#d6f34a] bg-[#f7fcdc] p-5">
+      <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-[#d6f34a] bg-[color:var(--sbx-lime-bg2)] p-5">
         <p className="flex-1 text-sm">
           Negócio fechado! Pague{" "}
-          <strong>{formatBrl(buyerTotal(proposal.amountBrl, feePercent))}</strong>{" "}
+          <strong>
+            {formatBrl(buyerTotal(proposal.amountBrl, feePercent))}
+          </strong>{" "}
           para receber a exclusividade.
         </p>
         <Button asChild={true}>
@@ -83,7 +89,10 @@ export function ProposalActions({
         <Button
           disabled={busy !== null}
           onClick={() =>
-            send({ action: "cancel" }, "Desistir da compra? A fatura será cancelada.")
+            send(
+              { action: "cancel" },
+              "Desistir da compra? A fatura será cancelada."
+            )
           }
           variant="outline"
         >
@@ -98,8 +107,9 @@ export function ProposalActions({
   if (!(myTurn || canCancel)) {
     if (proposal.status === "open") {
       return (
-        <p className="rounded-[14px] border border-[#e5e2db] bg-white p-5 text-[#6e6b65] text-sm">
-          Aguardando a resposta {role === "buyer" ? "do dono atual" : "do comprador"}.
+        <p className="rounded-[14px] border border-[color:var(--sbx-line-b)] bg-[color:var(--sbx-card)] p-5 text-[color:var(--sbx-mute)] text-sm">
+          Aguardando a resposta{" "}
+          {role === "buyer" ? "do dono atual" : "do comprador"}.
         </p>
       );
     }
@@ -107,7 +117,7 @@ export function ProposalActions({
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-[14px] border border-[#e5e2db] bg-white p-5">
+    <div className="flex flex-col gap-4 rounded-[14px] border border-[color:var(--sbx-line-b)] bg-[color:var(--sbx-card)] p-5">
       {myTurn ? (
         <p className="text-sm">
           {role === "seller"
@@ -116,7 +126,7 @@ export function ProposalActions({
           O que você quer fazer?
         </p>
       ) : (
-        <p className="text-[#6e6b65] text-sm">
+        <p className="text-[color:var(--sbx-mute)] text-sm">
           Aguardando a resposta do dono atual.
         </p>
       )}
@@ -152,7 +162,9 @@ export function ProposalActions({
                 )
               }
             >
-              {busy === "accept" && <Loader className="mr-2 size-4 animate-spin" />}
+              {busy === "accept" && (
+                <Loader className="mr-2 size-4 animate-spin" />
+              )}
               Aceitar
             </Button>
             <Button
@@ -165,11 +177,16 @@ export function ProposalActions({
             <Button
               disabled={busy !== null}
               onClick={() =>
-                send({ action: "decline" }, "Recusar e encerrar esta negociação?")
+                send(
+                  { action: "decline" },
+                  "Recusar e encerrar esta negociação?"
+                )
               }
               variant="outline"
             >
-              {busy === "decline" && <Loader className="mr-2 size-4 animate-spin" />}
+              {busy === "decline" && (
+                <Loader className="mr-2 size-4 animate-spin" />
+              )}
               Recusar
             </Button>
           </>
@@ -180,7 +197,9 @@ export function ProposalActions({
               disabled={busy !== null || amount < minimum}
               onClick={() => send({ action: "counter", amount })}
             >
-              {busy === "counter" && <Loader className="mr-2 size-4 animate-spin" />}
+              {busy === "counter" && (
+                <Loader className="mr-2 size-4 animate-spin" />
+              )}
               Enviar contraproposta
             </Button>
             <Button onClick={() => setCountering(false)} variant="outline">
@@ -191,12 +210,12 @@ export function ProposalActions({
         {canCancel && !countering && (
           <Button
             disabled={busy !== null}
-            onClick={() =>
-              send({ action: "cancel" }, "Cancelar sua proposta?")
-            }
+            onClick={() => send({ action: "cancel" }, "Cancelar sua proposta?")}
             variant="ghost"
           >
-            {busy === "cancel" && <Loader className="mr-2 size-4 animate-spin" />}
+            {busy === "cancel" && (
+              <Loader className="mr-2 size-4 animate-spin" />
+            )}
             Cancelar proposta
           </Button>
         )}

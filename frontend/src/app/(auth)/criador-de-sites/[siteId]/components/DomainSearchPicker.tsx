@@ -70,7 +70,7 @@ export default function DomainSearchPicker({
           value={query}
         />
         <button
-          className="flex items-center gap-1.5 whitespace-nowrap rounded-[10px] border border-[#e0ddd5] bg-white px-3.5 text-sm disabled:opacity-50"
+          className="flex items-center gap-1.5 whitespace-nowrap rounded-[10px] border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-3.5 text-sm disabled:opacity-50"
           disabled={pending || query.trim().length < 2}
           onClick={() => void search()}
           type="button"
@@ -88,7 +88,9 @@ export default function DomainSearchPicker({
 
       {results ? (
         results.length === 0 ? (
-          <p className="text-[#6e6b65] text-xs">Nenhum resultado.</p>
+          <p className="text-[color:var(--sbx-mute)] text-xs">
+            Nenhum resultado.
+          </p>
         ) : (
           <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">
             {results.map(item => {
@@ -98,8 +100,8 @@ export default function DomainSearchPicker({
                   <button
                     className={`flex w-full items-center justify-between gap-3 rounded-[10px] border px-3 py-2 text-left text-sm ${
                       isSelected
-                        ? "border-[#1f7a4d] bg-[#f3faf6]"
-                        : "border-[#e0ddd5] bg-white"
+                        ? "border-[color:var(--sbx-ok-fg)] bg-[color:var(--sbx-ok-bg2)]"
+                        : "border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)]"
                     } ${item.available ? "" : "opacity-55"}`}
                     disabled={!item.available}
                     onClick={() =>
@@ -112,7 +114,7 @@ export default function DomainSearchPicker({
                     type="button"
                   >
                     <span className="min-w-0 truncate">{item.domain}</span>
-                    <span className="whitespace-nowrap text-[#6e6b65] text-xs">
+                    <span className="whitespace-nowrap text-[color:var(--sbx-mute)] text-xs">
                       {item.available
                         ? `${brl(item.priceBrl)}/ano`
                         : "indisponível"}
@@ -125,7 +127,7 @@ export default function DomainSearchPicker({
         )
       ) : null}
 
-      <p className="text-[#6e6b65] text-xs">
+      <p className="text-[color:var(--sbx-mute)] text-xs">
         O domínio é registrado no seu nome depois do pagamento e o DNS já vem
         configurado pelo Atlas.
       </p>

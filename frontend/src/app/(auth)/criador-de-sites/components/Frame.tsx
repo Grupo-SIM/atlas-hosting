@@ -16,19 +16,26 @@ interface Props {
 /** Cartão das telas do Criador de Sites: barra de 52px com migalhas, passos e fechar. */
 export function Frame({ children, closeHref, crumbs, icon, step }: Props) {
   return (
-    <div className="flex min-h-full flex-col bg-[#fcfbf8] text-[#1d1c1a]">
-      <div className="flex h-[52px] shrink-0 items-center gap-2 border-[#ece9e2] border-b px-[18px] text-[#6e6b65] text-[13px]">
+    <div className="flex min-h-full flex-col bg-[color:var(--sbx-bg)] text-[color:var(--sbx-ink)]">
+      <div className="flex h-[52px] shrink-0 items-center gap-2 border-[color:var(--sbx-line-soft)] border-b px-[18px] text-[13px] text-[color:var(--sbx-mute)]">
         {icon}
         {crumbs.map((c, i) => {
           const last = i === crumbs.length - 1;
           return (
             <span className="flex items-center gap-2" key={c.label}>
               {c.href && !last ? (
-                <Link className="hover:text-[#1d1c1a]" href={c.href}>
+                <Link
+                  className="hover:text-[color:var(--sbx-ink)]"
+                  href={c.href}
+                >
                   {c.label}
                 </Link>
               ) : (
-                <span className={last ? "font-medium text-[#1d1c1a]" : ""}>
+                <span
+                  className={
+                    last ? "font-medium text-[color:var(--sbx-ink)]" : ""
+                  }
+                >
                   {c.label}
                 </span>
               )}
@@ -41,7 +48,7 @@ export function Frame({ children, closeHref, crumbs, icon, step }: Props) {
         <div className="flex-1" />
         {closeHref ? (
           <Link aria-label="Fechar" href={closeHref}>
-            <X className="size-4 text-[#1d1c1a]" />
+            <X className="size-4 text-[color:var(--sbx-ink)]" />
           </Link>
         ) : null}
       </div>

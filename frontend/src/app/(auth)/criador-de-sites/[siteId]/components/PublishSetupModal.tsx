@@ -48,7 +48,7 @@ interface Props extends PublishSetup {
 }
 
 const field =
-  "h-[42px] w-full rounded-[10px] border border-[#e0ddd5] bg-white px-3.5 text-sm outline-none focus:border-[#b9b4a8]";
+  "h-[42px] w-full rounded-[10px] border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-3.5 text-sm outline-none placeholder:text-[color:var(--sbx-faint)] focus:border-[color:var(--sbx-line-y)] dark:[color-scheme:dark]";
 
 export const slug = (value: string) =>
   value
@@ -186,10 +186,10 @@ export default function PublishSetupModal({
       }}
       open={open}
     >
-      <DialogContent className="w-[calc(100vw-32px)] max-w-[460px] gap-5 overflow-hidden rounded-2xl bg-[#fcfbf8] p-7 [&>*]:min-w-0">
+      <DialogContent className="w-[calc(100vw-32px)] max-w-[460px] gap-5 overflow-hidden rounded-2xl bg-[color:var(--sbx-bg)] p-7 text-[color:var(--sbx-ink)] [&>*]:min-w-0">
         {publishedDomain ? (
           <div className="flex flex-col items-start gap-4">
-            <div className="flex size-11 items-center justify-center rounded-full bg-[#d6f34a]">
+            <div className="flex size-11 items-center justify-center rounded-full bg-[#d6f34a] text-[#1d1c1a]">
               <Check className="size-[22px]" />
             </div>
             <DialogHeader className="gap-1.5 text-left">
@@ -204,7 +204,7 @@ export default function PublishSetupModal({
             </DialogHeader>
             <div className="flex flex-wrap gap-2">
               <a
-                className="flex items-center gap-1.5 rounded-full bg-[#d6f34a] px-5 py-[11px] font-medium text-sm"
+                className="flex items-center gap-1.5 rounded-full bg-[#d6f34a] px-5 py-[11px] font-medium text-[#1d1c1a] text-sm"
                 href={`https://${publishedDomain}`}
                 rel="noreferrer"
                 target="_blank"
@@ -213,7 +213,7 @@ export default function PublishSetupModal({
                 Abrir {publishedDomain}
               </a>
               <button
-                className="rounded-full border border-[#e0ddd5] bg-white px-4 py-[11px] text-sm"
+                className="rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-4 py-[11px] text-sm"
                 onClick={() => onOpenChange(false)}
                 type="button"
               >
@@ -223,7 +223,7 @@ export default function PublishSetupModal({
           </div>
         ) : waitingPayment ? (
           <div className="flex flex-col items-start gap-4">
-            <div className="flex size-11 items-center justify-center rounded-full bg-[#f1efea]">
+            <div className="flex size-11 items-center justify-center rounded-full bg-[color:var(--sbx-fill)]">
               <Loader className="size-[22px] animate-spin" />
             </div>
             <DialogHeader className="gap-1.5 text-left">
@@ -240,7 +240,7 @@ export default function PublishSetupModal({
               <p className="text-[13px] text-destructive">{error}</p>
             ) : null}
             <button
-              className="rounded-full border border-[#e0ddd5] bg-white px-4 py-[11px] text-sm"
+              className="rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-4 py-[11px] text-sm"
               onClick={() => onOpenChange(false)}
               type="button"
             >
@@ -262,13 +262,13 @@ export default function PublishSetupModal({
               <div className="flex min-w-0 flex-col gap-4">
                 <div className="flex min-w-0 flex-col gap-2">
                   <span className="font-medium text-[13px]">Endereço</span>
-                  <div className="flex gap-1 rounded-[10px] bg-[#f1efea] p-[3px]">
+                  <div className="flex gap-1 rounded-[10px] bg-[color:var(--sbx-fill)] p-[3px]">
                     {modes.map(m => (
                       <button
                         className={`flex-1 rounded-lg px-2.5 py-[7px] text-[13px] ${
                           mode === m.id
-                            ? "bg-white font-medium text-[#1d1c1a] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-                            : "text-[#6e6b65]"
+                            ? "bg-[color:var(--sbx-card)] font-medium text-[color:var(--sbx-ink)] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+                            : "text-[color:var(--sbx-mute)]"
                         }`}
                         key={m.id}
                         onClick={() => setMode(m.id)}
@@ -280,7 +280,7 @@ export default function PublishSetupModal({
                   </div>
 
                   {mode === "sub" && baseDomain ? (
-                    <div className="flex h-[42px] items-center overflow-hidden rounded-[10px] border border-[#e0ddd5] bg-white">
+                    <div className="flex h-[42px] items-center overflow-hidden rounded-[10px] border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)]">
                       <input
                         className="h-full min-w-0 flex-1 border-0 bg-transparent px-3.5 text-sm outline-none"
                         onChange={e =>
@@ -290,7 +290,7 @@ export default function PublishSetupModal({
                         }
                         value={label}
                       />
-                      <span className="flex h-full items-center border-[#ece9e2] border-l bg-[#f7f6f2] px-3.5 text-[#6e6b65] text-sm">
+                      <span className="flex h-full items-center border-[color:var(--sbx-line-soft)] border-l bg-[color:var(--sbx-fill-d)] px-3.5 text-[color:var(--sbx-mute)] text-sm">
                         .{baseDomain}
                       </span>
                     </div>
@@ -317,8 +317,8 @@ export default function PublishSetupModal({
                   ) : null}
                   {mode === "buy" ? null : (
                     <p className="flex items-center gap-1.5 text-xs">
-                      <CircleCheck className="size-[13px] text-[#1f7a4d]" />
-                      <span className="text-[#1f7a4d]">
+                      <CircleCheck className="size-[13px] text-[color:var(--sbx-ok-fg)]" />
+                      <span className="text-[color:var(--sbx-ok-fg)]">
                         {mode === "sub"
                           ? "Você pode conectar um domínio próprio depois."
                           : "O DNS é configurado automaticamente pelo Atlas."}
@@ -372,12 +372,12 @@ export default function PublishSetupModal({
                         type="password"
                         value={password}
                       />
-                      <p className="text-[#6e6b65] text-xs">
+                      <p className="text-[color:var(--sbx-mute)] text-xs">
                         Usada só para enviar os arquivos agora. Não é gravada.
                       </p>
                     </>
                   ) : (
-                    <p className="text-[#6e6b65] text-xs">
+                    <p className="text-[color:var(--sbx-mute)] text-xs">
                       {complimentaryAtlasHosting
                         ? "Nós cuidamos do servidor, do HTTPS e das atualizações sem cobrança para sua conta."
                         : "Nós cuidamos do servidor, do HTTPS e das atualizações. Cobrança mensal, cancela quando quiser."}
@@ -385,7 +385,7 @@ export default function PublishSetupModal({
                   )}
 
                   {servers.length === 0 ? (
-                    <p className="text-[#6e6b65] text-xs">
+                    <p className="text-[color:var(--sbx-mute)] text-xs">
                       Você não tem VPS contratada no Atlas. Pode publicar na
                       hospedagem do Atlas acima ou{" "}
                       <a className="underline" href="/vps">
@@ -397,10 +397,10 @@ export default function PublishSetupModal({
                 </div>
 
                 {total > 0 ? (
-                  <div className="flex flex-col gap-1.5 rounded-[10px] border border-[#e0ddd5] bg-white p-3.5 text-sm">
+                  <div className="flex flex-col gap-1.5 rounded-[10px] border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] p-3.5 text-sm">
                     {domainPrice !== null && offer ? (
                       <div className="flex justify-between gap-3">
-                        <span className="min-w-0 truncate text-[#6e6b65]">
+                        <span className="min-w-0 truncate text-[color:var(--sbx-mute)]">
                           Registro de {offer.domain} (1 ano)
                         </span>
                         <span>{brl(domainPrice)}</span>
@@ -408,17 +408,17 @@ export default function PublishSetupModal({
                     ) : null}
                     {hostingPrice !== null ? (
                       <div className="flex justify-between gap-3">
-                        <span className="text-[#6e6b65]">
+                        <span className="text-[color:var(--sbx-mute)]">
                           Hospedagem (1º mês)
                         </span>
                         <span>{brl(hostingPrice)}</span>
                       </div>
                     ) : null}
-                    <div className="mt-1 flex justify-between gap-3 border-[#ece9e2] border-t pt-2 font-medium">
+                    <div className="mt-1 flex justify-between gap-3 border-[color:var(--sbx-line-soft)] border-t pt-2 font-medium">
                       <span>Total agora</span>
                       <span>{brl(total)}</span>
                     </div>
-                    <p className="text-[#6e6b65] text-xs">
+                    <p className="text-[color:var(--sbx-mute)] text-xs">
                       O site é publicado assim que o pagamento for confirmado.
                     </p>
                   </div>
@@ -429,12 +429,12 @@ export default function PublishSetupModal({
                 ) : null}
 
                 <div className="flex min-w-0 flex-wrap items-center justify-between gap-2.5 pt-1">
-                  <span className="min-w-0 basis-full truncate text-[#6e6b65] text-xs">
+                  <span className="min-w-0 basis-full truncate text-[color:var(--sbx-mute)] text-xs">
                     {fullDomain}
                   </span>
                   <div className="ml-auto flex gap-2">
                     <button
-                      className="rounded-full border border-[#e0ddd5] bg-white px-4 py-[11px] text-sm disabled:opacity-50"
+                      className="rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-4 py-[11px] text-sm disabled:opacity-50"
                       disabled={pending}
                       onClick={() => onOpenChange(false)}
                       type="button"
@@ -442,7 +442,7 @@ export default function PublishSetupModal({
                       Cancelar
                     </button>
                     <button
-                      className="flex items-center gap-2 rounded-full bg-[#d6f34a] px-5 py-[11px] font-medium text-sm disabled:opacity-50"
+                      className="flex items-center gap-2 rounded-full bg-[#d6f34a] px-5 py-[11px] font-medium text-[#1d1c1a] text-sm disabled:opacity-50"
                       disabled={pending || !canPublish}
                       onClick={() => void submit()}
                       type="button"
@@ -462,7 +462,7 @@ export default function PublishSetupModal({
                 </div>
               </div>
             ) : (
-              <p className="text-[#6e6b65] text-sm">
+              <p className="text-[color:var(--sbx-mute)] text-sm">
                 Para publicar você precisa de uma VPS contratada no Atlas ou da
                 hospedagem do Atlas, que ainda não está disponível.{" "}
                 <a className="underline" href="/vps">

@@ -48,7 +48,9 @@ export function ExclusivityBadge({ state }: { state?: ExclusivityView }) {
     );
   }
   return (
-    <span className={`${base} bg-[#1d1c1a] text-white`}>
+    <span
+      className={`${base} bg-[color:var(--sbx-ink)] text-[color:var(--sbx-on-ink)]`}
+    >
       <Lock className="size-3" />
       {state.kind === "reserved" ? "Reservado" : "Exclusivo"}
     </span>
@@ -181,7 +183,9 @@ export function ExclusivityRulesButton({
               <span className="text-muted-foreground">
                 Taxa do Atlas ({feePercent}%)
               </span>
-              <span>+ {formatBrl(buyerTotal(example, feePercent) - example)}</span>
+              <span>
+                + {formatBrl(buyerTotal(example, feePercent) - example)}
+              </span>
             </div>
             <div className="flex justify-between border-t pt-1.5 font-medium">
               <span>Você paga</span>
@@ -225,16 +229,19 @@ export function ExclusivityAction({
 
   if (state.kind === "owned_by_me") {
     return (
-      <span className="flex items-center gap-1.5 px-1 py-2 text-[#55524c] text-[12px]">
+      <span className="flex items-center gap-1.5 px-1 py-2 text-[12px] text-[color:var(--sbx-mid)]">
         <Crown className="size-[13px]" />
-        Só seu{state.expiresAt ? ` até ${format(new Date(state.expiresAt), "dd/MM/yyyy")}` : ""}
+        Só seu
+        {state.expiresAt
+          ? ` até ${format(new Date(state.expiresAt), "dd/MM/yyyy")}`
+          : ""}
       </span>
     );
   }
 
   if (state.kind === "reserved") {
     return (
-      <span className="flex items-center gap-1.5 px-1 py-2 text-[#55524c] text-[12px]">
+      <span className="flex items-center gap-1.5 px-1 py-2 text-[12px] text-[color:var(--sbx-mid)]">
         <Lock className="size-[13px]" /> Sendo adquirido por outra pessoa
       </span>
     );
@@ -284,7 +291,9 @@ function OfferDialog({
     }
     toast.success("Proposta enviada! O dono foi avisado.");
     onClose();
-    router.push(`/criador-de-sites/exclusividades/propostas/${result.proposalId}`);
+    router.push(
+      `/criador-de-sites/exclusividades/propostas/${result.proposalId}`
+    );
   };
 
   return (
@@ -301,14 +310,21 @@ function OfferDialog({
         <div className="space-y-2">
           <Label htmlFor="offer-amount">Sua oferta</Label>
           <MoneyInput id="offer-amount" onChange={setAmount} value={amount} />
-          <p className={tooLow ? "text-destructive text-xs" : "text-muted-foreground text-xs"}>
+          <p
+            className={
+              tooLow
+                ? "text-destructive text-xs"
+                : "text-muted-foreground text-xs"
+            }
+          >
             Mínimo de {formatBrl(minimum)}.
           </p>
           {!tooLow && (
             <p className="text-muted-foreground text-sm">
               Se fechar por este valor, você paga{" "}
-              <strong>{formatBrl(buyerTotal(amount, feePercent))}</strong> (inclui
-              a taxa do Atlas de {feePercent}%) e ganha 12 meses de exclusividade.
+              <strong>{formatBrl(buyerTotal(amount, feePercent))}</strong>{" "}
+              (inclui a taxa do Atlas de {feePercent}%) e ganha 12 meses de
+              exclusividade.
             </p>
           )}
         </div>

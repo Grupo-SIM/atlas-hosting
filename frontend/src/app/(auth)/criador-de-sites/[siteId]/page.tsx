@@ -60,9 +60,9 @@ export default async function SiteEditorPage({
       >
         <div className="flex flex-1 items-center justify-center px-5 py-16">
           <div className="flex max-w-md flex-col items-center gap-4 text-center">
-            <Lock className="size-8 text-[#92550c]" />
+            <Lock className="size-8 text-[color:var(--sbx-warn-fg)]" />
             <h1 className="font-medium text-2xl">Site bloqueado</h1>
-            <p className="text-[#6e6b65] text-sm">
+            <p className="text-[color:var(--sbx-mute)] text-sm">
               O template "{templateName(site.templateId)}" agora é exclusivo de
               outro usuário. Este site saiu do ar e não pode mais ser editado
               nem publicado. O conteúdo continua guardado e volta a funcionar se
@@ -70,13 +70,13 @@ export default async function SiteEditorPage({
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <Link
-                className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[13px]"
+                className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[#1d1c1a] text-[13px]"
                 href="/criador-de-sites/novo"
               >
                 Criar um site novo
               </Link>
               <Link
-                className="rounded-full border border-[#e0ddd5] bg-white px-4 py-2 text-[13px]"
+                className="rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-4 py-2 text-[13px]"
                 href={`/criador-de-sites/preview/${site.templateId}`}
               >
                 Fazer proposta pelo template
@@ -115,7 +115,7 @@ export default async function SiteEditorPage({
   return (
     <>
       {site.exclusivityDeadlineAt && (
-        <div className="fixed bottom-4 left-4 z-50 flex max-w-sm items-start gap-2 rounded-xl border border-[#f1d3a6] bg-[#fdf1e0] px-4 py-3 text-[#92550c] text-[13px] shadow-lg">
+        <div className="fixed bottom-4 left-4 z-50 flex max-w-sm items-start gap-2 rounded-xl border border-[color:var(--sbx-warn-line)] bg-[color:var(--sbx-warn-bg)] px-4 py-3 text-[13px] text-[color:var(--sbx-warn-fg)] shadow-lg">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" />
           <span>
             O template deste site ficou exclusivo de outro usuário. Ele sai do

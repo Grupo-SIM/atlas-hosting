@@ -13,23 +13,25 @@ export function Steps({ current }: { current: 1 | 2 | 3 }) {
             <span
               className={`flex size-[18px] items-center justify-center rounded-full font-medium text-[10px] ${
                 active
-                  ? "bg-[#1d1c1a] text-white"
+                  ? "bg-[color:var(--sbx-ink)] text-[color:var(--sbx-on-ink)]"
                   : done
                     ? "bg-[#d6f34a] text-[#1d1c1a]"
-                    : "bg-[#ece9e2] text-[#9a968e]"
+                    : "bg-[color:var(--sbx-line-soft)] text-[color:var(--sbx-faint)]"
               }`}
             >
               {done ? "✓" : n}
             </span>
             <span
               className={
-                active ? "font-medium text-[#1d1c1a]" : "text-[#9a968e]"
+                active
+                  ? "font-medium text-[color:var(--sbx-ink)]"
+                  : "text-[color:var(--sbx-faint)]"
               }
             >
               {label}
             </span>
             {n < LABELS.length ? (
-              <span className="h-px w-[18px] bg-[#d9d6ce]" />
+              <span className="h-px w-[18px] bg-[color:var(--sbx-line-strong)]" />
             ) : null}
           </li>
         );

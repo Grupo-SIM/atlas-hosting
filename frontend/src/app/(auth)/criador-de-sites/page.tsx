@@ -74,7 +74,7 @@ export default async function SiteBuilderPage({
               <h1 className="font-medium text-[28px] tracking-[-0.02em]">
                 Meus sites
               </h1>
-              <p className="text-[#6e6b65] text-sm">
+              <p className="text-[color:var(--sbx-mute)] text-sm">
                 {mySites.length === 0
                   ? "Você ainda não criou nenhum site."
                   : `${live} no ar · ${waiting} sem publicar`}
@@ -82,7 +82,7 @@ export default async function SiteBuilderPage({
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
-                className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-[18px] py-2.5 text-[#1d1c1a] text-sm"
+                className="flex items-center gap-1.5 rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-[18px] py-2.5 text-[color:var(--sbx-ink)] text-sm"
                 href="/criador-de-sites/exclusividades"
               >
                 <Crown className="size-[15px]" />
@@ -141,12 +141,12 @@ export default async function SiteBuilderPage({
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 rounded-[14px] border border-[#d9d6ce] border-dashed p-12 text-center text-[#6e6b65] text-sm">
+            <div className="flex flex-col items-center gap-2 rounded-[14px] border border-[color:var(--sbx-line-strong)] border-dashed p-12 text-center text-[color:var(--sbx-mute)] text-sm">
               {filter === "no-ar"
                 ? "Nenhum site no ar ainda."
                 : "Nenhum site em desenvolvimento: todos já foram publicados."}
               <Link
-                className="text-[#1d1c1a] underline"
+                className="text-[color:var(--sbx-ink)] underline"
                 href="/criador-de-sites"
                 replace
               >

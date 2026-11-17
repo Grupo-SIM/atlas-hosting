@@ -33,19 +33,19 @@ type ExclusivityFilter = "all" | "available" | "mine";
 const chip = (active: boolean) =>
   `flex h-10 items-center gap-1.5 rounded-full border px-3.5 text-[13px] ${
     active
-      ? "border-[#1d1c1a] bg-[#1d1c1a] text-white"
-      : "border-[#e0ddd5] bg-white text-[#1d1c1a]"
+      ? "border-[color:var(--sbx-ink)] bg-[color:var(--sbx-ink)] text-[color:var(--sbx-on-ink)]"
+      : "border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] text-[color:var(--sbx-ink)]"
   }`;
 
 /** Contorno do card conforme a exclusividade. */
 function cardFrame(state?: ExclusivityView): string {
   if (state?.kind === "available") {
-    return "border-[#1d1c1a] shadow-[0_6px_20px_rgba(30,28,24,0.10)]";
+    return "border-[color:var(--sbx-ink)] shadow-[0_6px_20px_rgba(30,28,24,0.10)]";
   }
   if (state?.kind === "owned_by_me") {
     return "border-[#b9d63a] shadow-[0_0_0_3px_rgba(214,243,74,0.35)]";
   }
-  return "border-[#e5e2db] hover:border-[#c9c5bc] hover:shadow-[0_4px_18px_rgba(30,28,24,0.06)]";
+  return "border-[color:var(--sbx-line-b)] hover:border-[color:var(--sbx-line-x)] hover:shadow-[0_4px_18px_rgba(30,28,24,0.06)]";
 }
 
 const DEV_KEY = "sb-dev-mode";
@@ -109,14 +109,14 @@ export default function TemplateGallery({
     <div className="flex flex-col gap-6">
       {devAvailable ? (
         <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#e5e2db] bg-white px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[color:var(--sbx-line-b)] bg-[color:var(--sbx-card)] px-4 py-3">
             <div className="flex items-center gap-3">
               <span className="rounded-md bg-[#1d1c1a] px-2 py-1 font-mono text-[#d6f34a] text-[13px]">
                 {"</>"}
               </span>
               <div>
                 <div className="font-medium text-sm">Modo Dev</div>
-                <div className="text-[#6e6b65] text-xs">
+                <div className="text-[color:var(--sbx-mute)] text-xs">
                   Edite os templates de demonstração desta página.
                 </div>
               </div>
@@ -125,7 +125,9 @@ export default function TemplateGallery({
               aria-checked={devOn}
               aria-label="Modo Dev"
               className={`relative h-6 w-11 rounded-full transition-colors ${
-                devOn ? "bg-[#1d1c1a]" : "bg-[#d9d6ce]"
+                devOn
+                  ? "bg-[color:var(--sbx-ink)]"
+                  : "bg-[color:var(--sbx-line-strong)]"
               }`}
               onClick={() => changeDev(!devOn)}
               role="switch"
@@ -140,7 +142,7 @@ export default function TemplateGallery({
           </div>
           {devOn ? (
             <div
-              className="rounded-[14px] border border-[#f1d3a6] bg-[#fdf1e0] px-4 py-3 text-[#92550c] text-sm leading-[1.5]"
+              className="rounded-[14px] border border-[color:var(--sbx-warn-line)] bg-[color:var(--sbx-warn-bg)] px-4 py-3 text-[color:var(--sbx-warn-fg)] text-sm leading-[1.5]"
               role="status"
             >
               <strong className="font-medium">{"</>"} Modo Dev ligado.</strong>{" "}
@@ -160,7 +162,7 @@ export default function TemplateGallery({
         <h1 className="font-medium text-[28px] tracking-[-0.02em]">
           Escolha um ponto de partida
         </h1>
-        <p className="text-[#6e6b65] text-sm">
+        <p className="text-[color:var(--sbx-mute)] text-sm">
           Tudo pode ser alterado depois, direto no editor. Alguns templates
           podem ser só seus:{" "}
           <Link className="underline" href="/criador-de-sites/exclusividades">
@@ -171,8 +173,8 @@ export default function TemplateGallery({
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
-        <label className="flex h-10 min-w-60 flex-1 items-center gap-2 rounded-full border border-[#e0ddd5] bg-white px-3.5">
-          <Search className="size-[15px] text-[#9a968e]" />
+        <label className="flex h-10 min-w-60 flex-1 items-center gap-2 rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-3.5">
+          <Search className="size-[15px] text-[color:var(--sbx-faint)]" />
           <input
             className="flex-1 border-0 bg-transparent text-sm outline-none"
             onChange={e => setSearch(e.target.value)}
@@ -192,7 +194,7 @@ export default function TemplateGallery({
             </button>
           ))}
           {(availableCount > 0 || mineCount > 0) && (
-            <span className="mx-1 my-2 w-px self-stretch bg-[#e0ddd5]" />
+            <span className="mx-1 my-2 w-px self-stretch bg-[color:var(--sbx-line)]" />
           )}
           {availableCount > 0 && (
             <button
@@ -226,7 +228,7 @@ export default function TemplateGallery({
           ))}
         </div>
       ) : (
-        <div className="p-10 text-center text-[#6e6b65] text-sm">
+        <div className="p-10 text-center text-[color:var(--sbx-mute)] text-sm">
           Nenhum template encontrado.
         </div>
       )}
@@ -250,11 +252,11 @@ function TemplateCard({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-[14px] border bg-white [contain-intrinsic-size:auto_470px] [content-visibility:auto] ${cardFrame(state)}`}
+      className={`flex flex-col overflow-hidden rounded-[14px] border bg-[color:var(--sbx-card)] [contain-intrinsic-size:auto_470px] [content-visibility:auto] ${cardFrame(state)}`}
     >
       {/* O site da miniatura tem links: o link fica por cima, nunca em volta. */}
       <div
-        className="relative aspect-[4/3] overflow-hidden border-[#ece9e2] border-b"
+        className="relative aspect-[4/3] overflow-hidden border-[color:var(--sbx-line-soft)] border-b"
         style={{ background: t.previewBackground }}
       >
         <div
@@ -267,7 +269,7 @@ function TemplateCard({
         {dev && (t.master?.edited || t.master?.draft) ? (
           <span className="absolute top-2.5 right-2.5 z-20 flex gap-1">
             {t.master?.edited ? (
-              <span className="rounded-full bg-[#1d1c1a] px-2.5 py-1 text-[11px] text-white">
+              <span className="rounded-full bg-[color:var(--sbx-ink)] px-2.5 py-1 text-[11px] text-[color:var(--sbx-on-ink)]">
                 Publicado
               </span>
             ) : null}
@@ -321,7 +323,7 @@ function TemplateCard({
         <div className="flex flex-wrap gap-1.5">
           {t.tags.map(tagName => (
             <span
-              className="rounded-full bg-[#f3f1ec] px-2 py-0.5 text-[#55524c] text-[11px]"
+              className="rounded-full bg-[color:var(--sbx-fill-b)] px-2 py-0.5 text-[11px] text-[color:var(--sbx-mid)]"
               key={tagName}
             >
               {tagName}
@@ -331,7 +333,7 @@ function TemplateCard({
         <div className="mt-auto flex flex-wrap gap-2 pt-1.5">
           {!locked && !editing && (
             <UseTemplateButton
-              className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[13px] disabled:opacity-60"
+              className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[#1d1c1a] text-[13px] disabled:opacity-60"
               templateId={t.id}
               templateName={t.name}
             >
@@ -340,7 +342,7 @@ function TemplateCard({
           )}
           {state?.kind === "owned_by_other" && (
             <ProposalButton
-              className="flex items-center gap-1.5 rounded-full bg-[#1d1c1a] px-3.5 py-2 font-medium text-[13px] text-white"
+              className="flex items-center gap-1.5 rounded-full bg-[color:var(--sbx-ink)] px-3.5 py-2 font-medium text-[13px] text-[color:var(--sbx-on-ink)]"
               feePercent={state.feePercent}
               minOfferBrl={state.minOfferBrl}
               templateId={t.id}
@@ -350,7 +352,7 @@ function TemplateCard({
             </ProposalButton>
           )}
           <Link
-            className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-3 py-2 text-[13px]"
+            className="flex items-center gap-1.5 rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-3 py-2 text-[13px]"
             href={`/criador-de-sites/preview/${t.id}`}
             prefetch={false}
           >
@@ -386,7 +388,9 @@ function StatusStrip({
 
   if (state?.kind === "available") {
     return (
-      <div className={`${row} border-[#1d1c1a] bg-[#1d1c1a] text-white`}>
+      <div
+        className={`${row} border-[color:var(--sbx-ink)] bg-[color:var(--sbx-ink)] text-[color:var(--sbx-on-ink)]`}
+      >
         <Crown className="size-[13px] shrink-0" />
         <span className="min-w-0 flex-1 leading-[1.35]">
           Exclusividade por {formatBrl(state.annualPriceBrl)}/ano
@@ -403,7 +407,9 @@ function StatusStrip({
 
   if (state?.kind === "owned_by_me") {
     return (
-      <div className={`${row} border-[#e3efb0] bg-[#f4f9dc] text-[#1d1c1a]`}>
+      <div
+        className={`${row} border-[color:var(--sbx-lime-line)] bg-[color:var(--sbx-lime-bg)] text-[color:var(--sbx-ink)]`}
+      >
         <Crown className="size-[13px] shrink-0" />
         <span className="min-w-0 flex-1 leading-[1.35]">
           Só você pode usar
@@ -420,7 +426,9 @@ function StatusStrip({
 
   if (state?.kind === "owned_by_other") {
     return (
-      <div className={`${row} border-[#ece9e2] bg-[#f6f5f1] text-[#1d1c1a]`}>
+      <div
+        className={`${row} border-[color:var(--sbx-line-soft)] bg-[color:var(--sbx-bg-alt2)] text-[color:var(--sbx-ink)]`}
+      >
         <Lock className="size-[13px] shrink-0" />
         <span className="min-w-0 flex-1 leading-[1.35]">
           Propostas a partir de {formatBrl(state.minOfferBrl)}

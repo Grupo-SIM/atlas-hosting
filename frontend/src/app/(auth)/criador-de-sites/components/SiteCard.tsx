@@ -28,24 +28,24 @@ export type SiteStatus = "draft" | "failed" | "published" | "suspended";
 const STATUS: Record<SiteStatus, { dot: string; label: string; pill: string }> =
   {
     draft: {
-      dot: "bg-[#9a968e]",
+      dot: "bg-[color:var(--sbx-faint)]",
       label: "Não publicado",
-      pill: "bg-[#efece6] text-[#6e6b65]",
+      pill: "bg-[color:var(--sbx-fill-c)] text-[color:var(--sbx-mute)]",
     },
     failed: {
       dot: "bg-[#e11d48]",
       label: "Falha ao publicar",
-      pill: "bg-[#fbe7e8] text-[#a3292f]",
+      pill: "bg-[color:var(--sbx-err-bg2)] text-[color:var(--sbx-err-fg2)]",
     },
     published: {
       dot: "bg-[#22a06b]",
       label: "No ar",
-      pill: "bg-[#e6f5ec] text-[#1f7a4d]",
+      pill: "bg-[color:var(--sbx-ok-bg)] text-[color:var(--sbx-ok-fg)]",
     },
     suspended: {
       dot: "bg-[#d97706]",
       label: "Suspenso",
-      pill: "bg-[#fdf1e0] text-[#92550c]",
+      pill: "bg-[color:var(--sbx-warn-bg)] text-[color:var(--sbx-warn-fg)]",
     },
   };
 
@@ -55,19 +55,19 @@ const WAITING: Record<
   { dot: string; label: string; pill: string }
 > = {
   checking: {
-    dot: "bg-[#9a968e] animate-pulse",
+    dot: "bg-[color:var(--sbx-faint)] animate-pulse",
     label: "Verificando…",
-    pill: "bg-[#efece6] text-[#6e6b65]",
+    pill: "bg-[color:var(--sbx-fill-c)] text-[color:var(--sbx-mute)]",
   },
   no_dns: {
     dot: "bg-[#d97706] animate-pulse",
     label: "Aguardando DNS",
-    pill: "bg-[#fdf1e0] text-[#92550c]",
+    pill: "bg-[color:var(--sbx-warn-bg)] text-[color:var(--sbx-warn-fg)]",
   },
   no_site: {
     dot: "bg-[#d97706] animate-pulse",
     label: "Ativando HTTPS",
-    pill: "bg-[#fdf1e0] text-[#92550c]",
+    pill: "bg-[color:var(--sbx-warn-bg)] text-[color:var(--sbx-warn-fg)]",
   },
 };
 
@@ -118,11 +118,11 @@ export default function SiteCard({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-[14px] border border-[#e5e2db] bg-white [contain-intrinsic-size:auto_420px] [content-visibility:auto] ${pending ? "opacity-60" : ""}`}
+      className={`flex flex-col overflow-hidden rounded-[14px] border border-[color:var(--sbx-line-b)] bg-[color:var(--sbx-card)] [contain-intrinsic-size:auto_420px] [content-visibility:auto] ${pending ? "opacity-60" : ""}`}
     >
       {/* O site da miniatura tem links: o link do cartão fica por cima, nunca em volta (`<a>` dentro de `<a>` quebra o HTML). */}
       <div
-        className="relative h-[190px] overflow-hidden border-[#ece9e2] border-b"
+        className="relative h-[190px] overflow-hidden border-[color:var(--sbx-line-soft)] border-b"
         style={{ background }}
       >
         {thumb}
@@ -137,7 +137,7 @@ export default function SiteCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-col gap-[3px]">
             <div className="truncate font-medium text-[15px]">{name}</div>
-            <div className="truncate text-[#6e6b65] text-[13px]">
+            <div className="truncate text-[13px] text-[color:var(--sbx-mute)]">
               {domain ?? "Sem endereço"}
             </div>
           </div>
@@ -149,13 +149,13 @@ export default function SiteCard({
           </span>
         </div>
         {exclusivityNotice ? (
-          <p className="rounded-lg bg-[#fdf1e0] px-3 py-2 text-[#92550c] text-[12px] leading-[1.4]">
+          <p className="rounded-lg bg-[color:var(--sbx-warn-bg)] px-3 py-2 text-[12px] text-[color:var(--sbx-warn-fg)] leading-[1.4]">
             {exclusivityNotice}
           </p>
         ) : null}
         <div className="flex gap-2">
           <Link
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#1d1c1a] px-3 py-[9px] text-[13px] text-white"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[color:var(--sbx-ink)] px-3 py-[9px] text-[13px] text-[color:var(--sbx-on-ink)]"
             href={`/criador-de-sites/${id}`}
             prefetch={false}
           >
@@ -164,7 +164,7 @@ export default function SiteCard({
           </Link>
           {status === "published" && domain ? (
             <a
-              className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-3 py-[9px] text-[13px]"
+              className="flex items-center gap-1.5 rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-3 py-[9px] text-[13px]"
               href={`https://${domain}`}
               rel="noreferrer"
               target="_blank"
@@ -176,7 +176,7 @@ export default function SiteCard({
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label="Mais opções"
-              className="flex w-9 items-center justify-center rounded-full border border-[#e0ddd5] bg-white"
+              className="flex w-9 items-center justify-center rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)]"
             >
               <MoreHorizontal className="size-3.5" />
             </DropdownMenuTrigger>

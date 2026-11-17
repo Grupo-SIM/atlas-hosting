@@ -376,3 +376,78 @@
   animation-delay: 0s !important;
   animation-iteration-count: 1 !important;
 }
+
+/* Paleta do Criador de Sites: no claro são as cores creme de sempre; no escuro, tons que acompanham o tema do painel. */
+@layer base {
+  :root {
+    --sbx-bg: #fcfbf8;
+    --sbx-bg-alt: #faf9f6;
+    --sbx-bg-alt2: #f6f5f1;
+    --sbx-card: #ffffff;
+    --sbx-fill: #f1efea;
+    --sbx-fill-b: #f3f1ec;
+    --sbx-fill-c: #efece6;
+    --sbx-fill-d: #f7f6f2;
+    --sbx-ink: #1d1c1a;
+    --sbx-mid: #55524c;
+    --sbx-mute: #6e6b65;
+    --sbx-faint: #9a968e;
+    --sbx-line: #e0ddd5;
+    --sbx-line-b: #e5e2db;
+    --sbx-line-soft: #ece9e2;
+    --sbx-line-strong: #d9d6ce;
+    --sbx-line-x: #c9c5bc;
+    --sbx-line-y: #b9b4a8;
+    --sbx-lime-bg: #f4f9dc;
+    --sbx-lime-bg2: #f7fcdc;
+    --sbx-lime-line: #e3efb0;
+    --sbx-warn-bg: #fdf1e0;
+    --sbx-warn-line: #f1d3a6;
+    --sbx-warn-fg: #92550c;
+    --sbx-ok-bg: #e6f5ec;
+    --sbx-ok-bg2: #f3faf6;
+    --sbx-ok-fg: #1f7a4d;
+    --sbx-err-bg: #fdecec;
+    --sbx-err-bg2: #fbe7e8;
+    --sbx-err-fg: #b42318;
+    --sbx-err-fg2: #a3292f;
+    --sbx-on-ink: #ffffff;
+    --sbx-on-ink-soft: rgba(255, 255, 255, 0.7);
+  }
+
+  .dark {
+    --sbx-bg: #0b111d;
+    --sbx-bg-alt: #0d1422;
+    --sbx-bg-alt2: #0a0f1a;
+    --sbx-card: #121a2a;
+    --sbx-fill: #182235;
+    --sbx-fill-b: #1b263a;
+    --sbx-fill-c: #162033;
+    --sbx-fill-d: #141d2e;
+    --sbx-ink: #e9edf5;
+    --sbx-mid: #b8c1d0;
+    --sbx-mute: #97a3b8;
+    --sbx-faint: #6f7b90;
+    --sbx-line: #26324a;
+    --sbx-line-b: #232e45;
+    --sbx-line-soft: #1c2639;
+    --sbx-line-strong: #33415c;
+    --sbx-line-x: #3e4d6b;
+    --sbx-line-y: #51617f;
+    --sbx-lime-bg: #1b2410;
+    --sbx-lime-bg2: #1d2711;
+    --sbx-lime-line: #3a4a16;
+    --sbx-warn-bg: #2b1e0b;
+    --sbx-warn-line: #5b3d12;
+    --sbx-warn-fg: #f3c27b;
+    --sbx-ok-bg: #0f2a1f;
+    --sbx-ok-bg2: #0e271d;
+    --sbx-ok-fg: #5fd39b;
+    --sbx-err-bg: #2c1316;
+    --sbx-err-bg2: #2c1316;
+    --sbx-err-fg: #ff8b8b;
+    --sbx-err-fg2: #ff8b8b;
+    --sbx-on-ink: #0b111d;
+    --sbx-on-ink-soft: rgba(11, 17, 29, 0.7);
+  }
+}

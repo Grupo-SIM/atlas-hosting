@@ -11,13 +11,13 @@ import {
   pgTemplateProposalEvent,
 } from "@/lib/db/schema";
 import { requireBuilderUser } from "@/lib/site-builder/access";
+import { templateName } from "@/lib/template-exclusivity/names";
 import {
   atlasFee,
   buyerTotal,
   formatBrl,
   minimumOffer,
 } from "@/lib/template-exclusivity/rules";
-import { templateName } from "@/lib/template-exclusivity/names";
 import { getResaleConfig } from "@/lib/template-exclusivity/status";
 import { Frame } from "../../../components/Frame";
 import { ProposalActions } from "../../components/ProposalActions";
@@ -64,7 +64,10 @@ export default async function ProposalPage({
   ]);
 
   const feePercent = proposal.feePercent ?? resale.feePercent;
-  const minimum = minimumOffer(exclusivity?.minAskingPriceBrl, resale.minPriceBrl);
+  const minimum = minimumOffer(
+    exclusivity?.minAskingPriceBrl,
+    resale.minPriceBrl
+  );
   const name = templateName(proposal.templateId);
   const who = (actor: string) =>
     actor === "system"
@@ -91,7 +94,7 @@ export default async function ProposalPage({
             <h1 className="font-medium text-[28px] tracking-[-0.02em]">
               {role === "buyer" ? "Sua proposta" : "Proposta recebida"} · {name}
             </h1>
-            <p className="text-[#6e6b65] text-sm">
+            <p className="text-[color:var(--sbx-mute)] text-sm">
               {role === "buyer"
                 ? "Você está negociando com o dono atual do template."
                 : "Um usuário quer comprar a exclusividade deste template."}{" "}
@@ -104,7 +107,7 @@ export default async function ProposalPage({
             </p>
           </div>
 
-          <div className="grid gap-3 rounded-[14px] border border-[#e5e2db] bg-white p-5 sm:grid-cols-3">
+          <div className="grid gap-3 rounded-[14px] border border-[color:var(--sbx-line-b)] bg-[color:var(--sbx-card)] p-5 sm:grid-cols-3">
             <Info label="Valor na mesa" value={formatBrl(proposal.amountBrl)} />
             <Info
               label={role === "buyer" ? "Você paga" : "Comprador paga"}
@@ -114,9 +117,10 @@ export default async function ProposalPage({
               label={role === "seller" ? "Você recebe" : "Dono recebe"}
               value={formatBrl(proposal.amountBrl)}
             />
-            <p className="text-[#6e6b65] text-[12px] sm:col-span-3">
-              Taxa do Atlas: {feePercent}% ({formatBrl(atlasFee(proposal.amountBrl, feePercent))}),
-              cobrada do comprador. Status:{" "}
+            <p className="text-[12px] text-[color:var(--sbx-mute)] sm:col-span-3">
+              Taxa do Atlas: {feePercent}% (
+              {formatBrl(atlasFee(proposal.amountBrl, feePercent))}), cobrada do
+              comprador. Status:{" "}
               <strong>{PROPOSAL_STATUS_LABEL[proposal.status]}</strong>
               {proposal.status === "open" &&
                 ` · responder até ${format(proposal.expiresAt, "dd/MM/yyyy HH:mm")}`}
@@ -127,7 +131,9 @@ export default async function ProposalPage({
           </div>
 
           <ProposalActions
-            checkoutUrl={proposal.invoiceId ? `/checkout/${proposal.invoiceId}` : null}
+            checkoutUrl={
+              proposal.invoiceId ? `/checkout/${proposal.invoiceId}` : null
+            }
             feePercent={feePercent}
             minimum={minimum}
             proposal={{
@@ -145,7 +151,7 @@ export default async function ProposalPage({
             <ol className="flex flex-col gap-2">
               {events.map(event => (
                 <li
-                  className="flex items-start justify-between gap-4 rounded-[10px] border border-[#ece9e2] bg-white px-4 py-3 text-sm"
+                  className="flex items-start justify-between gap-4 rounded-[10px] border border-[color:var(--sbx-line-soft)] bg-[color:var(--sbx-card)] px-4 py-3 text-sm"
                   key={event.id}
                 >
                   <span>
@@ -157,7 +163,7 @@ export default async function ProposalPage({
                       : ""}
                     {event.note ? ` — ${event.note}` : ""}
                   </span>
-                  <span className="shrink-0 text-[#6e6b65] text-[12px]">
+                  <span className="shrink-0 text-[12px] text-[color:var(--sbx-mute)]">
                     {format(event.createdAt, "dd/MM HH:mm")}
                   </span>
                 </li>
@@ -173,7 +179,7 @@ export default async function ProposalPage({
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[#6e6b65] text-[12px]">{label}</span>
+      <span className="text-[12px] text-[color:var(--sbx-mute)]">{label}</span>
       <span className="font-medium text-lg">{value}</span>
     </div>
   );

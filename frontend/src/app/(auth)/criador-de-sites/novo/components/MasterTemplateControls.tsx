@@ -39,7 +39,7 @@ export default function MasterTemplateControls({
   return (
     <>
       <Link
-        className="flex items-center gap-1.5 rounded-full border border-[#1d1c1a] bg-[#1d1c1a] px-3 py-2 text-[13px] text-white"
+        className="flex items-center gap-1.5 rounded-full border border-[color:var(--sbx-ink)] bg-[color:var(--sbx-ink)] px-3 py-2 text-[13px] text-[color:var(--sbx-on-ink)]"
         href={`/criador-de-sites/templates/${templateId}`}
         prefetch={false}
       >
@@ -48,7 +48,7 @@ export default function MasterTemplateControls({
       </Link>
       {edited ? (
         <button
-          className="flex items-center gap-1.5 rounded-full border border-[#e0ddd5] bg-white px-3 py-2 text-[13px] disabled:opacity-60"
+          className="flex items-center gap-1.5 rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-3 py-2 text-[13px] disabled:opacity-60"
           disabled={pending}
           onClick={() => setConfirming(true)}
           type="button"
