@@ -291,7 +291,7 @@ export function SiCar({
   p: CarProps;
   pause?: boolean;
   /**
-   * `coverflow` = o slide atual no centro, reto, e os vizinhos girados em perspectiva (`data-effect`, CSS em `styles.ts`;
+   * `coverflow` = o slide atual no centro, reto, e os vizinhos girados em perspectiva (`data-effect`, CSS em `renderer/coverflow.ts`, que a variante precisa incluir;
    * o `fx-runtime` só troca as classes `on`/`is-prev`/`is-next`). Implica `transition="fade"` (slides empilhados).
    * Sem a prop o HTML é o de sempre.
    */
