@@ -56,6 +56,7 @@ import { type Route, resolveRoute } from "./routes.js";
 import { isSeguidores, seguidoresCss, seguidoresVars } from "./seguidores.js";
 import { isSeopack, seopackCss, seopackVars } from "./seopack.js";
 import { isSim, simCss, simVars } from "./sim.js";
+import { isSorveteria, sorveteriaCss, sorveteriaVars } from "./sorveteria.js";
 import { isSpy, spyCss } from "./spyhacker.js";
 import { siteCss, themeVars } from "./styles.js";
 import { isUniverso, universoCss, universoVars } from "./universo.js";
@@ -165,6 +166,7 @@ export function SiteRenderer({
   const grana = isGrana(site.theme);
   const universo = isUniverso(site.theme);
   const pousada = isPousada(site.theme);
+  const sorveteria = isSorveteria(site.theme);
   const fundacao = isFundacao(site.theme);
 
   const ctx: RenderContext = {
@@ -185,6 +187,7 @@ export function SiteRenderer({
   const variants: [boolean, string][] = [
     [fundacao, fundacaoCss],
     [pousada, pousada ? pousadaCss(site.theme) : ""],
+    [sorveteria, sorveteriaCss],
     [universo, universoCss],
     [atlas, atlasCss],
     [diario, diarioCss],
@@ -258,6 +261,7 @@ export function SiteRenderer({
         grana ? "sb-gh" : "",
         universo ? "sb-uv" : "",
         pousada ? "sb-vv" : "",
+        sorveteria ? "sb-fr" : "",
         fundacao ? "sb-sv" : "",
       ]
         .filter(Boolean)
@@ -295,6 +299,7 @@ export function SiteRenderer({
           ...(grana ? granaVars(site.theme) : {}),
           ...(universo ? universoVars(site.theme) : {}),
           ...(pousada ? pousadaVars(site.theme) : {}),
+          ...(sorveteria ? sorveteriaVars(site.theme) : {}),
           ...(fundacao ? fundacaoVars(site.theme) : {}),
         } as CSSProperties
       }

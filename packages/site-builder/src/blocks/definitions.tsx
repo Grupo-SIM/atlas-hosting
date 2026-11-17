@@ -60,6 +60,7 @@ import { seguidoresBlocks } from "./seguidores.js";
 import { seopackBlocks } from "./seopack.js";
 import { simBlocks } from "./sim.js";
 import { simPageBlocks } from "./sim-pages.js";
+import { sorveteriaBlocks } from "./sorveteria.js";
 import type { BlockDefinition, FieldDef, RenderContext } from "./types.js";
 import { universoBlocks } from "./universo.js";
 import { viralpackBlocks } from "./viralpack.js";
@@ -2693,6 +2694,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...diarioBlocks,
   ...diarioPageBlocks,
   ...pousadaBlocks,
+  ...sorveteriaBlocks,
   ...fundacaoBlocks,
   ...fundacaoPageBlocks,
   ...holofotePageBlocks,

@@ -1,3 +1,5 @@
+import { FR_STATUS_JS } from "./sorveteria.js";
+
 /**
  * Script dos efeitos (entrada ao rolar, parallax, seguir o mouse, contador). É uma string porque roda de
  * duas formas: inline no HTML publicado e injetado pelo `FxRuntime` na prévia. Define `window.sbFx()`, que
@@ -26,6 +28,7 @@ if(window.sbFx&&window.__sbFxV===${FX_VERSION})return;
 window.__sbFxV=${FX_VERSION};
 ${COUNT_FMT_JS}
 ${COUNT_AT_JS}
+${FR_STATUS_JS}
 window.sbFx=function(root){
 var D=root||document;
 var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -746,6 +749,42 @@ g.addEventListener("toggle",function(e){if(e.newState==="open"&&x)x.focus()},o);
 g.addEventListener("click",function(e){if(!box||g.classList.contains("is-static")||!g.hidePopover)return;var r=box.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){try{g.hidePopover()}catch(err){}}},o);
 show(0);
 off.push(function(){ac.abort();g.removeAttribute("data-vv-ready");g.classList.remove("is-contain");slides.forEach(function(s,k){s.classList.toggle("on",k===0)});thumbs.forEach(function(t,k){t.classList.remove("off");t.classList.toggle("on",k===0)})});
+});
+/* Frescor: o menu em tela cheia fecha ao clicar num link; sombra do cabeçalho depois de 50px de rolagem; ano do rodapé */
+D.querySelectorAll(".fr-full a").forEach(function(a){
+var frClose=function(){var b=document.getElementById("sb-burger");if(b)b.checked=false};
+a.addEventListener("click",frClose);
+off.push(function(){a.removeEventListener("click",frClose)});
+});
+D.querySelectorAll(".fr-bar").forEach(function(bar){
+function frY(e){var t=e&&e.target;return t&&t!==document&&typeof t.scrollTop==="number"?t.scrollTop:(window.pageYOffset||0)}
+function frUpd(e){bar.classList.toggle("is-scrolled",frY(e)>50)}
+document.addEventListener("scroll",frUpd,{passive:true,capture:true});
+frUpd();
+off.push(function(){document.removeEventListener("scroll",frUpd,true);bar.classList.remove("is-scrolled")});
+});
+D.querySelectorAll("[data-fr-year]").forEach(function(e){e.textContent=String(new Date().getFullYear())});
+/* Frescor: "Aberto agora" / "Abre em X min" / "Fechado agora" no fuso da loja, atualizado a cada minuto */
+D.querySelectorAll("[data-fr-hours]").forEach(function(el){
+var spec;
+try{spec=JSON.parse(el.getAttribute("data-fr-hours")||"")}catch(e){return}
+function frUpdHours(){
+var r=frStatusAt(spec,Date.now());
+el.setAttribute("data-state",r.s);
+el.textContent=(r.s==="open"?el.getAttribute("data-open"):r.s==="soon"?(el.getAttribute("data-soon")||"").replace("{n}",String(r.n)):el.getAttribute("data-closed"))||"";
+}
+frUpdHours();
+var frIv=setInterval(frUpdHours,60000);
+off.push(function(){clearInterval(frIv);el.removeAttribute("data-state");el.textContent=""});
+});
+/* Frescor: o seletor de unidade mostra só o botão de WhatsApp da unidade escolhida */
+D.querySelectorAll("[data-fr-contact]").forEach(function(box){
+var sel=box.querySelector("select"),btns=Array.prototype.slice.call(box.querySelectorAll("[data-fr-unit]"));
+if(!sel)return;
+function frPick(){btns.forEach(function(b){b.classList.toggle("on",b.getAttribute("data-fr-unit")===sel.value)})}
+sel.addEventListener("change",frPick);
+frPick();
+off.push(function(){sel.removeEventListener("change",frPick);btns.forEach(function(b){b.classList.remove("on")})});
 });
 /* Semente Viva: a gaveta fecha ao clicar num link; Esc fecha gaveta e busca; busca ganha foco; cabeçalho fixo depois de 200px de rolagem */
 D.querySelectorAll(".sv-drawer a").forEach(function(a){

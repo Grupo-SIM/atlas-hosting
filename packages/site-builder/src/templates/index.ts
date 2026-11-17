@@ -26,6 +26,7 @@ import { resolvit } from "./resolvit/index.js";
 import { seguidoresEmAlta } from "./seguidores-em-alta/index.js";
 import { seopack } from "./seopack/index.js";
 import { simIntermediacoes } from "./sim-intermediacoes/index.js";
+import { sorveteriaFrescor } from "./sorveteria-frescor/index.js";
 import { spyhacker } from "./spyhacker/index.js";
 import { universoLucasAcre } from "./universo-lucas-acre/index.js";
 import { viralPack } from "./viral-pack/index.js";
@@ -64,6 +65,7 @@ const templates: SiteTemplate[] = [
   pousadaVeredaViva,
   atlasHosting,
   universoLucasAcre,
+  sorveteriaFrescor,
   fundacaoSementeViva,
 ];
 

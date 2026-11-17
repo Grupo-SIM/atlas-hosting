@@ -269,6 +269,27 @@ export const VARIANT_TOKENS: Record<string, VariantToken[]> = {
     t("line", "Bordas", "#8351F147"),
     t("rose", "Rosa", "#DCB8C0"),
   ],
+  sorveteria: [
+    t("blueLight", "Azul claro (degradê dos cartões e da faixa)", "#3342FF"),
+    t("blueDark", "Azul escuro (fim da faixa “Fale com a gente”)", "#0008CC"),
+    t("yellow", "Amarelo (destaques, títulos do rodapé, onda)", "#FFED00"),
+    t("yellowDark", "Amarelo escuro (hover do amarelo)", "#E6D600"),
+    t("yellowSoft", "Amarelo suave (fundo da linha do tempo)", "#FFF9C4"),
+    t("cyan", "Ciano (onda e cartão da 2ª unidade)", "#00E5FF"),
+    t("red", "Vermelho (slide da pizza)", "#E33E2B"),
+    t(
+      "timezone",
+      "Fuso horário da loja (ex.: America/Sao_Paulo, America/Rio_Branco)",
+      "America/Sao_Paulo",
+      "text"
+    ),
+    t(
+      "waMessage",
+      "Mensagem do WhatsApp ({marca} e {unidade} são trocados)",
+      "Olá, {marca} ({unidade}). Gostaria de fazer um pedido!",
+      "text"
+    ),
+  ],
   universo: [
     t("neon", "Vermelho neon", "#ff0033"),
     t("redBright", "Vermelho vivo", "#ff2c49"),
