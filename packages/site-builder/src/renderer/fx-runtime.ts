@@ -277,7 +277,7 @@ var fsl=Array.prototype.slice.call(track.children),fn=fsl.length,fcur=0,ft=null,
 var fcf=box.getAttribute("data-effect")==="coverflow";
 function fshow(i){fcur=(i+fn)%fn;fsl.forEach(function(x,k){x.classList.toggle("on",k===fcur);if(fcf){x.classList.toggle("is-prev",fn>2&&k===(fcur-1+fn)%fn);x.classList.toggle("is-next",fn>1&&k===(fcur+1)%fn)}});fdots.forEach(function(d,k){d.classList.toggle("on",k===fcur)})}
 function fstop(){clearTimeout(ft);ft=null}
-function fplay(){fstop();if(reduce||fn<2)return;ft=setTimeout(function(){fshow(fcur+1);fplay()},delay+speed)}
+function fplay(){fstop();if(reduce||fn<2||box.getAttribute("data-autoplay")==="0")return;ft=setTimeout(function(){fshow(fcur+1);fplay()},delay+speed)}
 if(fn>1){
 if(dotsEl&&box.getAttribute("data-dots")){for(var fk=0;fk<fn;fk++){(function(k){var b=document.createElement("button");b.type="button";b.setAttribute("aria-label","Slide "+(k+1));b.addEventListener("click",function(){fshow(k);fplay()},fo);dotsEl.appendChild(b);fdots.push(b)})(fk)}}
 if(nb)nb.addEventListener("click",function(){fshow(fcur+1);fplay()},fo);
@@ -299,7 +299,7 @@ function mark(){dots.forEach(function(d,k){d.classList.toggle("on",k===cur%n)})}
 function go(i,anim){cur=i;place(-i*step(),anim);mark()}
 function wrap(){if(cur>=n){go(cur-n,false);track.offsetHeight}}
 function stop(){clearTimeout(t);t=null}
-function play(){stop();if(reduce||stat)return;t=setTimeout(function(){wrap();go(cur+by(),true);play()},delay+speed)}
+function play(){stop();if(reduce||stat||box.getAttribute("data-autoplay")==="0")return;t=setTimeout(function(){wrap();go(cur+by(),true);play()},delay+speed)}
 function build(){
 clones.forEach(function(c){c.remove()});clones=[];
 pv=pvNow();stat=n<=pv;

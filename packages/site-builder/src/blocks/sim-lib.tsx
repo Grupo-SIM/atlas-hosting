@@ -274,10 +274,11 @@ export interface CarProps {
 export function SiCar({
   advance = "one",
   arrows = "outside",
+  autoplay = true,
   className = "",
   dots = false,
-  items,
   effect,
+  items,
   p,
   pause = true,
   transition = "slide",
@@ -285,17 +286,19 @@ export function SiCar({
   /** `page` = cada passo avança uma tela inteira (N itens por vez); `one` = um item. */
   advance?: "one" | "page";
   arrows?: "inside" | "none" | "outside";
+  /** `false` = não troca sozinho (só pelas setas, bolinhas e arrastar); sem a prop o HTML é o de sempre. */
+  autoplay?: boolean;
   className?: string;
   dots?: boolean;
-  items: ReactNode[];
-  p: CarProps;
-  pause?: boolean;
   /**
    * `coverflow` = o slide atual no centro, reto, e os vizinhos girados em perspectiva (`data-effect`, CSS em `renderer/coverflow.ts`, que a variante precisa incluir;
    * o `fx-runtime` só troca as classes `on`/`is-prev`/`is-next`). Implica `transition="fade"` (slides empilhados).
    * Sem a prop o HTML é o de sempre.
    */
   effect?: "coverflow";
+  items: ReactNode[];
+  p: CarProps;
+  pause?: boolean;
   /** `fade` = os slides ficam empilhados e trocam por opacidade (`data-fade`, ligado no `fx-runtime`); o padrão desliza. */
   transition?: "fade" | "slide";
 }) {
@@ -314,6 +317,7 @@ export function SiCar({
     <div
       className={`si-car ${arrows !== "none" ? `arrows-${arrows}` : ""} ${className}`.trim()}
       data-adv={advance === "page" ? "page" : undefined}
+      data-autoplay={autoplay ? undefined : "0"}
       data-delay={p.delay}
       data-dots={dots ? "1" : undefined}
       data-effect={coverflow ? "coverflow" : undefined}
