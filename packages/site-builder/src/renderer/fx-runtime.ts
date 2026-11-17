@@ -5,7 +5,7 @@
  * só dentro de `raiz` (miniaturas: `startSiteFx`, uma chamada por cartão em vez de várias varrendo a página).
  * Ao mudar o script, suba `FX_VERSION` (a prévia troca a versão carregada sem recarregar a página).
  */
-export const FX_VERSION = 18;
+export const FX_VERSION = 23;
 
 /**
  * Formatação do contador (`data-sb-count`): `dec` casas decimais (o valor do HTML é "4.9" → 1 casa, ou `data-decimals`),
@@ -694,6 +694,42 @@ t2=setTimeout(function(){box.style.width=""},400);
 var iv=setInterval(swap,ms);
 off.push(function(){clearInterval(iv);clearTimeout(t1);clearTimeout(t2);w.style.transition="";w.className="sb-rot-w";w.textContent=orig;box.style.width="";box.removeAttribute("data-rot-ready")});
 });
+/* Semente Viva: a gaveta fecha ao clicar num link; Esc fecha gaveta e busca; busca ganha foco; cabeçalho fixo depois de 200px de rolagem */
+D.querySelectorAll(".sv-drawer a").forEach(function(a){
+var svClose=function(){var b=document.getElementById("sb-burger");if(b)b.checked=false};
+a.addEventListener("click",svClose);
+off.push(function(){a.removeEventListener("click",svClose)});
+});
+D.querySelectorAll(".sv-head").forEach(function(h){
+var svBurger=h.querySelector(".sv-burger-input"),svSearch=h.querySelector(".sv-search-input"),svInput=h.querySelector(".sv-sform input");
+function svY(e){var t=e&&e.target;return t&&t!==document&&typeof t.scrollTop==="number"?t.scrollTop:(window.pageYOffset||0)}
+function svStick(e){h.classList.toggle("is-stuck",svY(e)>200)}
+function svKey(e){if(e.key!=="Escape")return;if(svBurger)svBurger.checked=false;if(svSearch)svSearch.checked=false}
+function svFocus(){if(svSearch&&svSearch.checked&&svInput)svInput.focus()}
+document.addEventListener("scroll",svStick,{passive:true,capture:true});
+document.addEventListener("keydown",svKey);
+if(svSearch)svSearch.addEventListener("change",svFocus);
+svStick();
+off.push(function(){document.removeEventListener("scroll",svStick,true);document.removeEventListener("keydown",svKey);if(svSearch)svSearch.removeEventListener("change",svFocus);h.classList.remove("is-stuck")});
+});
+/* Semente Viva: botões "Copiar" do PIX (Clipboard API; sem ela, copia por um campo temporário) */
+D.querySelectorAll("[data-sv-copy]").forEach(function(btn){
+var svOrig=btn.textContent,svTm=null;
+function svDone(){btn.textContent=btn.getAttribute("data-done")||svOrig;btn.classList.add("is-done");clearTimeout(svTm);svTm=setTimeout(function(){btn.textContent=svOrig;btn.classList.remove("is-done")},2200)}
+function svFallback(v){var ta=document.createElement("textarea");ta.value=v;ta.setAttribute("readonly","");ta.style.cssText="position:fixed;top:0;left:0;opacity:0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy")}catch(e){}ta.remove();svDone()}
+var svCopy=function(){var v=btn.getAttribute("data-sv-copy")||"";if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(svDone,function(){svFallback(v)})}else svFallback(v)};
+btn.addEventListener("click",svCopy);
+off.push(function(){btn.removeEventListener("click",svCopy);clearTimeout(svTm);btn.textContent=svOrig;btn.classList.remove("is-done")});
+});
+/* Semente Viva: abas por área (radios nativos; aqui só o aria-selected acompanha) e ano do rodapé */
+D.querySelectorAll("[data-sv-tabs]").forEach(function(box){
+var radios=Array.prototype.slice.call(box.querySelectorAll("input[type=radio]")),tabs=Array.prototype.slice.call(box.querySelectorAll("[role=tab]"));
+function svSync(){radios.forEach(function(r,i){if(tabs[i])tabs[i].setAttribute("aria-selected",r.checked?"true":"false")})}
+radios.forEach(function(r){r.addEventListener("change",svSync)});
+svSync();
+off.push(function(){radios.forEach(function(r){r.removeEventListener("change",svSync)})});
+});
+D.querySelectorAll("[data-sv-year]").forEach(function(e){e.textContent=String(new Date().getFullYear())});
 return function(){off.forEach(function(f){f()})};
 };
 })();`;
