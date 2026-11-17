@@ -90,7 +90,7 @@ Telas em `frontend/src/app/(auth)/criador-de-sites/`:
    (`levelFor`). Quem edita sem ser master não mexe nela de outra pessoa (`updateTeamUserAction` preserva as linhas). Quem a tem
    entra no Criador de Sites (`getBuilderUser` e o menu do layout) para usar a galeria e o editor do template.
    Em `/novo` essas pessoas veem a chave **Modo Dev `</>`** (`TemplateGallery`, escolha lembrada no navegador, começa desligada):
-   ligada, aparece o aviso de que são templates de demonstração e cada cartão ganha **Editar template**, o selo **Editado** e
+   ligada, aparece o aviso de que são templates de demonstração, **clicar na imagem do cartão abre a edição do template (não cria um site e não vai para "Meus sites"; "Usar este template" some)** e cada cartão ganha **Editar template**, o selo **Editado** e
    **Descartar edições**; desligada, a galeria é a do cliente. O editor do template
    (`/criador-de-sites/templates/[templateId]`, `requireTemplateEditor`) abre o editor normal sem publicação, com a Atlas IA,
    "Restaurar original" = template do código, uma **faixa fixa "MODO DEV"** (prop `banner` do `SiteEditor`) e, **toda vez que a

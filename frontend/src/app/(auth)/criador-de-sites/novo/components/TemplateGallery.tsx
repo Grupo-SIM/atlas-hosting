@@ -154,7 +154,9 @@ export default function TemplateGallery({
               <strong>rascunho</strong> e só vira a versão que os clientes
               recebem quando você clica em <em>Publicar no template</em>, dentro
               do editor. Sites que já foram criados não mudam. Use{" "}
-              <em>Descartar edições</em> para voltar ao original.
+              <em>Descartar edições</em> para voltar ao original. Com o modo Dev
+              ligado, clicar no template <strong>abre a edição dele</strong> e
+              não cria um site; para criar um site, desligue o modo Dev.
             </div>
           ) : null}
         </div>
@@ -247,6 +249,9 @@ function TemplateCard({
 }) {
   const state = t.exclusivity;
   const locked = state?.kind === "owned_by_other" || state?.kind === "reserved";
+  // Modo Dev: o cartão é do template, não de um site. Clicar abre a edição do template (nunca cria um site nem leva
+  // para "Meus sites"); "Usar este template" some.
+  const editing = dev && Boolean(t.master);
 
   return (
     <div
@@ -297,12 +302,21 @@ function TemplateCard({
         ) : (
           <>
             <ExclusivityBadge state={state} />
-            <UseTemplateButton
-              ariaLabel={`Usar o template ${t.name}`}
-              className="absolute inset-0"
-              templateId={t.id}
-              templateName={t.name}
-            />
+            {editing ? (
+              <Link
+                aria-label={`Editar o template ${t.name} (modo Dev)`}
+                className="absolute inset-0"
+                href={`/criador-de-sites/templates/${t.id}`}
+                prefetch={false}
+              />
+            ) : (
+              <UseTemplateButton
+                ariaLabel={`Usar o template ${t.name}`}
+                className="absolute inset-0"
+                templateId={t.id}
+                templateName={t.name}
+              />
+            )}
           </>
         )}
       </div>
@@ -326,7 +340,7 @@ function TemplateCard({
           ))}
         </div>
         <div className="mt-auto flex flex-wrap gap-2 pt-1.5">
-          {!locked && (
+          {!locked && !editing && (
             <UseTemplateButton
               className="rounded-full bg-[#d6f34a] px-4 py-2 font-medium text-[13px] disabled:opacity-60"
               templateId={t.id}
