@@ -51,7 +51,6 @@ export default async function NewSitePage() {
     const image = edited ? null : templateThumb(meta.id);
     return [
       {
-        description: meta.description,
         exclusivity: exclusivity[meta.id]
           ? { ...exclusivity[meta.id], feePercent: resale.feePercent }
           : undefined,
@@ -60,7 +59,6 @@ export default async function NewSitePage() {
           ? { draft: meta.id in drafts, edited: meta.id in overrides }
           : undefined,
         name: meta.name,
-        pageCount: meta.pageCount,
         previewBackground: site.theme.bg ?? "#030712",
         tags: meta.tags,
         thumb: image ? (

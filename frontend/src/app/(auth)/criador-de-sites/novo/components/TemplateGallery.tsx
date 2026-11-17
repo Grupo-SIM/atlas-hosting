@@ -16,14 +16,12 @@ import MasterTemplateControls from "./MasterTemplateControls";
 import UseTemplateButton from "./UseTemplateButton";
 
 export interface GalleryTemplate {
-  description: string;
   /** Estado da exclusividade para quem está vendo (ausente = template livre). */
   exclusivity?: ExclusivityView;
   /** Admin master: o template já foi editado à mão (mostra o selo e "Descartar edições"); ausente = não é master. */
   master?: { draft: boolean; edited: boolean };
   id: string;
   name: string;
-  pageCount: number;
   previewBackground: string;
   tags: string[];
   /** Miniatura menor para a grade. */
@@ -101,10 +99,7 @@ export default function TemplateGallery({
       (exclusivity === "all" ||
         (exclusivity === "available" && t.exclusivity?.kind === "available") ||
         (exclusivity === "mine" && t.exclusivity?.kind === "owned_by_me")) &&
-      (!q ||
-        `${t.name} ${t.description} ${t.tags.join(" ")}`
-          .toLowerCase()
-          .includes(q))
+      (!q || `${t.name} ${t.tags.join(" ")}`.toLowerCase().includes(q))
   );
 
   const toggleExclusivity = (value: ExclusivityFilter) =>
@@ -323,14 +318,8 @@ function TemplateCard({
 
       <div className="flex flex-1 flex-col gap-2 px-4 py-3.5">
         <div className="font-medium text-sm">{t.name}</div>
-        <div className="text-[#6e6b65] text-[13px] leading-[1.4]">
-          {t.description}
-        </div>
         <div className="flex flex-wrap gap-1.5">
-          {[
-            ...t.tags,
-            `${t.pageCount} ${t.pageCount === 1 ? "página" : "páginas"}`,
-          ].map(tagName => (
+          {t.tags.map(tagName => (
             <span
               className="rounded-full bg-[#f3f1ec] px-2 py-0.5 text-[#55524c] text-[11px]"
               key={tagName}
