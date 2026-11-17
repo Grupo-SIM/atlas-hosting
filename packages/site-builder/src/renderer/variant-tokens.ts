@@ -62,6 +62,57 @@ export const VARIANT_TOKENS: Record<string, VariantToken[]> = {
     t("strip", "Faixas", "#F1F1F1"),
     t("title", "Títulos", "#060429"),
   ],
+  fundacao: [
+    t("greenDark", "Verde escuro (barra do topo)", "#106504"),
+    t("greenBright", "Verde vivo (sublinhado do menu, rótulos)", "#04CC40"),
+    t("greenBg", "Verde das faixas (colaborador e notícias)", "#01902B"),
+    t("greenFooter", "Verde do rodapé", "#0D8F06"),
+    t("cyan", "Ciano dos rótulos do rodapé", "#7EE3F0"),
+    t("soft", "Fundo da faixa de título das internas", "#EEF4FF"),
+    t("crumb", "Cor do link da trilha (Início ›)", "#7B8CFF"),
+    t("cnpj", "CNPJ da fundação", "00.000.000/0001-00", "text"),
+    t(
+      "address",
+      "Endereço (cabeçalho, rodapé, contato e mapa)",
+      "Rua Exemplo, 100 – Centro – Cidade/UF",
+      "text"
+    ),
+    t("contactEmail", "E-mail de contato", "contato@exemplo.org.br", "text"),
+    t("phone", "Telefone (com DDD)", "", "text"),
+    t(
+      "whatsapp",
+      "WhatsApp (só números, com DDI e DDD)",
+      "5500000000000",
+      "text"
+    ),
+    t(
+      "hours",
+      "Horário de atendimento",
+      "Segunda a sexta, das 8h às 12h e das 14h às 18h",
+      "text"
+    ),
+    t("pixKeyType", "PIX — tipo da chave", "email", "select", [
+      { label: "CNPJ", value: "cnpj" },
+      { label: "E-mail", value: "email" },
+      { label: "Telefone", value: "phone" },
+      { label: "Chave aleatória", value: "random" },
+    ]),
+    t(
+      "pixKey",
+      "PIX — chave (troque a de exemplo!)",
+      "pix@exemplo.org.br",
+      "text"
+    ),
+    t(
+      "pixReceiver",
+      "PIX — nome do recebedor",
+      "FUNDACAO SEMENTE VIVA",
+      "text"
+    ),
+    t("pixCity", "PIX — cidade do recebedor", "CIDADE EXEMPLO", "text"),
+    t("pixId", "PIX — código da transferência (opcional)", "", "text"),
+    t("pixQr", "PIX — imagem do QR code", "", "image"),
+  ],
   gatilhos: [
     t("glow", "Brilho", "#00E1FF24"),
     t("line", "Bordas", "#FFFFFF29"),

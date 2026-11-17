@@ -2,6 +2,7 @@ import { CENTRAL_EXTRA_FONTS, isCentral } from "./central.js";
 import { CONSULTORIA_EXTRA_FONTS, isConsultoria } from "./consultoria.js";
 import { CORTE_EXTRA_FONTS, isCorte } from "./corte.js";
 import { DIARIO_EXTRA_FONTS, isDiario } from "./diario.js";
+import { FUNDACAO_EXTRA_FONTS, isFundacao } from "./fundacao.js";
 import { GATILHOS_EXTRA_FONTS, isGatilhos } from "./gatilhos.js";
 import { GRANA_EXTRA_FONTS, isGrana } from "./grana.js";
 import { HABILIDADES_EXTRA_FONTS, isHabilidades } from "./habilidades.js";
@@ -27,6 +28,7 @@ export const SITE_FONTS = [
   "Mulish",
   "Poppins",
   "Rajdhani",
+  "Red Hat Display",
   "Red Hat Text",
   "Roboto",
   "Sora",
@@ -223,6 +225,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isConsultoria(theme))
     for (const extra of CONSULTORIA_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isFundacao(theme))
+    for (const extra of FUNDACAO_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   if (isUniverso(theme))
     for (const extra of UNIVERSO_EXTRA_FONTS)

@@ -22,6 +22,7 @@ import { corteCss, corteVars, isCorte } from "./corte.js";
 import { diarioCss, diarioVars, isDiario } from "./diario.js";
 import { FxRuntime } from "./FxRuntime.js";
 import { customFonts, fontFaceCss, fontStylesheet } from "./fonts.js";
+import { fundacaoCss, fundacaoVars, isFundacao } from "./fundacao.js";
 import { gatilhosCss, gatilhosVars, isGatilhos } from "./gatilhos.js";
 import { granaCss, granaVars, isGrana } from "./grana.js";
 import {
@@ -162,6 +163,7 @@ export function SiteRenderer({
   const diario = isDiario(site.theme);
   const grana = isGrana(site.theme);
   const universo = isUniverso(site.theme);
+  const fundacao = isFundacao(site.theme);
 
   const ctx: RenderContext = {
     basePath,
@@ -179,6 +181,7 @@ export function SiteRenderer({
 
   // CSS da variante do template (além do base): a primeira que valer, na mesma ordem de antes.
   const variants: [boolean, string][] = [
+    [fundacao, fundacaoCss],
     [universo, universoCss],
     [atlas, atlasCss],
     [diario, diarioCss],
@@ -251,6 +254,7 @@ export function SiteRenderer({
         diario ? "sb-dd" : "",
         grana ? "sb-gh" : "",
         universo ? "sb-uv" : "",
+        fundacao ? "sb-sv" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -286,6 +290,7 @@ export function SiteRenderer({
           ...(diario ? diarioVars(site.theme) : {}),
           ...(grana ? granaVars(site.theme) : {}),
           ...(universo ? universoVars(site.theme) : {}),
+          ...(fundacao ? fundacaoVars(site.theme) : {}),
         } as CSSProperties
       }
     >
