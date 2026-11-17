@@ -8,6 +8,7 @@ import { consultoriaFinanceira } from "./consultoria-financeira/index.js";
 import { controleMotorista } from "./controle-motorista/index.js";
 import { controlePatrimonial } from "./controle-patrimonial/index.js";
 import { diarioAberto } from "./diario-aberto/index.js";
+import { fundacaoSementeViva } from "./fundacao-semente-viva/index.js";
 import { gatilhosMentais } from "./gatilhos-mentais/index.js";
 import { granaNaHora } from "./grana-na-hora/index.js";
 import { habilidadesComunicacao } from "./habilidades-comunicacao/index.js";
@@ -61,6 +62,7 @@ const templates: SiteTemplate[] = [
   diarioAberto,
   atlasHosting,
   universoLucasAcre,
+  fundacaoSementeViva,
 ];
 
 /**
