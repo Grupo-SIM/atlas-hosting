@@ -1089,8 +1089,10 @@ function VariantSettings({
         <FieldInput
           field={{
             key: tok.key,
-            kind: tok.kind === "image" ? "image" : "text",
+            kind:
+              tok.kind === "image" || tok.kind === "select" ? tok.kind : "text",
             label: tok.label,
+            options: tok.options,
           }}
           key={tok.key}
           onChange={v => onTheme({ [tok.key]: String(v ?? "") }, tok.label)}

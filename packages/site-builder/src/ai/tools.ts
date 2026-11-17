@@ -541,6 +541,10 @@ function themePatch(site: Site, input: Input): Record<string, string> {
         throw new ToolError(`Cor inválida em ${key}: ${v}`);
       if (tok.kind === "image" && v && !URLISH.test(v))
         throw new ToolError(`${key} precisa ser uma URL de imagem.`);
+      if (tok.kind === "select" && !tok.options?.some(o => o.value === v))
+        throw new ToolError(
+          `${key} aceita só: ${tok.options?.map(o => o.value).join(", ")}.`
+        );
       if (v.length > 300) throw new ToolError(`${key} é longo demais.`);
       patch[key] = v;
     }
