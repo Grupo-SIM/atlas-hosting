@@ -31,6 +31,7 @@ import {
   isHabilidades,
 } from "./habilidades.js";
 import { holofoteCss, holofoteVars, isHolofote } from "./holofote.js";
+import { igrejaCss, igrejaVars, isIgreja } from "./igreja.js";
 import { instafanCss, instafanVars, isInstafan } from "./instafan.js";
 import { isJournal, journalCss, journalVars } from "./journal.js";
 import { isMargem, margemCss, margemVars } from "./margem.js";
@@ -167,6 +168,7 @@ export function SiteRenderer({
   const grana = isGrana(site.theme);
   const universo = isUniverso(site.theme);
   const pousada = isPousada(site.theme);
+  const igreja = isIgreja(site.theme);
   const saut = isSaut(site.theme);
   const sorveteria = isSorveteria(site.theme);
   const fundacao = isFundacao(site.theme);
@@ -188,6 +190,7 @@ export function SiteRenderer({
   // CSS da variante do template (além do base): a primeira que valer, na mesma ordem de antes.
   const variants: [boolean, string][] = [
     [fundacao, fundacaoCss],
+    [igreja, igrejaCss],
     [pousada, pousada ? pousadaCss(site.theme) : ""],
     [saut, sautCss],
     [sorveteria, sorveteriaCss],
@@ -264,6 +267,7 @@ export function SiteRenderer({
         grana ? "sb-gh" : "",
         universo ? "sb-uv" : "",
         pousada ? "sb-vv" : "",
+        igreja ? "sb-cv" : "",
         saut ? "sb-sa" : "",
         sorveteria ? "sb-fr" : "",
         fundacao ? "sb-sv" : "",
@@ -303,6 +307,7 @@ export function SiteRenderer({
           ...(grana ? granaVars(site.theme) : {}),
           ...(universo ? universoVars(site.theme) : {}),
           ...(pousada ? pousadaVars(site.theme) : {}),
+          ...(igreja ? igrejaVars(site.theme) : {}),
           ...(saut ? sautVars(site.theme) : {}),
           ...(sorveteria ? sorveteriaVars(site.theme) : {}),
           ...(fundacao ? fundacaoVars(site.theme) : {}),

@@ -356,7 +356,7 @@ play();
 off.push(function(){stop();ac.abort();clones.forEach(function(c){c.remove()});dots.forEach(function(d){d.remove()});box.removeAttribute("data-si-ready");box.classList.remove("is-static");track.style.transition="";track.style.transform=""});
 });
 var siBurger=document.getElementById("sb-burger");
-if(siBurger&&D.querySelector(".si-drawer,.pg-drop")){
+if(siBurger&&D.querySelector(".si-drawer,.pg-drop,.vv-drawer,.sa-drawer,.fr-full")){
 var siKey=function(e){if(e.key==="Escape")siBurger.checked=false};
 document.addEventListener("keydown",siKey);
 off.push(function(){document.removeEventListener("keydown",siKey)});
@@ -793,6 +793,34 @@ sel.addEventListener("change",frPick);
 frPick();
 off.push(function(){sel.removeEventListener("change",frPick);btns.forEach(function(b){b.classList.remove("on")})});
 });
+/* Comunidade Viva: a gaveta fecha ao clicar num link; submenu de redes (hover no CSS; clique, Esc e clique fora); abas: aria-selected; ano do rodapé */
+D.querySelectorAll(".cv-drawer a").forEach(function(a){
+var cvClose=function(){var b=document.getElementById("sb-burger");if(b)b.checked=false};
+a.addEventListener("click",cvClose);
+off.push(function(){a.removeEventListener("click",cvClose)});
+});
+D.querySelectorAll("[data-cv-soc]").forEach(function(box){
+var btn=box.querySelector(".cv-soc-b");
+if(!btn)return;
+function cvSet(on){box.classList.toggle("is-open",on);btn.setAttribute("aria-expanded",on?"true":"false");if(!on)btn.blur()}
+var cvClick=function(){cvSet(!box.classList.contains("is-open"))};
+var cvKey=function(e){if(e.key==="Escape"){cvSet(false);box.classList.add("is-shut")}};
+var cvDoc=function(e){if(!box.contains(e.target))cvSet(false)};
+var cvLeave=function(){box.classList.remove("is-shut")};
+btn.addEventListener("click",cvClick);
+box.addEventListener("mouseleave",cvLeave);
+document.addEventListener("keydown",cvKey);
+document.addEventListener("click",cvDoc);
+off.push(function(){btn.removeEventListener("click",cvClick);box.removeEventListener("mouseleave",cvLeave);document.removeEventListener("keydown",cvKey);document.removeEventListener("click",cvDoc);box.classList.remove("is-open","is-shut");btn.setAttribute("aria-expanded","false")});
+});
+D.querySelectorAll("[data-cv-tabs]").forEach(function(box){
+var radios=Array.prototype.slice.call(box.querySelectorAll("input[type=radio]")),tabs=Array.prototype.slice.call(box.querySelectorAll("[role=tab]"));
+function cvSync(){radios.forEach(function(r,i){if(tabs[i])tabs[i].setAttribute("aria-selected",r.checked?"true":"false")})}
+radios.forEach(function(r){r.addEventListener("change",cvSync)});
+cvSync();
+off.push(function(){radios.forEach(function(r){r.removeEventListener("change",cvSync)})});
+});
+D.querySelectorAll("[data-cv-year]").forEach(function(e){e.textContent=String(new Date().getFullYear())});
 /* Semente Viva: a gaveta fecha ao clicar num link; Esc fecha gaveta e busca; busca ganha foco; cabeçalho fixo depois de 200px de rolagem */
 D.querySelectorAll(".sv-drawer a").forEach(function(a){
 var svClose=function(){var b=document.getElementById("sb-burger");if(b)b.checked=false};

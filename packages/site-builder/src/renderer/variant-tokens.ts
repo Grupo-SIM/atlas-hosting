@@ -145,6 +145,52 @@ export const VARIANT_TOKENS: Record<string, VariantToken[]> = {
     t("hover", "Cor ao passar o mouse", "#cccccc"),
     t("page", "Fundo da página", "#f1f1f1"),
   ],
+  igreja: [
+    t("gray", "Cinza dos rótulos (“Baixe nosso aplicativo:”)", "#898989"),
+    t("purple", "Roxo (faixas do hero)", "#5A1FD1"),
+    t("star", "Laranja das estrelas (selos de nota)", "#F99707"),
+    t("watermark", "Marca d'água gigante", "#D5D5D529"),
+    t("overlay", "Véu escuro sobre a foto do banner", "#0000007D"),
+    t("footerFrom", "Rodapé: cor de cima", "#272727"),
+    t("footerTo", "Rodapé: cor de baixo", "#000000"),
+    t("barFrom", "Abas: cor da esquerda", "#3B3B3B"),
+    t("barTo", "Abas: cor da direita", "#4FA3F7"),
+    t("dot", "Bolinha e sublinhado da aba ativa", "#2ECC71"),
+    t("churchName", "Nome da igreja", "Comunidade Viva", "text"),
+    t(
+      "leaderName",
+      "Nome da liderança",
+      "Pr. Marcos e Pra. Lúcia Andrade",
+      "text"
+    ),
+    t(
+      "welcomeVideo",
+      "Vídeo de boas-vindas (link do YouTube; vazio = sem vídeo)",
+      "",
+      "text"
+    ),
+    t("podcastUrl", "Podcast (URL; vazio = o “Escute agora” some)", "", "text"),
+    t("appStoreUrl", "App Store (URL; vazio = sem selo)", "", "text"),
+    t("playStoreUrl", "Google Play (URL; vazio = sem selo)", "", "text"),
+    t("showApp", "Mostrar a seção do aplicativo", "yes", "select", [
+      { label: "Sim", value: "yes" },
+      { label: "Não", value: "no" },
+    ]),
+    t("contactEmail", "E-mail de contato", "contato@exemplo.com", "text"),
+    t("phone", "Telefone (com DDD)", "", "text"),
+    t(
+      "whatsapp",
+      "WhatsApp (só números, com DDI e DDD)",
+      "5500000000000",
+      "text"
+    ),
+    t(
+      "address",
+      "Endereço da sede",
+      "Rua Exemplo, 100 – Centro – Cidade/UF",
+      "text"
+    ),
+  ],
   instafan: [
     t("dark", "Azul escuro", "#1C244D"),
     t("panel", "Painéis", "#010921"),

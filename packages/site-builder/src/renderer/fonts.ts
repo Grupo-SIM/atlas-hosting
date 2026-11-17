@@ -6,6 +6,7 @@ import { FUNDACAO_EXTRA_FONTS, isFundacao } from "./fundacao.js";
 import { GATILHOS_EXTRA_FONTS, isGatilhos } from "./gatilhos.js";
 import { GRANA_EXTRA_FONTS, isGrana } from "./grana.js";
 import { HABILIDADES_EXTRA_FONTS, isHabilidades } from "./habilidades.js";
+import { IGREJA_EXTRA_FONTS, isIgreja } from "./igreja.js";
 import { INSTAFAN_EXTRA_FONTS, isInstafan } from "./instafan.js";
 import { isMotorista, MOTORISTA_EXTRA_FONTS } from "./motorista.js";
 import { isOutroLado, OUTROLADO_EXTRA_FONTS } from "./outrolado.js";
@@ -241,6 +242,9 @@ export function fontStylesheet(site: {
       if (!names.includes(extra)) names.push(extra);
   if (isConsultoria(theme))
     for (const extra of CONSULTORIA_EXTRA_FONTS)
+      if (!names.includes(extra)) names.push(extra);
+  if (isIgreja(theme))
+    for (const extra of IGREJA_EXTRA_FONTS)
       if (!names.includes(extra)) names.push(extra);
   if (isPousada(theme))
     for (const extra of POUSADA_EXTRA_FONTS)

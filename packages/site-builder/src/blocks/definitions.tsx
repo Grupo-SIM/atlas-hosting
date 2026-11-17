@@ -43,6 +43,8 @@ import {
 } from "./helpers.js";
 import { holofoteBlocks } from "./holofote.js";
 import { holofotePageBlocks } from "./holofote-pages.js";
+import { igrejaBlocks } from "./igreja.js";
+import { igrejaPageBlocks } from "./igreja-pages.js";
 import { instafanBlocks } from "./instafan.js";
 import { margemBlocks } from "./margem.js";
 import { marketplaceBlocks } from "./marketplace.js";
@@ -2695,6 +2697,8 @@ export const blockDefinitions: BlockDefinition[] = [
   ...diarioBlocks,
   ...diarioPageBlocks,
   ...pousadaBlocks,
+  ...igrejaBlocks,
+  ...igrejaPageBlocks,
   ...sautBlocks,
   ...sorveteriaBlocks,
   ...fundacaoBlocks,

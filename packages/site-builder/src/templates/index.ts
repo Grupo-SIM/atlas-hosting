@@ -13,6 +13,7 @@ import { gatilhosMentais } from "./gatilhos-mentais/index.js";
 import { granaNaHora } from "./grana-na-hora/index.js";
 import { habilidadesComunicacao } from "./habilidades-comunicacao/index.js";
 import { holofote } from "./holofote/index.js";
+import { igrejaComunidadeViva } from "./igreja-comunidade-viva/index.js";
 import { instafanFortune } from "./instafan-fortune/index.js";
 import { margem } from "./margem/index.js";
 import { marketingRaiz } from "./marketing-raiz/index.js";
@@ -68,6 +69,7 @@ const templates: SiteTemplate[] = [
   universoLucasAcre,
   sautMarketing,
   sorveteriaFrescor,
+  igrejaComunidadeViva,
   fundacaoSementeViva,
 ];
 
