@@ -29,6 +29,7 @@ import {
   type MenuItem,
   type Post,
   type Site,
+  TILT,
 } from "../model/index.js";
 import {
   FRAME_ZOOM_MAX,
@@ -2170,6 +2171,42 @@ export function Inspector({
               value={fx.hoverMs ?? HOVER_MS.default}
             />
           ) : null}
+          {fx.hover === "tilt" ? (
+            <>
+              <Slider
+                label="Inclinação máxima (graus)"
+                max={TILT.max}
+                min={TILT.min}
+                onChange={v =>
+                  onFx(
+                    {
+                      tiltMax: Math.min(
+                        TILT.max,
+                        Math.max(TILT.min, Math.round(v))
+                      ),
+                    },
+                    "Inclinação máxima"
+                  )
+                }
+                value={fx.tiltMax ?? TILT.default}
+              />
+              <div className="sbe-line">
+                <span>Reflexo de luz seguindo o mouse</span>
+                <button
+                  className={fx.tiltGlare ? "sbe-toggle on" : "sbe-toggle"}
+                  onClick={() =>
+                    onFx(
+                      { tiltGlare: fx.tiltGlare ? undefined : true },
+                      "Reflexo da inclinação"
+                    )
+                  }
+                  type="button"
+                >
+                  <span />
+                </button>
+              </div>
+            </>
+          ) : null}
           <Slider
             label="Parallax"
             max={10}
@@ -2284,6 +2321,8 @@ export function Inspector({
                       parallax: undefined,
                       parallaxScreens: undefined,
                       stagger: undefined,
+                      tiltGlare: undefined,
+                      tiltMax: undefined,
                     },
                     "Remover efeitos"
                   )

@@ -31,6 +31,29 @@ var D=root||document;
 var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 D.querySelectorAll(".sb").forEach(function(r){r.classList.add("sb-js")});
 var par=[],mice=[],counted=[],off=[];
+var hoverFine=!!(window.matchMedia&&window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+/* inclinação 3D (hover "tilt"): segue o ponteiro, volta ao soltar; reflexo opcional de até 15% */
+function frTilt(el,max,glare){
+var rect=null,g=null,tm=0;
+if(glare){
+g=document.createElement("div");g.setAttribute("data-sb-glare","1");
+g.style.cssText="position:absolute;inset:0;z-index:5;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity 400ms";
+el.appendChild(g);
+if(getComputedStyle(el).position==="static")el.style.position="relative";
+}
+function enter(){clearTimeout(tm);rect=el.getBoundingClientRect();el.style.transition="transform 400ms cubic-bezier(.03,.98,.52,.99)"}
+function move(e){
+if(!rect||!rect.width)return;
+var x=(e.clientX-rect.left)/rect.width,y=(e.clientY-rect.top)/rect.height;
+el.style.transform="perspective(1000px) rotateX("+(-(y-.5)*2*max).toFixed(2)+"deg) rotateY("+((x-.5)*2*max).toFixed(2)+"deg) scale3d(1.02,1.02,1.02)";
+if(g){g.style.opacity="1";g.style.background="radial-gradient(circle at "+(x*100).toFixed(1)+"% "+(y*100).toFixed(1)+"%,rgba(255,255,255,.15),rgba(255,255,255,0) 60%)"}
+}
+function leave(){rect=null;el.style.transform="";if(g)g.style.opacity="0";tm=setTimeout(function(){el.style.transition=""},420)}
+el.addEventListener("pointerenter",enter);
+el.addEventListener("pointermove",move);
+el.addEventListener("pointerleave",leave);
+off.push(function(){clearTimeout(tm);el.removeEventListener("pointerenter",enter);el.removeEventListener("pointermove",move);el.removeEventListener("pointerleave",leave);el.style.transform="";el.style.transition="";if(g)g.remove()});
+}
 function resolve(blk,p){
 if(!p)return blk;
 var n=blk,ix=p.split(".");
@@ -98,6 +121,7 @@ if(f.m&&!reduce){
 t.setAttribute("data-sb-mouse","1");
 mice.push({el:t,m:f.m,x:0,y:0});
 }
+if(f.t&&!reduce&&hoverFine)frTilt(t,f.t,f.g);
 if(!io){if(f.e)t.classList.add("sb-in");return}
 if(f.c){prep(t)}
 if(f.e||f.c)io.observe(t);

@@ -35,6 +35,7 @@ export const HOVER_EFFECTS = [
   "push",
   "hang",
   "pulse",
+  "tilt",
 ] as const;
 export type HoverEffect = (typeof HOVER_EFFECTS)[number];
 
@@ -65,7 +66,11 @@ export const HOVER_LABELS: Record<HoverEffect, string> = {
   rotate: "Girar",
   shadow: "Sombra",
   shrink: "Encolher",
+  tilt: "Inclinar (3D)",
 };
+
+/** Inclinação 3D (`hover: "tilt"`): grau máximo (padrão e limites) e se há reflexo de luz seguindo o ponteiro. */
+export const TILT = { default: 8, max: 20, min: 1 } as const;
 
 /** Duração padrão do hover (ms) e limites do controle. */
 export const HOVER_MS = { default: 300, max: 2000, min: 50 } as const;
@@ -104,6 +109,10 @@ export interface Fx {
   parallaxScreens?: "all" | "desktop";
   /** Com `each`: soma esse atraso (ms) a cada filho seguinte, para os itens entrarem em sequência. */
   stagger?: number;
+  /** Com `hover: "tilt"`: reflexo de luz (até 15% de branco) que acompanha o ponteiro. */
+  tiltGlare?: boolean;
+  /** Com `hover: "tilt"`: inclinação máxima em graus (`TILT.min`..`TILT.max`, padrão `TILT.default`). */
+  tiltMax?: number;
 }
 
 export const fxSchema: z.ZodType<Fx> = z.object({
@@ -121,6 +130,8 @@ export const fxSchema: z.ZodType<Fx> = z.object({
   parallax: z.number().min(-10).max(10).optional(),
   parallaxScreens: z.enum(["all", "desktop"]).optional(),
   stagger: z.number().min(0).max(1000).optional(),
+  tiltGlare: z.boolean().optional(),
+  tiltMax: z.number().min(TILT.min).max(TILT.max).optional(),
 });
 
 export const fxMapSchema = z
@@ -188,7 +199,7 @@ const ENTER_FROM: Record<Exclude<EnterEffect, AnimatedEnter>, string> = {
  * `translate`, `rotate`) para não brigar com o `transform` do próprio item. `pop` é animação.
  */
 const HOVER_TO: Record<
-  Exclude<HoverEffect, "pop" | "push" | "hang" | "pulse">,
+  Exclude<HoverEffect, "pop" | "push" | "hang" | "pulse" | "tilt">,
   [string, string]
 > = {
   brighten: ["filter", "brightness(1.15)"],
@@ -292,7 +303,8 @@ export function fxCss(
       f.hover !== "pop" &&
       f.hover !== "push" &&
       f.hover !== "hang" &&
-      f.hover !== "pulse"
+      f.hover !== "pulse" &&
+      f.hover !== "tilt"
         ? HOVER_TO[f.hover]
         : null;
     const hoverTransition = hoverTo ? `${hoverTo[0]} ${ms}ms ease` : "";
@@ -329,9 +341,13 @@ export interface FxRuntimeEntry {
   c?: 1;
   e?: 1;
   each?: 1;
+  /** Reflexo da inclinação 3D. */
+  g?: 1;
   m?: number;
   p: string;
   s?: number;
+  /** Inclinação 3D: grau máximo. */
+  t?: number;
 }
 
 export function fxRuntimeData(
@@ -348,7 +364,11 @@ export function fxRuntimeData(
     if (f.parallax) entry.s = f.parallax;
     if (f.mouse) entry.m = f.mouse;
     if (f.each) entry.each = 1;
-    if (entry.e || entry.c || entry.s || entry.m) out.push(entry);
+    if (f.hover === "tilt") {
+      entry.t = f.tiltMax ?? TILT.default;
+      if (f.tiltGlare) entry.g = 1;
+    }
+    if (entry.e || entry.c || entry.s || entry.m || entry.t) out.push(entry);
   }
   return out;
 }

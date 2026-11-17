@@ -135,4 +135,5 @@ export {
   HOVER_LABELS,
   HOVER_MS,
   type HoverEffect,
+  TILT,
 } from "./fx.js";

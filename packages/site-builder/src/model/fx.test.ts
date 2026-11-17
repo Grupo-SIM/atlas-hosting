@@ -57,6 +57,8 @@ describe("hover", () => {
   test("todo tipo de hover tem rótulo e gera CSS de :hover", () => {
     for (const hover of HOVER_EFFECTS) {
       expect(HOVER_LABELS[hover]).toBeTruthy();
+      // `tilt` é feito pelo script (`fx-runtime`), não por CSS: não gera regra :hover.
+      if (hover === "tilt") continue;
       expect(fxCss("b1", { "": { hover } })).toContain(
         '[data-block-id="b1"]:hover{'
       );

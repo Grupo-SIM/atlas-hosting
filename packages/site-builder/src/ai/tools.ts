@@ -38,6 +38,7 @@ import {
   ENTER_SCREEN_VALUES,
   HOVER_EFFECTS,
   HOVER_MS,
+  TILT,
 } from "../model/fx.js";
 import { BLOCK_ANCHOR, type Block, type Site } from "../model/index.js";
 import { siteSchema } from "../model/schema.js";
@@ -233,6 +234,9 @@ export const AI_TOOLS: AiToolDef[] = [
           `Duração do hover em ms (${HOVER_MS.min}-${HOVER_MS.max}; padrão ${HOVER_MS.default}).`
         ),
         id: str("Id do bloco."),
+        inclinacao_max: num(
+          `Com hover "tilt" (Inclinar 3D): inclinação máxima em graus (${TILT.min}-${TILT.max}; padrão ${TILT.default}).`
+        ),
         mouse: num(
           "Seguir o mouse: -10 a 10 (0 desliga; negativo vai ao contrário do ponteiro)."
         ),
@@ -240,6 +244,9 @@ export const AI_TOOLS: AiToolDef[] = [
         parallax_telas: oneOf(
           "Telas em que o parallax se move: all (padrão) ou desktop (some no tablet e no celular).",
           ["all", "desktop"]
+        ),
+        reflexo: bool(
+          'Com hover "tilt": reflexo de luz seguindo o ponteiro (até 15% de branco).'
         ),
         repetir: bool(
           "Com entrada pulse: pulsa sem parar (como o botão de oferta de algumas landings)."
@@ -767,9 +774,11 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
         entrada_tablet: "enterTablet",
         hover: "hover",
         hover_ms: "hoverMs",
+        inclinacao_max: "tiltMax",
         mouse: "mouse",
         parallax: "parallax",
         parallax_telas: "parallaxScreens",
+        reflexo: "tiltGlare",
         repetir: "loop",
       } as const;
       for (const [param, key] of Object.entries(map)) {
@@ -819,6 +828,16 @@ function execute(site: Site, name: string, input: Input): AiToolOutcome {
           patch.mouse > 10)
       ) {
         throw new ToolError("mouse deve ser um número de -10 a 10.");
+      }
+      if (
+        patch.tiltMax !== undefined &&
+        (typeof patch.tiltMax !== "number" ||
+          patch.tiltMax < TILT.min ||
+          patch.tiltMax > TILT.max)
+      ) {
+        throw new ToolError(
+          `inclinacao_max deve ser um número de ${TILT.min} a ${TILT.max}.`
+        );
       }
       if (patch.mouse === 0) patch.mouse = undefined;
       if (
