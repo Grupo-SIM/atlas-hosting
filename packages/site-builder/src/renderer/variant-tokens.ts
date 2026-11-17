@@ -8,17 +8,22 @@
 export interface VariantToken {
   fallback: string;
   key: string;
-  /** `color` (padrão), `image` (enviar/colar imagem) ou `text`. */
-  kind: "color" | "image" | "text";
+  /** `color` (padrão), `image` (enviar/colar imagem), `text` ou `select` (lista fechada em `options`). */
+  kind: "color" | "image" | "select" | "text";
   label: string;
+  options?: { label: string; value: string }[];
 }
 
 const t = (
   key: string,
   label: string,
   fallback: string,
-  kind: VariantToken["kind"] = "color"
-): VariantToken => ({ fallback, key, kind, label });
+  kind: VariantToken["kind"] = "color",
+  options?: VariantToken["options"]
+): VariantToken =>
+  options
+    ? { fallback, key, kind, label, options }
+    : { fallback, key, kind, label };
 
 const RAIZ: VariantToken[] = [
   t("active", "Roxo ativo (links e botões)", "#6617ff"),
