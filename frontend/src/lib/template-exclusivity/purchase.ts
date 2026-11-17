@@ -1,4 +1,4 @@
-import { getTemplate } from "@repo/site-builder";
+import { getTemplate, isWordpressTemplate } from "@repo/site-builder";
 import { format } from "date-fns";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -12,9 +12,9 @@ import {
 } from "@/lib/db/schema";
 import { notifyUser } from "@/lib/notifications/inbox";
 import { scheduleEvictions } from "./evictions";
+import { templateName } from "./names";
 import { reportPaidWithoutDelivery } from "./report";
 import { cycleEnd, formatBrl, reservationDeadline } from "./rules";
-import { templateName } from "./names";
 import {
   exclusivityData,
   exclusivityMetadata,
@@ -36,7 +36,7 @@ export async function createPurchaseInvoice(
   templateId: string,
   now = new Date()
 ): Promise<Result<{ invoiceId: string }>> {
-  if (!getTemplate(templateId)) {
+  if (!getTemplate(templateId) || isWordpressTemplate(templateId)) {
     return { error: "Template não encontrado.", ok: false };
   }
   const [setting] = await db
@@ -59,7 +59,9 @@ export async function createPurchaseInvoice(
         .where(
           and(
             eq(pgTemplateExclusivity.templateId, templateId),
-            inArray(pgTemplateExclusivity.status, [...LIVE_EXCLUSIVITY_STATUSES])
+            inArray(pgTemplateExclusivity.status, [
+              ...LIVE_EXCLUSIVITY_STATUSES,
+            ])
           )
         )
         .for("update");
@@ -68,7 +70,11 @@ export async function createPurchaseInvoice(
         const reservationOver =
           live.status === "reserved" &&
           (live.reservedUntil?.getTime() ?? 0) <= now.getTime();
-        if (live.status === "reserved" && live.ownerUserId === user.id && !reservationOver) {
+        if (
+          live.status === "reserved" &&
+          live.ownerUserId === user.id &&
+          !reservationOver
+        ) {
           // Mesmo usuário voltando ao checkout: reaproveita a fatura.
           if (live.initialInvoiceId) return live.initialInvoiceId;
         }
@@ -130,7 +136,8 @@ export async function createPurchaseInvoice(
     });
     return { invoiceId, ok: true };
   } catch (error) {
-    if (error instanceof PurchaseError) return { error: error.message, ok: false };
+    if (error instanceof PurchaseError)
+      return { error: error.message, ok: false };
     if (isUniqueViolation(error)) {
       return {
         error: "Outra pessoa acabou de reservar este template.",
@@ -138,7 +145,10 @@ export async function createPurchaseInvoice(
       };
     }
     console.error(`${LOG_PREFIX} Falha ao iniciar a compra:`, error);
-    return { error: "Não foi possível iniciar a compra. Tente de novo.", ok: false };
+    return {
+      error: "Não foi possível iniciar a compra. Tente de novo.",
+      ok: false,
+    };
   }
 }
 
@@ -193,8 +203,14 @@ export async function fulfillExclusivityInvoice(
     if (data.kind === "renewal") return await applyRenewal(invoice);
     return await activatePurchase(invoice);
   } catch (error) {
-    console.error(`${LOG_PREFIX} Falha na entrega da fatura ${invoice.id}:`, error);
-    return { ok: false, reason: error instanceof Error ? error.message : String(error) };
+    console.error(
+      `${LOG_PREFIX} Falha na entrega da fatura ${invoice.id}:`,
+      error
+    );
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
@@ -224,7 +240,9 @@ async function activatePurchase(invoice: Invoice) {
         .where(
           and(
             eq(pgTemplateExclusivity.templateId, row.templateId),
-            inArray(pgTemplateExclusivity.status, [...LIVE_EXCLUSIVITY_STATUSES])
+            inArray(pgTemplateExclusivity.status, [
+              ...LIVE_EXCLUSIVITY_STATUSES,
+            ])
           )
         )
         .limit(1);
@@ -233,7 +251,10 @@ async function activatePurchase(invoice: Invoice) {
     await tx
       .update(pgTemplateExclusivity)
       .set({
-        config: { ...row.config, cardToken: data.cardToken ?? row.config?.cardToken },
+        config: {
+          ...row.config,
+          cardToken: data.cardToken ?? row.config?.cardToken,
+        },
         expiresAt: cycleEnd(now),
         graceUntil: null,
         lastInvoiceId: invoice.id,
@@ -269,7 +290,7 @@ async function activatePurchase(invoice: Invoice) {
 
 async function applyRenewal(invoice: Invoice) {
   const data = exclusivityData(invoice);
-  if (!(data?.renewalCycle)) return { ok: false, reason: "renovação sem ciclo" };
+  if (!data?.renewalCycle) return { ok: false, reason: "renovação sem ciclo" };
   const cycle = data.renewalCycle;
 
   const outcome = await db.transaction(async tx => {
@@ -279,7 +300,8 @@ async function applyRenewal(invoice: Invoice) {
       .where(eq(pgTemplateExclusivity.id, data.exclusivityId))
       .for("update");
     if (!row) return { kind: "missing" as const };
-    if (row.config?.lastRenewalCycle === cycle) return { kind: "already" as const };
+    if (row.config?.lastRenewalCycle === cycle)
+      return { kind: "already" as const };
     if (row.status !== "active" && row.status !== "past_due") {
       return { kind: "conflict" as const };
     }
@@ -304,7 +326,8 @@ async function applyRenewal(invoice: Invoice) {
     return { expiresAt, kind: "renewed" as const, templateId: row.templateId };
   });
 
-  if (outcome.kind === "already") return { ok: true, reason: "ciclo já aplicado" };
+  if (outcome.kind === "already")
+    return { ok: true, reason: "ciclo já aplicado" };
   if (outcome.kind !== "renewed") {
     await reportPaidWithoutDelivery(
       invoice,

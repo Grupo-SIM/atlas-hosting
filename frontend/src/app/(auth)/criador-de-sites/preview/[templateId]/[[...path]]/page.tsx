@@ -1,10 +1,13 @@
-import { SiteRenderer } from "@repo/site-builder";
+import { isWordpressTemplate, SiteRenderer } from "@repo/site-builder";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { hasAreaAccess } from "@/lib/permissions/access";
-import { requireBuilderUser } from "@/lib/site-builder/access";
+import {
+  canUseWordpressTemplates,
+  requireBuilderUser,
+} from "@/lib/site-builder/access";
 import {
   getEffectiveTemplate,
   getTemplateDrafts,
@@ -32,6 +35,11 @@ export default async function TemplatePreviewPage({
   const { path = [], templateId } = await params;
   const template = await getEffectiveTemplate(templateId);
   if (!template) notFound();
+  if (
+    isWordpressTemplate(template.id) &&
+    !(await canUseWordpressTemplates(user))
+  )
+    notFound();
   const [state, resale] = await Promise.all([
     getTemplateState(template.id, user.id),
     getResaleConfig(),

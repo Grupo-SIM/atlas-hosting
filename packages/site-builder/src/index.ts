@@ -49,8 +49,12 @@ export {
 export { thumbnailHash, thumbnailSite } from "./renderer/thumbnail.js";
 export {
   getTemplate,
+  isWordpressTemplate,
   listTemplates,
+  listWordpressTemplates,
   peekTemplate,
+  WORDPRESS_PREFIX,
+  wordpressSourceId,
 } from "./templates/index.js";
 export {
   formatSize,

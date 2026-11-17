@@ -20,6 +20,7 @@ mock.module("@/lib/db", () => ({
   },
 }));
 mock.module("@/lib/site-builder/access", () => ({
+  canUseWordpressTemplates: async () => false,
   FORBIDDEN_MESSAGE: "",
   getBuilderUser: async () => null,
   // Os mocks de módulo vazam entre arquivos de teste: mantém os outros exports que outros testes importam.

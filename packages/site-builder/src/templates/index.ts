@@ -79,26 +79,67 @@ const templates: SiteTemplate[] = [
  */
 const legacyTemplates: SiteTemplate[] = [spyhacker];
 
-export const listTemplates = (): TemplateMeta[] =>
-  templates.map(({ description, id, name, preview, site, tags }) => ({
-    description,
-    id,
-    name,
-    pageCount: site.pages.length,
-    preview,
-    tags,
-  }));
+/** Prefixo do id das cópias para sites importados do WordPress (`wp-<id do original>`). */
+export const WORDPRESS_PREFIX = "wp-";
+
+export const isWordpressTemplate = (id: string): boolean =>
+  id.startsWith(WORDPRESS_PREFIX);
+
+/** Id do template original de uma cópia do WordPress (ou o próprio id, se não for cópia). */
+export const wordpressSourceId = (id: string): string =>
+  isWordpressTemplate(id) ? id.slice(WORDPRESS_PREFIX.length) : id;
+
+/**
+ * Uma cópia de cada template da lista, para sites importados do WordPress. Fica **fora** de `listTemplates`: só
+ * quem recebeu a permissão "Editar templates" do admin master a vê (a checagem é do servidor). Começa igual ao
+ * original e passa a ter vida própria: as edições do modo Dev gravam no id `wp-…`, sem mexer no original.
+ * O `site` é o mesmo objeto do original (leitura); quem cria site usa `getTemplate`, que clona.
+ */
+const wordpressTemplates: SiteTemplate[] = templates.map(t => ({
+  ...t,
+  id: `${WORDPRESS_PREFIX}${t.id}`,
+  name: `${t.name} (WordPress)`,
+  tags: [...t.tags, "WordPress"],
+}));
+
+const metaOf = ({
+  description,
+  id,
+  name,
+  preview,
+  site,
+  tags,
+}: SiteTemplate): TemplateMeta => ({
+  description,
+  id,
+  name,
+  pageCount: site.pages.length,
+  preview,
+  tags,
+});
+
+export const listTemplates = (): TemplateMeta[] => templates.map(metaOf);
+
+/** As cópias para sites importados do WordPress (não liste para quem não tem permissão). */
+export const listWordpressTemplates = (): TemplateMeta[] =>
+  wordpressTemplates.map(metaOf);
+
+const everything = () => [
+  ...templates,
+  ...wordpressTemplates,
+  ...legacyTemplates,
+];
 
 /**
  * O template como está no código, **sem clonar**: só para leitura (miniaturas, cor de fundo). Não altere o que
  * volta daqui; para criar site use `getTemplate`.
  */
 export function peekTemplate(id: string): SiteTemplate | undefined {
-  return [...templates, ...legacyTemplates].find(t => t.id === id);
+  return everything().find(t => t.id === id);
 }
 
 /** Cópia profunda — o site do usuário nunca compartilha referência com o seed. */
 export function getTemplate(id: string): SiteTemplate | undefined {
-  const found = [...templates, ...legacyTemplates].find(t => t.id === id);
+  const found = everything().find(t => t.id === id);
   return found ? structuredClone(found) : undefined;
 }

@@ -110,6 +110,14 @@ Telas em `frontend/src/app/(auth)/criador-de-sites/`:
    Sites já criados não mudam (cada um tem a própria cópia). Se a tabela não existir ou a versão guardada for inválida, o
    template do código vale e o erro só vai para o log — a galeria nunca cai. Migration (histórico, substituída pela 0016): `frontend/drizzle/0014_template_overrides.sql`
    (a pasta `frontend/drizzle` está no `.gitignore`: o arquivo não vai no commit, então passe-o a quem aplica).
+
+   **Cópias para sites importados do WordPress:** cada template da lista tem uma cópia com id `wp-<original>` e nome "… (WordPress)"
+   (`wordpressTemplates` em `packages/site-builder/src/templates/index.ts`; `listWordpressTemplates`, `isWordpressTemplate`,
+   `wordpressSourceId`). Ficam **fora** de `listTemplates` e só aparecem, na aba "Importados do WordPress" de `/novo`, para quem tem a
+   permissão `admin_templates` (o master e quem ele liberou; `canUseWordpressTemplates` em `lib/site-builder/access.ts`). A checagem
+   é do servidor: `createSite` e a prévia recusam o id `wp-…` para os demais, e a exclusividade (compra e admin) não aceita cópias.
+   Começam iguais ao original (a miniatura reaproveita a dele) e passam a ter vida própria: o modo Dev grava em `builder_template_overrides`
+   com o id `wp-…`, sem mexer no original. Nenhuma tabela nova.
 3. `/criador-de-sites/novo/[templateId]` — **Configurar** (nome + endereço) e **progresso**. `createSite` cria o
    registro e `publishSite` publica no endereço escolhido; "Definir depois" só cria. Os passos de progresso são
    cronometrados enquanto a publicação (uma chamada só) roda.

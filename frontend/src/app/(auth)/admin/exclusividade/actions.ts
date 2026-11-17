@@ -1,6 +1,6 @@
 "use server";
 
-import { getTemplate } from "@repo/site-builder";
+import { getTemplate, isWordpressTemplate } from "@repo/site-builder";
 import { and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getRealUser } from "@/lib/auth";
@@ -48,7 +48,9 @@ export async function saveTemplateExclusivities(
   for (const raw of input) {
     const templateId = String(raw?.templateId ?? "");
     const template = getTemplate(templateId);
-    if (!template) return { error: "Template não encontrado.", ok: false };
+    // As cópias para sites do WordPress não são vendidas.
+    if (!template || isWordpressTemplate(template.id))
+      return { error: "Template não encontrado.", ok: false };
     const enabled = Boolean(raw.enabled);
     const price = round2(Number(raw.annualPriceBrl));
     const valid = Number.isFinite(price) && price > 0;
@@ -61,7 +63,9 @@ export async function saveTemplateExclusivities(
     items.set(templateId, { enabled, price: valid ? price : 0 });
   }
 
-  const disabling = [...items].filter(([, item]) => !item.enabled).map(([id]) => id);
+  const disabling = [...items]
+    .filter(([, item]) => !item.enabled)
+    .map(([id]) => id);
   if (disabling.length > 0) {
     const owned = await db
       .select({ templateId: pgTemplateExclusivity.templateId })
@@ -77,7 +81,8 @@ export async function saveTemplateExclusivities(
       )
       .limit(1);
     if (owned[0]) {
-      const name = getTemplate(owned[0].templateId)?.name ?? owned[0].templateId;
+      const name =
+        getTemplate(owned[0].templateId)?.name ?? owned[0].templateId;
       return {
         error: `${name} tem dono (ou uma compra em andamento): a exclusividade não pode ser desligada agora.`,
         ok: false,
@@ -90,9 +95,17 @@ export async function saveTemplateExclusivities(
     for (const [templateId, item] of items) {
       await tx
         .insert(pgTemplateExclusivitySetting)
-        .values({ annualPriceBrl: item.price, enabled: item.enabled, templateId })
+        .values({
+          annualPriceBrl: item.price,
+          enabled: item.enabled,
+          templateId,
+        })
         .onConflictDoUpdate({
-          set: { annualPriceBrl: item.price, enabled: item.enabled, updatedAt: now },
+          set: {
+            annualPriceBrl: item.price,
+            enabled: item.enabled,
+            updatedAt: now,
+          },
           target: pgTemplateExclusivitySetting.templateId,
         });
     }

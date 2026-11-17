@@ -1,13 +1,18 @@
 import {
   listTemplates,
+  listWordpressTemplates,
   peekTemplate,
   SiteRenderer,
   thumbnailSite,
+  wordpressSourceId,
 } from "@repo/site-builder";
 import { LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
 import { hasAreaAccess } from "@/lib/permissions/access";
-import { requireBuilderUser } from "@/lib/site-builder/access";
+import {
+  canUseWordpressTemplates,
+  requireBuilderUser,
+} from "@/lib/site-builder/access";
 import { templateThumb } from "@/lib/site-builder/template-thumbs";
 import {
   getTemplateDrafts,
@@ -40,7 +45,16 @@ export default async function NewSitePage() {
     devAvailable ? getTemplateDrafts() : Promise.resolve({}),
   ]);
 
-  const templates: GalleryTemplate[] = listTemplates().flatMap(meta => {
+  // Cópias para sites importados do WordPress: só o admin master e quem ele liberou.
+  const wordpress = await canUseWordpressTemplates(user);
+  const metas = [
+    ...listTemplates().map(meta => ({ meta, wordpress: false })),
+    ...(wordpress
+      ? listWordpressTemplates().map(meta => ({ meta, wordpress: true }))
+      : []),
+  ];
+
+  const templates: GalleryTemplate[] = metas.flatMap(({ meta, wordpress }) => {
     // Só leitura (sem clonar o site inteiro de cada template a cada requisição).
     const full = peekTemplate(meta.id);
     if (!full) return [];
@@ -48,7 +62,8 @@ export default async function NewSitePage() {
     const edited = overrides[meta.id];
     const site = edited ?? full.site;
     // Imagem pré-gerada enquanto o template não foi editado nem mudou; senão a miniatura ao vivo.
-    const image = edited ? null : templateThumb(meta.id);
+    // A cópia do WordPress começa igual ao original, então reaproveita a imagem dele.
+    const image = edited ? null : templateThumb(wordpressSourceId(meta.id));
     return [
       {
         exclusivity: exclusivity[meta.id]
@@ -60,7 +75,7 @@ export default async function NewSitePage() {
           : undefined,
         name: meta.name,
         previewBackground: site.theme.bg ?? "#030712",
-        tags: meta.tags,
+        tags: wordpress ? meta.tags.filter(t => t !== "WordPress") : meta.tags,
         thumb: image ? (
           <TemplateThumbImage
             alt={`Prévia do template ${meta.name}`}
@@ -76,6 +91,7 @@ export default async function NewSitePage() {
             />
           </StaticThumb>
         ),
+        wordpress,
       },
     ];
   });

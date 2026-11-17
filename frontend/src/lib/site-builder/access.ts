@@ -64,3 +64,11 @@ export async function requireTemplateEditor(): Promise<User> {
   if (!user) notFound();
   return user;
 }
+
+/**
+ * Cópias dos templates para sites importados do WordPress (ids `wp-…`): só o admin master e quem ele liberou (a mesma
+ * permissão "Editar templates", em qualquer nível). Os demais admins e clientes não as veem nem as usam.
+ */
+export async function canUseWordpressTemplates(user: User): Promise<boolean> {
+  return await hasAreaAccess(user, "admin_templates", "view");
+}

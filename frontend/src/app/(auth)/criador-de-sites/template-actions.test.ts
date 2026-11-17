@@ -11,6 +11,7 @@ let draftRow: { draft: unknown } | undefined;
 
 mock.module("next/cache", () => ({ revalidatePath: () => undefined }));
 mock.module("@/lib/site-builder/access", () => ({
+  canUseWordpressTemplates: async () => false,
   FORBIDDEN_MESSAGE: "Recurso disponível apenas para usuários autorizados.",
   getTemplateEditor: async () => editor,
 }));

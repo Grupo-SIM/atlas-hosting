@@ -24,6 +24,8 @@ export interface GalleryTemplate {
   name: string;
   previewBackground: string;
   tags: string[];
+  /** Cópia para sites importados do WordPress (só o admin master e quem ele liberou recebem). */
+  wordpress?: boolean;
   /** Miniatura menor para a grade. */
   thumb: ReactNode;
 }
@@ -52,7 +54,7 @@ const DEV_KEY = "sb-dev-mode";
 
 export default function TemplateGallery({
   devAvailable = false,
-  templates,
+  templates: allTemplates,
 }: {
   /** Admin master e quem ele liberou: mostra a chave do modo Dev (editar os templates de demonstração). */
   devAvailable?: boolean;
@@ -80,6 +82,19 @@ export default function TemplateGallery({
   const [search, setSearch] = useState("");
   const [tag, setTag] = useState("Todos");
   const [exclusivity, setExclusivity] = useState<ExclusivityFilter>("all");
+  // Dois grupos: os templates de sempre e as cópias para sites importados do WordPress (só para quem tem acesso).
+  const [wp, setWp] = useState(false);
+  const hasWordpress = allTemplates.some(t => t.wordpress);
+  const templates = useMemo(
+    () =>
+      allTemplates.filter(t => Boolean(t.wordpress) === (hasWordpress && wp)),
+    [allTemplates, hasWordpress, wp]
+  );
+  const changeGroup = (value: boolean) => {
+    setWp(value);
+    setTag("Todos");
+    setExclusivity("all");
+  };
 
   const tags = useMemo(
     () => ["Todos", ...new Set(templates.flatMap(t => t.tags))],
@@ -171,6 +186,34 @@ export default function TemplateGallery({
           .
         </p>
       </div>
+
+      {hasWordpress ? (
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            className={chip(!wp)}
+            onClick={() => changeGroup(false)}
+            type="button"
+          >
+            Templates
+          </button>
+          <button
+            className={chip(wp)}
+            onClick={() => changeGroup(true)}
+            type="button"
+          >
+            Importados do WordPress
+            <span className="text-[11px] opacity-60">
+              {allTemplates.filter(t => t.wordpress).length}
+            </span>
+          </button>
+          {wp ? (
+            <span className="text-[color:var(--sbx-mute)] text-xs">
+              Cópias de todos os templates, só para você e para quem você
+              liberou.
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-2.5">
         <label className="flex h-10 min-w-60 flex-1 items-center gap-2 rounded-full border border-[color:var(--sbx-line)] bg-[color:var(--sbx-card)] px-3.5">
