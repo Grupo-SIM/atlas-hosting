@@ -57,6 +57,7 @@ ${x} .cf-h4{font-size:1.3em}
 ${x} .cf-hero{padding:100px 0 120px}
 ${x} .cf-hero-p{margin-right:0;padding-right:170px}
 ${x} .cf-hero-h .cf-t,${x} .cf-hero-h .cf-it{font-size:4.3em}
+${x} .cf-hl{flex-wrap:wrap;column-gap:.25em}
 ${x} .cf-hero-h .cf-t{line-height:1}
 ${x} .cf-hero-h .cf-it{line-height:1}
 ${x} .cf-pill{font-size:4.3em}

@@ -35,10 +35,11 @@ const tablet = (x: string) => `
 ${x} .if-head{min-height:101px;padding-right:92px}
 ${x} .if-logo{width:56px;height:41px}
 ${x} .if-brand{font-size:19px;line-height:19px;margin-left:0}
-${x} .if-hero{min-height:714px}
-${x} .if-hero-copy{top:133px;left:4.4%;width:77%}
+${x} .if-hero{min-height:0;justify-content:flex-start}
+${x} .if-hero-copy{position:static;width:auto;margin:133px 4.4% 0}
 ${x} .if-t{font-size:55px;line-height:60px}
-${x} .if-hero-img img{width:100%}
+${x} .if-hero-img{justify-content:center}
+${x} .if-hero-img img{width:min(100%,620px)}
 ${x} .if-d1{--l:30.7%;--w:23.4%;--t:682px}
 ${x} .if-d2{--l:28.7%;--w:41.2%;--t:1177px}
 ${x} .if-d3{--l:18.4%;--w:44.3%;--t:3069px}
