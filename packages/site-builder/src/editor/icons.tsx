@@ -243,6 +243,10 @@ const nodes: Record<string, Node> = {
     ["path", { d: "M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" }],
     ["path", { d: "M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" }],
   ],
+  search: [
+    ["circle", { cx: "11", cy: "11", r: "8" }],
+    ["path", { d: "m21 21-4.3-4.3" }],
+  ],
   settings: [
     [
       "path",

@@ -23,6 +23,7 @@ export const BLOCK_STYLE_KEYS = [
   "hoverColor",
   "margin",
   "maxWidth",
+  "objectFit",
   "opacity",
   "order",
   "padding",

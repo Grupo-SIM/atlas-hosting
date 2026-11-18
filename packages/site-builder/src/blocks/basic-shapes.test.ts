@@ -27,8 +27,11 @@ describe("formas", () => {
       "shapeSquare",
       "shapeCircle",
     ]);
-    for (const k of ["line", "rect", "square", "circle"])
-      expect(out).toContain(`sb-fig sb-fig-${k}`);
+    expect(out).toContain('class="sb-fig sb-fig-line"');
+    expect(out).toContain('class="sb-fig sb-fig-rect"');
+    // As de lados iguais levam a classe extra, separada por espaço (já houve bug de classes coladas).
+    expect(out).toContain('class="sb-fig sb-fig-square sb-fig-eq"');
+    expect(out).toContain('class="sb-fig sb-fig-circle sb-fig-eq"');
   });
 
   test("alinhamento vira justify-content", async () => {
@@ -42,5 +45,21 @@ describe("formas", () => {
 
   test("não usa a classe das divisórias em onda (sb-shape)", async () => {
     expect(await render(["shapeRect"])).not.toContain('class="sb-shape');
+  });
+
+  test("todas as formas de lados iguais têm as três classes separadas", async () => {
+    for (const [type, kind] of [
+      ["shapeTriangle", "triangle"],
+      ["shapeDiamond", "diamond"],
+      ["shapePentagon", "pentagon"],
+      ["shapeHexagon", "hexagon"],
+      ["shapeStar", "star"],
+      ["shapeArrow", "arrow"],
+      ["shapeCross", "cross"],
+    ] as const) {
+      expect(await render([type])).toContain(
+        `class="sb-fig sb-fig-${kind} sb-fig-eq"`
+      );
+    }
   });
 });

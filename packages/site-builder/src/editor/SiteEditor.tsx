@@ -31,6 +31,7 @@ import { AiPanel } from "./AiPanel.js";
 import { ConfirmDialog, type ConfirmRequest } from "./ConfirmDialog.js";
 import { ContentPanel } from "./ContentPanel.js";
 import { elementTree } from "./dom-tree.js";
+import { ElementsPanel } from "./ElementsPanel.js";
 import type { ResolveChannel } from "./fields.js";
 import {
   collectSnapLines,
@@ -130,7 +131,7 @@ type Device = "desktop" | "mobile" | "tablet";
 const PANELS_KEY = "sbe:panels";
 const PANEL_MIN = 200;
 const PANEL_MAX = 560;
-type LeftTab = "camadas" | "chat" | "paginas";
+type LeftTab = "camadas" | "chat" | "elementos" | "paginas";
 
 /** Indicador "o endereço já abre?" ao lado do salvamento. */
 const LIVE_PILL = {
@@ -784,6 +785,7 @@ export function SiteEditor({
     box.style.top = `${r.top}px`;
     box.style.width = `${r.width}px`;
     box.style.height = `${r.height}px`;
+    box.style.borderRadius = radiusOf(target);
   };
 
   /** Alças de redimensionar a mídia do post selecionado (quinas = reduz inteira; alça de baixo = corta a altura). */
@@ -802,22 +804,50 @@ export function SiteEditor({
         : isShape
           ? (block?.querySelector<HTMLElement>(".sb-fig") ?? null)
           : null;
-    if (!media) {
+    // Qualquer outra imagem ou vídeo do site: as alças aparecem quando ela é o elemento selecionado.
+    const picked = block && elPath ? elementAt(block, elPath) : null;
+    const generic =
+      !media &&
+      block?.dataset.blockType !== "postItem" &&
+      !isShape &&
+      (picked instanceof HTMLImageElement ||
+        picked instanceof HTMLVideoElement ||
+        picked instanceof HTMLIFrameElement)
+        ? picked
+        : null;
+    const target = media ?? generic;
+    if (!target) {
       box.style.display = "none";
       return;
     }
-    box.dataset.kind = isShape ? "shape" : "media";
+    box.dataset.kind = isShape ? "shape" : generic ? "el" : "media";
+    box.dataset.crop = generic instanceof HTMLIFrameElement ? "no" : "yes";
     box.dataset.align = isShape
       ? String(
           findBlock(siteRef.current, selectedId ?? "")?.props.align ?? "left"
         )
-      : "center";
-    const r = media.getBoundingClientRect();
+      : generic
+        ? anchorOf(generic)
+        : "center";
+    const r = target.getBoundingClientRect();
     box.style.display = "block";
     box.style.left = `${r.left}px`;
     box.style.top = `${r.top}px`;
     box.style.width = `${r.width}px`;
     box.style.height = `${r.height}px`;
+    box.style.borderRadius = radiusOf(target);
+  };
+
+  /** De que lado o elemento está preso no espaço dele: define de onde ele cresce ao arrastar uma alça. */
+  const anchorOf = (el: HTMLElement): "center" | "left" | "right" => {
+    const parent = el.parentElement;
+    if (!parent) return "center";
+    const r = el.getBoundingClientRect();
+    const p = parent.getBoundingClientRect();
+    const left = r.left - p.left;
+    const right = p.right - r.right;
+    if (Math.abs(left - right) <= 6) return "center";
+    return left < right ? "left" : "right";
   };
 
   /** Põe a barra de edição junto do elemento selecionado: em cima, ou embaixo quando não cabe. */
@@ -852,6 +882,7 @@ export function SiteEditor({
     )) {
       el.style.removeProperty("width");
       el.style.removeProperty("height");
+      el.style.removeProperty("object-fit");
       el.removeAttribute("data-live-size");
     }
   };
@@ -955,6 +986,105 @@ export function SiteEditor({
     window.addEventListener("pointercancel", up);
   };
 
+  /**
+   * Arrastar as alças de qualquer imagem ou vídeo: a quina muda o tamanho todo (sem cortar); as alças dos lados e
+   * a de baixo mudam a moldura e cortam o que passar. Grava largura e altura em px no estilo do elemento. Vídeo
+   * de link (player) só muda de tamanho, porque tem proporção fixa.
+   */
+  const startElementResize = (
+    blockId: string,
+    mode: "corner" | "height" | "side",
+    corner: string
+  ) => {
+    const node = blockEl(blockId);
+    const el = node && elPath ? elementAt(node, elPath) : null;
+    const block = findBlock(siteRef.current, blockId);
+    const start = pointerStart.current;
+    const parent = el?.parentElement;
+    if (!(node && el && block && start && parent)) return;
+    const path = pathWithin(el, node);
+    const cs = getComputedStyle(parent);
+    const maxW =
+      parent.clientWidth -
+      Number.parseFloat(cs.paddingLeft) -
+      Number.parseFloat(cs.paddingRight);
+    const iframe = el instanceof HTMLIFrameElement;
+    const w0 = el.offsetWidth;
+    const h0 = el.offsetHeight;
+    const hadHeight = block.elStyles?.[path]?.height !== undefined;
+    const side = corner.includes("w") ? -1 : 1;
+    const anchor = anchorOf(el);
+    const factor =
+      anchor === "center"
+        ? 2 * side
+        : anchor === "left"
+          ? side === 1
+            ? 1
+            : 0
+          : side === -1
+            ? -1
+            : 0;
+    // Corte só em imagem e vídeo de arquivo; o player de link e a quina só escalam.
+    const crop = !iframe && (mode === "side" || mode === "height" || hadHeight);
+    let w = w0;
+    let h = h0;
+    let moved = false;
+    shapeDrag.current = true;
+    const move = (ev: globalThis.PointerEvent) => {
+      moved = true;
+      const dx = (ev.clientX - start.x) / zoom;
+      const dy = (ev.clientY - start.y) / zoom;
+      if (mode === "height") {
+        if (iframe) return;
+        h = Math.min(3000, Math.max(24, h0 + dy));
+      } else {
+        w = Math.min(maxW, Math.max(24, w0 + factor * dx));
+        if (mode === "corner" || iframe) h = h0 * (w / w0);
+      }
+      el.dataset.liveSize = "1";
+      el.style.setProperty("width", `${Math.round(w)}px`, "important");
+      if (crop || mode === "corner" || iframe) {
+        el.style.setProperty("height", `${Math.round(h)}px`, "important");
+      }
+      if (crop) el.style.setProperty("object-fit", "cover", "important");
+      paintMedia();
+      paintSelectionBox();
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      shapeDrag.current = false;
+      if (!moved) return;
+      justDragged.current = true;
+      setTimeout(() => {
+        justDragged.current = false;
+      }, 0);
+      edit(
+        updateElementStyle(
+          siteRef.current,
+          blockId,
+          path,
+          crop
+            ? {
+                height: Math.round(h),
+                objectFit: "cover",
+                width: Math.round(w),
+              }
+            : { height: undefined, width: Math.round(w) }
+        ),
+        {
+          id: blockId,
+          key: `el-size:${blockId}:${path}`,
+          label: `${crop ? "Cortou" : "Redimensionou"} · ${labelOf(block.type)}`,
+        }
+      );
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+
   const startMediaResize = (
     e: PointerEvent<HTMLElement>,
     mode: "corner" | "height" | "side",
@@ -967,6 +1097,10 @@ export function SiteEditor({
     pointerStart.current = { x: e.clientX, y: e.clientY };
     if (findBlock(siteRef.current, blockId)?.type.startsWith("shape")) {
       startShapeResize(blockId, mode, corner);
+      return;
+    }
+    if (findBlock(siteRef.current, blockId)?.type !== "postItem") {
+      startElementResize(blockId, mode, corner);
       return;
     }
     const media = canvasRef.current?.querySelector<HTMLElement>(
@@ -1205,6 +1339,8 @@ export function SiteEditor({
       label: `Adicionou · ${labelOf(type)}`,
     });
     setSelectedId(res.id);
+    // O elemento entra depois do selecionado (ou no fim da página): leva o olhar até ele.
+    setTimeout(() => revealInCanvas(res.id), 200);
   };
 
   /** Arrastar e soltar nas camadas: mover um bloco existente. */
@@ -2078,6 +2214,12 @@ export function SiteEditor({
   };
 
   // Contorno em overlay: o fundo dos blocos filhos cobriria um outline no próprio bloco.
+  /** Cantos do elemento para os contornos do editor acompanharem (um círculo tem contorno redondo, sem canto quadrado). */
+  const radiusOf = (el: HTMLElement) => {
+    const r = getComputedStyle(el).borderTopLeftRadius;
+    return r.endsWith("%") ? r : `${(Number.parseFloat(r) || 0) * zoom}px`;
+  };
+
   const paintHover = () => {
     const box = hoverBoxRef.current;
     const el = hoverRef.current;
@@ -2092,6 +2234,7 @@ export function SiteEditor({
     box.style.top = `${r.top}px`;
     box.style.width = `${r.width}px`;
     box.style.height = `${r.height}px`;
+    box.style.borderRadius = radiusOf(el);
     const label = box.firstElementChild as HTMLElement | null;
     const type = el.closest<HTMLElement>("[data-block-id]")?.dataset.blockType;
     if (label) label.textContent = `${type ?? ""} › ${itemName(el)}`;
@@ -2467,6 +2610,14 @@ export function SiteEditor({
                 Camadas
               </button>
               <button
+                className={leftTab === "elementos" ? "on" : ""}
+                onClick={() => setLeftTab("elementos")}
+                type="button"
+              >
+                <Icon name="layout-template" size={14} />
+                Elementos
+              </button>
+              <button
                 className={leftTab === "paginas" ? "on" : ""}
                 onClick={() => setLeftTab("paginas")}
                 type="button"
@@ -2487,6 +2638,10 @@ export function SiteEditor({
               </button>
             </div>
           </div>
+
+          {leftTab === "elementos" && (
+            <ElementsPanel onAdd={type => addBlock(type)} />
+          )}
 
           {leftTab === "camadas" && (
             <LayersPanel
@@ -2955,9 +3110,49 @@ export function SiteEditor({
             liveColors={quick.live}
             liveText={quick.liveText}
             media={quick.media}
-            onEffect={(patch, what) =>
-              applyStyleAt(quick.effectPath, patch, what)
-            }
+            onEffect={(patch, what) => {
+              const path = quick.effectPath;
+              // "Círculo" numa imagem ou vídeo: deixa a moldura quadrada, senão sai uma elipse (e sobra o retângulo).
+              if (selected && patch.borderRadius === "50%") {
+                const node = blockEl(selected.id);
+                const el = node && path ? elementAt(node, path) : null;
+                if (el?.classList.contains("sb-post-media")) {
+                  edit(
+                    updateBlockProps(
+                      updateElementStyle(
+                        siteRef.current,
+                        selected.id,
+                        path,
+                        patch
+                      ),
+                      selected.id,
+                      { mediaRatio: 1 }
+                    ),
+                    {
+                      id: selected.id,
+                      key: `${selected.id}-s${path}-circle`,
+                      label: `${what} · ${labelOf(selected.type)}`,
+                    }
+                  );
+                  return;
+                }
+                if (
+                  el instanceof HTMLImageElement ||
+                  el instanceof HTMLVideoElement
+                ) {
+                  const size = Math.round(
+                    Math.min(el.offsetWidth, el.offsetHeight)
+                  );
+                  applyStyleAt(
+                    path,
+                    { ...patch, height: size, objectFit: "cover", width: size },
+                    what
+                  );
+                  return;
+                }
+              }
+              applyStyleAt(path, patch, what);
+            }}
             onLayer={changeLayer}
             onPickLayer={(blockId, path, label) => {
               selectElement(blockId, path, label);

@@ -39,6 +39,15 @@ const EQUAL = new Set<ShapeKind>([
   "triangle",
 ]);
 
+/**
+ * Classes da forma. Montadas fora do JSX porque a regra `useSortedClasses` do Biome, no `--write`, tira o espaço
+ * do começo de `" sb-fig-eq"` dentro do `className` e cola as duas classes.
+ */
+const figClass = (kind: ShapeKind) =>
+  ["sb-fig", `sb-fig-${kind}`, EQUAL.has(kind) && "sb-fig-eq"]
+    .filter(Boolean)
+    .join(" ");
+
 const shape = (type: string, label: string, kind: ShapeKind) =>
   defineBlock(
     z.object({
@@ -67,9 +76,7 @@ const shape = (type: string, label: string, kind: ShapeKind) =>
           className="sb-container sb-fig-wrap"
           style={{ justifyContent: JUSTIFY[p.align] }}
         >
-          <div
-            className={`sb-fig sb-fig-${kind}${EQUAL.has(kind) ? "sb-fig-eq" : ""}`}
-          />
+          <div className={figClass(kind)} />
         </div>
       ),
       type,
