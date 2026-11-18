@@ -16,12 +16,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { aiConfig } from "../../../[siteId]/components/SiteEditorClient";
-import {
-  resolveYoutubeChannel,
-  uploadSiteFont,
-  uploadSiteImage,
-  uploadSiteVideo,
-} from "../../../actions";
+import { resolveYoutubeChannel, uploadSiteFont } from "../../../actions";
+import { uploadSiteMedia } from "../../../components/upload-media";
 import {
   discardTemplateDraft,
   publishTemplateDraft,
@@ -157,15 +153,7 @@ export default function TemplateEditorClient({
           if (!result.ok) throw new Error(result.error);
           return { name: result.name, url: result.url };
         }}
-        onUploadImage={async file => {
-          const data = new FormData();
-          data.append("file", file);
-          const result = file.type.startsWith("video/")
-            ? await uploadSiteVideo(data)
-            : await uploadSiteImage(data);
-          if (!result.ok) throw new Error(result.error);
-          return result.url;
-        }}
+        onUploadImage={uploadSiteMedia}
         originalSite={originalSite}
         storageKey={`template:${templateId}`}
       />

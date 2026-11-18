@@ -6,6 +6,9 @@ const nextConfig = {
     ? [process.env.APP_BASE_URL.replace(/https?:\/\//, "")]
     : [],
   experimental: {
+    // Com o middleware ligado o Next guarda o corpo da requisição em memória e corta em 10 MB: vídeo de 10 a 25 MB
+    // chegava incompleto na server action e falhava. Acompanha o limite acima.
+    proxyClientMaxBodySize: "30mb",
     // Criador de Sites: upload de imagens (imagens até 8 MB, vídeos de anúncio até 25 MB) e save do site inteiro passam por server actions.
     serverActions: { bodySizeLimit: "30mb" },
     useCache: false,

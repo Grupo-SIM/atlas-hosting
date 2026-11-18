@@ -3,19 +3,14 @@
 import type { Site } from "@repo/site-builder";
 import { type AiConfig, SiteEditor } from "@repo/site-builder/editor";
 import { type ReactNode, useState } from "react";
-import {
-  resolveYoutubeChannel,
-  saveSite,
-  uploadSiteFont,
-  uploadSiteImage,
-  uploadSiteVideo,
-} from "../../actions";
+import { resolveYoutubeChannel, saveSite, uploadSiteFont } from "../../actions";
 import {
   disconnectAi,
   finishAiLogin,
   getAiStatus,
   startAiLogin,
 } from "../../ai-actions";
+import { uploadSiteMedia } from "../../components/upload-media";
 import { useSiteLive } from "../../components/useSiteLive";
 import { republishSite } from "../../publish-actions";
 import PublishSetupModal, {
@@ -111,16 +106,7 @@ export default function SiteEditorClient({
           if (!result.ok) throw new Error(result.error);
           return { name: result.name, url: result.url };
         }}
-        onUploadImage={async file => {
-          const data = new FormData();
-          data.append("file", file);
-          // Anúncios aceitam vídeo: o mesmo campo de envio escolhe a ação pelo tipo do arquivo.
-          const result = file.type.startsWith("video/")
-            ? await uploadSiteVideo(data)
-            : await uploadSiteImage(data);
-          if (!result.ok) throw new Error(result.error);
-          return result.url;
-        }}
+        onUploadImage={uploadSiteMedia}
         originalSite={originalSite}
         publish={{
           askPassword: publishWithPassword,
