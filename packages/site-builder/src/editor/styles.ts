@@ -17,6 +17,10 @@ export const editorCss = `
 .sbe-panel-card{background:var(--panel);border:0;border-radius:0;display:flex;flex-direction:column;overflow:hidden;min-height:0;flex-shrink:0}
 .sbe-left{width:clamp(240px,22vw,300px);border-right:1px solid var(--line)}
 .sbe-right{width:clamp(240px,22vw,290px);border-left:1px solid var(--line)}
+.sbe-resizer{flex:none;width:9px;margin:0 -4px;position:relative;z-index:12;cursor:col-resize;touch-action:none}
+.sbe-resizer::after{content:"";position:absolute;top:0;bottom:0;left:4px;width:2px;background:transparent;transition:background-color .15s}
+.sbe-resizer:hover::after,.sbe-resizer:active::after{background:var(--violet)}
+.sbe-right[hidden]{display:none}
 .sbe-center{flex:1;min-width:0;background:var(--panel);border:0;border-radius:0;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .sbe-scroll{flex:1;overflow:auto;min-height:0}
 

@@ -114,6 +114,10 @@ export interface SiteEditorProps {
 }
 
 type Device = "desktop" | "mobile" | "tablet";
+
+const PANELS_KEY = "sbe:panels";
+const PANEL_MIN = 200;
+const PANEL_MAX = 560;
 type LeftTab = "camadas" | "chat" | "paginas";
 
 /** Indicador "o endereço já abre?" ao lado do salvamento. */
@@ -464,6 +468,11 @@ export function SiteEditor({
   const [aiBusy, setAiBusy] = useState(false);
   const [aiOpened, setAiOpened] = useState(false);
   const [leftOpen, setLeftOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(true);
+  // Largura dos painéis (arrastando a borda). Sem valor, vale a largura padrão do CSS.
+  const [panelW, setPanelW] = useState<{ left?: number; right?: number }>({});
+  const panelWRef = useRef(panelW);
+  panelWRef.current = panelW;
   const [device, setDevice] = useState<Device>("desktop");
   const [availW, setAvailW] = useState(900);
   const [saveState, setSaveState] = useState<
@@ -530,6 +539,69 @@ export function SiteEditor({
     clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(""), 2400);
   }, []);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(PANELS_KEY) ?? "{}");
+      const ok = (n: unknown) =>
+        typeof n === "number" && n >= PANEL_MIN && n <= PANEL_MAX
+          ? n
+          : undefined;
+      setPanelW({ left: ok(saved.left), right: ok(saved.right) });
+    } catch {}
+  }, []);
+
+  /** Arrasta a borda de um painel lateral; duplo clique volta ao tamanho padrão. */
+  const startResize = (
+    side: "left" | "right",
+    e: PointerEvent<HTMLElement>
+  ) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const panel = e.currentTarget.parentElement?.querySelector<HTMLElement>(
+      side === "left" ? ".sbe-left" : ".sbe-right"
+    );
+    if (!panel) return;
+    const x = e.clientX;
+    const start = panel.getBoundingClientRect().width;
+    let last: number | undefined;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    const move = (ev: globalThis.PointerEvent) => {
+      const dx = side === "left" ? ev.clientX - x : x - ev.clientX;
+      const w = Math.round(
+        Math.min(PANEL_MAX, Math.max(PANEL_MIN, start + dx))
+      );
+      last = w;
+      setPanelW(p => ({ ...p, [side]: w }));
+    };
+    const up = () => {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      try {
+        if (last !== undefined)
+          localStorage.setItem(
+            PANELS_KEY,
+            JSON.stringify({ ...panelWRef.current, [side]: last })
+          );
+      } catch {}
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+  const resetPanel = (side: "left" | "right") => {
+    setPanelW(p => {
+      const next = { ...p, [side]: undefined };
+      try {
+        localStorage.setItem(PANELS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
 
   // Painel esquerdo começa fechado em tela estreita.
   useEffect(() => {
@@ -1795,7 +1867,10 @@ export function SiteEditor({
       <style>{editorCss}</style>
 
       {leftOpen ? (
-        <aside className="sbe-panel-card sbe-left">
+        <aside
+          className="sbe-panel-card sbe-left"
+          style={panelW.left ? { width: panelW.left } : undefined}
+        >
           <div style={{ borderBottom: "1px solid var(--line2)", padding: 10 }}>
             <div className="sbe-seg">
               <button
@@ -1940,6 +2015,15 @@ export function SiteEditor({
         </aside>
       ) : null}
 
+      {leftOpen ? (
+        <div
+          aria-hidden="true"
+          className="sbe-resizer"
+          onDoubleClick={() => resetPanel("left")}
+          onPointerDown={e => startResize("left", e)}
+          title="Arraste para ajustar · duplo clique volta ao padrão"
+        />
+      ) : null}
       <div className="sbe-center">
         {banner ? <div className="sbe-banner">{banner}</div> : null}
         <div className="sbe-top">
@@ -2071,6 +2155,19 @@ export function SiteEditor({
               {availW >= 420 ? "Revisar e publicar" : "Publicar"}
             </button>
           ) : null}
+          <button
+            aria-pressed={rightOpen}
+            className={rightOpen ? "sbe-ibtn on" : "sbe-ibtn"}
+            onClick={() => setRightOpen(o => !o)}
+            title="Mostrar/ocultar o painel de propriedades"
+            type="button"
+          >
+            <Icon
+              name="panel-left"
+              size={15}
+              style={{ transform: "scaleX(-1)" }}
+            />
+          </button>
           {exitHref ? (
             <a
               className="sbe-ibtn"
@@ -2268,7 +2365,20 @@ export function SiteEditor({
         ) : null}
       </div>
 
-      <aside className="sbe-panel-card sbe-right">
+      {rightOpen ? (
+        <div
+          aria-hidden="true"
+          className="sbe-resizer"
+          onDoubleClick={() => resetPanel("right")}
+          onPointerDown={e => startResize("right", e)}
+          title="Arraste para ajustar · duplo clique volta ao padrão"
+        />
+      ) : null}
+      <aside
+        className="sbe-panel-card sbe-right"
+        hidden={!rightOpen}
+        style={panelW.right ? { width: panelW.right } : undefined}
+      >
         <Inspector
           crumbs={crumbs}
           currentPost={site.posts.find(
